@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::{machine_id::get_machine_id, sha256::digest_file_blocking};
-use anyhow::{Context, Result};
+use anyhow::{format_err, Context, Result};
 use onefuzz_telemetry::{InstanceTelemetryKey, MicrosoftTelemetryKey};
 use std::path::{Path, PathBuf};
 use std::{collections::HashMap, hash::Hash};
@@ -14,7 +14,7 @@ pub enum ExpandedValue<'a> {
     Path(String),
     Scalar(String),
     List(&'a [String]),
-    Mapping(Box<dyn Fn(&Expand<'a>, &str) -> Option<ExpandedValue<'a>> + Send>),
+    Mapping(Box<dyn Fn(&Expand<'a>, &str) -> Result<Option<ExpandedValue<'a>>> + Send>),
 }
 
 #[derive(PartialEq, Eq, Hash, EnumIter)]
@@ -120,51 +120,56 @@ impl<'a> Expand<'a> {
 
     // by making this a Mapping rather than when creating an Expand instance,
     // users only pay for fetching the machine_id when it's used in expansion
-    fn machine_id(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        let result = rt.block_on(get_machine_id());
-
-        match result {
-            Ok(machine_id) => {
-                let value = machine_id.to_hyphenated().to_string();
-                Some(ExpandedValue::Scalar(value))
-            }
-            Err(_) => None,
-        }
+    fn machine_id(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
+        let rt = tokio::runtime::Runtime::new()?;
+        let machine_id = rt.block_on(get_machine_id())?;
+        let value = machine_id.to_hyphenated().to_string();
+        Ok(Some(ExpandedValue::Scalar(value)))
     }
 
-    fn input_file_sha256(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
-        match self.values.get(&PlaceHolder::Input.get_string()) {
+    fn input_file_sha256(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
+        let val = match self.values.get(&PlaceHolder::Input.get_string()) {
             Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
-                digest_file_blocking(file).ok().map(ExpandedValue::Scalar)
+                let hash = digest_file_blocking(file)?;
+                Some(ExpandedValue::Scalar(hash))
             }
             _ => None,
-        }
+        };
+
+        Ok(val)
     }
 
-    fn extract_file_name_no_ext(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
-        match self.values.get(&PlaceHolder::Input.get_string()) {
+    fn extract_file_name_no_ext(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
+        let val = match self.values.get(&PlaceHolder::Input.get_string()) {
             Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
-                let stem = file.file_stem()?;
+                let stem = file
+                    .file_stem()
+                    .ok_or_else(|| format_err!("missing file stem: {}", file.display()))?;
                 let name_as_str = stem.to_string_lossy().to_string();
                 Some(ExpandedValue::Scalar(name_as_str))
             }
             _ => None,
-        }
+        };
+
+        Ok(val)
     }
 
-    fn extract_file_name(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
-        match self.values.get(&PlaceHolder::Input.get_string()) {
+    fn extract_file_name(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
+        let val = match self.values.get(&PlaceHolder::Input.get_string()) {
             Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
-                let name = file.file_name()?;
+                let name = file
+                    .file_name()
+                    .ok_or_else(|| format_err!("missing file name: {}", file.display()))?;
                 let name_as_str = name.to_string_lossy().to_string();
                 Some(ExpandedValue::Scalar(name_as_str))
             }
             _ => None,
-        }
+        };
+
+        Ok(val)
     }
 
     pub fn set_value(self, name: PlaceHolder, value: ExpandedValue<'a>) -> Self {
@@ -366,7 +371,7 @@ impl<'a> Expand<'a> {
                 Ok(arg)
             }
             ExpandedValue::Mapping(func) => {
-                if let Some(value) = func(self, fmtstr) {
+                if let Some(value) = func(self, fmtstr)? {
                     let arg = self.replace_value(fmtstr, arg, &value)?;
                     Ok(arg)
                 } else {
