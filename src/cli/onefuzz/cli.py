@@ -7,8 +7,8 @@
 Simple CLI builder on top of a defined API (used for OneFuzz)
 """
 
-import datetime
 import argparse
+import datetime
 import inspect
 import json
 import logging
