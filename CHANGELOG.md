@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Deployment: Fixed the example deployment rule to include the required Azure Storage Queue support.  [#1207](https://github.com/microsoft/onefuzz/pull/1207)
-* CLI: Fixed an issue printing results that include `set`.  [#1208](https://github.com/microsoft/onefuzz/pull/1208)
+* CLI: Fixed an issue printing results that include `set`, `datetime`, and `None`.  [#1208](https://github.com/microsoft/onefuzz/pull/1208), [#1221](https://github.com/microsoft/onefuzz/pull/1221)
 
 ## 2.32.0
 ### Added
