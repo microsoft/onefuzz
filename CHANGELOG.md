@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.33.0
+### Added
+* Agent: Added `machine_id` [configuration value expansion](docs/command-replacements.md) for all tasks.  [#1217](https://github.com/microsoft/onefuzz/pull/1217), [#1216](https://github.com/microsoft/onefuzz/pull/1216)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1215](https://github.com/microsoft/onefuzz/pull/1215), [#1214](https://github.com/microsoft/onefuzz/pull/1214), [#1213](https://github.com/microsoft/onefuzz/pull/1213), [#1211](https://github.com/microsoft/onefuzz/pull/1211), [#1218](https://github.com/microsoft/onefuzz/pull/1218), [#1219](https://github.com/microsoft/onefuzz/pull/1219)
+
+### Fixed
+* Deployment: Fixed the example deployment rule to include the required Azure Storage Queue support.  [#1207](https://github.com/microsoft/onefuzz/pull/1207)
+* CLI: Fixed an issue printing results that include `set`, `datetime`, or `None`.  [#1208](https://github.com/microsoft/onefuzz/pull/1208), [#1221](https://github.com/microsoft/onefuzz/pull/1221)
+
 ## 2.32.0
 ### Added
 * CLI/Service: The Azure VM SKU used for proxies is now configurable via `onefuzz instance_config`.  [#1128](https://github.com/microsoft/onefuzz/pull/1128)
