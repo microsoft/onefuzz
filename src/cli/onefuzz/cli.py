@@ -8,6 +8,7 @@ Simple CLI builder on top of a defined API (used for OneFuzz)
 """
 
 import argparse
+import datetime
 import inspect
 import json
 import logging
@@ -502,12 +503,14 @@ def normalize(result: Any) -> Any:
         return {normalize(k): normalize(v) for (k, v) in result.items()}
     if isinstance(result, Enum):
         return result.name
-    if isinstance(result, UUID):
+    if isinstance(result, (UUID, datetime.datetime)):
         return str(result)
     if isinstance(result, (int, float, str)):
         return result
+    if result is None:
+        return result
 
-    logging.debug(f"unable to normalize type f{type(result)}")
+    logging.warning(f"unable to normalize type f{type(result)}")
 
     return result
 
