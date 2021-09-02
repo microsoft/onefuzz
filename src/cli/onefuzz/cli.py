@@ -507,6 +507,8 @@ def normalize(result: Any) -> Any:
         return str(result)
     if isinstance(result, (int, float, str)):
         return result
+    if result is None:
+        return result
 
     logging.warning(f"unable to normalize type f{type(result)}")
 
