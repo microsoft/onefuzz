@@ -5,7 +5,6 @@ azure-mgmt-eventgrid==9.0.0
 azure-mgmt-resource==18.0.0
 azure-mgmt-storage==18.0.0
 azure-storage-blob==12.8.1
-azure-storage-queue==12.1.6
 pyfunctional==1.4.3
 pyopenssl==19.1.0
 adal~=1.2.5
