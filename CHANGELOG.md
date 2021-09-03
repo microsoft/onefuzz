@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2.33.1
 ### Fixed
-* CLI: Fixed an issue printing results that include `SecretDat`.  [#1223](https://github.com/microsoft/onefuzz/pull/1223)
+* CLI: Fixed an issue printing results that include `SecretData`. [#1223](https://github.com/microsoft/onefuzz/pull/1223)
 
 ## 2.33.0
 ### Added
