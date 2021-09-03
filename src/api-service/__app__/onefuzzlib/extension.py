@@ -148,7 +148,7 @@ def azmon_extension(
         "publisher": "Microsoft.Azure.Monitor",
         "location": region,
         "type": "AzureMonitorLinuxAgent",
-        "typeHandlerVersion": "1.0",
+        "typeHandlerVersion": "1.10.5.0",
         "autoUpgradeMinorVersion": True,
         "settings": {},
         "protectedsettings": {
