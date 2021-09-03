@@ -33,6 +33,7 @@ from uuid import UUID
 import jmespath
 from docstring_parser import parse as parse_docstring
 from msrest.serialization import Model
+from onefuzztypes.models import SecretData
 from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, ValidationError
 
@@ -495,6 +496,8 @@ def normalize(result: Any) -> Any:
     """Convert arbitrary result streams into something filterable with jmespath"""
     if isinstance(result, BaseModel):
         return normalize(result.dict(exclude_none=True))
+    if isinstance(result, SecretData):
+        return normalize(result.secret)
     if isinstance(result, Model):
         return normalize(result.as_dict())
     if isinstance(result, (set, list)):
