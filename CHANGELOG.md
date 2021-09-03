@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.33.1
+### Fixed
+* CLI: Fixed an issue printing results that include `SecretDat`.  [#1223](https://github.com/microsoft/onefuzz/pull/1223)
+
 ## 2.33.0
 ### Added
 * Agent: Added `machine_id` [configuration value expansion](docs/command-replacements.md) for all tasks.  [#1217](https://github.com/microsoft/onefuzz/pull/1217), [#1216](https://github.com/microsoft/onefuzz/pull/1216)
