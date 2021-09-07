@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.33.1
+### Fixed
+* CLI: Fixed an issue printing results that include `SecretData`. [#1223](https://github.com/microsoft/onefuzz/pull/1223)
+
+## 2.33.0
+### Added
+* Agent: Added `machine_id` [configuration value expansion](docs/command-replacements.md) for all tasks.  [#1217](https://github.com/microsoft/onefuzz/pull/1217), [#1216](https://github.com/microsoft/onefuzz/pull/1216)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1215](https://github.com/microsoft/onefuzz/pull/1215), [#1214](https://github.com/microsoft/onefuzz/pull/1214), [#1213](https://github.com/microsoft/onefuzz/pull/1213), [#1211](https://github.com/microsoft/onefuzz/pull/1211), [#1218](https://github.com/microsoft/onefuzz/pull/1218), [#1219](https://github.com/microsoft/onefuzz/pull/1219)
+
+### Fixed
+* Deployment: Fixed the example deployment rule to include the required Azure Storage Queue support.  [#1207](https://github.com/microsoft/onefuzz/pull/1207)
+* CLI: Fixed an issue printing results that include `set`, `datetime`, or `None`.  [#1208](https://github.com/microsoft/onefuzz/pull/1208), [#1221](https://github.com/microsoft/onefuzz/pull/1221)
+
+## 2.32.0
+### Added
+* CLI/Service: The Azure VM SKU used for proxies is now configurable via `onefuzz instance_config`.  [#1128](https://github.com/microsoft/onefuzz/pull/1128)
+* CLI: Added `onefuzz status pool` command to give status information for a pool.  [#1170](https://github.com/microsoft/onefuzz/pull/1170)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1152](https://github.com/microsoft/onefuzz/pull/1152), [#1155](https://github.com/microsoft/onefuzz/pull/1155), [#1156](https://github.com/microsoft/onefuzz/pull/1156), [#1157](https://github.com/microsoft/onefuzz/pull/1157), [#1158](https://github.com/microsoft/onefuzz/pull/1158), [#1163](https://github.com/microsoft/onefuzz/pull/1163), [#1164](https://github.com/microsoft/onefuzz/pull/1164), [#1165](https://github.com/microsoft/onefuzz/pull/1165), [#1166](https://github.com/microsoft/onefuzz/pull/1166), [#1176](https://github.com/microsoft/onefuzz/pull/1176), [#1177](https://github.com/microsoft/onefuzz/pull/1177), [#1178](https://github.com/microsoft/onefuzz/pull/1178), [#1179](https://github.com/microsoft/onefuzz/pull/1179), [#1181](https://github.com/microsoft/onefuzz/pull/1181), [#1182](https://github.com/microsoft/onefuzz/pull/1182), [#1183](https://github.com/microsoft/onefuzz/pull/1183), [#1185](https://github.com/microsoft/onefuzz/pull/1185), [#1186](https://github.com/microsoft/onefuzz/pull/1186), [#1191](https://github.com/microsoft/onefuzz/pull/1191), [#1198](https://github.com/microsoft/onefuzz/pull/1198), [#1199](https://github.com/microsoft/onefuzz/pull/1199), [#1200](https://github.com/microsoft/onefuzz/pull/1200), [#1201](https://github.com/microsoft/onefuzz/pull/1201), [#1202](https://github.com/microsoft/onefuzz/pull/1202), [#1203](https://github.com/microsoft/onefuzz/pull/1203), [#1204](https://github.com/microsoft/onefuzz/pull/1204), [#1205](https://github.com/microsoft/onefuzz/pull/1205)
+* Agent: Changed `azcopy` calls to always retry when source files are modified mid-copy.  [#1196](https://github.com/microsoft/onefuzz/pull/1196)
+* Agent: Continued development related to upcoming features.  [#1146](https://github.com/microsoft/onefuzz/pull/1146)
+* Agent: SAS URLs are now redacted in logged `azcopy` failures.  [#1194](https://github.com/microsoft/onefuzz/pull/1194)
+* CLI: Include the number of VMs used per-task in `onefuzz status top`.  [#1169](https://github.com/microsoft/onefuzz/pull/1169)
+* Deployment: Application credentials created during deployment are no longer logged.  [#1172](https://github.com/microsoft/onefuzz/pull/1172)
+* Deployment: Clarify logging when retrying AAD interactions.  [#1173](https://github.com/microsoft/onefuzz/pull/1173)
+* Deployment: Replaced custom Azure Storage Queue creation with ARM templates.  [#1193](https://github.com/microsoft/onefuzz/pull/1193)
+* Service: The validity period for SAS URLs is now back-dated to avoid time synchronization issues.  [#1195](https://github.com/microsoft/onefuzz/pull/1195)
+
+### Fixed
+* Deployment: Invalid preauthorized application references are removed during application registration.  [#1175](https://github.com/microsoft/onefuzz/pull/1175)
+* Service: Fixed an issue logging node status.  [#1160](https://github.com/microsoft/onefuzz/pull/1160)
+
 ## 2.31.0
 ### Added
 * Supervisor: Added recording of STDOUT and STDERR of the supervisor to file.  [#1109](https://github.com/microsoft/onefuzz/pull/1109)

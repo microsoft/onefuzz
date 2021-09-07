@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use crate::blob::url::redact_query_sas_sig;
 use anyhow::{Context, Result};
 use backoff::{self, future::retry_notify, ExponentialBackoff};
 use std::{
-    ffi::OsStr,
+    ffi::{OsStr, OsString},
     fmt,
     path::Path,
     process::Stdio,
@@ -14,9 +15,18 @@ use std::{
 use tempfile::tempdir;
 use tokio::fs;
 use tokio::process::Command;
+use url::Url;
 
 const RETRY_INTERVAL: Duration = Duration::from_secs(5);
 const RETRY_COUNT: usize = 5;
+
+const ALWAYS_RETRY_ERROR_STRINGS: &[&str] = &[
+    // There isn't an ergonomic method to sync between the OneFuzz agent and fuzzers generating
+    // data.  As such, we should always retry azcopy commands that fail with errors that occur due
+    // to the fuzzers writing files while a sync is occurring.
+    // ref: https://github.com/microsoft/onefuzz/issues/1189
+    "source modified during transfer",
+];
 
 #[derive(Clone, Copy)]
 enum Mode {
@@ -45,6 +55,14 @@ async fn read_azcopy_log_file(path: &Path) -> Result<String> {
             .with_context(|| format!("unable to read file: {}", file.path().display()))
     } else {
         bail!("no log file in path: {}", path.display());
+    }
+}
+
+// attempt to redact an azcopy argument if it could possibly be a SAS URL
+fn redact_azcopy_sas_arg(value: &OsStr) -> OsString {
+    match value.to_str().map(Url::parse) {
+        Some(Ok(url)) => redact_query_sas_sig(&url).to_string().into(),
+        _ => value.to_owned(),
     }
 }
 
@@ -78,6 +96,10 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
         let logfile = read_azcopy_log_file(temp_dir.path())
             .await
             .unwrap_or_else(|e| format!("unable to read azcopy log file from: {:?}", e));
+
+        let src = redact_azcopy_sas_arg(src);
+        let dst = redact_azcopy_sas_arg(dst);
+
         anyhow::bail!(
             "azcopy {} failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?} log:{:?}",
             mode,
@@ -92,21 +114,47 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
     Ok(())
 }
 
+// Work around issues where azcopy fails with an error we should consider
+// "acceptable" to always retry on.
+fn should_always_retry(err: &anyhow::Error) -> bool {
+    let as_string = format!("{:?}", err);
+    for value in ALWAYS_RETRY_ERROR_STRINGS {
+        if as_string.contains(value) {
+            info!(
+                "azcopy failed with an error that always triggers a retry: {} - {:?}",
+                value, err
+            );
+            return true;
+        }
+    }
+    false
+}
+
 async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
-    let counter = AtomicUsize::new(0);
+    let attempt_counter = AtomicUsize::new(0);
+    let failure_counter = AtomicUsize::new(0);
 
     let operation = || async {
-        let attempt_count = counter.fetch_add(1, Ordering::SeqCst);
-        let result = az_impl(mode, src, dst, args)
-            .await
-            .with_context(|| format!("azcopy {} attempt {} failed", mode, attempt_count + 1));
+        let attempt_count = attempt_counter.fetch_add(1, Ordering::SeqCst);
+        let mut failure_count = failure_counter.load(Ordering::SeqCst);
+        let result = az_impl(mode, src, dst, args).await.with_context(|| {
+            format!(
+                "azcopy {} attempt {} failed.  (failure {})",
+                mode,
+                attempt_count + 1,
+                failure_count + 1
+            )
+        });
         match result {
             Ok(()) => Ok(()),
-            Err(x) => {
-                if attempt_count >= RETRY_COUNT {
-                    Err(backoff::Error::Permanent(x))
+            Err(err) => {
+                if !should_always_retry(&err) {
+                    failure_count = failure_counter.fetch_add(1, Ordering::SeqCst);
+                }
+                if failure_count >= RETRY_COUNT {
+                    Err(backoff::Error::Permanent(err))
                 } else {
-                    Err(backoff::Error::Transient(x))
+                    Err(backoff::Error::Transient(err))
                 }
             }
         }

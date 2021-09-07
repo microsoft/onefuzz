@@ -27,6 +27,7 @@
     "Microsoft.Storage/storageAccounts/listKeys/action",
     "Microsoft.Storage/storageAccounts/read",
     "Microsoft.Storage/storageAccounts/write",
+    "Microsoft.Storage/storageAccounts/queueServices/queues/write",
     "Microsoft.Web/serverfarms/read",
     "Microsoft.Web/serverfarms/write",
     "Microsoft.Web/sites/*",

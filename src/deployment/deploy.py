@@ -21,7 +21,6 @@ from uuid import UUID
 
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
-from azure.core.exceptions import ResourceExistsError
 from azure.cosmosdb.table.tableservice import TableService
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
@@ -58,7 +57,6 @@ from azure.storage.blob import (
     ContainerSasPermissions,
     generate_container_sas,
 )
-from azure.storage.queue import QueueServiceClient
 from msrest.serialization import TZ_UTC
 
 from data_migration import migrate
@@ -568,30 +566,6 @@ class Client:
             tenants.append(tenant)
         update_allowed_aad_tenants(table_service, self.application_name, tenants)
 
-    def create_queues(self) -> None:
-        logger.info("creating eventgrid destination queue")
-
-        name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
-        account_url = "https://%s.queue.core.windows.net" % name
-        client = QueueServiceClient(
-            account_url=account_url,
-            credential={"account_name": name, "account_key": key},
-        )
-        for queue in [
-            "file-changes",
-            "task-heartbeat",
-            "node-heartbeat",
-            "proxy",
-            "update-queue",
-            "webhooks",
-            "signalr-events",
-        ]:
-            try:
-                client.create_queue(queue)
-            except ResourceExistsError:
-                pass
-
     def create_eventgrid(self) -> None:
         logger.info("creating eventgrid subscription")
         src_resource_id = self.results["deploy"]["fuzz-storage"]["value"]
@@ -932,7 +906,6 @@ def main() -> None:
     full_deployment_states = rbac_only_states + [
         ("apply_migrations", Client.apply_migrations),
         ("set_instance_config", Client.set_instance_config),
-        ("queues", Client.create_queues),
         ("eventgrid", Client.create_eventgrid),
         ("tools", Client.upload_tools),
         ("add_instance_id", Client.add_instance_id),
