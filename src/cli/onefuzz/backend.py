@@ -177,10 +177,11 @@ class Backend:
         if self.config.tenant_domain:
             endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
             scopes = [
-                "https://" + self.config.tenant_domain + "/" + endpoint + "/.default"
+                "api://" + self.config.tenant_domain + "/" + endpoint + "/.default"
             ]
         else:
-            scopes = [self.config.endpoint + "/.default"]
+            netloc = urlparse(self.config.endpoint).netloc
+            scopes = [f"api://{netloc}/.default"]
 
         if self.config.client_secret:
             return self.client_secret(scopes)

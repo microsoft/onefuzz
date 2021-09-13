@@ -310,7 +310,7 @@ class Client:
 
             params = ApplicationCreateParameters(
                 display_name=self.application_name,
-                identifier_uris=[url],
+                identifier_uris=[f"api://{self.application_name}.azurewebsites.net"],
                 reply_urls=[url + "/.auth/login/aad/callback"],
                 optional_claims=OptionalClaims(id_token=[], access_token=[]),
                 required_resource_access=[
@@ -387,8 +387,16 @@ class Client:
                 self.multi_tenant_domain,
                 self.application_name,
             )
+            api_url = "api://%s/%s" % (
+                self.multi_tenant_domain,
+                self.application_name,
+            )
+            if not app.identifier_uris.contains(api_url):
+                app.identifier_uris.append(api_url)
+
             client.applications.patch(
-                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
+                app.object_id,
+                ApplicationUpdateParameters(identifier_uris=app.identifier_uris),
             )
             set_app_audience(app.object_id, "AzureADMultipleOrgs")
         elif (
@@ -397,8 +405,14 @@ class Client:
         ):
             set_app_audience(app.object_id, "AzureADMyOrg")
             url = "https://%s.azurewebsites.net" % self.application_name
+            api = "api://%s.azurewebsites.net" % self.application_name
+
+            if not app.identifier_uris.contains(api_url):
+                app.identifier_uris.append(api_url)
+
             client.applications.patch(
-                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
+                app.object_id,
+                ApplicationUpdateParameters(identifier_uris=app.identifier_uris),
             )
         else:
             logger.debug("No change to App Registration signInAudence setting")
@@ -471,20 +485,31 @@ class Client:
         if self.multi_tenant_domain:
             # clear the value in the Issuer Url field:
             # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
-            app_func_audience = "https://%s/%s" % (
-                self.multi_tenant_domain,
-                self.application_name,
-            )
+            app_func_audiences = [
+                "api://%s/%s"
+                % (
+                    self.multi_tenant_domain,
+                    self.application_name,
+                ),
+                "https://%s/%s"
+                % (
+                    self.multi_tenant_domain,
+                    self.application_name,
+                ),
+            ]
             app_func_issuer = ""
             multi_tenant_domain = {"value": self.multi_tenant_domain}
         else:
-            app_func_audience = "https://%s.azurewebsites.net" % self.application_name
+            app_func_audiences = [
+                "api://%s.azurewebsites.net" % self.application_name,
+                "https://%s.azurewebsites.net" % self.application_name,
+            ]
             tenant_oid = str(self.cli_config["authority"]).split("/")[-1]
             app_func_issuer = "https://sts.windows.net/%s/" % tenant_oid
             multi_tenant_domain = {"value": ""}
 
         params = {
-            "app_func_audience": {"value": app_func_audience},
+            "app_func_audiences": {"value": app_func_audiences},
             "name": {"value": self.application_name},
             "owner": {"value": self.owner},
             "clientId": {"value": self.results["client_id"]},
