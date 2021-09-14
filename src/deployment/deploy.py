@@ -310,7 +310,7 @@ class Client:
 
             params = ApplicationCreateParameters(
                 display_name=self.application_name,
-                identifier_uris=[url],
+                identifier_uris=["api://%s.azurewebsites.net" % self.application_name],
                 reply_urls=[url + "/.auth/login/aad/callback"],
                 optional_claims=OptionalClaims(id_token=[], access_token=[]),
                 required_resource_access=[
