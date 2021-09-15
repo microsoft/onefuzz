@@ -105,7 +105,7 @@ class Libfuzzer(Command):
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.crashes, containers[ContainerType.crashes]),
             (ContainerType.inputs, containers[ContainerType.inputs]),
-            (ContainerType.readonly_inputs, containers[ContainerType.readonly_inputs])
+            (ContainerType.readonly_inputs, containers[ContainerType.readonly_inputs]),
         ]
         self.logger.info("creating libfuzzer task")
 
@@ -293,7 +293,7 @@ class Libfuzzer(Command):
             ContainerType.coverage,
             ContainerType.unique_inputs,
             ContainerType.regression_reports,
-            ContainerType.readonly_inputs
+            ContainerType.readonly_inputs,
         )
 
         if existing_inputs:
