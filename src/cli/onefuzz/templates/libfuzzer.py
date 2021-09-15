@@ -236,6 +236,7 @@ class Libfuzzer(Command):
         wait_for_files: Optional[List[ContainerType]] = None,
         extra_files: Optional[List[File]] = None,
         existing_inputs: Optional[Container] = None,
+        readonly_inputs: Optional[Container] = None,
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
@@ -257,6 +258,9 @@ class Libfuzzer(Command):
         # verify containers exist
         if existing_inputs:
             self.onefuzz.containers.get(existing_inputs)
+
+        if readonly_inputs:
+            self.onefuzz.containers.get(readonly_inputs)
 
         if dryrun:
             return None
@@ -288,6 +292,7 @@ class Libfuzzer(Command):
             ContainerType.coverage,
             ContainerType.unique_inputs,
             ContainerType.regression_reports,
+            ContainerType.readonly_inputs
         )
 
         if existing_inputs:
@@ -295,6 +300,10 @@ class Libfuzzer(Command):
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
+
+        if readonly_inputs:
+            self.onefuzz.containers.get(readonly_inputs)
+            helper.containers[ContainerType.readonly_inputs] = readonly_inputs
 
         helper.create_containers()
         helper.setup_notifications(notification_config)
