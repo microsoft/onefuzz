@@ -362,6 +362,22 @@ class Client:
 
         else:
             app = existing[0]
+            if self.multi_tenant_domain:
+                api_id = "api://%s/%s" % (
+                    self.multi_tenant_domain,
+                    self.application_name,
+                )
+            else:
+                api_id = "api://%s.azurewebsites.net" % self.application_name
+
+            if api_id not in app.identifier_uris:
+                identifier_uris = app.identifier_uris
+                identifier_uris.append(api_id)
+                client.applications.patch(
+                    app.object_id,
+                    ApplicationUpdateParameters(identifier_uris=identifier_uris),
+                )
+
             existing_role_values = [app_role.value for app_role in app.app_roles]
             has_missing_roles = any(
                 [role.value not in existing_role_values for role in app_roles]
@@ -383,37 +399,12 @@ class Client:
                 )
 
         if self.multi_tenant_domain and app.sign_in_audience == "AzureADMyOrg":
-            url = "https://%s/%s" % (
-                self.multi_tenant_domain,
-                self.application_name,
-            )
-            api_url = "api://%s/%s" % (
-                self.multi_tenant_domain,
-                self.application_name,
-            )
-            if not app.identifier_uris.contains(api_url):
-                app.identifier_uris.append(api_url)
-
-            client.applications.patch(
-                app.object_id,
-                ApplicationUpdateParameters(identifier_uris=app.identifier_uris),
-            )
             set_app_audience(app.object_id, "AzureADMultipleOrgs")
         elif (
             not self.multi_tenant_domain
             and app.sign_in_audience == "AzureADMultipleOrgs"
         ):
             set_app_audience(app.object_id, "AzureADMyOrg")
-            url = "https://%s.azurewebsites.net" % self.application_name
-            api = "api://%s.azurewebsites.net" % self.application_name
-
-            if not app.identifier_uris.contains(api_url):
-                app.identifier_uris.append(api_url)
-
-            client.applications.patch(
-                app.object_id,
-                ApplicationUpdateParameters(identifier_uris=app.identifier_uris),
-            )
         else:
             logger.debug("No change to App Registration signInAudence setting")
 
