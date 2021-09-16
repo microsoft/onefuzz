@@ -255,6 +255,7 @@ class Backend:
             LOGGER.info("Interactive device authentication succeeded")
             print("Login succeeded", flush=True)
             self.save_cache()
+            break
 
         if access_token:
             return access_token
