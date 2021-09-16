@@ -229,6 +229,7 @@ class Backend:
                 if access_token:
                     return access_token
 
+        for scope in scopes:
             LOGGER.info("Attempting interactive device login")
             print("Please login", flush=True)
 
@@ -240,7 +241,6 @@ class Backend:
             print(flow["message"], flush=True)
 
             access_token = self.app.acquire_token_by_device_flow(flow)
-            print(f"acquired token {access_token}")
             # AADSTS70016: OAuth 2.0 device flow error. Authorization is pending
             # this happens when the intractive login request times out. This heppens when the login
             # fails because of a scope mismatch.
