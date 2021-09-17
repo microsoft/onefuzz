@@ -2659,9 +2659,9 @@ dependencies = [
 
 [[package]]
 name = "sysinfo"
-version = "0.20.2"
+version = "0.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42ef9905d4f98c059046037078f070e66de0f5ac69e5bb63f6bf805b570b3b51"
+checksum = "92d77883450d697c0010e60db3d940ed130b0ed81d27485edee981621b434e52"
 dependencies = [
  "cfg-if 1.0.0",
  "core-foundation-sys",
@@ -2805,9 +2805,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
-version = "0.6.7"
+version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1caa0b0c8d94a049db56b5acf8cba99dc0623aab1b26d5b5f5e2d945846b3592"
+checksum = "08d3725d3efa29485e87311c5b699de63cde14b00ed4d256b8318aa30ca452cd"
 dependencies = [
  "bytes 1.1.0",
  "futures-core",
