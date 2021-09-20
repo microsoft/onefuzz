@@ -177,10 +177,12 @@ class Backend:
         if self.config.tenant_domain:
             endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
             scopes = [
-                "https://" + self.config.tenant_domain + "/" + endpoint + "/.default"
+                f"api://{self.config.tenant_domain}/{endpoint}/.default",
+                f"https://{self.config.tenant_domain}/{endpoint}/.default",
             ]
         else:
-            scopes = [self.config.endpoint + "/.default"]
+            netloc = urlparse(self.config.endpoint).netloc
+            scopes = [f"api://{netloc}/.default", f"https://{netloc}/.default"]
 
         if self.config.client_secret:
             return self.client_secret(scopes)
@@ -194,7 +196,15 @@ class Backend:
                 client_credential=self.config.client_secret,
                 token_cache=self.token_cache,
             )
-        result = self.app.acquire_token_for_client(scopes=scopes)
+
+        for scope in scopes:
+            result = self.app.acquire_token_for_client(scopes=[scope])
+            # AADSTS500011: The resource principal named ... was not found in the tenant named ...
+            # This error is caused by a by mismatch between the identifierUr and the scope provided in the request.
+            if "error" in result and "AADSTS500011" in result["error_description"]:
+                LOGGER.warning(f"failed to get access token with scope {scope}")
+                continue
+
         if "error" in result:
             raise Exception(
                 "error: %s\n'%s'"
@@ -210,26 +220,47 @@ class Backend:
                 token_cache=self.token_cache,
             )
 
-        accounts = self.app.get_accounts()
-        if accounts:
-            access_token = self.app.acquire_token_silent(scopes, account=accounts[0])
-            if access_token:
-                return access_token
+        for scope in scopes:
+            accounts = self.app.get_accounts()
+            if accounts:
+                access_token = self.app.acquire_token_silent(
+                    [scope], account=accounts[0]
+                )
+                if access_token:
+                    return access_token
 
-        LOGGER.info("Attempting interactive device login")
-        print("Please login", flush=True)
+        for scope in scopes:
+            LOGGER.info("Attempting interactive device login")
+            print("Please login", flush=True)
 
-        flow = self.app.initiate_device_flow(scopes=scopes)
-        check_msal_error(flow, ["user_code", "message"])
-        print(flow["message"], flush=True)
+            flow = self.app.initiate_device_flow(scopes=[scope])
 
-        access_token = self.app.acquire_token_by_device_flow(flow)
-        check_msal_error(access_token, ["access_token"])
+            check_msal_error(flow, ["user_code", "message"])
+            # setting the expiration time to allow us to retry the interactive login with a new scope
+            flow["expires_at"] = int(time.time()) + 90  # 90 seconds from now
+            print(flow["message"], flush=True)
 
-        LOGGER.info("Interactive device authentication succeeded")
-        print("Login succeeded", flush=True)
-        self.save_cache()
-        return access_token
+            access_token = self.app.acquire_token_by_device_flow(flow)
+            # AADSTS70016: OAuth 2.0 device flow error. Authorization is pending
+            # this happens when the intractive login request times out. This heppens when the login
+            # fails because of a scope mismatch.
+            if (
+                "error" in access_token
+                and "AADSTS70016" in access_token["error_description"]
+            ):
+                LOGGER.warning(f"failed to get access token with scope {scope}")
+                continue
+            check_msal_error(access_token, ["access_token"])
+
+            LOGGER.info("Interactive device authentication succeeded")
+            print("Login succeeded", flush=True)
+            self.save_cache()
+            break
+
+        if access_token:
+            return access_token
+        else:
+            raise Exception("Failed to acquire token")
 
     def request(
         self,
