@@ -960,9 +960,9 @@ checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 
 [[package]]
 name = "goblin"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b1800b95efee8ad4ef04517d4d69f8e209e763b1668f1179aeeedd0e454da55"
+checksum = "32401e89c6446dcd28185931a01b1093726d0356820ac744023e6850689bf926"
 dependencies = [
  "log",
  "plain",
@@ -1800,9 +1800,9 @@ checksum = "acbf547ad0c65e31259204bd90935776d1c693cec2f4ff7abb7a1bbbd40dfe58"
 
 [[package]]
 name = "path-absolutize"
-version = "3.0.10"
+version = "3.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0feea2f0a6009a0fefe6ee3aae1871e4a57d7f2aae4681ac4a34a201071c9b9"
+checksum = "b288298a7a3a7b42539e3181ba590d32f2d91237b0691ed5f103875c754b3bf5"
 dependencies = [
  "path-dedot",
 ]
