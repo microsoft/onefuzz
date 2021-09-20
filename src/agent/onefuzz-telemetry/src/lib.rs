@@ -427,12 +427,30 @@ mod global {
     }
 }
 
+const REDACTED: &str = "Redacted";
 pub fn set_appinsights_clients(
     instance_key: Option<InstanceTelemetryKey>,
     microsoft_key: Option<MicrosoftTelemetryKey>,
 ) {
     let instance_client = instance_key.map(|k| TelemetryClient::new(k.to_string()));
-    let microsoft_client = microsoft_key.map(|k| TelemetryClient::new(k.to_string()));
+    let microsoft_client = microsoft_key.map(|k| {
+        let mut tc = TelemetryClient::new(k.to_string());
+        //Redact IP and machine name from telemetry
+        tc.context_mut()
+            .tags_mut()
+            .location_mut()
+            .set_ip("0.0.0.0".to_string());
+        tc.context_mut()
+            .tags_mut()
+            .cloud_mut()
+            .set_role_instance(REDACTED.to_string());
+        tc.context_mut()
+            .tags_mut()
+            .device_mut()
+            .set_id(REDACTED.to_string());
+        tc
+    });
+
     global::set_clients(instance_client, microsoft_client);
 }
 

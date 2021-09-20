@@ -111,19 +111,20 @@ impl ClientCredentials {
     }
 
     pub async fn access_token(&self) -> Result<AccessToken> {
-        let (authority, resource) = if let Some(domain) = &self.multi_tenant_domain {
+        let (authority, scope) = {
             let url = Url::parse(&self.resource.clone())?;
             let host = url.host_str().ok_or_else(|| {
                 anyhow::format_err!("resource URL does not have a host string: {}", url)
             })?;
-
-            let instance: Vec<&str> = host.split('.').collect();
-            (
-                String::from("common"),
-                format!("https://{}/{}/", &domain, instance[0]),
-            )
-        } else {
-            (self.tenant.clone(), self.resource.clone())
+            if let Some(domain) = &self.multi_tenant_domain {
+                let instance: Vec<&str> = host.split('.').collect();
+                (
+                    String::from("common"),
+                    format!("api://{}/{}/", &domain, instance[0]),
+                )
+            } else {
+                (self.tenant.clone(), format!("api://{}/", host))
+            }
         };
 
         let mut url = Url::parse("https://login.microsoftonline.com")?;
@@ -139,7 +140,7 @@ impl ClientCredentials {
                 ("client_secret", self.client_secret.expose_ref().to_string()),
                 ("grant_type", "client_credentials".into()),
                 ("tenant", authority),
-                ("scope", format!("{}.default", resource)),
+                ("scope", format!("{}.default", scope)),
             ])
             .send_retry_default()
             .await
@@ -180,15 +181,17 @@ const MANAGED_IDENTITY_URL: &str =
 
 impl ManagedIdentityCredentials {
     pub fn new(resource: String, multi_tenant_domain: Option<String>) -> Result<Self> {
-        let resource = if let Some(domain) = multi_tenant_domain.clone() {
+        let resource = {
             let resource_url = Url::parse(&resource)?;
             let host = resource_url.host_str().ok_or_else(|| {
                 anyhow::format_err!("resource URL does not have a host string: {}", resource_url)
             })?;
-            let instance: Vec<&str> = host.split('.').collect();
-            format!("https://{}/{}", domain, instance[0])
-        } else {
-            resource
+            if let Some(domain) = multi_tenant_domain.clone() {
+                let instance: Vec<&str> = host.split('.').collect();
+                format!("api://{}/{}", domain, instance[0])
+            } else {
+                format!("api://{}", host)
+            }
         };
 
         Ok(Self {
@@ -249,7 +252,7 @@ mod tests {
 
     #[test]
     fn test_managed_creds_with_valid_single_tenant() -> Result<()> {
-        let resource = "https://host-26.azurewebsites.net";
+        let resource = "api://host-26.azurewebsites.net";
 
         let managed_creds = ManagedIdentityCredentials::new(resource.to_string(), None)?;
 
@@ -259,7 +262,7 @@ mod tests {
 
     #[test]
     fn test_managed_creds_with_valid_multi_tenant_domain() -> Result<()> {
-        let resource = "https://host-26.azurewebsites.net";
+        let resource = "api://host-26.azurewebsites.net";
         let multi_tenant_domain = "mycloud.contoso.com";
 
         let managed_creds = ManagedIdentityCredentials::new(
@@ -267,7 +270,7 @@ mod tests {
             Some(multi_tenant_domain.to_string()),
         )?;
 
-        let expected = "https://mycloud.contoso.com/host-26";
+        let expected = "api://mycloud.contoso.com/host-26";
 
         assert_eq!(managed_creds.resource, expected);
 
