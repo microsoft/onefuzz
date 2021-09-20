@@ -11,8 +11,11 @@ binary-tests = []
 
 [dependencies]
 log = "0.4"
-nom = "6"
+nom = "7"
 pdb = "0.7"
 regex = "1"
 serde = { version = "1", features = ["derive"] }
 xml-rs = "0.8"
+anyhow = "1.0"
+structopt = "0.3"
+env_logger = "0.9"

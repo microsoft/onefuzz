@@ -55,6 +55,7 @@ cargo build --release --manifest-path ./onefuzz-telemetry/Cargo.toml --all-featu
 
 cp target/release/onefuzz-agent* ../../artifacts/agent-$(uname)
 cp target/release/onefuzz-supervisor* ../../artifacts/agent-$(uname)
+cp target/release/srcview* ../../artifacts/agent-$(uname)
 
 if exists target/release/*.pdb; then
     for file in target/release/*.pdb; do

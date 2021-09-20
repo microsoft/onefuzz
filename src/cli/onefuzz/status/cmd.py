@@ -4,11 +4,12 @@
 # Licensed under the MIT License.
 
 from collections import defaultdict
-from typing import DefaultDict, List, Optional, Set
+from typing import DefaultDict, Dict, List, Optional, Set
 from uuid import UUID
 
-from onefuzztypes.enums import ContainerType, JobState
+from onefuzztypes.enums import ContainerType, JobState, NodeState
 from onefuzztypes.primitives import Container
+from pydantic import BaseModel
 
 from ..api import UUID_EXPANSION, Command
 from .cache import JobFilter
@@ -20,8 +21,36 @@ def short(value: UUID) -> str:
     return str(value).split("-")[0]
 
 
+class PoolStatus(BaseModel):
+    # number of nodes in each node state
+    node_state: Dict[NodeState, int]
+    # number of VMs used for each task
+    tasks: Dict[UUID, int]
+
+
 class Status(Command):
     """Monitor status of Onefuzz Instance"""
+
+    def pool(self, *, name: str) -> PoolStatus:
+        pool = self.onefuzz.pools.get(name)
+        nodes = self.onefuzz.nodes.list(pool_name=pool.name)
+
+        tasks = {}
+        node_state = {}
+        for node in nodes:
+            if node.state not in node_state:
+                node_state[node.state] = 0
+            node_state[node.state] += 1
+
+            if node.state not in [NodeState.free, NodeState.init]:
+                node = self.onefuzz.nodes.get(node.machine_id)
+                if node.tasks is not None:
+                    for entry in node.tasks:
+                        task_id, _task_state = entry
+                        if task_id not in tasks:
+                            tasks[task_id] = 0
+                        tasks[task_id] += 1
+        return PoolStatus(tasks=tasks, node_state=node_state)
 
     def project(
         self,

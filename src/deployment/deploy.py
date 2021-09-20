@@ -21,7 +21,6 @@ from uuid import UUID
 
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
-from azure.core.exceptions import ResourceExistsError
 from azure.cosmosdb.table.tableservice import TableService
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
@@ -58,7 +57,6 @@ from azure.storage.blob import (
     ContainerSasPermissions,
     generate_container_sas,
 )
-from azure.storage.queue import QueueServiceClient
 from msrest.serialization import TZ_UTC
 
 from data_migration import migrate
@@ -126,7 +124,6 @@ class Client:
         create_registration: bool,
         migrations: List[str],
         export_appinsights: bool,
-        log_service_principal: bool,
         multi_tenant_domain: str,
         upgrade: bool,
         subscription_id: Optional[str],
@@ -160,7 +157,6 @@ class Client:
         }
         self.migrations = migrations
         self.export_appinsights = export_appinsights
-        self.log_service_principal = log_service_principal
         self.admins = admins
         self.allowed_aad_tenants = allowed_aad_tenants
 
@@ -314,7 +310,7 @@ class Client:
 
             params = ApplicationCreateParameters(
                 display_name=self.application_name,
-                identifier_uris=[url],
+                identifier_uris=[f"api://{self.application_name}.azurewebsites.net"],
                 reply_urls=[url + "/.auth/login/aad/callback"],
                 optional_claims=OptionalClaims(id_token=[], access_token=[]),
                 required_resource_access=[
@@ -366,6 +362,22 @@ class Client:
 
         else:
             app = existing[0]
+            if self.multi_tenant_domain:
+                api_id = "api://%s/%s" % (
+                    self.multi_tenant_domain,
+                    self.application_name,
+                )
+            else:
+                api_id = "api://%s.azurewebsites.net" % self.application_name
+
+            if api_id not in app.identifier_uris:
+                identifier_uris = app.identifier_uris
+                identifier_uris.append(api_id)
+                client.applications.patch(
+                    app.object_id,
+                    ApplicationUpdateParameters(identifier_uris=identifier_uris),
+                )
+
             existing_role_values = [app_role.value for app_role in app.app_roles]
             has_missing_roles = any(
                 [role.value not in existing_role_values for role in app_roles]
@@ -387,23 +399,12 @@ class Client:
                 )
 
         if self.multi_tenant_domain and app.sign_in_audience == "AzureADMyOrg":
-            url = "https://%s/%s" % (
-                self.multi_tenant_domain,
-                self.application_name,
-            )
-            client.applications.patch(
-                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
-            )
             set_app_audience(app.object_id, "AzureADMultipleOrgs")
         elif (
             not self.multi_tenant_domain
             and app.sign_in_audience == "AzureADMultipleOrgs"
         ):
             set_app_audience(app.object_id, "AzureADMyOrg")
-            url = "https://%s.azurewebsites.net" % self.application_name
-            client.applications.patch(
-                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
-            )
         else:
             logger.debug("No change to App Registration signInAudence setting")
 
@@ -455,12 +456,6 @@ class Client:
         self.results["client_id"] = app.app_id
         self.results["client_secret"] = password
 
-        # Log `client_secret` for consumption by CI.
-        if self.log_service_principal:
-            logger.info("client_id: %s client_secret: %s", app.app_id, password)
-        else:
-            logger.debug("client_id: %s client_secret: %s", app.app_id, password)
-
     def deploy_template(self) -> None:
         logger.info("deploying arm template: %s", self.arm_template)
 
@@ -481,20 +476,31 @@ class Client:
         if self.multi_tenant_domain:
             # clear the value in the Issuer Url field:
             # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
-            app_func_audience = "https://%s/%s" % (
-                self.multi_tenant_domain,
-                self.application_name,
-            )
+            app_func_audiences = [
+                "api://%s/%s"
+                % (
+                    self.multi_tenant_domain,
+                    self.application_name,
+                ),
+                "https://%s/%s"
+                % (
+                    self.multi_tenant_domain,
+                    self.application_name,
+                ),
+            ]
             app_func_issuer = ""
             multi_tenant_domain = {"value": self.multi_tenant_domain}
         else:
-            app_func_audience = "https://%s.azurewebsites.net" % self.application_name
+            app_func_audiences = [
+                "api://%s.azurewebsites.net" % self.application_name,
+                "https://%s.azurewebsites.net" % self.application_name,
+            ]
             tenant_oid = str(self.cli_config["authority"]).split("/")[-1]
             app_func_issuer = "https://sts.windows.net/%s/" % tenant_oid
             multi_tenant_domain = {"value": ""}
 
         params = {
-            "app_func_audience": {"value": app_func_audience},
+            "app_func_audiences": {"value": app_func_audiences},
             "name": {"value": self.application_name},
             "owner": {"value": self.owner},
             "clientId": {"value": self.results["client_id"]},
@@ -575,30 +581,6 @@ class Client:
         if tenant not in tenants:
             tenants.append(tenant)
         update_allowed_aad_tenants(table_service, self.application_name, tenants)
-
-    def create_queues(self) -> None:
-        logger.info("creating eventgrid destination queue")
-
-        name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
-        account_url = "https://%s.queue.core.windows.net" % name
-        client = QueueServiceClient(
-            account_url=account_url,
-            credential={"account_name": name, "account_key": key},
-        )
-        for queue in [
-            "file-changes",
-            "task-heartbeat",
-            "node-heartbeat",
-            "proxy",
-            "update-queue",
-            "webhooks",
-            "signalr-events",
-        ]:
-            try:
-                client.create_queue(queue)
-            except ResourceExistsError:
-                pass
 
     def create_eventgrid(self) -> None:
         logger.info("creating eventgrid subscription")
@@ -894,23 +876,27 @@ class Client:
 
     def done(self) -> None:
         logger.info(TELEMETRY_NOTICE)
-        client_secret_arg = (
-            ("--client_secret %s" % self.cli_config["client_secret"])
-            if "client_secret" in self.cli_config
-            else ""
-        )
-        multi_tenant_domain = ""
+
+        cmd: List[str] = [
+            "onefuzz",
+            "config",
+            "--endpoint",
+            f"https://{self.application_name}.azurewebsites.net",
+            "--authority",
+            str(self.cli_config["authority"]),
+            "--client_id",
+            str(self.cli_config["client_id"]),
+        ]
+
+        if "client_secret" in self.cli_config:
+            cmd += ["--client_secret", "YOUR_CLIENT_SECRET_HERE"]
+
         if self.multi_tenant_domain:
-            multi_tenant_domain = "--tenant_domain %s" % self.multi_tenant_domain
-        logger.info(
-            "Update your CLI config via: onefuzz config --endpoint "
-            "https://%s.azurewebsites.net --authority %s --client_id %s %s %s",
-            self.application_name,
-            self.cli_config["authority"],
-            self.cli_config["client_id"],
-            client_secret_arg,
-            multi_tenant_domain,
-        )
+            cmd += ["--tenant_domain", str(self.multi_tenant_domain)]
+
+        as_str = " ".join(cmd)
+
+        logger.info(f"Update your CLI config via: {as_str}")
 
 
 def arg_dir(arg: str) -> str:
@@ -936,7 +922,6 @@ def main() -> None:
     full_deployment_states = rbac_only_states + [
         ("apply_migrations", Client.apply_migrations),
         ("set_instance_config", Client.set_instance_config),
-        ("queues", Client.create_queues),
         ("eventgrid", Client.create_eventgrid),
         ("tools", Client.upload_tools),
         ("add_instance_id", Client.add_instance_id),
@@ -1022,11 +1007,6 @@ def main() -> None:
         help="enable appinsight log export",
     )
     parser.add_argument(
-        "--log_service_principal",
-        action="store_true",
-        help="display service prinipal with info log level",
-    )
-    parser.add_argument(
         "--multi_tenant_domain",
         type=str,
         default=None,
@@ -1076,7 +1056,6 @@ def main() -> None:
         create_registration=args.create_pool_registration,
         migrations=args.apply_migrations,
         export_appinsights=args.export_appinsights,
-        log_service_principal=args.log_service_principal,
         multi_tenant_domain=args.multi_tenant_domain,
         upgrade=args.upgrade,
         subscription_id=args.subscription_id,
