@@ -21,7 +21,6 @@ from uuid import UUID
 
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
-from azure.core.exceptions import ResourceExistsError
 from azure.cosmosdb.table.tableservice import TableService
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
@@ -58,7 +57,6 @@ from azure.storage.blob import (
     ContainerSasPermissions,
     generate_container_sas,
 )
-from azure.storage.queue import QueueServiceClient
 from msrest.serialization import TZ_UTC
 
 from data_migration import migrate
@@ -312,7 +310,7 @@ class Client:
 
             params = ApplicationCreateParameters(
                 display_name=self.application_name,
-                identifier_uris=[url],
+                identifier_uris=[f"api://{self.application_name}.azurewebsites.net"],
                 reply_urls=[url + "/.auth/login/aad/callback"],
                 optional_claims=OptionalClaims(id_token=[], access_token=[]),
                 required_resource_access=[
@@ -364,6 +362,22 @@ class Client:
 
         else:
             app = existing[0]
+            if self.multi_tenant_domain:
+                api_id = "api://%s/%s" % (
+                    self.multi_tenant_domain,
+                    self.application_name,
+                )
+            else:
+                api_id = "api://%s.azurewebsites.net" % self.application_name
+
+            if api_id not in app.identifier_uris:
+                identifier_uris = app.identifier_uris
+                identifier_uris.append(api_id)
+                client.applications.patch(
+                    app.object_id,
+                    ApplicationUpdateParameters(identifier_uris=identifier_uris),
+                )
+
             existing_role_values = [app_role.value for app_role in app.app_roles]
             has_missing_roles = any(
                 [role.value not in existing_role_values for role in app_roles]
@@ -385,23 +399,12 @@ class Client:
                 )
 
         if self.multi_tenant_domain and app.sign_in_audience == "AzureADMyOrg":
-            url = "https://%s/%s" % (
-                self.multi_tenant_domain,
-                self.application_name,
-            )
-            client.applications.patch(
-                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
-            )
             set_app_audience(app.object_id, "AzureADMultipleOrgs")
         elif (
             not self.multi_tenant_domain
             and app.sign_in_audience == "AzureADMultipleOrgs"
         ):
             set_app_audience(app.object_id, "AzureADMyOrg")
-            url = "https://%s.azurewebsites.net" % self.application_name
-            client.applications.patch(
-                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
-            )
         else:
             logger.debug("No change to App Registration signInAudence setting")
 
@@ -473,20 +476,31 @@ class Client:
         if self.multi_tenant_domain:
             # clear the value in the Issuer Url field:
             # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
-            app_func_audience = "https://%s/%s" % (
-                self.multi_tenant_domain,
-                self.application_name,
-            )
+            app_func_audiences = [
+                "api://%s/%s"
+                % (
+                    self.multi_tenant_domain,
+                    self.application_name,
+                ),
+                "https://%s/%s"
+                % (
+                    self.multi_tenant_domain,
+                    self.application_name,
+                ),
+            ]
             app_func_issuer = ""
             multi_tenant_domain = {"value": self.multi_tenant_domain}
         else:
-            app_func_audience = "https://%s.azurewebsites.net" % self.application_name
+            app_func_audiences = [
+                "api://%s.azurewebsites.net" % self.application_name,
+                "https://%s.azurewebsites.net" % self.application_name,
+            ]
             tenant_oid = str(self.cli_config["authority"]).split("/")[-1]
             app_func_issuer = "https://sts.windows.net/%s/" % tenant_oid
             multi_tenant_domain = {"value": ""}
 
         params = {
-            "app_func_audience": {"value": app_func_audience},
+            "app_func_audiences": {"value": app_func_audiences},
             "name": {"value": self.application_name},
             "owner": {"value": self.owner},
             "clientId": {"value": self.results["client_id"]},
@@ -567,30 +581,6 @@ class Client:
         if tenant not in tenants:
             tenants.append(tenant)
         update_allowed_aad_tenants(table_service, self.application_name, tenants)
-
-    def create_queues(self) -> None:
-        logger.info("creating eventgrid destination queue")
-
-        name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
-        account_url = "https://%s.queue.core.windows.net" % name
-        client = QueueServiceClient(
-            account_url=account_url,
-            credential={"account_name": name, "account_key": key},
-        )
-        for queue in [
-            "file-changes",
-            "task-heartbeat",
-            "node-heartbeat",
-            "proxy",
-            "update-queue",
-            "webhooks",
-            "signalr-events",
-        ]:
-            try:
-                client.create_queue(queue)
-            except ResourceExistsError:
-                pass
 
     def create_eventgrid(self) -> None:
         logger.info("creating eventgrid subscription")
@@ -932,7 +922,6 @@ def main() -> None:
     full_deployment_states = rbac_only_states + [
         ("apply_migrations", Client.apply_migrations),
         ("set_instance_config", Client.set_instance_config),
-        ("queues", Client.create_queues),
         ("eventgrid", Client.create_eventgrid),
         ("tools", Client.upload_tools),
         ("add_instance_id", Client.add_instance_id),

@@ -20,8 +20,8 @@
         "app_func_issuer": {
             "type": "string"
         },
-        "app_func_audience": {
-            "type": "string"
+        "app_func_audiences": {
+            "type": "array"
         },
         "multi_tenant_domain": {
             "type": "string"
@@ -122,11 +122,16 @@
                 "enabledForTemplateDeployment": true,
                 "tenantId": "[subscription().tenantId]",
                 "accessPolicies": [
-                     {
+                    {
                         "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2019-08-01', 'full').identity.principalId]",
                         "tenantId": "[subscription().tenantId]",
                         "permissions": {
-                            "secrets": ["get", "list", "set", "delete"]
+                            "secrets": [
+                                "get",
+                                "list",
+                                "set",
+                                "delete"
+                            ]
                         }
                     }
                 ],
@@ -278,7 +283,7 @@
                         "clientSecret": "[parameters('clientSecret')]",
                         "issuer": "[parameters('app_func_issuer')]",
                         "defaultProvider": "AzureActiveDirectory",
-                        "allowedAudiences": ["[parameters('app_func_audience')]"],
+                        "allowedAudiences": "[parameters('app_func_audiences')]",
                         "isAadAutoProvisioned": false
                     }
                 },
@@ -666,6 +671,62 @@
             "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
             "apiVersion": "2018-03-01-preview",
             "name": "[concat(variables('storageAccountNameFunc'), '/default/', 'app-logs')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/file-changes')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/task-heartbeat')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/node-heartbeat')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/proxy')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/update-queue')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/webhooks')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/signalr-events')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
             ]

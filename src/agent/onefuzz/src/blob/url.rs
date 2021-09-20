@@ -211,7 +211,7 @@ impl fmt::Display for BlobContainerUrl {
     }
 }
 
-fn redact_query_sas_sig(url: &Url) -> Url {
+pub fn redact_query_sas_sig(url: &Url) -> Url {
     let mut redacted = url.clone();
     redacted.set_query(None);
 
