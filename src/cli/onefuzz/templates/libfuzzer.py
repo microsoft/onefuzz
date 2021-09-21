@@ -106,6 +106,15 @@ class Libfuzzer(Command):
             (ContainerType.crashes, containers[ContainerType.crashes]),
             (ContainerType.inputs, containers[ContainerType.inputs]),
         ]
+
+        if ContainerType.readonly_inputs in containers:
+            fuzzer_containers.append(
+                (
+                    ContainerType.readonly_inputs,
+                    containers[ContainerType.readonly_inputs],
+                )
+            )
+
         self.logger.info("creating libfuzzer task")
 
         # disable ensemble sync if only one VM is used
@@ -236,6 +245,7 @@ class Libfuzzer(Command):
         wait_for_files: Optional[List[ContainerType]] = None,
         extra_files: Optional[List[File]] = None,
         existing_inputs: Optional[Container] = None,
+        readonly_inputs: Optional[Container] = None,
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
@@ -257,6 +267,9 @@ class Libfuzzer(Command):
         # verify containers exist
         if existing_inputs:
             self.onefuzz.containers.get(existing_inputs)
+
+        if readonly_inputs:
+            self.onefuzz.containers.get(readonly_inputs)
 
         if dryrun:
             return None
@@ -295,6 +308,10 @@ class Libfuzzer(Command):
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
+
+        if readonly_inputs:
+            self.onefuzz.containers.get(readonly_inputs)
+            helper.containers[ContainerType.readonly_inputs] = readonly_inputs
 
         helper.create_containers()
         helper.setup_notifications(notification_config)
