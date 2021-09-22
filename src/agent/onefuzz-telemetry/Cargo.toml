@@ -21,7 +21,7 @@ uuid = { version = "0.8", features = ["serde", "v4"] }
 serde = { version = "1.0", features = ["derive"] }
 z3-sys = { version = "0.6", optional = true}
 iced-x86 = { version = "1.14", optional = true}
-tokio = { version = "1.11", features = ["full"] }
+tokio = { version = "1.12", features = ["full"] }
 lazy_static = "1.4"
 
 
