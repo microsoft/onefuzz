@@ -794,6 +794,11 @@ class Task(BaseModel):
     user_info: Optional[UserInfo]
 
 
+class NetworkConfig(BaseModel):
+    address_space: str = Field(default="10.0.0.0/8")
+    subnet: str = Field(default="10.0.0.0/16")
+
+
 class InstanceConfig(BaseModel):
     # initial set of admins can only be set during deployment.
     # if admins are set, only admins can update instance configs.
@@ -804,6 +809,8 @@ class InstanceConfig(BaseModel):
 
     proxy_vm_sku: str = Field(default="Standard_B2s")
     allowed_aad_tenants: List[UUID]
+
+    network_config: NetworkConfig = Field(default=NetworkConfig())
 
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:
