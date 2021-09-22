@@ -63,7 +63,7 @@ impl fmt::Display for InstanceTelemetryKey {
     }
 }
 
-pub type TelemetryClient = appinsights::TelemetryClient<appinsights::InMemoryChannel>;
+pub type TelemetryClient = appinsights::blocking::TelemetryClient;
 pub enum ClientType {
     Instance,
     Microsoft,
