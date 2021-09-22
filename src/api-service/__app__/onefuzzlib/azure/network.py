@@ -9,20 +9,12 @@ from typing import Optional, Union
 
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import ErrorCode
-from onefuzztypes.models import Error
+from onefuzztypes.models import Error, NetworkConfig
 from onefuzztypes.primitives import Region
 
 from ..config import InstanceConfig
 from .creds import get_base_resource_group
 from .subnet import create_virtual_network, get_subnet_id
-
-# these were original address spaces chosen for 1f.  However, moving forwards
-# these are configurable in the Instance Config.  Network names will be
-# calculated from the address_space/subnet *except* if they are the original
-# values.  This allows backwards compatability to existing configs if you don't
-# change the network configs.
-ORIGINAL_ADDRESS_SPACE = "10.0.0.0/8"
-ORIGINAL_SUBNET = "10.0.0.0/16"
 
 # This was generated randomly and should be preserved moving forwards
 NETWORK_GUID_NAMESPACE = uuid.UUID("372977ad-b533-416a-b1b4-f770898e0b11")
@@ -34,9 +26,14 @@ class Network:
         self.region = region
         self.network_config = InstanceConfig.fetch().network_config
 
+        # Network names will be calculated from the address_space/subnet
+        # *except* if they are the original values.  This allows backwards
+        # compatability to existing configs if you don't change the network
+        # configs.
         if (
-            self.network_config.address_space == ORIGINAL_ADDRESS_SPACE
-            and self.network_config.subnet == ORIGINAL_SUBNET
+            self.network_config.address_space
+            == NetworkConfig.__fields__["address_space"].default
+            and self.network_config.subnet == NetworkConfig.__fields__["subnet"].default
         ):
             self.name: str = self.region
         else:
