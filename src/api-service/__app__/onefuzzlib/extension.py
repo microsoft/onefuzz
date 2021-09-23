@@ -160,9 +160,6 @@ def azmon_extension(
             "monitoringGCSRegion": region,
             "monitoringGCSAuthId": auth_id,
             "monitoringGCSAuthIdType": auth_id_type,
-            "monitoringTenant": "test",
-            "monitoringRole": "testtest",
-            "monitoringRoleInstance": "testtesttest",
         },
     }
 
