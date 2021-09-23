@@ -214,6 +214,7 @@ class Deployer:
         test_dir = "integration-test-artifacts"
         script = "integration-test.py"
         endpoint = f"https://{self.instance}.azurewebsites.net"
+        test_args = " ".join(self.test_args)
         commands = [
             (
                 "extracting integration-test-artifacts",
@@ -227,12 +228,13 @@ class Deployer:
                 (
                     f"{py} {test_dir}/{script} test {test_dir} "
                     f"--region {self.region} --endpoint {endpoint} "
-                    " ".join(self.test_args)
+                    f"{test_args}"
                 ),
             ),
         ]
         for (msg, cmd) in commands:
             print(msg)
+            print(cmd)
             subprocess.check_call(cmd, shell=True)
 
     def cleanup(self, skip: bool) -> None:
