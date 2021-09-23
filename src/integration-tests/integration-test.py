@@ -69,6 +69,7 @@ class Integration(BaseModel):
     reboot_after_setup: Optional[bool] = Field(default=False)
     test_repro: Optional[bool] = Field(default=True)
     target_options: Optional[List[str]]
+    inject_fake_regression: bool = Field(default=False)
 
 
 TARGETS: Dict[str, Integration] = {
@@ -90,6 +91,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.inputs: 2,
         },
         reboot_after_setup=True,
+        inject_fake_regression=True,
     ),
     "linux-libfuzzer-with-options": Integration(
         template=TemplateType.libfuzzer,
@@ -161,6 +163,7 @@ TARGETS: Dict[str, Integration] = {
         target_exe="fuzz.exe",
         inputs="seeds",
         wait_for_files={ContainerType.unique_reports: 1},
+        inject_fake_regression=True,
     ),
     "linux-trivial-crash-asan": Integration(
         template=TemplateType.radamsa,
@@ -181,6 +184,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.unique_reports: 1,
             ContainerType.coverage: 1,
         },
+        inject_fake_regression=True,
     ),
     "windows-libfuzzer-linked-library": Integration(
         template=TemplateType.libfuzzer,
@@ -212,6 +216,7 @@ TARGETS: Dict[str, Integration] = {
         target_exe="fuzz.exe",
         inputs="seeds",
         wait_for_files={ContainerType.unique_reports: 1},
+        inject_fake_regression=True,
     ),
 }
 
@@ -335,6 +340,9 @@ class TestOnefuzz:
                 )
             else:
                 raise NotImplementedError
+
+            if config.inject_fake_regression and job is not None:
+                self.of.debug.notification.job(job.job_id)
 
             if not job:
                 raise Exception("missing job")
