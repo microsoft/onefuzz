@@ -646,7 +646,7 @@ class DebugNotification(Command):
 
     def job(
         self,
-        job_id: str,
+        job_id: UUID_EXPANSION,
         *,
         report_container_type: ContainerType = ContainerType.unique_reports,
         crash_name: str = "fake-crash-sample",
@@ -670,7 +670,7 @@ class DebugNotification(Command):
 
     def task(
         self,
-        task_id: str,
+        task_id: UUID_EXPANSION,
         *,
         report_container_type: ContainerType = ContainerType.unique_reports,
         crash_name: str = "fake-crash-sample",
