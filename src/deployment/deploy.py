@@ -251,7 +251,9 @@ class Client:
     def create_password(self, object_id: UUID) -> Tuple[str, str]:
         return add_application_password(object_id, self.get_subscription_id())
 
-    def get_url(self) -> str:
+    def get_instance_url(self) -> str:
+        ## The url to access the instance
+        ## This also represents the legacy identifier_uris of the application registration
         if self.multi_tenant_domain:
             return "https://%s/%s" % (
                 self.multi_tenant_domain,
@@ -260,7 +262,11 @@ class Client:
         else:
             return "https://%s.azurewebsites.net" % self.application_name
 
-    def get_identifier_uri(self) -> str:
+    def get_identifier_url(self) -> str:
+        ## The used to identify the application registration via the identifier_uris field
+        ## Depending on the environment this value needs to be from an approved domain
+        ## The format of this value is derived from the default value proposed by azure when creating
+        ## an application registration api://{guid}/...
         if self.multi_tenant_domain:
             return "api://%s/%s" % (
                 self.multi_tenant_domain,
@@ -320,8 +326,8 @@ class Client:
 
             params = ApplicationCreateParameters(
                 display_name=self.application_name,
-                identifier_uris=[self.get_identifier_uri()],
-                reply_urls=[self.get_url() + "/.auth/login/aad/callback"],
+                identifier_uris=[self.get_identifier_url()],
+                reply_urls=[self.get_instance_url() + "/.auth/login/aad/callback"],
                 optional_claims=OptionalClaims(id_token=[], access_token=[]),
                 required_resource_access=[
                     RequiredResourceAccess(
@@ -372,7 +378,7 @@ class Client:
 
         else:
             app = existing[0]
-            api_id = self.get_identifier_uri()
+            api_id = self.get_identifier_url()
             if api_id not in app.identifier_uris:
                 identifier_uris = app.identifier_uris
                 identifier_uris.append(api_id)
@@ -477,8 +483,8 @@ class Client:
         )
 
         app_func_audiences = [
-            self.get_identifier_uri(),
-            self.get_url(),
+            self.get_identifier_url(),
+            self.get_instance_url(),
         ]
         if self.multi_tenant_domain:
             # clear the value in the Issuer Url field:
