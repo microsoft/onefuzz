@@ -58,6 +58,16 @@ jobs:
       with:
         name: build-artifacts
         path: artifacts
+  check-pr:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: lint
+      shell: bash
+      run: src/ci/check-check-pr.sh
   cli:
     needs:
     - onefuzztypes
