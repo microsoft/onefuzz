@@ -258,7 +258,7 @@ class Deployer:
 
         test_filename = "integration-test-artifacts.zip"
         self.downloader.get_artifact(
-            "microsoft/onefuzz",
+            self.repo,
             "ci.yml",
             self.branch,
             self.pr,
