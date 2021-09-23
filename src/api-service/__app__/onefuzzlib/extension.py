@@ -162,7 +162,7 @@ def azmon_extension(
             "monitoringGCSAuthIdType": auth_id_type,
             "monitoringTenant": "test",
             "monitoringRole": "testtest",
-            "monitoringRoleInstance": "testtesfttest",
+            "monitoringRoleInstance": "testtesttest",
         },
     }
 
