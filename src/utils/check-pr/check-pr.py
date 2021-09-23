@@ -167,6 +167,7 @@ class Deployer:
         subscription_id: Optional[str],
         skip_tests: bool,
         test_args: List[str],
+        repo: str,
     ):
         self.downloader = Downloader()
         self.pr = pr
@@ -176,6 +177,7 @@ class Deployer:
         self.subscription_id = subscription_id
         self.skip_tests = skip_tests
         self.test_args = test_args
+        self.repo = repo
 
     def merge(self) -> None:
         if self.pr:
@@ -246,7 +248,7 @@ class Deployer:
     def run(self, *, merge_on_success: bool = False) -> None:
         release_filename = "release-artifacts.zip"
         self.downloader.get_artifact(
-            "microsoft/onefuzz",
+            self.repo,
             "ci.yml",
             self.branch,
             self.pr,
@@ -280,6 +282,7 @@ def main() -> None:
     group.add_argument("--branch")
     group.add_argument("--pr", type=int)
 
+    parser.add_argument("--repo", default="microsoft/onefuzz")
     parser.add_argument("--region", default="eastus2")
     parser.add_argument("--skip-tests", action="store_true")
     parser.add_argument("--skip-cleanup", action="store_true")
@@ -300,6 +303,7 @@ def main() -> None:
         subscription_id=args.subscription_id,
         skip_tests=args.skip_tests,
         test_args=args.test_args,
+        repo=args.repo,
     )
     with tempfile.TemporaryDirectory() as directory:
         os.chdir(directory)
