@@ -49,7 +49,7 @@ class Network:
         return self.get_id() is not None
 
     def get_id(self) -> Optional[str]:
-        return get_subnet_id(self.group, self.name, self.region)
+        return get_subnet_id(self.group, self.name, self.name)
 
     def create(self) -> Union[None, Error]:
         if not self.exists():

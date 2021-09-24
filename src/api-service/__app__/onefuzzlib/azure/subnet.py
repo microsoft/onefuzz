@@ -16,10 +16,10 @@ from onefuzztypes.primitives import Region
 from .network_mgmt_client import get_network_client
 
 
-def get_subnet_id(resource_group: str, name: str, region: Region) -> Optional[str]:
+def get_subnet_id(resource_group: str, name: str, subnet_name: str) -> Optional[str]:
     network_client = get_network_client()
     try:
-        subnet = network_client.subnets.get(resource_group, name, region)
+        subnet = network_client.subnets.get(resource_group, name, subnet_name)
         return cast(str, subnet.id)
     except (CloudError, ResourceNotFoundError):
         logging.info(
