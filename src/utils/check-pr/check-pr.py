@@ -176,7 +176,7 @@ class Deployer:
         self.region = region
         self.subscription_id = subscription_id
         self.skip_tests = skip_tests
-        self.test_args = test_args
+        self.test_args = test_args or []
         self.repo = repo
 
     def merge(self) -> None:

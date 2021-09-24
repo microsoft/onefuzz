@@ -1,4 +1,4 @@
-msal~=1.12.0
+msal~=1.14.0
 requests~=2.25.1
 jmespath~=0.10.0
 semver~=2.13.0
