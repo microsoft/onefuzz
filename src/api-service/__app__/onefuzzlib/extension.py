@@ -8,7 +8,14 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 
 from onefuzztypes.enums import OS, AgentMode
-from onefuzztypes.models import AgentConfig, Pool, ReproConfig, Scaleset
+from onefuzztypes.models import (
+    AgentConfig,
+    AzureMonitorExtensionConfig,
+    KeyvaultExtensionConfig,
+    Pool,
+    ReproConfig,
+    Scaleset,
+)
 from onefuzztypes.primitives import Container, Extension, Region
 
 from .azure.containers import (
@@ -21,14 +28,38 @@ from .azure.creds import get_instance_id, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .azure.queue import get_queue_sas
 from .azure.storage import StorageType
+from .config import InstanceConfig
 from .reports import get_report
 
 
 def generic_extensions(region: Region, vm_os: OS) -> List[Extension]:
+    instance_config = InstanceConfig.fetch()
+
     extensions = [monitor_extension(region, vm_os)]
-    depedency = dependency_extension(region, vm_os)
-    if depedency:
-        extensions.append(depedency)
+
+    dependency = dependency_extension(region, vm_os)
+    if dependency:
+        extensions.append(dependency)
+
+    if instance_config.extensions:
+
+        if instance_config.extensions.keyvault:
+            keyvault = keyvault_extension(
+                region, instance_config.extensions.keyvault, vm_os
+            )
+            extensions.append(keyvault)
+
+        if instance_config.extensions.geneva and vm_os == OS.windows:
+            geneva = geneva_extension(region)
+            extensions.append(geneva)
+
+        if instance_config.extensions.azure_monitor and vm_os == OS.linux:
+            azmon = azmon_extension(region, instance_config.extensions.azure_monitor)
+            extensions.append(azmon)
+
+        if instance_config.extensions.azure_security and vm_os == OS.linux:
+            azsec = azsec_extension(region)
+            extensions.append(azsec)
 
     return extensions
 
@@ -83,6 +114,116 @@ def dependency_extension(region: Region, vm_os: OS) -> Optional[Extension]:
         #     "autoUpgradeMinorVersion": True,
         # }
         return None
+
+
+def geneva_extension(region: Region) -> Extension:
+
+    return {
+        "name": "Microsoft.Azure.Geneva.GenevaMonitoring",
+        "publisher": "Microsoft.Azure.Geneva",
+        "type": "GenevaMonitoring",
+        "typeHandlerVersion": "2.0",
+        "location": region,
+        "autoUpgradeMinorVersion": True,
+        "enableAutomaticUpgrade": True,
+        "settings": {},
+        "protectedSettings": {},
+    }
+
+
+def azmon_extension(
+    region: Region, azure_monitor: AzureMonitorExtensionConfig
+) -> Extension:
+
+    auth_id = azure_monitor.monitoringGCSAuthId
+    config_version = azure_monitor.config_version
+    moniker = azure_monitor.moniker
+    namespace = azure_monitor.namespace
+    environment = azure_monitor.monitoringGSEnvironment
+    account = azure_monitor.monitoringGCSAccount
+    auth_id_type = azure_monitor.monitoringGCSAuthIdType
+
+    return {
+        "name": "AzureMonitorLinuxAgent",
+        "publisher": "Microsoft.Azure.Monitor",
+        "location": region,
+        "type": "AzureMonitorLinuxAgent",
+        "typeHandlerVersion": "1.9",
+        "autoUpgradeMinorVersion": False,
+        "settings": {},
+        "protectedsettings": {
+            "configVersion": config_version,
+            "moniker": moniker,
+            "namespace": namespace,
+            "monitoringGCSEnvironment": environment,
+            "monitoringGCSAccount": account,
+            "monitoringGCSRegion": region,
+            "monitoringGCSAuthId": auth_id,
+            "monitoringGCSAuthIdType": auth_id_type,
+        },
+    }
+
+
+def azsec_extension(region: Region) -> Extension:
+
+    return {
+        "name": "AzureSecurityLinuxAgent",
+        "publisher": "Microsoft.Azure.Security.Monitoring",
+        "location": region,
+        "type": "AzureSecurityLinuxAgent",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": True,
+        "settings": {"enableGenevaUpload": True},
+    }
+
+
+def keyvault_extension(
+    region: Region, keyvault: KeyvaultExtensionConfig, vm_os: OS
+) -> Extension:
+
+    keyvault_name = keyvault.keyvault_name
+    cert_name = keyvault.cert_name
+    uri = keyvault_name + cert_name
+
+    if vm_os == OS.windows:
+        return {
+            "name": "KVVMExtensionForWindows",
+            "location": region,
+            "publisher": "Microsoft.Azure.KeyVault",
+            "type": "KeyVaultForWindows",
+            "typeHandlerVersion": "1.0",
+            "autoUpgradeMinorVersion": True,
+            "settings": {
+                "secretsManagementSettings": {
+                    "pollingIntervalInS": "3600",
+                    "certificateStoreName": "MY",
+                    "linkOnRenewal": False,
+                    "certificateStoreLocation": "LocalMachine",
+                    "requireInitialSync": True,
+                    "observedCertificates": [uri],
+                }
+            },
+        }
+    elif vm_os == OS.linux:
+        cert_path = keyvault.cert_path
+        extension_store = keyvault.extension_store
+        cert_location = cert_path + extension_store
+        return {
+            "name": "KVVMExtensionForLinux",
+            "location": region,
+            "publisher": "Microsoft.Azure.KeyVault",
+            "type": "KeyVaultForLinux",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": True,
+            "settings": {
+                "secretsManagementSettings": {
+                    "pollingIntervalInS": "3600",
+                    "certificateStoreLocation": cert_location,
+                    "observedCertificates": [uri],
+                },
+            },
+        }
+    raise NotImplementedError("unsupported os: %s" % vm_os)
 
 
 def build_scaleset_script(pool: Pool, scaleset: Scaleset) -> str:
