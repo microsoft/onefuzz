@@ -92,8 +92,8 @@ def not_ok(
         )
 
 
-def redirect(location: str) -> HttpResponse:
-    return HttpResponse(status_code=302, headers={"Location": location})
+def redirect(url: str) -> HttpResponse:
+    return HttpResponse(status_code=302, headers={"Location": url})
 
 
 def convert_error(err: ValidationError) -> Error:

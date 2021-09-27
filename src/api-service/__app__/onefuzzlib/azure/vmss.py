@@ -399,11 +399,11 @@ def create_vmss(
 
 @cached(ttl=60)
 @retry_on_auth_failure()
-def list_available_skus(location: str) -> List[str]:
+def list_available_skus(region: Region) -> List[str]:
     compute_client = get_compute_client()
 
     skus: List[ResourceSku] = list(
-        compute_client.resource_skus.list(filter="location eq '%s'" % location)
+        compute_client.resource_skus.list(filter="location eq '%s'" % region)
     )
     sku_names: List[str] = []
     for sku in skus:
@@ -411,7 +411,7 @@ def list_available_skus(location: str) -> List[str]:
         if sku.restrictions is not None:
             for restriction in sku.restrictions:
                 if restriction.type == ResourceSkuRestrictionsType.location and (
-                    location.upper() in [v.upper() for v in restriction.values]
+                    region.upper() in [v.upper() for v in restriction.values]
                 ):
                     available = False
                     break
