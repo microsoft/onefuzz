@@ -277,7 +277,7 @@ class Client:
         else:
             return "api://%s.azurewebsites.net" % self.application_name
 
-    def setup_rbac(self) -> None:
+    def setup_rbac(self) -> None:  # noqa: C901
         """
         Setup the client application for the OneFuzz instance.
         By default, Service Principals do not have access to create
