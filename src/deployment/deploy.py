@@ -317,7 +317,7 @@ class Client:
             params = {
                 "displayName": self.application_name,
                 "identifierUris": [self.get_identifier_url()],
-                "signInAudience": signInAudience,
+                "signInAudience": self.get_signin_audience(),
                 "appRoles": app_roles,
                 "api": {
                     "oauth2PermissionScopes": [
