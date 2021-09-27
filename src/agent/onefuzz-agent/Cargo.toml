@@ -38,7 +38,7 @@ stacktrace-parser = { path = "../stacktrace-parser" }
 storage-queue = { path = "../storage-queue" }
 tempfile = "3.2"
 thiserror = "1.0"
-tokio = { version = "1.10", features = ["full"] }
+tokio = { version = "1.12", features = ["full"] }
 tokio-util = { version = "0.6", features = ["full"] }
 tokio-stream = "0.1"
 tui = { version = "0.16", default-features = false, features = ['crossterm'] }

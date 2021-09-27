@@ -20,8 +20,8 @@
         "app_func_issuer": {
             "type": "string"
         },
-        "app_func_audience": {
-            "type": "string"
+        "app_func_audiences": {
+            "type": "array"
         },
         "multi_tenant_domain": {
             "type": "string"
@@ -283,9 +283,7 @@
                         "clientSecret": "[parameters('clientSecret')]",
                         "issuer": "[parameters('app_func_issuer')]",
                         "defaultProvider": "AzureActiveDirectory",
-                        "allowedAudiences": [
-                            "[parameters('app_func_audience')]"
-                        ],
+                        "allowedAudiences": "[parameters('app_func_audiences')]",
                         "isAadAutoProvisioned": false
                     }
                 },
