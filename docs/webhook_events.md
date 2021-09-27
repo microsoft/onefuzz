@@ -645,6 +645,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "allowed_aad_tenants": [
             "00000000-0000-0000-0000-000000000000"
         ],
+        "network_config": {
+            "address_space": "10.0.0.0/8",
+            "subnet": "10.0.0.0/16"
+        },
         "proxy_vm_sku": "Standard_B2s"
     }
 }
@@ -752,6 +756,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"
                 },
+                "network_config": {
+                    "$ref": "#/definitions/NetworkConfig"
+                },
                 "proxy_vm_sku": {
                     "default": "Standard_B2s",
                     "title": "Proxy Vm Sku",
@@ -790,6 +797,22 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "extension_store"
             ],
             "title": "KeyvaultExtensionConfig",
+            "type": "object"
+        },
+        "NetworkConfig": {
+            "properties": {
+                "address_space": {
+                    "default": "10.0.0.0/8",
+                    "title": "Address Space",
+                    "type": "string"
+                },
+                "subnet": {
+                    "default": "10.0.0.0/16",
+                    "title": "Subnet",
+                    "type": "string"
+                }
+            },
+            "title": "NetworkConfig",
             "type": "object"
         }
     },
@@ -5804,6 +5827,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"
                 },
+                "network_config": {
+                    "$ref": "#/definitions/NetworkConfig"
+                },
                 "proxy_vm_sku": {
                     "default": "Standard_B2s",
                     "title": "Proxy Vm Sku",
@@ -5893,6 +5919,22 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "extension_store"
             ],
             "title": "KeyvaultExtensionConfig",
+            "type": "object"
+        },
+        "NetworkConfig": {
+            "properties": {
+                "address_space": {
+                    "default": "10.0.0.0/8",
+                    "title": "Address Space",
+                    "type": "string"
+                },
+                "subnet": {
+                    "default": "10.0.0.0/16",
+                    "title": "Subnet",
+                    "type": "string"
+                }
+            },
+            "title": "NetworkConfig",
             "type": "object"
         },
         "NoReproReport": {

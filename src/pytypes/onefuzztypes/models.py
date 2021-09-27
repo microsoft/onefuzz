@@ -794,6 +794,11 @@ class Task(BaseModel):
     user_info: Optional[UserInfo]
 
 
+class NetworkConfig(BaseModel):
+    address_space: str = Field(default="10.0.0.0/8")
+    subnet: str = Field(default="10.0.0.0/16")
+
+
 class KeyvaultExtensionConfig(BaseModel):
     keyvault_name: str
     cert_name: str
@@ -835,9 +840,8 @@ class InstanceConfig(BaseModel):
     allow_pool_management: bool = Field(default=True)
 
     allowed_aad_tenants: List[UUID]
-
+    network_config: NetworkConfig = Field(default_factory=NetworkConfig)
     extensions: Optional[AzureVmExtensionConfig]
-
     proxy_vm_sku: str = Field(default="Standard_B2s")
 
     def update(self, config: "InstanceConfig") -> None:
