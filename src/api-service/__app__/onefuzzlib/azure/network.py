@@ -28,7 +28,7 @@ class Network:
 
         # Network names will be calculated from the address_space/subnet
         # *except* if they are the original values.  This allows backwards
-        # compatability to existing configs if you don't change the network
+        # compatibility to existing configs if you don't change the network
         # configs.
         if (
             self.network_config.address_space
