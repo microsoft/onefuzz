@@ -252,8 +252,9 @@ class Client:
         return add_application_password(object_id, self.get_subscription_id())
 
     def get_instance_url(self) -> str:
-        ## The url to access the instance
-        ## This also represents the legacy identifier_uris of the application registration
+        # The url to access the instance
+        # This also represents the legacy identifier_uris of the application
+        # registration
         if self.multi_tenant_domain:
             return "https://%s/%s" % (
                 self.multi_tenant_domain,
@@ -263,10 +264,11 @@ class Client:
             return "https://%s.azurewebsites.net" % self.application_name
 
     def get_identifier_url(self) -> str:
-        ## The used to identify the application registration via the identifier_uris field
-        ## Depending on the environment this value needs to be from an approved domain
-        ## The format of this value is derived from the default value proposed by azure when creating
-        ## an application registration api://{guid}/...
+        # This is used to identify the application registration via the
+        # identifier_uris field.  Depending on the environment this value needs
+        # to be from an approved domain The format of this value is derived
+        # from the default value proposed by azure when creating an application
+        # registration api://{guid}/...
         if self.multi_tenant_domain:
             return "api://%s/%s" % (
                 self.multi_tenant_domain,

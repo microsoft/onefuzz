@@ -309,10 +309,11 @@ jobs:
         set -ex
         cd src/deployment
         python -m pip install --upgrade pip
-        pip install mypy isort black types-requests
+        pip install mypy isort black types-requests flake8
         mypy .
         isort --profile black . --check
         black . --check
+        flake8 *.py
     - name: Package Onefuzz
       run: |
           set -ex
