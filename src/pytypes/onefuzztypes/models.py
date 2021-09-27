@@ -840,7 +840,7 @@ class InstanceConfig(BaseModel):
     allow_pool_management: bool = Field(default=True)
 
     allowed_aad_tenants: List[UUID]
-    network_config: NetworkConfig = Field(default=NetworkConfig())
+    network_config: NetworkConfig = Field(default_factory=NetworkConfig)
     extensions: Optional[AzureVmExtensionConfig]
     proxy_vm_sku: str = Field(default="Standard_B2s")
 
