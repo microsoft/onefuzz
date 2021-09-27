@@ -45,9 +45,8 @@ from azure.storage.blob import (
     ContainerSasPermissions,
     generate_container_sas,
 )
-from msrest.serialization import TZ_UTC
-
 from data_migration import migrate
+from msrest.serialization import TZ_UTC
 from registration import (
     GraphQueryError,
     OnefuzzAppRole,
@@ -449,7 +448,9 @@ class Client:
             and app["signInAudience"] == "AzureADMultipleOrgs"
         ):
             set_app_audience(
-                app.object_id, "AzureADMyOrg", subscription=self.get_subscription_id()
+                app.object_id,
+                "AzureADMyOrg",
+                subscription_id=self.get_subscription_id(),
             )
         else:
             logger.debug("No change to App Registration signInAudence setting")
