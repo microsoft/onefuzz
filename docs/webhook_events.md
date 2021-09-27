@@ -757,16 +757,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "$ref": "#/definitions/AzureVmExtensionConfig"
                 },
                 "network_config": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/NetworkConfig"
-                        }
-                    ],
-                    "default": {
-                        "address_space": "10.0.0.0/8",
-                        "subnet": "10.0.0.0/16"
-                    },
-                    "title": "Network Config"
+                    "$ref": "#/definitions/NetworkConfig"
                 },
                 "proxy_vm_sku": {
                     "default": "Standard_B2s",
@@ -5837,16 +5828,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "$ref": "#/definitions/AzureVmExtensionConfig"
                 },
                 "network_config": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/NetworkConfig"
-                        }
-                    ],
-                    "default": {
-                        "address_space": "10.0.0.0/8",
-                        "subnet": "10.0.0.0/16"
-                    },
-                    "title": "Network Config"
+                    "$ref": "#/definitions/NetworkConfig"
                 },
                 "proxy_vm_sku": {
                     "default": "Standard_B2s",

@@ -23,9 +23,10 @@ def get_subnet_id(resource_group: str, name: str, subnet_name: str) -> Optional[
         return cast(str, subnet.id)
     except (CloudError, ResourceNotFoundError):
         logging.info(
-            "subnet missing: resource group: %s name: %s",
+            "subnet missing: resource group:%s name:%s subnet_name:%s",
             resource_group,
             name,
+            subnet_name,
         )
     return None
 
