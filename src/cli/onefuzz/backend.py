@@ -29,7 +29,6 @@ from uuid import UUID
 
 import msal
 import requests
-from azure.common.credentials import get_cli_profile
 from azure.storage.blob import ContainerClient
 from pydantic import BaseModel, Field
 from tenacity import RetryCallState, retry
