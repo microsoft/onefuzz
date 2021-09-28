@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 3.1.0
+### Fixed
+* Deployment: Fixed an issue with multitenant deployment caused by a mismatch between the identifier used to configure the app registration and value used to authenticate the CLI client. [#1270](https://github.com/microsoft/onefuzz/pull/1270)
+* Service: Fixed `scaleset proxy reset` to reset all proxies in specified region. [#1275](https://github.com/microsoft/onefuzz/pull/1275)
+* CLI: Temporarily ignoring type errors from `azure-storage-blob` due to invalid python type signatures. [#1258](https://github.com/microsoft/onefuzz/pull/1258)
+
+### Added
+* Service: Added ability to configure virtual network IP ranges. [#1268](https://github.com/microsoft/onefuzz/pull/1268)
+* Deployment: Added `flake8` to the deployment process to align with rest of the python codebase linting process. [#1286](https://github.com/microsoft/onefuzz/pull/1286)
+* Service: Added custom extensions to enable Microsoft Security Monitoring extensions. [#1184](https://github.com/microsoft/onefuzz/pull/1184)
+* CLI: Added `--readonly_inputs` option for `onefuzz templates libfuzzer` command. [#1247](https://github.com/microsoft/onefuzz/pull/1247)
+
+### Changed
+* CLI: Increased the default verbosity of destructive CLI commands. [#1264](https://github.com/microsoft/onefuzz/pull/1264)
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1239](https://github.com/microsoft/onefuzz/pull/1239), [#1240](https://github.com/microsoft/onefuzz/pull/1240), [#1236](https://github.com/microsoft/onefuzz/pull/1236), [#1238](https://github.com/microsoft/onefuzz/pull/1238), [#1245](https://github.com/microsoft/onefuzz/pull/1245), [#1246](https://github.com/microsoft/onefuzz/pull/1246), [#1252](https://github.com/microsoft/onefuzz/pull/1252), [#1253](https://github.com/microsoft/onefuzz/pull/1253), [#1254](https://github.com/microsoft/onefuzz/pull/1254), [#1257](https://github.com/microsoft/onefuzz/pull/1257), [#1261](https://github.com/microsoft/onefuzz/pull/1261), [#1262](https://github.com/microsoft/onefuzz/pull/1262), [#1276](https://github.com/microsoft/onefuzz/pull/1276), [#1278](https://github.com/microsoft/onefuzz/pull/1278)
+
 ## 3.0.0
 ### Changed
 * CLI/Deployment/Service: Move to using `api://` for AAD Application "identifier URIs". [#1243](https://github.com/microsoft/onefuzz/pull/1243)
