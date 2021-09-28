@@ -201,9 +201,11 @@ class Backend:
             result = self.app.acquire_token_for_client(scopes=[scope])
             # AADSTS500011: The resource principal named ... was not found in the tenant named ...
             # This error is caused by a by mismatch between the identifierUr and the scope provided in the request.
-            if "error" in result and "AADSTS500011" in result["error_description"]:
+            if "error" not in result:
+                break
+
+            if "AADSTS500011" in result["error_description"]:
                 LOGGER.warning(f"failed to get access token with scope {scope}")
-                continue
 
         if "error" in result:
             raise Exception(
