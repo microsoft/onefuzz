@@ -1,6 +1,6 @@
 # Getting started using Onefuzz
 
-If you have access to an existing Onefuzz instance, skip ahead to "Starting Jobs"
+If you have access to an existing Onefuzz instance, skip ahead to [Deploying Jobs](#deploying-jobs).
 
 **Microsoft employees:** Please join the [Fuzzing @ Microsoft](https://aka.ms/fuzzingatmicrosoft) team for support.
 
