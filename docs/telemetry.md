@@ -1,13 +1,13 @@
 # Telemetry
 
-Onefuzz reports two types of telemetry, both via
+OneFuzz reports two types of telemetry, both via
 [AppInsights](https://docs.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview).
 
-1. Onefuzz records fully featured attributable data is to a user-owned
+1. OneFuzz records fully featured attributable data is to a user-owned
    [AppInsights](https://docs.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview)
    instance. This goal of this information is to enable users to perform
    detailed analysis of their fuzzing tasks.
-1. Onefuzz reports non-attributable minimal set of runtime statistics to
+1. OneFuzz reports non-attributable minimal set of runtime statistics to
    Microsoft via a Microsoft managed
    [AppInsights](https://docs.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview)
    instance. The goal is to provide insight to the efficacy of OneFuzz and
@@ -22,7 +22,7 @@ install of OneFuzz in that user's
 [Azure Subscription](https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/decision-guides/subscriptions/).
 
 The user owns and manages all resources used for OneFuzz, including the fuzzing
-nodes. Onefuzz supports both "managed" nodes, where OneFuzz orchestrates the
+nodes. OneFuzz supports both "managed" nodes, where OneFuzz orchestrates the
 lifecycle of the fuzzing nodes via
 [Azure VM Scale Sets](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview),
 and "unmanaged" nodes, where users provide compute however they wish (be that
