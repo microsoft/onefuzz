@@ -52,7 +52,6 @@ from registration import (
     GraphQueryError,
     OnefuzzAppRole,
     add_application_password,
-    assign_app_role,
     assign_instance_app_role,
     authorize_application,
     get_application,
