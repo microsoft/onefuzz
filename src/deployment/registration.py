@@ -11,7 +11,7 @@ import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, TypeVar, cast
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import requests
 from azure.cli.core.azclierror import AuthenticationError
