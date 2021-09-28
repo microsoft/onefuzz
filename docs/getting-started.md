@@ -1,6 +1,8 @@
 # Getting started using Onefuzz
 
-If you have access to an existing Onefuzz Instance, skip ahead to "Starting Jobs"
+If you have access to an existing Onefuzz instance, skip ahead to "Starting Jobs"
+
+**Microsoft employees:** Please join the [Fuzzing @ Microsoft](https://aka.ms/fuzzingatmicrosoft) team for support.
 
 ## Choosing a subscription
 
