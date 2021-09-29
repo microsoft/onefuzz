@@ -1,6 +1,8 @@
 # Getting started using Onefuzz
 
-If you have access to an existing Onefuzz Instance, skip ahead to "Starting Jobs"
+If you have access to an existing Onefuzz instance, skip ahead to [Deploying Jobs](#deploying-jobs).
+
+**Microsoft employees:** Please join the [Fuzzing @ Microsoft](https://aka.ms/fuzzingatmicrosoft) team for support.
 
 ## Choosing a subscription
 
@@ -51,24 +53,15 @@ pip install ./onefuzz*.whl
 ### Connecting to your instance
 
 Use the `onefuzz config` command to specify your instance of Onefuzz.
-This example uses the MSR hosted playground instance (only available
-to Microsoft employees).
 
 ```
-$ onefuzz config --endpoint https://onefuzz-playground.azurewebsites.net
+$ onefuzz config --endpoint https://$ONEFUZZ_INSTANCE_NAME.azurewebsites.net
 $ onefuzz versions check --exact
 "compatible"
 $
 ```
 
 From here, you can use Onefuzz.
-
-#### Using Onefuzz Playground
-
-Microsoft employees are welcome to use MSR's Playground instance of OneFuzz for
-experimentation purposes, but we reserve the right to stop or limit fuzzing
-jobs. [Come talk to us](https://aka.ms/fuzzingatmicrosoft) about running OneFuzz
-for your group!
 
 ## Creating Worker Pools
 
