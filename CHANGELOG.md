@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 3.1.0
 ### Fixed
-* Deployment: Fixed an issue with multitenant deployment caused by a mismatch between the identifier used to configure the app registration and value used to authenticate the CLI client. [#1270](https://github.com/microsoft/onefuzz/pull/1270)
+* Deployment: Fixed an issue with multi-tenant deployment caused by a mismatch between the identifier used to configure the app registration and value used to authenticate the CLI client. [#1270](https://github.com/microsoft/onefuzz/pull/1270)
 * Service: Fixed `scaleset proxy reset` to reset all proxies in specified region. [#1275](https://github.com/microsoft/onefuzz/pull/1275)
 * CLI: Temporarily ignore type errors from `azure-storage-blob` due to invalid Python type signatures. [#1258](https://github.com/microsoft/onefuzz/pull/1258)
 
