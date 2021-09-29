@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Service: Added ability to configure virtual network IP ranges. [#1268](https://github.com/microsoft/onefuzz/pull/1268)
-* Deployment: Added `flake8` to the deployment process to align with rest of the python codebase linting process. [#1286](https://github.com/microsoft/onefuzz/pull/1286)
+* Deployment: Added `flake8` to the deployment process to align with rest of the Python codebase linting. [#1286](https://github.com/microsoft/onefuzz/pull/1286)
 * Service: Added custom extensions to enable Microsoft Security Monitoring extensions. [#1184](https://github.com/microsoft/onefuzz/pull/1184)
 * CLI: Added `--readonly_inputs` option to the `libfuzzer basic` template. [#1247](https://github.com/microsoft/onefuzz/pull/1247)
 
