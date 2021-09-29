@@ -178,11 +178,14 @@ class Backend:
             endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
             scopes = [
                 f"api://{self.config.tenant_domain}/{endpoint}/.default",
-                f"https://{self.config.tenant_domain}/{endpoint}/.default",
+                f"https://{self.config.tenant_domain}/{endpoint}/.default", # before 3.0.0 release
             ]
         else:
             netloc = urlparse(self.config.endpoint).netloc
-            scopes = [f"api://{netloc}/.default", f"https://{netloc}/.default"]
+            scopes = [
+                f"api://{netloc}/.default",
+                f"https://{netloc}/.default", # before 3.0.0 release
+            ]
 
         if self.config.client_secret:
             return self.client_secret(scopes)
@@ -197,6 +200,7 @@ class Backend:
                 token_cache=self.token_cache,
             )
 
+        # try each scope until we successfully get an access token
         for scope in scopes:
             result = self.app.acquire_token_for_client(scopes=[scope])
             if "error" not in result:
