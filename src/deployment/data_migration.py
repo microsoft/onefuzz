@@ -16,9 +16,6 @@ from azure.mgmt.storage import StorageManagementClient
 
 def migrate_task_os(table_service: TableService) -> None:
     table_name = "Task"
-    if not table_service.exists(table_name):
-        return None
-
     tasks = table_service.query_entities(
         table_name, select="PartitionKey,RowKey,os,config"
     )
@@ -47,9 +44,6 @@ def migrate_task_os(table_service: TableService) -> None:
 
 def migrate_notification_keys(table_service: TableService) -> None:
     table_name = "Notification"
-    if not table_service.exists(table_name):
-        return None
-
     notifications = table_service.query_entities(
         table_name, select="PartitionKey,RowKey,config"
     )
