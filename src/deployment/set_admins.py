@@ -5,6 +5,7 @@
 
 import argparse
 import json
+import logging
 from time import sleep
 from typing import List, Optional
 from uuid import UUID
@@ -12,7 +13,6 @@ from uuid import UUID
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.cosmosdb.table.tableservice import TableService
 from azure.mgmt.storage import StorageManagementClient
-import logging
 
 ## Disable logging from storageclient. This modules display and error message
 ## when a resource is not found even if the exception is raised and handled internally.
