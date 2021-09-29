@@ -563,7 +563,6 @@ class Client:
 
     def apply_migrations(self) -> None:
         logger.info("applying database migrations")
-        self.results["deploy"]["func-storage"]["value"]
         name = self.results["deploy"]["func-name"]["value"]
         key = self.results["deploy"]["func-key"]["value"]
         table_service = TableService(account_name=name, account_key=key)

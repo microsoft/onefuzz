@@ -17,7 +17,9 @@ from azure.mgmt.storage import StorageManagementClient
 ## when a resource is not found even if the exception is raised and handled internally.
 ## This happen when a table does not exist. An error message is displayed but the exception is
 ## handled by the library.
-logging.getLogger('azure.cosmosdb.table.common.storageclient').disabled = True
+storage_client_logger = logging.getLogger("azure.cosmosdb.table.common.storageclient")
+if storage_client_logger:
+    storage_client_logger.disabled = True
 
 TABLE_NAME = "InstanceConfig"
 
