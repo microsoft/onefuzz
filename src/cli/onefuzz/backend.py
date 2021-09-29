@@ -178,13 +178,13 @@ class Backend:
             endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
             scopes = [
                 f"api://{self.config.tenant_domain}/{endpoint}/.default",
-                f"https://{self.config.tenant_domain}/{endpoint}/.default", # before 3.0.0 release
+                f"https://{self.config.tenant_domain}/{endpoint}/.default",  # before 3.0.0 release
             ]
         else:
             netloc = urlparse(self.config.endpoint).netloc
             scopes = [
                 f"api://{netloc}/.default",
-                f"https://{netloc}/.default", # before 3.0.0 release
+                f"https://{netloc}/.default",  # before 3.0.0 release
             ]
 
         if self.config.client_secret:
