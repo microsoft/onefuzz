@@ -16,6 +16,7 @@ from azure.mgmt.storage import StorageManagementClient
 storage_client_logger = logging.getLogger("azure.cosmosdb.table.common.storageclient")
 TABLE_NAME = "InstanceConfig"
 
+
 ## Disable logging from storageclient. This module displays an error message
 ## when a resource is not found even if the exception is raised and handled internally.
 ## This happen when a table does not exist. An error message is displayed but the exception is
