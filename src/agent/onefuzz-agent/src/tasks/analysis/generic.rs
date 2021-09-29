@@ -49,7 +49,7 @@ pub struct Config {
 pub async fn run(config: Config) -> Result<()> {
     let task_dir = config
         .analysis
-        .path
+        .local_path
         .parent()
         .ok_or_else(|| anyhow!("Invalid input path"))?;
     let temp_path = task_dir.join(".temp");
@@ -94,7 +94,7 @@ pub async fn run(config: Config) -> Result<()> {
             (None, None)
         };
 
-    set_executable(&config.tools.path).await?;
+    set_executable(&config.tools.local_path).await?;
     run_existing(&config, &reports_path).await?;
     let poller = poll_inputs(&config, tmp, &reports_path);
 
@@ -112,13 +112,19 @@ pub async fn run(config: Config) -> Result<()> {
 
 async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<()> {
     if let Some(crashes) = &config.crashes {
+        info!("processing initial inputs");
         crashes.init_pull().await?;
         let mut count: u64 = 0;
-        let mut read_dir = fs::read_dir(&crashes.path).await?;
+        let mut read_dir = fs::read_dir(&crashes.local_path).await?;
         while let Some(file) = read_dir.next_entry().await? {
             debug!("Processing file {:?}", file);
-            run_tool(file.path(), &config, &reports_dir).await?;
+            run_tool(file.path(), config, reports_dir).await?;
             count += 1;
+
+            // sync the analysis container after every 10 inputs
+            if count % 10 == 0 {
+                config.analysis.sync_push().await?;
+            }
         }
         info!("processed {} initial inputs", count);
         config.analysis.sync_push().await?;
@@ -128,9 +134,9 @@ async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<
 
 async fn already_checked(config: &Config, input: &BlobUrl) -> Result<bool> {
     let result = if let Some(crashes) = &config.crashes {
-        crashes.url.clone().and_then(|u| u.account()) == input.account()
-            && crashes.url.clone().and_then(|u| u.container()) == input.container()
-            && crashes.path.join(input.name()).exists()
+        crashes.remote_path.clone().and_then(|u| u.account()) == input.account()
+            && crashes.remote_path.clone().and_then(|u| u.container()) == input.container()
+            && crashes.local_path.join(input.name()).exists()
     } else {
         false
     };
@@ -143,7 +149,8 @@ async fn poll_inputs(
     tmp_dir: OwnedDir,
     reports_dir: &Option<PathBuf>,
 ) -> Result<()> {
-    let heartbeat = config.common.init_heartbeat().await?;
+    info!("polling for new inputs");
+    let heartbeat = config.common.init_heartbeat(None).await?;
     if let Some(input_queue) = &config.input_queue {
         loop {
             heartbeat.alive();
@@ -151,10 +158,10 @@ async fn poll_inputs(
                 let input_url = message
                     .parse(|data| BlobUrl::parse(str::from_utf8(data)?))
                     .with_context(|| format!("unable to parse URL from queue: {:?}", message))?;
-                if !already_checked(&config, &input_url).await? {
+                if !already_checked(config, &input_url).await? {
                     let destination_path = _copy(input_url, &tmp_dir).await?;
 
-                    run_tool(destination_path, &config, &reports_dir).await?;
+                    run_tool(destination_path, config, reports_dir).await?;
                     config.analysis.sync_push().await?
                 }
                 message.delete().await?;
@@ -193,28 +200,28 @@ pub async fn run_tool(
         .target_options(&config.target_options)
         .analyzer_exe(&config.analyzer_exe)
         .analyzer_options(&config.analyzer_options)
-        .output_dir(&config.analysis.path)
-        .tools_dir(&config.tools.path)
+        .output_dir(&config.analysis.local_path)
+        .tools_dir(&config.tools.local_path)
         .setup_dir(&config.common.setup_dir)
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
         .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
-            tester.microsoft_telemetry_key(&key)
+            tester.microsoft_telemetry_key(key)
         })
         .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
-            tester.instance_telemetry_key(&key)
+            tester.instance_telemetry_key(key)
         })
-        .set_optional_ref(&reports_dir, |tester, reports_dir| {
-            tester.reports_dir(&reports_dir)
+        .set_optional_ref(reports_dir, |tester, reports_dir| {
+            tester.reports_dir(reports_dir)
         })
         .set_optional_ref(&config.crashes, |tester, crashes| {
             tester
                 .set_optional_ref(
-                    &crashes.url.clone().and_then(|u| u.account()),
+                    &crashes.remote_path.clone().and_then(|u| u.account()),
                     |tester, account| tester.crashes_account(account),
                 )
                 .set_optional_ref(
-                    &crashes.url.clone().and_then(|u| u.container()),
+                    &crashes.remote_path.clone().and_then(|u| u.container()),
                     |tester, container| tester.crashes_container(container),
                 )
         });

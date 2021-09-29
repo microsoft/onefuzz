@@ -5,19 +5,25 @@
 pub mod linux;
 
 #[cfg(target_os = "windows")]
+pub mod pe_provider;
+
+#[cfg(target_os = "windows")]
 pub mod windows;
 
 use std::collections::{btree_map, BTreeMap};
+use std::convert::TryFrom;
 
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::code::ModulePath;
+use crate::report::{CoverageReport, CoverageReportEntry};
 
 /// Block coverage for a command invocation.
 ///
 /// Organized by module.
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
-#[serde(transparent)]
+#[serde(into = "BlockCoverageReport", try_from = "BlockCoverageReport")]
 pub struct CommandBlockCov {
     modules: BTreeMap<ModulePath, ModuleCov>,
 }
@@ -26,7 +32,7 @@ impl CommandBlockCov {
     /// Returns `true` if the module was newly-inserted (which initializes its
     /// block coverage map). Otherwise, returns `false`, and no re-computation
     /// is performed.
-    pub fn insert(&mut self, path: &ModulePath, offsets: impl Iterator<Item = u64>) -> bool {
+    pub fn insert(&mut self, path: &ModulePath, offsets: impl IntoIterator<Item = u32>) -> bool {
         use std::collections::btree_map::Entry;
 
         match self.modules.entry(path.clone()) {
@@ -38,11 +44,11 @@ impl CommandBlockCov {
         }
     }
 
-    pub fn increment(&mut self, path: &ModulePath, offset: u64) {
+    pub fn increment(&mut self, path: &ModulePath, offset: u32) {
         let entry = self.modules.entry(path.clone());
 
         if let btree_map::Entry::Vacant(_) = entry {
-            log::warn!(
+            log::debug!(
                 "initializing missing module when incrementing coverage at {}+{:x}",
                 path,
                 offset
@@ -57,28 +63,135 @@ impl CommandBlockCov {
         self.modules.iter()
     }
 
+    /// Total count of covered blocks across all modules.
+    pub fn covered_blocks(&self) -> u64 {
+        self.modules.values().map(|m| m.covered_blocks()).sum()
+    }
+
+    /// Total count of known blocks across all modules.
+    pub fn known_blocks(&self) -> u64 {
+        self.modules.values().map(|m| m.known_blocks()).sum()
+    }
+
     pub fn merge_max(&mut self, other: &Self) {
         for (module, cov) in other.iter() {
             let entry = self.modules.entry(module.clone()).or_default();
             entry.merge_max(cov);
         }
     }
+
+    /// Total count of blocks covered by modules in `self` but not `other`.
+    ///
+    /// Counts modules absent in `self`.
+    pub fn difference(&self, other: &Self) -> u64 {
+        let mut total = 0;
+
+        for (module, cov) in &self.modules {
+            if let Some(other_cov) = other.modules.get(module) {
+                total += cov.difference(other_cov);
+            } else {
+                total += cov.covered_blocks();
+            }
+        }
+
+        total
+    }
+
+    pub fn into_report(self) -> BlockCoverageReport {
+        self.into()
+    }
+
+    pub fn try_from_report(report: BlockCoverageReport) -> Result<Self> {
+        Self::try_from(report)
+    }
+}
+
+impl From<CommandBlockCov> for BlockCoverageReport {
+    fn from(cmd: CommandBlockCov) -> Self {
+        let mut report = CoverageReport::default();
+
+        for (module, blocks) in cmd.modules {
+            let entry = CoverageReportEntry {
+                module: module.path_lossy(),
+                metadata: (),
+                coverage: Block { blocks },
+            };
+            report.entries.push(entry);
+        }
+
+        report
+    }
+}
+
+impl TryFrom<CoverageReport<Block, ()>> for CommandBlockCov {
+    type Error = anyhow::Error;
+
+    fn try_from(report: BlockCoverageReport) -> Result<Self> {
+        let mut coverage = Self::default();
+
+        for entry in report.entries {
+            let path = ModulePath::new(entry.module.into())?;
+            let blocks = entry.coverage.blocks.blocks;
+            let cov = ModuleCov { blocks };
+
+            coverage.modules.insert(path, cov);
+        }
+
+        Ok(coverage)
+    }
+}
+
+pub type BlockCoverageReport = CoverageReport<Block, ()>;
+
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub struct Block {
+    pub blocks: ModuleCov,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(transparent)]
 pub struct ModuleCov {
     #[serde(with = "array")]
-    pub blocks: BTreeMap<u64, BlockCov>,
+    pub blocks: BTreeMap<u32, BlockCov>,
 }
 
 impl ModuleCov {
-    pub fn new(offsets: impl Iterator<Item = u64>) -> Self {
-        let blocks = offsets.map(|o| (o, BlockCov::new(o))).collect();
+    pub fn new(offsets: impl IntoIterator<Item = u32>) -> Self {
+        let blocks = offsets.into_iter().map(|o| (o, BlockCov::new(o))).collect();
         Self { blocks }
     }
 
-    pub fn increment(&mut self, offset: u64) {
+    /// Total count of blocks that have been reached (have a positive count).
+    pub fn covered_blocks(&self) -> u64 {
+        self.blocks.values().filter(|b| b.count > 0).count() as u64
+    }
+
+    /// Total count of known blocks.
+    pub fn known_blocks(&self) -> u64 {
+        self.blocks.len() as u64
+    }
+
+    /// Total count of blocks covered by `self` but not `other`.
+    ///
+    /// A difference of 0 does not imply identical coverage, and a positive
+    /// difference does not imply that `self` covers every block in `other`.
+    pub fn difference(&self, other: &Self) -> u64 {
+        let mut total = 0;
+
+        for (offset, block) in &self.blocks {
+            if let Some(other_block) = other.blocks.get(offset) {
+                if other_block.count == 0 {
+                    total += u64::min(1, block.count as u64);
+                }
+            } else {
+                total += u64::min(1, block.count as u64);
+            }
+        }
+
+        total
+    }
+
+    pub fn increment(&mut self, offset: u32) {
         let block = self
             .blocks
             .entry(offset)
@@ -102,13 +215,12 @@ impl ModuleCov {
 pub struct BlockCov {
     /// Offset of the block, relative to the module base load address.
     //
-    // These offsets are represented as `u64` values, but since they are offsets
-    // within an assumed well-formed module, they should never exceed a `u32`.
-    // We thus assume that they can be losslessly serialized to an `f64`.
+    // These offsets come from well-formed executable modules, so we assume they
+    // can be represented as `u32` values and losslessly serialized to an `f64`.
     //
     // If we need to handle malformed binaries or arbitrary addresses, then this
     // will need revision.
-    pub offset: u64,
+    pub offset: u32,
 
     /// Number of times a block was seen to be executed, relative to some input
     /// or corpus.
@@ -124,7 +236,7 @@ pub struct BlockCov {
 }
 
 impl BlockCov {
-    pub fn new(offset: u64) -> Self {
+    pub fn new(offset: u32) -> Self {
         Self { offset, count: 0 }
     }
 }
@@ -138,7 +250,7 @@ mod array {
 
     use super::BlockCov;
 
-    type BlockCovMap = BTreeMap<u64, BlockCov>;
+    type BlockCovMap = BTreeMap<u32, BlockCov>;
 
     pub fn serialize<S>(data: &BlockCovMap, ser: S) -> Result<S::Ok, S::Error>
     where
@@ -184,10 +296,15 @@ mod array {
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
+    use serde_json::json;
+
+    use crate::test::module_path;
+
     use super::*;
 
-    // Builds a `ModuleCov` from a vec of `(offset, counts)` tuples.
-    fn from_vec(data: Vec<(u64, u32)>) -> ModuleCov {
+    // Builds a `ModuleCov` from a vec of `(offset, count)` tuples.
+    fn from_vec(data: Vec<(u32, u32)>) -> ModuleCov {
         let offsets = data.iter().map(|(o, _)| *o);
         let mut cov = ModuleCov::new(offsets);
         for (offset, count) in data {
@@ -198,8 +315,8 @@ mod tests {
         cov
     }
 
-    // Builds a vec of `(count, offset)` tuples from a `ModuleCov`.
-    fn to_vec(cov: &ModuleCov) -> Vec<(u64, u32)> {
+    // Builds a vec of `(offset, count)` tuples from a `ModuleCov`.
+    fn to_vec(cov: &ModuleCov) -> Vec<(u32, u32)> {
         cov.blocks.iter().map(|(o, b)| (*o, b.count)).collect()
     }
 
@@ -251,37 +368,21 @@ mod tests {
         );
     }
 
-    fn module_path(path: &str) -> ModulePath {
-        ModulePath::new(std::path::PathBuf::from(path)).unwrap()
-    }
-
-    fn cmd_cov_from_vec(data: Vec<(&'static str, Vec<(u64, u32)>)>) -> CommandBlockCov {
+    fn cmd_cov_from_vec(data: Vec<(&ModulePath, Vec<(u32, u32)>)>) -> CommandBlockCov {
         let mut cov = CommandBlockCov::default();
 
         for (path, module_data) in data {
             let module_cov = from_vec(module_data);
-            cov.modules.insert(module_path(path), module_cov);
+            cov.modules.insert(path.clone(), module_cov);
         }
 
         cov
     }
 
     #[test]
-    fn test_cmd_cov_increment() {
-        #[cfg(target_os = "linux")]
-        const MAIN_EXE: &str = "/main.exe";
-
-        #[cfg(target_os = "linux")]
-        const SOME_DLL: &str = "/lib/some.dll";
-
-        #[cfg(target_os = "windows")]
-        const MAIN_EXE: &str = r"c:\main.exe";
-
-        #[cfg(target_os = "windows")]
-        const SOME_DLL: &str = r"c:\lib\some.dll";
-
-        let main_exe = module_path(MAIN_EXE);
-        let some_dll = module_path(SOME_DLL);
+    fn test_cmd_cov_increment() -> Result<()> {
+        let main_exe = module_path("/onefuzz/main.exe")?;
+        let some_dll = module_path("/common/some.dll")?;
 
         let mut coverage = CommandBlockCov::default();
 
@@ -295,87 +396,69 @@ mod tests {
         coverage.increment(&some_dll, 789);
 
         let expected = cmd_cov_from_vec(vec![
-            (MAIN_EXE, vec![(1, 0), (20, 1), (300, 0)]),
-            (SOME_DLL, vec![(123, 1), (456, 1), (789, 1)]),
+            (&main_exe, vec![(1, 0), (20, 1), (300, 0)]),
+            (&some_dll, vec![(123, 1), (456, 1), (789, 1)]),
         ]);
 
         assert_eq!(coverage, expected);
+
+        Ok(())
     }
 
     #[test]
-    fn test_cmd_cov_merge_max() {
-        #[cfg(target_os = "linux")]
-        const MAIN_EXE: &str = "/main.exe";
-
-        #[cfg(target_os = "linux")]
-        const KNOWN_DLL: &str = "/lib/known.dll";
-
-        #[cfg(target_os = "linux")]
-        const UNKNOWN_DLL: &str = "/usr/lib/unknown.dll";
-
-        #[cfg(target_os = "windows")]
-        const MAIN_EXE: &str = r"c:\main.exe";
-
-        #[cfg(target_os = "windows")]
-        const KNOWN_DLL: &str = r"c:\lib\known.dll";
-
-        #[cfg(target_os = "windows")]
-        const UNKNOWN_DLL: &str = r"c:\usr\lib\unknown.dll";
+    fn test_cmd_cov_merge_max() -> Result<()> {
+        let main_exe = module_path("/onefuzz/main.exe")?;
+        let known_dll = module_path("/common/known.dll")?;
+        let unknown_dll = module_path("/other/unknown.dll")?;
 
         let mut total = cmd_cov_from_vec(vec![
-            (MAIN_EXE, vec![(2, 0), (40, 1), (600, 0), (8000, 1)]),
-            (KNOWN_DLL, vec![(1, 1), (30, 1), (500, 0), (7000, 0)]),
+            (&main_exe, vec![(2, 0), (40, 1), (600, 0), (8000, 1)]),
+            (&known_dll, vec![(1, 1), (30, 1), (500, 0), (7000, 0)]),
         ]);
 
         let new = cmd_cov_from_vec(vec![
-            (MAIN_EXE, vec![(2, 1), (40, 0), (600, 0), (8000, 0)]),
-            (KNOWN_DLL, vec![(1, 0), (30, 0), (500, 1), (7000, 1)]),
-            (UNKNOWN_DLL, vec![(123, 0), (456, 1)]),
+            (&main_exe, vec![(2, 1), (40, 0), (600, 0), (8000, 0)]),
+            (&known_dll, vec![(1, 0), (30, 0), (500, 1), (7000, 1)]),
+            (&unknown_dll, vec![(123, 0), (456, 1)]),
         ]);
 
         total.merge_max(&new);
 
         let expected = cmd_cov_from_vec(vec![
-            (MAIN_EXE, vec![(2, 1), (40, 1), (600, 0), (8000, 1)]),
-            (KNOWN_DLL, vec![(1, 1), (30, 1), (500, 1), (7000, 1)]),
-            (UNKNOWN_DLL, vec![(123, 0), (456, 1)]),
+            (&main_exe, vec![(2, 1), (40, 1), (600, 0), (8000, 1)]),
+            (&known_dll, vec![(1, 1), (30, 1), (500, 1), (7000, 1)]),
+            (&unknown_dll, vec![(123, 0), (456, 1)]),
         ]);
 
         assert_eq!(total, expected);
+
+        Ok(())
     }
 
     #[test]
-    fn test_block_cov_serde() {
+    fn test_block_cov_serde() -> Result<()> {
         let block = BlockCov {
             offset: 123,
             count: 456,
         };
 
-        let ser = serde_json::to_string(&block).unwrap();
+        let ser = serde_json::to_string(&block)?;
 
         let text = r#"{"offset":123,"count":456}"#;
+
         assert_eq!(ser, text);
 
-        let de: BlockCov = serde_json::from_str(&ser).unwrap();
+        let de: BlockCov = serde_json::from_str(&ser)?;
+
         assert_eq!(de, block);
+
+        Ok(())
     }
 
     #[test]
-    fn test_cmd_cov_serde() {
-        #[cfg(target_os = "linux")]
-        const MAIN_EXE: &str = "/main.exe";
-
-        #[cfg(target_os = "linux")]
-        const SOME_DLL: &str = "/lib/some.dll";
-
-        #[cfg(target_os = "windows")]
-        const MAIN_EXE: &str = r"c:\main.exe";
-
-        #[cfg(target_os = "windows")]
-        const SOME_DLL: &str = r"c:\lib\some.dll";
-
-        let main_exe = module_path(MAIN_EXE);
-        let some_dll = module_path(SOME_DLL);
+    fn test_cmd_cov_serde() -> Result<()> {
+        let main_exe = module_path("/onefuzz/main.exe")?;
+        let some_dll = module_path("/common/some.dll")?;
 
         let cov = {
             let mut cov = CommandBlockCov::default();
@@ -387,17 +470,107 @@ mod tests {
             cov
         };
 
-        let ser = serde_json::to_string(&cov).unwrap();
+        let ser = serde_json::to_string(&cov)?;
 
-        #[cfg(target_os = "linux")]
-        let text = r#"{"/lib/some.dll":[{"offset":2,"count":0},{"offset":30,"count":1},{"offset":400,"count":0}],"/main.exe":[{"offset":1,"count":1},{"offset":20,"count":0},{"offset":300,"count":1}]}"#;
-
-        #[cfg(target_os = "windows")]
-        let text = r#"{"c:\\lib\\some.dll":[{"offset":2,"count":0},{"offset":30,"count":1},{"offset":400,"count":0}],"c:\\main.exe":[{"offset":1,"count":1},{"offset":20,"count":0},{"offset":300,"count":1}]}"#;
+        let text = serde_json::to_string(&json!([
+            {
+                "module": some_dll,
+                "blocks": [
+                    { "offset": 2, "count": 0 },
+                    { "offset": 30, "count": 1 },
+                    { "offset": 400, "count": 0 },
+                ],
+            },
+            {
+                "module": main_exe,
+                "blocks": [
+                    { "offset": 1, "count": 1 },
+                    { "offset": 20, "count": 0 },
+                    { "offset": 300, "count": 1 },
+                ],
+            },
+        ]))?;
 
         assert_eq!(ser, text);
 
-        let de: CommandBlockCov = serde_json::from_str(&ser).unwrap();
+        let de: CommandBlockCov = serde_json::from_str(&ser)?;
         assert_eq!(de, cov);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_cmd_cov_stats() -> Result<()> {
+        let main_exe = module_path("/onefuzz/main.exe")?;
+        let some_dll = module_path("/common/some.dll")?;
+        let other_dll = module_path("/common/other.dll")?;
+
+        let empty = CommandBlockCov::default();
+
+        let mut total: CommandBlockCov = serde_json::from_value(json!([
+            {
+                "module": some_dll,
+                "blocks": [
+                    { "offset": 2, "count": 0 },
+                    { "offset": 30, "count": 1 },
+                    { "offset": 400, "count": 0 },
+                ],
+            },
+            {
+                "module": main_exe,
+                "blocks": [
+                    { "offset": 1, "count": 2 },
+                    { "offset": 20, "count": 0 },
+                    { "offset": 300, "count": 3 },
+                ],
+            },
+        ]))?;
+
+        assert_eq!(total.known_blocks(), 6);
+        assert_eq!(total.covered_blocks(), 3);
+        assert_eq!(total.covered_blocks(), total.difference(&empty));
+        assert_eq!(total.difference(&total), 0);
+
+        let new: CommandBlockCov = serde_json::from_value(json!([
+            {
+                "module": some_dll,
+                "blocks": [
+                    { "offset": 2, "count": 0 },
+                    { "offset": 22, "count": 4 },
+                    { "offset": 30, "count": 5 },
+                    { "offset": 400, "count": 6 },
+                ],
+            },
+            {
+                "module": main_exe,
+                "blocks": [
+                    { "offset": 1, "count": 0 },
+                    { "offset": 300, "count": 1 },
+                    { "offset": 5000, "count": 0 },
+                ],
+            },
+            {
+                "module": other_dll,
+                "blocks": [
+                    { "offset": 123, "count": 0 },
+                    { "offset": 456, "count": 10 },
+                ],
+            },
+        ]))?;
+
+        assert_eq!(new.known_blocks(), 9);
+        assert_eq!(new.covered_blocks(), 5);
+        assert_eq!(new.covered_blocks(), new.difference(&empty));
+        assert_eq!(new.difference(&new), 0);
+
+        assert_eq!(new.difference(&total), 3);
+        assert_eq!(total.difference(&new), 1);
+
+        total.merge_max(&new);
+
+        assert_eq!(total.known_blocks(), 10);
+        assert_eq!(total.covered_blocks(), 6);
+
+        Ok(())
     }
 }

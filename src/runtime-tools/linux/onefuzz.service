@@ -5,8 +5,8 @@ Description=onefuzz
 [Service]
 Type=simple
 ExecStart=/bin/bash /onefuzz/tools/linux/run.sh
-StartLimitInterval=0
 Restart=always
+RestartSec=30
 
 [Install]
 WantedBy=default.target

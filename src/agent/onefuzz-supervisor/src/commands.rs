@@ -6,22 +6,32 @@ use onefuzz::{auth::Secret, machine_id::get_scaleset_name};
 use std::process::Stdio;
 use tokio::{fs, io::AsyncWriteExt, process::Command};
 
-#[cfg(target_os = "windows")]
+#[cfg(target_family = "windows")]
 use std::{env, path::PathBuf};
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "windows")]
+use tokio::sync::{OnceCell, SetError};
+
+#[cfg(target_family = "unix")]
 use users::{get_user_by_name, os::unix::UserExt};
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 const ONEFUZZ_SERVICE_USER: &str = "onefuzz";
+
+// On Windows, removing permissions that have already been removed fails.  As
+// such, this needs to happen once and only once.  NOTE: SSH keys are added as
+// node commands, which are processed serially.  As such, this should never get
+// called concurrently.
+#[cfg(target_family = "windows")]
+static SET_PERMISSION_ONCE: OnceCell<()> = OnceCell::const_new();
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SshKeyInfo {
     pub public_key: Secret<String>,
 }
 
-#[cfg(target_os = "windows")]
-pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
+#[cfg(target_family = "windows")]
+pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
     if get_scaleset_name().await?.is_none() {
         warn!("adding ssh keys only supported on managed nodes");
         return Ok(());
@@ -43,69 +53,104 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
             .await?;
     }
 
-    debug!("removing Authenticated Users permissions from administrators_authorized_keys");
-    let result = Command::new("icacls.exe")
-        .arg(&admin_auth_keys_path)
-        .arg("/remove")
-        .arg("NT AUTHORITY/Authenticated Users")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .context("icacls failed to start")?
-        .wait_with_output()
-        .await
-        .context("icalcs failed to run")?;
-    if !result.status.success() {
-        bail!(
-            "set authorized_keys ({}) permissions failed: {:?}",
-            admin_auth_keys_path.display(),
-            result
-        );
-    }
+    match SET_PERMISSION_ONCE.set(()) {
+        Ok(_) => {
+            debug!("removing Authenticated Users permissions from administrators_authorized_keys");
 
-    debug!("removing inheritance");
-    let result = Command::new("icacls.exe")
-        .arg(&admin_auth_keys_path)
-        .arg("/inheritance:r")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .context("icacls failed to start")?
-        .wait_with_output()
-        .await
-        .context("icacls failed to run")?;
-    if !result.status.success() {
-        bail!(
-            "set authorized_keys ({}) permissions failed: {:?}",
-            admin_auth_keys_path.display(),
-            result
-        );
-    }
+            let admins = "NT AUTHORITY\\Authenticated Users";
+            let result = Command::new("icacls.exe")
+                .arg(&admin_auth_keys_path)
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .context("icacls failed to start")?
+                .wait_with_output()
+                .await
+                .context("icalcs failed to run")?;
+            if !result.status.success() {
+                bail!(
+                    "checking permissions failed: '{}' failed: {:?}",
+                    admin_auth_keys_path.display(),
+                    result
+                );
+            }
 
-    debug!("copying ACL from ssh_host_dsa_key");
-    let result = Command::new("powershell.exe")
-        .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
-        .arg(format!(
-            "Get-Acl \"{}\" | Set-Acl \"{}\"",
-            admin_auth_keys_path.display(),
-            host_key_path.display()
-        ))
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .context("Powershell Get-ACL | Set-ACL failed to start")?
-        .wait_with_output()
-        .await
-        .context("Powershell Get-ACL | Set-ACL failed to run")?;
-    if !result.status.success() {
-        bail!(
-            "set authorized_keys ({}) permissions failed: {:?}",
-            admin_auth_keys_path.display(),
-            result
-        );
+            let stdout = String::from_utf8_lossy(&result.stdout).to_string();
+
+            if stdout.contains(&admins) {
+                let result = Command::new("icacls.exe")
+                    .arg(&admin_auth_keys_path)
+                    .arg("/remove")
+                    .arg(&admins)
+                    .stdin(Stdio::null())
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn()
+                    .context("icacls remove failed to start")?
+                    .wait_with_output()
+                    .await
+                    .context("icalcs remove failed to run")?;
+                if !result.status.success() {
+                    warn!(
+                        "removing {:?} permissions to '{}' failed: {:?}",
+                        admins,
+                        admin_auth_keys_path.display(),
+                        result
+                    );
+                }
+            }
+
+            debug!("removing inheritance");
+            let result = Command::new("icacls.exe")
+                .arg(&admin_auth_keys_path)
+                .arg("/inheritance:r")
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .context("icacls failed to start")?
+                .wait_with_output()
+                .await
+                .context("icacls failed to run")?;
+            if !result.status.success() {
+                bail!(
+                    "removing permission inheretence to '{}' failed: {:?}",
+                    admin_auth_keys_path.display(),
+                    result
+                );
+            }
+
+            debug!("copying ACL from ssh_host_dsa_key");
+            let result = Command::new("powershell.exe")
+                .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
+                .arg(format!(
+                    "Get-Acl \"{}\" | Set-Acl \"{}\"",
+                    host_key_path.display(),
+                    admin_auth_keys_path.display(),
+                ))
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .context("Powershell Get-ACL | Set-ACL failed to start")?
+                .wait_with_output()
+                .await
+                .context("Powershell Get-ACL | Set-ACL failed to run")?;
+            if !result.status.success() {
+                bail!(
+                    "copying ACL from '{}' to '{}' permissions failed: {:?}",
+                    host_key_path.display(),
+                    admin_auth_keys_path.display(),
+                    result
+                );
+            }
+        }
+        Err(SetError::InitializingError(())) => {
+            bail!("add_ssh_key must not be called concurrently");
+        }
+        // do nothing if already initialized
+        Err(SetError::AlreadyInitializedError(())) => {}
     }
 
     info!("ssh key written: {}", admin_auth_keys_path.display());
@@ -113,8 +158,8 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
     Ok(())
 }
 
-#[cfg(target_os = "linux")]
-pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
+#[cfg(target_family = "unix")]
+pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
     if get_scaleset_name().await?.is_none() {
         warn!("adding ssh keys only supported on managed nodes");
         return Ok(());
@@ -122,7 +167,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
 
     let user =
         get_user_by_name(ONEFUZZ_SERVICE_USER).ok_or_else(|| format_err!("unable to find user"))?;
-    info!("adding sshkey:{:?} to user:{:?}", key_info, user);
+    info!("adding ssh key:{:?} to user:{:?}", key_info, user);
 
     let home_path = user.home_dir().to_owned();
     if !home_path.exists() {

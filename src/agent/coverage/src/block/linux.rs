@@ -2,10 +2,14 @@
 // Licensed under the MIT License.
 
 use std::collections::BTreeMap;
+use std::convert::TryInto;
 use std::ffi::OsStr;
 use std::process::Command;
+use std::sync::mpsc;
+use std::thread;
+use std::time::{Duration, Instant};
 
-use anyhow::{format_err, Result};
+use anyhow::{format_err, Context, Result};
 use pete::{Ptracer, Restart, Signal, Stop, Tracee};
 use procfs::process::{MMapPath, MemoryMap, Process};
 
@@ -15,14 +19,6 @@ use crate::code::{CmdFilter, ModulePath};
 use crate::demangle::Demangler;
 use crate::region::Region;
 
-pub fn record(cmd: Command) -> Result<CommandBlockCov> {
-    let mut cache = ModuleCache::default();
-    let filter = CmdFilter::default();
-    let mut recorder = Recorder::new(&mut cache, filter);
-    recorder.record(cmd)?;
-    Ok(recorder.into_coverage())
-}
-
 #[derive(Debug)]
 pub struct Recorder<'c> {
     breakpoints: Breakpoints,
@@ -31,40 +27,41 @@ pub struct Recorder<'c> {
     demangler: Demangler,
     filter: CmdFilter,
     images: Option<Images>,
+    tracer: Ptracer,
 }
 
 impl<'c> Recorder<'c> {
-    pub fn new(cache: &'c mut ModuleCache, filter: CmdFilter) -> Self {
-        Self {
+    pub fn record(
+        cmd: Command,
+        timeout: Duration,
+        cache: &'c mut ModuleCache,
+        filter: CmdFilter,
+    ) -> Result<CommandBlockCov> {
+        let mut tracer = Ptracer::new();
+        let mut child = tracer.spawn(cmd)?;
+
+        let _timer = Timer::new(timeout, move || child.kill());
+
+        let recorder = Recorder {
             breakpoints: Breakpoints::default(),
             cache,
             coverage: CommandBlockCov::default(),
             demangler: Demangler::default(),
             filter,
             images: None,
-        }
+            tracer,
+        };
+
+        let coverage = recorder.wait()?;
+
+        Ok(coverage)
     }
 
-    pub fn coverage(&self) -> &CommandBlockCov {
-        &self.coverage
-    }
-
-    pub fn into_coverage(self) -> CommandBlockCov {
-        self.coverage
-    }
-
-    pub fn module_cache(&self) -> &ModuleCache {
-        self.cache
-    }
-
-    pub fn record(&mut self, cmd: Command) -> Result<()> {
+    fn wait(mut self) -> Result<CommandBlockCov> {
         use pete::ptracer::Options;
 
-        let mut tracer = Ptracer::new();
-        let _child = tracer.spawn(cmd)?;
-
         // Continue the tracee process until the return from its initial `execve()`.
-        let mut tracee = continue_to_init_execve(&mut tracer)?;
+        let mut tracee = continue_to_init_execve(&mut self.tracer)?;
 
         // Do not follow forks.
         //
@@ -74,37 +71,46 @@ impl<'c> Recorder<'c> {
         options.remove(Options::PTRACE_O_TRACEFORK);
         options.remove(Options::PTRACE_O_TRACEVFORK);
         options.remove(Options::PTRACE_O_TRACEEXEC);
-        tracee.set_options(options)?;
+        tracee
+            .set_options(options)
+            .context("setting tracee options")?;
 
         self.images = Some(Images::new(tracee.pid.as_raw()));
-        self.update_images(&mut tracee)?;
+        self.update_images(&mut tracee)
+            .context("initial update of module images")?;
 
-        tracer.restart(tracee, Restart::Syscall)?;
+        self.tracer
+            .restart(tracee, Restart::Syscall)
+            .context("initial tracer restart")?;
 
-        while let Some(mut tracee) = tracer.wait()? {
+        while let Some(mut tracee) = self.tracer.wait().context("main tracing loop")? {
             match tracee.stop {
-                Stop::SyscallEnterStop(..) => log::trace!("syscall-enter: {:?}", tracee.stop),
-                Stop::SyscallExitStop(..) => {
-                    self.update_images(&mut tracee)?;
+                Stop::SyscallEnter => log::trace!("syscall-enter: {:?}", tracee.stop),
+                Stop::SyscallExit => {
+                    self.update_images(&mut tracee)
+                        .context("updating module images after syscall-stop")?;
                 }
-                Stop::SignalDeliveryStop(_pid, Signal::SIGTRAP) => {
-                    self.on_breakpoint(&mut tracee)?;
+                Stop::SignalDelivery {
+                    signal: Signal::SIGTRAP,
+                } => {
+                    self.on_breakpoint(&mut tracee)
+                        .context("calling breakpoint handler")?;
                 }
-                Stop::Clone(pid, tid) => {
+                Stop::Clone { new: pid } => {
                     // Only seen when the `VM_CLONE` flag is set, as of Linux 4.15.
-                    log::info!("new thread: {} -> {}", pid, tid);
+                    log::info!("new thread: {}", pid);
                 }
                 _ => {
                     log::debug!("stop: {:?}", tracee.stop);
                 }
             }
 
-            if let Err(err) = tracer.restart(tracee, Restart::Syscall) {
+            if let Err(err) = self.tracer.restart(tracee, Restart::Syscall) {
                 log::error!("unable to restart tracee: {}", err);
             }
         }
 
-        Ok(())
+        Ok(self.coverage)
     }
 
     fn update_images(&mut self, tracee: &mut Tracee) -> Result<()> {
@@ -116,7 +122,8 @@ impl<'c> Recorder<'c> {
 
         for (_base, image) in &events.loaded {
             if self.filter.includes_module(image.path()) {
-                self.on_module_load(tracee, image)?;
+                self.on_module_load(tracee, image)
+                    .context("module load callback")?;
             }
         }
 
@@ -140,12 +147,16 @@ impl<'c> Recorder<'c> {
                 .find_va_image(pc)
                 .ok_or_else(|| format_err!("unable to find image for va = {:x}", pc))?;
 
-            let offset = image.va_to_offset(pc);
+            let offset = image
+                .va_to_offset(pc)
+                .context("converting PC to module offset")?;
             self.coverage.increment(image.path(), offset);
 
             // Execute clobbered instruction on restart.
             regs.rip = pc;
-            tracee.set_registers(regs)?;
+            tracee
+                .set_registers(regs)
+                .context("resetting PC in breakpoint handler")?;
         } else {
             // Assume the tracee concurrently executed an `int3` that we restored
             // in another handler.
@@ -154,7 +165,9 @@ impl<'c> Recorder<'c> {
             // clearing, but making their value a state.
             log::debug!("no breakpoint at {:x}, assuming race", pc);
             regs.rip = pc;
-            tracee.set_registers(regs)?;
+            tracee
+                .set_registers(regs)
+                .context("resetting PC after ignoring spurious breakpoint")?;
         }
 
         Ok(())
@@ -182,7 +195,15 @@ impl<'c> Recorder<'c> {
 
             // Check the maybe-demangled against the coverage filter.
             if self.filter.includes_symbol(&info.module.path, symbol_name) {
-                for offset in info.blocks.range(symbol.range()) {
+                // Convert range bounds to an `offset`-sized type.
+                let range = {
+                    let range = symbol.range();
+                    let lo: u32 = range.start.try_into()?;
+                    let hi: u32 = range.end.try_into()?;
+                    lo..hi
+                };
+
+                for offset in info.blocks.range(range) {
                     allowed_blocks.push(*offset);
                 }
             }
@@ -228,11 +249,11 @@ impl Images {
     }
 
     pub fn update(&mut self) -> Result<LoadEvents> {
-        let proc = Process::new(self.pid)?;
+        let proc = Process::new(self.pid).context("getting procinfo")?;
 
         let mut new = BTreeMap::default();
 
-        for map in proc.maps()? {
+        for map in proc.maps().context("getting maps for process")? {
             if let Ok(image) = ModuleImage::new(map) {
                 new.insert(image.base(), image);
             }
@@ -252,7 +273,7 @@ impl Images {
             }
 
             if image.region().contains(&va) {
-                return Some(&image);
+                return Some(image);
             }
         }
 
@@ -307,12 +328,16 @@ impl ModuleImage {
         (self.map.address.0)..(self.map.address.1)
     }
 
-    pub fn va_to_offset(&self, va: u64) -> u64 {
-        va - self.base()
+    pub fn va_to_offset(&self, va: u64) -> Result<u32> {
+        if let Some(offset) = va.checked_sub(self.base()) {
+            Ok(offset.try_into().context("ELF offset overflowed `u32`")?)
+        } else {
+            anyhow::bail!("underflow converting VA to image offset")
+        }
     }
 
-    pub fn offset_to_va(&self, offset: u64) -> u64 {
-        self.base() + offset
+    pub fn offset_to_va(&self, offset: u32) -> u64 {
+        self.base() + (offset as u64)
     }
 }
 
@@ -327,9 +352,8 @@ impl LoadEvents {
         let loaded: Vec<_> = new
             .iter()
             .filter(|(nva, n)| {
-                old.iter()
-                    .find(|(iva, i)| nva == iva && n.path() == i.path())
-                    .is_none()
+                !old.iter()
+                    .any(|(iva, i)| *nva == iva && n.path() == i.path())
             })
             .map(|(va, i)| (*va, i.clone()))
             .collect();
@@ -338,9 +362,8 @@ impl LoadEvents {
         let unloaded: Vec<_> = old
             .iter()
             .filter(|(iva, i)| {
-                new.iter()
-                    .find(|(nva, n)| nva == iva && n.path() == i.path())
-                    .is_none()
+                !new.iter()
+                    .any(|(nva, n)| nva == *iva && n.path() == i.path())
             })
             .map(|(va, i)| (*va, i.clone()))
             .collect();
@@ -365,7 +388,9 @@ impl Breakpoints {
         let mut data = [0u8];
         tracee.read_memory_mut(va, &mut data)?;
         self.saved.insert(va, data[0]);
-        tracee.write_memory(va, &[0xcc])?;
+        tracee
+            .write_memory(va, &[0xcc])
+            .context("setting breakpoint, writing int3")?;
 
         Ok(())
     }
@@ -374,7 +399,9 @@ impl Breakpoints {
         let data = self.saved.remove(&va);
 
         let cleared = if let Some(data) = data {
-            tracee.write_memory(va, &[data])?;
+            tracee
+                .write_memory(va, &[data])
+                .context("clearing breakpoint, restoring byte")?;
             true
         } else {
             false
@@ -386,12 +413,63 @@ impl Breakpoints {
 
 fn continue_to_init_execve(tracer: &mut Ptracer) -> Result<Tracee> {
     while let Some(tracee) = tracer.wait()? {
-        if let Stop::SyscallExitStop(..) = &tracee.stop {
+        if let Stop::SyscallExit = &tracee.stop {
             return Ok(tracee);
         }
 
-        tracer.restart(tracee, Restart::Continue)?;
+        tracer
+            .restart(tracee, Restart::Continue)
+            .context("restarting tracee pre-execve()")?;
     }
 
     anyhow::bail!("did not see initial execve() in tracee while recording coverage");
+}
+
+const MAX_POLL_PERIOD: Duration = Duration::from_millis(500);
+
+pub struct Timer {
+    sender: mpsc::Sender<()>,
+    _handle: thread::JoinHandle<()>,
+}
+
+impl Timer {
+    pub fn new<F, T>(timeout: Duration, on_timeout: F) -> Self
+    where
+        F: FnOnce() -> T + Send + 'static,
+    {
+        let (sender, receiver) = std::sync::mpsc::channel();
+
+        let _handle = thread::spawn(move || {
+            let poll_period = Duration::min(timeout, MAX_POLL_PERIOD);
+            let start = Instant::now();
+
+            while start.elapsed() < timeout {
+                thread::sleep(poll_period);
+
+                // Check if the timer has been cancelled.
+                if let Err(mpsc::TryRecvError::Empty) = receiver.try_recv() {
+                    continue;
+                } else {
+                    // We were cancelled or dropped, so return early and don't call back.
+                    return;
+                }
+            }
+
+            // Timed out, so call back.
+            on_timeout();
+        });
+
+        Self { sender, _handle }
+    }
+
+    pub fn cancel(self) {
+        // Drop `self`.
+    }
+}
+
+impl Drop for Timer {
+    fn drop(&mut self) {
+        // Ignore errors, because they just mean the receiver has been dropped.
+        let _ = self.sender.send(());
+    }
 }

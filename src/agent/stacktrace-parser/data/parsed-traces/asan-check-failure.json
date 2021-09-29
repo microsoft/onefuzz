@@ -151,5 +151,9 @@
   "minimized_stack_function_names": [
     "check",
     "from_file"
+  ],
+  "minimized_stack_function_lines": [
+    "check fuzz.c:21:3",
+    "from_file fuzz.c:67:12"
   ]
 }

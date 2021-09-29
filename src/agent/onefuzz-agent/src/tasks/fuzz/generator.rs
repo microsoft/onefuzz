@@ -61,13 +61,18 @@ impl GeneratorTask {
     }
 
     pub async fn run(&self) -> Result<()> {
-        self.config.crashes.init().await?;
+        self.config.crashes.init().await.with_context(|| {
+            format!(
+                "creating crashes directory failed: {}",
+                self.config.crashes.local_path.display()
+            )
+        })?;
         if let Some(tools) = &self.config.tools {
             tools.init_pull().await?;
-            set_executable(&tools.path).await?;
+            set_executable(&tools.local_path).await?;
         }
 
-        let hb_client = self.config.common.init_heartbeat().await?;
+        let hb_client = self.config.common.init_heartbeat(None).await?;
 
         for dir in &self.config.readonly_inputs {
             dir.init_pull().await?;
@@ -104,13 +109,16 @@ impl GeneratorTask {
         loop {
             for corpus_dir in &self.config.readonly_inputs {
                 heartbeat_client.alive();
-                let corpus_dir = &corpus_dir.path;
+                let corpus_dir = &corpus_dir.local_path;
                 let generated_inputs = tempdir()?;
                 let generated_inputs_path = generated_inputs.path();
 
                 self.generate_inputs(corpus_dir, &generated_inputs_path)
-                    .await?;
-                self.test_inputs(&generated_inputs_path, &tester).await?;
+                    .await
+                    .context("generate inputs failed")?;
+                self.test_inputs(&generated_inputs_path, &tester)
+                    .await
+                    .context("test inputs failed")?;
             }
         }
     }
@@ -122,7 +130,7 @@ impl GeneratorTask {
     ) -> Result<()> {
         let mut read_dir = fs::read_dir(generated_inputs).await?;
         while let Some(file) = read_dir.next_entry().await? {
-            debug!("testing input: {:?}", file);
+            debug!("testing input: {}", file.path().display());
 
             let destination_file = if self.config.rename_output {
                 let hash = sha256::digest_file(file.path()).await?;
@@ -131,8 +139,12 @@ impl GeneratorTask {
                 file.file_name()
             };
 
-            let destination_file = self.config.crashes.path.join(destination_file);
-            if tester.is_crash(file.path()).await? {
+            let destination_file = self.config.crashes.local_path.join(destination_file);
+            if tester
+                .is_crash(file.path())
+                .await
+                .with_context(|| format!("testing input failed: {}", file.path().display()))?
+            {
                 fs::rename(file.path(), &destination_file).await?;
                 debug!("crash found {}", destination_file.display());
             }
@@ -148,6 +160,7 @@ impl GeneratorTask {
         utils::reset_tmp_dir(&output_dir).await?;
         let (mut generator, generator_path) = {
             let expand = Expand::new()
+                .setup_dir(&self.config.common.setup_dir)
                 .generated_inputs(&output_dir)
                 .input_corpus(&corpus_dir)
                 .generator_exe(&self.config.generator_exe)
@@ -156,13 +169,13 @@ impl GeneratorTask {
                 .task_id(&self.config.common.task_id)
                 .set_optional_ref(
                     &self.config.common.microsoft_telemetry_key,
-                    |tester, key| tester.microsoft_telemetry_key(&key),
+                    |tester, key| tester.microsoft_telemetry_key(key),
                 )
                 .set_optional_ref(&self.config.common.instance_telemetry_key, |tester, key| {
-                    tester.instance_telemetry_key(&key)
+                    tester.instance_telemetry_key(key)
                 })
                 .set_optional_ref(&self.config.tools, |expand, tools| {
-                    expand.tools_dir(&tools.path)
+                    expand.tools_dir(&tools.local_path)
                 });
 
             let generator_path = expand.evaluate_value(&self.config.generator_exe)?;
@@ -189,7 +202,9 @@ impl GeneratorTask {
         let output = generator
             .spawn()
             .with_context(|| format!("generator failed to start: {}", generator_path))?;
-        monitor_process(output, "generator".to_string(), true, None).await?;
+        monitor_process(output, "generator".to_string(), true, None)
+            .await
+            .with_context(|| format!("generator failed to run: {}", generator_path))?;
 
         Ok(())
     }
@@ -240,20 +255,20 @@ mod tests {
             generator_exe: String::from("{tools_dir}/radamsa"),
             generator_options,
             readonly_inputs: vec![SyncedDir {
-                path: readonly_inputs_local,
-                url: Some(BlobContainerUrl::parse(
+                local_path: readonly_inputs_local,
+                remote_path: Some(BlobContainerUrl::parse(
                     Url::from_directory_path(inputs).unwrap(),
                 )?),
             }],
             crashes: SyncedDir {
-                path: crashes_local,
-                url: Some(BlobContainerUrl::parse(
+                local_path: crashes_local,
+                remote_path: Some(BlobContainerUrl::parse(
                     Url::from_directory_path(crashes).unwrap(),
                 )?),
             },
             tools: Some(SyncedDir {
-                path: tools_local,
-                url: Some(BlobContainerUrl::parse(
+                local_path: tools_local,
+                remote_path: Some(BlobContainerUrl::parse(
                     Url::from_directory_path(radamsa_dir).unwrap(),
                 )?),
             }),

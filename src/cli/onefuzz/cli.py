@@ -8,6 +8,7 @@ Simple CLI builder on top of a defined API (used for OneFuzz)
 """
 
 import argparse
+import datetime
 import inspect
 import json
 import logging
@@ -32,6 +33,7 @@ from uuid import UUID
 import jmespath
 from docstring_parser import parse as parse_docstring
 from msrest.serialization import Model
+from onefuzztypes.models import SecretData
 from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, ValidationError
 
@@ -190,7 +192,7 @@ class Builder:
         sig = inspect.signature(func)
 
         arg_docs = {}
-        docs = parse_docstring(func.__doc__)
+        docs = parse_docstring(func.__doc__ or "")
         for opt in docs.params:
             if opt.description:
                 arg_docs[opt.arg_name] = opt.description
@@ -204,7 +206,7 @@ class Builder:
     def parse_param(
         self, name: str, param: inspect.Parameter, help_doc: Optional[str] = None
     ) -> Tuple[List[str], Dict[str, Any]]:
-        """ Parse a single parameter """
+        """Parse a single parameter"""
 
         default = param.default
         annotation = param.annotation
@@ -303,6 +305,13 @@ class Builder:
             ) -> None:
                 if values is None:
                     return
+
+                for arg in values:
+                    if "=" not in arg:
+                        raise argparse.ArgumentTypeError(
+                            "unable to parse value as a key=value pair: %s" % repr(arg)
+                        )
+
                 as_dict: Dict[str, str] = {
                     key_arg(k): val_arg(v) for k, v in (x.split("=", 1) for x in values)
                 }
@@ -416,7 +425,7 @@ class Builder:
     def parse_instance(
         self, inst: Callable, subparser: argparse._SubParsersAction
     ) -> None:
-        """ Expose every non-private callable in a class instance """
+        """Expose every non-private callable in a class instance"""
         for (name, func) in self.get_children(inst, is_callable=True):
             sub = subparser.add_parser(name, help=self.get_help(func))
             add_base(sub)
@@ -483,18 +492,37 @@ class Builder:
             level += 1
 
 
+def normalize(result: Any) -> Any:
+    """Convert arbitrary result streams into something filterable with jmespath"""
+    if isinstance(result, BaseModel):
+        return normalize(result.dict(exclude_none=True))
+    if isinstance(result, SecretData):
+        return normalize(result.secret)
+    if isinstance(result, Model):
+        return normalize(result.as_dict())
+    if isinstance(result, (set, list)):
+        return [normalize(x) for x in result]
+    if isinstance(result, dict):
+        return {normalize(k): normalize(v) for (k, v) in result.items()}
+    if isinstance(result, Enum):
+        return result.name
+    if isinstance(result, (UUID, datetime.datetime)):
+        return str(result)
+    if isinstance(result, (int, float, str)):
+        return result
+    if result is None:
+        return result
+
+    logging.warning(f"unable to normalize type f{type(result)}")
+
+    return result
+
+
 def output(result: Any, output_format: str, expression: Optional[Any]) -> None:
     if isinstance(result, bytes):
         sys.stdout.buffer.write(result)
     else:
-        if isinstance(result, list) and result and isinstance(result[0], BaseModel):
-            # cycling through json resolves all of the nested BaseModel objects
-            result = [json.loads(x.json(exclude_none=True)) for x in result]
-        if isinstance(result, BaseModel):
-            # cycling through json resolves all of the nested BaseModel objects
-            result = json.loads(result.json(exclude_none=True))
-        if isinstance(result, Model):
-            result = result.as_dict()
+        result = normalize(result)
         if expression is not None:
             result = expression.search(result)
         if result is not None:
@@ -517,7 +545,11 @@ def execute_api(api: Any, api_types: List[Any], version: str) -> int:
     builder = Builder(api_types)
     builder.add_version(version)
     builder.parse_api(api)
-    args = builder.parse_args()
+    try:
+        args = builder.parse_args()
+    except argparse.ArgumentTypeError as err:
+        LOGGER.error("unable to parse arguments: %s", err)
+        return 1
 
     if args.verbose == 0:
         logging.basicConfig(level=logging.WARNING)

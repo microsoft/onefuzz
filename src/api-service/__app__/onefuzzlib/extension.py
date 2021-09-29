@@ -5,25 +5,61 @@
 
 import os
 from typing import List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from onefuzztypes.enums import OS, AgentMode
-from onefuzztypes.models import AgentConfig, Pool, ReproConfig, Scaleset
+from onefuzztypes.models import (
+    AgentConfig,
+    AzureMonitorExtensionConfig,
+    KeyvaultExtensionConfig,
+    Pool,
+    ReproConfig,
+    Scaleset,
+)
 from onefuzztypes.primitives import Container, Extension, Region
 
-from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
+from .azure.containers import (
+    get_container_sas_url,
+    get_file_sas_url,
+    get_file_url,
+    save_blob,
+)
 from .azure.creds import get_instance_id, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .azure.queue import get_queue_sas
 from .azure.storage import StorageType
+from .config import InstanceConfig
 from .reports import get_report
 
 
 def generic_extensions(region: Region, vm_os: OS) -> List[Extension]:
+    instance_config = InstanceConfig.fetch()
+
     extensions = [monitor_extension(region, vm_os)]
-    depedency = dependency_extension(region, vm_os)
-    if depedency:
-        extensions.append(depedency)
+
+    dependency = dependency_extension(region, vm_os)
+    if dependency:
+        extensions.append(dependency)
+
+    if instance_config.extensions:
+
+        if instance_config.extensions.keyvault:
+            keyvault = keyvault_extension(
+                region, instance_config.extensions.keyvault, vm_os
+            )
+            extensions.append(keyvault)
+
+        if instance_config.extensions.geneva and vm_os == OS.windows:
+            geneva = geneva_extension(region)
+            extensions.append(geneva)
+
+        if instance_config.extensions.azure_monitor and vm_os == OS.linux:
+            azmon = azmon_extension(region, instance_config.extensions.azure_monitor)
+            extensions.append(azmon)
+
+        if instance_config.extensions.azure_security and vm_os == OS.linux:
+            azsec = azsec_extension(region)
+            extensions.append(azsec)
 
     return extensions
 
@@ -80,6 +116,116 @@ def dependency_extension(region: Region, vm_os: OS) -> Optional[Extension]:
         return None
 
 
+def geneva_extension(region: Region) -> Extension:
+
+    return {
+        "name": "Microsoft.Azure.Geneva.GenevaMonitoring",
+        "publisher": "Microsoft.Azure.Geneva",
+        "type": "GenevaMonitoring",
+        "typeHandlerVersion": "2.0",
+        "location": region,
+        "autoUpgradeMinorVersion": True,
+        "enableAutomaticUpgrade": True,
+        "settings": {},
+        "protectedSettings": {},
+    }
+
+
+def azmon_extension(
+    region: Region, azure_monitor: AzureMonitorExtensionConfig
+) -> Extension:
+
+    auth_id = azure_monitor.monitoringGCSAuthId
+    config_version = azure_monitor.config_version
+    moniker = azure_monitor.moniker
+    namespace = azure_monitor.namespace
+    environment = azure_monitor.monitoringGSEnvironment
+    account = azure_monitor.monitoringGCSAccount
+    auth_id_type = azure_monitor.monitoringGCSAuthIdType
+
+    return {
+        "name": "AzureMonitorLinuxAgent",
+        "publisher": "Microsoft.Azure.Monitor",
+        "location": region,
+        "type": "AzureMonitorLinuxAgent",
+        "typeHandlerVersion": "1.9",
+        "autoUpgradeMinorVersion": False,
+        "settings": {},
+        "protectedsettings": {
+            "configVersion": config_version,
+            "moniker": moniker,
+            "namespace": namespace,
+            "monitoringGCSEnvironment": environment,
+            "monitoringGCSAccount": account,
+            "monitoringGCSRegion": region,
+            "monitoringGCSAuthId": auth_id,
+            "monitoringGCSAuthIdType": auth_id_type,
+        },
+    }
+
+
+def azsec_extension(region: Region) -> Extension:
+
+    return {
+        "name": "AzureSecurityLinuxAgent",
+        "publisher": "Microsoft.Azure.Security.Monitoring",
+        "location": region,
+        "type": "AzureSecurityLinuxAgent",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": True,
+        "settings": {"enableGenevaUpload": True},
+    }
+
+
+def keyvault_extension(
+    region: Region, keyvault: KeyvaultExtensionConfig, vm_os: OS
+) -> Extension:
+
+    keyvault_name = keyvault.keyvault_name
+    cert_name = keyvault.cert_name
+    uri = keyvault_name + cert_name
+
+    if vm_os == OS.windows:
+        return {
+            "name": "KVVMExtensionForWindows",
+            "location": region,
+            "publisher": "Microsoft.Azure.KeyVault",
+            "type": "KeyVaultForWindows",
+            "typeHandlerVersion": "1.0",
+            "autoUpgradeMinorVersion": True,
+            "settings": {
+                "secretsManagementSettings": {
+                    "pollingIntervalInS": "3600",
+                    "certificateStoreName": "MY",
+                    "linkOnRenewal": False,
+                    "certificateStoreLocation": "LocalMachine",
+                    "requireInitialSync": True,
+                    "observedCertificates": [uri],
+                }
+            },
+        }
+    elif vm_os == OS.linux:
+        cert_path = keyvault.cert_path
+        extension_store = keyvault.extension_store
+        cert_location = cert_path + extension_store
+        return {
+            "name": "KVVMExtensionForLinux",
+            "location": region,
+            "publisher": "Microsoft.Azure.KeyVault",
+            "type": "KeyVaultForLinux",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": True,
+            "settings": {
+                "secretsManagementSettings": {
+                    "pollingIntervalInS": "3600",
+                    "certificateStoreLocation": cert_location,
+                    "observedCertificates": [uri],
+                },
+            },
+        }
+    raise NotImplementedError("unsupported os: %s" % vm_os)
+
+
 def build_scaleset_script(pool: Pool, scaleset: Scaleset) -> str:
     commands = []
     extension = "ps1" if pool.os == OS.windows else "sh"
@@ -94,9 +240,7 @@ def build_scaleset_script(pool: Pool, scaleset: Scaleset) -> str:
     save_blob(
         Container("vm-scripts"), filename, sep.join(commands) + sep, StorageType.config
     )
-    return get_file_sas_url(
-        Container("vm-scripts"), filename, StorageType.config, read=True
-    )
+    return get_file_url(Container("vm-scripts"), filename, StorageType.config)
 
 
 def build_pool_config(pool: Pool) -> str:
@@ -126,12 +270,7 @@ def build_pool_config(pool: Pool) -> str:
         StorageType.config,
     )
 
-    return get_file_sas_url(
-        Container("vm-scripts"),
-        filename,
-        StorageType.config,
-        read=True,
-    )
+    return config_url(Container("vm-scripts"), filename, False)
 
 
 def update_managed_scripts() -> None:
@@ -142,13 +281,13 @@ def update_managed_scripts() -> None:
                 Container("instance-specific-setup"),
                 StorageType.config,
                 read=True,
-                list=True,
+                list_=True,
             )
         ),
         "azcopy sync '%s' tools"
         % (
             get_container_sas_url(
-                Container("tools"), StorageType.config, read=True, list=True
+                Container("tools"), StorageType.config, read=True, list_=True
             )
         ),
     ]
@@ -167,8 +306,20 @@ def update_managed_scripts() -> None:
     )
 
 
+def config_url(container: Container, filename: str, with_sas: bool) -> str:
+    if with_sas:
+        return get_file_sas_url(container, filename, StorageType.config, read=True)
+    else:
+        return get_file_url(container, filename, StorageType.config)
+
+
 def agent_config(
-    region: Region, vm_os: OS, mode: AgentMode, *, urls: Optional[List[str]] = None
+    region: Region,
+    vm_os: OS,
+    mode: AgentMode,
+    *,
+    urls: Optional[List[str]] = None,
+    with_sas: bool = False,
 ) -> Extension:
     update_managed_scripts()
 
@@ -177,29 +328,17 @@ def agent_config(
 
     if vm_os == OS.windows:
         urls += [
-            get_file_sas_url(
-                Container("vm-scripts"),
-                "managed.ps1",
-                StorageType.config,
-                read=True,
-            ),
-            get_file_sas_url(
-                Container("tools"),
-                "win64/azcopy.exe",
-                StorageType.config,
-                read=True,
-            ),
-            get_file_sas_url(
+            config_url(Container("vm-scripts"), "managed.ps1", with_sas),
+            config_url(Container("tools"), "win64/azcopy.exe", with_sas),
+            config_url(
                 Container("tools"),
                 "win64/setup.ps1",
-                StorageType.config,
-                read=True,
+                with_sas,
             ),
-            get_file_sas_url(
+            config_url(
                 Container("tools"),
                 "win64/onefuzz.ps1",
-                StorageType.config,
-                read=True,
+                with_sas,
             ),
         ]
         to_execute_cmd = (
@@ -211,31 +350,34 @@ def agent_config(
             "type": "CustomScriptExtension",
             "publisher": "Microsoft.Compute",
             "location": region,
+            "force_update_tag": uuid4(),
             "type_handler_version": "1.9",
             "auto_upgrade_minor_version": True,
-            "settings": {"commandToExecute": to_execute_cmd, "fileUris": urls},
-            "protectedSettings": {},
+            "settings": {
+                "commandToExecute": to_execute_cmd,
+                "fileUris": urls,
+            },
+            "protectedSettings": {
+                "managedIdentity": {},
+            },
         }
         return extension
     elif vm_os == OS.linux:
         urls += [
-            get_file_sas_url(
+            config_url(
                 Container("vm-scripts"),
                 "managed.sh",
-                StorageType.config,
-                read=True,
+                with_sas,
             ),
-            get_file_sas_url(
+            config_url(
                 Container("tools"),
                 "linux/azcopy",
-                StorageType.config,
-                read=True,
+                with_sas,
             ),
-            get_file_sas_url(
+            config_url(
                 Container("tools"),
                 "linux/setup.sh",
-                StorageType.config,
-                read=True,
+                with_sas,
             ),
         ]
         to_execute_cmd = "sh setup.sh %s" % (mode.name)
@@ -246,9 +388,15 @@ def agent_config(
             "type": "CustomScript",
             "typeHandlerVersion": "2.1",
             "location": region,
+            "force_update_tag": uuid4(),
             "autoUpgradeMinorVersion": True,
-            "settings": {"commandToExecute": to_execute_cmd, "fileUris": urls},
-            "protectedSettings": {},
+            "settings": {
+                "commandToExecute": to_execute_cmd,
+                "fileUris": urls,
+            },
+            "protectedSettings": {
+                "managedIdentity": {},
+            },
         }
         return extension
 
@@ -284,7 +432,7 @@ def repro_extensions(
             "azcopy sync '%s' ./setup"
             % (
                 get_container_sas_url(
-                    setup_container, StorageType.corpus, read=True, list=True
+                    setup_container, StorageType.corpus, read=True, list_=True
                 )
             ),
         ]
@@ -335,17 +483,19 @@ def repro_extensions(
             ),
         ]
 
-    base_extension = agent_config(region, repro_os, AgentMode.repro, urls=urls)
+    base_extension = agent_config(
+        region, repro_os, AgentMode.repro, urls=urls, with_sas=True
+    )
     extensions = generic_extensions(region, repro_os)
     extensions += [base_extension]
     return extensions
 
 
-def proxy_manager_extensions(region: Region) -> List[Extension]:
+def proxy_manager_extensions(region: Region, proxy_id: UUID) -> List[Extension]:
     urls = [
         get_file_sas_url(
             Container("proxy-configs"),
-            "%s/config.json" % region,
+            "%s/%s/config.json" % (region, proxy_id),
             StorageType.config,
             read=True,
         ),
@@ -357,7 +507,9 @@ def proxy_manager_extensions(region: Region) -> List[Extension]:
         ),
     ]
 
-    base_extension = agent_config(region, OS.linux, AgentMode.proxy, urls=urls)
+    base_extension = agent_config(
+        region, OS.linux, AgentMode.proxy, urls=urls, with_sas=True
+    )
     extensions = generic_extensions(region, OS.linux)
     extensions += [base_extension]
     return extensions

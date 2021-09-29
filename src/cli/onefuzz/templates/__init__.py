@@ -3,7 +3,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import json
 import os
 import tempfile
 import zipfile
@@ -23,39 +22,6 @@ DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest"
 
 class StoppedEarly(Exception):
     pass
-
-
-def _build_container_name(
-    onefuzz: "Onefuzz",
-    container_type: ContainerType,
-    project: str,
-    name: str,
-    build: str,
-    platform: OS,
-) -> Container:
-    if container_type in [ContainerType.setup, ContainerType.coverage]:
-        guid = onefuzz.utils.namespaced_guid(
-            project,
-            name,
-            build=build,
-            platform=platform.name,
-        )
-    elif container_type == ContainerType.regression_reports:
-        guid = onefuzz.utils.namespaced_guid(
-            project,
-            name,
-            build=build,
-        )
-    else:
-        guid = onefuzz.utils.namespaced_guid(project, name)
-
-    return Container(
-        "oft-%s-%s"
-        % (
-            container_type.name.replace("_", "-"),
-            guid.hex,
-        )
-    )
 
 
 class JobHelper:
@@ -115,13 +81,12 @@ class JobHelper:
         """
 
         for container_type in types:
-            self.containers[container_type] = _build_container_name(
-                self.onefuzz,
-                container_type,
-                self.project,
-                self.name,
-                self.build,
-                self.platform,
+            self.containers[container_type] = self.onefuzz.utils.build_container_name(
+                container_type=container_type,
+                project=self.project,
+                name=self.name,
+                build=self.build,
+                platform=self.platform,
             )
 
     def get_unique_container_name(self, container_type: ContainerType) -> Container:
@@ -153,19 +118,8 @@ class JobHelper:
         else:
             container = self.containers[ContainerType.reports]
 
-        if not container:
-            return
-
-        config_dict = json.loads(config.json())
-        for entry in self.onefuzz.notifications.list():
-            if entry.container == container and entry.config == config_dict:
-                self.logger.debug(
-                    "notification already exists: %s", entry.notification_id
-                )
-                return
-
         self.logger.info("creating notification config for %s", container)
-        self.onefuzz.notifications.create(container, config)
+        self.onefuzz.notifications.create(container, config, replace_existing=True)
 
     def upload_setup(
         self,
@@ -307,28 +261,30 @@ class JobHelper:
             wait_for_stopped=self.wait_for_stopped,
         )
 
-    def target_exe_blob_name(
-        self, target_exe: File, setup_dir: Optional[Directory]
+    def setup_relative_blob_name(
+        self, local_file: File, setup_dir: Optional[Directory]
     ) -> str:
-        # The target executable must end up in the setup container, and the
-        # `target_exe` value passed to the tasks must be the name of the target
-        # exe _as a blob_ in the setup container.
+        # The local file must end up as a remote blob in the setup container. The blob
+        # name, which is a virtual `setup`-relative path, must be passed to the tasks as a
+        # value relative to the local copy of the setup directory.
         if setup_dir:
-            # If the user set a `setup_dir`, then `target_exe` must occur inside
-            # of it. When we upload the `setup_dir`, the blob name agrees with
-            # the `setup_dir`-relative path of the target.
-            resolved = os.path.relpath(target_exe, setup_dir)
-            if resolved.startswith("..") or resolved == target_exe:
+            # If we have a `setup_dir`, then `local_file` must occur inside of it. When we
+            # upload the `setup_dir`, the blob name will match the `setup_dir`-relative
+            # path to the file.
+            resolved = os.path.relpath(local_file, setup_dir)
+
+            if resolved.startswith("..") or resolved == local_file:
                 raise ValueError(
-                    "target_exe (%s) is not within the setup directory (%s)"
-                    % (target_exe, setup_dir)
+                    "local file (%s) is not within the setup directory (%s)"
+                    % (local_file, setup_dir)
                 )
+
             return resolved
         else:
-            # If no `setup_dir` was given, we will upload `target_exe` to the
-            # root of the setup container created for the user. In that case,
-            # the `target_exe` name is just the filename of `target_exe`.
-            return os.path.basename(target_exe)
+            # If no `setup_dir` was given, we will upload the file at `local_file` to the
+            # root of the setup container created for the user. In that case, the future,
+            # setup-relative path to `local_file` is just the filename of `local_file`.
+            return os.path.basename(local_file)
 
     def add_tags(self, tags: Optional[Dict[str, str]]) -> None:
         if tags:

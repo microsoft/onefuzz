@@ -9,10 +9,9 @@ import azure.functions as func
 from onefuzztypes.enums import ErrorCode, VmState
 from onefuzztypes.models import Error
 from onefuzztypes.requests import ProxyCreate, ProxyDelete, ProxyGet, ProxyReset
-from onefuzztypes.responses import BoolResult, ProxyGetResult
+from onefuzztypes.responses import BoolResult, ProxyGetResult, ProxyInfo, ProxyList
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
-from ..onefuzzlib.events import get_events
 from ..onefuzzlib.proxy import Proxy
 from ..onefuzzlib.proxy_forward import ProxyForward
 from ..onefuzzlib.request import not_ok, ok, parse_request
@@ -36,26 +35,37 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="ProxyGet")
 
-    scaleset = Scaleset.get_by_id(request.scaleset_id)
-    if isinstance(scaleset, Error):
-        return not_ok(scaleset, context="ProxyGet")
+    if (
+        request.scaleset_id is not None
+        and request.machine_id is not None
+        and request.dst_port is not None
+    ):
+        scaleset = Scaleset.get_by_id(request.scaleset_id)
+        if isinstance(scaleset, Error):
+            return not_ok(scaleset, context="ProxyGet")
 
-    proxy = Proxy.get_or_create(scaleset.region)
-    forwards = ProxyForward.search_forward(
-        scaleset_id=request.scaleset_id,
-        machine_id=request.machine_id,
-        dst_port=request.dst_port,
-    )
-    if not forwards:
-        return not_ok(
-            Error(
-                code=ErrorCode.INVALID_REQUEST,
-                errors=["no forwards for scaleset and node"],
-            ),
-            context="debug_proxy get",
+        proxy = Proxy.get_or_create(scaleset.region)
+        forwards = ProxyForward.search_forward(
+            scaleset_id=request.scaleset_id,
+            machine_id=request.machine_id,
+            dst_port=request.dst_port,
         )
+        if not forwards:
+            return not_ok(
+                Error(
+                    code=ErrorCode.INVALID_REQUEST,
+                    errors=["no forwards for scaleset and node"],
+                ),
+                context="debug_proxy get",
+            )
 
-    return ok(get_result(forwards[0], proxy))
+        return ok(get_result(forwards[0], proxy))
+    else:
+        proxies = [
+            ProxyInfo(region=x.region, proxy_id=x.proxy_id, state=x.state)
+            for x in Proxy.search()
+        ]
+        return ok(ProxyList(proxies=proxies))
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
@@ -79,6 +89,8 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
     proxy = Proxy.get_or_create(scaleset.region)
     if proxy:
+        forward.proxy_id = proxy.proxy_id
+        forward.save()
         proxy.save_proxy_config()
     return ok(get_result(forward, proxy))
 
@@ -88,13 +100,14 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="ProxyReset")
 
-    proxy = Proxy.get(request.region)
-    if proxy is not None:
-        proxy.state = VmState.stopping
-        proxy.save()
-        return ok(BoolResult(result=True))
+    proxy_list = Proxy.search(query={"region": [request.region]})
+    for proxy in proxy_list:
+        proxy.set_state(VmState.stopping)
 
-    return ok(BoolResult(result=False))
+    if proxy_list:
+        return ok(BoolResult(result=True))
+    else:
+        return ok(BoolResult(result=False))
 
 
 def delete(req: func.HttpRequest) -> func.HttpResponse:
@@ -115,13 +128,9 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     return ok(BoolResult(result=True))
 
 
-def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
+def main(req: func.HttpRequest) -> func.HttpResponse:
     methods = {"GET": get, "POST": post, "DELETE": delete, "PATCH": patch}
     method = methods[req.method]
     result = call_if_user(req, method)
-
-    events = get_events()
-    if events:
-        dashboard.set(events)
 
     return result

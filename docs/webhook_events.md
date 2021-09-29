@@ -25,6 +25,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 * [crash_reported](#crash_reported)
 * [file_added](#file_added)
+* [instance_config_updated](#instance_config_updated)
 * [job_created](#job_created)
 * [job_stopped](#job_stopped)
 * [node_created](#node_created)
@@ -37,10 +38,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
 * [proxy_created](#proxy_created)
 * [proxy_deleted](#proxy_deleted)
 * [proxy_failed](#proxy_failed)
+* [proxy_state_updated](#proxy_state_updated)
 * [regression_reported](#regression_reported)
 * [scaleset_created](#scaleset_created)
 * [scaleset_deleted](#scaleset_deleted)
 * [scaleset_failed](#scaleset_failed)
+* [scaleset_resize_scheduled](#scaleset_resize_scheduled)
+* [scaleset_state_updated](#scaleset_state_updated)
 * [task_created](#task_created)
 * [task_failed](#task_failed)
 * [task_heartbeat](#task_heartbeat)
@@ -84,7 +88,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "BlobRef": {
             "properties": {
@@ -178,6 +181,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Minimized Stack",
                     "type": "array"
+                },
+                "minimized_stack_function_lines": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Lines",
+                    "type": "array"
+                },
+                "minimized_stack_function_lines_sha256": {
+                    "title": "Minimized Stack Function Lines Sha256",
+                    "type": "string"
                 },
                 "minimized_stack_function_names": {
                     "items": {
@@ -345,10 +359,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -453,6 +474,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -495,6 +517,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -513,6 +536,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -588,7 +612,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "container": {
             "title": "Container",
@@ -604,6 +627,204 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "filename"
     ],
     "title": "EventFileAdded",
+    "type": "object"
+}
+```
+
+### instance_config_updated
+
+#### Example
+
+```json
+{
+    "config": {
+        "admins": [
+            "00000000-0000-0000-0000-000000000000"
+        ],
+        "allow_pool_management": true,
+        "allowed_aad_tenants": [
+            "00000000-0000-0000-0000-000000000000"
+        ],
+        "network_config": {
+            "address_space": "10.0.0.0/8",
+            "subnet": "10.0.0.0/16"
+        },
+        "proxy_vm_sku": "Standard_B2s"
+    }
+}
+```
+
+#### Schema
+
+```json
+{
+    "definitions": {
+        "AzureMonitorExtensionConfig": {
+            "properties": {
+                "config_version": {
+                    "title": "Config Version",
+                    "type": "string"
+                },
+                "moniker": {
+                    "title": "Moniker",
+                    "type": "string"
+                },
+                "monitoringGCSAccount": {
+                    "title": "Monitoringgcsaccount",
+                    "type": "string"
+                },
+                "monitoringGCSAuthId": {
+                    "title": "Monitoringgcsauthid",
+                    "type": "string"
+                },
+                "monitoringGCSAuthIdType": {
+                    "title": "Monitoringgcsauthidtype",
+                    "type": "string"
+                },
+                "monitoringGSEnvironment": {
+                    "title": "Monitoringgsenvironment",
+                    "type": "string"
+                },
+                "namespace": {
+                    "title": "Namespace",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "config_version",
+                "moniker",
+                "namespace",
+                "monitoringGSEnvironment",
+                "monitoringGCSAccount",
+                "monitoringGCSAuthId",
+                "monitoringGCSAuthIdType"
+            ],
+            "title": "AzureMonitorExtensionConfig",
+            "type": "object"
+        },
+        "AzureSecurityExtensionConfig": {
+            "properties": {},
+            "title": "AzureSecurityExtensionConfig",
+            "type": "object"
+        },
+        "AzureVmExtensionConfig": {
+            "properties": {
+                "azure_monitor": {
+                    "$ref": "#/definitions/AzureMonitorExtensionConfig"
+                },
+                "azure_security": {
+                    "$ref": "#/definitions/AzureSecurityExtensionConfig"
+                },
+                "geneva": {
+                    "$ref": "#/definitions/GenevaExtensionConfig"
+                },
+                "keyvault": {
+                    "$ref": "#/definitions/KeyvaultExtensionConfig"
+                }
+            },
+            "title": "AzureVmExtensionConfig",
+            "type": "object"
+        },
+        "GenevaExtensionConfig": {
+            "properties": {},
+            "title": "GenevaExtensionConfig",
+            "type": "object"
+        },
+        "InstanceConfig": {
+            "properties": {
+                "admins": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Admins",
+                    "type": "array"
+                },
+                "allow_pool_management": {
+                    "default": true,
+                    "title": "Allow Pool Management",
+                    "type": "boolean"
+                },
+                "allowed_aad_tenants": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Allowed Aad Tenants",
+                    "type": "array"
+                },
+                "extensions": {
+                    "$ref": "#/definitions/AzureVmExtensionConfig"
+                },
+                "network_config": {
+                    "$ref": "#/definitions/NetworkConfig"
+                },
+                "proxy_vm_sku": {
+                    "default": "Standard_B2s",
+                    "title": "Proxy Vm Sku",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "allowed_aad_tenants"
+            ],
+            "title": "InstanceConfig",
+            "type": "object"
+        },
+        "KeyvaultExtensionConfig": {
+            "properties": {
+                "cert_name": {
+                    "title": "Cert Name",
+                    "type": "string"
+                },
+                "cert_path": {
+                    "title": "Cert Path",
+                    "type": "string"
+                },
+                "extension_store": {
+                    "title": "Extension Store",
+                    "type": "string"
+                },
+                "keyvault_name": {
+                    "title": "Keyvault Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "keyvault_name",
+                "cert_name",
+                "cert_path",
+                "extension_store"
+            ],
+            "title": "KeyvaultExtensionConfig",
+            "type": "object"
+        },
+        "NetworkConfig": {
+            "properties": {
+                "address_space": {
+                    "default": "10.0.0.0/8",
+                    "title": "Address Space",
+                    "type": "string"
+                },
+                "subnet": {
+                    "default": "10.0.0.0/16",
+                    "title": "Subnet",
+                    "type": "string"
+                }
+            },
+            "title": "NetworkConfig",
+            "type": "object"
+        }
+    },
+    "properties": {
+        "config": {
+            "$ref": "#/definitions/InstanceConfig"
+        }
+    },
+    "required": [
+        "config"
+    ],
+    "title": "EventInstanceConfigUpdated",
     "type": "object"
 }
 ```
@@ -628,7 +849,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "JobConfig": {
             "properties": {
@@ -637,6 +857,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -737,7 +959,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Error": {
             "properties": {
@@ -794,6 +1015,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -839,6 +1062,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -918,7 +1142,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "machine_id": {
             "format": "uuid",
@@ -959,7 +1182,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "machine_id": {
             "format": "uuid",
@@ -1000,7 +1222,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "machine_id": {
             "format": "uuid",
@@ -1042,7 +1263,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "NodeState": {
             "description": "An enumeration.",
@@ -1135,7 +1355,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Architecture": {
             "description": "An enumeration.",
@@ -1156,11 +1375,16 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "max_size": {
+                    "default": 1000,
+                    "maximum": 1000,
+                    "minimum": 0,
                     "title": "Max Size",
                     "type": "integer"
                 },
                 "min_size": {
                     "default": 0,
+                    "maximum": 1000,
+                    "minimum": 0,
                     "title": "Min Size",
                     "type": "integer"
                 },
@@ -1243,7 +1467,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "pool_name": {
             "title": "Pool Name",
@@ -1264,6 +1487,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -1272,8 +1496,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -1293,6 +1521,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -1301,8 +1530,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -1328,6 +1561,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "example error message"
         ]
     },
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -1336,7 +1570,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Error": {
             "properties": {
@@ -1391,6 +1624,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "error": {
             "$ref": "#/definitions/Error"
         },
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -1401,6 +1639,61 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "error"
     ],
     "title": "EventProxyFailed",
+    "type": "object"
+}
+```
+
+### proxy_state_updated
+
+#### Example
+
+```json
+{
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
+    "region": "eastus",
+    "state": "init"
+}
+```
+
+#### Schema
+
+```json
+{
+    "definitions": {
+        "VmState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "extensions_launch",
+                "extensions_failed",
+                "vm_allocation_failed",
+                "running",
+                "stopping",
+                "stopped"
+            ],
+            "title": "VmState"
+        }
+    },
+    "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
+        "region": {
+            "title": "Region",
+            "type": "string"
+        },
+        "state": {
+            "$ref": "#/definitions/VmState"
+        }
+    },
+    "required": [
+        "region",
+        "proxy_id",
+        "state"
+    ],
+    "title": "EventProxyStateUpdated",
     "type": "object"
 }
 ```
@@ -1470,7 +1763,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "BlobRef": {
             "properties": {
@@ -1634,6 +1926,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Minimized Stack",
                     "type": "array"
                 },
+                "minimized_stack_function_lines": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Lines",
+                    "type": "array"
+                },
+                "minimized_stack_function_lines_sha256": {
+                    "title": "Minimized Stack Function Lines Sha256",
+                    "type": "string"
+                },
                 "minimized_stack_function_names": {
                     "items": {
                         "type": "string"
@@ -1800,10 +2103,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -1908,6 +2218,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -1950,6 +2261,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -1968,6 +2280,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -2047,7 +2360,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "image": {
             "title": "Image",
@@ -2103,7 +2415,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "pool_name": {
             "title": "Pool Name",
@@ -2145,7 +2456,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Error": {
             "properties": {
@@ -2220,6 +2530,102 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
+### scaleset_resize_scheduled
+
+#### Example
+
+```json
+{
+    "pool_name": "example",
+    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "size": 0
+}
+```
+
+#### Schema
+
+```json
+{
+    "properties": {
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
+            "type": "string"
+        },
+        "size": {
+            "title": "Size",
+            "type": "integer"
+        }
+    },
+    "required": [
+        "scaleset_id",
+        "pool_name",
+        "size"
+    ],
+    "title": "EventScalesetResizeScheduled",
+    "type": "object"
+}
+```
+
+### scaleset_state_updated
+
+#### Example
+
+```json
+{
+    "pool_name": "example",
+    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "state": "init"
+}
+```
+
+#### Schema
+
+```json
+{
+    "definitions": {
+        "ScalesetState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "setup",
+                "resize",
+                "running",
+                "shutdown",
+                "halt",
+                "creation_failed"
+            ],
+            "title": "ScalesetState"
+        }
+    },
+    "properties": {
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
+            "type": "string"
+        },
+        "state": {
+            "$ref": "#/definitions/ScalesetState"
+        }
+    },
+    "required": [
+        "scaleset_id",
+        "pool_name",
+        "state"
+    ],
+    "title": "EventScalesetStateUpdated",
+    "type": "object"
+}
+```
+
 ### task_created
 
 #### Example
@@ -2266,7 +2672,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -2410,10 +2815,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -2518,6 +2930,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -2560,6 +2973,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -2578,6 +2992,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -2712,7 +3127,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -2904,10 +3318,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -3012,6 +3433,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -3054,6 +3476,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -3072,6 +3495,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -3199,7 +3623,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -3343,10 +3766,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -3451,6 +3881,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -3493,6 +3924,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -3511,6 +3943,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -3612,7 +4045,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -3756,10 +4188,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -3864,6 +4303,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -3920,6 +4360,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -3938,6 +4379,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -4052,7 +4494,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -4196,10 +4637,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -4304,6 +4752,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -4346,6 +4795,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -4364,6 +4814,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -4450,7 +4901,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Architecture": {
             "description": "An enumeration.",
@@ -4471,11 +4921,16 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "max_size": {
+                    "default": 1000,
+                    "maximum": 1000,
+                    "minimum": 0,
                     "title": "Max Size",
                     "type": "integer"
                 },
                 "min_size": {
                     "default": 0,
+                    "maximum": 1000,
+                    "minimum": 0,
                     "title": "Min Size",
                     "type": "integer"
                 },
@@ -4503,6 +4958,72 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "vm_sku"
             ],
             "title": "AutoScaleConfig",
+            "type": "object"
+        },
+        "AzureMonitorExtensionConfig": {
+            "properties": {
+                "config_version": {
+                    "title": "Config Version",
+                    "type": "string"
+                },
+                "moniker": {
+                    "title": "Moniker",
+                    "type": "string"
+                },
+                "monitoringGCSAccount": {
+                    "title": "Monitoringgcsaccount",
+                    "type": "string"
+                },
+                "monitoringGCSAuthId": {
+                    "title": "Monitoringgcsauthid",
+                    "type": "string"
+                },
+                "monitoringGCSAuthIdType": {
+                    "title": "Monitoringgcsauthidtype",
+                    "type": "string"
+                },
+                "monitoringGSEnvironment": {
+                    "title": "Monitoringgsenvironment",
+                    "type": "string"
+                },
+                "namespace": {
+                    "title": "Namespace",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "config_version",
+                "moniker",
+                "namespace",
+                "monitoringGSEnvironment",
+                "monitoringGCSAccount",
+                "monitoringGCSAuthId",
+                "monitoringGCSAuthIdType"
+            ],
+            "title": "AzureMonitorExtensionConfig",
+            "type": "object"
+        },
+        "AzureSecurityExtensionConfig": {
+            "properties": {},
+            "title": "AzureSecurityExtensionConfig",
+            "type": "object"
+        },
+        "AzureVmExtensionConfig": {
+            "properties": {
+                "azure_monitor": {
+                    "$ref": "#/definitions/AzureMonitorExtensionConfig"
+                },
+                "azure_security": {
+                    "$ref": "#/definitions/AzureSecurityExtensionConfig"
+                },
+                "geneva": {
+                    "$ref": "#/definitions/GenevaExtensionConfig"
+                },
+                "keyvault": {
+                    "$ref": "#/definitions/KeyvaultExtensionConfig"
+                }
+            },
+            "title": "AzureVmExtensionConfig",
             "type": "object"
         },
         "BlobRef": {
@@ -4607,7 +5128,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "ErrorCode"
         },
         "EventCrashReported": {
-            "additionalProperties": false,
             "properties": {
                 "container": {
                     "title": "Container",
@@ -4633,7 +5153,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventFileAdded": {
-            "additionalProperties": false,
             "properties": {
                 "container": {
                     "title": "Container",
@@ -4651,8 +5170,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventFileAdded",
             "type": "object"
         },
+        "EventInstanceConfigUpdated": {
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/InstanceConfig"
+                }
+            },
+            "required": [
+                "config"
+            ],
+            "title": "EventInstanceConfigUpdated",
+            "type": "object"
+        },
         "EventJobCreated": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/JobConfig"
@@ -4674,7 +5204,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventJobStopped": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/JobConfig"
@@ -4703,7 +5232,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeCreated": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4728,7 +5256,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeDeleted": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4753,7 +5280,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeHeartbeat": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4778,7 +5304,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeStateUpdated": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4821,7 +5346,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventPoolCreated": {
-            "additionalProperties": false,
             "properties": {
                 "arch": {
                     "$ref": "#/definitions/Architecture"
@@ -4851,7 +5375,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventPoolDeleted": {
-            "additionalProperties": false,
             "properties": {
                 "pool_name": {
                     "title": "Pool Name",
@@ -4865,8 +5388,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventProxyCreated": {
-            "additionalProperties": false,
             "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
                 "region": {
                     "title": "Region",
                     "type": "string"
@@ -4879,8 +5406,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventProxyDeleted": {
-            "additionalProperties": false,
             "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
                 "region": {
                     "title": "Region",
                     "type": "string"
@@ -4893,10 +5424,14 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventProxyFailed": {
-            "additionalProperties": false,
             "properties": {
                 "error": {
                     "$ref": "#/definitions/Error"
+                },
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
                 },
                 "region": {
                     "title": "Region",
@@ -4910,8 +5445,30 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventProxyFailed",
             "type": "object"
         },
+        "EventProxyStateUpdated": {
+            "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/VmState"
+                }
+            },
+            "required": [
+                "region",
+                "proxy_id",
+                "state"
+            ],
+            "title": "EventProxyStateUpdated",
+            "type": "object"
+        },
         "EventRegressionReported": {
-            "additionalProperties": false,
             "properties": {
                 "container": {
                     "title": "Container",
@@ -4937,7 +5494,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventScalesetCreated": {
-            "additionalProperties": false,
             "properties": {
                 "image": {
                     "title": "Image",
@@ -4977,7 +5533,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventScalesetDeleted": {
-            "additionalProperties": false,
             "properties": {
                 "pool_name": {
                     "title": "Pool Name",
@@ -4997,7 +5552,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventScalesetFailed": {
-            "additionalProperties": false,
             "properties": {
                 "error": {
                     "$ref": "#/definitions/Error"
@@ -5020,8 +5574,54 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventScalesetFailed",
             "type": "object"
         },
+        "EventScalesetResizeScheduled": {
+            "properties": {
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                },
+                "size": {
+                    "title": "Size",
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name",
+                "size"
+            ],
+            "title": "EventScalesetResizeScheduled",
+            "type": "object"
+        },
+        "EventScalesetStateUpdated": {
+            "properties": {
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/ScalesetState"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name",
+                "state"
+            ],
+            "title": "EventScalesetStateUpdated",
+            "type": "object"
+        },
         "EventTaskCreated": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5049,7 +5649,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskFailed": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5081,7 +5680,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskHeartbeat": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5106,7 +5704,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskStateUpdated": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5140,7 +5737,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskStopped": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5181,9 +5777,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "proxy_created",
                 "proxy_deleted",
                 "proxy_failed",
+                "proxy_state_updated",
                 "scaleset_created",
                 "scaleset_deleted",
                 "scaleset_failed",
+                "scaleset_state_updated",
+                "scaleset_resize_scheduled",
                 "task_created",
                 "task_failed",
                 "task_state_updated",
@@ -5192,9 +5791,56 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "regression_reported",
                 "file_added",
                 "task_heartbeat",
-                "node_heartbeat"
+                "node_heartbeat",
+                "instance_config_updated"
             ],
             "title": "EventType"
+        },
+        "GenevaExtensionConfig": {
+            "properties": {},
+            "title": "GenevaExtensionConfig",
+            "type": "object"
+        },
+        "InstanceConfig": {
+            "properties": {
+                "admins": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Admins",
+                    "type": "array"
+                },
+                "allow_pool_management": {
+                    "default": true,
+                    "title": "Allow Pool Management",
+                    "type": "boolean"
+                },
+                "allowed_aad_tenants": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Allowed Aad Tenants",
+                    "type": "array"
+                },
+                "extensions": {
+                    "$ref": "#/definitions/AzureVmExtensionConfig"
+                },
+                "network_config": {
+                    "$ref": "#/definitions/NetworkConfig"
+                },
+                "proxy_vm_sku": {
+                    "default": "Standard_B2s",
+                    "title": "Proxy Vm Sku",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "allowed_aad_tenants"
+            ],
+            "title": "InstanceConfig",
+            "type": "object"
         },
         "JobConfig": {
             "properties": {
@@ -5203,6 +5849,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -5243,6 +5891,50 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "task_type"
             ],
             "title": "JobTaskStopped",
+            "type": "object"
+        },
+        "KeyvaultExtensionConfig": {
+            "properties": {
+                "cert_name": {
+                    "title": "Cert Name",
+                    "type": "string"
+                },
+                "cert_path": {
+                    "title": "Cert Path",
+                    "type": "string"
+                },
+                "extension_store": {
+                    "title": "Extension Store",
+                    "type": "string"
+                },
+                "keyvault_name": {
+                    "title": "Keyvault Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "keyvault_name",
+                "cert_name",
+                "cert_path",
+                "extension_store"
+            ],
+            "title": "KeyvaultExtensionConfig",
+            "type": "object"
+        },
+        "NetworkConfig": {
+            "properties": {
+                "address_space": {
+                    "default": "10.0.0.0/8",
+                    "title": "Address Space",
+                    "type": "string"
+                },
+                "subnet": {
+                    "default": "10.0.0.0/16",
+                    "title": "Subnet",
+                    "type": "string"
+                }
+            },
+            "title": "NetworkConfig",
             "type": "object"
         },
         "NoReproReport": {
@@ -5377,6 +6069,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Minimized Stack",
                     "type": "array"
                 },
+                "minimized_stack_function_lines": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Lines",
+                    "type": "array"
+                },
+                "minimized_stack_function_lines_sha256": {
+                    "title": "Minimized Stack Function Lines Sha256",
+                    "type": "string"
+                },
                 "minimized_stack_function_names": {
                     "items": {
                         "type": "string"
@@ -5418,6 +6121,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
             ],
             "title": "Report",
             "type": "object"
+        },
+        "ScalesetState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "setup",
+                "resize",
+                "running",
+                "shutdown",
+                "halt",
+                "creation_failed"
+            ],
+            "title": "ScalesetState"
         },
         "StatsFormat": {
             "description": "An enumeration.",
@@ -5543,10 +6259,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -5651,6 +6374,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -5707,6 +6431,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -5725,6 +6450,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -5777,6 +6503,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "title": "UserInfo",
             "type": "object"
+        },
+        "VmState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "extensions_launch",
+                "extensions_failed",
+                "vm_allocation_failed",
+                "running",
+                "stopping",
+                "stopped"
+            ],
+            "title": "VmState"
         }
     },
     "properties": {
@@ -5819,6 +6558,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "$ref": "#/definitions/EventProxyDeleted"
                 },
                 {
+                    "$ref": "#/definitions/EventProxyStateUpdated"
+                },
+                {
                     "$ref": "#/definitions/EventScalesetFailed"
                 },
                 {
@@ -5826,6 +6568,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventScalesetDeleted"
+                },
+                {
+                    "$ref": "#/definitions/EventScalesetStateUpdated"
+                },
+                {
+                    "$ref": "#/definitions/EventScalesetResizeScheduled"
                 },
                 {
                     "$ref": "#/definitions/EventTaskFailed"
@@ -5850,6 +6598,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventFileAdded"
+                },
+                {
+                    "$ref": "#/definitions/EventInstanceConfigUpdated"
                 }
             ],
             "title": "Event"

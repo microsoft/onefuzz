@@ -18,6 +18,7 @@ The following values are replaced with the specific values at runtime.
 * `{runtime_dir}`: Path to the runtime directory for the task
 * `{tools_dir}`: Path to the task specific `tools` directory
 * `{setup_dir}` : Path to the setup directory
+* `{coverage_dir}`: Path to the coverage directory for the task
 * `{job_id}`: UUID that indicates the Job ID
 * `{task_id}`: UUID that indicates the Task ID
 * `{reports_dir}`: Path to the directory to write crash reports
@@ -47,19 +48,28 @@ If you need `supervisor_options` to expand to: `"a", "b", "c", "d"`, you should 
 
 These are currently used in the following tasks:
 
-* libfuzzer\_fuzz: `target_exe`, `target_options`, `input_corpus`, `crashes`
-* libfuzzer\_crash\_report: `target_exe`, `target_options`, `input`
-* libfuzzer\_merge: `target_exe`, `target_options`, `input_corpus`
+* libfuzzer\_fuzz: `target_exe`, `target_options`, `input_corpus`, `crashes`,
+  `setup_dir`, `machine_id`
+* libfuzzer\_crash\_report: `target_exe`, `target_options`, `input`,
+  `setup_dir`, `machine_id`
+* libfuzzer\_merge: `target_exe`, `target_options`, `input_corpus`,
+  `setup_dir`, `machine_id`
 * libfuzzer\_coverage: None
 * generic\_analysis: `input`, `target_exe`, `target_options`, `analyzer_exe`,
   `analyzer_options`, `output_dir`, `tools_dir`, `job_id`, `task_id`,
-  `crashes_account`, `crashes_container`, `reports_dir`, `microsoft_telemetry_key`, `instance_telemetry_key`
+  `crashes_account`, `crashes_container`, `reports_dir`,
+  `microsoft_telemetry_key`, `instance_telemetry_key`, `setup_dir`,
+  `machine_id`
 * generic\_generator: `generated_inputs`, `input_corpus`, `tools_dir`,
   `generator_exe`, `generator_options`, `target_exe`, `target_options`,
-  `input`, `job_id`, `task_id`, `microsoft_telemetry_key`, `instance_telemetry_key`
+  `input`, `job_id`, `task_id`, `microsoft_telemetry_key`,
+  `instance_telemetry_key`, `setup_dir`, `machine_id`
 * generic\_supervisor: `crashes`, `runtime_dir`, `target_exe`, `target_options`,
   `input_corpus`, `input`, `supervisor_exe`, `supervisor_options`, `tools_dir`,
-  `job_id`, `task_id`, `crashes_account`, `crashes_container`, `reports_dir`, `microsoft_telemetry_key`, `instance_telemetry_key`
+  `job_id`, `task_id`, `crashes_account`, `crashes_container`, `reports_dir`,
+  `microsoft_telemetry_key`, `instance_telemetry_key`, `setup_dir`,
+  `coverage_dir`, `machine_id`
 * generic\_merge: `input`, `input_corpus`, `output_dir`, `target_exe`,
   `target_options`, `supervisor_exe`, `supervisor_options`, `tools_dir`,
-  `job_id`, `task_id`, `microsoft_telemetry_key`, `instance_telemetry_key`
+  `job_id`, `task_id`, `microsoft_telemetry_key`, `instance_telemetry_key`,
+  `setup_dir`, `machine_id`

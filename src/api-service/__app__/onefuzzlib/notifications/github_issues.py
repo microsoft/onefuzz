@@ -128,7 +128,5 @@ def github_issue(
     try:
         handler = GithubIssue(config, container, filename, report)
         handler.process()
-    except GitHubException as err:
-        fail_task(report, err)
-    except ValueError as err:
+    except (GitHubException, ValueError) as err:
         fail_task(report, err)

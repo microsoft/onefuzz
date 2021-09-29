@@ -1,35 +1,55 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::time::Duration;
-
-use anyhow::Result;
-use clap::{App, Arg, SubCommand};
-use crossterm::tty::IsTty;
-use tokio::{select, time::timeout};
-
 use crate::local::{
     common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
-    libfuzzer, libfuzzer_coverage, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge,
-    libfuzzer_regression, libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
+    libfuzzer, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge, libfuzzer_regression,
+    libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
 };
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+use crate::local::{coverage, libfuzzer_coverage};
+use anyhow::{Context, Result};
+use clap::{App, Arg, SubCommand};
+use crossterm::tty::IsTty;
+use std::str::FromStr;
+use std::time::Duration;
+use strum::IntoEnumIterator;
+use strum_macros::{EnumIter, EnumString, IntoStaticStr};
+use tokio::{select, time::timeout};
 
-const RADAMSA: &str = "radamsa";
-const LIBFUZZER: &str = "libfuzzer";
-const LIBFUZZER_FUZZ: &str = "libfuzzer-fuzz";
-const LIBFUZZER_CRASH_REPORT: &str = "libfuzzer-crash-report";
-const LIBFUZZER_COVERAGE: &str = "libfuzzer-coverage";
-const LIBFUZZER_MERGE: &str = "libfuzzer-merge";
-const LIBFUZZER_TEST_INPUT: &str = "libfuzzer-test-input";
-const LIBFUZZER_REGRESSION: &str = "libfuzzer-regression";
-const GENERIC_CRASH_REPORT: &str = "crash-report";
-const GENERIC_GENERATOR: &str = "generator";
-const GENERIC_ANALYSIS: &str = "analysis";
-const GENERIC_TEST_INPUT: &str = "test-input";
+#[derive(Debug, PartialEq, EnumString, IntoStaticStr, EnumIter)]
+#[strum(serialize_all = "kebab-case")]
+enum Commands {
+    Radamsa,
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    Coverage,
+    LibfuzzerFuzz,
+    LibfuzzerMerge,
+    LibfuzzerCrashReport,
+    LibfuzzerTestInput,
+    LibfuzzerRegression,
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    LibfuzzerCoverage,
+    Libfuzzer,
+    CrashReport,
+    Generator,
+    Analysis,
+    TestInput,
+}
+
 const TIMEOUT: &str = "timeout";
 
 pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
     let running_duration = value_t!(args, TIMEOUT, u64).ok();
+
+    let (cmd, sub_args) = args.subcommand();
+    let command =
+        Commands::from_str(cmd).with_context(|| format!("unexpected subcommand: {}", cmd))?;
+
+    let sub_args = sub_args
+        .ok_or_else(|| anyhow!("missing subcommand arguments"))?
+        .to_owned();
+
     let terminal = if std::io::stdout().is_tty() {
         Some(TerminalUi::init()?)
     } else {
@@ -38,24 +58,28 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
     };
     let event_sender = terminal.as_ref().map(|t| t.task_events.clone());
     let command_run = tokio::spawn(async move {
-        match args.subcommand() {
-            (RADAMSA, Some(sub)) => radamsa::run(sub, event_sender).await,
-            (LIBFUZZER, Some(sub)) => libfuzzer::run(sub, event_sender).await,
-            (LIBFUZZER_FUZZ, Some(sub)) => libfuzzer_fuzz::run(sub, event_sender).await,
-            (LIBFUZZER_COVERAGE, Some(sub)) => libfuzzer_coverage::run(sub, event_sender).await,
-            (LIBFUZZER_CRASH_REPORT, Some(sub)) => {
-                libfuzzer_crash_report::run(sub, event_sender).await
+        match command {
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
+            Commands::Coverage => coverage::run(&sub_args, event_sender).await,
+            Commands::Radamsa => radamsa::run(&sub_args, event_sender).await,
+            Commands::LibfuzzerCrashReport => {
+                libfuzzer_crash_report::run(&sub_args, event_sender).await
             }
-            (LIBFUZZER_MERGE, Some(sub)) => libfuzzer_merge::run(sub, event_sender).await,
-            (GENERIC_ANALYSIS, Some(sub)) => generic_analysis::run(sub, event_sender).await,
-            (GENERIC_CRASH_REPORT, Some(sub)) => generic_crash_report::run(sub, event_sender).await,
-            (GENERIC_GENERATOR, Some(sub)) => generic_generator::run(sub, event_sender).await,
-            (GENERIC_TEST_INPUT, Some(sub)) => test_input::run(sub, event_sender).await,
-            (LIBFUZZER_TEST_INPUT, Some(sub)) => libfuzzer_test_input::run(sub, event_sender).await,
-            (LIBFUZZER_REGRESSION, Some(sub)) => libfuzzer_regression::run(sub, event_sender).await,
-            _ => {
-                anyhow::bail!("missing subcommand\nUSAGE: {}", args.usage());
+            Commands::LibfuzzerFuzz => libfuzzer_fuzz::run(&sub_args, event_sender).await,
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
+            Commands::LibfuzzerCoverage => libfuzzer_coverage::run(&sub_args, event_sender).await,
+            Commands::LibfuzzerMerge => libfuzzer_merge::run(&sub_args, event_sender).await,
+            Commands::LibfuzzerTestInput => {
+                libfuzzer_test_input::run(&sub_args, event_sender).await
             }
+            Commands::LibfuzzerRegression => {
+                libfuzzer_regression::run(&sub_args, event_sender).await
+            }
+            Commands::Libfuzzer => libfuzzer::run(&sub_args, event_sender).await,
+            Commands::CrashReport => generic_crash_report::run(&sub_args, event_sender).await,
+            Commands::Generator => generic_generator::run(&sub_args, event_sender).await,
+            Commands::Analysis => generic_analysis::run(&sub_args, event_sender).await,
+            Commands::TestInput => test_input::run(&sub_args, event_sender).await,
         }
     });
 
@@ -84,36 +108,35 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
 }
 
 pub fn args(name: &str) -> App<'static, 'static> {
-    SubCommand::with_name(name)
+    let mut cmd = SubCommand::with_name(name)
         .about("pre-release local fuzzing")
         .arg(
             Arg::with_name(TIMEOUT)
                 .long(TIMEOUT)
                 .help("The maximum running time in seconds")
                 .takes_value(true),
-        )
-        .subcommand(add_common_config(radamsa::args(RADAMSA)))
-        .subcommand(add_common_config(libfuzzer::args(LIBFUZZER)))
-        .subcommand(add_common_config(libfuzzer_fuzz::args(LIBFUZZER_FUZZ)))
-        .subcommand(add_common_config(libfuzzer_coverage::args(
-            LIBFUZZER_COVERAGE,
-        )))
-        .subcommand(add_common_config(libfuzzer_merge::args(LIBFUZZER_MERGE)))
-        .subcommand(add_common_config(libfuzzer_regression::args(
-            LIBFUZZER_REGRESSION,
-        )))
-        .subcommand(add_common_config(libfuzzer_crash_report::args(
-            LIBFUZZER_CRASH_REPORT,
-        )))
-        .subcommand(add_common_config(generic_crash_report::args(
-            GENERIC_CRASH_REPORT,
-        )))
-        .subcommand(add_common_config(generic_generator::args(
-            GENERIC_GENERATOR,
-        )))
-        .subcommand(add_common_config(generic_analysis::args(GENERIC_ANALYSIS)))
-        .subcommand(add_common_config(test_input::args(GENERIC_TEST_INPUT)))
-        .subcommand(add_common_config(libfuzzer_test_input::args(
-            LIBFUZZER_TEST_INPUT,
-        )))
+        );
+
+    for subcommand in Commands::iter() {
+        let app = match subcommand {
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
+            Commands::Coverage => coverage::args(subcommand.into()),
+            Commands::Radamsa => radamsa::args(subcommand.into()),
+            Commands::LibfuzzerCrashReport => libfuzzer_crash_report::args(subcommand.into()),
+            Commands::LibfuzzerFuzz => libfuzzer_fuzz::args(subcommand.into()),
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
+            Commands::LibfuzzerCoverage => libfuzzer_coverage::args(subcommand.into()),
+            Commands::LibfuzzerMerge => libfuzzer_merge::args(subcommand.into()),
+            Commands::LibfuzzerTestInput => libfuzzer_test_input::args(subcommand.into()),
+            Commands::LibfuzzerRegression => libfuzzer_regression::args(subcommand.into()),
+            Commands::Libfuzzer => libfuzzer::args(subcommand.into()),
+            Commands::CrashReport => generic_crash_report::args(subcommand.into()),
+            Commands::Generator => generic_generator::args(subcommand.into()),
+            Commands::Analysis => generic_analysis::args(subcommand.into()),
+            Commands::TestInput => test_input::args(subcommand.into()),
+        };
+        cmd = cmd.subcommand(add_common_config(app));
+    }
+
+    cmd
 }

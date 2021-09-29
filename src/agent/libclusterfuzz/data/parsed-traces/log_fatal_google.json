@@ -77,6 +77,10 @@
     "Frame",
     "path.cc"
   ],
+  "minimized_stack_function_lines": [
+    "Frame(int) path.cc:87:9",
+    "path.cc path.cc:98:1"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

@@ -116,8 +116,9 @@ impl fmt::Display for BlobUrl {
 ///
 /// Use to validate a URL and address contained blobs.
 #[derive(Clone, Eq, PartialEq)]
-pub struct BlobContainerUrl {
-    url: Url,
+pub enum BlobContainerUrl {
+    BlobContainer(Url),
+    Path(PathBuf),
 }
 
 impl BlobContainerUrl {
@@ -126,11 +127,19 @@ impl BlobContainerUrl {
             bail!("Invalid container URL: {}", url);
         }
 
-        Ok(Self { url })
+        if let Ok(path) = url.to_file_path() {
+            Ok(Self::Path(path))
+        } else {
+            Ok(Self::BlobContainer(url))
+        }
     }
 
     pub fn as_file_path(&self) -> Option<PathBuf> {
-        self.url.to_file_path().ok()
+        if let Self::Path(p) = self {
+            Some(p.clone())
+        } else {
+            None
+        }
     }
 
     pub fn parse(url: impl AsRef<str>) -> Result<Self> {
@@ -139,55 +148,54 @@ impl BlobContainerUrl {
         Self::new(url)
     }
 
-    pub fn url(&self) -> &Url {
-        &self.url
+    pub fn url(&self) -> Result<Url> {
+        match self {
+            Self::BlobContainer(url) => Ok(url.clone()),
+            Self::Path(p) => Ok(Url::from_file_path(p)
+                .map_err(|err| anyhow!("invalid path.  path:{} error:{:?}", p.display(), err))?),
+        }
     }
 
     pub fn account(&self) -> Option<String> {
-        if self.as_file_path().is_some() {
-            None
-        } else {
-            // Ctor checks that domain has at least one subdomain.
-            Some(
-                self.url
-                    .domain()
-                    .unwrap()
-                    .split('.')
-                    .next()
-                    .unwrap()
-                    .to_owned(),
-            )
+        match self {
+            Self::BlobContainer(url) => {
+                // Ctor checks that domain has at least one subdomain.
+                Some(url.domain().unwrap().split('.').next().unwrap().to_owned())
+            }
+            Self::Path(_p) => None,
         }
     }
 
     pub fn container(&self) -> Option<String> {
-        if self.as_file_path().is_some() {
-            None
-        } else {
-            Some(self.url.path_segments().unwrap().next().unwrap().to_owned())
+        match self {
+            Self::BlobContainer(url) => {
+                Some(url.path_segments().unwrap().next().unwrap().to_owned())
+            }
+            Self::Path(_p) => None,
         }
     }
 
     pub fn blob(&self, name: impl AsRef<str>) -> BlobUrl {
-        let mut url = self.url.clone();
-        name.as_ref().split('/').fold(
-            &mut url.path_segments_mut().unwrap(), // Checked in ctor
-            |segments, current| segments.push(current),
-        );
-
-        BlobUrl::new(url).expect("invalid blob URL from valid container")
-    }
-}
-
-impl AsRef<Url> for BlobContainerUrl {
-    fn as_ref(&self) -> &Url {
-        self.url()
+        match self {
+            Self::BlobContainer(url) => {
+                let mut url = url.clone();
+                name.as_ref().split('/').fold(
+                    &mut url.path_segments_mut().unwrap(), // Checked in ctor
+                    |segments, current| segments.push(current),
+                );
+                BlobUrl::AzureBlob(url)
+            }
+            Self::Path(p) => BlobUrl::LocalFile(p.join(name.as_ref())),
+        }
     }
 }
 
 impl fmt::Debug for BlobContainerUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", redact_query_sas_sig(self.url()))
+        match self {
+            Self::BlobContainer(url) => write!(f, "{}", redact_query_sas_sig(url)),
+            Self::Path(p) => write!(f, "{}", p.display()),
+        }
     }
 }
 
@@ -203,13 +211,7 @@ impl fmt::Display for BlobContainerUrl {
     }
 }
 
-impl From<BlobContainerUrl> for Url {
-    fn from(container: BlobContainerUrl) -> Self {
-        container.url
-    }
-}
-
-fn redact_query_sas_sig(url: &Url) -> Url {
+pub fn redact_query_sas_sig(url: &Url) -> Url {
     let mut redacted = url.clone();
     redacted.set_query(None);
 
@@ -292,8 +294,13 @@ impl Serialize for BlobContainerUrl {
     where
         S: Serializer,
     {
-        let url = self.url.to_string();
-        serializer.serialize_str(&url)
+        match self {
+            Self::Path(p) => serializer.serialize_str(p.to_str().unwrap_or_default()),
+            Self::BlobContainer(url) => {
+                let url = url.to_string();
+                serializer.serialize_str(&url)
+            }
+        }
     }
 }
 

@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::sha256::digest_file_blocking;
-use anyhow::Result;
+use crate::{machine_id::get_machine_id, sha256::digest_file_blocking};
+use anyhow::{format_err, Context, Result};
 use onefuzz_telemetry::{InstanceTelemetryKey, MicrosoftTelemetryKey};
 use std::path::{Path, PathBuf};
 use std::{collections::HashMap, hash::Hash};
@@ -14,7 +14,7 @@ pub enum ExpandedValue<'a> {
     Path(String),
     Scalar(String),
     List(&'a [String]),
-    Mapping(Box<dyn Fn(&Expand<'a>, &str) -> Option<ExpandedValue<'a>> + Send>),
+    Mapping(Box<dyn Fn(&Expand<'a>, &str) -> Result<Option<ExpandedValue<'a>>> + Send>),
 }
 
 #[derive(PartialEq, Eq, Hash, EnumIter)]
@@ -32,6 +32,7 @@ pub enum PlaceHolder {
     InputFileName,
     RuntimeDir,
     ToolsDir,
+    CoverageDir,
     GeneratorExe,
     GeneratorOptions,
     SupervisorExe,
@@ -40,6 +41,7 @@ pub enum PlaceHolder {
     ReportsDir,
     JobId,
     TaskId,
+    MachineId,
     CrashesContainer,
     CrashesAccount,
     MicrosoftTelemetryKey,
@@ -48,7 +50,7 @@ pub enum PlaceHolder {
 }
 
 impl PlaceHolder {
-    fn get_string(&self) -> String {
+    pub fn get_string(&self) -> String {
         match self {
             Self::Input => "{input}",
             Self::Crashes => "{crashes}",
@@ -63,6 +65,7 @@ impl PlaceHolder {
             Self::InputFileName => "{input_file_name}",
             Self::RuntimeDir => "{runtime_dir}",
             Self::ToolsDir => "{tools_dir}",
+            Self::CoverageDir => "{coverage_dir}",
             Self::GeneratorExe => "{generator_exe}",
             Self::GeneratorOptions => "{generator_options}",
             Self::SupervisorExe => "{supervisor_exe}",
@@ -71,6 +74,7 @@ impl PlaceHolder {
             Self::ReportsDir => "{reports_dir}",
             Self::JobId => "{job_id}",
             Self::TaskId => "{task_id}",
+            Self::MachineId => "{machine_id}",
             Self::CrashesContainer => "{crashes_container}",
             Self::CrashesAccount => "{crashes_account}",
             Self::MicrosoftTelemetryKey => "{microsoft_telemetry_key}",
@@ -106,41 +110,68 @@ impl<'a> Expand<'a> {
             PlaceHolder::InputFileSha256.get_string(),
             ExpandedValue::Mapping(Box::new(Expand::input_file_sha256)),
         );
+        values.insert(
+            PlaceHolder::MachineId.get_string(),
+            ExpandedValue::Mapping(Box::new(Expand::machine_id)),
+        );
+
         Self { values }
     }
 
-    fn input_file_sha256(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
-        match self.values.get(&PlaceHolder::Input.get_string()) {
-            Some(ExpandedValue::Path(fp)) => {
-                let file = PathBuf::from(fp);
-                digest_file_blocking(file).ok().map(ExpandedValue::Scalar)
-            }
-            _ => None,
-        }
+    // Note: this spawns it's own tokio runtime as it's not really workable to
+    // refactor the get_machine_id into a blockable version, however... as this
+    // is implemented as a ExpandedValue::Mapping, launching a tokio runtime
+    // occurs when users actively attempt to expand {machine_id}.
+    fn machine_id(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
+        let rt = tokio::runtime::Runtime::new()?;
+        let machine_id = rt.block_on(get_machine_id())?;
+        let value = machine_id.to_hyphenated().to_string();
+        Ok(Some(ExpandedValue::Scalar(value)))
     }
 
-    fn extract_file_name_no_ext(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
-        match self.values.get(&PlaceHolder::Input.get_string()) {
+    fn input_file_sha256(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
+        let val = match self.values.get(&PlaceHolder::Input.get_string()) {
             Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
-                let stem = file.file_stem()?;
-                let name_as_str = String::from(stem.to_str()?);
+                let hash = digest_file_blocking(file)?;
+                Some(ExpandedValue::Scalar(hash))
+            }
+            _ => None,
+        };
+
+        Ok(val)
+    }
+
+    fn extract_file_name_no_ext(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
+        let val = match self.values.get(&PlaceHolder::Input.get_string()) {
+            Some(ExpandedValue::Path(fp)) => {
+                let file = PathBuf::from(fp);
+                let stem = file
+                    .file_stem()
+                    .ok_or_else(|| format_err!("missing file stem: {}", file.display()))?;
+                let name_as_str = stem.to_string_lossy().to_string();
                 Some(ExpandedValue::Scalar(name_as_str))
             }
             _ => None,
-        }
+        };
+
+        Ok(val)
     }
 
-    fn extract_file_name(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
-        match self.values.get(&PlaceHolder::Input.get_string()) {
+    fn extract_file_name(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
+        let val = match self.values.get(&PlaceHolder::Input.get_string()) {
             Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
-                let name = file.file_name()?;
-                let name_as_str = String::from(name.to_str()?);
+                let name = file
+                    .file_name()
+                    .ok_or_else(|| format_err!("missing file name: {}", file.display()))?;
+                let name_as_str = name.to_string_lossy().to_string();
                 Some(ExpandedValue::Scalar(name_as_str))
             }
             _ => None,
-        }
+        };
+
+        Ok(val)
     }
 
     pub fn set_value(self, name: PlaceHolder, value: ExpandedValue<'a>) -> Self {
@@ -267,6 +298,12 @@ impl<'a> Expand<'a> {
         self.set_value(PlaceHolder::SetupDir, ExpandedValue::Path(path))
     }
 
+    pub fn coverage_dir(self, arg: impl AsRef<Path>) -> Self {
+        let arg = arg.as_ref();
+        let path = String::from(arg.to_string_lossy());
+        self.set_value(PlaceHolder::CoverageDir, ExpandedValue::Path(path))
+    }
+
     pub fn task_id(self, arg: &Uuid) -> Self {
         let value = arg.to_hyphenated().to_string();
         self.set_value(PlaceHolder::TaskId, ExpandedValue::Scalar(value))
@@ -284,6 +321,7 @@ impl<'a> Expand<'a> {
             ExpandedValue::Scalar(value),
         )
     }
+
     pub fn instance_telemetry_key(self, arg: &InstanceTelemetryKey) -> Self {
         let value = arg.to_string();
         self.set_value(
@@ -314,12 +352,18 @@ impl<'a> Expand<'a> {
     ) -> Result<String> {
         match ev {
             ExpandedValue::Path(v) => {
-                let path = String::from(dunce::canonicalize(v)?.to_string_lossy());
+                let path = String::from(
+                    dunce::canonicalize(&v)
+                        .with_context(|| {
+                            format!("unable to canonicalize path during extension: {}", v)
+                        })?
+                        .to_string_lossy(),
+                );
                 arg = arg.replace(fmtstr, &path);
                 Ok(arg)
             }
             ExpandedValue::Scalar(v) => {
-                arg = arg.replace(fmtstr, &v);
+                arg = arg.replace(fmtstr, v);
                 Ok(arg)
             }
             ExpandedValue::List(value) => {
@@ -329,7 +373,7 @@ impl<'a> Expand<'a> {
                 Ok(arg)
             }
             ExpandedValue::Mapping(func) => {
-                if let Some(value) = func(self, &fmtstr) {
+                if let Some(value) = func(self, fmtstr)? {
                     let arg = self.replace_value(fmtstr, arg, &value)?;
                     Ok(arg)
                 } else {
@@ -348,7 +392,11 @@ impl<'a> Expand<'a> {
                 arg.contains(fmtstr),
                 self.values.get(&placeholder.get_string()),
             ) {
-                (true, Some(ev)) => arg = self.replace_value(fmtstr, arg, ev)?,
+                (true, Some(ev)) => {
+                    arg = self
+                        .replace_value(fmtstr, arg.clone(), ev)
+                        .with_context(|| format!("replace_value failed: {} {}", fmtstr, arg))?
+                }
                 (true, None) => bail!("missing argument {}", fmtstr),
                 (false, _) => (),
             }
@@ -359,7 +407,9 @@ impl<'a> Expand<'a> {
     pub fn evaluate<T: AsRef<str>>(&self, args: &[T]) -> Result<Vec<String>> {
         let mut result = Vec::new();
         for arg in args {
-            let arg = self.evaluate_value(arg)?;
+            let arg = self
+                .evaluate_value(arg)
+                .with_context(|| format!("evaluating argument failed: {}", arg.as_ref()))?;
             result.push(arg);
         }
         Ok(result)
@@ -371,6 +421,7 @@ mod tests {
     use super::Expand;
     use anyhow::{Context, Result};
     use std::path::Path;
+    use uuid::Uuid;
 
     #[test]
     fn test_expand_nested() -> Result<()> {
@@ -455,6 +506,24 @@ mod tests {
 
         assert!(Expand::new().evaluate(&my_args).is_err());
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_expand_in_string() -> Result<()> {
+        let result = Expand::new()
+            .input_path("src/lib.rs")
+            .evaluate_value("a {input} b")?;
+        assert!(result.contains("lib.rs"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_expand_machine_id() -> Result<()> {
+        // verify {machine_id} expands to a UUID, but don't worry about the
+        // actual value of the UUID
+        let result = Expand::new().evaluate_value("{machine_id}")?;
+        Uuid::parse_str(&result)?;
         Ok(())
     }
 }

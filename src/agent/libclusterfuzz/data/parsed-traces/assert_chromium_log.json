@@ -134,6 +134,9 @@
   "minimized_stack_function_names": [
     "correctness_fuzzer.cc"
   ],
+  "minimized_stack_function_lines": [
+    "correctness_fuzzer.cc correctness_fuzzer.cc:51:3"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

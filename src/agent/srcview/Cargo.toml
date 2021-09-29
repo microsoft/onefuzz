@@ -1,0 +1,21 @@
+[package]
+name = "srcview"
+version = "0.1.0"
+edition = "2018"
+license = "MIT"
+
+[features]
+# Feature to gate tests that depend on binary artifacts, should be removed when
+# #1143 is resolved.
+binary-tests = []
+
+[dependencies]
+log = "0.4"
+nom = "7"
+pdb = "0.7"
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+xml-rs = "0.8"
+anyhow = "1.0"
+structopt = "0.3"
+env_logger = "0.9"

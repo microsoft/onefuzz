@@ -27,6 +27,10 @@ pub fn onefuzz_etc() -> Result<PathBuf> {
     Ok(onefuzz_root()?.join("etc"))
 }
 
+pub fn onefuzz_logs() -> Result<PathBuf> {
+    Ok(onefuzz_root()?.join("logs"))
+}
+
 pub async fn has_files(path: impl AsRef<Path>) -> Result<bool> {
     let path = path.as_ref();
     let mut paths = fs::read_dir(&path)
@@ -66,7 +70,7 @@ pub async fn list_files(path: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
     Ok(files)
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 pub async fn set_executable(path: impl AsRef<Path>) -> Result<()> {
     let path = path.as_ref();
 
@@ -173,7 +177,7 @@ impl OwnedDir {
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 pub async fn sync_impl(
     src: impl AsRef<OsStr>,
     dst: impl AsRef<OsStr>,
@@ -214,7 +218,7 @@ pub async fn sync_impl(
     Ok(())
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(target_family = "windows")]
 pub async fn sync_impl(
     src: impl AsRef<OsStr>,
     dst: impl AsRef<OsStr>,

@@ -68,6 +68,8 @@ class Integration(BaseModel):
     disable_check_debugger: Optional[bool] = Field(default=False)
     reboot_after_setup: Optional[bool] = Field(default=False)
     test_repro: Optional[bool] = Field(default=True)
+    target_options: Optional[List[str]]
+    inject_fake_regression: bool = Field(default=False)
 
 
 TARGETS: Dict[str, Integration] = {
@@ -89,6 +91,20 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.inputs: 2,
         },
         reboot_after_setup=True,
+        inject_fake_regression=True,
+    ),
+    "linux-libfuzzer-with-options": Integration(
+        template=TemplateType.libfuzzer,
+        os=OS.linux,
+        target_exe="fuzz.exe",
+        inputs="seeds",
+        wait_for_files={
+            ContainerType.unique_reports: 1,
+            ContainerType.coverage: 1,
+            ContainerType.inputs: 2,
+        },
+        reboot_after_setup=True,
+        target_options=["-runs=10000000"],
     ),
     "linux-libfuzzer-dlopen": Integration(
         template=TemplateType.libfuzzer,
@@ -147,6 +163,7 @@ TARGETS: Dict[str, Integration] = {
         target_exe="fuzz.exe",
         inputs="seeds",
         wait_for_files={ContainerType.unique_reports: 1},
+        inject_fake_regression=True,
     ),
     "linux-trivial-crash-asan": Integration(
         template=TemplateType.radamsa,
@@ -167,6 +184,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.unique_reports: 1,
             ContainerType.coverage: 1,
         },
+        inject_fake_regression=True,
     ),
     "windows-libfuzzer-linked-library": Integration(
         template=TemplateType.libfuzzer,
@@ -198,6 +216,7 @@ TARGETS: Dict[str, Integration] = {
         target_exe="fuzz.exe",
         inputs="seeds",
         wait_for_files={ContainerType.unique_reports: 1},
+        inject_fake_regression=True,
     ),
 }
 
@@ -230,7 +249,7 @@ class TestOnefuzz:
     def launch(
         self, path: Directory, *, os_list: List[OS], targets: List[str], duration=int
     ) -> None:
-        """ Launch all of the fuzzing templates """
+        """Launch all of the fuzzing templates"""
         for target, config in TARGETS.items():
             if target not in targets:
                 continue
@@ -264,6 +283,7 @@ class TestOnefuzz:
                     duration=duration,
                     vm_count=1,
                     reboot_after_setup=config.reboot_after_setup or False,
+                    target_options=config.target_options,
                 )
             elif config.template == TemplateType.libfuzzer_dotnet:
                 if setup is None:
@@ -278,6 +298,7 @@ class TestOnefuzz:
                     setup_dir=setup,
                     duration=duration,
                     vm_count=1,
+                    target_options=config.target_options,
                 )
             elif config.template == TemplateType.libfuzzer_qemu_user:
                 job = self.of.template.libfuzzer.qemu_user(
@@ -289,6 +310,7 @@ class TestOnefuzz:
                     target_exe=target_exe,
                     duration=duration,
                     vm_count=1,
+                    target_options=config.target_options,
                 )
             elif config.template == TemplateType.radamsa:
                 job = self.of.template.radamsa.basic(
@@ -315,9 +337,13 @@ class TestOnefuzz:
                     setup_dir=setup,
                     duration=duration,
                     vm_count=1,
+                    target_options=config.target_options,
                 )
             else:
                 raise NotImplementedError
+
+            if config.inject_fake_regression and job is not None:
+                self.of.debug.notification.job(job.job_id)
 
             if not job:
                 raise Exception("missing job")
@@ -346,10 +372,11 @@ class TestOnefuzz:
         # check if the task itself has an error
         if task.error is not None:
             self.logger.error(
-                "task failed: %s - %s (%s)",
+                "task failed: %s - %s (%s) - %s",
                 job.config.name,
                 task.config.task.type.name,
                 task.error,
+                task.task_id,
             )
             return TaskTestState.failed
 
@@ -364,7 +391,7 @@ class TestOnefuzz:
     def check_jobs(
         self, poll: bool = False, stop_on_complete_check: bool = False
     ) -> bool:
-        """ Check all of the integration jobs """
+        """Check all of the integration jobs"""
         jobs: Dict[UUID, Job] = {x.job_id: x for x in self.get_jobs()}
         job_tasks: Dict[UUID, List[Task]] = {}
         check_containers: Dict[UUID, Dict[Container, Tuple[ContainerWrapper, int]]] = {}
@@ -647,7 +674,7 @@ class TestOnefuzz:
         return pools
 
     def cleanup(self) -> None:
-        """ cleanup all of the integration pools & jobs """
+        """cleanup all of the integration pools & jobs"""
 
         self.logger.info("cleaning up")
         errors: List[Exception] = []
@@ -772,7 +799,7 @@ class TestOnefuzz:
             # which relate to azure-retry issues
             if (
                 message.startswith("Client-Request-ID=")
-                and "ResourceNotFound" in message
+                and ("ResourceNotFound" in message or "TableAlreadyExists" in message)
                 and entry.get("sdkVersion", "").startswith("azurefunctions")
             ):
                 continue

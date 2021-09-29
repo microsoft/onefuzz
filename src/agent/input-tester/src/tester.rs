@@ -14,11 +14,12 @@ use std::{
     fs,
     io::Write,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, RwLock},
     time::Duration,
 };
 
 use anyhow::{Context, Result};
+use coverage::cache::ModuleCache;
 use log::{error, info, trace, warn};
 use num_cpus;
 use rayon::{prelude::*, ThreadPoolBuilder};
@@ -70,6 +71,7 @@ pub struct Tester {
     ignore_first_chance_exceptions: bool,
     appverif_controller: Option<AppVerifierController>,
     bugs_found_dir: PathBuf,
+    module_cache: RwLock<ModuleCache>,
 }
 
 impl Tester {
@@ -81,6 +83,7 @@ impl Tester {
         max_run_s: u64,
         ignore_first_chance_exceptions: bool,
         app_verifier_tests: Option<Vec<String>>,
+        module_cache: ModuleCache,
     ) -> Result<Arc<Self>> {
         let mut bugs_found_dir = output_dir.to_path_buf();
         bugs_found_dir.push("bugs_found");
@@ -115,6 +118,7 @@ impl Tester {
             max_run_s,
             ignore_first_chance_exceptions,
             bugs_found_dir,
+            module_cache: RwLock::new(module_cache),
         }))
     }
 
@@ -122,13 +126,18 @@ impl Tester {
     pub fn test_application(&self, input_path: impl AsRef<Path>) -> Result<InputTestResult> {
         let app_args = args_with_input_file_applied(&self.driver_args, &input_path)?;
 
+        let mut module_cache = self
+            .module_cache
+            .write()
+            .map_err(|err| anyhow::format_err!("{:?}", err))?;
+
         crash_detector::test_process(
             &self.driver,
             &app_args,
             &self.driver_env,
             Duration::from_secs(self.max_run_s),
             self.ignore_first_chance_exceptions,
-            None,
+            Some(&mut *module_cache),
         )
         .and_then(|result| {
             let result = InputTestResult::new(result, PathBuf::from(input_path.as_ref()));
@@ -254,7 +263,7 @@ impl Tester {
             .context("Writing markdown summary for crash/timeout.")?;
 
         // Create a batch file to help reproduce the bug with the settings we used.
-        self.create_repro_bat(&log_dir, &result.input_path, &deduped_input_path)?;
+        self.create_repro_bat(log_dir, &result.input_path, deduped_input_path)?;
 
         Ok(())
     }
@@ -378,9 +387,9 @@ impl Tester {
                 let mut logs_dir = PathBuf::from(&copied_file);
                 logs_dir.set_file_name(format!(
                     "{}-logs",
-                    logs_dir.file_stem().unwrap().to_str().unwrap()
+                    logs_dir.file_stem().unwrap().to_string_lossy()
                 ));
-                self.create_test_failure_artifacts(&logs_dir, &result, &copied_file)?;
+                self.create_test_failure_artifacts(&logs_dir, result, &copied_file)?;
                 Ok(Some(new_test_result(
                     result.debugger_result.clone(),
                     &result.input_path,

@@ -54,7 +54,7 @@ impl Scheduler {
         Self::default()
     }
 
-    pub async fn execute_command(&mut self, cmd: NodeCommand) -> Result<()> {
+    pub async fn execute_command(&mut self, cmd: &NodeCommand) -> Result<()> {
         match cmd {
             NodeCommand::AddSshKey(ssh_key_info) => {
                 add_ssh_key(ssh_key_info).await?;
@@ -70,6 +70,15 @@ impl Scheduler {
                     ctx: Done { cause },
                 };
                 *self = state.into();
+            }
+            NodeCommand::StopIfFree {} => {
+                if let Scheduler::Free(_) = self {
+                    let cause = DoneCause::Stopped;
+                    let state = State {
+                        ctx: Done { cause },
+                    };
+                    *self = state.into();
+                }
             }
         }
 

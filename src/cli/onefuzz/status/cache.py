@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import json
 import logging
 from datetime import datetime
 from enum import Enum
@@ -15,7 +16,6 @@ from onefuzztypes.events import (
     EventFileAdded,
     EventJobCreated,
     EventJobStopped,
-    EventMessage,
     EventNodeCreated,
     EventNodeDeleted,
     EventNodeStateUpdated,
@@ -25,7 +25,7 @@ from onefuzztypes.events import (
     EventTaskFailed,
     EventTaskStateUpdated,
     EventTaskStopped,
-    EventType,
+    parse_event_message,
 )
 from onefuzztypes.models import (
     Job,
@@ -39,7 +39,7 @@ from onefuzztypes.models import (
 from onefuzztypes.primitives import Container, PoolName
 from pydantic import BaseModel
 
-MESSAGE = Tuple[datetime, EventType, str]
+MESSAGE = Tuple[datetime, str, str]
 
 MINUTES = 60
 HOURS = 60 * MINUTES
@@ -71,6 +71,7 @@ class MiniTask(BaseModel):
     pool: str
     end_time: Optional[datetime]
     containers: List[TaskContainers]
+    vm_count: int
 
 
 def fmt(data: Any) -> Any:
@@ -118,6 +119,7 @@ class TopCache:
         "Target",
         "Files",
         "Pool",
+        "VM Count",
         "End time",
     ]
     POOL_FIELDS = ["Name", "OS", "Arch", "Nodes"]
@@ -152,31 +154,43 @@ class TopCache:
 
         self.add_files_set(name, set(files.files))
 
-    def add_message(self, message: EventMessage) -> None:
-        events = {
-            EventPoolCreated: lambda x: self.pool_created(x),
-            EventPoolDeleted: lambda x: self.pool_deleted(x),
-            EventTaskCreated: lambda x: self.task_created(x),
-            EventTaskStopped: lambda x: self.task_stopped(x),
-            EventTaskFailed: lambda x: self.task_stopped(x),
-            EventTaskStateUpdated: lambda x: self.task_state_updated(x),
-            EventJobCreated: lambda x: self.job_created(x),
-            EventJobStopped: lambda x: self.job_stopped(x),
-            EventNodeStateUpdated: lambda x: self.node_state_updated(x),
-            EventNodeCreated: lambda x: self.node_created(x),
-            EventNodeDeleted: lambda x: self.node_deleted(x),
-            EventCrashReported: lambda x: self.file_added(x),
-            EventFileAdded: lambda x: self.file_added(x),
-        }
+    def add_message(self, message_obj: Any) -> None:
+        message = parse_event_message(message_obj)
 
-        for event_cls in events:
-            if isinstance(message.event, event_cls):
-                events[event_cls](message.event)
+        event = message.event
+        if isinstance(event, EventPoolCreated):
+            self.pool_created(event)
+        elif isinstance(event, EventPoolDeleted):
+            self.pool_deleted(event)
+        elif isinstance(event, EventTaskCreated):
+            self.task_created(event)
+        elif isinstance(event, EventTaskStopped):
+            self.task_stopped(event)
+        elif isinstance(event, EventTaskFailed):
+            self.task_failed(event)
+        elif isinstance(event, EventTaskStateUpdated):
+            self.task_state_updated(event)
+        elif isinstance(event, EventJobCreated):
+            self.job_created(event)
+        elif isinstance(event, EventJobStopped):
+            self.job_stopped(event)
+        elif isinstance(event, EventNodeStateUpdated):
+            self.node_state_updated(event)
+        elif isinstance(event, EventNodeCreated):
+            self.node_created(event)
+        elif isinstance(event, EventNodeDeleted):
+            self.node_deleted(event)
+        elif isinstance(event, (EventCrashReported, EventFileAdded)):
+            self.file_added(event)
 
         self.last_update = datetime.now()
         messages = [x for x in self.messages][-99:]
         messages += [
-            (datetime.now(), message.event_type, message.event.json(exclude_none=True))
+            (
+                datetime.now(),
+                message.event_type.name,
+                json.dumps(message_obj, sort_keys=True),
+            )
         ]
         self.messages = messages
 
@@ -277,6 +291,7 @@ class TopCache:
             target=(task.config.task.target_exe or "").replace("setup/", "", 0),
             containers=task.config.containers,
             end_time=task.end_time,
+            vm_count=task.config.pool.count if task.config.pool else 0,
         )
 
     def task_created(self, event: EventTaskCreated) -> None:
@@ -288,6 +303,7 @@ class TopCache:
             target=(event.config.task.target_exe or "").replace("setup/", "", 0),
             containers=event.config.containers,
             state=TaskState.init,
+            vm_count=event.config.pool.count if event.config.pool else 0,
         )
 
     def task_state_updated(self, event: EventTaskStateUpdated) -> None:
@@ -298,6 +314,10 @@ class TopCache:
             self.tasks[event.task_id] = task
 
     def task_stopped(self, event: EventTaskStopped) -> None:
+        if event.task_id in self.tasks:
+            del self.tasks[event.task_id]
+
+    def task_failed(self, event: EventTaskFailed) -> None:
         if event.task_id in self.tasks:
             del self.tasks[event.task_id]
 
@@ -319,6 +339,7 @@ class TopCache:
                 task.target,
                 files,
                 task.pool,
+                task.vm_count,
                 task.end_time,
             )
             results.append(entry)
@@ -351,6 +372,11 @@ class TopCache:
     def job_stopped(self, event: EventJobStopped) -> None:
         if event.job_id in self.jobs:
             del self.jobs[event.job_id]
+
+        to_remove = [x.task_id for x in self.tasks.values() if x.job_id == event.job_id]
+
+        for task_id in to_remove:
+            del self.tasks[task_id]
 
     def render_jobs(self) -> List[Tuple]:
         results: List[Tuple] = []

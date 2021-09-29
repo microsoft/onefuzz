@@ -25,8 +25,7 @@ from ..azure.queue import create_queue, delete_queue
 from ..azure.storage import StorageType
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
-from ..proxy_forward import ProxyForward
-from ..workers.nodes import Node
+from ..workers.nodes import Node, NodeTasks
 from ..workers.pools import Pool
 from ..workers.scalesets import Scaleset
 
@@ -124,14 +123,17 @@ class Task(BASE_TASK, ORMMixin):
         self.set_state(TaskState.waiting)
 
     def stopping(self) -> None:
+        logging.info("stopping task: %s:%s", self.job_id, self.task_id)
+        Node.stop_task(self.task_id)
+        if not NodeTasks.get_nodes_by_task_id(self.task_id):
+            self.stopped()
+
+    def stopped(self) -> None:
+        self.set_state(TaskState.stopped)
+        delete_queue(str(self.task_id), StorageType.corpus)
+
         # TODO: we need to 'unschedule' this task from the existing pools
         from ..jobs import Job
-
-        logging.info("stopping task: %s:%s", self.job_id, self.task_id)
-        ProxyForward.remove_forward(self.task_id)
-        delete_queue(str(self.task_id), StorageType.corpus)
-        Node.stop_task(self.task_id)
-        self.set_state(TaskState.stopped)
 
         job = Job.get(self.job_id)
         if job:
@@ -193,6 +195,11 @@ class Task(BASE_TASK, ORMMixin):
             )
             return
 
+        if self.state not in TaskState.has_started():
+            self.mark_failed(
+                Error(code=ErrorCode.TASK_FAILED, errors=["task never started"])
+            )
+
         self.set_state(TaskState.stopping)
 
     def mark_failed(
@@ -229,7 +236,9 @@ class Task(BASE_TASK, ORMMixin):
                     task.mark_failed(
                         Error(
                             code=ErrorCode.TASK_FAILED,
-                            errors=["prerequisite task failed"],
+                            errors=[
+                                "prerequisite task failed.  task_id:%s" % self.task_id
+                            ],
                         ),
                         tasks_in_job,
                     )

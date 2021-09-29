@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 use anyhow::{Context, Result};
-use futures::StreamExt;
 use onefuzz::{blob::BlobUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use onefuzz_telemetry::{
     Event::{
@@ -32,15 +31,19 @@ pub struct CrashReport {
     pub call_stack: Vec<String>,
     pub call_stack_sha256: String,
 
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub minimized_stack: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub minimized_stack: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub minimized_stack_sha256: Option<String>,
-
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub minimized_stack_function_names: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub minimized_stack_function_names: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub minimized_stack_function_names_sha256: Option<String>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub minimized_stack_function_lines: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub minimized_stack_function_lines_sha256: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub asan_log: Option<String>,
@@ -190,12 +193,34 @@ impl CrashReport {
             Some(crash_log.minimized_stack_sha256(minimized_stack_depth))
         };
 
+        let minimized_stack_function_lines_sha256 =
+            if crash_log.minimized_stack_function_lines.is_empty() {
+                None
+            } else {
+                Some(crash_log.minimized_stack_function_lines_sha256(minimized_stack_depth))
+            };
+
         let minimized_stack_function_names_sha256 =
             if crash_log.minimized_stack_function_names.is_empty() {
                 None
             } else {
                 Some(crash_log.minimized_stack_function_names_sha256(minimized_stack_depth))
             };
+
+        let minimized_stack_function_lines = if crash_log.minimized_stack_function_lines.is_empty()
+        {
+            None
+        } else {
+            Some(crash_log.minimized_stack_function_lines)
+        };
+
+        let minimized_stack_function_names = if crash_log.minimized_stack_function_names.is_empty()
+        {
+            None
+        } else {
+            Some(crash_log.minimized_stack_function_names)
+        };
+
         Self {
             input_sha256,
             input_blob,
@@ -203,10 +228,12 @@ impl CrashReport {
             crash_type: crash_log.fault_type,
             crash_site: crash_log.summary,
             call_stack_sha256,
-            minimized_stack: crash_log.minimized_stack,
+            minimized_stack: Some(crash_log.minimized_stack),
             minimized_stack_sha256,
-            minimized_stack_function_names: crash_log.minimized_stack_function_names,
+            minimized_stack_function_names,
             minimized_stack_function_names_sha256,
+            minimized_stack_function_lines,
+            minimized_stack_function_lines_sha256,
             call_stack: crash_log.call_stack,
             asan_log: crash_log.text,
             scariness_score: crash_log.scariness_score,
@@ -239,15 +266,25 @@ pub async fn parse_report_file(path: PathBuf) -> Result<CrashTestResult> {
         .with_context(|| format_err!("invalid json: {} - {:?}", path.display(), raw))?;
 
     let report: Result<CrashReport, serde_json::Error> = serde_json::from_value(json.clone());
-    if let Ok(report) = report {
-        return Ok(CrashTestResult::CrashReport(report));
-    }
-    let no_repro: Result<NoCrash, serde_json::Error> = serde_json::from_value(json);
-    if let Ok(no_repro) = no_repro {
-        return Ok(CrashTestResult::NoRepro(no_repro));
-    }
 
-    bail!("unable to parse report: {} - {:?}", path.display(), raw)
+    let report_err = match report {
+        Ok(report) => return Ok(CrashTestResult::CrashReport(report)),
+        Err(err) => err,
+    };
+    let no_repro: Result<NoCrash, serde_json::Error> = serde_json::from_value(json);
+
+    let no_repro_err = match no_repro {
+        Ok(no_repro) => return Ok(CrashTestResult::NoRepro(no_repro)),
+        Err(err) => err,
+    };
+
+    bail!(
+        "unable to parse report: {} - {:?} - report error: {:?} no_repo error: {:?}",
+        path.display(),
+        raw,
+        report_err,
+        no_repro_err
+    )
 }
 
 pub async fn monitor_reports(
@@ -263,9 +300,22 @@ pub async fn monitor_reports(
 
     let mut monitor = DirectoryMonitor::new(base_dir);
     monitor.start()?;
-    while let Some(file) = monitor.next().await {
+    while let Some(file) = monitor.next_file().await {
         let result = parse_report_file(file).await?;
         result.save(unique_reports, reports, no_crash).await?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use anyhow::Result;
+
+    #[tokio::test]
+    async fn test_parse_fake_crash_report() -> Result<()> {
+        let path = std::path::PathBuf::from("data/fake-crash-report.json");
+        parse_report_file(path).await?;
+        Ok(())
+    }
 }

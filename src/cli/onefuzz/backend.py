@@ -5,7 +5,6 @@
 
 import atexit
 import contextlib
-import glob
 import json
 import logging
 import os
@@ -32,8 +31,7 @@ import msal
 import requests
 from azure.storage.blob import ContainerClient
 from pydantic import BaseModel, Field
-from tenacity import Future as tenacity_future
-from tenacity import Retrying, retry
+from tenacity import RetryCallState, retry
 from tenacity.retry import retry_if_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random
@@ -45,6 +43,8 @@ _ACCESSTOKENCACHE_UMASK = 0o077
 ONEFUZZ_BASE_PATH = os.path.join("~", ".cache", "onefuzz")
 DEFAULT_CONFIG_PATH = os.path.join(ONEFUZZ_BASE_PATH, "config.json")
 DEFAULT_TOKEN_PATH = os.path.join(ONEFUZZ_BASE_PATH, "access_token.json")
+REQUEST_CONNECT_TIMEOUT = 30.0
+REQUEST_READ_TIMEOUT = 120.0
 
 LOGGER = logging.getLogger("nsv-backend")
 
@@ -58,6 +58,31 @@ def _temporary_umask(new_umask: int) -> Generator[None, None, None]:
     finally:
         if prev_umask is not None:
             os.umask(prev_umask)
+
+
+def check_msal_error(value: Dict[str, Any], expected: List[str]) -> None:
+    if "error" in value:
+        if "error_description" in value:
+            raise Exception(
+                "error: %s\n%s" % (value["error"], value["error_description"])
+            )
+
+        raise Exception("error: %s" % (value["error"]))
+    for entry in expected:
+        if entry not in value:
+            raise Exception("interactive login missing value: %s - %s" % (entry, value))
+
+
+def check_application_error(response: requests.Response) -> None:
+    if response.status_code == 401:
+        try:
+            as_json = json.loads(response.content)
+            if isinstance(as_json, dict) and "code" in as_json and "errors" in as_json:
+                raise Exception(
+                    f"request failed: application error - {as_json['code']} {as_json['errors']}"
+                )
+        except json.decoder.JSONDecodeError:
+            pass
 
 
 class BackendConfig(BaseModel):
@@ -152,10 +177,12 @@ class Backend:
         if self.config.tenant_domain:
             endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
             scopes = [
-                "https://" + self.config.tenant_domain + "/" + endpoint + "/.default"
+                f"api://{self.config.tenant_domain}/{endpoint}/.default",
+                f"https://{self.config.tenant_domain}/{endpoint}/.default",
             ]
         else:
-            scopes = [self.config.endpoint + "/.default"]
+            netloc = urlparse(self.config.endpoint).netloc
+            scopes = [f"api://{netloc}/.default", f"https://{netloc}/.default"]
 
         if self.config.client_secret:
             return self.client_secret(scopes)
@@ -169,7 +196,15 @@ class Backend:
                 client_credential=self.config.client_secret,
                 token_cache=self.token_cache,
             )
-        result = self.app.acquire_token_for_client(scopes=scopes)
+
+        for scope in scopes:
+            result = self.app.acquire_token_for_client(scopes=[scope])
+            # AADSTS500011: The resource principal named ... was not found in the tenant named ...
+            # This error is caused by a by mismatch between the identifierUr and the scope provided in the request.
+            if "error" in result and "AADSTS500011" in result["error_description"]:
+                LOGGER.warning(f"failed to get access token with scope {scope}")
+                continue
+
         if "error" in result:
             raise Exception(
                 "error: %s\n'%s'"
@@ -185,40 +220,47 @@ class Backend:
                 token_cache=self.token_cache,
             )
 
-        accounts = self.app.get_accounts()
-        if accounts:
-            access_token = self.app.acquire_token_silent(scopes, account=accounts[0])
-            if access_token:
-                return access_token
+        for scope in scopes:
+            accounts = self.app.get_accounts()
+            if accounts:
+                access_token = self.app.acquire_token_silent(
+                    [scope], account=accounts[0]
+                )
+                if access_token:
+                    return access_token
 
-        def check_msal_error(value: Dict[str, Any], expected: List[str]) -> None:
-            if "error" in value:
-                if "error_description" in value:
-                    raise Exception(
-                        "error: %s\n%s" % (value["error"], value["error_description"])
-                    )
+        for scope in scopes:
+            LOGGER.info("Attempting interactive device login")
+            print("Please login", flush=True)
 
-                raise Exception("error: %s" % (value["error"]))
-            for entry in expected:
-                if entry not in value:
-                    raise Exception(
-                        "interactive login missing value: %s - %s" % (entry, value)
-                    )
+            flow = self.app.initiate_device_flow(scopes=[scope])
 
-        LOGGER.info("Attempting interactive device login")
-        print("Please login", flush=True)
+            check_msal_error(flow, ["user_code", "message"])
+            # setting the expiration time to allow us to retry the interactive login with a new scope
+            flow["expires_at"] = int(time.time()) + 90  # 90 seconds from now
+            print(flow["message"], flush=True)
 
-        flow = self.app.initiate_device_flow(scopes=scopes)
-        check_msal_error(flow, ["user_code", "message"])
-        print(flow["message"], flush=True)
+            access_token = self.app.acquire_token_by_device_flow(flow)
+            # AADSTS70016: OAuth 2.0 device flow error. Authorization is pending
+            # this happens when the intractive login request times out. This heppens when the login
+            # fails because of a scope mismatch.
+            if (
+                "error" in access_token
+                and "AADSTS70016" in access_token["error_description"]
+            ):
+                LOGGER.warning(f"failed to get access token with scope {scope}")
+                continue
+            check_msal_error(access_token, ["access_token"])
 
-        access_token = self.app.acquire_token_by_device_flow(flow)
-        check_msal_error(access_token, ["access_token"])
+            LOGGER.info("Interactive device authentication succeeded")
+            print("Login succeeded", flush=True)
+            self.save_cache()
+            break
 
-        LOGGER.info("Interactive device authentication succeeded")
-        print("Login succeeded", flush=True)
-        self.save_cache()
-        return access_token
+        if access_token:
+            return access_token
+        else:
+            raise Exception("Failed to acquire token")
 
     def request(
         self,
@@ -254,11 +296,13 @@ class Backend:
                     headers=headers,
                     json=json_data,
                     params=params,
-                    timeout=(30.0, 30.0),
+                    timeout=(REQUEST_CONNECT_TIMEOUT, REQUEST_READ_TIMEOUT),
                 )
 
                 if response.status_code not in retry_codes:
                     break
+
+                check_application_error(response)
 
                 LOGGER.info("request bad status code: %s", response.status_code)
             except requests.exceptions.ConnectionError as err:
@@ -282,12 +326,12 @@ class Backend:
         return response.json()
 
 
-def before_sleep(
-    retry_object: Retrying, sleep: float, last_result: tenacity_future
-) -> None:
-    name = retry_object.fn.__name__ if retry_object.fn else "blob function"
+def before_sleep(retry_state: RetryCallState) -> None:
+    name = retry_state.fn.__name__ if retry_state.fn else "blob function"
 
-    why = getattr(last_result, "_exception")
+    why: Optional[BaseException] = None
+    if retry_state.outcome is not None:
+        why = retry_state.outcome.exception()
     if why:
         LOGGER.warning("%s failed with %s, retrying ...", name, repr(why))
     else:
@@ -318,11 +362,11 @@ class ContainerWrapper:
             name=blob_name, data=data, overwrite=True, max_concurrency=10
         )
 
-    def upload_dir(self, dir_path: str, recursive: bool = True) -> None:
-        for path in glob.glob(os.path.join(dir_path, "**"), recursive=recursive):
-            if os.path.isfile(path):
-                blob_name = os.path.relpath(path, start=dir_path)
-                self.upload_file(path, blob_name)
+    def upload_dir(self, dir_path: str) -> None:
+        # security note: the src for azcopy comes from the server which is
+        # trusted in this context, while the destination is provided by the
+        # user
+        azcopy_sync(dir_path, self.container_url)
 
     def download_dir(self, dir_path: str) -> None:
         # security note: the src for azcopy comes from the server which is

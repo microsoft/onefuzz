@@ -5,6 +5,7 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
+  ACTIONS_CACHE_KEY_DATE: 2021-08-26-01
 
 jobs:
   agent:
@@ -19,9 +20,7 @@ jobs:
           ~/.cargo/registry
           ~/.cargo/git
           ~/.cargo/bin
-        key: rust-${{ runner.os }}-2020-11
-        restore-keys: |
-           rust-${{ runner.os }}
+        key: rust-${{ runner.os }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
     - name: Install Rust Prereqs
       if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
       shell: bash 
@@ -32,9 +31,7 @@ jobs:
         path: |
           sccache
           src/agent/target
-        key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-2021-01-14-01
-        restore-keys: |
-           agent-${{ runner.os }}
+        key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
     - name: Linux Prereqs
       run: |
         sudo apt-get -y update
@@ -51,6 +48,7 @@ jobs:
         os:
         - ubuntu-18.04
         - windows-2019
+        - macos-10.15
   azcopy:
     runs-on: ubuntu-18.04
     steps:
@@ -60,6 +58,16 @@ jobs:
       with:
         name: build-artifacts
         path: artifacts
+  check-pr:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: lint
+      shell: bash
+      run: src/ci/check-check-pr.sh
   cli:
     needs:
     - onefuzztypes
@@ -169,13 +177,10 @@ jobs:
       id: cache-rust-prereqs
       with:
         path: |
-          sccache
           ~/.cargo/registry
           ~/.cargo/git
           ~/.cargo/bin
-        key: rust-${{ runner.os }}-2020-09
-        restore-keys: |
-           rust-${{ runner.os }}
+        key: rust-${{ runner.os }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
     - name: Install Rust Prereqs
       if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
       shell: bash 
@@ -186,9 +191,7 @@ jobs:
         path: |
           sccache
           src/proxy-manager/target
-        key: proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}
-        restore-keys: |
-           proxy-${{ runner.os }}
+        key: proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
     - run: src/ci/proxy.sh
     - uses: actions/upload-artifact@v2.2.2
       with:
@@ -306,10 +309,11 @@ jobs:
         set -ex
         cd src/deployment
         python -m pip install --upgrade pip
-        pip install mypy isort black
+        pip install mypy isort black types-requests flake8
         mypy .
         isort --profile black . --check
         black . --check
+        flake8 *.py
     - name: Package Onefuzz
       run: |
           set -ex
@@ -323,12 +327,12 @@ jobs:
               cp artifacts/azcopy/azcopy artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/linux
               cp artifacts/azcopy/azcopy.exe artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/win64
           fi
-          cp artifacts/agent/onefuzz-supervisor.exe src/deployment/tools/win64/
-          cp artifacts/agent/onefuzz-agent.exe src/deployment/tools/win64/
-          cp artifacts/agent/onefuzz_supervisor.pdb src/deployment/tools/win64/
-          cp artifacts/agent/onefuzz_agent.pdb src/deployment/tools/win64/
-          cp artifacts/agent/onefuzz-supervisor src/deployment/tools/linux/
-          cp artifacts/agent/onefuzz-agent src/deployment/tools/linux/
+          cp artifacts/agent-MINGW*/onefuzz-supervisor.exe src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz-agent.exe src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz_supervisor.pdb src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz_agent.pdb src/deployment/tools/win64/
+          cp artifacts/agent-Linux/onefuzz-supervisor src/deployment/tools/linux/
+          cp artifacts/agent-Linux/onefuzz-agent src/deployment/tools/linux/
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment
           cp -r artifacts/third-party src/deployment
@@ -356,8 +360,10 @@ jobs:
           cp integration-test.py artifacts/
 
           mkdir -p artifacts/linux-libfuzzer
+          mkdir -p artifacts/linux-libfuzzer-with-options
           (cd libfuzzer ; make )
           cp -r libfuzzer/fuzz.exe libfuzzer/seeds artifacts/linux-libfuzzer
+          cp -r libfuzzer/fuzz.exe libfuzzer/seeds artifacts/linux-libfuzzer-with-options
 
           mkdir -p artifacts/linux-libfuzzer-regression
           (cd libfuzzer-regression ; make )

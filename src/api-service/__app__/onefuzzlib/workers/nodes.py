@@ -16,7 +16,12 @@ from onefuzztypes.events import (
 )
 from onefuzztypes.models import Error
 from onefuzztypes.models import Node as BASE_NODE
-from onefuzztypes.models import NodeAssignment, NodeCommand, NodeCommandAddSshKey
+from onefuzztypes.models import (
+    NodeAssignment,
+    NodeCommand,
+    NodeCommandAddSshKey,
+    NodeCommandStopIfFree,
+)
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
 from onefuzztypes.models import Result, StopNodeCommand, StopTaskNodeCommand
 from onefuzztypes.primitives import PoolName
@@ -26,6 +31,8 @@ from ..__version__ import __version__
 from ..azure.vmss import get_instance_id
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
+from ..versions import is_minimum_version
+from .shrink_queue import ShrinkQueue
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
@@ -37,14 +44,11 @@ NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
 
 
 class Node(BASE_NODE, ORMMixin):
-    # should only be set by Scaleset.reimage_nodes
-    # should only be unset during agent_registration POST
-    reimage_queued: bool = Field(default=False)
-
     @classmethod
     def create(
         cls,
         *,
+        pool_id: UUID,
         pool_name: PoolName,
         machine_id: UUID,
         scaleset_id: Optional[UUID],
@@ -52,6 +56,7 @@ class Node(BASE_NODE, ORMMixin):
         new: bool = False,
     ) -> "Node":
         node = cls(
+            pool_id=pool_id,
             pool_name=pool_name,
             machine_id=machine_id,
             scaleset_id=scaleset_id,
@@ -75,11 +80,14 @@ class Node(BASE_NODE, ORMMixin):
     def search_states(
         cls,
         *,
+        pool_id: Optional[UUID] = None,
         scaleset_id: Optional[UUID] = None,
         states: Optional[List[NodeState]] = None,
         pool_name: Optional[PoolName] = None,
     ) -> List["Node"]:
         query: QueryFilter = {}
+        if pool_id:
+            query["pool_id"] = [pool_id]
         if scaleset_id:
             query["scaleset_id"] = [scaleset_id]
         if states:
@@ -92,6 +100,7 @@ class Node(BASE_NODE, ORMMixin):
     def search_outdated(
         cls,
         *,
+        pool_id: Optional[UUID] = None,
         scaleset_id: Optional[UUID] = None,
         states: Optional[List[NodeState]] = None,
         pool_name: Optional[PoolName] = None,
@@ -99,6 +108,8 @@ class Node(BASE_NODE, ORMMixin):
         num_results: Optional[int] = None,
     ) -> List["Node"]:
         query: QueryFilter = {}
+        if pool_id:
+            query["pool_id"] = [pool_id]
         if scaleset_id:
             query["scaleset_id"] = [scaleset_id]
         if states:
@@ -157,7 +168,7 @@ class Node(BASE_NODE, ORMMixin):
         return ("pool_name", "machine_id")
 
     def save_exclude(self) -> Optional[MappingIntStrAny]:
-        return {"tasks": ...}
+        return {"tasks": ..., "messages": ...}
 
     def telemetry_include(self) -> Optional[MappingIntStrAny]:
         return {
@@ -217,7 +228,7 @@ class Node(BASE_NODE, ORMMixin):
             "node: stopping busy node with all tasks complete: %s",
             self.machine_id,
         )
-        self.stop()
+        self.stop(done=True)
         return True
 
     def mark_tasks_stopped_early(self, error: Optional[Error] = None) -> None:
@@ -226,19 +237,26 @@ class Node(BASE_NODE, ORMMixin):
         if error is None:
             error = Error(
                 code=ErrorCode.TASK_FAILED,
-                errors=["node reimaged during task execution"],
+                errors=[
+                    "node reimaged during task execution.  machine_id:%s"
+                    % self.machine_id
+                ],
             )
 
         for entry in NodeTasks.get_by_machine_id(self.machine_id):
             task = Task.get_by_task_id(entry.task_id)
             if isinstance(task, Task):
                 task.mark_failed(error)
+            if not self.debug_keep_node:
+                entry.delete()
 
     def could_shrink_scaleset(self) -> bool:
-        from .scalesets import ScalesetShrinkQueue
-
-        if self.scaleset_id and ScalesetShrinkQueue(self.scaleset_id).should_shrink():
+        if self.scaleset_id and ShrinkQueue(self.scaleset_id).should_shrink():
             return True
+
+        if self.pool_id and ShrinkQueue(self.pool_id).should_shrink():
+            return True
+
         return False
 
     def can_process_new_work(self) -> bool:
@@ -247,47 +265,69 @@ class Node(BASE_NODE, ORMMixin):
 
         if self.is_outdated():
             logging.info(
-                "can_schedule agent and service versions differ, stopping node. "
+                "can_process_new_work agent and service versions differ, "
+                "stopping node. "
                 "machine_id:%s agent_version:%s service_version: %s",
                 self.machine_id,
                 self.version,
                 __version__,
             )
-            self.stop()
+            self.stop(done=True)
+            return False
+
+        if self.is_too_old():
+            logging.info(
+                "can_process_new_work node is too old.  machine_id:%s", self.machine_id
+            )
+            self.stop(done=True)
+            return False
+
+        if self.state not in NodeState.can_process_new_work():
+            logging.info(
+                "can_process_new_work node not in appropriate state for new work"
+                "machine_id:%s state:%s",
+                self.machine_id,
+                self.state.name,
+            )
             return False
 
         if self.state in NodeState.ready_for_reset():
             logging.info(
-                "can_schedule node is set for reset.  machine_id:%s", self.machine_id
+                "can_process_new_work node is set for reset.  machine_id:%s",
+                self.machine_id,
             )
             return False
 
         if self.delete_requested:
             logging.info(
-                "can_schedule is set to be deleted.  machine_id:%s",
+                "can_process_new_work is set to be deleted.  machine_id:%s",
                 self.machine_id,
             )
-            self.stop()
+            self.stop(done=True)
             return False
 
         if self.reimage_requested:
             logging.info(
-                "can_schedule is set to be reimaged.  machine_id:%s",
+                "can_process_new_work is set to be reimaged.  machine_id:%s",
                 self.machine_id,
             )
-            self.stop()
+            self.stop(done=True)
             return False
 
         if self.could_shrink_scaleset():
+            logging.info(
+                "can_process_new_work node scheduled to shrink.  machine_id:%s",
+                self.machine_id,
+            )
             self.set_halt()
-            logging.info("node scheduled to shrink.  machine_id:%s", self.machine_id)
             return False
 
         if self.scaleset_id:
             scaleset = Scaleset.get_by_id(self.scaleset_id)
             if isinstance(scaleset, Error):
                 logging.info(
-                    "can_schedule - invalid scaleset.  scaleset_id:%s machine_id:%s",
+                    "can_process_new_work invalid scaleset.  "
+                    "scaleset_id:%s machine_id:%s",
                     self.scaleset_id,
                     self.machine_id,
                 )
@@ -295,7 +335,7 @@ class Node(BASE_NODE, ORMMixin):
 
             if scaleset.state not in ScalesetState.available():
                 logging.info(
-                    "can_schedule - scaleset not available for work. "
+                    "can_process_new_work scaleset not available for work. "
                     "scaleset_id:%s machine_id:%s",
                     self.scaleset_id,
                     self.machine_id,
@@ -324,6 +364,14 @@ class Node(BASE_NODE, ORMMixin):
     def is_outdated(self) -> bool:
         return self.version != __version__
 
+    def is_too_old(self) -> bool:
+        return (
+            self.scaleset_id is not None
+            and self.timestamp is not None
+            and self.timestamp
+            < datetime.datetime.now(datetime.timezone.utc) - NODE_REIMAGE_TIME
+        )
+
     def send_message(self, message: NodeCommand) -> None:
         NodeMessage(
             machine_id=self.machine_id,
@@ -338,6 +386,11 @@ class Node(BASE_NODE, ORMMixin):
         if not self.reimage_requested and not self.delete_requested:
             logging.info("setting reimage_requested: %s", self.machine_id)
             self.reimage_requested = True
+
+        # if we're going to reimage, make sure the node doesn't pick up new work
+        # too.
+        self.send_stop_if_free()
+
         self.save()
 
     def add_ssh_public_key(self, public_key: str) -> Result[None]:
@@ -355,6 +408,10 @@ class Node(BASE_NODE, ORMMixin):
         )
         return None
 
+    def send_stop_if_free(self) -> None:
+        if is_minimum_version(version=self.version, minimum="2.16.1"):
+            self.send_message(NodeCommand(stop_if_free=NodeCommandStopIfFree()))
+
     def stop(self, done: bool = False) -> None:
         self.to_reimage(done=done)
         self.send_message(NodeCommand(stop=StopNodeCommand()))
@@ -364,19 +421,23 @@ class Node(BASE_NODE, ORMMixin):
         logging.info("setting delete_requested: %s", self.machine_id)
         self.delete_requested = True
         self.save()
+        self.send_stop_if_free()
 
     def set_halt(self) -> None:
-        """ Tell the node to stop everything. """
-        self.set_shutdown()
-        self.stop()
+        """Tell the node to stop everything."""
+        logging.info("setting halt: %s", self.machine_id)
+        self.delete_requested = True
+        self.stop(done=True)
         self.set_state(NodeState.halt)
 
     @classmethod
     def get_dead_nodes(
         cls, scaleset_id: UUID, expiration_period: datetime.timedelta
     ) -> List["Node"]:
-        time_filter = "heartbeat lt datetime'%s'" % (
-            (datetime.datetime.utcnow() - expiration_period).isoformat()
+        min_date = (datetime.datetime.utcnow() - expiration_period).isoformat()
+        time_filter = "heartbeat lt datetime'%s' or Timestamp lt datetime'%s'" % (
+            min_date,
+            min_date,
         )
         return cls.search(
             query={"scaleset_id": [scaleset_id]},
@@ -395,15 +456,20 @@ class Node(BASE_NODE, ORMMixin):
         time_filter = "Timestamp lt datetime'%s'" % (
             (datetime.datetime.utcnow() - NODE_REIMAGE_TIME).isoformat()
         )
-        # skip any nodes already marked for reimage/deletion
         for node in cls.search(
             query={
                 "scaleset_id": [scaleset_id],
-                "reimage_requested": [False],
-                "delete_requested": [False],
             },
             raw_unchecked_filter=time_filter,
         ):
+            if node.debug_keep_node:
+                logging.info(
+                    "removing debug_keep_node for expired node. "
+                    "scaleset_id:%s machine_id:%s",
+                    node.scaleset_id,
+                    node.machine_id,
+                )
+                node.debug_keep_node = False
             node.to_reimage()
 
     def set_state(self, state: NodeState) -> None:

@@ -21,6 +21,13 @@ use tokio::process::{Child, Command};
 
 const DEFAULT_MAX_TOTAL_SECONDS: i32 = 10 * 60;
 
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref LIBFUZZERLINEREGEX: regex::Regex =
+        regex::Regex::new(r"#(\d+)\s*(?:pulse|INITED|NEW|REDUCE).*exec/s: (\d+)").unwrap();
+}
+
 #[derive(Debug)]
 pub struct LibFuzzerMergeOutput {
     pub added_files_count: i32,
@@ -73,7 +80,7 @@ impl<'a> LibFuzzer<'a> {
 
         let expand = Expand::new()
             .target_exe(&self.exe)
-            .target_options(&self.options)
+            .target_options(self.options)
             .setup_dir(&self.setup_dir)
             .set_optional(corpus_dir, |tester, corpus_dir| {
                 tester.input_corpus(&corpus_dir)
@@ -102,11 +109,10 @@ impl<'a> LibFuzzer<'a> {
         }
 
         // check if a max_time is already set
-        if self
+        if !self
             .options
             .iter()
-            .find(|o| o.starts_with("-max_total_time"))
-            .is_none()
+            .any(|o| o.starts_with("-max_total_time"))
         {
             cmd.arg(format!("-max_total_time={}", DEFAULT_MAX_TOTAL_SECONDS));
         }
@@ -135,7 +141,7 @@ impl<'a> LibFuzzer<'a> {
                         files.shuffle(&mut rng);
                     }
                     for file in files.iter().take(5) {
-                        self.check_input(&file).await.with_context(|| {
+                        self.check_input(file).await.with_context(|| {
                             format!("checking input corpus: {}", file.display())
                         })?;
                         seen_inputs = true;
@@ -237,7 +243,7 @@ impl<'a> LibFuzzer<'a> {
         let mut options = self.options.to_owned();
         options.push("{input}".to_string());
 
-        let mut tester = Tester::new(&self.setup_dir, &self.exe, &options, &self.env)
+        let mut tester = Tester::new(&self.setup_dir, &self.exe, &options, self.env)
             .check_asan_stderr(true)
             .check_retry_count(retry)
             .add_setup_to_path(true)
@@ -304,9 +310,7 @@ impl LibFuzzerLine {
     }
 
     pub fn parse(line: &str) -> Result<Option<Self>> {
-        let re = regex::Regex::new(r"#(\d+)\s*(?:pulse|INITED|NEW|REDUCE).*exec/s: (\d+)")?;
-
-        let caps = match re.captures(line) {
+        let caps = match LIBFUZZERLINEREGEX.captures(line) {
             Some(caps) => caps,
             None => return Ok(None),
         };

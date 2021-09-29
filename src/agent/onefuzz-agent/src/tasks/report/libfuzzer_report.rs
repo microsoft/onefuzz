@@ -89,7 +89,7 @@ impl ReportTask {
         let mut processor = AsanProcessor::new(self.config.clone()).await?;
 
         if let Some(crashes) = &self.config.crashes {
-            self.poller.batch_process(&mut processor, &crashes).await?;
+            self.poller.batch_process(&mut processor, crashes).await?;
         }
 
         if self.config.check_queue {
@@ -175,7 +175,7 @@ pub struct AsanProcessor {
 
 impl AsanProcessor {
     pub async fn new(config: Arc<Config>) -> Result<Self> {
-        let heartbeat_client = config.common.init_heartbeat().await?;
+        let heartbeat_client = config.common.init_heartbeat(None).await?;
 
         Ok(Self {
             config,

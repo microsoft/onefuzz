@@ -3,10 +3,13 @@
 
 pub mod cmd;
 pub mod common;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+pub mod coverage;
 pub mod generic_analysis;
 pub mod generic_crash_report;
 pub mod generic_generator;
 pub mod libfuzzer;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 pub mod libfuzzer_coverage;
 pub mod libfuzzer_crash_report;
 pub mod libfuzzer_fuzz;

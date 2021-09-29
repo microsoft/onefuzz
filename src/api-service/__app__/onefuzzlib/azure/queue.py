@@ -24,6 +24,7 @@ from .storage import StorageType, get_primary_account, get_storage_account_name_
 QueueNameType = Union[str, UUID]
 
 DEFAULT_TTL = -1
+DEFAULT_DURATION = datetime.timedelta(days=30)
 
 
 @cached(ttl=60)
@@ -48,8 +49,10 @@ def get_queue_sas(
     add: bool = False,
     update: bool = False,
     process: bool = False,
-    duration: datetime.timedelta = datetime.timedelta(days=30),
+    duration: Optional[datetime.timedelta] = None,
 ) -> str:
+    if duration is None:
+        duration = DEFAULT_DURATION
     account_id = get_primary_account(storage_type)
     logging.debug("getting queue sas %s (account_id: %s)", queue, account_id)
     name, key = get_storage_account_name_key(account_id)
@@ -158,14 +161,17 @@ def peek_queue(
     if max_messages < MIN_PEEK_SIZE or max_messages > MAX_PEEK_SIZE:
         raise ValueError("invalid max messages: %s" % max_messages)
 
-    queue = get_queue(name, storage_type)
-    if not queue:
-        return result
+    try:
+        queue = get_queue(name, storage_type)
+        if not queue:
+            return result
 
-    for message in queue.peek_messages(max_messages=max_messages):
-        decoded = base64.b64decode(message.content)
-        raw = json.loads(decoded)
-        result.append(object_type.parse_obj(raw))
+        for message in queue.peek_messages(max_messages=max_messages):
+            decoded = base64.b64decode(message.content)
+            raw = json.loads(decoded)
+            result.append(object_type.parse_obj(raw))
+    except ResourceNotFoundError:
+        return result
     return result
 
 

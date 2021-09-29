@@ -38,6 +38,36 @@ pub struct StackEntry {
     pub module_offset: Option<u64>,
 }
 
+impl StackEntry {
+    fn function_line_entry(&self) -> Option<String> {
+        let mut parts = vec![];
+        if let Some(function_name) = &self.function_name {
+            parts.push(function_name.clone());
+        }
+
+        let mut source = vec![];
+        if let Some(source_file_name) = &self.source_file_name {
+            source.push(source_file_name.clone());
+        }
+        if let Some(source_file_line) = self.source_file_line {
+            source.push(format!("{}", source_file_line));
+        }
+        if let Some(function_offset) = self.function_offset {
+            source.push(format!("{}", function_offset));
+        }
+
+        if !source.is_empty() {
+            parts.push(source.join(":"));
+        }
+
+        if parts.is_empty() {
+            None
+        } else {
+            Some(parts.join(" "))
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct CrashLog {
     pub text: Option<String>,
@@ -62,6 +92,9 @@ pub struct CrashLog {
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub minimized_stack_function_names: Vec<String>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub minimized_stack_function_lines: Vec<String>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scariness_score: Option<u32>,
@@ -132,11 +165,11 @@ impl CrashLog {
         let stack_filter = get_stack_filter();
         let mut minimized_stack_details: Vec<StackEntry> = stack
             .iter()
-            .filter_map(|x| filter_funcs(x, &stack_filter))
+            .filter_map(|x| filter_funcs(x, stack_filter))
             .collect();
         // if we don't have a minimized stack, if one of these functions is on
         // the stack, use it
-        for entry in &[
+        for entry in [
             "LLVMFuzzerTestOneInput",
             "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
             "main",
@@ -144,7 +177,7 @@ impl CrashLog {
             if !minimized_stack_details.is_empty() {
                 break;
             }
-            let value = Some(String::from(*entry));
+            let value = Some(entry.to_string());
             minimized_stack_details = stack
                 .iter()
                 .filter_map(|x| {
@@ -162,6 +195,7 @@ impl CrashLog {
 
         let minimized_stack = stack_lines(&minimized_stack_details);
         let minimized_stack_function_names = stack_names(&minimized_stack_details);
+        let minimized_stack_function_lines = stack_function_lines(&minimized_stack_details);
 
         Ok(Self {
             text,
@@ -176,6 +210,7 @@ impl CrashLog {
             minimized_stack,
             minimized_stack_function_names,
             minimized_stack_details,
+            minimized_stack_function_lines,
         })
     }
 
@@ -205,6 +240,10 @@ impl CrashLog {
     pub fn minimized_stack_function_names_sha256(&self, depth: Option<usize>) -> String {
         digest_iter(&self.minimized_stack_function_names, depth)
     }
+
+    pub fn minimized_stack_function_lines_sha256(&self, depth: Option<usize>) -> String {
+        digest_iter(&self.minimized_stack_function_lines, depth)
+    }
 }
 
 fn stack_lines(stack: &[StackEntry]) -> Vec<String> {
@@ -219,15 +258,23 @@ fn stack_names(stack: &[StackEntry]) -> Vec<String> {
         .collect()
 }
 
+fn stack_function_lines(stack: &[StackEntry]) -> Vec<String> {
+    stack
+        .iter()
+        .map(|x| x.function_line_entry())
+        .flatten()
+        .collect()
+}
+
 fn parse_summary(text: &str) -> Result<(String, String, String)> {
     // eventually, this should be updated to support multiple callstack formats
-    asan::parse_summary(&text)
+    asan::parse_summary(text)
 }
 
 fn parse_scariness(text: &str) -> (Option<u32>, Option<String>) {
     // eventually, this should be updated to support multiple callstack formats,
     // including building this value
-    match asan::parse_scariness(&text) {
+    match asan::parse_scariness(text) {
         Some((x, y)) => (Some(x), Some(y)),
         None => (None, None),
     }

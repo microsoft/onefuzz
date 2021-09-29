@@ -5,15 +5,25 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, Field
 
-from .enums import OS, Architecture, NodeState, TaskState, TaskType
+from ._monkeypatch import _check_hotfix
+from .enums import (
+    OS,
+    Architecture,
+    NodeState,
+    ScalesetState,
+    TaskState,
+    TaskType,
+    VmState,
+)
 from .models import (
     AutoScaleConfig,
     Error,
+    InstanceConfig,
     JobConfig,
     RegressionReport,
     Report,
@@ -25,8 +35,7 @@ from .responses import BaseResponse
 
 
 class BaseEvent(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    pass
 
 
 class EventTaskStopped(BaseEvent):
@@ -84,7 +93,7 @@ class EventTaskHeartbeat(BaseEvent):
     config: TaskConfig
 
 
-class EventPing(BaseResponse):
+class EventPing(BaseEvent, BaseResponse):
     ping_id: UUID
 
 
@@ -108,6 +117,12 @@ class EventScalesetDeleted(BaseEvent):
     pool_name: PoolName
 
 
+class EventScalesetResizeScheduled(BaseEvent):
+    scaleset_id: UUID
+    pool_name: PoolName
+    size: int
+
+
 class EventPoolDeleted(BaseEvent):
     pool_name: PoolName
 
@@ -122,15 +137,24 @@ class EventPoolCreated(BaseEvent):
 
 class EventProxyCreated(BaseEvent):
     region: Region
+    proxy_id: Optional[UUID]
 
 
 class EventProxyDeleted(BaseEvent):
     region: Region
+    proxy_id: Optional[UUID]
 
 
 class EventProxyFailed(BaseEvent):
     region: Region
+    proxy_id: Optional[UUID]
     error: Error
+
+
+class EventProxyStateUpdated(BaseEvent):
+    region: Region
+    proxy_id: UUID
+    state: VmState
 
 
 class EventNodeCreated(BaseEvent):
@@ -149,6 +173,12 @@ class EventNodeDeleted(BaseEvent):
     machine_id: UUID
     scaleset_id: Optional[UUID]
     pool_name: PoolName
+
+
+class EventScalesetStateUpdated(BaseEvent):
+    scaleset_id: UUID
+    pool_name: PoolName
+    state: ScalesetState
 
 
 class EventNodeStateUpdated(BaseEvent):
@@ -177,6 +207,10 @@ class EventFileAdded(BaseEvent):
     filename: str
 
 
+class EventInstanceConfigUpdated(BaseEvent):
+    config: InstanceConfig
+
+
 Event = Union[
     EventJobCreated,
     EventJobStopped,
@@ -190,9 +224,12 @@ Event = Union[
     EventProxyFailed,
     EventProxyCreated,
     EventProxyDeleted,
+    EventProxyStateUpdated,
     EventScalesetFailed,
     EventScalesetCreated,
     EventScalesetDeleted,
+    EventScalesetStateUpdated,
+    EventScalesetResizeScheduled,
     EventTaskFailed,
     EventTaskStateUpdated,
     EventTaskCreated,
@@ -201,6 +238,7 @@ Event = Union[
     EventCrashReported,
     EventRegressionReported,
     EventFileAdded,
+    EventInstanceConfigUpdated,
 ]
 
 
@@ -216,9 +254,12 @@ class EventType(Enum):
     proxy_created = "proxy_created"
     proxy_deleted = "proxy_deleted"
     proxy_failed = "proxy_failed"
+    proxy_state_updated = "proxy_state_updated"
     scaleset_created = "scaleset_created"
     scaleset_deleted = "scaleset_deleted"
     scaleset_failed = "scaleset_failed"
+    scaleset_state_updated = "scaleset_state_updated"
+    scaleset_resize_scheduled = "scaleset_resize_scheduled"
     task_created = "task_created"
     task_failed = "task_failed"
     task_state_updated = "task_state_updated"
@@ -228,6 +269,7 @@ class EventType(Enum):
     file_added = "file_added"
     task_heartbeat = "task_heartbeat"
     node_heartbeat = "node_heartbeat"
+    instance_config_updated = "instance_config_updated"
 
 
 EventTypeMap = {
@@ -243,9 +285,12 @@ EventTypeMap = {
     EventType.proxy_created: EventProxyCreated,
     EventType.proxy_deleted: EventProxyDeleted,
     EventType.proxy_failed: EventProxyFailed,
+    EventType.proxy_state_updated: EventProxyStateUpdated,
     EventType.scaleset_created: EventScalesetCreated,
     EventType.scaleset_deleted: EventScalesetDeleted,
     EventType.scaleset_failed: EventScalesetFailed,
+    EventType.scaleset_state_updated: EventScalesetStateUpdated,
+    EventType.scaleset_resize_scheduled: EventScalesetResizeScheduled,
     EventType.task_created: EventTaskCreated,
     EventType.task_failed: EventTaskFailed,
     EventType.task_state_updated: EventTaskStateUpdated,
@@ -254,6 +299,7 @@ EventTypeMap = {
     EventType.crash_reported: EventCrashReported,
     EventType.regression_reported: EventRegressionReported,
     EventType.file_added: EventFileAdded,
+    EventType.instance_config_updated: EventInstanceConfigUpdated,
 }
 
 
@@ -272,3 +318,25 @@ class EventMessage(BaseEvent):
     event: Event
     instance_id: UUID
     instance_name: str
+
+
+# because Pydantic does not yet have discriminated union types yet, parse events
+# by hand.  https://github.com/samuelcolvin/pydantic/issues/619
+def parse_event_message(data: Dict[str, Any]) -> EventMessage:
+    instance_id = UUID(data["instance_id"])
+    instance_name = data["instance_name"]
+    event_id = UUID(data["event_id"])
+    event_type = EventType[data["event_type"]]
+    # mypy incorrectly identifies this as having not supported parse_obj yet
+    event = EventTypeMap[event_type].parse_obj(data["event"])  # type: ignore
+
+    return EventMessage(
+        event_id=event_id,
+        event_type=event_type,
+        event=event,
+        instance_id=instance_id,
+        instance_name=instance_name,
+    )
+
+
+_check_hotfix()

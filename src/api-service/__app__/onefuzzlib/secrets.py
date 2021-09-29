@@ -5,7 +5,7 @@
 
 
 import os
-from typing import Tuple, Type, TypeVar, cast
+from typing import Tuple, Type, TypeVar
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -18,9 +18,9 @@ from .azure.creds import get_keyvault_client
 A = TypeVar("A", bound=BaseModel)
 
 
-def save_to_keyvault(secret_data: SecretData) -> None:
+def save_to_keyvault(secret_data: SecretData) -> SecretData:
     if isinstance(secret_data.secret, SecretAddress):
-        return
+        return secret_data
 
     secret_name = str(uuid4())
     if isinstance(secret_data.secret, str):
@@ -32,12 +32,13 @@ def save_to_keyvault(secret_data: SecretData) -> None:
 
     kv = store_in_keyvault(get_keyvault_address(), secret_name, secret_value)
     secret_data.secret = SecretAddress(url=kv.id)
+    return secret_data
 
 
 def get_secret_string_value(self: SecretData[str]) -> str:
     if isinstance(self.secret, SecretAddress):
         secret = get_secret(self.secret.url)
-        return cast(str, secret.value)
+        return secret.value
     else:
         return self.secret
 
@@ -78,4 +79,9 @@ def get_secret_obj(secret_url: str, model: Type[A]) -> A:
 def delete_secret(secret_url: str) -> None:
     (vault_url, secret_name) = parse_secret_url(secret_url)
     keyvault_client = get_keyvault_client(vault_url)
-    keyvault_client.begin_delete_secret(secret_name).wait()
+    keyvault_client.begin_delete_secret(secret_name)
+
+
+def delete_remote_secret_data(data: SecretData) -> None:
+    if isinstance(data.secret, SecretAddress):
+        delete_secret(data.secret.url)

@@ -30,7 +30,7 @@ class TelemetryEvent(Enum):
 
     @classmethod
     def can_share(cls) -> List["TelemetryEvent"]:
-        """ only these events will be shared to the central telemetry """
+        """only these events will be shared to the central telemetry"""
         return [cls.task, cls.state_changed]
 
 
@@ -44,7 +44,7 @@ class TelemetryData(Enum):
 
     @classmethod
     def can_share(cls) -> List["TelemetryData"]:
-        """ only these types of data will be shared to the central telemetry """
+        """only these types of data will be shared to the central telemetry"""
         return [cls.current_state, cls.vm_id, cls.job_id, cls.task_id, cls.task_type]
 
 
@@ -80,6 +80,8 @@ class TaskFeature(Enum):
     expect_crash_on_failure = "expect_crash_on_failure"
     report_list = "report_list"
     minimized_stack_depth = "minimized_stack_depth"
+    coverage_filter = "coverage_filter"
+    target_must_use_input = "target_must_use_input"
 
 
 # Permissions for an Azure Blob Storage Container.
@@ -100,7 +102,7 @@ class JobState(Enum):
 
     @classmethod
     def available(cls) -> List["JobState"]:
-        """ set of states that indicate if tasks can be added to it """
+        """set of states that indicate if tasks can be added to it"""
         return [x for x in cls if x not in [cls.stopping, cls.stopped]]
 
     @classmethod
@@ -138,7 +140,7 @@ class TaskState(Enum):
 
     @classmethod
     def available(cls) -> List["TaskState"]:
-        """ set of states that indicate if the task isn't stopping """
+        """set of states that indicate if the task isn't stopping"""
         return [x for x in cls if x not in [TaskState.stopping, TaskState.stopped]]
 
     @classmethod
@@ -147,6 +149,7 @@ class TaskState(Enum):
 
 
 class TaskType(Enum):
+    coverage = "coverage"
     libfuzzer_fuzz = "libfuzzer_fuzz"
     libfuzzer_coverage = "libfuzzer_coverage"
     libfuzzer_crash_report = "libfuzzer_crash_report"
@@ -178,7 +181,7 @@ class VmState(Enum):
 
     @classmethod
     def available(cls) -> List["VmState"]:
-        """ set of states that indicate if the repro vm isn't stopping """
+        """set of states that indicate if the repro vm isn't stopping"""
         return [x for x in cls if x not in [cls.stopping, cls.stopped]]
 
 
@@ -289,7 +292,7 @@ class PoolState(Enum):
 
     @classmethod
     def available(cls) -> List["PoolState"]:
-        """ set of states that indicate if it's available for work """
+        """set of states that indicate if it's available for work"""
         return [cls.running]
 
 
@@ -303,6 +306,13 @@ class ScalesetState(Enum):
     creation_failed = "creation_failed"
 
     @classmethod
+    def can_update(cls) -> List["ScalesetState"]:
+        """
+        set of states that indicate the scaleset can be updated
+        """
+        return [cls.running, cls.resize]
+
+    @classmethod
     def needs_work(cls) -> List["ScalesetState"]:
         """
         set of states that indicate work is needed during eventing
@@ -311,13 +321,13 @@ class ScalesetState(Enum):
 
     @classmethod
     def available(cls) -> List["ScalesetState"]:
-        """ set of states that indicate if it's available for work """
+        """set of states that indicate if it's available for work"""
         unavailable = [cls.shutdown, cls.halt, cls.creation_failed]
         return [x for x in cls if x not in unavailable]
 
     @classmethod
     def modifying(cls) -> List["ScalesetState"]:
-        """ set of states that indicate scaleset is resizing """
+        """set of states that indicate scaleset is resizing"""
         return [
             cls.halt,
             cls.init,
@@ -361,6 +371,10 @@ class NodeState(Enum):
         # If Node is in one of these states, ignore updates
         # from the agent.
         return [cls.done, cls.shutdown, cls.halt]
+
+    @classmethod
+    def can_process_new_work(cls) -> List["NodeState"]:
+        return [cls.free]
 
 
 class GithubIssueState(Enum):

@@ -15,7 +15,6 @@ from typing import (
     List,
     Mapping,
     Optional,
-    Set,
     Tuple,
     Type,
     TypeVar,
@@ -41,7 +40,7 @@ from pydantic import BaseModel
 from typing_extensions import Protocol
 
 from .azure.table import get_client
-from .secrets import save_to_keyvault
+from .secrets import delete_remote_secret_data, save_to_keyvault
 from .telemetry import track_event_filtered
 from .updates import queue_update
 
@@ -76,6 +75,9 @@ class HasState(Protocol):
     # the JobState,TaskState,etc enums.
     state: Any
 
+    def get_keys(self) -> Tuple[KEY, KEY]:
+        ...
+
 
 def process_state_update(obj: HasState) -> None:
     """
@@ -87,15 +89,16 @@ def process_state_update(obj: HasState) -> None:
     if func is None:
         return
 
-    get_keys = getattr(obj, "get_keys", None)
-    if get_keys is not None:
-        logging.info("processing state update: %s - %s", get_keys(), obj.state.name)
+    keys = obj.get_keys()
 
+    logging.info(
+        "processing state update: %s - %s - %s", type(obj), keys, obj.state.name
+    )
     func()
 
 
 def process_state_updates(obj: HasState, max_updates: int = 5) -> None:
-    """ process through the state machine for an object """
+    """process through the state machine for an object"""
 
     for _ in range(max_updates):
         state = obj.state
@@ -219,6 +222,55 @@ class ModelMixin(BaseModel):
         return result
 
 
+B = TypeVar("B", bound=BaseModel)
+
+
+def hide_secrets(data: B, hider: Callable[[SecretData], SecretData]) -> B:
+    for field in data.__fields__:
+        field_data = getattr(data, field)
+
+        if isinstance(field_data, SecretData):
+            field_data = hider(field_data)
+        elif isinstance(field_data, BaseModel):
+            field_data = hide_secrets(field_data, hider)
+        elif isinstance(field_data, list):
+            field_data = [
+                hide_secrets(x, hider) if isinstance(x, BaseModel) else x
+                for x in field_data
+            ]
+        elif isinstance(field_data, dict):
+            for key in field_data:
+                if not isinstance(field_data[key], BaseModel):
+                    continue
+                field_data[key] = hide_secrets(field_data[key], hider)
+
+        setattr(data, field, field_data)
+
+    return data
+
+
+# NOTE: the actual deletion must come from the `deleter` callback function
+def delete_secrets(data: B, deleter: Callable[[SecretData], None]) -> None:
+    for field in data.__fields__:
+        field_data = getattr(data, field)
+        if isinstance(field_data, SecretData):
+            deleter(field_data)
+        elif isinstance(field_data, BaseModel):
+            delete_secrets(field_data, deleter)
+        elif isinstance(field_data, list):
+            for entry in field_data:
+                if isinstance(entry, BaseModel):
+                    delete_secrets(entry, deleter)
+                elif isinstance(entry, SecretData):
+                    deleter(entry)
+        elif isinstance(field_data, dict):
+            for value in field_data.values():
+                if isinstance(value, BaseModel):
+                    delete_secrets(value, deleter)
+                elif isinstance(value, SecretData):
+                    deleter(value)
+
+
 # NOTE: if you want to include Timestamp in a model that uses ORMMixin,
 # it must be maintained as part of the model.
 class ORMMixin(ModelMixin):
@@ -277,38 +329,8 @@ class ORMMixin(ModelMixin):
 
         return (partition_key, row_key)
 
-    @classmethod
-    def hide_secrets(
-        cls,
-        model: BaseModel,
-        hider: Callable[["SecretData"], None],
-        visited: Set[int] = set(),
-    ) -> None:
-        if id(model) in visited:
-            return
-
-        visited.add(id(model))
-        for field in model.__fields__:
-            field_data = getattr(model, field)
-            if isinstance(field_data, SecretData):
-                hider(field_data)
-            elif isinstance(field_data, List):
-                if len(field_data) > 0:
-                    if not isinstance(field_data[0], BaseModel):
-                        continue
-                for data in field_data:
-                    cls.hide_secrets(data, hider, visited)
-            elif isinstance(field_data, dict):
-                for key in field_data:
-                    if not isinstance(field_data[key], BaseModel):
-                        continue
-                    cls.hide_secrets(field_data[key], hider, visited)
-            else:
-                if isinstance(field_data, BaseModel):
-                    cls.hide_secrets(field_data, hider, visited)
-
     def save(self, new: bool = False, require_etag: bool = False) -> Optional[Error]:
-        self.__class__.hide_secrets(self, save_to_keyvault)
+        self = hide_secrets(self, save_to_keyvault)
         # TODO: migrate to an inspect.signature() model
         raw = self.raw(by_alias=True, exclude_none=True, exclude=self.save_exclude())
         for key in raw:
@@ -362,6 +384,8 @@ class ORMMixin(ModelMixin):
 
     def delete(self) -> None:
         partition_key, row_key = self.get_keys()
+
+        delete_secrets(self, delete_remote_secret_data)
 
         client = get_client()
         try:

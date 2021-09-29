@@ -284,5 +284,18 @@
     "content::ContentMainRunnerImpl::Run",
     "content::ContentMain",
     "ChromeMain"
+  ],
+  "minimized_stack_function_lines": [
+    "_gdk_window_process_updates_recurse gdkwindow.c:5484",
+    "base::MessageLoop::RunHandler() message_loop.cc:440:3",
+    "base::RunLoop::Run() run_loop.cc:35:3",
+    "ChromeBrowserMainParts::MainMessageLoopRun(int*) chrome_browser_main.cc:1820:3",
+    "content::BrowserMainLoop::RunMainMessageLoopParts() browser_main_loop.cc:959:21",
+    "content::BrowserMainRunnerImpl::Run() browser_main_runner.cc:152:5",
+    "content::BrowserMain(content::MainFunctionParams const&) browser_main.cc:44:15",
+    "content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*) content_main_runner.cc:399:14",
+    "content::ContentMainRunnerImpl::Run() content_main_runner.cc:772:12",
+    "content::ContentMain(content::ContentMainParams const&) content_main.cc:19:15",
+    "ChromeMain chrome_main.cc:84:12"
   ]
 }

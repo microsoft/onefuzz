@@ -139,5 +139,9 @@
   "minimized_stack_function_names": [
     "woff2::ConvertWOFF2ToTTF",
     "convert_woff2ttf_fuzzer.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "woff2::ConvertWOFF2ToTTF(unsigned char const*, unsigned long, woff2::WOFF2Out*) woff2_dec.cc:1302",
+    "convert_woff2ttf_fuzzer.cc convert_woff2ttf_fuzzer.cc:11:3"
   ]
 }

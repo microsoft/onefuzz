@@ -24,6 +24,7 @@ from ..azure.queue import create_queue, delete_queue, peek_queue, queue_object
 from ..azure.storage import StorageType
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
+from .shrink_queue import ShrinkQueue
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
@@ -98,6 +99,11 @@ class Pool(BASE_POOL, ORMMixin):
             for x in Scaleset.search_by_pool(self.name)
         ]
 
+    def peek_work_queue(self) -> List[WorkSet]:
+        return peek_queue(
+            self.get_pool_queue(), StorageType.corpus, object_type=WorkSet
+        )
+
     def populate_work_queue(self) -> None:
         self.work_queue = []
 
@@ -106,11 +112,13 @@ class Pool(BASE_POOL, ORMMixin):
         if self.state == PoolState.init:
             return
 
-        worksets = peek_queue(
-            self.get_pool_queue(), StorageType.corpus, object_type=WorkSet
-        )
+        worksets = self.peek_work_queue()
 
         for workset in worksets:
+            # only include work units with work
+            if not workset.work_units:
+                continue
+
             work_units = [
                 WorkUnitSummary(
                     job_id=work_unit.job_id,
@@ -126,8 +134,8 @@ class Pool(BASE_POOL, ORMMixin):
 
     def init(self) -> None:
         create_queue(self.get_pool_queue(), StorageType.corpus)
-        self.state = PoolState.running
-        self.save()
+        ShrinkQueue(self.pool_id).create()
+        self.set_state(PoolState.running)
 
     def schedule_workset(self, work_set: WorkSet) -> bool:
         # Don't schedule work for pools that can't and won't do work.
@@ -174,18 +182,13 @@ class Pool(BASE_POOL, ORMMixin):
         return cls.search(query=query)
 
     def set_shutdown(self, now: bool) -> None:
-        if self.state in [PoolState.halt, PoolState.shutdown]:
-            return
-
         if now:
-            self.state = PoolState.halt
+            self.set_state(PoolState.halt)
         else:
-            self.state = PoolState.shutdown
-
-        self.save()
+            self.set_state(PoolState.shutdown)
 
     def shutdown(self) -> None:
-        """ shutdown allows nodes to finish current work then delete """
+        """shutdown allows nodes to finish current work then delete"""
         from .nodes import Node
         from .scalesets import Scaleset
 
@@ -193,8 +196,6 @@ class Pool(BASE_POOL, ORMMixin):
         nodes = Node.search(query={"pool_name": [self.name]})
         if not scalesets and not nodes:
             logging.info("pool stopped, deleting: %s", self.name)
-
-            self.state = PoolState.halt
             self.delete()
             return
 
@@ -207,7 +208,7 @@ class Pool(BASE_POOL, ORMMixin):
         self.save()
 
     def halt(self) -> None:
-        """ halt the pool immediately """
+        """halt the pool immediately"""
 
         from .nodes import Node
         from .scalesets import Scaleset
@@ -216,18 +217,28 @@ class Pool(BASE_POOL, ORMMixin):
         nodes = Node.search(query={"pool_name": [self.name]})
         if not scalesets and not nodes:
             delete_queue(self.get_pool_queue(), StorageType.corpus)
+            ShrinkQueue(self.pool_id).delete()
             logging.info("pool stopped, deleting: %s", self.name)
-            self.state = PoolState.halt
             self.delete()
             return
 
         for scaleset in scalesets:
-            scaleset.state = ScalesetState.halt
-            scaleset.save()
+            scaleset.set_state(ScalesetState.halt)
 
         for node in nodes:
             node.set_halt()
 
+        self.save()
+
+    def set_state(self, state: PoolState) -> None:
+        if self.state == state:
+            return
+
+        # scalesets should never leave the `halt` state
+        if self.state == PoolState.halt:
+            return
+
+        self.state = state
         self.save()
 
     @classmethod

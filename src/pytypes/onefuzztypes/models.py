@@ -10,6 +10,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, root_validator, validator
 from pydantic.dataclasses import dataclass
 
+from ._monkeypatch import _check_hotfix
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
     OS,
@@ -60,9 +61,9 @@ class SecretData(Generic[T]):
     secret: Union[T, SecretAddress]
 
     def __init__(self, secret: Union[T, SecretAddress]):
-        if isinstance(secret, dict):
+        try:
             self.secret = SecretAddress.parse_obj(secret)
-        else:
+        except Exception:
             self.secret = secret
 
     def __str__(self) -> str:
@@ -118,30 +119,18 @@ class JobConfig(BaseModel):
     project: str
     name: str
     build: str
-    duration: int
-
-    @validator("duration", allow_reuse=True)
-    def check_duration(cls, value: int) -> int:
-        if value < ONE_HOUR or value > SEVEN_DAYS:
-            raise ValueError("invalid duration")
-        return value
+    duration: int = Field(ge=ONE_HOUR, le=SEVEN_DAYS)
 
 
 class ReproConfig(BaseModel):
     container: Container
     path: str
-    duration: int
-
-    @validator("duration", allow_reuse=True)
-    def check_duration(cls, value: int) -> int:
-        if value < ONE_HOUR or value > SEVEN_DAYS:
-            raise ValueError("invalid duration")
-        return value
+    duration: int = Field(ge=ONE_HOUR, le=SEVEN_DAYS)
 
 
 class TaskDetails(BaseModel):
     type: TaskType
-    duration: int
+    duration: int = Field(ge=ONE_HOUR, le=SEVEN_DAYS)
     target_exe: Optional[str]
     target_env: Optional[Dict[str, str]]
     target_options: Optional[List[str]]
@@ -149,7 +138,7 @@ class TaskDetails(BaseModel):
     target_options_merge: Optional[bool]
     check_asan_log: Optional[bool]
     check_debugger: Optional[bool] = Field(default=True)
-    check_retry_count: Optional[int]
+    check_retry_count: Optional[int] = Field(ge=0)
     check_fuzzer_help: Optional[bool]
     expect_crash_on_failure: Optional[bool]
     rename_output: Optional[bool]
@@ -167,31 +156,12 @@ class TaskDetails(BaseModel):
     stats_file: Optional[str]
     stats_format: Optional[StatsFormat]
     reboot_after_setup: Optional[bool]
-    target_timeout: Optional[int]
+    target_timeout: Optional[int] = Field(ge=1)
     ensemble_sync_delay: Optional[int]
     preserve_existing_outputs: Optional[bool]
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
-
-    @validator("check_retry_count", allow_reuse=True)
-    def validate_check_retry_count(cls, value: int) -> int:
-        if value is not None:
-            if value < 0:
-                raise ValueError("invalid check_retry_count")
-        return value
-
-    @validator("target_timeout", allow_reuse=True)
-    def check_target_timeout(cls, value: Optional[int]) -> Optional[int]:
-        if value is not None:
-            if value < 1:
-                raise ValueError("invalid target_timeout")
-        return value
-
-    @validator("duration", allow_reuse=True)
-    def check_duration(cls, value: int) -> int:
-        if value < ONE_HOUR or value > SEVEN_DAYS:
-            raise ValueError("invalid duration")
-        return value
+    coverage_filter: Optional[str]
 
 
 class TaskPool(BaseModel):
@@ -203,15 +173,9 @@ class TaskVm(BaseModel):
     region: Region
     sku: str
     image: str
-    count: int = Field(default=1)
+    count: int = Field(default=1, ge=0)
     spot_instances: bool = Field(default=False)
     reboot_after_setup: Optional[bool]
-
-    @validator("count", allow_reuse=True)
-    def check_count(cls, value: int) -> int:
-        if value <= 0:
-            raise ValueError("invalid count")
-        return value
 
 
 class TaskContainers(BaseModel):
@@ -255,6 +219,8 @@ class Report(BaseModel):
     minimized_stack_sha256: Optional[str]
     minimized_stack_function_names: Optional[List[str]]
     minimized_stack_function_names_sha256: Optional[str]
+    minimized_stack_function_lines: Optional[List[str]]
+    minimized_stack_function_lines_sha256: Optional[str]
 
 
 class NoReproReport(BaseModel):
@@ -406,6 +372,7 @@ class TaskUnitConfig(BaseModel):
     ensemble_sync_delay: Optional[int]
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
+    coverage_filter: Optional[str]
 
     # from here forwards are Container definitions.  These need to be inline
     # with TaskDefinitions and ContainerTypes
@@ -432,6 +399,7 @@ class ProxyConfig(BaseModel):
     url: str
     notification: str
     region: Region
+    proxy_id: UUID
     forwards: List[Forward]
     instance_telemetry_key: Optional[str]
     microsoft_telemetry_key: Optional[str]
@@ -440,6 +408,7 @@ class ProxyConfig(BaseModel):
 
 class ProxyHeartbeat(BaseModel):
     region: Region
+    proxy_id: UUID
     forwards: List[Forward]
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
@@ -488,15 +457,15 @@ class GithubIssueSearch(BaseModel):
 
 
 class GithubAuth(BaseModel):
-    user: str
-    personal_access_token: str
+    user: str = Field(min_length=1)
+    personal_access_token: str = Field(min_length=1)
 
 
 class GithubIssueTemplate(BaseModel):
     auth: SecretData[GithubAuth]
-    organization: str
-    repository: str
-    title: str
+    organization: str = Field(min_length=1)
+    repository: str = Field(min_length=1)
+    title: str = Field(min_length=1)
     body: str
     unique_search: GithubIssueSearch
     assignees: List[str]
@@ -506,15 +475,26 @@ class GithubIssueTemplate(BaseModel):
     # validator needed for backward compatibility
     @validator("auth", pre=True, always=True)
     def validate_auth(cls, v: Any) -> SecretData:
-        if isinstance(v, str):
+        def try_parse_GithubAuth(x: dict) -> Optional[GithubAuth]:
+            try:
+                return GithubAuth.parse_obj(x)
+            except Exception:
+                return None
+
+        if isinstance(v, GithubAuth):
             return SecretData(secret=v)
         elif isinstance(v, SecretData):
             return v
         elif isinstance(v, dict):
-            try:
-                return SecretData(GithubAuth.parse_obj(v))
-            except Exception:
-                return SecretData(secret=v["secret"])
+            githubAuth = try_parse_GithubAuth(v)
+            if githubAuth:
+                return SecretData(secret=githubAuth)
+
+            githubAuth = try_parse_GithubAuth(v["secret"])
+            if githubAuth:
+                return SecretData(secret=githubAuth)
+
+            return SecretData(secret=v["secret"])
         else:
             raise TypeError(f"invalid datatype {type(v)}")
 
@@ -523,6 +503,7 @@ NotificationTemplate = Union[ADOTemplate, TeamsTemplate, GithubIssueTemplate]
 
 
 class Notification(BaseModel):
+    timestamp: Optional[datetime] = Field(alias="Timestamp")
     container: Container
     notification_id: UUID = Field(default_factory=uuid4)
     config: NotificationTemplate
@@ -557,13 +538,43 @@ class NodeHeartbeatEntry(BaseModel):
     data: List[Dict[str, HeartbeatType]]
 
 
+class NodeCommandStopIfFree(BaseModel):
+    pass
+
+
+class StopNodeCommand(BaseModel):
+    pass
+
+
+class StopTaskNodeCommand(BaseModel):
+    task_id: UUID
+
+
+class NodeCommandAddSshKey(BaseModel):
+    public_key: str
+
+
+class NodeCommand(EnumModel):
+    stop: Optional[StopNodeCommand]
+    stop_task: Optional[StopTaskNodeCommand]
+    add_ssh_key: Optional[NodeCommandAddSshKey]
+    stop_if_free: Optional[NodeCommandStopIfFree]
+
+
+class NodeCommandEnvelope(BaseModel):
+    command: NodeCommand
+    message_id: str
+
+
 class Node(BaseModel):
     timestamp: Optional[datetime] = Field(alias="Timestamp")
     pool_name: PoolName
+    pool_id: Optional[UUID]
     machine_id: UUID
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
+    messages: Optional[List[NodeCommand]] = None
     heartbeat: Optional[datetime]
     version: str = Field(default="1.0.0")
     reimage_requested: bool = Field(default=False)
@@ -584,41 +595,19 @@ class NodeTasks(BaseModel):
 
 class AutoScaleConfig(BaseModel):
     image: str
-    max_size: Optional[int]  # max size of pool
-    min_size: int = Field(default=0)  # min size of pool
+    max_size: int = Field(default=1000, le=1000, ge=0)  # max size of pool
+    min_size: int = Field(default=0, le=1000, ge=0)  # min size of pool
     region: Optional[Region]
     scaleset_size: int  # Individual scaleset size
     spot_instances: bool = Field(default=False)
     ephemeral_os_disks: bool = Field(default=False)
     vm_sku: str
 
-    @validator("scaleset_size", allow_reuse=True)
-    def check_scaleset_size(cls, value: int) -> int:
-        if value < 1 or value > 1000:
-            raise ValueError("invalid scaleset size")
-        return value
-
     @root_validator()
     def check_data(cls, values: Any) -> Any:
-        if (
-            "max_size" in values
-            and values.get("max_size")
-            and values.get("min_size") > values.get("max_size")
-        ):
+        if values["min_size"] > values["max_size"]:
             raise ValueError("The pool min_size is greater than max_size")
         return values
-
-    @validator("max_size", allow_reuse=True)
-    def check_max_size(cls, value: Optional[int]) -> Optional[int]:
-        if value and value < 1:
-            raise ValueError("Autoscale sizes are not defined properly")
-        return value
-
-    @validator("min_size", allow_reuse=True)
-    def check_min_size(cls, value: int) -> int:
-        if value < 0 or value > 1000:
-            raise ValueError("Invalid pool min_size")
-        return value
 
 
 class Pool(BaseModel):
@@ -658,7 +647,7 @@ class Scaleset(BaseModel):
     vm_sku: str
     image: str
     region: Region
-    size: int
+    size: int = Field(ge=0)
     spot_instances: bool
     ephemeral_os_disks: bool = Field(default=False)
     needs_config_update: bool = Field(default=False)
@@ -667,12 +656,6 @@ class Scaleset(BaseModel):
     client_id: Optional[UUID]
     client_object_id: Optional[UUID]
     tags: Dict[str, str] = Field(default_factory=lambda: {})
-
-    @validator("size", allow_reuse=True)
-    def check_size(cls, value: int) -> int:
-        if value < 0:
-            raise ValueError("Invalid scaleset size")
-        return value
 
 
 class NotificationConfig(BaseModel):
@@ -776,29 +759,6 @@ class NodeEventEnvelope(BaseModel):
     event: NodeEventShim
 
 
-class StopNodeCommand(BaseModel):
-    pass
-
-
-class StopTaskNodeCommand(BaseModel):
-    task_id: UUID
-
-
-class NodeCommandAddSshKey(BaseModel):
-    public_key: str
-
-
-class NodeCommand(EnumModel):
-    stop: Optional[StopNodeCommand]
-    stop_task: Optional[StopTaskNodeCommand]
-    add_ssh_key: Optional[NodeCommandAddSshKey]
-
-
-class NodeCommandEnvelope(BaseModel):
-    command: NodeCommand
-    message_id: str
-
-
 class TaskEvent(BaseModel):
     timestamp: Optional[datetime] = Field(alias="Timestamp")
     task_id: UUID
@@ -832,3 +792,83 @@ class Task(BaseModel):
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]
     user_info: Optional[UserInfo]
+
+
+class NetworkConfig(BaseModel):
+    address_space: str = Field(default="10.0.0.0/8")
+    subnet: str = Field(default="10.0.0.0/16")
+
+
+class KeyvaultExtensionConfig(BaseModel):
+    keyvault_name: str
+    cert_name: str
+    cert_path: str
+    extension_store: str
+
+
+class AzureMonitorExtensionConfig(BaseModel):
+    config_version: str
+    moniker: str
+    namespace: str
+    monitoringGSEnvironment: str
+    monitoringGCSAccount: str
+    monitoringGCSAuthId: str
+    monitoringGCSAuthIdType: str
+
+
+class AzureSecurityExtensionConfig(BaseModel):
+    pass
+
+
+class GenevaExtensionConfig(BaseModel):
+    pass
+
+
+class AzureVmExtensionConfig(BaseModel):
+    keyvault: Optional[KeyvaultExtensionConfig]
+    azure_monitor: Optional[AzureMonitorExtensionConfig]
+    azure_security: Optional[AzureSecurityExtensionConfig]
+    geneva: Optional[GenevaExtensionConfig]
+
+
+class InstanceConfig(BaseModel):
+    # initial set of admins can only be set during deployment.
+    # if admins are set, only admins can update instance configs.
+    admins: Optional[List[UUID]] = None
+
+    # if set, only admins can manage pools or scalesets
+    allow_pool_management: bool = Field(default=True)
+
+    allowed_aad_tenants: List[UUID]
+    network_config: NetworkConfig = Field(default_factory=NetworkConfig)
+    extensions: Optional[AzureVmExtensionConfig]
+    proxy_vm_sku: str = Field(default="Standard_B2s")
+
+    def update(self, config: "InstanceConfig") -> None:
+        for field in config.__fields__:
+            # If no admins are set, then ignore setting admins
+            if field == "admins" and self.admins is None:
+                continue
+
+            if hasattr(self, field):
+                setattr(self, field, getattr(config, field))
+
+    @validator("admins", allow_reuse=True)
+    def check_admins(cls, value: Optional[List[UUID]]) -> Optional[List[UUID]]:
+        if value is not None and len(value) == 0:
+            raise ValueError("admins must be None or contain at least one UUID")
+        return value
+
+    # At the moment, this only checks allowed_aad_tenants, however adding
+    # support for 3rd party JWT validation is anticipated in a future release.
+    @root_validator()
+    def check_instance_config(cls, values: Any) -> Any:
+        if "allowed_aad_tenants" not in values:
+            raise ValueError("missing allowed_aad_tenants")
+
+        if not len(values["allowed_aad_tenants"]):
+            raise ValueError("allowed_aad_tenants must not be empty")
+        return values
+
+
+_check_hotfix()

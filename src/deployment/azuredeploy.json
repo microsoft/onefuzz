@@ -20,8 +20,8 @@
         "app_func_issuer": {
             "type": "string"
         },
-        "app_func_audience": {
-            "type": "string"
+        "app_func_audiences": {
+            "type": "array"
         },
         "multi_tenant_domain": {
             "type": "string"
@@ -48,7 +48,7 @@
     },
     "variables": {
         "autoscale_name": "[concat('onefuzz-autoscale-', uniquestring(resourceGroup().id))]",
-        "diagnosticsLogsRetentionInDays": 90,
+        "log_retention": 30,
         "monitorAccountName": "[concat('logs-wb-', uniquestring(resourceGroup().id))]",
         "scaleset_identity": "[concat(parameters('name'), '-scalesetid')]",
         "signalr-name": "[concat('onefuzz-', uniquestring(resourceGroup().id))]",
@@ -66,6 +66,7 @@
         "Network Contributor": "4d97b98b-1d4f-4787-a291-c67834d212e7",
         "Storage Account Contributor": "17d1049b-9a84-46fb-8f53-869881c3d3ab",
         "Virtual Machine Contributor": "9980e02c-c2be-4d73-94e8-173b1dc7cf3c",
+        "Storage Blob Data Reader": "2a2b9908-6ea1-4ae2-8e65-a410df84e7d1",
         "keyVaultName": "[concat('of-kv-', uniquestring(resourceGroup().id))]"
     },
     "functions": [
@@ -121,11 +122,16 @@
                 "enabledForTemplateDeployment": true,
                 "tenantId": "[subscription().tenantId]",
                 "accessPolicies": [
-                     {
+                    {
                         "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2019-08-01', 'full').identity.principalId]",
                         "tenantId": "[subscription().tenantId]",
                         "permissions": {
-                            "secrets": ["get", "list", "set", "delete"]
+                            "secrets": [
+                                "get",
+                                "list",
+                                "set",
+                                "delete"
+                            ]
                         }
                     }
                 ],
@@ -173,7 +179,7 @@
                             "azureBlobStorage": {
                                 "level": "[parameters('diagnosticsLogsLevel')]",
                                 "sasUrl": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountNameFunc'))).primaryEndpoints.blob, 'app-logs', '?', listAccountSas(variables('storageAccountNameFunc'), '2018-02-01', variables('storage_account_sas')).accountSasToken)]",
-                                "retentionInDays": "[variables('diagnosticsLogsRetentionInDays')]"
+                                "retentionInDays": "[variables('log_retention')]"
                             }
                         }
                     }
@@ -277,7 +283,7 @@
                         "clientSecret": "[parameters('clientSecret')]",
                         "issuer": "[parameters('app_func_issuer')]",
                         "defaultProvider": "AzureActiveDirectory",
-                        "allowedAudiences": ["[parameters('app_func_audience')]"],
+                        "allowedAudiences": "[parameters('app_func_audiences')]",
                         "isAadAutoProvisioned": false
                     }
                 },
@@ -382,19 +388,33 @@
                 "OWNER": "[parameters('owner')]"
             }
         },
+
         {
-            "apiVersion": "2015-05-01",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2020-08-01",
+            "name": "[parameters('name')]",
+            "location": "[resourceGroup().location]",
+            "properties": {}
+        },
+
+        {
+            "apiVersion": "2020-02-02-preview",
             "name": "[parameters('name')]",
             "type": "microsoft.insights/components",
             "location": "[resourceGroup().location]",
             "kind": "",
             "properties": {
                 "ApplicationId": "[parameters('name')]",
-                "Application_Type": "other"
+                "Application_Type": "other",
+                "RetentionInDays": "[variables('log_retention')]",
+                "WorkspaceResourceId" : "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
             },
             "tags": {
                 "OWNER": "[parameters('owner')]"
             },
+            "dependsOn" : [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+            ],
             "resources": [
                 {
                     "name": "df20765c-ed5b-46f9-a47b-20f4aaf7936d",
@@ -424,7 +444,7 @@
                 "sku": {
                     "name": "PerGB2018"
                 },
-                "retentionInDays": 120,
+                "retentionInDays": "[variables('log_retention')]",
                 "features": {
                     "searchVersion": 1,
                     "legacy": 0,
@@ -669,6 +689,62 @@
             ]
         },
         {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/file-changes')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/task-heartbeat')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/node-heartbeat')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/proxy')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/update-queue')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/webhooks')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/signalr-events')]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2017-09-01",
             "name": "[guid(concat(resourceGroup().id, '-vmss'))]",
@@ -744,6 +820,21 @@
             }
         },
         {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2018-07-01",
+            "name": "[guid(concat(resourceGroup().id, '-user_managed_idenity_read_blob'))]",
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('Storage Blob Data Reader'))]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('scaleset_identity')), '2018-11-30', 'Full').properties.principalId]"
+            },
+            "DependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ],
+            "tags": {
+                "OWNER": "[parameters('owner')]"
+            }
+        },
+        {
             "type": "Microsoft.SignalRService/SignalR",
             "apiVersion": "2018-10-01",
             "name": "[variables('signalr-name')]",
@@ -804,6 +895,10 @@
         "scaleset-identity": {
             "type": "string",
             "value": "[variables('scaleset_identity')]"
+        },
+        "tenant_id": {
+            "type": "string",
+            "value": "[subscription().tenantId]"
         }
     }
 }

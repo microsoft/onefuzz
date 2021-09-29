@@ -21,8 +21,7 @@ from ..onefuzzlib.azure.creds import (
 from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.azure.storage import StorageType
 from ..onefuzzlib.azure.vmss import list_available_skus
-from ..onefuzzlib.endpoint_authorization import call_if_user
-from ..onefuzzlib.events import get_events
+from ..onefuzzlib.endpoint_authorization import call_if_user, check_can_manage_pools
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.workers.pools import Pool
 
@@ -78,6 +77,10 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="PoolCreate")
 
+    answer = check_can_manage_pools(req)
+    if isinstance(answer, Error):
+        return not_ok(answer, context="PoolCreate")
+
     pool = Pool.get_by_name(request.name)
     if isinstance(pool, Pool):
         return not_ok(
@@ -130,6 +133,10 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="PoolDelete")
 
+    answer = check_can_manage_pools(req)
+    if isinstance(answer, Error):
+        return not_ok(answer, context="PoolDelete")
+
     pool = Pool.get_by_name(request.name)
     if isinstance(pool, Error):
         return not_ok(pool, context="pool stop")
@@ -137,13 +144,9 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     return ok(BoolResult(result=True))
 
 
-def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
+def main(req: func.HttpRequest) -> func.HttpResponse:
     methods = {"GET": get, "POST": post, "DELETE": delete}
     method = methods[req.method]
     result = call_if_user(req, method)
-
-    events = get_events()
-    if events:
-        dashboard.set(events)
 
     return result

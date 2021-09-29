@@ -13,6 +13,9 @@ use crate::setup::*;
 use crate::work::IWorkQueue;
 use crate::worker::IWorkerRunner;
 
+const PENDING_COMMANDS_DELAY: time::Duration = time::Duration::from_secs(10);
+const BUSY_DELAY: time::Duration = time::Duration::from_secs(1);
+
 pub struct Agent {
     coordinator: Box<dyn ICoordinator>,
     reboot: Box<dyn IReboot>,
@@ -22,6 +25,7 @@ pub struct Agent {
     worker_runner: Box<dyn IWorkerRunner>,
     heartbeat: Option<AgentHeartbeatClient>,
     previous_state: NodeState,
+    last_poll_command: Result<Option<NodeCommand>, PollCommandError>,
 }
 
 impl Agent {
@@ -36,6 +40,7 @@ impl Agent {
     ) -> Self {
         let scheduler = Some(scheduler);
         let previous_state = NodeState::Init;
+        let last_poll_command = Ok(None);
 
         Self {
             coordinator,
@@ -46,11 +51,12 @@ impl Agent {
             worker_runner,
             heartbeat,
             previous_state,
+            last_poll_command,
         }
     }
 
     pub async fn run(&mut self) -> Result<()> {
-        let mut delay = command_delay();
+        let mut instant = time::Instant::now();
 
         // Tell the service that the agent has started.
         //
@@ -68,9 +74,9 @@ impl Agent {
 
         loop {
             self.heartbeat.alive();
-            if delay.is_elapsed() {
+            if instant.elapsed() >= PENDING_COMMANDS_DELAY {
                 self.execute_pending_commands().await?;
-                delay = command_delay();
+                instant = time::Instant::now();
             }
 
             let done = self.update().await?;
@@ -229,6 +235,15 @@ impl Agent {
     async fn busy(&mut self, state: State<Busy>) -> Result<Scheduler> {
         self.emit_state_update_if_changed(StateUpdateEvent::Busy)
             .await?;
+
+        // Without this sleep, the `Agent.run` loop turns into an extremely tight loop calling
+        // `wait4` of the running agents.  This sleep adds a small window to allow the rest of the
+        // system to work.  Emperical testing shows this has a significant reduction in CPU use.
+        //
+        // TODO: The worker_runner monitoring needs to be turned into something event driven.  Once
+        // that is done, this sleep should be removed.
+        time::sleep(BUSY_DELAY).await;
+
         let mut events = vec![];
         let updated = state
             .update(&mut events, self.worker_runner.as_mut())
@@ -265,12 +280,39 @@ impl Agent {
     }
 
     async fn execute_pending_commands(&mut self) -> Result<()> {
-        let cmd = self.coordinator.poll_commands().await?;
+        let result = self.coordinator.poll_commands().await;
 
-        if let Some(cmd) = cmd {
-            debug!("agent received node command: {:?}", cmd);
-            self.scheduler()?.execute_command(cmd).await?;
+        match &result {
+            Ok(None) => {}
+            Ok(Some(cmd)) => {
+                info!("agent received node command: {:?}", cmd);
+                self.scheduler()?.execute_command(cmd).await?;
+            }
+            Err(PollCommandError::RequestFailed(err)) => {
+                // If we failed to request commands, this could be the service
+                // could be down.  Log it, but keep going.
+                error!("error polling the service for commands: {:?}", err);
+            }
+            Err(PollCommandError::RequestParseFailed(err)) => {
+                bail!("poll commands failed: {:?}", err);
+            }
+            Err(PollCommandError::ClaimFailed(err)) => {
+                // If we failed to claim two commands in a row, it means the
+                // service is up (since we received the commands we're trying to
+                // claim), but something else is going wrong, consistently. This
+                // is suspicious, and less likely to be a transient service or
+                // networking error, so bail.
+                if matches!(
+                    self.last_poll_command,
+                    Err(PollCommandError::ClaimFailed(..))
+                ) {
+                    bail!("repeated command claim attempt failures: {:?}", err);
+                }
+                error!("error claiming command from the service: {:?}", err);
+            }
         }
+
+        self.last_poll_command = result;
 
         Ok(())
     }
@@ -283,11 +325,6 @@ impl Agent {
     fn scheduler(&mut self) -> Result<&mut Scheduler> {
         self.scheduler.as_mut().ok_or_else(scheduler_error)
     }
-}
-
-fn command_delay() -> time::Sleep {
-    let delay = time::Duration::from_secs(10);
-    time::sleep(delay)
 }
 
 // The agent owns a `Scheduler`, which it must consume when driving its state

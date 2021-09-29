@@ -298,5 +298,20 @@
     "base::Thread::ThreadMain",
     "base::",
     "start_thread"
+  ],
+  "minimized_stack_function_lines": [
+    "base::internal::RunnableAdapter<void (media::midi::MidiManagerClient::*)(unsigned long)>::Run(media::midi::MidiManagerClient*, unsigned long const&) bind_internal.h:178:12",
+    "base::internal::InvokeHelper<false, void, base::internal::RunnableAdapter<void (media::midi::MidiManagerClient::*)(unsigned long)>, base::internal::TypeList<media::midi::MidiManagerClient*, unsigned long const&> >::MakeItSo(base::internal::RunnableAdapter<void (media::midi::MidiManagerClient::*)(unsigned long)>, media::midi::MidiManagerClient*, unsigned long const&) bind_internal.h:295:5",
+    "base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) task_annotator.cc:51:3",
+    "base::MessageLoop::RunTask(base::PendingTask const&) message_loop.cc:482:3",
+    "base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&) message_loop.cc:491:5",
+    "base::MessageLoop::DoWork() message_loop.cc:603:13",
+    "base::MessagePumpDefault::Run(base::MessagePump::Delegate*) message_pump_default.cc:32:21",
+    "base::MessageLoop::RunHandler() message_loop.cc:446:3",
+    "base::RunLoop::Run() run_loop.cc:55:3",
+    "base::MessageLoop::Run() message_loop.cc:289:3",
+    "base::Thread::ThreadMain() thread.cc:251:3",
+    "base::(anonymous namespace)::ThreadFunc(void*) platform_thread_posix.cc:64:3",
+    "start_thread pthread_create.c:312"
   ]
 }

@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Iterator, List, Optional, Union
+from typing import Iterator, List, Optional, Tuple, Union
 
 from azure.devops.connection import Connection
 from azure.devops.credentials import BasicAuthentication
@@ -29,6 +29,10 @@ from onefuzztypes.primitives import Container
 
 from ..secrets import get_secret_string_value
 from .common import Render, fail_task
+
+
+class AdoNotificationException(Exception):
+    pass
 
 
 @cached(ttl=60)
@@ -56,12 +60,19 @@ class ADO:
         filename: str,
         config: ADOTemplate,
         report: Report,
+        *,
+        renderer: Optional[Render] = None,
     ):
         self.config = config
-        self.renderer = Render(container, filename, report)
+        if renderer:
+            self.renderer = renderer
+        else:
+            self.renderer = Render(container, filename, report)
+        self.project = self.render(self.config.project)
+
+    def connect(self) -> None:
         auth_token = get_secret_string_value(self.config.auth_token)
         self.client = get_ado_client(self.config.base_url, auth_token)
-        self.project = self.render(self.config.project)
 
     def render(self, template: str) -> str:
         return self.renderer.render(template)
@@ -165,9 +176,8 @@ class ADO:
         if document:
             self.client.update_work_item(document, item.id, project=self.project)
 
-    def create_new(self) -> None:
+    def render_new(self) -> Tuple[str, List[JsonPatchOperation]]:
         task_type = self.render(self.config.type)
-
         document = []
         if "System.Tags" not in self.config.ado_fields:
             document.append(
@@ -183,6 +193,10 @@ class ADO:
             document.append(
                 JsonPatchOperation(op="Add", path="/fields/%s" % field, value=value)
             )
+        return (task_type, document)
+
+    def create_new(self) -> None:
+        task_type, document = self.render_new()
 
         entry = self.client.create_work_item(
             document=document, project=self.project, type=task_type
@@ -206,11 +220,26 @@ class ADO:
             self.create_new()
 
 
+def is_transient(err: Exception) -> bool:
+    error_codes = [
+        # "TF401349: An unexpected error has occurred, please verify your request and try again." # noqa: E501
+        "TF401349",
+        # TF26071: This work item has been changed by someone else since you opened it. You will need to refresh it and discard your changes. # noqa: E501
+        "TF26071",
+    ]
+    error_str = str(err)
+    for code in error_codes:
+        if code in error_str:
+            return True
+    return False
+
+
 def notify_ado(
     config: ADOTemplate,
     container: Container,
     filename: str,
     report: Union[Report, RegressionReport],
+    fail_task_on_transient_error: bool,
 ) -> None:
     if isinstance(report, RegressionReport):
         logging.info(
@@ -221,24 +250,29 @@ def notify_ado(
         )
         return
 
-    logging.info(
-        "notify ado: job_id:%s task_id:%s container:%s filename:%s",
+    notification_info = (
+        "job_id:%s task_id:%s container:%s filename:%s",
         report.job_id,
         report.task_id,
         container,
         filename,
     )
+    logging.info("notify ado: %s", notification_info)
 
     try:
         ado = ADO(container, filename, config, report)
         ado.process()
-    except AzureDevOpsAuthenticationError as err:
-        fail_task(report, err)
-    except AzureDevOpsClientError as err:
-        fail_task(report, err)
-    except AzureDevOpsServiceError as err:
-        fail_task(report, err)
-    except AzureDevOpsClientRequestError as err:
-        fail_task(report, err)
-    except ValueError as err:
-        fail_task(report, err)
+    except (
+        AzureDevOpsAuthenticationError,
+        AzureDevOpsClientError,
+        AzureDevOpsServiceError,
+        AzureDevOpsClientRequestError,
+        ValueError,
+    ) as err:
+
+        if not fail_task_on_transient_error and is_transient(err):
+            raise AdoNotificationException(
+                f"transient ADO notification failure {notification_info}"
+            ) from err
+        else:
+            fail_task(report, err)

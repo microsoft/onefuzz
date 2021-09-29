@@ -7,10 +7,10 @@ import datetime
 import logging
 import os
 import urllib.parse
-from typing import Dict, Optional, Union, cast
+from typing import Dict, Optional, Tuple, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
-from azure.core.exceptions import ResourceExistsError
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.storage.blob import (
     BlobClient,
     BlobSasPermissions,
@@ -140,18 +140,43 @@ def create_container(
         read=True,
         write=True,
         delete=True,
-        list=True,
+        list_=True,
     )
 
 
 def delete_container(container: Container, storage_type: StorageType) -> bool:
     accounts = get_accounts(storage_type)
+    deleted = False
     for account in accounts:
         service = get_blob_service(account)
-        if bool(service.delete_container(container)):
-            return True
+        try:
+            service.delete_container(container)
+            deleted = True
+        except ResourceNotFoundError:
+            pass
 
-    return False
+    return deleted
+
+
+def sas_time_window(
+    *, days: int, hours: int, minutes: int
+) -> Tuple[datetime.datetime, datetime.datetime]:
+    # SAS URLs are valid 6 hours earlier, primarily to work around dev
+    # workstations having out-of-sync time.  Additionally, SAS URLs are stopped
+    # 15 minutes later than requested based on "Be careful with SAS start time"
+    # guidance.
+    # Ref: https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview
+    SAS_START_TIME_DELTA = datetime.timedelta(hours=6)
+    SAS_END_TIME_DELTA = datetime.timedelta(minutes=15)
+
+    now = datetime.datetime.utcnow()
+    start = now - SAS_START_TIME_DELTA
+    expiry = (
+        now
+        + datetime.timedelta(days=days, hours=hours, minutes=minutes)
+        + SAS_END_TIME_DELTA
+    )
+    return (start, expiry)
 
 
 def get_container_sas_url_service(
@@ -160,13 +185,18 @@ def get_container_sas_url_service(
     read: bool = False,
     write: bool = False,
     delete: bool = False,
-    list: bool = False,
+    list_: bool = False,
     delete_previous_version: bool = False,
     tag: bool = False,
+    days: int = 30,
+    hours: int = 0,
+    minutes: int = 0,
 ) -> str:
     account_name = client.account_name
     container_name = client.container_name
     account_key = get_storage_account_name_key_by_name(account_name)
+
+    start, expiry = sas_time_window(days=days, hours=hours, minutes=minutes)
 
     sas = generate_container_sas(
         account_name,
@@ -176,11 +206,12 @@ def get_container_sas_url_service(
             read=read,
             write=write,
             delete=delete,
-            list=list,
+            list=list_,
             delete_previous_version=delete_previous_version,
             tag=tag,
         ),
-        expiry=datetime.datetime.utcnow() + datetime.timedelta(days=30),
+        start=start,
+        expiry=expiry,
     )
 
     with_sas = ContainerClient(
@@ -198,7 +229,7 @@ def get_container_sas_url(
     read: bool = False,
     write: bool = False,
     delete: bool = False,
-    list: bool = False,
+    list_: bool = False,
 ) -> str:
     client = find_container(container, storage_type)
     if not client:
@@ -209,8 +240,17 @@ def get_container_sas_url(
         read=read,
         write=write,
         delete=delete,
-        list=list,
+        list_=list_,
     )
+
+
+def get_file_url(container: Container, name: str, storage_type: StorageType) -> str:
+    client = find_container(container, storage_type)
+    if not client:
+        raise Exception("unable to find container: %s - %s" % (container, storage_type))
+
+    # get_url has a trailing '/'
+    return f"{get_url(client.account_name)}{container}/{name}"
 
 
 def get_file_sas_url(
@@ -234,9 +274,8 @@ def get_file_sas_url(
         raise Exception("unable to find container: %s - %s" % (container, storage_type))
 
     account_key = get_storage_account_name_key_by_name(client.account_name)
-    expiry = datetime.datetime.utcnow() + datetime.timedelta(
-        days=days, hours=hours, minutes=minutes
-    )
+    start, expiry = sas_time_window(days=days, hours=hours, minutes=minutes)
+
     permission = BlobSasPermissions(
         read=read,
         add=add,
@@ -253,6 +292,7 @@ def get_file_sas_url(
         account_key=account_key,
         permission=permission,
         expiry=expiry,
+        start=start,
     )
 
     with_sas = BlobClient(

@@ -9,14 +9,19 @@ use crate::{
     expand::Expand,
     process::run_cmd,
 };
-use anyhow::{Error, Result};
-use stacktrace_parser::{CrashLog, StackEntry};
+use anyhow::{Context, Error, Result};
+#[cfg(target_os = "linux")]
+use nix::sys::signal::{kill, Signal};
+use stacktrace_parser::CrashLog;
+#[cfg(any(target_os = "linux", target_family = "windows"))]
+use stacktrace_parser::StackEntry;
 #[cfg(target_os = "linux")]
 use std::process::Stdio;
 use std::{collections::HashMap, path::Path, time::Duration};
 use tempfile::tempdir;
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
+#[cfg(any(target_os = "linux", target_family = "windows"))]
 const CRASH_SITE_UNAVAILABLE: &str = "<crash site unavailable>";
 
 pub struct Tester<'a> {
@@ -125,7 +130,7 @@ impl<'a> Tester<'a> {
         }
     }
 
-    #[cfg(target_os = "windows")]
+    #[cfg(target_family = "windows")]
     async fn test_input_debugger(
         &self,
         argv: Vec<String>,
@@ -192,6 +197,15 @@ impl<'a> Tester<'a> {
         Ok(crash)
     }
 
+    #[cfg(target_os = "macos")]
+    async fn test_input_debugger(
+        &self,
+        _args: Vec<String>,
+        _env: HashMap<String, String>,
+    ) -> Result<Option<CrashLog>> {
+        bail!("running application under a debugger is not supported on macOS");
+    }
+
     #[cfg(target_os = "linux")]
     async fn test_input_debugger(
         &self,
@@ -225,7 +239,6 @@ impl<'a> Tester<'a> {
 
         let timeout = tokio::time::timeout(self.timeout, triage).await;
         let crash = if timeout.is_err() {
-            use nix::sys::signal::{kill, Signal};
             // Yes. Try to kill the target process, if hung.
             kill(target_pid, Signal::SIGKILL)?;
             bail!("process timed out");
@@ -289,10 +302,10 @@ impl<'a> Tester<'a> {
             let expand = Expand::new()
                 .input_path(input_file)
                 .target_exe(&self.exe_path)
-                .target_options(&self.arguments)
+                .target_options(self.arguments)
                 .setup_dir(&self.setup_dir);
 
-            let argv = expand.evaluate(&self.arguments)?;
+            let argv = expand.evaluate(self.arguments)?;
             let mut env: HashMap<String, String> = HashMap::new();
             for (k, v) in self.environ {
                 env.insert(k.clone(), expand.evaluate_value(v)?);
@@ -301,15 +314,15 @@ impl<'a> Tester<'a> {
             let setup_dir = &self.setup_dir.to_path_buf();
             if self.add_setup_to_path {
                 let new_path = match env.get(PATH) {
-                    Some(v) => update_path(v.clone().into(), &setup_dir)?,
-                    None => get_path_with_directory(PATH, &setup_dir)?,
+                    Some(v) => update_path(v.clone().into(), setup_dir)?,
+                    None => get_path_with_directory(PATH, setup_dir)?,
                 };
                 env.insert(PATH.to_string(), new_path.to_string_lossy().to_string());
             }
             if self.add_setup_to_ld_library_path {
                 let new_path = match env.get(LD_LIBRARY_PATH) {
-                    Some(v) => update_path(v.clone().into(), &setup_dir)?,
-                    None => get_path_with_directory(LD_LIBRARY_PATH, &setup_dir)?,
+                    Some(v) => update_path(v.clone().into(), setup_dir)?,
+                    None => get_path_with_directory(LD_LIBRARY_PATH, setup_dir)?,
                 };
                 env.insert(
                     LD_LIBRARY_PATH.to_string(),
@@ -335,7 +348,7 @@ impl<'a> Tester<'a> {
                     Err(error) => (None, Some(error), None),
                 }
             } else {
-                match run_cmd(&self.exe_path, argv.clone(), &env, self.timeout).await {
+                match run_cmd(self.exe_path, argv.clone(), &env, self.timeout).await {
                     Ok(output) => (None, None, Some(output)),
                     Err(error) => (None, Some(error), None),
                 }
@@ -351,7 +364,9 @@ impl<'a> Tester<'a> {
             // 3. if we have an ASAN log to STDERR
             if crash_log.is_none() {
                 crash_log = if let Some(asan_dir) = &asan_dir {
-                    check_asan_path(asan_dir.path()).await?
+                    check_asan_path(asan_dir.path())
+                        .await
+                        .context("parsing ASAN logs failed")?
                 } else {
                     None
                 };
@@ -359,7 +374,9 @@ impl<'a> Tester<'a> {
 
             if crash_log.is_none() && self.check_asan_stderr {
                 if let Some(output) = output {
-                    crash_log = check_asan_string(output.stderr).await?;
+                    crash_log = check_asan_string(output.stderr)
+                        .await
+                        .context("parsing STDERR as ASAN failed")?;
                 }
             }
 
@@ -372,7 +389,11 @@ impl<'a> Tester<'a> {
     }
 
     pub async fn is_crash(&self, input_file: impl AsRef<Path>) -> Result<bool> {
-        let test_result = self.test_input(input_file).await?;
+        let input_file = input_file.as_ref();
+        let test_result = self
+            .test_input(input_file)
+            .await
+            .with_context(|| format!("testing input failed: {}", input_file.display()))?;
         Ok(test_result.crash_log.is_some())
     }
 }

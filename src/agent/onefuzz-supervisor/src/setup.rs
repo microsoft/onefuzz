@@ -41,7 +41,7 @@ impl SetupRunner {
         work_set.save_context().await?;
 
         // Download the setup container.
-        let setup_url = work_set.setup_url.url();
+        let setup_url = work_set.setup_url.url()?;
         let setup_dir = work_set.setup_dir()?;
 
         // `azcopy sync` requires the local dir to exist.
@@ -99,7 +99,7 @@ impl SetupRunner {
     }
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(target_family = "windows")]
 async fn create_setup_symlink(setup_dir: &Path, work_unit: &WorkUnit) -> Result<()> {
     use std::os::windows::fs::symlink_dir;
     use tokio::task::spawn_blocking;
@@ -130,7 +130,7 @@ async fn create_setup_symlink(setup_dir: &Path, work_unit: &WorkUnit) -> Result<
     Ok(())
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 async fn create_setup_symlink(setup_dir: &Path, work_unit: &WorkUnit) -> Result<()> {
     use tokio::fs::symlink;
 
@@ -165,10 +165,10 @@ async fn create_setup_symlink(setup_dir: &Path, work_unit: &WorkUnit) -> Result<
     Ok(())
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(target_family = "windows")]
 const SETUP_SCRIPT: &str = "setup.ps1";
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 const SETUP_SCRIPT: &str = "setup.sh";
 
 pub struct SetupScript {
@@ -201,7 +201,7 @@ impl SetupScript {
         Ok(self.setup_command().output().await?.into())
     }
 
-    #[cfg(target_os = "windows")]
+    #[cfg(target_family = "windows")]
     fn setup_command(&self) -> Command {
         let mut cmd = Command::new("powershell.exe");
 
@@ -216,7 +216,7 @@ impl SetupScript {
         cmd
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(target_family = "unix")]
     fn setup_command(&self) -> Command {
         let mut cmd = Command::new("bash");
 

@@ -4,7 +4,9 @@
 # Licensed under the MIT License.
 
 import json
+import pathlib
 import unittest
+from typing import Dict, List
 
 from onefuzztypes.enums import OS, ContainerType
 from onefuzztypes.job_templates import (
@@ -13,6 +15,9 @@ from onefuzztypes.job_templates import (
     JobTemplateNotification,
 )
 from onefuzztypes.models import (
+    ADOTemplate,
+    GithubAuth,
+    GithubIssueTemplate,
     JobConfig,
     Notification,
     NotificationConfig,
@@ -21,21 +26,90 @@ from onefuzztypes.models import (
     TeamsTemplate,
 )
 from onefuzztypes.primitives import Container
+from onefuzztypes.requests import NotificationCreate
+from pydantic import BaseModel
 
-from __app__.onefuzzlib.orm import ORMMixin
+from __app__.onefuzzlib.orm import delete_secrets, hide_secrets
+
+
+def hider(secret_data: SecretData) -> SecretData:
+    if not isinstance(secret_data.secret, SecretAddress):
+        secret_data.secret = SecretAddress(url="blah blah")
+    return secret_data
+
+
+class WithSecret(BaseModel):
+    a: SecretData[str]
+
+
+class WithList(BaseModel):
+    a: List[WithSecret]
+
+
+class WithDict(BaseModel):
+    a: Dict[str, SecretData[str]]
+    b: Dict[str, WithSecret]
+
+
+class Nested(BaseModel):
+    a: WithSecret
+    b: WithDict
+    c: WithList
 
 
 class TestSecret(unittest.TestCase):
-    def test_hide(self) -> None:
-        def hider(secret_data: SecretData) -> None:
-            if not isinstance(secret_data.secret, SecretAddress):
-                secret_data.secret = SecretAddress(url="blah blah")
+    def test_delete(self) -> None:
+        self.count = 0
 
+        def deleter(secret_data: SecretData) -> None:
+            self.count += 1
+
+        delete_secrets(WithSecret(a=SecretData("a")), deleter)
+        self.assertEqual(self.count, 1)
+
+        delete_secrets(
+            WithList(
+                a=[
+                    WithSecret(a=SecretData("a")),
+                    WithSecret(a=SecretData("b")),
+                ]
+            ),
+            deleter,
+        )
+        self.assertEqual(self.count, 3)
+
+        delete_secrets(
+            WithDict(
+                a={"a": SecretData("a"), "b": SecretData("b")},
+                b={
+                    "a": WithSecret(a=SecretData("a")),
+                    "b": WithSecret(a=SecretData("a")),
+                },
+            ),
+            deleter,
+        )
+        self.assertEqual(self.count, 7)
+
+        delete_secrets(
+            Nested(
+                a=WithSecret(a=SecretData("a")),
+                b=WithDict(
+                    a={"a": SecretData("a")}, b={"a": WithSecret(a=SecretData("a"))}
+                ),
+                c=WithList(
+                    a=[WithSecret(a=SecretData("a")), WithSecret(a=SecretData("b"))]
+                ),
+            ),
+            deleter,
+        )
+        self.assertEqual(self.count, 12)
+
+    def test_hide(self) -> None:
         notification = Notification(
             container=Container("data"),
             config=TeamsTemplate(url=SecretData(secret="http://test")),
         )
-        ORMMixin.hide_secrets(notification, hider)
+        notification = hide_secrets(notification, hider)
 
         if isinstance(notification.config, TeamsTemplate):
             self.assertIsInstance(notification.config.url, SecretData)
@@ -44,10 +118,6 @@ class TestSecret(unittest.TestCase):
             self.fail(f"Invalid config type {type(notification.config)}")
 
     def test_hide_nested_list(self) -> None:
-        def hider(secret_data: SecretData) -> None:
-            if not isinstance(secret_data.secret, SecretAddress):
-                secret_data.secret = SecretAddress(url="blah blah")
-
         job_template_index = JobTemplateIndex(
             name="test",
             template=JobTemplate(
@@ -65,7 +135,7 @@ class TestSecret(unittest.TestCase):
                 user_fields=[],
             ),
         )
-        ORMMixin.hide_secrets(job_template_index, hider)
+        job_template_index = hide_secrets(job_template_index, hider)
         notification = job_template_index.template.notifications[0].notification
         if isinstance(notification.config, TeamsTemplate):
             self.assertIsInstance(notification.config.url, SecretData)
@@ -89,3 +159,102 @@ class TestSecret(unittest.TestCase):
             self.assertIsInstance(notification.config.url.secret, SecretAddress)
         else:
             self.fail(f"Invalid config type {type(notification.config)}")
+
+    def test_roundtrip_github_issue(self) -> None:
+        current_path = pathlib.Path(__file__).parent.absolute()
+        with open(
+            f"{current_path}"
+            + "/../../../contrib/onefuzz-job-github-actions/github-issues.json"
+        ) as json_file:
+            notification_dict = json.load(json_file)
+            notification_dict["container"] = "testing"
+            notification1 = NotificationCreate.parse_obj(notification_dict)
+
+            assert isinstance(notification1.config, GithubIssueTemplate)
+            self.assertIsInstance(
+                notification1.config.auth.secret, GithubAuth, "Invalid secret type"
+            )
+
+            notification2 = NotificationCreate.parse_obj(
+                json.loads(notification1.json())
+            )
+
+            assert isinstance(notification2.config, GithubIssueTemplate)
+            self.assertIsInstance(
+                notification2.config.auth.secret, GithubAuth, "Invalid secret type"
+            )
+
+            hide_secrets(notification2, hider)
+
+            notification3 = NotificationCreate.parse_obj(
+                json.loads(notification2.json())
+            )
+            assert isinstance(notification3.config, GithubIssueTemplate)
+            self.assertIsInstance(
+                notification3.config.auth.secret, SecretAddress, "Invalid secret type"
+            )
+
+    def test_roundtrip_team_issue(self) -> None:
+        a = """
+            {
+                "config" : {"url": "http://test"},
+                "container": "testing"
+                }
+
+        """  # noqa
+        notification_dict = json.loads(a)
+        notification_dict["container"] = "testing"
+        notification1 = NotificationCreate.parse_obj(notification_dict)
+
+        assert isinstance(notification1.config, TeamsTemplate)
+        self.assertIsInstance(
+            notification1.config.url.secret, str, "Invalid secret type"
+        )
+
+        notification2 = NotificationCreate.parse_obj(json.loads(notification1.json()))
+        assert isinstance(notification2.config, TeamsTemplate)
+        self.assertIsInstance(
+            notification2.config.url.secret, str, "Invalid secret type"
+        )
+
+        hide_secrets(notification2, hider)
+
+        notification3 = NotificationCreate.parse_obj(json.loads(notification2.json()))
+        assert isinstance(notification3.config, TeamsTemplate)
+        self.assertIsInstance(
+            notification3.config.url.secret, SecretAddress, "Invalid secret type"
+        )
+
+    def test_roundtrip_ado(self) -> None:
+        current_path = pathlib.Path(__file__).parent.absolute()
+        with open(
+            f"{current_path}"
+            + "/../../../contrib/onefuzz-job-azure-devops-pipeline/ado-work-items.json"  # noqa
+        ) as json_file:
+            notification_dict = json.load(json_file)
+            notification_dict["container"] = "testing"
+            notification1 = NotificationCreate.parse_obj(notification_dict)
+            assert isinstance(notification1.config, ADOTemplate)
+            self.assertIsInstance(
+                notification1.config.auth_token.secret, str, "Invalid secret type"
+            )
+
+            notification2 = NotificationCreate.parse_obj(
+                json.loads(notification1.json())
+            )
+            assert isinstance(notification2.config, ADOTemplate)
+            self.assertIsInstance(
+                notification2.config.auth_token.secret, str, "Invalid secret type"
+            )
+
+            hide_secrets(notification2, hider)
+
+            notification3 = NotificationCreate.parse_obj(
+                json.loads(notification2.json())
+            )
+            assert isinstance(notification3.config, ADOTemplate)
+            self.assertIsInstance(
+                notification3.config.auth_token.secret,
+                SecretAddress,
+                "Invalid secret type",
+            )

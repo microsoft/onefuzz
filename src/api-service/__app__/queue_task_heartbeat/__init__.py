@@ -12,11 +12,11 @@ from onefuzztypes.events import EventTaskHeartbeat
 from onefuzztypes.models import Error, TaskHeartbeatEntry
 from pydantic import ValidationError
 
-from ..onefuzzlib.events import get_events, send_event
+from ..onefuzzlib.events import send_event
 from ..onefuzzlib.tasks.main import Task
 
 
-def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
+def main(msg: func.QueueMessage) -> None:
     body = msg.get_body()
     logging.info("heartbeat: %s", body)
 
@@ -37,7 +37,3 @@ def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
             )
     except ValidationError:
         logging.error("invalid task heartbeat: %s", raw)
-
-    events = get_events()
-    if events:
-        dashboard.set(events)

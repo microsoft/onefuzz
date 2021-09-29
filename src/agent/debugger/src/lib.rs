@@ -3,8 +3,15 @@
 
 #![cfg(windows)]
 
+mod breakpoint;
 pub mod dbghelp;
-pub mod debug_event;
-pub mod debugger;
+mod debug_event;
+mod debugger;
+mod module;
 pub mod stack;
-pub mod target;
+mod target;
+
+pub use self::{
+    debug_event::DebugEvent,
+    debugger::{BreakpointId, BreakpointType, DebugEventHandler, Debugger, ModuleLoadInfo},
+};

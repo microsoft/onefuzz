@@ -4,6 +4,334 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 3.0.0
+### Changed
+* CLI/Deployment/Service: Move to using `api://` for AAD Application "identifier URIs". [#1243](https://github.com/microsoft/onefuzz/pull/1243)
+* Agent/Supervisor/Proxy: Redact device, IP, and machine name in runtime statistics reported to Microsoft via Application Insights. [#1242](https://github.com/microsoft/onefuzz/pull/1242)
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1232](https://github.com/microsoft/onefuzz/pull/1232), [#1230](https://github.com/microsoft/onefuzz/pull/1230), [#1228](https://github.com/microsoft/onefuzz/pull/1228), [#1229](https://github.com/microsoft/onefuzz/pull/1229), [#1231](https://github.com/microsoft/onefuzz/pull/1231), [#1242](https://github.com/microsoft/onefuzz/pull/1242).
+
+## 2.33.1
+### Fixed
+* CLI: Fixed an issue printing results that include `SecretData`. [#1223](https://github.com/microsoft/onefuzz/pull/1223)
+
+## 2.33.0
+### Added
+* Agent: Added `machine_id` [configuration value expansion](docs/command-replacements.md) for all tasks.  [#1217](https://github.com/microsoft/onefuzz/pull/1217), [#1216](https://github.com/microsoft/onefuzz/pull/1216)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1215](https://github.com/microsoft/onefuzz/pull/1215), [#1214](https://github.com/microsoft/onefuzz/pull/1214), [#1213](https://github.com/microsoft/onefuzz/pull/1213), [#1211](https://github.com/microsoft/onefuzz/pull/1211), [#1218](https://github.com/microsoft/onefuzz/pull/1218), [#1219](https://github.com/microsoft/onefuzz/pull/1219)
+
+### Fixed
+* Deployment: Fixed the example deployment rule to include the required Azure Storage Queue support.  [#1207](https://github.com/microsoft/onefuzz/pull/1207)
+* CLI: Fixed an issue printing results that include `set`, `datetime`, or `None`.  [#1208](https://github.com/microsoft/onefuzz/pull/1208), [#1221](https://github.com/microsoft/onefuzz/pull/1221)
+
+## 2.32.0
+### Added
+* CLI/Service: The Azure VM SKU used for proxies is now configurable via `onefuzz instance_config`.  [#1128](https://github.com/microsoft/onefuzz/pull/1128)
+* CLI: Added `onefuzz status pool` command to give status information for a pool.  [#1170](https://github.com/microsoft/onefuzz/pull/1170)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1152](https://github.com/microsoft/onefuzz/pull/1152), [#1155](https://github.com/microsoft/onefuzz/pull/1155), [#1156](https://github.com/microsoft/onefuzz/pull/1156), [#1157](https://github.com/microsoft/onefuzz/pull/1157), [#1158](https://github.com/microsoft/onefuzz/pull/1158), [#1163](https://github.com/microsoft/onefuzz/pull/1163), [#1164](https://github.com/microsoft/onefuzz/pull/1164), [#1165](https://github.com/microsoft/onefuzz/pull/1165), [#1166](https://github.com/microsoft/onefuzz/pull/1166), [#1176](https://github.com/microsoft/onefuzz/pull/1176), [#1177](https://github.com/microsoft/onefuzz/pull/1177), [#1178](https://github.com/microsoft/onefuzz/pull/1178), [#1179](https://github.com/microsoft/onefuzz/pull/1179), [#1181](https://github.com/microsoft/onefuzz/pull/1181), [#1182](https://github.com/microsoft/onefuzz/pull/1182), [#1183](https://github.com/microsoft/onefuzz/pull/1183), [#1185](https://github.com/microsoft/onefuzz/pull/1185), [#1186](https://github.com/microsoft/onefuzz/pull/1186), [#1191](https://github.com/microsoft/onefuzz/pull/1191), [#1198](https://github.com/microsoft/onefuzz/pull/1198), [#1199](https://github.com/microsoft/onefuzz/pull/1199), [#1200](https://github.com/microsoft/onefuzz/pull/1200), [#1201](https://github.com/microsoft/onefuzz/pull/1201), [#1202](https://github.com/microsoft/onefuzz/pull/1202), [#1203](https://github.com/microsoft/onefuzz/pull/1203), [#1204](https://github.com/microsoft/onefuzz/pull/1204), [#1205](https://github.com/microsoft/onefuzz/pull/1205)
+* Agent: Changed `azcopy` calls to always retry when source files are modified mid-copy.  [#1196](https://github.com/microsoft/onefuzz/pull/1196)
+* Agent: Continued development related to upcoming features.  [#1146](https://github.com/microsoft/onefuzz/pull/1146)
+* Agent: SAS URLs are now redacted in logged `azcopy` failures.  [#1194](https://github.com/microsoft/onefuzz/pull/1194)
+* CLI: Include the number of VMs used per-task in `onefuzz status top`.  [#1169](https://github.com/microsoft/onefuzz/pull/1169)
+* Deployment: Application credentials created during deployment are no longer logged.  [#1172](https://github.com/microsoft/onefuzz/pull/1172)
+* Deployment: Clarify logging when retrying AAD interactions.  [#1173](https://github.com/microsoft/onefuzz/pull/1173)
+* Deployment: Replaced custom Azure Storage Queue creation with ARM templates.  [#1193](https://github.com/microsoft/onefuzz/pull/1193)
+* Service: The validity period for SAS URLs is now back-dated to avoid time synchronization issues.  [#1195](https://github.com/microsoft/onefuzz/pull/1195)
+
+### Fixed
+* Deployment: Invalid preauthorized application references are removed during application registration.  [#1175](https://github.com/microsoft/onefuzz/pull/1175)
+* Service: Fixed an issue logging node status.  [#1160](https://github.com/microsoft/onefuzz/pull/1160)
+
+## 2.31.0
+### Added
+* Supervisor: Added recording of STDOUT and STDERR of the supervisor to file.  [#1109](https://github.com/microsoft/onefuzz/pull/1109)
+* CLI/Service/Agent: Supervisor tasks can now optionally have a managed coverage container.  [#1123](https://github.com/microsoft/onefuzz/pull/1123)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1151](https://github.com/microsoft/onefuzz/pull/1151), [#1149](https://github.com/microsoft/onefuzz/pull/1149), [#1145](https://github.com/microsoft/onefuzz/pull/1145), [#1134](https://github.com/microsoft/onefuzz/pull/1134), [#1135](https://github.com/microsoft/onefuzz/pull/1135), [#1137](https://github.com/microsoft/onefuzz/pull/1137), [#1133](https://github.com/microsoft/onefuzz/pull/1133), [#1138](https://github.com/microsoft/onefuzz/pull/1138), [#1132](https://github.com/microsoft/onefuzz/pull/1132), [#1140](https://github.com/microsoft/onefuzz/pull/1140), 
+* Service: Enabled testing of the Azure Devops work item rendering.  [#1144](https://github.com/microsoft/onefuzz/pull/1144)
+* Agent: Continued development related to upcoming features.  [#1142](https://github.com/microsoft/onefuzz/pull/1142)
+* CLI: No longer retry service API requests that fail with service-level errors.  [#1129](https://github.com/microsoft/onefuzz/pull/1129)
+* Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#1125](https://github.com/microsoft/onefuzz/pull/1125)
+* CLI/Service: Updated third-party Python dependencies.  [#1124](https://github.com/microsoft/onefuzz/pull/1124)
+
+### Fixed
+* Service: Fixed an issue with incomplete authorization in multi-tenant deployments.  CVE-2021-37705 [#1153](https://github.com/microsoft/onefuzz/pull/1153)
+
+## 2.30.0
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1116](https://github.com/microsoft/onefuzz/pull/1116)
+
+### Fixed
+* Service: Fixed an error when replacing notifications for a container. [#1115](https://github.com/microsoft/onefuzz/pull/1115)
+* Service: Fixed Python 3.9 compatibility issues.  [#1117](https://github.com/microsoft/onefuzz/pull/1117)
+* Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#1118](https://github.com/microsoft/onefuzz/pull/1118)
+
+## 2.29.1
+### Fixed
+* Agent: Fixed an issue with the "Premium" storage account utilities.  [#1111](https://github.com/microsoft/onefuzz/pull/1111)
+* Agent: Addressed a rate-limiting issue when using `azcopy` from a large number of VMs with numbers cores.  [#1112](https://github.com/microsoft/onefuzz/pull/1112)
+
+## 2.29.0
+### Added
+* Service: PII is now removed from Jobs, Tasks, and Repros after 18 months.  [#1051](https://github.com/microsoft/onefuzz/pull/1051)
+* Service: Unused notifications are now removed after 18 months.  [#1051](https://github.com/microsoft/onefuzz/pull/1051)
+
+### Changed
+* Service: SignalR events are routed through an Azure Storage Queue to prevent SignalR outages from impacting the entire service.  [#1100](https://github.com/microsoft/onefuzz/pull/1100), [#1102](https://github.com/microsoft/onefuzz/pull/1102)
+* Service: Functionality used prior to 1.0.0 for assigning tasks to VMs rather than Pools is no longer supported.  [#1105](https://github.com/microsoft/onefuzz/pull/1105)
+* Service: The `coverage` and `generic_generator` tasks now verify `{input}` is used in `target_env` or `target_options`.  [#1106](https://github.com/microsoft/onefuzz/pull/1106)
+
+### Fixed
+* Service: Fixed an issue reimaging old nodes with `debug_keep_node` set.  [#1103](https://github.com/microsoft/onefuzz/pull/1103)
+* Service: Fixed an issue authenticating to Azure services.  [#1099](https://github.com/microsoft/onefuzz/pull/1099)
+* Service: Fixed an issue preventing Pools and Scalesets set to `shutdown` from being set to `halt`.  [#1104](https://github.com/microsoft/onefuzz/pull/1104)
+
+## 2.28.0
+### Added
+* CLI: Added the ability to remove existing container notifications upon creating a notification integration.  [#1084](https://github.com/microsoft/onefuzz/pull/1084)
+* CLI/Documentation: Added an example `generic_analysis` task that demonstrates collecting LLVM source-based coverage.  [#1072](https://github.com/microsoft/onefuzz/pull/1072)
+* Supervisor: Added service-interaction resiliency for node commands.  [#1098](https://github.com/microsoft/onefuzz/pull/1098)
+
+### Changed
+* Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#1089](https://github.com/microsoft/onefuzz/pull/1089)
+* Agent: Added more context to errors in generator tasks.  [#1094](https://github.com/microsoft/onefuzz/pull/1094)
+* Agent: Added support for ASAN runtime identification of format string bugs.  [#1093](https://github.com/microsoft/onefuzz/pull/1093)
+* Agent: Added verification that `{input}` is provided to the application under test via `target_env` or `target_options`.  [#1097](https://github.com/microsoft/onefuzz/pull/1097)
+* Agent: Continued development related to upcoming features.  [#1090](https://github.com/microsoft/onefuzz/pull/1090), [#1091](https://github.com/microsoft/onefuzz/pull/1091)
+* CLI/Service: Updated multiple first-party and third-party Python dependencies.  [#1086](https://github.com/microsoft/onefuzz/pull/1086)
+* CLI: Changed job templates to replace existing notifications for the unique report container.  [#1084](https://github.com/microsoft/onefuzz/pull/1084)
+* Service: Added more context to Azure DevOps errors.  [#1082](https://github.com/microsoft/onefuzz/pull/1082)
+* Service: Notification secrets are now deleted from Azure KeyVault upon notification deletion.  [#1085](https://github.com/microsoft/onefuzz/pull/1085)
+
+### Fixed
+* Agent: Fixed an issue logging ASAN output upon ASAN log parse errors.  [#1092](https://github.com/microsoft/onefuzz/pull/1092)
+* Agent: Fixed issues handling non-UTF8 output from applications under test.  [#1088](https://github.com/microsoft/onefuzz/pull/1088)
+
+## 2.27.0
+### Changed
+* Agent: Batch processing results are now saved after every 10 executions.  [#1076](https://github.com/microsoft/onefuzz/pull/1076)
+* Service: Optimized `file_added` event queueing by avoiding unnecessary Azure queries.  [#1075](https://github.com/microsoft/onefuzz/pull/1075)
+* Agent: Optimized directory change monitoring.  [#1078](https://github.com/microsoft/onefuzz/pull/1078)
+* Supervisor: Optimized agent monitoring.  [#1080](https://github.com/microsoft/onefuzz/pull/1080)
+
+## 2.26.1
+### Fixed
+* CLI: Fixed an issue handling long-running requests.  [#1068](https://github.com/microsoft/onefuzz/pull/1068)
+* CLI/Service: Fixed an issue related to upcoming features.  [#1067](https://github.com/microsoft/onefuzz/pull/1067)
+* CLI: Fixed an issue handling `target_options` for libFuzzer jobs.  [#1066](https://github.com/microsoft/onefuzz/pull/1066)
+
+## 2.26.0
+### Added
+* Supervisor: Added a `panic` handler to record supervisor failures. [#1062](https://github.com/microsoft/onefuzz/pull/1062)
+
+### Changed
+* Agent: Added more context to file upload errors.  [#1063](https://github.com/microsoft/onefuzz/pull/1063)
+* CLI: Made errors locating `azcopy` more clear. [#1061](https://github.com/microsoft/onefuzz/pull/1061)
+
+### Fixed
+* Service: Fixed an issue where long-lived VM scaleset instances could get reimaged with out-of-date VM setup scripts.  [#1060](https://github.com/microsoft/onefuzz/pull/1060)
+* Service: Fixed an issue where VM setup script updates were not always pushed.  [#1059](https://github.com/microsoft/onefuzz/pull/1059)
+
+## 2.25.1
+### Fixed
+* Service: Fixed an issue detecting and reimaging failed nodes.  [#1054](https://github.com/microsoft/onefuzz/pull/1054)
+* Service: Fixed an issue with the supervisor restarting too quickly.  [#1055](https://github.com/microsoft/onefuzz/pull/1055)
+
+## 2.25.0
+### Added
+* Agent: Added `minimized_stack_function_lines` and `minimized_stack_function_lines_sha256` to crash reports.  [#993](https://github.com/microsoft/onefuzz/pull/993)
+* CLI/Service: Added `timestamp` to `Notification` objects.  [#1043](https://github.com/microsoft/onefuzz/pull/1043)
+* Service: Added the [scaleset\_resize\_scheduled](docs/webhook_events.md#scaleset_resize_scheduled) event.  [#1047](https://github.com/microsoft/onefuzz/pull/1047)
+* Service: Added `pool_id` to `Node` objects. [#1049](https://github.com/microsoft/onefuzz/pull/1049)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1040](https://github.com/microsoft/onefuzz/pull/1040), [#1052](https://github.com/microsoft/onefuzz/pull/1052)
+* CLI/Deployment/Service: Updated multiple first-party and third-party Python dependencies.  [#922](https://github.com/microsoft/onefuzz/pull/922), [#1045](https://github.com/microsoft/onefuzz/pull/1045)
+* CLI/Service: Moved to using Pydantic built-in size validation for types. [#1048](https://github.com/microsoft/onefuzz/pull/1048)
+* Service: Continued development related to upcoming features.  [#1046](https://github.com/microsoft/onefuzz/pull/1046), [#1050](https://github.com/microsoft/onefuzz/pull/1050)
+
+### Fixed
+* CLI: Fixed an issue handling column sorting in `onefuzz status top`.  [#1037](https://github.com/microsoft/onefuzz/pull/1037)
+* Service: Fixed an issue adding SSH keys to Windows VMs.  [#1038](https://github.com/microsoft/onefuzz/pull/1038)
+
+## 2.24.0
+### Added
+* CLI/Service: Added instance configuration that can be managed via `onefuzz instance_config`.  [#1010](https://github.com/microsoft/onefuzz/pull/1010)
+* Service: Added automatic retry for Azure Devops notifications.  [#1026](https://github.com/microsoft/onefuzz/pull/1026)
+* CLI/Service: Added validation to GitHub Issues integration configuration. [#1019](https://github.com/microsoft/onefuzz/pull/1019)
+
+### Changed
+* Agent/Supervisor/Proxy: Moved to `rustls` to enable running the Agent and Supervisor on Ubuntu 20.04.  [#1029](https://github.com/microsoft/onefuzz/pull/1029)
+* Agent: Continued development related to upcoming features.  [#1016](https://github.com/microsoft/onefuzz/pull/1016)
+
+### Fixed
+* Agent: Fixed an issue handling invalid data during coverage collection.  [#1032](https://github.com/microsoft/onefuzz/pull/1032)
+* Agent: Fixed retry logic on coverage recording failures [#1033](https://github.com/microsoft/onefuzz/pull/1033)
+
+## 2.23.1
+### Fixed
+* Service: Fixed an issue preventing deletion or reimaging of nodes in some cases. [#1023](https://github.com/microsoft/onefuzz/pull/1023)
+
+## 2.23.0
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1018](https://github.com/microsoft/onefuzz/pull/1018), [#1009](https://github.com/microsoft/onefuzz/pull/1009), [#1004](https://github.com/microsoft/onefuzz/pull/1004)
+* Service: Tasks running on nodes without recent heartbeats are now marked as failed due to heartbeat issues.  [#1015](https://github.com/microsoft/onefuzz/pull/1015)
+* Service: Updated multiple first-party Python dependencies. [#1012](https://github.com/microsoft/onefuzz/pull/1012)
+
+### Fixed
+* Agent: Fixed an issue where `libfuzzer_fuzz` tasks on Windows that found crashes too rapidly were unable recover handles. [#1002](https://github.com/microsoft/onefuzz/pull/1002)
+* Agent: Fixed an issue with the regression tasks after using the `onefuzz debug notification` commands. [#1011](https://github.com/microsoft/onefuzz/pull/1011)
+* Deployment: Fixed a configuration issue reducing log retention durations.  [#1007](https://github.com/microsoft/onefuzz/pull/1007)
+* Service: Fixed an issue creating GitHub Issues notifications. [#1008](https://github.com/microsoft/onefuzz/pull/1008)
+* Service: Fixed an issue handling reimaging nodes that took an excessive amount of time. [#1005](https://github.com/microsoft/onefuzz/pull/1005)
+
+## 2.22.0
+### Changed
+* Service: Update node and task-related log messages to ease debugging. [#988](https://github.com/microsoft/onefuzz/pull/988)
+* Agent: Changed the log level for `azcopy` retry notification to `DEBUG`. [#986](https://github.com/microsoft/onefuzz/pull/986)
+* Agent: Updated stack minimization regular expressions from `libclusterfuzz`. [#992](https://github.com/microsoft/onefuzz/pull/992)
+* Agent: Added more context to synchronized directory errors.  [#995](https://github.com/microsoft/onefuzz/pull/995)
+* Deployment: Reduced the Application Insights log retention duration to 30 days.  [#997](https://github.com/microsoft/onefuzz/pull/997)
+* Agent: Improved tracking of threads during win32 debugging.  [#1000](https://github.com/microsoft/onefuzz/pull/1000)
+
+### Fixed
+* Agent: Fixed an issue using relative paths with synchronized directories.  [#996](https://github.com/microsoft/onefuzz/pull/996)
+* Service: Fixed an issue creating GitHub Issues notifications [#990](https://github.com/microsoft/onefuzz/pull/990)
+* CLI/Service: Fixed an issue handling `Union` fields in the `onefuzztypes` library [#982](https://github.com/microsoft/onefuzz/pull/982)
+* Service: Fixed an issue handling manually-resized scalesets [#984](https://github.com/microsoft/onefuzz/pull/984)
+
+## 2.21.0
+### Added
+* CLI: Added `onefuzz debug job rerun` command. [#960](https://github.com/microsoft/onefuzz/pull/960)
+
+### Changed
+* Agent: Added more context to coverage recording errors. [#979](https://github.com/microsoft/onefuzz/pull/979)
+* Agent: The coverage task now retries an input in the case of coverage recording failure. [#978](https://github.com/microsoft/onefuzz/pull/978)
+* Service: Nodes with the `debug_keep_node` flag will now be reimaged once the node is 7 days old. [#968](https://github.com/microsoft/onefuzz/pull/968)
+* Service: Updates to scalesets can now be requested while the node is in the `resize` state.  [#969](https://github.com/microsoft/onefuzz/pull/969)
+
+### Fixed
+* Service: Fixed an issue when reimaging nodes that previously failed to reimage as expected. [#970](https://github.com/microsoft/onefuzz/pull/970)
+* Service: Fixed an issue when resizing scalesets that exceed Azure VM quotas. [#967](https://github.com/microsoft/onefuzz/pull/967)
+* Supervisor: Fixed an issue with refreshing service authentication tokens. [#976](https://github.com/microsoft/onefuzz/pull/976)
+
+## 2.20.0
+### Added
+* Agent: Added a new `coverage` task that enables coverage analysis for both uninstrumented and Sancov targets on Linux and Windows. [#763](https://github.com/microsoft/onefuzz/pull/763)
+
+### Changed
+* Agent: Improved performance of the libFuzzer fuzzing tasks. [#941](https://github.com/microsoft/onefuzz/pull/941)
+* CLI: Changed the `libfuzzer basic` job template to use the new `coverage` task.  [#763](https://github.com/microsoft/onefuzz/pull/763)
+* Deployment: Added automatic retry when authorizing newly-created applications during deployment.  [#959](https://github.com/microsoft/onefuzz/pull/959)
+* Supervisor: Simplified the service coordination logic and added increased context upon failure. [#963](https://github.com/microsoft/onefuzz/pull/963)
+
+## 2.19.0
+### Added
+* Agent/Supervisor: Added azcopy log recording upon azcopy failure. [#945](https://github.com/microsoft/onefuzz/pull/945)
+* CLI: Added `onefuzz jobs containers delete` command.  [#949](https://github.com/microsoft/onefuzz/pull/949)
+* CLI: Added `onefuzz jobs containers download` command. [#953](https://github.com/microsoft/onefuzz/pull/953)
+
+### Changed
+* Agent/Service: Agents scheduled to shut down no longer wait for work prior to shutting down.  [#940](https://github.com/microsoft/onefuzz/pull/940)
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#942](https://github.com/microsoft/onefuzz/pull/942)
+* Agent: Continued deveopment related to upcoming features. [#937](https://github.com/microsoft/onefuzz/pull/937), [#929](https://github.com/microsoft/onefuzz/pull/929), [#919](https://github.com/microsoft/onefuzz/pull/919)
+* CLI: Message details are now always shown in `onefuzz status top`.  [#933](https://github.com/microsoft/onefuzz/pull/933)
+* CLI: Renamed template helper methods for uploading task setup files. [#926](https://github.com/microsoft/onefuzz/pull/926)
+* Contrib: Updated multiple third-party Python dependencies.  [#950](https://github.com/microsoft/onefuzz/pull/950)
+* Service: Tasks that are stopped without ever having started are now marked as failed.  [#935](https://github.com/microsoft/onefuzz/pull/935)
+* Supervisor: Added increased context when recording supervisor failures. [#931](https://github.com/microsoft/onefuzz/pull/931)
+
+### Fixed
+* CLI/Service: Worked around a third-party dependency issue in handling Python Unions in Events.  [#939](https://github.com/microsoft/onefuzz/pull/939)
+* Deployment: Fixed an authentication issue during deployment. [#947](https://github.com/microsoft/onefuzz/pull/947), [#954](https://github.com/microsoft/onefuzz/pull/954)
+* Deployment: Fixed an issue limiting application creation logs.  [#952](https://github.com/microsoft/onefuzz/pull/952)
+* Service: Fixed an issue deleting nodes with expired heartbeats. [#930](https://github.com/microsoft/onefuzz/pull/930)
+* Service: Fixed an issue deleting nonexistent containers.  [#948](https://github.com/microsoft/onefuzz/pull/948)
+* Service: Fixed an issue deleting proxies.  [#932](https://github.com/microsoft/onefuzz/pull/932)
+* Service: Fixed an issue that prevented automatic migration of notification secrets to Azure KeyVault in some cases. [#936](https://github.com/microsoft/onefuzz/pull/936)
+* Supervisor: Fixed an issue adding multiple SSH keys to Windows VMs. [#928](https://github.com/microsoft/onefuzz/pull/928)
+
+## 2.18.0
+### Added
+* Agent: Added `setup_dir` [configuration value expansion](docs/command-replacements.md) for generator tasks. [#901](https://github.com/microsoft/onefuzz/pull/901)
+* CLI: Enable specifying alternate tenant configuration via command line arguments. [#900](https://github.com/microsoft/onefuzz/pull/900)
+* CLI/Service: Proxy status is now available via `onefuzz scaleset_proxy list` command. [#905](https://github.com/microsoft/onefuzz/pull/905)
+
+### Changes
+* Deployment: Moved to using Microsoft Graph `User.Read` rather than Azure AD Graph. [#894](https://github.com/microsoft/onefuzz/pull/894)
+* Service: Tasks are now stopped on nodes before task related storage queues are deleted. [#801](https://github.com/microsoft/onefuzz/pull/801)
+* Proxy: Proxies are automatically deployed and always available based on regions with active fuzzing scalesets. [#839](https://github.com/microsoft/onefuzz/pull/839), [#908](https://github.com/microsoft/onefuzz/pull/908), [#907](https://github.com/microsoft/onefuzz/pull/907), [#909](https://github.com/microsoft/onefuzz/pull/909), [#904](https://github.com/microsoft/onefuzz/pull/904)
+* CLI: Added explanations to errors generated when parsing arguments whose values are key/value pairs. [#910](https://github.com/microsoft/onefuzz/pull/910), [#911](https://github.com/microsoft/onefuzz/pull/911)
+* Agent: Continued development related to upcoming features. [#913](https://github.com/microsoft/onefuzz/pull/913), [#918](https://github.com/microsoft/onefuzz/pull/918)
+* Service: Updated first-party Python libraries [#903](https://github.com/microsoft/onefuzz/pull/903)
+
+## 2.17.0
+### Added
+* Documentation: Added [descriptions](docs/AADEntitites.md) for the Azure AD entities used by OneFuzz. [#896](https://github.com/microsoft/onefuzz/pull/896)
+* Service: Added the [scaleset\_state\_updated](docs/webhook_events.md#scaleset_state_updated) event.  [#882](https://github.com/microsoft/onefuzz/pull/882)
+
+### Changes
+* Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#884](https://github.com/microsoft/onefuzz/pull/884)
+* Agent/Supervisor/Proxy: Updated and removed third-party Rust dependencies.  [#892](https://github.com/microsoft/onefuzz/pull/892), [#873](https://github.com/microsoft/onefuzz/pull/873), [#865](https://github.com/microsoft/onefuzz/pull/865)
+* Service: Improved the Python typing signatures used in the service.  [#881](https://github.com/microsoft/onefuzz/pull/881)
+* Service: Updated multiple first-party and third-party Python libraries.  [#893](https://github.com/microsoft/onefuzz/pull/893), [#889](https://github.com/microsoft/onefuzz/pull/889), [#866](https://github.com/microsoft/onefuzz/pull/886), [#885](https://github.com/microsoft/onefuzz/pull/885), [#861](https://github.com/microsoft/onefuzz/pull/861), [#890](https://github.com/microsoft/onefuzz/pull/890), 
+* Supervisor: The supervisor now includes the full error context upon failure. [#879](https://github.com/microsoft/onefuzz/pull/879)
+* Service: Cleaned up scaleset update logs. [#880](https://github.com/microsoft/onefuzz/pull/880)
+* Agent: Continued development related to upcoming features. [#874](https://github.com/microsoft/onefuzz/pull/874), [#868](https://github.com/microsoft/onefuzz/pull/868), [#864](https://github.com/microsoft/onefuzz/pull/864)
+* SDK/CLI: Replaced Python based directory uploading with `azcopy sync`.  [#878](https://github.com/microsoft/onefuzz/pull/878)
+
+### Fixed
+* Service/Supervisor: Fixed an issue shrinking scalesets where idle nodes would not shut down as expected. [#866](https://github.com/microsoft/onefuzz/pull/866)
+* Deployment: Fixed an issue deploying to non-Microsoft single-tenant instances. [#872](https://github.com/microsoft/onefuzz/pull/872), [#898](https://github.com/microsoft/onefuzz/pull/898)
+
+## 2.16.0
+### Aded
+* Deployment: Added ability to only deploy RBAC rsources. [#818](https://github.com/microsoft/onefuzz/pull/818)
+* Agent: Continued development related to upcoming features. [#855](https://github.com/microsoft/onefuzz/pull/855), [#858](https://github.com/microsoft/onefuzz/pull/858)
+
+### Fixed
+* Agent: Fixed issue where directory monitoring would fail due to `azcopy` temporary files. [#859](https://github.com/microsoft/onefuzz/pull/859)
+* Service: Fixed issue where scalesets could get stuck trying to resize if also manually deleted. [#860](https://github.com/microsoft/onefuzz/pull/860)
+
+## 2.15.0
+### Added
+* Agent: Added context to errors generated during [configuration value expansion](docs/command-replacements.md). [#835](https://github.com/microsoft/onefuzz/pull/835).
+* CLI/Service: Added messages awaiting processing for a node to the node status API.  [#836](https://github.com/microsoft/onefuzz/pull/836)
+* Agent: Continued development related to upcoming features. [#844](https://github.com/microsoft/onefuzz/pull/844), [#852](https://github.com/microsoft/onefuzz/pull/852), [#850](https://github.com/microsoft/onefuzz/pull/850), [#843](https://github.com/microsoft/onefuzz/pull/843), [#837](https://github.com/microsoft/onefuzz/pull/837), [#838](https://github.com/microsoft/onefuzz/pull/838), [#844](https://github.com/microsoft/onefuzz/pull/844)
+
+### Changes
+* Agent/Proxy/Supervisor : Updated multiple third-party Rust dependencies.  [#842](https://github.com/microsoft/onefuzz/pull/842), [#826](https://github.com/microsoft/onefuzz/pull/826), [#829](https://github.com/microsoft/onefuzz/pull/829), 
+* Service/Contrib: Updated multiple Python dependencies.  [#828](https://github.com/microsoft/onefuzz/pull/828), [#827](https://github.com/microsoft/onefuzz/pull/827), [#823](https://github.com/microsoft/onefuzz/pull/823), [#822](https://github.com/microsoft/onefuzz/pull/822), [#821](https://github.com/microsoft/onefuzz/pull/821), [#847](https://github.com/microsoft/onefuzz/pull/847)
+* Service: Resetting nodes no longer requires waiting for the node to acknowledge the shutdown in some cases. [#834](https://github.com/microsoft/onefuzz/pull/834)
+
+### Fixed
+* Supervisor: Fixed an issue introduced in 2.14.0 that sometimes prevents nodes from stopping processing tasks.  [#833](https://github.com/microsoft/onefuzz/pull/833)
+* Service: Fixed an issue related to Azure Storage Queues being deleted while in use. [#832](https://github.com/microsoft/onefuzz/pull/832)
+* Deployment: Fixed an issue where the CLI client application role was not assigned during deployment.  [#825](https://github.com/microsoft/onefuzz/pull/825)
+
+## 2.14.0
+### Added
+* Contrib: Added a sample GitHub Actions workflow and an Azure DevOps Pipeline to demonstrate deploying OneFuzz jobs using CICD.  [#778](https://github.com/microsoft/onefuzz/pull/778)
+* CLI/Service: Added creation timestamps to `Job`, `Node`, `Pool`, `Scaleset`, `Repro`, `Task`, and `TaskEvent` records returned by the service.  [#796](https://github.com/microsoft/onefuzz/pull/796), [#805](https://github.com/microsoft/onefuzz/pull/805), [#804](https://github.com/microsoft/onefuzz/pull/804)
+* Agent/Proxy/Supervisor: Added additional context to web request failures to assist in debugging issues.  [#798](https://github.com/microsoft/onefuzz/pull/798)
+* Service: Added task configuration to the [crash\_reported](docs/webhook_events.md#crash_reported) and [regression\_reported](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md#regression_reported) events.  [#793](https://github.com/microsoft/onefuzz/pull/793)
+
+### Changes
+* Agent: The full error context is now logged upon task failure. [#802](https://github.com/microsoft/onefuzz/pull/802)
+* CLI: The `libfuzzer-dotnet` template no longer defaults to failing the task if the fuzzer exits with a non-zero status but no crash artifact.  [#807](https://github.com/microsoft/onefuzz/pull/807)
+* Agent/Proxy/Supervisor: Updated multiple Rust dependencies.  [#800](https://github.com/microsoft/onefuzz/pull/800)
+* Service: When multiple failures are reported for a given task, only the first failure is recorded.  [#797](https://github.com/microsoft/onefuzz/pull/797)
+* Agent: Continued development related to upcoming features. [#820](https://github.com/microsoft/onefuzz/pull/820), [#816](https://github.com/microsoft/onefuzz/pull/816), [#790](https://github.com/microsoft/onefuzz/pull/790), [#809](https://github.com/microsoft/onefuzz/pull/809), [#812](https://github.com/microsoft/onefuzz/pull/812), [#811](https://github.com/microsoft/onefuzz/pull/811), [#810](https://github.com/microsoft/onefuzz/pull/810), [#794](https://github.com/microsoft/onefuzz/pull/794), [#799](https://github.com/microsoft/onefuzz/pull/799), [#779](https://github.com/microsoft/onefuzz/pull/779)
+
+### Fixed
+* Deployment: Added missing actions to the example Custom Azure Role for deployment. [#808](https://github.com/microsoft/onefuzz/pull/808)
+* Service: Fixed an issue in scaleset creation with incompatible VM SKUs and VM Images. [#803](https://github.com/microsoft/onefuzz/pull/803)
+* Service: Fixed an issue removing user identity information from logging to user instances.  [#795](https://github.com/microsoft/onefuzz/pull/795)
+
 ## 2.13.0
 ### Added
 * Deployment: Allow specifying the Azure subscription to use for deployment, instead of always using the default [#774](https://github.com/microsoft/onefuzz/pull/774)

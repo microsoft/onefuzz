@@ -25,14 +25,21 @@ if [ "${GITHUB_REF}" != "" ]; then
     fi
 fi
 
-mkdir -p artifacts/agent
+mkdir -p artifacts/agent-$(uname)
 
 cd src/agent
+
+# unless we're doing incremental builds, start clean during CI
+if [ X${CARGO_INCREMENTAL} == X ]; then
+    cargo clean
+fi
+
 cargo fmt -- --check
 # RUSTSEC-2020-0016: a dependency net2 (pulled in from tokio) is deprecated
 # RUSTSEC-2020-0036: a dependency failure (pulled from proc-maps) is deprecated
 # RUSTSEC-2019-0036: a dependency failure (pulled from proc-maps) has type confusion vulnerability
-cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2020-0016 --ignore RUSTSEC-2020-0036 --ignore RUSTSEC-2019-0036
+# RUSTSEC-2021-0065: a dependency anymap is no longer maintained
+cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2020-0016 --ignore RUSTSEC-2020-0036 --ignore RUSTSEC-2019-0036 --ignore RUSTSEC-2021-0065
 cargo-license -j > data/licenses.json
 cargo build --release --locked
 cargo clippy --release -- -D warnings
@@ -46,11 +53,12 @@ cargo test --release --workspace
 # TODO: once Salvo is integrated, this can get deleted
 cargo build --release --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
 
-cp target/release/onefuzz-agent* ../../artifacts/agent
-cp target/release/onefuzz-supervisor* ../../artifacts/agent
+cp target/release/onefuzz-agent* ../../artifacts/agent-$(uname)
+cp target/release/onefuzz-supervisor* ../../artifacts/agent-$(uname)
+cp target/release/srcview* ../../artifacts/agent-$(uname)
 
 if exists target/release/*.pdb; then
     for file in target/release/*.pdb; do
-        cp ${file} ../../artifacts/agent
+        cp ${file} ../../artifacts/agent-$(uname)
     done
 fi

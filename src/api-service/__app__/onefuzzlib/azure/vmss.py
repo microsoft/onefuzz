@@ -5,10 +5,14 @@
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Set, Union, cast
 from uuid import UUID
 
-from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from azure.core.exceptions import (
+    HttpResponseError,
+    ResourceExistsError,
+    ResourceNotFoundError,
+)
 from azure.mgmt.compute.models import (
     ResourceSku,
     ResourceSkuRestrictionsType,
@@ -22,10 +26,15 @@ from onefuzztypes.models import Error
 from onefuzztypes.primitives import Region
 
 from .compute import get_compute_client
-from .creds import get_base_resource_group, get_scaleset_identity_resource_path
+from .creds import (
+    get_base_resource_group,
+    get_scaleset_identity_resource_path,
+    retry_on_auth_failure,
+)
 from .image import get_os
 
 
+@retry_on_auth_failure()
 def list_vmss(name: UUID) -> Optional[List[str]]:
     resource_group = get_base_resource_group()
     client = get_compute_client()
@@ -43,6 +52,7 @@ def list_vmss(name: UUID) -> Optional[List[str]]:
     return None
 
 
+@retry_on_auth_failure()
 def delete_vmss(name: UUID) -> bool:
     resource_group = get_base_resource_group()
     compute_client = get_compute_client()
@@ -59,6 +69,7 @@ def delete_vmss(name: UUID) -> bool:
     return bool(response.status() == "Succeeded")
 
 
+@retry_on_auth_failure()
 def get_vmss(name: UUID) -> Optional[Any]:
     resource_group = get_base_resource_group()
     logging.debug("getting vm: %s", name)
@@ -71,17 +82,27 @@ def get_vmss(name: UUID) -> Optional[Any]:
     return None
 
 
+@retry_on_auth_failure()
 def resize_vmss(name: UUID, capacity: int) -> None:
     check_can_update(name)
 
     resource_group = get_base_resource_group()
     logging.info("updating VM count - name: %s vm_count: %d", name, capacity)
     compute_client = get_compute_client()
-    compute_client.virtual_machine_scale_sets.begin_update(
-        resource_group, str(name), {"sku": {"capacity": capacity}}
-    )
+    try:
+        compute_client.virtual_machine_scale_sets.begin_update(
+            resource_group, str(name), {"sku": {"capacity": capacity}}
+        )
+    except ResourceExistsError as err:
+        logging.error(
+            "unable to resize scaleset. name:%s vm_count:%d - err:%s",
+            name,
+            capacity,
+            err,
+        )
 
 
+@retry_on_auth_failure()
 def get_vmss_size(name: UUID) -> Optional[int]:
     vmss = get_vmss(name)
     if vmss is None:
@@ -89,6 +110,7 @@ def get_vmss_size(name: UUID) -> Optional[int]:
     return cast(int, vmss.sku.capacity)
 
 
+@retry_on_auth_failure()
 def list_instance_ids(name: UUID) -> Dict[UUID, str]:
     logging.debug("get instance IDs for scaleset: %s", name)
     resource_group = get_base_resource_group()
@@ -102,10 +124,12 @@ def list_instance_ids(name: UUID) -> Dict[UUID, str]:
             results[UUID(instance.vm_id)] = cast(str, instance.instance_id)
     except (ResourceNotFoundError, CloudError):
         logging.debug("vm does not exist %s", name)
+
     return results
 
 
 @cached(ttl=60)
+@retry_on_auth_failure()
 def get_instance_id(name: UUID, vm_id: UUID) -> Union[str, Error]:
     resource_group = get_base_resource_group()
     logging.info("get instance ID for scaleset node: %s:%s", name, vm_id)
@@ -139,18 +163,19 @@ def check_can_update(name: UUID) -> Any:
     return vmss
 
 
-def reimage_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
+@retry_on_auth_failure()
+def reimage_vmss_nodes(name: UUID, vm_ids: Set[UUID]) -> Optional[Error]:
     check_can_update(name)
 
     resource_group = get_base_resource_group()
     logging.info("reimaging scaleset VM - name: %s vm_ids:%s", name, vm_ids)
     compute_client = get_compute_client()
 
-    instance_ids = []
+    instance_ids = set()
     machine_to_id = list_instance_ids(name)
     for vm_id in vm_ids:
         if vm_id in machine_to_id:
-            instance_ids.append(machine_to_id[vm_id])
+            instance_ids.add(machine_to_id[vm_id])
         else:
             logging.info("unable to find vm_id for %s:%s", name, vm_id)
 
@@ -158,23 +183,24 @@ def reimage_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
         compute_client.virtual_machine_scale_sets.begin_reimage_all(
             resource_group,
             str(name),
-            VirtualMachineScaleSetVMInstanceIDs(instance_ids=instance_ids),
+            VirtualMachineScaleSetVMInstanceIDs(instance_ids=list(instance_ids)),
         )
     return None
 
 
-def delete_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
+@retry_on_auth_failure()
+def delete_vmss_nodes(name: UUID, vm_ids: Set[UUID]) -> Optional[Error]:
     check_can_update(name)
 
     resource_group = get_base_resource_group()
     logging.info("deleting scaleset VM - name: %s vm_ids:%s", name, vm_ids)
     compute_client = get_compute_client()
 
-    instance_ids = []
+    instance_ids = set()
     machine_to_id = list_instance_ids(name)
     for vm_id in vm_ids:
         if vm_id in machine_to_id:
-            instance_ids.append(machine_to_id[vm_id])
+            instance_ids.add(machine_to_id[vm_id])
         else:
             logging.info("unable to find vm_id for %s:%s", name, vm_id)
 
@@ -182,11 +208,14 @@ def delete_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
         compute_client.virtual_machine_scale_sets.begin_delete_instances(
             resource_group,
             str(name),
-            VirtualMachineScaleSetVMInstanceRequiredIDs(instance_ids=instance_ids),
+            VirtualMachineScaleSetVMInstanceRequiredIDs(
+                instance_ids=list(instance_ids)
+            ),
         )
     return None
 
 
+@retry_on_auth_failure()
 def update_extensions(name: UUID, extensions: List[Any]) -> None:
     check_can_update(name)
 
@@ -198,8 +227,10 @@ def update_extensions(name: UUID, extensions: List[Any]) -> None:
         str(name),
         {"virtual_machine_profile": {"extension_profile": {"extensions": extensions}}},
     )
+    logging.info("VM extensions updated: %s", name)
 
 
+@retry_on_auth_failure()
 def create_vmss(
     location: Region,
     name: UUID,
@@ -350,16 +381,29 @@ def create_vmss(
             code=ErrorCode.VM_CREATE_FAILED,
             errors=["creating vmss: %s" % err],
         )
+    except HttpResponseError as err:
+        err_str = str(err)
+        # Catch Gen2 Hypervisor / Image mismatch errors
+        # See https://github.com/microsoft/lisa/pull/716 for an example
+        if (
+            "check that the Hypervisor Generation of the Image matches the "
+            "Hypervisor Generation of the selected VM Size"
+        ) in err_str:
+            return Error(
+                code=ErrorCode.VM_CREATE_FAILED, errors=[f"creating vmss: {err_str}"]
+            )
+        raise err
 
     return None
 
 
 @cached(ttl=60)
-def list_available_skus(location: str) -> List[str]:
+@retry_on_auth_failure()
+def list_available_skus(region: Region) -> List[str]:
     compute_client = get_compute_client()
 
     skus: List[ResourceSku] = list(
-        compute_client.resource_skus.list(filter="location eq '%s'" % location)
+        compute_client.resource_skus.list(filter="location eq '%s'" % region)
     )
     sku_names: List[str] = []
     for sku in skus:
@@ -367,7 +411,7 @@ def list_available_skus(location: str) -> List[str]:
         if sku.restrictions is not None:
             for restriction in sku.restrictions:
                 if restriction.type == ResourceSkuRestrictionsType.location and (
-                    location.upper() in [v.upper() for v in restriction.values]
+                    region.upper() in [v.upper() for v in restriction.values]
                 ):
                     available = False
                     break

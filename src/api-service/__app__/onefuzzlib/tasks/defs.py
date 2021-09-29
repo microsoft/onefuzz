@@ -14,6 +14,42 @@ from onefuzztypes.models import ContainerDefinition, TaskDefinition, VmDefinitio
 
 # all tasks are required to have a 'setup' container
 TASK_DEFINITIONS = {
+    TaskType.coverage: TaskDefinition(
+        features=[
+            TaskFeature.target_exe,
+            TaskFeature.target_env,
+            TaskFeature.target_options,
+            TaskFeature.target_timeout,
+            TaskFeature.coverage_filter,
+            TaskFeature.target_must_use_input,
+        ],
+        vm=VmDefinition(compare=Compare.Equal, value=1),
+        containers=[
+            ContainerDefinition(
+                type=ContainerType.setup,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.readonly_inputs,
+                compare=Compare.AtLeast,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.coverage,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[
+                    ContainerPermission.List,
+                    ContainerPermission.Read,
+                    ContainerPermission.Write,
+                ],
+            ),
+        ],
+        monitor_queue=ContainerType.readonly_inputs,
+    ),
     TaskType.generic_analysis: TaskDefinition(
         features=[
             TaskFeature.target_exe,
@@ -283,6 +319,16 @@ TASK_DEFINITIONS = {
                     ContainerPermission.List,
                 ],
             ),
+            ContainerDefinition(
+                type=ContainerType.coverage,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[
+                    ContainerPermission.Write,
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
+            ),
         ],
         monitor_queue=None,
     ),
@@ -340,6 +386,7 @@ TASK_DEFINITIONS = {
             TaskFeature.check_debugger,
             TaskFeature.check_retry_count,
             TaskFeature.ensemble_sync_delay,
+            TaskFeature.target_must_use_input,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[

@@ -8,7 +8,7 @@ use tokio::fs;
 pub use stacktrace_parser::CrashLog;
 const ASAN_LOG_TRUNCATE_SIZE: usize = 4096;
 
-#[cfg(target_os = "windows")]
+#[cfg(target_family = "windows")]
 pub fn add_asan_log_env<S: BuildHasher>(env: &mut HashMap<String, String, S>, asan_dir: &Path) {
     let asan_path = asan_dir.join("asan-log");
     let asan_path_as_str = asan_path.to_string_lossy();
@@ -35,7 +35,7 @@ pub fn add_asan_log_env<S: BuildHasher>(env: &mut HashMap<String, String, S>, as
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 pub fn add_asan_log_env<S: BuildHasher>(env: &mut HashMap<String, String, S>, asan_dir: &Path) {
     let asan_path = asan_dir.join("asan-log");
     let asan_path_as_str = asan_path.to_string_lossy();
@@ -69,14 +69,17 @@ pub async fn check_asan_path(asan_dir: &Path) -> Result<Option<CrashLog>> {
     let mut entries = fs::read_dir(asan_dir).await?;
     // there should be only up to one file in asan_dir
     if let Some(file) = entries.next_entry().await? {
-        let mut asan_text = fs::read_to_string(file.path()).await?;
+        let asan_bytes = fs::read(file.path())
+            .await
+            .with_context(|| format!("unable to read ASAN log: {}", file.path().display()))?;
+        let mut asan_text = String::from_utf8_lossy(&asan_bytes).to_string();
 
         let asan = CrashLog::parse(asan_text.clone()).with_context(|| {
             if asan_text.len() > ASAN_LOG_TRUNCATE_SIZE {
                 asan_text.truncate(ASAN_LOG_TRUNCATE_SIZE);
                 asan_text.push_str("...<truncated>");
             }
-            format_err!("unable to parse asan log {}: {:?}")
+            format_err!("unable to parse asan log: {:?}", asan_text)
         })?;
         return Ok(Some(asan));
     }
