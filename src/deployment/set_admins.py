@@ -20,12 +20,12 @@ TABLE_NAME = "InstanceConfig"
 ## when a resource is not found even if the exception is raised and handled internally.
 ## This happen when a table does not exist. An error message is displayed but the exception is
 ## handled by the library.
-def disable_storage_client_logging():
+def disable_storage_client_logging() -> None:
     if storage_client_logger:
         storage_client_logger.disabled = True
 
 
-def enable_storage_client_logging():
+def enable_storage_client_logging() -> None:
     if storage_client_logger:
         storage_client_logger.disabled = False
 
