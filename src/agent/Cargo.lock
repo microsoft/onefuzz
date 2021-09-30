@@ -506,10 +506,9 @@ dependencies = [
 [[package]]
 name = "ctrlc"
 version = "3.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "377c9b002a72a0b2c1a18c62e2f3864bdfea4a015e3683a96e24aa45dd6c02d1"
+source = "git+http://github.com/ranweiler/rust-ctrlc?rev=7535c9306557ef69bc07401ba653aa5d7d625e2f#7535c9306557ef69bc07401ba653aa5d7d625e2f"
 dependencies = [
- "nix 0.22.0",
+ "nix",
  "winapi 0.3.9",
 ]
 
@@ -1503,19 +1502,6 @@ dependencies = [
 
 [[package]]
 name = "nix"
-version = "0.22.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf1e25ee6b412c2a1e3fcb6a4499a5c1bfe7f43e014bdce9a6b6666e5aa2d187"
-dependencies = [
- "bitflags",
- "cc",
- "cfg-if 1.0.0",
- "libc",
- "memoffset",
-]
-
-[[package]]
-name = "nix"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f305c2c2e4c39a82f7bf0bf65fb557f9070ce06781d4f2454295cc34b1c43188"
@@ -1638,7 +1624,7 @@ dependencies = [
  "input-tester",
  "lazy_static",
  "log",
- "nix 0.23.0",
+ "nix",
  "notify",
  "onefuzz-telemetry",
  "pete",
@@ -1859,7 +1845,7 @@ source = "git+http://github.com/ranweiler/pete?rev=efeb0769b4376d22a33328553c31c
 dependencies = [
  "libc",
  "memoffset",
- "nix 0.23.0",
+ "nix",
  "thiserror",
 ]
 
