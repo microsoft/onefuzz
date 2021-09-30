@@ -1,6 +1,6 @@
 # SSH within OneFuzz
 
-Onefuzz enables automatically connecting to fuzzing & crash repro nodes via SSH.
+OneFuzz enables automatically connecting to fuzzing & crash repro nodes via SSH.
 Each VM and VM scale set has its own SSH key pair.
 
 On Linux VMs, the public key is written to `~onefuzz/.ssh/authorized_keys`
