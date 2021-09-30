@@ -14,7 +14,7 @@ This example uses [Encrypted Secrets](https://docs.github.com/en/actions/referen
 This example uses environment variables to configure the workflow:
 * `ONEFUZZ_PROJECT`:The name of your project.  As an example, "Browser".
 * `ONEFUZZ_NAME`: The name of your target application.  As an example, "jpg-parser".
-* `ONEFUZZ_POOL`: The name of the fuzzing [Pool](../../docs/terminology.md#pool) to use.  As an example, `linux`.
+* `ONEFUZZ_POOL`: The name of the fuzzing [Pool](../../docs/terminology.md#pool) to use.  As an example, `my-linux-pool`.
 
 ### GitHub Issues Configuration
 In the [notification configuration](github-issues.json), there are a few items that are hard-coded that you should update for your instance:
