@@ -6,7 +6,13 @@ on:
 
 jobs:
   build:
-    # The OS that a job _runs_ on does NOT need to match the OS that a job is _created_ from.
+    # The OS that a OneFuzz job is _scheduled_ to is determined by the pool. The pool is
+    # a OneFuzz resource that the user manages outside of CI. The pool for a given job is
+    # specified when submitting the job (in the `runs` script below).
+    #
+    # The `runs-on` key here specifies the GitHub Actions environment used to _submit_ the job.
+    # This can differ from the job's execution environment.
+    #
     # To deploy a job from e.g. `windows-latest`, the script in the "submit onefuzz job" task
     # would just need to be ported to run on Windows.
     runs-on: ubuntu-latest
