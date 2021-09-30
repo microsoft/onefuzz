@@ -18,3 +18,6 @@ members = [
 
 [profile.release]
 lto = "thin"
+
+[patch.crates-io]
+pete = { git = "http://github.com/ranweiler/pete", rev = "efeb0769b4376d22a33328553c31ce331a7261ad" }
