@@ -273,7 +273,7 @@ def create_application_registration(
 
     authorize_application(UUID(registered_app.app_id), UUID(app.app_id))
     assign_app_role(
-        onefuzz_instance_name, name, subscription_id, OnefuzzAppRole.ManagedNode
+        onefuzz_instance_name, name, subscription_id, approle
     )
     return registered_app
 
