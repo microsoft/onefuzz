@@ -14,4 +14,4 @@ serde_json = "1.0"
 libclusterfuzz = { path = "../libclusterfuzz" }
 
 [dev-dependencies]
-pretty_assertions = "0.7"
+pretty_assertions = "1.0"
