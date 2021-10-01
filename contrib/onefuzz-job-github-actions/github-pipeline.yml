@@ -1,5 +1,3 @@
-
-
 name: Onefuzz Sample Pipeline
 
 on:
@@ -8,6 +6,15 @@ on:
 
 jobs:
   build:
+    # The OS that a OneFuzz job is _scheduled_ to is determined by the pool. The pool is
+    # a OneFuzz resource that the user manages outside of CI. The pool for a given job is
+    # specified when submitting the job (in the `runs` script below).
+    #
+    # The `runs-on` key here specifies the GitHub Actions environment used to _submit_ the job.
+    # This can differ from the job's execution environment.
+    #
+    # To deploy a job from e.g. `windows-latest`, the script in the "submit onefuzz job" task
+    # would just need to be ported to run on Windows.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -18,7 +25,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7 
+          python-version: 3.7
       - name: submit onefuzz job
         env:
           ONEFUZZ_ENDPOINT: ${{ secrets.onefuzz_endpoint }}
@@ -27,10 +34,20 @@ jobs:
           ONEFUZZ_PAT: ${{ secrets.onefuzz_pat }}
           ONEFUZZ_PROJECT: sample
           ONEFUZZ_NAME: sample
-          ONEFUZZ_POOL: linux
+          # Assumes the existence of a pool named `my-linux-pool`, with an OS type of `linux`.
+          # Not created in this script; this would be a long-lived resource managed outside of CI.
+          # See `README.md`.
+          ONEFUZZ_POOL: my-linux-pool
         run: |
+          # Set `bash` error and logging behavior.
           set -ex
+
           pip install onefuzz
+
+          # On Windows, this text replacement could instead be implemented via PowerShell.
           sed -i s/INSERT_YOUR_PERSONAL_ACCESS_TOKEN_HERE/${ONEFUZZ_PAT}/ github-issues.json
+
           onefuzz config --endpoint $ONEFUZZ_ENDPOINT --client_id $ONEFUZZ_CLIENT_ID --client_secret $ONEFUZZ_CLIENT_SECRET
           onefuzz template libfuzzer basic $ONEFUZZ_PROJECT $ONEFUZZ_NAME $GITHUB_SHA $ONEFUZZ_POOL --target_exe fuzz.exe --colocate_all_tasks --duration 1 --vm_count 1 --notification_config @./github-issues.json
+        # Default for Linux. Would only need to be specified if `runs-on` == `windows-latest`.
+        shell: bash
