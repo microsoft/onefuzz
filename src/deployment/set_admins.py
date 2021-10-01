@@ -5,6 +5,7 @@
 
 import argparse
 import json
+import logging
 from typing import List, Optional
 from uuid import UUID
 
@@ -12,12 +13,32 @@ from azure.common.client_factory import get_client_from_cli_profile
 from azure.cosmosdb.table.tableservice import TableService
 from azure.mgmt.storage import StorageManagementClient
 
+storage_client_logger = logging.getLogger("azure.cosmosdb.table.common.storageclient")
 TABLE_NAME = "InstanceConfig"
 
 
+## Disable logging from storageclient. This module displays an error message
+## when a resource is not found even if the exception is raised and handled internally.
+## This happen when a table does not exist. An error message is displayed but the exception is
+## handled by the library.
+def disable_storage_client_logging() -> None:
+    if storage_client_logger:
+        storage_client_logger.disabled = True
+
+
+def enable_storage_client_logging() -> None:
+    if storage_client_logger:
+        storage_client_logger.disabled = False
+
+
 def create_if_missing(table_service: TableService) -> None:
-    if not table_service.exists(TABLE_NAME):
-        table_service.create_table(TABLE_NAME)
+    try:
+        disable_storage_client_logging()
+
+        if not table_service.exists(TABLE_NAME):
+            table_service.create_table(TABLE_NAME)
+    finally:
+        enable_storage_client_logging()
 
 
 def update_allowed_aad_tenants(
