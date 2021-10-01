@@ -1,14 +1,14 @@
-# Notifications in Onefuzz
+# Notifications in OneFuzz
 
-Onefuzz supports built-in [container monitoring](containers.md) and reporting 
-via Notifications.  Onefuzz notifications monitor user specified containers
+OneFuzz supports built-in [container monitoring](containers.md) and reporting
+via Notifications.  OneFuzz notifications monitor user specified containers
 for changes and will perform the notifications upon new file creation.
 
 ## Features
 
 * Arbitrary notification integrations per container
 * Integration is tied to the containers, not tasks, enabling monitoring of
-  container use outside of Onefuzz
+  container use outside of OneFuzz
 
 ## Implementation
 

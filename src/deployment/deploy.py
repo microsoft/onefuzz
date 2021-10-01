@@ -594,12 +594,14 @@ class Client:
         )
 
     def apply_migrations(self) -> None:
+        logger.info("applying database migrations")
         name = self.results["deploy"]["func-name"]["value"]
         key = self.results["deploy"]["func-key"]["value"]
         table_service = TableService(account_name=name, account_key=key)
         migrate(table_service, self.migrations)
 
     def set_instance_config(self) -> None:
+        logger.info("setting instance config")
         name = self.results["deploy"]["func-name"]["value"]
         key = self.results["deploy"]["func-key"]["value"]
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])

@@ -1,6 +1,8 @@
-# Getting started using Onefuzz
+# Getting started using OneFuzz
 
-If you have access to an existing Onefuzz Instance, skip ahead to "Starting Jobs"
+If you have access to an existing OneFuzz instance, skip ahead to [Deploying Jobs](#deploying-jobs).
+
+**Microsoft employees:** Please join the [Fuzzing @ Microsoft](https://aka.ms/fuzzingatmicrosoft) team for support.
 
 ## Choosing a subscription
 
@@ -14,14 +16,14 @@ registered:
 - `Microsoft.Compute`
 - `Microsoft.SignalRService`
 
-## Deploying an instance of Onefuzz
+## Deploying an instance of OneFuzz
 
 Ensure you have Python with `python --version` >= 3.7, [Azure Functions Core Tools
 v3](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local),
 and OpenSSL installed.
 
 From the [Latest Release of
-Onefuzz](https://github.com/microsoft/onefuzz/releases) download the
+OneFuzz](https://github.com/microsoft/onefuzz/releases) download the
 `onefuzz-deployment` package.
 
 On a host with the [Azure CLI logged
@@ -40,7 +42,7 @@ to follow a manual step to initialize your CLI config.
 ## Install the CLI
 
 Download the Python SDK (make sure to download both `onefuzz` and `onefuzztypes`)
-from the [Latest Release of Onefuzz](https://github.com/microsoft/onefuzz/releases).
+from the [Latest Release of OneFuzz](https://github.com/microsoft/onefuzz/releases).
 
 If you're using the SDK, install via:
 
@@ -50,29 +52,20 @@ pip install ./onefuzz*.whl
 
 ### Connecting to your instance
 
-Use the `onefuzz config` command to specify your instance of Onefuzz.
-This example uses the MSR hosted playground instance (only available
-to Microsoft employees).
+Use the `onefuzz config` command to specify your instance of OneFuzz.
 
 ```
-$ onefuzz config --endpoint https://onefuzz-playground.azurewebsites.net
+$ onefuzz config --endpoint https://$ONEFUZZ_INSTANCE_NAME.azurewebsites.net
 $ onefuzz versions check --exact
 "compatible"
 $
 ```
 
-From here, you can use Onefuzz.
-
-#### Using Onefuzz Playground
-
-Microsoft employees are welcome to use MSR's Playground instance of OneFuzz for
-experimentation purposes, but we reserve the right to stop or limit fuzzing
-jobs. [Come talk to us](https://aka.ms/fuzzingatmicrosoft) about running OneFuzz
-for your group!
+From here, you can use OneFuzz.
 
 ## Creating Worker Pools
 
-Onefuzz distributes tasks to pools of workers, and manages workers using [VM Scalesets](https://azure.microsoft.com/en-us/services/virtual-machine-scale-sets/).
+OneFuzz distributes tasks to pools of workers, and manages workers using [VM Scalesets](https://azure.microsoft.com/en-us/services/virtual-machine-scale-sets/).
 
 To create a pool:
 
@@ -191,7 +184,7 @@ $
 
 ### Live debugging of a crash sample
 
-Using the crash report, Onefuzz can enable live remote debugging of the crash
+Using the crash report, OneFuzz can enable live remote debugging of the crash
 using a platform-appropriate debugger (gdb for Linux and cdb for Windows):
 
 ```

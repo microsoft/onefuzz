@@ -1,6 +1,6 @@
 # Notifications via Microsoft Teams
 
-Onefuzz can send notifications to [Microsoft Teams](https://docs.microsoft.com/en-us/microsoftteams/) channels upon new file creation within Onefuzz managed [containers](../containers.md).
+OneFuzz can send notifications to [Microsoft Teams](https://docs.microsoft.com/en-us/microsoftteams/) channels upon new file creation within OneFuzz managed [containers](../containers.md).
 
 ## Notifications
 
@@ -16,7 +16,7 @@ For this purpose, most users will want to monitor `reports` or `unique_reports` 
 ## Integration
 
 1. Create an [incoming webhook in Teams](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using#setting-up-a-custom-incoming-webhook).
-1. Add a notification to your Onefuzz instance.
+1. Add a notification to your OneFuzz instance.
 
     ```
     onefuzz notifications create <CONTAINER> @./config.json
