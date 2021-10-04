@@ -277,7 +277,16 @@ class Deployer:
 
 
 def main() -> None:
-    default_instance = "pr-check-%s" % uuid.uuid4().hex
+    # Get a name that can be added to the resource group name
+    # to make it easy to identify the owner
+    cmd = ["az", "ad", "signed-in-user", "show", "--query", "mailNickname"]
+    name = subprocess.run(cmd, capture_output=True, encoding='UTF-8')
+
+    # The result from az includes quotes and a newline
+    # which we strip out.
+    name = name.stdout.strip()[1:-1]
+
+    default_instance = f'pr-check-{name}-%s' % uuid.uuid4().hex
     parser = argparse.ArgumentParser()
     parser.add_argument("--instance", default=default_instance)
     group = parser.add_mutually_exclusive_group()
