@@ -1840,8 +1840,9 @@ checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
 name = "pete"
-version = "0.7.0"
-source = "git+http://github.com/ranweiler/pete?rev=efeb0769b4376d22a33328553c31ce331a7261ad#efeb0769b4376d22a33328553c31ce331a7261ad"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e5abe343c643f2fadc7649db57083c62ce818d7bf89393f3bc70f7051adfa2b"
 dependencies = [
  "libc",
  "memoffset",
@@ -1901,9 +1902,9 @@ checksum = "ac74c624d6b2d21f425f752262f42188365d7b8ff1aff74c82e45136510a4857"
 
 [[package]]
 name = "pretty_assertions"
-version = "0.7.2"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cab0e7c02cf376875e9335e0ba1da535775beb5450d21e1dffca068818ed98b"
+checksum = "ec0cfe1b2403f172ba0f234e500906ee0a3e493fb81092dac23ebefe129301cc"
 dependencies = [
  "ansi_term 0.12.1",
  "ctor",
