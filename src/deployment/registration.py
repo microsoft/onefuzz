@@ -526,15 +526,15 @@ def assign_instance_app_role(
     if len(onefuzz_service_principals["value"]) == 0:
         raise Exception("onefuzz app service principal not found")
     onefuzz_service_principal = onefuzz_service_principals["value"][0]
-    scaleset_service_principals = query_microsoft_graph(
+    application_service_principals = query_microsoft_graph(
         method="GET",
         resource="servicePrincipals",
         params={"$filter": "displayName eq '%s'" % application_name},
         subscription=subscription_id,
     )
-    if len(scaleset_service_principals["value"]) == 0:
-        raise Exception("scaleset service principal not found")
-    scaleset_service_principal = scaleset_service_principals["value"][0]
+    if len(application_service_principals["value"]) == 0:
+        raise Exception(f"application '{application_name}' service principal not found")
+    application_service_principal = application_service_principals["value"][0]
     managed_node_role = (
         seq(onefuzz_service_principal["appRoles"])
         .filter(lambda x: x["value"] == app_role.value)
@@ -549,7 +549,7 @@ def assign_instance_app_role(
     assignments = query_microsoft_graph(
         method="GET",
         resource="servicePrincipals/%s/appRoleAssignments"
-        % scaleset_service_principal["id"],
+        % application_service_principal["id"],
         subscription=subscription_id,
     )
 
@@ -561,9 +561,9 @@ def assign_instance_app_role(
         query_microsoft_graph(
             method="POST",
             resource="servicePrincipals/%s/appRoleAssignedTo"
-            % scaleset_service_principal["id"],
+            % application_service_principal["id"],
             body={
-                "principalId": scaleset_service_principal["id"],
+                "principalId": application_service_principal["id"],
                 "resourceId": onefuzz_service_principal["id"],
                 "appRoleId": managed_node_role["id"],
             },
