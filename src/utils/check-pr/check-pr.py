@@ -279,14 +279,14 @@ class Deployer:
 def main() -> None:
     # Get a name that can be added to the resource group name
     # to make it easy to identify the owner
-    cmd = ["az", "ad", "signed-in-user", "show", "--query", "mailNickname"]
-    name = subprocess.run(cmd, capture_output=True, encoding='UTF-8')
+    cmd = ["az", "ad", "signed-in-user", "show", "--query", "mailNickname", "-o", "tsv"]
+    name = subprocess.check_output(cmd, encoding="UTF-8")
 
-    # The result from az includes quotes and a newline
+    # The result from az includes a newline
     # which we strip out.
-    name = name.stdout.strip()[1:-1]
+    name = name.strip()
 
-    default_instance = f'pr-check-{name}-%s' % uuid.uuid4().hex
+    default_instance = f"pr-check-{name}-%s" % uuid.uuid4().hex
     parser = argparse.ArgumentParser()
     parser.add_argument("--instance", default=default_instance)
     group = parser.add_mutually_exclusive_group()
