@@ -14,15 +14,9 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, TypeV
 from uuid import UUID
 
 import requests
-from azure.cli.core.azclierror import AuthenticationError
 from azure.common.credentials import get_cli_profile
 from functional import seq
 from msrest.serialization import TZ_UTC
-
-FIX_URL = (
-    "https://ms.portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/"
-    "ApplicationMenuBlade/ProtectAnAPI/appId/%s/isMSAApp/"
-)
 
 logger = logging.getLogger("deploy")
 
@@ -347,71 +341,69 @@ def authorize_application(
     permissions: List[str] = ["user_impersonation"],
     subscription_id: Optional[str] = None,
 ) -> None:
-    try:
-        onefuzz_app = get_application(app_id=onefuzz_app_id)
-        if onefuzz_app is None:
-            logger.error("Application '%s' not found", onefuzz_app_id)
-            return
+    onefuzz_app = get_application(
+        app_id=onefuzz_app_id, subscription_id=subscription_id
+    )
+    if onefuzz_app is None:
+        logger.error("Application '%s' not found", onefuzz_app_id)
+        return
 
-        scopes = seq(onefuzz_app["api"]["oauth2PermissionScopes"]).filter(
-            lambda scope: scope["value"] in permissions
-        )
+    scopes = seq(onefuzz_app["api"]["oauth2PermissionScopes"]).filter(
+        lambda scope: scope["value"] in permissions
+    )
 
-        existing_preAuthorizedApplications = (
-            seq(onefuzz_app["api"]["preAuthorizedApplications"])
-            .map(
-                lambda paa: seq(paa["delegatedPermissionIds"]).map(
-                    lambda permission_id: (paa["appId"], permission_id)
-                )
+    existing_preAuthorizedApplications = (
+        seq(onefuzz_app["api"]["preAuthorizedApplications"])
+        .map(
+            lambda paa: seq(paa["delegatedPermissionIds"]).map(
+                lambda permission_id: (paa["appId"], permission_id)
             )
-            .flatten()
         )
+        .flatten()
+    )
 
-        preAuthorizedApplications = (
-            scopes.map(lambda s: (str(registration_app_id), s["id"]))
-            .union(existing_preAuthorizedApplications)
-            .distinct()
-            .group_by_key()
-            .map(lambda data: {"appId": data[0], "delegatedPermissionIds": data[1]})
-        )
+    preAuthorizedApplications = (
+        scopes.map(lambda s: (str(registration_app_id), s["id"]))
+        .union(existing_preAuthorizedApplications)
+        .distinct()
+        .group_by_key()
+        .map(lambda data: {"appId": data[0], "delegatedPermissionIds": data[1]})
+    )
 
-        onefuzz_app_id = onefuzz_app["id"]
+    onefuzz_app_id = onefuzz_app["id"]
 
-        def add_preauthorized_app(app_list: List[Dict]) -> None:
-            try:
-                query_microsoft_graph(
-                    method="PATCH",
-                    resource="applications/%s" % onefuzz_app_id,
-                    body={"api": {"preAuthorizedApplications": app_list}},
-                )
-            except GraphQueryError as e:
-                m = re.search(
-                    "Property PreAuthorizedApplication references "
-                    "applications (.*) that cannot be found.",
-                    e.message,
-                )
-                if m:
-                    invalid_app_id = m.group(1)
-                    if invalid_app_id:
-                        for app in app_list:
-                            if app["appId"] == invalid_app_id:
-                                logger.warning(
-                                    f"removing invalid id {invalid_app_id} "
-                                    "for the next request"
-                                )
-                                app_list.remove(app)
+    def add_preauthorized_app(app_list: List[Dict]) -> None:
+        try:
+            query_microsoft_graph(
+                method="PATCH",
+                resource="applications/%s" % onefuzz_app_id,
+                body={"api": {"preAuthorizedApplications": app_list}},
+                subscription=subscription_id,
+            )
+        except GraphQueryError as e:
+            m = re.search(
+                "Property PreAuthorizedApplication references "
+                "applications (.*) that cannot be found.",
+                e.message,
+            )
+            if m:
+                invalid_app_id = m.group(1)
+                if invalid_app_id:
+                    for app in app_list:
+                        if app["appId"] == invalid_app_id:
+                            logger.warning(
+                                f"removing invalid id {invalid_app_id} "
+                                "for the next request"
+                            )
+                            app_list.remove(app)
 
-                raise e
+            raise e
 
-        retry(
-            add_preauthorized_app,
-            "authorize application",
-            data=preAuthorizedApplications.to_list(),
-        )
-
-    except AuthenticationError:
-        logger.warning("*** Browse to: %s", FIX_URL % onefuzz_app_id)
-        logger.warning("*** Then add the client application %s", registration_app_id)
+    retry(
+        add_preauthorized_app,
+        "authorize application",
+        data=preAuthorizedApplications.to_list(),
+    )
 
 
 def create_and_display_registration(
