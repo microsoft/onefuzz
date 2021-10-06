@@ -650,7 +650,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "subnet": "10.0.0.0/16"
         },
         "nsg_config": {
-            "allowed_IPs": []
+            "allowed_ips": []
         },
         "proxy_vm_sku": "Standard_B2s"
     }
@@ -823,7 +823,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "NetworkSecurityGroupConfig": {
             "properties": {
-                "allowed_IPs": {
+                "allowed_ips": {
                     "items": {
                         "type": "string"
                     },
@@ -5968,7 +5968,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "NetworkSecurityGroupConfig": {
             "properties": {
-                "allowed_IPs": {
+                "allowed_ips": {
                     "items": {
                         "type": "string"
                     },
