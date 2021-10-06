@@ -824,7 +824,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "NetworkSecurityGroupConfig": {
             "properties": {
                 "allowed_IPs": {
-                    "default": [],
                     "items": {
                         "type": "string"
                     },
@@ -5970,7 +5969,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "NetworkSecurityGroupConfig": {
             "properties": {
                 "allowed_IPs": {
-                    "default": [],
                     "items": {
                         "type": "string"
                     },

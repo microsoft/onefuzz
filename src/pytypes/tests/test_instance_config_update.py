@@ -3,8 +3,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from uuid import UUID
 import unittest
+from uuid import UUID
 
 from onefuzztypes.models import InstanceConfig
 
