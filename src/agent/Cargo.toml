@@ -18,8 +18,3 @@ members = [
 
 [profile.release]
 lto = "thin"
-
-
-[patch.crates-io]
-# Remove after `Detegr/rust-ctrlc#81` is released.
-ctrlc = { git = "http://github.com/ranweiler/rust-ctrlc", rev = "7535c9306557ef69bc07401ba653aa5d7d625e2f" }
