@@ -6,7 +6,6 @@
 from uuid import UUID
 import unittest
 
-
 from onefuzztypes.models import InstanceConfig
 
 
