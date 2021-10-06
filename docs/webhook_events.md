@@ -649,6 +649,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "address_space": "10.0.0.0/8",
             "subnet": "10.0.0.0/16"
         },
+        "nsg_config": {
+            "allow_IPs": []
+        },
         "proxy_vm_sku": "Standard_B2s"
     }
 }
@@ -759,6 +762,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "network_config": {
                     "$ref": "#/definitions/NetworkConfig"
                 },
+                "nsg_config": {
+                    "$ref": "#/definitions/NetworkSecurityGroupConfig"
+                },
                 "proxy_vm_sku": {
                     "default": "Standard_B2s",
                     "title": "Proxy Vm Sku",
@@ -813,6 +819,27 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 }
             },
             "title": "NetworkConfig",
+            "type": "object"
+        },
+        "NetworkSecurityGroupConfig": {
+            "properties": {
+                "allow_IPs": {
+                    "default": [],
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Allow Ips",
+                    "type": "array"
+                },
+                "allow_service_tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Allow Service Tags",
+                    "type": "array"
+                }
+            },
+            "title": "NetworkSecurityGroupConfig",
             "type": "object"
         }
     },
@@ -5830,6 +5857,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "network_config": {
                     "$ref": "#/definitions/NetworkConfig"
                 },
+                "nsg_config": {
+                    "$ref": "#/definitions/NetworkSecurityGroupConfig"
+                },
                 "proxy_vm_sku": {
                     "default": "Standard_B2s",
                     "title": "Proxy Vm Sku",
@@ -5935,6 +5965,27 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 }
             },
             "title": "NetworkConfig",
+            "type": "object"
+        },
+        "NetworkSecurityGroupConfig": {
+            "properties": {
+                "allow_IPs": {
+                    "default": [],
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Allow Ips",
+                    "type": "array"
+                },
+                "allow_service_tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Allow Service Tags",
+                    "type": "array"
+                }
+            },
+            "title": "NetworkSecurityGroupConfig",
             "type": "object"
         },
         "NoReproReport": {
