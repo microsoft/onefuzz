@@ -800,8 +800,8 @@ class NetworkConfig(BaseModel):
 
 
 class NetworkSecurityGroupConfig(BaseModel):
-    allow_service_tags: Optional[List[str]]
-    allow_IPs: List[str] = Field(default=[])
+    allowed_service_tags: Optional[List[str]]
+    allowed_IPs: List[str] = Field(default=[])
 
 
 class KeyvaultExtensionConfig(BaseModel):
