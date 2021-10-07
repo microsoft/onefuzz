@@ -57,9 +57,10 @@ from azure.storage.blob import (
     ContainerSasPermissions,
     generate_container_sas,
 )
+from configuration import update_admins, update_allowed_aad_tenants, update_nsg
+from data_migration import migrate
 from msrest.serialization import TZ_UTC
 
-from data_migration import migrate
 from registration import (
     OnefuzzAppRole,
     add_application_password,
@@ -70,7 +71,6 @@ from registration import (
     set_app_audience,
     update_pool_registration,
 )
-from set_admins import update_admins, update_allowed_aad_tenants
 
 # Found by manually assigning the User.Read permission to application
 # registration in the admin portal. The values are in the manifest under
@@ -569,11 +569,21 @@ class Client:
         migrate(table_service, self.migrations)
 
     def set_instance_config(self) -> None:
-        logger.info("setting instance config")
+        logger.info("setting instance configfdfdfdfd")
         name = self.results["deploy"]["func-name"]["value"]
         key = self.results["deploy"]["func-key"]["value"]
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
         table_service = TableService(account_name=name, account_key=key)
+
+        logger.info("hello")
+        if self.nsg_config:
+            logger.info("in first if")
+            update_nsg(
+                table_service,
+                self.application_name,
+                self.nsg_config,
+                # self.nsg_config.allowed_service_tags,
+            )
 
         if self.admins:
             update_admins(table_service, self.application_name, self.admins)
