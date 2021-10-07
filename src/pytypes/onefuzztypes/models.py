@@ -846,7 +846,7 @@ class InstanceConfig(BaseModel):
 
     allowed_aad_tenants: List[UUID]
     network_config: NetworkConfig = Field(default_factory=NetworkConfig)
-    nsg_config: NetworkSecurityGroupConfig = Field(
+    proxy_nsg_config: NetworkSecurityGroupConfig = Field(
         default_factory=NetworkSecurityGroupConfig
     )
     extensions: Optional[AzureVmExtensionConfig]
