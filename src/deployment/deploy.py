@@ -60,7 +60,6 @@ from azure.storage.blob import (
 from configuration import update_admins, update_allowed_aad_tenants, update_nsg
 from data_migration import migrate
 from msrest.serialization import TZ_UTC
-
 from registration import (
     OnefuzzAppRole,
     add_application_password,
@@ -113,6 +112,7 @@ class Client:
         location: str,
         application_name: str,
         owner: str,
+        nsg_config: str,
         client_id: Optional[str],
         client_secret: Optional[str],
         app_zip: str,
@@ -949,6 +949,7 @@ def main() -> None:
     parser.add_argument("resource_group")
     parser.add_argument("application_name")
     parser.add_argument("owner")
+    parser.add_argument("nsg_config")
     parser.add_argument(
         "--arm-template",
         type=arg_file,
@@ -1056,6 +1057,7 @@ def main() -> None:
         location=args.location,
         application_name=args.application_name,
         owner=args.owner,
+        nsg_config=args.nsg_config,
         client_id=args.client_id,
         client_secret=args.client_secret,
         app_zip=args.app_zip,
