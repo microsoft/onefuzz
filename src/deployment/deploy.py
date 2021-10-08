@@ -60,6 +60,7 @@ from azure.storage.blob import (
 from configuration import update_admins, update_allowed_aad_tenants, update_nsg
 from data_migration import migrate
 from msrest.serialization import TZ_UTC
+from onefuzztypes.models import NetworkSecurityGroupConfig
 from registration import (
     OnefuzzAppRole,
     add_application_password,
@@ -112,7 +113,7 @@ class Client:
         location: str,
         application_name: str,
         owner: str,
-        nsg_config: str,
+        nsg_config: NetworkSecurityGroupConfig,
         client_id: Optional[str],
         client_secret: Optional[str],
         app_zip: str,
@@ -578,12 +579,7 @@ class Client:
         logger.info("hello")
         if self.nsg_config:
             logger.info("in first if")
-            update_nsg(
-                table_service,
-                self.application_name,
-                self.nsg_config,
-                # self.nsg_config.allowed_service_tags,
-            )
+            update_nsg(table_service, self.application_name, self.nsg_config)
 
         if self.admins:
             update_admins(table_service, self.application_name, self.admins)

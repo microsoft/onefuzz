@@ -11,6 +11,7 @@ from uuid import UUID
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.cosmosdb.table.tableservice import TableService
 from azure.mgmt.storage import StorageManagementClient
+from onefuzztypes.models import NetworkSecurityGroupConfig
 
 storage_client_logger = logging.getLogger("azure.cosmosdb.table.common.storageclient")
 TABLE_NAME = "InstanceConfig"
@@ -78,22 +79,20 @@ def update_admins(
 def update_nsg(
     table_service: TableService,
     resource_group: str,
-    nsg_ip_rules: List[str],
-    # nsg_tag_rules: Optional[List[str]],
+    nsg_config: NetworkSecurityGroupConfig,
 ) -> None:
     create_if_missing(table_service)
     logger.info("in update_nsg")
-    if nsg_ip_rules:
-        logger.info("in if")
-        logger.info(nsg_ip_rules)
-        table_service.insert_or_merge_entity(
-            TABLE_NAME,
-            {
-                "PartitionKey": resource_group,
-                "RowKey": resource_group,
-                "nsg_ip_rules": json.dumps(nsg_ip_rules),
-            },
-        )
+    logger.info("in if")
+    logger.info(nsg_config)
+    table_service.insert_or_merge_entity(
+        TABLE_NAME,
+        {
+            "PartitionKey": resource_group,
+            "RowKey": resource_group,
+            "nsg_config": json.dumps(nsg_config),
+        },
+    )
     # if nsg_tag_rules:
     #     table_service.insert_or_merge_entity(
     #         TABLE_NAME,
