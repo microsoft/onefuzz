@@ -137,6 +137,7 @@ class Client:
         self.location = location
         self.application_name = application_name
         self.owner = owner
+        self.nsg_config = nsg_config
         self.app_zip = app_zip
         self.tools = tools
         self.instance_specific = instance_specific
