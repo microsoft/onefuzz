@@ -89,7 +89,7 @@ jobs:
         set -ex
         ls artifacts
         cd src/cli
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip==21.2.4
         pip install -r requirements-dev.txt
         pip-licenses -uf json > onefuzz/data/licenses.json
         python setup.py sdist bdist_wheel
