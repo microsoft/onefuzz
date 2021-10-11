@@ -578,7 +578,7 @@ class Client:
 
         logger.info("hello")
         if self.nsg_config:
-            logger.info("in first if")
+            logger.info("in first if git")
             update_nsg(table_service, self.application_name, self.nsg_config)
 
         if self.admins:
