@@ -20,6 +20,9 @@ from msrest.serialization import TZ_UTC
 
 logger = logging.getLogger("deploy")
 
+GRAPH_RESOURCE = "https://graph.microsoft.com"
+GRAPH_RESOURCE_ENDPOINT = "https://graph.microsoft.com/v0.1"
+
 
 class GraphQueryError(Exception):
     def __init__(self, message: str, status_code: int) -> None:
@@ -27,7 +30,7 @@ class GraphQueryError(Exception):
         self.message = message
         self.status_code = status_code
 
-
+## Queries microsoft graph api and return
 def query_microsoft_graph(
     method: str,
     resource: str,
@@ -37,9 +40,9 @@ def query_microsoft_graph(
 ) -> Any:
     profile = get_cli_profile()
     (token_type, access_token, _), _, _ = profile.get_raw_token(
-        resource="https://graph.microsoft.com", subscription=subscription
+        resource=GRAPH_RESOURCE, subscription=subscription
     )
-    url = urllib.parse.urljoin("https://graph.microsoft.com/v1.0/", resource)
+    url = urllib.parse.urljoin(f"{GRAPH_RESOURCE_ENDPOINT}/", resource)
     headers = {
         "Authorization": "%s %s" % (token_type, access_token),
         "Content-Type": "application/json",
@@ -47,28 +50,44 @@ def query_microsoft_graph(
     response = requests.request(
         method=method, url=url, headers=headers, params=params, json=body
     )
-
-    response.status_code
-
     if 200 <= response.status_code < 300:
-        try:
+        if response.content and response.content.strip():
             return response.json()
-        except ValueError:
+        else:
             return None
     else:
         error_text = str(response.content, encoding="utf-8", errors="backslashreplace")
         raise GraphQueryError(
-            "request did not succeed: HTTP %s - %s"
-            % (response.status_code, error_text),
+            f"request did not succeed: HTTP {response.status_code} - {error_text}",
             response.status_code,
         )
 
 
-def get_tenant_id(subscription_id: Optional[str] = None) -> str:
+def query_microsoft_graph_list(
+    method: str,
+    resource: str,
+    params: Optional[Dict] = None,
+    body: Optional[Dict] = None,
+    subscription: Optional[str] = None,
+) -> List[Dict]:
     result = query_microsoft_graph(
+                method,
+                resource,
+                params,
+                body,
+                subscription,
+            )
+    if result and result["value"]:
+        return cast(List[Dict], result["value"])
+    else:
+        raise Exception("Expected data containing a list of values")
+
+
+def get_tenant_id(subscription_id: Optional[str] = None) -> str:
+    result = query_microsoft_graph_list(
         method="GET", resource="organization", subscription=subscription_id
     )
-    return cast(str, result["value"][0]["id"])
+    return cast(str, result["id"])
 
 
 OperationResult = TypeVar("OperationResult")
@@ -218,7 +237,7 @@ def create_application_registration(
         ),
     }
 
-    registered_app: Dict = query_microsoft_graph(
+    registered_app = query_microsoft_graph(
         method="POST",
         resource="applications",
         body=params,
@@ -321,7 +340,7 @@ def get_application(
 
     filter_str = " and ".join(filters)
 
-    apps: Dict = query_microsoft_graph(
+    apps = query_microsoft_graph(
         method="GET",
         resource="applications",
         params={
@@ -329,10 +348,13 @@ def get_application(
         },
         subscription=subscription_id,
     )
-    if len(apps["value"]) == 0:
+    number_of_apps = len(apps["value"])
+    if number_of_apps == 0:
         return None
-
-    return apps["value"][0]
+    elif number_of_apps == 1:
+        return apps["value"][0]
+    else:
+        raise Exception(f"Found {number_of_apps} application matching filter: '{filter_str}'")
 
 
 def authorize_application(
