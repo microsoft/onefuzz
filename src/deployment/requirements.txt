@@ -9,6 +9,4 @@ pyfunctional==1.4.3
 pyopenssl==19.1.0
 adal~=1.2.5
 idna<3,>=2.5
-# onefuzz types version is set during build
-onefuzztypes==0.0.0
 
