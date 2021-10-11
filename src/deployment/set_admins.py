@@ -9,6 +9,7 @@ from uuid import UUID
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.cosmosdb.table.tableservice import TableService
 from azure.mgmt.storage import StorageManagementClient
+
 from configuration import update_admins, update_allowed_aad_tenants
 
 
