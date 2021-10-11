@@ -113,7 +113,7 @@ class Client:
         location: str,
         application_name: str,
         owner: str,
-        nsg_config: NetworkSecurityGroupConfig,
+        nsg_config: List[str],
         client_id: Optional[str],
         client_secret: Optional[str],
         app_zip: str,
