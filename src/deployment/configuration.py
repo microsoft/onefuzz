@@ -78,7 +78,7 @@ def update_admins(
 def update_nsg(
     table_service: TableService,
     resource_group: str,
-    nsg_config: NetworkSecurityGroupConfig,
+    nsg_config: List[str],
 ) -> None:
     create_if_missing(table_service)
     logger.info("in update_nsg")
