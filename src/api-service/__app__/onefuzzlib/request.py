@@ -15,7 +15,9 @@ from onefuzztypes.models import Error
 from onefuzztypes.responses import BaseResponse
 from pydantic import ValidationError
 
-from .azure.creds import is_member_of
+from deployment.registration import GraphQueryError
+
+from .azure.creds import is_member_of, GraphQueryError
 from .orm import ModelMixin
 
 # We don't actually use these types at runtime at this time.  Rather,
@@ -34,7 +36,7 @@ def check_access(req: HttpRequest) -> Optional[Error]:
     member_id = req.headers["x-ms-client-principal-id"]
     try:
         result = is_member_of(group_id, member_id)
-    except Exception as e:
+    except GraphQueryError as e:
         return Error(
             code=ErrorCode.UNAUTHORIZED,
             errors=["unable to interact with graph", str(e)],

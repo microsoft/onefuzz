@@ -271,6 +271,7 @@ class Client:
             return "api://%s.azurewebsites.net" % self.application_name
 
     def get_signin_audience(self) -> str:
+        # https://docs.microsoft.com/en-us/azure/active-directory/develop/supported-accounts-validation
         if self.multi_tenant_domain:
             return "AzureADMultipleOrgs"
         else:

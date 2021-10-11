@@ -23,6 +23,10 @@ from onefuzztypes.primitives import Container, Region
 
 from .monkeypatch import allow_more_workers, reduce_logging
 
+## https://docs.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0
+GRAPH_RESOURCE = "https://graph.microsoft.com"
+GRAPH_RESOURCE_ENDPOINT = "https://graph.microsoft.com/v1.0"
+
 
 @cached
 def get_msi() -> MSIAuthentication:
@@ -99,16 +103,23 @@ def get_regions() -> List[Region]:
     return sorted([Region(x.name) for x in locations])
 
 
+class GraphQueryError(Exception):
+    def __init__(self, message: str, status_code: Optional[int]) -> None:
+        super(GraphQueryError, self).__init__(message)
+        self.message = message
+        self.status_code = status_code
+
+
 def query_microsoft_graph(
     method: str,
     resource: str,
     params: Optional[Dict] = None,
     body: Optional[Dict] = None,
-) -> Any:
+) -> Dict:
     cred = get_identity()
-    access_token = cred.get_token("https://graph.microsoft.com/.default")
+    access_token = cred.get_token(f"{GRAPH_RESOURCE}/.default")
 
-    url = urllib.parse.urljoin("https://graph.microsoft.com/v1.0/", resource)
+    url = urllib.parse.urljoin(f"{GRAPH_RESOURCE_ENDPOINT}/", resource)
     headers = {
         "Authorization": "Bearer %s" % access_token.token,
         "Content-Type": "application/json",
@@ -117,28 +128,45 @@ def query_microsoft_graph(
         method=method, url=url, headers=headers, params=params, json=body
     )
 
-    response.status_code
-
     if 200 <= response.status_code < 300:
-        try:
+        if response.content and response.content.strip():
             return response.json()
-        except ValueError:
-            return None
+        else:
+            return {}
     else:
         error_text = str(response.content, encoding="utf-8", errors="backslashreplace")
-        raise Exception(
-            "request did not succeed: HTTP %s - %s"
-            % (response.status_code, error_text),
+        raise GraphQueryError(
+            f"request did not succeed: HTTP {response.status_code} - {error_text}",
             response.status_code,
         )
 
 
+def query_microsoft_graph_list(
+    method: str,
+    resource: str,
+    params: Optional[Dict] = None,
+    body: Optional[Dict] = None,
+    subscription: Optional[str] = None,
+) -> List[Dict]:
+    result = query_microsoft_graph(
+        method,
+        resource,
+        params,
+        body,
+        subscription,
+    )
+    if result["value"]:
+        return cast(List[Dict], result["value"])
+    else:
+        raise GraphQueryError("Expected data containing a list of values", None)
+
+
 def is_member_of(group_id: str, member_id: str) -> bool:
     body = {"groupIds": [group_id]}
-    response = query_microsoft_graph(
+    response = query_microsoft_graph_list(
         method="POST", resource=f"users/{member_id}/checkMemberGroups", body=body
     )
-    return group_id in response["value"]
+    return group_id in response
 
 
 @cached
