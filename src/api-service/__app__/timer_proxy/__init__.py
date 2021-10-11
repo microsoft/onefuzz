@@ -8,6 +8,7 @@ import logging
 import azure.functions as func
 from onefuzztypes.enums import VmState
 
+from ..onefuzzlib.azure.nsg import delete_nsg, list_nsgs, ok_to_delete
 from ..onefuzzlib.orm import process_state_updates
 from ..onefuzzlib.proxy import PROXY_LOG_PREFIX, Proxy
 from ..onefuzzlib.workers.scalesets import Scaleset
@@ -50,3 +51,10 @@ def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
     for region in regions:
         if all(x.outdated for x in proxies if x.region == region):
             Proxy.get_or_create(region)
+
+    # if there are NSGs with name same as the region that they are allocated
+    # and have no NIC associated with it then delete the NSG
+    for nsg in list_nsgs():
+        if ok_to_delete(regions, nsg.location, nsg.name):
+            if nsg.network_interfaces is None:
+                delete_nsg(nsg.name)
