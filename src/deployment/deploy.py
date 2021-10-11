@@ -60,7 +60,6 @@ from azure.storage.blob import (
 from configuration import update_admins, update_allowed_aad_tenants, update_nsg
 from data_migration import migrate
 from msrest.serialization import TZ_UTC
-from onefuzztypes.models import NetworkSecurityGroupConfig
 from registration import (
     OnefuzzAppRole,
     add_application_password,
