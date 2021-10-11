@@ -8,7 +8,6 @@ import logging
 from typing import List, Optional
 from uuid import UUID
 
-from azure.common.client_factory import get_client_from_cli_profile
 from azure.cosmosdb.table.tableservice import TableService
 
 storage_client_logger = logging.getLogger("azure.cosmosdb.table.common.storageclient")
