@@ -76,18 +76,24 @@ def update_admins(
 def update_nsg(
     table_service: TableService,
     resource_group: str,
-    nsg_config: List[str],
+    allowed_rules: List[str],
 ) -> None:
     create_if_missing(table_service)
     logger.info("in update_nsg")
     logger.info("in if")
-    logger.info(nsg_config)
+    logger.info(allowed_rules)
+    
+    rules_as_str = allowed_rules.split(" ")
+
+    nsg_config = {
+        "allowed_ips": rules_as_str
+    }
     table_service.insert_or_merge_entity(
         TABLE_NAME,
         {
             "PartitionKey": resource_group,
             "RowKey": resource_group,
-            "nsg_config": json.dumps(nsg_config),
+            "proxy_nsg_config": json.dumps(nsg_config),
         },
     )
     # if nsg_tag_rules:
