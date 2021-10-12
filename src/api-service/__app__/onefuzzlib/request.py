@@ -15,7 +15,7 @@ from onefuzztypes.models import Error
 from onefuzztypes.responses import BaseResponse
 from pydantic import ValidationError
 
-from .azure.creds import is_member_of, GraphQueryError
+from .azure.creds import GraphQueryError, is_member_of
 from .orm import ModelMixin
 
 # We don't actually use these types at runtime at this time.  Rather,
