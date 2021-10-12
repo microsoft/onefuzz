@@ -23,7 +23,7 @@ from onefuzztypes.primitives import Container, Region
 
 from .monkeypatch import allow_more_workers, reduce_logging
 
-## https://docs.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0
+# https://docs.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0
 GRAPH_RESOURCE = "https://graph.microsoft.com"
 GRAPH_RESOURCE_ENDPOINT = "https://graph.microsoft.com/v1.0"
 
