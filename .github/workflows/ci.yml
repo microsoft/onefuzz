@@ -89,8 +89,7 @@ jobs:
         set -ex
         ls artifacts
         cd src/cli
-        # Workaround: pin `pip` version until raimon49/pip-licenses#113 is fixed.
-        python -m pip install --upgrade pip==21.2.4
+        python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
         pip-licenses -uf json > onefuzz/data/licenses.json
         python setup.py sdist bdist_wheel
