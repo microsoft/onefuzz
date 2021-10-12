@@ -93,7 +93,9 @@ def get_tenant_id(subscription_id: Optional[str] = None) -> str:
     if isinstance(tenant_id, str):
         return tenant_id
     else:
-        raise Exception(f"unable to retrive tenant_id for subscription {subscription_id}")
+        raise Exception(
+            f"unable to retrive tenant_id for subscription {subscription_id}"
+        )
 
 
 OperationResult = TypeVar("OperationResult")
