@@ -76,7 +76,7 @@ def update_admins(
 def update_nsg(
     table_service: TableService,
     resource_group: str,
-    allowed_rules: List[str],
+    allowed_rules: str,
 ) -> None:
     create_if_missing(table_service)
     
