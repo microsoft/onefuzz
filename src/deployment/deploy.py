@@ -449,7 +449,7 @@ class Client:
             and app["signInAudience"] == "AzureADMultipleOrgs"
         ):
             set_app_audience(
-                app.object_id,
+                app["id"],
                 "AzureADMyOrg",
                 subscription_id=self.get_subscription_id(),
             )
