@@ -54,7 +54,7 @@ def query_microsoft_graph(
     )
     if 200 <= response.status_code < 300:
         if response.content and response.content.strip():
-            return response.json()
+            return cast(Dict, response.json())
         else:
             return {}
     else:
@@ -90,7 +90,10 @@ def get_tenant_id(subscription_id: Optional[str] = None) -> str:
     _, tenant_id, _ = profile.get_raw_token(
         resource=GRAPH_RESOURCE, subscription=subscription_id
     )
-    return tenant_id
+    if isinstance(tenant_id, str):
+        return tenant_id
+    else:
+        raise Exception(f"unable to retrive tenant_id for subscription {subscription_id}")
 
 
 OperationResult = TypeVar("OperationResult")

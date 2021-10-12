@@ -130,7 +130,7 @@ def query_microsoft_graph(
 
     if 200 <= response.status_code < 300:
         if response.content and response.content.strip():
-            return response.json()
+            return cast(Dict, response.json())
         else:
             return {}
     else:
@@ -146,14 +146,12 @@ def query_microsoft_graph_list(
     resource: str,
     params: Optional[Dict] = None,
     body: Optional[Dict] = None,
-    subscription: Optional[str] = None,
 ) -> List[Dict]:
     result = query_microsoft_graph(
         method,
         resource,
         params,
         body,
-        subscription,
     )
     if result["value"]:
         return cast(List[Dict], result["value"])
