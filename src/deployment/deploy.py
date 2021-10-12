@@ -577,9 +577,7 @@ class Client:
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
         table_service = TableService(account_name=name, account_key=key)
 
-        logger.info("hello")
         if self.nsg_config:
-            logger.info("in first if git ")
             update_nsg(table_service, self.application_name, self.nsg_config)
 
         if self.admins:

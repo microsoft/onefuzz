@@ -79,9 +79,6 @@ def update_nsg(
     allowed_rules: List[str],
 ) -> None:
     create_if_missing(table_service)
-    logger.info("in update_nsg")
-    logger.info("in if")
-    logger.info(allowed_rules)
     
     rules_as_str = allowed_rules.split(" ")
 
