@@ -113,7 +113,7 @@ class Client:
         location: str,
         application_name: str,
         owner: str,
-        nsg_config: List[str],
+        nsg_config: str,
         client_id: Optional[str],
         client_secret: Optional[str],
         app_zip: str,
