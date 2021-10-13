@@ -21,6 +21,7 @@ from .creds import get_base_resource_group
 from .disk import delete_disk, list_disks
 from .image import get_os
 from .ip import create_public_nic, delete_ip, delete_nic, get_ip, get_public_nic
+from .nsg import NSG
 
 
 def get_vm(name: str) -> Optional[VirtualMachine]:
@@ -47,6 +48,7 @@ def create_vm(
     image: str,
     password: str,
     ssh_public_key: str,
+    nsg: Optional[NSG],
 ) -> Union[None, Error]:
     resource_group = get_base_resource_group()
     logging.info("creating vm %s:%s:%s", resource_group, location, name)
@@ -60,6 +62,10 @@ def create_vm(
             return result
         logging.info("waiting on nic creation")
         return None
+    if nsg:
+        result = nsg.associate_nic(nic)
+        if isinstance(result, Error):
+            return result
 
     if image.startswith("/"):
         image_ref = {"id": image}
@@ -181,7 +187,7 @@ def has_components(name: str) -> bool:
     return False
 
 
-def delete_vm_components(name: str) -> bool:
+def delete_vm_components(name: str, nsg: Optional[NSG]) -> bool:
     resource_group = get_base_resource_group()
     logging.info("deleting vm components %s:%s", resource_group, name)
     if get_vm(name):
@@ -189,8 +195,12 @@ def delete_vm_components(name: str) -> bool:
         delete_vm(name)
         return False
 
-    if get_public_nic(resource_group, name):
+    nic = get_public_nic(resource_group, name)
+    if nic:
         logging.info("deleting nic %s:%s", resource_group, name)
+        if nic.network_security_group and nsg:
+            nsg.dissociate_nic(nic)
+            return False
         delete_nic(resource_group, name)
         return False
 
@@ -215,6 +225,7 @@ class VM(BaseModel):
     sku: str
     image: str
     auth: Authentication
+    nsg: Optional[NSG]
 
     @validator("name", allow_reuse=True)
     def check_name(cls, value: Union[UUID, str]) -> Union[UUID, str]:
@@ -248,10 +259,11 @@ class VM(BaseModel):
             self.image,
             self.auth.password,
             self.auth.public_key,
+            self.nsg,
         )
 
     def delete(self) -> bool:
-        return delete_vm_components(str(self.name))
+        return delete_vm_components(str(self.name), self.nsg)
 
     def add_extensions(self, extensions: List[Extension]) -> Union[bool, Error]:
         status = []
