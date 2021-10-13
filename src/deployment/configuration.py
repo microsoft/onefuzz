@@ -79,12 +79,10 @@ def update_nsg(
     allowed_rules: str,
 ) -> None:
     create_if_missing(table_service)
-    
+
     rules_as_str = allowed_rules.split(" ")
 
-    nsg_config = {
-        "allowed_ips": rules_as_str
-    }
+    nsg_config = {"allowed_ips": rules_as_str}
     table_service.insert_or_merge_entity(
         TABLE_NAME,
         {
