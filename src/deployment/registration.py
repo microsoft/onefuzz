@@ -10,7 +10,7 @@ import time
 import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, TypeVar, cast
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, TypeVar
 from uuid import UUID
 
 import requests
