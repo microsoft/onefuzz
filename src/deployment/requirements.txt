@@ -9,4 +9,3 @@ pyfunctional==1.4.3
 pyopenssl==19.1.0
 adal~=1.2.5
 idna<3,>=2.5
-
