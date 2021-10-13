@@ -92,16 +92,6 @@ def update_nsg(
             "RowKey": resource_group,
             "proxy_nsg_config": json.dumps(nsg_config),
         },
-    )
-    # if nsg_tag_rules:
-    #     table_service.insert_or_merge_entity(
-    #         TABLE_NAME,
-    #         {
-    #             "PartitionKey": resource_group,
-    #             "RowKey": resource_group,
-    #             "admins": json.dumps(nsg_ip_rules),
-    #         },
-    #     )
 
 
 if __name__ == "__main__":
