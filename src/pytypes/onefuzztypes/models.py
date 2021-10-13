@@ -796,6 +796,43 @@ class Task(BaseModel):
     user_info: Optional[UserInfo]
 
 
+class NetworkConfig(BaseModel):
+    address_space: str = Field(default="10.0.0.0/8")
+    subnet: str = Field(default="10.0.0.0/16")
+
+
+class KeyvaultExtensionConfig(BaseModel):
+    keyvault_name: str
+    cert_name: str
+    cert_path: str
+    extension_store: str
+
+
+class AzureMonitorExtensionConfig(BaseModel):
+    config_version: str
+    moniker: str
+    namespace: str
+    monitoringGSEnvironment: str
+    monitoringGCSAccount: str
+    monitoringGCSAuthId: str
+    monitoringGCSAuthIdType: str
+
+
+class AzureSecurityExtensionConfig(BaseModel):
+    pass
+
+
+class GenevaExtensionConfig(BaseModel):
+    pass
+
+
+class AzureVmExtensionConfig(BaseModel):
+    keyvault: Optional[KeyvaultExtensionConfig]
+    azure_monitor: Optional[AzureMonitorExtensionConfig]
+    azure_security: Optional[AzureSecurityExtensionConfig]
+    geneva: Optional[GenevaExtensionConfig]
+
+
 class InstanceConfig(BaseModel):
     # initial set of admins can only be set during deployment.
     # if admins are set, only admins can update instance configs.
@@ -804,8 +841,10 @@ class InstanceConfig(BaseModel):
     # if set, only admins can manage pools or scalesets
     allow_pool_management: bool = Field(default=True)
 
-    proxy_vm_sku: str = Field(default="Standard_B2s")
     allowed_aad_tenants: List[UUID]
+    network_config: NetworkConfig = Field(default_factory=NetworkConfig)
+    extensions: Optional[AzureVmExtensionConfig]
+    proxy_vm_sku: str = Field(default="Standard_B2s")
 
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:

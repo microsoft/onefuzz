@@ -18,7 +18,7 @@ This is the registration of the OneFuzz instance.
 * Authorized application:
     * OneFuzz CLI registration
 
-### Onefuzz Application Service Principal
+### OneFuzz Application Service Principal
 Service principal linked to the OneFuzz application registration.
 * name: `<instance_name>`
 * Application Id: `<OneFuzz Application registration app_id>`

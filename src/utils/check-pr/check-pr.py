@@ -176,7 +176,7 @@ class Deployer:
         self.region = region
         self.subscription_id = subscription_id
         self.skip_tests = skip_tests
-        self.test_args = test_args
+        self.test_args = test_args or []
         self.repo = repo
 
     def merge(self) -> None:
@@ -277,7 +277,16 @@ class Deployer:
 
 
 def main() -> None:
-    default_instance = "pr-check-%s" % uuid.uuid4().hex
+    # Get a name that can be added to the resource group name
+    # to make it easy to identify the owner
+    cmd = ["az", "ad", "signed-in-user", "show", "--query", "mailNickname", "-o", "tsv"]
+    name = subprocess.check_output(cmd, encoding="UTF-8")
+
+    # The result from az includes a newline
+    # which we strip out.
+    name = name.strip()
+
+    default_instance = f"pr-check-{name}-%s" % uuid.uuid4().hex
     parser = argparse.ArgumentParser()
     parser.add_argument("--instance", default=default_instance)
     group = parser.add_mutually_exclusive_group()

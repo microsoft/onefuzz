@@ -1358,13 +1358,16 @@ class JobContainers(Endpoint):
         for container_name in to_keep:
             self.logger.info("not removing: %s", container_name)
 
-        for container_name in to_delete:
-            if dryrun:
-                self.logger.info("container would be deleted: %s", container_name)
-            elif self.onefuzz.containers.delete(container_name).result:
-                self.logger.info("removed container: %s", container_name)
-            else:
-                self.logger.info("container already removed: %s", container_name)
+        if len(to_delete) > 0:
+            for container_name in to_delete:
+                if dryrun:
+                    self.logger.info("container would be deleted: %s", container_name)
+                elif self.onefuzz.containers.delete(container_name).result:
+                    self.logger.info("removed container: %s", container_name)
+                else:
+                    self.logger.info("container already removed: %s", container_name)
+        else:
+            self.logger.info("nothing to delete")
 
 
 class JobTasks(Endpoint):

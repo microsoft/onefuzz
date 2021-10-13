@@ -251,7 +251,33 @@ class Client:
     def create_password(self, object_id: UUID) -> Tuple[str, str]:
         return add_application_password(object_id, self.get_subscription_id())
 
-    def setup_rbac(self) -> None:
+    def get_instance_url(self) -> str:
+        # The url to access the instance
+        # This also represents the legacy identifier_uris of the application
+        # registration
+        if self.multi_tenant_domain:
+            return "https://%s/%s" % (
+                self.multi_tenant_domain,
+                self.application_name,
+            )
+        else:
+            return "https://%s.azurewebsites.net" % self.application_name
+
+    def get_identifier_url(self) -> str:
+        # This is used to identify the application registration via the
+        # identifier_uris field.  Depending on the environment this value needs
+        # to be from an approved domain The format of this value is derived
+        # from the default value proposed by azure when creating an application
+        # registration api://{guid}/...
+        if self.multi_tenant_domain:
+            return "api://%s/%s" % (
+                self.multi_tenant_domain,
+                self.application_name,
+            )
+        else:
+            return "api://%s.azurewebsites.net" % self.application_name
+
+    def setup_rbac(self) -> None:  # noqa: C901
         """
         Setup the client application for the OneFuzz instance.
         By default, Service Principals do not have access to create
@@ -300,18 +326,10 @@ class Client:
         if not existing:
             logger.info("creating Application registration")
 
-            if self.multi_tenant_domain:
-                url = "https://%s/%s" % (
-                    self.multi_tenant_domain,
-                    self.application_name,
-                )
-            else:
-                url = "https://%s.azurewebsites.net" % self.application_name
-
             params = ApplicationCreateParameters(
                 display_name=self.application_name,
-                identifier_uris=[f"api://{self.application_name}.azurewebsites.net"],
-                reply_urls=[url + "/.auth/login/aad/callback"],
+                identifier_uris=[self.get_identifier_url()],
+                reply_urls=[self.get_instance_url() + "/.auth/login/aad/callback"],
                 optional_claims=OptionalClaims(id_token=[], access_token=[]),
                 required_resource_access=[
                     RequiredResourceAccess(
@@ -362,14 +380,7 @@ class Client:
 
         else:
             app = existing[0]
-            if self.multi_tenant_domain:
-                api_id = "api://%s/%s" % (
-                    self.multi_tenant_domain,
-                    self.application_name,
-                )
-            else:
-                api_id = "api://%s.azurewebsites.net" % self.application_name
-
+            api_id = self.get_identifier_url()
             if api_id not in app.identifier_uris:
                 identifier_uris = app.identifier_uris
                 identifier_uris.append(api_id)
@@ -473,28 +484,16 @@ class Client:
             "%Y-%m-%dT%H:%M:%SZ"
         )
 
+        app_func_audiences = [
+            self.get_identifier_url(),
+            self.get_instance_url(),
+        ]
         if self.multi_tenant_domain:
             # clear the value in the Issuer Url field:
             # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
-            app_func_audiences = [
-                "api://%s/%s"
-                % (
-                    self.multi_tenant_domain,
-                    self.application_name,
-                ),
-                "https://%s/%s"
-                % (
-                    self.multi_tenant_domain,
-                    self.application_name,
-                ),
-            ]
             app_func_issuer = ""
             multi_tenant_domain = {"value": self.multi_tenant_domain}
         else:
-            app_func_audiences = [
-                "api://%s.azurewebsites.net" % self.application_name,
-                "https://%s.azurewebsites.net" % self.application_name,
-            ]
             tenant_oid = str(self.cli_config["authority"]).split("/")[-1]
             app_func_issuer = "https://sts.windows.net/%s/" % tenant_oid
             multi_tenant_domain = {"value": ""}
@@ -563,12 +562,14 @@ class Client:
         )
 
     def apply_migrations(self) -> None:
+        logger.info("applying database migrations")
         name = self.results["deploy"]["func-name"]["value"]
         key = self.results["deploy"]["func-key"]["value"]
         table_service = TableService(account_name=name, account_key=key)
         migrate(table_service, self.migrations)
 
     def set_instance_config(self) -> None:
+        logger.info("setting instance config")
         name = self.results["deploy"]["func-name"]["value"]
         key = self.results["deploy"]["func-key"]["value"]
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])

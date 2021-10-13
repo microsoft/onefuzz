@@ -1,4 +1,4 @@
-# Various internal comms channels used in Onefuzz
+# Various internal comms channels used in OneFuzz
 
 Storage Queues:
 

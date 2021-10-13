@@ -1,4 +1,4 @@
-# Screencasts of using Onefuzz
+# Screencasts of using OneFuzz
 
 ## Launching a Job
 ![Launching a job](launching-job.gif)

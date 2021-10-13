@@ -100,13 +100,14 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="ProxyReset")
 
-    proxy = Proxy.get(request.region)
-    if proxy is not None:
-        proxy.state = VmState.stopping
-        proxy.save()
-        return ok(BoolResult(result=True))
+    proxy_list = Proxy.search(query={"region": [request.region]})
+    for proxy in proxy_list:
+        proxy.set_state(VmState.stopping)
 
-    return ok(BoolResult(result=False))
+    if proxy_list:
+        return ok(BoolResult(result=True))
+    else:
+        return ok(BoolResult(result=False))
 
 
 def delete(req: func.HttpRequest) -> func.HttpResponse:
