@@ -130,7 +130,14 @@ def query_microsoft_graph(
 
     if 200 <= response.status_code < 300:
         if response.content and response.content.strip():
-            return cast(Dict, response.json())
+            json = response.json()
+            if isinstance(json, Dict):
+                return json
+            else:
+                raise GraphQueryError(
+                    f"invalid data received expected a json object: HTTP {response.status_code} - {json}",
+                    response.status_code,
+                )
         else:
             return {}
     else:
@@ -153,8 +160,9 @@ def query_microsoft_graph_list(
         params,
         body,
     )
-    if result["value"]:
-        return cast(List[Dict], result["value"])
+    value = result.get("value")
+    if isinstance(value, list):
+        return value
     else:
         raise GraphQueryError("Expected data containing a list of values", None)
 
