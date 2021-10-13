@@ -135,7 +135,8 @@ def query_microsoft_graph(
                 return json
             else:
                 raise GraphQueryError(
-                    f"invalid data received expected a json object: HTTP {response.status_code} - {json}",
+                    "invalid data expected a json object: HTTP"
+                    f" {response.status_code} - {json}",
                     response.status_code,
                 )
         else:
