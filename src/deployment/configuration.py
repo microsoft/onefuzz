@@ -10,7 +10,6 @@ from typing import List, Optional
 from uuid import UUID
 
 from azure.cosmosdb.table.tableservice import TableService
-from pydantic import Field
 
 storage_client_logger = logging.getLogger("azure.cosmosdb.table.common.storageclient")
 TABLE_NAME = "InstanceConfig"
