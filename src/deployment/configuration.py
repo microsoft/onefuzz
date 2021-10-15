@@ -25,10 +25,11 @@ logger = logging.getLogger("deploy")
 class NsgRule:
 
     rule: str
-    is_tag: bool = Field(default=False)
+    is_tag: bool
 
     def __init__(self, rule: str):
         try:
+            self.is_tag = False
             self.check_rule(rule)
             self.rule = rule
         except:
