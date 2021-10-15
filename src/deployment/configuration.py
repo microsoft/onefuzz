@@ -21,6 +21,8 @@ logger = logging.getLogger("deploy")
 #                               key:
 #                               name:
 #                               create_if_missing(in constructor)}
+
+
 class NsgRule:
 
     rule: str
@@ -31,7 +33,7 @@ class NsgRule:
             self.is_tag = False
             self.check_rule(rule)
             self.rule = rule
-        except:
+        except Exception:
             raise ValueError(
                 "Invalid rule. Please provide a valid rule or supply the wild card *."
             )
@@ -45,12 +47,12 @@ class NsgRule:
         # Check if IP Address
         try:
             ipaddress.ip_address(value)
-        except ValueError as err:
+        except ValueError:
             pass
         # Check if IP Range
         try:
             ipaddress.ip_network(value)
-        except ValueError as err:
+        except ValueError:
             pass
 
         self.is_tag = True
@@ -121,7 +123,7 @@ def parse_rules(rules_str: str) -> List[NsgRule]:
         try:
             nsg_rule = NsgRule(rule)
             nsg_rules.append(nsg_rule)
-        except:
+        except Exception:
             raise ValueError(
                 "One or more input rules was invalid. Please enter a comma-separted list if valid sources."
             )
