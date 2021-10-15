@@ -57,7 +57,12 @@ from azure.storage.blob import (
     ContainerSasPermissions,
     generate_container_sas,
 )
-from configuration import update_admins, update_allowed_aad_tenants, update_nsg
+from configuration import (
+    parse_rules,
+    update_admins,
+    update_allowed_aad_tenants,
+    update_nsg,
+)
 from data_migration import migrate
 from msrest.serialization import TZ_UTC
 from registration import (
@@ -575,9 +580,10 @@ class Client:
         key = self.results["deploy"]["func-key"]["value"]
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
         table_service = TableService(account_name=name, account_key=key)
-
+        #
         if self.nsg_config:
-            update_nsg(table_service, self.application_name, self.nsg_config)
+            rules = parse_rules(self.nsg_config)
+            update_nsg(table_service, self.application_name, rules)
 
         if self.admins:
             update_admins(table_service, self.application_name, self.admins)
