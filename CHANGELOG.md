@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Service: Fixed authentication when using a client secret. [#1300](https://github.com/microsoft/onefuzz/pull/1300)
 * Deployment: Fixed an issue where the wrong AppRole was assigned when creating new CLI registrations. [#1308](https://github.com/microsoft/onefuzz/pull/1308)
-Write Preview
 * Deployment: Suppress a dependency's noisy logging of handled errors when deploying. [#1304](https://github.com/microsoft/onefuzz/pull/1304)
 
 ## 3.1.0
