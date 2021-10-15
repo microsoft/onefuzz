@@ -10,7 +10,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from azure.cosmosdb.table.tableservice import TableService
-from onefuzztypes.requests import TaskGet
+from pydantic import Field
 
 storage_client_logger = logging.getLogger("azure.cosmosdb.table.common.storageclient")
 TABLE_NAME = "InstanceConfig"
@@ -25,7 +25,7 @@ logger = logging.getLogger("deploy")
 class NsgRule:
 
     rule: str
-    is_tag: False
+    is_tag: bool = Field(default=False)
 
     def __init__(self, rule: str):
         try:
@@ -141,7 +141,7 @@ def update_nsg(
         {
             "PartitionKey": resource_group,
             "RowKey": resource_group,
-            "proxy_nsg_config": json.dumps(nsg_config),
+            "proxy_nsg_config": json.dumps(allowed_rules),
         },
     )
 
