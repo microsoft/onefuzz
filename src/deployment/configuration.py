@@ -35,7 +35,7 @@ class NsgRule:
             self.rule = rule
         except Exception:
             raise ValueError(
-                "Invalid rule. Please provide a valid rule or supply the wild card *."
+                "Invalid rule. Please  provide a valid rule or supply the wild card *."
             )
 
     def check_rule(self, value: str) -> None:
