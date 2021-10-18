@@ -58,6 +58,7 @@ from azure.storage.blob import (
     generate_container_sas,
 )
 from configuration import (
+    InstanceConfigClient,
     parse_rules,
     update_admins,
     update_allowed_aad_tenants,
@@ -580,18 +581,20 @@ class Client:
         key = self.results["deploy"]["func-key"]["value"]
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
         table_service = TableService(account_name=name, account_key=key)
-        #
+
+        config_client = InstanceConfigClient(table_service, self.application_name)
+
         if self.nsg_config:
             rules = parse_rules(self.nsg_config)
-            update_nsg(table_service, self.application_name, rules)
+            update_nsg(config_client, rules)
 
         if self.admins:
-            update_admins(table_service, self.application_name, self.admins)
+            update_admins(config_client, self.admins)
 
         tenants = self.allowed_aad_tenants
         if tenant not in tenants:
             tenants.append(tenant)
-        update_allowed_aad_tenants(table_service, self.application_name, tenants)
+        update_allowed_aad_tenants(config_client, tenants)
 
     def create_eventgrid(self) -> None:
         logger.info("creating eventgrid subscription")
