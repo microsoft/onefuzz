@@ -32,11 +32,11 @@ class InstanceConfigClient:
         self.resource_group = resource_group
         self.create_if_missing(table_service)
 
-    def disable_storage_client_logging() -> None:
+    def disable_storage_client_logging(self) -> None:
         if storage_client_logger:
             storage_client_logger.disabled = True
 
-    def enable_storage_client_logging() -> None:
+    def enable_storage_client_logging(self) -> None:
         if storage_client_logger:
             storage_client_logger.disabled = False
 
