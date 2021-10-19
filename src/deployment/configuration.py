@@ -69,7 +69,9 @@ class NsgRule:
             raise ValueError(
                 "Rule can not be None or empty string. Please provide a valid rule or supply the wild card *."
             )
-
+        # Check Wild Card
+        if value == "*":
+            return
         # Check if IP Address
         try:
             ipaddress.ip_address(value)
