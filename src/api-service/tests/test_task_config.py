@@ -31,6 +31,16 @@ BLOB_NAME_TEST_CASES = [
     ("  ", False),
     ("/".join("a" * 255), False),
     ("a" * 1025, False),
+    # Paths with invalid segments.
+    ("a.", False),
+    ("a..", False),
+    ("a./b", False),
+    ("a/b./c", False),
+    ("a./", False),
+    ("a../", False),
+    ("a./b/", False),
+    ("a/b./c/", False),
+    ("a//", False),
 ]
 
 

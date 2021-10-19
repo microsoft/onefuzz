@@ -146,6 +146,11 @@ def is_valid_blob_name(blob_name: str) -> bool:
     if len(path.parts) > MAX_PATH_SEGMENTS:
         return False
 
+    # No path segment should end with a dot (`.`).
+    for part in path.parts:
+        if part.endswith("."):
+            return False
+
     # Reject absolute paths to avoid confusion.
     if path.is_absolute():
         return False
