@@ -16,12 +16,6 @@ TABLE_NAME = "InstanceConfig"
 
 logger = logging.getLogger("deploy")
 
-# Class InstanceConfigClient { if i have an instance of this class, what can i be sure of? Constructor can be useful in validating
-#                               resourcegroup:
-#                               key:
-#                               name:
-#                               create_if_missing(in constructor)}
-
 
 class InstanceConfigClient:
 
@@ -30,6 +24,7 @@ class InstanceConfigClient:
 
     def __init__(self, table_service: TableService, resource_group: str):
         self.resource_group = resource_group
+        self.table_service = table_service
         self.create_if_missing(table_service)
 
     def disable_storage_client_logging(self) -> None:
