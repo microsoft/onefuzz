@@ -9,7 +9,11 @@ from uuid import UUID
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.cosmosdb.table.tableservice import TableService
 from azure.mgmt.storage import StorageManagementClient
-from configuration import update_admins, update_allowed_aad_tenants
+from configuration import (
+    InstanceConfigClient,
+    update_admins,
+    update_allowed_aad_tenants,
+)
 
 
 def main() -> None:
@@ -28,12 +32,11 @@ def main() -> None:
     table_service = TableService(
         account_name=args.storage_account, account_key=storage_keys.keys[0].value
     )
+    config_client = InstanceConfigClient(table_service, args.resource_group)
     if args.admins:
-        update_admins(table_service, args.resource_group, args.admins)
+        update_admins(config_client, args.admins)
     if args.allowed_aad_tenants:
-        update_allowed_aad_tenants(
-            table_service, args.resource_group, args.allowed_aad_tenants
-        )
+        update_allowed_aad_tenants(config_client, args.allowed_aad_tenants)
 
 
 if __name__ == "__main__":
