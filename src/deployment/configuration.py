@@ -69,11 +69,13 @@ class NsgRule:
         # Check if IP Address
         try:
             ipaddress.ip_address(value)
+            return
         except ValueError:
             pass
         # Check if IP Range
         try:
             ipaddress.ip_network(value)
+            return
         except ValueError:
             pass
 
@@ -152,13 +154,14 @@ def update_nsg(
     config_client: InstanceConfigClient,
     allowed_rules: List[NsgRule],
 ) -> None:
+    rules_as_str = [x.rule for x in allowed_rules]
     # create class initialized by table service/resource group outside function that's checked in deploy.py
     config_client.table_service.insert_or_merge_entity(
         TABLE_NAME,
         {
             "PartitionKey": config_client.resource_group,
             "RowKey": config_client.resource_group,
-            "proxy_nsg_config": json.dumps(allowed_rules),
+            "proxy_nsg_config": json.dumps(rules_as_str),
         },
     )
 
