@@ -4,9 +4,8 @@
 # Licensed under the MIT License.
 
 import logging
-import ntpath
 import os
-import posixpath
+import pathlib
 from typing import Dict, List, Optional
 from uuid import UUID
 
@@ -105,14 +104,12 @@ def check_target_exe(config: TaskConfig, definition: TaskDefinition) -> None:
 
         return
 
-    # Azure Blob Store uses virtualized directory structures.  As such, we need
-    # the paths to already be canonicalized.  As an example, accessing the blob
-    # store path "./foo" generates an exception, but "foo" and "foo/bar" do
-    # not.
-    if (
-        posixpath.relpath(config.task.target_exe) != config.task.target_exe
-        or ntpath.relpath(config.task.target_exe) != config.task.target_exe
-    ):
+    # User-submitted paths must be relative to the setup directory that contains them.
+    # They also must be normalized, and exclude special filesystem path elements.
+    #
+    # For example, accessing the blob store path "./foo" generates an exception, but
+    # "foo" and "foo/bar" do not.
+    if not is_valid_blob_name(config.task.target_exe):
         raise TaskConfigError("target_exe must be a canonicalized relative path")
 
     container = [x for x in config.containers if x.type == ContainerType.setup][0]
@@ -122,6 +119,48 @@ def check_target_exe(config: TaskConfig, definition: TaskDefinition) -> None:
             container.name,
         )
         LOGGER.warning(err)
+
+
+# Azure Blob Storage uses a flat scheme, and has no true directory hierarchy. Forward
+# slashes are used to delimit a _virtual_ directory structure.
+def is_valid_blob_name(blob_name: str) -> bool:
+    # https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-containers--blobs--and-metadata#blob-names
+    MIN_LENGTH = 1
+    MAX_LENGTH = 1024  # Inclusive
+    MAX_PATH_SEGMENTS = 254
+
+    length = len(blob_name)
+
+    # No leading/trailing whitespace.
+    if blob_name != blob_name.strip():
+        return False
+
+    if length < MIN_LENGTH:
+        return False
+
+    if length > MAX_LENGTH:
+        return False
+
+    path = pathlib.PurePosixPath(blob_name)
+
+    if len(path.parts) > MAX_PATH_SEGMENTS:
+        return False
+
+    # Reject relative paths to avoid confusion.
+    if path.is_absolute():
+        return False
+
+    # Reject paths with special relative filesystem entries.
+    if "." in path.parts:
+        return False
+
+    if ".." in path.parts:
+        return False
+
+    # Will not have a leading `.`, even if `blob_name` does.
+    normalized = path.as_posix()
+
+    return blob_name == normalized
 
 
 def target_uses_input(config: TaskConfig) -> bool:
