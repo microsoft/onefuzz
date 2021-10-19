@@ -27,6 +27,10 @@ class InstanceConfigClient:
         self.table_service = table_service
         self.create_if_missing(table_service)
 
+    ## Disable logging from storageclient. This module displays an error message
+    ## when a resource is not found even if the exception is raised and handled internally.
+    ## This happen when a table does not exist. An error message is displayed but the exception is
+    ## handled by the library.
     def disable_storage_client_logging(self) -> None:
         if storage_client_logger:
             storage_client_logger.disabled = True
@@ -80,30 +84,6 @@ class NsgRule:
             pass
 
         self.is_tag = True
-
-
-## Disable logging from storageclient. This module displays an error message
-## when a resource is not found even if the exception is raised and handled internally.
-## This happen when a table does not exist. An error message is displayed but the exception is
-## handled by the library.
-# def disable_storage_client_logging() -> None:
-#     if storage_client_logger:
-#         storage_client_logger.disabled = True
-
-
-# def enable_storage_client_logging() -> None:
-#     if storage_client_logger:
-#         storage_client_logger.disabled = False
-
-
-# def create_if_missing(table_service: TableService) -> None:
-#     try:
-#         disable_storage_client_logging()
-
-#         if not table_service.exists(TABLE_NAME):
-#             table_service.create_table(TABLE_NAME)
-#     finally:
-#         enable_storage_client_logging()
 
 
 def update_allowed_aad_tenants(
