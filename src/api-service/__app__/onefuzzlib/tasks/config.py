@@ -146,7 +146,7 @@ def is_valid_blob_name(blob_name: str) -> bool:
     if len(path.parts) > MAX_PATH_SEGMENTS:
         return False
 
-    # Reject relative paths to avoid confusion.
+    # Reject absolute paths to avoid confusion.
     if path.is_absolute():
         return False
 
