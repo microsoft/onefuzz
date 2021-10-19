@@ -78,7 +78,7 @@ def query_microsoft_graph_list(
     params: Optional[Dict] = None,
     body: Optional[Dict] = None,
     subscription: Optional[str] = None,
-) -> List[Dict]:
+) -> List[Any]:
     result = query_microsoft_graph(
         method,
         resource,
