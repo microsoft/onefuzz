@@ -800,7 +800,7 @@ class NetworkConfig(BaseModel):
 
 
 class NetworkSecurityGroupConfig(BaseModel):
-    allowed_service_tags: Optional[List[str]]
+    allowed_service_tags: List[str] = Field(default_factory=list)
     allowed_ips: List[str] = Field(default_factory=list)
 
 
