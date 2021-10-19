@@ -7,7 +7,6 @@ import pytest
 
 from __app__.onefuzzlib.tasks.config import is_valid_blob_name
 
-
 BLOB_NAME_TEST_CASES = [
     # Valid
     ("fuzz.exe", True),
