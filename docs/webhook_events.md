@@ -1004,7 +1004,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 469,
                 470,
                 471,
-                472
+                472,
+                473
             ],
             "title": "ErrorCode"
         },
@@ -1615,7 +1616,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 469,
                 470,
                 471,
-                472
+                472,
+                473
             ],
             "title": "ErrorCode"
         }
@@ -2501,7 +2503,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 469,
                 470,
                 471,
-                472
+                472,
+                473
             ],
             "title": "ErrorCode"
         }
@@ -3190,7 +3193,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 469,
                 470,
                 471,
-                472
+                472,
+                473
             ],
             "title": "ErrorCode"
         },
@@ -5123,7 +5127,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 469,
                 470,
                 471,
-                472
+                472,
+                473
             ],
             "title": "ErrorCode"
         },
