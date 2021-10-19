@@ -8,9 +8,11 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.requests import InstanceConfigUpdate
 
+from ..onefuzzlib.azure.nsg import NSG
 from ..onefuzzlib.config import InstanceConfig
 from ..onefuzzlib.endpoint_authorization import call_if_user, can_modify_config
 from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.workers.scalesets import Scaleset
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
@@ -30,8 +32,25 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             context="instance_config_update",
         )
 
+    update_nsg = False
+    if request.config.proxy_nsg_config and config.proxy_nsg_config:
+        request_config = request.config.proxy_nsg_config
+        current_config = config.proxy_nsg_config
+        if set(request_config.allowed_service_tags) != set(
+            current_config.allowed_service_tags
+        ) or set(request_config.allowed_ips) != set(current_config.allowed_ips):
+            update_nsg = True
+
     config.update(request.config)
     config.save()
+
+    # Update All NSGs
+    if update_nsg:
+        scalesets = Scaleset.search()
+        regions = set(x.region for x in scalesets)
+        for region in regions:
+            NSG.set_allowed_sources(region, request_config)
+
     return ok(config)
 
 
