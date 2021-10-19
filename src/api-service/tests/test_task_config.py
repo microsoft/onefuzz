@@ -14,11 +14,9 @@ BLOB_NAME_TEST_CASES = [
     ("bin/fuzz.exe", True),
     ("/".join("a" * 254), True),
     ("a" * 1024, True),
-
     # Invalid (absolute)
     ("/fuzz.exe", False),
     ("/bin/fuzz.exe", False),
-
     # Invalid (special dirs)
     ("./fuzz.exe", False),
     ("././fuzz.exe", False),
@@ -28,7 +26,6 @@ BLOB_NAME_TEST_CASES = [
     ("../bin/fuzz.exe", False),
     (".././fuzz.exe", False),
     ("../bin/./fuzz.exe", False),
-
     # Out of Azure size bounds
     ("", False),
     ("  ", False),
