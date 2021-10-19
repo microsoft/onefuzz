@@ -558,7 +558,7 @@ class Client:
 
     def assign_scaleset_identity_role(self) -> None:
         if self.upgrade:
-            logger.info("Upgrading:skipping assignment of the managed identity role")
+            logger.info("Upgrading: skipping assignment of the managed identity role")
             return
         logger.info("assigning the user managed identity role")
         assign_app_role(
