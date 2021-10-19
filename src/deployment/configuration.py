@@ -154,14 +154,16 @@ def update_nsg(
     config_client: InstanceConfigClient,
     allowed_rules: List[NsgRule],
 ) -> None:
-    rules_as_str = [x.rule for x in allowed_rules]
+    tags_as_str = [x.rule for x in allowed_rules if x.is_tag]
+    ips_as_str = [x.rule for x in allowed_rules if not x.is_tag]
+    nsg_config = {"allowed_service_tags": tags_as_str, "allowed_ips": ips_as_str}
     # create class initialized by table service/resource group outside function that's checked in deploy.py
     config_client.table_service.insert_or_merge_entity(
         TABLE_NAME,
         {
             "PartitionKey": config_client.resource_group,
             "RowKey": config_client.resource_group,
-            "proxy_nsg_config": json.dumps(rules_as_str),
+            "proxy_nsg_config": json.dumps(nsg_config),
         },
     )
 
