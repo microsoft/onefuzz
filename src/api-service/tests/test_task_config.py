@@ -3,9 +3,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+from typing import Tuple
+
 import pytest
 
 from __app__.onefuzzlib.tasks.config import is_valid_blob_name
+
+BlobNameTestCase = Tuple[str, bool]
+
 
 BLOB_NAME_TEST_CASES = [
     # Valid
@@ -44,7 +49,7 @@ BLOB_NAME_TEST_CASES = [
 
 
 @pytest.mark.parametrize("blob_name_test_case", BLOB_NAME_TEST_CASES)
-def test_is_valid_blob_name(blob_name_test_case):
+def test_is_valid_blob_name(blob_name_test_case: BlobNameTestCase) -> None:
     blob_name, expected = blob_name_test_case
 
     is_valid = is_valid_blob_name(blob_name)
