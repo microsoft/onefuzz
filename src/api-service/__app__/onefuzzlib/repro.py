@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple, Union
 
 from azure.mgmt.compute.models import VirtualMachine
 from onefuzztypes.enums import OS, ContainerType, ErrorCode, VmState
-from onefuzztypes.models import Error
+from onefuzztypes.models import Error, NetworkSecurityGroupConfig
 from onefuzztypes.models import Repro as BASE_REPRO
 from onefuzztypes.models import ReproConfig, TaskVm, UserInfo
 from onefuzztypes.primitives import Container
@@ -95,7 +95,10 @@ class Repro(BASE_REPRO, ORMMixin):
                 self.set_failed(result)
                 return
 
-            result = nsg.set_allowed_sources(["*"])
+            nsg_config = NetworkSecurityGroupConfig(
+                allowed_service_tags=[], allowed_ips=["*"]
+            )
+            result = nsg.set_allowed_sources(nsg_config)
             if isinstance(result, Error):
                 self.set_failed(result)
                 return
