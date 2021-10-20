@@ -803,10 +803,6 @@ class NetworkSecurityGroupConfig(BaseModel):
     allowed_service_tags: List[str] = Field(default_factory=list)
     allowed_ips: List[str] = Field(default_factory=list)
 
-    # def __init__(self, allowed_service_tags: List[str], allowed_ips: List[str]):
-    #     self.allowed_service_tags = allowed_service_tags
-    #     self.allowed_ips = allowed_ips
-
 
 class KeyvaultExtensionConfig(BaseModel):
     keyvault_name: str
