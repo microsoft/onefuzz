@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 import azure.functions as func
+from azure.core.exceptions import HttpResponseError
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.requests import InstanceConfigUpdate
@@ -50,7 +51,16 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         regions = set(x.region for x in scalesets)
         for region in regions:
             # nsg = get_nsg(region)
-            set_allowed(region, request.config.proxy_nsg_config)
+            try:
+                set_allowed(region, request.config.proxy_nsg_config)
+            except HttpResponseError as err:
+                return not_ok(
+                    Error(
+                        code=ErrorCode.UNABLE_TO_CREATE,
+                        errors=["Unable to update nsg %s due to %s" % (region, err)],
+                        context="instance_config_update",
+                    )
+                )
 
     return ok(config)
 
