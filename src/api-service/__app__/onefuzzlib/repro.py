@@ -89,7 +89,6 @@ class Repro(BASE_REPRO, ORMMixin):
             nsg = NSG(
                 name=vm.region,
                 region=vm.region,
-            )
             result = nsg.create()
             if isinstance(result, Error):
                 self.set_failed(result)
