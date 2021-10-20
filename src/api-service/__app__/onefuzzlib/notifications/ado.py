@@ -261,6 +261,7 @@ def notify_ado(
 
     try:
         ado = ADO(container, filename, config, report)
+        ado.connect()
         ado.process()
     except (
         AzureDevOpsAuthenticationError,

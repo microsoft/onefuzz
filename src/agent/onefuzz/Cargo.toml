@@ -34,8 +34,8 @@ uuid = { version = "0.8", features = ["serde", "v4"] }
 urlparse = "0.7"
 ring = "0.16"
 storage-queue = { path = "../storage-queue" }
-strum = "0.21"
-strum_macros = "0.21"
+strum = "0.22"
+strum_macros = "0.22"
 tempfile = "3.2"
 process_control = "3.0"
 reqwest-retry = { path = "../reqwest-retry"}
