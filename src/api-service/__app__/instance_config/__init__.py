@@ -56,9 +56,9 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
                 return not_ok(
                     Error(
                         code=ErrorCode.UNABLE_TO_CREATE,
-                        errors=["Unable to update nsg %s due to %s" % (region, err)],
-                        context="instance_config_update",
-                    )
+                        errors=["Unable to update nsg %s due to %s" % (region, result)],
+                    ),
+                    context="instance_config_update",
                 )
 
     return ok(config)
