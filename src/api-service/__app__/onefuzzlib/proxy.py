@@ -10,7 +10,7 @@ from typing import List, Optional, Tuple
 from uuid import UUID, uuid4
 
 import base58
-from azure.mgmt.compute.models import NetworkSecurityGroupConfig, VirtualMachine
+from azure.mgmt.compute.models import VirtualMachine
 from onefuzztypes.enums import ErrorCode, VmState
 from onefuzztypes.events import (
     EventProxyCreated,
@@ -22,6 +22,7 @@ from onefuzztypes.models import (
     Authentication,
     Error,
     Forward,
+    NetworkSecurityGroupConfig,
     ProxyConfig,
     ProxyHeartbeat,
 )
