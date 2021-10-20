@@ -102,8 +102,8 @@ class Proxy(ORMMixin):
                 self.set_failed(result)
                 return
 
-            nsg_config = NetworkSecurityGroupConfig()
-            nsg_config.allowed_ips = ["*"]
+            config = InstanceConfig.fetch()
+            nsg_config = config.proxy_nsg_config
             result = nsg.set_allowed_sources(nsg_config)
             if isinstance(result, Error):
                 self.set_failed(result)
