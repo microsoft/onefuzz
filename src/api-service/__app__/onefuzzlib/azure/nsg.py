@@ -182,7 +182,7 @@ def set_allowed(name: str, sources: NetworkSecurityGroupConfig) -> Union[None, E
 
 
 def clear_all_rules(name: str) -> Union[None, Error]:
-    return set_allowed(name, NetworkSecurityGroupConfig().empty())
+    return set_allowed(name, NetworkSecurityGroupConfig())
 
 
 def get_all_rules(name: str) -> Union[Error, List[SecurityRule]]:
