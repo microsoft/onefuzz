@@ -10,7 +10,7 @@ from typing import List, Optional, Tuple
 from uuid import UUID, uuid4
 
 import base58
-from azure.mgmt.compute.models import VirtualMachine
+from azure.mgmt.compute.models import NetworkSecurityGroupConfig, VirtualMachine
 from onefuzztypes.enums import ErrorCode, VmState
 from onefuzztypes.events import (
     EventProxyCreated,
@@ -101,7 +101,10 @@ class Proxy(ORMMixin):
                 self.set_failed(result)
                 return
 
-            result = nsg.set_allowed_sources(["*"])
+            nsg_config = NetworkSecurityGroupConfig(
+                allowed_service_tags=[], allowed_ips=["*"]
+            )
+            result = nsg.set_allowed_sources(nsg_config)
             if isinstance(result, Error):
                 self.set_failed(result)
                 return

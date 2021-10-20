@@ -50,7 +50,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         regions = set(x.region for x in scalesets)
         for region in regions:
             # nsg = get_nsg(region)
-            set_allowed(region, request.config.proxy_nsg_config.allowed_ips)
+            set_allowed(region, request.config.proxy_nsg_config)
 
     return ok(config)
 
