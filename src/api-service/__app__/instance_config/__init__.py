@@ -8,7 +8,7 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.requests import InstanceConfigUpdate
 
-from ..onefuzzlib.azure.nsg import NSG, set_allowed
+from ..onefuzzlib.azure.nsg import set_allowed
 from ..onefuzzlib.config import InstanceConfig
 from ..onefuzzlib.endpoint_authorization import call_if_user, can_modify_config
 from ..onefuzzlib.request import not_ok, ok, parse_request
