@@ -210,6 +210,9 @@ class Backend:
             # This error is caused by a by mismatch between the identifierUr and the scope provided in the request.
             if "AADSTS500011" in result["error_description"]:
                 LOGGER.warning(f"failed to get access token with scope {scope}")
+            else:
+                # unexpected error
+                break
 
         if "error" in result:
             raise Exception(
