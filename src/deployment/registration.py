@@ -95,7 +95,7 @@ def query_microsoft_graph_list(
 
 def get_tenant_id(subscription_id: Optional[str] = None) -> str:
     profile = get_cli_profile()
-    _, tenant_id, _ = profile.get_raw_token(
+    _, _, tenant_id = profile.get_raw_token(
         resource=GRAPH_RESOURCE, subscription=subscription_id
     )
     if isinstance(tenant_id, str):
