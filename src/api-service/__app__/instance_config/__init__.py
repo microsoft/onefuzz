@@ -4,7 +4,6 @@
 # Licensed under the MIT License.
 
 import azure.functions as func
-from azure.core.exceptions import HttpResponseError
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.requests import InstanceConfigUpdate
