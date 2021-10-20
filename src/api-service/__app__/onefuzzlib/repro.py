@@ -95,9 +95,8 @@ class Repro(BASE_REPRO, ORMMixin):
                 self.set_failed(result)
                 return
 
-            nsg_config = NetworkSecurityGroupConfig(
-                allowed_service_tags=[], allowed_ips=["*"]
-            )
+            nsg_config = NetworkSecurityGroupConfig()
+            nsg_config.allowed_ips = ["*"]
             result = nsg.set_allowed_sources(nsg_config)
             if isinstance(result, Error):
                 self.set_failed(result)
