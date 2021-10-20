@@ -8,7 +8,7 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.requests import InstanceConfigUpdate
 
-from ..onefuzzlib.azure.nsg import NSG, get_nsg
+from ..onefuzzlib.azure.nsg import NSG, set_allowed
 from ..onefuzzlib.config import InstanceConfig
 from ..onefuzzlib.endpoint_authorization import call_if_user, can_modify_config
 from ..onefuzzlib.request import not_ok, ok, parse_request
@@ -49,8 +49,8 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         scalesets = Scaleset.search()
         regions = set(x.region for x in scalesets)
         for region in regions:
-            nsg = get_nsg(region)
-            NSG.set_allowed_sources(nsg, request.config.proxy_nsg_config.allowed_ips)
+            # nsg = get_nsg(region)
+            set_allowed(region, request.config.proxy_nsg_config.allowed_ips)
 
     return ok(config)
 
