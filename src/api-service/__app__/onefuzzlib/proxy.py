@@ -22,7 +22,6 @@ from onefuzztypes.models import (
     Authentication,
     Error,
     Forward,
-    NetworkSecurityGroupConfig,
     ProxyConfig,
     ProxyHeartbeat,
 )

@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple, Union
 
 from azure.mgmt.compute.models import VirtualMachine
 from onefuzztypes.enums import OS, ContainerType, ErrorCode, VmState
-from onefuzztypes.models import Error, NetworkSecurityGroupConfig
+from onefuzztypes.models import Error
 from onefuzztypes.models import Repro as BASE_REPRO
 from onefuzztypes.models import ReproConfig, TaskVm, UserInfo
 from onefuzztypes.primitives import Container
