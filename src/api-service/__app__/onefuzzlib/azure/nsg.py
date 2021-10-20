@@ -5,7 +5,7 @@
 
 import logging
 import os
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Set, Union, cast
 
 from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
 from azure.mgmt.network.models import (
@@ -72,6 +72,12 @@ def create_nsg(name: str, location: Region) -> Union[None, Error]:
     return None
 
 
+def list_nsgs() -> List[NetworkSecurityGroup]:
+    resource_group = get_base_resource_group()
+    network_client = get_network_client()
+    return list(network_client.network_security_groups.list(resource_group))
+
+
 def update_nsg(nsg: NetworkSecurityGroup) -> Union[None, Error]:
     resource_group = get_base_resource_group()
 
@@ -93,6 +99,10 @@ def update_nsg(nsg: NetworkSecurityGroup) -> Union[None, Error]:
             errors=["Unable to update nsg %s due to %s" % (nsg.name, err)],
         )
     return None
+
+
+def ok_to_delete(active_regions: Set[Region], nsg_region: str, nsg_name: str) -> bool:
+    return nsg_region not in active_regions and nsg_region == nsg_name
 
 
 def delete_nsg(name: str) -> bool:
