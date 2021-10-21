@@ -14,6 +14,8 @@ from azure.mgmt.network.models import (
     SecurityRule,
     SecurityRuleAccess,
     SecurityRuleProtocol,
+    Subnet,
+    VirtualNetwork,
 )
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import ErrorCode
@@ -163,7 +165,7 @@ def set_allowed(name: str, sources: NetworkSecurityGroupConfig) -> Union[None, E
         security_rules.append(
             SecurityRule(
                 name="Allow" + str(priority),
-                protocol=SecurityRuleProtocol.TCP,
+                protocol=SecurityRuleProtocol.ANY,
                 source_port_range="*",
                 destination_port_range="*",
                 source_address_prefix=src,
@@ -284,7 +286,7 @@ def dissociate_nic(name: str, nic: NetworkInterface) -> Union[None, Error]:
     except (ResourceNotFoundError, CloudError) as err:
         if is_concurrent_request_error(str(err)):
             logging.debug(
-                "associate NSG with NIC had conflicts with ",
+                "dissociate nsg with nic had conflicts with ",
                 "concurrent request, ignoring %s",
                 err,
             )
@@ -292,10 +294,124 @@ def dissociate_nic(name: str, nic: NetworkInterface) -> Union[None, Error]:
         return Error(
             code=ErrorCode.UNABLE_TO_UPDATE,
             errors=[
-                "Unable to associate nsg %s with nic %s due to %s"
+                "Unable to dissociate nsg %s with nic %s due to %s"
                 % (
                     name,
                     nic.name,
+                    err,
+                )
+            ],
+        )
+
+    return None
+
+
+def associate_subnet(
+    name: str, vnet: VirtualNetwork, subnet: Subnet
+) -> Union[None, Error]:
+
+    resource_group = get_base_resource_group()
+    nsg = get_nsg(name)
+    if not nsg:
+        return Error(
+            code=ErrorCode.UNABLE_TO_FIND,
+            errors=["cannot associate subnet. nsg %s not found" % name],
+        )
+
+    if nsg.location != vnet.location:
+        return Error(
+            code=ErrorCode.UNABLE_TO_UPDATE,
+            errors=[
+                "subnet and nsg have to be in the same region.",
+                "nsg %s %s, subnet: %s %s"
+                % (nsg.name, nsg.location, subnet.name, subnet.location),
+            ],
+        )
+
+    logging.info(
+        "associating subnet %s with nsg: %s %s", subnet.name, resource_group, name
+    )
+
+    subnet.network_security_group = nsg
+    network_client = get_network_client()
+    try:
+        network_client.subnets.begin_create_or_update(
+            resource_group, vnet.name, subnet.name, subnet
+        )
+    except (ResourceNotFoundError, CloudError) as err:
+        if is_concurrent_request_error(str(err)):
+            logging.debug(
+                "associate NSG with subnet had conflicts",
+                "with concurrent request, ignoring %s",
+                err,
+            )
+            return None
+        return Error(
+            code=ErrorCode.UNABLE_TO_UPDATE,
+            errors=[
+                "Unable to associate nsg %s with subnet %s due to %s"
+                % (
+                    name,
+                    subnet.name,
+                    err,
+                )
+            ],
+        )
+
+    return None
+
+
+def dissociate_subnet(
+    name: str, vnet: VirtualNetwork, subnet: Subnet
+) -> Union[None, Error]:
+    if subnet.network_security_group is None:
+        return None
+    resource_group = get_base_resource_group()
+    nsg = get_nsg(name)
+    if not nsg:
+        return Error(
+            code=ErrorCode.UNABLE_TO_FIND,
+            errors=["cannot update nsg rules. nsg %s not found" % name],
+        )
+    if nsg.id != subnet.network_security_group.id:
+        return Error(
+            code=ErrorCode.UNABLE_TO_UPDATE,
+            errors=[
+                "subnet is not associated with this nsg.",
+                "nsg %s, subnet: %s, subnet.nsg: %s"
+                % (
+                    nsg.id,
+                    subnet.name,
+                    subnet.network_security_group.id,
+                ),
+            ],
+        )
+
+    logging.info(
+        "dissociating subnet %s with nsg: %s %s", subnet.name, resource_group, name
+    )
+
+    subnet.network_security_group = None
+    network_client = get_network_client()
+    try:
+        network_client.subnets.begin_create_or_update(
+            resource_group, vnet.name, subnet.name, subnet
+        )
+    except (ResourceNotFoundError, CloudError) as err:
+        if is_concurrent_request_error(str(err)):
+            logging.debug(
+                "dissociate nsg with subnet had conflicts with ",
+                "concurrent request, ignoring %s",
+                err,
+            )
+            return None
+        return Error(
+            code=ErrorCode.UNABLE_TO_UPDATE,
+            errors=[
+                "Unable to dissociate nsg %s with subnet %s due to %s"
+                % (
+                    name,
+                    subnet.name,
                     err,
                 )
             ],
@@ -345,3 +461,13 @@ class NSG(BaseModel):
 
     def dissociate_nic(self, nic: NetworkInterface) -> Union[None, Error]:
         return dissociate_nic(self.name, nic)
+
+    def associate_subnet(
+        self, vnet: VirtualNetwork, subnet: Subnet
+    ) -> Union[None, Error]:
+        return associate_subnet(self.name, vnet, subnet)
+
+    def dissociate_subnet(
+        self, vnet: VirtualNetwork, subnet: Subnet
+    ) -> Union[None, Error]:
+        return dissociate_subnet(self.name, vnet, subnet)
