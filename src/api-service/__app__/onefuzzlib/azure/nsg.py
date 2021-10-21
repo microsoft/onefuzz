@@ -17,7 +17,7 @@ from azure.mgmt.network.models import (
 )
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import ErrorCode
-from onefuzztypes.models import Error
+from onefuzztypes.models import Error, NetworkSecurityGroupConfig
 from onefuzztypes.primitives import Region
 from pydantic import BaseModel, validator
 
