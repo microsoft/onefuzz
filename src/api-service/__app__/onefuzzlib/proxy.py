@@ -33,7 +33,6 @@ from .azure.auth import build_auth
 from .azure.containers import get_file_sas_url, save_blob
 from .azure.creds import get_instance_id
 from .azure.ip import get_public_ip
-from .azure.nsg import NSG
 from .azure.queue import get_queue_sas
 from .azure.storage import StorageType
 from .azure.vm import VM
@@ -91,25 +90,6 @@ class Proxy(ORMMixin):
                 self.save_proxy_config()
                 self.set_state(VmState.extensions_launch)
         else:
-            nsg = NSG(
-                name=self.region,
-                region=self.region,
-            )
-
-            result = nsg.create()
-            if isinstance(result, Error):
-                self.set_failed(result)
-                return
-
-            config = InstanceConfig.fetch()
-            nsg_config = config.proxy_nsg_config
-            result = nsg.set_allowed_sources(nsg_config)
-            if isinstance(result, Error):
-                self.set_failed(result)
-                return
-
-            vm.nsg = nsg
-
             result = vm.create()
             if isinstance(result, Error):
                 self.set_failed(result)
