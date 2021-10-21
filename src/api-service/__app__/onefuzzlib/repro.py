@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple, Union
 
 from azure.mgmt.compute.models import VirtualMachine
 from onefuzztypes.enums import OS, ContainerType, ErrorCode, VmState
-from onefuzztypes.models import Error, NetworkSecurityGroupConfig
+from onefuzztypes.models import Error
 from onefuzztypes.models import Repro as BASE_REPRO
 from onefuzztypes.models import ReproConfig, TaskVm, UserInfo
 from onefuzztypes.primitives import Container
@@ -21,6 +21,7 @@ from .azure.ip import get_public_ip
 from .azure.nsg import NSG
 from .azure.storage import StorageType
 from .azure.vm import VM
+from .config import InstanceConfig
 from .extension import repro_extensions
 from .orm import ORMMixin, QueryFilter
 from .reports import get_report
@@ -89,12 +90,15 @@ class Repro(BASE_REPRO, ORMMixin):
             nsg = NSG(
                 name=vm.region,
                 region=vm.region,
+            )
             result = nsg.create()
             if isinstance(result, Error):
                 self.set_failed(result)
                 return
 
-            result = nsg.set_allowed_sources(["*"])
+            config = InstanceConfig.fetch()
+            nsg_config = config.proxy_nsg_config
+            result = nsg.set_allowed_sources(nsg_config)
             if isinstance(result, Error):
                 self.set_failed(result)
                 return
