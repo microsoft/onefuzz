@@ -799,11 +799,6 @@ class NetworkConfig(BaseModel):
     subnet: str = Field(default="10.0.0.0/16")
 
 
-class NetworkSecurityGroupConfig(BaseModel):
-    allowed_service_tags: List[str] = Field(default_factory=list)
-    allowed_ips: List[str] = Field(default_factory=list)
-
-
 class KeyvaultExtensionConfig(BaseModel):
     keyvault_name: str
     cert_name: str
@@ -846,9 +841,6 @@ class InstanceConfig(BaseModel):
 
     allowed_aad_tenants: List[UUID]
     network_config: NetworkConfig = Field(default_factory=NetworkConfig)
-    proxy_nsg_config: NetworkSecurityGroupConfig = Field(
-        default_factory=NetworkSecurityGroupConfig
-    )
     extensions: Optional[AzureVmExtensionConfig]
     proxy_vm_sku: str = Field(default="Standard_B2s")
 
