@@ -47,6 +47,13 @@ from azure.storage.blob import (
 )
 from msrest.serialization import TZ_UTC
 
+from configuration import (
+    InstanceConfigClient,
+    parse_rules,
+    update_admins,
+    update_allowed_aad_tenants,
+    update_nsg,
+)
 from data_migration import migrate
 from registration import (
     GraphQueryError,
@@ -61,7 +68,6 @@ from registration import (
     set_app_audience,
     update_pool_registration,
 )
-from set_admins import update_admins, update_allowed_aad_tenants
 
 # Found by manually assigning the User.Read permission to application
 # registration in the admin portal. The values are in the manifest under
@@ -104,6 +110,7 @@ class Client:
         location: str,
         application_name: str,
         owner: str,
+        nsg_config: str,
         client_id: Optional[str],
         client_secret: Optional[str],
         app_zip: str,
@@ -127,6 +134,7 @@ class Client:
         self.location = location
         self.application_name = application_name
         self.owner = owner
+        self.nsg_config = nsg_config
         self.app_zip = app_zip
         self.tools = tools
         self.instance_specific = instance_specific
@@ -608,13 +616,19 @@ class Client:
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
         table_service = TableService(account_name=name, account_key=key)
 
+        config_client = InstanceConfigClient(table_service, self.application_name)
+
+        if self.nsg_config:
+            rules = parse_rules(self.nsg_config)
+            update_nsg(config_client, rules)
+
         if self.admins:
-            update_admins(table_service, self.application_name, self.admins)
+            update_admins(config_client, self.admins)
 
         tenants = self.allowed_aad_tenants
         if tenant not in tenants:
             tenants.append(tenant)
-        update_allowed_aad_tenants(table_service, self.application_name, tenants)
+        update_allowed_aad_tenants(config_client, tenants)
 
     def create_eventgrid(self) -> None:
         logger.info("creating eventgrid subscription")
@@ -972,6 +986,7 @@ def main() -> None:
     parser.add_argument("resource_group")
     parser.add_argument("application_name")
     parser.add_argument("owner")
+    parser.add_argument("nsg_config")
     parser.add_argument(
         "--arm-template",
         type=arg_file,
@@ -1079,6 +1094,7 @@ def main() -> None:
         location=args.location,
         application_name=args.application_name,
         owner=args.owner,
+        nsg_config=args.nsg_config,
         client_id=args.client_id,
         client_secret=args.client_secret,
         app_zip=args.app_zip,
