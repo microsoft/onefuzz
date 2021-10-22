@@ -650,7 +650,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "subnet": "10.0.0.0/16"
         },
         "proxy_nsg_config": {
-            "allowed_ips": []
+            "allowed_ips": [],
+            "allowed_service_tags": []
         },
         "proxy_vm_sku": "Standard_B2s"
     }
