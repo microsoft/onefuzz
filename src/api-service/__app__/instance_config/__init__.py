@@ -49,7 +49,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         scalesets = Scaleset.search()
         regions = set(x.region for x in scalesets)
         for region in regions:
-            # nsg = get_nsg(region)
             result = set_allowed(region, request.config.proxy_nsg_config)
             if isinstance(result, Error):
                 return not_ok(
