@@ -899,6 +899,6 @@
         "tenant_id": {
             "type": "string",
             "value": "[subscription().tenantId]"
-        }
+       }
     }
 }

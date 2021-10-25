@@ -265,6 +265,7 @@ class ErrorCode(Enum):
     NOTIFICATION_FAILURE = 470
     UNABLE_TO_UPDATE = 471
     PROXY_FAILED = 472
+    INVALID_CONFIGURATION = 473
 
 
 class HeartbeatType(Enum):

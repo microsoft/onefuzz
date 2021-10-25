@@ -421,7 +421,34 @@ jobs:
           choco install llvm
           choco install make
           $env:Path += ";C:\Program Files\LLVM\bin;C:\ProgramData\chocolatey\bin"
-          
+
+          # WORKAROUND: effectively downgrade the default Windows 10 SDK version.
+          #
+          # This ensures we link against a version of the SDK which won't trigger a
+          # startup bug in the LLVM-shipped ASAN runtime.
+
+          # Assume a default MSVC 2019 install path.
+          $MsvcDir = 'C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/MSVC'
+
+          # Assume that `$MsvcDir` only contains version-named subdirectories.
+          $MsvcVersion = ((Get-ChildItem $MsvcDir).name | Sort-Object -Descending)[0]
+          $MsvcLib = "${MsvcDir}/${MsvcVersion}/lib/x64"
+
+          # Known "good" (non-bug-surfacing) version.
+          $WindowsSdkVersion = '10.0.18362.0'
+
+          # Assume default install path.
+          $WindowsSdkDir = 'C:/Program Files (x86)/Windows Kits/10'
+          $WindowsSdkLib = "${WindowsSdkDir}/Lib/${WindowsSdkVersion}"
+          $WindowsSdkInclude = "${WindowsSdkDir}/Include/${WindowsSdkVersion}"
+
+          # Used by `clang.exe`.
+          $env:CPATH = $WindowsSdkInclude
+          $env:LIBRARY_PATH = "${MsvcLib};${WindowsSdkLib}/ucrt/x64;${WindowsSdkLib}/um/x64"
+
+          # Used by `link.exe`.
+          $env:LIB = $env:LIBRARY_PATH
+
           cd src/integration-tests
           
           mkdir artifacts/windows-libfuzzer
