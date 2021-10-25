@@ -105,6 +105,7 @@ def get_tenant_id(subscription_id: Optional[str] = None) -> str:
             f"unable to retrive tenant_id for subscription {subscription_id}"
         )
 
+
 OperationResult = TypeVar("OperationResult")
 
 

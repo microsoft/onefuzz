@@ -243,6 +243,7 @@ class Client:
         return add_application_password(
             "cli_password", object_id, self.get_subscription_id()
         )
+
     def get_instance_url(self) -> str:
         # The url to access the instance
         # This also represents the legacy identifier_uris of the application

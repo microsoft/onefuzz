@@ -147,8 +147,8 @@ def query_microsoft_graph(
             f"request did not succeed: HTTP {response.status_code} - {error_text}",
             response.status_code,
         )
-        
-        
+
+
 def query_microsoft_graph_list(
     method: str,
     resource: str,
@@ -176,6 +176,7 @@ def query_microsoft_graph_list(
 def is_member_of_test(group_ids: List[UUID], member_id: UUID) -> bool:
     from pydantic import BaseModel
     from pydantic.tools import parse_raw_as
+
     memberships = os.environ.get("TEST_MSGRAPH_AAD")
     if memberships is None:
         return True
@@ -188,6 +189,8 @@ def is_member_of_test(group_ids: List[UUID], member_id: UUID) -> bool:
                     return False
             return True
     return False
+
+
 # ########################################
 
 
@@ -197,6 +200,7 @@ def is_member_of(group_id: str, member_id: str) -> bool:
         method="POST", resource=f"users/{member_id}/checkMemberGroups", body=body
     )
     return group_id in response
+
 
 @cached
 def get_scaleset_identity_resource_path() -> str:
