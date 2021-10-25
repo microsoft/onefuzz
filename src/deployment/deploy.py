@@ -594,19 +594,6 @@ class Client:
             OnefuzzAppRole.ManagedNode,
         )
 
-    def assign_app_permissions(self) -> None:
-        if self.upgrade:
-            logger.info("Upgrading: skipping assignment of msgraph permissions")
-            return
-        logger.info("assigning msgraph permissions")
-
-        assign_app_role(
-            principal_id=self.results["deploy"]["webapp-identity"]["value"],
-            application_id=MICROSOFT_GRAPH_APP_ID,
-            role_names=["GroupMember.Read.All", "User.Read.All"],
-            subscription_id=self.get_subscription_id(),
-        )
-
     def apply_migrations(self) -> None:
         logger.info("applying database migrations")
         name = self.results["deploy"]["func-name"]["value"]

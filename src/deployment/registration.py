@@ -494,6 +494,7 @@ def assign_app_role(
     if len(application_registrations) == 0:
         raise Exception(f"appid '{application_id}' was not found:")
     app = application_registrations[0]
+
     roles = (
         seq(app["appRoles"]).filter(lambda role: role["value"] in role_names).to_list()
     )
