@@ -65,10 +65,13 @@ class NsgRule:
             )
 
     def check_rule(self, value: str) -> None:
-        if value is None or len(value.strip()) == 0:
+        if value is None:
             raise ValueError(
                 "Rule can not be None or empty string. Please provide a valid rule or supply the wild card *."
             )
+        # Check block all
+        if len(value.strip()) == 0:
+            return
         # Check Wild Card
         if value == "*":
             return
