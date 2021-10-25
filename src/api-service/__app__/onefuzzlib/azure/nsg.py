@@ -5,7 +5,7 @@
 
 import logging
 import os
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Set, Union, cast
 
 from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
 from azure.mgmt.network.models import (
@@ -17,7 +17,7 @@ from azure.mgmt.network.models import (
 )
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import ErrorCode
-from onefuzztypes.models import Error
+from onefuzztypes.models import Error, NetworkSecurityGroupConfig
 from onefuzztypes.primitives import Region
 from pydantic import BaseModel, validator
 
@@ -72,6 +72,12 @@ def create_nsg(name: str, location: Region) -> Union[None, Error]:
     return None
 
 
+def list_nsgs() -> List[NetworkSecurityGroup]:
+    resource_group = get_base_resource_group()
+    network_client = get_network_client()
+    return list(network_client.network_security_groups.list(resource_group))
+
+
 def update_nsg(nsg: NetworkSecurityGroup) -> Union[None, Error]:
     resource_group = get_base_resource_group()
 
@@ -93,6 +99,10 @@ def update_nsg(nsg: NetworkSecurityGroup) -> Union[None, Error]:
             errors=["Unable to update nsg %s due to %s" % (nsg.name, err)],
         )
     return None
+
+
+def ok_to_delete(active_regions: Set[Region], nsg_region: str, nsg_name: str) -> bool:
+    return nsg_region not in active_regions and nsg_region == nsg_name
 
 
 def delete_nsg(name: str) -> bool:
@@ -117,7 +127,7 @@ def delete_nsg(name: str) -> bool:
     return False
 
 
-def set_allowed(name: str, sources: List[str]) -> Union[None, Error]:
+def set_allowed(name: str, sources: NetworkSecurityGroupConfig) -> Union[None, Error]:
     resource_group = get_base_resource_group()
     nsg = get_nsg(name)
     if not nsg:
@@ -131,6 +141,7 @@ def set_allowed(name: str, sources: List[str]) -> Union[None, Error]:
         resource_group,
         name,
     )
+    all_sources = sources.allowed_ips + sources.allowed_service_tags
     security_rules = []
     # NSG security rule priority range defined here:
     # https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
@@ -138,17 +149,17 @@ def set_allowed(name: str, sources: List[str]) -> Union[None, Error]:
     # NSG rules per NSG limits:
     # https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/azure-subscription-service-limits?toc=/azure/virtual-network/toc.json#networking-limits
     max_rule_count = 1000
-    if len(sources) > max_rule_count:
+    if len(all_sources) > max_rule_count:
         return Error(
             code=ErrorCode.INVALID_REQUEST,
             errors=[
                 "too many rules provided %d. Max allowed: %d"
-                % ((len(sources)), max_rule_count),
+                % ((len(all_sources)), max_rule_count),
             ],
         )
 
     priority = min_priority
-    for src in sources:
+    for src in all_sources:
         security_rules.append(
             SecurityRule(
                 name="Allow" + str(priority),
@@ -163,7 +174,7 @@ def set_allowed(name: str, sources: List[str]) -> Union[None, Error]:
             )
         )
         # Will not exceed `max_rule_count` or max NSG priority (4096)
-        # due to earlier check of `len(sources)`.
+        # due to earlier check of `len(all_sources)`.
         priority += 1
 
     nsg.security_rules = security_rules
@@ -171,7 +182,7 @@ def set_allowed(name: str, sources: List[str]) -> Union[None, Error]:
 
 
 def clear_all_rules(name: str) -> Union[None, Error]:
-    return set_allowed(name, [])
+    return set_allowed(name, NetworkSecurityGroupConfig())
 
 
 def get_all_rules(name: str) -> Union[Error, List[SecurityRule]]:
@@ -318,7 +329,9 @@ class NSG(BaseModel):
     def get(self) -> Optional[NetworkSecurityGroup]:
         return get_nsg(self.name)
 
-    def set_allowed_sources(self, sources: List[str]) -> Union[None, Error]:
+    def set_allowed_sources(
+        self, sources: NetworkSecurityGroupConfig
+    ) -> Union[None, Error]:
         return set_allowed(self.name, sources)
 
     def clear_all_rules(self) -> Union[None, Error]:

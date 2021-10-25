@@ -21,6 +21,7 @@ from .azure.ip import get_public_ip
 from .azure.nsg import NSG
 from .azure.storage import StorageType
 from .azure.vm import VM
+from .config import InstanceConfig
 from .extension import repro_extensions
 from .orm import ORMMixin, QueryFilter
 from .reports import get_report
@@ -95,7 +96,9 @@ class Repro(BASE_REPRO, ORMMixin):
                 self.set_failed(result)
                 return
 
-            result = nsg.set_allowed_sources(["*"])
+            config = InstanceConfig.fetch()
+            nsg_config = config.proxy_nsg_config
+            result = nsg.set_allowed_sources(nsg_config)
             if isinstance(result, Error):
                 self.set_failed(result)
                 return
