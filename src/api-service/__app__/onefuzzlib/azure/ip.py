@@ -107,9 +107,12 @@ def create_public_nic(
         return None
 
     if nsg:
-        result = nsg.associate_subnet(network.get_vnet(), network.get_subnet())
-        if isinstance(result, Error):
-            return result
+        subnet = network.get_subnet()
+        if not subnet.network_security_group:
+            result = nsg.associate_subnet(network.get_vnet(), subnet)
+            if isinstance(result, Error):
+                return result
+            return None
 
     ip = get_ip(resource_group, name)
     if not ip:
