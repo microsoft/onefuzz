@@ -53,7 +53,7 @@ def add_event_grid(src_account_id: str, resource_group: str, location: str) -> N
 
     topic_id = uuid.uuid5(STORAGE_GUID_NAMESPACE, src_account_id).hex
 
-    result = client.event_subscriptions.create_or_update(
+    result = client.event_subscriptions.begin_create_or_update(
         src_account_id, "corpus" + topic_id, event_subscription_info
     ).result()
     if result.provisioning_state != "Succeeded":

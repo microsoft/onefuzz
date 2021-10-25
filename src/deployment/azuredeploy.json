@@ -20,8 +20,8 @@
         "app_func_issuer": {
             "type": "string"
         },
-        "app_func_audience": {
-            "type": "string"
+        "app_func_audiences": {
+            "type": "array"
         },
         "multi_tenant_domain": {
             "type": "string"
@@ -283,9 +283,7 @@
                         "clientSecret": "[parameters('clientSecret')]",
                         "issuer": "[parameters('app_func_issuer')]",
                         "defaultProvider": "AzureActiveDirectory",
-                        "allowedAudiences": [
-                            "[parameters('app_func_audience')]"
-                        ],
+                        "allowedAudiences": "[parameters('app_func_audiences')]",
                         "isAadAutoProvisioned": false
                     }
                 },
@@ -390,8 +388,17 @@
                 "OWNER": "[parameters('owner')]"
             }
         },
+
         {
-            "apiVersion": "2015-05-01",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2020-08-01",
+            "name": "[parameters('name')]",
+            "location": "[resourceGroup().location]",
+            "properties": {}
+        },
+
+        {
+            "apiVersion": "2020-02-02-preview",
             "name": "[parameters('name')]",
             "type": "microsoft.insights/components",
             "location": "[resourceGroup().location]",
@@ -399,11 +406,15 @@
             "properties": {
                 "ApplicationId": "[parameters('name')]",
                 "Application_Type": "other",
-                "RetentionInDays": "[variables('log_retention')]"
+                "RetentionInDays": "[variables('log_retention')]",
+                "WorkspaceResourceId" : "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
             },
             "tags": {
                 "OWNER": "[parameters('owner')]"
             },
+            "dependsOn" : [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+            ],
             "resources": [
                 {
                     "name": "df20765c-ed5b-46f9-a47b-20f4aaf7936d",

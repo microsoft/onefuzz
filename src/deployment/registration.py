@@ -10,42 +10,41 @@ import time
 import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, TypeVar, cast
-from uuid import UUID, uuid4
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, TypeVar
+from uuid import UUID
 
 import requests
-from azure.cli.core.azclierror import AuthenticationError
 from azure.common.credentials import get_cli_profile
 from functional import seq
 from msrest.serialization import TZ_UTC
 
-FIX_URL = (
-    "https://ms.portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/"
-    "ApplicationMenuBlade/ProtectAnAPI/appId/%s/isMSAApp/"
-)
-
 logger = logging.getLogger("deploy")
+
+## https://docs.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0
+GRAPH_RESOURCE = "https://graph.microsoft.com"
+GRAPH_RESOURCE_ENDPOINT = "https://graph.microsoft.com/v1.0"
 
 
 class GraphQueryError(Exception):
-    def __init__(self, message: str, status_code: int) -> None:
+    def __init__(self, message: str, status_code: Optional[int]) -> None:
         super(GraphQueryError, self).__init__(message)
         self.message = message
         self.status_code = status_code
 
 
+## Queries microsoft graph api and return
 def query_microsoft_graph(
     method: str,
     resource: str,
     params: Optional[Dict] = None,
     body: Optional[Dict] = None,
     subscription: Optional[str] = None,
-) -> Any:
+) -> Dict:
     profile = get_cli_profile()
     (token_type, access_token, _), _, _ = profile.get_raw_token(
-        resource="https://graph.microsoft.com", subscription=subscription
+        resource=GRAPH_RESOURCE, subscription=subscription
     )
-    url = urllib.parse.urljoin("https://graph.microsoft.com/v1.0/", resource)
+    url = urllib.parse.urljoin(f"{GRAPH_RESOURCE_ENDPOINT}/", resource)
     headers = {
         "Authorization": "%s %s" % (token_type, access_token),
         "Content-Type": "application/json",
@@ -53,29 +52,58 @@ def query_microsoft_graph(
     response = requests.request(
         method=method, url=url, headers=headers, params=params, json=body
     )
-
-    response.status_code
-
     if 200 <= response.status_code < 300:
-        try:
-            return response.json()
-        except ValueError:
-            return None
+        if response.content and response.content.strip():
+            json = response.json()
+            if isinstance(json, Dict):
+                return json
+            else:
+                raise GraphQueryError(
+                    f"invalid data received expected a json object: HTTP {response.status_code} - {json}",
+                    response.status_code,
+                )
+        else:
+            return {}
     else:
         error_text = str(response.content, encoding="utf-8", errors="backslashreplace")
         raise GraphQueryError(
-            "request did not succeed: HTTP %s - %s"
-            % (response.status_code, error_text),
+            f"request did not succeed: HTTP {response.status_code} - {error_text}",
             response.status_code,
         )
 
 
-def get_tenant_id(subscription_id: Optional[str] = None) -> str:
+def query_microsoft_graph_list(
+    method: str,
+    resource: str,
+    params: Optional[Dict] = None,
+    body: Optional[Dict] = None,
+    subscription: Optional[str] = None,
+) -> List[Any]:
     result = query_microsoft_graph(
-        method="GET", resource="organization", subscription=subscription_id
+        method,
+        resource,
+        params,
+        body,
+        subscription,
     )
-    return cast(str, result["value"][0]["id"])
+    value = result.get("value")
+    if isinstance(value, list):
+        return value
+    else:
+        raise GraphQueryError("Expected data containing a list of values", None)
 
+
+def get_tenant_id(subscription_id: Optional[str] = None) -> str:
+    profile = get_cli_profile()
+    _, _, tenant_id = profile.get_raw_token(
+        resource=GRAPH_RESOURCE, subscription=subscription_id
+    )
+    if isinstance(tenant_id, str):
+        return tenant_id
+    else:
+        raise Exception(
+            f"unable to retrive tenant_id for subscription {subscription_id}"
+        )
 
 OperationResult = TypeVar("OperationResult")
 
@@ -224,7 +252,7 @@ def create_application_registration(
         ),
     }
 
-    registered_app: Dict = query_microsoft_graph(
+    registered_app = query_microsoft_graph(
         method="POST",
         resource="applications",
         body=params,
@@ -327,7 +355,7 @@ def get_application(
 
     filter_str = " and ".join(filters)
 
-    apps: Dict = query_microsoft_graph(
+    apps = query_microsoft_graph(
         method="GET",
         resource="applications",
         params={
@@ -335,10 +363,15 @@ def get_application(
         },
         subscription=subscription_id,
     )
-    if len(apps["value"]) == 0:
+    number_of_apps = len(apps["value"])
+    if number_of_apps == 0:
         return None
-
-    return apps["value"][0]
+    elif number_of_apps == 1:
+        return apps["value"][0]
+    else:
+        raise Exception(
+            f"Found {number_of_apps} application matching filter: '{filter_str}'"
+        )
 
 
 def authorize_application(
@@ -347,71 +380,69 @@ def authorize_application(
     permissions: List[str] = ["user_impersonation"],
     subscription_id: Optional[str] = None,
 ) -> None:
-    try:
-        onefuzz_app = get_application(app_id=onefuzz_app_id)
-        if onefuzz_app is None:
-            logger.error("Application '%s' not found", onefuzz_app_id)
-            return
+    onefuzz_app = get_application(
+        app_id=onefuzz_app_id, subscription_id=subscription_id
+    )
+    if onefuzz_app is None:
+        logger.error("Application '%s' not found", onefuzz_app_id)
+        return
 
-        scopes = seq(onefuzz_app["api"]["oauth2PermissionScopes"]).filter(
-            lambda scope: scope["value"] in permissions
-        )
+    scopes = seq(onefuzz_app["api"]["oauth2PermissionScopes"]).filter(
+        lambda scope: scope["value"] in permissions
+    )
 
-        existing_preAuthorizedApplications = (
-            seq(onefuzz_app["api"]["preAuthorizedApplications"])
-            .map(
-                lambda paa: seq(paa["delegatedPermissionIds"]).map(
-                    lambda permission_id: (paa["appId"], permission_id)
-                )
+    existing_preAuthorizedApplications = (
+        seq(onefuzz_app["api"]["preAuthorizedApplications"])
+        .map(
+            lambda paa: seq(paa["delegatedPermissionIds"]).map(
+                lambda permission_id: (paa["appId"], permission_id)
             )
-            .flatten()
         )
+        .flatten()
+    )
 
-        preAuthorizedApplications = (
-            scopes.map(lambda s: (str(registration_app_id), s["id"]))
-            .union(existing_preAuthorizedApplications)
-            .distinct()
-            .group_by_key()
-            .map(lambda data: {"appId": data[0], "delegatedPermissionIds": data[1]})
-        )
+    preAuthorizedApplications = (
+        scopes.map(lambda s: (str(registration_app_id), s["id"]))
+        .union(existing_preAuthorizedApplications)
+        .distinct()
+        .group_by_key()
+        .map(lambda data: {"appId": data[0], "delegatedPermissionIds": data[1]})
+    )
 
-        onefuzz_app_id = onefuzz_app["id"]
+    onefuzz_app_id = onefuzz_app["id"]
 
-        def add_preauthorized_app(app_list: List[Dict]) -> None:
-            try:
-                query_microsoft_graph(
-                    method="PATCH",
-                    resource="applications/%s" % onefuzz_app_id,
-                    body={"api": {"preAuthorizedApplications": app_list}},
-                )
-            except GraphQueryError as e:
-                m = re.search(
-                    "Property PreAuthorizedApplication references "
-                    "applications (.*) that cannot be found.",
-                    e.message,
-                )
-                if m:
-                    invalid_app_id = m.group(1)
-                    if invalid_app_id:
-                        for app in app_list:
-                            if app["appId"] == invalid_app_id:
-                                logger.warning(
-                                    f"removing invalid id {invalid_app_id} "
-                                    "for the next request"
-                                )
-                                app_list.remove(app)
+    def add_preauthorized_app(app_list: List[Dict]) -> None:
+        try:
+            query_microsoft_graph(
+                method="PATCH",
+                resource="applications/%s" % onefuzz_app_id,
+                body={"api": {"preAuthorizedApplications": app_list}},
+                subscription=subscription_id,
+            )
+        except GraphQueryError as e:
+            m = re.search(
+                "Property PreAuthorizedApplication references "
+                "applications (.*) that cannot be found.",
+                e.message,
+            )
+            if m:
+                invalid_app_id = m.group(1)
+                if invalid_app_id:
+                    for app in app_list:
+                        if app["appId"] == invalid_app_id:
+                            logger.warning(
+                                f"removing invalid id {invalid_app_id} "
+                                "for the next request"
+                            )
+                            app_list.remove(app)
 
-                raise e
+            raise e
 
-        retry(
-            add_preauthorized_app,
-            "authorize application",
-            data=preAuthorizedApplications.to_list(),
-        )
-
-    except AuthenticationError:
-        logger.warning("*** Browse to: %s", FIX_URL % onefuzz_app_id)
-        logger.warning("*** Then add the client application %s", registration_app_id)
+    retry(
+        add_preauthorized_app,
+        "authorize application",
+        data=preAuthorizedApplications.to_list(),
+    )
 
 
 def create_and_display_registration(
@@ -451,7 +482,7 @@ def assign_app_role(
     role_names: List[str],
     subscription_id: str,
 ) -> None:
-    application_registration = query_microsoft_graph(
+    application_registrations = query_microsoft_graph_list(
         method="GET",
         resource="servicePrincipals",
         params={
@@ -459,10 +490,9 @@ def assign_app_role(
         },
         subscription=subscription_id,
     )
-    if len(application_registration["value"]) == 0:
+    if len(application_registrations) == 0:
         raise Exception(f"appid '{application_id}' was not found:")
-    app = application_registration["value"][0]
-
+    app = application_registrations[0]
     roles = (
         seq(app["appRoles"]).filter(lambda role: role["value"] in role_names).to_list()
     )
@@ -477,12 +507,12 @@ def assign_app_role(
         )
 
     expected_role_ids = [role["id"] for role in roles]
-    assignments = query_microsoft_graph(
+    assignments = query_microsoft_graph_list(
         method="GET",
         resource=f"servicePrincipals/{principal_id}/appRoleAssignments",
         subscription=subscription_id,
     )
-    assigned_role_ids = [assignment["appRoleId"] for assignment in assignments["value"]]
+    assigned_role_ids = [assignment["appRoleId"] for assignment in assignments]
     missing_assignments = [
         id for id in expected_role_ids if id not in assigned_role_ids
     ]
@@ -512,7 +542,7 @@ def assign_instance_app_role(
     their managed identity to the provided App Role
     """
 
-    onefuzz_service_appId = query_microsoft_graph(
+    onefuzz_service_appIds = query_microsoft_graph_list(
         method="GET",
         resource="applications",
         params={
@@ -521,28 +551,28 @@ def assign_instance_app_role(
         },
         subscription=subscription_id,
     )
-    if len(onefuzz_service_appId["value"]) == 0:
+    if len(onefuzz_service_appIds) == 0:
         raise Exception("onefuzz app registration not found")
-    appId = onefuzz_service_appId["value"][0]["appId"]
-    onefuzz_service_principals = query_microsoft_graph(
+    appId = onefuzz_service_appIds[0]["appId"]
+    onefuzz_service_principals = query_microsoft_graph_list(
         method="GET",
         resource="servicePrincipals",
         params={"$filter": "appId eq '%s'" % appId},
         subscription=subscription_id,
     )
 
-    if len(onefuzz_service_principals["value"]) == 0:
+    if len(onefuzz_service_principals) == 0:
         raise Exception("onefuzz app service principal not found")
-    onefuzz_service_principal = onefuzz_service_principals["value"][0]
-    scaleset_service_principals = query_microsoft_graph(
+    onefuzz_service_principal = onefuzz_service_principals[0]
+    application_service_principals = query_microsoft_graph_list(
         method="GET",
         resource="servicePrincipals",
         params={"$filter": "displayName eq '%s'" % application_name},
         subscription=subscription_id,
     )
-    if len(scaleset_service_principals["value"]) == 0:
-        raise Exception("scaleset service principal not found")
-    scaleset_service_principal = scaleset_service_principals["value"][0]
+    if len(application_service_principals) == 0:
+        raise Exception(f"application '{application_name}' service principal not found")
+    application_service_principal = application_service_principals[0]
     managed_node_role = (
         seq(onefuzz_service_principal["appRoles"])
         .filter(lambda x: x["value"] == app_role.value)
@@ -554,24 +584,24 @@ def assign_instance_app_role(
             f"{app_role.value} role not found in the OneFuzz application "
             "registration. Please redeploy the instance"
         )
-    assignments = query_microsoft_graph(
+    assignments = query_microsoft_graph_list(
         method="GET",
         resource="servicePrincipals/%s/appRoleAssignments"
-        % scaleset_service_principal["id"],
+        % application_service_principal["id"],
         subscription=subscription_id,
     )
 
     # check if the role is already assigned
-    role_assigned = seq(assignments["value"]).find(
+    role_assigned = seq(assignments).find(
         lambda assignment: assignment["appRoleId"] == managed_node_role["id"]
     )
     if not role_assigned:
         query_microsoft_graph(
             method="POST",
             resource="servicePrincipals/%s/appRoleAssignedTo"
-            % scaleset_service_principal["id"],
+            % application_service_principal["id"],
             body={
-                "principalId": scaleset_service_principal["id"],
+                "principalId": application_service_principal["id"],
                 "resourceId": onefuzz_service_principal["id"],
                 "appRoleId": managed_node_role["id"],
             },

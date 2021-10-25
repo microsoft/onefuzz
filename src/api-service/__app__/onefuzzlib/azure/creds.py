@@ -23,6 +23,10 @@ from onefuzztypes.primitives import Container, Region
 
 from .monkeypatch import allow_more_workers, reduce_logging
 
+# https://docs.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0
+GRAPH_RESOURCE = "https://graph.microsoft.com"
+GRAPH_RESOURCE_ENDPOINT = "https://graph.microsoft.com/v1.0"
+
 
 @cached
 def get_msi() -> MSIAuthentication:
@@ -99,16 +103,23 @@ def get_regions() -> List[Region]:
     return sorted([Region(x.name) for x in locations])
 
 
+class GraphQueryError(Exception):
+    def __init__(self, message: str, status_code: Optional[int]) -> None:
+        super(GraphQueryError, self).__init__(message)
+        self.message = message
+        self.status_code = status_code
+
+
 def query_microsoft_graph(
     method: str,
     resource: str,
     params: Optional[Dict] = None,
     body: Optional[Dict] = None,
-) -> Any:
+) -> Dict:
     cred = get_identity()
-    access_token = cred.get_token("https://graph.microsoft.com/.default")
+    access_token = cred.get_token(f"{GRAPH_RESOURCE}/.default")
 
-    url = urllib.parse.urljoin("https://graph.microsoft.com/v1.0/", resource)
+    url = urllib.parse.urljoin(f"{GRAPH_RESOURCE_ENDPOINT}/", resource)
     headers = {
         "Authorization": "Bearer %s" % access_token.token,
         "Content-Type": "application/json",
@@ -117,31 +128,54 @@ def query_microsoft_graph(
         method=method, url=url, headers=headers, params=params, json=body
     )
 
-    response.status_code
-
     if 200 <= response.status_code < 300:
-        try:
-            return response.json()
-        except ValueError:
-            return None
+        if response.content and response.content.strip():
+            json = response.json()
+            if isinstance(json, Dict):
+                return json
+            else:
+                raise GraphQueryError(
+                    "invalid data expected a json object: HTTP"
+                    f" {response.status_code} - {json}",
+                    response.status_code,
+                )
+        else:
+            return {}
     else:
         error_text = str(response.content, encoding="utf-8", errors="backslashreplace")
-        raise Exception(
-            "request did not succeed: HTTP %s - %s"
-            % (response.status_code, error_text),
+        raise GraphQueryError(
+            f"request did not succeed: HTTP {response.status_code} - {error_text}",
             response.status_code,
         )
+        
+        
+def query_microsoft_graph_list(
+    method: str,
+    resource: str,
+    params: Optional[Dict] = None,
+    body: Optional[Dict] = None,
+) -> List[Any]:
+    result = query_microsoft_graph(
+        method,
+        resource,
+        params,
+        body,
+    )
+    value = result.get("value")
+    if isinstance(value, list):
+        return value
+    else:
+        raise GraphQueryError("Expected data containing a list of values", None)
+
+    class GroupMemebership(BaseModel):
+        principal_id: UUID
+        groups: List[UUID]
 
 
 # FOR TESTING PURPOSE ONLY ############
 def is_member_of_test(group_ids: List[UUID], member_id: UUID) -> bool:
     from pydantic import BaseModel
     from pydantic.tools import parse_raw_as
-
-    class GroupMemebership(BaseModel):
-        principal_id: UUID
-        groups: List[UUID]
-
     memberships = os.environ.get("TEST_MSGRAPH_AAD")
     if memberships is None:
         return True
@@ -154,23 +188,15 @@ def is_member_of_test(group_ids: List[UUID], member_id: UUID) -> bool:
                     return False
             return True
     return False
-
-
 # ########################################
 
 
-def is_member_of(group_ids: List[UUID], member_id: UUID) -> bool:
-    body = {"groupIds": group_ids}
-    response = query_microsoft_graph(
+def is_member_of(group_id: str, member_id: str) -> bool:
+    body = {"groupIds": [group_id]}
+    response = query_microsoft_graph_list(
         method="POST", resource=f"users/{member_id}/checkMemberGroups", body=body
     )
-    result = map(UUID, response["value"])
-    for group_id in group_ids:
-        if group_id not in result:
-            return False
-
-    return True
-
+    return group_id in response
 
 @cached
 def get_scaleset_identity_resource_path() -> str:

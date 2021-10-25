@@ -52,7 +52,6 @@ from registration import (
     GraphQueryError,
     OnefuzzAppRole,
     add_application_password,
-    assign_app_role,
     assign_instance_app_role,
     authorize_application,
     get_application,
@@ -244,6 +243,38 @@ class Client:
         return add_application_password(
             "cli_password", object_id, self.get_subscription_id()
         )
+    def get_instance_url(self) -> str:
+        # The url to access the instance
+        # This also represents the legacy identifier_uris of the application
+        # registration
+        if self.multi_tenant_domain:
+            return "https://%s/%s" % (
+                self.multi_tenant_domain,
+                self.application_name,
+            )
+        else:
+            return "https://%s.azurewebsites.net" % self.application_name
+
+    def get_identifier_url(self) -> str:
+        # This is used to identify the application registration via the
+        # identifier_uris field.  Depending on the environment this value needs
+        # to be from an approved domain The format of this value is derived
+        # from the default value proposed by azure when creating an application
+        # registration api://{guid}/...
+        if self.multi_tenant_domain:
+            return "api://%s/%s" % (
+                self.multi_tenant_domain,
+                self.application_name,
+            )
+        else:
+            return "api://%s.azurewebsites.net" % self.application_name
+
+    def get_signin_audience(self) -> str:
+        # https://docs.microsoft.com/en-us/azure/active-directory/develop/supported-accounts-validation
+        if self.multi_tenant_domain:
+            return "AzureADMultipleOrgs"
+        else:
+            return "AzureADMyOrg"
 
     def setup_rbac(self) -> None:
         """
@@ -279,25 +310,13 @@ class Client:
             },
         ]
 
-        # app: Optional[Application] = None
-
         if not app:
             logger.info("creating Application registration")
 
-            if self.multi_tenant_domain:
-                url = "https://%s/%s" % (
-                    self.multi_tenant_domain,
-                    self.application_name,
-                )
-                signInAudience = "AzureADMultipleOrgs"
-            else:
-                url = "https://%s.azurewebsites.net" % self.application_name
-                signInAudience = "AzureADMyOrg"
-
             params = {
                 "displayName": self.application_name,
-                "identifierUris": [url],
-                "signInAudience": signInAudience,
+                "identifierUris": [self.get_identifier_url()],
+                "signInAudience": self.get_signin_audience(),
                 "appRoles": app_roles,
                 "api": {
                     "oauth2PermissionScopes": [
@@ -318,7 +337,9 @@ class Client:
                         "enableAccessTokenIssuance": False,
                         "enableIdTokenIssuance": True,
                     },
-                    "redirectUris": [f"{url}/.auth/login/aad/callback"],
+                    "redirectUris": [
+                        f"{self.get_instance_url()}/.auth/login/aad/callback"
+                    ],
                 },
                 "requiredResourceAccess": [
                     {
@@ -378,8 +399,19 @@ class Client:
             try_sp_create()
 
         else:
-
             existing_role_values = [app_role["value"] for app_role in app["appRoles"]]
+            api_id = self.get_identifier_url()
+
+            if api_id not in app["identifierUris"]:
+                identifier_uris = app["identifierUris"]
+                identifier_uris.append(api_id)
+                query_microsoft_graph(
+                    method="PATCH",
+                    resource=f"applications/{app['id']}",
+                    body={"identifierUris": identifier_uris},
+                    subscription=self.get_subscription_id(),
+                )
+
             has_missing_roles = any(
                 [role["value"] not in existing_role_values for role in app_roles]
             )
@@ -406,17 +438,6 @@ class Client:
                 )
 
         if self.multi_tenant_domain and app["signInAudience"] == "AzureADMyOrg":
-            url = "https://%s/%s" % (
-                self.multi_tenant_domain,
-                self.application_name,
-            )
-            query_microsoft_graph(
-                method="PATCH",
-                resource=f"applications/{app['id']}",
-                body={"identifierUris": [url]},
-                subscription=self.get_subscription_id(),
-            )
-
             set_app_audience(
                 app["id"],
                 "AzureADMultipleOrgs",
@@ -430,13 +451,6 @@ class Client:
                 app["id"],
                 "AzureADMyOrg",
                 subscription_id=self.get_subscription_id(),
-            )
-            url = "https://%s.azurewebsites.net" % self.application_name
-            query_microsoft_graph(
-                method="PATCH",
-                resource=f"applications/{app['id']}",
-                body={"identifierUris": [url]},
-                subscription=self.get_subscription_id(),
             )
         else:
             logger.debug("No change to App Registration signInAudence setting")
@@ -502,23 +516,22 @@ class Client:
             "%Y-%m-%dT%H:%M:%SZ"
         )
 
+        app_func_audiences = [
+            self.get_identifier_url(),
+            self.get_instance_url(),
+        ]
         if self.multi_tenant_domain:
             # clear the value in the Issuer Url field:
             # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
-            app_func_audience = "https://%s/%s" % (
-                self.multi_tenant_domain,
-                self.application_name,
-            )
             app_func_issuer = ""
             multi_tenant_domain = {"value": self.multi_tenant_domain}
         else:
-            app_func_audience = "https://%s.azurewebsites.net" % self.application_name
             tenant_oid = str(self.cli_config["authority"]).split("/")[-1]
             app_func_issuer = "https://sts.windows.net/%s/" % tenant_oid
             multi_tenant_domain = {"value": ""}
 
         params = {
-            "app_func_audience": {"value": app_func_audience},
+            "app_func_audiences": {"value": app_func_audiences},
             "name": {"value": self.application_name},
             "owner": {"value": self.owner},
             "clientId": {"value": self.results["client_id"]},
@@ -594,12 +607,14 @@ class Client:
         )
 
     def apply_migrations(self) -> None:
+        logger.info("applying database migrations")
         name = self.results["deploy"]["func-name"]["value"]
         key = self.results["deploy"]["func-key"]["value"]
         table_service = TableService(account_name=name, account_key=key)
         migrate(table_service, self.migrations)
 
     def set_instance_config(self) -> None:
+        logger.info("setting instance config")
         name = self.results["deploy"]["func-name"]["value"]
         key = self.results["deploy"]["func-key"]["value"]
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])

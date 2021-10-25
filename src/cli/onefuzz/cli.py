@@ -8,6 +8,7 @@ Simple CLI builder on top of a defined API (used for OneFuzz)
 """
 
 import argparse
+import datetime
 import inspect
 import json
 import logging
@@ -32,6 +33,7 @@ from uuid import UUID
 import jmespath
 from docstring_parser import parse as parse_docstring
 from msrest.serialization import Model
+from onefuzztypes.models import SecretData
 from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, ValidationError
 
@@ -494,20 +496,24 @@ def normalize(result: Any) -> Any:
     """Convert arbitrary result streams into something filterable with jmespath"""
     if isinstance(result, BaseModel):
         return normalize(result.dict(exclude_none=True))
+    if isinstance(result, SecretData):
+        return normalize(result.secret)
     if isinstance(result, Model):
         return normalize(result.as_dict())
-    if isinstance(result, list):
+    if isinstance(result, (set, list)):
         return [normalize(x) for x in result]
     if isinstance(result, dict):
         return {normalize(k): normalize(v) for (k, v) in result.items()}
     if isinstance(result, Enum):
         return result.name
-    if isinstance(result, UUID):
+    if isinstance(result, (UUID, datetime.datetime)):
         return str(result)
     if isinstance(result, (int, float, str)):
         return result
+    if result is None:
+        return result
 
-    logging.debug(f"unable to normalize type f{type(result)}")
+    logging.warning(f"unable to normalize type f{type(result)}")
 
     return result
 
