@@ -5,10 +5,11 @@
 
 import logging
 import os
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 from uuid import UUID
 
 from azure.core.exceptions import ResourceNotFoundError
+from azure.mgmt.network.models import Subnet
 from msrestazure.azure_exceptions import CloudError
 from msrestazure.tools import parse_resource_id
 from onefuzztypes.enums import ErrorCode
@@ -107,7 +108,7 @@ def create_public_nic(
         return None
 
     if nsg:
-        subnet = network.get_subnet()
+        subnet = cast(Subnet, network.get_subnet())
         if not subnet.network_security_group:
             result = nsg.associate_subnet(network.get_vnet(), subnet)
             if isinstance(result, Error):
