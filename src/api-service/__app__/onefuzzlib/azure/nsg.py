@@ -105,8 +105,10 @@ def update_nsg(nsg: NetworkSecurityGroup) -> Union[None, Error]:
 def ok_to_delete(active_regions: Set[Region], nsg_region: str, nsg_name: str) -> bool:
     return nsg_region not in active_regions and nsg_region == nsg_name
 
+
 def is_one_fuzz_nsg(nsg_region: str, nsg_name: str) -> bool:
     return nsg_region == nsg_name
+
 
 def delete_nsg(name: str) -> bool:
     # NSG can be only deleted if no other resource is associated with it
