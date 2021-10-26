@@ -18,7 +18,6 @@ from onefuzztypes.responses import BaseResponse
 from pydantic import BaseModel  # noqa: F401
 from pydantic import ValidationError
 
-
 from .azure.creds import is_member_of, is_member_of_test
 from .orm import ModelMixin
 from .request_access import RequestAccess
