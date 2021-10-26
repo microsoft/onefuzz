@@ -95,6 +95,47 @@ class NsgTests:
     def wait_for_nsg_rules_to_apply(self) -> None:
         time.sleep(120)
 
+    def test_proxy_cycle(self, pool_name: str, region: str) -> None:
+        scaleset = self.create_scaleset(pool_name, region)
+        try:
+            ip = self.get_proxy_ip(scaleset)
+            print("Allow connection")
+            self.allow_all()
+            self.wait_for_nsg_rules_to_apply()
+            # can ping since all allowed
+            result = self.test_connection(ip)
+            if not result:
+                raise Exception("Failed to connect to proxy")
+
+            print("Block connection")
+            self.block_all()
+            self.wait_for_nsg_rules_to_apply()
+            # should not be able to ping since all blocked
+            result = self.test_connection(ip)
+            if result:
+                raise Exception("Connected to proxy")
+
+            reset_result = self.onefuzz.scaleset_proxy.reset(region)
+            if not reset_result:
+                raise Exception("Failed to reset proxy for region %s" % region)
+
+            updated_ip = self.get_proxy_ip(scaleset)
+            # should be still blocked, since we blocked before we cycled
+            # the proxy
+            result = self.test_connection(updated_ip)
+            if result:
+                raise Exception("Connected to proxy")
+
+            self.allow_all()
+            self.wait_for_nsg_rules_to_apply()
+            result = self.test_connection(updated_ip)
+
+            if not result:
+                raise Exception("Failed to connect to proxy")
+
+        finally:
+            self.onefuzz.scalesets.shutdown(scaleset.scaleset_id, now=True)
+
     def test_proxy_access(self, pool_name: str, region: str) -> None:
         scaleset = self.create_scaleset(pool_name, region)
         try:
@@ -214,6 +255,8 @@ def main() -> None:
     t.test_proxy_access(pool_name, args.region1)
     print("Test new region addition access")
     t.test_new_scaleset_region(pool_name, args.region1, args.region2)
+    print("Test proxy cycle")
+    t.test_proxy_cycle(pool_name, args.region1)
 
 
 if __name__ == "__main__":
