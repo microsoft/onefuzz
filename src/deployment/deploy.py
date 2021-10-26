@@ -624,6 +624,16 @@ class Client:
             with open(self.nsg_config, "r") as template_handle:
                 config_template = json.load(template_handle)
 
+            if (
+                not config_template["proxy_nsg_config"]
+                and not config_template["proxy_nsg_config"]["allowed_ips"]
+                and not config_template["proxy_nsg_config"]["allowed_service_tags"]
+            ):
+                raise Exception(
+                    "proxy_nsg_config and sub-values were not properly included in config."
+                    + "Please submit a configuration resembling"
+                    + " { 'proxy_nsg_config': { 'allowed_ips': [], 'allowed_service_tags': [] } }"
+                )
             proxy_config = config_template["proxy_nsg_config"]
             rules = parse_rules(proxy_config)
 
