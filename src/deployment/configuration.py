@@ -135,7 +135,8 @@ def parse_rules(proxy_config: Dict[str, str]) -> List[NsgRule]:
             nsg_rules.append(nsg_rule)
         except Exception:
             raise ValueError(
-                "One or more input rules was invalid. Please enter a comma-separted list if valid sources."
+                "One or more input ips was invalid: %s. Please enter a comma-separted list of valid sources.",
+                rule,
             )
     for rule in allowed_service_tags:
         try:
@@ -143,7 +144,8 @@ def parse_rules(proxy_config: Dict[str, str]) -> List[NsgRule]:
             nsg_rules.append(nsg_rule)
         except Exception:
             raise ValueError(
-                "One or more input rules was invalid. Please enter a comma-separted list if valid sources."
+                "One or more input tags was invalid: %s. Please enter a comma-separted list of valid sources.",
+                rule,
             )
     return nsg_rules
 
