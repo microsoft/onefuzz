@@ -69,9 +69,6 @@ class NsgRule:
             raise ValueError(
                 "Please provide a valid rule or supply the empty string '' to block all sources or the wild card * to allow all sources."
             )
-        # Check block all
-        if len(value.strip()) == 0:
-            return
         # Check Wild Card
         if value == "*":
             return
@@ -125,6 +122,13 @@ def parse_rules(proxy_config: Dict[str, str]) -> List[NsgRule]:
     allowed_service_tags = proxy_config["allowed_service_tags"]
 
     nsg_rules = []
+    if "*" in allowed_ips:
+        nsg_rule = NsgRule("*")
+        nsg_rules.append(nsg_rule)
+        return nsg_rules
+    elif len(allowed_ips) + len(allowed_service_tags):
+        return []
+
     for rule in allowed_ips:
         try:
             nsg_rule = NsgRule(rule)
