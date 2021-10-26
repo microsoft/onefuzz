@@ -14,8 +14,8 @@ from onefuzztypes.enums import OS, ScalesetState
 
 
 class NsgTests:
-    def __init__(self):
-        self.onefuzz = Onefuzz()
+    def __init__(self, onefuzz_config_path=None):
+        self.onefuzz = Onefuzz(config_path=onefuzz_config_path)
 
     def allow_all(self) -> None:
         instance_config = self.onefuzz.instance_config.get()
@@ -202,14 +202,12 @@ class NsgTests:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--region1")
-    parser.add_argument("--region2")
+    parser.add_argument("--region1", required=True)
+    parser.add_argument("--region2", required=True)
+    parser.add_argument("--config_path", default=None)
     args = parser.parse_args()
 
-    if not args.region1 or not args.region2:
-        raise Exception("--region1 and --region2 are required")
-
-    t = NsgTests()
+    t = NsgTests(args.config_path)
     pool_name = t.generate_name()
     t.create_pool(pool_name)
     print("Test basic proxy access")
