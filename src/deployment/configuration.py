@@ -126,7 +126,7 @@ def parse_rules(proxy_config: Dict[str, str]) -> List[NsgRule]:
         nsg_rule = NsgRule("*")
         nsg_rules.append(nsg_rule)
         return nsg_rules
-    elif len(allowed_ips) + len(allowed_service_tags):
+    elif len(allowed_ips) + len(allowed_service_tags) == 0:
         return []
 
     for rule in allowed_ips:
