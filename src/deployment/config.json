@@ -1,8 +1,6 @@
 {
     "proxy_nsg_config": {
-        "allowed_ips": [
-            "10.0.0.2", "10.0.1.0/16"
-        ],
-        "allowed_service_tags": ["Internet"]
+        "allowed_ips": ["*"],
+        "allowed_service_tags": []
     }
 }
