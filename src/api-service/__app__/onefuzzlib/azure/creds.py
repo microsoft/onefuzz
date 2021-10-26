@@ -167,15 +167,15 @@ def query_microsoft_graph_list(
     else:
         raise GraphQueryError("Expected data containing a list of values", None)
 
-    class GroupMemebership(BaseModel):
-        principal_id: UUID
-        groups: List[UUID]
-
 
 # FOR TESTING PURPOSE ONLY ############
 def is_member_of_test(group_ids: List[UUID], member_id: UUID) -> bool:
     from pydantic import BaseModel
     from pydantic.tools import parse_raw_as
+
+    class GroupMemebership(BaseModel):
+        principal_id: UUID
+        groups: List[UUID]
 
     memberships = os.environ.get("TEST_MSGRAPH_AAD")
     if memberships is None:
