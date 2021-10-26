@@ -586,7 +586,12 @@ class Client:
         config_client = InstanceConfigClient(table_service, self.application_name)
 
         if self.nsg_config:
-            rules = parse_rules(self.nsg_config)
+            logger.info("deploying arm template: %s", self.nsg_config)
+
+            with open(self.nsg_config, "r") as template_handle:
+                config_template = json.load(template_handle)
+            proxy_config = config_template["proxy_nsg_config"]
+            rules = parse_rules(proxy_config)
             update_nsg(config_client, rules)
 
         if self.admins:
