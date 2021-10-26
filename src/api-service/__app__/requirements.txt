@@ -4,7 +4,6 @@ azure-cosmosdb-nspkg==2.0.2
 azure-cosmosdb-table==1.0.6
 azure-devops==6.0.0b4
 azure-functions==1.7.2
-azure-graphrbac~=0.61.1
 azure-identity==1.6.1
 azure-keyvault-secrets~=4.3.0
 azure-mgmt-compute==22.0
