@@ -6,7 +6,7 @@
 import ipaddress
 import json
 import logging
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from azure.cosmosdb.table.tableservice import TableService
@@ -65,13 +65,10 @@ class NsgRule:
             )
 
     def check_rule(self, value: str) -> None:
-        if value is None:
+        if value is None or len(value.strip()) == 0:
             raise ValueError(
-                "Please provide a valid rule or supply the empty string '' to block all sources or the wild card * to allow all sources."
+                "Rule can not be None or empty string. Please provide a valid rule or supply the wild card *."
             )
-        # Check block all
-        if len(value.strip()) == 0:
-            return
         # Check Wild Card
         if value == "*":
             return
@@ -83,7 +80,7 @@ class NsgRule:
             pass
         # Check if IP Range
         try:
-            ipaddress.ip_network(value)
+            ipaddress.ip_network(value, False)
             return
         except ValueError:
             pass
@@ -120,11 +117,20 @@ def update_admins(config_client: InstanceConfigClient, admins: List[UUID]) -> No
     )
 
 
-def parse_rules(rules_str: str) -> List[NsgRule]:
-    rules_list = rules_str.split(",")
+def parse_rules(proxy_config: Dict[str, str]) -> List[NsgRule]:
+    allowed_ips = proxy_config["allowed_ips"]
+    allowed_service_tags = proxy_config["allowed_service_tags"]
 
     nsg_rules = []
-    for rule in rules_list:
+    for rule in allowed_ips:
+        try:
+            nsg_rule = NsgRule(rule)
+            nsg_rules.append(nsg_rule)
+        except Exception:
+            raise ValueError(
+                "One or more input rules was invalid. Please enter a comma-separted list if valid sources."
+            )
+    for rule in allowed_service_tags:
         try:
             nsg_rule = NsgRule(rule)
             nsg_rules.append(nsg_rule)
