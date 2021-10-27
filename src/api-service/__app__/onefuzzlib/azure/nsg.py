@@ -331,6 +331,10 @@ def associate_subnet(
             ],
         )
 
+    #  this is noop, since correct NSG is already assigned
+    if subnet.network_security_group.id == nsg.id:
+        return None
+
     logging.info(
         "associating subnet %s with nsg: %s %s", subnet.name, resource_group, name
     )
