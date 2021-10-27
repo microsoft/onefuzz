@@ -62,18 +62,6 @@ def create_vm(
             return result
         logging.info("waiting on nic creation")
         return None
-    if nsg:
-        result = nsg.associate_nic(nic)
-        if isinstance(result, Error):
-            return result
-
-    # when public nic is created, VNET must exist at that point
-    # this is logic of get_public_nic function
-
-    if nsg:
-        result = nsg.associate_nic(nic)
-        if isinstance(result, Error):
-            return result
 
     # when public nic is created, VNET must exist at that point
     # this is logic of get_public_nic function
