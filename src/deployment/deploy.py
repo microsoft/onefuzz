@@ -45,6 +45,8 @@ from azure.storage.blob import (
     ContainerSasPermissions,
     generate_container_sas,
 )
+from msrest.serialization import TZ_UTC
+
 from configuration import (
     InstanceConfigClient,
     parse_rules,
@@ -53,7 +55,6 @@ from configuration import (
     update_nsg,
 )
 from data_migration import migrate
-from msrest.serialization import TZ_UTC
 from registration import (
     GraphQueryError,
     OnefuzzAppRole,
