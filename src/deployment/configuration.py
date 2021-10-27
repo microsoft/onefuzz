@@ -70,7 +70,7 @@ class NsgRule:
                 "Please provide a valid rule. Supply an empty list to block all sources or the wild card * to allow all sources."
             )
         # Check Wild Card
-        if value == "*":
+        if value is None or len(value.strip()) == 0:
             return
         # Check if IP Address
         try:
