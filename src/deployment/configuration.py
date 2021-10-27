@@ -65,9 +65,9 @@ class NsgRule:
             )
 
     def check_rule(self, value: str) -> None:
-        if value is None:
+        if value is None or len(value.strip()) == 0:
             raise ValueError(
-                "Please provide a valid rule. Supply an empty list to block all sources or the wild card * to allow all sources."
+                "Please provide a valid rule. Supply an empty list to block all sources or the wild card * to allow all sources. "
             )
         # Check Wild Card
         if value == "*":
