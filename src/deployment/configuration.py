@@ -79,8 +79,12 @@ class NetworkSecurityConfig:
             raise Exception(
                 "allowed_ips and allowed_service_tags not provided. Please Provide Valid Config."
             )
-        if not isinstance(proxy_config["allowed_ips"], List) or not isinstance(
-            proxy_config["allowed_service_tags"]
+        if (
+            len(proxy_config["allowed_ips"]) != 0
+            and not isinstance(proxy_config["allowed_ips"], List)
+        ) or (
+            len(proxy_config["allowed_service_tags"]) != 0
+            and not isinstance(proxy_config["allowed_service_tags"])
         ):
             raise Exception(
                 "allowed_ips and allowed_service_tags are not a list. Please Provide Valid Config."
