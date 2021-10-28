@@ -332,7 +332,7 @@ def associate_subnet(
         )
 
     #  this is noop, since correct NSG is already assigned
-    if subnet.network_security_group.id == nsg.id:
+    if subnet.network_security_group and subnet.network_security_group.id == nsg.id:
         return None
 
     logging.info(
