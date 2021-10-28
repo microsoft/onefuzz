@@ -16,7 +16,7 @@ import time
 import uuid
 import zipfile
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Dict, KeysView, List, Optional, Tuple, Union, cast
 from uuid import UUID
 
 from azure.common.client_factory import get_client_from_cli_profile
@@ -45,15 +45,16 @@ from azure.storage.blob import (
     ContainerSasPermissions,
     generate_container_sas,
 )
+from msrest.serialization import TZ_UTC
+
 from configuration import (
     InstanceConfigClient,
-    parse_rules,
+    parse_nsg_json,
     update_admins,
     update_allowed_aad_tenants,
     update_nsg,
 )
 from data_migration import migrate
-from msrest.serialization import TZ_UTC
 from registration import (
     GraphQueryError,
     OnefuzzAppRole,
@@ -623,18 +624,18 @@ class Client:
             with open(self.nsg_config, "r") as template_handle:
                 config_template = json.load(template_handle)
 
-            if (
-                not config_template["proxy_nsg_config"]
-                and not config_template["proxy_nsg_config"]["allowed_ips"]
-                and not config_template["proxy_nsg_config"]["allowed_service_tags"]
-            ):
+            try:
+                rules = parse_nsg_json(config_template)
+            except Exception as ex:
+                logging.info(
+                    "An Exception was encountered while parsing nsg_config file: %s", ex
+                )
                 raise Exception(
                     "proxy_nsg_config and sub-values were not properly included in config."
                     + "Please submit a configuration resembling"
                     + " { 'proxy_nsg_config': { 'allowed_ips': [], 'allowed_service_tags': [] } }"
                 )
             proxy_config = config_template["proxy_nsg_config"]
-            rules = parse_rules(proxy_config)
 
             update_nsg(config_client, rules)
 
