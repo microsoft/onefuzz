@@ -6,7 +6,7 @@
 import ipaddress
 import json
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from azure.cosmosdb.table.tableservice import TableService
@@ -65,7 +65,7 @@ class NsgRule:
             )
 
     def check_rule(self, value: str) -> None:
-        if value is None:
+        if value is None or len(value.strip()) == 0:
             raise ValueError(
                 "Please provide a valid rule. Supply an empty list to block all sources or the wild card * to allow all sources."
             )
@@ -117,7 +117,36 @@ def update_admins(config_client: InstanceConfigClient, admins: List[UUID]) -> No
     )
 
 
-def parse_rules(proxy_config: Dict[str, str]) -> List[NsgRule]:
+def parse_nsg_json(config: Dict[Any, Any]) -> List[NsgRule]:
+
+    if len(config.keys()) == 0:
+        raise Exception(
+            "Empty Configuration File Provided. Please Provide Valid Config."
+        )
+    if None in config.keys() or "proxy_nsg_config" not in config.keys():
+        raise Exception(
+            "proxy_nsg_config not provided as valid key. Please Provide Valid Config."
+        )
+    proxy_config = config["proxy_nsg_config"]
+    if len(proxy_config.keys()) == 0:
+        raise Exception(
+            "Empty Configuration File Provided. Please Provide Valid Config."
+        )
+    if (
+        None in proxy_config.keys()
+        or "allowed_ips" not in proxy_config.keys()
+        or "allowed_service_tags" not in proxy_config.keys()
+    ):
+        raise Exception(
+            "allowed_ips and allowed_service_tags not provided. Please Provide Valid Config."
+        )
+    if not isinstance(proxy_config["allowed_ips"], List[str]) or not isinstance(
+        proxy_config["allowed_service_tags"]
+    ):
+        raise Exception(
+            "allowed_ips and allowed_service_tags are not a list of strings. Please Provide Valid Config."
+        )
+
     allowed_ips = proxy_config["allowed_ips"]
     allowed_service_tags = proxy_config["allowed_service_tags"]
 
