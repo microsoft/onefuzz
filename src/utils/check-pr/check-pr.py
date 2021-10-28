@@ -189,6 +189,7 @@ class Deployer:
         subprocess.check_call(f"python -mvenv {venv}", shell=True)
         pip = venv_path(venv, "pip")
         py = venv_path(venv, "python")
+        config = os.getcwd() + "/config.json"
         commands = [
             ("extracting release-artifacts", f"unzip -qq {filename}"),
             ("extracting deployment", "unzip -qq onefuzz-deployment*.zip"),
@@ -198,7 +199,7 @@ class Deployer:
                 "running deployment",
                 (
                     f"{py} deploy.py {self.region} "
-                    f"{self.instance} {self.instance} cicd"
+                    f"{self.instance} {self.instance} cicd {config}"
                     f" {' --subscription_id ' + self.subscription_id if self.subscription_id else ''}"
                 ),
             ),
