@@ -49,7 +49,8 @@ from msrest.serialization import TZ_UTC
 
 from configuration import (
     InstanceConfigClient,
-    parse_nsg_json,
+    NetworkSecurityConfig,
+    parse_rules,
     update_admins,
     update_allowed_aad_tenants,
     update_nsg,
@@ -625,7 +626,8 @@ class Client:
                 config_template = json.load(template_handle)
 
             try:
-                rules = parse_nsg_json(config_template)
+                config = NetworkSecurityConfig(config_template)
+                rules = parse_rules(config)
             except Exception as ex:
                 logging.info(
                     "An Exception was encountered while parsing nsg_config file: %s", ex
