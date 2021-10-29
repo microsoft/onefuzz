@@ -57,7 +57,6 @@ class NetworkSecurityConfig:
         self.parse_nsg_json(config)
 
     def parse_nsg_json(self, config: Any) -> None:
-
         if isinstance(config, Dict):
             raise Exception(
                 "Configuration is not a Dictionary. Please provide Valid Config."
