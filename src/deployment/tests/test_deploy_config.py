@@ -18,7 +18,6 @@ class TestNetworkSecurityConfig(BaseModel):
 
 class DeployTests(unittest.TestCase):
     def test_config(self) -> None:
-
         ## Test Invalid Configs
         #  Test Dictionary
         invalid_config = ""
