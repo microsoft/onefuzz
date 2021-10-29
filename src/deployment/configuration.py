@@ -74,7 +74,7 @@ class NetworkSecurityConfig:
         if (
             None in proxy_config.keys()
             or "allowed_ips" not in proxy_config.keys()
-            or "allowed_serviice_tags" not in proxy_config.keys()
+            or "allowed_service_tags" not in proxy_config.keys()
         ):
             raise Exception(
                 "allowed_ips and allowed_service_tags not provided. Please Provide Valid Config."
