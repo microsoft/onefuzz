@@ -16,7 +16,7 @@ import time
 import uuid
 import zipfile
 from datetime import datetime, timedelta
-from typing import Dict, KeysView, List, Optional, Tuple, Union, cast
+from typing import Dict, List, Optional, Tuple, Union, cast
 from uuid import UUID
 
 from azure.common.client_factory import get_client_from_cli_profile

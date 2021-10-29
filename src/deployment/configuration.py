@@ -6,7 +6,7 @@
 import ipaddress
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 from uuid import UUID
 
 from azure.cosmosdb.table.tableservice import TableService
@@ -66,7 +66,6 @@ class NetworkSecurityConfig:
             raise Exception(
                 "proxy_nsg_config not provided as valid key. Please Provide Valid Config."
             )
-        proxy_config = config["proxy_nsg_config"]
         if len(proxy_config.keys()) == 0:
             raise Exception(
                 "Empty Configuration File Provided. Please Provide Valid Config."
