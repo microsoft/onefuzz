@@ -66,6 +66,7 @@ class NetworkSecurityConfig:
             raise Exception(
                 "proxy_nsg_config not provided as valid key. Please Provide Valid Config."
             )
+        proxy_config = config["proxy_nsg_config"]
         if len(proxy_config.keys()) == 0:
             raise Exception(
                 "Empty Configuration File Provided. Please Provide Valid Config."

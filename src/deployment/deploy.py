@@ -637,7 +637,6 @@ class Client:
                     + "Please submit a configuration resembling"
                     + " { 'proxy_nsg_config': { 'allowed_ips': [], 'allowed_service_tags': [] } }"
                 )
-            proxy_config = config_template["proxy_nsg_config"]
 
             update_nsg(config_client, rules)
 
