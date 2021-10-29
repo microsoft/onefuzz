@@ -173,8 +173,8 @@ def update_admins(config_client: InstanceConfigClient, admins: List[UUID]) -> No
 
 def parse_rules(proxy_config: NetworkSecurityConfig) -> List[NsgRule]:
 
-    allowed_ips = proxy_config["allowed_ips"]
-    allowed_service_tags = proxy_config["allowed_service_tags"]
+    allowed_ips = proxy_config.allowed_ips
+    allowed_service_tags = proxy_config.allowed_service_tags
 
     nsg_rules = []
     if "*" in allowed_ips:
