@@ -194,12 +194,12 @@ def is_member_of_test(group_ids: List[UUID], member_id: UUID) -> bool:
 # ########################################
 
 
-def is_member_of(group_id: str, member_id: str) -> bool:
-    body = {"groupIds": [group_id]}
+def is_member_of(group_ids: List[UUID], member_id: UUID) -> bool:
+    body = {"groupIds": group_ids}
     response = query_microsoft_graph_list(
         method="POST", resource=f"users/{member_id}/checkMemberGroups", body=body
     )
-    return group_id in response
+    return group_ids in response
 
 
 @cached
