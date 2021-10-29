@@ -6,7 +6,7 @@
 import ipaddress
 import json
 import logging
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from azure.cosmosdb.table.tableservice import TableService
@@ -58,6 +58,10 @@ class NetworkSecurityConfig:
 
     def parse_nsg_json(self, config: Any) -> None:
 
+        if isinstance(config, Dict):
+            raise Exception(
+                "Configuration is not a Dictionary. Please provide Valid Config."
+            )
         if len(config.keys()) == 0:
             raise Exception(
                 "Empty Configuration File Provided. Please Provide Valid Config."
