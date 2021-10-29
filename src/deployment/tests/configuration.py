@@ -76,7 +76,7 @@ class NetworkSecurityConfig:
             )
         if len(proxy_config.keys()) == 0:
             raise Exception(
-                "Empty Inner Configuration File Provided. Please Provide Valid Config."
+                "Empty Configuration File Provided. Please Provide Valid Config."
             )
         if (
             None in proxy_config.keys()
