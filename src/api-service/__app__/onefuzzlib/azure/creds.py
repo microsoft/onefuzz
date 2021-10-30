@@ -7,7 +7,7 @@ import functools
 import logging
 import os
 import urllib.parse
-from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
+from typing import Any, Callable, Dict, List, Optional, Protocol, TypeVar, cast
 from uuid import UUID
 
 import requests
@@ -168,38 +168,54 @@ def query_microsoft_graph_list(
         raise GraphQueryError("Expected data containing a list of values", None)
 
 
-# FOR TESTING PURPOSE ONLY ############
-def is_member_of_test(group_ids: List[UUID], member_id: UUID) -> bool:
-    from pydantic import BaseModel
-    from pydantic.tools import parse_raw_as
+class GroupMembershipChecker(Protocol):
+    def is_member(self, group_ids: List[UUID], member_id: UUID) -> bool:
+        """Check if member is part of at least one of the groups"""
 
-    class GroupMemebership(BaseModel):
-        principal_id: UUID
-        groups: List[UUID]
 
-    memberships = os.environ.get("TEST_MSGRAPH_AAD")
+def create_group_membership_checker() -> GroupMembershipChecker:
+    memberships = os.environ.get("_STATIC_GROUP_MEMBERSHIP")
     if memberships is None:
-        return True
+        return AzureADGroupMembership()
+    else:
+        return StaticGroupMembership(memberships)
 
-    data = parse_raw_as(List[GroupMemebership], memberships)
-    for membership in data:
-        if membership.principal_id == member_id:
-            for group_id in group_ids:
-                if group_id not in membership.groups:
-                    return False
+
+class AzureADGroupMembership:
+    def is_member(self, group_ids: List[UUID], member_id: UUID) -> bool:
+        if member_id in group_ids:
             return True
-    return False
+
+        body = {"groupIds": group_ids}
+        response = query_microsoft_graph_list(
+            method="POST", resource=f"users/{member_id}/checkMemberGroups", body=body
+        )
+        return group_ids in response
 
 
-# ########################################
+class StaticGroupMembership:
+    def __init__(self, memberships: str):
+        from pydantic import BaseModel
+        from pydantic.tools import parse_raw_as
 
+        class GroupMemebership(BaseModel):
+            principal_id: UUID
+            groups: List[UUID]
 
-def is_member_of(group_ids: List[UUID], member_id: UUID) -> bool:
-    body = {"groupIds": group_ids}
-    response = query_microsoft_graph_list(
-        method="POST", resource=f"users/{member_id}/checkMemberGroups", body=body
-    )
-    return group_ids in response
+        data = parse_raw_as(List[GroupMemebership], memberships)
+        self.memberships = data
+
+    def is_member(self, group_ids: List[UUID], member_id: UUID) -> bool:
+        if member_id in group_ids:
+            return True
+
+        for membership in self.memberships:
+            if membership.principal_id == member_id:
+                for group_id in group_ids:
+                    if group_id not in membership.groups:
+                        return False
+                return True
+        return False
 
 
 @cached

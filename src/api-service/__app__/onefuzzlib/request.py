@@ -18,7 +18,7 @@ from onefuzztypes.responses import BaseResponse
 from pydantic import BaseModel  # noqa: F401
 from pydantic import ValidationError
 
-from .azure.creds import is_member_of, is_member_of_test
+from .azure.creds import create_group_membership_checker
 from .orm import ModelMixin
 from .request_access import RequestAccess
 
@@ -39,7 +39,7 @@ def get_rules() -> Optional[RequestAccess]:
     return RequestAccess.parse_rules(rules_data)
 
 
-Testing = True
+membership_checker = create_group_membership_checker()
 
 
 def check_access(req: HttpRequest) -> Optional[Error]:
@@ -54,25 +54,23 @@ def check_access(req: HttpRequest) -> Optional[Error]:
     member_id = UUID(req.headers["x-ms-client-principal-id"])
 
     try:
-        if Testing:
-            result = is_member_of_test(rule.allowed_groups_ids, member_id)
-        else:
-            result = is_member_of(rule.allowed_groups_ids, member_id)
+        result = membership_checker.is_member(rule.allowed_groups_ids, member_id)
+        if not result:
+            logging.error(
+                "unauthorized access: %s is not authorized to access in %s",
+                member_id,
+                req.url,
+            )
+            return Error(
+                code=ErrorCode.UNAUTHORIZED,
+                errors=["not approved to use this instance of onefuzz"],
+            )
     except Exception as e:
         return Error(
             code=ErrorCode.UNAUTHORIZED,
             errors=["unable to interact with graph", str(e)],
         )
-    if not result:
-        logging.error(
-            "unauthorized access: %s is not authorized to access in %s",
-            member_id,
-            req.url,
-        )
-        return Error(
-            code=ErrorCode.UNAUTHORIZED,
-            errors=["not approved to use this instance of onefuzz"],
-        )
+
     return None
 
 
