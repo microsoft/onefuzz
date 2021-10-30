@@ -1,7 +1,7 @@
 import unittest
 import uuid
 
-from __app__.onefuzzlib.request_access import RequestAccess, RuleDefinition
+from __app__.onefuzzlib.request_access import RequestAccess, ApiAccessRule
 
 
 class TestRequestAccess(unittest.TestCase):
@@ -11,7 +11,7 @@ class TestRequestAccess(unittest.TestCase):
 
         request_access = RequestAccess.build(
             [
-                RuleDefinition(
+                ApiAccessRule(
                     methods=["get"],
                     endpoint="a/b/c",
                     allowed_groups=[guid1],
@@ -32,7 +32,7 @@ class TestRequestAccess(unittest.TestCase):
 
         request_access = RequestAccess.build(
             [
-                RuleDefinition(
+                ApiAccessRule(
                     methods=["get"],
                     endpoint="b/*/c",
                     allowed_groups=[guid1],
@@ -51,12 +51,12 @@ class TestRequestAccess(unittest.TestCase):
         try:
             RequestAccess.build(
                 [
-                    RuleDefinition(
+                    ApiAccessRule(
                         methods=["get"],
                         endpoint="a/b/c",
                         allowed_groups=[guid1],
                     ),
-                    RuleDefinition(
+                    ApiAccessRule(
                         methods=["get"],
                         endpoint="a/b/c",
                         allowed_groups=[],
@@ -75,12 +75,12 @@ class TestRequestAccess(unittest.TestCase):
 
         request_access = RequestAccess.build(
             [
-                RuleDefinition(
+                ApiAccessRule(
                     methods=["get"],
                     endpoint="a/*/c",
                     allowed_groups=[guid1],
                 ),
-                RuleDefinition(
+                ApiAccessRule(
                     methods=["get"],
                     endpoint="a/b/c",
                     allowed_groups=[guid2],
@@ -106,17 +106,17 @@ class TestRequestAccess(unittest.TestCase):
 
         request_access = RequestAccess.build(
             [
-                RuleDefinition(
+                ApiAccessRule(
                     methods=["get"],
                     endpoint="a/b/c",
                     allowed_groups=[guid1],
                 ),
-                RuleDefinition(
+                ApiAccessRule(
                     methods=["get"],
                     endpoint="f/*/c",
                     allowed_groups=[guid2],
                 ),
-                RuleDefinition(
+                ApiAccessRule(
                     methods=["post"],
                     endpoint="a/b",
                     allowed_groups=[guid3],
@@ -146,12 +146,12 @@ class TestRequestAccess(unittest.TestCase):
 
         request_access = RequestAccess.build(
             [
-                RuleDefinition(
+                ApiAccessRule(
                     methods=["get"],
                     endpoint="a/b/c",
                     allowed_groups=[guid1],
                 ),
-                RuleDefinition(
+                ApiAccessRule(
                     methods=["get"],
                     endpoint="a/b/c/d",
                     allowed_groups=[guid2],

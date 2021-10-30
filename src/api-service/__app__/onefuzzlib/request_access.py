@@ -1,13 +1,8 @@
 from typing import Dict, List
 from uuid import UUID
 
+from onefuzztypes.models import ApiAccessRule
 from pydantic import BaseModel, parse_raw_as
-
-
-class RuleDefinition(BaseModel):
-    methods: List[str]
-    endpoint: str
-    allowed_groups: List[UUID]
 
 
 class RequestAccess:
@@ -98,11 +93,11 @@ class RequestAccess:
 
     @classmethod
     def parse_rules(cls, rules_data: str) -> "RequestAccess":
-        rules = parse_raw_as(List[RuleDefinition], rules_data)
+        rules = parse_raw_as(List[ApiAccessRule], rules_data)
         return cls.build(rules)
 
     @classmethod
-    def build(cls, rules: List[RuleDefinition]) -> "RequestAccess":
+    def build(cls, rules: List[ApiAccessRule]) -> "RequestAccess":
         request_access = RequestAccess()
         for rule in rules:
             request_access.__add_url__(

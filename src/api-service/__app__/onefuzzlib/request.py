@@ -19,6 +19,7 @@ from pydantic import BaseModel  # noqa: F401
 from pydantic import ValidationError
 
 from .azure.creds import create_group_membership_checker
+from .config import InstanceConfig
 from .orm import ModelMixin
 from .request_access import RequestAccess
 
@@ -31,12 +32,11 @@ if TYPE_CHECKING:
 
 @cached
 def get_rules() -> Optional[RequestAccess]:
-    # todo: move to instancewide configuration
-    rules_data = os.environ.get("ONEFUZZ_AAD_GROUP_RULES")
-    if rules_data is None:
+    config = InstanceConfig.fetch()
+    if config.api_access_rules:
+        return RequestAccess.build(config.api_access_rules)
+    else:
         return None
-
-    return RequestAccess.parse_rules(rules_data)
 
 
 membership_checker = create_group_membership_checker()

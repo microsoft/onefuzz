@@ -831,6 +831,11 @@ class AzureVmExtensionConfig(BaseModel):
     geneva: Optional[GenevaExtensionConfig]
 
 
+class ApiAccessRule(BaseModel):
+    methods: List[str]
+    endpoint: str
+    allowed_groups: List[UUID]
+
 class InstanceConfig(BaseModel):
     # initial set of admins can only be set during deployment.
     # if admins are set, only admins can update instance configs.
@@ -843,6 +848,7 @@ class InstanceConfig(BaseModel):
     network_config: NetworkConfig = Field(default_factory=NetworkConfig)
     extensions: Optional[AzureVmExtensionConfig]
     proxy_vm_sku: str = Field(default="Standard_B2s")
+    api_access_rules: Optional[List[ApiAccessRule]] = None
 
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:
