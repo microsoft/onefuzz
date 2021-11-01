@@ -2,7 +2,7 @@ from typing import Dict, List
 from uuid import UUID
 
 from onefuzztypes.models import ApiAccessRule
-from pydantic import BaseModel, parse_raw_as
+from pydantic import parse_raw_as
 
 
 class RuleConflictError(Exception):
