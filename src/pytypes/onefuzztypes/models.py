@@ -836,6 +836,7 @@ class ApiAccessRule(BaseModel):
     endpoint: str
     allowed_groups: List[UUID]
 
+
 class InstanceConfig(BaseModel):
     # initial set of admins can only be set during deployment.
     # if admins are set, only admins can update instance configs.
