@@ -18,7 +18,6 @@ logger = logging.getLogger("deploy")
 
 
 class InstanceConfigClient:
-
     table_service: TableService
     resource_group: str
 
@@ -65,7 +64,7 @@ class NetworkSecurityConfig:
             raise Exception(
                 "Empty Configuration File Provided. Please Provide Valid Config."
             )
-        if None in config.keys() or "proxy_nsg_config" not in config.keys():
+        if "proxy_nsg_config" not in config:
             raise Exception(
                 "proxy_nsg_config not provided as valid key. Please Provide Valid Config."
             )
@@ -74,14 +73,13 @@ class NetworkSecurityConfig:
             raise Exception(
                 "Inner Configuration is not a Dictionary. Please provide Valid Config."
             )
-        if len(proxy_config.keys()) == 0:
+        if len(proxy_config) == 0:
             raise Exception(
                 "Empty Inner Configuration File Provided. Please Provide Valid Config."
             )
         if (
-            None in proxy_config.keys()
-            or "allowed_ips" not in proxy_config.keys()
-            or "allowed_service_tags" not in proxy_config.keys()
+            "allowed_ips" not in proxy_config
+            or "allowed_service_tags" not in proxy_config
         ):
             raise Exception(
                 "allowed_ips and allowed_service_tags not provided. Please Provide Valid Config."
@@ -111,7 +109,6 @@ class NetworkSecurityConfig:
 
 
 class NsgRule:
-
     rule: str
     is_tag: bool
 
@@ -197,7 +194,7 @@ def parse_rules(proxy_config: NetworkSecurityConfig) -> List[NsgRule]:
             nsg_rules.append(nsg_rule)
         except Exception:
             raise ValueError(
-                "One or more input ips was invalid: %s. Please enter a comma-separted list of valid sources.",
+                "One or more input ips was invalid: %s. Please enter a comma-separated list of valid sources.",
                 rule,
             )
     for rule in allowed_service_tags:
@@ -206,7 +203,7 @@ def parse_rules(proxy_config: NetworkSecurityConfig) -> List[NsgRule]:
             nsg_rules.append(nsg_rule)
         except Exception:
             raise ValueError(
-                "One or more input tags was invalid: %s. Please enter a comma-separted list of valid sources.",
+                "One or more input tags was invalid: %s. Please enter a comma-separated list of valid sources.",
                 rule,
             )
     return nsg_rules
