@@ -18,7 +18,6 @@ logger = logging.getLogger("deploy")
 
 
 class InstanceConfigClient:
-
     table_service: TableService
     resource_group: str
 
@@ -111,7 +110,6 @@ class NetworkSecurityConfig:
 
 
 class NsgRule:
-
     rule: str
     is_tag: bool
 
@@ -197,7 +195,7 @@ def parse_rules(proxy_config: NetworkSecurityConfig) -> List[NsgRule]:
             nsg_rules.append(nsg_rule)
         except Exception:
             raise ValueError(
-                "One or more input ips was invalid: %s. Please enter a comma-separted list of valid sources.",
+                "One or more input ips was invalid: %s. Please enter a comma-separated list of valid sources.",
                 rule,
             )
     for rule in allowed_service_tags:
@@ -206,7 +204,7 @@ def parse_rules(proxy_config: NetworkSecurityConfig) -> List[NsgRule]:
             nsg_rules.append(nsg_rule)
         except Exception:
             raise ValueError(
-                "One or more input tags was invalid: %s. Please enter a comma-separted list of valid sources.",
+                "One or more input tags was invalid: %s. Please enter a comma-separated list of valid sources.",
                 rule,
             )
     return nsg_rules
