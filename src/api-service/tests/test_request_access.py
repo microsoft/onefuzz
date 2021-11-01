@@ -1,11 +1,9 @@
 import unittest
 import uuid
 
-from __app__.onefuzzlib.request_access import (
-    ApiAccessRule,
-    RequestAccess,
-    RuleConflictError,
-)
+from onefuzztypes.models import ApiAccessRule
+
+from __app__.onefuzzlib.request_access import RequestAccess, RuleConflictError
 
 
 class TestRequestAccess(unittest.TestCase):
