@@ -4,15 +4,12 @@
 # Licensed under the MIT License.
 
 import unittest
-import sys
-from typing import List
-
-from pydantic import BaseModel
+from typing import Any, List
 
 from deploylib.configuration import NetworkSecurityConfig
 
 
-class TestNetworkSecurityConfig(BaseModel):
+class TestNetworkSecurityConfig:
     allowed_ips: List[str]
     allowed_service_tags: List[str]
 
@@ -21,7 +18,7 @@ class DeployTests(unittest.TestCase):
     def test_config(self) -> None:
         ## Test Invalid Configs
         #  Test Dictionary
-        invalid_config = ""
+        invalid_config: Any = ""
         with self.assertRaises(Exception):
             NetworkSecurityConfig(invalid_config)
         #  Test Empty Dic
@@ -91,4 +88,3 @@ class DeployTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
