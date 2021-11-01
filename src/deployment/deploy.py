@@ -45,16 +45,18 @@ from azure.storage.blob import (
     ContainerSasPermissions,
     generate_container_sas,
 )
-from configuration import (
+from msrest.serialization import TZ_UTC
+
+from deploylib.configuration import (
     InstanceConfigClient,
+    NetworkSecurityConfig,
     parse_rules,
     update_admins,
     update_allowed_aad_tenants,
     update_nsg,
 )
-from data_migration import migrate
-from msrest.serialization import TZ_UTC
-from registration import (
+from deploylib.data_migration import migrate
+from deploylib.registration import (
     GraphQueryError,
     OnefuzzAppRole,
     add_application_password,
@@ -623,18 +625,18 @@ class Client:
             with open(self.nsg_config, "r") as template_handle:
                 config_template = json.load(template_handle)
 
-            if (
-                not config_template["proxy_nsg_config"]
-                and not config_template["proxy_nsg_config"]["allowed_ips"]
-                and not config_template["proxy_nsg_config"]["allowed_service_tags"]
-            ):
+            try:
+                config = NetworkSecurityConfig(config_template)
+                rules = parse_rules(config)
+            except Exception as ex:
+                logging.info(
+                    "An Exception was encountered while parsing nsg_config file: %s", ex
+                )
                 raise Exception(
                     "proxy_nsg_config and sub-values were not properly included in config."
                     + "Please submit a configuration resembling"
                     + " { 'proxy_nsg_config': { 'allowed_ips': [], 'allowed_service_tags': [] } }"
                 )
-            proxy_config = config_template["proxy_nsg_config"]
-            rules = parse_rules(proxy_config)
 
             update_nsg(config_client, rules)
 
