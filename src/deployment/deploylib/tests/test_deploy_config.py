@@ -4,11 +4,12 @@
 # Licensed under the MIT License.
 
 import unittest
+import sys
 from typing import List
 
 from pydantic import BaseModel
 
-from configuration import NetworkSecurityConfig
+from deploylib.configuration import NetworkSecurityConfig
 
 
 class TestNetworkSecurityConfig(BaseModel):
@@ -90,3 +91,4 @@ class DeployTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

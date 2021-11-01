@@ -76,7 +76,7 @@ class NetworkSecurityConfig:
             )
         if len(proxy_config.keys()) == 0:
             raise Exception(
-                "Empty Configuration File Provided. Please Provide Valid Config."
+                "Empty Inner Configuration File Provided. Please Provide Valid Config."
             )
         if (
             None in proxy_config.keys()
@@ -228,7 +228,3 @@ def update_nsg(
             "proxy_nsg_config": json.dumps(nsg_config),
         },
     )
-
-
-if __name__ == "__main__":
-    pass

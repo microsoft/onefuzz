@@ -47,7 +47,7 @@ from azure.storage.blob import (
 )
 from msrest.serialization import TZ_UTC
 
-from configuration import (
+from deploylib.configuration import (
     InstanceConfigClient,
     NetworkSecurityConfig,
     parse_rules,
@@ -55,8 +55,8 @@ from configuration import (
     update_allowed_aad_tenants,
     update_nsg,
 )
-from data_migration import migrate
-from registration import (
+from deploylib.data_migration import migrate
+from deploylib.registration import (
     GraphQueryError,
     OnefuzzAppRole,
     add_application_password,
