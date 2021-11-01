@@ -18,7 +18,7 @@ from onefuzztypes.responses import BaseResponse
 from pydantic import BaseModel  # noqa: F401
 from pydantic import ValidationError
 
-from .azure.creds import create_group_membership_checker
+from .azure.group_membership import create_group_membership_checker
 from .config import InstanceConfig
 from .orm import ModelMixin
 from .request_access import RequestAccess
