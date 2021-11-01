@@ -1,7 +1,11 @@
 import unittest
 import uuid
 
-from __app__.onefuzzlib.request_access import RequestAccess, ApiAccessRule
+from __app__.onefuzzlib.request_access import (
+    ApiAccessRule,
+    RequestAccess,
+    RuleConflictError,
+)
 
 
 class TestRequestAccess(unittest.TestCase):
@@ -65,7 +69,7 @@ class TestRequestAccess(unittest.TestCase):
             )
 
             self.fail("this is expected to fail")
-        except Exception:
+        except RuleConflictError:
             pass
 
     # The most specific rules takes priority over the ones containing a wildcard
@@ -97,8 +101,7 @@ class TestRequestAccess(unittest.TestCase):
         )
 
     # if a path has no specific rule. it inherits from the parents
-    # /a/b/c inherint from a/b
-    # todo test the wildcard behavior
+    # /a/b/c inherit from a/b
     def test_inherit_rule(self) -> None:
         guid1 = uuid.uuid4()
         guid2 = uuid.uuid4()
@@ -124,19 +127,19 @@ class TestRequestAccess(unittest.TestCase):
             ]
         )
 
-        rules = request_access.get_matching_rules("get", "a/b/c/d")
+        rules1 = request_access.get_matching_rules("get", "a/b/c/d")
         self.assertEqual(
-            rules.allowed_groups_ids[0], guid1, "expected to inherit rule of a/b/c"
+            rules1.allowed_groups_ids[0], guid1, "expected to inherit rule of a/b/c"
         )
 
-        rules = request_access.get_matching_rules("get", "f/b/c/d")
+        rules2 = request_access.get_matching_rules("get", "f/b/c/d")
         self.assertEqual(
-            rules.allowed_groups_ids[0], guid2, "expected to inherit rule of f/*/c"
+            rules2.allowed_groups_ids[0], guid2, "expected to inherit rule of f/*/c"
         )
 
-        rules = request_access.get_matching_rules("post", "a/b/c/d")
+        rules3 = request_access.get_matching_rules("post", "a/b/c/d")
         self.assertEqual(
-            rules.allowed_groups_ids[0], guid3, "expected to inherit rule of post a/b"
+            rules3.allowed_groups_ids[0], guid3, "expected to inherit rule of post a/b"
         )
 
     # the lowest level rule override the parent rules
@@ -159,12 +162,12 @@ class TestRequestAccess(unittest.TestCase):
             ]
         )
 
-        rules = request_access.get_matching_rules("get", "a/b/c")
+        rules1 = request_access.get_matching_rules("get", "a/b/c")
         self.assertEqual(
-            rules.allowed_groups_ids[0], guid1, "expected to inherit rule of a/b/c"
+            rules1.allowed_groups_ids[0], guid1, "expected to inherit rule of a/b/c"
         )
 
-        rules = request_access.get_matching_rules("get", "a/b/c/d")
+        rules2 = request_access.get_matching_rules("get", "a/b/c/d")
         self.assertEqual(
-            rules.allowed_groups_ids[0], guid2, "expected to inherit rule of a/b/c/d"
+            rules2.allowed_groups_ids[0], guid2, "expected to inherit rule of a/b/c/d"
         )

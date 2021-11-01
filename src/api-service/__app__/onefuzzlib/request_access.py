@@ -5,6 +5,12 @@ from onefuzztypes.models import ApiAccessRule
 from pydantic import BaseModel, parse_raw_as
 
 
+class RuleConflictError(Exception):
+    def __init__(self, message: str) -> None:
+        super(RuleConflictError, self).__init__(message)
+        self.message = message
+
+
 class RequestAccess:
     """
     Stores the rules associated with a the request paths
@@ -54,7 +60,7 @@ class RequestAccess:
         if current_segment_index == len(segments):
             for method in methods:
                 if method in current_node.rules:
-                    raise Exception(f"Conflicting rules on {method} {path}")
+                    raise RuleConflictError(f"Conflicting rules on {method} {path}")
 
         while current_segment_index < len(segments):
             current_segment = segments[current_segment_index]
