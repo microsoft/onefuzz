@@ -9,6 +9,25 @@ from __app__.onefuzzlib.request_access import (
 
 
 class TestRequestAccess(unittest.TestCase):
+    def test_empty(self) -> None:
+        request_access1 = RequestAccess.build([])
+        rules1 = request_access1.get_matching_rules("get", "a/b/c")
+
+        self.assertEqual(len(rules1.allowed_groups_ids), 0, "expected nothing")
+
+        guid2 = uuid.uuid4()
+        request_access1 = RequestAccess.build(
+            [
+                ApiAccessRule(
+                    methods=["get"],
+                    endpoint="a/b/c",
+                    allowed_groups=[guid2],
+                )
+            ]
+        )
+        rules1 = request_access1.get_matching_rules("get", "")
+        self.assertEqual(len(rules1.allowed_groups_ids), 0, "expected nothing")
+
     def test_exact_match(self) -> None:
 
         guid1 = uuid.uuid4()
