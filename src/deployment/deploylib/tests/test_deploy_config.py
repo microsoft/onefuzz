@@ -59,7 +59,7 @@ class DeployTests(unittest.TestCase):
 
         ## Test Valid Configs
         #  Test Empty Lists
-        valid_config = {
+        valid_config: Any = {
             "proxy_nsg_config": {"allowed_ips": [], "allowed_service_tags": []}
         }
         NetworkSecurityConfig(valid_config)
