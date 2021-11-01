@@ -18,7 +18,6 @@ logger = logging.getLogger("deploy")
 
 
 class InstanceConfigClient:
-
     table_service: TableService
     resource_group: str
 
