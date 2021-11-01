@@ -9,11 +9,6 @@ from typing import Any, List
 from deploylib.configuration import NetworkSecurityConfig
 
 
-class TestNetworkSecurityConfig:
-    allowed_ips: List[str]
-    allowed_service_tags: List[str]
-
-
 class DeployTests(unittest.TestCase):
     def test_config(self) -> None:
         ## Test Invalid Configs

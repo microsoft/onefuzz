@@ -5,7 +5,7 @@
 
 import logging
 import os
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, Optional, Union
 from uuid import UUID
 
 from azure.core.exceptions import ResourceNotFoundError
@@ -108,8 +108,8 @@ def create_public_nic(
         return None
 
     if nsg:
-        subnet = cast(Subnet, network.get_subnet())
-        if not subnet.network_security_group:
+        subnet = network.get_subnet()
+        if isinstance(subnet, Subnet) and not subnet.network_security_group:
             result = nsg.associate_subnet(network.get_vnet(), subnet)
             if isinstance(result, Error):
                 return result

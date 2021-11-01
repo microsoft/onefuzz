@@ -39,7 +39,7 @@ def get_nsg(name: str) -> Optional[NetworkSecurityGroup]:
         nsg = network_client.network_security_groups.get(resource_group, name)
         return cast(NetworkSecurityGroup, nsg)
     except (ResourceNotFoundError, CloudError) as err:
-        logging.debug("nsg %s does not exist: %s", name, err)
+        logging.error("nsg %s does not exist: %s", name, err)
         return None
 
 
@@ -102,15 +102,19 @@ def update_nsg(nsg: NetworkSecurityGroup) -> Union[None, Error]:
     return None
 
 
+# Return True if NSG is created using OneFuzz naming convention.
+# Therefore NSG belongs to OneFuzz.
 def ok_to_delete(active_regions: Set[Region], nsg_region: str, nsg_name: str) -> bool:
     return nsg_region not in active_regions and nsg_region == nsg_name
 
 
-def is_one_fuzz_nsg(nsg_region: str, nsg_name: str) -> bool:
+def is_onefuzz_nsg(nsg_region: str, nsg_name: str) -> bool:
     return nsg_region == nsg_name
 
 
-def delete_nsg(name: str) -> bool:
+# Returns True if deletion completed (thus resource not found) or successfully started.
+# Returns False if failed to start deletion.
+def start_delete_nsg(name: str) -> bool:
     # NSG can be only deleted if no other resource is associated with it
     resource_group = get_base_resource_group()
 
@@ -221,6 +225,9 @@ def associate_nic(name: str, nic: NetworkInterface) -> Union[None, Error]:
         )
 
     if nic.network_security_group and nic.network_security_group.id == nsg.id:
+        logging.info(
+            "NIC %s and NSG %s already associated, not updating", nic.name, name
+        )
         return None
 
     logging.info("associating nic %s with nsg: %s %s", nic.name, resource_group, name)
@@ -331,8 +338,10 @@ def associate_subnet(
             ],
         )
 
-    #  this is noop, since correct NSG is already assigned
     if subnet.network_security_group and subnet.network_security_group.id == nsg.id:
+        logging.info(
+            "Subnet %s and NSG %s already associated, not updating", subnet.name, name
+        )
         return None
 
     logging.info(
@@ -446,8 +455,8 @@ class NSG(BaseModel):
 
         return create_nsg(self.name, self.region)
 
-    def delete(self) -> bool:
-        return delete_nsg(self.name)
+    def start_delete(self) -> bool:
+        return start_delete_nsg(self.name)
 
     def get(self) -> Optional[NetworkSecurityGroup]:
         return get_nsg(self.name)
