@@ -7,6 +7,7 @@ use backoff::{self, future::retry_notify, ExponentialBackoff};
 use std::{
     ffi::{OsStr, OsString},
     fmt,
+    fs::Metadata,
     path::Path,
     process::Stdio,
     sync::atomic::{AtomicUsize, Ordering},
@@ -130,6 +131,42 @@ fn should_always_retry(err: &anyhow::Error) -> bool {
     false
 }
 
+fn file_change_detected(
+    file: &OsStr,
+    pre_copy: Result<Metadata, std::io::Error>,
+    post_copy: Result<Metadata, std::io::Error>,
+) -> bool {
+    match (pre_copy, post_copy) {
+        (Ok(pre_meta), Ok(post_meta)) => {
+            let pre_len = pre_meta.len();
+            let post_len = post_meta.len();
+            if pre_meta.len() != post_meta.len() {
+                info!(
+                    "File length changed from {} to {} for file {:?}",
+                    pre_len, post_len, file
+                );
+                true
+            } else {
+                match (pre_meta.modified(), post_meta.modified()) {
+                    (Ok(pre_modified), Ok(post_modified)) => {
+                        if pre_modified != post_modified {
+                            info!(
+                                "File modified timestamp changed from {:?} to {:?} for file {:?}",
+                                pre_modified, post_modified, file
+                            );
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                    (_, _) => false,
+                }
+            }
+        }
+        (_, _) => false,
+    }
+}
+
 async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
     let attempt_counter = AtomicUsize::new(0);
     let failure_counter = AtomicUsize::new(0);
@@ -137,6 +174,7 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
     let operation = || async {
         let attempt_count = attempt_counter.fetch_add(1, Ordering::SeqCst);
         let mut failure_count = failure_counter.load(Ordering::SeqCst);
+        let pre_copy = fs::metadata(src).await;
         let result = az_impl(mode, src, dst, args).await.with_context(|| {
             format!(
                 "azcopy {} attempt {} failed.  (failure {})",
@@ -145,16 +183,24 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
                 failure_count + 1
             )
         });
-        match result {
-            Ok(()) => Ok(()),
-            Err(err) => {
-                if !should_always_retry(&err) {
-                    failure_count = failure_counter.fetch_add(1, Ordering::SeqCst);
-                }
-                if failure_count >= RETRY_COUNT {
-                    Err(backoff::Error::Permanent(err))
-                } else {
-                    Err(backoff::Error::Transient(err))
+        let post_copy = fs::metadata(src).await;
+
+        if file_change_detected(src, pre_copy, post_copy) {
+            Err(backoff::Error::Transient(anyhow::Error::msg(
+                "File change detected, re-trying az-copy",
+            )))
+        } else {
+            match result {
+                Ok(()) => Ok(()),
+                Err(err) => {
+                    if !should_always_retry(&err) {
+                        failure_count = failure_counter.fetch_add(1, Ordering::SeqCst);
+                    }
+                    if failure_count >= RETRY_COUNT {
+                        Err(backoff::Error::Permanent(err))
+                    } else {
+                        Err(backoff::Error::Transient(err))
+                    }
                 }
             }
         }
