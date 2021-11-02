@@ -51,6 +51,7 @@ from data_migration import migrate
 from registration import (
     GraphQueryError,
     OnefuzzAppRole,
+    get_signed_in_user,
     add_application_password,
     add_user,
     assign_instance_app_role,
@@ -288,16 +289,10 @@ class Client:
             logger.info("using existing client application")
             return
 
-        client = get_client_from_cli_profile(
-            SubscriptionClient, subscription_id=self.get_subscription_id()
-        )
-        user = client.signed_in_user.get()
-
         app = get_application(
             display_name=self.application_name,
             subscription_id=self.get_subscription_id(),
         )
-
         app_roles = [
             {
                 "allowedMemberTypes": ["Application"],
@@ -464,14 +459,13 @@ class Client:
 
         (password_id, password) = self.create_password(app["id"])
 
-        if app is not None:
-            logging.info("inside add_users")
-            logging.info(app["id"])
-            users = [user.object_id]
-            if self.admins:
-                users += self.admins
-            for user_id in users:
-                add_user(app["id"], user_id)
+        logger.info("inside add_users")
+        user = get_signed_in_user(self.subscription_id)
+        users = [user["id"]]
+        if self.admins:
+            users += self.admins
+        for user_id in users:
+            add_user(app["id"], user_id)
 
         cli_app = get_application(
             app_id=uuid.UUID(ONEFUZZ_CLI_APP),
