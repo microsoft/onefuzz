@@ -659,6 +659,36 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "definitions": {
+        "ApiAccessRule": {
+            "properties": {
+                "allowed_groups": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Allowed Groups",
+                    "type": "array"
+                },
+                "endpoint": {
+                    "title": "Endpoint",
+                    "type": "string"
+                },
+                "methods": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Methods",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "methods",
+                "endpoint",
+                "allowed_groups"
+            ],
+            "title": "ApiAccessRule",
+            "type": "object"
+        },
         "AzureMonitorExtensionConfig": {
             "properties": {
                 "config_version": {
@@ -751,6 +781,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                         "type": "string"
                     },
                     "title": "Allowed Aad Tenants",
+                    "type": "array"
+                },
+                "api_access_rules": {
+                    "items": {
+                        "$ref": "#/definitions/ApiAccessRule"
+                    },
+                    "title": "Api Access Rules",
                     "type": "array"
                 },
                 "extensions": {
@@ -4906,6 +4943,36 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "definitions": {
+        "ApiAccessRule": {
+            "properties": {
+                "allowed_groups": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Allowed Groups",
+                    "type": "array"
+                },
+                "endpoint": {
+                    "title": "Endpoint",
+                    "type": "string"
+                },
+                "methods": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Methods",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "methods",
+                "endpoint",
+                "allowed_groups"
+            ],
+            "title": "ApiAccessRule",
+            "type": "object"
+        },
         "Architecture": {
             "description": "An enumeration.",
             "enum": [
@@ -5827,6 +5894,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                         "type": "string"
                     },
                     "title": "Allowed Aad Tenants",
+                    "type": "array"
+                },
+                "api_access_rules": {
+                    "items": {
+                        "$ref": "#/definitions/ApiAccessRule"
+                    },
+                    "title": "Api Access Rules",
                     "type": "array"
                 },
                 "extensions": {
