@@ -52,7 +52,7 @@ from registration import (
     GraphQueryError,
     OnefuzzAppRole,
     add_application_password,
-    add_users,
+    add_user,
     assign_instance_app_role,
     authorize_application,
     get_application,
@@ -470,7 +470,8 @@ class Client:
             users = [user.object_id]
             if self.admins:
                 users += self.admins
-            add_users(app["id"], user.object_id)
+            for user_id in users:
+                add_user(app["id"], user_id)
 
         cli_app = get_application(
             app_id=uuid.UUID(ONEFUZZ_CLI_APP),
