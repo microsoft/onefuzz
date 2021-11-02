@@ -110,7 +110,7 @@ def is_one_fuzz_nsg(nsg_region: str, nsg_name: str) -> bool:
     return nsg_region == nsg_name
 
 
-def delete_nsg(name: str) -> bool:
+def start_delete_nsg(name: str) -> bool:
     # NSG can be only deleted if no other resource is associated with it
     resource_group = get_base_resource_group()
 
@@ -446,8 +446,8 @@ class NSG(BaseModel):
 
         return create_nsg(self.name, self.region)
 
-    def delete(self) -> bool:
-        return delete_nsg(self.name)
+    def start_delete(self) -> bool:
+        return start_delete_nsg(self.name)
 
     def get(self) -> Optional[NetworkSecurityGroup]:
         return get_nsg(self.name)
