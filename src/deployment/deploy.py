@@ -288,6 +288,11 @@ class Client:
             logger.info("using existing client application")
             return
 
+        client = get_client_from_cli_profile(
+            SubscriptionClient, subscription_id=self.get_subscription_id()
+        )
+        user = client.signed_in_user.get()
+
         app = get_application(
             display_name=self.application_name,
             subscription_id=self.get_subscription_id(),
