@@ -52,6 +52,7 @@ from registration import (
     GraphQueryError,
     OnefuzzAppRole,
     add_application_password,
+    add_user,
     assign_instance_app_role,
     authorize_application,
     get_application,
@@ -363,7 +364,7 @@ class Client:
 
             service_principal_params = {
                 "accountEnabled": True,
-                "appRoleAssignmentRequired": False,
+                "appRoleAssignmentRequired": True,
                 "servicePrincipalType": "Application",
                 "appId": app["appId"],
             }
@@ -397,7 +398,7 @@ class Client:
                 else:
                     raise error
 
-            try_sp_create()
+            sp = try_sp_create()
 
         else:
             existing_role_values = [app_role["value"] for app_role in app["appRoles"]]
@@ -457,6 +458,10 @@ class Client:
             logger.debug("No change to App Registration signInAudence setting")
 
         (password_id, password) = self.create_password(app["id"])
+
+        if sp is not None:
+            logging.info("inside add_user")
+            add_user(sp.object_id, user.object_id)
 
         cli_app = get_application(
             app_id=uuid.UUID(ONEFUZZ_CLI_APP),

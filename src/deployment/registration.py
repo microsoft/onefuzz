@@ -646,6 +646,35 @@ def set_app_audience(
         raise Exception(err_str)
 
 
+def add_user(objectId: str, principalId: str) -> None:
+    # Get principalId by retrieving owner for SP
+    http_body = {
+        "principalId": principalId,
+        "resourceId": objectId,
+        "appRoleId": "00000000-0000-0000-0000-000000000000",
+    }
+    try:
+        query_microsoft_graph(
+            method="POST",
+            resource="users/%s/appRoleAssignments" % principalId,
+            body=http_body,
+        )
+    except GraphQueryError:
+        query = (
+            "az rest --method post --url "
+            "https://graph.microsoft.com/v1.0/users/%s/appRoleAssignments "
+            "--body '%s' --headers \"Content-Type\"=application/json"
+            % (principalId, http_body)
+        )
+        logger.warning(
+            "execute the following query in the azure portal bash shell and "
+            "run deploy.py again : \n%s",
+            query,
+        )
+        err_str = "Unable to add user to SP using Microsoft Graph Query API. \n"
+        raise Exception(err_str)
+
+
 def main() -> None:
     formatter = argparse.ArgumentDefaultsHelpFormatter
 
