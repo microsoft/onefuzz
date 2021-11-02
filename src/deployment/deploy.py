@@ -403,7 +403,7 @@ class Client:
                 else:
                     raise error
 
-            sp = try_sp_create()
+            try_sp_create()
 
         else:
             existing_role_values = [app_role["value"] for app_role in app["appRoles"]]
@@ -464,12 +464,13 @@ class Client:
 
         (password_id, password) = self.create_password(app["id"])
 
-        if sp is not None:
+        if app is not None:
             logging.info("inside add_users")
+            logging.info(app["id"])
             users = [user.object_id]
             if self.admins:
                 users += self.admins
-            add_users(sp.object_id, user.object_id)
+            add_users(app["id"], user.object_id)
 
         cli_app = get_application(
             app_id=uuid.UUID(ONEFUZZ_CLI_APP),
