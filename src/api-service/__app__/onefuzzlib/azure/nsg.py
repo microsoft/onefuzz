@@ -450,13 +450,8 @@ class NSG(BaseModel):
 
         return create_nsg(self.name, self.region)
 
-<<<<<<< HEAD
-    def delete(self) -> bool:
-        return delete_nsg(self.name)
-=======
     def start_delete(self) -> bool:
         return start_delete_nsg(self.name)
->>>>>>> 432c943586b3c15e527ea4fc90a51d9dfa1d4f64
 
     def get(self) -> Optional[NetworkSecurityGroup]:
         return get_nsg(self.name)

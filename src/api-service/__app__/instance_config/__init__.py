@@ -14,7 +14,6 @@ from ..onefuzzlib.azure.nsg import is_onefuzz_nsg, list_nsgs, set_allowed
 from ..onefuzzlib.config import InstanceConfig
 from ..onefuzzlib.endpoint_authorization import call_if_user, can_modify_config
 from ..onefuzzlib.request import not_ok, ok, parse_request
-from ..onefuzzlib.workers.scalesets import Scaleset
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
