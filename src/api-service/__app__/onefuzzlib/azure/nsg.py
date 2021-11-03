@@ -102,15 +102,19 @@ def update_nsg(nsg: NetworkSecurityGroup) -> Union[None, Error]:
     return None
 
 
+# Return True if NSG is created using OneFuzz naming convention.
+# Therefore NSG belongs to OneFuzz.
 def ok_to_delete(active_regions: Set[Region], nsg_region: str, nsg_name: str) -> bool:
     return nsg_region not in active_regions and nsg_region == nsg_name
 
 
-def is_one_fuzz_nsg(nsg_region: str, nsg_name: str) -> bool:
+def is_onefuzz_nsg(nsg_region: str, nsg_name: str) -> bool:
     return nsg_region == nsg_name
 
 
-def delete_nsg(name: str) -> bool:
+# Returns True if deletion completed (thus resource not found) or successfully started.
+# Returns False if failed to start deletion.
+def start_delete_nsg(name: str) -> bool:
     # NSG can be only deleted if no other resource is associated with it
     resource_group = get_base_resource_group()
 
@@ -446,8 +450,13 @@ class NSG(BaseModel):
 
         return create_nsg(self.name, self.region)
 
+<<<<<<< HEAD
     def delete(self) -> bool:
         return delete_nsg(self.name)
+=======
+    def start_delete(self) -> bool:
+        return start_delete_nsg(self.name)
+>>>>>>> 432c943586b3c15e527ea4fc90a51d9dfa1d4f64
 
     def get(self) -> Optional[NetworkSecurityGroup]:
         return get_nsg(self.name)

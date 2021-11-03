@@ -21,6 +21,7 @@ pub mod code;
 pub mod demangle;
 pub mod report;
 pub mod sancov;
+pub mod source;
 
 #[cfg(target_os = "linux")]
 pub mod disasm;

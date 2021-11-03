@@ -46,8 +46,8 @@ def get_subnet(
 
 def get_subnet_id(resource_group: str, name: str, subnet_name: str) -> Optional[str]:
     subnet = get_subnet(resource_group, name, subnet_name)
-    if subnet:
-        return cast(str, subnet.id)
+    if subnet and isinstance(subnet.id, str):
+        return subnet.id
     else:
         return None
 

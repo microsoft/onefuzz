@@ -10,7 +10,7 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.requests import InstanceConfigUpdate
 
-from ..onefuzzlib.azure.nsg import is_one_fuzz_nsg, list_nsgs, set_allowed
+from ..onefuzzlib.azure.nsg import is_onefuzz_nsg, list_nsgs, set_allowed
 from ..onefuzzlib.config import InstanceConfig
 from ..onefuzzlib.endpoint_authorization import call_if_user, can_modify_config
 from ..onefuzzlib.request import not_ok, ok, parse_request
@@ -53,7 +53,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             logging.info(
                 "Checking if nsg: %s (%s) owned by OneFuzz" % (nsg.location, nsg.name)
             )
-            if is_one_fuzz_nsg(nsg.location, nsg.name):
+            if is_onefuzz_nsg(nsg.location, nsg.name):
                 result = set_allowed(nsg.location, request.config.proxy_nsg_config)
                 if isinstance(result, Error):
                     return not_ok(
