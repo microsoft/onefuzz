@@ -12,10 +12,10 @@ from onefuzztypes.models import Error
 from ..onefuzzlib.azure.network import Network
 from ..onefuzzlib.azure.nsg import (
     associate_subnet,
-    delete_nsg,
     get_nsg,
     list_nsgs,
     ok_to_delete,
+    start_delete_nsg,
 )
 from ..onefuzzlib.orm import process_state_updates
 from ..onefuzzlib.proxy import PROXY_LOG_PREFIX, Proxy
@@ -82,4 +82,4 @@ def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
     for nsg in list_nsgs():
         if ok_to_delete(regions, nsg.location, nsg.name):
             if nsg.network_interfaces is None and nsg.subnets is None:
-                delete_nsg(nsg.name)
+                start_delete_nsg(nsg.name)

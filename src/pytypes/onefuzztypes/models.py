@@ -836,6 +836,12 @@ class AzureVmExtensionConfig(BaseModel):
     geneva: Optional[GenevaExtensionConfig]
 
 
+class ApiAccessRule(BaseModel):
+    methods: List[str]
+    endpoint: str
+    allowed_groups: List[UUID]
+
+
 class InstanceConfig(BaseModel):
     # initial set of admins can only be set during deployment.
     # if admins are set, only admins can update instance configs.
