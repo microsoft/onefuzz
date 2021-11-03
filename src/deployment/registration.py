@@ -645,42 +645,63 @@ def set_app_audience(
         )
         raise Exception(err_str)
 
-def get_signed_in_user(subscriptionId: str) -> Optional[Any]:
+
+def get_signed_in_user(subscription_id: str) -> Optional[Any]:
     # Get principalId by retrieving owner for SP
     try:
         app = query_microsoft_graph(
             method="GET",
             resource="me/",
-            subscription=subscriptionId,
+            subscription=subscription_id,
         )
         return app
-        
+
     except GraphQueryError:
-        # query = (
-        #     "az rest --method post --url "
-        #     "https://graph.microsoft.com/v1.0/users/%s/appRoleAssignments "
-        #     "--body '%s' --headers \"Content-Type\"=application/json"
-        #     % (principalId, http_body)
-        # )
-        # logger.warning(
-        #     "execute the following query in the azure portal bash shell and "
-        #     "run deploy.py again : \n%s",
-        #     query,
-        # )
-        err_str = "Unable to add user to SP using Microsoft Graph Query API. \n"
+        query = (
+            "az rest --method post --url "
+            "https://graph.microsoft.com/v1.0/me "
+            '--headers "Content-Type"=application/json'
+        )
+        logger.warning(
+            "execute the following query in the azure portal bash shell and "
+            "run deploy.py again : \n%s",
+            query,
+        )
+        err_str = "Unable to retrieve signed-in user via Microsoft Graph Query API. \n"
         raise Exception(err_str)
 
-def add_user(objectId: str, principalId: str) -> None:
+
+def get_service_principal(app_id: str, subscription_id: str) -> Optional[Any]:
+    try:
+        service_principals = query_microsoft_graph_list(
+            method="GET",
+            resource="servicePrincipals",
+            params={"$filter": f"appId eq '{app_id}'"},
+            subscription=subscription_id,
+        )
+        if len(service_principals) != 0:
+            return service_principals[0]
+        else:
+            raise GraphQueryError(
+                "Could not retrieve any service principals for App Id: %s", app_id
+            )
+
+    except GraphQueryError:
+        err_str = "Unable to add retrieve SP using Microsoft Graph Query API. \n"
+        raise Exception(err_str)
+
+
+def add_user(object_id: str, principal_id: str) -> None:
     # Get principalId by retrieving owner for SP
     http_body = {
-        "principalId": principalId,
-        "resourceId": objectId,
+        "principalId": principal_id,
+        "resourceId": object_id,
         "appRoleId": "00000000-0000-0000-0000-000000000000",
     }
     try:
         query_microsoft_graph(
             method="POST",
-            resource="users/%s/appRoleAssignments" % principalId,
+            resource="users/%s/appRoleAssignments" % principal_id,
             body=http_body,
         )
     except GraphQueryError:
@@ -688,7 +709,7 @@ def add_user(objectId: str, principalId: str) -> None:
             "az rest --method post --url "
             "https://graph.microsoft.com/v1.0/users/%s/appRoleAssignments "
             "--body '%s' --headers \"Content-Type\"=application/json"
-            % (principalId, http_body)
+            % (principal_id, http_body)
         )
         logger.warning(
             "execute the following query in the azure portal bash shell and "

@@ -51,12 +51,13 @@ from data_migration import migrate
 from registration import (
     GraphQueryError,
     OnefuzzAppRole,
-    get_signed_in_user,
     add_application_password,
     add_user,
     assign_instance_app_role,
     authorize_application,
     get_application,
+    get_service_principal,
+    get_signed_in_user,
     get_tenant_id,
     query_microsoft_graph,
     register_application,
@@ -373,13 +374,12 @@ class Client:
                 error: Optional[Exception] = None
                 for _ in range(10):
                     try:
-                        sp = query_microsoft_graph(
+                        query_microsoft_graph(
                             method="POST",
                             resource="servicePrincipals",
                             body=service_principal_params,
                             subscription=self.get_subscription_id(),
                         )
-                        logger.info(sp)
                     except GraphQueryError as err:
                         # work around timing issue when creating service principal
                         # https://github.com/Azure/azure-cli/issues/14767
@@ -459,15 +459,14 @@ class Client:
 
         (password_id, password) = self.create_password(app["id"])
 
-        logger.info("inside add_users")
         user = get_signed_in_user(self.subscription_id)
+        sp = get_service_principal(app["appId"], self.subscription_id)
+
         users = [user["id"]]
         if self.admins:
             users += self.admins
         for user_id in users:
-            #need object id of SP 
-            # logger.info(app)
-            add_user(app["id"], user_id)
+            add_user(sp["id"], user_id)
 
         cli_app = get_application(
             app_id=uuid.UUID(ONEFUZZ_CLI_APP),
