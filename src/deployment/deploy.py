@@ -612,14 +612,15 @@ class Client:
             subscription_id=self.get_subscription_id(),
         )
         user = get_signed_in_user(self.subscription_id)
-        sp = get_service_principal(app["appId"], self.subscription_id)
+        if app:
+            sp = get_service_principal(app["appId"], self.subscription_id)
 
-        users = [user["id"]]
-        if self.admins:
-            admins_str = [str(x) for x in self.admins]
-            users += admins_str
-        for user_id in users:
-            add_user(sp["id"], user_id)
+            users = [user["id"]]
+            if self.admins:
+                admins_str = [str(x) for x in self.admins]
+                users += admins_str
+            for user_id in users:
+                add_user(sp["id"], user_id)
 
     def apply_migrations(self) -> None:
         logger.info("applying database migrations")
