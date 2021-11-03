@@ -373,13 +373,13 @@ class Client:
                 error: Optional[Exception] = None
                 for _ in range(10):
                     try:
-                        query_microsoft_graph(
+                        sp = query_microsoft_graph(
                             method="POST",
                             resource="servicePrincipals",
                             body=service_principal_params,
                             subscription=self.get_subscription_id(),
                         )
-                        return
+                        logger.info(sp)
                     except GraphQueryError as err:
                         # work around timing issue when creating service principal
                         # https://github.com/Azure/azure-cli/issues/14767
@@ -465,6 +465,8 @@ class Client:
         if self.admins:
             users += self.admins
         for user_id in users:
+            #need object id of SP 
+            # logger.info(app)
             add_user(app["id"], user_id)
 
         cli_app = get_application(
