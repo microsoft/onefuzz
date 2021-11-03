@@ -459,15 +459,15 @@ class Client:
 
         (password_id, password) = self.create_password(app["id"])
 
-        user = get_signed_in_user(self.subscription_id)
-        sp = get_service_principal(app["appId"], self.subscription_id)
+        # user = get_signed_in_user(self.subscription_id)
+        # sp = get_service_principal(app["appId"], self.subscription_id)
 
-        users = [user["id"]]
-        if self.admins:
-            admins_str = [str(x) for x in self.admins]
-            users += admins_str
-        for user_id in users:
-            add_user(sp["id"], user_id)
+        # users = [user["id"]]
+        # if self.admins:
+        #     admins_str = [str(x) for x in self.admins]
+        #     users += admins_str
+        # for user_id in users:
+        #     add_user(sp["id"], user_id)
 
         cli_app = get_application(
             app_id=uuid.UUID(ONEFUZZ_CLI_APP),
@@ -604,6 +604,22 @@ class Client:
             self.get_subscription_id(),
             OnefuzzAppRole.ManagedNode,
         )
+
+    def assign_user_access(self) -> None:
+        logger.info("assinging user access to service principal")
+        app = get_application(
+            display_name=self.application_name,
+            subscription_id=self.get_subscription_id(),
+        )
+        user = get_signed_in_user(self.subscription_id)
+        sp = get_service_principal(app["appId"], self.subscription_id)
+
+        users = [user["id"]]
+        if self.admins:
+            admins_str = [str(x) for x in self.admins]
+            users += admins_str
+        for user_id in users:
+            add_user(sp["id"], user_id)
 
     def apply_migrations(self) -> None:
         logger.info("applying database migrations")
@@ -962,6 +978,7 @@ def main() -> None:
         ("rbac", Client.setup_rbac),
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
+        ("assign_user_access", Client.assign_user_access),
     ]
 
     full_deployment_states = rbac_only_states + [
