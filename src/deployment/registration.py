@@ -646,7 +646,7 @@ def set_app_audience(
         raise Exception(err_str)
 
 
-def get_signed_in_user(subscription_id: str) -> Optional[Any]:
+def get_signed_in_user(subscription_id: Optional[str]) -> Any:
     # Get principalId by retrieving owner for SP
     try:
         app = query_microsoft_graph(
@@ -671,7 +671,7 @@ def get_signed_in_user(subscription_id: str) -> Optional[Any]:
         raise Exception(err_str)
 
 
-def get_service_principal(app_id: str, subscription_id: str) -> Optional[Any]:
+def get_service_principal(app_id: str, subscription_id: Optional[str]) -> Any:
     try:
         service_principals = query_microsoft_graph_list(
             method="GET",
@@ -683,7 +683,7 @@ def get_service_principal(app_id: str, subscription_id: str) -> Optional[Any]:
             return service_principals[0]
         else:
             raise GraphQueryError(
-                "Could not retrieve any service principals for App Id: %s", app_id
+                f"Could not retrieve any service principals for App Id: {app_id}", 400
             )
 
     except GraphQueryError:
@@ -704,20 +704,23 @@ def add_user(object_id: str, principal_id: str) -> None:
             resource="users/%s/appRoleAssignments" % principal_id,
             body=http_body,
         )
-    except GraphQueryError:
-        query = (
-            "az rest --method post --url "
-            "https://graph.microsoft.com/v1.0/users/%s/appRoleAssignments "
-            "--body '%s' --headers \"Content-Type\"=application/json"
-            % (principal_id, http_body)
-        )
-        logger.warning(
-            "execute the following query in the azure portal bash shell and "
-            "run deploy.py again : \n%s",
-            query,
-        )
-        err_str = "Unable to add user to SP using Microsoft Graph Query API. \n"
-        raise Exception(err_str)
+    except GraphQueryError as ex:
+        if "Permission being assigned already exists" not in ex.message:
+            query = (
+                "az rest --method post --url "
+                "https://graph.microsoft.com/v1.0/users/%s/appRoleAssignments "
+                "--body '%s' --headers \"Content-Type\"=application/json"
+                % (principal_id, http_body)
+            )
+            logger.warning(
+                "execute the following query in the azure portal bash shell and "
+                "run deploy.py again : \n%s",
+                query,
+            )
+            err_str = "Unable to add user to SP using Microsoft Graph Query API. \n"
+            raise Exception(err_str)
+        else:
+            logger.info("User already assigned to application.")
 
 
 def main() -> None:

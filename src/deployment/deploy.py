@@ -464,7 +464,8 @@ class Client:
 
         users = [user["id"]]
         if self.admins:
-            users += self.admins
+            admins_str = [str(x) for x in self.admins]
+            users += admins_str
         for user_id in users:
             add_user(sp["id"], user_id)
 
