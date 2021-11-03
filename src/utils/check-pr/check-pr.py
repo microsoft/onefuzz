@@ -14,6 +14,7 @@ from typing import Callable, List, Optional, Tuple, TypeVar
 
 import requests
 from github import Github
+from cleanup_ad import delete_current_user_app_registrations
 
 A = TypeVar("A")
 
@@ -245,6 +246,8 @@ class Deployer:
         cmd = ["az", "group", "delete", "-n", self.instance, "--yes", "--no-wait"]
         print(cmd)
         subprocess.call(cmd)
+
+        delete_current_user_app_registrations(self.instance) 
         print("done")
 
     def run(self, *, merge_on_success: bool = False) -> None:

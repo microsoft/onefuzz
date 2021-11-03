@@ -1,1 +1,5 @@
+azure-common~=1.1.25
+msrestazure==0.6.4
 PyGithub==1.54.1
+azure-graphrbac==0.61.1
+azure-cli-core==2.27.2
