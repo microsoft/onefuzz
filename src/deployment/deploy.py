@@ -620,7 +620,7 @@ class Client:
                 try:
                     query_microsoft_graph(
                         method="PATCH",
-                        resource="servicePrincipals",
+                        resource=f"servicePrincipals/{sp['id']}",
                         body=service_principal_params,
                         subscription=self.get_subscription_id(),
                     )
