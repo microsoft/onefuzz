@@ -616,7 +616,7 @@ class Client:
             if not sp["appRoleAssignmentRequired"]:
                 logger.warning(
                     "The Service Principal does not have 'appRoleAssignmentRequired' set to True."
-                    + " This means that any authenticated user can access the principal."
+                    + " This means that any authenticated user can access the service."
                     + " If you are manually upgrading an instance, and want this value set to 'True',"
                     + " you must manually update the setting."
                 )
