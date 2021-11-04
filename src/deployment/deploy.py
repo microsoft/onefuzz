@@ -622,7 +622,7 @@ class Client:
                         method="PATCH",
                         resource=f"servicePrincipals/{sp['id']}",
                         body=service_principal_params,
-                        subscription=self.get_subscription_id(),
+                        subscription=self.subscription_id,
                     )
                 except GraphQueryError as err:
                     if (
@@ -630,7 +630,7 @@ class Client:
                         not in str(err)
                     ):
                         raise err
-                logger.warning("udating service principal failed with an error.")
+                logger.warning(err)
 
             # Assign Roles and Add Users
             roles = [
