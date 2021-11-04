@@ -614,27 +614,18 @@ class Client:
             sp = get_service_principal(app["appId"], self.subscription_id)
             # Update appRoleAssignmentRequired if necessary
             if not sp["appRoleAssignmentRequired"]:
-                service_principal_params = {
-                    "appRoleAssignmentRequired": True,
-                }
-                try:
-                    query_microsoft_graph(
-                        method="PATCH",
-                        resource=f"servicePrincipals/{sp['id']}",
-                        body=service_principal_params,
-                        subscription=self.subscription_id,
-                    )
-                except GraphQueryError as err:
-                    if (
-                        "service principal was not updated with proper appRoleAssignmentRequired value (True)."
-                        not in str(err)
-                    ):
-                        raise err
-                    logger.warning(err)
+                logger.warning(
+                    "The Service Principal does not have 'appRoleAssignmentRequired' set to True."
+                    + " This means that any authenticated user can access the principal."
+                    + " If you are manually upgrading an instance, and want this value set to 'True',"
+                    + " you must manually update the setting."
+                )
 
             # Assign Roles and Add Users
             roles = [
-                x["id"] for x in app["appRoles"] if x["displayName"] == OnefuzzAppRole.UserAssignment.value
+                x["id"]
+                for x in app["appRoles"]
+                if x["displayName"] == OnefuzzAppRole.UserAssignment.value
             ]
             users = [user["id"]]
             if self.admins:
