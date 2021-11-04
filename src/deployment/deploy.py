@@ -312,7 +312,7 @@ class Client:
                 "value": OnefuzzAppRole.ManagedNode.value,
             },
             {
-                "allowedMemberTypes": ["Application"],
+                "allowedMemberTypes": ["User"],
                 "description": "Allows user access from the CLI.",
                 "displayName": OnefuzzAppRole.UserAssignment.value,
                 "id": str(uuid.uuid4()),
@@ -634,7 +634,7 @@ class Client:
 
             # Assign Roles and Add Users
             roles = [
-                x["id"] for x in app["appRoles"] if x["displayName"] == "UserAssignment"
+                x["id"] for x in app["appRoles"] if x["displayName"] == OnefuzzAppRole.UserAssignment.value
             ]
             users = [user["id"]]
             if self.admins:
