@@ -15,6 +15,8 @@ from typing import Callable, List, Optional, Tuple, TypeVar
 import requests
 from github import Github
 
+from cleanup_ad import delete_current_user_app_registrations
+
 A = TypeVar("A")
 
 
@@ -117,7 +119,7 @@ class Downloader:
     ) -> str:
         repo = self.gh.get_repo(repo_name)
         workflow = repo.get_workflow(workflow_name)
-        runs = workflow.get_runs()  # type: ignore
+        runs = workflow.get_runs()
         run = None
         for x in runs:
             if x.head_branch != branch:
@@ -245,6 +247,8 @@ class Deployer:
         cmd = ["az", "group", "delete", "-n", self.instance, "--yes", "--no-wait"]
         print(cmd)
         subprocess.call(cmd)
+
+        delete_current_user_app_registrations(self.instance)
         print("done")
 
     def run(self, *, merge_on_success: bool = False) -> None:
