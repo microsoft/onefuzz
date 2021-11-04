@@ -64,7 +64,7 @@ class NetworkSecurityConfig:
             raise Exception(
                 "Empty Configuration File Provided. Please Provide Valid Config."
             )
-        if "proxy_nsg_config" not in config.keys():
+        if "proxy_nsg_config" not in config:
             raise Exception(
                 "proxy_nsg_config not provided as valid key. Please Provide Valid Config."
             )
@@ -73,13 +73,13 @@ class NetworkSecurityConfig:
             raise Exception(
                 "Inner Configuration is not a Dictionary. Please provide Valid Config."
             )
-        if len(proxy_config.keys()) == 0:
+        if len(proxy_config) == 0:
             raise Exception(
                 "Empty Inner Configuration File Provided. Please Provide Valid Config."
             )
         if (
-            "allowed_ips" not in proxy_config.keys()
-            or "allowed_service_tags" not in proxy_config.keys()
+            "allowed_ips" not in proxy_config
+            or "allowed_service_tags" not in proxy_config
         ):
             raise Exception(
                 "allowed_ips and allowed_service_tags not provided. Please Provide Valid Config."
