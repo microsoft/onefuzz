@@ -119,7 +119,7 @@ class Downloader:
     ) -> str:
         repo = self.gh.get_repo(repo_name)
         workflow = repo.get_workflow(workflow_name)
-        runs = workflow.get_runs()  # type: ignore
+        runs = workflow.get_runs()
         run = None
         for x in runs:
             if x.head_branch != branch:

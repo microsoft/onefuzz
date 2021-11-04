@@ -1,17 +1,21 @@
 #!/usr/bin/env python
+#
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
 
 # IMPORTANT: Same as check-pr.py must be run from a Linux shell
 
 import argparse
 import json
 import subprocess
+from typing import Any
 
 from azure.core.credentials import AccessToken
 from msgraph.core import GraphClient
 
 
 class AzCliMsGraphAuth(object):
-    def get_token(self, *scopes, **kwargs) -> AccessToken:
+    def get_token(self, *scopes: Any, **kwargs: Any) -> AccessToken:
         json_token = subprocess.check_output(
             [
                 "az",
