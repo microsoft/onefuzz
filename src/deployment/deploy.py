@@ -311,6 +311,14 @@ class Client:
                 "isEnabled": True,
                 "value": OnefuzzAppRole.ManagedNode.value,
             },
+            {
+                "allowedMemberTypes": ["Application"],
+                "description": "Allows user access from the CLI.",
+                "displayName": OnefuzzAppRole.UserAssignment.value,
+                "id": str(uuid.uuid4()),
+                "isEnabled": True,
+                "value": OnefuzzAppRole.UserAssignment.value,
+            },
         ]
 
         if not app:
@@ -423,11 +431,10 @@ class Client:
                 # this is a requirement to update the application roles
                 for role in app["appRoles"]:
                     role["isEnabled"] = False
-
                 query_microsoft_graph(
                     method="PATCH",
                     resource=f"applications/{app['id']}",
-                    body={"appRoles": app["AppRoles"]},
+                    body={"appRoles": app["appRoles"]},
                     subscription=self.get_subscription_id(),
                 )
 
@@ -458,16 +465,6 @@ class Client:
             logger.debug("No change to App Registration signInAudence setting")
 
         (password_id, password) = self.create_password(app["id"])
-
-        # user = get_signed_in_user(self.subscription_id)
-        # sp = get_service_principal(app["appId"], self.subscription_id)
-
-        # users = [user["id"]]
-        # if self.admins:
-        #     admins_str = [str(x) for x in self.admins]
-        #     users += admins_str
-        # for user_id in users:
-        #     add_user(sp["id"], user_id)
 
         cli_app = get_application(
             app_id=uuid.UUID(ONEFUZZ_CLI_APP),
@@ -612,15 +609,39 @@ class Client:
             subscription_id=self.get_subscription_id(),
         )
         user = get_signed_in_user(self.subscription_id)
+
         if app:
             sp = get_service_principal(app["appId"], self.subscription_id)
+            # Update appRoleAssignmentRequired if necessary
+            if not sp["appRoleAssignmentRequired"]:
+                service_principal_params = {
+                    "appRoleAssignmentRequired": True,
+                }
+                try:
+                    query_microsoft_graph(
+                        method="POST",
+                        resource="servicePrincipals",
+                        body=service_principal_params,
+                        subscription=self.get_subscription_id(),
+                    )
+                except GraphQueryError as err:
+                    if (
+                        "service principal was not updated with proper appRoleAssignmentRequired value (True)."
+                        not in str(err)
+                    ):
+                        raise err
+                logger.warning("udating service principal failed with an error.")
 
+            # Assign Roles and Add Users
+            roles = [
+                x["id"] for x in app["appRoles"] if x["displayName"] == "UserAssignment"
+            ]
             users = [user["id"]]
             if self.admins:
                 admins_str = [str(x) for x in self.admins]
                 users += admins_str
             for user_id in users:
-                add_user(sp["id"], user_id)
+                add_user(sp["id"], user_id, roles[0])
 
     def apply_migrations(self) -> None:
         logger.info("applying database migrations")

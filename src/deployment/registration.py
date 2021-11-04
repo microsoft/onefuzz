@@ -154,6 +154,7 @@ class ApplicationInfo(NamedTuple):
 class OnefuzzAppRole(Enum):
     ManagedNode = "ManagedNode"
     CliClient = "CliClient"
+    UserAssignment = "UserAssignment"
 
 
 def register_application(
@@ -691,12 +692,13 @@ def get_service_principal(app_id: str, subscription_id: Optional[str]) -> Any:
         raise Exception(err_str)
 
 
-def add_user(object_id: str, principal_id: str) -> None:
+def add_user(object_id: str, principal_id: str, role_id: str) -> None:
     # Get principalId by retrieving owner for SP
+    # need to add users with proper role assignment
     http_body = {
         "principalId": principal_id,
         "resourceId": object_id,
-        "appRoleId": "00000000-0000-0000-0000-000000000000",
+        "appRoleId": role_id,
     }
     try:
         query_microsoft_graph(
