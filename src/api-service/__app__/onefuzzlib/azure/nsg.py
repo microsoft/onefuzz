@@ -39,7 +39,7 @@ def get_nsg(name: str) -> Optional[NetworkSecurityGroup]:
         nsg = network_client.network_security_groups.get(resource_group, name)
         return cast(NetworkSecurityGroup, nsg)
     except (ResourceNotFoundError, CloudError) as err:
-        logging.debug("nsg %s does not exist: %s", name, err)
+        logging.error("nsg %s does not exist: %s", name, err)
         return None
 
 
@@ -225,6 +225,9 @@ def associate_nic(name: str, nic: NetworkInterface) -> Union[None, Error]:
         )
 
     if nic.network_security_group and nic.network_security_group.id == nsg.id:
+        logging.info(
+            "NIC %s and NSG %s already associated, not updating", nic.name, name
+        )
         return None
 
     logging.info("associating nic %s with nsg: %s %s", nic.name, resource_group, name)
@@ -335,8 +338,10 @@ def associate_subnet(
             ],
         )
 
-    #  this is noop, since correct NSG is already assigned
     if subnet.network_security_group and subnet.network_security_group.id == nsg.id:
+        logging.info(
+            "Subnet %s and NSG %s already associated, not updating", subnet.name, name
+        )
         return None
 
     logging.info(
