@@ -615,10 +615,9 @@ class Client:
             # Update appRoleAssignmentRequired if necessary
             if not sp["appRoleAssignmentRequired"]:
                 logger.warning(
-                    "The Service Principal does not have 'appRoleAssignmentRequired' set to True."
-                    + " This means that any authenticated user can access the principal."
-                    + " If you are manually upgrading an instance, and want this value set to 'True',"
-                    + " you must manually update the setting."
+                    "The service is not currently configured to require a role assignment to access it."
+                    + " This means that any authenticated user can access the service."
+                    + " To change this behavior enable 'Assignment Required?' on the service principal in the AAD Portal."
                 )
 
             # Assign Roles and Add Users
