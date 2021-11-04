@@ -1,8 +1,26 @@
 #!/usr/bin/env python
 
+# IMPORTANT: Same as check-pr.py must be run from a Linux shell
+
+import json
+import subprocess
 import argparse
 from azure.common.client_factory import get_client_from_cli_profile
-from azure.graphrbac import GraphRbacManagementClient
+
+from azure.core.credentials import AccessToken
+from azure.identity import ManagedIdentityCredential
+from msgraph.core import GraphClient
+
+
+class AZCliCredThatWorks(object):
+    def get_token(self, *scopes, **kwargs):
+        json_token = subprocess.check_output(
+            ["az", "account", "get-access-token", "--resource-type", "ms-graph", "--output", "json"],
+        )
+        token = json.loads(json_token)
+        self._token = AccessToken(token=f'{token["accessToken"]}', expires_on=token["expiresOn"])
+        return self._token
+
 
 # Cleanup user owned App Registrations by deleting AppRegistrations
 # that have 'contains' string in their name
@@ -10,25 +28,34 @@ def delete_current_user_app_registrations(contains) :
     if not contains:
         raise Exception("Contains string must be set to a valid string")
 
-    client = get_client_from_cli_profile(GraphRbacManagementClient)
-    my_objs = client.signed_in_user.list_owned_objects()
+    cred =AZCliCredThatWorks()
+    client = GraphClient(credential=cred)
 
-    for o in my_objs:
-        if contains in o.display_name:
-            try:
-                if client.applications.get(o.object_id):
-                    print("Deleting: %s with object id: %s" % (o.display_name, o.object_id))
-                    client.applications.delete(o.object_id)
-            except:
-                pass
+    result = client.get("/me")
+    result = client.get(f'/users/{result.json()["id"]}/ownedObjects')
 
-    for x in client.deleted_applications.list():
-        if contains in x.display_name:
-            try:
-                print("Hard deleting: %s with object id: %s" % (x.dispaly_name, x.object_id))
-                client.deleted_applications.hard_delete(x.object_id)
-            except:
-                pass
+    my_apps = []
+
+    for x in result.json()['value']:
+        if x['@odata.type'] == "#microsoft.graph.application" and contains in x['displayName']:
+            my_apps.append((x['displayName'], x['id']))
+
+    for (name, id) in my_apps:
+        print("Deleting: %s (%s)" % (name, id))
+        result = client.delete(f"/applications/{id}")
+        if not result.ok:
+            print("Failed to delete: %s (%s) due to : %s" % (name, id, result.reason))
+
+        result = client.get(f"/directory/deletedItems/{id}")
+        if result.ok:
+            deleted_app = result.json()
+            if deleted_app['id'] == id:
+                result = client.delete("/directory/deleteditems/%s" % id)
+                if result.ok:
+                    print("Permanently deleted: %s (%s)" % (name, id))
+                else:
+                    print("Failed to permanently delete: %s (%s) due to : %s" % (name, id, result.reason))
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
