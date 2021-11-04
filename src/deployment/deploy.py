@@ -630,7 +630,7 @@ class Client:
                         not in str(err)
                     ):
                         raise err
-                logger.warning(err)
+                    logger.warning(err)
 
             # Assign Roles and Add Users
             roles = [
