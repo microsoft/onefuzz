@@ -61,3 +61,10 @@ eval $(direnv export bash)
 black *.py
 isort --profile black *.py
 mypy *.py
+
+echo $ONEFUZZ_SRC_ROOT/utils/check-pr
+cd $ONEFUZZ_SRC_ROOT/utils/check-pr
+eval $(direnv export bash)
+black *.py
+isort --profile black *.py
+flake8 *.py
