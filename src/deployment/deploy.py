@@ -619,7 +619,7 @@ class Client:
                 }
                 try:
                     query_microsoft_graph(
-                        method="POST",
+                        method="PATCH",
                         resource="servicePrincipals",
                         body=service_principal_params,
                         subscription=self.get_subscription_id(),
