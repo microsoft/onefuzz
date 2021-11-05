@@ -48,7 +48,7 @@ from azure.storage.blob import (
 from msrest.serialization import TZ_UTC
 
 from data_migration import migrate
-from registration import (
+from deploylib.registration import (
     GraphQueryError,
     OnefuzzAppRole,
     add_application_password,
@@ -64,7 +64,7 @@ from registration import (
     set_app_audience,
     update_pool_registration,
 )
-from set_admins import update_admins, update_allowed_aad_tenants
+from deploylib.set_admins import update_admins, update_allowed_aad_tenants
 
 # Found by manually assigning the User.Read permission to application
 # registration in the admin portal. The values are in the manifest under
