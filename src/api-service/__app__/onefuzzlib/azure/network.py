@@ -7,6 +7,7 @@ import logging
 import uuid
 from typing import Optional, Union
 
+from azure.mgmt.network.models import Subnet, VirtualNetwork
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error, NetworkConfig
@@ -14,7 +15,7 @@ from onefuzztypes.primitives import Region
 
 from ..config import InstanceConfig
 from .creds import get_base_resource_group
-from .subnet import create_virtual_network, get_subnet_id
+from .subnet import create_virtual_network, get_subnet, get_subnet_id, get_vnet
 
 # This was generated randomly and should be preserved moving forwards
 NETWORK_GUID_NAMESPACE = uuid.UUID("372977ad-b533-416a-b1b4-f770898e0b11")
@@ -50,6 +51,12 @@ class Network:
 
     def get_id(self) -> Optional[str]:
         return get_subnet_id(self.group, self.name, self.name)
+
+    def get_subnet(self) -> Optional[Subnet]:
+        return get_subnet(self.group, self.name, self.name)
+
+    def get_vnet(self) -> Optional[VirtualNetwork]:
+        return get_vnet(self.group, self.name)
 
     def create(self) -> Union[None, Error]:
         if not self.exists():
