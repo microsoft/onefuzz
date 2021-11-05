@@ -52,9 +52,12 @@ from registration import (
     GraphQueryError,
     OnefuzzAppRole,
     add_application_password,
+    add_user,
     assign_instance_app_role,
     authorize_application,
     get_application,
+    get_service_principal,
+    get_signed_in_user,
     get_tenant_id,
     query_microsoft_graph,
     register_application,
@@ -291,7 +294,6 @@ class Client:
             display_name=self.application_name,
             subscription_id=self.get_subscription_id(),
         )
-
         app_roles = [
             {
                 "allowedMemberTypes": ["Application"],
@@ -308,6 +310,14 @@ class Client:
                 "id": str(uuid.uuid4()),
                 "isEnabled": True,
                 "value": OnefuzzAppRole.ManagedNode.value,
+            },
+            {
+                "allowedMemberTypes": ["User"],
+                "description": "Allows user access from the CLI.",
+                "displayName": OnefuzzAppRole.UserAssignment.value,
+                "id": str(uuid.uuid4()),
+                "isEnabled": True,
+                "value": OnefuzzAppRole.UserAssignment.value,
             },
         ]
 
@@ -363,7 +373,7 @@ class Client:
 
             service_principal_params = {
                 "accountEnabled": True,
-                "appRoleAssignmentRequired": False,
+                "appRoleAssignmentRequired": True,
                 "servicePrincipalType": "Application",
                 "appId": app["appId"],
             }
@@ -378,7 +388,6 @@ class Client:
                             body=service_principal_params,
                             subscription=self.get_subscription_id(),
                         )
-                        return
                     except GraphQueryError as err:
                         # work around timing issue when creating service principal
                         # https://github.com/Azure/azure-cli/issues/14767
@@ -422,11 +431,10 @@ class Client:
                 # this is a requirement to update the application roles
                 for role in app["appRoles"]:
                     role["isEnabled"] = False
-
                 query_microsoft_graph(
                     method="PATCH",
                     resource=f"applications/{app['id']}",
-                    body={"appRoles": app["AppRoles"]},
+                    body={"appRoles": app["appRoles"]},
                     subscription=self.get_subscription_id(),
                 )
 
@@ -593,6 +601,37 @@ class Client:
             self.get_subscription_id(),
             OnefuzzAppRole.ManagedNode,
         )
+
+    def assign_user_access(self) -> None:
+        logger.info("assinging user access to service principal")
+        app = get_application(
+            display_name=self.application_name,
+            subscription_id=self.get_subscription_id(),
+        )
+        user = get_signed_in_user(self.subscription_id)
+
+        if app:
+            sp = get_service_principal(app["appId"], self.subscription_id)
+            # Update appRoleAssignmentRequired if necessary
+            if not sp["appRoleAssignmentRequired"]:
+                logger.warning(
+                    "The service is not currently configured to require a role assignment to access it."
+                    + " This means that any authenticated user can access the service."
+                    + " To change this behavior enable 'Assignment Required?' on the service principal in the AAD Portal."
+                )
+
+            # Assign Roles and Add Users
+            roles = [
+                x["id"]
+                for x in app["appRoles"]
+                if x["displayName"] == OnefuzzAppRole.UserAssignment.value
+            ]
+            users = [user["id"]]
+            if self.admins:
+                admins_str = [str(x) for x in self.admins]
+                users += admins_str
+            for user_id in users:
+                add_user(sp["id"], user_id, roles[0])
 
     def apply_migrations(self) -> None:
         logger.info("applying database migrations")
@@ -951,6 +990,7 @@ def main() -> None:
         ("rbac", Client.setup_rbac),
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
+        ("assign_user_access", Client.assign_user_access),
     ]
 
     full_deployment_states = rbac_only_states + [
