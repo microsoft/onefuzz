@@ -397,6 +397,7 @@ class Client:
                             body=service_principal_params,
                             subscription=self.get_subscription_id(),
                         )
+                        return
                     except GraphQueryError as err:
                         # work around timing issue when creating service principal
                         # https://github.com/Azure/azure-cli/issues/14767
