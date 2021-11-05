@@ -616,7 +616,7 @@ class Client:
             if not sp["appRoleAssignmentRequired"]:
                 logger.warning(
                     "The service is not currently configured to require a role assignment to access it."
-                    + " This means that any authenticated user can access the service."
+                    + " This means that any authenticated user can access the service. "
                     + " To change this behavior enable 'Assignment Required?' on the service principal in the AAD Portal."
                 )
 
