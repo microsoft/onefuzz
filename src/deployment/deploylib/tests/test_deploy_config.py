@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import unittest
-from typing import Any, List
+from typing import Any
 
 from deploylib.configuration import NetworkSecurityConfig
 
