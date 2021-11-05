@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional, Union
 from uuid import UUID
 
 from azure.core.exceptions import ResourceNotFoundError
+from azure.mgmt.network.models import Subnet
 from msrestazure.azure_exceptions import CloudError
 from msrestazure.tools import parse_resource_id
 from onefuzztypes.enums import ErrorCode
@@ -18,6 +19,7 @@ from onefuzztypes.primitives import Region
 from .creds import get_base_resource_group
 from .network import Network
 from .network_mgmt_client import get_network_client
+from .nsg import NSG
 from .vmss import get_instance_id
 
 
@@ -95,7 +97,7 @@ def delete_nic(resource_group: str, name: str) -> Optional[Any]:
 
 
 def create_public_nic(
-    resource_group: str, name: str, region: Region
+    resource_group: str, name: str, region: Region, nsg: Optional[NSG]
 ) -> Optional[Error]:
     logging.info("creating nic for %s:%s in %s", resource_group, name, region)
 
@@ -104,6 +106,14 @@ def create_public_nic(
     if subnet_id is None:
         network.create()
         return None
+
+    if nsg:
+        subnet = network.get_subnet()
+        if isinstance(subnet, Subnet) and not subnet.network_security_group:
+            result = nsg.associate_subnet(network.get_vnet(), subnet)
+            if isinstance(result, Error):
+                return result
+            return None
 
     ip = get_ip(resource_group, name)
     if not ip:
