@@ -13,66 +13,11 @@ from azure.common.client_factory import get_client_from_cli_profile
 from azure.cosmosdb.table.tableservice import TableService
 from azure.mgmt.storage import StorageManagementClient
 
-storage_client_logger = logging.getLogger("azure.cosmosdb.table.common.storageclient")
-TABLE_NAME = "InstanceConfig"
-
-
-## Disable logging from storageclient. This module displays an error message
-## when a resource is not found even if the exception is raised and handled internally.
-## This happen when a table does not exist. An error message is displayed but the exception is
-## handled by the library.
-def disable_storage_client_logging() -> None:
-    if storage_client_logger:
-        storage_client_logger.disabled = True
-
-
-def enable_storage_client_logging() -> None:
-    if storage_client_logger:
-        storage_client_logger.disabled = False
-
-
-def create_if_missing(table_service: TableService) -> None:
-    try:
-        disable_storage_client_logging()
-
-        if not table_service.exists(TABLE_NAME):
-            table_service.create_table(TABLE_NAME)
-    finally:
-        enable_storage_client_logging()
-
-
-def update_allowed_aad_tenants(
-    table_service: TableService, resource_group: str, tenants: List[UUID]
-) -> None:
-    create_if_missing(table_service)
-    as_str = [str(x) for x in tenants]
-    table_service.insert_or_merge_entity(
-        TABLE_NAME,
-        {
-            "PartitionKey": resource_group,
-            "RowKey": resource_group,
-            "allowed_aad_tenants": json.dumps(as_str),
-        },
-    )
-
-
-def update_admins(
-    table_service: TableService, resource_group: str, admins: List[UUID]
-) -> None:
-    create_if_missing(table_service)
-    admins_as_str: Optional[List[str]] = None
-    if admins:
-        admins_as_str = [str(x) for x in admins]
-
-    table_service.insert_or_merge_entity(
-        TABLE_NAME,
-        {
-            "PartitionKey": resource_group,
-            "RowKey": resource_group,
-            "admins": json.dumps(admins_as_str),
-        },
-    )
-
+from deploylib.configuration import (
+    InstanceConfigClient,
+    update_admins,
+    update_allowed_aad_tenants,
+)
 
 def main() -> None:
     formatter = argparse.ArgumentDefaultsHelpFormatter
@@ -90,13 +35,11 @@ def main() -> None:
     table_service = TableService(
         account_name=args.storage_account, account_key=storage_keys.keys[0].value
     )
+    config_client = InstanceConfigClient(table_service, args.resource_group)
     if args.admins:
-        update_admins(table_service, args.resource_group, args.admins)
+        update_admins(config_client, args.admins)
     if args.allowed_aad_tenants:
-        update_allowed_aad_tenants(
-            table_service, args.resource_group, args.allowed_aad_tenants
-        )
-
+        update_allowed_aad_tenants(config_client, args.allowed_aad_tenants)
 
 if __name__ == "__main__":
     main()

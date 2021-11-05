@@ -724,7 +724,6 @@ def add_user(object_id: str, principal_id: str, role_id: str) -> None:
         else:
             logger.info("User already assigned to application.")
 
-
 def main() -> None:
     formatter = argparse.ArgumentDefaultsHelpFormatter
 
