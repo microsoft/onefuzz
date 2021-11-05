@@ -72,6 +72,7 @@ from deploylib.registration import (
     set_app_audience,
     update_pool_registration,
 )
+from deploylib.set_admins import update_admins, update_allowed_aad_tenants
 
 # Found by manually assigning the User.Read permission to application
 # registration in the admin portal. The values are in the manifest under
@@ -625,7 +626,7 @@ class Client:
             if not sp["appRoleAssignmentRequired"]:
                 logger.warning(
                     "The service is not currently configured to require a role assignment to access it."
-                    + " This means that any authenticated user can access the service."
+                    + " This means that any authenticated user can access the service. "
                     + " To change this behavior enable 'Assignment Required?' on the service principal in the AAD Portal."
                 )
 
