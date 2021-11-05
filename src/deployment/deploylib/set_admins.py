@@ -4,9 +4,6 @@
 # Licensed under the MIT License.
 
 import argparse
-import json
-import logging
-from typing import List, Optional
 from uuid import UUID
 
 from azure.common.client_factory import get_client_from_cli_profile
@@ -18,6 +15,7 @@ from deploylib.configuration import (
     update_admins,
     update_allowed_aad_tenants,
 )
+
 
 def main() -> None:
     formatter = argparse.ArgumentDefaultsHelpFormatter
@@ -40,6 +38,7 @@ def main() -> None:
         update_admins(config_client, args.admins)
     if args.allowed_aad_tenants:
         update_allowed_aad_tenants(config_client, args.allowed_aad_tenants)
+
 
 if __name__ == "__main__":
     main()

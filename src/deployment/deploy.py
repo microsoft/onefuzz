@@ -56,7 +56,6 @@ from deploylib.configuration import (
     update_nsg,
 )
 from deploylib.data_migration import migrate
-
 from deploylib.registration import (
     GraphQueryError,
     OnefuzzAppRole,
@@ -73,7 +72,6 @@ from deploylib.registration import (
     set_app_audience,
     update_pool_registration,
 )
-from deploylib.set_admins import update_admins, update_allowed_aad_tenants
 
 # Found by manually assigning the User.Read permission to application
 # registration in the admin portal. The values are in the manifest under
