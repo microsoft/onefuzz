@@ -34,7 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 3.0.0
 ### Changed
-* CLI/Deployment/Service: Move to using `api://` for AAD Application "identifier URIs". [#1243](https://github.com/microsoft/onefuzz/pull/1243)
+* CLI/Deployment/Service: Move to using `api://` for AAD Application "identifier URIs".
+  Pre-3.0 clients will not be able to connect to newer instances.
+  (BREAKING CHANGE) [#1243](https://github.com/microsoft/onefuzz/pull/1243)
 * Agent/Supervisor/Proxy: Redact device, IP, and machine name in runtime statistics reported to Microsoft via Application Insights. [#1242](https://github.com/microsoft/onefuzz/pull/1242)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1232](https://github.com/microsoft/onefuzz/pull/1232), [#1230](https://github.com/microsoft/onefuzz/pull/1230), [#1228](https://github.com/microsoft/onefuzz/pull/1228), [#1229](https://github.com/microsoft/onefuzz/pull/1229), [#1231](https://github.com/microsoft/onefuzz/pull/1231), [#1242](https://github.com/microsoft/onefuzz/pull/1242).
 
