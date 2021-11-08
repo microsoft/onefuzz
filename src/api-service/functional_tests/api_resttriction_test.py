@@ -4,9 +4,6 @@
 # Licensed under the MIT License.
 
 import argparse
-import subprocess  # nosec
-import sys
-import time
 import uuid
 from azure.cli.core import get_default_cli
 
