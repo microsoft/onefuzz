@@ -7,7 +7,7 @@ import os
 from typing import List, Protocol
 from uuid import UUID
 
-from pytypes.onefuzztypes.models import GroupMemebership, InstanceConfig
+from onefuzztypes.models import GroupMemebership, InstanceConfig
 
 from .creds import query_microsoft_graph_list
 
@@ -17,7 +17,6 @@ class GroupMembershipChecker(Protocol):
         """Check if member is part of at least one of the groups"""
         if member_id in group_ids:
             return True
-
 
         groups = self.get_groups(member_id)
         return group_ids in groups
@@ -33,8 +32,8 @@ def create_group_membership_checker() -> GroupMembershipChecker:
     else:
         return AzureADGroupMembership()
 
-class AzureADGroupMembership(GroupMembershipChecker):
 
+class AzureADGroupMembership(GroupMembershipChecker):
     def get_groups(self, member_id: UUID) -> List[UUID]:
         response = query_microsoft_graph_list(
             method="GET", resource=f"users/{member_id}/memberOf"
