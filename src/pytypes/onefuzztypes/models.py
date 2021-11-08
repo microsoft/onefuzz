@@ -841,6 +841,13 @@ class ApiAccessRule(BaseModel):
     endpoint: str
     allowed_groups: List[UUID]
 
+PrincipalID = UUID
+GroupId = UUID
+
+class GroupMemebership(BaseModel):
+    principal_id: UUID
+    groups: List[UUID]
+
 
 class InstanceConfig(BaseModel):
     # initial set of admins can only be set during deployment.
@@ -858,6 +865,7 @@ class InstanceConfig(BaseModel):
     extensions: Optional[AzureVmExtensionConfig]
     proxy_vm_sku: str = Field(default="Standard_B2s")
     api_access_rules: Optional[List[ApiAccessRule]] = None
+    group_membership: Optional[Dict[PrincipalID, List[GroupId]]] = None
 
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:

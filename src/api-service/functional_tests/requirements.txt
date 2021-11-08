@@ -1,0 +1,2 @@
+onefuzz==0.0.0
+azure-cli-core==2.27.2
