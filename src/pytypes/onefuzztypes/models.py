@@ -841,8 +841,10 @@ class ApiAccessRule(BaseModel):
     endpoint: str
     allowed_groups: List[UUID]
 
+
 PrincipalID = UUID
 GroupId = UUID
+
 
 class GroupMemebership(BaseModel):
     principal_id: UUID
