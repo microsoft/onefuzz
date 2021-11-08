@@ -797,6 +797,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"
                 },
+                "group_membership": {
+                    "additionalProperties": {
+                        "items": {
+                            "format": "uuid",
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "title": "Group Membership",
+                    "type": "object"
+                },
                 "network_config": {
                     "$ref": "#/definitions/NetworkConfig"
                 },
@@ -5932,6 +5943,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"
+                },
+                "group_membership": {
+                    "additionalProperties": {
+                        "items": {
+                            "format": "uuid",
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "title": "Group Membership",
+                    "type": "object"
                 },
                 "network_config": {
                     "$ref": "#/definitions/NetworkConfig"
