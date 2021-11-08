@@ -846,11 +846,6 @@ PrincipalID = UUID
 GroupId = UUID
 
 
-class GroupMemebership(BaseModel):
-    principal_id: UUID
-    groups: List[UUID]
-
-
 class InstanceConfig(BaseModel):
     # initial set of admins can only be set during deployment.
     # if admins are set, only admins can update instance configs.

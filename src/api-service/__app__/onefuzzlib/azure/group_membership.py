@@ -4,11 +4,10 @@
 # Licensed under the MIT License.
 
 import os
-from typing import List, Protocol
+from typing import Dict, List, Protocol
 from uuid import UUID
 
-from onefuzztypes.models import GroupMemebership, InstanceConfig
-
+from ..config import InstanceConfig
 from .creds import query_microsoft_graph_list
 
 
@@ -42,13 +41,8 @@ class AzureADGroupMembership(GroupMembershipChecker):
 
 
 class StaticGroupMembership(GroupMembershipChecker):
-    def __init__(self, memberships: List[GroupMemebership]):
+    def __init__(self, memberships: Dict[UUID, List[UUID]]):
         self.memberships = memberships
 
     def get_groups(self, member_id: UUID) -> List[UUID]:
-        groups = set()
-        for membership in self.memberships:
-            if membership.principal_id == member_id:
-                for g in membership.groups:
-                    groups.add(g)
-        return list(groups)
+        return self.memberships.get(member_id, [])
