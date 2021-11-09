@@ -4,13 +4,14 @@
 # Licensed under the MIT License.
 
 import argparse
-import uuid
-from azure.cli.core import get_default_cli
-
-from onefuzz.api import Onefuzz
-from uuid import UUID
 import os
+import uuid
+from uuid import UUID
+
+from azure.cli.core import get_default_cli
+from onefuzz.api import Onefuzz
 from onefuzztypes.models import ApiAccessRule
+
 
 def az_cli(args):
     cli = get_default_cli()
@@ -38,23 +39,21 @@ class APIRestrictionTests:
 
         self.onefuzz.instance_config.update(instance_config)
 
-
     def assign_current_user(self, group_id: UUID) -> None:
         onefuzz_service_appId = az_cli(
-        [
-            "ad",
-            "signed-in-user",
-            "show",
-        ])
+            [
+                "ad",
+                "signed-in-user",
+                "show",
+            ]
+        )
         member_id = UUID(onefuzz_service_appId["objectid"])
         self.assign(group_id, member_id)
-
 
     def test_restriction_on_current_user(self) -> None:
 
         print("Checking that the current user can get info")
         info = self.onefuzz.info.get()
-
 
         print("Creating test group")
         group_id = uuid.uuid4()
@@ -62,7 +61,7 @@ class APIRestrictionTests:
         print("Adding restriction to the info endpoint")
         instance_config = self.onefuzz.instance_config
         if instance_config.api_access_rules is None:
-           instance_config.api_access_rules = []
+            instance_config.api_access_rules = []
 
         instance_config.api_access_rules.append(
             ApiAccessRule(
@@ -98,7 +97,6 @@ def main() -> None:
         tester.test_restriction_on_current_user()
     finally:
         tester.restore_config()
-
 
 
 if __name__ == "__main__":
