@@ -39,9 +39,6 @@ def get_rules() -> Optional[RequestAccess]:
         return None
 
 
-membership_checker = create_group_membership_checker()
-
-
 def check_access(req: HttpRequest) -> Optional[Error]:
     rules = get_rules()
 
@@ -54,6 +51,7 @@ def check_access(req: HttpRequest) -> Optional[Error]:
     member_id = UUID(req.headers["x-ms-client-principal-id"])
 
     try:
+        membership_checker = create_group_membership_checker()
         result = membership_checker.is_member(rule.allowed_groups_ids, member_id)
         if not result:
             logging.error(
