@@ -6,6 +6,7 @@
 import argparse
 import os
 import uuid
+from typing import Any, List
 from uuid import UUID
 
 from azure.cli.core import get_default_cli
@@ -13,7 +14,7 @@ from onefuzz.api import Onefuzz
 from onefuzztypes.models import ApiAccessRule
 
 
-def az_cli(args):
+def az_cli(args: List[str]) -> Any:
     cli = get_default_cli()
     cli.logging_cls
     cli.invoke(args, out_file=open(os.devnull, "w"))
@@ -24,7 +25,7 @@ def az_cli(args):
 
 
 class APIRestrictionTests:
-    def __init__(self, onefuzz_config_path=None):
+    def __init__(self, onefuzz_config_path: str = None) -> None:
         self.onefuzz = Onefuzz(config_path=onefuzz_config_path)
         self.intial_config = self.onefuzz.instance_config.get()
 
@@ -33,6 +34,8 @@ class APIRestrictionTests:
 
     def assign(self, group_id: UUID, member_id: UUID) -> None:
         instance_config = self.onefuzz.instance_config.get()
+        if instance_config.group_membership is None:
+            instance_config.group_membership = {}
         if member_id in instance_config.group_membership:
             if group_id not in instance_config.group_membership[member_id]:
                 instance_config.group_membership[member_id].append(group_id)
@@ -59,15 +62,15 @@ class APIRestrictionTests:
         group_id = uuid.uuid4()
 
         print("Adding restriction to the info endpoint")
-        instance_config = self.onefuzz.instance_config
+        instance_config = self.onefuzz.instance_config.get()
         if instance_config.api_access_rules is None:
             instance_config.api_access_rules = []
 
         instance_config.api_access_rules.append(
             ApiAccessRule(
-                path="/info",
-                group_ids=[group_id],
-                method="GET",
+                endpoint="/info",
+                allowed_groups=[group_id],
+                methods=["GET"],
             )
         )
         self.onefuzz.instance_config.update(instance_config)
