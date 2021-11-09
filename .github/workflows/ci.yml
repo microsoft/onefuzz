@@ -23,7 +23,7 @@ jobs:
         key: rust-${{ runner.os }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
     - name: Install Rust Prereqs
       if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
-      shell: bash 
+      shell: bash
       run: src/ci/rust-prereqs.sh
     - name: Rust Compile Cache
       uses: actions/cache@v2
@@ -58,6 +58,16 @@ jobs:
       with:
         name: build-artifacts
         path: artifacts
+  check-pr:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: lint
+      shell: bash
+      run: src/ci/check-check-pr.sh
   cli:
     needs:
     - onefuzztypes
@@ -173,7 +183,7 @@ jobs:
         key: rust-${{ runner.os }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
     - name: Install Rust Prereqs
       if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
-      shell: bash 
+      shell: bash
       run: src/ci/rust-prereqs.sh
     - name: Rust Compile Cache
       uses: actions/cache@v2
@@ -196,7 +206,7 @@ jobs:
     - run: src/ci/set-versions.sh
     - uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: 3.8
     - uses: actions/download-artifact@v2.0.8
       with:
         name: build-artifacts
@@ -231,7 +241,7 @@ jobs:
         mypy __app__ ./tests
 
         # set a minimum confidence to ignore known false positives
-        vulture --min-confidence 61 __app__ 
+        vulture --min-confidence 61 __app__
 
         ../ci/disable-py-cache.sh
         mypy __app__ ./tests
@@ -299,10 +309,11 @@ jobs:
         set -ex
         cd src/deployment
         python -m pip install --upgrade pip
-        pip install mypy isort black types-requests
+        pip install mypy isort black types-requests flake8
         mypy .
         isort --profile black . --check
         black . --check
+        flake8 *.py
     - name: Package Onefuzz
       run: |
           set -ex
@@ -404,15 +415,42 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force 
+          Set-ExecutionPolicy Bypass -Scope Process -Force
           $ProgressPreference = 'SilentlyContinue'
           Invoke-Expression (Invoke-RestMethod 'https://chocolatey.org/install.ps1')
           choco install llvm
           choco install make
           $env:Path += ";C:\Program Files\LLVM\bin;C:\ProgramData\chocolatey\bin"
-          
+
+          # WORKAROUND: effectively downgrade the default Windows 10 SDK version.
+          #
+          # This ensures we link against a version of the SDK which won't trigger a
+          # startup bug in the LLVM-shipped ASAN runtime.
+
+          # Assume a default MSVC 2019 install path.
+          $MsvcDir = 'C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/MSVC'
+
+          # Assume that `$MsvcDir` only contains version-named subdirectories.
+          $MsvcVersion = ((Get-ChildItem $MsvcDir).name | Sort-Object -Descending)[0]
+          $MsvcLib = "${MsvcDir}/${MsvcVersion}/lib/x64"
+
+          # Known "good" (non-bug-surfacing) version.
+          $WindowsSdkVersion = '10.0.18362.0'
+
+          # Assume default install path.
+          $WindowsSdkDir = 'C:/Program Files (x86)/Windows Kits/10'
+          $WindowsSdkLib = "${WindowsSdkDir}/Lib/${WindowsSdkVersion}"
+          $WindowsSdkInclude = "${WindowsSdkDir}/Include/${WindowsSdkVersion}"
+
+          # Used by `clang.exe`.
+          $env:CPATH = $WindowsSdkInclude
+          $env:LIBRARY_PATH = "${MsvcLib};${WindowsSdkLib}/ucrt/x64;${WindowsSdkLib}/um/x64"
+
+          # Used by `link.exe`.
+          $env:LIB = $env:LIBRARY_PATH
+
           cd src/integration-tests
-          
+
           mkdir artifacts/windows-libfuzzer
           cd libfuzzer
           make
@@ -430,7 +468,7 @@ jobs:
           make -f Makefile.windows
           cp fuzz.exe,fuzz.pdb,bad1.dll,bad1.pdb,bad2.dll,bad2.pdb,seeds ../artifacts/windows-libfuzzer-linked-library -Recurse
           cd ../
-          
+
           mkdir artifacts/windows-libfuzzer-load-library
           cd libfuzzer-load-library
           make

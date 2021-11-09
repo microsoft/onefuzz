@@ -18,8 +18,10 @@ from .azure.auth import build_auth
 from .azure.containers import save_blob
 from .azure.creds import get_base_region
 from .azure.ip import get_public_ip
+from .azure.nsg import NSG
 from .azure.storage import StorageType
 from .azure.vm import VM
+from .config import InstanceConfig
 from .extension import repro_extensions
 from .orm import ORMMixin, QueryFilter
 from .reports import get_report
@@ -85,6 +87,23 @@ class Repro(BASE_REPRO, ORMMixin):
 
                 self.state = VmState.extensions_launch
         else:
+            nsg = NSG(
+                name=vm.region,
+                region=vm.region,
+            )
+            result = nsg.create()
+            if isinstance(result, Error):
+                self.set_failed(result)
+                return
+
+            config = InstanceConfig.fetch()
+            nsg_config = config.proxy_nsg_config
+            result = nsg.set_allowed_sources(nsg_config)
+            if isinstance(result, Error):
+                self.set_failed(result)
+                return
+
+            vm.nsg = nsg
             result = vm.create()
             if isinstance(result, Error):
                 self.set_error(result)

@@ -10,13 +10,11 @@ from typing import TYPE_CHECKING, Optional, Sequence, Type, TypeVar, Union
 from uuid import UUID
 
 from azure.functions import HttpRequest, HttpResponse
-from azure.graphrbac.models import GraphErrorException
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.responses import BaseResponse
 from pydantic import ValidationError
 
-from .azure.creds import is_member_of
 from .orm import ModelMixin
 
 # We don't actually use these types at runtime at this time.  Rather,
@@ -28,25 +26,15 @@ if TYPE_CHECKING:
 
 
 def check_access(req: HttpRequest) -> Optional[Error]:
-    if "ONEFUZZ_AAD_GROUP_ID" not in os.environ:
+    if "ONEFUZZ_AAD_GROUP_ID" in os.environ:
+        message = "ONEFUZZ_AAD_GROUP_ID configuration not supported"
+        logging.error(message)
+        return Error(
+            code=ErrorCode.INVALID_CONFIGURATION,
+            errors=[message],
+        )
+    else:
         return None
-
-    group_id = os.environ["ONEFUZZ_AAD_GROUP_ID"]
-    member_id = req.headers["x-ms-client-principal-id"]
-    try:
-        result = is_member_of(group_id, member_id)
-    except GraphErrorException:
-        return Error(
-            code=ErrorCode.UNAUTHORIZED, errors=["unable to interact with graph"]
-        )
-    if not result:
-        logging.error("unauthorized access: %s is not in %s", member_id, group_id)
-        return Error(
-            code=ErrorCode.UNAUTHORIZED,
-            errors=["not approved to use this instance of onefuzz"],
-        )
-
-    return None
 
 
 def ok(
@@ -92,8 +80,8 @@ def not_ok(
         )
 
 
-def redirect(location: str) -> HttpResponse:
-    return HttpResponse(status_code=302, headers={"Location": location})
+def redirect(url: str) -> HttpResponse:
+    return HttpResponse(status_code=302, headers={"Location": url})
 
 
 def convert_error(err: ValidationError) -> Error:

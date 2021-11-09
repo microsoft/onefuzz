@@ -9,14 +9,17 @@ from typing import Any, Dict, Optional, Union
 from uuid import UUID
 
 from azure.core.exceptions import ResourceNotFoundError
+from azure.mgmt.network.models import Subnet
 from msrestazure.azure_exceptions import CloudError
 from msrestazure.tools import parse_resource_id
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
+from onefuzztypes.primitives import Region
 
 from .creds import get_base_resource_group
+from .network import Network
 from .network_mgmt_client import get_network_client
-from .subnet import create_virtual_network, get_subnet_id
+from .nsg import NSG
 from .vmss import get_instance_id
 
 
@@ -63,12 +66,12 @@ def delete_ip(resource_group: str, name: str) -> Any:
     return network_client.public_ip_addresses.begin_delete(resource_group, name)
 
 
-def create_ip(resource_group: str, name: str, location: str) -> Any:
-    logging.info("creating ip for %s:%s in %s", resource_group, name, location)
+def create_ip(resource_group: str, name: str, region: Region) -> Any:
+    logging.info("creating ip for %s:%s in %s", resource_group, name, region)
 
     network_client = get_network_client()
     params: Dict[str, Union[str, Dict[str, str]]] = {
-        "location": location,
+        "location": region,
         "public_ip_allocation_method": "Dynamic",
     }
     if "ONEFUZZ_OWNER" in os.environ:
@@ -93,21 +96,32 @@ def delete_nic(resource_group: str, name: str) -> Optional[Any]:
     return network_client.network_interfaces.begin_delete(resource_group, name)
 
 
-def create_public_nic(resource_group: str, name: str, location: str) -> Optional[Error]:
-    logging.info("creating nic for %s:%s in %s", resource_group, name, location)
+def create_public_nic(
+    resource_group: str, name: str, region: Region, nsg: Optional[NSG]
+) -> Optional[Error]:
+    logging.info("creating nic for %s:%s in %s", resource_group, name, region)
 
-    network_client = get_network_client()
-    subnet_id = get_subnet_id(resource_group, location)
-    if not subnet_id:
-        return create_virtual_network(resource_group, location, location)
+    network = Network(region)
+    subnet_id = network.get_id()
+    if subnet_id is None:
+        network.create()
+        return None
+
+    if nsg:
+        subnet = network.get_subnet()
+        if isinstance(subnet, Subnet) and not subnet.network_security_group:
+            result = nsg.associate_subnet(network.get_vnet(), subnet)
+            if isinstance(result, Error):
+                return result
+            return None
 
     ip = get_ip(resource_group, name)
     if not ip:
-        create_ip(resource_group, name, location)
+        create_ip(resource_group, name, region)
         return None
 
     params = {
-        "location": location,
+        "location": region,
         "ip_configurations": [
             {
                 "name": "myIPConfig",
@@ -119,6 +133,7 @@ def create_public_nic(resource_group: str, name: str, location: str) -> Optional
     if "ONEFUZZ_OWNER" in os.environ:
         params["tags"] = {"OWNER": os.environ["ONEFUZZ_OWNER"]}
 
+    network_client = get_network_client()
     try:
         network_client.network_interfaces.begin_create_or_update(
             resource_group, name, params

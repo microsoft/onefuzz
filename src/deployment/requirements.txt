@@ -1,5 +1,5 @@
-azure-cli-core==2.26.0
-azure-cli==2.26.0
+azure-cli-core==2.27.2
+azure-cli==2.27.2
 azure-cosmosdb-table==1.0.6
 azure-mgmt-eventgrid==9.0.0
 azure-mgmt-resource==18.0.0
