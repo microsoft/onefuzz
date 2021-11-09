@@ -56,7 +56,7 @@ class APIRestrictionTests:
     def test_restriction_on_current_user(self) -> None:
 
         print("Checking that the current user can get info")
-        info = self.onefuzz.info.get()
+        self.onefuzz.info.get()
 
         print("Creating test group")
         group_id = uuid.uuid4()
@@ -77,16 +77,16 @@ class APIRestrictionTests:
 
         print("Checking that the current user cannot get info")
         try:
-            info = self.onefuzz.info.get()
+            self.onefuzz.info.get()
             raise Exception("Expected exception not thrown")
-        except Exception as e:
+        except Exception:
             pass
 
         print("Assigning current user to test group")
         self.assign_current_user(group_id)
 
         print("Checking that the current user can get info")
-        info = self.onefuzz.info.get()
+        self.onefuzz.info.get()
 
 
 def main() -> None:
