@@ -503,6 +503,8 @@ class TestOnefuzz:
                     to_remove.add(job.job_id)
 
             for job_id in to_remove:
+                # send the stop marker here to ignore errors after the jobs stops
+                self.inject_log(self.stop_log_marker)
                 if stop_on_complete_check:
                     self.stop_job(jobs[job_id])
                 del jobs[job_id]
