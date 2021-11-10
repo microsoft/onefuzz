@@ -21,12 +21,20 @@ def get_os(region: Region, image: str) -> Union[Error, OS]:
     client = get_compute_client()
     parsed = parse_resource_id(image)
     if "resource_group" in parsed:
-        try:
-            name = client.images.get(
-                parsed["resource_group"], parsed["name"]
-            ).storage_profile.os_disk.os_type.name
-        except (ResourceNotFoundError, CloudError) as err:
-            return Error(code=ErrorCode.INVALID_IMAGE, errors=[str(err)])
+        if parsed["type"] == "galleries":
+            try:
+                name = client.gallery_images.get(
+                    parsed["resource_group"], parsed["name"], parsed["child_name_1"]
+                ).os_type.lower()
+            except (ResourceNotFoundError, CloudError) as err:
+                return Error(code=ErrorCode.INVALID_IMAGE, errors=[str(err)])
+        else:
+            try:
+                name = client.images.get(
+                    parsed["resource_group"], parsed["name"]
+                ).storage_profile.os_disk.os_type.lower()
+            except (ResourceNotFoundError, CloudError) as err:
+                return Error(code=ErrorCode.INVALID_IMAGE, errors=[str(err)])
     else:
         publisher, offer, sku, version = image.split(":")
         try:
