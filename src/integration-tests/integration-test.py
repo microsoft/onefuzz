@@ -783,6 +783,11 @@ class TestOnefuzz:
                     seen_stop = True
                 continue
 
+            # ignore any errors after any the stop marker
+            if self.stop_log_marker in message:
+                seen_errors = False
+                continue
+
             if self.start_log_marker in message:
                 break
 
