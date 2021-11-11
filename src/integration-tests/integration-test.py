@@ -506,6 +506,7 @@ class TestOnefuzz:
                 if stop_on_complete_check:
                     # send the stop marker here to ignore errors after the jobs stops
                     self.inject_log(self.stop_log_marker)
+                    wait(self.check_log_end_marker, frequency=5.0)
                     self.stop_job(jobs[job_id])
                 del jobs[job_id]
 
