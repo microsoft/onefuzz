@@ -1729,6 +1729,7 @@ dependencies = [
  "url",
  "users",
  "uuid",
+ "winapi 0.3.9",
 ]
 
 [[package]]

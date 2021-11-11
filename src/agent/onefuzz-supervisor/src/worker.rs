@@ -239,6 +239,31 @@ impl IWorkerRunner for WorkerRunner {
     }
 }
 
+trait SuspendableChild {
+    fn suspend(&mut self) -> Result<()>;
+}
+
+
+#[cfg(target_os = "windows")]
+impl SuspendableChild for Child {
+    fn suspend(&mut self) -> Result<()> {
+        let result = unsafe { winapi::um::debugapi::DebugActiveProcess(self.id() as u32) };
+        if result == 0 {
+            bail!("unable to suspend child process");
+        }
+        Ok(())
+    }
+}
+
+#[cfg(target_os = "linux")]
+impl SuspendableChild for Child {
+    fn suspend(&mut self) -> Result<()> {
+        use nix::sys::signal::{self, Signal};
+        signal::kill(Pid::from_raw(child.id()), Signal::SIGSTOP)?;
+        Ok(())
+    }
+}
+
 /// Child process with redirected output streams, tailed by two worker threads.
 struct RedirectedChild {
     /// The child process.
@@ -357,6 +382,10 @@ impl IWorkerChild for RedirectedChild {
 
     fn kill(&mut self) -> Result<()> {
         use std::io::ErrorKind;
+
+        // trying to gracefully kill the child process.
+        // we ignore the error if it's because the process will be killed anyway
+        let _ = self.child.suspend();
 
         let killed = self.child.kill();
 
