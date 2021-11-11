@@ -243,7 +243,6 @@ trait SuspendableChild {
     fn suspend(&mut self) -> Result<()>;
 }
 
-
 #[cfg(target_os = "windows")]
 impl SuspendableChild for Child {
     fn suspend(&mut self) -> Result<()> {
