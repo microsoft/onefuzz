@@ -504,9 +504,6 @@ class TestOnefuzz:
 
             for job_id in to_remove:
                 if stop_on_complete_check:
-                    # send the stop marker here to ignore errors after the jobs stops
-                    self.inject_log(self.stop_log_marker)
-                    wait(self.check_log_end_marker, frequency=5.0)
                     self.stop_job(jobs[job_id])
                 del jobs[job_id]
 
@@ -781,11 +778,6 @@ class TestOnefuzz:
             if not seen_stop:
                 if self.stop_log_marker in message:
                     seen_stop = True
-                continue
-
-            # ignore any errors after any the stop marker
-            if self.stop_log_marker in message:
-                seen_errors = False
                 continue
 
             if self.start_log_marker in message:
