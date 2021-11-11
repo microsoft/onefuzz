@@ -257,8 +257,11 @@ impl SuspendableChild for Child {
 #[cfg(target_os = "linux")]
 impl SuspendableChild for Child {
     fn suspend(&mut self) -> Result<()> {
-        use nix::sys::signal::{self, Signal};
-        signal::kill(Pid::from_raw(child.id()), Signal::SIGSTOP)?;
+        use nix::sys::signal;
+        signal::kill(
+            nix::unistd::Pid::from_raw(self.id() as _),
+            signal::Signal::SIGSTOP,
+        )?;
         Ok(())
     }
 }
