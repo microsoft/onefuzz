@@ -385,7 +385,7 @@ impl IWorkerChild for RedirectedChild {
     fn kill(&mut self) -> Result<()> {
         use std::io::ErrorKind;
 
-        // trying to gracefully kill the child process.
+        // Try to gracefully kill the child process to avoid spurious error telemetry;
         // we ignore the error here because the process will be killed anyway
         if let Err(suspend_error) = self.child.suspend() {
             log::info!("error while suspending process: {}", suspend_error);
