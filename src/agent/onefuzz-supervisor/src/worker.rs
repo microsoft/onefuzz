@@ -387,7 +387,9 @@ impl IWorkerChild for RedirectedChild {
 
         // trying to gracefully kill the child process.
         // we ignore the error if it's because the process will be killed anyway
-        let _ = self.child.suspend();
+        if let Err(suspend_error) = self.child.suspend() {
+            log::error!("error while suspending process: {}", suspend_error);
+        }
 
         let killed = self.child.kill();
 
