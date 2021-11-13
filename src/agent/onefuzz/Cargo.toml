@@ -27,7 +27,7 @@ serde_json = "1.0"
 rand = "0.8"
 serde_derive = "1.0"
 sysinfo = "0.20"
-tokio = { version = "1.12", features = ["full"] }
+tokio = { version = "1.13", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["fs", "time", "tokio-util"] }
 tokio-util = { version = "0.6", features = ["full"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
