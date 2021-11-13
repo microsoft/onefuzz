@@ -39,7 +39,7 @@ def get_nsg(name: str) -> Optional[NetworkSecurityGroup]:
         nsg = network_client.network_security_groups.get(resource_group, name)
         return cast(NetworkSecurityGroup, nsg)
     except (ResourceNotFoundError, CloudError) as err:
-        logging.error("nsg %s does not exist: %s", name, err)
+        logging.debug("nsg %s does not exist: %s", name, err)
         return None
 
 
