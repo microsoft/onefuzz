@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from onefuzztypes.requests import BaseRequest  # noqa: F401
 
 
-@cached
+@cached(ttl=60)
 def get_rules() -> Optional[RequestAccess]:
     config = InstanceConfig.fetch()
     if config.api_access_rules:
@@ -47,6 +47,9 @@ def check_access(req: HttpRequest) -> Optional[Error]:
 
     path = urllib.parse.urlparse(req.url).path
     rule = rules.get_matching_rules(req.method, path)
+
+    if not rule:
+        return None
 
     member_id = UUID(req.headers["x-ms-client-principal-id"])
 

@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from onefuzztypes.models import ApiAccessRule
@@ -71,7 +71,7 @@ class RequestAccess:
         for method in methods:
             current_node.rules[method] = rules
 
-    def get_matching_rules(self, method: str, path: str) -> Rules:
+    def get_matching_rules(self, method: str, path: str) -> Optional[Rules]:
         method = method.upper()
         segments = path.split("/")
         current_node = self.root
@@ -79,7 +79,7 @@ class RequestAccess:
         if method in current_node.rules:
             current_rule = current_node.rules[method]
         else:
-            current_rule = RequestAccess.Rules()
+            current_rule = None
 
         current_segment_index = 0
 
