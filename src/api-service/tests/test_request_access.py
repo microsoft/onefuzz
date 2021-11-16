@@ -44,7 +44,6 @@ class TestRequestAccess(unittest.TestCase):
         rules2 = request_access.get_matching_rules("get", "b/b/e")
 
         assert rules1 is not None
-        assert rules2 is not None
         self.assertNotEqual(len(rules1.allowed_groups_ids), 0, "empty allowed groups")
         self.assertEqual(rules1.allowed_groups_ids[0], guid1)
 
