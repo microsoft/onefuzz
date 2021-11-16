@@ -64,7 +64,7 @@ def check_access(req: HttpRequest) -> Optional[Error]:
             )
             return Error(
                 code=ErrorCode.UNAUTHORIZED,
-                errors=["not approved to use this instance of onefuzz"],
+                errors=["not approved to use this endpoint"],
             )
     except Exception as e:
         return Error(

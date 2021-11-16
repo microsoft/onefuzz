@@ -17,7 +17,12 @@ class GroupMembershipChecker(Protocol):
             return True
 
         groups = self.get_groups(member_id)
-        return group_ids in groups
+        for g in group_ids:
+            if g in groups:
+                return True
+
+        return False
+
 
     def get_groups(self, member_id: UUID) -> List[UUID]:
         """Gets all the groups of the provided member"""
