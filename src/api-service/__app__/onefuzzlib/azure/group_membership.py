@@ -40,8 +40,8 @@ class AzureADGroupMembership(GroupMembershipChecker):
 
 
 class StaticGroupMembership(GroupMembershipChecker):
-    def __init__(self, memberships: Dict[UUID, List[UUID]]):
+    def __init__(self, memberships: Dict[str, List[UUID]]):
         self.memberships = memberships
 
     def get_groups(self, member_id: UUID) -> List[UUID]:
-        return self.memberships.get(member_id, [])
+        return self.memberships.get(str(member_id), [])

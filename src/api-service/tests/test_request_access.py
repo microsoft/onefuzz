@@ -43,6 +43,8 @@ class TestRequestAccess(unittest.TestCase):
         rules1 = request_access.get_matching_rules("get", "a/b/c")
         rules2 = request_access.get_matching_rules("get", "b/b/e")
 
+        assert rules1 is not None
+        assert rules2 is not None
         self.assertNotEqual(len(rules1.allowed_groups_ids), 0, "empty allowed groups")
         self.assertEqual(rules1.allowed_groups_ids[0], guid1)
 
@@ -63,6 +65,7 @@ class TestRequestAccess(unittest.TestCase):
 
         rules = request_access.get_matching_rules("get", "b/b/c")
 
+        assert rules is not None
         self.assertNotEqual(len(rules.allowed_groups_ids), 0, "empty allowed groups")
         self.assertEqual(rules.allowed_groups_ids[0], guid1)
 
@@ -111,6 +114,7 @@ class TestRequestAccess(unittest.TestCase):
 
         rules = request_access.get_matching_rules("get", "a/b/c")
 
+        assert rules is not None
         self.assertEqual(
             rules.allowed_groups_ids[0],
             guid2,
@@ -145,16 +149,19 @@ class TestRequestAccess(unittest.TestCase):
         )
 
         rules1 = request_access.get_matching_rules("get", "a/b/c/d")
+        assert rules1 is not None
         self.assertEqual(
             rules1.allowed_groups_ids[0], guid1, "expected to inherit rule of a/b/c"
         )
 
         rules2 = request_access.get_matching_rules("get", "f/b/c/d")
+        assert rules2 is not None
         self.assertEqual(
             rules2.allowed_groups_ids[0], guid2, "expected to inherit rule of f/*/c"
         )
 
         rules3 = request_access.get_matching_rules("post", "a/b/c/d")
+        assert rules3 is not None
         self.assertEqual(
             rules3.allowed_groups_ids[0], guid3, "expected to inherit rule of post a/b"
         )
@@ -180,11 +187,13 @@ class TestRequestAccess(unittest.TestCase):
         )
 
         rules1 = request_access.get_matching_rules("get", "a/b/c")
+        assert rules1 is not None
         self.assertEqual(
             rules1.allowed_groups_ids[0], guid1, "expected to inherit rule of a/b/c"
         )
 
         rules2 = request_access.get_matching_rules("get", "a/b/c/d")
+        assert rules2 is not None
         self.assertEqual(
             rules2.allowed_groups_ids[0], guid2, "expected to inherit rule of a/b/c/d"
         )

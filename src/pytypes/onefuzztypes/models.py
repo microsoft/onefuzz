@@ -842,7 +842,8 @@ class ApiAccessRule(BaseModel):
     allowed_groups: List[UUID]
 
 
-PrincipalID = UUID
+# json dumps doesn't support UUID as dictionary key
+PrincipalID = str
 GroupId = UUID
 
 

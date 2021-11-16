@@ -75,11 +75,10 @@ class RequestAccess:
         method = method.upper()
         segments = path.split("/")
         current_node = self.root
+        current_rule = None
 
         if method in current_node.rules:
             current_rule = current_node.rules[method]
-        else:
-            current_rule = None
 
         current_segment_index = 0
 
