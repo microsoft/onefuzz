@@ -38,7 +38,7 @@ def create_group_membership_checker() -> GroupMembershipChecker:
 class AzureADGroupMembership(GroupMembershipChecker):
     def get_groups(self, member_id: UUID) -> List[UUID]:
         response = query_microsoft_graph_list(
-            method="GET", resource=f"users/{member_id}/memberOf"
+            method="GET", resource=f"users/{member_id}/transitiveMemberOf"
         )
         return response
 

@@ -75,19 +75,6 @@ def check_access(req: HttpRequest) -> Optional[Error]:
     return None
 
 
-def check_access_(req: HttpRequest) -> Optional[Error]:
-
-    if "ONEFUZZ_AAD_GROUP_ID" in os.environ:
-        message = "ONEFUZZ_AAD_GROUP_ID configuration not supported"
-        logging.error(message)
-        return Error(
-            code=ErrorCode.INVALID_CONFIGURATION,
-            errors=[message],
-        )
-    else:
-        return None
-
-
 def ok(
     data: Union[BaseResponse, Sequence[BaseResponse], ModelMixin, Sequence[ModelMixin]]
 ) -> HttpResponse:
