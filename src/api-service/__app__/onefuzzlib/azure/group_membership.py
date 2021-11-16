@@ -23,7 +23,6 @@ class GroupMembershipChecker(Protocol):
 
         return False
 
-
     def get_groups(self, member_id: UUID) -> List[UUID]:
         """Gets all the groups of the provided member"""
 
