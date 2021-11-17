@@ -15,13 +15,12 @@ class TestRequestAccess(unittest.TestCase):
 
         guid2 = uuid.uuid4()
         request_access1 = RequestAccess.build(
-            [
-                ApiAccessRule(
+            {
+                "a/b/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/b/c",
                     allowed_groups=[guid2],
                 )
-            ]
+            }
         )
         rules1 = request_access1.get_matching_rules("get", "")
         self.assertEqual(rules1, None, "expected nothing")
@@ -31,13 +30,12 @@ class TestRequestAccess(unittest.TestCase):
         guid1 = uuid.uuid4()
 
         request_access = RequestAccess.build(
-            [
-                ApiAccessRule(
+            {
+                "a/b/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/b/c",
                     allowed_groups=[guid1],
                 )
-            ]
+            }
         )
 
         rules1 = request_access.get_matching_rules("get", "a/b/c")
@@ -53,13 +51,12 @@ class TestRequestAccess(unittest.TestCase):
         guid1 = uuid.uuid4()
 
         request_access = RequestAccess.build(
-            [
-                ApiAccessRule(
+            {
+                "b/*/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="b/*/c",
                     allowed_groups=[guid1],
                 )
-            ]
+            }
         )
 
         rules = request_access.get_matching_rules("get", "b/b/c")
@@ -73,18 +70,16 @@ class TestRequestAccess(unittest.TestCase):
 
         try:
             RequestAccess.build(
-                [
-                    ApiAccessRule(
+                {
+                    "a/b/c": ApiAccessRule(
                         methods=["get"],
-                        endpoint="a/b/c",
                         allowed_groups=[guid1],
                     ),
-                    ApiAccessRule(
+                    "a/b/c/": ApiAccessRule(
                         methods=["get"],
-                        endpoint="a/b/c",
                         allowed_groups=[],
                     ),
-                ]
+                }
             )
 
             self.fail("this is expected to fail")
@@ -97,18 +92,16 @@ class TestRequestAccess(unittest.TestCase):
         guid2 = uuid.uuid4()
 
         request_access = RequestAccess.build(
-            [
-                ApiAccessRule(
+            {
+                "a/*/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/*/c",
                     allowed_groups=[guid1],
                 ),
-                ApiAccessRule(
+                "a/b/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/b/c",
                     allowed_groups=[guid2],
                 ),
-            ]
+            }
         )
 
         rules = request_access.get_matching_rules("get", "a/b/c")
@@ -128,23 +121,20 @@ class TestRequestAccess(unittest.TestCase):
         guid3 = uuid.uuid4()
 
         request_access = RequestAccess.build(
-            [
-                ApiAccessRule(
+            {
+                "a/b/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/b/c",
                     allowed_groups=[guid1],
                 ),
-                ApiAccessRule(
+                "f/*/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="f/*/c",
                     allowed_groups=[guid2],
                 ),
-                ApiAccessRule(
+                "a/b": ApiAccessRule(
                     methods=["post"],
-                    endpoint="a/b",
                     allowed_groups=[guid3],
                 ),
-            ]
+            }
         )
 
         rules1 = request_access.get_matching_rules("get", "a/b/c/d")
@@ -171,18 +161,16 @@ class TestRequestAccess(unittest.TestCase):
         guid2 = uuid.uuid4()
 
         request_access = RequestAccess.build(
-            [
-                ApiAccessRule(
+            {
+                "a/b/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/b/c",
                     allowed_groups=[guid1],
                 ),
-                ApiAccessRule(
+                "a/b/c/d": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/b/c/d",
                     allowed_groups=[guid2],
                 ),
-            ]
+            }
         )
 
         rules1 = request_access.get_matching_rules("get", "a/b/c")

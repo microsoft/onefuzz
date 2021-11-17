@@ -1,2 +1,4 @@
-onefuzz==0.0.0
+../../cli
+../../pytypes
 azure-cli-core==2.27.2
+azure-cli==2.27.2
