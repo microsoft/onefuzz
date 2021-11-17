@@ -673,10 +673,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Allowed Groups",
                     "type": "array"
                 },
-                "endpoint": {
-                    "title": "Endpoint",
-                    "type": "string"
-                },
                 "methods": {
                     "items": {
                         "type": "string"
@@ -687,7 +683,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "required": [
                 "methods",
-                "endpoint",
                 "allowed_groups"
             ],
             "title": "ApiAccessRule",
@@ -788,11 +783,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "array"
                 },
                 "api_access_rules": {
-                    "items": {
+                    "additionalProperties": {
                         "$ref": "#/definitions/ApiAccessRule"
                     },
                     "title": "Api Access Rules",
-                    "type": "array"
+                    "type": "object"
                 },
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"
@@ -4991,10 +4986,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Allowed Groups",
                     "type": "array"
                 },
-                "endpoint": {
-                    "title": "Endpoint",
-                    "type": "string"
-                },
                 "methods": {
                     "items": {
                         "type": "string"
@@ -5005,7 +4996,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "required": [
                 "methods",
-                "endpoint",
                 "allowed_groups"
             ],
             "title": "ApiAccessRule",
@@ -5935,11 +5925,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "array"
                 },
                 "api_access_rules": {
-                    "items": {
+                    "additionalProperties": {
                         "$ref": "#/definitions/ApiAccessRule"
                     },
                     "title": "Api Access Rules",
-                    "type": "array"
+                    "type": "object"
                 },
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"
