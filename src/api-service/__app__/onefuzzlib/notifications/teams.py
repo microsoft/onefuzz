@@ -26,7 +26,7 @@ def markdown_escape(data: str) -> str:
 
 def code_block(data: str) -> str:
     data = data.replace("`", "``")
-    return "\n```%s\n```\n" % data
+    return "\n```\n%s\n```\n" % data
 
 
 def send_teams_webhook(
