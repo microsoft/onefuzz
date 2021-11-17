@@ -40,7 +40,7 @@ class RequestAccess:
     def __add_url__(self, methods: List[str], path: str, rules: Rules) -> None:
         methods = list(map(lambda m: m.upper(), methods))
 
-        segments = [s for s in  path.split("/") if s != ""]
+        segments = [s for s in path.split("/") if s != ""]
         if len(segments) == 0:
             return
 
@@ -72,7 +72,7 @@ class RequestAccess:
 
     def get_matching_rules(self, method: str, path: str) -> Optional[Rules]:
         method = method.upper()
-        segments = [s for s in  path.split("/") if s != ""]
+        segments = [s for s in path.split("/") if s != ""]
         current_node = self.root
         current_rule = None
 

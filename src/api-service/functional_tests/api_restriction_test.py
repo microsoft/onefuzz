@@ -27,9 +27,19 @@ def az_cli(args: List[str]) -> Any:
 
 
 class APIRestrictionTests:
-    def __init__(self, onefuzz_config_path: str = None) -> None:
+    def __init__(
+        self, resource_group: str = None, onefuzz_config_path: str = None
+    ) -> None:
         self.onefuzz = Onefuzz(config_path=onefuzz_config_path)
         self.intial_config = self.onefuzz.instance_config.get()
+
+        self.instance_name = urlparse(self.onefuzz.config().endpoint).netloc.split(".")[
+            0
+        ]
+        if resource_group:
+            self.resource_group = resource_group
+        else:
+            self.resource_group = self.instance_name
 
     def restore_config(self) -> None:
         self.onefuzz.instance_config.update(self.intial_config)
@@ -74,8 +84,7 @@ class APIRestrictionTests:
         )
 
         self.onefuzz.instance_config.update(instance_config)
-        print("sleep 10 seconds")
-        # time.sleep(10)
+        restart_instance(self.instance_name, self.resource_group)
         print("Checking that the current user cannot get jobs")
         try:
             self.onefuzz.jobs.list()
@@ -89,9 +98,24 @@ class APIRestrictionTests:
 
         print("Assigning current user to test group")
         self.assign_current_user(group_id)
+        restart_instance(self.instance_name, self.resource_group)
 
         print("Checking that the current user can get jobs")
         self.onefuzz.jobs.list()
+
+
+def restart_instance(instance_name: str, resource_group: str) -> None:
+    print("Restarting instance")
+    az_cli(
+        [
+            "functionapp",
+            "restart",
+            "--name",
+            f"{instance_name}",
+            "--resource-group",
+            f"{resource_group}",
+        ]
+    )
 
 
 def disable_api_access_rules_caching(instance_name: str, resource_group: str) -> None:
@@ -110,16 +134,8 @@ def disable_api_access_rules_caching(instance_name: str, resource_group: str) ->
             f"NO_REQUEST_ACCESS_RULES_CACHE=''",
         ]
     )
-    az_cli(
-        [
-            "functionapp",
-            "restart",
-            "--name",
-            f"{instance_name}",
-            "--resource-group",
-            f"{resource_group}",
-        ]
-    )
+
+    restart_instance(instance_name, resource_group)
 
 
 def enable_api_access_rules_caching(instance_name: str, resource_group: str) -> None:
@@ -139,19 +155,7 @@ def enable_api_access_rules_caching(instance_name: str, resource_group: str) -> 
         ]
     )
 
-    az_cli(
-        [
-            "functionapp",
-            "restart",
-            "--name",
-            f"{instance_name}",
-            "--resource-group",
-            f"{resource_group}",
-        ]
-    )
-
-
-    # az functionapp restart
+    restart_instance(instance_name, resource_group)
 
 
 def main() -> None:
@@ -159,24 +163,16 @@ def main() -> None:
     parser.add_argument("--config_path", default=None)
     parser.add_argument("--resource_group", default=None)
     args = parser.parse_args()
-    tester = APIRestrictionTests(args.config_path)
-    config = tester.onefuzz.config()
-
-    instance_name = urlparse(config.endpoint).netloc.split(".")[0]
-
-    if args.resource_group:
-        resource_group = args.resource_group
-    else:
-        resource_group = instance_name
+    tester = APIRestrictionTests(args.resource_group, args.config_path)
 
     try:
-        disable_api_access_rules_caching(instance_name, resource_group)
+        disable_api_access_rules_caching(tester.instance_name, tester.resource_group)
         print("test current user restriction")
         tester.test_restriction_on_current_user()
     finally:
         pass
-        # enable_api_access_rules_caching(instance_name, resource_group)
-        # tester.restore_config()
+        enable_api_access_rules_caching(tester.instance_name, tester.resource_group)
+        tester.restore_config()
 
 
 if __name__ == "__main__":

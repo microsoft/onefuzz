@@ -37,9 +37,11 @@ def get_rules() -> Optional[RequestAccess]:
     else:
         return None
 
+
 @cached(ttl=60)
 def get_rules_cached() -> Optional[RequestAccess]:
     return get_rules()
+
 
 def check_access(req: HttpRequest) -> Optional[Error]:
     if "NO_REQUEST_ACCESS_RULES_CACHE" in os.environ:
