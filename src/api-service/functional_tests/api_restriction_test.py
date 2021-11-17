@@ -13,7 +13,6 @@ from uuid import UUID
 from azure.cli.core import get_default_cli
 from onefuzz.api import Onefuzz
 from onefuzztypes.models import ApiAccessRule
-import time
 
 
 def az_cli(args: List[str]) -> Any:
@@ -131,7 +130,7 @@ def disable_api_access_rules_caching(instance_name: str, resource_group: str) ->
             "--resource-group",
             f"{resource_group}",
             "--settings",
-            f"NO_REQUEST_ACCESS_RULES_CACHE=''",
+            "NO_REQUEST_ACCESS_RULES_CACHE=''",
         ]
     )
 
@@ -151,7 +150,7 @@ def enable_api_access_rules_caching(instance_name: str, resource_group: str) -> 
             "--resource-group",
             f"{resource_group}",
             "--setting-names",
-            f"NO_REQUEST_ACCESS_RULES_CACHE",
+            "NO_REQUEST_ACCESS_RULES_CACHE",
         ]
     )
 
