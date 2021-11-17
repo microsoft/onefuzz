@@ -8,7 +8,7 @@ from __app__.onefuzzlib.request_access import RequestAccess, RuleConflictError
 
 class TestRequestAccess(unittest.TestCase):
     def test_empty(self) -> None:
-        request_access1 = RequestAccess.build([])
+        request_access1 = RequestAccess.build({})
         rules1 = request_access1.get_matching_rules("get", "a/b/c")
 
         self.assertEqual(rules1, None, "expected nothing")
