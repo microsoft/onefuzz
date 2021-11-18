@@ -19,6 +19,9 @@ from .compute import get_compute_client
 @cached(ttl=60)
 def get_os(region: Region, image: str) -> Union[Error, OS]:
     client = get_compute_client()
+    # The dict returned here may not have any defined keys.
+    # 
+    # See: https://github.com/Azure/msrestazure-for-python/blob/v0.6.3/msrestazure/tools.py#L134
     parsed = parse_resource_id(image)
     if "resource_group" in parsed:
         if parsed["type"] == "galleries":
