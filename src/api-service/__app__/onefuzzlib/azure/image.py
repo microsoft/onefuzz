@@ -21,12 +21,12 @@ def get_os(region: Region, image: str) -> Union[Error, OS]:
     client = get_compute_client()
     # The dict returned here may not have any defined keys.
     #
-    # See: https://github.com/Azure/msrestazure-for-python/blob/v0.6.3/msrestazure/tools.py#L134  # noqa: E501 
+    # See: https://github.com/Azure/msrestazure-for-python/blob/v0.6.3/msrestazure/tools.py#L134  # noqa: E501
     parsed = parse_resource_id(image)
     if "resource_group" in parsed:
         if parsed["type"] == "galleries":
             try:
-                # See: https://docs.microsoft.com/en-us/rest/api/compute/gallery-images/get#galleryimage  # noqa: E501 
+                # See: https://docs.microsoft.com/en-us/rest/api/compute/gallery-images/get#galleryimage  # noqa: E501
                 name = client.gallery_images.get(
                     parsed["resource_group"], parsed["name"], parsed["child_name_1"]
                 ).os_type.lower()
