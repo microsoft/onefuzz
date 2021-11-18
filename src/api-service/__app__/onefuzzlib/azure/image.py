@@ -33,6 +33,7 @@ def get_os(region: Region, image: str) -> Union[Error, OS]:
                 return Error(code=ErrorCode.INVALID_IMAGE, errors=[str(err)])
         else:
             try:
+                # See: https://docs.microsoft.com/en-us/rest/api/compute/images/get
                 name = client.images.get(
                     parsed["resource_group"], parsed["name"]
                 ).storage_profile.os_disk.os_type.lower()
