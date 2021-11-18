@@ -26,6 +26,7 @@ def get_os(region: Region, image: str) -> Union[Error, OS]:
     if "resource_group" in parsed:
         if parsed["type"] == "galleries":
             try:
+                # See: https://docs.microsoft.com/en-us/rest/api/compute/gallery-images/get#galleryimage
                 name = client.gallery_images.get(
                     parsed["resource_group"], parsed["name"], parsed["child_name_1"]
                 ).os_type.lower()
