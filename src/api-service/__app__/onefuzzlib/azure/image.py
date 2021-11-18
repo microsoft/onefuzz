@@ -19,14 +19,27 @@ from .compute import get_compute_client
 @cached(ttl=60)
 def get_os(region: Region, image: str) -> Union[Error, OS]:
     client = get_compute_client()
+    # The dict returned here may not have any defined keys.
+    #
+    # See: https://github.com/Azure/msrestazure-for-python/blob/v0.6.3/msrestazure/tools.py#L134  # noqa: E501
     parsed = parse_resource_id(image)
     if "resource_group" in parsed:
-        try:
-            name = client.images.get(
-                parsed["resource_group"], parsed["name"]
-            ).storage_profile.os_disk.os_type.name
-        except (ResourceNotFoundError, CloudError) as err:
-            return Error(code=ErrorCode.INVALID_IMAGE, errors=[str(err)])
+        if parsed["type"] == "galleries":
+            try:
+                # See: https://docs.microsoft.com/en-us/rest/api/compute/gallery-images/get#galleryimage  # noqa: E501
+                name = client.gallery_images.get(
+                    parsed["resource_group"], parsed["name"], parsed["child_name_1"]
+                ).os_type.lower()
+            except (ResourceNotFoundError, CloudError) as err:
+                return Error(code=ErrorCode.INVALID_IMAGE, errors=[str(err)])
+        else:
+            try:
+                # See: https://docs.microsoft.com/en-us/rest/api/compute/images/get
+                name = client.images.get(
+                    parsed["resource_group"], parsed["name"]
+                ).storage_profile.os_disk.os_type.lower()
+            except (ResourceNotFoundError, CloudError) as err:
+                return Error(code=ErrorCode.INVALID_IMAGE, errors=[str(err)])
     else:
         publisher, offer, sku, version = image.split(":")
         try:
