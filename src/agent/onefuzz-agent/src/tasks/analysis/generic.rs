@@ -195,6 +195,7 @@ pub async fn run_tool(
     reports_dir: &Option<PathBuf>,
 ) -> Result<()> {
     let expand = Expand::new()
+        .machine_id().await?
         .input_path(&input)
         .target_exe(&config.target_exe)
         .target_options(&config.target_options)
