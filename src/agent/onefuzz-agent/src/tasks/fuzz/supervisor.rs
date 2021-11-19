@@ -143,7 +143,8 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     let monitor_path = if let Some(stats_file) = &config.stats_file {
         Some(
             Expand::new()
-                .machine_id().await?
+                .machine_id()
+                .await?
                 .runtime_dir(runtime_dir.path())
                 .evaluate_value(stats_file)?,
         )
@@ -196,7 +197,8 @@ async fn start_supervisor(
     reports_dir: PathBuf,
 ) -> Result<Child> {
     let expand = Expand::new()
-        .machine_id().await?
+        .machine_id()
+        .await?
         .supervisor_exe(&config.supervisor_exe)
         .supervisor_options(&config.supervisor_options)
         .runtime_dir(&runtime_dir)

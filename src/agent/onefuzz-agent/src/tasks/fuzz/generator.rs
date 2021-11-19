@@ -160,7 +160,8 @@ impl GeneratorTask {
         utils::reset_tmp_dir(&output_dir).await?;
         let (mut generator, generator_path) = {
             let expand = Expand::new()
-                .machine_id().await?
+                .machine_id()
+                .await?
                 .setup_dir(&self.config.common.setup_dir)
                 .generated_inputs(&output_dir)
                 .input_corpus(&corpus_dir)

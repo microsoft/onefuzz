@@ -268,7 +268,8 @@ impl<'a> TaskContext<'a> {
 
     fn command_for_input(&self, input: &Path) -> Result<Command> {
         let expand = Expand::new()
-            .machine_id().await?
+            .machine_id()
+            .await?
             .input_path(input)
             .job_id(&self.config.common.job_id)
             .setup_dir(&self.config.common.setup_dir)
