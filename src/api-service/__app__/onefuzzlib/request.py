@@ -49,12 +49,14 @@ def check_access(req: HttpRequest) -> Optional[Error]:
     else:
         rules = get_rules_cached()
 
+    # Noting to enforce if there are no rules.
     if not rules:
         return None
 
     path = urllib.parse.urlparse(req.url).path
     rule = rules.get_matching_rules(req.method, path)
 
+    # No restriction defined on this endpoint.
     if not rule:
         return None
 
@@ -62,8 +64,8 @@ def check_access(req: HttpRequest) -> Optional[Error]:
 
     try:
         membership_checker = create_group_membership_checker()
-        result = membership_checker.is_member(rule.allowed_groups_ids, member_id)
-        if not result:
+        allowed = membership_checker.is_member(rule.allowed_groups_ids, member_id)
+        if not allowed:
             logging.error(
                 "unauthorized access: %s is not authorized to access in %s",
                 member_id,
