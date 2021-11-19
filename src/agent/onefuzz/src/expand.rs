@@ -114,6 +114,7 @@ impl<'a> Expand<'a> {
         Self { values }
     }
 
+    // Must be manually called to enable the use of async library code.
     pub async fn machine_id(self) -> Result<Expand<'a>> {
         let id = get_machine_id().await?;
         let value = id.to_string();
