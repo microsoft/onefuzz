@@ -13,6 +13,7 @@ from uuid import UUID
 from azure.cli.core import get_default_cli
 from onefuzz.api import Onefuzz
 from onefuzztypes.models import ApiAccessRule
+import time
 
 
 def az_cli(args: List[str]) -> Any:
@@ -47,9 +48,12 @@ class APIRestrictionTests:
         instance_config = self.onefuzz.instance_config.get()
         if instance_config.group_membership is None:
             instance_config.group_membership = {}
-        if member_id in instance_config.group_membership:
-            if group_id not in instance_config.group_membership[member_id]:
-                instance_config.group_membership[member_id].append(group_id)
+
+        if member_id not in instance_config.group_membership:
+            instance_config.group_membership[member_id] = []
+
+        if group_id not in instance_config.group_membership[member_id]:
+            instance_config.group_membership[member_id].append(group_id)
 
         self.onefuzz.instance_config.update(instance_config)
 
@@ -62,6 +66,7 @@ class APIRestrictionTests:
             ]
         )
         member_id = UUID(onefuzz_service_appId["objectId"])
+        print(f"adding user {member_id}")
         self.assign(group_id, member_id)
 
     def test_restriction_on_current_user(self) -> None:
@@ -84,7 +89,9 @@ class APIRestrictionTests:
 
         self.onefuzz.instance_config.update(instance_config)
         restart_instance(self.instance_name, self.resource_group)
+        time.sleep(20)
         print("Checking that the current user cannot get jobs")
+
         try:
             self.onefuzz.jobs.list()
             failed = False
@@ -98,6 +105,7 @@ class APIRestrictionTests:
         print("Assigning current user to test group")
         self.assign_current_user(group_id)
         restart_instance(self.instance_name, self.resource_group)
+        time.sleep(20)
 
         print("Checking that the current user can get jobs")
         self.onefuzz.jobs.list()
@@ -117,46 +125,6 @@ def restart_instance(instance_name: str, resource_group: str) -> None:
     )
 
 
-def disable_api_access_rules_caching(instance_name: str, resource_group: str) -> None:
-    print("Disabling API access rules caching")
-    az_cli(
-        [
-            "functionapp",
-            "config",
-            "appsettings",
-            "set",
-            "--name",
-            f"{instance_name}",
-            "--resource-group",
-            f"{resource_group}",
-            "--settings",
-            "NO_REQUEST_ACCESS_RULES_CACHE=''",
-        ]
-    )
-
-    restart_instance(instance_name, resource_group)
-
-
-def enable_api_access_rules_caching(instance_name: str, resource_group: str) -> None:
-    print("Enabling API access rules caching")
-    az_cli(
-        [
-            "functionapp",
-            "config",
-            "appsettings",
-            "delete",
-            "--name",
-            f"{instance_name}",
-            "--resource-group",
-            f"{resource_group}",
-            "--setting-names",
-            "NO_REQUEST_ACCESS_RULES_CACHE",
-        ]
-    )
-
-    restart_instance(instance_name, resource_group)
-
-
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config_path", default=None)
@@ -165,13 +133,11 @@ def main() -> None:
     tester = APIRestrictionTests(args.resource_group, args.config_path)
 
     try:
-        disable_api_access_rules_caching(tester.instance_name, tester.resource_group)
         print("test current user restriction")
         tester.test_restriction_on_current_user()
     finally:
-        pass
-        enable_api_access_rules_caching(tester.instance_name, tester.resource_group)
         tester.restore_config()
+        pass
 
 
 if __name__ == "__main__":

@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from onefuzztypes.requests import BaseRequest  # noqa: F401
 
 
+@cached(ttl=60)
 def get_rules() -> Optional[RequestAccess]:
     config = InstanceConfig.fetch()
     if config.api_access_rules:
@@ -38,16 +39,8 @@ def get_rules() -> Optional[RequestAccess]:
         return None
 
 
-@cached(ttl=60)
-def get_rules_cached() -> Optional[RequestAccess]:
-    return get_rules()
-
-
 def check_access(req: HttpRequest) -> Optional[Error]:
-    if "NO_REQUEST_ACCESS_RULES_CACHE" in os.environ:
-        rules = get_rules()
-    else:
-        rules = get_rules_cached()
+    rules = get_rules()
 
     # Noting to enforce if there are no rules.
     if not rules:
