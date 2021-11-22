@@ -266,7 +266,7 @@
                             "value": "[parameters('owner')]"
                         }
                     ],
-                    "linuxFxVersion": "Python|3.7",
+                    "linuxFxVersion": "Python|3.8",
                     "alwaysOn": true,
                     "defaultDocuments": [],
                     "httpLoggingEnabled": true,

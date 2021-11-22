@@ -168,14 +168,6 @@ def query_microsoft_graph_list(
         raise GraphQueryError("Expected data containing a list of values", None)
 
 
-def is_member_of(group_id: str, member_id: str) -> bool:
-    body = {"groupIds": [group_id]}
-    response = query_microsoft_graph_list(
-        method="POST", resource=f"users/{member_id}/checkMemberGroups", body=body
-    )
-    return group_id in response
-
-
 @cached
 def get_scaleset_identity_resource_path() -> str:
     scaleset_id_name = "%s-scalesetid" % get_instance_name()
