@@ -5,7 +5,6 @@
 
 import json
 import logging
-import os
 import urllib
 from typing import TYPE_CHECKING, Optional, Sequence, Type, TypeVar, Union
 from uuid import UUID
