@@ -5,15 +5,15 @@
 
 import argparse
 import os
-from urllib.parse import urlparse
+import time
 import uuid
 from typing import Any, List
+from urllib.parse import urlparse
 from uuid import UUID
 
 from azure.cli.core import get_default_cli
 from onefuzz.api import Onefuzz
 from onefuzztypes.models import ApiAccessRule
-import time
 
 
 def az_cli(args: List[str]) -> Any:

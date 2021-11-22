@@ -1,8 +1,6 @@
 import unittest
 import uuid
 
-from onefuzztypes.models import ApiAccessRule
-
 from __app__.onefuzzlib.azure.group_membership import (
     GroupMembershipChecker,
     StaticGroupMembership,
