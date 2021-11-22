@@ -1,8 +1,7 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from onefuzztypes.models import ApiAccessRule
-from pydantic import parse_raw_as
 
 
 class RuleConflictError(Exception):
@@ -41,7 +40,7 @@ class RequestAccess:
     def __add_url__(self, methods: List[str], path: str, rules: Rules) -> None:
         methods = list(map(lambda m: m.upper(), methods))
 
-        segments = path.split("/")
+        segments = [s for s in path.split("/") if s != ""]
         if len(segments) == 0:
             return
 
@@ -71,15 +70,14 @@ class RequestAccess:
         for method in methods:
             current_node.rules[method] = rules
 
-    def get_matching_rules(self, method: str, path: str) -> Rules:
+    def get_matching_rules(self, method: str, path: str) -> Optional[Rules]:
         method = method.upper()
-        segments = path.split("/")
+        segments = [s for s in path.split("/") if s != ""]
         current_node = self.root
+        current_rule = None
 
         if method in current_node.rules:
             current_rule = current_node.rules[method]
-        else:
-            current_rule = RequestAccess.Rules()
 
         current_segment_index = 0
 
@@ -98,17 +96,13 @@ class RequestAccess:
         return current_rule
 
     @classmethod
-    def parse_rules(cls, rules_data: str) -> "RequestAccess":
-        rules = parse_raw_as(List[ApiAccessRule], rules_data)
-        return cls.build(rules)
-
-    @classmethod
-    def build(cls, rules: List[ApiAccessRule]) -> "RequestAccess":
+    def build(cls, rules: Dict[str, ApiAccessRule]) -> "RequestAccess":
         request_access = RequestAccess()
-        for rule in rules:
+        for endpoint in rules:
+            rule = rules[endpoint]
             request_access.__add_url__(
                 rule.methods,
-                rule.endpoint,
+                endpoint,
                 RequestAccess.Rules(allowed_groups_ids=rule.allowed_groups),
             )
 
