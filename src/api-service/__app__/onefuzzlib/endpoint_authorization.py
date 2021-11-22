@@ -172,16 +172,17 @@ def call_if(
     allow_agent: bool = False
 ) -> func.HttpResponse:
 
-    access = check_access(req)
-    if isinstance(access, Error):
-        return access
-
     token = parse_jwt_token(req)
     if isinstance(token, Error):
         return not_ok(token, status_code=401, context="token verification")
 
-    if is_user(token) and not allow_user:
-        return reject(req, token)
+    if is_user(token):
+        if not allow_user:
+            return reject(req, token)
+
+        access = check_access(req)
+        if isinstance(access, Error):
+            return not_ok(access, status_code=401, context="access control")
 
     if is_agent(token) and not allow_agent:
         return reject(req, token)
