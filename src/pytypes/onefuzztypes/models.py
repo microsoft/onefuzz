@@ -838,8 +838,13 @@ class AzureVmExtensionConfig(BaseModel):
 
 class ApiAccessRule(BaseModel):
     methods: List[str]
-    endpoint: str
     allowed_groups: List[UUID]
+
+
+Endpoint = str
+# json dumps doesn't support UUID as dictionary key
+PrincipalID = str
+GroupId = UUID
 
 
 class InstanceConfig(BaseModel):
@@ -857,6 +862,8 @@ class InstanceConfig(BaseModel):
     )
     extensions: Optional[AzureVmExtensionConfig]
     proxy_vm_sku: str = Field(default="Standard_B2s")
+    api_access_rules: Optional[Dict[Endpoint, ApiAccessRule]] = None
+    group_membership: Optional[Dict[PrincipalID, List[GroupId]]] = None
 
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:

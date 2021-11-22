@@ -663,6 +663,31 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "definitions": {
+        "ApiAccessRule": {
+            "properties": {
+                "allowed_groups": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Allowed Groups",
+                    "type": "array"
+                },
+                "methods": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Methods",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "methods",
+                "allowed_groups"
+            ],
+            "title": "ApiAccessRule",
+            "type": "object"
+        },
         "AzureMonitorExtensionConfig": {
             "properties": {
                 "config_version": {
@@ -757,8 +782,26 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Allowed Aad Tenants",
                     "type": "array"
                 },
+                "api_access_rules": {
+                    "additionalProperties": {
+                        "$ref": "#/definitions/ApiAccessRule"
+                    },
+                    "title": "Api Access Rules",
+                    "type": "object"
+                },
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"
+                },
+                "group_membership": {
+                    "additionalProperties": {
+                        "items": {
+                            "format": "uuid",
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "title": "Group Membership",
+                    "type": "object"
                 },
                 "network_config": {
                     "$ref": "#/definitions/NetworkConfig"
@@ -4933,6 +4976,31 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "definitions": {
+        "ApiAccessRule": {
+            "properties": {
+                "allowed_groups": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Allowed Groups",
+                    "type": "array"
+                },
+                "methods": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Methods",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "methods",
+                "allowed_groups"
+            ],
+            "title": "ApiAccessRule",
+            "type": "object"
+        },
         "Architecture": {
             "description": "An enumeration.",
             "enum": [
@@ -5856,8 +5924,26 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Allowed Aad Tenants",
                     "type": "array"
                 },
+                "api_access_rules": {
+                    "additionalProperties": {
+                        "$ref": "#/definitions/ApiAccessRule"
+                    },
+                    "title": "Api Access Rules",
+                    "type": "object"
+                },
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"
+                },
+                "group_membership": {
+                    "additionalProperties": {
+                        "items": {
+                            "format": "uuid",
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "title": "Group Membership",
+                    "type": "object"
                 },
                 "network_config": {
                     "$ref": "#/definitions/NetworkConfig"
