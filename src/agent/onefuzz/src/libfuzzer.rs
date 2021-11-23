@@ -213,11 +213,13 @@ impl<'a> LibFuzzer<'a> {
         extra_corpus_dirs: &[impl AsRef<Path>],
     ) -> Result<Child> {
         let extra_corpus_dirs: Vec<&Path> = extra_corpus_dirs.iter().map(|x| x.as_ref()).collect();
-        let mut cmd = self.build_command(
-            Some(fault_dir.as_ref()),
-            Some(corpus_dir.as_ref()),
-            Some(&extra_corpus_dirs),
-        ).await?;
+        let mut cmd = self
+            .build_command(
+                Some(fault_dir.as_ref()),
+                Some(corpus_dir.as_ref()),
+                Some(&extra_corpus_dirs),
+            )
+            .await?;
 
         // When writing a new faulting input, the libFuzzer runtime _exactly_
         // prepends the value of `-artifact_prefix` to the new file name. To
@@ -264,8 +266,9 @@ impl<'a> LibFuzzer<'a> {
         extra_corpus_dirs: &[impl AsRef<Path>],
     ) -> Result<LibFuzzerMergeOutput> {
         let extra_corpus_dirs: Vec<&Path> = extra_corpus_dirs.iter().map(|x| x.as_ref()).collect();
-        let mut cmd =
-            self.build_command(None, Some(corpus_dir.as_ref()), Some(&extra_corpus_dirs)).await?;
+        let mut cmd = self
+            .build_command(None, Some(corpus_dir.as_ref()), Some(&extra_corpus_dirs))
+            .await?;
         cmd.arg("-merge=1");
 
         let output = cmd
