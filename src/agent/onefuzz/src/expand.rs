@@ -114,6 +114,7 @@ impl<'a> Expand<'a> {
         Self { values }
     }
 
+    // Must be manually called to enable the use of async library code.
     pub async fn machine_id(self) -> Result<Expand<'a>> {
         let id = get_machine_id().await?;
         let value = id.to_string();
@@ -513,6 +514,7 @@ mod tests {
     async fn test_expand_machine_id() -> Result<()> {
         let expand = Expand::new().machine_id().await?;
         let expanded = expand.evaluate_value("{machine_id}")?;
+        // Check that "{machine_id}" expands to a valid UUID, but don't worry about the actual value.
         Uuid::parse_str(&expanded)?;
         Ok(())
     }
