@@ -649,6 +649,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "address_space": "10.0.0.0/8",
             "subnet": "10.0.0.0/16"
         },
+        "proxy_nsg_config": {
+            "allowed_ips": [],
+            "allowed_service_tags": []
+        },
         "proxy_vm_sku": "Standard_B2s"
     }
 }
@@ -659,6 +663,31 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "definitions": {
+        "ApiAccessRule": {
+            "properties": {
+                "allowed_groups": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Allowed Groups",
+                    "type": "array"
+                },
+                "methods": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Methods",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "methods",
+                "allowed_groups"
+            ],
+            "title": "ApiAccessRule",
+            "type": "object"
+        },
         "AzureMonitorExtensionConfig": {
             "properties": {
                 "config_version": {
@@ -753,11 +782,32 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Allowed Aad Tenants",
                     "type": "array"
                 },
+                "api_access_rules": {
+                    "additionalProperties": {
+                        "$ref": "#/definitions/ApiAccessRule"
+                    },
+                    "title": "Api Access Rules",
+                    "type": "object"
+                },
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"
                 },
+                "group_membership": {
+                    "additionalProperties": {
+                        "items": {
+                            "format": "uuid",
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "title": "Group Membership",
+                    "type": "object"
+                },
                 "network_config": {
                     "$ref": "#/definitions/NetworkConfig"
+                },
+                "proxy_nsg_config": {
+                    "$ref": "#/definitions/NetworkSecurityGroupConfig"
                 },
                 "proxy_vm_sku": {
                     "default": "Standard_B2s",
@@ -813,6 +863,26 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 }
             },
             "title": "NetworkConfig",
+            "type": "object"
+        },
+        "NetworkSecurityGroupConfig": {
+            "properties": {
+                "allowed_ips": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Allowed Ips",
+                    "type": "array"
+                },
+                "allowed_service_tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Allowed Service Tags",
+                    "type": "array"
+                }
+            },
+            "title": "NetworkSecurityGroupConfig",
             "type": "object"
         }
     },
@@ -4906,6 +4976,31 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "definitions": {
+        "ApiAccessRule": {
+            "properties": {
+                "allowed_groups": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Allowed Groups",
+                    "type": "array"
+                },
+                "methods": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Methods",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "methods",
+                "allowed_groups"
+            ],
+            "title": "ApiAccessRule",
+            "type": "object"
+        },
         "Architecture": {
             "description": "An enumeration.",
             "enum": [
@@ -5829,11 +5924,32 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Allowed Aad Tenants",
                     "type": "array"
                 },
+                "api_access_rules": {
+                    "additionalProperties": {
+                        "$ref": "#/definitions/ApiAccessRule"
+                    },
+                    "title": "Api Access Rules",
+                    "type": "object"
+                },
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"
                 },
+                "group_membership": {
+                    "additionalProperties": {
+                        "items": {
+                            "format": "uuid",
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "title": "Group Membership",
+                    "type": "object"
+                },
                 "network_config": {
                     "$ref": "#/definitions/NetworkConfig"
+                },
+                "proxy_nsg_config": {
+                    "$ref": "#/definitions/NetworkSecurityGroupConfig"
                 },
                 "proxy_vm_sku": {
                     "default": "Standard_B2s",
@@ -5940,6 +6056,26 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 }
             },
             "title": "NetworkConfig",
+            "type": "object"
+        },
+        "NetworkSecurityGroupConfig": {
+            "properties": {
+                "allowed_ips": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Allowed Ips",
+                    "type": "array"
+                },
+                "allowed_service_tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Allowed Service Tags",
+                    "type": "array"
+                }
+            },
+            "title": "NetworkSecurityGroupConfig",
             "type": "object"
         },
         "NoReproReport": {

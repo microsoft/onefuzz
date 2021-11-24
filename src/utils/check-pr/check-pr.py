@@ -15,6 +15,8 @@ from typing import Callable, List, Optional, Tuple, TypeVar
 import requests
 from github import Github
 
+from cleanup_ad import delete_current_user_app_registrations
+
 A = TypeVar("A")
 
 
@@ -117,7 +119,7 @@ class Downloader:
     ) -> str:
         repo = self.gh.get_repo(repo_name)
         workflow = repo.get_workflow(workflow_name)
-        runs = workflow.get_runs()  # type: ignore
+        runs = workflow.get_runs()
         run = None
         for x in runs:
             if x.head_branch != branch:
@@ -189,6 +191,7 @@ class Deployer:
         subprocess.check_call(f"python -mvenv {venv}", shell=True)
         pip = venv_path(venv, "pip")
         py = venv_path(venv, "python")
+        config = os.path.join(os.getcwd(), "config.json")
         commands = [
             ("extracting release-artifacts", f"unzip -qq {filename}"),
             ("extracting deployment", "unzip -qq onefuzz-deployment*.zip"),
@@ -198,7 +201,7 @@ class Deployer:
                 "running deployment",
                 (
                     f"{py} deploy.py {self.region} "
-                    f"{self.instance} {self.instance} cicd"
+                    f"{self.instance} {self.instance} cicd {config}"
                     f" {' --subscription_id ' + self.subscription_id if self.subscription_id else ''}"
                 ),
             ),
@@ -245,6 +248,8 @@ class Deployer:
         cmd = ["az", "group", "delete", "-n", self.instance, "--yes", "--no-wait"]
         print(cmd)
         subprocess.call(cmd)
+
+        delete_current_user_app_registrations(self.instance)
         print("done")
 
     def run(self, *, merge_on_success: bool = False) -> None:

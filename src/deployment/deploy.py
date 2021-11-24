@@ -47,21 +47,31 @@ from azure.storage.blob import (
 )
 from msrest.serialization import TZ_UTC
 
-from data_migration import migrate
-from registration import (
+from deploylib.configuration import (
+    InstanceConfigClient,
+    NetworkSecurityConfig,
+    parse_rules,
+    update_admins,
+    update_allowed_aad_tenants,
+    update_nsg,
+)
+from deploylib.data_migration import migrate
+from deploylib.registration import (
     GraphQueryError,
     OnefuzzAppRole,
     add_application_password,
+    add_user,
     assign_instance_app_role,
     authorize_application,
     get_application,
+    get_service_principal,
+    get_signed_in_user,
     get_tenant_id,
     query_microsoft_graph,
     register_application,
     set_app_audience,
     update_pool_registration,
 )
-from set_admins import update_admins, update_allowed_aad_tenants
 
 # Found by manually assigning the User.Read permission to application
 # registration in the admin portal. The values are in the manifest under
@@ -104,6 +114,7 @@ class Client:
         location: str,
         application_name: str,
         owner: str,
+        nsg_config: str,
         client_id: Optional[str],
         client_secret: Optional[str],
         app_zip: str,
@@ -127,6 +138,7 @@ class Client:
         self.location = location
         self.application_name = application_name
         self.owner = owner
+        self.nsg_config = nsg_config
         self.app_zip = app_zip
         self.tools = tools
         self.instance_specific = instance_specific
@@ -291,7 +303,6 @@ class Client:
             display_name=self.application_name,
             subscription_id=self.get_subscription_id(),
         )
-
         app_roles = [
             {
                 "allowedMemberTypes": ["Application"],
@@ -308,6 +319,14 @@ class Client:
                 "id": str(uuid.uuid4()),
                 "isEnabled": True,
                 "value": OnefuzzAppRole.ManagedNode.value,
+            },
+            {
+                "allowedMemberTypes": ["User"],
+                "description": "Allows user access from the CLI.",
+                "displayName": OnefuzzAppRole.UserAssignment.value,
+                "id": str(uuid.uuid4()),
+                "isEnabled": True,
+                "value": OnefuzzAppRole.UserAssignment.value,
             },
         ]
 
@@ -363,7 +382,7 @@ class Client:
 
             service_principal_params = {
                 "accountEnabled": True,
-                "appRoleAssignmentRequired": False,
+                "appRoleAssignmentRequired": True,
                 "servicePrincipalType": "Application",
                 "appId": app["appId"],
             }
@@ -422,11 +441,10 @@ class Client:
                 # this is a requirement to update the application roles
                 for role in app["appRoles"]:
                     role["isEnabled"] = False
-
                 query_microsoft_graph(
                     method="PATCH",
                     resource=f"applications/{app['id']}",
-                    body={"appRoles": app["AppRoles"]},
+                    body={"appRoles": app["appRoles"]},
                     subscription=self.get_subscription_id(),
                 )
 
@@ -594,6 +612,37 @@ class Client:
             OnefuzzAppRole.ManagedNode,
         )
 
+    def assign_user_access(self) -> None:
+        logger.info("assinging user access to service principal")
+        app = get_application(
+            display_name=self.application_name,
+            subscription_id=self.get_subscription_id(),
+        )
+        user = get_signed_in_user(self.subscription_id)
+
+        if app:
+            sp = get_service_principal(app["appId"], self.subscription_id)
+            # Update appRoleAssignmentRequired if necessary
+            if not sp["appRoleAssignmentRequired"]:
+                logger.warning(
+                    "The service is not currently configured to require a role assignment to access it."
+                    + " This means that any authenticated user can access the service. "
+                    + " To change this behavior enable 'Assignment Required?' on the service principal in the AAD Portal."
+                )
+
+            # Assign Roles and Add Users
+            roles = [
+                x["id"]
+                for x in app["appRoles"]
+                if x["displayName"] == OnefuzzAppRole.UserAssignment.value
+            ]
+            users = [user["id"]]
+            if self.admins:
+                admins_str = [str(x) for x in self.admins]
+                users += admins_str
+            for user_id in users:
+                add_user(sp["id"], user_id, roles[0])
+
     def apply_migrations(self) -> None:
         logger.info("applying database migrations")
         name = self.results["deploy"]["func-name"]["value"]
@@ -608,13 +657,36 @@ class Client:
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
         table_service = TableService(account_name=name, account_key=key)
 
+        config_client = InstanceConfigClient(table_service, self.application_name)
+
+        if self.nsg_config:
+            logger.info("deploying arm template: %s", self.nsg_config)
+
+            with open(self.nsg_config, "r") as template_handle:
+                config_template = json.load(template_handle)
+
+            try:
+                config = NetworkSecurityConfig(config_template)
+                rules = parse_rules(config)
+            except Exception as ex:
+                logging.info(
+                    "An Exception was encountered while parsing nsg_config file: %s", ex
+                )
+                raise Exception(
+                    "proxy_nsg_config and sub-values were not properly included in config."
+                    + "Please submit a configuration resembling"
+                    + " { 'proxy_nsg_config': { 'allowed_ips': [], 'allowed_service_tags': [] } }"
+                )
+
+            update_nsg(config_client, rules)
+
         if self.admins:
-            update_admins(table_service, self.application_name, self.admins)
+            update_admins(config_client, self.admins)
 
         tenants = self.allowed_aad_tenants
         if tenant not in tenants:
             tenants.append(tenant)
-        update_allowed_aad_tenants(table_service, self.application_name, tenants)
+        update_allowed_aad_tenants(config_client, tenants)
 
     def create_eventgrid(self) -> None:
         logger.info("creating eventgrid subscription")
@@ -951,6 +1023,7 @@ def main() -> None:
         ("rbac", Client.setup_rbac),
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
+        ("assign_user_access", Client.assign_user_access),
     ]
 
     full_deployment_states = rbac_only_states + [
@@ -972,6 +1045,7 @@ def main() -> None:
     parser.add_argument("resource_group")
     parser.add_argument("application_name")
     parser.add_argument("owner")
+    parser.add_argument("nsg_config")
     parser.add_argument(
         "--arm-template",
         type=arg_file,
@@ -1079,6 +1153,7 @@ def main() -> None:
         location=args.location,
         application_name=args.application_name,
         owner=args.owner,
+        nsg_config=args.nsg_config,
         client_id=args.client_id,
         client_secret=args.client_secret,
         app_zip=args.app_zip,

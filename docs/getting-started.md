@@ -33,11 +33,23 @@ do the following:
 ```
 unzip onefuzz-deployment-$VERSION.zip
 pip install -r requirements.txt
-./deploy.py $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS
+./deploy.py $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS $NSG_CONFIG_FILE
 ```
 
 When running `deploy.py` the first time for an instance, you will be prompted
 to follow a manual step to initialize your CLI config.
+
+The $NSG_CONFIG_FILE is a required parameter that specifies the 'allow rules' for the OneFuzz Network Security Group. A default `config.json` is provided in the deployment zip. 
+This 'allow' config resembles the following: 
+```
+{
+    "proxy_nsg_config": {
+        "allowed_ips": ["*"],
+        "allowed_service_tags": []
+    }
+}
+```
+Future updates can be made to this configuration via the OneFuzz CLI. 
 
 ## Install the CLI
 

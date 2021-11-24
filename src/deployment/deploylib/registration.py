@@ -154,6 +154,7 @@ class ApplicationInfo(NamedTuple):
 class OnefuzzAppRole(Enum):
     ManagedNode = "ManagedNode"
     CliClient = "CliClient"
+    UserAssignment = "UserAssignment"
 
 
 def register_application(
@@ -423,7 +424,7 @@ def authorize_application(
         except GraphQueryError as e:
             m = re.search(
                 "Property PreAuthorizedApplication references "
-                "applications (.*) that cannot be found.",
+                "applications (.*?) that cannot be found.",
                 e.message,
             )
             if m:
@@ -644,6 +645,84 @@ def set_app_audience(
             "using the command given above."
         )
         raise Exception(err_str)
+
+
+def get_signed_in_user(subscription_id: Optional[str]) -> Any:
+    # Get principalId by retrieving owner for SP
+    try:
+        app = query_microsoft_graph(
+            method="GET",
+            resource="me/",
+            subscription=subscription_id,
+        )
+        return app
+
+    except GraphQueryError:
+        query = (
+            "az rest --method post --url "
+            "https://graph.microsoft.com/v1.0/me "
+            '--headers "Content-Type"=application/json'
+        )
+        logger.warning(
+            "execute the following query in the azure portal bash shell and "
+            "run deploy.py again : \n%s",
+            query,
+        )
+        err_str = "Unable to retrieve signed-in user via Microsoft Graph Query API. \n"
+        raise Exception(err_str)
+
+
+def get_service_principal(app_id: str, subscription_id: Optional[str]) -> Any:
+    try:
+        service_principals = query_microsoft_graph_list(
+            method="GET",
+            resource="servicePrincipals",
+            params={"$filter": f"appId eq '{app_id}'"},
+            subscription=subscription_id,
+        )
+        if len(service_principals) != 0:
+            return service_principals[0]
+        else:
+            raise GraphQueryError(
+                f"Could not retrieve any service principals for App Id: {app_id}", 400
+            )
+
+    except GraphQueryError:
+        err_str = "Unable to add retrieve SP using Microsoft Graph Query API. \n"
+        raise Exception(err_str)
+
+
+def add_user(object_id: str, principal_id: str, role_id: str) -> None:
+    # Get principalId by retrieving owner for SP
+    # need to add users with proper role assignment
+    http_body = {
+        "principalId": principal_id,
+        "resourceId": object_id,
+        "appRoleId": role_id,
+    }
+    try:
+        query_microsoft_graph(
+            method="POST",
+            resource="users/%s/appRoleAssignments" % principal_id,
+            body=http_body,
+        )
+    except GraphQueryError as ex:
+        if "Permission being assigned already exists" not in ex.message:
+            query = (
+                "az rest --method post --url "
+                "https://graph.microsoft.com/v1.0/users/%s/appRoleAssignments "
+                "--body '%s' --headers \"Content-Type\"=application/json"
+                % (principal_id, http_body)
+            )
+            logger.warning(
+                "execute the following query in the azure portal bash shell and "
+                "run deploy.py again : \n%s",
+                query,
+            )
+            err_str = "Unable to add user to SP using Microsoft Graph Query API. \n"
+            raise Exception(err_str)
+        else:
+            logger.info("User already assigned to application.")
 
 
 def main() -> None:

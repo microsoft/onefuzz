@@ -799,6 +799,11 @@ class NetworkConfig(BaseModel):
     subnet: str = Field(default="10.0.0.0/16")
 
 
+class NetworkSecurityGroupConfig(BaseModel):
+    allowed_service_tags: List[str] = Field(default_factory=list)
+    allowed_ips: List[str] = Field(default_factory=list)
+
+
 class KeyvaultExtensionConfig(BaseModel):
     keyvault_name: str
     cert_name: str
@@ -831,6 +836,17 @@ class AzureVmExtensionConfig(BaseModel):
     geneva: Optional[GenevaExtensionConfig]
 
 
+class ApiAccessRule(BaseModel):
+    methods: List[str]
+    allowed_groups: List[UUID]
+
+
+Endpoint = str
+# json dumps doesn't support UUID as dictionary key
+PrincipalID = str
+GroupId = UUID
+
+
 class InstanceConfig(BaseModel):
     # initial set of admins can only be set during deployment.
     # if admins are set, only admins can update instance configs.
@@ -841,8 +857,13 @@ class InstanceConfig(BaseModel):
 
     allowed_aad_tenants: List[UUID]
     network_config: NetworkConfig = Field(default_factory=NetworkConfig)
+    proxy_nsg_config: NetworkSecurityGroupConfig = Field(
+        default_factory=NetworkSecurityGroupConfig
+    )
     extensions: Optional[AzureVmExtensionConfig]
     proxy_vm_sku: str = Field(default="Standard_B2s")
+    api_access_rules: Optional[Dict[Endpoint, ApiAccessRule]] = None
+    group_membership: Optional[Dict[PrincipalID, List[GroupId]]] = None
 
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:
