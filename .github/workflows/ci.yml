@@ -233,7 +233,7 @@ jobs:
         pip install ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
         pip install -r __app__/requirements.txt
         pip install -r requirements-dev.txt
-        pytest
+        pytest tests
         flake8 .
         bandit -r ./__app__/
         black ./__app__/ ./tests --check

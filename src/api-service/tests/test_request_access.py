@@ -8,61 +8,60 @@ from __app__.onefuzzlib.request_access import RequestAccess, RuleConflictError
 
 class TestRequestAccess(unittest.TestCase):
     def test_empty(self) -> None:
-        request_access1 = RequestAccess.build([])
+        request_access1 = RequestAccess.build({})
         rules1 = request_access1.get_matching_rules("get", "a/b/c")
 
-        self.assertEqual(len(rules1.allowed_groups_ids), 0, "expected nothing")
+        self.assertEqual(rules1, None, "expected nothing")
 
         guid2 = uuid.uuid4()
         request_access1 = RequestAccess.build(
-            [
-                ApiAccessRule(
+            {
+                "a/b/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/b/c",
                     allowed_groups=[guid2],
                 )
-            ]
+            }
         )
         rules1 = request_access1.get_matching_rules("get", "")
-        self.assertEqual(len(rules1.allowed_groups_ids), 0, "expected nothing")
+        self.assertEqual(rules1, None, "expected nothing")
 
     def test_exact_match(self) -> None:
 
         guid1 = uuid.uuid4()
 
         request_access = RequestAccess.build(
-            [
-                ApiAccessRule(
+            {
+                "a/b/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/b/c",
                     allowed_groups=[guid1],
                 )
-            ]
+            }
         )
 
         rules1 = request_access.get_matching_rules("get", "a/b/c")
         rules2 = request_access.get_matching_rules("get", "b/b/e")
 
+        assert rules1 is not None
         self.assertNotEqual(len(rules1.allowed_groups_ids), 0, "empty allowed groups")
         self.assertEqual(rules1.allowed_groups_ids[0], guid1)
 
-        self.assertEqual(len(rules2.allowed_groups_ids), 0, "expected nothing")
+        self.assertEqual(rules2, None, "expected nothing")
 
     def test_wildcard(self) -> None:
         guid1 = uuid.uuid4()
 
         request_access = RequestAccess.build(
-            [
-                ApiAccessRule(
+            {
+                "b/*/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="b/*/c",
                     allowed_groups=[guid1],
                 )
-            ]
+            }
         )
 
         rules = request_access.get_matching_rules("get", "b/b/c")
 
+        assert rules is not None
         self.assertNotEqual(len(rules.allowed_groups_ids), 0, "empty allowed groups")
         self.assertEqual(rules.allowed_groups_ids[0], guid1)
 
@@ -71,18 +70,16 @@ class TestRequestAccess(unittest.TestCase):
 
         try:
             RequestAccess.build(
-                [
-                    ApiAccessRule(
+                {
+                    "a/b/c": ApiAccessRule(
                         methods=["get"],
-                        endpoint="a/b/c",
                         allowed_groups=[guid1],
                     ),
-                    ApiAccessRule(
+                    "a/b/c/": ApiAccessRule(
                         methods=["get"],
-                        endpoint="a/b/c",
                         allowed_groups=[],
                     ),
-                ]
+                }
             )
 
             self.fail("this is expected to fail")
@@ -95,22 +92,21 @@ class TestRequestAccess(unittest.TestCase):
         guid2 = uuid.uuid4()
 
         request_access = RequestAccess.build(
-            [
-                ApiAccessRule(
+            {
+                "a/*/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/*/c",
                     allowed_groups=[guid1],
                 ),
-                ApiAccessRule(
+                "a/b/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/b/c",
                     allowed_groups=[guid2],
                 ),
-            ]
+            }
         )
 
         rules = request_access.get_matching_rules("get", "a/b/c")
 
+        assert rules is not None
         self.assertEqual(
             rules.allowed_groups_ids[0],
             guid2,
@@ -125,36 +121,36 @@ class TestRequestAccess(unittest.TestCase):
         guid3 = uuid.uuid4()
 
         request_access = RequestAccess.build(
-            [
-                ApiAccessRule(
+            {
+                "a/b/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/b/c",
                     allowed_groups=[guid1],
                 ),
-                ApiAccessRule(
+                "f/*/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="f/*/c",
                     allowed_groups=[guid2],
                 ),
-                ApiAccessRule(
+                "a/b": ApiAccessRule(
                     methods=["post"],
-                    endpoint="a/b",
                     allowed_groups=[guid3],
                 ),
-            ]
+            }
         )
 
         rules1 = request_access.get_matching_rules("get", "a/b/c/d")
+        assert rules1 is not None
         self.assertEqual(
             rules1.allowed_groups_ids[0], guid1, "expected to inherit rule of a/b/c"
         )
 
         rules2 = request_access.get_matching_rules("get", "f/b/c/d")
+        assert rules2 is not None
         self.assertEqual(
             rules2.allowed_groups_ids[0], guid2, "expected to inherit rule of f/*/c"
         )
 
         rules3 = request_access.get_matching_rules("post", "a/b/c/d")
+        assert rules3 is not None
         self.assertEqual(
             rules3.allowed_groups_ids[0], guid3, "expected to inherit rule of post a/b"
         )
@@ -165,26 +161,26 @@ class TestRequestAccess(unittest.TestCase):
         guid2 = uuid.uuid4()
 
         request_access = RequestAccess.build(
-            [
-                ApiAccessRule(
+            {
+                "a/b/c": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/b/c",
                     allowed_groups=[guid1],
                 ),
-                ApiAccessRule(
+                "a/b/c/d": ApiAccessRule(
                     methods=["get"],
-                    endpoint="a/b/c/d",
                     allowed_groups=[guid2],
                 ),
-            ]
+            }
         )
 
         rules1 = request_access.get_matching_rules("get", "a/b/c")
+        assert rules1 is not None
         self.assertEqual(
             rules1.allowed_groups_ids[0], guid1, "expected to inherit rule of a/b/c"
         )
 
         rules2 = request_access.get_matching_rules("get", "a/b/c/d")
+        assert rules2 is not None
         self.assertEqual(
             rules2.allowed_groups_ids[0], guid2, "expected to inherit rule of a/b/c/d"
         )
