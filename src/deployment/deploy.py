@@ -614,9 +614,7 @@ class Client:
 
     def assign_user_access(self) -> None:
         if self.upgrade:
-            logger.info(
-                "Upgrading: Skipping assignment of current user to app role"
-            )
+            logger.info("Upgrading: Skipping assignment of current user to app role")
             return
         logger.info("assinging user access to service principal")
         app = get_application(
