@@ -296,9 +296,11 @@ fn find_module_rva(addr: u64, maps: &[MapRange]) -> Option<Rva> {
 
     let name = mapping
         .filename()
+        .map(|p| p.to_string_lossy())
         .as_ref()
         .map(|s| s.to_owned())
-        .unwrap_or_else(|| "<unknown>".into());
+        .unwrap_or_else(|| "<unknown>".into())
+        .into();
 
     Some(Rva { name, offset })
 }
