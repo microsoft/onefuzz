@@ -613,7 +613,7 @@ class Client:
         )
 
     def assign_user_access(self) -> None:
-        if self.results["client_id"]:
+        if self.upgrade:
             logger.info(
                 "Deploying w/ Service Principal. Skipping assignment of the user role."
             )
