@@ -45,8 +45,6 @@ from azure.storage.blob import (
     ContainerSasPermissions,
     generate_container_sas,
 )
-from msrest.serialization import TZ_UTC
-
 from deploylib.configuration import (
     InstanceConfigClient,
     NetworkSecurityConfig,
@@ -72,6 +70,7 @@ from deploylib.registration import (
     set_app_audience,
     update_pool_registration,
 )
+from msrest.serialization import TZ_UTC
 
 # Found by manually assigning the User.Read permission to application
 # registration in the admin portal. The values are in the manifest under
@@ -613,6 +612,11 @@ class Client:
         )
 
     def assign_user_access(self) -> None:
+        if self.results["client_id"]:
+            logger.info(
+                "Deploying w/ Service Principal. Skipping assignment of the user role."
+            )
+            return
         logger.info("assinging user access to service principal")
         app = get_application(
             display_name=self.application_name,
