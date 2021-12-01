@@ -210,11 +210,11 @@ class Deployer:
         ]
         for (msg, cmd) in commands:
             print(msg)
-            if "client_id" in msg: 
+            if "client_id" in msg:
                 msg_list = msg.split(":")
                 client_id = msg_list[1].strip()
                 self.client_id = client_id
-            if "client_secret" in msg: 
+            if "client_secret" in msg:
                 msg_list = msg.split(":")
                 client_secret = msg_list[1].strip()
                 self.client_secret = client_secret
@@ -225,7 +225,6 @@ class Deployer:
         print(f"registering {sp_name} to {self.instance}")
         venv = "register-venv"
         subprocess.check_call(f"python3 -mvenv {venv}", shell=True)
-        pip = venv_path(venv, "pip")
         py = venv_path(venv, "python3")
         commands = [
             (
@@ -251,8 +250,7 @@ class Deployer:
             subprocess.check_call(cmd, shell=True)
 
         return
-    
-    
+
     def test(self, filename: str) -> None:
         venv = "test-venv"
         subprocess.check_call(f"python3 -mvenv {venv}", shell=True)
