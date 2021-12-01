@@ -170,6 +170,7 @@ class Deployer:
         skip_tests: bool,
         test_args: List[str],
         repo: str,
+        ignore_log_errors: bool,
     ):
         self.downloader = Downloader()
         self.pr = pr
@@ -180,6 +181,7 @@ class Deployer:
         self.skip_tests = skip_tests
         self.test_args = test_args or []
         self.repo = repo
+        self.ignore_log_errors = ignore_log_errors
 
     def merge(self) -> None:
         if self.pr:
@@ -230,7 +232,7 @@ class Deployer:
                 "running integration",
                 (
                     f"{py} {test_dir}/{script} test {test_dir} "
-                    f"--region {self.region} --endpoint {endpoint} "
+                    f"--region {self.region} --endpoint {endpoint} --ignore_log_errors {self.ignore_log_errors}"
                     f"{test_args}"
                 ),
             ),
@@ -306,6 +308,7 @@ def main() -> None:
     parser.add_argument("--merge-on-success", action="store_true")
     parser.add_argument("--subscription_id")
     parser.add_argument("--test_args", nargs=argparse.REMAINDER)
+    parser.add_argument("--ignore-log-errors", action="store_true")
     args = parser.parse_args()
 
     if not args.branch and not args.pr:
@@ -320,6 +323,7 @@ def main() -> None:
         skip_tests=args.skip_tests,
         test_args=args.test_args,
         repo=args.repo,
+        ignore_log_errors=args.ignore_log_errors,
     )
     with tempfile.TemporaryDirectory() as directory:
         os.chdir(directory)

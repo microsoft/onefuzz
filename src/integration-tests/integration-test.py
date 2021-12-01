@@ -222,7 +222,13 @@ TARGETS: Dict[str, Integration] = {
 
 
 class TestOnefuzz:
-    def __init__(self, onefuzz: Onefuzz, logger: logging.Logger, test_id: UUID) -> None:
+    def __init__(
+        self,
+        onefuzz: Onefuzz,
+        logger: logging.Logger,
+        test_id: UUID,
+        ignore_log_errors: bool,
+    ) -> None:
         self.of = onefuzz
         self.logger = logger
         self.pools: Dict[OS, Pool] = {}
@@ -230,6 +236,7 @@ class TestOnefuzz:
         self.project = f"test-{self.test_id}"
         self.start_log_marker = f"integration-test-injection-error-start-{self.test_id}"
         self.stop_log_marker = f"integration-test-injection-error-stop-{self.test_id}"
+        self.ignore_log_errors = ignore_log_errors
 
     def setup(
         self,
@@ -826,6 +833,9 @@ class TestOnefuzz:
                 self.logger.error("error log: %s", message)
             seen_errors = True
 
+        if self.ignore_log_errors:
+            return
+
         if seen_errors:
             raise Exception("logs included errors")
 
@@ -838,18 +848,25 @@ class Run(Command):
         endpoint: Optional[str],
         poll: bool = False,
         stop_on_complete_check: bool = False,
+        ignore_log_errors: bool = True,
     ) -> None:
         self.onefuzz.__setup__(endpoint=endpoint)
-        tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
+        tester = TestOnefuzz(self.onefuzz, self.logger, test_id, ignore_log_errors)
         result = tester.check_jobs(
             poll=poll, stop_on_complete_check=stop_on_complete_check
         )
         if not result:
             raise Exception("jobs failed")
 
-    def check_repros(self, test_id: UUID, *, endpoint: Optional[str]) -> None:
+    def check_repros(
+        self,
+        test_id: UUID,
+        *,
+        endpoint: Optional[str],
+        ignore_log_errors: bool = False,
+    ) -> None:
         self.onefuzz.__setup__(endpoint=endpoint)
-        tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
+        tester = TestOnefuzz(self.onefuzz, self.logger, test_id, ignore_log_errors)
         launch_result, repros = tester.launch_repro()
         result = tester.check_repro(repros)
         if not (result and launch_result):
@@ -866,25 +883,48 @@ class Run(Command):
         targets: List[str] = list(TARGETS.keys()),
         test_id: Optional[UUID] = None,
         duration: int = 1,
+        ignore_log_errors: bool = False,
     ) -> UUID:
         if test_id is None:
             test_id = uuid4()
         self.logger.info("launching test_id: %s", test_id)
 
         self.onefuzz.__setup__(endpoint=endpoint)
-        tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
+        tester = TestOnefuzz(self.onefuzz, self.logger, test_id, ignore_log_errors)
         tester.setup(region=region, pool_size=pool_size, os_list=os_list)
         tester.launch(samples, os_list=os_list, targets=targets, duration=duration)
         return test_id
 
-    def cleanup(self, test_id: UUID, *, endpoint: Optional[str]) -> None:
+    def cleanup(
+        self,
+        test_id: UUID,
+        *,
+        endpoint: Optional[str],
+        ignore_log_errors: bool = False,
+    ) -> None:
         self.onefuzz.__setup__(endpoint=endpoint)
-        tester = TestOnefuzz(self.onefuzz, self.logger, test_id=test_id)
+        tester = TestOnefuzz(
+            self.onefuzz,
+            self.logger,
+            test_id=test_id,
+            ignore_log_errors=ignore_log_errors,
+        )
         tester.cleanup()
 
-    def check_logs(self, test_id: UUID, *, endpoint: Optional[str]) -> None:
+    def check_logs(
+        self,
+        test_id: UUID,
+        *,
+        endpoint: Optional[str],
+        ignore_log_errors: bool = False,
+    ) -> None:
         self.onefuzz.__setup__(endpoint=endpoint)
-        tester = TestOnefuzz(self.onefuzz, self.logger, test_id=test_id)
+        tester = TestOnefuzz(
+            self.onefuzz,
+            self.logger,
+            test_id=test_id,
+            ignore_log_errors=ignore_log_errors,
+        )
         tester.check_logs_for_errors()
 
     def test(
@@ -898,6 +938,7 @@ class Run(Command):
         targets: List[str] = list(TARGETS.keys()),
         skip_repro: bool = False,
         duration: int = 1,
+        ignore_log_errors: bool = False,
     ) -> None:
         success = True
 
@@ -913,17 +954,26 @@ class Run(Command):
                 targets=targets,
                 test_id=test_id,
                 duration=duration,
+                ignore_log_errors=ignore_log_errors,
             )
             self.check_jobs(
-                test_id, endpoint=endpoint, poll=True, stop_on_complete_check=True
+                test_id,
+                endpoint=endpoint,
+                poll=True,
+                stop_on_complete_check=True,
+                ignore_log_errors=ignore_log_errors,
             )
 
             if skip_repro:
                 self.logger.warning("not testing crash repro")
             else:
-                self.check_repros(test_id, endpoint=endpoint)
+                self.check_repros(
+                    test_id, endpoint=endpoint, ignore_log_errors=ignore_log_errors
+                )
 
-            self.check_logs(test_id, endpoint=endpoint)
+            self.check_logs(
+                test_id, endpoint=endpoint, ignore_log_errors=ignore_log_errors
+            )
 
         except Exception as e:
             self.logger.error("testing failed: %s", repr(e))
