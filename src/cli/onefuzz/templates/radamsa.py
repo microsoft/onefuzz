@@ -49,6 +49,7 @@ class Radamsa(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        target_timeout: Optional[int] = None,
     ) -> Optional[Job]:
         """
         Basic radamsa job
@@ -173,6 +174,7 @@ class Radamsa(Command):
             rename_output=rename_output,
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
+            target_timeout=target_timeout,
         )
 
         report_containers = [
@@ -204,6 +206,7 @@ class Radamsa(Command):
             check_retry_count=check_retry_count,
             prereq_tasks=[fuzzer_task.task_id],
             debug=debug,
+            target_timeout=target_timeout,
         )
 
         if helper.platform == OS.windows:
@@ -245,6 +248,7 @@ class Radamsa(Command):
                 tags=helper.tags,
                 prereq_tasks=[fuzzer_task.task_id],
                 debug=debug,
+                target_timeout=target_timeout,
             )
 
         self.logger.info("done creating tasks")
