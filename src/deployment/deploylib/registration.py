@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 import argparse
+import json
 import logging
 import re
 import time
@@ -745,12 +746,20 @@ def main() -> None:
 
     subparsers = parser.add_subparsers(title="commands", dest="command")
     subparsers.add_parser("update_pool_registration", parents=[parent_parser])
-    role_assignment_parser = subparsers.add_parser(
+    scaleset_role_assignment_parser = subparsers.add_parser(
         "assign_scaleset_role",
         parents=[parent_parser],
     )
-    role_assignment_parser.add_argument(
-        "scaleset_name",
+    scaleset_role_assignment_parser.add_argument(
+        "--scaleset_name",
+        help="the name of the scaleset",
+    )
+    cli_role_assignment_parser = subparsers.add_parser(
+        "assign_cli_role",
+        parents=[parent_parser],
+    )
+    cli_role_assignment_parser.add_argument(
+        "--app_name",
         help="the name of the scaleset",
     )
     cli_registration_parser = subparsers.add_parser(
@@ -787,6 +796,13 @@ def main() -> None:
             args.scaleset_name,
             args.subscription_id,
             OnefuzzAppRole.ManagedNode,
+        )
+    elif args.command == "assign_cli_role":
+        assign_instance_app_role(
+            onefuzz_instance_name,
+            args.app_name,
+            args.subscription_id,
+            OnefuzzAppRole.CliClient,
         )
     else:
         raise Exception("invalid arguments")

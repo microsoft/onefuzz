@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
@@ -180,6 +180,8 @@ class Deployer:
         self.skip_tests = skip_tests
         self.test_args = test_args or []
         self.repo = repo
+        self.client_id = ""
+        self.client_secret = ""
 
     def merge(self) -> None:
         if self.pr:
@@ -188,9 +190,9 @@ class Deployer:
     def deploy(self, filename: str) -> None:
         print(f"deploying {filename} to {self.instance}")
         venv = "deploy-venv"
-        subprocess.check_call(f"python -mvenv {venv}", shell=True)
+        subprocess.check_call(f"python3 -mvenv {venv}", shell=True)
         pip = venv_path(venv, "pip")
-        py = venv_path(venv, "python")
+        py = venv_path(venv, "python3")
         config = os.path.join(os.getcwd(), "config.json")
         commands = [
             ("extracting release-artifacts", f"unzip -qq {filename}"),
@@ -208,12 +210,53 @@ class Deployer:
         ]
         for (msg, cmd) in commands:
             print(msg)
+            if "client_id" in msg: 
+                msg_list = msg.split(":")
+                client_id = msg_list[1].strip()
+                self.client_id = client_id
+            if "client_secret" in msg: 
+                msg_list = msg.split(":")
+                client_secret = msg_list[1].strip()
+                self.client_secret = client_secret
             subprocess.check_call(cmd, shell=True)
 
+    def register(self, filename: str) -> None:
+        sp_name = "sp_" + self.instance_name
+        print(f"registering {sp_name} to {self.instance}")
+        venv = "register-venv"
+        subprocess.check_call(f"python3 -mvenv {venv}", shell=True)
+        pip = venv_path(venv, "pip")
+        py = venv_path(venv, "python3")
+        commands = [
+            (
+                "running cli registration",
+                (
+                    f"{py} register.py create_cli_registration "
+                    f"{self.instance} {self.subscription_id}"
+                    f" --registration_name {sp_name}"
+                ),
+            ),
+            (
+                "retrieving registration info",
+                (
+                    f"{py} register.py assign_cli_role "
+                    f"{self.instance} {self.subscription_id}"
+                    f" --app_name {sp_name}"
+                ),
+            ),
+        ]
+
+        for (msg, cmd) in commands:
+            print(msg)
+            subprocess.check_call(cmd, shell=True)
+
+        return
+    
+    
     def test(self, filename: str) -> None:
         venv = "test-venv"
-        subprocess.check_call(f"python -mvenv {venv}", shell=True)
-        py = venv_path(venv, "python")
+        subprocess.check_call(f"python3 -mvenv {venv}", shell=True)
+        py = venv_path(venv, "python3")
         test_dir = "integration-test-artifacts"
         script = "integration-test.py"
         endpoint = f"https://{self.instance}.azurewebsites.net"
@@ -223,7 +266,7 @@ class Deployer:
                 "extracting integration-test-artifacts",
                 f"unzip -qq {filename} -d {test_dir}",
             ),
-            ("test venv", f"python -mvenv {venv}"),
+            ("test venv", f"python3 -mvenv {venv}"),
             ("installing wheel", f"./{venv}/bin/pip install -q wheel"),
             ("installing sdk", f"./{venv}/bin/pip install -q sdk/*.whl"),
             (
@@ -231,6 +274,7 @@ class Deployer:
                 (
                     f"{py} {test_dir}/{script} test {test_dir} "
                     f"--region {self.region} --endpoint {endpoint} "
+                    f"--client_id {self.client_id} --client_secret {self.client_secret} "
                     f"{test_args}"
                 ),
             ),
@@ -273,7 +317,10 @@ class Deployer:
             test_filename,
         )
 
-        self.deploy(release_filename)
+        # self.deploy(release_filename)
+
+        self.register(release_filename)
+
         if not self.skip_tests:
             self.test(test_filename)
 
