@@ -221,7 +221,7 @@ class Deployer:
             subprocess.check_call(cmd, shell=True)
 
     def register(self, filename: str) -> None:
-        sp_name = "sp_" + self.instance_name
+        sp_name = "sp_" + self.instance
         print(f"registering {sp_name} to {self.instance}")
         venv = "register-venv"
         subprocess.check_call(f"python3 -mvenv {venv}", shell=True)
