@@ -19,7 +19,7 @@ appinsights = { git = "https://github.com/dmolokanov/appinsights-rs", rev = "0af
 log = "0.4"
 uuid = { version = "0.8", features = ["serde", "v4"] }
 serde = { version = "1.0", features = ["derive"] }
-z3-sys = { version = "0.6", optional = true}
+z3-sys = { version = "0.7", optional = true}
 iced-x86 = { version = "1.15", optional = true}
 tokio = { version = "1.14", features = ["full"] }
 lazy_static = "1.4"

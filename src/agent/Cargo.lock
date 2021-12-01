@@ -28,15 +28,6 @@ dependencies = [
 
 [[package]]
 name = "ansi_term"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
-dependencies = [
- "winapi 0.3.9",
-]
-
-[[package]]
-name = "ansi_term"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d52a9bb7ec0cf484c551830a7ce27bd20d67eac647e1befb56b0be4ee39a55d2"
@@ -46,9 +37,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.45"
+version = "1.0.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee10e43ae4a853c0a3591d4e2ada1719e553be18199d9da9d4a83f5927c2f5c7"
+checksum = "8b26702f315f53b6071259e15dd9d64528213b44d61de1ec926eca7715d62203"
 
 [[package]]
 name = "appinsights"
@@ -174,12 +165,35 @@ dependencies = [
 
 [[package]]
 name = "bindgen"
+version = "0.58.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f8523b410d7187a43085e7e064416ea32ded16bd0a4e6fc025e21616d01258f"
+dependencies = [
+ "bitflags",
+ "cexpr 0.4.0",
+ "clang-sys",
+ "clap",
+ "env_logger 0.8.4",
+ "lazy_static",
+ "lazycell",
+ "log",
+ "peeking_take_while",
+ "proc-macro2 1.0.29",
+ "quote 1.0.9",
+ "regex",
+ "rustc-hash",
+ "shlex",
+ "which",
+]
+
+[[package]]
+name = "bindgen"
 version = "0.59.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "453c49e5950bb0eb63bb3df640e31618846c89d5b7faa54040d76e98e0134375"
 dependencies = [
  "bitflags",
- "cexpr",
+ "cexpr 0.5.0",
  "clang-sys",
  "clap",
  "env_logger 0.8.4",
@@ -269,6 +283,15 @@ checksum = "d26a6ce4b6a484fa3edb70f7efa6fc430fd2b87285fe8b84304fd0936faa0dc0"
 
 [[package]]
 name = "cexpr"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4aedb84272dbe89af497cf81375129abda4fc0a9e7c5d317498c15cc30c0d27"
+dependencies = [
+ "nom 5.1.2",
+]
+
+[[package]]
+name = "cexpr"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db507a7679252d2276ed0dd8113c6875ec56d3089f9225b2b42c30cc1f8e5c89"
@@ -314,11 +337,11 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "2.33.3"
+version = "2.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37e58ac78573c40708d45522f0d80fa2f01cc4f9b4e2bf749807255454312002"
+checksum = "a0610544180c38b88101fecf2dd634b174a62eef6946f84dfc6a7127512b381c"
 dependencies = [
- "ansi_term 0.11.0",
+ "ansi_term",
  "atty",
  "bitflags",
  "strsim",
@@ -1933,7 +1956,7 @@ version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0cfe1b2403f172ba0f234e500906ee0a3e493fb81092dac23ebefe129301cc"
 dependencies = [
- "ansi_term 0.12.1",
+ "ansi_term",
  "ctor",
  "diff",
  "output_vt100",
@@ -1988,7 +2011,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d01e71493938bee4c460ec61aabbf0801e08cd2714d1677365b4d7f81475353"
 dependencies = [
  "anyhow",
- "bindgen",
+ "bindgen 0.59.1",
  "libc",
  "libproc",
  "mach",
@@ -3275,6 +3298,9 @@ checksum = "d2d7d3948613f75c98fd9328cfdcc45acc4d360655289d0a7d4ec931392200a3"
 
 [[package]]
 name = "z3-sys"
-version = "0.6.3"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afa18ba5fbd4933e41ffb440c3fd91f91fe9cdb7310cce3ddfb6648563811de0"
+checksum = "1c82dcbc58be4bf1994c520066cb2bd6c3d36aed0fdc57244f34d277421986a6"
+dependencies = [
+ "bindgen 0.58.1",
+]
