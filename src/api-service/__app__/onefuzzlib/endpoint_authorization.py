@@ -36,7 +36,7 @@ def get_rules() -> Optional[RequestAccess]:
 def check_access(req: HttpRequest) -> Optional[Error]:
     rules = get_rules()
 
-    # Noting to enforce if there are no rules.
+    # Nothing to enforce if there are no rules.
     if not rules:
         return None
 
