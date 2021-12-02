@@ -48,7 +48,8 @@ def on_state_update(
     if isinstance(node, Error):
         if state == NodeState.done:
             logging.warning(
-                f"unable to process state update event. machine_id:{machine_id} envelope:{state_update} error:{node}"
+                "unable to process state update event. machine_id:"
+                f"{machine_id} envelope:{state_update} error:{node}"
             )
             return None
         return node
