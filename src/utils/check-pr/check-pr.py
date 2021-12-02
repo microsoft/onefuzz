@@ -226,7 +226,7 @@ class Deployer:
         subscription_id = subscription_id.strip()
 
         commands = [
-            ("installing prereqs", f"{pip} install -q -r requirements.txt"),
+            # ("installing prereqs", f"{pip} install -q -r requirements.txt"),
             (
                 "running cli registration",
                 (
