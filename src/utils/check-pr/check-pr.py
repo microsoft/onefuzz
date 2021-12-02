@@ -235,14 +235,6 @@ class Deployer:
                     f" --registration_name {sp_name}"
                 ),
             ),
-            (
-                "retrieving registration info",
-                (
-                    f"{py} ./deploylib/registration.py assign_cli_role "
-                    f"{self.instance} {subscription_id}"
-                    f" --app_name {sp_name}"
-                ),
-            ),
         ]
 
         for (msg, cmd) in commands:
