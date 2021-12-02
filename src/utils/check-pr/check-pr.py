@@ -221,12 +221,12 @@ class Deployer:
         pip = venv_path(venv, "pip")
         py = venv_path(venv, "python3")
 
-        cmd = ["az", "account", "show", "--query", "id", "-o", "tsv"]
-        subscription_id = subprocess.check_output(cmd, encoding="UTF-8")
+        az_cmd = ["az", "account", "show", "--query", "id", "-o", "tsv"]
+        subscription_id = subprocess.check_output(az_cmd, encoding="UTF-8")
         subscription_id = subscription_id.strip()
 
         commands = [
-            # ("installing prereqs", f"{pip} install -q -r requirements.txt"),
+            ("installing prereqs", f"{pip} install -q -r requirements.txt"),
             (
                 "running cli registration",
                 (
@@ -247,16 +247,6 @@ class Deployer:
 
         for (msg, cmd) in commands:
             print(msg)
-            # if "client_id" in msg:
-            #     msg_list = msg.split(":")
-            #     client_id = msg_list[1].strip()
-            #     self.client_id = client_id
-            #     print(("client_id: " + client_id))
-            # if "client_secret" in msg:
-            #     msg_list = msg.split(":")
-            #     client_secret = msg_list[1].strip()
-            #     self.client_secret = client_secret
-            #     print(("client_secret: " + client_secret))
             output = subprocess.check_output(cmd, shell=True, encoding="UTF-8")
             print(("output: " + output))
             if "client_id" in output:
