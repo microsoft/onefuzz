@@ -248,17 +248,18 @@ class Deployer:
         for (msg, cmd) in commands:
             print(msg)
             output = subprocess.check_output(cmd, shell=True, encoding="UTF-8")
-            print(("output: " + output))
-            if "client_id" in output:
-                output_list = output.split(":")
-                client_id = output_list[1].strip()
-                self.client_id = client_id
-                print(("client_id: " + client_id))
-            if "client_secret" in output:
-                output_list = output.split(":")
-                client_secret = output_list[1].strip()
-                self.client_secret = client_secret
-                print(("client_secret: " + client_secret))
+            if "client_id" in output: 
+                output_list = output.split("\n")
+                for line in output_list:
+                    if "client_id" in line:
+                        line_list = line.split(":")
+                        client_id = line_list[1].strip()
+                        self.client_id = client_id
+                        print(("client_id: " + client_id))
+                    if "client_secret" in line:
+                        line_list = line.split(":")
+                        client_secret = line_list[1].strip()
+                        self.client_secret = client_secret
 
         return
 
