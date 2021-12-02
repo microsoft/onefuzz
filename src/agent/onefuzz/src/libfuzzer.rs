@@ -56,7 +56,7 @@ impl<'a> LibFuzzer<'a> {
         }
     }
 
-    fn build_command(
+    async fn build_command(
         &self,
         fault_dir: Option<&Path>,
         corpus_dir: Option<&Path>,
@@ -79,6 +79,8 @@ impl<'a> LibFuzzer<'a> {
         }
 
         let expand = Expand::new()
+            .machine_id()
+            .await?
             .target_exe(&self.exe)
             .target_options(self.options)
             .setup_dir(&self.setup_dir)
@@ -168,7 +170,7 @@ impl<'a> LibFuzzer<'a> {
         // Verify that the libfuzzer exits with a zero return code with a known
         // good input, which libfuzzer works as we expect.
 
-        let mut cmd = self.build_command(None, None, None)?;
+        let mut cmd = self.build_command(None, None, None).await?;
         cmd.arg(&input);
 
         let result = cmd
@@ -189,7 +191,7 @@ impl<'a> LibFuzzer<'a> {
     }
 
     async fn check_help(&self) -> Result<()> {
-        let mut cmd = self.build_command(None, None, None)?;
+        let mut cmd = self.build_command(None, None, None).await?;
         cmd.arg("-help=1");
 
         let result = cmd
@@ -204,18 +206,20 @@ impl<'a> LibFuzzer<'a> {
         Ok(())
     }
 
-    pub fn fuzz(
+    pub async fn fuzz(
         &self,
         fault_dir: impl AsRef<Path>,
         corpus_dir: impl AsRef<Path>,
         extra_corpus_dirs: &[impl AsRef<Path>],
     ) -> Result<Child> {
         let extra_corpus_dirs: Vec<&Path> = extra_corpus_dirs.iter().map(|x| x.as_ref()).collect();
-        let mut cmd = self.build_command(
-            Some(fault_dir.as_ref()),
-            Some(corpus_dir.as_ref()),
-            Some(&extra_corpus_dirs),
-        )?;
+        let mut cmd = self
+            .build_command(
+                Some(fault_dir.as_ref()),
+                Some(corpus_dir.as_ref()),
+                Some(&extra_corpus_dirs),
+            )
+            .await?;
 
         // When writing a new faulting input, the libFuzzer runtime _exactly_
         // prepends the value of `-artifact_prefix` to the new file name. To
@@ -262,8 +266,9 @@ impl<'a> LibFuzzer<'a> {
         extra_corpus_dirs: &[impl AsRef<Path>],
     ) -> Result<LibFuzzerMergeOutput> {
         let extra_corpus_dirs: Vec<&Path> = extra_corpus_dirs.iter().map(|x| x.as_ref()).collect();
-        let mut cmd =
-            self.build_command(None, Some(corpus_dir.as_ref()), Some(&extra_corpus_dirs))?;
+        let mut cmd = self
+            .build_command(None, Some(corpus_dir.as_ref()), Some(&extra_corpus_dirs))
+            .await?;
         cmd.arg("-merge=1");
 
         let output = cmd
