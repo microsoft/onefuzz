@@ -257,7 +257,7 @@ class Deployer:
             #     client_secret = msg_list[1].strip()
             #     self.client_secret = client_secret
             #     print(("client_secret: " + client_secret))
-            output = subprocess.check_call(cmd, shell=True)
+            output = subprocess.check_output(cmd, shell=True, encoding="UTF-8")
             print(("output: " + output))
             if "client_id" in output:
                 output_list = output.split(":")
