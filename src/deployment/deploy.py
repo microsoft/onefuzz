@@ -45,6 +45,8 @@ from azure.storage.blob import (
     ContainerSasPermissions,
     generate_container_sas,
 )
+from msrest.serialization import TZ_UTC
+
 from deploylib.configuration import (
     InstanceConfigClient,
     NetworkSecurityConfig,
@@ -70,7 +72,6 @@ from deploylib.registration import (
     set_app_audience,
     update_pool_registration,
 )
-from msrest.serialization import TZ_UTC
 
 # Found by manually assigning the User.Read permission to application
 # registration in the admin portal. The values are in the manifest under
