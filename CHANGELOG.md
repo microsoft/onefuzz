@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Fixed validation of the `target_exe` blob name preventing spurious failures when nested in a (virtual) directory. [#1371](https://github.com/microsoft/onefuzz/pull/1371)
 * Service: Migrated to msgraph as `azure-graphrbac` is soon to be depreciated. [#966](https://github.com/microsoft/onefuzz/pull/966)
 * Service: Stopped ignoring unexpected errors when authenticating the client secret. [#1376](https://github.com/microsoft/onefuzz/pull/1376)
-* Service: Fixed regex to correctly capture the object_id when trying to remove an invalid application id. [#1408](https://github.com/microsoft/onefuzz/pull/1408)
+* Service: Fixed regex to correctly capture the object ID when trying to remove an invalid application ID. [#1408](https://github.com/microsoft/onefuzz/pull/1408)
 * Service: Added check for service principal use during user role assignment. [#1479](https://github.com/microsoft/onefuzz/pull/1479)
 ## 3.2.0
 ### Changed
