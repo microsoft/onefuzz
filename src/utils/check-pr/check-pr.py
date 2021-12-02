@@ -210,36 +210,36 @@ class Deployer:
         ]
         for (msg, cmd) in commands:
             print(msg)
-            if "client_id" in msg:
-                msg_list = msg.split(":")
-                client_id = msg_list[1].strip()
-                self.client_id = client_id
-            if "client_secret" in msg:
-                msg_list = msg.split(":")
-                client_secret = msg_list[1].strip()
-                self.client_secret = client_secret
             subprocess.check_call(cmd, shell=True)
 
-    def register(self, filename: str) -> None:
+    def register(self) -> None:
         sp_name = "sp_" + self.instance
         print(f"registering {sp_name} to {self.instance}")
+
         venv = "register-venv"
         subprocess.check_call(f"python3 -mvenv {venv}", shell=True)
+        pip = venv_path(venv, "pip")
         py = venv_path(venv, "python3")
+
+        cmd = ["az", "account", "show", "--query", "id", "-o", "tsv"]
+        subscription_id = subprocess.check_output(cmd, encoding="UTF-8")
+        subscription_id = subscription_id.strip()
+
         commands = [
+            ("installing prereqs", f"{pip} install -q -r requirements.txt"),
             (
                 "running cli registration",
                 (
-                    f"{py} register.py create_cli_registration "
-                    f"{self.instance} {self.subscription_id}"
+                    f"{py} ./deploylib/registration.py create_cli_registration "
+                    f"{self.instance} {subscription_id}"
                     f" --registration_name {sp_name}"
                 ),
             ),
             (
                 "retrieving registration info",
                 (
-                    f"{py} register.py assign_cli_role "
-                    f"{self.instance} {self.subscription_id}"
+                    f"{py} ./deploylib/registration.py assign_cli_role "
+                    f"{self.instance} {subscription_id}"
                     f" --app_name {sp_name}"
                 ),
             ),
@@ -247,7 +247,28 @@ class Deployer:
 
         for (msg, cmd) in commands:
             print(msg)
-            subprocess.check_call(cmd, shell=True)
+            # if "client_id" in msg:
+            #     msg_list = msg.split(":")
+            #     client_id = msg_list[1].strip()
+            #     self.client_id = client_id
+            #     print(("client_id: " + client_id))
+            # if "client_secret" in msg:
+            #     msg_list = msg.split(":")
+            #     client_secret = msg_list[1].strip()
+            #     self.client_secret = client_secret
+            #     print(("client_secret: " + client_secret))
+            output = subprocess.check_call(cmd, shell=True)
+            print(("output: " + output))
+            if "client_id" in output:
+                output_list = output.split(":")
+                client_id = output_list[1].strip()
+                self.client_id = client_id
+                print(("client_id: " + client_id))
+            if "client_secret" in output:
+                output_list = output.split(":")
+                client_secret = output_list[1].strip()
+                self.client_secret = client_secret
+                print(("client_secret: " + client_secret))
 
         return
 
@@ -315,9 +336,9 @@ class Deployer:
             test_filename,
         )
 
-        # self.deploy(release_filename)
+        self.deploy(release_filename)
 
-        self.register(release_filename)
+        self.register()
 
         if not self.skip_tests:
             self.test(test_filename)
