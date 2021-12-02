@@ -759,7 +759,7 @@ def main() -> None:
     )
     cli_role_assignment_parser.add_argument(
         "--app_name",
-        help="the name of the scaleset",
+        help="the name of the cli app",
     )
     cli_registration_parser = subparsers.add_parser(
         "create_cli_registration", parents=[parent_parser]
