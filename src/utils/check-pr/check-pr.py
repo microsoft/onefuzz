@@ -248,7 +248,7 @@ class Deployer:
         for (msg, cmd) in commands:
             print(msg)
             output = subprocess.check_output(cmd, shell=True, encoding="UTF-8")
-            if "client_id" in output: 
+            if "client_id" in output:
                 output_list = output.split("\n")
                 for line in output_list:
                     if "client_id" in line:
