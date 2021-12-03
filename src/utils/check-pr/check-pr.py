@@ -170,6 +170,7 @@ class Deployer:
         skip_tests: bool,
         test_args: List[str],
         repo: str,
+        unattended: bool,
     ):
         self.downloader = Downloader()
         self.pr = pr
@@ -180,6 +181,7 @@ class Deployer:
         self.skip_tests = skip_tests
         self.test_args = test_args or []
         self.repo = repo
+        self.unattended = unattended
         self.client_id = ""
         self.client_secret = ""
 
@@ -212,12 +214,14 @@ class Deployer:
             print(msg)
             subprocess.check_call(cmd, shell=True)
 
+        if self.unattended:
+            self.register()
+
     def register(self) -> None:
         sp_name = "sp_" + self.instance
         print(f"registering {sp_name} to {self.instance}")
 
-        venv = "register-venv"
-        subprocess.check_call(f"python3 -mvenv {venv}", shell=True)
+        venv = "deploy-venv"
         pip = venv_path(venv, "pip")
         py = venv_path(venv, "python3")
 
@@ -321,8 +325,6 @@ class Deployer:
 
         self.deploy(release_filename)
 
-        self.register()
-
         if not self.skip_tests:
             self.test(test_filename)
 
@@ -355,6 +357,7 @@ def main() -> None:
     parser.add_argument("--merge-on-success", action="store_true")
     parser.add_argument("--subscription_id")
     parser.add_argument("--test_args", nargs=argparse.REMAINDER)
+    parser.add_argument("--unattended", action="store_false")
     args = parser.parse_args()
 
     if not args.branch and not args.pr:
@@ -369,6 +372,7 @@ def main() -> None:
         skip_tests=args.skip_tests,
         test_args=args.test_args,
         repo=args.repo,
+        unattended=args.unattended,
     )
     with tempfile.TemporaryDirectory() as directory:
         os.chdir(directory)
