@@ -300,6 +300,8 @@ impl<'a> Tester<'a> {
 
         let (argv, env) = {
             let expand = Expand::new()
+                .machine_id()
+                .await?
                 .input_path(input_file)
                 .target_exe(&self.exe_path)
                 .target_options(self.arguments)
