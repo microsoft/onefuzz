@@ -24,7 +24,7 @@ def main(msg: func.QueueMessage) -> None:
         entry = NodeHeartbeatEntry.parse_obj(raw)
         node = Node.get_by_machine_id(entry.node_id)
         if not node:
-            logging.error("invalid node id: %s", entry.node_id)
+            logging.warning("invalid node id: %s", entry.node_id)
             return
         node.heartbeat = datetime.datetime.utcnow()
         node.save()
