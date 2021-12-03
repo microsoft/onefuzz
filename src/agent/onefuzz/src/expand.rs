@@ -110,23 +110,15 @@ impl<'a> Expand<'a> {
             PlaceHolder::InputFileSha256.get_string(),
             ExpandedValue::Mapping(Box::new(Expand::input_file_sha256)),
         );
-        values.insert(
-            PlaceHolder::MachineId.get_string(),
-            ExpandedValue::Mapping(Box::new(Expand::machine_id)),
-        );
 
         Self { values }
     }
 
-    // Note: this spawns it's own tokio runtime as it's not really workable to
-    // refactor the get_machine_id into a blockable version, however... as this
-    // is implemented as a ExpandedValue::Mapping, launching a tokio runtime
-    // occurs when users actively attempt to expand {machine_id}.
-    fn machine_id(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
-        let rt = tokio::runtime::Runtime::new()?;
-        let machine_id = rt.block_on(get_machine_id())?;
-        let value = machine_id.to_hyphenated().to_string();
-        Ok(Some(ExpandedValue::Scalar(value)))
+    // Must be manually called to enable the use of async library code.
+    pub async fn machine_id(self) -> Result<Expand<'a>> {
+        let id = get_machine_id().await?;
+        let value = id.to_string();
+        Ok(self.set_value(PlaceHolder::MachineId, ExpandedValue::Scalar(value)))
     }
 
     fn input_file_sha256(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
@@ -518,12 +510,12 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_expand_machine_id() -> Result<()> {
-        // verify {machine_id} expands to a UUID, but don't worry about the
-        // actual value of the UUID
-        let result = Expand::new().evaluate_value("{machine_id}")?;
-        Uuid::parse_str(&result)?;
+    #[tokio::test]
+    async fn test_expand_machine_id() -> Result<()> {
+        let expand = Expand::new().machine_id().await?;
+        let expanded = expand.evaluate_value("{machine_id}")?;
+        // Check that "{machine_id}" expands to a valid UUID, but don't worry about the actual value.
+        Uuid::parse_str(&expanded)?;
         Ok(())
     }
 }

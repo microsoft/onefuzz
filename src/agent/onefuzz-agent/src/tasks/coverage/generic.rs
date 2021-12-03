@@ -236,7 +236,7 @@ impl<'a> TaskContext<'a> {
     async fn record_impl(&mut self, input: &Path) -> Result<CommandBlockCov> {
         let cache = Arc::clone(&self.cache);
         let filter = self.filter.clone();
-        let cmd = self.command_for_input(input)?;
+        let cmd = self.command_for_input(input).await?;
         let timeout = self.config.timeout();
         let coverage = spawn_blocking(move || {
             let mut cache = cache
@@ -266,8 +266,10 @@ impl<'a> TaskContext<'a> {
         false
     }
 
-    fn command_for_input(&self, input: &Path) -> Result<Command> {
+    async fn command_for_input(&self, input: &Path) -> Result<Command> {
         let expand = Expand::new()
+            .machine_id()
+            .await?
             .input_path(input)
             .job_id(&self.config.common.job_id)
             .setup_dir(&self.config.common.setup_dir)

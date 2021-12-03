@@ -222,7 +222,7 @@ impl LibFuzzerFuzzTask {
             &self.config.target_env,
             &self.config.common.setup_dir,
         );
-        let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
+        let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs).await?;
         let running_id = running.id();
         let notify = Arc::new(Notify::new());
         let sys_info = task::spawn(report_fuzzer_sys_info(
