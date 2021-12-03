@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 4.0.0
+### Added
+* Agent: Added common source coverage format. [#1403](https://github.com/microsoft/onefuzz/pull/1403)
+* Service: Added class to store and retrieve rules associated with an API endpoint. This supports the ability to control who has access to an API. [#1420](https://github.com/microsoft/onefuzz/pull/1420)
+* Service: Support for NSG creation during deployment, allowing restricted access to the scaleset and repro VMs. [#1331](https://github.com/microsoft/onefuzz/pull/1331), [#1340](https://github.com/microsoft/onefuzz/pull/1340), [#1358](https://github.com/microsoft/onefuzz/pull/1358), [#1385](https://github.com/microsoft/onefuzz/pull/1385), [#1393](https://github.com/microsoft/onefuzz/pull/1393), [#1395](https://github.com/microsoft/onefuzz/pull/1395), [#1400](https://github.com/microsoft/onefuzz/pull/1400), [#1404](https://github.com/microsoft/onefuzz/pull/1404), [#1406](https://github.com/microsoft/onefuzz/pull/1406), [#1410](https://github.com/microsoft/onefuzz/pull/1410)
+* Service: Guest account access is disabled by default when creating the default service principal during deployment. [#1425](https://github.com/microsoft/onefuzz/pull/1425)
+* Service: Group membership check added. [#1074](https://github.com/microsoft/onefuzz/pull/1074)
+* Service: Exposed the `target_timeout` parameter in the `radamsa basic` template. [#1499](https://github.com/microsoft/onefuzz/pull/1499)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1360](https://github.com/microsoft/onefuzz/pull/1360), [#1364](https://github.com/microsoft/onefuzz/pull/1364), [#1367](https://github.com/microsoft/onefuzz/pull/1367), [#1368](https://github.com/microsoft/onefuzz/pull/1368), [#1369](https://github.com/microsoft/onefuzz/pull/1369), [#1382](https://github.com/microsoft/onefuzz/pull/1382), [#1429](https://github.com/microsoft/onefuzz/pull/1429), [#1455](https://github.com/microsoft/onefuzz/pull/1455), [#1456](https://github.com/microsoft/onefuzz/pull/1456), [#1414](https://github.com/microsoft/onefuzz/pull/1414), [#1416](https://github.com/microsoft/onefuzz/pull/1416), [#1417](https://github.com/microsoft/onefuzz/pull/1417), [#1423](https://github.com/microsoft/onefuzz/pull/1423), [#1438](https://github.com/microsoft/onefuzz/pull/1438), [#1446](https://github.com/microsoft/onefuzz/pull/1446), [#1458](https://github.com/microsoft/onefuzz/pull/1458), [#1463](https://github.com/microsoft/onefuzz/pull/1463), [#1470](https://github.com/microsoft/onefuzz/pull/1470), [#1453](https://github.com/microsoft/onefuzz/pull/1453), [#1492](https://github.com/microsoft/onefuzz/pull/1492), [#1493](https://github.com/microsoft/onefuzz/pull/1493), [#1480](https://github.com/microsoft/onefuzz/pull/1480), [#1488](https://github.com/microsoft/onefuzz/pull/1488), [#1490](https://github.com/microsoft/onefuzz/pull/1490)
+
+### Fixed
+* Service: Fixed Azure DevOps work item creation by adding missing client initialization. [#1370](https://github.com/microsoft/onefuzz/pull/1370)
+* Service: Fixed validation of the `target_exe` blob name, enabling nesting in a subdirectory of the `setup` container. [#1371](https://github.com/microsoft/onefuzz/pull/1371)
+* Service: Migrated to MS Graph, as `azure-graphrbac` is soon to be deprecated. [#966](https://github.com/microsoft/onefuzz/pull/966)
+* Service: Stopped ignoring unexpected errors when authenticating the client secret. [#1376](https://github.com/microsoft/onefuzz/pull/1376)
+* Service: Fixed regex to correctly capture the object ID when trying to remove an invalid application ID. [#1408](https://github.com/microsoft/onefuzz/pull/1408)
+* Service: Added check for service principal use during user role assignment. [#1479](https://github.com/microsoft/onefuzz/pull/1479)
+* Service: Added support for Compute Gallery images. [#1450](https://github.com/microsoft/onefuzz/pull/1450)
+
 ## 3.2.0
 ### Changed
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1301](https://github.com/microsoft/onefuzz/pull/1301), [#1302](https://github.com/microsoft/onefuzz/pull/1302), [#1310](https://github.com/microsoft/onefuzz/pull/1310), [#1312](https://github.com/microsoft/onefuzz/pull/1312), [#1332](https://github.com/microsoft/onefuzz/pull/1332), [#1335](https://github.com/microsoft/onefuzz/pull/1335), [#1336](https://github.com/microsoft/onefuzz/pull/1336), [#1337](https://github.com/microsoft/onefuzz/pull/1337), [#1341](https://github.com/microsoft/onefuzz/pull/1341), [#1342](https://github.com/microsoft/onefuzz/pull/1342), [#1343](https://github.com/microsoft/onefuzz/pull/1343), [#1344](https://github.com/microsoft/onefuzz/pull/1344), [#1353](https://github.com/microsoft/onefuzz/pull/1353)
