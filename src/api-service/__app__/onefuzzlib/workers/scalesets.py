@@ -607,6 +607,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         machine_ids = set()
         for node in nodes:
+            if node.state != NodeState.done:
+                continue
+
             if node.debug_keep_node:
                 logging.warning(
                     SCALESET_LOG_PREFIX + "not reimaging manually overridden node. "
