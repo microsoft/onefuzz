@@ -151,7 +151,7 @@ class Node(BASE_NODE, ORMMixin):
         # are made concurrently.  By performing this check regularly, any nodes
         # that hit this race condition will get cleaned up.
         for node in cls.search_states(states=[NodeState.busy]):
-            node.stop_if_complete()
+            node.stop_if_complete(True)
 
     @classmethod
     def get_by_machine_id(cls, machine_id: UUID) -> Optional["Node"]:
@@ -209,7 +209,7 @@ class Node(BASE_NODE, ORMMixin):
                     node.machine_id,
                 )
 
-    def stop_if_complete(self) -> bool:
+    def stop_if_complete(self, done: bool = False) -> bool:
         # returns True on stopping the node and False if this doesn't stop the node
         from ..tasks.main import Task
 
@@ -228,7 +228,7 @@ class Node(BASE_NODE, ORMMixin):
             "node: stopping busy node with all tasks complete: %s",
             self.machine_id,
         )
-        self.stop(done=True)
+        self.stop(done=done)
         return True
 
     def mark_tasks_stopped_early(self, error: Optional[Error] = None) -> None:
