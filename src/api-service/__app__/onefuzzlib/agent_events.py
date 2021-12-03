@@ -46,6 +46,12 @@ def on_state_update(
     state = state_update.state
     node = get_node(machine_id)
     if isinstance(node, Error):
+        if state == NodeState.done:
+            logging.warning(
+                "unable to process state update event. machine_id:"
+                f"{machine_id} state event:{state_update} error:{node}"
+            )
+            return None
         return node
 
     if state == NodeState.free:
