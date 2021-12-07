@@ -256,7 +256,7 @@ class Deployer:
                         line_list = line.split(":")
                         client_secret = line_list[1].strip()
                         self.client_secret = client_secret
-
+        time.sleep(10)
         return
 
     def test(self, filename: str) -> None:
@@ -357,7 +357,7 @@ def main() -> None:
     parser.add_argument("--merge-on-success", action="store_true")
     parser.add_argument("--subscription_id")
     parser.add_argument("--test_args", nargs=argparse.REMAINDER)
-    parser.add_argument("--unattended", action="store_false")
+    parser.add_argument("--unattended", action="store_true")
     args = parser.parse_args()
 
     if not args.branch and not args.pr:
