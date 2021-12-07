@@ -268,7 +268,7 @@ class Deployer:
         endpoint = f"https://{self.instance}.azurewebsites.net"
         test_args = " ".join(self.test_args)
         unattended_args = (
-            f"--client_id {self.client_id} --client_secret {self.client_secret}"
+            f" --client_id {self.client_id} --client_secret {self.client_secret}"
         )
         if self.unattended:
             test_args.join(unattended_args)
