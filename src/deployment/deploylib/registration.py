@@ -270,6 +270,8 @@ def create_application_registration(
         "appId": registered_app["appId"],
     }
 
+    time.sleep(15)
+    
     query_microsoft_graph(
         method="POST",
         resource="servicePrincipals",
