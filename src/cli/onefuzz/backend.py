@@ -293,7 +293,8 @@ class Backend:
         # TODO: remove this once swapping deployment are in use
 
         # 502, 503, and 504 errors are often to Azure App issues.
-        retry_codes = [401, 404, 429, 502, 503, 504]
+        # integration tests often fail with 500's, adding it here to test
+        retry_codes = [401, 404, 429, 500, 502, 503, 504]
 
         response = None
         for backoff in range(1, 10):
