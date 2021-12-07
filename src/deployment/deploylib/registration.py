@@ -271,7 +271,7 @@ def create_application_registration(
     }
 
     time.sleep(15)
-    
+
     query_microsoft_graph(
         method="POST",
         resource="servicePrincipals",
