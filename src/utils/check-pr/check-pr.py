@@ -267,6 +267,11 @@ class Deployer:
         script = "integration-test.py"
         endpoint = f"https://{self.instance}.azurewebsites.net"
         test_args = " ".join(self.test_args)
+        unattended_args = (
+            f" --client_id {self.client_id} --client_secret {self.client_secret}"
+        )
+        if self.unattended:
+            test_args.join(unattended_args)
         commands = [
             (
                 "extracting integration-test-artifacts",
@@ -280,7 +285,6 @@ class Deployer:
                 (
                     f"{py} {test_dir}/{script} test {test_dir} "
                     f"--region {self.region} --endpoint {endpoint} "
-                    f"--client_id {self.client_id} --client_secret {self.client_secret} "
                     f"{test_args}"
                 ),
             ),
