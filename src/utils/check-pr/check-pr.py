@@ -267,6 +267,11 @@ class Deployer:
         script = "integration-test.py"
         endpoint = f"https://{self.instance}.azurewebsites.net"
         test_args = " ".join(self.test_args)
+        unattended_args = (
+            f"--client_id {self.client_id} --client_secret {self.client_secret}"
+        )
+        if self.unattended:
+            test_args.join(unattended_args)
         commands = [
             (
                 "extracting integration-test-artifacts",
@@ -280,7 +285,6 @@ class Deployer:
                 (
                     f"{py} {test_dir}/{script} test {test_dir} "
                     f"--region {self.region} --endpoint {endpoint} "
-                    f"--client_id {self.client_id} --client_secret {self.client_secret} "
                     f"{test_args}"
                 ),
             ),
@@ -357,7 +361,7 @@ def main() -> None:
     parser.add_argument("--merge-on-success", action="store_true")
     parser.add_argument("--subscription_id")
     parser.add_argument("--test_args", nargs=argparse.REMAINDER)
-    parser.add_argument("--unattended", action="store_false")
+    parser.add_argument("--unattended", action="store_true")
     args = parser.parse_args()
 
     if not args.branch and not args.pr:
