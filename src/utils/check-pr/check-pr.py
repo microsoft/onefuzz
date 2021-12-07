@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
@@ -192,9 +192,9 @@ class Deployer:
     def deploy(self, filename: str) -> None:
         print(f"deploying {filename} to {self.instance}")
         venv = "deploy-venv"
-        subprocess.check_call(f"python -mvenv {venv}", shell=True)
+        subprocess.check_call(f"python3 -mvenv {venv}", shell=True)
         pip = venv_path(venv, "pip")
-        py = venv_path(venv, "python")
+        py = venv_path(venv, "python3")
         config = os.path.join(os.getcwd(), "config.json")
         commands = [
             ("extracting release-artifacts", f"unzip -qq {filename}"),
@@ -223,7 +223,7 @@ class Deployer:
 
         venv = "deploy-venv"
         pip = venv_path(venv, "pip")
-        py = venv_path(venv, "python")
+        py = venv_path(venv, "python3")
 
         az_cmd = ["az", "account", "show", "--query", "id", "-o", "tsv"]
         subscription_id = subprocess.check_output(az_cmd, encoding="UTF-8")
@@ -261,23 +261,24 @@ class Deployer:
 
     def test(self, filename: str) -> None:
         venv = "test-venv"
-        subprocess.check_call(f"python -mvenv {venv}", shell=True)
-        py = venv_path(venv, "python")
+        subprocess.check_call(f"python3 -mvenv {venv}", shell=True)
+        py = venv_path(venv, "python3")
         test_dir = "integration-test-artifacts"
         script = "integration-test.py"
         endpoint = f"https://{self.instance}.azurewebsites.net"
         test_args = " ".join(self.test_args)
         unattended_args = (
-            f" --client_id {self.client_id} --client_secret {self.client_secret}"
+            f"--client_id {self.client_id} --client_secret {self.client_secret}"
+            if self.unattended
+            else ""
         )
-        if self.unattended:
-            test_args.join(unattended_args)
+
         commands = [
             (
                 "extracting integration-test-artifacts",
                 f"unzip -qq {filename} -d {test_dir}",
             ),
-            ("test venv", f"python -mvenv {venv}"),
+            ("test venv", f"python3 -mvenv {venv}"),
             ("installing wheel", f"./{venv}/bin/pip install -q wheel"),
             ("installing sdk", f"./{venv}/bin/pip install -q sdk/*.whl"),
             (
@@ -285,7 +286,7 @@ class Deployer:
                 (
                     f"{py} {test_dir}/{script} test {test_dir} "
                     f"--region {self.region} --endpoint {endpoint} "
-                    f"{test_args}"
+                    f"{unattended_args} {test_args}"
                 ),
             ),
         ]
