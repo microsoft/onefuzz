@@ -270,15 +270,37 @@ def create_application_registration(
         "appId": registered_app["appId"],
     }
 
-    time.sleep(15)
-
-    query_microsoft_graph(
-        method="POST",
-        resource="servicePrincipals",
-        body=service_principal_params,
-        subscription=subscription_id,
-    )
-
+    ## Retry logic potentially needed - use function?
+    ## Also needs to be able to catch weird error
+    def try_sp_create() -> None:
+        error: Optional[Exception] = None
+        for _ in range(10):
+            try:
+                query_microsoft_graph(
+                    method="POST",
+                    resource="servicePrincipals",
+                    body=service_principal_params,
+                    subscription=subscription_id,
+                )
+                return
+            except GraphQueryError as err:
+                # work around timing issue when creating service principal
+                # https://github.com/Azure/azure-cli/issues/14767
+                if (
+                    "service principal being created must in the local tenant"
+                    not in str(err)
+                ):
+                    raise err
+            logger.warning(
+                "creating service principal failed with an error that occurs "
+                "due to AAD race conditions"
+            )
+            time.sleep(60)
+        if error is None:
+            raise Exception("service principal creation failed")
+        else:
+            raise error
+    ## Retry, as well
     authorize_application(
         UUID(registered_app["appId"]),
         UUID(app["appId"]),
