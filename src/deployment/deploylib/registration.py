@@ -303,11 +303,13 @@ def create_application_registration(
 
     try_sp_create()
 
-    ## Retry, as well
-    def try_authorize_application() -> None:
+    registered_app_id = registered_app["appId"]
+    app_id = app["appId"]
+
+    def try_authorize_application(data: Any) -> None:
         authorize_application(
-            UUID(registered_app["appId"]),
-            UUID(app["appId"]),
+            UUID(registered_app_id),
+            UUID(app_id),
             subscription_id=subscription_id,
         )
 
