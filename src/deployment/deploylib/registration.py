@@ -300,6 +300,7 @@ def create_application_registration(
             raise Exception("service principal creation failed")
         else:
             raise error
+
     ## Retry, as well
     authorize_application(
         UUID(registered_app["appId"]),
