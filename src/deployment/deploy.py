@@ -484,7 +484,7 @@ class Client:
         if not cli_app:
             logger.info(
                 "Could not find the default CLI application under the current "
-                "subscription, creating a new one"
+                "subscription, creating  a new one"
             )
             app_info = register_application(
                 "onefuzz-cli",
