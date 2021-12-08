@@ -301,13 +301,20 @@ def create_application_registration(
         else:
             raise error
 
+    try_sp_create()
+
     ## Retry, as well
-    authorize_application(
-        UUID(registered_app["appId"]),
-        UUID(app["appId"]),
-        subscription_id=subscription_id,
-    )
+    def try_authorize_application() -> None:
+        authorize_application(
+            UUID(registered_app["appId"]),
+            UUID(app["appId"]),
+            subscription_id=subscription_id,
+        )
+
+    retry(try_authorize_application, "authorize application")
+
     assign_instance_app_role(onefuzz_instance_name, name, subscription_id, approle)
+
     return registered_app
 
 
