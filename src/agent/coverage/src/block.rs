@@ -17,7 +17,9 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::code::ModulePath;
+use crate::debuginfo::DebugInfo;
 use crate::report::{CoverageReport, CoverageReportEntry};
+use crate::source::SourceCoverage;
 
 /// Block coverage for a command invocation.
 ///
@@ -103,6 +105,68 @@ impl CommandBlockCov {
 
     pub fn try_from_report(report: BlockCoverageReport) -> Result<Self> {
         Self::try_from(report)
+    }
+
+    pub fn source_coverage(&self, debuginfo: &mut DebugInfo) -> Result<SourceCoverage> {
+        use crate::source::{SourceCoverageLocation as Location, *};
+        use std::collections::HashMap;
+
+        // Temporary map to collect line coverage results without duplication.
+        // Will be converted after processing block coverage.
+        //
+        // Maps: source_file_path -> (line -> count)
+        let mut files: HashMap<String, HashMap<u32, u32>> = HashMap::default();
+
+        for (module, coverage) in &self.modules {
+            let loaded = debuginfo.load_module(module.path().to_owned())?;
+
+            if !loaded {
+                continue;
+            }
+
+            let mod_info = debuginfo.get(&module.path());
+
+            if let Some(mod_info) = mod_info {
+                for (offset, block) in &coverage.blocks {
+                    let lines = mod_info.source.lookup(u64::from(*offset))?;
+
+                    for line_info in lines {
+                        let line_info = line_info?;
+                        let file = line_info.path().to_owned();
+                        let line = line_info.line();
+
+                        let file_entry = files.entry(file).or_default();
+                        let line_entry = file_entry.entry(line).or_insert(0);
+
+                        // Will always be 0 or 1.
+                        *line_entry = u32::max(*line_entry, block.count);
+                    }
+                }
+            }
+        }
+
+        let mut src = SourceCoverage::default();
+
+        for (file, lines) in files {
+            let mut locations = vec![];
+
+            for (line, count) in lines {
+                // Valid lines are always 1-indexed.
+                if line > 0 {
+                    let location = Location::new(line, None, count)?;
+                    locations.push(location)
+                }
+            }
+
+            locations.sort_by_key(|l| l.line);
+
+            let file_coverage = SourceFileCoverage { file, locations };
+            src.files.push(file_coverage);
+        }
+
+        src.files.sort_by_key(|f| f.file.clone());
+
+        Ok(src)
     }
 }
 
