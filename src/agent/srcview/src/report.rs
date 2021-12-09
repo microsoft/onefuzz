@@ -82,7 +82,7 @@ impl Report {
         srcview: &SrcView,
         include_regex: Option<&str>,
     ) -> Result<Self> {
-        let filter = include_regex.map(Regex::new).transpose()?;
+        let include = include_regex.map(Regex::new).transpose()?;
         let filecov = Self::compute_filecov(coverage, srcview, &include)?;
 
         // should this function take &[ModOff] and perform the conversion itself?
