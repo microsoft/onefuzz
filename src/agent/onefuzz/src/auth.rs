@@ -235,7 +235,6 @@ impl ManagedIdentityCredentials {
 #[derive(Clone, Debug, Deserialize)]
 struct ManagedIdentityAccessTokenBody {
     access_token: Secret<String>,
-    resource: String,
 }
 
 impl From<ManagedIdentityAccessTokenBody> for AccessToken {
