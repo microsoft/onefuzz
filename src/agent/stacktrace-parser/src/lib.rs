@@ -118,7 +118,7 @@ fn function_without_args(func: &str) -> String {
     // fill in `minimized_stack_functions_names`. The unstripped version will be
     // in `minimized_stack`.
     func.split_once('(')
-        .map(|(x,_)| x)
+        .map(|(x, _)| x)
         .unwrap_or(func)
         .to_string()
 }
