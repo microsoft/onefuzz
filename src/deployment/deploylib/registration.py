@@ -270,8 +270,6 @@ def create_application_registration(
         "appId": registered_app["appId"],
     }
 
-    ## Retry logic potentially needed - use function?
-    ## Also needs to be able to catch weird error
     def try_sp_create() -> None:
         error: Optional[Exception] = None
         for _ in range(10):
