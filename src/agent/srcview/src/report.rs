@@ -82,7 +82,7 @@ impl Report {
         srcview: &SrcView,
         include_regex: Option<&str>,
     ) -> Result<Self> {
-        let include = include_regex.map(|f| Regex::new(f)).transpose()?;
+        let filter = filter_regex.map(Regex::new).transpose()?;
         let filecov = Self::compute_filecov(coverage, srcview, &include)?;
 
         // should this function take &[ModOff] and perform the conversion itself?
@@ -352,7 +352,7 @@ impl Report {
     /// println!("{}", xml);
     /// ```
     pub fn cobertura(&self, filter_regex: Option<&str>) -> Result<String> {
-        let filter = filter_regex.map(|f| Regex::new(f)).transpose()?;
+        let filter = filter_regex.map(Regex::new).transpose()?;
 
         let mut backing: Vec<u8> = Vec::new();
         let mut ew = EmitterConfig::new()
