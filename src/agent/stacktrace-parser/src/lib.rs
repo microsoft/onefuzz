@@ -117,9 +117,9 @@ fn function_without_args(func: &str) -> String {
     // with ClusterFuzz, this is going to stay this way for now. This is used to
     // fill in `minimized_stack_functions_names`. The unstripped version will be
     // in `minimized_stack`.
-    func.splitn(2, '(')
-        .next()
-        .expect("splitn should always return at least one item")
+    func.split_once('(')
+        .map(|(x,_)| x)
+        .expect("split_once should be successful")
         .to_string()
 }
 
