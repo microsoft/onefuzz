@@ -311,7 +311,7 @@ def create_application_registration(
             subscription_id=subscription_id,
         )
 
-    retry(try_authorize_application, "authoriz application")
+    retry(try_authorize_application, "authorize application")
 
     def try_assign_instance_role(data: Any) -> None:
         assign_instance_app_role(onefuzz_instance_name, name, subscription_id, approle)
