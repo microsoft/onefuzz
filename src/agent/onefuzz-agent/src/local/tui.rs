@@ -68,6 +68,7 @@ const FILE_MONITOR_POLLING_PERIOD: Duration = Duration::from_secs(5);
 const EVENT_POLLING_PERIOD: Duration = Duration::from_secs(1);
 
 #[derive(Debug, Default)]
+#[allow(dead_code)]
 struct CoverageData {
     covered: Option<u64>,
     features: Option<u64>,
