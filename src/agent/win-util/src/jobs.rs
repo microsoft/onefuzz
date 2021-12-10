@@ -475,7 +475,7 @@ impl From<JOBOBJECT_NOTIFICATION_LIMIT_INFORMATION> for JobObjectLimitNotificati
         } else {
             None
         };
-        
+
         JobObjectLimitNotification {
             io_read_bytes_limit,
             io_write_bytes_limit,
