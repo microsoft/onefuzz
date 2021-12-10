@@ -20,13 +20,6 @@ use storage_queue::{QueueClient, EMPTY_QUEUE_DELAY};
 use tokio::process::Command;
 
 #[derive(Debug, Deserialize)]
-struct QueueMessage {
-    content_length: u32,
-
-    url: Url,
-}
-
-#[derive(Debug, Deserialize)]
 pub struct Config {
     pub supervisor_exe: String,
     pub supervisor_options: Vec<String>,
