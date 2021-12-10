@@ -446,7 +446,6 @@ impl JobInformation {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 pub struct JobObjectLimitNotification {
     io_read_bytes_limit: Option<u64>,
     io_write_bytes_limit: Option<u64>,
