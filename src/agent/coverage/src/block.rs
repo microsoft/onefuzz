@@ -158,13 +158,13 @@ impl CommandBlockCov {
                 }
             }
 
-            locations.sort_by_key(|l| l.line);
+            locations.sort_unstable_by_key(|l| l.line);
 
             let file_coverage = SourceFileCoverage { file, locations };
             src.files.push(file_coverage);
         }
 
-        src.files.sort_by_key(|f| f.file.clone());
+        src.files.sort_unstable_by_key(|f| f.file.clone());
 
         Ok(src)
     }
