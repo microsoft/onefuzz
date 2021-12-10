@@ -24,12 +24,6 @@ use std::{
 use storage_queue::{QueueClient, EMPTY_QUEUE_DELAY};
 
 #[derive(Debug, Deserialize)]
-struct QueueMessage {
-    content_length: u32,
-    url: Url,
-}
-
-#[derive(Debug, Deserialize)]
 pub struct Config {
     pub target_exe: PathBuf,
     pub target_env: HashMap<String, String>,
