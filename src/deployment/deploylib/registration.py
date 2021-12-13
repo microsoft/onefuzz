@@ -132,8 +132,9 @@ def retry(
             else:
                 logger.warning(f"failed '{description}': {err.message}")
         except Exception as exc:
-            print("unknown error:")
-            print(exc)
+            error = exc
+            logger.error(f"failed '{description}'. logging stack trace.")
+            logger.error(exc)
         count += 1
         if count >= tries:
             if error:
