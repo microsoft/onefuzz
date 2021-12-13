@@ -12,13 +12,21 @@ use symbolic::{
     symcache::{SymCache, SymCacheWriter},
 };
 
+/// Caching provider of debug info for executable code modules.
 #[derive(Default)]
 pub struct DebugInfo {
+    // Cached debug info, keyed by module path.
     modules: HashMap<PathBuf, ModuleDebugInfo>,
+
+    // Set of module paths known to lack debug info.
     no_debug_info: HashSet<PathBuf>,
 }
 
 impl DebugInfo {
+    /// Try to load debug info for a module.
+    ///
+    /// If debug info was founded and loaded (now or previously), returns
+    /// `true`. If the module does not have debug info, returns `false`.
     pub fn load_module(&mut self, module: PathBuf) -> Result<bool> {
         if self.no_debug_info.contains(&module) {
             return Ok(false);
@@ -30,10 +38,13 @@ impl DebugInfo {
 
         let info = ModuleDebugInfo::load(&module);
 
+        // Treats any module load error as absence of debug info.
         if info.is_err() {
             self.no_debug_info.insert(module);
             return Ok(false);
         }
+
+        // Will always succeed, by the above check.
         let info = info?;
 
         self.modules.insert(module, info);
@@ -41,14 +52,25 @@ impl DebugInfo {
         Ok(true)
     }
 
+    /// Fetch debug info for `module`, if loaded.
+    ///
+    /// Does not attempt to load debug info for the module.
     pub fn get(&self, module: impl AsRef<Path>) -> Option<&ModuleDebugInfo> {
         self.modules.get(module.as_ref())
     }
 }
 
+/// Debug info for a single executable module.
 pub struct ModuleDebugInfo {
+    /// Backing debug info file data for the module.
+    ///
+    /// May not include the actual executable code.
     pub object: Object<'static>,
+
+    /// Interface and caching structures for general debug info querying.
     pub session: ObjectDebugSession<'static>,
+
+    /// Cache which allows efficient source line lookups.
     pub source: SymCache<'static>,
 }
 
@@ -59,6 +81,9 @@ impl ModuleDebugInfo {
     fn load(module: &Path) -> Result<Self> {
         let mut data = fs::read(&module)?.into_boxed_slice();
 
+        // If our module is a PE file, the debug info will be in the PDB.
+        //
+        // We will need a similar check to support split DWARF.
         let is_pe = pe::PeObject::test(&data);
         if is_pe {
             // Assume a sibling PDB.

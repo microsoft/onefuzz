@@ -107,6 +107,8 @@ impl CommandBlockCov {
         Self::try_from(report)
     }
 
+    /// Translate binary block coverage to source line coverage, using a caching
+    /// debug info provider.
     pub fn source_coverage(&self, debuginfo: &mut DebugInfo) -> Result<SourceCoverage> {
         use crate::source::{SourceCoverageLocation as Location, *};
         use std::collections::HashMap;
