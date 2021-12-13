@@ -233,6 +233,7 @@ impl ManagedIdentityCredentials {
 //      #get-an-access-token-using-the-vms-system-assigned-managed-identity
 //      -and-use-it-to-call-resource-manager
 #[derive(Clone, Debug, Deserialize)]
+#[allow(dead_code)]
 struct ManagedIdentityAccessTokenBody {
     access_token: Secret<String>,
     resource: String,

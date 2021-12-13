@@ -28,6 +28,7 @@ where
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct ProcessDetails<'a> {
     pid: u32,
     output: &'a Output,
