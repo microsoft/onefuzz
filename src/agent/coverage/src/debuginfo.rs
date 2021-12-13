@@ -104,9 +104,10 @@ impl ModuleDebugInfo {
 
         let session = object.debug_session()?;
 
-        let cursor = SymCacheWriter::write_object(&object, io::Cursor::new(vec![]))?;
-        let data = Box::leak(cursor.into_inner().into_boxed_slice());
-        let source = SymCache::parse(data)?;
+        let cursor = io::Cursor::new(vec![]);
+        let cursor = SymCacheWriter::write_object(&object, cursor)?;
+        let cache_data = Box::leak(cursor.into_inner().into_boxed_slice());
+        let source = SymCache::parse(cache_data)?;
 
         Ok(Some(Self {
             object,
