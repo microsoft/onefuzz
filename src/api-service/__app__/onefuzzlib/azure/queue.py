@@ -136,8 +136,6 @@ def remove_first_message(name: QueueNameType, storage_type: StorageType) -> bool
                 return True
         except ResourceNotFoundError:
             return False
-        except TimeoutError:
-            return False
     return False
 
 
@@ -173,8 +171,6 @@ def peek_queue(
             raw = json.loads(decoded)
             result.append(object_type.parse_obj(raw))
     except ResourceNotFoundError:
-        return result
-    except TimeoutError:
         return result
     return result
 
