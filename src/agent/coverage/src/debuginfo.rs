@@ -36,16 +36,13 @@ impl DebugInfo {
             return Ok(true);
         }
 
-        let info = ModuleDebugInfo::load(&module);
-
-        // Treats any module load error as absence of debug info.
-        if info.is_err() {
-            self.no_debug_info.insert(module);
-            return Ok(false);
-        }
-
-        // Will always succeed, by the above check.
-        let info = info?;
+        let info = match ModuleDebugInfo::load(&module)? {
+            Some(info) => info,
+            None => {
+                self.no_debug_info.insert(module);
+                return Ok(false);
+            }
+        };
 
         self.modules.insert(module, info);
 
@@ -77,8 +74,11 @@ pub struct ModuleDebugInfo {
 impl ModuleDebugInfo {
     /// Load debug info for a module.
     ///
+    /// Returns `None` when the module was found and loadable, but no matching
+    /// debug info could be found.
+    ///
     /// Leaks module and symbol data.
-    fn load(module: &Path) -> Result<Self> {
+    fn load(module: &Path) -> Result<Option<Self>> {
         let mut data = fs::read(&module)?.into_boxed_slice();
 
         // If our module is a PE file, the debug info will be in the PDB.
@@ -99,7 +99,7 @@ impl ModuleDebugInfo {
         let object = Object::parse(data)?;
 
         if !object.has_debug_info() {
-            anyhow::bail!("no debug info!");
+            return Ok(None);
         }
 
         let session = object.debug_session()?;
@@ -108,10 +108,10 @@ impl ModuleDebugInfo {
         let data = Box::leak(cursor.into_inner().into_boxed_slice());
         let source = SymCache::parse(data)?;
 
-        Ok(Self {
+        Ok(Some(Self {
             object,
             session,
             source,
-        })
+        }))
     }
 }
