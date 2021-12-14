@@ -132,13 +132,15 @@ def retry(
             else:
                 logger.warning(f"failed '{description}': {err.message}")
         except Exception as exc:
-            error = exc
+            exception = exc
             logger.error(f"failed '{description}'. logging stack trace.")
             logger.error(exc)
         count += 1
         if count >= tries:
             if error:
                 raise error
+            elif exception:
+                raise exception
             else:
                 raise Exception(f"failed '{description}'")
         else:
