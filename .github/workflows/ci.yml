@@ -35,7 +35,7 @@ jobs:
     - name: Linux Prereqs
       run: |
         sudo apt-get -y update
-        sudo apt-get -y install libssl1.0-dev libunwind-dev
+        sudo apt-get -y install libssl1.0-dev libunwind-dev libz3-dev
       if: "${{ runner.os == 'Linux' }}"
     - run: src/ci/agent.sh
       shell: bash
