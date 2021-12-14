@@ -75,8 +75,8 @@ pub struct NoCrash {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CrashTestResult {
-    CrashReport(CrashReport),
-    NoRepro(NoCrash),
+    CrashReport(Box<CrashReport>),
+    NoRepro(Box<NoCrash>),
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -268,13 +268,13 @@ pub async fn parse_report_file(path: PathBuf) -> Result<CrashTestResult> {
     let report: Result<CrashReport, serde_json::Error> = serde_json::from_value(json.clone());
 
     let report_err = match report {
-        Ok(report) => return Ok(CrashTestResult::CrashReport(report)),
+        Ok(report) => return Ok(CrashTestResult::CrashReport(Box::new(report))),
         Err(err) => err,
     };
     let no_repro: Result<NoCrash, serde_json::Error> = serde_json::from_value(json);
 
     let no_repro_err = match no_repro {
-        Ok(no_repro) => return Ok(CrashTestResult::NoRepro(no_repro)),
+        Ok(no_repro) => return Ok(CrashTestResult::NoRepro(Box::new(no_repro))),
         Err(err) => err,
     };
 
