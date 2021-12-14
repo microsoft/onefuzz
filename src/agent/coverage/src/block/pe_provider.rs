@@ -73,7 +73,7 @@ where
     // reverse the instrumented basic blocks.
     fn provide_from_inline_table(&mut self, inline_table: SancovTable) -> Result<BTreeSet<u32>> {
         let mut visitor =
-            SancovInlineAccessVisitor::new(inline_table, self.data, self.pe, &mut self.pdb)?;
+            SancovInlineAccessVisitor::new(inline_table, self.data, self.pe, self.pdb)?;
 
         let debug_info = self.pdb.debug_information()?;
         let mut modules = debug_info.modules()?;
