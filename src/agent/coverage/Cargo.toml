@@ -24,6 +24,7 @@ msvc-demangler = "0.9"
 regex = "1.4"
 rustc-demangle = "0.1"
 serde = { version = "1.0", features = ["derive"] }
+symbolic = { version = "8.5", features = ["debuginfo", "demangle", "symcache"] }
 uuid = { version = "0.8", features = ["guid"] }
 win-util = { path = "../win-util" }
 
