@@ -155,7 +155,7 @@ impl CommandBlockCov {
             for (line, count) in lines {
                 // Valid lines are always 1-indexed.
                 if line > 0 {
-                    let location = Location::new(line, None, count)?;
+                    let location = Location::new(line, count)?;
                     locations.push(location)
                 }
             }

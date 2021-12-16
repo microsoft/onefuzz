@@ -23,6 +23,7 @@ pub mod demangle;
 pub mod report;
 pub mod sancov;
 pub mod source;
+pub mod cobertura;
 
 #[cfg(target_os = "linux")]
 pub mod disasm;
