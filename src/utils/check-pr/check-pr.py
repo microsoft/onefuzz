@@ -22,7 +22,7 @@ A = TypeVar("A")
 
 def wait(func: Callable[[], Tuple[bool, str, A]], frequency: float = 1.0) -> A:
     """
-    Wait until the provided func returns True
+    Wait until the provided func returns True.
 
     Provides user feedback via a spinner if stdout is a TTY.
     """
