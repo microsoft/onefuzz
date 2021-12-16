@@ -25,7 +25,7 @@ import sys
 import time
 from enum import Enum
 from shutil import which
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from uuid import UUID, uuid4
 
 import requests
@@ -221,35 +221,37 @@ TARGETS: Dict[str, Integration] = {
     ),
 }
 
-OperationResult = TypeVar("OperationResult")
+# OperationResult = TypeVar("OperationResult")
 
-def retry(
-    operation: Callable[[Any], OperationResult],
-    description: str,
-    tries: int = 10,
-    wait_duration: int = 10,
-    data: Any = None,
-) -> OperationResult:
-    logger = logging.Logger
-    count = 0
-    while True:
-        try:
-            return operation(data)
-        except Exception as exc:
-            exception = exc
-            logger.error(f"failed '{description}'. logging stack trace.")
-            logger.error(exc)
-        count += 1
-        if count >= tries:
-            if exception:
-                raise exception
-            else:
-                raise Exception(f"failed '{description}'")
-        else:
-            logger.info(
-                f"waiting {wait_duration} seconds before retrying '{description}'"
-            )
-            time.sleep(wait_duration)
+
+# def retry(
+#     operation: Callable[[Any], OperationResult],
+#     description: str,
+#     tries: int = 10,
+#     wait_duration: int = 10,
+#     data: Any = None,
+# ) -> OperationResult:
+#     logger = logging.Logger
+#     count = 0
+#     while True:
+#         try:
+#             return operation(data)
+#         except Exception as exc:
+#             exception = exc
+#             logger.error(f"failed '{description}'. logging stack trace.")
+#             logger.error(exc)
+#         count += 1
+#         if count >= tries:
+#             if exception:
+#                 raise exception
+#             else:
+#                 raise Exception(f"failed '{description}'")
+#         else:
+#             logger.info(
+#                 f"waiting {wait_duration} seconds before retrying '{description}'"
+#             )
+#             time.sleep(wait_duration)
+
 
 class TestOnefuzz:
     def __init__(self, onefuzz: Onefuzz, logger: logging.Logger, test_id: UUID) -> None:
@@ -915,7 +917,7 @@ class Run(Command):
         if test_id is None:
             test_id = uuid4()
         self.logger.info("launching test_id: %s", test_id)
-        
+
         def try_setup(data: Any) -> None:
             self.onefuzz.__setup__(
                 endpoint=endpoint, client_id=client_id, client_secret=client_secret
