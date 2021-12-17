@@ -7,11 +7,13 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
-use goblin::pe::PE;
 use symbolic::{
     debuginfo::Object,
     symcache::{SymCache, SymCacheWriter},
 };
+
+#[cfg(windows)]
+use goblin::pe::PE;
 
 #[cfg(windows)]
 use symbolic::debuginfo::pe;
@@ -80,6 +82,8 @@ impl ModuleDebugInfo {
     ///
     /// Leaks module and symbol data.
     fn load(module: &Path) -> Result<Option<Self>> {
+        // Used when `cfg(windows)`.
+        #[allow(unused_mut)]
         let mut data = fs::read(&module)?.into_boxed_slice();
 
         // Conditional so we can use `dbghelp`.
