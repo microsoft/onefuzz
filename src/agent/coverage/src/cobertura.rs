@@ -113,19 +113,26 @@ mod tests {
 
     #[test]
     fn test_source_to_cobertura() -> Result<()> {
-
         let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec1.push(SourceCoverageLocation {line:5,count:3});
-        coverage_locations_vec1.push(SourceCoverageLocation {line:10,count:0});
+        coverage_locations_vec1.push(SourceCoverageLocation { line: 5, column: None, count: 3 });
+        coverage_locations_vec1.push(SourceCoverageLocation { line: 10, column: None, count: 0 });
 
         let mut coverage_locations_vec2: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec2.push(SourceCoverageLocation {line:0,count:0});
+        coverage_locations_vec2.push(SourceCoverageLocation { line: 0, column: None, count: 0 });
 
         let mut file_coverage_vec1: Vec<SourceFileCoverage> = Vec::new();
-        file_coverage_vec1.push(SourceFileCoverage {locations:coverage_locations_vec1,file:"C:/Users/file1.txt".to_string()});
-        file_coverage_vec1.push(SourceFileCoverage {locations:coverage_locations_vec2, file:"C:/Users/file2.txt".to_string()});
+        file_coverage_vec1.push(SourceFileCoverage {
+            locations: coverage_locations_vec1,
+            file: "C:/Users/file1.txt".to_string(),
+        });
+        file_coverage_vec1.push(SourceFileCoverage {
+            locations: coverage_locations_vec2,
+            file: "C:/Users/file2.txt".to_string(),
+        });
 
-        let source_coverage_result = cobertura (SourceCoverage{files:file_coverage_vec1});
+        let source_coverage_result = cobertura(SourceCoverage {
+            files: file_coverage_vec1,
+        });
 
         let mut backing_test: Vec<u8> = Vec::new();
         let mut _emitter_test = EmitterConfig::new()
@@ -133,15 +140,15 @@ mod tests {
             .create_writer(&mut backing_test);
 
         let unixtime = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .context("system time before unix epoch")?
-        .as_secs();
+            .duration_since(UNIX_EPOCH)
+            .context("system time before unix epoch")?
+            .as_secs();
 
         _emitter_test.write(
             XmlEvent::start_element("coverage")
-                .attr("lines-valid","0")
-                .attr("lines-covered","0")
-                .attr("line-rate","0")
+                .attr("lines-valid", "0")
+                .attr("lines-covered", "0")
+                .attr("line-rate", "0")
                 .attr("branches-valid", "0")
                 .attr("branches-covered", "0")
                 .attr("branch-rate", "0")
@@ -160,9 +167,9 @@ mod tests {
         _emitter_test.write(
             XmlEvent::start_element("package")
                 .attr("name", "0")
-                .attr("lines-valid","0")
-                .attr("lines-covered","0")
-                .attr("line-rate","0")
+                .attr("lines-valid", "0")
+                .attr("lines-covered", "0")
+                .attr("line-rate", "0")
                 .attr("branches-valid", "0")
                 .attr("branches-covered", "0")
                 .attr("branch-rate", "0")
@@ -174,9 +181,9 @@ mod tests {
             XmlEvent::start_element("class")
                 .attr("name", "0")
                 .attr("filename", "C:/Users/file1.txt")
-                .attr("lines-valid","0")
-                .attr("lines-covered","0")
-                .attr("line-rate","0")
+                .attr("lines-valid", "0")
+                .attr("lines-covered", "0")
+                .attr("line-rate", "0")
                 .attr("branches-valid", "0")
                 .attr("branches-covered", "0")
                 .attr("branch-rate", "0")
@@ -208,9 +215,9 @@ mod tests {
             XmlEvent::start_element("class")
                 .attr("name", "0")
                 .attr("filename", "C:/Users/file2.txt")
-                .attr("lines-valid","0")
-                .attr("lines-covered","0")
-                .attr("line-rate","0")
+                .attr("lines-valid", "0")
+                .attr("lines-covered", "0")
+                .attr("line-rate", "0")
                 .attr("branches-valid", "0")
                 .attr("branches-covered", "0")
                 .attr("branch-rate", "0")
@@ -238,7 +245,10 @@ mod tests {
         //     Ok(source_coverage_result) => source_coverage_result,
         //     Err(err) => return Err(err),
         // };
-        assert_eq!(source_coverage_result.unwrap(), String::from_utf8(backing_test)?);
+        assert_eq!(
+            source_coverage_result.unwrap(),
+            String::from_utf8(backing_test)?
+        );
 
         Ok(())
     }
