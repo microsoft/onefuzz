@@ -90,9 +90,6 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         }
         emitter.write(XmlEvent::end_element())?; // lines
 
-        // emitter.write(XmlEvent::end_element())?; // method
-        // emitter.write(XmlEvent::end_element())?; // methods
-
         emitter.write(XmlEvent::end_element())?; // class
     }
 
@@ -114,11 +111,23 @@ mod tests {
     #[test]
     fn test_source_to_cobertura() -> Result<()> {
         let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec1.push(SourceCoverageLocation { line: 5, column: None, count: 3 });
-        coverage_locations_vec1.push(SourceCoverageLocation { line: 10, column: None, count: 0 });
+        coverage_locations_vec1.push(SourceCoverageLocation {
+            line: 5,
+            column: None,
+            count: 3,
+        });
+        coverage_locations_vec1.push(SourceCoverageLocation {
+            line: 10,
+            column: None,
+            count: 0,
+        });
 
         let mut coverage_locations_vec2: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec2.push(SourceCoverageLocation { line: 0, column: None, count: 0 });
+        coverage_locations_vec2.push(SourceCoverageLocation {
+            line: 0,
+            column: None,
+            count: 0,
+        });
 
         let mut file_coverage_vec1: Vec<SourceFileCoverage> = Vec::new();
         file_coverage_vec1.push(SourceFileCoverage {
@@ -241,14 +250,7 @@ mod tests {
         _emitter_test.write(XmlEvent::end_element())?; // packages
         _emitter_test.write(XmlEvent::end_element())?; // coverage
 
-        // let check = match source_coverage_result {
-        //     Ok(source_coverage_result) => source_coverage_result,
-        //     Err(err) => return Err(err),
-        // };
-        assert_eq!(
-            source_coverage_result.unwrap(),
-            String::from_utf8(backing_test)?
-        );
+        assert_eq!(source_coverage_result?, String::from_utf8(backing_test)?);
 
         Ok(())
     }
