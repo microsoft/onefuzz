@@ -131,11 +131,16 @@ def retry(
                 logger.info(f"failed '{description}' missing required resource")
             else:
                 logger.warning(f"failed '{description}': {err.message}")
-
+        except Exception as exc:
+            exception = exc
+            logger.error(f"failed '{description}'. logging stack trace.")
+            logger.error(exc)
         count += 1
         if count >= tries:
             if error:
                 raise error
+            elif exception:
+                raise exception
             else:
                 raise Exception(f"failed '{description}'")
         else:
@@ -270,19 +275,54 @@ def create_application_registration(
         "appId": registered_app["appId"],
     }
 
-    query_microsoft_graph(
-        method="POST",
-        resource="servicePrincipals",
-        body=service_principal_params,
-        subscription=subscription_id,
-    )
+    def try_sp_create() -> None:
+        error: Optional[Exception] = None
+        for _ in range(10):
+            try:
+                query_microsoft_graph(
+                    method="POST",
+                    resource="servicePrincipals",
+                    body=service_principal_params,
+                    subscription=subscription_id,
+                )
+                return
+            except GraphQueryError as err:
+                # work around timing issue when creating service principal
+                # https://github.com/Azure/azure-cli/issues/14767
+                if (
+                    "service principal being created must in the local tenant"
+                    not in str(err)
+                ):
+                    raise err
+            logger.warning(
+                "creating service principal failed with an error that occurs "
+                "due to AAD race conditions"
+            )
+            time.sleep(60)
+        if error is None:
+            raise Exception("service principal creation failed")
+        else:
+            raise error
 
-    authorize_application(
-        UUID(registered_app["appId"]),
-        UUID(app["appId"]),
-        subscription_id=subscription_id,
-    )
-    assign_instance_app_role(onefuzz_instance_name, name, subscription_id, approle)
+    try_sp_create()
+
+    registered_app_id = registered_app["appId"]
+    app_id = app["appId"]
+
+    def try_authorize_application(data: Any) -> None:
+        authorize_application(
+            UUID(registered_app_id),
+            UUID(app_id),
+            subscription_id=subscription_id,
+        )
+
+    retry(try_authorize_application, "authorize application")
+
+    def try_assign_instance_role(data: Any) -> None:
+        assign_instance_app_role(onefuzz_instance_name, name, subscription_id, approle)
+
+    retry(try_assign_instance_role, "assingn role")
+
     return registered_app
 
 
@@ -745,12 +785,12 @@ def main() -> None:
 
     subparsers = parser.add_subparsers(title="commands", dest="command")
     subparsers.add_parser("update_pool_registration", parents=[parent_parser])
-    role_assignment_parser = subparsers.add_parser(
+    scaleset_role_assignment_parser = subparsers.add_parser(
         "assign_scaleset_role",
         parents=[parent_parser],
     )
-    role_assignment_parser.add_argument(
-        "scaleset_name",
+    scaleset_role_assignment_parser.add_argument(
+        "--scaleset_name",
         help="the name of the scaleset",
     )
     cli_registration_parser = subparsers.add_parser(
