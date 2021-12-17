@@ -103,20 +103,72 @@ impl ModuleDebugInfo {
             }
         }
 
-        // Now we're sure we want this data, so leak it.
+        // Now we're more sure we want this data. Leak it so the parsed object
+        // will have a `static` lifetime.
         let data = Box::leak(data);
 
-        let object = Object::parse(data)?;
+        // Save a raw pointer to the file data. If object parsing fails, or
+        // there is no debuginfo, we will use this to avoid leaking memory.
+        let data_ptr = data as *mut _;
 
-        if !object.has_debug_info() {
-            return Ok(None);
-        }
+        let object = match Object::parse(data) {
+            Ok(object) => {
+                if !object.has_debug_info() {
+                    // Drop the object to drop its static references to the leaked data.
+                    drop(object);
+
+                    // Reconstruct to free data on drop.
+                    //
+                    // Safety: we leaked this box locally, and only `object` had a reference to it
+                    // via `Object::parse()`. We manually dropped `object`, so the raw pointer is no
+                    // longer aliased.
+                    unsafe {
+                        Box::from_raw(data_ptr);
+                    }
+
+                    return Ok(None);
+                }
+
+                object
+            }
+            Err(err) => {
+                // Reconstruct to free data on drop.
+                //
+                // Safety: we leaked this box locally, and only passed the leaked ref once, to
+                // `Object::parse()`. In this branch, it returned an `ObjectError`, which does not
+                // hold a reference to the leaked data. The raw pointer is no longer aliased, so we
+                // can both free its referent and also return the error.
+                unsafe {
+                    Box::from_raw(data_ptr);
+                }
+
+                return Err(err.into());
+            }
+        };
 
         let cursor = io::Cursor::new(vec![]);
         let cursor = SymCacheWriter::write_object(&object, cursor)?;
         let cache_data = Box::leak(cursor.into_inner().into_boxed_slice());
-        let source = SymCache::parse(cache_data)?;
 
-        Ok(Some(Self { object, source }))
+        // Save a raw pointer to the cache data. If cache parsing fails, we will use this to
+        // avoid leaking memory.
+        let cache_data_ptr = cache_data as *mut _;
+
+        match SymCache::parse(cache_data) {
+            Ok(source) => Ok(Some(Self { object, source })),
+            Err(err) => {
+                // Reconstruct to free data on drop.
+                //
+                // Safety: we leaked this box locally, and only passed the leaked ref once, to
+                // `SymCache::parse()`. In this branch, it returned a `SymCacheError`, which does
+                // not hold a reference to the leaked data. The pointer is no longer aliased, so we
+                // can both free its referent and also return the error.
+                unsafe {
+                    Box::from_raw(cache_data_ptr);
+                }
+
+                Err(err.into())
+            }
+        }
     }
 }
