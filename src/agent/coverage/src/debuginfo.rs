@@ -8,9 +8,15 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use symbolic::{
-    debuginfo::{pe, Object},
+    debuginfo::Object,
     symcache::{SymCache, SymCacheWriter},
 };
+
+#[cfg(windows)]
+use goblin::pe::PE;
+
+#[cfg(windows)]
+use symbolic::debuginfo::pe;
 
 /// Caching provider of debug info for executable code modules.
 #[derive(Default)]
@@ -76,18 +82,25 @@ impl ModuleDebugInfo {
     ///
     /// Leaks module and symbol data.
     fn load(module: &Path) -> Result<Option<Self>> {
+        // Used when `cfg(windows)`.
+        #[allow(unused_mut)]
         let mut data = fs::read(&module)?.into_boxed_slice();
 
-        // If our module is a PE file, the debug info will be in the PDB.
-        //
-        // We will need a similar check to support split DWARF.
-        let is_pe = pe::PeObject::test(&data);
-        if is_pe {
-            // Assume a sibling PDB.
+        // Conditional so we can use `dbghelp`.
+        #[cfg(windows)]
+        {
+            // If our module is a PE file, the debug info will be in the PDB.
             //
-            // TODO: Find PDB using `dbghelp::`SymGetSymbolFile()`.
-            let pdb = module.with_extension("pdb");
-            data = fs::read(&pdb)?.into_boxed_slice();
+            // We will need a similar check to support split DWARF.
+            let is_pe = pe::PeObject::test(&data);
+            if is_pe {
+                let pe = PE::parse(&data)?;
+
+                // Search the symbol path for a PDB for this PE, which we'll use instead.
+                if let Some(pdb) = crate::pdb::find_pdb_path(module, &pe, None)? {
+                    data = fs::read(&pdb)?.into_boxed_slice();
+                }
+            }
         }
 
         // Now we're sure we want this data, so leak it.
