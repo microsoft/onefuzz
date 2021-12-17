@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
@@ -22,7 +22,7 @@ A = TypeVar("A")
 
 def wait(func: Callable[[], Tuple[bool, str, A]], frequency: float = 1.0) -> A:
     """
-    Wait until the provided func returns True
+    Wait until the provided func returns True.
 
     Provides user feedback via a spinner if stdout is a TTY.
     """
@@ -170,6 +170,7 @@ class Deployer:
         skip_tests: bool,
         test_args: List[str],
         repo: str,
+        unattended: bool,
     ):
         self.downloader = Downloader()
         self.pr = pr
@@ -180,6 +181,9 @@ class Deployer:
         self.skip_tests = skip_tests
         self.test_args = test_args or []
         self.repo = repo
+        self.unattended = unattended
+        self.client_id = ""
+        self.client_secret = ""
 
     def merge(self) -> None:
         if self.pr:
@@ -188,9 +192,9 @@ class Deployer:
     def deploy(self, filename: str) -> None:
         print(f"deploying {filename} to {self.instance}")
         venv = "deploy-venv"
-        subprocess.check_call(f"python -mvenv {venv}", shell=True)
+        subprocess.check_call(f"python3 -mvenv {venv}", shell=True)
         pip = venv_path(venv, "pip")
-        py = venv_path(venv, "python")
+        py = venv_path(venv, "python3")
         config = os.path.join(os.getcwd(), "config.json")
         commands = [
             ("extracting release-artifacts", f"unzip -qq {filename}"),
@@ -198,7 +202,7 @@ class Deployer:
             ("installing wheel", f"{pip} install -q wheel"),
             ("installing prereqs", f"{pip} install -q -r requirements.txt"),
             (
-                "running deployment",
+                "running deploment",
                 (
                     f"{py} deploy.py {self.region} "
                     f"{self.instance} {self.instance} cicd {config}"
@@ -210,20 +214,71 @@ class Deployer:
             print(msg)
             subprocess.check_call(cmd, shell=True)
 
+        if self.unattended:
+            self.register()
+
+    def register(self) -> None:
+        sp_name = "sp_" + self.instance
+        print(f"registering {sp_name} to {self.instance}")
+
+        venv = "deploy-venv"
+        pip = venv_path(venv, "pip")
+        py = venv_path(venv, "python3")
+
+        az_cmd = ["az", "account", "show", "--query", "id", "-o", "tsv"]
+        subscription_id = subprocess.check_output(az_cmd, encoding="UTF-8")
+        subscription_id = subscription_id.strip()
+
+        commands = [
+            ("installing prereqs", f"{pip} install -q -r requirements.txt"),
+            (
+                "running cli registration",
+                (
+                    f"{py} ./deploylib/registration.py create_cli_registration "
+                    f"{self.instance} {subscription_id}"
+                    f" --registration_name {sp_name}"
+                ),
+            ),
+        ]
+
+        for (msg, cmd) in commands:
+            print(msg)
+            output = subprocess.check_output(cmd, shell=True, encoding="UTF-8")
+            if "client_id" in output:
+                output_list = output.split("\n")
+                for line in output_list:
+                    if "client_id" in line:
+                        line_list = line.split(":")
+                        client_id = line_list[1].strip()
+                        self.client_id = client_id
+                        print(("client_id: " + client_id))
+                    if "client_secret" in line:
+                        line_list = line.split(":")
+                        client_secret = line_list[1].strip()
+                        self.client_secret = client_secret
+        time.sleep(30)
+        return
+
     def test(self, filename: str) -> None:
         venv = "test-venv"
-        subprocess.check_call(f"python -mvenv {venv}", shell=True)
-        py = venv_path(venv, "python")
+        subprocess.check_call(f"python3 -mvenv {venv}", shell=True)
+        py = venv_path(venv, "python3")
         test_dir = "integration-test-artifacts"
         script = "integration-test.py"
         endpoint = f"https://{self.instance}.azurewebsites.net"
         test_args = " ".join(self.test_args)
+        unattended_args = (
+            f"--client_id {self.client_id} --client_secret {self.client_secret}"
+            if self.unattended
+            else ""
+        )
+
         commands = [
             (
                 "extracting integration-test-artifacts",
                 f"unzip -qq {filename} -d {test_dir}",
             ),
-            ("test venv", f"python -mvenv {venv}"),
+            ("test venv", f"python3 -mvenv {venv}"),
             ("installing wheel", f"./{venv}/bin/pip install -q wheel"),
             ("installing sdk", f"./{venv}/bin/pip install -q sdk/*.whl"),
             (
@@ -231,7 +286,7 @@ class Deployer:
                 (
                     f"{py} {test_dir}/{script} test {test_dir} "
                     f"--region {self.region} --endpoint {endpoint} "
-                    f"{test_args}"
+                    f"{unattended_args} {test_args}"
                 ),
             ),
         ]
@@ -274,6 +329,7 @@ class Deployer:
         )
 
         self.deploy(release_filename)
+
         if not self.skip_tests:
             self.test(test_filename)
 
@@ -306,6 +362,7 @@ def main() -> None:
     parser.add_argument("--merge-on-success", action="store_true")
     parser.add_argument("--subscription_id")
     parser.add_argument("--test_args", nargs=argparse.REMAINDER)
+    parser.add_argument("--unattended", action="store_true")
     args = parser.parse_args()
 
     if not args.branch and not args.pr:
@@ -320,6 +377,7 @@ def main() -> None:
         skip_tests=args.skip_tests,
         test_args=args.test_args,
         repo=args.repo,
+        unattended=args.unattended,
     )
     with tempfile.TemporaryDirectory() as directory:
         os.chdir(directory)
