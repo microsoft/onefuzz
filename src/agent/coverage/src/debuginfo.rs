@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use symbolic::{
-    debuginfo::{pe, Object, ObjectDebugSession},
+    debuginfo::{pe, Object},
     symcache::{SymCache, SymCacheWriter},
 };
 
@@ -64,9 +64,6 @@ pub struct ModuleDebugInfo {
     /// May not include the actual executable code.
     pub object: Object<'static>,
 
-    /// Interface and caching structures for general debug info querying.
-    pub session: ObjectDebugSession<'static>,
-
     /// Cache which allows efficient source line lookups.
     pub source: SymCache<'static>,
 }
@@ -102,17 +99,11 @@ impl ModuleDebugInfo {
             return Ok(None);
         }
 
-        let session = object.debug_session()?;
-
         let cursor = io::Cursor::new(vec![]);
         let cursor = SymCacheWriter::write_object(&object, cursor)?;
         let cache_data = Box::leak(cursor.into_inner().into_boxed_slice());
         let source = SymCache::parse(cache_data)?;
 
-        Ok(Some(Self {
-            object,
-            session,
-            source,
-        }))
+        Ok(Some(Self { object, source }))
     }
 }
