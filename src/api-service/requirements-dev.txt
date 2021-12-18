@@ -1,6 +1,6 @@
 pytest
 flake8
-mypy
+mypy==0.910
 isort
 vulture
 black
