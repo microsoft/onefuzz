@@ -150,7 +150,7 @@ def azmon_extension(
         "type": "AzureMonitorLinuxAgent",
         "typeHandlerVersion": "1.9",
         "autoUpgradeMinorVersion": False,
-        "settings": {},
+        "settings": {"GCS_AUTO_CONFIG": True},
         "protectedsettings": {
             "configVersion": config_version,
             "moniker": moniker,
@@ -173,7 +173,7 @@ def azsec_extension(region: Region) -> Extension:
         "type": "AzureSecurityLinuxAgent",
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": True,
-        "settings": {"enableGenevaUpload": True},
+        "settings": {"enableGenevaUpload": True, "enableAutoConfig": True},
     }
 
 
