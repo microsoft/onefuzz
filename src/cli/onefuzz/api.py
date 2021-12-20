@@ -1651,6 +1651,7 @@ class Onefuzz:
         self,
         endpoint: Optional[str] = None,
         client_id: Optional[str] = None,
+        client_secret: Optional[str] = None,
         authority: Optional[str] = None,
         tenant_domain: Optional[str] = None,
     ) -> None:
@@ -1661,6 +1662,8 @@ class Onefuzz:
             self._backend.config.authority = authority
         if client_id is not None:
             self._backend.config.client_id = client_id
+        if client_secret is not None:
+            self._backend.config.client_secret = client_secret
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
 
