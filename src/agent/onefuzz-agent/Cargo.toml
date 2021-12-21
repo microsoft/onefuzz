@@ -14,7 +14,7 @@ anyhow = "1.0"
 arraydeque = "0.4"
 async-trait = "0.1"
 atexit = { path = "../atexit" }
-backoff = { version = "0.3", features = ["tokio"] }
+backoff = { version = "0.4", features = ["tokio"] }
 clap = "2.34"
 coverage = { path = "../coverage" }
 crossterm = "0.22"
