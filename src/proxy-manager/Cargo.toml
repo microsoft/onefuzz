@@ -16,7 +16,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 storage-queue = { path = "../agent/storage-queue" }
 thiserror = "1.0"
-tokio = { version = "1.14", features = ["macros", "rt-multi-thread", "fs", "process"] }
+tokio = { version = "1.15", features = ["macros", "rt-multi-thread", "fs", "process"] }
 url = { version = "2.2", features = ["serde"] }
 reqwest-retry = { path = "../agent/reqwest-retry"}
 onefuzz-telemetry = { path = "../agent/onefuzz-telemetry" }
