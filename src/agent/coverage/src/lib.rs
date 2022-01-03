@@ -18,6 +18,7 @@ pub mod elf;
 pub mod block;
 pub mod cache;
 pub mod code;
+pub mod debuginfo;
 pub mod demangle;
 pub mod report;
 pub mod sancov;

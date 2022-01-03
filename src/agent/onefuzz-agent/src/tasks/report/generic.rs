@@ -152,7 +152,7 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
             input_sha256,
             args.minimized_stack_depth,
         );
-        Ok(CrashTestResult::CrashReport(crash_report))
+        Ok(CrashTestResult::CrashReport(Box::new(crash_report)))
     } else {
         let no_repro = NoCrash {
             input_blob,
@@ -164,7 +164,7 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
             error: test_report.error.map(|e| format!("{}", e)),
         };
 
-        Ok(CrashTestResult::NoRepro(no_repro))
+        Ok(CrashTestResult::NoRepro(Box::new(no_repro)))
     }
 }
 
