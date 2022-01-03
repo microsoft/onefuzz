@@ -41,7 +41,8 @@ class AzureIdentityCredentialAdapter(BasicTokenAuthentication):
         return PipelineRequest(
             HttpRequest(
                 "AzureIdentityCredentialAdapter",
-                # changing from https://fakurl to https://contoso.com
+                # This URL is not actually used. We just create a phony request to get credentials using only public APIs.
+                # Use a standard Microsoft-controlled example URL anyway.
                 "https://contoso.com",
             ),
             PipelineContext(None),
