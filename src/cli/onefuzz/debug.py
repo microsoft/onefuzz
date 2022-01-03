@@ -22,8 +22,8 @@ from onefuzztypes.primitives import Container, Directory, PoolName
 
 from onefuzz.api import UUID_EXPANSION, Command, Onefuzz
 
+from .azure_identity_credential_adapter import AzureIdentityCredentialAdapter
 from .backend import wait
-from .cred_wrapper import CredentialWrapper
 from .rdp import rdp_connect
 from .ssh import ssh_connect
 
@@ -456,7 +456,7 @@ class DebugLog(Command):
             raise Exception("instance does not have an insights_appid")
         if self._client is None:
 
-            creds = CredentialWrapper(
+            creds = AzureCliCredential(
                 AzureCliCredential(), resource_id="https://api.applicationinsights.io"
             )
             self._client = ApplicationInsightsDataClient(creds)

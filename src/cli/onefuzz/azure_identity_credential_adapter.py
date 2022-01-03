@@ -1,9 +1,13 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+# ------------------------------------
+# Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-#
-# Wrap credentials from azure-identity to be compatible with SDK that needs msrestazure or azure.common.credentials
+# ------------------------------------
+
+# Adapt credentials from azure-identity to be compatible with SDK that needs msrestazure or azure.common.credentials
 # Need msrest >= 0.6.0
 # See also https://pypi.org/project/azure-identity/
+
+# Source: https://github.com/jongio/azidext/blob/8374293bd80648f764237ddfc5f5223e7e98472b/python/azure_identity_credential_adapter.py
 
 from typing import Any
 
@@ -14,28 +18,33 @@ from azure.identity import DefaultAzureCredential
 from msrest.authentication import BasicTokenAuthentication
 
 
-class CredentialWrapper(BasicTokenAuthentication):
+class AzureIdentityCredentialAdapter(BasicTokenAuthentication):
     def __init__(
         self,
         credential: Any = None,
         resource_id: Any = "https://management.azure.com/.default",
         **kwargs: Any
     ):
-        """Wrap any azure-identity credential to work with SDK that needs azure.common.credentials/msrestazure.
+        """Adapt any azure-identity credential to work with SDK that needs azure.common.credentials or msrestazure.
 
         Default resource is ARM (syntax of endpoint v2)
 
         :param credential: Any azure-identity credential (DefaultAzureCredential by default)
         :param str resource_id: The scope to use to get the token (default ARM)
         """
-        super(CredentialWrapper, self).__init__({})
+        super(AzureIdentityCredentialAdapter, self).__init__(None)
         if credential is None:
             credential = DefaultAzureCredential()
         self._policy = BearerTokenCredentialPolicy(credential, resource_id, **kwargs)
 
     def _make_request(self) -> Any:
         return PipelineRequest(
-            HttpRequest("CredentialWrapper", "https://fakeurl"), PipelineContext(None)
+            HttpRequest(
+                "AzureIdentityCredentialAdapter",
+                # changing from https://fakurl to https://contoso.com
+                "https://contoso.com",
+            ),
+            PipelineContext(None),
         )
 
     def set_token(self) -> Any:
@@ -53,17 +62,4 @@ class CredentialWrapper(BasicTokenAuthentication):
 
     def signed_session(self, session: Any = None) -> Any:
         self.set_token()
-        return super(CredentialWrapper, self).signed_session(session)
-
-
-if __name__ == "__main__":
-    import os
-
-    credentials = CredentialWrapper()
-    subscription_id = os.environ.get("AZURE_SUBSCRIPTION_ID", "<subscription_id>")
-
-    from azure.mgmt.resource import ResourceManagementClient
-
-    client = ResourceManagementClient(credentials, subscription_id)
-    for rg in client.resource_groups.list():
-        print(rg.name)
+        return super(AzureIdentityCredentialAdapter, self).signed_session(session)
