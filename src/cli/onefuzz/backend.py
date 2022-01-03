@@ -363,7 +363,7 @@ class ContainerWrapper:
     def upload_file(self, file_path: str, blob_name: str) -> None:
         try:
             # Split the container URL to insert the blob_name
-            url_parts = self.container_url.split('?',1)
+            url_parts = self.container_url.split('?', 1)
 
             # Default to azcopy if it is installed
             azcopy_copy(file_path, url_parts[0] + '/' + blob_name + '?' + url_parts[1])
@@ -379,7 +379,7 @@ class ContainerWrapper:
             with open(file_path, "rb") as handle:
                 # Using the Azure SDK default max_concurrency
                 self.client.upload_blob(
-                     name=blob_name, data=handle, overwrite=True
+                    name=blob_name, data=handle, overwrite=True
                 )
         return None
 
