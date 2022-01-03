@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import sys
+import tempfile
 import time
 from dataclasses import asdict, is_dataclass
 from enum import Enum
@@ -383,9 +384,13 @@ class ContainerWrapper:
         return None
 
     def upload_file_data(self, data: str, blob_name: str) -> None:
-        self.client.upload_blob(
-            name=blob_name, data=data, overwrite=True
-        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            filename = os.path.join(tmpdir, blob_name)
+
+            with open(filename, "w") as handle:
+                handle.write(data)
+
+            self.upload_file(filename, blob_name)
 
     def upload_dir(self, dir_path: str) -> None:
         # security note: the src for azcopy comes from the server which is
