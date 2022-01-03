@@ -36,7 +36,7 @@ from tenacity.retry import retry_if_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random
 
-from .azcopy import azcopy_sync
+from .azcopy import azcopy_sync, azcopy_copy
 
 _ACCESSTOKENCACHE_UMASK = 0o077
 
@@ -360,15 +360,31 @@ class ContainerWrapper:
         reraise=True,
     )
     def upload_file(self, file_path: str, blob_name: str) -> None:
-        with open(file_path, "rb") as handle:
-            self.client.upload_blob(
-                name=blob_name, data=handle, overwrite=True, max_concurrency=10
-            )
+        try:
+            # Split the container URL to insert the blob_name
+            url_parts = self.container_url.split('?',1)
+
+            # Default to azcopy if it is installed
+            azcopy_copy(file_path, url_parts[0] + '/' + blob_name + '?' + url_parts[1])
+        except Exception as exc:
+            # A subprocess exception would typically only contain the exit status.
+            LOGGER.warning("Upload using azcopy failed. Check the azcopy logs for more information.")
+            LOGGER.warning(exc)
+            # Indicate the switch in the approach for clarity in debugging
+            LOGGER.warning("Now attempting to upload using the Python SDK...")
+
+            # This does not have a try/except since it should be caught by the retry system.
+            # The retry system will always attempt azcopy first and this approach second
+            with open(file_path, "rb") as handle:
+                # Using the Azure SDK default max_concurrency
+                self.client.upload_blob(
+                     name=blob_name, data=handle, overwrite=True
+                )
         return None
 
     def upload_file_data(self, data: str, blob_name: str) -> None:
         self.client.upload_blob(
-            name=blob_name, data=data, overwrite=True, max_concurrency=10
+            name=blob_name, data=data, overwrite=True
         )
 
     def upload_dir(self, dir_path: str) -> None:

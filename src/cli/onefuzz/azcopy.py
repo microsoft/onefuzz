@@ -21,9 +21,18 @@ def find_azcopy() -> str:
 
 
 def azcopy_sync(src: str, dst: str) -> None:
-    """Expose azcopy for uploading/downloading files"""
+    """Expose azcopy for syncing existing files"""
 
     azcopy = find_azcopy()
 
     # security note: callers need to understand the src/dst for this.
     subprocess.check_output([azcopy, "sync", src, dst, "--recursive=true"])  # nosec
+
+
+def azcopy_copy(src: str, dst: str) -> None:
+    """Expose azcopy for uploading/downloading files"""
+
+    azcopy = find_azcopy()
+
+    # security note: callers need to understand the src/dst for this.
+    subprocess.check_output([azcopy, "cp", src, dst, "--recursive=true"])  # nosec
