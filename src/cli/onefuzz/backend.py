@@ -363,13 +363,15 @@ class ContainerWrapper:
     def upload_file(self, file_path: str, blob_name: str) -> None:
         try:
             # Split the container URL to insert the blob_name
-            url_parts = self.container_url.split('?', 1)
+            url_parts = self.container_url.split("?", 1)
 
             # Default to azcopy if it is installed
-            azcopy_copy(file_path, url_parts[0] + '/' + blob_name + '?' + url_parts[1])
+            azcopy_copy(file_path, url_parts[0] + "/" + blob_name + "?" + url_parts[1])
         except Exception as exc:
             # A subprocess exception would typically only contain the exit status.
-            LOGGER.warning("Upload using azcopy failed. Check the azcopy logs for more information.")
+            LOGGER.warning(
+                "Upload using azcopy failed. Check the azcopy logs for more information."
+            )
             LOGGER.warning(exc)
             # Indicate the switch in the approach for clarity in debugging
             LOGGER.warning("Now attempting to upload using the Python SDK...")
@@ -378,9 +380,7 @@ class ContainerWrapper:
             # The retry system will always attempt azcopy first and this approach second
             with open(file_path, "rb") as handle:
                 # Using the Azure SDK default max_concurrency
-                self.client.upload_blob(
-                    name=blob_name, data=handle, overwrite=True
-                )
+                self.client.upload_blob(name=blob_name, data=handle, overwrite=True)
         return None
 
     def upload_file_data(self, data: str, blob_name: str) -> None:
