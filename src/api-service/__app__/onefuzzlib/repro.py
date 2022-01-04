@@ -165,7 +165,8 @@ class Repro(BASE_REPRO, ORMMixin):
         self.save()
 
     def stopping(self) -> None:
-        vm = self.get_vm()
+        config = InstanceConfig.fetch()
+        vm = self.get_vm(config)
         if not vm.is_deleted():
             logging.info("vm stopping: %s", self.vm_id)
             vm.delete()
