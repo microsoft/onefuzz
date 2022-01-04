@@ -149,7 +149,8 @@ class Proxy(ORMMixin):
         self.set_state(VmState.stopping)
 
     def extensions_launch(self) -> None:
-        vm = self.get_vm()
+        config = InstanceConfig.fetch()
+        vm = self.get_vm(config)
         vm_data = vm.get()
         if not vm_data:
             self.set_failed(

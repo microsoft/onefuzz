@@ -49,7 +49,7 @@ def create_vm(
     password: str,
     ssh_public_key: str,
     nsg: Optional[NSG],
-    tags: Dict[str, str],
+    tags: Optional[Dict[str, str]],
 ) -> Union[None, Error]:
 
     resource_group = get_base_resource_group()
