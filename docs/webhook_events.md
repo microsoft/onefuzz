@@ -809,10 +809,24 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "proxy_nsg_config": {
                     "$ref": "#/definitions/NetworkSecurityGroupConfig"
                 },
+                "proxy_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Proxy Tags",
+                    "type": "object"
+                },
                 "proxy_vm_sku": {
                     "default": "Standard_B2s",
                     "title": "Proxy Vm Sku",
                     "type": "string"
+                },
+                "vmss_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Vmss Tags",
+                    "type": "object"
                 }
             },
             "required": [
@@ -5951,10 +5965,24 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "proxy_nsg_config": {
                     "$ref": "#/definitions/NetworkSecurityGroupConfig"
                 },
+                "proxy_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Proxy Tags",
+                    "type": "object"
+                },
                 "proxy_vm_sku": {
                     "default": "Standard_B2s",
                     "title": "Proxy Vm Sku",
                     "type": "string"
+                },
+                "vmss_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Vmss Tags",
+                    "type": "object"
                 }
             },
             "required": [

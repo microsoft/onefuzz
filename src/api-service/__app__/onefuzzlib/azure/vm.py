@@ -12,10 +12,11 @@ from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.compute.models import VirtualMachine
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import OS, ErrorCode
-from onefuzztypes.models import Authentication, Error
+from onefuzztypes.models import Authentication, Error, InstanceConfig
 from onefuzztypes.primitives import Extension, Region
 from pydantic import BaseModel, validator
 
+from ..config import InstanceConfig
 from .compute import get_compute_client
 from .creds import get_base_resource_group
 from .disk import delete_disk, list_disks
@@ -50,6 +51,9 @@ def create_vm(
     ssh_public_key: str,
     nsg: Optional[NSG],
 ) -> Union[None, Error]:
+
+    instance_config = InstanceConfig.fetch()
+
     resource_group = get_base_resource_group()
     logging.info("creating vm %s:%s:%s", resource_group, location, name)
 
@@ -114,8 +118,14 @@ def create_vm(
             },
         }
 
-    if "ONEFUZZ_OWNER" in os.environ:
-        params["tags"] = {"OWNER": os.environ["ONEFUZZ_OWNER"]}
+    vm_tags = None
+    if instance_config.proxy_tags:
+        vm_tags = instance_config.proxy_tags
+    params["tags"] = vm_tags
+
+    owner = os.environ.get("ONEFUZZ_OWNER")
+    if owner:
+        params["tags"]["OWNER"] = owner
 
     try:
         compute_client.virtual_machines.begin_create_or_update(
