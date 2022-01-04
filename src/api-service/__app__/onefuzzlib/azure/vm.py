@@ -50,9 +50,8 @@ def create_vm(
     password: str,
     ssh_public_key: str,
     nsg: Optional[NSG],
+    tags: Dict[str, str],
 ) -> Union[None, Error]:
-
-    instance_config = InstanceConfig.fetch()
 
     resource_group = get_base_resource_group()
     logging.info("creating vm %s:%s:%s", resource_group, location, name)
@@ -118,10 +117,7 @@ def create_vm(
             },
         }
 
-    vm_tags = None
-    if instance_config.vm_tags:
-        vm_tags = instance_config.vm_tags
-    params["tags"] = vm_tags
+    params["tags"] = tags.copy()
 
     owner = os.environ.get("ONEFUZZ_OWNER")
     if owner:
@@ -265,6 +261,11 @@ class VM(BaseModel):
         if self.get() is not None:
             return None
 
+        instance_config = InstanceConfig.fetch()
+        tags = None
+        if instance_config.vm_tags:
+            tags = instance_config.vm_tags
+
         logging.info("vm creating: %s", self.name)
         return create_vm(
             str(self.name),
@@ -274,6 +275,7 @@ class VM(BaseModel):
             self.auth.password,
             self.auth.public_key,
             self.nsg,
+            tags,
         )
 
     def delete(self) -> bool:
