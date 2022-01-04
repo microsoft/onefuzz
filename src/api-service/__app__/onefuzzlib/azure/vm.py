@@ -119,8 +119,8 @@ def create_vm(
         }
 
     vm_tags = None
-    if instance_config.proxy_tags:
-        vm_tags = instance_config.proxy_tags
+    if instance_config.vm_tags:
+        vm_tags = instance_config.vm_tags
     params["tags"] = vm_tags
 
     owner = os.environ.get("ONEFUZZ_OWNER")

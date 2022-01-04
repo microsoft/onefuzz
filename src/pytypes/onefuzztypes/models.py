@@ -864,7 +864,7 @@ class InstanceConfig(BaseModel):
     proxy_vm_sku: str = Field(default="Standard_B2s")
     api_access_rules: Optional[Dict[Endpoint, ApiAccessRule]] = None
     group_membership: Optional[Dict[PrincipalID, List[GroupId]]] = None
-    proxy_tags: Optional[Dict[str, str]] = None
+    vm_tags: Optional[Dict[str, str]] = None
     vmss_tags: Optional[Dict[str, str]] = None
 
     def update(self, config: "InstanceConfig") -> None:

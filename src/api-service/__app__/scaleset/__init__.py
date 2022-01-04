@@ -16,6 +16,7 @@ from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.azure.creds import get_base_region, get_regions
 from ..onefuzzlib.azure.vmss import list_available_skus
+from ..onefuzzlib.config import InstanceConfig
 from ..onefuzzlib.endpoint_authorization import call_if_user, check_can_manage_pools
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.workers.pools import Pool
@@ -44,6 +45,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
     request = parse_request(ScalesetCreate, req)
+    instance_config = InstanceConfig.fetch()
     if isinstance(request, Error):
         return not_ok(request, context="ScalesetCreate")
 
@@ -87,6 +89,10 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             ),
             context="scalesetcreate",
         )
+
+    tags = request.tags
+    if instance_config.vmss_tags:
+        tags = tags.update(instance_config.vmss_tags)
 
     scaleset = Scaleset.create(
         pool_name=request.pool_name,
