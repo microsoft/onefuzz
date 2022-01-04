@@ -69,12 +69,11 @@ class Proxy(ORMMixin):
     def key_fields(cls) -> Tuple[str, Optional[str]]:
         return ("region", "proxy_id")
 
-    def get_vm(self) -> VM:
-        instance_config = InstanceConfig.fetch()
-        sku = instance_config.proxy_vm_sku
+    def get_vm(self, config: InstanceConfig) -> VM:
+        sku = config.proxy_vm_sku
         tags = None
-        if instance_config.vm_tags:
-            tags = instance_config.vm_tags
+        if config.vm_tags:
+            tags = config.vm_tags
         vm = VM(
             name="proxy-%s" % base58.b58encode(self.proxy_id.bytes).decode(),
             region=self.region,
@@ -86,7 +85,8 @@ class Proxy(ORMMixin):
         return vm
 
     def init(self) -> None:
-        vm = self.get_vm()
+        config = InstanceConfig.fetch()
+        vm = self.get_vm(config)
         vm_data = vm.get()
         if vm_data:
             if vm_data.provisioning_state == "Failed":
@@ -106,7 +106,6 @@ class Proxy(ORMMixin):
                 self.set_failed(result)
                 return
 
-            config = InstanceConfig.fetch()
             nsg_config = config.proxy_nsg_config
             result = nsg.set_allowed_sources(nsg_config)
             if isinstance(result, Error):

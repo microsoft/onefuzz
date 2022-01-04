@@ -47,11 +47,10 @@ class Repro(BASE_REPRO, ORMMixin):
         self.state = VmState.stopping
         self.save()
 
-    def get_vm(self) -> VM:
-        instance_config = InstanceConfig.fetch()
+    def get_vm(self, config: InstanceConfig) -> VM:
         tags = None
-        if instance_config.vm_tags:
-            tags = instance_config.vm_tags
+        if config.vm_tags:
+            tags = config.vm_tags
 
         task = Task.get_by_task_id(self.task_id)
         if isinstance(task, Error):
@@ -80,7 +79,8 @@ class Repro(BASE_REPRO, ORMMixin):
         )
 
     def init(self) -> None:
-        vm = self.get_vm()
+        config = InstanceConfig.fetch()
+        vm = self.get_vm(config)
         vm_data = vm.get()
         if vm_data:
             if vm_data.provisioning_state == "Failed":
@@ -102,7 +102,6 @@ class Repro(BASE_REPRO, ORMMixin):
                 self.set_failed(result)
                 return
 
-            config = InstanceConfig.fetch()
             nsg_config = config.proxy_nsg_config
             result = nsg.set_allowed_sources(nsg_config)
             if isinstance(result, Error):

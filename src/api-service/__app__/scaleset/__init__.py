@@ -92,7 +92,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
     tags = request.tags
     if instance_config.vmss_tags:
-        tags = tags.update(instance_config.vmss_tags)
+        tags.update(instance_config.vmss_tags)
 
     scaleset = Scaleset.create(
         pool_name=request.pool_name,
@@ -102,7 +102,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         size=request.size,
         spot_instances=request.spot_instances,
         ephemeral_os_disks=request.ephemeral_os_disks,
-        tags=request.tags,
+        tags=tags,
     )
     # don't return auths during create, only 'get' with include_auth
     scaleset.auth = None
