@@ -48,6 +48,11 @@ class Repro(BASE_REPRO, ORMMixin):
         self.save()
 
     def get_vm(self) -> VM:
+        instance_config = InstanceConfig.fetch()
+        tags = None
+        if instance_config.vm_tags:
+            tags = instance_config.vm_tags
+
         task = Task.get_by_task_id(self.task_id)
         if isinstance(task, Error):
             raise Exception("previously existing task missing: %s" % self.task_id)
@@ -71,6 +76,7 @@ class Repro(BASE_REPRO, ORMMixin):
             sku=vm_config.sku,
             image=vm_config.image,
             auth=self.auth,
+            tags=tags,
         )
 
     def init(self) -> None:

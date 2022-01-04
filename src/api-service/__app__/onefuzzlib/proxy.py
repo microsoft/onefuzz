@@ -70,13 +70,18 @@ class Proxy(ORMMixin):
         return ("region", "proxy_id")
 
     def get_vm(self) -> VM:
-        sku = InstanceConfig.fetch().proxy_vm_sku
+        instance_config = InstanceConfig.fetch()
+        sku = instance_config.proxy_vm_sku
+        tags = None
+        if instance_config.vm_tags:
+            tags = instance_config.vm_tags
         vm = VM(
             name="proxy-%s" % base58.b58encode(self.proxy_id.bytes).decode(),
             region=self.region,
             sku=sku,
             image=PROXY_IMAGE,
             auth=self.auth,
+            tags=tags,
         )
         return vm
 

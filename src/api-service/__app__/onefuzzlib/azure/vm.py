@@ -236,6 +236,7 @@ class VM(BaseModel):
     image: str
     auth: Authentication
     nsg: Optional[NSG]
+    tags: Dict[str, str]
 
     @validator("name", allow_reuse=True)
     def check_name(cls, value: Union[UUID, str]) -> Union[UUID, str]:
@@ -261,11 +262,6 @@ class VM(BaseModel):
         if self.get() is not None:
             return None
 
-        instance_config = InstanceConfig.fetch()
-        tags = None
-        if instance_config.vm_tags:
-            tags = instance_config.vm_tags
-
         logging.info("vm creating: %s", self.name)
         return create_vm(
             str(self.name),
@@ -275,7 +271,7 @@ class VM(BaseModel):
             self.auth.password,
             self.auth.public_key,
             self.nsg,
-            tags,
+            self.tags,
         )
 
     def delete(self) -> bool:
