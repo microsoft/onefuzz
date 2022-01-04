@@ -12,7 +12,7 @@ from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.compute.models import VirtualMachine
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import OS, ErrorCode
-from onefuzztypes.models import Authentication, Error, InstanceConfig
+from onefuzztypes.models import Authentication, Error
 from onefuzztypes.primitives import Extension, Region
 from pydantic import BaseModel, validator
 
