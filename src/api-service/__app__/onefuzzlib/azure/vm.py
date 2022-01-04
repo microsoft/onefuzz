@@ -235,7 +235,7 @@ class VM(BaseModel):
     image: str
     auth: Authentication
     nsg: Optional[NSG]
-    tags: Dict[str, str]
+    tags: Optional[Dict[str, str]]
 
     @validator("name", allow_reuse=True)
     def check_name(cls, value: Union[UUID, str]) -> Union[UUID, str]:
