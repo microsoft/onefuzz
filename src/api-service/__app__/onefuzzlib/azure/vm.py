@@ -116,7 +116,8 @@ def create_vm(
             },
         }
 
-    params["tags"] = tags.copy()
+    if tags:
+        params["tags"] = tags.copy()
 
     owner = os.environ.get("ONEFUZZ_OWNER")
     if owner:
