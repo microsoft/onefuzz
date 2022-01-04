@@ -16,7 +16,6 @@ from onefuzztypes.models import Authentication, Error
 from onefuzztypes.primitives import Extension, Region
 from pydantic import BaseModel, validator
 
-from ..config import InstanceConfig
 from .compute import get_compute_client
 from .creds import get_base_resource_group
 from .disk import delete_disk, list_disks
