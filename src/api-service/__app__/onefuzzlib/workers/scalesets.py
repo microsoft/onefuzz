@@ -37,6 +37,7 @@ from ..azure.vmss import (
     resize_vmss,
     update_extensions,
 )
+from ..config import InstanceConfig
 from ..events import send_event
 from ..extension import fuzz_extensions
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
@@ -221,7 +222,13 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 SCALESET_LOG_PREFIX + "creating scaleset. scaleset_id:%s",
                 self.scaleset_id,
             )
+
+            instance_config = InstanceConfig.fetch()
+            if instance_config.vmss_tags:
+                self.tags.update(instance_config.vmss_tags)
+
             extensions = fuzz_extensions(pool, self)
+
             result = create_vmss(
                 self.region,
                 self.scaleset_id,

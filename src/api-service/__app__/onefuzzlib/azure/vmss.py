@@ -25,7 +25,6 @@ from onefuzztypes.enums import OS, ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.primitives import Region
 
-from ..config import InstanceConfig
 from .compute import get_compute_client
 from .creds import (
     get_base_resource_group,
@@ -247,8 +246,6 @@ def create_vmss(
     tags: Dict[str, str],
 ) -> Optional[Error]:
 
-    instance_config = InstanceConfig.fetch()
-
     vmss = get_vmss(name)
     if vmss is not None:
         return None
@@ -358,10 +355,7 @@ def create_vmss(
             }
         )
 
-    scaleset_tags = tags.copy()
-    if instance_config.vmss_tags:
-        scaleset_tags.update(instance_config.vmss_tags)
-    params["tags"] = scaleset_tags
+    params["tags"] = tags.copy()
 
     owner = os.environ.get("ONEFUZZ_OWNER")
     if owner:
