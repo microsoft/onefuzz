@@ -6,8 +6,9 @@
 import unittest
 from uuid import uuid4
 
-from __app__.onefuzzlib.sarif import generate_sarif
 from onefuzztypes.models import BlobRef, Container, Report
+
+from __app__.onefuzzlib.sarif import generate_sarif
 
 # import logging
 

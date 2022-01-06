@@ -9,15 +9,7 @@ import json
 from cattr import unstructure
 from functional import seq
 from onefuzztypes.models import Report
-from sarif_om import (
-    Result,
-    Run,
-    SarifLog,
-    Stack,
-    StackFrame,
-    Tool,
-    ToolComponent,
-)
+from sarif_om import Result, Run, SarifLog, Stack, StackFrame, Tool, ToolComponent
 
 
 def generate_sarif(report: Report) -> str:
