@@ -20,34 +20,16 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
 
     emitter.write(
         XmlEvent::start_element("coverage")
-            .attr("lines-valid", "0")
-            .attr("lines-covered", "0")
             .attr("line-rate", "0")
-            .attr("branches-valid", "0")
-            .attr("branches-covered", "0")
             .attr("branch-rate", "0")
-            .attr("timestamp", &format!("{}", unixtime))
+            .attr("lines-covered", "0")
+            .attr("lines-valid", "0")
+            .attr("branches-covered", "0")
             .attr("complexity", "0")
             .attr("version", "0.1"),
+            .attr("timestamp", &format!("{}", unixtime))
     )?;
-    emitter.write(XmlEvent::start_element("sources"))?;
-    emitter.write(XmlEvent::start_element("source"))?;
-    emitter.write(XmlEvent::characters(""))?;
-    emitter.write(XmlEvent::end_element())?; // source
-    emitter.write(XmlEvent::end_element())?; // sources
 
-    emitter.write(XmlEvent::start_element("packages"))?;
-    emitter.write(
-        XmlEvent::start_element("package")
-            .attr("name", "0")
-            .attr("lines-valid", "0")
-            .attr("lines-covered", "0")
-            .attr("line-rate", "0")
-            .attr("branches-valid", "0")
-            .attr("branches-covered", "0")
-            .attr("branch-rate", "0")
-            .attr("complexity", "0"),
-    )?;
     emitter.write(XmlEvent::start_element("classes"))?;
     // loop through files
     let files: Vec<SourceFileCoverage> = source_coverage.files;
@@ -56,27 +38,11 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
             XmlEvent::start_element("class")
                 .attr("name", "0")
                 .attr("filename", &file.file)
-                .attr("lines-valid", "0")
-                .attr("lines-covered", "0")
                 .attr("line-rate", "0")
-                .attr("branches-valid", "0")
-                .attr("branches-covered", "0")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
-        // emitter.write(XmlEvent::start_element("methods"))?;
-        // emitter.write(
-        //     XmlEvent::start_element("method")
-        //         .attr("name", "0")
-        //         .attr("signature", "0")
-        //         .attr("lines-valid","0")
-        //         .attr("lines-covered","0")
-        //         .attr("line-rate","0")
-        //         .attr("branches-valid", "0")
-        //         .attr("branches-covered", "0")
-        //         .attr("branch-rate", "0")
-        //         .attr("complexity", "0"),
-        // )?;
+
         let locations: Vec<SourceCoverageLocation> = file.locations;
         emitter.write(XmlEvent::start_element("lines"))?;
         for location in locations {
@@ -94,9 +60,6 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     }
 
     emitter.write(XmlEvent::end_element())?; // classes
-    emitter.write(XmlEvent::end_element())?; // package
-
-    emitter.write(XmlEvent::end_element())?; // packages
     emitter.write(XmlEvent::end_element())?; // coverage
 
     Ok(String::from_utf8(backing)?)
@@ -165,25 +128,7 @@ mod tests {
                 .attr("complexity", "0")
                 .attr("version", "0.1"),
         )?;
-        _emitter_test.write(XmlEvent::start_element("sources"))?;
-        _emitter_test.write(XmlEvent::start_element("source"))?;
-        _emitter_test.write(XmlEvent::characters(""))?;
-        _emitter_test.write(XmlEvent::end_element())?; // source
-        _emitter_test.write(XmlEvent::end_element())?; // sources
 
-        _emitter_test.write(XmlEvent::start_element("packages"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("package")
-                .attr("name", "0")
-                .attr("lines-valid", "0")
-                .attr("lines-covered", "0")
-                .attr("line-rate", "0")
-                .attr("branches-valid", "0")
-                .attr("branches-covered", "0")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
         _emitter_test.write(XmlEvent::start_element("classes"))?;
 
         _emitter_test.write(
@@ -246,8 +191,6 @@ mod tests {
         _emitter_test.write(XmlEvent::end_element())?; // lines
         _emitter_test.write(XmlEvent::end_element())?; // class
         _emitter_test.write(XmlEvent::end_element())?; // classes
-        _emitter_test.write(XmlEvent::end_element())?; // package
-        _emitter_test.write(XmlEvent::end_element())?; // packages
         _emitter_test.write(XmlEvent::end_element())?; // coverage
 
         assert_eq!(source_coverage_result?, String::from_utf8(backing_test)?);
