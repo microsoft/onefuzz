@@ -33,9 +33,9 @@ class TestSarif(unittest.TestCase):
             minimized_stack=[],
             minimized_stack_sha256="minimized_stack_sha256",
             minimized_stack_function_names=[],
-            minimized_stack_function_names_sha256="minimized_stack_function_names_sha256",
+            minimized_stack_function_names_sha256="test",
             minimized_stack_function_lines=[],
-            minimized_stack_function_lines_sha256="minimized_stack_function_lines_sha256",
+            minimized_stack_function_lines_sha256="test",
         )
 
         sarif = generate_sarif(test_report)

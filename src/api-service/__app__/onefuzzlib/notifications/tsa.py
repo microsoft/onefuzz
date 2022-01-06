@@ -1,5 +1,5 @@
 import logging
-from typing import Iterator, List, Optional, Tuple, Union
+from typing import Optional, Union
 
 from onefuzztypes.models import RegressionReport, Report, TSATemplate
 from onefuzztypes.primitives import Container

@@ -10,7 +10,6 @@ from cattr import unstructure
 from functional import seq
 from onefuzztypes.models import Report
 from sarif_om import (
-    Location,
     Result,
     Run,
     SarifLog,
