@@ -356,6 +356,7 @@ def create_vmss(
         )
 
     params["tags"] = tags.copy()
+
     owner = os.environ.get("ONEFUZZ_OWNER")
     if owner:
         params["tags"]["OWNER"] = owner

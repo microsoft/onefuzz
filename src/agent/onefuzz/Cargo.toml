@@ -20,14 +20,14 @@ log = "0.4"
 notify = "4.0"
 regex = "1.4"
 reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"], default-features=false }
-sha2 = "0.10"
+sha2 = "0.10.1"
 url = { version = "2.2", features = ["serde"] }
 serde = "1.0"
 serde_json = "1.0"
 rand = "0.8"
 serde_derive = "1.0"
 sysinfo = "0.21"
-tokio = { version = "1.14", features = ["full"] }
+tokio = { version = "1.15", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["fs", "time", "tokio-util"] }
 tokio-util = { version = "0.6", features = ["full"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }

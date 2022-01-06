@@ -5,75 +5,23 @@
 
 import json
 import logging
-import urllib
-from typing import TYPE_CHECKING, Optional, Sequence, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Sequence, Type, TypeVar, Union
 from uuid import UUID
 
 from azure.functions import HttpRequest, HttpResponse
-from memoization import cached
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.responses import BaseResponse
 from pydantic import BaseModel  # noqa: F401
 from pydantic import ValidationError
 
-from .azure.group_membership import create_group_membership_checker
-from .config import InstanceConfig
 from .orm import ModelMixin
-from .request_access import RequestAccess
 
 # We don't actually use these types at runtime at this time.  Rather,
 # these are used in a bound TypeVar.  MyPy suggests to only import these
 # types during type checking.
 if TYPE_CHECKING:
     from onefuzztypes.requests import BaseRequest  # noqa: F401
-
-
-@cached(ttl=60)
-def get_rules() -> Optional[RequestAccess]:
-    config = InstanceConfig.fetch()
-    if config.api_access_rules:
-        return RequestAccess.build(config.api_access_rules)
-    else:
-        return None
-
-
-def check_access(req: HttpRequest) -> Optional[Error]:
-    rules = get_rules()
-
-    # Noting to enforce if there are no rules.
-    if not rules:
-        return None
-
-    path = urllib.parse.urlparse(req.url).path
-    rule = rules.get_matching_rules(req.method, path)
-
-    # No restriction defined on this endpoint.
-    if not rule:
-        return None
-
-    member_id = UUID(req.headers["x-ms-client-principal-id"])
-
-    try:
-        membership_checker = create_group_membership_checker()
-        allowed = membership_checker.is_member(rule.allowed_groups_ids, member_id)
-        if not allowed:
-            logging.error(
-                "unauthorized access: %s is not authorized to access in %s",
-                member_id,
-                req.url,
-            )
-            return Error(
-                code=ErrorCode.UNAUTHORIZED,
-                errors=["not approved to use this endpoint"],
-            )
-    except Exception as e:
-        return Error(
-            code=ErrorCode.UNAUTHORIZED,
-            errors=["unable to interact with graph", str(e)],
-        )
-
-    return None
 
 
 def ok(
@@ -146,10 +94,6 @@ A = TypeVar("A", bound="BaseModel")
 
 
 def parse_request(cls: Type[A], req: HttpRequest) -> Union[A, Error]:
-    access = check_access(req)
-    if isinstance(access, Error):
-        return access
-
     try:
         return cls.parse_obj(req.get_json())
     except ValidationError as err:
@@ -157,10 +101,6 @@ def parse_request(cls: Type[A], req: HttpRequest) -> Union[A, Error]:
 
 
 def parse_uri(cls: Type[A], req: HttpRequest) -> Union[A, Error]:
-    access = check_access(req)
-    if isinstance(access, Error):
-        return access
-
     data = {}
     for key in req.params:
         data[key] = req.params[key]
