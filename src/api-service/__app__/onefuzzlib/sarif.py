@@ -9,7 +9,7 @@ import json
 from cattr import unstructure  # type: ignore
 from functional import seq  # type: ignore
 from onefuzztypes.models import Report
-from sarif_om import Result, Run, SarifLog, Stack, StackFrame, Tool, ToolComponent  # type: ignore
+from sarif_om import Result, Run, SarifLog, Stack, StackFrame, Tool, ToolComponent  # type: ignore # noqa: E501
 
 
 def generate_sarif(report: Report) -> str:
