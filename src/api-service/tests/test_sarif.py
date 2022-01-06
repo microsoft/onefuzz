@@ -6,7 +6,8 @@
 import unittest
 from uuid import uuid4
 
-from onefuzztypes.models import BlobRef, Container, Report
+from onefuzztypes.models import BlobRef, Report
+from onefuzztypes.primitives import Container
 
 from __app__.onefuzzlib.sarif import generate_sarif
 
@@ -29,7 +30,7 @@ class TestSarif(unittest.TestCase):
             asan_log="asan_log",
             task_id=uuid4(),
             job_id=uuid4(),
-            scariness_score=5.0,
+            scariness_score=5,
             scariness_description="scariness_description",
             minimized_stack=[],
             minimized_stack_sha256="minimized_stack_sha256",

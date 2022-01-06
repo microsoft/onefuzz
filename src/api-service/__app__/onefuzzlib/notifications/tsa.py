@@ -20,11 +20,11 @@ def notify_tsa(
             f"container:{container} filename:{filename}",
         )
         return
+    if isinstance(report, Report):
+        sarif_log = generate_sarif(report)
 
-    sarif_log = generate_sarif(report)
+        logging.info(f"generated sarif log: {sarif_log}")
 
-    logging.info(f"generated sarif log: {sarif_log}")
-
-    # todo: send sarif to tsa
+        # todo: send sarif to tsa
 
     pass
