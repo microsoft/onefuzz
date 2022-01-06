@@ -19,9 +19,9 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Union, cast
 from uuid import UUID
 
-from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
 from azure.cosmosdb.table.tableservice import TableService
+from azure.identity import AzureCliCredential
 from azure.mgmt.applicationinsights import ApplicationInsightsManagementClient
 from azure.mgmt.applicationinsights.models import (
     ApplicationInsightsComponentExportRequest,
@@ -190,8 +190,9 @@ class Client:
         return self.subscription_id
 
     def get_location_display_name(self) -> str:
-        location_client = get_client_from_cli_profile(
-            SubscriptionClient, subscription_id=self.get_subscription_id()
+        credential = AzureCliCredential()
+        location_client = SubscriptionClient(
+            credential, subscription_id=self.get_subscription_id()
         )
         locations = location_client.subscriptions.list_locations(
             self.get_subscription_id()
@@ -211,8 +212,9 @@ class Client:
         with open(self.arm_template, "r") as handle:
             arm = json.load(handle)
 
-        client = get_client_from_cli_profile(
-            ResourceManagementClient, subscription_id=self.get_subscription_id()
+        credential = AzureCliCredential()
+        client = ResourceManagementClient(
+            credential, subscription_id=self.get_subscription_id()
         )
         providers = {x.namespace: x for x in client.providers.list()}
 
@@ -524,8 +526,9 @@ class Client:
         with open(self.arm_template, "r") as template_handle:
             template = json.load(template_handle)
 
-        client = get_client_from_cli_profile(
-            ResourceManagementClient, subscription_id=self.get_subscription_id()
+        credential = AzureCliCredential()
+        client = ResourceManagementClient(
+            credential, subscription_id=self.get_subscription_id()
         )
         client.resource_groups.create_or_update(
             self.resource_group, {"location": self.location}
@@ -695,8 +698,10 @@ class Client:
         logger.info("creating eventgrid subscription")
         src_resource_id = self.results["deploy"]["fuzz-storage"]["value"]
         dst_resource_id = self.results["deploy"]["func-storage"]["value"]
-        client = get_client_from_cli_profile(
-            StorageManagementClient, subscription_id=self.get_subscription_id()
+
+        credential = AzureCliCredential()
+        client = StorageManagementClient(
+            credential, subscription_id=self.get_subscription_id()
         )
         event_subscription_info = EventSubscription(
             destination=StorageQueueEventSubscriptionDestination(
@@ -714,8 +719,8 @@ class Client:
             ),
         )
 
-        client = get_client_from_cli_profile(
-            EventGridManagementClient, subscription_id=self.get_subscription_id()
+        client = EventGridManagementClient(
+            credential, subscription_id=self.get_subscription_id()
         )
         result = client.event_subscriptions.begin_create_or_update(
             src_resource_id, "onefuzz1", event_subscription_info
@@ -789,8 +794,9 @@ class Client:
             destination_address=url,
         )
 
-        app_insight_client = get_client_from_cli_profile(
-            ApplicationInsightsManagementClient,
+        credential = AzureCliCredential()
+        app_insight_client = ApplicationInsightsManagementClient(
+            credential,
             subscription_id=self.get_subscription_id(),
         )
 

@@ -15,13 +15,14 @@ from uuid import UUID
 import jmespath
 from azure.applicationinsights import ApplicationInsightsDataClient
 from azure.applicationinsights.models import QueryBody
-from azure.common.client_factory import get_azure_cli_credentials
+from azure.identity import AzureCliCredential
 from onefuzztypes.enums import ContainerType, TaskType
 from onefuzztypes.models import BlobRef, Job, NodeAssignment, Report, Task, TaskConfig
 from onefuzztypes.primitives import Container, Directory, PoolName
 
 from onefuzz.api import UUID_EXPANSION, Command, Onefuzz
 
+from .azure_identity_credential_adapter import AzureIdentityCredentialAdapter
 from .backend import wait
 from .rdp import rdp_connect
 from .ssh import ssh_connect
@@ -455,8 +456,8 @@ class DebugLog(Command):
             raise Exception("instance does not have an insights_appid")
         if self._client is None:
 
-            creds, _ = get_azure_cli_credentials(
-                resource="https://api.applicationinsights.io"
+            creds = AzureIdentityCredentialAdapter(
+                AzureCliCredential(), resource_id="https://api.applicationinsights.io"
             )
             self._client = ApplicationInsightsDataClient(creds)
 
