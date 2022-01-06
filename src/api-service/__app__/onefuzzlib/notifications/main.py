@@ -24,6 +24,7 @@ from onefuzztypes.models import (
     Report,
     Result,
     TeamsTemplate,
+    TSATemplate,
 )
 from onefuzztypes.primitives import Container
 
@@ -38,6 +39,7 @@ from ..tasks.main import Task
 from .ado import notify_ado
 from .github_issues import github_issue
 from .teams import notify_teams
+from .tsa import notify_tsa
 
 
 class Notification(models.Notification, ORMMixin):
@@ -157,6 +159,9 @@ def new_files(
 
             if isinstance(notification.config, GithubIssueTemplate):
                 github_issue(notification.config, container, filename, report)
+
+            if isinstance(notification.config, TSATemplate):
+                notify_tsa(notification.config, container, filename, report)
 
     for (task, containers) in get_queue_tasks():
         if container in containers:

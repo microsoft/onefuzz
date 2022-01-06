@@ -17,12 +17,15 @@ azure-nspkg==3.0.2
 azure-storage-blob==12.8.1
 azure-storage-common==2.1.0
 azure-storage-queue==12.1.6
+cattrs==1.10.0
 jinja2~=2.11.3
 msrestazure~=0.6.3
 opencensus-ext-azure~=1.0.2
 pydantic==1.8.2 --no-binary=pydantic
+pyfunctional==1.4.3
 PyJWT>=2.1.0
 requests~=2.25.1
+sarif-om==1.0.4
 memoization~=0.4.0
 github3.py~=2.0.0
 typing-extensions~=3.10.0.0
@@ -31,3 +34,5 @@ semver==2.13.0
 base58==2.1.0
 # onefuzz types version is set during build
 onefuzztypes==0.0.0
+
+

@@ -260,9 +260,26 @@ class ADOTemplate(BaseModel):
     ado_fields: Dict[str, str]
     on_duplicate: ADODuplicateTemplate
 
-    # validator needed for backward compatibility
+    # validator needed to convert the string representation of the secret data
     @validator("auth_token", pre=True, always=True)
     def validate_auth_token(cls, v: Any) -> SecretData:
+        if isinstance(v, str):
+            return SecretData(secret=v)
+        elif isinstance(v, SecretData):
+            return v
+        elif isinstance(v, dict):
+            return SecretData(secret=v["secret"])
+        else:
+            raise TypeError(f"invalid datatype {type(v)}")
+
+
+class TSATemplate(BaseModel):
+    url: str
+    token: SecretData[str]
+
+    # validator needed to convert the string representation of the secret data
+    @validator("token", pre=True, always=True)
+    def validate_token(cls, v: Any) -> SecretData:
         if isinstance(v, str):
             return SecretData(secret=v)
         elif isinstance(v, SecretData):
@@ -276,7 +293,7 @@ class ADOTemplate(BaseModel):
 class TeamsTemplate(BaseModel):
     url: SecretData[str]
 
-    # validator needed for backward compatibility
+    # validator needed to convert the string representation of the secret data
     @validator("url", pre=True, always=True)
     def validate_url(cls, v: Any) -> SecretData:
         if isinstance(v, str):
