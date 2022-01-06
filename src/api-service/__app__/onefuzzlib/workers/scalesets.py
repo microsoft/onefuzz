@@ -221,7 +221,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 SCALESET_LOG_PREFIX + "creating scaleset. scaleset_id:%s",
                 self.scaleset_id,
             )
+
             extensions = fuzz_extensions(pool, self)
+
             result = create_vmss(
                 self.region,
                 self.scaleset_id,

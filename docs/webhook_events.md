@@ -813,6 +813,20 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "default": "Standard_B2s",
                     "title": "Proxy Vm Sku",
                     "type": "string"
+                },
+                "vm_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Vm Tags",
+                    "type": "object"
+                },
+                "vmss_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Vmss Tags",
+                    "type": "object"
                 }
             },
             "required": [
@@ -5955,6 +5969,20 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "default": "Standard_B2s",
                     "title": "Proxy Vm Sku",
                     "type": "string"
+                },
+                "vm_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Vm Tags",
+                    "type": "object"
+                },
+                "vmss_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Vmss Tags",
+                    "type": "object"
                 }
             },
             "required": [
