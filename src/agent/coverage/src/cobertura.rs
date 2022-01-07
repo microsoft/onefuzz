@@ -25,9 +25,19 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
             .attr("lines-covered", "0")
             .attr("lines-valid", "0")
             .attr("branches-covered", "0")
+            .attr("branches-valid", "0")
             .attr("complexity", "0")
             .attr("version", "0.1")
             .attr("timestamp", &format!("{}", unixtime)),
+    )?;
+
+    emitter.write(XmlEvent::start_element("packages"))?;
+    emitter.write(
+        XmlEvent::start_element("package")
+            .attr("name", "0")
+            .attr("line-rate", "0")
+            .attr("branch-rate", "0")
+            .attr("complexity", "0"),
     )?;
 
     emitter.write(XmlEvent::start_element("classes"))?;
@@ -60,6 +70,8 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     }
 
     emitter.write(XmlEvent::end_element())?; // classes
+    emitter.write(XmlEvent::end_element())?; // package
+    emitter.write(XmlEvent::end_element())?; // packages
     emitter.write(XmlEvent::end_element())?; // coverage
 
     Ok(String::from_utf8(backing)?)
@@ -123,9 +135,19 @@ mod tests {
                 .attr("lines-covered", "0")
                 .attr("lines-valid", "0")
                 .attr("branches-covered", "0")
+                .attr("branches-valid", "0")
                 .attr("complexity", "0")
                 .attr("version", "0.1")
                 .attr("timestamp", &format!("{}", unixtime)),
+        )?;
+
+        _emitter_test.write(XmlEvent::start_element("packages"))?;
+        _emitter_test.write(
+            XmlEvent::start_element("package")
+                .attr("name", "0")
+                .attr("line-rate", "0")
+                .attr("branch-rate", "0")
+                .attr("complexity", "0"),
         )?;
 
         _emitter_test.write(XmlEvent::start_element("classes"))?;
@@ -182,6 +204,8 @@ mod tests {
         _emitter_test.write(XmlEvent::end_element())?; // lines
         _emitter_test.write(XmlEvent::end_element())?; // class
         _emitter_test.write(XmlEvent::end_element())?; // classes
+        _emitter_test.write(XmlEvent::end_element())?; // package
+        _emitter_test.write(XmlEvent::end_element())?; // packages
         _emitter_test.write(XmlEvent::end_element())?; // coverage
 
         assert_eq!(source_coverage_result?, String::from_utf8(backing_test)?);
