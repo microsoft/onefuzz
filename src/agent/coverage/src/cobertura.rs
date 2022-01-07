@@ -26,8 +26,8 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
             .attr("lines-valid", "0")
             .attr("branches-covered", "0")
             .attr("complexity", "0")
-            .attr("version", "0.1"),
-            .attr("timestamp", &format!("{}", unixtime))
+            .attr("version", "0.1")
+            .attr("timestamp", &format!("{}", unixtime)),
     )?;
 
     emitter.write(XmlEvent::start_element("classes"))?;
@@ -118,15 +118,14 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("coverage")
-                .attr("lines-valid", "0")
-                .attr("lines-covered", "0")
                 .attr("line-rate", "0")
-                .attr("branches-valid", "0")
-                .attr("branches-covered", "0")
                 .attr("branch-rate", "0")
-                .attr("timestamp", &format!("{}", unixtime))
+                .attr("lines-covered", "0")
+                .attr("lines-valid", "0")
+                .attr("branches-covered", "0")
                 .attr("complexity", "0")
-                .attr("version", "0.1"),
+                .attr("version", "0.1")
+                .attr("timestamp", &format!("{}", unixtime)),
         )?;
 
         _emitter_test.write(XmlEvent::start_element("classes"))?;
@@ -135,11 +134,7 @@ mod tests {
             XmlEvent::start_element("class")
                 .attr("name", "0")
                 .attr("filename", "C:/Users/file1.txt")
-                .attr("lines-valid", "0")
-                .attr("lines-covered", "0")
                 .attr("line-rate", "0")
-                .attr("branches-valid", "0")
-                .attr("branches-covered", "0")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
@@ -169,11 +164,7 @@ mod tests {
             XmlEvent::start_element("class")
                 .attr("name", "0")
                 .attr("filename", "C:/Users/file2.txt")
-                .attr("lines-valid", "0")
-                .attr("lines-covered", "0")
                 .attr("line-rate", "0")
-                .attr("branches-valid", "0")
-                .attr("branches-covered", "0")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
