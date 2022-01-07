@@ -17,13 +17,13 @@ pub mod elf;
 
 pub mod block;
 pub mod cache;
+pub mod cobertura;
 pub mod code;
 pub mod debuginfo;
 pub mod demangle;
 pub mod report;
 pub mod sancov;
 pub mod source;
-pub mod cobertura;
 
 #[cfg(target_os = "linux")]
 pub mod disasm;
