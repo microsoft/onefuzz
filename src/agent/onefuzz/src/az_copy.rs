@@ -145,6 +145,7 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
                 failure_count + 1
             )
         });
+        let option_retry_interval: Option<Duration> = Some(RETRY_INTERVAL);
         match result {
             Ok(()) => Ok(()),
             Err(err) => {
@@ -154,7 +155,7 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
                 if failure_count >= RETRY_COUNT {
                     Err(backoff::Error::Permanent(err))
                 } else {
-                    Err(backoff::Error::Transient(err))
+                    Err(backoff::Error::Transient{err: err, retry_after: option_retry_interval})
                 }
             }
         }

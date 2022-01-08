@@ -56,13 +56,13 @@ where
             .send()
             .await
             .with_context(|| format!("request attempt {} failed", attempt_count + 1));
-
+        let option_default_retry_period: Option<Duration> = Some(DEFAULT_RETRY_PERIOD);
         match result {
             Err(x) => {
                 if attempt_count >= max_retry {
                     Err(backoff::Error::Permanent(Err(x)))
                 } else {
-                    Err(backoff::Error::Transient(Err(x)))
+                    Err(backoff::Error::Transient{err: Err(x), retry_after: option_default_retry_period})
                 }
             }
             Ok(x) => {
@@ -93,7 +93,7 @@ where
                                     if attempt_count >= max_retry {
                                         Err(backoff::Error::Permanent(Err(as_err)))
                                     } else {
-                                        Err(backoff::Error::Transient(Err(as_err)))
+                                        Err(backoff::Error::Transient{err: Err(as_err), retry_after: option_default_retry_period})
                                     }
                                 }
                             }
