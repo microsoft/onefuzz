@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1501](https://github.com/microsoft/onefuzz/pull/1501)
 [#1502](https://github.com/microsoft/onefuzz/pull/1502)
 [#1507](https://github.com/microsoft/onefuzz/pull/1507)
-[#1510](https://github.com/microsoft/onefuzz/pull/)
+[#1510](https://github.com/microsoft/onefuzz/pull/1510)
 [#1513](https://github.com/microsoft/onefuzz/pull/1513)
 [#1514](https://github.com/microsoft/onefuzz/pull/1514)
 [#1517](https://github.com/microsoft/onefuzz/pull/1517)
