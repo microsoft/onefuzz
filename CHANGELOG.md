@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1528](https://github.com/microsoft/onefuzz/pull/1528)
 [#1557](https://github.com/microsoft/onefuzz/pull/1557)
 [#1566](https://github.com/microsoft/onefuzz/pull/1566)
-* Agent: Changed the function that gets the machine_id to be async. This prevents having too many nested tokio runtimes. [#1468](https://github.com/microsoft/onefuzz/pull/1468)
+* Agent: Changed the function that gets the `machine_id` to be `async` to avoid runtime nesting [#1468](https://github.com/microsoft/onefuzz/pull/1468)
 * Service: Removed generic reset command from the CLI [#1511](https://github.com/microsoft/onefuzz/pull/1511)
 * Service: Updated the way we check for endpoint authorization [#1472](https://github.com/microsoft/onefuzz/pull/1472)
 
