@@ -31,7 +31,7 @@ use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
 const MAX_COVERAGE_RECORDING_ATTEMPTS: usize = 2;
 const COVERAGE_FILE: &str = "coverage.json";
 const SOURCE_COVERAGE_FILE: &str = "source-coverage.json";
-const COBERTURA_COVERAGE_FILE: &str = "cobertura-coverage.json";
+const COBERTURA_COVERAGE_FILE: &str = "cobertura-coverage.txt";
 const MODULE_CACHE_FILE: &str = "module-cache.json";
 
 const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(5);
@@ -366,7 +366,7 @@ impl<'a> TaskContext<'a> {
 
         let path = self.config.coverage.local_path.join(COBERTURA_COVERAGE_FILE);
         let cobertura_source_coverage = cobertura(src_coverage)?;
-        let text = serde_json::to_string(&cobertura_source_coverage).context("serializing cobertura source coverage")?;
+        let text = &cobertura_source_coverage;
         fs::write(&path, &text)
         .await
         .with_context(|| format!("writing cobertura source coverage to {}", path.display()))?;
