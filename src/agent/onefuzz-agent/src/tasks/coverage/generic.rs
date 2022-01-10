@@ -31,7 +31,7 @@ use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
 const MAX_COVERAGE_RECORDING_ATTEMPTS: usize = 2;
 const COVERAGE_FILE: &str = "coverage.json";
 const SOURCE_COVERAGE_FILE: &str = "source-coverage.json";
-const COBERTURA_COVERAGE_FILE: &str = "cobertura-coverage.txt";
+const COBERTURA_COVERAGE_FILE: &str = "cobertura-coverage.xml";
 const MODULE_CACHE_FILE: &str = "module-cache.json";
 
 const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(5);
