@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Updated the way we check for endpoint authorization [#1472](https://github.com/microsoft/onefuzz/pull/1472)
 
 ### Fixed
-* Service: Increase reliability of integration tests. [#1505]((https://github.com/microsoft/onefuzz/pull/1505) 
+* Service: Increase reliability of integration tests. [#1505](https://github.com/microsoft/onefuzz/pull/1505) 
 * Agent: Avoid leaking unused file and cache data [#1539](https://github.com/microsoft/onefuzz/pull/1539)
 * Agent: Fixed new clippy errors [#1516](https://github.com/microsoft/onefuzz/pull/1516)
 
