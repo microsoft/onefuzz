@@ -11,9 +11,9 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use coverage::block::CommandBlockCov;
 use coverage::cache::ModuleCache;
+use coverage::cobertura::cobertura;
 use coverage::code::{CmdFilter, CmdFilterDef};
 use coverage::debuginfo::DebugInfo;
-use coverage::cobertura::cobertura;
 use onefuzz::expand::{Expand, PlaceHolder};
 use onefuzz::syncdir::SyncedDir;
 use onefuzz_telemetry::{warn, Event::coverage_data, EventData};
@@ -364,12 +364,16 @@ impl<'a> TaskContext<'a> {
             .await
             .with_context(|| format!("writing source coverage to {}", path.display()))?;
 
-        let path = self.config.coverage.local_path.join(COBERTURA_COVERAGE_FILE);
+        let path = self
+            .config
+            .coverage
+            .local_path
+            .join(COBERTURA_COVERAGE_FILE);
         let cobertura_source_coverage = cobertura(src_coverage)?;
         let text = &cobertura_source_coverage;
         fs::write(&path, &text)
-        .await
-        .with_context(|| format!("writing cobertura source coverage to {}", path.display()))?;
+            .await
+            .with_context(|| format!("writing cobertura source coverage to {}", path.display()))?;
 
         self.config.coverage.sync_push().await?;
 
