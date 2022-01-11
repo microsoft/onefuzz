@@ -4,6 +4,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 4.1.0
+### Added
+* Agent: Added source line coverage data 
+[#1518](https://github.com/microsoft/onefuzz/pull/1518)
+[#1534](https://github.com/microsoft/onefuzz/pull/1534)
+[#1538](https://github.com/microsoft/onefuzz/pull/1538)
+[#1535](https://github.com/microsoft/onefuzz/pull/1535)
+* Agent: Added Cobertura XML output for source code visualization [#1533](https://github.com/microsoft/onefuzz/pull/1533)
+* Service: Added auto configuration properties to the monitoring agents [#1541](https://github.com/microsoft/onefuzz/pull/1541)
+* Service: Added tags to scalesets and VMs [#1560](https://github.com/microsoft/onefuzz/pull/1560)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. 
+[#1489](https://github.com/microsoft/onefuzz/pull/1489)
+[#1495](https://github.com/microsoft/onefuzz/pull/1495)
+[#1496](https://github.com/microsoft/onefuzz/pull/1496)
+[#1501](https://github.com/microsoft/onefuzz/pull/1501)
+[#1502](https://github.com/microsoft/onefuzz/pull/1502)
+[#1507](https://github.com/microsoft/onefuzz/pull/1507)
+[#1510](https://github.com/microsoft/onefuzz/pull/1510)
+[#1513](https://github.com/microsoft/onefuzz/pull/1513)
+[#1514](https://github.com/microsoft/onefuzz/pull/1514)
+[#1517](https://github.com/microsoft/onefuzz/pull/1517)
+[#1519](https://github.com/microsoft/onefuzz/pull/1519)
+[#1521](https://github.com/microsoft/onefuzz/pull/1521)
+[#1522](https://github.com/microsoft/onefuzz/pull/1522)
+[#1528](https://github.com/microsoft/onefuzz/pull/1528)
+[#1557](https://github.com/microsoft/onefuzz/pull/1557)
+[#1566](https://github.com/microsoft/onefuzz/pull/1566)
+* Agent: Changed the function that gets the `machine_id` to be `async` to avoid runtime nesting [#1468](https://github.com/microsoft/onefuzz/pull/1468)
+* Service: Removed generic reset command from the CLI [#1511](https://github.com/microsoft/onefuzz/pull/1511)
+* Service: Updated the way we check for endpoint authorization [#1472](https://github.com/microsoft/onefuzz/pull/1472)
+
+### Fixed
+* Service: Increase reliability of integration tests. [#1505](https://github.com/microsoft/onefuzz/pull/1505) 
+* Agent: Avoid leaking unused file and cache data [#1539](https://github.com/microsoft/onefuzz/pull/1539)
+* Agent: Fixed new clippy errors [#1516](https://github.com/microsoft/onefuzz/pull/1516)
+
 ## 4.0.0
 ### Added
 * Agent: Added common source coverage format. [#1403](https://github.com/microsoft/onefuzz/pull/1403)
