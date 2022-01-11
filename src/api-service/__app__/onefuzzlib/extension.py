@@ -148,8 +148,8 @@ def azmon_extension(
         "publisher": "Microsoft.Azure.Monitor",
         "location": region,
         "type": "AzureMonitorLinuxAgent",
-        "typeHandlerVersion": "1.9",
-        "autoUpgradeMinorVersion": False,
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": True,
         "settings": {"GCS_AUTO_CONFIG": True},
         "protectedsettings": {
             "configVersion": config_version,

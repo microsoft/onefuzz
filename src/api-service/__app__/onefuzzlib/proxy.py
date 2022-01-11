@@ -69,19 +69,24 @@ class Proxy(ORMMixin):
     def key_fields(cls) -> Tuple[str, Optional[str]]:
         return ("region", "proxy_id")
 
-    def get_vm(self) -> VM:
-        sku = InstanceConfig.fetch().proxy_vm_sku
+    def get_vm(self, config: InstanceConfig) -> VM:
+        sku = config.proxy_vm_sku
+        tags = None
+        if config.vm_tags:
+            tags = config.vm_tags
         vm = VM(
             name="proxy-%s" % base58.b58encode(self.proxy_id.bytes).decode(),
             region=self.region,
             sku=sku,
             image=PROXY_IMAGE,
             auth=self.auth,
+            tags=tags,
         )
         return vm
 
     def init(self) -> None:
-        vm = self.get_vm()
+        config = InstanceConfig.fetch()
+        vm = self.get_vm(config)
         vm_data = vm.get()
         if vm_data:
             if vm_data.provisioning_state == "Failed":
@@ -101,7 +106,6 @@ class Proxy(ORMMixin):
                 self.set_failed(result)
                 return
 
-            config = InstanceConfig.fetch()
             nsg_config = config.proxy_nsg_config
             result = nsg.set_allowed_sources(nsg_config)
             if isinstance(result, Error):
@@ -145,7 +149,8 @@ class Proxy(ORMMixin):
         self.set_state(VmState.stopping)
 
     def extensions_launch(self) -> None:
-        vm = self.get_vm()
+        config = InstanceConfig.fetch()
+        vm = self.get_vm(config)
         vm_data = vm.get()
         if not vm_data:
             self.set_failed(
@@ -177,7 +182,8 @@ class Proxy(ORMMixin):
         self.save()
 
     def stopping(self) -> None:
-        vm = self.get_vm()
+        config = InstanceConfig.fetch()
+        vm = self.get_vm(config)
         if not vm.is_deleted():
             logging.info(PROXY_LOG_PREFIX + "stopping proxy: %s", self.region)
             vm.delete()
