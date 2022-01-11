@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1534](https://github.com/microsoft/onefuzz/pull/1534)
 [#1538](https://github.com/microsoft/onefuzz/pull/1538)
 [#1535](https://github.com/microsoft/onefuzz/pull/1535)
+[#1572](https://github.com/microsoft/onefuzz/pull/1572)
 * Agent: Added Cobertura XML output for source code visualization [#1533](https://github.com/microsoft/onefuzz/pull/1533)
 * Service: Added auto configuration properties to the monitoring agents [#1541](https://github.com/microsoft/onefuzz/pull/1541)
 * Service: Added tags to scalesets and VMs [#1560](https://github.com/microsoft/onefuzz/pull/1560)
