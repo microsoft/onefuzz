@@ -370,8 +370,7 @@ impl<'a> TaskContext<'a> {
             .local_path
             .join(COBERTURA_COVERAGE_FILE);
         let cobertura_source_coverage = cobertura(src_coverage)?;
-        let text = &cobertura_source_coverage;
-        fs::write(&path, &text)
+        fs::write(&path, &cobertura_source_coverage)
             .await
             .with_context(|| format!("writing cobertura source coverage to {}", path.display()))?;
 
