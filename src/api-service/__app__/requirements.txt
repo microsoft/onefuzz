@@ -22,7 +22,7 @@ msrestazure~=0.6.3
 opencensus-ext-azure~=1.0.2
 pydantic==1.8.2 --no-binary=pydantic
 PyJWT>=2.1.0
-requests~=2.25.1
+requests~=2.27.1
 memoization~=0.4.0
 github3.py~=2.0.0
 typing-extensions~=3.10.0.0

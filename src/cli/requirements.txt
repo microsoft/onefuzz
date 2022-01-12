@@ -1,5 +1,5 @@
 msal~=1.16.0
-requests~=2.25.1
+requests~=2.27.1
 jmespath~=0.10.0
 semver~=2.13.0
 signalrcore==0.9.2
