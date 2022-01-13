@@ -9,8 +9,11 @@ This is the registration of the OneFuzz instance.
         * value: ManagedNode
         * Allowed Member types: Applications
     * _CliClient_
-        * value: ManagedNode
+        * value: CliClient
         * Allowed Member types: Applications
+    * _UserAssignment_
+        * value: UserAssignment
+        * Allowed Member types: Users/Groups 
 * API Permissions
     * _User.Read_ ([Microsoft Graph](https://docs.microsoft.com/en-us/graph/permissions-reference#user-permissions))
 * scope
