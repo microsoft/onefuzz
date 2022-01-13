@@ -62,7 +62,10 @@ where
                 if attempt_count >= max_retry {
                     Err(backoff::Error::Permanent(Err(x)))
                 } else {
-                    Err(backoff::Error::Transient{err: Err(x), retry_after: option_default_retry_period})
+                    Err(backoff::Error::Transient {
+                        err: Err(x),
+                        retry_after: option_default_retry_period,
+                    })
                 }
             }
             Ok(x) => {
@@ -80,7 +83,7 @@ where
                             }) {
                                 // the is_success check earlier should have taken care of this already.
                                 Ok(x) => Ok(x),
-                                Err(as_err) => Err(backoff::Error::Permanent(Err(as_err))), 
+                                Err(as_err) => Err(backoff::Error::Permanent(Err(as_err))),
                             }
                         }
                         RetryCheck::Retry => {
@@ -93,7 +96,10 @@ where
                                     if attempt_count >= max_retry {
                                         Err(backoff::Error::Permanent(Err(as_err)))
                                     } else {
-                                        Err(backoff::Error::Transient{err: Err(as_err), retry_after: option_default_retry_period})
+                                        Err(backoff::Error::Transient {
+                                            err: Err(as_err),
+                                            retry_after: option_default_retry_period,
+                                        })
                                     }
                                 }
                             }

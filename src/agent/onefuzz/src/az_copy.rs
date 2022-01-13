@@ -155,7 +155,10 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
                 if failure_count >= RETRY_COUNT {
                     Err(backoff::Error::Permanent(err))
                 } else {
-                    Err(backoff::Error::Transient{err: err, retry_after: option_retry_interval})
+                    Err(backoff::Error::Transient {
+                        err: err,
+                        retry_after: option_retry_interval,
+                    })
                 }
             }
         }
