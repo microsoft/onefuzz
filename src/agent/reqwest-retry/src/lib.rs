@@ -80,7 +80,7 @@ where
                             }) {
                                 // the is_success check earlier should have taken care of this already.
                                 Ok(x) => Ok(x),
-                                Err(as_err) => Err(backoff::Error::Permanent(Err(as_err))),
+                                Err(as_err) => Err(backoff::Error::Permanent(Err(as_err))), 
                             }
                         }
                         RetryCheck::Retry => {

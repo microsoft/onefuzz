@@ -41,7 +41,7 @@ process_control = "3.0"
 reqwest-retry = { path = "../reqwest-retry"}
 onefuzz-telemetry = { path = "../onefuzz-telemetry"}
 stacktrace-parser = { path = "../stacktrace-parser" }
-backoff = { version = "0.3", features = ["tokio"] }
+backoff = { version = "0.4", features = ["tokio"] }
 
 [target.'cfg(target_family = "windows")'.dependencies]
 winreg = "0.10"
