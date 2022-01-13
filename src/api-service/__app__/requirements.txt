@@ -17,12 +17,12 @@ azure-nspkg==3.0.2
 azure-storage-blob==12.8.1
 azure-storage-common==2.1.0
 azure-storage-queue==12.1.6
-jinja2~=2.11.3
+jinja2~=3.0.3
 msrestazure~=0.6.3
 opencensus-ext-azure~=1.0.2
 pydantic==1.8.2 --no-binary=pydantic
 PyJWT>=2.1.0
-requests~=2.25.1
+requests~=2.27.1
 memoization~=0.4.0
 github3.py~=2.0.0
 typing-extensions~=3.10.0.0
