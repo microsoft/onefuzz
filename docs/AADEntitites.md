@@ -20,6 +20,8 @@ This is the registration of the OneFuzz instance.
     * `user_impersonation`
 * Authorized application:
     * OneFuzz CLI registration
+ * Parameters: 
+    * appRoleAssignmentRequired: True
 
 ### OneFuzz Application Service Principal
 Service principal linked to the OneFuzz application registration.
