@@ -324,7 +324,7 @@ class Client:
             },
             {
                 "allowedMemberTypes": ["User"],
-                "description": "Allows user access from the CLI.",
+                "description": "Allows user to access the OneFuzz instance.",
                 "displayName": OnefuzzAppRole.UserAssignment.value,
                 "id": str(uuid.uuid4()),
                 "isEnabled": True,
