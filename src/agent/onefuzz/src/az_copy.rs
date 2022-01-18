@@ -156,7 +156,7 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
                     Err(backoff::Error::Permanent(err))
                 } else {
                     Err(backoff::Error::Transient {
-                        err: err,
+                        err,
                         retry_after: option_retry_interval,
                     })
                 }
