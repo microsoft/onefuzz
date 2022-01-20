@@ -694,42 +694,27 @@ class Client:
             tenants.append(tenant)
         update_allowed_aad_tenants(config_client, tenants)
 
-    def create_eventgrid(self) -> None:
-        logger.info("creating eventgrid subscription")
+    def remove_eventgrid(self) -> None:
+
         src_resource_id = self.results["deploy"]["fuzz-storage"]["value"]
-        dst_resource_id = self.results["deploy"]["func-storage"]["value"]
 
         credential = AzureCliCredential()
-        client = StorageManagementClient(
-            credential, subscription_id=self.get_subscription_id()
-        )
-        event_subscription_info = EventSubscription(
-            destination=StorageQueueEventSubscriptionDestination(
-                resource_id=dst_resource_id, queue_name="file-changes"
-            ),
-            filter=EventSubscriptionFilter(
-                included_event_types=[
-                    "Microsoft.Storage.BlobCreated",
-                    "Microsoft.Storage.BlobDeleted",
-                ]
-            ),
-            retry_policy=RetryPolicy(
-                max_delivery_attempts=30,
-                event_time_to_live_in_minutes=1440,
-            ),
-        )
 
         client = EventGridManagementClient(
             credential, subscription_id=self.get_subscription_id()
         )
-        result = client.event_subscriptions.begin_create_or_update(
-            src_resource_id, "onefuzz1", event_subscription_info
-        ).result()
-        if result.provisioning_state != "Succeeded":
-            raise Exception(
-                "eventgrid subscription failed: %s"
-                % json.dumps(result.as_dict(), indent=4, sort_keys=True),
-            )
+        exising_event_grid = client.event_subscriptions.get(src_resource_id, "onefuzz1")
+        if exising_event_grid:
+            logger.info("removing deprecated event subscription")
+            result = client.event_subscriptions.begin_delete(
+                src_resource_id, "onefuzz1"
+            ).result()
+
+            if result.provisioning_state != "Succeeded":
+                raise Exception(
+                    "Failed to remove : %s"
+                    % json.dumps(result.as_dict(), indent=4, sort_keys=True),
+                )
 
     def add_instance_id(self) -> None:
         logger.info("setting instance_id log export")
@@ -1038,7 +1023,7 @@ def main() -> None:
     full_deployment_states = rbac_only_states + [
         ("apply_migrations", Client.apply_migrations),
         ("set_instance_config", Client.set_instance_config),
-        ("eventgrid", Client.create_eventgrid),
+        ("eventgrid", Client.remove_eventgrid),
         ("tools", Client.upload_tools),
         ("add_instance_id", Client.add_instance_id),
         ("instance-specific-setup", Client.upload_instance_setup),
