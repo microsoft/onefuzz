@@ -880,7 +880,7 @@
         {
             "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
             "apiVersion": "2021-12-01",
-            "name": "[concat(variables('fuzz-blob-topic-name'), '/onefuzz1')]",
+            "name": "[concat(variables('fuzz-blob-topic-name'), '/onefuzz1_subscription')]",
             "dependsOn": [
                 "[resourceId('Microsoft.EventGrid/systemTopics', variables('fuzz-blob-topic-name'))]"
             ],

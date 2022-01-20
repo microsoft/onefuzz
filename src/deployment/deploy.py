@@ -20,6 +20,7 @@ from typing import Dict, List, Optional, Tuple, Union, cast
 from uuid import UUID
 
 from azure.common.credentials import get_cli_profile
+from azure.core.exceptions import ResourceNotFoundError
 from azure.cosmosdb.table.tableservice import TableService
 from azure.identity import AzureCliCredential
 from azure.mgmt.applicationinsights import ApplicationInsightsManagementClient
@@ -27,12 +28,6 @@ from azure.mgmt.applicationinsights.models import (
     ApplicationInsightsComponentExportRequest,
 )
 from azure.mgmt.eventgrid import EventGridManagementClient
-from azure.mgmt.eventgrid.models import (
-    EventSubscription,
-    EventSubscriptionFilter,
-    RetryPolicy,
-    StorageQueueEventSubscriptionDestination,
-)
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
 from azure.mgmt.resource.resources.models import (
     Deployment,
@@ -45,8 +40,6 @@ from azure.storage.blob import (
     ContainerSasPermissions,
     generate_container_sas,
 )
-from msrest.serialization import TZ_UTC
-
 from deploylib.configuration import (
     InstanceConfigClient,
     NetworkSecurityConfig,
@@ -72,6 +65,7 @@ from deploylib.registration import (
     set_app_audience,
     update_pool_registration,
 )
+from msrest.serialization import TZ_UTC
 
 # Found by manually assigning the User.Read permission to application
 # registration in the admin portal. The values are in the manifest under
@@ -703,7 +697,14 @@ class Client:
         client = EventGridManagementClient(
             credential, subscription_id=self.get_subscription_id()
         )
-        exising_event_grid = client.event_subscriptions.get(src_resource_id, "onefuzz1")
+
+        exising_event_grid = False
+        try:
+            client.event_subscriptions.get(src_resource_id, "onefuzz1")
+            exising_event_grid = True
+        except ResourceNotFoundError as _:
+            pass
+
         if exising_event_grid:
             logger.info("removing deprecated event subscription")
             result = client.event_subscriptions.begin_delete(
