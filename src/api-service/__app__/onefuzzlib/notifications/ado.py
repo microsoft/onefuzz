@@ -125,6 +125,7 @@ class ADO:
         wiql = Wiql(query=query)
         for entry in self.client.query_by_wiql(wiql).work_items:
             item = self.client.get_work_item(entry.id, expand="Fields")
+            # todo: group the ids and callget_work_items instead
             lowered_fields = {x.lower(): str(y) for (x, y) in item.fields.items()}
             if post_query_filter and not all(
                 [

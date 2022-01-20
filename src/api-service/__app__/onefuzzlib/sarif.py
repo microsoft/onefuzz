@@ -9,7 +9,8 @@ import json
 from cattr import unstructure  # type: ignore
 from functional import seq  # type: ignore
 from onefuzztypes.models import Report
-from sarif_om import (  # type: ignore
+from sarif_om import (
+    Location,  # type: ignore
     Result,
     Run,
     SarifLog,
@@ -43,7 +44,7 @@ def generate_sarif(report: Report) -> str:
                     Result(
                         stacks=[Stack(frames=stack_frames)],
                         message=report.scariness_description,
-                        locations=[],
+                        locations= seq(report.minimized_stack_function_lines).map(lambda s: Location(physical_location=s) ).to_list(),
                     )
                 ],
             )
@@ -52,4 +53,8 @@ def generate_sarif(report: Report) -> str:
     )
     log = unstructure(sarif_log)
 
-    return json.dumps(log, indent=4)
+    return json.dumps(
+            log,
+            indent=4,
+            allow_nan=False,
+            default=lambda o: dict((key, "a") for key, value in o.__dict__.items() if value ))
