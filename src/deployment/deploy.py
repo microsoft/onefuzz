@@ -698,17 +698,21 @@ class Client:
             credential, subscription_id=self.get_subscription_id()
         )
 
-        exising_event_grid = False
-        try:
-            client.event_subscriptions.get(src_resource_id, "onefuzz1")
-            exising_event_grid = True
-        except ResourceNotFoundError as _:
-            pass
+        old_subscription_name = "onefuzz1"
 
-        if exising_event_grid:
+        def old_subscription_exists() -> bool:
+            try:
+                result = client.event_subscriptions.get(
+                    src_resource_id, old_subscription_name
+                )
+                return result.provisioning_state == "Succeeded"
+            except ResourceNotFoundError as _:
+                return False
+
+        if old_subscription_exists():
             logger.info("removing deprecated event subscription")
             result = client.event_subscriptions.begin_delete(
-                src_resource_id, "onefuzz1"
+                src_resource_id, old_subscription_name
             ).result()
 
             if result.provisioning_state != "Succeeded":
