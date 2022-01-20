@@ -196,7 +196,7 @@ impl SrcView {
         for (module, cache) in self.0.iter() {
             if let Some(symbols) = cache.path_symbols(path.as_ref()) {
                 for sym in symbols {
-                    r.insert(format!("{}!{}", module, sym.to_string()));
+                    r.insert(format!("{}!{}", module, sym));
                 }
             }
         }
