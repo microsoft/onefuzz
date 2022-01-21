@@ -355,6 +355,9 @@ async fn report_fuzzer_sys_info(
             _ = period.tick() => (),
         }
 
+        // Refresh the list of known processes.
+        system::refresh()?;
+
         // process doesn't exist
         if !system::refresh_process(fuzzer_pid)? {
             break;
