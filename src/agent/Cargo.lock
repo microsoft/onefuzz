@@ -408,6 +408,7 @@ dependencies = [
  "uuid",
  "win-util",
  "winapi 0.3.9",
+ "xml-rs",
 ]
 
 [[package]]
