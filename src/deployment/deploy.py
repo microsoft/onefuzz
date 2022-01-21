@@ -705,7 +705,7 @@ class Client:
                 result = client.event_subscriptions.get(
                     src_resource_id, old_subscription_name
                 )
-                return result.provisioning_state == "Succeeded"
+                return bool(result.provisioning_state == "Succeeded")
             except ResourceNotFoundError as _:
                 return False
 
