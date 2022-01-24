@@ -11,7 +11,9 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use coverage::block::CommandBlockCov;
 use coverage::cache::ModuleCache;
+use coverage::cobertura::cobertura;
 use coverage::code::{CmdFilter, CmdFilterDef};
+use coverage::debuginfo::DebugInfo;
 use onefuzz::expand::{Expand, PlaceHolder};
 use onefuzz::syncdir::SyncedDir;
 use onefuzz_telemetry::{warn, Event::coverage_data, EventData};
@@ -28,6 +30,8 @@ use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
 
 const MAX_COVERAGE_RECORDING_ATTEMPTS: usize = 2;
 const COVERAGE_FILE: &str = "coverage.json";
+const SOURCE_COVERAGE_FILE: &str = "source-coverage.json";
+const COBERTURA_COVERAGE_FILE: &str = "cobertura-coverage.xml";
 const MODULE_CACHE_FILE: &str = "module-cache.json";
 
 const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(5);
@@ -168,6 +172,7 @@ struct TaskContext<'a> {
     cache: Arc<Mutex<ModuleCache>>,
     config: &'a Config,
     coverage: CommandBlockCov,
+    debuginfo: Mutex<DebugInfo>,
     filter: CmdFilter,
     heartbeat: Option<TaskHeartbeatClient>,
 }
@@ -181,11 +186,13 @@ impl<'a> TaskContext<'a> {
         heartbeat: Option<TaskHeartbeatClient>,
     ) -> Self {
         let cache = Arc::new(Mutex::new(cache));
+        let debuginfo = Mutex::new(DebugInfo::default());
 
         Self {
             cache,
             config,
             coverage,
+            debuginfo,
             filter,
             heartbeat,
         }
@@ -339,11 +346,34 @@ impl<'a> TaskContext<'a> {
 
     pub async fn save_and_sync_coverage(&self) -> Result<()> {
         let path = self.config.coverage.local_path.join(COVERAGE_FILE);
-        let text = serde_json::to_string(&self.coverage).context("serializing coverage to JSON")?;
-
+        let text = serde_json::to_string(&self.coverage).context("serializing block coverage")?;
         fs::write(&path, &text)
             .await
             .with_context(|| format!("writing coverage to {}", path.display()))?;
+
+        let path = self.config.coverage.local_path.join(SOURCE_COVERAGE_FILE);
+        let src_coverage = {
+            let mut debuginfo = self
+                .debuginfo
+                .lock()
+                .map_err(|e| anyhow::format_err!("{}", e))?;
+            self.coverage.source_coverage(&mut *debuginfo)?
+        };
+        let text = serde_json::to_string(&src_coverage).context("serializing source coverage")?;
+        fs::write(&path, &text)
+            .await
+            .with_context(|| format!("writing source coverage to {}", path.display()))?;
+
+        let path = self
+            .config
+            .coverage
+            .local_path
+            .join(COBERTURA_COVERAGE_FILE);
+        let cobertura_source_coverage = cobertura(src_coverage)?;
+        fs::write(&path, &cobertura_source_coverage)
+            .await
+            .with_context(|| format!("writing cobertura source coverage to {}", path.display()))?;
+
         self.config.coverage.sync_push().await?;
 
         Ok(())

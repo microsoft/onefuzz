@@ -116,12 +116,11 @@ def create_vm(
             },
         }
 
-    if tags:
-        params["tags"] = tags.copy()
+    if "ONEFUZZ_OWNER" in os.environ:
+        params["tags"] = {"OWNER": os.environ["ONEFUZZ_OWNER"]}
 
-    owner = os.environ.get("ONEFUZZ_OWNER")
-    if owner:
-        params["tags"]["OWNER"] = owner
+    if tags:
+        params["tags"].update(tags.copy())
 
     try:
         compute_client.virtual_machines.begin_create_or_update(
