@@ -34,7 +34,6 @@ from azure.mgmt.resource.resources.models import (
     DeploymentMode,
     DeploymentProperties,
 )
-from azure.mgmt.storage import StorageManagementClient
 from azure.storage.blob import (
     BlobServiceClient,
     ContainerSasPermissions,
@@ -707,7 +706,7 @@ class Client:
                     src_resource_id, old_subscription_name
                 )
                 return bool(result.provisioning_state == "Succeeded")
-            except ResourceNotFoundError as _:
+            except ResourceNotFoundError:
                 return False
 
         if old_subscription_exists():
