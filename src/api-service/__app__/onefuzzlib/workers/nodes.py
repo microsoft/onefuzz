@@ -35,7 +35,7 @@ from ..versions import is_minimum_version
 from .shrink_queue import ShrinkQueue
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
-NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
+NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 
 # Future work:
 #
