@@ -180,6 +180,11 @@ def reimage_vmss_nodes(name: UUID, vm_ids: Set[UUID]) -> Optional[Error]:
             logging.info("unable to find vm_id for %s:%s", name, vm_id)
 
     if instance_ids:
+        compute_client.begin_update_instances.begin_reimage_all(
+            resource_group,
+            str(name),
+            VirtualMachineScaleSetVMInstanceIDs(instance_ids=list(instance_ids)),
+        )
         compute_client.virtual_machine_scale_sets.begin_reimage_all(
             resource_group,
             str(name),
