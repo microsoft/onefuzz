@@ -44,7 +44,7 @@ from .nodes import Node
 from .shrink_queue import ShrinkQueue
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
-NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(hours=1)
+NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
 SCALESET_LOG_PREFIX = "scalesets: "
 
 # Future work:
