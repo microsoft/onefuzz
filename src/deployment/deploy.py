@@ -34,6 +34,7 @@ from azure.mgmt.resource.resources.models import (
     DeploymentMode,
     DeploymentProperties,
 )
+from azure.mgmt.storage import StorageManagementClient
 from azure.storage.blob import (
     BlobServiceClient,
     ContainerSasPermissions,
@@ -689,10 +690,22 @@ class Client:
         update_allowed_aad_tenants(config_client, tenants)
 
     def remove_eventgrid(self) -> None:
-
-        src_resource_id = self.results["deploy"]["fuzz-storage"]["value"]
-
         credential = AzureCliCredential()
+        client = StorageManagementClient(
+            credential, subscription_id=self.get_subscription_id()
+        )
+        try:
+            storage_accounts = client.storage_accounts.list_by_resource_group(
+                self.resource_group
+            )
+            for storage_account in storage_accounts:
+                if storage_account.name.startswith("fuzz"):
+                    src_resource_id = storage_account.id
+
+            if not src_resource_id:
+                return
+        except ResourceNotFoundError:
+            return
 
         client = EventGridManagementClient(
             credential, subscription_id=self.get_subscription_id()
@@ -1020,6 +1033,7 @@ def main() -> None:
     rbac_only_states = [
         ("check_region", Client.check_region),
         ("rbac", Client.setup_rbac),
+        ("eventgrid", Client.remove_eventgrid),
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
         ("assign_user_access", Client.assign_user_access),
@@ -1028,7 +1042,6 @@ def main() -> None:
     full_deployment_states = rbac_only_states + [
         ("apply_migrations", Client.apply_migrations),
         ("set_instance_config", Client.set_instance_config),
-        ("eventgrid", Client.remove_eventgrid),
         ("tools", Client.upload_tools),
         ("add_instance_id", Client.add_instance_id),
         ("instance-specific-setup", Client.upload_instance_setup),
