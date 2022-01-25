@@ -728,7 +728,7 @@ class Client:
                 src_resource_id, old_subscription_name
             ).result()
 
-            if result.provisioning_state != "Succeeded":
+            if result and result.provisioning_state != "Succeeded":
                 raise Exception(
                     "Failed to remove : %s"
                     % json.dumps(result.as_dict(), indent=4, sort_keys=True),

@@ -887,7 +887,7 @@
             "properties": {
                 "destination": {
                     "properties": {
-                        "resourceId": "[variables('storageAccountNameFunc')]",
+                        "resourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]",
                         "queueName": "file-changes"
                     },
                     "endpointType": "StorageQueue"
