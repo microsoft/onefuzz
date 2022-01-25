@@ -10,10 +10,9 @@ use onefuzz::{
     libfuzzer::{LibFuzzer, LibFuzzerLine},
     process::ExitStatus,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
-    system,
 };
 use onefuzz_telemetry::{
-    Event::{new_coverage, new_result, process_stats, runtime_stats},
+    Event::{new_coverage, new_result, runtime_stats},
     EventData,
 };
 use serde::Deserialize;
@@ -21,18 +20,10 @@ use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tempfile::{tempdir_in, TempDir};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
-    select,
     sync::{mpsc, Notify},
-    task,
     time::{sleep, Duration, Instant},
 };
 use uuid::Uuid;
-
-// Delay to allow for observation of CPU usage when reporting proc info.
-const PROC_INFO_COLLECTION_DELAY: Duration = Duration::from_secs(1);
-
-// Period of reporting proc info about running processes.
-const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
@@ -223,14 +214,7 @@ impl LibFuzzerFuzzTask {
             &self.config.common.setup_dir,
         );
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs).await?;
-        let running_id = running.id();
         let notify = Arc::new(Notify::new());
-        let sys_info = task::spawn(report_fuzzer_sys_info(
-            worker_id,
-            run_id,
-            running_id.unwrap_or_default(),
-            notify.clone(),
-        ));
 
         // Splitting borrow.
         let stderr = running
@@ -257,7 +241,6 @@ impl LibFuzzerFuzzTask {
 
         let exit_status = running.wait().await;
         notify.notify_one();
-        let _ = sys_info.await;
 
         let exit_status: ExitStatus = exit_status?.into();
 
@@ -333,48 +316,6 @@ fn try_report_iter_update(
             count: line.iters(),
             execs_sec: line.execs_sec(),
         })?;
-    }
-
-    Ok(())
-}
-
-async fn report_fuzzer_sys_info(
-    worker_id: usize,
-    run_id: Uuid,
-    fuzzer_pid: u32,
-    cancellation: Arc<Notify>,
-) -> Result<()> {
-    // Allow for sampling CPU usage.
-    let mut period = tokio::time::interval_at(
-        Instant::now() + PROC_INFO_COLLECTION_DELAY,
-        PROC_INFO_PERIOD,
-    );
-    loop {
-        select! {
-            () = cancellation.notified() => break,
-            _ = period.tick() => (),
-        }
-
-        // process doesn't exist
-        if !system::refresh_process(fuzzer_pid)? {
-            break;
-        }
-
-        if let Some(proc_info) = system::proc_info(fuzzer_pid)? {
-            event!(process_stats;
-               EventData::WorkerId = worker_id,
-               EventData::RunId = run_id,
-               EventData::Name = proc_info.name,
-               EventData::Pid = proc_info.pid,
-               EventData::ProcessStatus = proc_info.status,
-               EventData::CpuUsage = proc_info.cpu_usage,
-               EventData::PhysicalMemory = proc_info.memory_kb,
-               EventData::VirtualMemory = proc_info.virtual_memory_kb
-            );
-        } else {
-            // The process no longer exists.
-            break;
-        }
     }
 
     Ok(())
