@@ -367,8 +367,8 @@ class Node(BASE_NODE, ORMMixin):
     def is_too_old(self) -> bool:
         return (
             self.scaleset_id is not None
-            and self.timestamp is not None
-            and self.timestamp
+            and self.created_at is not None
+            and self.created_at
             < datetime.datetime.now(datetime.timezone.utc) - NODE_REIMAGE_TIME
         )
 
@@ -453,7 +453,7 @@ class Node(BASE_NODE, ORMMixin):
         reasonably up-to-date with OS patches without disrupting running
         fuzzing tasks with patch reboot cycles.
         """
-        time_filter = "Timestamp lt datetime'%s'" % (
+        time_filter = "created_at lt datetime'%s'" % (
             (datetime.datetime.utcnow() - NODE_REIMAGE_TIME).isoformat()
         )
         for node in cls.search(
