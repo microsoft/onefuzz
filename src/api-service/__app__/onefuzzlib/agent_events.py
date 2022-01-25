@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import datetime
 import logging
 from typing import Optional, cast
 from uuid import UUID
@@ -76,6 +77,8 @@ def on_state_update(
         # successfully.
         node.reimage_requested = False
         node.set_state(state)
+        node.created_at = datetime.datetime.utcnow()
+
         return None
 
     logging.info("node state update: %s from:%s to:%s", machine_id, node.state, state)

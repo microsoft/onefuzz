@@ -568,6 +568,7 @@ class NodeCommandEnvelope(BaseModel):
 
 class Node(BaseModel):
     timestamp: Optional[datetime] = Field(alias="Timestamp")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
     pool_name: PoolName
     pool_id: Optional[UUID]
     machine_id: UUID
