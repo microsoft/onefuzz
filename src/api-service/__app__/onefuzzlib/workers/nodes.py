@@ -35,7 +35,7 @@ from ..versions import is_minimum_version
 from .shrink_queue import ShrinkQueue
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
-NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(minutes=10)
+NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=6)
 
 # Future work:
 #
@@ -462,9 +462,7 @@ class Node(BASE_NODE, ORMMixin):
             },
             raw_unchecked_filter=time_filter,
         )
-        logging.info(f"Number of nodes to reimaged {len(reimage_nodes)}")
         for node in reimage_nodes:
-            logging.info("Processing node %s", node.machine_id)
             if node.debug_keep_node:
                 logging.info(
                     "removing debug_keep_node for expired node. "
