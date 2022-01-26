@@ -168,7 +168,6 @@ def reimage_vmss_nodes(name: UUID, vm_ids: Set[UUID]) -> Optional[Error]:
     check_can_update(name)
 
     resource_group = get_base_resource_group()
-    logging.info("reimaging scaleset VM - name: %s vm_ids:%s", name, vm_ids)
     compute_client = get_compute_client()
 
     instance_ids = set()
