@@ -76,8 +76,8 @@ def on_state_update(
         # they send 'init' with reimage_requested, it's because the node was reimaged
         # successfully.
         node.reimage_requested = False
-        node.set_state(state)
         node.initialized_at = datetime.datetime.utcnow()
+        node.set_state(state)
 
         return None
 
