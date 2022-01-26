@@ -456,12 +456,15 @@ class Node(BASE_NODE, ORMMixin):
         time_filter = "not (initialized_at ge datetime'%s')" % (
             (datetime.datetime.utcnow() - NODE_REIMAGE_TIME).isoformat()
         )
-        for node in cls.search(
+        reimage_nodes = cls.search(
             query={
                 "scaleset_id": [scaleset_id],
             },
             raw_unchecked_filter=time_filter,
-        ):
+        )
+        logging.info(f"Number of nodes to reimaged {len(reimage_nodes)}")
+        for node in reimage_nodes:
+            logging.info("Processing node %s", node.machine_id)
             if node.debug_keep_node:
                 logging.info(
                     "removing debug_keep_node for expired node. "
