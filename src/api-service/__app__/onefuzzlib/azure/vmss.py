@@ -168,7 +168,6 @@ def reimage_vmss_nodes(name: UUID, vm_ids: Set[UUID]) -> Optional[Error]:
     check_can_update(name)
 
     resource_group = get_base_resource_group()
-    logging.info("reimaging scaleset VM - name: %s vm_ids:%s", name, vm_ids)
     compute_client = get_compute_client()
 
     instance_ids = set()
@@ -179,7 +178,18 @@ def reimage_vmss_nodes(name: UUID, vm_ids: Set[UUID]) -> Optional[Error]:
         else:
             logging.info("unable to find vm_id for %s:%s", name, vm_id)
 
+    # Nodes that must be are 'upgraded' before the reimage. This call makes sure
+    # the instance is up-to-date with the VMSS model.
+    # The expectation is that these requests are queued and handled subsequently.
+    # The VMSS Team confirmed this expectation and testing supports it, as well.
     if instance_ids:
+        logging.info("upgrading VMSS nodes - name: %s vm_ids: %s", name, vm_id)
+        compute_client.virtual_machine_scale_sets.begin_update_instances(
+            resource_group,
+            str(name),
+            VirtualMachineScaleSetVMInstanceIDs(instance_ids=list(instance_ids)),
+        )
+        logging.info("reimaging VMSS nodes - name: %s vm_ids: %s", name, vm_id)
         compute_client.virtual_machine_scale_sets.begin_reimage_all(
             resource_group,
             str(name),
