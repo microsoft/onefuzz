@@ -77,7 +77,7 @@ def on_state_update(
         # successfully.
         node.reimage_requested = False
         node.set_state(state)
-        node.reimaged_at = datetime.datetime.utcnow()
+        node.initialized_at = datetime.datetime.utcnow()
 
         return None
 

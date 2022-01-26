@@ -568,7 +568,7 @@ class NodeCommandEnvelope(BaseModel):
 
 class Node(BaseModel):
     timestamp: Optional[datetime] = Field(alias="Timestamp")
-    reimaged_at: datetime = Field(default_factory=datetime.utcnow)
+    initialized_at: Optional[datetime]
     pool_name: PoolName
     pool_id: Optional[UUID]
     machine_id: UUID
