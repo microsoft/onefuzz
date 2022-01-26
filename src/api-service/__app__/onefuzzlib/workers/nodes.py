@@ -454,7 +454,9 @@ class Node(BASE_NODE, ORMMixin):
         fuzzing tasks with patch reboot cycles.
         """
         time_filter = "not (initialized_at ge datetime'%s')" % (
-            (datetime.datetime.utcnow() - NODE_REIMAGE_TIME).isoformat()
+            (
+                datetime.datetime.now(datetime.timezone.utc) - NODE_REIMAGE_TIME
+            ).isoformat()
         )
         reimage_nodes = cls.search(
             query={
