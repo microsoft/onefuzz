@@ -453,7 +453,7 @@ class Node(BASE_NODE, ORMMixin):
         reasonably up-to-date with OS patches without disrupting running
         fuzzing tasks with patch reboot cycles.
         """
-        time_filter = "initialized_at lt datetime'%s'" % (
+        time_filter = "not (initialized_at ge datetime'%s')" % (
             (datetime.datetime.utcnow() - NODE_REIMAGE_TIME).isoformat()
         )
         for node in cls.search(
