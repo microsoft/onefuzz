@@ -353,6 +353,7 @@ class Libfuzzer(Command):
             duration=duration,
             target_workers=target_workers,
             target_options=target_options,
+            fuzzing_target_options=fuzzing_target_options,
             target_env=target_env,
             tags=helper.tags,
             crash_report_timeout=crash_report_timeout,
