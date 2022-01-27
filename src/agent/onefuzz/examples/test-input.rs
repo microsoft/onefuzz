@@ -15,7 +15,7 @@ struct Opt {
     #[structopt(short, long)]
     pub options: Vec<String>,
 
-    #[structopt(short, long)]
+    #[structopt(short, long, long_help = "Defaults to dir of `exe`")]
     pub setup_dir: Option<PathBuf>,
 
     #[structopt(short, long)]
