@@ -26,7 +26,6 @@ serde = "1.0"
 serde_json = "1.0"
 rand = "0.8"
 serde_derive = "1.0"
-sysinfo = "0.21"
 tokio = { version = "1.15", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["fs", "time", "tokio-util"] }
 tokio-util = { version = "0.6", features = ["full"] }
@@ -56,3 +55,6 @@ nix = "0.23"
 pete = "0.8"
 rstack = "0.3"
 proc-maps = "0.2"
+
+[dev-dependencies]
+structopt = "0.3"

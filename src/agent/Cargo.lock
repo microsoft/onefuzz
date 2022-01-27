@@ -375,12 +375,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "core-foundation-sys"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea221b5284a47e40033bf9b66f35f984ec0ea2931eb03505246cd27a963f981b"
-
-[[package]]
 name = "coverage"
 version = "0.1.0"
 dependencies = [
@@ -1798,9 +1792,9 @@ dependencies = [
  "sha2",
  "stacktrace-parser",
  "storage-queue",
+ "structopt",
  "strum",
  "strum_macros",
- "sysinfo",
  "tempfile",
  "tokio",
  "tokio-stream",
@@ -2942,21 +2936,6 @@ dependencies = [
  "proc-macro2 1.0.29",
  "quote 1.0.9",
  "unicode-xid 0.2.2",
-]
-
-[[package]]
-name = "sysinfo"
-version = "0.21.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f88d66f3341b688163d3585037954ff276cf24a234d015b30025318a3e3449a"
-dependencies = [
- "cfg-if 1.0.0",
- "core-foundation-sys",
- "libc",
- "ntapi",
- "once_cell",
- "rayon",
- "winapi 0.3.9",
 ]
 
 [[package]]
