@@ -64,6 +64,7 @@ class Libfuzzer(Command):
         minimized_stack_depth: Optional[int] = None,
         coverage_filter: Optional[str] = None,
     ) -> None:
+        target_options = target_options or []
 
         regression_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
