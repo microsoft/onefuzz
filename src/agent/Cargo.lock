@@ -1792,6 +1792,7 @@ dependencies = [
  "sha2",
  "stacktrace-parser",
  "storage-queue",
+ "structopt",
  "strum",
  "strum_macros",
  "tempfile",
