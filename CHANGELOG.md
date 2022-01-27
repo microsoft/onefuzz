@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CLI/Service: Added call to `upgrade` the VMInstance before reimaging to ensure the instance matches the scale set model. [#1612](https://github.com/microsoft/onefuzz/pull/1612)
 
 ### Fixed
-* Agent: Removed generated process perf stats by the agent as it was causing memory leaks. [#1608](https://github.com/microsoft/onefuzz/pull/1608)
+* Agent: Removed the `process_stats` telemetry event, which fixes a class of memory leaks on Windows `libfuzzer_fuzz` tasks. [#1608](https://github.com/microsoft/onefuzz/pull/1608)
 * CLI/Service: Fixed seven day stale node reimaging check. [#1616](https://github.com/microsoft/onefuzz/pull/1616)
 
 ## 4.1.0
