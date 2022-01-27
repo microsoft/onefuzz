@@ -223,6 +223,7 @@ TARGETS: Dict[str, Integration] = {
 
 OperationResult = TypeVar("OperationResult")
 
+
 def retry(
     operation: Callable[[Any], OperationResult],
     description: str,
@@ -251,6 +252,7 @@ def retry(
             )
             time.sleep(wait_duration)
 
+
 class TestOnefuzz:
     def __init__(self, onefuzz: Onefuzz, logger: logging.Logger, test_id: UUID) -> None:
         self.of = onefuzz
@@ -268,6 +270,11 @@ class TestOnefuzz:
         pool_size: int,
         os_list: List[OS],
     ) -> None:
+        def try_info_get(data: Any) -> None:
+            self.of.info.get()
+
+        retry(try_info_get, "testing endpoint")
+
         self.inject_log(self.start_log_marker)
         for entry in os_list:
             name = PoolName(f"testpool-{entry.name}-{self.test_id}")
@@ -915,7 +922,7 @@ class Run(Command):
         if test_id is None:
             test_id = uuid4()
         self.logger.info("launching test_id: %s", test_id)
-        
+
         def try_setup(data: Any) -> None:
             self.onefuzz.__setup__(
                 endpoint=endpoint, client_id=client_id, client_secret=client_secret
