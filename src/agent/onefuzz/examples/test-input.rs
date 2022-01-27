@@ -8,6 +8,7 @@ use onefuzz::input_tester::Tester;
 use structopt::StructOpt;
 
 #[derive(Debug, PartialEq, StructOpt)]
+#[structopt(name = "test-input")]
 struct Opt {
     #[structopt(short, long)]
     pub exe: PathBuf,
