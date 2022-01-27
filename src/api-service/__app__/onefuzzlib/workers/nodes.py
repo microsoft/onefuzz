@@ -35,7 +35,7 @@ from ..versions import is_minimum_version
 from .shrink_queue import ShrinkQueue
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
-NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
+NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=6)
 
 # Future work:
 #
@@ -367,8 +367,8 @@ class Node(BASE_NODE, ORMMixin):
     def is_too_old(self) -> bool:
         return (
             self.scaleset_id is not None
-            and self.timestamp is not None
-            and self.timestamp
+            and self.initialized_at is not None
+            and self.initialized_at
             < datetime.datetime.now(datetime.timezone.utc) - NODE_REIMAGE_TIME
         )
 
@@ -453,15 +453,18 @@ class Node(BASE_NODE, ORMMixin):
         reasonably up-to-date with OS patches without disrupting running
         fuzzing tasks with patch reboot cycles.
         """
-        time_filter = "Timestamp lt datetime'%s'" % (
-            (datetime.datetime.utcnow() - NODE_REIMAGE_TIME).isoformat()
+        time_filter = "not (initialized_at ge datetime'%s')" % (
+            (
+                datetime.datetime.now(datetime.timezone.utc) - NODE_REIMAGE_TIME
+            ).isoformat()
         )
-        for node in cls.search(
+        reimage_nodes = cls.search(
             query={
                 "scaleset_id": [scaleset_id],
             },
             raw_unchecked_filter=time_filter,
-        ):
+        )
+        for node in reimage_nodes:
             if node.debug_keep_node:
                 logging.info(
                     "removing debug_keep_node for expired node. "
