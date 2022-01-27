@@ -12,7 +12,7 @@ struct Opt {
     #[structopt(short, long)]
     pub exe: PathBuf,
 
-    #[structopt(short, long)]
+    #[structopt(short, long, long_help = "Defaults to `{input}`")]
     pub options: Vec<String>,
 
     #[structopt(short, long, long_help = "Defaults to dir of `exe`")]
@@ -46,8 +46,13 @@ async fn main() -> Result<()> {
             .to_owned()
     });
 
+    let mut target_options = opt.options.clone();
+    if target_options.is_empty() {
+        target_options.push("{input}".into());
+    }
+
     let env = Default::default();
-    let tester = Tester::new(&setup_dir, &opt.exe, &opt.options, &env);
+    let tester = Tester::new(&setup_dir, &opt.exe, &target_options, &env);
 
     let check_debugger = !opt.no_check_debugger;
     let tester = tester
