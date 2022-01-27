@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.0.0
+### Added
+* CLI/Service: Added `fuzzer_target_options` argument to the `libfuzzer` templates to allow passing some target options only in persistent fuzzing mode [#1610](https://github.com/microsoft/onefuzz/pull/1610)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.
+[#1530](https://github.com/microsoft/onefuzz/pull/1530)
+* CLI/Service: Updated multiple first-party and third-party Python dependencies. 
+[#1576](https://github.com/microsoft/onefuzz/pull/1576)
+[#1577](https://github.com/microsoft/onefuzz/pull/1577)
+[#1579](https://github.com/microsoft/onefuzz/pull/1579)
+[#1582](https://github.com/microsoft/onefuzz/pull/1582)
+[#1586](https://github.com/microsoft/onefuzz/pull/1586)
+[#1599](https://github.com/microsoft/onefuzz/pull/1599)
+* CLI/Service: Begin update of scale set instances before reimaging to ensure they match the latest scale set model. [#1612](https://github.com/microsoft/onefuzz/pull/1612)
+
+### Fixed
+* Agent: Removed the `process_stats` telemetry event, which fixes a class of memory leaks on Windows `libfuzzer_fuzz` tasks. [#1608](https://github.com/microsoft/onefuzz/pull/1608)
+* CLI/Service: Fixed seven day stale node reimaging check. [#1616](https://github.com/microsoft/onefuzz/pull/1616)
+
 ## 4.1.0
 ### Added
 * Agent: Added source line coverage data 
