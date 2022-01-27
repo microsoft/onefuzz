@@ -39,9 +39,12 @@ async fn main() -> Result<()> {
     let opt = Opt::from_args();
 
     // Default `setup_dir` to base dir of
-    let setup_dir = opt.setup_dir
-        .clone()
-        .unwrap_or_else(|| opt.exe.parent().expect("target exe missing file component").to_owned());
+    let setup_dir = opt.setup_dir.clone().unwrap_or_else(|| {
+        opt.exe
+            .parent()
+            .expect("target exe missing file component")
+            .to_owned()
+    });
 
     let env = Default::default();
     let tester = Tester::new(&setup_dir, &opt.exe, &opt.options, &env);
