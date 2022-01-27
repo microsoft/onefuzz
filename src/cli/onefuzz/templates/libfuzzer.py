@@ -127,10 +127,9 @@ class Libfuzzer(Command):
         #
         # This allows passing arguments like `-runs` to the target only when
         # invoked in persistent fuzzing mode, and not test case repro mode.
-        libfuzzer_fuzz_target_options = target_options
+        libfuzzer_fuzz_target_options = target_options.copy()
 
         if fuzzing_target_options:
-            libfuzzer_fuzz_target_options = libfuzzer_fuzz_target_options or []
             libfuzzer_fuzz_target_options += fuzzing_target_options
 
         fuzzer_task = self.onefuzz.tasks.create(
@@ -586,7 +585,7 @@ class Libfuzzer(Command):
         #
         # This allows passing arguments like `-runs` to the target only when
         # invoked in persistent fuzzing mode, and not test case repro mode.
-        libfuzzer_fuzz_target_options = target_options
+        libfuzzer_fuzz_target_options = target_options.copy()
 
         if fuzzing_target_options:
             libfuzzer_fuzz_target_options += fuzzing_target_options
