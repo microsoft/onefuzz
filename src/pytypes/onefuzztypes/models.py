@@ -568,6 +568,9 @@ class NodeCommandEnvelope(BaseModel):
 
 class Node(BaseModel):
     timestamp: Optional[datetime] = Field(alias="Timestamp")
+
+    # Set only once, when a node is initialized.
+    initialized_at: Optional[datetime]
     pool_name: PoolName
     pool_id: Optional[UUID]
     machine_id: UUID
