@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 5.0.0
 ### Added
-* CLI/Service: Added `fuzzer_target_options` to the `libfuzzer basic` template to clarify which options are fuzzer specific. [#1610](https://github.com/microsoft/onefuzz/pull/1610)
+* CLI/Service: Added `fuzzer_target_options` argument to the `libfuzzer` templates to allow passing some target options only in persistent fuzzing mode [#1610](https://github.com/microsoft/onefuzz/pull/1610)
 
 ### Changed
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.
