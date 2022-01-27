@@ -15,6 +15,7 @@ from uuid import UUID
 
 import requests
 from azure.common.credentials import get_cli_profile
+from azure.identity import AzureCliCredential
 from functional import seq
 from msrest.serialization import TZ_UTC
 
@@ -40,13 +41,11 @@ def query_microsoft_graph(
     body: Optional[Dict] = None,
     subscription: Optional[str] = None,
 ) -> Dict:
-    profile = get_cli_profile()
-    (token_type, access_token, _), _, _ = profile.get_raw_token(
-        resource=GRAPH_RESOURCE, subscription=subscription
-    )
+    cred = AzureCliCredential()
+    access_token = cred.get_token(f"{GRAPH_RESOURCE}/.default")
     url = urllib.parse.urljoin(f"{GRAPH_RESOURCE_ENDPOINT}/", resource)
     headers = {
-        "Authorization": "%s %s" % (token_type, access_token),
+        "Authorization": "Bearer %s" % (access_token.token),
         "Content-Type": "application/json",
     }
     response = requests.request(
