@@ -31,7 +31,7 @@ struct Opt {
     pub no_check_debugger: bool,
 
     #[structopt(short, long, long_help = "Timeout (seconds)", default_value = "5")]
-    timeout: u64,
+    pub timeout: u64,
 }
 
 #[tokio::main]
