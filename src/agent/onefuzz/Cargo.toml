@@ -55,3 +55,6 @@ nix = "0.23"
 pete = "0.8"
 rstack = "0.3"
 proc-maps = "0.2"
+
+[dev-dependencies]
+structopt = "0.3"

@@ -49,6 +49,7 @@ class Libfuzzer(Command):
         duration: int = 24,
         target_workers: Optional[int] = None,
         target_options: Optional[List[str]] = None,
+        fuzzing_target_options: Optional[List[str]] = None,
         target_env: Optional[Dict[str, str]] = None,
         target_timeout: Optional[int] = None,
         tags: Optional[Dict[str, str]] = None,
@@ -63,6 +64,7 @@ class Libfuzzer(Command):
         minimized_stack_depth: Optional[int] = None,
         coverage_filter: Optional[str] = None,
     ) -> None:
+        target_options = target_options or []
 
         regression_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
@@ -121,6 +123,15 @@ class Libfuzzer(Command):
         if ensemble_sync_delay is None and vm_count == 1:
             ensemble_sync_delay = 0
 
+        # Build `target_options` for the `libfuzzer_fuzz` task.
+        #
+        # This allows passing arguments like `-runs` to the target only when
+        # invoked in persistent fuzzing mode, and not test case repro mode.
+        libfuzzer_fuzz_target_options = target_options.copy()
+
+        if fuzzing_target_options:
+            libfuzzer_fuzz_target_options += fuzzing_target_options
+
         fuzzer_task = self.onefuzz.tasks.create(
             job.job_id,
             TaskType.libfuzzer_fuzz,
@@ -130,7 +141,7 @@ class Libfuzzer(Command):
             reboot_after_setup=reboot_after_setup,
             duration=duration,
             vm_count=vm_count,
-            target_options=target_options,
+            target_options=libfuzzer_fuzz_target_options,
             target_env=target_env,
             target_workers=target_workers,
             tags=tags,
@@ -236,6 +247,7 @@ class Libfuzzer(Command):
         duration: int = 24,
         target_workers: Optional[int] = None,
         target_options: Optional[List[str]] = None,
+        fuzzing_target_options: Optional[List[str]] = None,
         target_env: Optional[Dict[str, str]] = None,
         target_timeout: Optional[int] = None,
         check_retry_count: Optional[int] = None,
@@ -340,6 +352,7 @@ class Libfuzzer(Command):
             duration=duration,
             target_workers=target_workers,
             target_options=target_options,
+            fuzzing_target_options=fuzzing_target_options,
             target_env=target_env,
             tags=helper.tags,
             crash_report_timeout=crash_report_timeout,
@@ -494,6 +507,7 @@ class Libfuzzer(Command):
         duration: int = 24,
         target_workers: Optional[int] = None,
         target_options: Optional[List[str]] = None,
+        fuzzing_target_options: Optional[List[str]] = None,
         target_env: Optional[Dict[str, str]] = None,
         tags: Optional[Dict[str, str]] = None,
         wait_for_running: bool = False,
@@ -567,6 +581,15 @@ class Libfuzzer(Command):
             helper.upload_inputs(inputs)
         helper.wait_on(wait_for_files, wait_for_running)
 
+        # Build `target_options` for the `libfuzzer_fuzz` task.
+        #
+        # This allows passing arguments like `-runs` to the target only when
+        # invoked in persistent fuzzing mode, and not test case repro mode.
+        libfuzzer_fuzz_target_options = target_options.copy()
+
+        if fuzzing_target_options:
+            libfuzzer_fuzz_target_options += fuzzing_target_options
+
         self.onefuzz.tasks.create(
             helper.job.job_id,
             TaskType.libfuzzer_fuzz,
@@ -576,7 +599,7 @@ class Libfuzzer(Command):
             reboot_after_setup=reboot_after_setup,
             duration=duration,
             vm_count=vm_count,
-            target_options=target_options,
+            target_options=libfuzzer_fuzz_target_options,
             target_env=target_env,
             target_workers=target_workers,
             tags=tags,
@@ -606,6 +629,7 @@ class Libfuzzer(Command):
         duration: int = 24,
         target_workers: Optional[int] = 1,
         target_options: Optional[List[str]] = None,
+        fuzzing_target_options: Optional[List[str]] = None,
         target_env: Optional[Dict[str, str]] = None,
         tags: Optional[Dict[str, str]] = None,
         wait_for_running: bool = False,
@@ -729,6 +753,15 @@ class Libfuzzer(Command):
             helper.upload_inputs(inputs)
         helper.wait_on(wait_for_files, wait_for_running)
 
+        # Build `target_options` for the `libfuzzer_fuzz` task.
+        #
+        # This allows passing arguments like `-runs` to the target only when
+        # invoked in persistent fuzzing mode, and not test case repro mode.
+        libfuzzer_fuzz_target_options = target_options.copy()
+
+        if fuzzing_target_options:
+            libfuzzer_fuzz_target_options += fuzzing_target_options
+
         self.logger.info("creating libfuzzer_fuzz task")
         fuzzer_task = self.onefuzz.tasks.create(
             helper.job.job_id,
@@ -739,7 +772,7 @@ class Libfuzzer(Command):
             reboot_after_setup=reboot_after_setup,
             duration=duration,
             vm_count=vm_count,
-            target_options=target_options,
+            target_options=libfuzzer_fuzz_target_options,
             target_env=target_env,
             target_workers=target_workers,
             tags=tags,
