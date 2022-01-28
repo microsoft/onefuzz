@@ -31,7 +31,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
             return not_ok(node, context=request.machine_id)
 
         node_tasks = NodeTasks.get_by_machine_id(request.machine_id)
-        node.tasks = [(t.task_id, t.state) for t in node_tasks]
+        node.tasks = node_tasks
         node.messages = [
             x.message for x in NodeMessage.get_messages(request.machine_id)
         ]
