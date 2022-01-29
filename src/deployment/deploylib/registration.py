@@ -11,7 +11,7 @@ import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, TypeVar
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import requests
 from azure.common.credentials import get_cli_profile
@@ -217,7 +217,7 @@ def create_application_credential(application_name: str, subscription_id: str) -
         raise Exception("app not found")
 
     (_, password) = add_application_password(
-        f"{application_name}_password", app["id"], subscription_id
+        f"{application_name}_password_{uuid4()}", app["id"], subscription_id
     )
     return str(password)
 
