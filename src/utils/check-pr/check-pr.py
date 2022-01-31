@@ -182,8 +182,8 @@ class Deployer:
         self.test_args = test_args or []
         self.repo = repo
         self.unattended = unattended
-        self.client_id = ""
-        self.client_secret = ""
+        self.client_id = None
+        self.client_secret = None
 
     def merge(self) -> None:
         if self.pr:
