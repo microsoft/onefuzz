@@ -275,7 +275,12 @@ class TestOnefuzz:
             self.of.info.get()
             self.logger.info("successfully tested 'info get' with new service principal.")
 
+        def try_create_test_pool(data: Any) -> None:
+            self.logger.info("creating test pool: test")
+            self.pools[entry] = self.of.pools.create("test", os_list[0])
+
         retry(try_info_get, "testing endpoint")
+        retry(try_create_test_pool, "testing pool creation")
 
         self.inject_log(self.start_log_marker)
         for entry in os_list:
