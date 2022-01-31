@@ -271,7 +271,9 @@ class TestOnefuzz:
         os_list: List[OS],
     ) -> None:
         def try_info_get(data: Any) -> None:
+            self.logger.info("endpoint configured. testing 'info get' with new service principal.")
             self.of.info.get()
+            self.logger.info("successfully tested 'info get' with new service principal.")
 
         retry(try_info_get, "testing endpoint")
 
