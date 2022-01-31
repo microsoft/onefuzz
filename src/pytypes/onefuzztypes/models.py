@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, root_validator, validator
@@ -561,6 +561,12 @@ class NodeCommand(EnumModel):
     stop_if_free: Optional[NodeCommandStopIfFree]
 
 
+class NodeTasks(BaseModel):
+    machine_id: UUID
+    task_id: UUID
+    state: NodeTaskState = Field(default=NodeTaskState.init)
+
+
 class NodeCommandEnvelope(BaseModel):
     command: NodeCommand
     message_id: str
@@ -576,7 +582,7 @@ class Node(BaseModel):
     machine_id: UUID
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
-    tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
+    tasks: Optional[List[NodeTasks]] = None
     messages: Optional[List[NodeCommand]] = None
     heartbeat: Optional[datetime]
     version: str = Field(default="1.0.0")
@@ -588,12 +594,6 @@ class Node(BaseModel):
 class ScalesetSummary(BaseModel):
     scaleset_id: UUID
     state: ScalesetState
-
-
-class NodeTasks(BaseModel):
-    machine_id: UUID
-    task_id: UUID
-    state: NodeTaskState = Field(default=NodeTaskState.init)
 
 
 class AutoScaleConfig(BaseModel):
