@@ -57,6 +57,10 @@ pub struct CrashReport {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scariness_description: Option<String>,
+
+    pub onefuzz_version: String,
+
+    pub tool_name: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -185,6 +189,7 @@ impl CrashReport {
         input_blob: Option<InputBlob>,
         input_sha256: String,
         minimized_stack_depth: Option<usize>,
+        tool_name: String,
     ) -> Self {
         let call_stack_sha256 = crash_log.call_stack_sha256();
         let minimized_stack_sha256 = if crash_log.minimized_stack.is_empty() {
@@ -221,6 +226,8 @@ impl CrashReport {
             Some(crash_log.minimized_stack_function_names)
         };
 
+        let onefuzz_version = env!("ONEFUZZ_VERSION").to_string();
+
         Self {
             input_sha256,
             input_blob,
@@ -240,6 +247,8 @@ impl CrashReport {
             scariness_description: crash_log.scariness_description,
             task_id,
             job_id,
+            onefuzz_version,
+            tool_name,
         }
     }
 

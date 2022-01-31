@@ -20,6 +20,8 @@ use std::{
 };
 use storage_queue::{Message, QueueClient};
 
+const LIBFUZZER_TOOL_NAME: &str = "libfuzzer";
+
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub target_exe: PathBuf,
@@ -149,6 +151,7 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
                 input_blob,
                 input_sha256,
                 args.minimized_stack_depth,
+                LIBFUZZER_TOOL_NAME.into(),
             );
             Ok(CrashTestResult::CrashReport(Box::new(crash_report)))
         }

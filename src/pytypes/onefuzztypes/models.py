@@ -213,6 +213,8 @@ class Report(BaseModel):
     asan_log: Optional[str]
     task_id: UUID
     job_id: UUID
+    tool_name: str
+    onefuzz_version: str
     scariness_score: Optional[int]
     scariness_description: Optional[str]
     minimized_stack: Optional[List[str]]
