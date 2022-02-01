@@ -238,7 +238,7 @@ def retry(
             return operation(data)
         except Exception as exc:
             exception = exc
-            logger.error(f"failed '{description}'. logging stack trace.")
+            logger.error("failed '%s'. logging stack trace.", description)
             logger.error(exc)
         count += 1
         if count >= tries:
@@ -248,7 +248,7 @@ def retry(
                 raise Exception(f"failed '{description}'")
         else:
             logger.info(
-                f"waiting {wait_duration} seconds before retrying '{description}'"
+                "waiting %s seconds before retrying '%s'", wait_duration, description
             )
             time.sleep(wait_duration)
 
@@ -271,9 +271,13 @@ class TestOnefuzz:
         os_list: List[OS],
     ) -> None:
         def try_info_get(data: Any) -> None:
-            self.logger.info("endpoint configured. testing 'info get' with new service principal.")
+            self.logger.info(
+                "endpoint configured. testing 'info get' with new service principal."
+            )
             self.of.info.get()
-            self.logger.info("successfully tested 'info get' with new service principal.")
+            self.logger.info(
+                "successfully tested 'info get' with new service principal."
+            )
 
         def try_create_test_pool(data: Any) -> None:
             self.logger.info("creating test pool: test")
