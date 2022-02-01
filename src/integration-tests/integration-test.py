@@ -293,6 +293,7 @@ class TestOnefuzz:
             self.pools[entry] = self.of.pools.create(name, entry)
             self.logger.info("creating scaleset for pool: %s", name)
             self.of.scalesets.create(name, pool_size, region=region)
+            raise Exception("Test Exception")
 
     def launch(
         self, path: Directory, *, os_list: List[OS], targets: List[str], duration=int
