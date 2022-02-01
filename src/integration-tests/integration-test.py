@@ -277,7 +277,7 @@ class TestOnefuzz:
 
         def try_create_test_pool(data: Any) -> None:
             self.logger.info("creating test pool: test")
-            self.pools[entry] = self.of.pools.create("test", os_list[0])
+            self.of.pools.create("test", os_list[0])
 
         retry(try_info_get, "testing endpoint")
         retry(try_create_test_pool, "testing pool creation")
