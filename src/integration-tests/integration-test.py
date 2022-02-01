@@ -231,7 +231,7 @@ def retry(
     wait_duration: int = 10,
     data: Any = None,
 ) -> OperationResult:
-    logger = logging.Logger
+    logger = logging.getLogger("integration")
     count = 0
     while True:
         try:
