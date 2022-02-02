@@ -234,15 +234,23 @@ def retry(
     logger = logging.getLogger("integration")
     count = 0
     while True:
+        logger.info("About to try operation")
         try:
+            logger.info("inside try")
             return operation(data)
         except Exception as exc:
+            logger.info("inside except")
             exception = exc
             logger.error("failed '%s'. logging stack trace.", description)
             logger.error(exc)
+            logger.info("end of except")
+        logger.info("increasing count")
         count += 1
+        logger.info("about to try condition")
         if count >= tries:
+            logger.info("count igreater than tries: %s", count)
             if exception:
+                logger.info("raisng exception")
                 raise exception
             else:
                 raise Exception(f"failed '{description}'")
