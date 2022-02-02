@@ -873,7 +873,7 @@ class Run(Command):
         test_id: UUID,
         *,
         endpoint: Optional[str],
-        tenant_domain: Optional[str] = None,
+        authority: Optional[str] = None,
         client_id: Optional[str],
         client_secret: Optional[str],
         poll: bool = False,
@@ -883,7 +883,7 @@ class Run(Command):
             endpoint=endpoint,
             client_id=client_id,
             client_secret=client_secret,
-            tenant_domain=tenant_domain,
+            authority=authority,
         )
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
         result = tester.check_jobs(
@@ -899,13 +899,13 @@ class Run(Command):
         endpoint: Optional[str],
         client_id: Optional[str],
         client_secret: Optional[str],
-        tenant_domain: Optional[str] = None,
+        authority: Optional[str] = None,
     ) -> None:
         self.onefuzz.__setup__(
             endpoint=endpoint,
             client_id=client_id,
             client_secret=client_secret,
-            tenant_domain=tenant_domain,
+            authority=authority,
         )
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
         launch_result, repros = tester.launch_repro()
@@ -918,7 +918,7 @@ class Run(Command):
         samples: Directory,
         *,
         endpoint: Optional[str] = None,
-        tenant_domain: Optional[str] = None,
+        authority: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
         pool_size: int = 10,
@@ -937,7 +937,7 @@ class Run(Command):
                 endpoint=endpoint,
                 client_id=client_id,
                 client_secret=client_secret,
-                tenant_domain=tenant_domain,
+                authority=authority,
             )
 
         retry(try_setup, "trying to configure")
@@ -952,7 +952,7 @@ class Run(Command):
         test_id: UUID,
         *,
         endpoint: Optional[str],
-        tenant_domain: Optional[str],
+        authority: Optional[str],
         client_id: Optional[str],
         client_secret: Optional[str],
     ) -> None:
@@ -960,7 +960,7 @@ class Run(Command):
             endpoint=endpoint,
             client_id=client_id,
             client_secret=client_secret,
-            tenant_domain=tenant_domain,
+            authority=authority,
         )
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id=test_id)
         tester.cleanup()
@@ -970,7 +970,7 @@ class Run(Command):
         test_id: UUID,
         *,
         endpoint: Optional[str],
-        tenant_domain: Optional[str] = None,
+        authority: Optional[str] = None,
         client_id: Optional[str],
         client_secret: Optional[str],
     ) -> None:
@@ -978,7 +978,7 @@ class Run(Command):
             endpoint=endpoint,
             client_id=client_id,
             client_secret=client_secret,
-            tenant_domain=tenant_domain,
+            authority=authority,
         )
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id=test_id)
         tester.check_logs_for_errors()
@@ -988,7 +988,7 @@ class Run(Command):
         samples: Directory,
         *,
         endpoint: Optional[str] = None,
-        tenant: Optional[str] = None,
+        authority: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
         pool_size: int = 15,
@@ -1006,7 +1006,7 @@ class Run(Command):
             self.launch(
                 samples,
                 endpoint=endpoint,
-                tenant_domain=tenant,
+                authority=authority,
                 client_id=client_id,
                 client_secret=client_secret,
                 pool_size=pool_size,
@@ -1019,7 +1019,7 @@ class Run(Command):
             self.check_jobs(
                 test_id,
                 endpoint=endpoint,
-                tenant_domain=tenant,
+                authority=authority,
                 client_id=client_id,
                 client_secret=client_secret,
                 poll=True,
@@ -1032,7 +1032,7 @@ class Run(Command):
                 self.check_repros(
                     test_id,
                     endpoint=endpoint,
-                    tenant_domain=tenant,
+                    authority=authority,
                     client_id=client_id,
                     client_secret=client_secret,
                 )
@@ -1042,7 +1042,7 @@ class Run(Command):
                 endpoint=endpoint,
                 client_id=client_id,
                 client_secret=client_secret,
-                tenant_domain=tenant,
+                authority=authority,
             )
 
         except Exception as e:
@@ -1059,7 +1059,7 @@ class Run(Command):
                 endpoint=endpoint,
                 client_id=client_id,
                 client_secret=client_secret,
-                tenant_domain=tenant,
+                authority=authority,
             )
         except Exception as e:
             self.logger.error("testing failed: %s", repr(e))

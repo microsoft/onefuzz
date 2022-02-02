@@ -167,7 +167,7 @@ class Deployer:
         instance: str,
         region: str,
         subscription_id: Optional[str],
-        tenant_domain: Optional[str],
+        authority: Optional[str],
         skip_tests: bool,
         test_args: List[str],
         repo: str,
@@ -185,7 +185,7 @@ class Deployer:
         self.unattended = unattended
         self.client_id: Optional[str] = None
         self.client_secret: Optional[str] = None
-        self.tenant_domain = tenant_domain
+        self.authority = authority
 
     def merge(self) -> None:
         if self.pr:
@@ -274,7 +274,7 @@ class Deployer:
             if self.unattended
             else ""
         )
-        tenant_args = f"--tenant {self.tenant_domain}" if self.tenant_domain else ""
+        authority_args = f"--authority {self.authority}" if self.authority else ""
 
         commands = [
             (
@@ -289,7 +289,7 @@ class Deployer:
                 (
                     f"{py} {test_dir}/{script} test {test_dir} "
                     f"--region {self.region} --endpoint {endpoint} "
-                    f"{tenant_args} "
+                    f"{authority_args} "
                     f"{unattended_args} {test_args}"
                 ),
             ),
@@ -365,7 +365,7 @@ def main() -> None:
     parser.add_argument("--skip-cleanup-on-failure", action="store_true")
     parser.add_argument("--merge-on-success", action="store_true")
     parser.add_argument("--subscription_id")
-    parser.add_argument("--tenant", default=None)
+    parser.add_argument("--authority", default=None)
     parser.add_argument("--test_args", nargs=argparse.REMAINDER)
     parser.add_argument("--unattended", action="store_true")
     args = parser.parse_args()
@@ -383,7 +383,7 @@ def main() -> None:
         test_args=args.test_args,
         repo=args.repo,
         unattended=args.unattended,
-        tenant_domain=args.tenant,
+        authority=args.authority,
     )
     with tempfile.TemporaryDirectory() as directory:
         os.chdir(directory)
