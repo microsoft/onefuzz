@@ -274,14 +274,13 @@ class TestOnefuzz:
             self.logger.info(
                 "endpoint configured. testing 'info get' with new service principal."
             )
-            self.of.info.get()
-            self.logger.info(
-                "successfully tested 'info get' with new service principal."
-            )
+            request_body = self.of.info.get()
+            self.logger.info(request_body)
 
         def try_create_test_pool(data: Any) -> None:
             self.logger.info("creating test pool: test")
-            self.of.pools.create(f"test-{uuid4()}", os_list[0])
+            request_body = self.of.pools.create(f"test-{uuid4()}", os_list[0])
+            self.logger.info(request_body)
 
         retry(try_info_get, "testing endpoint")
         retry(try_create_test_pool, "testing pool creation")
