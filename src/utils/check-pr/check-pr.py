@@ -167,6 +167,7 @@ class Deployer:
         instance: str,
         region: str,
         subscription_id: Optional[str],
+        tenant_domain: Optional[str],
         skip_tests: bool,
         test_args: List[str],
         repo: str,
@@ -182,8 +183,9 @@ class Deployer:
         self.test_args = test_args or []
         self.repo = repo
         self.unattended = unattended
-        self.client_id = None
-        self.client_secret = None
+        self.client_id: Optional[str] = None
+        self.client_secret: Optional[str] = None
+        self.tenant_domain = tenant_domain
 
     def merge(self) -> None:
         if self.pr:
@@ -272,6 +274,7 @@ class Deployer:
             if self.unattended
             else ""
         )
+        tenant_args = f"--tenant {self.tenant_domain}" if self.tenant_domain else ""
 
         commands = [
             (
@@ -286,6 +289,7 @@ class Deployer:
                 (
                     f"{py} {test_dir}/{script} test {test_dir} "
                     f"--region {self.region} --endpoint {endpoint} "
+                    f"{tenant_args} "
                     f"{unattended_args} {test_args}"
                 ),
             ),
@@ -361,6 +365,7 @@ def main() -> None:
     parser.add_argument("--skip-cleanup-on-failure", action="store_true")
     parser.add_argument("--merge-on-success", action="store_true")
     parser.add_argument("--subscription_id")
+    parser.add_argument("--tenant")
     parser.add_argument("--test_args", nargs=argparse.REMAINDER)
     parser.add_argument("--unattended", action="store_true")
     args = parser.parse_args()
