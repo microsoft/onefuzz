@@ -871,7 +871,7 @@
             "type": "Microsoft.EventGrid/systemTopics",
             "apiVersion": "2021-12-01",
             "name": "[variables('fuzz-blob-topic-name')]",
-            "location": "eastus2",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "source": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
                 "topicType": "microsoft.storage.storageaccounts"
