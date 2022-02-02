@@ -365,7 +365,7 @@ def main() -> None:
     parser.add_argument("--skip-cleanup-on-failure", action="store_true")
     parser.add_argument("--merge-on-success", action="store_true")
     parser.add_argument("--subscription_id")
-    parser.add_argument("--tenant")
+    parser.add_argument("--tenant", default=None)
     parser.add_argument("--test_args", nargs=argparse.REMAINDER)
     parser.add_argument("--unattended", action="store_true")
     args = parser.parse_args()
@@ -383,6 +383,7 @@ def main() -> None:
         test_args=args.test_args,
         repo=args.repo,
         unattended=args.unattended,
+        tenant_domain=args.tenant,
     )
     with tempfile.TemporaryDirectory() as directory:
         os.chdir(directory)
