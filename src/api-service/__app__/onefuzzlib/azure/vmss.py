@@ -18,6 +18,7 @@ from azure.mgmt.compute.models import (
     ResourceSkuRestrictionsType,
     VirtualMachineScaleSetVMInstanceIDs,
     VirtualMachineScaleSetVMInstanceRequiredIDs,
+    VirtualMachineScaleSetVMProtectionPolicy,
 )
 from memoization import cached
 from msrestazure.azure_exceptions import CloudError
@@ -147,6 +148,21 @@ def get_instance_id(name: UUID, vm_id: UUID) -> Union[str, Error]:
         errors=["unable to find scaleset machine: %s:%s" % (name, vm_id)],
     )
 
+@retry_on_auth_failure()
+def update_scale_in_protection(name: UUID, vm_id: UUID, protect_from_scale_in: bool):
+    instance_id = get_instance_id(name, vm_id)
+
+    if instance_id:
+        compute_client = get_compute_client()
+        resource_group = get_base_resource_group()
+
+        compute_client.virtual_machine_scale_set_vms.begin_update(
+            resource_group,
+            name,
+            instance_id,
+            # {"protection_policy": {"protectFromScaleIn": True}}
+            {"protection_policy": VirtualMachineScaleSetVMProtectionPolicy(protect_from_scale_in=protect_from_scale_in)}
+        )
 
 class UnableToUpdate(Exception):
     pass

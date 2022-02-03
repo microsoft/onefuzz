@@ -28,7 +28,7 @@ from onefuzztypes.primitives import PoolName
 from pydantic import Field
 
 from ..__version__ import __version__
-from ..azure.vmss import get_instance_id
+from ..azure.vmss import get_instance_id, update_scale_in_protection
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from ..versions import is_minimum_version
@@ -390,6 +390,7 @@ class Node(BASE_NODE, ORMMixin):
         # if we're going to reimage, make sure the node doesn't pick up new work
         # too.
         self.send_stop_if_free()
+        self.release_scale_in_protection()
 
         self.save()
 
@@ -502,6 +503,16 @@ class Node(BASE_NODE, ORMMixin):
             )
         )
 
+    def acquire_scale_in_protection(self):
+        if self.scaleset_node_exists():
+            logging.info("Setting scale-in protection on node %s", self.machine_id)
+            update_scale_in_protection(self.scaleset_id, self.machine_id, protect_from_scale_in=True)
+        
+
+    def release_scale_in_protection(self):
+        if not self.debug_keep_node and self.scaleset_node_exists():
+            logging.info("Removing scale-in protection on node %s", self.machine_id)
+            update_scale_in_protection(self.scaleset_id, self.machine_id, protect_from_scale_in=False)
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
     @classmethod
