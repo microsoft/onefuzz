@@ -237,7 +237,6 @@ def retry(
     while True:
         logger.info("About to try operation")
         try:
-            logger.info("inside try")
             return operation(data)
         except Exception as exc:
             if len(filter) > 0:
