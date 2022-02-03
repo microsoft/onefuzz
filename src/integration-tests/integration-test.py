@@ -235,7 +235,6 @@ def retry(
     logger = logging.getLogger("integration")
     count = 0
     while True:
-        logger.info("About to try operation")
         try:
             return operation(data)
         except Exception as exc:
@@ -253,11 +252,8 @@ def retry(
             logger.error("failed '%s'. logging stack trace.", description)
             logger.error(exc)
         count += 1
-        logger.info("about to try condition")
         if count >= tries:
-            logger.info("count igreater than tries: %s", count)
             if exception:
-                logger.info("raisng exception")
                 raise exception
             else:
                 raise Exception(f"failed '{description}'")
@@ -967,9 +963,8 @@ class Run(Command):
         def try_setup(data: Any) -> None:
             tester.setup(region=region, pool_size=pool_size, os_list=os_list)
 
-        retry(try_setup, "trying to setup resources.", filter=["AADSTS7000215"])
-        self.logger.info("Finished setup!")
-        raise Exception("Test Exception")
+        retry(try_setup, "deploying resources resources.", filter=["AADSTS7000215"])
+        self.logger.info("Setup Complete.")
         tester.launch(samples, os_list=os_list, targets=targets, duration=duration)
         return test_id
 
