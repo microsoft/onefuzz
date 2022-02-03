@@ -253,7 +253,6 @@ def retry(
             exception = exc
             logger.error("failed '%s'. logging stack trace.", description)
             logger.error(exc)
-        logger.info("increasing count")
         count += 1
         logger.info("about to try condition")
         if count >= tries:
