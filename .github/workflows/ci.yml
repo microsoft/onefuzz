@@ -91,7 +91,6 @@ jobs:
         cd src/cli
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
-        pip-licenses -uf json > onefuzz/data/licenses.json
         python setup.py sdist bdist_wheel
         pip install -r ./requirements.txt ../../artifacts/sdk/*.whl
         pip install six
