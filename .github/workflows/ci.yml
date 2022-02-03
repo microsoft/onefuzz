@@ -89,6 +89,10 @@ jobs:
         set -ex
         ls artifacts
         cd src/cli
+        python --version
+        python -mvenv venv
+        ls venv
+        . venv/Scripts/activate
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
         pip-licenses -uf json > onefuzz/data/licenses.json
