@@ -12,7 +12,7 @@ azure-applicationinsights==0.1.0
 tenacity==8.0.1
 docstring_parser==0.8.1
 azure-identity==1.7.1
-azure-cli-core==2.31.0
+azure-cli-core==2.32.0
 # packaging is required but not specified by azure-cli-core
 packaging==20.9
 # urllib3[secure] needs to be specifically stated for azure-cli-core
