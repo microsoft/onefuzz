@@ -974,7 +974,7 @@ class Run(Command):
         def try_setup(data: Any) -> None:
             tester.setup(region=region, pool_size=pool_size, os_list=os_list)
 
-        retry(try_setup, "trying to setup resources.")
+        retry(try_setup, "trying to setup resources.", filter = ["AADSTS7000215"])
         self.logger.info("Finished setup!")
         raise Exception("Test Exception")
         tester.launch(samples, os_list=os_list, targets=targets, duration=duration)
