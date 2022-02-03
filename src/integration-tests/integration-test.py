@@ -286,20 +286,6 @@ class TestOnefuzz:
         pool_size: int,
         os_list: List[OS],
     ) -> None:
-        # def try_info_get(data: Any) -> None:
-        #     self.logger.info(
-        #         "endpoint configured. testing 'info get' with new service principal."
-        #     )
-        #     request_body = self.of.info.get()
-        #     self.logger.info(request_body)
-
-        # def try_create_test_pool(data: Any) -> None:
-        #     self.logger.info("creating test pool: test")
-        #     request_body = self.of.pools.create(f"test-{uuid4()}", os_list[0])
-        #     self.logger.info(request_body)
-
-        # retry(try_info_get, "testing endpoint", filter = ["AADSTS7000215"])
-        # retry(try_create_test_pool, "testing pool creation", filter = ["AADSTS7000215"])
 
         self.inject_log(self.start_log_marker)
         for entry in os_list:
