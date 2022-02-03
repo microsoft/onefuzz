@@ -230,6 +230,7 @@ def retry(
     tries: int = 10,
     wait_duration: int = 10,
     data: Any = None,
+    filter: List[str] = [],
 ) -> OperationResult:
     logger = logging.getLogger("integration")
     count = 0
@@ -239,11 +240,19 @@ def retry(
             logger.info("inside try")
             return operation(data)
         except Exception as exc:
-            logger.info("inside except")
+            if len(filter) > 0:
+                message = str(exc)
+                retry = False
+                for item in filter:
+                    if item in message:
+                        logger.info("Found Client Secret Error. Retrying.")
+                        retry = True
+                        break
+                if not retry:
+                    raise exc
             exception = exc
             logger.error("failed '%s'. logging stack trace.", description)
             logger.error(exc)
-            logger.info("end of except")
         logger.info("increasing count")
         count += 1
         logger.info("about to try condition")
@@ -278,29 +287,43 @@ class TestOnefuzz:
         pool_size: int,
         os_list: List[OS],
     ) -> None:
-        def try_info_get(data: Any) -> None:
-            self.logger.info(
-                "endpoint configured. testing 'info get' with new service principal."
-            )
-            request_body = self.of.info.get()
-            self.logger.info(request_body)
+        # def try_info_get(data: Any) -> None:
+        #     self.logger.info(
+        #         "endpoint configured. testing 'info get' with new service principal."
+        #     )
+        #     request_body = self.of.info.get()
+        #     self.logger.info(request_body)
 
-        def try_create_test_pool(data: Any) -> None:
-            self.logger.info("creating test pool: test")
-            request_body = self.of.pools.create(f"test-{uuid4()}", os_list[0])
-            self.logger.info(request_body)
+        # def try_create_test_pool(data: Any) -> None:
+        #     self.logger.info("creating test pool: test")
+        #     request_body = self.of.pools.create(f"test-{uuid4()}", os_list[0])
+        #     self.logger.info(request_body)
 
-        retry(try_info_get, "testing endpoint")
-        retry(try_create_test_pool, "testing pool creation")
+        # retry(try_info_get, "testing endpoint", filter = ["AADSTS7000215"])
+        # retry(try_create_test_pool, "testing pool creation", filter = ["AADSTS7000215"])
 
         self.inject_log(self.start_log_marker)
         for entry in os_list:
             name = PoolName(f"testpool-{entry.name}-{self.test_id}")
-            self.logger.info("creating pool: %s:%s", entry.name, name)
-            self.pools[entry] = self.of.pools.create(name, entry)
-            self.logger.info("creating scaleset for pool: %s", name)
-            self.of.scalesets.create(name, pool_size, region=region)
-            raise Exception("Test Exception")
+            try:
+                self.logger.info("creating pool: %s:%s", entry.name, name)
+                self.pools[entry] = self.of.pools.create(name, entry)
+            except Exception as exc:
+                message = str(exc)
+                if "AADSTS7000215" in message:
+                    self.logger.info("Client Secret Error Found. Raising Exception")
+                    raise exc
+                self.logger.info("Pool already exists. Continue Setup.")
+
+            try:
+                self.logger.info("creating scaleset for pool: %s", name)
+                self.of.scalesets.create(name, pool_size, region=region)
+            except Exception as exc:
+                message = str(exc)
+                if "AADSTS7000215" in message:
+                    self.logger.info("Client Secret Error Found. Raising Exception")
+                    raise exc
+                self.logger.info("Scaleset already exists. Continue Setup.")
 
     def launch(
         self, path: Directory, *, os_list: List[OS], targets: List[str], duration=int
@@ -942,15 +965,18 @@ class Run(Command):
             test_id = uuid4()
         self.logger.info("launching test_id: %s", test_id)
 
-        def try_setup(data: Any) -> None:
-            self.onefuzz.__setup__(
-                endpoint=endpoint, client_id=client_id, client_secret=client_secret
-            )
-
-        retry(try_setup, "trying to configure")
+        self.onefuzz.__setup__(
+            endpoint=endpoint, client_id=client_id, client_secret=client_secret
+        )
 
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
-        tester.setup(region=region, pool_size=pool_size, os_list=os_list)
+
+        def try_setup(data: Any) -> None:
+            tester.setup(region=region, pool_size=pool_size, os_list=os_list)
+
+        retry(try_setup, "trying to setup resources.")
+        self.logger.info("Finished setup!")
+        raise Exception("Test Exception")
         tester.launch(samples, os_list=os_list, targets=targets, duration=duration)
         return test_id
 
