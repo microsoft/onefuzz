@@ -15,7 +15,7 @@ from .events import Event, EventMessage, EventType
 
 
 class WebhookMessageFormat(Enum):
-    one_fuzz = "one_fuzz"
+    onefuzz = "onefuzz"
     event_grid = "event_grid"
 
 
