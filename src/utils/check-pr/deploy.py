@@ -11,7 +11,8 @@ from typing import List, Optional
 
 from cleanup_ad import delete_current_user_app_registrations
 
-from .githubClient import GithubClient
+from .github_client import GithubClient
+from pydantic import BaseModel
 
 
 def venv_path(base: str, name: str) -> str:
@@ -24,7 +25,7 @@ def venv_path(base: str, name: str) -> str:
     raise Exception("missing venv")
 
 
-class TestConfig:
+class TestConfig(BaseModel):
     def __init__(
         self,
         *,
@@ -55,6 +56,18 @@ class TestConfig:
         self.release_filename = "release-artifacts.zip"
         self.test_filename = "integration-test-artifacts.zip"
         self.directory = directory
+
+    @classmethod
+    def load_config(cls, path: str) -> "TestConfig":
+        return cls.parse_file(path)
+
+    def save(self, path: str) -> None:
+        with open(path, "w") as handle:
+            handle.write(
+                self.json(
+                    indent=4, exclude_none=True, exclude={"client_id", "client_secret"}
+                )
+            )
 
 
 class Deployer:

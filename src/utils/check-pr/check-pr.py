@@ -9,8 +9,8 @@ import subprocess
 import tempfile
 import uuid
 
-from .deploy import Deployer, Tester
-from .githubClient import GithubClient, download_artifacts
+from .deploy import Deployer, Tester, TestConfig
+from .github_client import GithubClient, download_artifacts
 
 
 def main() -> None:
@@ -46,9 +46,7 @@ def main() -> None:
         raise Exception("--branch or --pr is required")
 
     with tempfile.TemporaryDirectory() as directory:
-
-        githubClient = GithubClient()
-        deployer = Deployer(
+        test_config = TestConfig(
             branch=args.branch,
             pr=args.pr,
             instance=args.instance,
@@ -61,7 +59,9 @@ def main() -> None:
             authority=args.authority,
             directory=directory,
         )
-        tester = Tester(deployer.test_filename)
+        githubClient = GithubClient()
+        deployer = Deployer(test_config)
+        tester = Tester(test_config)
 
         try:
             download_artifacts(githubClient, args.repo, args.branch, args.pr, directory)
