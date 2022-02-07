@@ -183,7 +183,7 @@ def update_scale_in_protection(name: UUID, vm_id: UUID, protect_from_scale_in: b
     except:
         return Error(
             code=ErrorCode.UNABLE_TO_UPDATE,
-            errors=["unable to set protection policy on vm instance: "]
+            errors=["unable to set protection policy on: %s:%s" % (vm_id, instance_id)]
         )
 
     logging.info("Successfully set scale in protection on node %s to %s" % (vm_id, protect_from_scale_in))
