@@ -163,7 +163,7 @@ def update_scale_in_protection(name: UUID, vm_id: UUID, protect_from_scale_in: b
     except:
         return Error(
             code=ErrorCode.UNABLE_TO_FIND,
-            errors=["unable to find vm instance: %s:%s:%s" % (name, vm_id, instance_id)]
+            errors=["unable to find vm instance: %s:%s" % (name, instance_id)]
         )
 
     new_protection_policy = VirtualMachineScaleSetVMProtectionPolicy(protect_from_scale_in = protect_from_scale_in)
@@ -186,7 +186,7 @@ def update_scale_in_protection(name: UUID, vm_id: UUID, protect_from_scale_in: b
             errors=["unable to set protection policy on vm instance: "]
         )
 
-    logging.info("Successfully updated scale in protection on node: %s" % (vm_id))
+    logging.info("Successfully set scale in protection on node %s to %s" % (vm_id, protect_from_scale_in))
     return None
 
 class UnableToUpdate(Exception):
