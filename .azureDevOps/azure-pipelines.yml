@@ -6,19 +6,90 @@
 trigger:
 - main
 
+parameters:
+  - name: runConfig
+    displayName: Run configuration
+    values:
+      - stas-check-pr
+      - mgreisen-check-pr
+      - joranwei-check-pr
+      - tevoinea-check-pr
+      - chkeita-check-pr
+
+  - name: pr
+    displayName: 'pull request #'
+    type: string
+
+  - name: retriesOnFailure
+    displayName: Number times to re-run check-pr on failure
+    type: number
+    default: 10
+
+  - name: mergeOnSuccess
+    displayName: merge on success
+    type: boolean
+    default: false
+
+  - name: skipCleanupOnFailure
+    displayName: Skip Cleanup on Failure
+    type: boolean
+    default: false
+
+  - name: region
+    displayName: Region to use for testing
+    type: string
+    default: default
+    values:
+      - default
+      - westus2
+      - westus3
+      - eastus
+      - eastus2
+      - southcentralus
+      - westeurope
+      - northeurope
+      - uksouth
+      - australiaeast
+
+variables:
+- name: github_pat
+  value: test 
+
 pool:
   vmImage: ubuntu-latest
 
-steps:
+jobs:
+- job: 'download'
+  continueOnError: false
+  steps:
+  - checkout: self
+  - task: UsePythonVersion@0
+    displayName: 'Use Python 3.8'
+    inputs:
+      versionSpec: '3.8'
 
-- script: |
-    echo Hello, world!
-  displayName: 'Run a one-line script'
+  - script: python -m pip install --upgrade pip setuptools wheel
+    displayName: 'Install tools'
+
+  - script: pip install -r src/utils/check-pr/requirements.txt
+    displayName: 'Install Requirements'
+
+  - script: wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb && sudo dpkg -i packages-microsoft-prod.deb
+    displayName: 'Install function tools'
+
+  - script: sudo apt-get update && sudo apt-get install azure-functions-core-tools-3
+    displayName: apt-get update
+  - task: PythonScript@0
+    displayName: 'download'
+    inputs:
+      scriptSource: 'filePath'
+      scriptPath: 'src\utils\check-pr\download_artifact.py'
+      arguments: --pr ${{ parameters.pr }}
+      
+
+
+- job: 'deploy'
+  dependsOn: 'download'
+
   
-  
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
-
+      
