@@ -52,7 +52,7 @@ def wait(func: Callable[[], Tuple[bool, str, A]], frequency: float = 1.0) -> A:
     return result[2]
 
 
-class Downloader:
+class GithubClient:
     def __init__(self) -> None:
         self.gh = Github(login_or_token=os.environ["GITHUB_ISSUE_TOKEN"])
 
@@ -80,7 +80,7 @@ class Downloader:
         branch: Optional[str],
         pr: Optional[int],
         name: str,
-        filename: str,
+        file_path: str,
     ) -> None:
         print(f"getting {name}")
 
@@ -98,7 +98,7 @@ class Downloader:
         if code != 302:
             raise Exception(f"unexpected response: {resp}")
 
-        with open(filename, "wb") as handle:
+        with open(file_path, "wb") as handle:
             for chunk in requests.get(resp["location"], stream=True).iter_content(
                 chunk_size=1024 * 16
             ):
@@ -139,16 +139,22 @@ class Downloader:
 
 
 def download_artifacts(
-    downloader: Downloader, repo, branch, pr, *, merge_on_success: bool = False
+    downloader: GithubClient,
+    repo: str,
+    branch: Optional[str],
+    pr: Optional[int],
+    directory: str,
+    merge_on_success: bool = False,
 ) -> None:
     release_filename = "release-artifacts.zip"
+
     downloader.get_artifact(
         repo,
         "ci.yml",
         branch,
         pr,
         "release-artifacts",
-        release_filename,
+        os.path.join(directory, release_filename),
     )
 
     test_filename = "integration-test-artifacts.zip"
@@ -158,7 +164,7 @@ def download_artifacts(
         branch,
         pr,
         "integration-test-artifacts",
-        test_filename,
+        os.path.join(directory, test_filename),
     )
 
 
@@ -172,8 +178,8 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    downloader = Downloader()
-    download_artifacts(downloader, args.repo, args.branch, args.pr)
+    downloader = GithubClient()
+    download_artifacts(downloader, args.repo, args.branch, args.pr, os.getcwd())
 
 
 if __name__ == "__main__":
