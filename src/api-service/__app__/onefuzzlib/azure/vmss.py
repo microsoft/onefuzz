@@ -148,8 +148,11 @@ def get_instance_id(name: UUID, vm_id: UUID) -> Union[str, Error]:
         errors=["unable to find scaleset machine: %s:%s" % (name, vm_id)],
     )
 
+
 @retry_on_auth_failure()
-def update_scale_in_protection(name: UUID, vm_id: UUID, protect_from_scale_in: bool) -> Optional[Error]:
+def update_scale_in_protection(
+    name: UUID, vm_id: UUID, protect_from_scale_in: bool
+) -> Optional[Error]:
     instance_id = get_instance_id(name, vm_id)
 
     if isinstance(instance_id, Error):
@@ -159,35 +162,40 @@ def update_scale_in_protection(name: UUID, vm_id: UUID, protect_from_scale_in: b
     resource_group = get_base_resource_group()
 
     try:
-        instance_vm = compute_client.virtual_machine_scale_set_vms.get(resource_group, name, instance_id)
+        instance_vm = compute_client.virtual_machine_scale_set_vms.get(
+            resource_group, name, instance_id
+        )
     except:
         return Error(
             code=ErrorCode.UNABLE_TO_FIND,
-            errors=["unable to find vm instance: %s:%s" % (name, instance_id)]
+            errors=["unable to find vm instance: %s:%s" % (name, instance_id)],
         )
 
-    new_protection_policy = VirtualMachineScaleSetVMProtectionPolicy(protect_from_scale_in = protect_from_scale_in)
+    new_protection_policy = VirtualMachineScaleSetVMProtectionPolicy(
+        protect_from_scale_in=protect_from_scale_in
+    )
     if instance_vm.protection_policy is not None:
         new_protection_policy = instance_vm.protection_policy
         new_protection_policy.protect_from_scale_in = protect_from_scale_in
-    
+
     instance_vm.protection_policy = new_protection_policy
 
     try:
         compute_client.virtual_machine_scale_set_vms.begin_update(
-            resource_group,
-            name,
-            instance_id,
-            instance_vm
+            resource_group, name, instance_id, instance_vm
         )
     except:
         return Error(
             code=ErrorCode.UNABLE_TO_UPDATE,
-            errors=["unable to set protection policy on: %s:%s" % (vm_id, instance_id)]
+            errors=["unable to set protection policy on: %s:%s" % (vm_id, instance_id)],
         )
 
-    logging.info("Successfully set scale in protection on node %s to %s" % (vm_id, protect_from_scale_in))
+    logging.info(
+        "Successfully set scale in protection on node %s to %s"
+        % (vm_id, protect_from_scale_in)
+    )
     return None
+
 
 class UnableToUpdate(Exception):
     pass
