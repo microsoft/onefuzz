@@ -90,6 +90,16 @@ jobs:
 
 - job: 'deploy'
   dependsOn: 'download'
+  steps: 
+  - task: PowerShell@2
+    inputs:
+      targetType: 'inline'
+      script: |
+        # Write your PowerShell commands here.
+        Expand-Archive "release-artifacts" .
+        Write-Host "Hello World"
+      pwsh: true
+
 
   
       
