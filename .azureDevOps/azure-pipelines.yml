@@ -115,7 +115,7 @@ jobs:
         python -m venv .env
         . ./.env/bin/Activate.ps1
         ls -al
-        Expand-Archive -Path release-artifacts -DestinationPath .
+        Expand-Archive -Path release-artifacts.zip -DestinationPath .
         Expand-Archive -Path onefuzz-deployment*.zip
         pip install install -q wheel
         pip install -q -r requirements.txt
