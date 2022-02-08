@@ -91,10 +91,6 @@ jobs:
         python -mvenv cli_venv
         . cli_venv/Scripts/activate
         cd src/cli
-        python --version
-        python -mvenv venv
-        ls venv
-        . venv/Scripts/activate
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
         pip-licenses -uf json > onefuzz/data/licenses.json
