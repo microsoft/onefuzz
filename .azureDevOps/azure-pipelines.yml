@@ -111,11 +111,10 @@ jobs:
       targetType: 'inline'
       script: |
         # Write your PowerShell commands here.
-        Set-PSDebug -Trace 1
         cd $(Build.SourcesDirectory)/checkpr/
         python -m venv .env
         . ./.env/bin/Activate.ps1
-        dir
+        ls -al
         Expand-Archive -Path release-artifacts -DestinationPath .
         Expand-Archive -Path onefuzz-deployment*.zip
         pip install install -q wheel
