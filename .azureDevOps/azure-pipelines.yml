@@ -102,7 +102,7 @@ jobs:
       targetType: 'inline'
       script: |
         # Write your PowerShell commands here.
-        Expand-Archive "release-artifacts" .
+        Expand-Archive $(Build.SourcesDirectory)/release-artifacts .
         Write-Host "Hello World"
       pwsh: true
 
