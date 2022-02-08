@@ -70,7 +70,10 @@ def main() -> None:
                 client_id, client_secret = deployer.register()
 
             tester.run(
-                githubClient=githubClient, merge_on_success=args.merge_on_success, client_id=client_id, client_secret=client_secret
+                githubClient=githubClient,
+                merge_on_success=args.merge_on_success,
+                client_id=client_id,
+                client_secret=client_secret,
             )
             tester.cleanup(args.skip_cleanup)
             return
