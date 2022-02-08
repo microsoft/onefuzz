@@ -16,8 +16,8 @@ parameters:
       - tevoinea-check-pr
       - chkeita-check-pr
 
-  - name: pr
-    displayName: 'pull request #'
+  - name: branch
+    displayName: 'branch name'
     type: string
 
   - name: retriesOnFailure
@@ -88,7 +88,7 @@ jobs:
     inputs:
       scriptSource: 'filePath'
       scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
-      arguments: --pr ${{ parameters.pr }}
+      arguments: --branch ${{ parameters.branch }}
     env:
       GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
 
