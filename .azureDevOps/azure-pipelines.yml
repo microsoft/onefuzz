@@ -54,6 +54,8 @@ parameters:
 variables:
 - group: 1f-service-account
 - group: ${{ parameters.runConfig }}
+- name: github_pat
+  value: test
 
 pool:
   vmImage: ubuntu-latest
