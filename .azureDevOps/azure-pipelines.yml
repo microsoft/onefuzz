@@ -58,7 +58,7 @@ variables:
   value: test
 
 - name: instance
-  value: check-pr-$(Build.BuildId)-$(System.JobAttempt)-$(System.JobId)
+  value: check-pr2-$(Build.BuildId)-$(System.JobAttempt)-$(System.JobId)
 
 - name: subscription
   value: "038d675a-9bbe-4964-9cd1-6d50071a61b5"
@@ -76,28 +76,9 @@ pool:
   vmImage: ubuntu-latest
 
 jobs:
-- job: 'download'
+- job: 'deploy'
   steps:
-  - checkout: self
-  - task: UsePythonVersion@0
-    displayName: 'Use Python 3.8'
-    inputs:
-      versionSpec: '3.8'
-
-  - script: python -m pip install --upgrade pip setuptools wheel
-    displayName: 'Install tools'
-
-  - script: pip install -r src/utils/check-pr/requirements.txt
-    displayName: 'Install Requirements'
-
-  - script: wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb && sudo dpkg -i packages-microsoft-prod.deb
-    displayName: 'Install function tools'
-
-  - script: sudo apt-get update && sudo apt-get install azure-functions-core-tools-3
-    displayName: apt-get update
-  
-  - script: az login -u 1f-test-runner@microsoft.com -p $(1f-test-runner)
-    displayName: Login
+  - template: common-steps.yml
   - task: PythonScript@0
     displayName: 'download'
     inputs:
@@ -106,21 +87,37 @@ jobs:
       arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr
     env:
       GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
-  - task: PowerShell@2
-    inputs:
-      targetType: 'inline'
-      script: |
-        # Write your PowerShell commands here.
-        cd $(Build.SourcesDirectory)/checkpr/
-        python -m venv .env
-        . ./.env/bin/Activate.ps1
-        ls -al
-        Expand-Archive -Path release-artifacts.zip -DestinationPath .
-        Expand-Archive -Path onefuzz-deployment*.zip -DestinationPath .
-        pip install install -q wheel
-        pip install -q -r requirements.txt
-        python deploy.py eastus2 chkeitacheckpr chkeitacheckpr chkeita@microsoft.com config.json
-      pwsh: true
+  - pwsh: |
+      # Write your PowerShell commands here.
+      cd $(Build.SourcesDirectory)/checkpr/
+      Expand-Archive -Path release-artifacts.zip -DestinationPath .
+      Expand-Archive -Path onefuzz-deployment*.zip -DestinationPath .
+
+      name: 'expand'
+
+  - pwsh: |
+      python -m venv .env
+      . ./.env/bin/Activate.ps1
+      ls -al
+      pip install install -q wheel
+      pip install -q -r requirements.txt
+      python deploy.py $(testRegion) $(instance) $(instance) azure-pipelines config.json
+      # register cli 
+      # set secret 
+      $registration_info = python deploylib/registration.py create_cli_registration $(instance) $(subscription) --registration_name
+
+      $registration_info | % {
+        $m = [regex]::Match("$_", "client_id: (?<client_id>.+)|client_secret: (?<client_secret>.+)")
+        if ($m.Groups["client_secret"]) {
+          Write-Host "##vso[task.setvariable client_secret=$($m.Groups["client_secret"].Value);issecret=true]secretvalue"
+        }
+        if ($m.Groups["client_id"]) {
+          Write-Host "##vso[task.setvariable client_id=$($m.Groups["client_id"].Value);issecret=true]secretvalue"
+        }
+      }
+      name: deploy
+
+- job: 'test'
 
 
 
