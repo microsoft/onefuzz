@@ -58,7 +58,7 @@ class TestConfig(BaseModel):
 
     @classmethod
     def load_config(cls, path: str) -> "TestConfig":
-        return cls.parse_file(path)
+        return TestConfig.parse_file(path)
 
     def save(self, path: str) -> None:
         with open(path, "w") as handle:
