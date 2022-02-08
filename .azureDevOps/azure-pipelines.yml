@@ -57,6 +57,21 @@ variables:
 - name: github_pat
   value: test
 
+- name: instance
+  value: check-pr-$(Build.BuildId)-$(System.JobAttempt)-$(System.JobId)
+
+- name: subscription
+  value: "038d675a-9bbe-4964-9cd1-6d50071a61b5"
+
+- name: skipCleanupOnFailure
+  value: ${{ parameters.skipCleanupOnFailure }}
+
+- name: testRegion
+  ${{ if eq(parameters.region, 'default') }}:
+    value: $(region)
+  ${{ else }}:
+    value: ${{ parameters.region }}
+
 pool:
   vmImage: ubuntu-latest
 
@@ -91,18 +106,21 @@ jobs:
       arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr
     env:
       GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
-
-
-
-- job: 'deploy'
-  dependsOn: 'download'
-  steps:
   - task: PowerShell@2
     inputs:
       targetType: 'inline'
       script: |
         # Write your PowerShell commands here.
-        Expand-Archive -Path $(Build.SourcesDirectory)/checkpr/release-artifacts -DestinationPath .
+        Set-PSDebug -Trace 1
+        cd $(Build.SourcesDirectory)/checkpr/
+        python -m venv .env
+        .env/scripts/activate 
+        Expand-Archive -Path release-artifacts -DestinationPath .
+        Expand-Archive -Path $(Build.SourcesDirectory)/checkpr/release-artifacts/onefuzz-deployment*.zip
+        pip install install -q wheel
+        pip install -q -r requirements.txt
+        python deploy $(region) chkeitacheckpr chkeitacheckpr chkeita@microsoft.com `@config.json
+
         Write-Host "Hello World"
       pwsh: true
 
