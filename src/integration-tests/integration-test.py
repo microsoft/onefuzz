@@ -228,7 +228,7 @@ def retry(
     operation: Callable[[Any], OperationResult],
     description: str,
     tries: int = 10,
-    wait_duration: int = 10,
+    wait_duration: int = 60,
     data: Any = None,
     filter: List[str] = [],
 ) -> OperationResult:
@@ -901,6 +901,7 @@ class Run(Command):
         poll: bool = False,
         stop_on_complete_check: bool = False,
     ) -> None:
+
         self.onefuzz.__setup__(
             endpoint=endpoint,
             client_id=client_id,
@@ -957,8 +958,8 @@ class Run(Command):
         self.onefuzz.__setup__(
             endpoint=endpoint, client_id=client_id, client_secret=client_secret
         )
-
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
+        self.logger.info("Client ID: %s Client Secret: %s", client_id, client_secret)
 
         def try_setup(data: Any) -> None:
             tester.setup(region=region, pool_size=pool_size, os_list=os_list)
