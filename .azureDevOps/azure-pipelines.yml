@@ -119,7 +119,7 @@ jobs:
         Expand-Archive -Path onefuzz-deployment*.zip -DestinationPath .
         pip install install -q wheel
         pip install -q -r requirements.txt
-        python deploy.py eastus2 chkeitacheckpr chkeitacheckpr chkeita@microsoft.com `@config.json
+        python deploy.py eastus2 chkeitacheckpr chkeitacheckpr chkeita@microsoft.com config.json
       pwsh: true
 
 
