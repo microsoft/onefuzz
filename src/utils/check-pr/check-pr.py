@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 import uuid
 
-from .deploy import Deployer, Tester, TestConfig
+from .deploy import Deployer, TestConfig, Tester
 from .github_client import GithubClient, download_artifacts
 
 
@@ -66,8 +66,11 @@ def main() -> None:
         try:
             download_artifacts(githubClient, args.repo, args.branch, args.pr, directory)
             deployer.deploy()
+            if test_config.unattended:
+                client_id, client_secret = deployer.register()
+
             tester.run(
-                githubClient=githubClient, merge_on_success=args.merge_on_success
+                githubClient=githubClient, merge_on_success=args.merge_on_success, client_id=client_id, client_secret=client_secret
             )
             tester.cleanup(args.skip_cleanup)
             return

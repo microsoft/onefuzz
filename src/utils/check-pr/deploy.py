@@ -7,12 +7,13 @@ import os
 import subprocess
 import tempfile
 import time
-from typing import List, Optional
+from typing import List, Optional, Tuple
+
+from pydantic import BaseModel
 
 from cleanup_ad import delete_current_user_app_registrations
 
 from .github_client import GithubClient
-from pydantic import BaseModel
 
 
 def venv_path(base: str, name: str) -> str:
@@ -50,8 +51,6 @@ class TestConfig(BaseModel):
         self.test_args = test_args or []
         self.repo = repo
         self.unattended = unattended
-        self.client_id: Optional[str] = None
-        self.client_secret: Optional[str] = None
         self.authority = authority
         self.release_filename = "release-artifacts.zip"
         self.test_filename = "integration-test-artifacts.zip"
@@ -63,11 +62,7 @@ class TestConfig(BaseModel):
 
     def save(self, path: str) -> None:
         with open(path, "w") as handle:
-            handle.write(
-                self.json(
-                    indent=4, exclude_none=True, exclude={"client_id", "client_secret"}
-                )
-            )
+            handle.write(self.json(indent=4, exclude_none=True))
 
 
 class Deployer:
@@ -107,10 +102,7 @@ class Deployer:
             print(msg)
             subprocess.check_call(cmd, shell=True)
 
-        if self.test_config.unattended:
-            self.register()
-
-    def register(self) -> None:
+    def register(self) -> Tuple[str, str]:
         sp_name = "sp_" + self.test_config.instance
         print(f"registering {sp_name} to {self.test_config.instance}")
 
@@ -143,21 +135,22 @@ class Deployer:
                     if "client_id" in line:
                         line_list = line.split(":")
                         client_id = line_list[1].strip()
-                        self.test_config.client_id = client_id
                         print(("client_id: " + client_id))
                     if "client_secret" in line:
                         line_list = line.split(":")
                         client_secret = line_list[1].strip()
-                        self.test_config.client_secret = client_secret
+
         time.sleep(30)
-        return
+        return client_id, client_secret
 
 
 class Tester:
     def __init__(self, test_config: TestConfig):
         self.test_config = test_config
 
-    def test(self) -> None:
+    def test(
+        self, client_id: Optional[str] = None, client_secret: Optional[str] = None
+    ) -> None:
         venv = "test-venv"
         subprocess.check_call(f"python -mvenv {venv}", shell=True)
         py = venv_path(venv, "python")
@@ -165,17 +158,9 @@ class Tester:
         script = "integration-test.py"
         endpoint = f"https://{self.test_config.instance}.azurewebsites.net"
         test_args = " ".join(self.test_config.test_args)
-        client_id_arg = (
-            f"--client_id {self.test_config.client_id}"
-            if self.test_config.client_id
-            else ""
-        )
+        client_id_arg = f"--client_id {client_id}" if client_id else ""
 
-        client_secret_arg = (
-            f"--client_secret {self.test_config.client_secret}"
-            if self.test_config.client_secret
-            else ""
-        )
+        client_secret_arg = f"--client_secret {client_secret}" if client_secret else ""
         authority_args = (
             f"--authority {self.test_config.authority}"
             if self.test_config.authority

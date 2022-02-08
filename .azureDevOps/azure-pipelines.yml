@@ -53,14 +53,13 @@ parameters:
 
 variables:
 - name: github_pat
-  value: test 
+  value: test
 
 pool:
   vmImage: ubuntu-latest
 
 jobs:
 - job: 'download'
-  continueOnError: false
   steps:
   - checkout: self
   - task: UsePythonVersion@0
@@ -83,14 +82,14 @@ jobs:
     displayName: 'download'
     inputs:
       scriptSource: 'filePath'
-      scriptPath: 'src\utils\check-pr\download_artifact.py'
+      scriptPath: 'src\utils\check-pr\github_client.py'
       arguments: --pr ${{ parameters.pr }}
-      
+
 
 
 - job: 'deploy'
   dependsOn: 'download'
-  steps: 
+  steps:
   - task: PowerShell@2
     inputs:
       targetType: 'inline'
@@ -101,5 +100,4 @@ jobs:
       pwsh: true
 
 
-  
-      
+
