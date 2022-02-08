@@ -114,9 +114,10 @@ jobs:
         Set-PSDebug -Trace 1
         cd $(Build.SourcesDirectory)/checkpr/
         python -m venv .env
-        . ./.env/bin/Activate.ps1 
+        . ./.env/bin/Activate.ps1
+        dir
         Expand-Archive -Path release-artifacts -DestinationPath .
-        Expand-Archive -Path $(Build.SourcesDirectory)/checkpr/release-artifacts/onefuzz-deployment*.zip
+        Expand-Archive -Path onefuzz-deployment*.zip
         pip install install -q wheel
         pip install -q -r requirements.txt
         python deploy $(region) chkeitacheckpr chkeitacheckpr chkeita@microsoft.com `@config.json
