@@ -60,6 +60,9 @@ variables:
 - name: instance
   value: check-pr2-$(Build.BuildId)-$(System.JobAttempt)-$(System.JobId)
 
+- name: endpoint
+  value: 'https://$(instance).azurewebsites.net'
+
 - name: subscription
   value: "038d675a-9bbe-4964-9cd1-6d50071a61b5"
 
@@ -92,13 +95,13 @@ jobs:
       cd $(Build.SourcesDirectory)/checkpr/
       Expand-Archive -Path release-artifacts.zip -DestinationPath .
       Expand-Archive -Path onefuzz-deployment*.zip -DestinationPath .
-
+      
       name: 'expand'
 
   - pwsh: |
       python -m venv .env
       . ./.env/bin/Activate.ps1
-      ls -al
+      cd $(Build.SourcesDirectory)/checkpr/
       pip install install -q wheel
       pip install -q -r requirements.txt
       python deploy.py $(testRegion) $(instance) $(instance) azure-pipelines config.json
@@ -118,6 +121,31 @@ jobs:
       name: deploy
 
 - job: 'test'
+  steps: 
+  - template: common-steps.yml
+  - task: PythonScript@0
+    displayName: 'download'
+    inputs:
+      scriptSource: 'filePath'
+      scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
+      arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr
+    env:
+      GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
 
+  - pwsh: |
+      # Write your PowerShell commands here.
+      cd $(Build.SourcesDirectory)/checkpr/
+      Expand-Archive -Path integration-test-artifacts.zip -DestinationPath .
+    name: 'deploy'
+  
+  
+  - pwsh: |
+      python -m venv .env
+      . ./.env/bin/Activate.ps1
+      cd $(Build.SourcesDirectory)/checkpr/
+      pip install install -q wheel
+      pip install -q -r requirements.txt
+      pip install sdk/onefuzztypes-*.whl
+      pip install sdk/onefuzz-*.whl
 
-
+      python integration-test.py test . --region $(testRegion) --endpoint $(endpoint) --client_id $(client_id) --client_secret $(client_secret) --targets "linux-libfuzzer" 
