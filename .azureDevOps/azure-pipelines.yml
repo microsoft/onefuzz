@@ -78,6 +78,9 @@ jobs:
 
   - script: sudo apt-get update && sudo apt-get install azure-functions-core-tools-3
     displayName: apt-get update
+  
+  - script: az login -u 1f-test-runner@microsoft.com -p $(1f-test-runner)
+    displayName: Login
   - task: PythonScript@0
     displayName: 'download'
     inputs:
