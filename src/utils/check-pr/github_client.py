@@ -6,6 +6,7 @@ from typing import Callable, Optional, Tuple, TypeVar
 
 import requests
 from github import Github
+from pathlib import Path
 
 A = TypeVar("A")
 
@@ -99,6 +100,7 @@ class GithubClient:
             raise Exception(f"unexpected response: {resp}")
 
         with open(file_path, "wb") as handle:
+            print(f"writing {file_path}")
             for chunk in requests.get(resp["location"], stream=True).iter_content(
                 chunk_size=1024 * 16
             ):
@@ -144,7 +146,6 @@ def download_artifacts(
     branch: Optional[str],
     pr: Optional[int],
     directory: str,
-    merge_on_success: bool = False,
 ) -> None:
     release_filename = "release-artifacts.zip"
 
@@ -175,11 +176,14 @@ def main() -> None:
     group.add_argument("--branch")
     group.add_argument("--pr", type=int)
     parser.add_argument("--repo", default="microsoft/onefuzz")
+    parser.add_argument("--destination", default=os.getcwd())
 
     args = parser.parse_args()
+    path = Path(args.destination)
+    path.mkdir(parents=True, exist_ok=True)
 
     downloader = GithubClient()
-    download_artifacts(downloader, args.repo, args.branch, args.pr, os.getcwd())
+    download_artifacts(downloader, args.repo, args.branch, args.pr, args.destination)
 
 
 if __name__ == "__main__":
