@@ -147,6 +147,5 @@ jobs:
       pip install sdk/onefuzztypes-*.whl
       pip install sdk/onefuzz-*.whl
       python integration-test.py test . --region $(testRegion) --endpoint $(endpoint) --client_id $(client_id) --client_secret $(client_secret) --targets "linux-libfuzzer" 
-    name: 'test-linux-libfuzzer'
-    
+    displayName: : 'test linux-libfuzzer'
 
