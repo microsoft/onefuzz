@@ -7,7 +7,7 @@ import os
 import subprocess
 import tempfile
 import time
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 from pydantic import BaseModel
 
@@ -58,7 +58,7 @@ class TestConfig(BaseModel):
 
     @classmethod
     def load_config(cls, path: str) -> "TestConfig":
-        return TestConfig.parse_file(path)
+        return cast(TestConfig, cls.parse_file(path))
 
     def save(self, path: str) -> None:
         with open(path, "w") as handle:
