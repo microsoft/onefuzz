@@ -84,6 +84,8 @@ jobs:
       scriptSource: 'filePath'
       scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
       arguments: --pr ${{ parameters.pr }}
+    env:
+      GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
 
 
 
