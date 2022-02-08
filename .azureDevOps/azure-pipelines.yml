@@ -82,7 +82,7 @@ jobs:
     displayName: 'download'
     inputs:
       scriptSource: 'filePath'
-      scriptPath: 'src\utils\check-pr\github_client.py'
+      scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
       arguments: --pr ${{ parameters.pr }}
 
 
