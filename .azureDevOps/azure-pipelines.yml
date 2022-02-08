@@ -102,7 +102,7 @@ jobs:
       targetType: 'inline'
       script: |
         # Write your PowerShell commands here.
-        Expand-Archive $(Build.SourcesDirectory)/release-artifacts .
+        Expand-Archive -Path $(Build.SourcesDirectory)/checkpr/release-artifacts -DestinationPath .
         Write-Host "Hello World"
       pwsh: true
 
