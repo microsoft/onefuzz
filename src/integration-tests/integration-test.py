@@ -244,6 +244,7 @@ def retry(
                 for item in filter:
                     if item in message:
                         logger.info("Identified filter item: %s. Retrying.", item)
+                        
                         retry = True
                         break
                 if not retry:
@@ -962,9 +963,19 @@ class Run(Command):
         self.logger.info("Client ID: %s Client Secret: %s", client_id, client_secret)
 
         def try_setup(data: Any) -> None:
-            tester.setup(region=region, pool_size=pool_size, os_list=os_list)
+            try: 
+                tester.setup(region=region, pool_size=pool_size, os_list=os_list)
+            except Exception as exc:
+                tester.cleanup(
+                    test_id,
+                    endpoint=endpoint,
+                    client_id=client_id,
+                    client_secret=client_secret,
+                    authority=authority,
+                )
+                raise exc
 
-        retry(try_setup, "deploying resources resources.", filter=["AADSTS7000215"])
+        retry(try_setup, "deploying resources.", filter=["AADSTS7000215"])
         self.logger.info("Setup Complete.")
         tester.launch(samples, os_list=os_list, targets=targets, duration=duration)
         return test_id
