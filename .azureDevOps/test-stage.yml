@@ -1,5 +1,5 @@
 parameters:
-- name: 'testTarget'
+- name: testTarget
   type: string
 
 - name: pr
