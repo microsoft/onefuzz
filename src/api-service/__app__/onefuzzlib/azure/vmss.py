@@ -165,7 +165,7 @@ def update_scale_in_protection(
         instance_vm = compute_client.virtual_machine_scale_set_vms.get(
             resource_group, name, instance_id
         )
-    except:
+    except (ResourceNotFoundError, CloudError):
         return Error(
             code=ErrorCode.UNABLE_TO_FIND,
             errors=["unable to find vm instance: %s:%s" % (name, instance_id)],
@@ -184,7 +184,7 @@ def update_scale_in_protection(
         compute_client.virtual_machine_scale_set_vms.begin_update(
             resource_group, name, instance_id, instance_vm
         )
-    except:
+    except (ResourceNotFoundError, CloudError):
         return Error(
             code=ErrorCode.UNABLE_TO_UPDATE,
             errors=["unable to set protection policy on: %s:%s" % (vm_id, instance_id)],
