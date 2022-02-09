@@ -51,49 +51,63 @@ parameters:
       - uksouth
       - australiaeast
 
-  - name: linux-trivial-crash-afl
+  - name: linuxTrivialCrashAfl
+    displayName: linux-trivial-crash-afl
     type: boolean
     default: true
-  - name: linux-libfuzzer
+  - name: linuxLibfuzzer
+    displayName: linux-libfuzzer
     type: boolean
     default: true
-  - name: linux-libfuzzer-with-options
+  - name: linuxLibfuzzerWithOptions
+    displayName: linux-libfuzzer-with-options
     type: boolean
     default: true
-  - name: linux-libfuzzer-dlopen
+  - name: linuxLibfuzzerDlopen
+    displayName: linux-libfuzzer-dlopen
     type: boolean
     default: true
-  - name: linux-libfuzzer-linked-library
+  - name: linuxLibfuzzerLinkedLibrary
+    displayName: linux-libfuzzer-linked-library
     type: boolean
     default: true
-  - name: linux-libfuzzer-dotnet
+  - name: linuxLibfuzzerDotnet
+    displayName: linux-libfuzzer-dotnet
     type: boolean
     default: true
-  - name: linux-libfuzzer-aarch64-crosscompile
+  - name: linuxLibfuzzerAarch64Crosscompile
+    displayName: linux-libfuzzer-aarch64-crosscompile
     type: boolean
     default: true
-  - name: linux-libfuzzer-rust
+  - name: linuxLibfuzzerRust
+    displayName: linux-libfuzzer-rust
     type: boolean
     default: true
-  - name: linux-trivial-crash
+  - name: linuxTrivialCrash
+    displayName: linux-trivial-crash
     type: boolean
     default: true
-  - name: linux-trivial-crash-asan
+  - name: linuxTrivialCrashAsan
+    displayName: linux-trivial-crash-asan
     type: boolean
     default: true
-  - name: windows-libfuzzer
+  - name: windowsLibfuzzer
+    displayName: windows-libfuzzer
     type: boolean
     default: true
-  - name: windows-libfuzzer-linked-library
+  - name: windowsLibfuzzerLinkedLibrary
+    displayName: windows-libfuzzer-linked-library
     type: boolean
     default: true
-  - name: windows-libfuzzer-load-library
+  - name: windowsLibfuzzerLoadLibrary
+    displayName: windows-libfuzzer-load-library
     type: boolean
     default: true
-  - name: windows-trivial-crash
+  - name: windowsTrivialCrash
+    displayName: windows-trivial-crash
     type: boolean
     default: true
-
+    
 
 variables:
 - group: 1f-service-account
@@ -170,7 +184,7 @@ stages:
         }
       name: deploy
 
-- ${{ if eq(parameters.linux-libfuzzer, true) }}:
+- ${{ if eq(parameters.linuxLibfuzzer, true) }}:
 - stage: 'test'
   dependsOn: 'deploy'
   condition: succeeded()
