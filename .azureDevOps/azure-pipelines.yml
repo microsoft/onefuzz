@@ -78,78 +78,84 @@ variables:
 pool:
   vmImage: ubuntu-latest
 
-jobs:
-- job: 'deploy'
-  steps:
-  - template: common-steps.yml
-  - task: PythonScript@0
-    displayName: 'download'
-    inputs:
-      scriptSource: 'filePath'
-      scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
-      arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr
-    env:
-      GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
+stages:
+- stage: 'deploy'
+  jobs:
+  - job: 'deploy'
+    steps:
+    - template: common-steps.yml
+    - task: PythonScript@0
+      displayName: 'download'
+      inputs:
+        scriptSource: 'filePath'
+        scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
+        arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr
+      env:
+        GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
 
-  - pwsh: |
-      # Write your PowerShell commands here.
-      cd $(Build.SourcesDirectory)/checkpr/
-      Expand-Archive -Path release-artifacts.zip -DestinationPath .
-      Expand-Archive -Path onefuzz-deployment*.zip -DestinationPath .
-    name: expand
+    - pwsh: |
+        # Write your PowerShell commands here.
+        cd $(Build.SourcesDirectory)/checkpr/
+        Expand-Archive -Path release-artifacts.zip -DestinationPath .
+        Expand-Archive -Path onefuzz-deployment*.zip -DestinationPath .
+      name: expand
 
-  - pwsh: |
-      python -m venv .env
-      . ./.env/bin/Activate.ps1
-      cd $(Build.SourcesDirectory)/checkpr/
-      pip install install -q wheel
-      pip install -q -r requirements.txt
-      python deploy.py $(testRegion) $(instance) $(instance) azure-pipelines config.json
-      # register cli 
-      # set secret 
-      $registration_info = python deploylib/registration.py create_cli_registration $(instance) $(subscription)
+    - pwsh: |
+        python -m venv .env
+        . ./.env/bin/Activate.ps1
+        cd $(Build.SourcesDirectory)/checkpr/
+        pip install install -q wheel
+        pip install -q -r requirements.txt
+        python deploy.py $(testRegion) $(instance) $(instance) azure-pipelines config.json
+        # register cli 
+        # set secret 
+        $registration_info = python deploylib/registration.py create_cli_registration $(instance) $(subscription)
 
-      $registration_info | % {
-        $m = [regex]::Match("$_", "client_id: (?<client_id>.+)|client_secret: (?<client_secret>.+)")
-        if ($m.Groups["client_secret"]) {
-          Write-Host "##vso[task.setvariable client_secret=$($m.Groups["client_secret"].Value);issecret=true;isoutput=true]secretvalue"
+        $registration_info | % {
+          $m = [regex]::Match("$_", "client_id: (?<client_id>.+)|client_secret: (?<client_secret>.+)")
+          if ($m.Groups["client_secret"].Success) {
+            $secret = $m.Groups["client_secret"].Value
+            Write-Host "##vso[task.setvariable client_secret="$secret";issecret=true;isoutput=true]client_secret"
+          }
+          if ($m.Groups["client_id"].Success) {
+            $id = $m.Groups["client_id"].Value
+            Write-Host "##vso[task.setvariable client_id=$id;isoutput=true]client_id"
+          }
         }
-        if ($m.Groups["client_id"]) {
-          Write-Host "##vso[task.setvariable client_id=$($m.Groups["client_id"].Value); isoutput=true]secretvalue"
-        }
-      }
-    name: deploy
+      name: deploy
 
-- job: 'test'
+- stage: 'test'
   dependsOn: 'deploy'
-  variables:
-    client_id: $[ dependencies.deploy.outputs['deploy.client_id'] ]  
-    client_secret: $[ dependencies.deploy.outputs['deploy.client_secret'] ]  
-  steps:
-  - template: common-steps.yml
-  - task: PythonScript@0
-    displayName: 'download'
-    inputs:
-      scriptSource: 'filePath'
-      scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
-      arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr
-    env:
-      GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
+  jobs:
+  - job: 'test'
+    variables:
+      client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]  
+      client_secret: $[ stageDependencies.deploy.deploy.outputs['deploy.client_secret'] ]  
+    steps:
+    - template: common-steps.yml
+    - task: PythonScript@0
+      displayName: 'download'
+      inputs:
+        scriptSource: 'filePath'
+        scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
+        arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr
+      env:
+        GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
 
-  - pwsh: |
-      # Write your PowerShell commands here.
-      cd $(Build.SourcesDirectory)/checkpr/
-      Expand-Archive -Path integration-test-artifacts.zip -DestinationPath .
-    name: 'deploy'
+    - pwsh: |
+        # Write your PowerShell commands here.
+        cd $(Build.SourcesDirectory)/checkpr/
+        Expand-Archive -Path integration-test-artifacts.zip -DestinationPath .
+      name: 'expand'
 
-  - pwsh: |
-      python -m venv .env
-      . ./.env/bin/Activate.ps1
-      cd $(Build.SourcesDirectory)/checkpr/
-      pip install install -q wheel
-      pip install -q -r requirements.txt
-      pip install sdk/onefuzztypes-*.whl
-      pip install sdk/onefuzz-*.whl
-      python integration-test.py test . --region $(testRegion) --endpoint $(endpoint) --client_id $(client_id) --client_secret $(client_secret) --targets "linux-libfuzzer" 
-    displayName: 'test linux-libfuzzer'
+    - pwsh: |
+        python -m venv .env
+        . ./.env/bin/Activate.ps1
+        cd $(Build.SourcesDirectory)/checkpr/
+        pip install install -q wheel
+        pip install -q -r requirements.txt
+        pip install sdk/onefuzztypes-*.whl
+        pip install sdk/onefuzz-*.whl
+        python integration-test.py test . --region $(testRegion) --endpoint $(endpoint) --client_id $(client_id) --client_secret $(client_secret) --targets "linux-libfuzzer" 
+      displayName: 'test linux-libfuzzer'
 
