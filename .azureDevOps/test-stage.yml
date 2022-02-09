@@ -2,6 +2,10 @@ parameters:
 - name: 'testTarget'
   type: string
 
+- name: pr
+  displayName: 'pull request id'
+  type: string
+
 
 steps:
 - template: common-steps.yml

@@ -198,6 +198,7 @@ stages:
       - template: test-stage.yml
         parameters:
           testTarget: linux-libfuzzer
+          pr: ${{parameters.pr }}
 
   - ${{ if eq(parameters.linuxTrivialCrash, true) }}:
     - job: 'testLinuxTrivialCrash'
@@ -205,3 +206,4 @@ stages:
       - template: test-stage.yml
         parameters:
           testTarget: linux-trivial-crash
+          pr: ${{parameters.pr }}
