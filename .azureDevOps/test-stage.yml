@@ -21,8 +21,9 @@ steps:
 - pwsh: |
     # Write your PowerShell commands here.
     cd $(Build.SourcesDirectory)/checkpr/
-    Expand-Archive -Path release-artifacts.zip -DestinationPath integration
+    Expand-Archive -Path release-artifacts.zip -DestinationPath .
     Expand-Archive -Path onefuzz-deployment*.zip -DestinationPath .
+    Expand-Archive -Path integration-test-artifacts.zip -DestinationPath integration
   name: 'expand'
 
 - pwsh: |
