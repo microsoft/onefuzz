@@ -107,20 +107,24 @@ jobs:
       python deploy.py $(testRegion) $(instance) $(instance) azure-pipelines config.json
       # register cli 
       # set secret 
-      $registration_info = python deploylib/registration.py create_cli_registration $(instance) $(subscription) --registration_name
+      $registration_info = python deploylib/registration.py create_cli_registration $(instance) $(subscription)
 
       $registration_info | % {
         $m = [regex]::Match("$_", "client_id: (?<client_id>.+)|client_secret: (?<client_secret>.+)")
         if ($m.Groups["client_secret"]) {
-          Write-Host "##vso[task.setvariable client_secret=$($m.Groups["client_secret"].Value);issecret=true]secretvalue"
+          Write-Host "##vso[task.setvariable client_secret=$($m.Groups["client_secret"].Value);issecret=true;isoutput=true]secretvalue"
         }
         if ($m.Groups["client_id"]) {
-          Write-Host "##vso[task.setvariable client_id=$($m.Groups["client_id"].Value);issecret=true]secretvalue"
+          Write-Host "##vso[task.setvariable client_id=$($m.Groups["client_id"].Value); isoutput=true]secretvalue"
         }
       }
     name: deploy
 
 - job: 'test'
+  dependsOn: 'deploy'
+  variables:
+    client_id: $[ dependencies.deploy.outputs['deploy.client_id'] ]  
+    client_secret: $[ dependencies.deploy.outputs['deploy.client_secret'] ]  
   steps:
   - template: common-steps.yml
   - task: PythonScript@0
