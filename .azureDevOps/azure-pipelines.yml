@@ -51,6 +51,50 @@ parameters:
       - uksouth
       - australiaeast
 
+  - name: linux-trivial-crash-afl
+    type: boolean
+    default: true
+  - name: linux-libfuzzer
+    type: boolean
+    default: true
+  - name: linux-libfuzzer-with-options
+    type: boolean
+    default: true
+  - name: linux-libfuzzer-dlopen
+    type: boolean
+    default: true
+  - name: linux-libfuzzer-linked-library
+    type: boolean
+    default: true
+  - name: linux-libfuzzer-dotnet
+    type: boolean
+    default: true
+  - name: linux-libfuzzer-aarch64-crosscompile
+    type: boolean
+    default: true
+  - name: linux-libfuzzer-rust
+    type: boolean
+    default: true
+  - name: linux-trivial-crash
+    type: boolean
+    default: true
+  - name: linux-trivial-crash-asan
+    type: boolean
+    default: true
+  - name: windows-libfuzzer
+    type: boolean
+    default: true
+  - name: windows-libfuzzer-linked-library
+    type: boolean
+    default: true
+  - name: windows-libfuzzer-load-library
+    type: boolean
+    default: true
+  - name: windows-trivial-crash
+    type: boolean
+    default: true
+
+
 variables:
 - group: 1f-service-account
 - group: ${{ parameters.runConfig }}
@@ -74,6 +118,8 @@ variables:
     value: $(region)
   ${{ else }}:
     value: ${{ parameters.region }}
+    
+
 
 pool:
   vmImage: ubuntu-latest
@@ -115,11 +161,11 @@ stages:
           $m = [regex]::Match("$_", "client_id: (?<client_id>.+)|client_secret: (?<client_secret>.+)")
           if ($m.Groups["client_secret"].Success) {
             $secret = $m.Groups["client_secret"].Value
-            Write-Host "##vso[task.setvariable client_secret="$secret";issecret=true;isoutput=true]client_secret"
+            Write-Host "##vso[task.setvariable variable=client_secret;issecret=true;isoutput=true]$secret"
           }
           if ($m.Groups["client_id"].Success) {
             $id = $m.Groups["client_id"].Value
-            Write-Host "##vso[task.setvariable client_id=$id;isoutput=true]client_id"
+            Write-Host "##vso[task.setvariable variable=client_id;isoutput=true]$id"
           }
         }
       name: deploy
