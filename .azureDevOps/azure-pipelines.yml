@@ -193,17 +193,17 @@ stages:
       client_secret: $[ stageDependencies.deploy.deploy.outputs['deploy.client_secret'] ]
   jobs:
   - ${{ if eq(parameters.linuxLibfuzzer, true) }}:
-    - job: 'testLinuxLibfuzzer'
+    - job: testLinuxLibfuzzer
       steps:
       - template: test-stage.yml
         parameters:
-          testTarget: linux-libfuzzer
+          testTarget: 'linux-libfuzzer'
           pr: ${{parameters.pr }}
 
   - ${{ if eq(parameters.linuxTrivialCrash, true) }}:
-    - job: 'testLinuxTrivialCrash'
+    - job: testLinuxTrivialCrash
       steps:
       - template: test-stage.yml
         parameters:
-          testTarget: linux-trivial-crash
+          testTarget: 'linux-trivial-crash'
           pr: ${{parameters.pr }}

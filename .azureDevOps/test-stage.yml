@@ -6,6 +6,9 @@ parameters:
   displayName: 'pull request id'
   type: string
 
+variables:
+- name: testTarget
+  value: ${{ parameters.testTarget }}
 
 steps:
 - template: common-steps.yml
