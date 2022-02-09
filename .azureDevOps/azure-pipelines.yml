@@ -185,39 +185,38 @@ stages:
       name: deploy
 
 - ${{ if eq(parameters.linuxLibfuzzer, true) }}:
-- stage: 'test'
-  dependsOn: 'deploy'
-  condition: succeeded()
-  jobs:
-  - job: 'test'
-    variables:
-      client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]  
-      client_secret: $[ stageDependencies.deploy.deploy.outputs['deploy.client_secret'] ]  
-    steps:
-    - template: common-steps.yml
-    - task: PythonScript@0
-      displayName: 'download'
-      inputs:
-        scriptSource: 'filePath'
-        scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
-        arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr
-      env:
-        GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
+  - stage: 'test'
+    dependsOn: 'deploy'
+    condition: succeeded()
+    jobs:
+    - job: 'test'
+      variables:
+        client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]  
+        client_secret: $[ stageDependencies.deploy.deploy.outputs['deploy.client_secret'] ]  
+      steps:
+      - template: common-steps.yml
+      - task: PythonScript@0
+        displayName: 'download'
+        inputs:
+          scriptSource: 'filePath'
+          scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
+          arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr
+        env:
+          GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
 
-    - pwsh: |
-        # Write your PowerShell commands here.
-        cd $(Build.SourcesDirectory)/checkpr/
-        Expand-Archive -Path integration-test-artifacts.zip -DestinationPath .
-      name: 'expand'
+      - pwsh: |
+          # Write your PowerShell commands here.
+          cd $(Build.SourcesDirectory)/checkpr/
+          Expand-Archive -Path integration-test-artifacts.zip -DestinationPath .
+        name: 'expand'
 
-    - pwsh: |
-        python -m venv .env
-        . ./.env/bin/Activate.ps1
-        cd $(Build.SourcesDirectory)/checkpr/
-        pip install install -q wheel
-        pip install -q -r requirements.txt
-        pip install sdk/onefuzztypes-*.whl
-        pip install sdk/onefuzz-*.whl
-        python integration-test.py test . --region $(testRegion) --endpoint $(endpoint) --client_id $(client_id) --client_secret $(client_secret) --targets "linux-libfuzzer" 
-      displayName: 'test linux-libfuzzer'
-
+      - pwsh: |
+          python -m venv .env
+          . ./.env/bin/Activate.ps1
+          cd $(Build.SourcesDirectory)/checkpr/
+          pip install install -q wheel
+          pip install -q -r requirements.txt
+          pip install sdk/onefuzztypes-*.whl
+          pip install sdk/onefuzz-*.whl
+          python integration-test.py test . --region $(testRegion) --endpoint $(endpoint) --client_id $(client_id) --client_secret $(client_secret) --targets "linux-libfuzzer" 
+        displayName: 'test linux-libfuzzer'
