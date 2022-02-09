@@ -504,7 +504,7 @@ class Node(BASE_NODE, ORMMixin):
         )
 
     def acquire_scale_in_protection(self) -> Optional[Error]:
-        if self.scaleset_node_exists():
+        if self.scaleset_node_exists() and self.scaleset_id:
             logging.info("Setting scale-in protection on node %s", self.machine_id)
             return update_scale_in_protection(
                 self.scaleset_id, self.machine_id, protect_from_scale_in=True
@@ -512,7 +512,11 @@ class Node(BASE_NODE, ORMMixin):
         return None
 
     def release_scale_in_protection(self) -> Optional[Error]:
-        if not self.debug_keep_node and self.scaleset_node_exists():
+        if (
+            not self.debug_keep_node
+            and self.scaleset_node_exists()
+            and self.scaleset_id
+        ):
             logging.info("Removing scale-in protection on node %s", self.machine_id)
             return update_scale_in_protection(
                 self.scaleset_id, self.machine_id, protect_from_scale_in=False
