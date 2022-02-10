@@ -57,9 +57,9 @@ class GithubClient:
     def __init__(self) -> None:
         self.gh = Github(login_or_token=os.environ["GITHUB_ISSUE_TOKEN"])
 
-    def update_pr(self, repo_name: str, pr: int) -> None:
+    def update_pr(self, repo_name: str, pr: int, update_if_behind: bool=True) -> None:
         pr_obj = self.gh.get_repo(repo_name).get_pull(pr)
-        if pr_obj.mergeable_state == "behind":
+        if (pr_obj.mergeable_state == "behind") and update_if_behind:
             print(f"pr:{pr} out of date.  Updating")
             pr_obj.update_branch()  # type: ignore
             time.sleep(5)
@@ -82,11 +82,12 @@ class GithubClient:
         pr: Optional[int],
         name: str,
         file_path: str,
+        update_branch: bool = True,
     ) -> None:
         print(f"getting {name}")
 
         if pr:
-            self.update_pr(repo_name, pr)
+            self.update_pr(repo_name, pr, update_branch)
             branch = self.gh.get_repo(repo_name).get_pull(pr).head.ref
         if not branch:
             raise Exception("missing branch")
@@ -146,6 +147,7 @@ def download_artifacts(
     branch: Optional[str],
     pr: Optional[int],
     directory: str,
+    update_branch: bool = True,
 ) -> None:
     release_filename = "release-artifacts.zip"
 
@@ -177,13 +179,14 @@ def main() -> None:
     group.add_argument("--pr", type=int)
     parser.add_argument("--repo", default="microsoft/onefuzz")
     parser.add_argument("--destination", default=os.getcwd())
+    parser.add_argument("--skip_update", action="store_true")
 
     args = parser.parse_args()
     path = Path(args.destination)
     path.mkdir(parents=True, exist_ok=True)
 
     downloader = GithubClient()
-    download_artifacts(downloader, args.repo, args.branch, args.pr, args.destination)
+    download_artifacts(downloader, args.repo, args.branch, args.pr, args.destination, not args.skip_update)
 
 
 if __name__ == "__main__":

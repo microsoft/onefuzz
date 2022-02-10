@@ -8,6 +8,10 @@ parameters:
 - name: pr
   type: string
 
+- name: update_branch
+  type: boolean
+  default: false
+
 
 
 jobs:
@@ -21,7 +25,7 @@ jobs:
       inputs:
         scriptSource: 'filePath'
         scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
-        arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr
+        arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr --update_branch ${{parameters.update_branch}}
       env:
         GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
 
