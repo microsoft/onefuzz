@@ -40,5 +40,5 @@ jobs:
         pip install sdk/onefuzztypes-*.whl
         pip install sdk/onefuzz-*.whl
         cd integration
-        python integration-test.py test . --region $(testRegion) --endpoint $(endpoint) --client_id $(client_id) --client_secret $(client_secret) --targets $(testTarget)
+        python integration-test.py test . --region $(testRegion) --endpoint $(instance_endpoint) --client_id $(client_id) --client_secret $(client_secret) --targets $(testTarget)
       displayName: 'test ${{ parameters.testTarget }}'

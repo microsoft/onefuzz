@@ -182,6 +182,8 @@ stages:
             Write-Host "##vso[task.setvariable variable=client_id;isoutput=true]$id"
           }
         }
+        $instance_endpoint = "$(endpoint)"
+        Write-Host "##vso[task.setvariable variable=instance_endpoint;isoutput=true]$instance_endpoint"
       name: deploy
 
 
@@ -191,6 +193,7 @@ stages:
   variables:
       client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]
       client_secret: $[ stageDependencies.deploy.deploy.outputs['deploy.client_secret'] ]
+      instance_endpoint: $[ stageDependencies.deploy.deploy.outputs['deploy.instance_endpoint'] ]
   jobs:
   - ${{ if eq(parameters.linuxLibfuzzer, true) }}:
     - template: test-stage.yml
