@@ -8,14 +8,12 @@ parameters:
 - name: pr
   type: string
 
-- name: test_id
-  type: string
+
 
 jobs:
   - job: ${{parameters.jobName}}
     variables:
       testTarget: ${{parameters.testTarget}}
-      test_id: ${{test_id}}
     steps:
     - template: common-steps.yml
     - task: PythonScript@0
