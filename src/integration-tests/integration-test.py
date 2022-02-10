@@ -913,6 +913,36 @@ class Run(Command):
         if not (result and launch_result):
             raise Exception("repros failed")
 
+    def setup(
+        self,
+        *,
+        endpoint: Optional[str] = None,
+        authority: Optional[str] = None,
+        client_id: Optional[str] = None,
+        client_secret: Optional[str] = None,
+        pool_size: int = 10,
+        region: Optional[Region] = None,
+        os_list: List[OS] = [OS.linux, OS.windows],
+        test_id: Optional[UUID] = None,
+    ) -> UUID:
+        if test_id is None:
+            test_id = uuid4()
+        self.logger.info("launching test_id: %s", test_id)
+
+        def try_setup(data: Any) -> None:
+            self.onefuzz.__setup__(
+                endpoint=endpoint,
+                client_id=client_id,
+                client_secret=client_secret,
+                authority=authority,
+            )
+
+        retry(try_setup, "trying to configure")
+
+        tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
+        tester.setup(region=region, pool_size=pool_size, os_list=os_list)
+        return test_id
+
     def launch(
         self,
         samples: Directory,
@@ -921,8 +951,6 @@ class Run(Command):
         authority: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
-        pool_size: int = 10,
-        region: Optional[Region] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
         targets: List[str] = list(TARGETS.keys()),
         test_id: Optional[UUID] = None,
@@ -943,7 +971,6 @@ class Run(Command):
         retry(try_setup, "trying to configure")
 
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
-        tester.setup(region=region, pool_size=pool_size, os_list=os_list)
         tester.launch(samples, os_list=os_list, targets=targets, duration=duration)
         return test_id
 
@@ -983,6 +1010,46 @@ class Run(Command):
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id=test_id)
         tester.check_logs_for_errors()
 
+    def check_results(
+        self,
+        *,
+        endpoint: Optional[str] = None,
+        authority: Optional[str] = None,
+        client_id: Optional[str] = None,
+        client_secret: Optional[str] = None,
+        skip_repro: bool = False,
+        test_id: UUID,
+    ) -> None:
+
+        self.check_jobs(
+            test_id,
+            endpoint=endpoint,
+            authority=authority,
+            client_id=client_id,
+            client_secret=client_secret,
+            poll=True,
+            stop_on_complete_check=True,
+        )
+
+        if skip_repro:
+            self.logger.warning("not testing crash repro")
+        else:
+            self.check_repros(
+                test_id,
+                endpoint=endpoint,
+                authority=authority,
+                client_id=client_id,
+                client_secret=client_secret,
+            )
+
+        self.check_logs(
+            test_id,
+            endpoint=endpoint,
+            client_id=client_id,
+            client_secret=client_secret,
+            authority=authority,
+        )
+
     def test(
         self,
         samples: Directory,
@@ -1016,33 +1083,13 @@ class Run(Command):
                 test_id=test_id,
                 duration=duration,
             )
-            self.check_jobs(
+            self.check_results(
                 test_id,
                 endpoint=endpoint,
                 authority=authority,
                 client_id=client_id,
                 client_secret=client_secret,
-                poll=True,
-                stop_on_complete_check=True,
-            )
-
-            if skip_repro:
-                self.logger.warning("not testing crash repro")
-            else:
-                self.check_repros(
-                    test_id,
-                    endpoint=endpoint,
-                    authority=authority,
-                    client_id=client_id,
-                    client_secret=client_secret,
-                )
-
-            self.check_logs(
-                test_id,
-                endpoint=endpoint,
-                client_id=client_id,
-                client_secret=client_secret,
-                authority=authority,
+                skip_repro=skip_repro,
             )
 
         except Exception as e:

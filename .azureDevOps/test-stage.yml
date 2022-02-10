@@ -8,10 +8,14 @@ parameters:
 - name: pr
   type: string
 
+- name: test_id
+  type: string
+
 jobs:
   - job: ${{parameters.jobName}}
     variables:
       testTarget: ${{parameters.testTarget}}
+      test_id: ${{test_id}}
     steps:
     - template: common-steps.yml
     - task: PythonScript@0
@@ -40,5 +44,19 @@ jobs:
         pip install sdk/onefuzztypes-*.whl
         pip install sdk/onefuzz-*.whl
         cd integration
-        python integration-test.py test . --region $(testRegion) --endpoint $(instance_endpoint) --client_id $(client_id) --client_secret $(client_secret) --targets $(testTarget)
+
+        python integration-test.py launch . `
+          --endpoint $(instance_endpoint) `
+          --client_id $(client_id) `
+          --client_secret $(client_secret) `
+          --targets $(testTarget) `
+          --test_id $(test_id) `
+
+        python integration-test.py check_result  `
+          --endpoint $(instance_endpoint) `
+          --region $(testRegion) `
+          --client_id $(client_id) `
+          --client_secret $(client_secret) `
+          --test_id $(test_id) `
+
       displayName: 'test ${{ parameters.testTarget }}'

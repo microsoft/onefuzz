@@ -139,15 +139,15 @@ pool:
   vmImage: ubuntu-latest
 
 stages:
-- stage: 'deploy'
+- stage: deploy
   jobs:
-  - job: 'deploy'
+  - job: deploy
     steps:
     - template: common-steps.yml
     - task: PythonScript@0
-      displayName: 'download'
+      displayName: download
       inputs:
-        scriptSource: 'filePath'
+        scriptSource: filePath
         scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
         arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr
       env:
@@ -189,25 +189,86 @@ stages:
         Write-Host "##vso[task.setvariable variable=instance_endpoint;isoutput=true]$instance_endpoint"
       name: deploy
 
+    - pwsh: |
+        Expand-Archive -Path integration-test-artifacts.zip -DestinationPath integration
+        python -m venv .env
+        . ./.env/bin/Activate.ps1
+        cd $(Build.SourcesDirectory)/checkpr
+        pip install install -q wheel
+        pip install -q -r requirements.txt
+        pip install sdk/onefuzztypes-*.whl
+        pip install sdk/onefuzz-*.whl
+        cd integration
+        $test_id = New-Guid
+        python integration-test.py setup --region $(testRegion) --endpoint $(instance_endpoint) --client_id $(client_id) --client_secret $(client_secret) --test_id $test_id
+        Write-Host "##vso[task.setvariable variable=test_id;isoutput=true]$test_id"
+      displayName: setup
 
-- stage: 'test'
-  dependsOn: 'deploy'
+- stage: test
+  dependsOn: deploy
   condition: succeeded()
   variables:
       client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]
       client_secret: $[ stageDependencies.deploy.deploy.outputs['deploy.client_secret'] ]
       instance_endpoint: $[ stageDependencies.deploy.deploy.outputs['deploy.instance_endpoint'] ]
+      test_id: $[ stageDependencies.deploy.deploy.outputs['setup.client_id'] ]
   jobs:
   - ${{ if eq(parameters.linuxLibfuzzer, true) }}:
     - template: test-stage.yml
       parameters:
-        testTarget: 'linux-libfuzzer'
+        testTarget: linux-libfuzzer
         pr: ${{ parameters.pr }}
         jobName: linuxLibfuzzer
 
   - ${{ if eq(parameters.linuxTrivialCrash, true) }}:
     - template: test-stage.yml
       parameters:
-        testTarget: 'linux-trivial-crash'
+        testTarget: linux-trivial-crash
         pr: ${{ parameters.pr }}
         jobName: linuxTrivialCrash
+
+- stage: cleanup
+  dependsOn: test
+  variables:
+    client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]
+    client_secret: $[ stageDependencies.deploy.deploy.outputs['deploy.client_secret'] ]
+    instance_endpoint: $[ stageDependencies.deploy.deploy.outputs['deploy.instance_endpoint'] ]
+    test_id: $[ stageDependencies.deploy.deploy.outputs['setup.client_id'] ]
+  jobs:
+  - job: cleanup
+    steps:
+      - template: common-steps.yml
+      - task: PythonScript@0
+        displayName: download
+        inputs:
+          scriptSource: filePath
+          scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
+          arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr
+        env:
+          GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
+
+      - pwsh: |
+          # Write your PowerShell commands here.
+          cd $(Build.SourcesDirectory)/checkpr/
+          Expand-Archive -Path release-artifacts.zip -DestinationPath .
+          Expand-Archive -Path onefuzz-deployment*.zip -DestinationPath .
+          Expand-Archive -Path integration-test-artifacts.zip -DestinationPath integration
+        name: expand
+
+      - pwsh: |
+          python -m venv .env
+          . ./.env/bin/Activate.ps1
+          cd $(Build.SourcesDirectory)/checkpr
+          pip install install -q wheel
+          pip install -q -r requirements.txt
+          pip install sdk/onefuzztypes-*.whl
+          pip install sdk/onefuzz-*.whl
+          cd integration
+
+          python integration-test.py cleanup $(test_id) `
+            --endpoint $(instance_endpoint) `
+            --client_id $(client_id) `
+            --client_secret $(client_secret) `
+
+        name: deploy
+
