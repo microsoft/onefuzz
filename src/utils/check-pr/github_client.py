@@ -2,11 +2,11 @@ import argparse
 import os
 import sys
 import time
+from pathlib import Path
 from typing import Callable, Optional, Tuple, TypeVar
 
 import requests
 from github import Github
-from pathlib import Path
 
 A = TypeVar("A")
 
@@ -57,7 +57,7 @@ class GithubClient:
     def __init__(self) -> None:
         self.gh = Github(login_or_token=os.environ["GITHUB_ISSUE_TOKEN"])
 
-    def update_pr(self, repo_name: str, pr: int, update_if_behind: bool=True) -> None:
+    def update_pr(self, repo_name: str, pr: int, update_if_behind: bool = True) -> None:
         pr_obj = self.gh.get_repo(repo_name).get_pull(pr)
         if (pr_obj.mergeable_state == "behind") and update_if_behind:
             print(f"pr:{pr} out of date.  Updating")
@@ -186,7 +186,14 @@ def main() -> None:
     path.mkdir(parents=True, exist_ok=True)
 
     downloader = GithubClient()
-    download_artifacts(downloader, args.repo, args.branch, args.pr, args.destination, not args.skip_update)
+    download_artifacts(
+        downloader,
+        args.repo,
+        args.branch,
+        args.pr,
+        args.destination,
+        not args.skip_update,
+    )
 
 
 if __name__ == "__main__":
