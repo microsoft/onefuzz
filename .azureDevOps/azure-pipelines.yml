@@ -174,14 +174,17 @@ stages:
         $registration_info | % {
           $m = [regex]::Match("$_", "client_id: (?<client_id>.+)|client_secret: (?<client_secret>.+)")
           if ($m.Groups["client_secret"].Success) {
+            Write-Host "setting client_secret"
             $secret = $m.Groups["client_secret"].Value
             Write-Host "##vso[task.setvariable variable=client_secret;issecret=true;isoutput=true]$secret"
           }
           if ($m.Groups["client_id"].Success) {
+            Write-Host "setting client_id"
             $id = $m.Groups["client_id"].Value
             Write-Host "##vso[task.setvariable variable=client_id;isoutput=true]$id"
           }
         }
+        Write-Host "setting endpoint"
         $instance_endpoint = "$(endpoint)"
         Write-Host "##vso[task.setvariable variable=instance_endpoint;isoutput=true]$instance_endpoint"
       name: deploy
