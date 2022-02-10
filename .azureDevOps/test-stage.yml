@@ -8,9 +8,8 @@ parameters:
 - name: pr
   type: string
 
-- name: update_branch
-  type: boolean
-  default: false
+- name: skip_update
+  type: string
 
 
 
@@ -25,7 +24,7 @@ jobs:
       inputs:
         scriptSource: 'filePath'
         scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
-        arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr --update_branch ${{parameters.update_branch}}
+        arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr  --update_branch ${{ parameters.skip_update}}
       env:
         GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
 
