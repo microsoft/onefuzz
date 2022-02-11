@@ -239,9 +239,9 @@ stages:
         $test_id = New-Guid
         python integration-test.py setup `
           --region $(testRegion) `
-          --endpoint $(deploy.instance_endpoint) `
-          --client_id $(deploy.client_id) `
-          --client_secret $(deploy.client_secret) `
+          --endpoint $(instance_endpoint) `
+          --client_id $(client_id) `
+          --client_secret $(client_secret) `
           --test_id $test_id
         Write-Host "##vso[task.setvariable variable=test_id;isoutput=true]$test_id"
       displayName: setup
