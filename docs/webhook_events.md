@@ -21,23 +21,26 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
+## Event Grid Payload format
+
 If webhook is set to have Event Grid message format then the payload will look as follows:
 
 ### Example
 
 ```json
-[{
-    "data": {
-        "ping_id": "00000000-0000-0000-0000-000000000000"
-    },
-    "id": "00000000-0000-0000-0000-000000000000",
-    "dataVersion" : "1.0.0",
-    "eventType": "ping",
-    "subject": "example",
-    "eventTime" : "00:00:00"
-}]
+[
+    {
+        "data": {
+            "ping_id": "00000000-0000-0000-0000-000000000000"
+        },
+        "dataVersion": "1.0.0",
+        "eventTime": "0001-01-01T00:00:00",
+        "eventType": "ping",
+        "id": "00000000-0000-0000-0000-000000000000",
+        "subject": "example"
+    }
+]
 ```
-
 
 ## Event Types (EventType)
 
