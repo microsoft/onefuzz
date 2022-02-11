@@ -924,7 +924,7 @@ class Run(Command):
         region: Optional[Region] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
         test_id: Optional[UUID] = None,
-    ) -> UUID:
+    ) -> None:
         if test_id is None:
             test_id = uuid4()
         self.logger.info("launching test_id: %s", test_id)
@@ -941,7 +941,6 @@ class Run(Command):
 
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
         tester.setup(region=region, pool_size=pool_size, os_list=os_list)
-        return test_id
 
     def launch(
         self,
