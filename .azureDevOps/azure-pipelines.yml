@@ -244,7 +244,7 @@ stages:
           --client_secret $(client_secret) `
           --test_id $test_id
         Write-Host "##vso[task.setvariable variable=test_id;isoutput=true]$test_id"
-      displayName: setup
+      name: setup
 
 - stage: test
   dependsOn:
@@ -281,7 +281,7 @@ stages:
     client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]
     client_secret: $[ stageDependencies.deploy.deploy.outputs['deploy.client_secret'] ]
     instance_endpoint: $[ stageDependencies.deploy.deploy.outputs['deploy.instance_endpoint'] ]
-    test_id: $[ stageDependencies.deploy.deploy.outputs['setup.client_id'] ]
+    test_id: $[ stageDependencies.setup.setup.outputs['setup.client_id'] ]
   jobs:
   - job: cleanup
     steps:
