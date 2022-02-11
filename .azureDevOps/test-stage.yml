@@ -51,13 +51,13 @@ jobs:
           --client_id $(client_id) `
           --client_secret $(client_secret) `
           --targets $(testTarget) `
-          --test_id $(test_id) `
+          --test_id $(test_id)
 
         python integration-test.py check_result  `
           --endpoint $(instance_endpoint) `
           --region $(testRegion) `
           --client_id $(client_id) `
           --client_secret $(client_secret) `
-          --test_id $(test_id) `
+          --test_id $(test_id)
 
       displayName: 'test ${{ parameters.testTarget }}'

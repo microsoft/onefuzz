@@ -210,7 +210,12 @@ stages:
         pip install sdk/onefuzz-*.whl
         cd integration
         $test_id = New-Guid
-        python integration-test.py setup --region $(testRegion) --endpoint $(instance_endpoint) --client_id $(client_id) --client_secret $(client_secret) --test_id $test_id
+        python integration-test.py setup `
+          --region $(testRegion) `
+          --endpoint $(deploy.instance_endpoint) `
+          --client_id $(client_id) `
+          --client_secret $(client_secret) `
+          --test_id $test_id
         Write-Host "##vso[task.setvariable variable=test_id;isoutput=true]$test_id"
       displayName: setup
 
@@ -280,7 +285,7 @@ stages:
           python integration-test.py cleanup $(test_id) `
             --endpoint $(instance_endpoint) `
             --client_id $(client_id) `
-            --client_secret $(client_secret) `
+            --client_secret $(client_secret)
 
         name: deploy
 
