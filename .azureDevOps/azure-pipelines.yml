@@ -213,8 +213,8 @@ stages:
         python integration-test.py setup `
           --region $(testRegion) `
           --endpoint $(deploy.instance_endpoint) `
-          --client_id $(client_id) `
-          --client_secret $(client_secret) `
+          --client_id $(deploy.client_id) `
+          --client_secret $(deploy.client_secret) `
           --test_id $test_id
         Write-Host "##vso[task.setvariable variable=test_id;isoutput=true]$test_id"
       displayName: setup
@@ -226,7 +226,7 @@ stages:
       client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]
       client_secret: $[ stageDependencies.deploy.deploy.outputs['deploy.client_secret'] ]
       instance_endpoint: $[ stageDependencies.deploy.deploy.outputs['deploy.instance_endpoint'] ]
-      test_id: $[ stageDependencies.deploy.deploy.outputs['setup.client_id'] ]
+      test_id: $[ stageDependencies.deploy.deploy.outputs['setup.test_id'] ]
   jobs:
   - ${{ if eq(parameters.linuxLibfuzzer, true) }}:
     - template: test-stage.yml
