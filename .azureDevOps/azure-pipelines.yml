@@ -168,7 +168,6 @@ stages:
         cd $(Build.SourcesDirectory)/checkpr/
         Expand-Archive -Path release-artifacts.zip -DestinationPath .
         Expand-Archive -Path onefuzz-deployment*.zip -DestinationPath .
-        Expand-Archive -Path integration-test-artifacts.zip -DestinationPath integration
       name: expand
 
     - pwsh: |
@@ -200,6 +199,34 @@ stages:
         Write-Host "##vso[task.setvariable variable=instance_endpoint;isoutput=true]$instance_endpoint"
       name: deploy
 
+- stage: setup
+  dependsOn: deploy
+  condition: succeeded()
+  variables:
+      client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]
+      client_secret: $[ stageDependencies.deploy.deploy.outputs['deploy.client_secret'] ]
+      instance_endpoint: $[ stageDependencies.deploy.deploy.outputs['deploy.instance_endpoint'] ]
+  jobs:
+  - job: setup
+    steps:
+    - template: common-steps.yml
+    - task: PythonScript@0
+      displayName: download
+      inputs:
+        scriptSource: filePath
+        scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
+        arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr ${{variables.skip_update}}
+      env:
+        GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
+
+    - pwsh: |
+        # Write your PowerShell commands here.
+        cd $(Build.SourcesDirectory)/checkpr/
+        Expand-Archive -Path release-artifacts.zip -DestinationPath .
+        Expand-Archive -Path onefuzz-deployment*.zip -DestinationPath .
+        Expand-Archive -Path integration-test-artifacts.zip -DestinationPath integration
+      name: expand
+
     - pwsh: |
         python -m venv .env
         . ./.env/bin/Activate.ps1
@@ -220,13 +247,13 @@ stages:
       displayName: setup
 
 - stage: test
-  dependsOn: deploy
+  dependsOn: setup
   condition: succeeded()
   variables:
       client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]
       client_secret: $[ stageDependencies.deploy.deploy.outputs['deploy.client_secret'] ]
       instance_endpoint: $[ stageDependencies.deploy.deploy.outputs['deploy.instance_endpoint'] ]
-      test_id: $[ stageDependencies.deploy.deploy.outputs['setup.test_id'] ]
+      test_id: $[ stageDependencies.setup.setup.outputs['setup.test_id'] ]
   jobs:
   - ${{ if eq(parameters.linuxLibfuzzer, true) }}:
     - template: test-stage.yml
