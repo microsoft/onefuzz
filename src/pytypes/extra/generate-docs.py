@@ -334,7 +334,8 @@ def main() -> None:
     result += layer(
         2,
         "Event Grid Payload format",
-        "If webhook is set to have Event Grid message format then the payload will look as follows:",
+        "If webhook is set to have Event Grid message format then "
+        "the payload will look as follows:",
     )
 
     result += typed(
