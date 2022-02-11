@@ -247,7 +247,9 @@ stages:
       displayName: setup
 
 - stage: test
-  dependsOn: setup
+  dependsOn:
+  - deploy
+  - setup
   condition: succeeded()
   variables:
       client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]
@@ -262,6 +264,7 @@ stages:
         pr: ${{ parameters.pr }}
         jobName: linuxLibfuzzer
         skip_update: ${{variables.skip_update}}
+        instance_endpoint: $(instance_endpoint)
 
   - ${{ if eq(parameters.linuxTrivialCrash, true) }}:
     - template: test-stage.yml
@@ -270,9 +273,12 @@ stages:
         pr: ${{ parameters.pr }}
         jobName: linuxTrivialCrash
         skip_update: ${{variables.skip_update}}
+        instance_endpoint: $(instance_endpoint)
 
 - stage: cleanup
-  dependsOn: test
+  dependsOn:
+    - deploy
+    - test
   variables:
     client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]
     client_secret: $[ stageDependencies.deploy.deploy.outputs['deploy.client_secret'] ]

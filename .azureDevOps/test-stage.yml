@@ -12,7 +12,6 @@ parameters:
   type: string
 
 
-
 jobs:
   - job: ${{parameters.jobName}}
     variables:
