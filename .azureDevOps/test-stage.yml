@@ -52,11 +52,9 @@ jobs:
           --targets $(testTarget) `
           --test_id $(test_id)
 
-        python integration-test.py check_results  `
+        python integration-test.py check_results $(test_id)  `
           --endpoint $(instance_endpoint) `
-          --region $(testRegion) `
           --client_id $(client_id) `
           --client_secret $(client_secret) `
-          --test_id $(test_id)
 
       displayName: 'test ${{ parameters.testTarget }}'
