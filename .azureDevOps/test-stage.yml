@@ -53,7 +53,7 @@ jobs:
           --targets $(testTarget) `
           --test_id $(test_id)
 
-        python integration-test.py check_result  `
+        python integration-test.py check_results  `
           --endpoint $(instance_endpoint) `
           --region $(testRegion) `
           --client_id $(client_id) `
