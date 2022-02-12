@@ -278,6 +278,7 @@ class TestOnefuzz:
         for entry in os_list:
             name = PoolName(f"testpool-{entry.name}-{self.test_id}")
             self.logger.info("creating pool: %s:%s", entry.name, name)
+            self.of.pools.create(name, entry)
             self.logger.info("creating scaleset for pool: %s", name)
             self.of.scalesets.create(name, pool_size, region=region)
 
