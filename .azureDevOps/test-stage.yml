@@ -46,12 +46,12 @@ jobs:
         cd integration
 
         Set-PSDebug -Trace 1
-        python integration-test.py launch . --endpoint $(instance_endpoint) --client_id $(client_id) --client_secret $(client_secret) --targets $(testTarget) --test_id $(test_id)
+        python integration-test.py launch . --endpoint $(instance_endpoint) --client_id $(client_id) --client_secret $(client_secret) --targets $(testTarget) --test_id $(test_id) -v
         if ($LASTEXITCODE -ne 0) {
           throw "failed to launch"
         }
 
-        python integration-test.py check_results $(test_id) --endpoint $(instance_endpoint) --client_id $(client_id) --client_secret $(client_secret)
+        python integration-test.py check_results $(test_id) --endpoint $(instance_endpoint) --client_id $(client_id) --client_secret $(client_secret) -v
         if ($LASTEXITCODE -ne 0) {
           throw "result check failed"
         }

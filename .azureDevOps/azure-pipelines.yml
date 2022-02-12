@@ -242,7 +242,8 @@ stages:
           --endpoint $(instance_endpoint) `
           --client_id $(client_id) `
           --client_secret $(client_secret) `
-          --test_id $test_id
+          --test_id $test_id `
+          -v
         Write-Host "##vso[task.setvariable variable=test_id;isoutput=true]$test_id"
       name: setup
 
@@ -316,7 +317,8 @@ stages:
           python integration-test.py cleanup $(test_id) `
             --endpoint $(instance_endpoint) `
             --client_id $(client_id) `
-            --client_secret $(client_secret)
+            --client_secret $(client_secret) `
+            -v
 
         name: deploy
 
