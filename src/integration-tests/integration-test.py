@@ -257,7 +257,6 @@ class TestOnefuzz:
     def __init__(self, onefuzz: Onefuzz, logger: logging.Logger, test_id: UUID) -> None:
         self.of = onefuzz
         self.logger = logger
-        self.pools: Dict[OS, Pool] = {}
         self.test_id = test_id
         self.project = f"test-{self.test_id}"
         self.start_log_marker = f"integration-test-injection-error-start-{self.test_id}"
@@ -279,7 +278,6 @@ class TestOnefuzz:
         for entry in os_list:
             name = PoolName(f"testpool-{entry.name}-{self.test_id}")
             self.logger.info("creating pool: %s:%s", entry.name, name)
-            self.pools[entry] = self.of.pools.create(name, entry)
             self.logger.info("creating scaleset for pool: %s", name)
             self.of.scalesets.create(name, pool_size, region=region)
 
@@ -287,12 +285,20 @@ class TestOnefuzz:
         self, path: Directory, *, os_list: List[OS], targets: List[str], duration=int
     ) -> None:
         """Launch all of the fuzzing templates"""
+
+        pools = {}
+        for pool in self.of.pools.list():
+            pools[pool.os] = pool
+
         for target, config in TARGETS.items():
             if target not in targets:
                 continue
 
             if config.os not in os_list:
                 continue
+
+            if config.os not in pools.keys:
+                raise Exception(f"No pool for target: {target} ,os: {config.os}")
 
             self.logger.info("launching: %s", target)
 
@@ -313,7 +319,7 @@ class TestOnefuzz:
                     self.project,
                     target,
                     BUILD,
-                    self.pools[config.os].name,
+                    pools[config.os].name,
                     target_exe=target_exe,
                     inputs=inputs,
                     setup_dir=setup,
@@ -329,7 +335,7 @@ class TestOnefuzz:
                     self.project,
                     target,
                     BUILD,
-                    self.pools[config.os].name,
+                    pools[config.os].name,
                     target_harness=config.target_exe,
                     inputs=inputs,
                     setup_dir=setup,
@@ -342,7 +348,7 @@ class TestOnefuzz:
                     self.project,
                     target,
                     BUILD,
-                    self.pools[config.os].name,
+                    pools[config.os].name,
                     inputs=inputs,
                     target_exe=target_exe,
                     duration=duration,
@@ -354,7 +360,7 @@ class TestOnefuzz:
                     self.project,
                     target,
                     BUILD,
-                    pool_name=self.pools[config.os].name,
+                    pool_name=pools[config.os].name,
                     target_exe=target_exe,
                     inputs=inputs,
                     setup_dir=setup,
@@ -368,7 +374,7 @@ class TestOnefuzz:
                     self.project,
                     target,
                     BUILD,
-                    pool_name=self.pools[config.os].name,
+                    pool_name=pools[config.os].name,
                     target_exe=target_exe,
                     inputs=inputs,
                     setup_dir=setup,
