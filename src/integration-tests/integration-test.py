@@ -248,7 +248,7 @@ def retry(
                 raise Exception(f"failed '{description}'")
         else:
             logger.info(
-                f"waiting {wait_duration} seconds before retrying '{description}'"
+                f"waiting {wait_duration} seconds before retrying '{description}'",
             )
             time.sleep(wait_duration)
 
@@ -298,7 +298,7 @@ class TestOnefuzz:
             if config.os not in os_list:
                 continue
 
-            if config.os not in pools.keys:
+            if config.os not in pools.keys():
                 raise Exception(f"No pool for target: {target} ,os: {config.os}")
 
             self.logger.info("launching: %s", target)
@@ -1076,8 +1076,7 @@ class Run(Command):
         test_id = uuid4()
         error: Optional[Exception] = None
         try:
-            self.launch(
-                samples,
+            self.setup(
                 endpoint=endpoint,
                 authority=authority,
                 client_id=client_id,
@@ -1085,17 +1084,27 @@ class Run(Command):
                 pool_size=pool_size,
                 region=region,
                 os_list=os_list,
+                test_id=test_id,
+            )
+
+            self.launch(
+                samples,
+                endpoint=endpoint,
+                authority=authority,
+                client_id=client_id,
+                client_secret=client_secret,
+                os_list=os_list,
                 targets=targets,
                 test_id=test_id,
                 duration=duration,
             )
             self.check_results(
-                test_id,
                 endpoint=endpoint,
                 authority=authority,
                 client_id=client_id,
                 client_secret=client_secret,
                 skip_repro=skip_repro,
+                test_id=test_id,
             )
 
         except Exception as e:
