@@ -18,6 +18,7 @@ from azure.mgmt.compute.models import (
     ResourceSkuRestrictionsType,
     VirtualMachineScaleSetVMInstanceIDs,
     VirtualMachineScaleSetVMInstanceRequiredIDs,
+    VirtualMachineScaleSetVMProtectionPolicy,
 )
 from memoization import cached
 from msrestazure.azure_exceptions import CloudError
@@ -146,6 +147,54 @@ def get_instance_id(name: UUID, vm_id: UUID) -> Union[str, Error]:
         code=ErrorCode.UNABLE_TO_FIND,
         errors=["unable to find scaleset machine: %s:%s" % (name, vm_id)],
     )
+
+
+@retry_on_auth_failure()
+def update_scale_in_protection(
+    name: UUID, vm_id: UUID, protect_from_scale_in: bool
+) -> Optional[Error]:
+    instance_id = get_instance_id(name, vm_id)
+
+    if isinstance(instance_id, Error):
+        return instance_id
+
+    compute_client = get_compute_client()
+    resource_group = get_base_resource_group()
+
+    try:
+        instance_vm = compute_client.virtual_machine_scale_set_vms.get(
+            resource_group, name, instance_id
+        )
+    except (ResourceNotFoundError, CloudError):
+        return Error(
+            code=ErrorCode.UNABLE_TO_FIND,
+            errors=["unable to find vm instance: %s:%s" % (name, instance_id)],
+        )
+
+    new_protection_policy = VirtualMachineScaleSetVMProtectionPolicy(
+        protect_from_scale_in=protect_from_scale_in
+    )
+    if instance_vm.protection_policy is not None:
+        new_protection_policy = instance_vm.protection_policy
+        new_protection_policy.protect_from_scale_in = protect_from_scale_in
+
+    instance_vm.protection_policy = new_protection_policy
+
+    try:
+        compute_client.virtual_machine_scale_set_vms.begin_update(
+            resource_group, name, instance_id, instance_vm
+        )
+    except (ResourceNotFoundError, CloudError):
+        return Error(
+            code=ErrorCode.UNABLE_TO_UPDATE,
+            errors=["unable to set protection policy on: %s:%s" % (vm_id, instance_id)],
+        )
+
+    logging.info(
+        "Successfully set scale in protection on node %s to %s"
+        % (vm_id, protect_from_scale_in)
+    )
+    return None
 
 
 class UnableToUpdate(Exception):
