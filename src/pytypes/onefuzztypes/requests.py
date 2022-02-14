@@ -22,6 +22,7 @@ from .enums import (
 from .events import EventType
 from .models import AutoScaleConfig, InstanceConfig, NotificationConfig
 from .primitives import Container, PoolName, Region
+from .webhooks import WebhookMessageFormat
 
 
 class BaseRequest(BaseModel):
@@ -211,6 +212,7 @@ class WebhookCreate(BaseRequest):
     url: AnyHttpUrl
     event_types: List[EventType]
     secret_token: Optional[str]
+    message_format: Optional[WebhookMessageFormat]
 
 
 class WebhookSearch(BaseModel):
@@ -227,6 +229,7 @@ class WebhookUpdate(BaseModel):
     event_types: Optional[List[EventType]]
     url: Optional[AnyHttpUrl]
     secret_token: Optional[str]
+    message_format: Optional[WebhookMessageFormat]
 
 
 class NodeAddSshKey(BaseModel):
