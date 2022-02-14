@@ -18,7 +18,9 @@ jobs:
       testTarget: ${{parameters.testTarget}}
     steps:
     - template: common-steps.yml
-    - task: PythonScript@0
+      parameters:
+        pr: ${{ parameters.pr }}
+        skip_update: ${{parameters.skip_update}}
     - pwsh: |
         python -m venv .env
         . ./.env/bin/Activate.ps1

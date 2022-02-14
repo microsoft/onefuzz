@@ -142,8 +142,6 @@ variables:
     value: ''
   ${{else}}:
     value: '--skip_update'
-- name: pr
-  value: ${{parameters.pr}}
 
 pool:
   vmImage: ubuntu-latest
@@ -154,6 +152,9 @@ stages:
   - job: deploy
     steps:
     - template: common-steps.yml
+      parameters:
+        pr: ${{ parameters.pr }}
+        skip_update: ${{variables.skip_update}}
 
     - pwsh: |
         python -m venv .env
@@ -195,6 +196,9 @@ stages:
   - job: setup
     steps:
     - template: common-steps.yml
+      parameters:
+        pr: ${{ parameters.pr }}
+        skip_update: ${{variables.skip_update}}
 
     - pwsh: |
         python -m venv .env
@@ -258,6 +262,9 @@ stages:
   - job: check_logs
     steps:
     - template: common-steps.yml
+      parameters:
+        pr: ${{ parameters.pr }}
+        skip_update: ${{variables.skip_update}}
     - pwsh: |
         python -m venv .env
         . ./.env/bin/Activate.ps1
@@ -290,6 +297,9 @@ stages:
   - job: cleanup
     steps:
       - template: common-steps.yml
+        parameters:
+          pr: ${{ parameters.pr }}
+          skip_update: ${{variables.skip_update}}
       - pwsh: |
           python -m venv .env
           . ./.env/bin/Activate.ps1
