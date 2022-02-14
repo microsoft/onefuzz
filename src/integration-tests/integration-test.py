@@ -1048,13 +1048,7 @@ class Run(Command):
                 client_secret=client_secret,
             )
 
-        self.check_logs(
-            test_id,
-            endpoint=endpoint,
-            client_id=client_id,
-            client_secret=client_secret,
-            authority=authority,
-        )
+
 
     def test(
         self,
@@ -1105,6 +1099,13 @@ class Run(Command):
                 client_secret=client_secret,
                 skip_repro=skip_repro,
                 test_id=test_id,
+            )
+            self.check_logs(
+                test_id,
+                endpoint=endpoint,
+                client_id=client_id,
+                client_secret=client_secret,
+                authority=authority,
             )
 
         except Exception as e:
