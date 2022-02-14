@@ -211,6 +211,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             return
 
         vmss = get_vmss(self.scaleset_id)
+        # TODO: Set up auto scale resource
+        # TODO: Link up auto scale resource with diagnostics
         if vmss is None:
             pool = Pool.get_by_name(self.pool_name)
             if isinstance(pool, Error):
