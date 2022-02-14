@@ -142,8 +142,8 @@ variables:
     value: ''
   ${{else}}:
     value: '--skip_update'
-
-
+- name: pr
+  value: ${{parameters.pr}}
 
 pool:
   vmImage: ubuntu-latest

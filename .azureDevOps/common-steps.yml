@@ -27,7 +27,7 @@ steps:
     inputs:
       scriptSource: 'filePath'
       scriptPath: '$(Build.SourcesDirectory)/src/utils/check-pr/github_client.py'
-      arguments: --pr ${{ parameters.pr }} --destination $(Build.SourcesDirectory)/checkpr ${{variables.skip_update}}
+      arguments: --pr ${{ variables.pr }} --destination $(Build.SourcesDirectory)/checkpr ${{variables.skip_update}}
     env:
       GITHUB_ISSUE_TOKEN: $(GITHUB_ISSUE_TOKEN)
 
