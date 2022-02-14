@@ -3,7 +3,7 @@ parameters:
   type: string
 
 - name: skip_update
-  type: boolean
+  type: string
 
 steps:
   - task: UsePythonVersion@0
