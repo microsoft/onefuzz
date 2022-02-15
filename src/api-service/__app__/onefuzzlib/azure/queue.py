@@ -5,6 +5,7 @@
 
 import base64
 import datetime
+from importlib.abc import ResourceReader
 import json
 import logging
 from typing import List, Optional, Type, TypeVar, Union
@@ -18,8 +19,12 @@ from azure.storage.queue import (
 )
 from memoization import cached
 from pydantic import BaseModel
+from onefuzztypes.enums import ErrorCode
+from onefuzztypes.models import Error
+from azure.mgmt.resource.resources import ResourceManagementClient
 
 from .storage import StorageType, get_primary_account, get_storage_account_name_key
+from .creds import get_base_resource_group, get_identity, get_subscription
 
 QueueNameType = Union[str, UUID]
 
@@ -138,7 +143,6 @@ def remove_first_message(name: QueueNameType, storage_type: StorageType) -> bool
             return False
     return False
 
-
 A = TypeVar("A", bound=BaseModel)
 
 
@@ -195,3 +199,20 @@ def queue_object(
         return True
     except ResourceNotFoundError:
         return False
+
+def get_resource_id(
+    queue_name: QueueNameType,
+    storage_type: StorageType
+) -> Union[str, Error]:
+    account_id = get_primary_account(storage_type)
+    resource_uri = "%s/services/queue/queues/%s" % (account_id, queue_name)
+
+    rm_client = ResourceManagementClient(get_identity(), get_subscription())
+    
+    try:
+        rm_client.resources.get_by_id(resource_uri)
+    except (ResourceNotFoundError):
+        return Error(
+            code=ErrorCode.UNABLE_TO_FIND
+        )
+    return resource_uri

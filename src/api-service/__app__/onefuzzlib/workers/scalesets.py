@@ -5,6 +5,7 @@
 
 import datetime
 import logging
+import queue
 from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
@@ -42,6 +43,9 @@ from ..extension import fuzz_extensions
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from .nodes import Node
 from .shrink_queue import ShrinkQueue
+from ..azure.queue import get_queue, get_resource_id
+from ..azure.storage import StorageType
+from ..azure.auto_scale import create_auto_scale_profile, add_auto_scale_to_vmss
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
@@ -211,8 +215,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             return
 
         vmss = get_vmss(self.scaleset_id)
-        # TODO: Set up auto scale resource
-        # TODO: Link up auto scale resource with diagnostics
         if vmss is None:
             pool = Pool.get_by_name(self.pool_name)
             if isinstance(pool, Error):
@@ -244,6 +246,12 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.set_failed(result)
                 return
             else:
+                # TODO: Link up auto scale resource with diagnostics
+                pool_queue_id = pool.get_pool_queue()
+                pool_queue_uri = get_resource_id(pool_queue_id, StorageType.corpus)
+                pool_instances = len(pool.nodes)
+                auto_scale_profile = create_auto_scale_profile(pool_instances, pool_instances, pool_queue_uri)
+                add_auto_scale_to_vmss(self.scaleset_id, auto_scale_profile)
                 logging.info(
                     SCALESET_LOG_PREFIX + "creating scaleset scaleset_id:%s",
                     self.scaleset_id,
