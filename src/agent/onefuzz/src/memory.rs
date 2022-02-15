@@ -58,7 +58,7 @@ pub fn available_bytes() -> Result<u64> {
 #[cfg(target_os = "linux")]
 fn parse_available_kb(meminfo: &str) -> Result<u64> {
     let captures = AVAILABLE_KB
-        .captures(&meminfo)
+        .captures(meminfo)
         .ok_or_else(|| format_err!("`MemAvailable` not found in `/proc/meminfo`"))?;
 
     let available_kb = captures
