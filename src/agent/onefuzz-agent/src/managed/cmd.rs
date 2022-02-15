@@ -44,6 +44,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 // If available memory drops below the minimum, exit informatively.
 //
 // Parameterized to enable future configuration by VMSS.
+#[cfg(not(target_os = "macos"))]
 async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
     loop {
         match onefuzz::memory::available_bytes() {
@@ -63,6 +64,11 @@ async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
 
         tokio::time::sleep(OOM_CHECK_INTERVAL).await;
     }
+}
+
+#[cfg(target_os = "macos")]
+async fn out_of_memory(_min_bytes: u64) -> Result<OutOfMemory> {
+    std::future::pending()
 }
 
 struct OutOfMemory {
