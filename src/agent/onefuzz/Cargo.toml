@@ -46,6 +46,7 @@ backoff = { version = "0.3", features = ["tokio"] }
 winreg = "0.10"
 input-tester = { path = "../input-tester" }
 debugger = { path = "../debugger" }
+winapi = { version = "0.3", features = ["psapi"] }
 
 [target.'cfg(target_family = "unix")'.dependencies]
 cpp_demangle = "0.3"

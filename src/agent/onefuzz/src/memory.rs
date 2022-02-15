@@ -1,32 +1,47 @@
+#[cfg(target_os = "windows")]
+use std::convert::TryFrom;
+
 use anyhow::Result;
+
+#[cfg(target_os = "linux")]
 use regex::Regex;
 
 #[cfg(target_os = "windows")]
-pub fn available_bytes() -> u64 {
-    let info = get_performance_info()?;
-    let available_pages = info.CommitLimit.saturating_sub(info.commit_total);
-    let available_bytes = available_bytes * info.PageSize;
+use winapi::um::psapi::PERFORMANCE_INFORMATION;
 
-    Ok(available_bytes)
+#[cfg(target_os = "windows")]
+pub fn available_bytes() -> Result<u64> {
+    let info = get_performance_info()?;
+    let pages = info.CommitLimit.saturating_sub(info.CommitTotal);
+    let bytes = pages * info.PageSize;
+    let bytes = u64::try_from(bytes)?;
+
+    Ok(bytes)
 }
 
 #[cfg(target_os = "windows")]
-fn get_performance_info() -> Ok(PERFORMANCE_INFORMATION) {
+fn get_performance_info() -> Result<PERFORMANCE_INFORMATION> {
+    use winapi::shared::minwindef::FALSE;
     use winapi::um::errhandlingapi::GetLastError;
-    use winapi::um::psapi::{GetPerformanceInfo, PERFORMANCE_INFORMATION};
+    use winapi::um::psapi::GetPerformanceInfo;
 
     let mut info = PERFORMANCE_INFORMATION::default();
 
     let success = unsafe {
-        GetPerformanceInfo(&mut info, std::mem::size_of::<PERFORMANCE_INFORMATION>());
+        // Will always fit in a `u32`.
+        //
+        // https://docs.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-performance_information
+        let size = std::mem::size_of::<PERFORMANCE_INFORMATION>();
+        let size = u32::try_from(size)?;
+        GetPerformanceInfo(&mut info, size)
     };
 
-    if !success {
+    if success == FALSE {
         let code = unsafe { GetLastError() };
         bail!("error querying performance information: {:x}", code);
     }
 
-    Ok(PERFORMANCE_INFORMATION)
+    Ok(info)
 }
 
 #[cfg(target_os = "linux")]
