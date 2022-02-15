@@ -42,6 +42,8 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 // Periodically check available system memory.
 //
 // If available memory drops below the minimum, exit informatively.
+//
+// Parameterized to enable future configuration by VMSS.
 async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
     loop {
         match onefuzz::memory::available_bytes() {
