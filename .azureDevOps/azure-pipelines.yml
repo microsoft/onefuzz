@@ -65,19 +65,19 @@ parameters:
   - name: linuxLibfuzzerWithOptions
     displayName: linux-libfuzzer-with-options
     type: boolean
-    default: true
+    default: false
   - name: linuxLibfuzzerDlopen
     displayName: linux-libfuzzer-dlopen
     type: boolean
-    default: true
+    default: false
   - name: linuxLibfuzzerLinkedLibrary
     displayName: linux-libfuzzer-linked-library
     type: boolean
-    default: true
+    default: false
   - name: linuxLibfuzzerDotnet
     displayName: linux-libfuzzer-dotnet
     type: boolean
-    default: true
+    default: false
   - name: linuxLibfuzzerAarch64Crosscompile
     displayName: linux-libfuzzer-aarch64-crosscompile
     type: boolean
@@ -85,11 +85,11 @@ parameters:
   - name: linuxLibfuzzerRust
     displayName: linux-libfuzzer-rust
     type: boolean
-    default: true
+    default: false
   - name: linuxTrivialCrash
     displayName: linux-trivial-crash
     type: boolean
-    default: true
+    default: false
   - name: linuxTrivialCrashAsan
     displayName: linux-trivial-crash-asan
     type: boolean
@@ -101,15 +101,15 @@ parameters:
   - name: windowsLibfuzzerLinkedLibrary
     displayName: windows-libfuzzer-linked-library
     type: boolean
-    default: true
+    default: false
   - name: windowsLibfuzzerLoadLibrary
     displayName: windows-libfuzzer-load-library
     type: boolean
-    default: true
+    default: false
   - name: windowsTrivialCrash
     displayName: windows-trivial-crash
     type: boolean
-    default: true
+    default: false
 
 
 variables:
@@ -374,7 +374,7 @@ stages:
     client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]
     client_secret: $[ stageDependencies.deploy.deploy.outputs['deploy.client_secret'] ]
     instance_endpoint: $[ stageDependencies.deploy.deploy.outputs['deploy.instance_endpoint'] ]
-    test_id: $[ stageDependencies.setup.setup.outputs['setup.client_id'] ]
+    test_id: $[ stageDependencies.setup.setup.outputs['setup.test_id'] ]
   jobs:
   - job: cleanup
     steps:
