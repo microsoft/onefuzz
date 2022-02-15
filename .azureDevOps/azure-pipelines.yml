@@ -4,6 +4,7 @@
 # https://aka.ms/yaml
 
 trigger: none
+pr: none
 
 parameters:
   - name: runConfig
