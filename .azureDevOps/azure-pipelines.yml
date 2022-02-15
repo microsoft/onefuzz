@@ -231,6 +231,13 @@ stages:
       instance_endpoint: $[ stageDependencies.deploy.deploy.outputs['deploy.instance_endpoint'] ]
       test_id: $[ stageDependencies.setup.setup.outputs['setup.test_id'] ]
   jobs:
+  - ${{ if eq(parameters.linuxTrivialCrashAfl, true) }}:
+    - template: test-stage.yml
+      parameters:
+        testTarget: linux-trivial-crash-afl
+        pr: ${{ parameters.pr }}
+        jobName: linuxTrivialCrashAfl
+        skip_update: ${{variables.skip_update}}
   - ${{ if eq(parameters.linuxLibfuzzer, true) }}:
     - template: test-stage.yml
       parameters:
@@ -238,13 +245,89 @@ stages:
         pr: ${{ parameters.pr }}
         jobName: linuxLibfuzzer
         skip_update: ${{variables.skip_update}}
-
+  - ${{ if eq(parameters.linuxLibfuzzerWithOptions, true) }}:
+    - template: test-stage.yml
+      parameters:
+        testTarget: linux-libfuzzer-with-options
+        pr: ${{ parameters.pr }}
+        jobName: linuxLibfuzzerWithOptions
+        skip_update: ${{variables.skip_update}}
+  - ${{ if eq(parameters.linuxLibfuzzerDlopen, true) }}:
+    - template: test-stage.yml
+      parameters:
+        testTarget: linux-libfuzzer-dlopen
+        pr: ${{ parameters.pr }}
+        jobName: linuxLibfuzzerDlopen
+        skip_update: ${{variables.skip_update}}
+  - ${{ if eq(parameters.linuxLibfuzzerLinkedLibrary, true) }}:
+    - template: test-stage.yml
+      parameters:
+        testTarget: linux-libfuzzer-linked-library
+        pr: ${{ parameters.pr }}
+        jobName: linuxLibfuzzerLinkedLibrary
+        skip_update: ${{variables.skip_update}}
+  - ${{ if eq(parameters.linuxLibfuzzerDotnet, true) }}:
+    - template: test-stage.yml
+      parameters:
+        testTarget: linux-libfuzzer-dotnet
+        pr: ${{ parameters.pr }}
+        jobName: linuxLibfuzzerDotnet
+        skip_update: ${{variables.skip_update}}
+  - ${{ if eq(parameters.linuxLibfuzzerAarch64Crosscompile, true) }}:
+    - template: test-stage.yml
+      parameters:
+        testTarget: linux-libfuzzer-aarch64-crosscompile
+        pr: ${{ parameters.pr }}
+        jobName: linuxLibfuzzerAarch64Crosscompile
+        skip_update: ${{variables.skip_update}}
+  - ${{ if eq(parameters.linuxLibfuzzerRust, true) }}:
+    - template: test-stage.yml
+      parameters:
+        testTarget: linux-libfuzzer-rust
+        pr: ${{ parameters.pr }}
+        jobName: linuxLibfuzzerRust
+        skip_update: ${{variables.skip_update}}
   - ${{ if eq(parameters.linuxTrivialCrash, true) }}:
     - template: test-stage.yml
       parameters:
         testTarget: linux-trivial-crash
         pr: ${{ parameters.pr }}
         jobName: linuxTrivialCrash
+        skip_update: ${{variables.skip_update}}
+  - ${{ if eq(parameters.linuxTrivialCrashAsan, true) }}:
+    - template: test-stage.yml
+      parameters:
+        testTarget: linux-trivial-crash-asan
+        pr: ${{ parameters.pr }}
+        jobName: linuxTrivialCrashAsan
+        skip_update: ${{variables.skip_update}}
+  - ${{ if eq(parameters.windowsLibfuzzer, true) }}:
+    - template: test-stage.yml
+      parameters:
+        testTarget: windows-libfuzzer
+        pr: ${{ parameters.pr }}
+        jobName: windowsLibfuzzer
+        skip_update: ${{variables.skip_update}}
+  - ${{ if eq(parameters.windowsLibfuzzerLinkedLibrary, true) }}:
+    - template: test-stage.yml
+      parameters:
+        testTarget: windows-libfuzzer-linked-library
+        pr: ${{ parameters.pr }}
+        jobName: windowsLibfuzzerLinkedLibrary
+        skip_update: ${{variables.skip_update}}
+  - ${{ if eq(parameters.windowsLibfuzzerLoadLibrary, true) }}:
+    - template: test-stage.yml
+      parameters:
+        testTarget: windows-libfuzzer-load-library
+        pr: ${{ parameters.pr }}
+        jobName: windowsLibfuzzerLoadLibrary
+        skip_update: ${{variables.skip_update}}
+  - ${{ if eq(parameters.windowsTrivialCrash, true) }}:
+    - template: test-stage.yml
+      parameters:
+        testTarget: windows-trivial-crash
+        pr: ${{ parameters.pr }}
+        jobName: windowsTrivialCrash
         skip_update: ${{variables.skip_update}}
 
 - stage: check_logs
@@ -286,7 +369,7 @@ stages:
 - stage: cleanup
   dependsOn:
     - deploy
-    - test
+    - setup
     - check_logs
   variables:
     client_id: $[ stageDependencies.deploy.deploy.outputs['deploy.client_id'] ]
