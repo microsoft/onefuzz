@@ -40,8 +40,10 @@ jobs:
         if ($launch_result -notmatch "launch info:(.+)") {
           throw "invalid launch result: {$launch_result}"
         }
+        Write-Host "$launch_info"
+
         $launch_info = $Matches[1] | ConvertFrom-Json
-        $job_ids = launch_info.jobs -join " "
+        $job_ids = $launch_info.jobs -join " "
 
         python integration-test.py check_results $(test_id) --endpoint $(instance_endpoint) --client_id $(client_id) --client_secret $(client_secret) --job_ids $job_ids -v
         if ($LASTEXITCODE -ne 0) {
