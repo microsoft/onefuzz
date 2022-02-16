@@ -3,6 +3,7 @@
 
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
+use std::time::Duration;
 
 use anyhow::{Context, Result};
 use downcast_rs::Downcast;
@@ -12,6 +13,9 @@ use tokio::fs;
 use tokio::process::Command;
 
 use crate::work::*;
+
+// Default to 4 hour timeout for user setup scripts.
+const DEFAULT_SETUP_SCRIPT_TIMEOUT: Duration = Duration::from_secs(4 * 60 * 60);
 
 const SETUP_PATH_ENV: &str = "ONEFUZZ_TARGET_SETUP_PATH";
 
@@ -73,7 +77,7 @@ impl SetupRunner {
                 setup_script.path().display()
             );
 
-            let output = setup_script.invoke().await?;
+            let output = setup_script.invoke(None).await?;
 
             if output.exit_status.success {
                 debug!(
@@ -197,8 +201,13 @@ impl SetupScript {
         &self.script_path
     }
 
-    pub async fn invoke(&self) -> Result<Output> {
-        Ok(self.setup_command().output().await?.into())
+    pub async fn invoke(&self, timeout: impl Into<Option<Duration>>) -> Result<Output> {
+        let timeout = timeout.into().unwrap_or(DEFAULT_SETUP_SCRIPT_TIMEOUT);
+
+        let timed = tokio::time::timeout(timeout, self.setup_command().output()).await?;
+        let output = timed?.into();
+
+        Ok(output)
     }
 
     #[cfg(target_family = "windows")]
