@@ -10,6 +10,7 @@ use std::time::Duration;
 // 100 MB.
 const MIN_AVAILABLE_BYTES: u64 = 100 * 1_000_000;
 
+#[cfg(not(target_os = "macos"))]
 const OOM_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
