@@ -19,12 +19,13 @@
 
 import datetime
 import logging
-from optparse import Option
 import os
+import pprint
 import re
 import sys
 import time
 from enum import Enum
+from optparse import Option
 from shutil import which
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar
 from uuid import UUID, uuid4
@@ -1006,7 +1007,7 @@ class Run(Command):
             "jobs": job_ids,
         }
 
-        print(f"launch info: {launch_data}")
+        print(f"launch info: {pprint.pformat(launch_data)}")
 
     def cleanup(
         self,
