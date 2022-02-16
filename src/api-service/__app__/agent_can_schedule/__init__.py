@@ -39,6 +39,9 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if work_stopped:
         allowed = False
 
+    if allowed:
+        allowed = not isinstance(node.acquire_scale_in_protection(), Error)
+
     return ok(CanSchedule(allowed=allowed, work_stopped=work_stopped))
 
 
