@@ -14,8 +14,8 @@ use tokio::process::Command;
 
 use crate::work::*;
 
-// Default to 4 hour timeout for user setup scripts.
-const DEFAULT_SETUP_SCRIPT_TIMEOUT: Duration = Duration::from_secs(4 * 60 * 60);
+// Default to 59 minutes, just under the service's `NODE_EXPIRATION_TIME` of 1 hour.
+const DEFAULT_SETUP_SCRIPT_TIMEOUT: Duration = Duration::from_secs(59 * 60);
 
 const SETUP_PATH_ENV: &str = "ONEFUZZ_TARGET_SETUP_PATH";
 
