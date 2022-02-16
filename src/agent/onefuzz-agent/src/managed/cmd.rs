@@ -1,11 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+use std::path::PathBuf;
 
-use crate::tasks::config::{CommonConfig, Config};
+#[cfg(not(target_os = "macos"))]
+use std::time::Duration;
+
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use std::path::PathBuf;
-use std::time::Duration;
+
+use crate::tasks::config::{CommonConfig, Config};
 
 // 100 MB.
 const MIN_AVAILABLE_BYTES: u64 = 100 * 1_000_000;
