@@ -37,7 +37,7 @@ jobs:
           throw "failed to launch"
         }
 
-        if ($launch_result -join "" -notmatch "launch info:(.+)") {
+        if ($launch_result -notmatch "launch info:(.+)") {
           throw "invalid launch result: {$launch_result}"
         }
         $launch_info = $Matches[1] | ConvertFrom-Json

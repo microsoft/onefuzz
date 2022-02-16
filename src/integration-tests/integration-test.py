@@ -20,12 +20,10 @@
 import datetime
 import logging
 import os
-import pprint
 import re
 import sys
 import time
 from enum import Enum
-from optparse import Option
 from shutil import which
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar
 from uuid import UUID, uuid4
@@ -36,7 +34,8 @@ from onefuzz.backend import ContainerWrapper, wait
 from onefuzz.cli import execute_api
 from onefuzztypes.enums import OS, ContainerType, TaskState, VmState
 from onefuzztypes.models import Job, Pool, Repro, Scaleset, Task
-from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
+from onefuzztypes.primitives import (Container, Directory, File, PoolName,
+                                     Region)
 from pydantic import BaseModel, Field
 
 LINUX_POOL = "linux-test"
@@ -57,6 +56,11 @@ class TemplateType(Enum):
     libfuzzer_qemu_user = "libfuzzer_qemu_user"
     afl = "afl"
     radamsa = "radamsa"
+
+
+class LaunchInfo(BaseModel):
+    test_id: UUID
+    jobs: List[UUID]
 
 
 class Integration(BaseModel):
@@ -1002,12 +1006,9 @@ class Run(Command):
         job_ids = tester.launch(
             samples, os_list=os_list, targets=targets, duration=duration
         )
-        launch_data = {
-            "test_id": test_id,
-            "jobs": job_ids,
-        }
+        launch_data = LaunchInfo(test_id=test_id, jobs=job_ids)
 
-        print(f"launch info: {pprint.pformat(launch_data)}")
+        print(f"launch info: {launch_data.json()}")
 
     def cleanup(
         self,
