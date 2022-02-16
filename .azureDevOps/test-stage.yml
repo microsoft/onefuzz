@@ -32,13 +32,13 @@ jobs:
         cd integration
 
         Set-PSDebug -Trace 1
-        launch_result = python integration-test.py launch . --endpoint $(instance_endpoint) --client_id $(client_id) --client_secret $(client_secret) --targets $(testTarget) --test_id $(test_id) -v
+        $launch_result = python integration-test.py launch . --endpoint $(instance_endpoint) --client_id $(client_id) --client_secret $(client_secret) --targets $(testTarget) --test_id $(test_id) -v
         if ($LASTEXITCODE -ne 0) {
           throw "failed to launch"
         }
 
-        if (launch_result -notmatch "launch info:(.+)") {
-          throw "invalid launch result: {launch_result}"
+        if ($launch_result -notmatch "launch info:(.+)") {
+          throw "invalid launch result: {$launch_result}"
         }
         $launch_info = $Matches[1] | ConvertFrom-Json
         job_ids = launch_info.jobs -join " "
