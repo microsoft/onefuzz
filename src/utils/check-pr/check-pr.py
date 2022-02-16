@@ -6,14 +6,10 @@
 import argparse
 import os
 import subprocess
-import sys
 import tempfile
 import time
 import uuid
-from typing import Callable, List, Optional, Tuple, TypeVar
-
-import requests
-from github import Github
+from typing import List, Optional
 
 from cleanup_ad import delete_current_user_app_registrations
 
