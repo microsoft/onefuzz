@@ -1,6 +1,7 @@
 #[cfg(target_os = "windows")]
 use std::convert::TryFrom;
 
+#[cfg(not(target_os = "macos"))]
 use anyhow::Result;
 
 #[cfg(target_os = "linux")]
