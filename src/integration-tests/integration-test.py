@@ -292,7 +292,7 @@ class TestOnefuzz:
         for pool in self.of.pools.list():
             pools[pool.os] = pool
 
-        job_ids = List[UUID]()
+        job_ids = []
 
         for target, config in TARGETS.items():
             if target not in targets:
