@@ -204,7 +204,9 @@ impl SetupScript {
     pub async fn invoke(&self, timeout: impl Into<Option<Duration>>) -> Result<Output> {
         let timeout = timeout.into().unwrap_or(DEFAULT_SETUP_SCRIPT_TIMEOUT);
 
-        let timed = tokio::time::timeout(timeout, self.setup_command().output()).await?;
+        let timed = tokio::time::timeout(timeout, self.setup_command().output())
+            .await
+            .context("setup script timed out")?;
         let output = timed?.into();
 
         Ok(output)
