@@ -10,9 +10,6 @@ use clap::{App, Arg, SubCommand};
 
 use crate::tasks::config::{CommonConfig, Config};
 
-// 100 MB.
-const MIN_AVAILABLE_BYTES: u64 = 100 * 1_000_000;
-
 #[cfg(not(target_os = "macos"))]
 const OOM_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
@@ -24,11 +21,16 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 
     init_telemetry(config.common());
 
+    let min_available_memory_bytes = 1_000_000 * config.common().min_available_memory_mb;
+
+    // If the memory limit is 0, this will resolve immediately with an error.
+    let check_oom = out_of_memory(min_available_memory_bytes);
+
     let result = tokio::select! {
         result = config.run() => result,
 
         // Ignore this task if it returns due to a querying error.
-        Ok(oom) = out_of_memory(MIN_AVAILABLE_BYTES) => {
+        Ok(oom) = check_oom => {
             // Convert the OOM notification to an error, so we can log it below.
             let err = format_err!("out of memory: {} bytes available, {} required", oom.available_bytes, oom.min_bytes);
             Err(err)
@@ -50,6 +52,10 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 // Parameterized to enable future configuration by VMSS.
 #[cfg(not(target_os = "macos"))]
 async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
+    if min_bytes == 0 {
+        bail!("available memory minimum is unreachable");
+    }
+
     loop {
         match onefuzz::memory::available_bytes() {
             Ok(available_bytes) => {
