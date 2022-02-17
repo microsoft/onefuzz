@@ -139,6 +139,7 @@ def remove_first_message(name: QueueNameType, storage_type: StorageType) -> bool
             return False
     return False
 
+
 A = TypeVar("A", bound=BaseModel)
 
 
@@ -196,10 +197,8 @@ def queue_object(
     except ResourceNotFoundError:
         return False
 
-def get_resource_id(
-    queue_name: QueueNameType,
-    storage_type: StorageType
-) -> str:
+
+def get_resource_id(queue_name: QueueNameType, storage_type: StorageType) -> str:
     account_id = get_primary_account(storage_type)
     resource_uri = "%s/services/queue/queues/%s" % (account_id, queue_name)
     return resource_uri

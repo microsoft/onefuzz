@@ -27,7 +27,7 @@ from azure.mgmt.monitor.models import (
     ComparisonOperationType,
     MetricStatisticType,
     ScaleDirection,
-    ScaleType
+    ScaleType,
 )
 from azure.core.exceptions import (
     HttpResponseError,
@@ -45,8 +45,11 @@ from .creds import (
 
 # TODO: Look into deleting auto scale resource when deleting scaleset
 
+
 @retry_on_auth_failure()
-def add_auto_scale_to_vmss(vmss: UUID, auto_scale_profile: AutoscaleProfile) -> Optional[Error]:
+def add_auto_scale_to_vmss(
+    vmss: UUID, auto_scale_profile: AutoscaleProfile
+) -> Optional[Error]:
     logging.info("Checking scaleset %s for existing auto scale resources" % vmss)
     client = get_monitor_client()
     resource_group = get_base_resource_group()
@@ -54,7 +57,9 @@ def add_auto_scale_to_vmss(vmss: UUID, auto_scale_profile: AutoscaleProfile) -> 
     auto_scale_resource_id = None
 
     try:
-        auto_scale_collections = client.autoscale_settings.list_by_resource_group(resource_group)
+        auto_scale_collections = client.autoscale_settings.list_by_resource_group(
+            resource_group
+        )
         for auto_scale in auto_scale_collections:
             if str(auto_scale.target_resource_uri).endswith(str(vmss)):
                 auto_scale_resource_id = auto_scale.id
@@ -62,25 +67,36 @@ def add_auto_scale_to_vmss(vmss: UUID, auto_scale_profile: AutoscaleProfile) -> 
     except (ResourceNotFoundError, CloudError):
         return Error(
             code=ErrorCode.INVALID_CONFIGURATION,
-            errors=["Failed to check if scaleset %s already has an autoscale resource" % vmss]
+            errors=[
+                "Failed to check if scaleset %s already has an autoscale resource"
+                % vmss
+            ],
         )
 
     if auto_scale_resource_id is not None:
         logging.warning("Scaleset %s already has auto scale resource" % vmss)
         return None
 
-    resource_creation = create_auto_scale_resource_for(vmss, get_base_region(), auto_scale_profile)
+    resource_creation = create_auto_scale_resource_for(
+        vmss, get_base_region(), auto_scale_profile
+    )
     if isinstance(resource_creation, Error):
         return resource_creation
     return None
 
-def create_auto_scale_resource_for(resource_id: UUID, location: Region, profile: AutoscaleProfile) -> Union[AutoscaleSettingResource, Error]:
+
+def create_auto_scale_resource_for(
+    resource_id: UUID, location: Region, profile: AutoscaleProfile
+) -> Union[AutoscaleSettingResource, Error]:
     logging.info("Creating auto scale resource for: %s" % resource_id)
     client = get_monitor_client()
     resource_group = get_base_resource_group()
     subscription = get_subscription()
 
-    scaleset_uri = "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachineScaleSets/%s" % (subscription, resource_group, resource_id)
+    scaleset_uri = (
+        "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachineScaleSets/%s"
+        % (subscription, resource_group, resource_id)
+    )
 
     params: Dict[str, Any] = {
         "location": location,
@@ -90,51 +106,49 @@ def create_auto_scale_resource_for(resource_id: UUID, location: Region, profile:
 
     try:
         auto_scale_resource = client.autoscale_settings.create_or_update(
-            resource_group,
-            str(uuid.uuid4()),
-            params
+            resource_group, str(uuid.uuid4()), params
         )
-        logging.info("Successfully created auto scale resource %s for %s" % (auto_scale_resource.id, resource_id))
+        logging.info(
+            "Successfully created auto scale resource %s for %s"
+            % (auto_scale_resource.id, resource_id)
+        )
         return auto_scale_resource
     except (ResourceNotFoundError, CloudError):
         return Error(
             code=ErrorCode.UNABLE_TO_CREATE,
-            errors=["unable to create auto scale resource for resource: %s with profile: %s" % (resource_id, profile)]
+            errors=[
+                "unable to create auto scale resource for resource: %s with profile: %s"
+                % (resource_id, profile)
+            ],
         )
+
 
 def create_auto_scale_profile(min: int, max: int, queue_uri: str) -> AutoscaleProfile:
     return AutoscaleProfile(
         name=str(uuid.uuid4()),
-        capacity=ScaleCapacity(
-            minimum=min,
-            maximum=max,
-            default=max
-        ),
+        capacity=ScaleCapacity(minimum=min, maximum=max, default=max),
         rules=[
             ScaleRule(
                 metric_trigger=MetricTrigger(
                     metric_name="ApproximateMessageCount",
                     metric_resource_uri=queue_uri,
-
                     # Check every minute
                     time_grain=timedelta(minutes=1),
-
                     # The average amount of messages there are in the pool queue
-                    time_aggregation= TimeAggregationType.AVERAGE,
+                    time_aggregation=TimeAggregationType.AVERAGE,
                     statistic=MetricStatisticType.COUNT,
-
                     # Over the past 10 minutes
-                    time_window = timedelta(minutes=10),
-
+                    time_window=timedelta(minutes=10),
                     # When there's more than 1 message in the pool queue
-                    operator= ComparisonOperationType.GREATER_THAN,
+                    operator=ComparisonOperationType.GREATER_THAN,
                     threshold=1,
                 ),
                 scale_action=ScaleAction(
                     direction=ScaleDirection.INCREASE,
                     type=ScaleType.CHANGE_COUNT,
-                    value = 1,
-                    cooldown = timedelta(minutes=5)
-                )
+                    value=1,
+                    cooldown=timedelta(minutes=5),
+                ),
             )
-        ])
+        ],
+    )

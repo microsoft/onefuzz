@@ -835,11 +835,14 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
     def try_to_enable_auto_scaling(self) -> Optional[Error]:
         from .pools import Pool
+
         logging.info("Trying to add auto scaling for scaleset %s" % self.scaleset_id)
 
         pool = Pool.get_by_name(self.pool_name)
         if isinstance(pool, Error):
-            logging.error("Failed to get pool by name: %s error: %s" % (self.pool_name, pool))
+            logging.error(
+                "Failed to get pool by name: %s error: %s" % (self.pool_name, pool)
+            )
             return pool
 
         pool_queue_id = pool.get_pool_queue()
@@ -847,13 +850,14 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         capacity = get_vmss_size(self.scaleset_id)
         if capacity is None:
             capacity_failed = Error(
+                code=ErrorCode.ErrorCode.UNABLE_TO_FIND
                 errors=["Failed to get capacity for scaleset %s" % self.scaleset_id]
             )
             logging.error(capacity_failed)
             return capacity_failed
 
-        auto_scale_profile = create_auto_scale_profile(capacity, capacity, pool_queue_uri)
-        logging.info(
-            "Added auto scale resource to scaleset: %s" % self.scaleset_id
+        auto_scale_profile = create_auto_scale_profile(
+            capacity, capacity, pool_queue_uri
         )
+        logging.info("Added auto scale resource to scaleset: %s" % self.scaleset_id)
         return add_auto_scale_to_vmss(self.scaleset_id, auto_scale_profile)

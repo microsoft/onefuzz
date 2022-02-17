@@ -32,3 +32,4 @@ semver==2.13.0
 base58==2.1.0
 # onefuzz types version is set during build
 onefuzztypes==5.0.0
+
