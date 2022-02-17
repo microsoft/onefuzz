@@ -45,6 +45,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     result
 }
 
+#[cfg(not(target_os = "macos"))]
 const MAX_OOM_QUERY_ERRORS: usize = 5;
 
 // Periodically check available system memory.
