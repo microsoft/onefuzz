@@ -78,7 +78,8 @@ async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
 
 #[cfg(target_os = "macos")]
 async fn out_of_memory(_min_bytes: u64) -> Result<OutOfMemory> {
-    std::future::pending().await
+    // Resolve immediately.
+    bail!("out-of-memory check not implemented on macOS")
 }
 
 struct OutOfMemory {
