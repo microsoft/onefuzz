@@ -45,6 +45,8 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     result
 }
 
+const MAX_OOM_QUERY_ERRORS: usize = 5;
+
 // Periodically check available system memory.
 //
 // If available memory drops below the minimum, exit informatively.
@@ -56,9 +58,14 @@ async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
         bail!("available memory minimum is unreachable");
     }
 
+    let mut consecutive_query_errors = 0;
+
     loop {
         match onefuzz::memory::available_bytes() {
             Ok(available_bytes) => {
+                // Reset so we count consecutive errors.
+                consecutive_query_errors = 0;
+
                 if available_bytes < min_bytes {
                     return Ok(OutOfMemory {
                         available_bytes,
@@ -68,7 +75,12 @@ async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
             }
             Err(err) => {
                 warn!("error querying system memory usage: {}", err);
-                return Err(err);
+
+                consecutive_query_errors += 1;
+
+                if consecutive_query_errors > MAX_OOM_QUERY_ERRORS {
+                    return Err(err);
+                }
             }
         }
 
