@@ -43,10 +43,11 @@ from .creds import (
     retry_on_auth_failure,
 )
 
+# TODO: Look into deleting auto scale resource when deleting scaleset
 
 @retry_on_auth_failure()
 def add_auto_scale_to_vmss(vmss: UUID, auto_scale_profile: AutoscaleProfile) -> Optional[Error]:
-    logging.info("Checking scaleset %s for existing auto scale resources" % vmss)
+    logging.error("Checking scaleset %s for existing auto scale resources" % vmss)
     client = get_monitor_client()
     resource_group = get_base_resource_group()
 
@@ -54,30 +55,19 @@ def add_auto_scale_to_vmss(vmss: UUID, auto_scale_profile: AutoscaleProfile) -> 
 
     try:
         auto_scale_collections = client.autoscale_settings.list_by_resource_group(resource_group)
-        for auto_scale_collection in auto_scale_collections:
-            # The type isn't getting picked up automatically
-            auto_scale: AutoscaleSettingResource
-
-            for auto_scale in auto_scale_collection.value:
-                if str(auto_scale.target_resource_uri).endswith(str(vmss)):
-                    auto_scale_resource_id = auto_scale.id
-                    break
+        for auto_scale in auto_scale_collections:
+            if str(auto_scale.target_resource_uri).endswith(str(vmss)):
+                auto_scale_resource_id = auto_scale.id
+                break
     except (ResourceNotFoundError, CloudError):
         return Error(
             code=ErrorCode.INVALID_CONFIGURATION,
-            errors=["Scaleset %s already has an auto scale resource" % vmss]
+            errors=["Failed to check if scaleset %s already has an autoscale resource" % vmss]
         )
 
-    if auto_scale_resource_id is None:
-        logging.info("Scaleset %s already has auto scale resource")
+    if auto_scale_resource_id is not None:
+        logging.error("Scaleset %s already has auto scale resource" % vmss)
         return None
-
-    vmss_size = get_vmss_size(vmss)
-    if vmss_size is None:
-        return Error(
-            code=ErrorCode.UNABLE_TO_FIND,
-            error=["Could not get size for scaleset: %s" % vmss]
-        )
 
     resource_creation = create_auto_scale_resource_for(vmss, get_base_region(), auto_scale_profile)
     if isinstance(resource_creation, Error):
@@ -85,7 +75,7 @@ def add_auto_scale_to_vmss(vmss: UUID, auto_scale_profile: AutoscaleProfile) -> 
     return None
 
 def create_auto_scale_resource_for(resource_id: UUID, location: Region, profile: AutoscaleProfile) -> Union[AutoscaleSettingResource, Error]:
-    logging.info("Creating auto scale resource for: %s" % resource_id)
+    logging.error("Creating auto scale resource for: %s" % resource_id)
     client = get_monitor_client()
     resource_group = get_base_resource_group()
     subscription = get_subscription()
@@ -104,7 +94,7 @@ def create_auto_scale_resource_for(resource_id: UUID, location: Region, profile:
             str(uuid.uuid4()),
             params
         )
-        logging.info("Successfully created auto scale resource %s for %s" % (auto_scale_resource.id, resource_id))
+        logging.error("Successfully created auto scale resource %s for %s" % (auto_scale_resource.id, resource_id))
         return auto_scale_resource
     except (ResourceNotFoundError, CloudError):
         return Error(
@@ -122,8 +112,8 @@ def create_auto_scale_profile(min: int, max: int, queue_uri: str) -> AutoscalePr
         ),
         rules=[
             ScaleRule(
-                matric_trigger=MetricTrigger(
-                    metric_name="PoolQueueItemCount",
+                metric_trigger=MetricTrigger(
+                    metric_name="ApproximateMessageCount",
                     metric_resource_uri=queue_uri,
 
                     # Check every minute

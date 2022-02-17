@@ -247,11 +247,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 return
             else:
                 # TODO: Link up auto scale resource with diagnostics
-                pool_queue_id = pool.get_pool_queue()
-                pool_queue_uri = get_resource_id(pool_queue_id, StorageType.corpus)
-                pool_instances = len(pool.nodes)
-                auto_scale_profile = create_auto_scale_profile(pool_instances, pool_instances, pool_queue_uri)
-                add_auto_scale_to_vmss(self.scaleset_id, auto_scale_profile)
                 logging.info(
                     SCALESET_LOG_PREFIX + "creating scaleset scaleset_id:%s",
                     self.scaleset_id,
@@ -267,6 +262,25 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 SCALESET_LOG_PREFIX + "scaleset running scaleset_id:%s",
                 self.scaleset_id,
             )
+            pool = Pool.get_by_name(self.pool_name)
+            if not isinstance(pool, Error):
+                pool_queue_id = pool.get_pool_queue()
+                pool_queue_uri = get_resource_id(pool_queue_id, StorageType.corpus)
+                if not isinstance(pool_queue_uri, Error):
+                    instances = get_vmss_size(self.scaleset_id)
+                    if instances is not None:
+                        auto_scale_profile = create_auto_scale_profile(instances, instances, pool_queue_uri)
+                        add_auto_scale_to_vmss(self.scaleset_id, auto_scale_profile)
+                        logging.error(
+                            "Adding auto scale resource to scaleset: %s" % self.scaleset_id
+                        )
+                    else:
+                        logging.error("Instances was none")
+                else:
+                    logging.error("Pool queue uri was error")
+            else:
+                logging.error("Pool was Error")
+
             identity_result = self.try_set_identity(vmss)
             if identity_result:
                 self.set_failed(identity_result)

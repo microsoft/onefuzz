@@ -206,13 +206,13 @@ def get_resource_id(
 ) -> Union[str, Error]:
     account_id = get_primary_account(storage_type)
     resource_uri = "%s/services/queue/queues/%s" % (account_id, queue_name)
-
-    rm_client = ResourceManagementClient(get_identity(), get_subscription())
+    # logging.error("Calculated resource uri: %s" % resource_uri)
+    # rm_client = ResourceManagementClient(get_identity(), get_subscription())
     
-    try:
-        rm_client.resources.get_by_id(resource_uri)
-    except (ResourceNotFoundError):
-        return Error(
-            code=ErrorCode.UNABLE_TO_FIND
-        )
+    # try:
+    #     rm_client.resources.get_by_id(resource_uri, '2014-04-01')
+    # except (ResourceNotFoundError):
+    #     return Error(
+    #         code=ErrorCode.UNABLE_TO_FIND
+    #     )
     return resource_uri
