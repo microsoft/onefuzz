@@ -47,7 +47,7 @@ from .creds import (
 
 @retry_on_auth_failure()
 def add_auto_scale_to_vmss(vmss: UUID, auto_scale_profile: AutoscaleProfile) -> Optional[Error]:
-    logging.error("Checking scaleset %s for existing auto scale resources" % vmss)
+    logging.info("Checking scaleset %s for existing auto scale resources" % vmss)
     client = get_monitor_client()
     resource_group = get_base_resource_group()
 
@@ -66,7 +66,7 @@ def add_auto_scale_to_vmss(vmss: UUID, auto_scale_profile: AutoscaleProfile) -> 
         )
 
     if auto_scale_resource_id is not None:
-        logging.error("Scaleset %s already has auto scale resource" % vmss)
+        logging.warning("Scaleset %s already has auto scale resource" % vmss)
         return None
 
     resource_creation = create_auto_scale_resource_for(vmss, get_base_region(), auto_scale_profile)
@@ -75,7 +75,7 @@ def add_auto_scale_to_vmss(vmss: UUID, auto_scale_profile: AutoscaleProfile) -> 
     return None
 
 def create_auto_scale_resource_for(resource_id: UUID, location: Region, profile: AutoscaleProfile) -> Union[AutoscaleSettingResource, Error]:
-    logging.error("Creating auto scale resource for: %s" % resource_id)
+    logging.info("Creating auto scale resource for: %s" % resource_id)
     client = get_monitor_client()
     resource_group = get_base_resource_group()
     subscription = get_subscription()
@@ -94,7 +94,7 @@ def create_auto_scale_resource_for(resource_id: UUID, location: Region, profile:
             str(uuid.uuid4()),
             params
         )
-        logging.error("Successfully created auto scale resource %s for %s" % (auto_scale_resource.id, resource_id))
+        logging.info("Successfully created auto scale resource %s for %s" % (auto_scale_resource.id, resource_id))
         return auto_scale_resource
     except (ResourceNotFoundError, CloudError):
         return Error(
