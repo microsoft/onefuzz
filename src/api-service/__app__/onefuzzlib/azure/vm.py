@@ -9,7 +9,11 @@ from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
 
 from azure.core.exceptions import ResourceNotFoundError
-from azure.mgmt.compute.models import VirtualMachine
+from azure.mgmt.compute.models import (
+    VirtualMachine,
+    VirtualMachineExtension,
+    VirtualMachineExtensionInstanceView,
+)
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import OS, ErrorCode
 from onefuzztypes.models import Authentication, Error
@@ -136,7 +140,9 @@ def create_vm(
     return None
 
 
-def get_extension(vm_name: str, extension_name: str) -> Optional[Any]:
+def get_extension(
+    vm_name: str, extension_name: str
+) -> Optional[VirtualMachineExtension]:
     resource_group = get_base_resource_group()
 
     logging.debug(
@@ -284,13 +290,15 @@ class VM(BaseModel):
                 logging.error("vm agent  - incompatable name: %s", repr(config))
                 continue
             extension = get_extension(str(self.name), config["name"])
-
             if extension:
+                iv: VirtualMachineExtensionInstanceView = extension.instance_view
+
                 logging.info(
-                    "vm extension state: %s - %s - %s",
+                    "vm extension state: %s - %s - %s\n%s",
                     self.name,
                     config["name"],
                     extension.provisioning_state,
+                    iv.serialize(True),
                 )
                 status.append(extension.provisioning_state)
             else:
