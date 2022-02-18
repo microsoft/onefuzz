@@ -676,6 +676,7 @@ class TestOnefuzz:
                         job.config.name,
                         repro.error,
                     )
+                    self.success = False
                     self.of.repro.delete(repro.vm_id)
                     del repros[job.job_id]
                 elif repro.state == VmState.running:
@@ -695,14 +696,17 @@ class TestOnefuzz:
                             self.logger.error(
                                 "repro failed: %s - %s", job.config.name, result
                             )
+                            self.success = False
                     except Exception as err:
                         clear()
                         self.logger.error("repro failed: %s - %s", job.config.name, err)
+                        self.success = False
                     del repros[job.job_id]
                 elif repro.state not in [VmState.init, VmState.extensions_launch]:
                     self.logger.error(
                         "repro failed: %s - bad state: %s", job.config.name, repro.state
                     )
+                    self.success = False
                     del repros[job.job_id]
 
             repro_states: Dict[str, List[str]] = {}
