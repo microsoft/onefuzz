@@ -291,14 +291,16 @@ class VM(BaseModel):
                 continue
             extension = get_extension(str(self.name), config["name"])
             if extension:
-                iv: VirtualMachineExtensionInstanceView = extension.instance_view
+                instance_view: Optional[
+                    VirtualMachineExtensionInstanceView
+                ] = extension.instance_view
 
                 logging.info(
                     "vm extension state: %s - %s - %s\n%s",
                     self.name,
                     config["name"],
                     extension.provisioning_state,
-                    iv.serialize(True),
+                    instance_view.serialize(True) if instance_view else "",
                 )
                 status.append(extension.provisioning_state)
             else:
