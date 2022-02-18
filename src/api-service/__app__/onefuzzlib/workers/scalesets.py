@@ -23,8 +23,11 @@ from onefuzztypes.primitives import PoolName, Region
 
 from ..__version__ import __version__
 from ..azure.auth import build_auth
+from ..azure.auto_scale import add_auto_scale_to_vmss, create_auto_scale_profile
 from ..azure.image import get_os
 from ..azure.network import Network
+from ..azure.queue import get_resource_id
+from ..azure.storage import StorageType
 from ..azure.vmss import (
     UnableToUpdate,
     create_vmss,
@@ -42,9 +45,6 @@ from ..extension import fuzz_extensions
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from .nodes import Node
 from .shrink_queue import ShrinkQueue
-from ..azure.queue import get_queue, get_resource_id
-from ..azure.storage import StorageType
-from ..azure.auto_scale import create_auto_scale_profile, add_auto_scale_to_vmss
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
@@ -850,8 +850,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         capacity = get_vmss_size(self.scaleset_id)
         if capacity is None:
             capacity_failed = Error(
-                code=ErrorCode.ErrorCode.UNABLE_TO_FIND
-                errors=["Failed to get capacity for scaleset %s" % self.scaleset_id]
+                code=ErrorCode.UNABLE_TO_FIND,
+                errors=["Failed to get capacity for scaleset %s" % self.scaleset_id],
             )
             logging.error(capacity_failed)
             return capacity_failed

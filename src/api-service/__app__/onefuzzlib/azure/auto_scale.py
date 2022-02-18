@@ -3,38 +3,30 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from datetime import datetime, timedelta
-from enum import auto
 import logging
-from typing import Any, Dict, List, Optional, Set, Union, cast
-from uuid import UUID
 import uuid
-from onefuzztypes.enums import ErrorCode
+from datetime import timedelta
+from typing import Any, Dict, Optional, Union
+from uuid import UUID
 
-from onefuzztypes.models import Error
-from onefuzztypes.primitives import Region
-from .vmss import get_vmss_size
-from .monitor import get_monitor_client
-
+from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.monitor.models import (
     AutoscaleProfile,
     AutoscaleSettingResource,
-    ScaleCapacity,
-    ScaleRule,
-    MetricTrigger,
-    ScaleAction,
-    TimeAggregationType,
     ComparisonOperationType,
     MetricStatisticType,
+    MetricTrigger,
+    ScaleAction,
+    ScaleCapacity,
     ScaleDirection,
+    ScaleRule,
     ScaleType,
-)
-from azure.core.exceptions import (
-    HttpResponseError,
-    ResourceExistsError,
-    ResourceNotFoundError,
+    TimeAggregationType,
 )
 from msrestazure.azure_exceptions import CloudError
+from onefuzztypes.enums import ErrorCode
+from onefuzztypes.models import Error
+from onefuzztypes.primitives import Region
 
 from .creds import (
     get_base_region,
@@ -42,8 +34,7 @@ from .creds import (
     get_subscription,
     retry_on_auth_failure,
 )
-
-# TODO: Look into deleting auto scale resource when deleting scaleset
+from .monitor import get_monitor_client
 
 
 @retry_on_auth_failure()
@@ -94,7 +85,7 @@ def create_auto_scale_resource_for(
     subscription = get_subscription()
 
     scaleset_uri = (
-        "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachineScaleSets/%s"
+        "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachineScaleSets/%s"  # noqa: E501
         % (subscription, resource_group, resource_id)
     )
 

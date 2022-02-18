@@ -18,7 +18,6 @@ from azure.storage.queue import (
 )
 from memoization import cached
 from pydantic import BaseModel
-from onefuzztypes.models import Error
 
 from .storage import StorageType, get_primary_account, get_storage_account_name_key
 
