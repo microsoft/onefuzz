@@ -181,6 +181,7 @@ impl From<BlobUrl> for InputBlob {
 }
 
 impl CrashReport {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         crash_log: CrashLog,
         task_id: Uuid,
