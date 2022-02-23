@@ -431,7 +431,7 @@ jobs:
           # startup bug in the LLVM-shipped ASAN runtime.
 
           # Assume a default MSVC 2019 install path.
-          $MsvcDir = 'C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/MSVC'
+          $MsvcDir = 'C:/Program Files (x86)/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC'
 
           # Assume that `$MsvcDir` only contains version-named subdirectories.
           $MsvcVersion = ((Get-ChildItem $MsvcDir).name | Sort-Object -Descending)[0]
