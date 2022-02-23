@@ -538,10 +538,21 @@ class TestOnefuzz:
                 # stop tracking failed jobs
                 if job.job_id in failed_jobs:
                     if job.job_id in check_containers:
+                        logger.info("deleting %s from check_containers", job.job_id)
                         del check_containers[job.job_id]
                     if job.job_id in job_tasks:
+                        logger.info("deleting %s from job_tasks", job.job_id)
                         del job_tasks[job.job_id]
                     continue
+
+                self.logger.info(
+                    "[1] job_tasks = %s, check_containers = %s, job_task_states = %s, to_remove = %s, finished_tasks = %s",
+                    job_tasks,
+                    check_containers,
+                    job_task_states,
+                    to_remove,
+                    finished_tasks,
+                )
 
                 # stop checking containers once all the containers for the job
                 # have checked out.
@@ -553,17 +564,45 @@ class TestOnefuzz:
                         )
                         del check_containers[job.job_id]
 
+                self.logger.info(
+                    "[2] job_tasks = %s, check_containers = %s, job_task_states = %s, to_remove = %s, finished_tasks = %s",
+                    job_tasks,
+                    check_containers,
+                    job_task_states,
+                    to_remove,
+                    finished_tasks,
+                )
+
                 if job.job_id not in check_containers:
                     if job.job_id in job_task_states:
                         if set([TaskTestState.running]).issuperset(
                             job_task_states[job.job_id]
                         ):
+                            self.logger.info("deleting %s from job_tasks", job.job_id)
                             del job_tasks[job.job_id]
+
+                self.logger.info(
+                    "[3] job_tasks = %s, check_containers = %s, job_task_states = %s, to_remove = %s, finished_tasks = %s",
+                    job_tasks,
+                    check_containers,
+                    job_task_states,
+                    to_remove,
+                    finished_tasks,
+                )
 
                 if job.job_id not in job_tasks and job.job_id not in check_containers:
                     clear()
                     self.logger.info("%s completed", job.config.name)
                     to_remove.add(job.job_id)
+
+                self.logger.info(
+                    "[4] job_tasks = %s, check_containers = %s, job_task_states = %s, to_remove = %s, finished_tasks = %s",
+                    job_tasks,
+                    check_containers,
+                    job_task_states,
+                    to_remove,
+                    finished_tasks,
+                )
 
             for job_id in to_remove:
                 if stop_on_complete_check:
