@@ -123,6 +123,8 @@ def main() -> None:
         job_id=UUID(int=0),
         scariness_score=10,
         scariness_description="example-scariness",
+        tool_name="libfuzzer",
+        onefuzz_version="1.2.3",
     )
     examples: List[Event] = [
         EventPing(ping_id=UUID(int=0)),
