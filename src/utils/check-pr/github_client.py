@@ -158,6 +158,7 @@ def download_artifacts(
         pr,
         "release-artifacts",
         os.path.join(directory, release_filename),
+        update_branch,
     )
 
     test_filename = "integration-test-artifacts.zip"
@@ -168,6 +169,7 @@ def download_artifacts(
         pr,
         "integration-test-artifacts",
         os.path.join(directory, test_filename),
+        update_branch,
     )
 
 
