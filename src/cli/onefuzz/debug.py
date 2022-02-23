@@ -698,6 +698,8 @@ class DebugNotification(Command):
             job_id=task.job_id,
             minimized_stack=[],
             minimized_stack_function_names=[],
+            tool_name="libfuzzer",
+            onefuzz_version="1.2.3",
         )
 
         with tempfile.TemporaryDirectory() as tempdir:
