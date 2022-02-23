@@ -76,7 +76,7 @@ impl BlobUrl {
                     .path_segments()
                     .unwrap()
                     .skip(1)
-                    .map(|s| url_escape::decode(s))
+                    .map(url_escape::decode)
                     .collect();
                 name_segments.join("/")
             }
