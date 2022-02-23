@@ -1800,6 +1800,7 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "url",
+ "url-escape",
  "urlparse",
  "uuid",
  "winapi 0.3.9",
@@ -3219,6 +3220,15 @@ dependencies = [
  "matches",
  "percent-encoding",
  "serde",
+]
+
+[[package]]
+name = "url-escape"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55c7bdc6152ebf118ddb53188af83c07b586778661434a21a3c475f06335771c"
+dependencies = [
+ "percent-encoding",
 ]
 
 [[package]]
