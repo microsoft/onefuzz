@@ -255,7 +255,7 @@
                         },
                         {
                             "name": "ONEFUZZ_MONITOR",
-                            "value": "[variables('monitorAccountName')]"
+                            "value": "[parameters('name')]"
                         },
                         {
                             "name": "ONEFUZZ_KEYVAULT",
@@ -391,10 +391,150 @@
 
         {
             "type": "Microsoft.OperationalInsights/workspaces",
-            "apiVersion": "2020-08-01",
             "name": "[parameters('name')]",
+            "apiVersion": "2017-03-15-preview",
             "location": "[resourceGroup().location]",
-            "properties": {}
+            "properties": {
+                "sku": {
+                    "name": "PerGB2018"
+                },
+                "retentionInDays": "[variables('log_retention')]",
+                "features": {
+                    "searchVersion": 1,
+                    "legacy": 0,
+                    "enableLogAccessUsingOnlyResourcePermissions": true
+                }
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-11-01-preview",
+                    "location": "[resourceGroup().location]",
+                    "name": "[concat('VMInsights', '(', parameters('name'), ')')]",
+                    "type": "Microsoft.OperationsManagement/solutions",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                    ],
+                    "properties": {
+                        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                    },
+                    "plan": {
+                        "name": "[concat('VMInsights', '(', parameters('name'), ')')]",
+                        "publisher": "Microsoft",
+                        "product": "[Concat('OMSGallery/', 'VMInsights')]",
+                        "promotionCode": ""
+                    }
+                },
+                {
+                    "apiVersion": "2015-11-01-preview",
+                    "type": "datasources",
+                    "name": "syslogDataSourceKern",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                    ],
+                    "kind": "LinuxSyslog",
+                    "properties": {
+                        "syslogName": "kern",
+                        "syslogSeverities": "[onefuzz.severitiesAtMostInfo()]"
+                    }
+                },
+                {
+                    "apiVersion": "2015-11-01-preview",
+                    "type": "datasources",
+                    "name": "syslogDataSourceUser",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                    ],
+                    "kind": "LinuxSyslog",
+                    "properties": {
+                        "syslogName": "user",
+                        "syslogSeverities": "[onefuzz.severitiesAtMostInfo()]"
+                    }
+                },
+                {
+                    "apiVersion": "2015-11-01-preview",
+                    "type": "datasources",
+                    "name": "syslogDataSourceDaemon",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                    ],
+                    "kind": "LinuxSyslog",
+                    "properties": {
+                        "syslogName": "daemon",
+                        "syslogSeverities": "[onefuzz.severitiesAtMostInfo()]"
+                    }
+                },
+                {
+                    "apiVersion": "2015-11-01-preview",
+                    "type": "datasources",
+                    "name": "syslogDataSourceCron",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                    ],
+                    "kind": "LinuxSyslog",
+                    "properties": {
+                        "syslogName": "cron",
+                        "syslogSeverities": "[onefuzz.severitiesAtMostInfo()]"
+                    }
+                },
+                {
+                    "apiVersion": "2015-11-01-preview",
+                    "type": "datasources",
+                    "name": "syslogDataSourceCollection",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                    ],
+                    "kind": "LinuxSyslogCollection",
+                    "properties": {
+                        "state": "Enabled"
+                    }
+                },
+                {
+                    "apiVersion": "2015-11-01-preview",
+                    "type": "datasources",
+                    "name": "windowsEventSystem",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                    ],
+                    "kind": "WindowsEvent",
+                    "properties": {
+                        "eventLogName": "System",
+                        "eventTypes": [
+                            {
+                                "eventType": "Error"
+                            },
+                            {
+                                "eventType": "Warning"
+                            },
+                            {
+                                "eventType": "Information"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "apiVersion": "2015-11-01-preview",
+                    "type": "datasources",
+                    "name": "windowsEventApplication",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                    ],
+                    "kind": "WindowsEvent",
+                    "properties": {
+                        "eventLogName": "Application",
+                        "eventTypes": [
+                            {
+                                "eventType": "Error"
+                            },
+                            {
+                                "eventType": "Warning"
+                            },
+                            {
+                                "eventType": "Information"
+                            }
+                        ]
+                    }
+                }
+            ]
         },
 
         {
@@ -435,153 +575,7 @@
                 }
             ]
         },
-        {
-            "type": "Microsoft.OperationalInsights/workspaces",
-            "name": "[variables('monitorAccountName')]",
-            "apiVersion": "2017-03-15-preview",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "sku": {
-                    "name": "PerGB2018"
-                },
-                "retentionInDays": "[variables('log_retention')]",
-                "features": {
-                    "searchVersion": 1,
-                    "legacy": 0,
-                    "enableLogAccessUsingOnlyResourcePermissions": true
-                }
-            },
-            "resources": [
-                {
-                    "apiVersion": "2015-11-01-preview",
-                    "location": "[resourceGroup().location]",
-                    "name": "[concat('VMInsights', '(', variables('monitorAccountName'), ')')]",
-                    "type": "Microsoft.OperationsManagement/solutions",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
-                    ],
-                    "properties": {
-                        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
-                    },
-                    "plan": {
-                        "name": "[concat('VMInsights', '(', variables('monitorAccountName'), ')')]",
-                        "publisher": "Microsoft",
-                        "product": "[Concat('OMSGallery/', 'VMInsights')]",
-                        "promotionCode": ""
-                    }
-                },
-                {
-                    "apiVersion": "2015-11-01-preview",
-                    "type": "datasources",
-                    "name": "syslogDataSourceKern",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
-                    ],
-                    "kind": "LinuxSyslog",
-                    "properties": {
-                        "syslogName": "kern",
-                        "syslogSeverities": "[onefuzz.severitiesAtMostInfo()]"
-                    }
-                },
-                {
-                    "apiVersion": "2015-11-01-preview",
-                    "type": "datasources",
-                    "name": "syslogDataSourceUser",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
-                    ],
-                    "kind": "LinuxSyslog",
-                    "properties": {
-                        "syslogName": "user",
-                        "syslogSeverities": "[onefuzz.severitiesAtMostInfo()]"
-                    }
-                },
-                {
-                    "apiVersion": "2015-11-01-preview",
-                    "type": "datasources",
-                    "name": "syslogDataSourceDaemon",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
-                    ],
-                    "kind": "LinuxSyslog",
-                    "properties": {
-                        "syslogName": "daemon",
-                        "syslogSeverities": "[onefuzz.severitiesAtMostInfo()]"
-                    }
-                },
-                {
-                    "apiVersion": "2015-11-01-preview",
-                    "type": "datasources",
-                    "name": "syslogDataSourceCron",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
-                    ],
-                    "kind": "LinuxSyslog",
-                    "properties": {
-                        "syslogName": "cron",
-                        "syslogSeverities": "[onefuzz.severitiesAtMostInfo()]"
-                    }
-                },
-                {
-                    "apiVersion": "2015-11-01-preview",
-                    "type": "datasources",
-                    "name": "syslogDataSourceCollection",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
-                    ],
-                    "kind": "LinuxSyslogCollection",
-                    "properties": {
-                        "state": "Enabled"
-                    }
-                },
-                {
-                    "apiVersion": "2015-11-01-preview",
-                    "type": "datasources",
-                    "name": "windowsEventSystem",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
-                    ],
-                    "kind": "WindowsEvent",
-                    "properties": {
-                        "eventLogName": "System",
-                        "eventTypes": [
-                            {
-                                "eventType": "Error"
-                            },
-                            {
-                                "eventType": "Warning"
-                            },
-                            {
-                                "eventType": "Information"
-                            }
-                        ]
-                    }
-                },
-                {
-                    "apiVersion": "2015-11-01-preview",
-                    "type": "datasources",
-                    "name": "windowsEventApplication",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
-                    ],
-                    "kind": "WindowsEvent",
-                    "properties": {
-                        "eventLogName": "Application",
-                        "eventTypes": [
-                            {
-                                "eventType": "Error"
-                            },
-                            {
-                                "eventType": "Warning"
-                            },
-                            {
-                                "eventType": "Information"
-                            }
-                        ]
-                    }
-                }
-            ]
-        },
+        
         {
             "apiVersion": "2019-06-01",
             "type": "Microsoft.Storage/storageAccounts",
