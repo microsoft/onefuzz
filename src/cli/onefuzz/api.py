@@ -326,6 +326,7 @@ class Webhooks(Endpoint):
         event_types: List[events.EventType],
         *,
         secret_token: Optional[str] = None,
+        message_format: Optional[webhooks.WebhookMessageFormat] = None,
     ) -> webhooks.Webhook:
         """Create a webhook"""
         self.logger.debug("creating webhook.  name: %s", name)
@@ -333,7 +334,11 @@ class Webhooks(Endpoint):
             "POST",
             webhooks.Webhook,
             data=requests.WebhookCreate(
-                name=name, url=url, event_types=event_types, secret_token=secret_token
+                name=name,
+                url=url,
+                event_types=event_types,
+                secret_token=secret_token,
+                message_format=message_format,
             ),
         )
 
@@ -345,6 +350,7 @@ class Webhooks(Endpoint):
         url: Optional[str] = None,
         event_types: Optional[List[events.EventType]] = None,
         secret_token: Optional[str] = None,
+        message_format: Optional[webhooks.WebhookMessageFormat] = None,
     ) -> webhooks.Webhook:
         """Update a webhook"""
 
@@ -362,6 +368,7 @@ class Webhooks(Endpoint):
                 url=url,
                 event_types=event_types,
                 secret_token=secret_token,
+                message_format=message_format,
             ),
         )
 
