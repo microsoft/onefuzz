@@ -171,6 +171,15 @@ impl<'a> LibFuzzer<'a> {
         // good input, which libfuzzer works as we expect.
 
         let mut cmd = self.build_command(None, None, None).await?;
+
+        // Override any arg of the form `-runs=<N>` (last occurrence wins).
+        // In this command invocation, we only ever want to test inputs once.
+        //
+        // Assumes that the presence of an `-args` option was an iteration limit meant
+        // for fuzzing mode. We are only mutating the args of a local `Command`, so the
+        // command used by the `fuzz()` method will still receive the iteration limit.
+        cmd.arg("-runs=1");
+
         cmd.arg(&input);
 
         let result = cmd
