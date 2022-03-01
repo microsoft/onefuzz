@@ -20,6 +20,12 @@ use serde::{self, Deserialize};
 use std::{path::PathBuf, sync::Arc, time::Duration};
 use uuid::Uuid;
 
+const DEFAULT_MIN_AVAILABLE_MEMORY_MB: u64 = 100;
+
+fn default_min_available_memory_mb() -> u64 {
+    DEFAULT_MIN_AVAILABLE_MEMORY_MB
+}
+
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 pub enum ContainerType {
     #[serde(alias = "inputs")]
@@ -42,6 +48,14 @@ pub struct CommonConfig {
 
     #[serde(default)]
     pub setup_dir: PathBuf,
+
+    /// Lower bound on available system memory. If the available memory drops
+    /// below the limit, the task will exit with an error. This is a fail-fast
+    /// mechanism to support debugging.
+    ///
+    /// Can be disabled by setting to 0.
+    #[serde(default = "default_min_available_memory_mb")]
+    pub min_available_memory_mb: u64,
 }
 
 impl CommonConfig {
