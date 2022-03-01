@@ -549,7 +549,7 @@
                 "ApplicationId": "[parameters('name')]",
                 "Application_Type": "other",
                 "RetentionInDays": "[variables('log_retention')]",
-                "WorkspaceResourceId" : "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                "WorkspaceResourceId" : "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
             },
             "tags": {
                 "OWNER": "[parameters('owner')]"
