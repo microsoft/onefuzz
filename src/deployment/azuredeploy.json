@@ -49,6 +49,9 @@
     "variables": {
         "autoscale_name": "[concat('onefuzz-autoscale-', uniquestring(resourceGroup().id))]",
         "log_retention": 30,
+        "appInsightsName": "[parameters('name')]",
+        "functionAppName": "[parameters('name')]",
+        "serverFarmName": "[parameters('name')]",
         "monitorAccountName": "[parameters('name')]",
         "vmInsightsName": "[concat('VMInsights', '(', variables('monitorAccountName'), ')')]",
         "scaleset_identity": "[concat(parameters('name'), '-scalesetid')]",
@@ -125,7 +128,7 @@
                 "tenantId": "[subscription().tenantId]",
                 "accessPolicies": [
                     {
-                        "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2019-08-01', 'full').identity.principalId]",
+                        "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2019-08-01', 'full').identity.principalId]",
                         "tenantId": "[subscription().tenantId]",
                         "permissions": {
                             "secrets": [
@@ -149,7 +152,7 @@
         },
         {
             "apiVersion": "2018-11-01",
-            "name": "[parameters('name')]",
+            "name": "[variables('functionAppName')]",
             "type": "Microsoft.Web/sites",
             "kind": "functionapp,linux",
             "location": "[resourceGroup().location]",
@@ -158,8 +161,8 @@
             },
             "dependsOn": [
                 "[resourceId('Microsoft.SignalRService/SignalR', variables('signalr-name'))]",
-                "[resourceId('microsoft.insights/components/', parameters('name'))]",
-                "[resourceId('Microsoft.Web/serverFarms', parameters('name'))]",
+                "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]",
+                "[resourceId('Microsoft.Web/serverFarms', variables('serverFarmName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountNameFunc'))]"
             ],
@@ -173,7 +176,7 @@
                     "name": "logs",
                     "location": "[resourceGroup().location]",
                     "dependsOn": [
-                        "[concat('Microsoft.Web/sites/', parameters('name'))]",
+                        "[concat('Microsoft.Web/sites/', variables('functionAppName'))]",
                         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
                     ],
                     "properties": {
@@ -188,7 +191,7 @@
                 }
             ],
             "properties": {
-                "name": "[parameters('name')]",
+                "name": "[variables('functionAppName')]",
                 "siteConfig": {
                     "appSettings": [
                         {
@@ -205,11 +208,11 @@
                         },
                         {
                             "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-                            "value": "[reference(resourceId('microsoft.insights/components/', parameters('name')), '2015-05-01').InstrumentationKey]"
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
                         },
                         {
                             "name": "APPINSIGHTS_APPID",
-                            "value": "[reference(resourceId('microsoft.insights/components/', parameters('name')), '2015-05-01').AppId]"
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').AppId]"
                         },
                         {
                             "name": "ONEFUZZ_TELEMETRY",
@@ -289,7 +292,7 @@
                         "isAadAutoProvisioned": false
                     }
                 },
-                "serverFarmId": "[resourceId('Microsoft.Web/serverFarms', parameters('name'))]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverFarms', variables('serverFarmName'))]",
                 "hostingEnvironment": "",
                 "clientAffinityEnabled": false,
                 "httpsOnly": true
@@ -297,13 +300,13 @@
         },
         {
             "apiVersion": "2018-02-01",
-            "name": "[parameters('name')]",
+            "name": "[variables('serverFarmName')]",
             "type": "Microsoft.Web/serverFarms",
             "location": "[resourceGroup().location]",
             "kind": "linux",
             "dependsOn": [],
             "properties": {
-                "name": "[parameters('name')]",
+                "name": "[variables('serverFarmName')]",
                 "reserved": true
             },
             "sku": {
@@ -323,12 +326,12 @@
             "type": "microsoft.insights/autoscalesettings",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverFarms', parameters('name'))]"
+                "[resourceId('Microsoft.Web/serverFarms', variables('serverFarmName'))]"
             ],
             "properties": {
                 "name": "[variables('autoscale_name')]",
                 "enabled": true,
-                "targetResourceUri": "[resourceId('Microsoft.Web/serverFarms/', parameters('name'))]",
+                "targetResourceUri": "[resourceId('Microsoft.Web/serverFarms/', variables('serverFarmName'))]",
                 "profiles": [
                     {
                         "name": "Auto scale condition",
@@ -348,7 +351,7 @@
                                 "metricTrigger": {
                                     "metricName": "CpuPercentage",
                                     "metricNamespace": "microsoft.web/serverfarms",
-                                    "metricResourceUri": "[resourceId('Microsoft.Web/serverFarms/', parameters('name'))]",
+                                    "metricResourceUri": "[resourceId('Microsoft.Web/serverFarms/', variables('serverFarmName'))]",
                                     "operator": "GreaterThanOrEqual",
                                     "statistic": "Average",
                                     "threshold": 20,
@@ -369,7 +372,7 @@
                                 "metricTrigger": {
                                     "metricName": "CpuPercentage",
                                     "metricNamespace": "microsoft.web/serverfarms",
-                                    "metricResourceUri": "[resourceId('Microsoft.Web/serverFarms/', parameters('name'))]",
+                                    "metricResourceUri": "[resourceId('Microsoft.Web/serverFarms/', variables('serverFarmName'))]",
                                     "operator": "LessThan",
                                     "statistic": "Average",
                                     "threshold": 20,
@@ -541,12 +544,12 @@
 
         {
             "apiVersion": "2020-02-02-preview",
-            "name": "[parameters('name')]",
+            "name": "[variables('appInsightsName')]",
             "type": "microsoft.insights/components",
             "location": "[resourceGroup().location]",
             "kind": "",
             "properties": {
-                "ApplicationId": "[parameters('name')]",
+                "ApplicationId": "[variables('appInsightsName')]",
                 "Application_Type": "other",
                 "RetentionInDays": "[variables('log_retention')]",
                 "WorkspaceResourceId" : "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
@@ -564,14 +567,14 @@
                     "location": "[resourceGroup().location]",
                     "apiVersion": "2018-06-17-preview",
                     "dependsOn": [
-                        "[resourceId('microsoft.insights/components', parameters('name'))]"
+                        "[resourceId('microsoft.insights/components', variables('appInsightsName'))]"
                     ],
                     "kind": "shared",
                     "properties": {
                         "displayName": "LibFuzzer Job Dashboard",
                         "serializedData": "[parameters('workbookData').libFuzzerJob]",
                         "version": "1.0",
-                        "sourceId": "[resourceId('microsoft.insights/components', parameters('name'))]",
+                        "sourceId": "[resourceId('microsoft.insights/components', variables('appInsightsName'))]",
                         "category": "tsg"
                     }
                 }
@@ -746,10 +749,10 @@
             "name": "[guid(concat(resourceGroup().id, '-vmss'))]",
             "properties": {
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('Virtual Machine Contributor'))]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2018-02-01', 'Full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2018-02-01', 'Full').identity.principalId]"
             },
             "DependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('name'))]"
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
             ],
             "tags": {
                 "OWNER": "[parameters('owner')]"
@@ -761,10 +764,10 @@
             "name": "[guid(concat(resourceGroup().id, '-storage'))]",
             "properties": {
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('Storage Account Contributor'))]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2018-02-01', 'Full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2018-02-01', 'Full').identity.principalId]"
             },
             "DependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('name'))]"
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
             ],
             "tags": {
                 "OWNER": "[parameters('owner')]"
@@ -776,10 +779,10 @@
             "name": "[guid(concat(resourceGroup().id, '-network'))]",
             "properties": {
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('Network Contributor'))]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2018-02-01', 'Full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2018-02-01', 'Full').identity.principalId]"
             },
             "DependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('name'))]"
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
             ],
             "tags": {
                 "OWNER": "[parameters('owner')]"
@@ -791,10 +794,10 @@
             "name": "[guid(concat(resourceGroup().id, '-logs'))]",
             "properties": {
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('Log Analytics Contributor'))]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2018-02-01', 'Full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2018-02-01', 'Full').identity.principalId]"
             },
             "DependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('name'))]"
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
             ],
             "tags": {
                 "OWNER": "[parameters('owner')]"
@@ -806,10 +809,10 @@
             "name": "[guid(concat(resourceGroup().id, '-user_managed_idenity'))]",
             "properties": {
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('Managed Identity Operator'))]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2018-02-01', 'Full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2018-02-01', 'Full').identity.principalId]"
             },
             "DependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('name'))]"
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
             ],
             "tags": {
                 "OWNER": "[parameters('owner')]"
@@ -821,10 +824,10 @@
             "name": "[guid(concat(resourceGroup().id, '-auto_scale'))]",
             "properties": {
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('OneFuzz Deployment'))]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2018-02-01', 'Full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2018-02-01', 'Full').identity.principalId]"
             },
             "DependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('name'))]"
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
             ],
             "tags": {
                 "OWNER": "[parameters('owner')]"
