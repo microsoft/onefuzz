@@ -50,6 +50,7 @@
         "autoscale_name": "[concat('onefuzz-autoscale-', uniquestring(resourceGroup().id))]",
         "log_retention": 30,
         "monitorAccountName": "[parameters('name')]",
+        "vmInsightsName": "[concat('VMInsights', '(', variables('monitorAccountName'), ')')]",
         "scaleset_identity": "[concat(parameters('name'), '-scalesetid')]",
         "signalr-name": "[concat('onefuzz-', uniquestring(resourceGroup().id))]",
         "storage_account_sas": {
@@ -410,7 +411,7 @@
                 {
                     "apiVersion": "2015-11-01-preview",
                     "location": "[resourceGroup().location]",
-                    "name": "[concat('VMInsights', '(', variables('monitorAccountName'), ')')]",
+                    "name": "[variables('vmInsightsName')]",
                     "type": "Microsoft.OperationsManagement/solutions",
                     "dependsOn": [
                         "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
@@ -419,7 +420,7 @@
                         "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
                     },
                     "plan": {
-                        "name": "[concat('VMInsights', '(', variables('monitorAccountName'), ')')]",
+                        "name": "[variables('vmInsightsName')]",
                         "publisher": "Microsoft",
                         "product": "[Concat('OMSGallery/', 'VMInsights')]",
                         "promotionCode": ""
