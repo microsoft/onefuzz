@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 5.1.0
 ### Added
-* Service: Added compatibility for the `EventGrid` webhook format. [#1640](https://github.com/microsoft/onefuzz/pull/1640)
+* Service: Added a new webhook message format compatible with Azure Event Grid. [#1640](https://github.com/microsoft/onefuzz/pull/1640)
 * Service: Added initial auto scaling support for VM scale sets. [#1647](https://github.com/microsoft/onefuzz/pull/1647), [#1661](https://github.com/microsoft/onefuzz/pull/1661)
 * Agent: Add an explicit timeout to setup scripts so hangs are easier to debug. [#1659](https://github.com/microsoft/onefuzz/pull/1659)
 
