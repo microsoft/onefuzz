@@ -266,6 +266,7 @@ class ErrorCode(Enum):
     UNABLE_TO_UPDATE = 471
     PROXY_FAILED = 472
     INVALID_CONFIGURATION = 473
+    UNHANDLED_ENUM_VARIANT = 474
 
 
 class HeartbeatType(Enum):
@@ -411,3 +412,7 @@ class UserFieldType(Enum):
     Str = "Str"
     DictStr = "DictStr"
     ListStr = "ListStr"
+
+class NodeDisaposalStrategy(Enum):
+    scale_in = "scale_in"
+    reimage = "reimage"

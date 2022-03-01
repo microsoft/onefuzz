@@ -93,6 +93,7 @@ def create_auto_scale_resource_for(
         "location": location,
         "profiles": [profile],
         "target_resource_uri": scaleset_uri,
+        "enabled": True
     }
 
     try:
@@ -136,6 +137,30 @@ def create_auto_scale_profile(min: int, max: int, queue_uri: str) -> AutoscalePr
                 ),
                 scale_action=ScaleAction(
                     direction=ScaleDirection.INCREASE,
+                    type=ScaleType.CHANGE_COUNT,
+                    value=2,
+                    cooldown=timedelta(minutes=5),
+                ),
+            ),
+             # Scale in
+            ScaleRule(
+                # Scale in if no work in the past 10 mins
+                metric_trigger=MetricTrigger(
+                    metric_name="ApproximateMessageCount",
+                    metric_resource_uri=queue_uri,
+                    # Check every 10 minutes
+                    time_grain=timedelta(minutes=10),
+                    # The average amount of messages there are in the pool queue
+                    time_aggregation=TimeAggregationType.AVERAGE,
+                    statistic=MetricStatisticType.SUM,
+                    # Over the past 10 minutes
+                    time_window=timedelta(minutes=10),
+                    # When there's no messages in the pool queue
+                    operator=ComparisonOperationType.EQUALS,
+                    threshold=0,
+                ),
+                scale_action=ScaleAction(
+                    direction=ScaleDirection.DECREASE,
                     type=ScaleType.CHANGE_COUNT,
                     value=1,
                     cooldown=timedelta(minutes=5),
