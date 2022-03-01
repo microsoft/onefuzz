@@ -34,8 +34,7 @@ from onefuzz.backend import ContainerWrapper, wait
 from onefuzz.cli import execute_api
 from onefuzztypes.enums import OS, ContainerType, TaskState, VmState
 from onefuzztypes.models import Job, Pool, Repro, Scaleset, Task
-from onefuzztypes.primitives import (Container, Directory, File, PoolName,
-                                     Region)
+from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, Field
 
 LINUX_POOL = "linux-test"
@@ -260,7 +259,9 @@ def retry(
 
 
 class TestOnefuzz:
-    def __init__(self, onefuzz: Onefuzz, logger: logging.Logger, test_id: UUID, polling_period=30) -> None:
+    def __init__(
+        self, onefuzz: Onefuzz, logger: logging.Logger, test_id: UUID, polling_period=30
+    ) -> None:
         self.of = onefuzz
         self.logger = logger
         self.test_id = test_id
