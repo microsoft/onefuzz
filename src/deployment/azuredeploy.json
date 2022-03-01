@@ -49,7 +49,7 @@
     "variables": {
         "autoscale_name": "[concat('onefuzz-autoscale-', uniquestring(resourceGroup().id))]",
         "log_retention": 30,
-        "monitorAccountName": "[concat('logs-wb-', uniquestring(resourceGroup().id))]",
+        "monitorAccountName": "[parameters('name')]",
         "scaleset_identity": "[concat(parameters('name'), '-scalesetid')]",
         "signalr-name": "[concat('onefuzz-', uniquestring(resourceGroup().id))]",
         "storage_account_sas": {
@@ -256,7 +256,7 @@
                         },
                         {
                             "name": "ONEFUZZ_MONITOR",
-                            "value": "[parameters('name')]"
+                            "value": "[variables('monitorAccountName')]"
                         },
                         {
                             "name": "ONEFUZZ_KEYVAULT",
@@ -392,7 +392,7 @@
 
         {
             "type": "Microsoft.OperationalInsights/workspaces",
-            "name": "[parameters('name')]",
+            "name": "[variables('monitorAccountName')]",
             "apiVersion": "2017-03-15-preview",
             "location": "[resourceGroup().location]",
             "properties": {
@@ -410,16 +410,16 @@
                 {
                     "apiVersion": "2015-11-01-preview",
                     "location": "[resourceGroup().location]",
-                    "name": "[concat('VMInsights', '(', parameters('name'), ')')]",
+                    "name": "[concat('VMInsights', '(', variables('monitorAccountName'), ')')]",
                     "type": "Microsoft.OperationsManagement/solutions",
                     "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
                     ],
                     "properties": {
-                        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
                     },
                     "plan": {
-                        "name": "[concat('VMInsights', '(', parameters('name'), ')')]",
+                        "name": "[concat('VMInsights', '(', variables('monitorAccountName'), ')')]",
                         "publisher": "Microsoft",
                         "product": "[Concat('OMSGallery/', 'VMInsights')]",
                         "promotionCode": ""
@@ -430,7 +430,7 @@
                     "type": "datasources",
                     "name": "syslogDataSourceKern",
                     "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
                     ],
                     "kind": "LinuxSyslog",
                     "properties": {
@@ -443,7 +443,7 @@
                     "type": "datasources",
                     "name": "syslogDataSourceUser",
                     "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
                     ],
                     "kind": "LinuxSyslog",
                     "properties": {
@@ -456,7 +456,7 @@
                     "type": "datasources",
                     "name": "syslogDataSourceDaemon",
                     "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
                     ],
                     "kind": "LinuxSyslog",
                     "properties": {
@@ -469,7 +469,7 @@
                     "type": "datasources",
                     "name": "syslogDataSourceCron",
                     "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
                     ],
                     "kind": "LinuxSyslog",
                     "properties": {
@@ -482,7 +482,7 @@
                     "type": "datasources",
                     "name": "syslogDataSourceCollection",
                     "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
                     ],
                     "kind": "LinuxSyslogCollection",
                     "properties": {
@@ -494,7 +494,7 @@
                     "type": "datasources",
                     "name": "windowsEventSystem",
                     "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
                     ],
                     "kind": "WindowsEvent",
                     "properties": {
@@ -517,7 +517,7 @@
                     "type": "datasources",
                     "name": "windowsEventApplication",
                     "dependsOn": [
-                        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
                     ],
                     "kind": "WindowsEvent",
                     "properties": {
@@ -554,7 +554,7 @@
                 "OWNER": "[parameters('owner')]"
             },
             "dependsOn" : [
-                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
             ],
             "resources": [
                 {
