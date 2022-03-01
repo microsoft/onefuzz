@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Service: Added compatibility for the `EventGrid` webhook format. [#1640](https://github.com/microsoft/onefuzz/pull/1640)
 * Service: Added initial auto scaling support for VM scale sets. [#1647](https://github.com/microsoft/onefuzz/pull/1647), [#1661](https://github.com/microsoft/onefuzz/pull/1661)
-* Agent: Add a timeout to setup scripts so they cannot hang the system. [#1659](https://github.com/microsoft/onefuzz/pull/1659)
+* Agent: Add an explicit timeout to setup scripts so hangs are easier to debug. [#1659](https://github.com/microsoft/onefuzz/pull/1659)
 
 ### Changed
 * CLI/Service: Updated multiple first-party and third-party Python dependencies. [#1606](https://github.com/microsoft/onefuzz/pull/1606), [#1634](https://github.com/microsoft/onefuzz/pull/1634)
