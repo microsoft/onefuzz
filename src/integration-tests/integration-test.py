@@ -582,7 +582,7 @@ class TestOnefuzz:
             return (not bool(jobs), msg, self.success)
 
         if poll:
-            return wait(check_jobs_impl)
+            return wait(check_jobs_impl, 10)
         else:
             _, msg, result = check_jobs_impl()
             self.logger.info(msg)
@@ -724,7 +724,7 @@ class TestOnefuzz:
                 msg = "waiting on %d repros" % len(repros)
             return (not bool(repros), msg, self.success)
 
-        return wait(check_repro_impl)
+        return wait(check_repro_impl, 10)
 
     def get_jobs(self) -> List[Job]:
         jobs = self.of.jobs.list(job_state=None)
@@ -837,7 +837,7 @@ class TestOnefuzz:
         # order.
 
         self.inject_log(self.stop_log_marker)
-        wait(self.check_log_end_marker, frequency=5.0)
+        wait(self.check_log_end_marker, frequency=10)
         self.logger.info("application insights log flushed")
 
         logs = self.of.debug.logs.keyword("error", limit=100000, timespan="PT3H")
