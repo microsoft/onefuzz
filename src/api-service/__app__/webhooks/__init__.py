@@ -51,6 +51,9 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         event_types=request.event_types,
         secret_token=request.secret_token,
     )
+    if request.message_format is not None:
+        webhook.message_format = request.message_format
+
     webhook.save()
 
     webhook.url = None
@@ -82,6 +85,9 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
 
     if request.secret_token is not None:
         webhook.secret_token = request.secret_token
+
+    if request.message_format is not None:
+        webhook.message_format = request.message_format
 
     webhook.save()
     webhook.url = None

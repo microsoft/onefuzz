@@ -31,6 +31,7 @@ tokio-stream = { version = "0.1", features = ["fs", "time", "tokio-util"] }
 tokio-util = { version = "0.6", features = ["full"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 urlparse = "0.7"
+url-escape = "0.1.0"
 ring = "0.16"
 storage-queue = { path = "../storage-queue" }
 strum = "0.23"
@@ -46,6 +47,7 @@ backoff = { version = "0.3", features = ["tokio"] }
 winreg = "0.10"
 input-tester = { path = "../input-tester" }
 debugger = { path = "../debugger" }
+winapi = { version = "0.3", features = ["impl-default", "psapi"] }
 
 [target.'cfg(target_family = "unix")'.dependencies]
 cpp_demangle = "0.3"

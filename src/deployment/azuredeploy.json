@@ -822,6 +822,21 @@
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2017-09-01",
+            "name": "[guid(concat(resourceGroup().id, '-auto_scale'))]",
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('OneFuzz Deployment'))]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2018-02-01', 'Full').identity.principalId]"
+            },
+            "DependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('name'))]"
+            ],
+            "tags": {
+                "OWNER": "[parameters('owner')]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2018-07-01",
             "name": "[guid(concat(resourceGroup().id, '-user_managed_idenity_read_blob'))]",
             "properties": {
