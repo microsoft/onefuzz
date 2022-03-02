@@ -479,6 +479,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         queue = ShrinkQueue(self.scaleset_id)
         queue.set_size(to_remove)
 
+        nodes = Node.search_states(scaleset_id=self.scaleset_id)
+        for node in nodes:
+            node.send_stop_if_free()
+
     def sync_scaleset_size(self) -> None:
         # If our understanding of size is out of sync with Azure, resize the
         # scaleset to match our understanding.
@@ -507,7 +511,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.size,
                 size,
             )
-            self.size = size
+            self.set_size(size)
+            self.save()
 
     def set_size(self, size: int) -> None:
         # ensure we always stay within max_size boundaries
@@ -546,6 +551,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             # such, we should go thruogh the process of deleting it.
             self.set_shutdown(now=True)
             return
+
+        self.set_state(ScalesetState.running)
 
     def delete_nodes(
         self, nodes: List[Node], disposal_strategy: NodeDisaposalStrategy
