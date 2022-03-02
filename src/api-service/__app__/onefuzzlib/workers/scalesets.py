@@ -511,7 +511,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.size,
                 size,
             )
-            self.set_size(size)
+            self.size = size
             self.save()
 
     def set_size(self, size: int) -> None:
@@ -552,7 +552,12 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             self.set_shutdown(now=True)
             return
 
-        self.set_state(ScalesetState.running)
+        if size == self.size:
+            self._resize_equal()
+        elif self.size > size:
+            self._resize_grow()
+        else:
+            self._resize_shrink(size - self.size)
 
     def delete_nodes(
         self, nodes: List[Node], disposal_strategy: NodeDisaposalStrategy
