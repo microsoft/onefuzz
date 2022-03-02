@@ -20,6 +20,7 @@ pub mod input_tester;
 pub mod jitter;
 pub mod libfuzzer;
 pub mod machine_id;
+pub mod memory;
 pub mod monitor;
 pub mod process;
 pub mod sha256;

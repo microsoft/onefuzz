@@ -176,7 +176,7 @@ class Client:
             if not azcopy:
                 raise Exception(AZCOPY_MISSING_ERROR)
             else:
-                logger.warn("unable to use built-in azcopy, using system install")
+                logger.warning("unable to use built-in azcopy, using system install")
                 self.azcopy = azcopy
 
         with open(workbook_data) as f:
