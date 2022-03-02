@@ -337,19 +337,14 @@ impl TerminalUi {
             "Stats: ",
             Style::default().add_modifier(Modifier::BOLD),
         ))
-        .chain(
-            event_values
-                .into_iter()
-                .map(|(name, value)| {
-                    vec![
-                        Span::raw(name),
-                        Span::raw(" "),
-                        Span::styled(value, Style::default().add_modifier(Modifier::BOLD)),
-                        Span::raw(", "),
-                    ]
-                })
-                .flatten(),
-        )
+        .chain(event_values.into_iter().flat_map(|(name, value)| {
+            vec![
+                Span::raw(name),
+                Span::raw(" "),
+                Span::styled(value, Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(", "),
+            ]
+        }))
         .collect::<Vec<_>>();
 
         if stats_spans.len() > 1 {
@@ -372,26 +367,21 @@ impl TerminalUi {
             "Files: ",
             Style::default().add_modifier(Modifier::BOLD),
         ))
-        .chain(
-            sorted_file_count
-                .iter()
-                .map(|(path, count)| {
-                    vec![
-                        Span::raw(
-                            path.file_name()
-                                .map(|f| f.to_string_lossy())
-                                .unwrap_or_default(),
-                        ),
-                        Span::raw(" "),
-                        Span::styled(
-                            format!("{}", count),
-                            Style::default().add_modifier(Modifier::BOLD),
-                        ),
-                        Span::raw(", "),
-                    ]
-                })
-                .flatten(),
-        )
+        .chain(sorted_file_count.iter().flat_map(|(path, count)| {
+            vec![
+                Span::raw(
+                    path.file_name()
+                        .map(|f| f.to_string_lossy())
+                        .unwrap_or_default(),
+                ),
+                Span::raw(" "),
+                Span::styled(
+                    format!("{}", count),
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(", "),
+            ]
+        }))
         .collect::<Vec<_>>();
 
         if files_spans.len() > 1 {
