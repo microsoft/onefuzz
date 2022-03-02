@@ -93,7 +93,6 @@ def create_auto_scale_resource_for(
         "location": location,
         "profiles": [profile],
         "target_resource_uri": scaleset_uri,
-        "enabled": True
     }
 
     try:
@@ -124,37 +123,37 @@ def create_auto_scale_profile(min: int, max: int, queue_uri: str) -> AutoscalePr
                 metric_trigger=MetricTrigger(
                     metric_name="ApproximateMessageCount",
                     metric_resource_uri=queue_uri,
-                    # Check every minute
-                    time_grain=timedelta(minutes=1),
+                    # Check every 15 minutes
+                    time_grain=timedelta(minutes=15),
                     # The average amount of messages there are in the pool queue
                     time_aggregation=TimeAggregationType.AVERAGE,
                     statistic=MetricStatisticType.COUNT,
-                    # Over the past 10 minutes
-                    time_window=timedelta(minutes=10),
+                    # Over the past 15 minutes
+                    time_window=timedelta(minutes=15),
                     # When there's more than 1 message in the pool queue
-                    operator=ComparisonOperationType.GREATER_THAN,
+                    operator=ComparisonOperationType.GREATER_THAN_OR_EQUAL,
                     threshold=1,
                 ),
                 scale_action=ScaleAction(
                     direction=ScaleDirection.INCREASE,
                     type=ScaleType.CHANGE_COUNT,
                     value=2,
-                    cooldown=timedelta(minutes=5),
+                    cooldown=timedelta(minutes=10),
                 ),
             ),
-             # Scale in
+            # Scale in
             ScaleRule(
-                # Scale in if no work in the past 10 mins
+                # Scale in if no work in the past 20 mins
                 metric_trigger=MetricTrigger(
                     metric_name="ApproximateMessageCount",
                     metric_resource_uri=queue_uri,
-                    # Check every 10 minutes
-                    time_grain=timedelta(minutes=10),
+                    # Check every 20 minutes
+                    time_grain=timedelta(minutes=20),
                     # The average amount of messages there are in the pool queue
                     time_aggregation=TimeAggregationType.AVERAGE,
                     statistic=MetricStatisticType.SUM,
-                    # Over the past 10 minutes
-                    time_window=timedelta(minutes=10),
+                    # Over the past 20 minutes
+                    time_window=timedelta(minutes=20),
                     # When there's no messages in the pool queue
                     operator=ComparisonOperationType.EQUALS,
                     threshold=0,
@@ -163,8 +162,8 @@ def create_auto_scale_profile(min: int, max: int, queue_uri: str) -> AutoscalePr
                     direction=ScaleDirection.DECREASE,
                     type=ScaleType.CHANGE_COUNT,
                     value=1,
-                    cooldown=timedelta(minutes=5),
+                    cooldown=timedelta(minutes=15),
                 ),
-            )
+            ),
         ],
     )
