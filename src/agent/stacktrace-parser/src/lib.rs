@@ -261,8 +261,7 @@ fn stack_names(stack: &[StackEntry]) -> Vec<String> {
 fn stack_function_lines(stack: &[StackEntry]) -> Vec<String> {
     stack
         .iter()
-        .map(|x| x.function_line_entry())
-        .flatten()
+        .flat_map(|x| x.function_line_entry())
         .collect()
 }
 
