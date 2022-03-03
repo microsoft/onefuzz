@@ -9,6 +9,7 @@ azure-keyvault-secrets~=4.3.0
 azure-mgmt-compute==24.0.1
 azure-mgmt-core==1.3.0
 azure-mgmt-loganalytics~=11.0.0
+azure-mgmt-monitor==3.0.0
 azure-mgmt-network==19.0.0
 azure-mgmt-storage~=18.0.0
 azure-mgmt-resource~=18.1.0
