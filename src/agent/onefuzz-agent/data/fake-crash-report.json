@@ -27,5 +27,6 @@
   "minimized_stack_function_lines": null,
   "minimized_stack_function_lines_sha256": null,
   "tool_name": "libfuzzer",
+  "tool_version": "1.2.3",
 	"onefuzz_version": "1.2.3"
 }

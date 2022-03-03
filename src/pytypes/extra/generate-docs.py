@@ -124,6 +124,7 @@ def main() -> None:
         scariness_score=10,
         scariness_description="example-scariness",
         tool_name="libfuzzer",
+        tool_version="1.2.3",
         onefuzz_version="1.2.3",
     )
     examples: List[Event] = [

@@ -152,6 +152,8 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
                 input_sha256,
                 args.minimized_stack_depth,
                 LIBFUZZER_TOOL_NAME.into(),
+                env!("ONEFUZZ_VERSION").to_string(),
+                env!("ONEFUZZ_VERSION").to_string(),
             );
             Ok(CrashTestResult::CrashReport(Box::new(crash_report)))
         }

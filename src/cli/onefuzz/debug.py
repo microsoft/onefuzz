@@ -699,6 +699,7 @@ class DebugNotification(Command):
             minimized_stack=[],
             minimized_stack_function_names=[],
             tool_name="libfuzzer",
+            tool_version="1.2.3",
             onefuzz_version="1.2.3",
         )
 

@@ -214,6 +214,7 @@ class Report(BaseModel):
     task_id: UUID
     job_id: UUID
     tool_name: str
+    tool_version: str
     onefuzz_version: str
     scariness_score: Optional[int]
     scariness_description: Optional[str]
