@@ -34,6 +34,12 @@ if [ X${CARGO_INCREMENTAL} == X ]; then
     cargo clean
 fi
 
+rustc --version
+cargo --version
+cargo audit --version
+cargo clippy --version
+cargo fmt --version
+
 cargo fmt -- --check
 # RUSTSEC-2020-0016: a dependency `net2` (pulled in from tokio) is deprecated
 # RUSTSEC-2020-0036: a dependency `failure` (pulled from proc-maps) is deprecated
