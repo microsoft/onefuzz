@@ -168,10 +168,9 @@ impl<'a> Tester<'a> {
                         module_offset: Some(*module_offset),
                         module_path: Some(module_name.to_owned()),
                         source_file_line: file_info.as_ref().map(|x| x.line.into()),
-                        source_file_name: file_info
-                            .as_ref()
-                            .map(|x| x.file.rsplit_terminator('\\').next().map(|x| x.to_owned()))
-                            .flatten(),
+                        source_file_name: file_info.as_ref().flat_map(|x| {
+                            x.file.rsplit_terminator('\\').next().map(|x| x.to_owned())
+                        }),
                         source_file_path: file_info.as_ref().map(|x| x.file.to_string()),
                     },
                 })
