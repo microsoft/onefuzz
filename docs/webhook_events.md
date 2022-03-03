@@ -102,7 +102,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "scariness_description": "example-scariness",
         "scariness_score": 10,
         "task_id": "00000000-0000-0000-0000-000000000000",
-        "tool_name": "libfuzzer"
+        "tool_name": "libfuzzer",
+        "tool_version": "1.2.3"
     }
 }
 ```
@@ -251,6 +252,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tool_name": {
                     "title": "Tool Name",
                     "type": "string"
+                },
+                "tool_version": {
+                    "title": "Tool Version",
+                    "type": "string"
                 }
             },
             "required": [
@@ -263,6 +268,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "task_id",
                 "job_id",
                 "tool_name",
+                "tool_version",
                 "onefuzz_version"
             ],
             "title": "Report",
@@ -1849,7 +1855,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "scariness_description": "example-scariness",
                 "scariness_score": 10,
                 "task_id": "00000000-0000-0000-0000-000000000000",
-                "tool_name": "libfuzzer"
+                "tool_name": "libfuzzer",
+                "tool_version": "1.2.3"
             }
         },
         "original_crash_test_result": {
@@ -1875,7 +1882,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "scariness_description": "example-scariness",
                 "scariness_score": 10,
                 "task_id": "00000000-0000-0000-0000-000000000000",
-                "tool_name": "libfuzzer"
+                "tool_name": "libfuzzer",
+                "tool_version": "1.2.3"
             }
         }
     }
@@ -2095,6 +2103,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tool_name": {
                     "title": "Tool Name",
                     "type": "string"
+                },
+                "tool_version": {
+                    "title": "Tool Version",
+                    "type": "string"
                 }
             },
             "required": [
@@ -2107,6 +2119,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "task_id",
                 "job_id",
                 "tool_name",
+                "tool_version",
                 "onefuzz_version"
             ],
             "title": "Report",
@@ -6331,6 +6344,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tool_name": {
                     "title": "Tool Name",
                     "type": "string"
+                },
+                "tool_version": {
+                    "title": "Tool Version",
+                    "type": "string"
                 }
             },
             "required": [
@@ -6343,6 +6360,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "task_id",
                 "job_id",
                 "tool_name",
+                "tool_version",
                 "onefuzz_version"
             ],
             "title": "Report",
