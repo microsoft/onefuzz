@@ -118,6 +118,8 @@ def create_auto_scale_profile(min: int, max: int, queue_uri: str) -> AutoscalePr
     return AutoscaleProfile(
         name=str(uuid.uuid4()),
         capacity=ScaleCapacity(minimum=min, maximum=max, default=max),
+        # Auto scale tuning guidance:
+        # https://docs.microsoft.com/en-us/azure/architecture/best-practices/auto-scaling
         rules=[
             ScaleRule(
                 metric_trigger=MetricTrigger(
