@@ -259,11 +259,7 @@ fn stack_names(stack: &[StackEntry]) -> Vec<String> {
 }
 
 fn stack_function_lines(stack: &[StackEntry]) -> Vec<String> {
-    stack
-        .iter()
-        .map(|x| x.function_line_entry())
-        .flatten()
-        .collect()
+    stack.iter().flat_map(|x| x.function_line_entry()).collect()
 }
 
 fn parse_summary(text: &str) -> Result<(String, String, String)> {
