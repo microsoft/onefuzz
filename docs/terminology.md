@@ -70,7 +70,7 @@ Pools are defined by:
 * `name`: the Name of the pool
 * `os`: The operating system of the node (`linux` or `windows`)
 3. `arch`: The CPU architecture of the nodes (only `x86_64` for now)
-4. `managed`: Is the pool made up of OneFuzz managed [scalsets](#scaleset)
+4. `managed`: Is the pool made up of OneFuzz managed [scalesets](#scaleset)
 
 ## Scaleset
 
