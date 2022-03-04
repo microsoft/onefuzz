@@ -88,6 +88,8 @@ jobs:
       run: |
         set -ex
         ls artifacts
+        python -mvenv cli_venv
+        . cli_venv/Scripts/activate
         cd src/cli
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
@@ -110,6 +112,7 @@ jobs:
       shell: bash
       run: |
         set -ex
+        . cli_venv/Scripts/activate
         cd src/cli
         pip install -r requirements-lint.txt
         flake8 .
@@ -411,7 +414,7 @@ jobs:
         name: integration-test-artifacts
         path: src/integration-tests/artifacts
   build-integration-tests-windows:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
     - uses: actions/checkout@v2
     - run: |

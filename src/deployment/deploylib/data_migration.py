@@ -8,9 +8,10 @@ import json
 from typing import Callable, Dict, List
 from uuid import UUID
 
-from azure.common.client_factory import get_client_from_cli_profile
 from azure.cosmosdb.table.tablebatch import TableBatch
 from azure.cosmosdb.table.tableservice import TableService
+from azure.identity import AzureCliCredential
+from azure.mgmt.resource import SubscriptionClient
 from azure.mgmt.storage import StorageManagementClient
 
 
@@ -91,7 +92,8 @@ def main() -> None:
     parser.add_argument("migration", choices=migrations.keys(), nargs="+")
     args = parser.parse_args()
 
-    client = get_client_from_cli_profile(StorageManagementClient)
+    credential = AzureCliCredential()
+    client = StorageManagementClient(credential)
     storage_keys = client.storage_accounts.list_keys(
         args.resource_group, args.storage_account
     )

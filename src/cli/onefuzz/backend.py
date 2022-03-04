@@ -319,7 +319,7 @@ class Backend:
             except requests.exceptions.ReadTimeout as err:
                 LOGGER.info("request timed out: %s", err)
 
-            time.sleep(1.5 ** backoff)
+            time.sleep(1.5**backoff)
 
         if response is None:
             raise Exception("request failed: %s %s" % (method, url))

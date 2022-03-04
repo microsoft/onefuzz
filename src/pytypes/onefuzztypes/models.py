@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, root_validator, validator
@@ -561,6 +561,12 @@ class NodeCommand(EnumModel):
     stop_if_free: Optional[NodeCommandStopIfFree]
 
 
+class NodeTasks(BaseModel):
+    machine_id: UUID
+    task_id: UUID
+    state: NodeTaskState = Field(default=NodeTaskState.init)
+
+
 class NodeCommandEnvelope(BaseModel):
     command: NodeCommand
     message_id: str
@@ -568,12 +574,15 @@ class NodeCommandEnvelope(BaseModel):
 
 class Node(BaseModel):
     timestamp: Optional[datetime] = Field(alias="Timestamp")
+
+    # Set only once, when a node is initialized.
+    initialized_at: Optional[datetime]
     pool_name: PoolName
     pool_id: Optional[UUID]
     machine_id: UUID
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
-    tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
+    tasks: Optional[List[NodeTasks]] = None
     messages: Optional[List[NodeCommand]] = None
     heartbeat: Optional[datetime]
     version: str = Field(default="1.0.0")
@@ -585,12 +594,6 @@ class Node(BaseModel):
 class ScalesetSummary(BaseModel):
     scaleset_id: UUID
     state: ScalesetState
-
-
-class NodeTasks(BaseModel):
-    machine_id: UUID
-    task_id: UUID
-    state: NodeTaskState = Field(default=NodeTaskState.init)
 
 
 class AutoScaleConfig(BaseModel):
@@ -864,6 +867,8 @@ class InstanceConfig(BaseModel):
     proxy_vm_sku: str = Field(default="Standard_B2s")
     api_access_rules: Optional[Dict[Endpoint, ApiAccessRule]] = None
     group_membership: Optional[Dict[PrincipalID, List[GroupId]]] = None
+    vm_tags: Optional[Dict[str, str]] = None
+    vmss_tags: Optional[Dict[str, str]] = None
 
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:

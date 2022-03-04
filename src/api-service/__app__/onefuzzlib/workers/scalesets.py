@@ -23,8 +23,11 @@ from onefuzztypes.primitives import PoolName, Region
 
 from ..__version__ import __version__
 from ..azure.auth import build_auth
+from ..azure.auto_scale import add_auto_scale_to_vmss, create_auto_scale_profile
 from ..azure.image import get_os
 from ..azure.network import Network
+from ..azure.queue import get_resource_id
+from ..azure.storage import StorageType
 from ..azure.vmss import (
     UnableToUpdate,
     create_vmss,
@@ -221,7 +224,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 SCALESET_LOG_PREFIX + "creating scaleset. scaleset_id:%s",
                 self.scaleset_id,
             )
+
             extensions = fuzz_extensions(pool, self)
+
             result = create_vmss(
                 self.region,
                 self.scaleset_id,
@@ -240,6 +245,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.set_failed(result)
                 return
             else:
+                # TODO: Link up auto scale resource with diagnostics
                 logging.info(
                     SCALESET_LOG_PREFIX + "creating scaleset scaleset_id:%s",
                     self.scaleset_id,
@@ -255,6 +261,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 SCALESET_LOG_PREFIX + "scaleset running scaleset_id:%s",
                 self.scaleset_id,
             )
+            auto_scaling = self.try_to_enable_auto_scaling()
+            if isinstance(auto_scaling, Error):
+                self.set_failed(auto_scaling)
+                return
+
             identity_result = self.try_set_identity(vmss)
             if identity_result:
                 self.set_failed(identity_result)
@@ -821,3 +832,32 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     state=self.state,
                 )
             )
+
+    def try_to_enable_auto_scaling(self) -> Optional[Error]:
+        from .pools import Pool
+
+        logging.info("Trying to add auto scaling for scaleset %s" % self.scaleset_id)
+
+        pool = Pool.get_by_name(self.pool_name)
+        if isinstance(pool, Error):
+            logging.error(
+                "Failed to get pool by name: %s error: %s" % (self.pool_name, pool)
+            )
+            return pool
+
+        pool_queue_id = pool.get_pool_queue()
+        pool_queue_uri = get_resource_id(pool_queue_id, StorageType.corpus)
+        capacity = get_vmss_size(self.scaleset_id)
+        if capacity is None:
+            capacity_failed = Error(
+                code=ErrorCode.UNABLE_TO_FIND,
+                errors=["Failed to get capacity for scaleset %s" % self.scaleset_id],
+            )
+            logging.error(capacity_failed)
+            return capacity_failed
+
+        auto_scale_profile = create_auto_scale_profile(
+            capacity, capacity, pool_queue_uri
+        )
+        logging.info("Added auto scale resource to scaleset: %s" % self.scaleset_id)
+        return add_auto_scale_to_vmss(self.scaleset_id, auto_scale_profile)
