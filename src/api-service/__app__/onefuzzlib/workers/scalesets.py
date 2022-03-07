@@ -267,11 +267,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 SCALESET_LOG_PREFIX + "scaleset running scaleset_id:%s",
                 self.scaleset_id,
             )
-            auto_scaling = self.try_to_enable_auto_scaling()
-            if isinstance(auto_scaling, Error):
-                self.set_failed(auto_scaling)
-                logging.error(auto_scaling)
-                return
 
             identity_result = self.try_set_identity(vmss)
             if identity_result:
