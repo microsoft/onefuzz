@@ -21,7 +21,7 @@ iced-x86 = { version = "1.15", features = ["decoder", "op_code_info", "instr_inf
 log = "0.4"
 memmap2 = "0.5"
 msvc-demangler = "0.9"
-regex = "1.4"
+regex = "1.5.5"
 rustc-demangle = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 symbolic = { version = "8.5", features = ["debuginfo", "demangle", "symcache"] }

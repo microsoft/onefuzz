@@ -13,7 +13,7 @@ binary-tests = []
 log = "0.4"
 nom = "7"
 pdb = "0.7"
-regex = "1"
+regex = "1.5.5"
 serde = { version = "1", features = ["derive"] }
 xml-rs = "0.8"
 anyhow = "1.0"
