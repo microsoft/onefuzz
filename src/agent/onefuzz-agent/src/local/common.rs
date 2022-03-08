@@ -299,11 +299,10 @@ pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
         if path.as_ref().exists() {
             Ok(())
         } else {
-            let max_retry_period: Option<Duration> = Some(WAIT_FOR_MAX_WAIT);
-            Err(BackoffError::Transient {
-                err: anyhow::anyhow!("path '{}' does not exist", path.as_ref().display()),
-                retry_after: max_retry_period,
-            })
+            Err(BackoffError::transient(anyhow::anyhow!(
+                "path '{}' does not exist",
+                path.as_ref().display()
+            )))
         }
     };
     retry(
