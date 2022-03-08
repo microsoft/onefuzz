@@ -4,6 +4,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.1.0
+### Added
+* Service: Added a new webhook message format compatible with Azure Event Grid. [#1640](https://github.com/microsoft/onefuzz/pull/1640)
+* Service: Added initial auto scaling support for VM scale sets. [#1647](https://github.com/microsoft/onefuzz/pull/1647), [#1661](https://github.com/microsoft/onefuzz/pull/1661)
+* Agent: Add an explicit timeout to setup scripts so hangs are easier to debug. [#1659](https://github.com/microsoft/onefuzz/pull/1659)
+
+### Changed
+* CLI/Service: Updated multiple first-party and third-party Python dependencies. [#1606](https://github.com/microsoft/onefuzz/pull/1606), [#1634](https://github.com/microsoft/onefuzz/pull/1634)
+* Agent: Check system-wide memory usage and fail tasks that are nearly out of memory. [#1657](https://github.com/microsoft/onefuzz/pull/1657)
+
+### Fixed
+* Service: Fix `task` field to the correct `NodeTasks` type so serialization works correctly.  [#1627](https://github.com/microsoft/onefuzz/pull/1627)
+* Agent: Convert escaped characters when accessing the name of a blob in a URL.  [#1673](https://github.com/microsoft/onefuzz/pull/1673)
+* Agent: Override `runs` parameter when testing inputs as we only want to test them once. [#1651](https://github.com/microsoft/onefuzz/pull/1651)
+* Service: Remove deprecated `warn()` method. [#1641](https://github.com/microsoft/onefuzz/pull/1641)
+
+## 5.0.0
+### Added
+* CLI/Service: Added `fuzzer_target_options` argument to the `libfuzzer` templates to allow passing some target options only in persistent fuzzing mode [#1610](https://github.com/microsoft/onefuzz/pull/1610)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.
+[#1530](https://github.com/microsoft/onefuzz/pull/1530)
+* CLI/Service: Updated multiple first-party and third-party Python dependencies. 
+[#1576](https://github.com/microsoft/onefuzz/pull/1576)
+[#1577](https://github.com/microsoft/onefuzz/pull/1577)
+[#1579](https://github.com/microsoft/onefuzz/pull/1579)
+[#1582](https://github.com/microsoft/onefuzz/pull/1582)
+[#1586](https://github.com/microsoft/onefuzz/pull/1586)
+[#1599](https://github.com/microsoft/onefuzz/pull/1599)
+* CLI/Service: Begin update of scale set instances before reimaging to ensure they match the latest scale set model. [#1612](https://github.com/microsoft/onefuzz/pull/1612)
+
+### Fixed
+* Agent: Removed the `process_stats` telemetry event, which fixes a class of memory leaks on Windows `libfuzzer_fuzz` tasks. [#1608](https://github.com/microsoft/onefuzz/pull/1608)
+* CLI/Service: Fixed seven day stale node reimaging check. [#1616](https://github.com/microsoft/onefuzz/pull/1616)
+
 ## 4.1.0
 ### Added
 * Agent: Added source line coverage data 

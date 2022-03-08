@@ -76,7 +76,7 @@ impl BlobUrl {
                     .path_segments()
                     .unwrap()
                     .skip(1)
-                    .map(|s| s.to_owned())
+                    .map(url_escape::decode)
                     .collect();
                 name_segments.join("/")
             }
@@ -503,6 +503,18 @@ mod tests {
         assert_eq!(
             redacted,
             format!("{:?}", BlobContainerUrl::parse(url_sas_query).unwrap())
+        );
+    }
+
+    #[test]
+    fn test_blob_name_escape() {
+        let url = "https://myaccount.blob.core.windows.net/mycontainer/id%3A000000%2Csig%3A06%2Csrc%3A000000%2Cop%3Ahavoc%2Crep%3A128";
+        let blob_url = BlobUrl::parse(url);
+
+        assert!(blob_url.is_ok());
+        assert_eq!(
+            blob_url.unwrap().name(),
+            "id:000000,sig:06,src:000000,op:havoc,rep:128"
         );
     }
 }

@@ -8,7 +8,13 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
-from onefuzztypes.enums import ErrorCode, NodeState, PoolState, ScalesetState
+from onefuzztypes.enums import (
+    ErrorCode,
+    NodeDisaposalStrategy,
+    NodeState,
+    PoolState,
+    ScalesetState,
+)
 from onefuzztypes.events import (
     EventScalesetCreated,
     EventScalesetDeleted,
@@ -23,8 +29,11 @@ from onefuzztypes.primitives import PoolName, Region
 
 from ..__version__ import __version__
 from ..azure.auth import build_auth
+from ..azure.auto_scale import add_auto_scale_to_vmss, create_auto_scale_profile
 from ..azure.image import get_os
 from ..azure.network import Network
+from ..azure.queue import get_resource_id
+from ..azure.storage import StorageType
 from ..azure.vmss import (
     UnableToUpdate,
     create_vmss,
@@ -242,6 +251,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.set_failed(result)
                 return
             else:
+                # TODO: Link up auto scale resource with diagnostics
                 logging.info(
                     SCALESET_LOG_PREFIX + "creating scaleset scaleset_id:%s",
                     self.scaleset_id,
@@ -257,6 +267,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 SCALESET_LOG_PREFIX + "scaleset running scaleset_id:%s",
                 self.scaleset_id,
             )
+
             identity_result = self.try_set_identity(vmss)
             if identity_result:
                 self.set_failed(identity_result)
@@ -415,8 +426,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         # Perform operations until they fail due to scaleset getting locked
         try:
-            self.delete_nodes(to_delete)
-            self.reimage_nodes(to_reimage)
+            self.reimage_nodes(to_reimage, NodeDisaposalStrategy.scale_in)
+            self.delete_nodes(to_delete, NodeDisaposalStrategy.scale_in)
         except UnableToUpdate:
             logging.info(
                 SCALESET_LOG_PREFIX
@@ -486,6 +497,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             return
 
         if size != self.size:
+            # Azure auto-scaled us or nodes were manually added/removed
+            # New node state will be synced in cleanup_nodes
             logging.info(
                 SCALESET_LOG_PREFIX + "unexpected scaleset size, resizing.  "
                 "scaleset_id:%s expected:%d actual:%d",
@@ -493,7 +506,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.size,
                 size,
             )
-            self.set_state(ScalesetState.resize)
+            self.size = size
+            self.save()
 
     def set_size(self, size: int) -> None:
         # ensure we always stay within max_size boundaries
@@ -540,7 +554,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         else:
             self._resize_shrink(size - self.size)
 
-    def delete_nodes(self, nodes: List[Node]) -> None:
+    def delete_nodes(
+        self, nodes: List[Node], disposal_strategy: NodeDisaposalStrategy
+    ) -> None:
         if not nodes:
             logging.info(
                 SCALESET_LOG_PREFIX + "no nodes to delete. scaleset_id:%s",
@@ -580,8 +596,12 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         for node in nodes:
             if node.machine_id in machine_ids:
                 node.delete()
+                if disposal_strategy == NodeDisaposalStrategy.scale_in:
+                    node.release_scale_in_protection()
 
-    def reimage_nodes(self, nodes: List[Node]) -> None:
+    def reimage_nodes(
+        self, nodes: List[Node], disposal_strategy: NodeDisaposalStrategy
+    ) -> None:
         if not nodes:
             logging.info(
                 SCALESET_LOG_PREFIX + "no nodes to reimage: scaleset_id:%s",
@@ -596,7 +616,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 + "scaleset_id:%s",
                 self.scaleset_id,
             )
-            self.delete_nodes(nodes)
+            self.delete_nodes(nodes, disposal_strategy)
             return
 
         if self.state == ScalesetState.halt:
@@ -638,6 +658,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         for node in nodes:
             if node.machine_id in machine_ids:
                 node.delete()
+                if disposal_strategy == NodeDisaposalStrategy.scale_in:
+                    node.release_scale_in_protection()
 
     def set_shutdown(self, now: bool) -> None:
         if now:
@@ -823,3 +845,30 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     state=self.state,
                 )
             )
+
+    def try_to_enable_auto_scaling(self) -> Optional[Error]:
+        from .pools import Pool
+
+        logging.info("Trying to add auto scaling for scaleset %s" % self.scaleset_id)
+
+        pool = Pool.get_by_name(self.pool_name)
+        if isinstance(pool, Error):
+            logging.error(
+                "Failed to get pool by name: %s error: %s" % (self.pool_name, pool)
+            )
+            return pool
+
+        pool_queue_id = pool.get_pool_queue()
+        pool_queue_uri = get_resource_id(pool_queue_id, StorageType.corpus)
+        capacity = get_vmss_size(self.scaleset_id)
+        if capacity is None:
+            capacity_failed = Error(
+                code=ErrorCode.UNABLE_TO_FIND,
+                errors=["Failed to get capacity for scaleset %s" % self.scaleset_id],
+            )
+            logging.error(capacity_failed)
+            return capacity_failed
+
+        auto_scale_profile = create_auto_scale_profile(1, capacity, pool_queue_uri)
+        logging.info("Added auto scale resource to scaleset: %s" % self.scaleset_id)
+        return add_auto_scale_to_vmss(self.scaleset_id, auto_scale_profile)

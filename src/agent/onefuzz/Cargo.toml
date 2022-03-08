@@ -18,7 +18,7 @@ hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 notify = "4.0"
-regex = "1.4"
+regex = "1.5.5"
 reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"], default-features=false }
 sha2 = "0.10.1"
 url = { version = "2.2", features = ["serde"] }
@@ -26,12 +26,12 @@ serde = "1.0"
 serde_json = "1.0"
 rand = "0.8"
 serde_derive = "1.0"
-sysinfo = "0.21"
 tokio = { version = "1.15", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["fs", "time", "tokio-util"] }
 tokio-util = { version = "0.6", features = ["full"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 urlparse = "0.7"
+url-escape = "0.1.0"
 ring = "0.16"
 storage-queue = { path = "../storage-queue" }
 strum = "0.23"
@@ -47,6 +47,7 @@ backoff = { version = "0.4", features = ["tokio"] }
 winreg = "0.10"
 input-tester = { path = "../input-tester" }
 debugger = { path = "../debugger" }
+winapi = { version = "0.3", features = ["impl-default", "psapi"] }
 
 [target.'cfg(target_family = "unix")'.dependencies]
 cpp_demangle = "0.3"
@@ -56,3 +57,6 @@ nix = "0.23"
 pete = "0.8"
 rstack = "0.3"
 proc-maps = "0.2"
+
+[dev-dependencies]
+structopt = "0.3"

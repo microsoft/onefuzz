@@ -5,6 +5,7 @@
 
 import datetime
 import hmac
+import json
 import logging
 from hashlib import sha512
 from typing import List, Optional, Tuple
@@ -16,7 +17,11 @@ from onefuzztypes.enums import ErrorCode, WebhookMessageState
 from onefuzztypes.events import Event, EventMessage, EventPing, EventType
 from onefuzztypes.models import Error, Result
 from onefuzztypes.webhooks import Webhook as BASE_WEBHOOK
-from onefuzztypes.webhooks import WebhookMessage
+from onefuzztypes.webhooks import (
+    WebhookMessage,
+    WebhookMessageEventGrid,
+    WebhookMessageFormat,
+)
 from onefuzztypes.webhooks import WebhookMessageLog as BASE_WEBHOOK_MESSAGE_LOG
 from pydantic import BaseModel, Field
 
@@ -203,6 +208,7 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
             event_type=message_log.event_type,
             event=message_log.event,
             secret_token=self.secret_token,
+            message_format=self.message_format,
         )
 
         headers = {"Content-type": "application/json", "User-Agent": USER_AGENT}
@@ -225,19 +231,36 @@ def build_message(
     event_type: EventType,
     event: Event,
     secret_token: Optional[str] = None,
+    message_format: Optional[WebhookMessageFormat] = None,
 ) -> Tuple[bytes, Optional[str]]:
-    data = (
-        WebhookMessage(
-            webhook_id=webhook_id,
-            event_id=event_id,
-            event_type=event_type,
-            event=event,
-            instance_id=get_instance_id(),
-            instance_name=get_instance_name(),
+
+    if message_format and message_format == WebhookMessageFormat.event_grid:
+        decoded = [
+            json.loads(
+                WebhookMessageEventGrid(
+                    id=event_id,
+                    data=event,
+                    dataVersion="1.0.0",
+                    subject=get_instance_name(),
+                    eventType=event_type,
+                    eventTime=datetime.datetime.now(datetime.timezone.utc),
+                ).json(sort_keys=True, exclude_none=True)
+            )
+        ]
+        data = json.dumps(decoded).encode()
+    else:
+        data = (
+            WebhookMessage(
+                webhook_id=webhook_id,
+                event_id=event_id,
+                event_type=event_type,
+                event=event,
+                instance_id=get_instance_id(),
+                instance_name=get_instance_name(),
+            )
+            .json(sort_keys=True, exclude_none=True)
+            .encode()
         )
-        .json(sort_keys=True, exclude_none=True)
-        .encode()
-    )
     digest = None
     if secret_token:
         digest = hmac.new(secret_token.encode(), msg=data, digestmod=sha512).hexdigest()

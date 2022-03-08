@@ -1,5 +1,5 @@
 azure-common~=1.1.25
 azure-identity==1.7.1
 PyGithub==1.55
-azure-cli-core==2.31.0
+azure-cli-core==2.32.0
 msgraph-core==0.2.2
