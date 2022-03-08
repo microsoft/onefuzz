@@ -25,7 +25,7 @@ from .azure.containers import (
     save_blob,
 )
 from .azure.creds import get_instance_id, get_instance_url
-from .azure.monitor import get_monitor_settings
+from .azure.log_analytics import get_monitor_settings
 from .azure.queue import get_queue_sas
 from .azure.storage import StorageType
 from .config import InstanceConfig
