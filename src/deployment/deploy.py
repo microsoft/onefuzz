@@ -715,10 +715,8 @@ class Client:
 
         def old_subscription_exists() -> bool:
             try:
-                result = client.event_subscriptions.get(
-                    src_resource_id, old_subscription_name
-                )
-                return bool(result.provisioning_state == "Succeeded")
+                client.event_subscriptions.get(src_resource_id, old_subscription_name)
+                return True
             except ResourceNotFoundError:
                 return False
 
