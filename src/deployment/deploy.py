@@ -689,44 +689,60 @@ class Client:
             tenants.append(tenant)
         update_allowed_aad_tenants(config_client, tenants)
 
-    def remove_eventgrid(self) -> None:
-        credential = AzureCliCredential()
-        client = StorageManagementClient(
-            credential, subscription_id=self.get_subscription_id()
-        )
+    @staticmethod
+    def event_subscription_exists(
+        client: EventGridManagementClient, resource_id: str, subscription_name: str
+    ) -> bool:
+        try:
+            client.event_subscriptions.get(resource_id, subscription_name)
+            return True
+        except ResourceNotFoundError:
+            return False
+
+    @staticmethod
+    def get_storageAccount_id(
+        client: StorageManagementClient, resource_group: str, prefix: str
+    ) -> Optional[str]:
         try:
             storage_accounts = client.storage_accounts.list_by_resource_group(
-                self.resource_group
+                resource_group
             )
             for storage_account in storage_accounts:
-                if storage_account.name.startswith("fuzz"):
-                    src_resource_id = storage_account.id
-
-            if not src_resource_id:
-                return
+                if storage_account.name.startswith(prefix):
+                    return str(storage_account.id)
+            return None
         except ResourceNotFoundError:
-            return
+            return None
 
-        client = EventGridManagementClient(
+    def remove_eventgrid(self) -> None:
+        credential = AzureCliCredential()
+        storage_account_client = StorageManagementClient(
             credential, subscription_id=self.get_subscription_id()
         )
 
+        src_resource_id = Client.get_storageAccount_id(
+            storage_account_client, self.resource_group, "fuzz"
+        )
+        if not src_resource_id:
+            return
+
+        event_grid_client = EventGridManagementClient(
+            credential, subscription_id=self.get_subscription_id()
+        )
+
+        # Event subscription for version up to 5.1.0
         old_subscription_name = "onefuzz1"
+        old_subscription_exists = Client.event_subscription_exists(
+            event_grid_client, src_resource_id, old_subscription_name
+        )
 
-        def old_subscription_exists() -> bool:
-            try:
-                client.event_subscriptions.get(src_resource_id, old_subscription_name)
-                return True
-            except ResourceNotFoundError:
-                return False
-
-        if old_subscription_exists():
+        if old_subscription_exists:
             logger.info("removing deprecated event subscription")
-            result = client.event_subscriptions.begin_delete(
+            result = event_grid_client.event_subscriptions.begin_delete(
                 src_resource_id, old_subscription_name
             ).result()
 
-            if result and result.provisioning_state != "Succeeded":
+            if result.provisioning_state != "Succeeded":
                 raise Exception(
                     "Failed to remove : %s"
                     % json.dumps(result.as_dict(), indent=4, sort_keys=True),
