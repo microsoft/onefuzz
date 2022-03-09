@@ -700,7 +700,7 @@ class Client:
             return False
 
     @staticmethod
-    def get_storageAccount_id(
+    def get_storage_account_id(
         client: StorageManagementClient, resource_group: str, prefix: str
     ) -> Optional[str]:
         try:
@@ -720,7 +720,7 @@ class Client:
             credential, subscription_id=self.get_subscription_id()
         )
 
-        src_resource_id = Client.get_storageAccount_id(
+        src_resource_id = Client.get_storage_account_id(
             storage_account_client, self.resource_group, "fuzz"
         )
         if not src_resource_id:
