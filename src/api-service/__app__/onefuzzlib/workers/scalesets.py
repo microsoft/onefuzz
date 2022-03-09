@@ -874,6 +874,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.error(capacity_failed)
             return capacity_failed
 
-        auto_scale_profile = create_auto_scale_profile(1, capacity, pool_queue_uri)
+        auto_scale_profile = create_auto_scale_profile(capacity, capacity, pool_queue_uri)
         logging.info("Added auto scale resource to scaleset: %s" % self.scaleset_id)
         return add_auto_scale_to_vmss(self.scaleset_id, auto_scale_profile)
