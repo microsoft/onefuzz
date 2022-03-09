@@ -268,6 +268,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.scaleset_id,
             )
 
+            auto_scaling = self.try_to_enable_auto_scaling()
+            if isinstance(auto_scaling, Error):
+                self.set_failed(auto_scaling)
+                return
+
             identity_result = self.try_set_identity(vmss)
             if identity_result:
                 self.set_failed(identity_result)
@@ -869,6 +874,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.error(capacity_failed)
             return capacity_failed
 
-        auto_scale_profile = create_auto_scale_profile(1, capacity, pool_queue_uri)
+        auto_scale_profile = create_auto_scale_profile(
+            capacity, capacity, pool_queue_uri
+        )
         logging.info("Added auto scale resource to scaleset: %s" % self.scaleset_id)
         return add_auto_scale_to_vmss(self.scaleset_id, auto_scale_profile)
