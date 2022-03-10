@@ -29,6 +29,12 @@ mkdir -p artifacts/agent-$(uname)
 
 cd src/agent
 
+rustc --version
+cargo --version
+cargo audit --version
+cargo clippy --version
+cargo fmt --version
+
 # unless we're doing incremental builds, start clean during CI
 if [ X${CARGO_INCREMENTAL} == X ]; then
     cargo clean

@@ -299,9 +299,9 @@ pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
         if path.as_ref().exists() {
             Ok(())
         } else {
-            Err(BackoffError::Transient(anyhow::anyhow!(
-                "path '{:?}' does not exist",
-                path.as_ref()
+            Err(BackoffError::transient(anyhow::anyhow!(
+                "path '{}' does not exist",
+                path.as_ref().display()
             )))
         }
     };
