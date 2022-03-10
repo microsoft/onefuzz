@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 5.2.0
 ### Added
-* Service: Added additional auto scaling support for VM scale sets. [#1686](https://github.com/microsoft/onefuzz/pull/1686), [#1698](https://github.com/microsoft/onefuzz/pull1698)
+* Service: Added additional auto-scaling support for VM scale sets. [#1686](https://github.com/microsoft/onefuzz/pull/1686), [#1698](https://github.com/microsoft/onefuzz/pull/1698)
 
 ### Changed
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1699](https://github.com/microsoft/onefuzz/pull/1699), [#1589](https://github.com/microsoft/onefuzz/pull/1589)
