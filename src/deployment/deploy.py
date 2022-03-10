@@ -738,15 +738,9 @@ class Client:
 
         if old_subscription_exists:
             logger.info("removing deprecated event subscription")
-            result = event_grid_client.event_subscriptions.begin_delete(
+            event_grid_client.event_subscriptions.begin_delete(
                 src_resource_id, old_subscription_name
-            ).result()
-
-            if result.provisioning_state != "Succeeded":
-                raise Exception(
-                    "Failed to remove : %s"
-                    % json.dumps(result.as_dict(), indent=4, sort_keys=True),
-                )
+            ).wait()
 
     def add_instance_id(self) -> None:
         logger.info("setting instance_id log export")
