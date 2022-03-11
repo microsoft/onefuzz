@@ -42,6 +42,7 @@ from .monitor import get_monitor_client
 from .storage import get_func_storage
 from .log_analytics import get_workspace_id
 
+
 @retry_on_auth_failure()
 def add_auto_scale_to_vmss(
     vmss: UUID, auto_scale_profile: AutoscaleProfile
@@ -80,10 +81,7 @@ def add_auto_scale_to_vmss(
         return auto_scale_resource
 
     diagnostics_resource = setup_auto_scale_diagnostics(
-        auto_scale_resource.id,
-        auto_scale_resource.name,
-        get_func_storage(),
-        get_workspace_id()
+        auto_scale_resource.id, auto_scale_resource.name, get_workspace_id()
     )
     if isinstance(diagnostics_resource, Error):
         return diagnostics_resource
@@ -190,23 +188,18 @@ def create_auto_scale_profile(min: int, max: int, queue_uri: str) -> AutoscalePr
 def setup_auto_scale_diagnostics(
     auto_scale_resource_uri: str,
     auto_scale_resource_name: str,
-    storage_account_id: str,
     log_analytics_workspace_id: str,
 ) -> Union[DiagnosticSettingsResource, Error]:
     logging.info("Setting up diagnostics for auto scale")
     client = get_monitor_client()
 
     log_settings = LogSettings(
-        categoryGroup="allLogs",
         enabled=True,
-        retentionPolicy=RetentionPolicy(enabled=True, days=30),
+        category_group="allLogs",
+        retention_policy=RetentionPolicy(enabled=True, days=30),
     )
 
-    # TODO: Fill this out then add it to the params but keep it disabled
-    metric_settings = MetricSettings()
-
     params: Dict[str, Any] = {
-        "storage_account_id": storage_account_id,
         "logs": [log_settings],
         "workspace_id": log_analytics_workspace_id,
     }
@@ -215,7 +208,9 @@ def setup_auto_scale_diagnostics(
         diagnostics = client.diagnostic_settings.create_or_update(
             auto_scale_resource_uri, "%s-diagnostics" % auto_scale_resource_name, params
         )
-        logging.info("Diagnostics created for auto scale resource: %s" % auto_scale_resource_uri)
+        logging.info(
+            "Diagnostics created for auto scale resource: %s" % auto_scale_resource_uri
+        )
         return diagnostics
     except (ResourceNotFoundError, CloudError):
         return Error(
