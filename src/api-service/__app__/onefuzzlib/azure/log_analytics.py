@@ -30,9 +30,10 @@ def get_monitor_settings() -> Dict[str, str]:
 
 
 def get_workspace_id() -> str:
-    # TODO: Once #1679 merges, we can use ONEFUZZ_MONITOR instead of ONEFUZZ_INSTANCE_NAME
+    # TODO:
+    # Once #1679 merges, we can use ONEFUZZ_MONITOR instead of ONEFUZZ_INSTANCE_NAME
     workspace_id = (
-        "/subscriptions/%s/resourceGroups/%s/providers/microsoft.operationalinsights/workspaces/%s"
+        "/subscriptions/%s/resourceGroups/%s/providers/microsoft.operationalinsights/workspaces/%s" # noqa: E501
         % (
             get_subscription(),
             get_base_resource_group(),
