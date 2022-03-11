@@ -25,7 +25,6 @@ from azure.mgmt.monitor.models import (
     DiagnosticSettingsResource,
     LogSettings,
     RetentionPolicy,
-    MetricSettings,
 )
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import ErrorCode
@@ -39,7 +38,6 @@ from .creds import (
     retry_on_auth_failure,
 )
 from .monitor import get_monitor_client
-from .storage import get_func_storage
 from .log_analytics import get_workspace_id
 
 
@@ -106,7 +104,6 @@ def create_auto_scale_resource_for(
         "location": location,
         "profiles": [profile],
         "target_resource_uri": scaleset_uri,
-        "enabled": True,
     }
 
     try:
