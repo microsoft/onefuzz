@@ -14,17 +14,17 @@ from azure.mgmt.monitor.models import (
     AutoscaleProfile,
     AutoscaleSettingResource,
     ComparisonOperationType,
+    DiagnosticSettingsResource,
+    LogSettings,
     MetricStatisticType,
     MetricTrigger,
+    RetentionPolicy,
     ScaleAction,
     ScaleCapacity,
     ScaleDirection,
     ScaleRule,
     ScaleType,
     TimeAggregationType,
-    DiagnosticSettingsResource,
-    LogSettings,
-    RetentionPolicy,
 )
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import ErrorCode
@@ -37,8 +37,8 @@ from .creds import (
     get_subscription,
     retry_on_auth_failure,
 )
-from .monitor import get_monitor_client
 from .log_analytics import get_workspace_id
+from .monitor import get_monitor_client
 
 
 @retry_on_auth_failure()
