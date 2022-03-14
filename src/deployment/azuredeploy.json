@@ -71,6 +71,7 @@
         "Storage Account Contributor": "17d1049b-9a84-46fb-8f53-869881c3d3ab",
         "Virtual Machine Contributor": "9980e02c-c2be-4d73-94e8-173b1dc7cf3c",
         "Storage Blob Data Reader": "2a2b9908-6ea1-4ae2-8e65-a410df84e7d1",
+        "Contributor": "b24988ac-6180-42a0-ab88-20f7382dd24c",
         "keyVaultName": "[concat('of-kv-', uniquestring(resourceGroup().id))]"
     },
     "functions": [
@@ -812,6 +813,21 @@
             },
             "DependsOn": [
                 "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+            ],
+            "tags": {
+                "OWNER": "[parameters('owner')]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2017-09-01",
+            "name": "[guid(concat(resourceGroup().id, '-contributor'))]",
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('Contributor'))]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2018-02-01', 'Full').identity.principalId]"
+            },
+            "DependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('name'))]"
             ],
             "tags": {
                 "OWNER": "[parameters('owner')]"

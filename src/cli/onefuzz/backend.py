@@ -348,6 +348,8 @@ def before_sleep(retry_state: RetryCallState) -> None:
 
 
 class ContainerWrapper:
+    client: ContainerClient
+
     def __init__(self, container_url: str) -> None:
         self.client = ContainerClient.from_container_url(container_url)
         self.container_url = container_url
