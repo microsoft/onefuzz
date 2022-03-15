@@ -31,7 +31,7 @@ def get_base_event(
         resource_group, location
     ):
         if (
-            entry.name == "onefuzz1"
+            entry.name == "onefuzz1_subscription"
             and entry.type == "Microsoft.EventGrid/eventSubscriptions"
             and entry.event_delivery_schema == "EventGridSchema"
             and entry.destination.endpoint_type == "StorageQueue"
