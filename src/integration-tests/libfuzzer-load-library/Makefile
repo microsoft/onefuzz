@@ -1,5 +1,5 @@
 CC=clang
-CFLAGS=-fsanitize=address,fuzzer -O0
+CFLAGS=-fsanitize=address,fuzzer -O0 -g3
 
 .PHONY: all clean
 

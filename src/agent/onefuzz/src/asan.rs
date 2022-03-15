@@ -56,7 +56,7 @@ pub async fn check_asan_string(mut data: String) -> Result<Option<CrashLog>> {
                 data.truncate(ASAN_LOG_TRUNCATE_SIZE);
                 data.push_str("...<truncated>");
             }
-            warn!(
+            debug!(
                 "unable to parse asan log from string.  error:{:?} data:{:?}",
                 err, data
             );

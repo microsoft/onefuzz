@@ -679,8 +679,8 @@ class TestOnefuzz:
                         repro.error,
                     )
                     self.success = False
-                    self.of.repro.delete(repro.vm_id)
-                    del repros[job.job_id]
+                    # self.of.repro.delete(repro.vm_id)
+                    # del repros[job.job_id]
                 elif repro.state == VmState.running:
                     try:
                         result = self.of.repro.connect(

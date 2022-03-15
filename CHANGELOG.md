@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.2.0
+### Added
+* Service: Added additional auto-scaling support for VM scale sets. [#1686](https://github.com/microsoft/onefuzz/pull/1686), [#1698](https://github.com/microsoft/onefuzz/pull/1698)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1699](https://github.com/microsoft/onefuzz/pull/1699), [#1589](https://github.com/microsoft/onefuzz/pull/1589)
+
+## 5.1.0
+### Added
+* Service: Added a new webhook message format compatible with Azure Event Grid. [#1640](https://github.com/microsoft/onefuzz/pull/1640)
+* Service: Added initial auto scaling support for VM scale sets. [#1647](https://github.com/microsoft/onefuzz/pull/1647), [#1661](https://github.com/microsoft/onefuzz/pull/1661)
+* Agent: Add an explicit timeout to setup scripts so hangs are easier to debug. [#1659](https://github.com/microsoft/onefuzz/pull/1659)
+
+### Changed
+* CLI/Service: Updated multiple first-party and third-party Python dependencies. [#1606](https://github.com/microsoft/onefuzz/pull/1606), [#1634](https://github.com/microsoft/onefuzz/pull/1634)
+* Agent: Check system-wide memory usage and fail tasks that are nearly out of memory. [#1657](https://github.com/microsoft/onefuzz/pull/1657)
+
+### Fixed
+* Service: Fix `task` field to the correct `NodeTasks` type so serialization works correctly.  [#1627](https://github.com/microsoft/onefuzz/pull/1627)
+* Agent: Convert escaped characters when accessing the name of a blob in a URL.  [#1673](https://github.com/microsoft/onefuzz/pull/1673)
+* Agent: Override `runs` parameter when testing inputs as we only want to test them once. [#1651](https://github.com/microsoft/onefuzz/pull/1651)
+* Service: Remove deprecated `warn()` method. [#1641](https://github.com/microsoft/onefuzz/pull/1641)
+
 ## 5.0.0
 ### Added
 * CLI/Service: Added `fuzzer_target_options` argument to the `libfuzzer` templates to allow passing some target options only in persistent fuzzing mode [#1610](https://github.com/microsoft/onefuzz/pull/1610)
