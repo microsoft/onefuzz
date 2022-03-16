@@ -7,7 +7,7 @@ use crate::tasks::coverage;
 use crate::tasks::{
     analysis, fuzz,
     heartbeat::{init_task_heartbeat, TaskHeartbeatClient},
-    merge, regression, report,
+    merge, regression, report, task_logger,
 };
 use anyhow::Result;
 use onefuzz::machine_id::{get_machine_id, get_scaleset_name};
@@ -45,6 +45,8 @@ pub struct CommonConfig {
     pub instance_telemetry_key: Option<InstanceTelemetryKey>,
 
     pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
+
+    pub logs: Option<Url>,
 
     #[serde(default)]
     pub setup_dir: PathBuf,
@@ -204,6 +206,8 @@ impl Config {
         telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
         telemetry::set_property(EventData::InstanceId(self.common().instance_id));
         telemetry::set_property(EventData::Role(Role::Agent));
+        telemetry::set_property(EventData::Role(Role::Agent));
+
         let scaleset = get_scaleset_name().await?;
         if let Some(scaleset_name) = &scaleset {
             telemetry::set_property(EventData::ScalesetId(scaleset_name.to_string()));
@@ -212,46 +216,67 @@ impl Config {
         info!("agent ready, dispatching task");
         self.report_event();
 
-        match self {
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
-            Config::Coverage(config) => coverage::generic::CoverageTask::new(config).run().await,
-            Config::LibFuzzerFuzz(config) => {
-                fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
-                    .run()
-                    .await
-            }
-            Config::LibFuzzerReport(config) => {
-                report::libfuzzer_report::ReportTask::new(config)
-                    .managed_run()
-                    .await
-            }
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
-            Config::LibFuzzerCoverage(config) => {
-                coverage::libfuzzer_coverage::CoverageTask::new(config)
-                    .managed_run()
-                    .await
-            }
-            Config::LibFuzzerMerge(config) => merge::libfuzzer_merge::spawn(Arc::new(config)).await,
-            Config::GenericAnalysis(config) => analysis::generic::run(config).await,
+        let common = self.common().clone();
+        let task = tokio::spawn(async move {
+            match self {
+                #[cfg(any(target_os = "linux", target_os = "windows"))]
+                Config::Coverage(config) => {
+                    coverage::generic::CoverageTask::new(config).run().await
+                }
+                Config::LibFuzzerFuzz(config) => {
+                    fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
+                        .run()
+                        .await
+                }
+                Config::LibFuzzerReport(config) => {
+                    report::libfuzzer_report::ReportTask::new(config)
+                        .managed_run()
+                        .await
+                }
+                #[cfg(any(target_os = "linux", target_os = "windows"))]
+                Config::LibFuzzerCoverage(config) => {
+                    coverage::libfuzzer_coverage::CoverageTask::new(config)
+                        .managed_run()
+                        .await
+                }
+                Config::LibFuzzerMerge(config) => {
+                    merge::libfuzzer_merge::spawn(Arc::new(config)).await
+                }
+                Config::GenericAnalysis(config) => analysis::generic::run(config).await,
 
-            Config::GenericGenerator(config) => {
-                fuzz::generator::GeneratorTask::new(config).run().await
+                Config::GenericGenerator(config) => {
+                    fuzz::generator::GeneratorTask::new(config).run().await
+                }
+                Config::GenericSupervisor(config) => fuzz::supervisor::spawn(config).await,
+                Config::GenericMerge(config) => merge::generic::spawn(Arc::new(config)).await,
+                Config::GenericReport(config) => {
+                    report::generic::ReportTask::new(config).managed_run().await
+                }
+                Config::GenericRegression(config) => {
+                    regression::generic::GenericRegressionTask::new(config)
+                        .run()
+                        .await
+                }
+                Config::LibFuzzerRegression(config) => {
+                    regression::libfuzzer::LibFuzzerRegressionTask::new(config)
+                        .run()
+                        .await
+                }
             }
-            Config::GenericSupervisor(config) => fuzz::supervisor::spawn(config).await,
-            Config::GenericMerge(config) => merge::generic::spawn(Arc::new(config)).await,
-            Config::GenericReport(config) => {
-                report::generic::ReportTask::new(config).managed_run().await
-            }
-            Config::GenericRegression(config) => {
-                regression::generic::GenericRegressionTask::new(config)
-                    .run()
-                    .await
-            }
-            Config::LibFuzzerRegression(config) => {
-                regression::libfuzzer::LibFuzzerRegressionTask::new(config)
-                    .run()
-                    .await
-            }
+        });
+
+        if let Some(logs) = common.logs.clone() {
+            let rx = onefuzz_telemetry::subscribe_to_events();
+
+            let _logging = tokio::spawn(async move {
+                let logger = task_logger::TaskLogger::new(
+                    common.job_id,
+                    common.task_id,
+                    get_machine_id().await?,
+                );
+                logger.start(rx, logs).await
+            });
         }
+        task.await?
     }
 }

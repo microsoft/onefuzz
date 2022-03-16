@@ -288,6 +288,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Job Id",
                     "type": "string"
                 },
+                "logs": {
+                    "title": "Logs",
+                    "type": "string"
+                },
                 "pool": {
                     "$ref": "#/definitions/TaskPool"
                 },
@@ -2129,6 +2133,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Job Id",
                     "type": "string"
                 },
+                "logs": {
+                    "title": "Logs",
+                    "type": "string"
+                },
                 "pool": {
                     "$ref": "#/definitions/TaskPool"
                 },
@@ -2844,6 +2852,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Job Id",
                     "type": "string"
                 },
+                "logs": {
+                    "title": "Logs",
+                    "type": "string"
+                },
                 "pool": {
                     "$ref": "#/definitions/TaskPool"
                 },
@@ -3350,6 +3362,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Job Id",
                     "type": "string"
                 },
+                "logs": {
+                    "title": "Logs",
+                    "type": "string"
+                },
                 "pool": {
                     "$ref": "#/definitions/TaskPool"
                 },
@@ -3799,6 +3815,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Job Id",
                     "type": "string"
                 },
+                "logs": {
+                    "title": "Logs",
+                    "type": "string"
+                },
                 "pool": {
                     "$ref": "#/definitions/TaskPool"
                 },
@@ -4220,6 +4240,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "job_id": {
                     "format": "uuid",
                     "title": "Job Id",
+                    "type": "string"
+                },
+                "logs": {
+                    "title": "Logs",
                     "type": "string"
                 },
                 "pool": {
@@ -4670,6 +4694,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "job_id": {
                     "format": "uuid",
                     "title": "Job Id",
+                    "type": "string"
+                },
+                "logs": {
+                    "title": "Logs",
                     "type": "string"
                 },
                 "pool": {
@@ -6379,6 +6407,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "job_id": {
                     "format": "uuid",
                     "title": "Job Id",
+                    "type": "string"
+                },
+                "logs": {
+                    "title": "Logs",
                     "type": "string"
                 },
                 "pool": {
