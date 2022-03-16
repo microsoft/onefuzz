@@ -1,0 +1,33 @@
+[package]
+name = "dynamic-library"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+lazy_static = "1.4"
+regex = "1.5"
+structopt = "0.3"
+thiserror = "1.0"
+
+[target.'cfg(windows)'.dependencies]
+debugger = { path = "../debugger" }
+winreg = "0.10"
+
+[dependencies.winapi]
+version = "0.3"
+features = [
+    "dbghelp",
+    "debugapi",
+    "handleapi",
+    "memoryapi",
+    "processthreadsapi",
+    "securitybaseapi",
+    "shellapi",
+    "werapi",
+    "winbase",
+    "winerror"
+]
+
+[[bin]]
+name = "dynamic-library"
