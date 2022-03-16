@@ -147,7 +147,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -285,6 +286,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "job_id": {
                     "format": "uuid",
                     "title": "Job Id",
+                    "type": "string"
+                },
+                "logs": {
+                    "title": "Logs",
                     "type": "string"
                 },
                 "pool": {
@@ -1110,7 +1115,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         },
@@ -1722,7 +1728,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         }
@@ -1908,7 +1915,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -2115,6 +2123,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "job_id": {
                     "format": "uuid",
                     "title": "Job Id",
+                    "type": "string"
+                },
+                "logs": {
+                    "title": "Logs",
                     "type": "string"
                 },
                 "pool": {
@@ -2609,7 +2621,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         }
@@ -2795,7 +2808,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -2828,6 +2842,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "job_id": {
                     "format": "uuid",
                     "title": "Job Id",
+                    "type": "string"
+                },
+                "logs": {
+                    "title": "Logs",
                     "type": "string"
                 },
                 "pool": {
@@ -3250,7 +3268,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -3299,7 +3318,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         },
@@ -3332,6 +3352,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "job_id": {
                     "format": "uuid",
                     "title": "Job Id",
+                    "type": "string"
+                },
+                "logs": {
+                    "title": "Logs",
                     "type": "string"
                 },
                 "pool": {
@@ -3747,7 +3771,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -3780,6 +3805,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "job_id": {
                     "format": "uuid",
                     "title": "Job Id",
+                    "type": "string"
+                },
+                "logs": {
+                    "title": "Logs",
                     "type": "string"
                 },
                 "pool": {
@@ -4169,7 +4198,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -4202,6 +4232,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "job_id": {
                     "format": "uuid",
                     "title": "Job Id",
+                    "type": "string"
+                },
+                "logs": {
+                    "title": "Logs",
                     "type": "string"
                 },
                 "pool": {
@@ -4618,7 +4652,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -4651,6 +4686,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "job_id": {
                     "format": "uuid",
                     "title": "Job Id",
+                    "type": "string"
+                },
+                "logs": {
+                    "title": "Logs",
                     "type": "string"
                 },
                 "pool": {
@@ -5197,7 +5236,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -5258,7 +5298,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         },
@@ -6354,6 +6395,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "job_id": {
                     "format": "uuid",
                     "title": "Job Id",
+                    "type": "string"
+                },
+                "logs": {
+                    "title": "Logs",
                     "type": "string"
                 },
                 "pool": {
