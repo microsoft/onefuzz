@@ -77,7 +77,7 @@ impl ImageFile {
     ///
     /// See: https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/show-loader-snaps
     pub fn show_loader_snaps(&self) -> Result<ImageLoaderSnapsGuard, ImageGlobalFlagsError> {
-        Ok(ImageLoaderSnapsGuard::new(self.clone())?)
+        ImageLoaderSnapsGuard::new(self.clone())
     }
 }
 
@@ -259,7 +259,7 @@ impl LoaderSnapsHandler {
 
 impl DebugEventHandler for LoaderSnapsHandler {
     fn on_output_debug_string(&mut self, _debugger: &mut Debugger, message: String) {
-        self.debug_strings.push(message.clone());
+        self.debug_strings.push(message);
     }
 }
 
