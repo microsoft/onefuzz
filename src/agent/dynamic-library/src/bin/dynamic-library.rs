@@ -50,3 +50,8 @@ fn main() -> Result<()> {
 fn main() -> Result<()> {
     todo!()
 }
+
+#[cfg(target_os = "macos")]
+fn main() -> Result<()> {
+    todo!()
+}
