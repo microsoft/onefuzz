@@ -20,6 +20,7 @@ from typing import Dict, List, Optional, Tuple, Union, cast
 from uuid import UUID
 
 from azure.common.credentials import get_cli_profile
+from azure.core.exceptions import ResourceNotFoundError
 from azure.cosmosdb.table.tableservice import TableService
 from azure.identity import AzureCliCredential
 from azure.mgmt.applicationinsights import ApplicationInsightsManagementClient
@@ -27,12 +28,6 @@ from azure.mgmt.applicationinsights.models import (
     ApplicationInsightsComponentExportRequest,
 )
 from azure.mgmt.eventgrid import EventGridManagementClient
-from azure.mgmt.eventgrid.models import (
-    EventSubscription,
-    EventSubscriptionFilter,
-    RetryPolicy,
-    StorageQueueEventSubscriptionDestination,
-)
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
 from azure.mgmt.resource.resources.models import (
     Deployment,
@@ -694,42 +689,58 @@ class Client:
             tenants.append(tenant)
         update_allowed_aad_tenants(config_client, tenants)
 
-    def create_eventgrid(self) -> None:
-        logger.info("creating eventgrid subscription")
-        src_resource_id = self.results["deploy"]["fuzz-storage"]["value"]
-        dst_resource_id = self.results["deploy"]["func-storage"]["value"]
+    @staticmethod
+    def event_subscription_exists(
+        client: EventGridManagementClient, resource_id: str, subscription_name: str
+    ) -> bool:
+        try:
+            client.event_subscriptions.get(resource_id, subscription_name)
+            return True
+        except ResourceNotFoundError:
+            return False
 
-        credential = AzureCliCredential()
-        client = StorageManagementClient(
-            credential, subscription_id=self.get_subscription_id()
-        )
-        event_subscription_info = EventSubscription(
-            destination=StorageQueueEventSubscriptionDestination(
-                resource_id=dst_resource_id, queue_name="file-changes"
-            ),
-            filter=EventSubscriptionFilter(
-                included_event_types=[
-                    "Microsoft.Storage.BlobCreated",
-                    "Microsoft.Storage.BlobDeleted",
-                ]
-            ),
-            retry_policy=RetryPolicy(
-                max_delivery_attempts=30,
-                event_time_to_live_in_minutes=1440,
-            ),
-        )
-
-        client = EventGridManagementClient(
-            credential, subscription_id=self.get_subscription_id()
-        )
-        result = client.event_subscriptions.begin_create_or_update(
-            src_resource_id, "onefuzz1", event_subscription_info
-        ).result()
-        if result.provisioning_state != "Succeeded":
-            raise Exception(
-                "eventgrid subscription failed: %s"
-                % json.dumps(result.as_dict(), indent=4, sort_keys=True),
+    @staticmethod
+    def get_storage_account_id(
+        client: StorageManagementClient, resource_group: str, prefix: str
+    ) -> Optional[str]:
+        try:
+            storage_accounts = client.storage_accounts.list_by_resource_group(
+                resource_group
             )
+            for storage_account in storage_accounts:
+                if storage_account.name.startswith(prefix):
+                    return str(storage_account.id)
+            return None
+        except ResourceNotFoundError:
+            return None
+
+    def remove_eventgrid(self) -> None:
+        credential = AzureCliCredential()
+        storage_account_client = StorageManagementClient(
+            credential, subscription_id=self.get_subscription_id()
+        )
+
+        src_resource_id = Client.get_storage_account_id(
+            storage_account_client, self.resource_group, "fuzz"
+        )
+        if not src_resource_id:
+            return
+
+        event_grid_client = EventGridManagementClient(
+            credential, subscription_id=self.get_subscription_id()
+        )
+
+        # Event subscription for version up to 5.1.0
+        old_subscription_name = "onefuzz1"
+        old_subscription_exists = Client.event_subscription_exists(
+            event_grid_client, src_resource_id, old_subscription_name
+        )
+
+        if old_subscription_exists:
+            logger.info("removing deprecated event subscription")
+            event_grid_client.event_subscriptions.begin_delete(
+                src_resource_id, old_subscription_name
+            ).wait()
 
     def add_instance_id(self) -> None:
         logger.info("setting instance_id log export")
@@ -1030,6 +1041,7 @@ def main() -> None:
     rbac_only_states = [
         ("check_region", Client.check_region),
         ("rbac", Client.setup_rbac),
+        ("eventgrid", Client.remove_eventgrid),
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
         ("assign_user_access", Client.assign_user_access),
@@ -1038,7 +1050,6 @@ def main() -> None:
     full_deployment_states = rbac_only_states + [
         ("apply_migrations", Client.apply_migrations),
         ("set_instance_config", Client.set_instance_config),
-        ("eventgrid", Client.create_eventgrid),
         ("tools", Client.upload_tools),
         ("add_instance_id", Client.add_instance_id),
         ("instance-specific-setup", Client.upload_instance_setup),
