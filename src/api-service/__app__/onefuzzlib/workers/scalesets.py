@@ -27,7 +27,6 @@ from onefuzztypes.models import Error
 from onefuzztypes.models import Scaleset as BASE_SCALESET
 from onefuzztypes.models import ScalesetNodeState
 from onefuzztypes.primitives import PoolName, Region
-from onefuzztypes.requests import AutoScaleOptions
 
 from ..__version__ import __version__
 from ..azure.auth import build_auth
