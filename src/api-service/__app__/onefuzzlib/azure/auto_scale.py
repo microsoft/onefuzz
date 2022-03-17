@@ -93,6 +93,7 @@ def create_auto_scale_resource_for(
         "location": location,
         "profiles": [profile],
         "target_resource_uri": scaleset_uri,
+        "enabled": True,
     }
 
     try:
@@ -114,7 +115,16 @@ def create_auto_scale_resource_for(
         )
 
 
-def create_auto_scale_profile(min: int, max: int, queue_uri: str) -> AutoscaleProfile:
+def create_auto_scale_profile(
+    queue_uri: str,
+    min: int,
+    max: int,
+    default: int,
+    scale_out_amount: int,
+    scale_out_cooldown: int,
+    scale_in_amount: int,
+    scale_in_cooldown: int,
+) -> AutoscaleProfile:
     return AutoscaleProfile(
         name=str(uuid.uuid4()),
         capacity=ScaleCapacity(minimum=min, maximum=max, default=max),
@@ -139,8 +149,8 @@ def create_auto_scale_profile(min: int, max: int, queue_uri: str) -> AutoscalePr
                 scale_action=ScaleAction(
                     direction=ScaleDirection.INCREASE,
                     type=ScaleType.CHANGE_COUNT,
-                    value=2,
-                    cooldown=timedelta(minutes=10),
+                    value=scale_out_amount,
+                    cooldown=timedelta(minutes=scale_out_cooldown),
                 ),
             ),
             # Scale in
@@ -163,9 +173,15 @@ def create_auto_scale_profile(min: int, max: int, queue_uri: str) -> AutoscalePr
                 scale_action=ScaleAction(
                     direction=ScaleDirection.DECREASE,
                     type=ScaleType.CHANGE_COUNT,
-                    value=1,
-                    cooldown=timedelta(minutes=15),
+                    value=scale_in_amount,
+                    cooldown=timedelta(minutes=scale_in_cooldown),
                 ),
             ),
         ],
+    )
+
+
+def default_auto_scale_profile(queue_uri: str, scaleset_size: int) -> AutoscaleProfile:
+    return create_auto_scale_profile(
+        queue_uri, 1, scaleset_size, scaleset_size, 1, 10, 1, 15
     )
