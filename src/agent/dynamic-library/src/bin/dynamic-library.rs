@@ -55,6 +55,7 @@ fn find_missing(cmd: Command) -> Result<Vec<String>> {
 #[cfg(target_os = "windows")]
 fn find_missing(cmd: Command) -> Result<Vec<String>> {
     Ok(dynamic_library::windows::find_missing(cmd)?
+        .into_iter()
         .map(|m| m.name)
         .collect())
 }
