@@ -40,7 +40,7 @@ pub struct MissingDynamicLibrary {
 }
 
 /// Dynamic library searches, as extracted from the dynamic linker debug log output
-/// obtained by setting `LD_DEBUGS=libs`.
+/// obtained by setting `LD_DEBUG=libs`.
 pub struct LdDebugLogs {
     pub searches: HashMap<LdDebugSearchQuery, LdDebugSearchResult>,
 }
