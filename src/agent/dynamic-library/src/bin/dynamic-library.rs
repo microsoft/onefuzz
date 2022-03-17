@@ -65,6 +65,6 @@ fn main() -> Result<()> {
 }
 
 #[cfg(target_os = "macos")]
-fn main() -> Result<()> {
+fn find_missing(cmd: Command) -> Result<Vec<String>> {
     todo!()
 }
