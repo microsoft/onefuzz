@@ -95,7 +95,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         tags: Dict[str, str],
         client_id: Optional[UUID] = None,
         client_object_id: Optional[UUID] = None,
-        auto_scale_options: Optional[AutoScaleOptions] = None,
     ) -> "Scaleset":
         entry = cls(
             pool_name=pool_name,
