@@ -27,3 +27,17 @@ def get_monitor_settings() -> Dict[str, str]:
         resource_group, workspace_name
     ).primary_shared_key
     return {"id": customer_id, "key": shared_key}
+
+
+def get_workspace_id() -> str:
+    # TODO:
+    # Once #1679 merges, we can use ONEFUZZ_MONITOR instead of ONEFUZZ_INSTANCE_NAME
+    workspace_id = (
+        "/subscriptions/%s/resourceGroups/%s/providers/microsoft.operationalinsights/workspaces/%s"  # noqa: E501
+        % (
+            get_subscription(),
+            get_base_resource_group(),
+            os.environ["ONEFUZZ_INSTANCE_NAME"],
+        )
+    )
+    return workspace_id
