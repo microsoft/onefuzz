@@ -1,0 +1,446 @@
+      8579:	find library=libstdc++.so.6 [0]; searching
+      8579:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8579:	  trying file=./tls/haswell/x86_64/libstdc++.so.6
+      8579:	  trying file=./tls/haswell/libstdc++.so.6
+      8579:	  trying file=./tls/x86_64/libstdc++.so.6
+      8579:	  trying file=./tls/libstdc++.so.6
+      8579:	  trying file=./haswell/x86_64/libstdc++.so.6
+      8579:	  trying file=./haswell/libstdc++.so.6
+      8579:	  trying file=./x86_64/libstdc++.so.6
+      8579:	  trying file=./libstdc++.so.6
+      8579:	 search cache=/etc/ld.so.cache
+      8579:	  trying file=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
+      8579:
+      8579:	find library=libpthread.so.0 [0]; searching
+      8579:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8579:	  trying file=./tls/haswell/x86_64/libpthread.so.0
+      8579:	  trying file=./tls/haswell/libpthread.so.0
+      8579:	  trying file=./tls/x86_64/libpthread.so.0
+      8579:	  trying file=./tls/libpthread.so.0
+      8579:	  trying file=./haswell/x86_64/libpthread.so.0
+      8579:	  trying file=./haswell/libpthread.so.0
+      8579:	  trying file=./x86_64/libpthread.so.0
+      8579:	  trying file=./libpthread.so.0
+      8579:	 search cache=/etc/ld.so.cache
+      8579:	  trying file=/lib/x86_64-linux-gnu/libpthread.so.0
+      8579:
+      8579:	find library=librt.so.1 [0]; searching
+      8579:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8579:	  trying file=./tls/haswell/x86_64/librt.so.1
+      8579:	  trying file=./tls/haswell/librt.so.1
+      8579:	  trying file=./tls/x86_64/librt.so.1
+      8579:	  trying file=./tls/librt.so.1
+      8579:	  trying file=./haswell/x86_64/librt.so.1
+      8579:	  trying file=./haswell/librt.so.1
+      8579:	  trying file=./x86_64/librt.so.1
+      8579:	  trying file=./librt.so.1
+      8579:	 search cache=/etc/ld.so.cache
+      8579:	  trying file=/lib/x86_64-linux-gnu/librt.so.1
+      8579:
+      8579:	find library=libm.so.6 [0]; searching
+      8579:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8579:	  trying file=./tls/haswell/x86_64/libm.so.6
+      8579:	  trying file=./tls/haswell/libm.so.6
+      8579:	  trying file=./tls/x86_64/libm.so.6
+      8579:	  trying file=./tls/libm.so.6
+      8579:	  trying file=./haswell/x86_64/libm.so.6
+      8579:	  trying file=./haswell/libm.so.6
+      8579:	  trying file=./x86_64/libm.so.6
+      8579:	  trying file=./libm.so.6
+      8579:	 search cache=/etc/ld.so.cache
+      8579:	  trying file=/lib/x86_64-linux-gnu/libm.so.6
+      8579:
+      8579:	find library=libdl.so.2 [0]; searching
+      8579:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8579:	  trying file=./tls/haswell/x86_64/libdl.so.2
+      8579:	  trying file=./tls/haswell/libdl.so.2
+      8579:	  trying file=./tls/x86_64/libdl.so.2
+      8579:	  trying file=./tls/libdl.so.2
+      8579:	  trying file=./haswell/x86_64/libdl.so.2
+      8579:	  trying file=./haswell/libdl.so.2
+      8579:	  trying file=./x86_64/libdl.so.2
+      8579:	  trying file=./libdl.so.2
+      8579:	 search cache=/etc/ld.so.cache
+      8579:	  trying file=/lib/x86_64-linux-gnu/libdl.so.2
+      8579:
+      8579:	find library=libgcc_s.so.1 [0]; searching
+      8579:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8579:	  trying file=./tls/haswell/x86_64/libgcc_s.so.1
+      8579:	  trying file=./tls/haswell/libgcc_s.so.1
+      8579:	  trying file=./tls/x86_64/libgcc_s.so.1
+      8579:	  trying file=./tls/libgcc_s.so.1
+      8579:	  trying file=./haswell/x86_64/libgcc_s.so.1
+      8579:	  trying file=./haswell/libgcc_s.so.1
+      8579:	  trying file=./x86_64/libgcc_s.so.1
+      8579:	  trying file=./libgcc_s.so.1
+      8579:	 search cache=/etc/ld.so.cache
+      8579:	  trying file=/lib/x86_64-linux-gnu/libgcc_s.so.1
+      8579:
+      8579:	find library=libc.so.6 [0]; searching
+      8579:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8579:	  trying file=./tls/haswell/x86_64/libc.so.6
+      8579:	  trying file=./tls/haswell/libc.so.6
+      8579:	  trying file=./tls/x86_64/libc.so.6
+      8579:	  trying file=./tls/libc.so.6
+      8579:	  trying file=./haswell/x86_64/libc.so.6
+      8579:	  trying file=./haswell/libc.so.6
+      8579:	  trying file=./x86_64/libc.so.6
+      8579:	  trying file=./libc.so.6
+      8579:	 search cache=/etc/ld.so.cache
+      8579:	  trying file=/lib/x86_64-linux-gnu/libc.so.6
+      8579:
+      8579:
+      8579:	calling init: /lib/x86_64-linux-gnu/libpthread.so.0
+      8579:
+      8579:
+      8579:	calling preinit: ./fuzz.exe
+      8579:
+      8579:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_printf (fatal)
+      8579:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_sprintf (fatal)
+      8579:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_snprintf (fatal)
+      8579:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_fprintf (fatal)
+      8579:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_vprintf (fatal)
+      8579:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_vsprintf (fatal)
+      8579:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_vsnprintf (fatal)
+      8579:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_vfprintf (fatal)
+      8579:	./fuzz.exe: error: symbol lookup error: undefined symbol: __cxa_rethrow_primary_exception (fatal)
+      8579:	./fuzz.exe: error: symbol lookup error: undefined symbol: swift_demangle (fatal)
+      8579:
+      8579:	calling init: /lib/x86_64-linux-gnu/libc.so.6
+      8579:
+      8579:
+      8579:	calling init: /lib/x86_64-linux-gnu/libgcc_s.so.1
+      8579:
+      8579:
+      8579:	calling init: /lib/x86_64-linux-gnu/libdl.so.2
+      8579:
+      8579:
+      8579:	calling init: /lib/x86_64-linux-gnu/libm.so.6
+      8579:
+      8579:
+      8579:	calling init: /lib/x86_64-linux-gnu/librt.so.1
+      8579:
+      8579:
+      8579:	calling init: /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+      8579:
+      8579:
+      8579:	initialize program: ./fuzz.exe
+      8579:
+      8579:
+      8579:	transferring control: ./fuzz.exe
+      8579:
+      8579:	find library=libmycode.so [0]; searching
+      8579:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8579:	  trying file=./tls/haswell/x86_64/libmycode.so
+      8579:	  trying file=./tls/haswell/libmycode.so
+      8579:	  trying file=./tls/x86_64/libmycode.so
+      8579:	  trying file=./tls/libmycode.so
+      8579:	  trying file=./haswell/x86_64/libmycode.so
+      8579:	  trying file=./haswell/libmycode.so
+      8579:	  trying file=./x86_64/libmycode.so
+      8579:	  trying file=./libmycode.so
+      8579:	 search cache=/etc/ld.so.cache
+      8579:	 search path=/lib/x86_64-linux-gnu/tls/haswell/x86_64:/lib/x86_64-linux-gnu/tls/haswell:/lib/x86_64-linux-gnu/tls/x86_64:/lib/x86_64-linux-gnu/tls:/lib/x86_64-linux-gnu/haswell/x86_64:/lib/x86_64-linux-gnu/haswell:/lib/x86_64-linux-gnu/x86_64:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu/tls/haswell/x86_64:/usr/lib/x86_64-linux-gnu/tls/haswell:/usr/lib/x86_64-linux-gnu/tls/x86_64:/usr/lib/x86_64-linux-gnu/tls:/usr/lib/x86_64-linux-gnu/haswell/x86_64:/usr/lib/x86_64-linux-gnu/haswell:/usr/lib/x86_64-linux-gnu/x86_64:/usr/lib/x86_64-linux-gnu:/lib/tls/haswell/x86_64:/lib/tls/haswell:/lib/tls/x86_64:/lib/tls:/lib/haswell/x86_64:/lib/haswell:/lib/x86_64:/lib:/usr/lib/tls/haswell/x86_64:/usr/lib/tls/haswell:/usr/lib/tls/x86_64:/usr/lib/tls:/usr/lib/haswell/x86_64:/usr/lib/haswell:/usr/lib/x86_64:/usr/lib		(system search path)
+      8579:	  trying file=/lib/x86_64-linux-gnu/tls/haswell/x86_64/libmycode.so
+      8579:	  trying file=/lib/x86_64-linux-gnu/tls/haswell/libmycode.so
+      8579:	  trying file=/lib/x86_64-linux-gnu/tls/x86_64/libmycode.so
+      8579:	  trying file=/lib/x86_64-linux-gnu/tls/libmycode.so
+      8579:	  trying file=/lib/x86_64-linux-gnu/haswell/x86_64/libmycode.so
+      8579:	  trying file=/lib/x86_64-linux-gnu/haswell/libmycode.so
+      8579:	  trying file=/lib/x86_64-linux-gnu/x86_64/libmycode.so
+      8579:	  trying file=/lib/x86_64-linux-gnu/libmycode.so
+      8579:	  trying file=/usr/lib/x86_64-linux-gnu/tls/haswell/x86_64/libmycode.so
+      8579:	  trying file=/usr/lib/x86_64-linux-gnu/tls/haswell/libmycode.so
+      8579:	  trying file=/usr/lib/x86_64-linux-gnu/tls/x86_64/libmycode.so
+      8579:	  trying file=/usr/lib/x86_64-linux-gnu/tls/libmycode.so
+      8579:	  trying file=/usr/lib/x86_64-linux-gnu/haswell/x86_64/libmycode.so
+      8579:	  trying file=/usr/lib/x86_64-linux-gnu/haswell/libmycode.so
+      8579:	  trying file=/usr/lib/x86_64-linux-gnu/x86_64/libmycode.so
+      8579:	  trying file=/usr/lib/x86_64-linux-gnu/libmycode.so
+      8579:	  trying file=/lib/tls/haswell/x86_64/libmycode.so
+      8579:	  trying file=/lib/tls/haswell/libmycode.so
+      8579:	  trying file=/lib/tls/x86_64/libmycode.so
+      8579:	  trying file=/lib/tls/libmycode.so
+      8579:	  trying file=/lib/haswell/x86_64/libmycode.so
+      8579:	  trying file=/lib/haswell/libmycode.so
+      8579:	  trying file=/lib/x86_64/libmycode.so
+      8579:	  trying file=/lib/libmycode.so
+      8579:	  trying file=/usr/lib/tls/haswell/x86_64/libmycode.so
+      8579:	  trying file=/usr/lib/tls/haswell/libmycode.so
+      8579:	  trying file=/usr/lib/tls/x86_64/libmycode.so
+      8579:	  trying file=/usr/lib/tls/libmycode.so
+      8579:	  trying file=/usr/lib/haswell/x86_64/libmycode.so
+      8579:	  trying file=/usr/lib/haswell/libmycode.so
+      8579:	  trying file=/usr/lib/x86_64/libmycode.so
+      8579:	  trying file=/usr/lib/libmycode.so
+      8579:
+INFO: Seed: 2499819812
+INFO: Loaded 1 modules   (7 inline 8-bit counters): 7 [0x7380d0, 0x7380d7),
+INFO: Loaded 1 PC tables (7 PCs): 7 [0x7380d8,0x738148),
+./fuzz.exe: Running 1 inputs 1 time(s) each.
+Running: seeds/good.txt
+fuzz.exe: main.c:37: int LLVMFuzzerTestOneInput(const uint8_t *, size_t): Assertion `fuzz_func != NULL' failed.
+==8579== ERROR: libFuzzer: deadly signal
+      8581:	find library=libLLVM-9.so.1 [0]; searching
+      8581:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8581:	  trying file=./tls/haswell/x86_64/libLLVM-9.so.1
+      8581:	  trying file=./tls/haswell/libLLVM-9.so.1
+      8581:	  trying file=./tls/x86_64/libLLVM-9.so.1
+      8581:	  trying file=./tls/libLLVM-9.so.1
+      8581:	  trying file=./haswell/x86_64/libLLVM-9.so.1
+      8581:	  trying file=./haswell/libLLVM-9.so.1
+      8581:	  trying file=./x86_64/libLLVM-9.so.1
+      8581:	  trying file=./libLLVM-9.so.1
+      8581:	 search cache=/etc/ld.so.cache
+      8581:	  trying file=/usr/lib/x86_64-linux-gnu/libLLVM-9.so.1
+      8581:
+      8581:	find library=libpthread.so.0 [0]; searching
+      8581:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8581:	  trying file=./tls/haswell/x86_64/libpthread.so.0
+      8581:	  trying file=./tls/haswell/libpthread.so.0
+      8581:	  trying file=./tls/x86_64/libpthread.so.0
+      8581:	  trying file=./tls/libpthread.so.0
+      8581:	  trying file=./haswell/x86_64/libpthread.so.0
+      8581:	  trying file=./haswell/libpthread.so.0
+      8581:	  trying file=./x86_64/libpthread.so.0
+      8581:	  trying file=./libpthread.so.0
+      8581:	 search cache=/etc/ld.so.cache
+      8581:	  trying file=/lib/x86_64-linux-gnu/libpthread.so.0
+      8581:
+      8581:	find library=libstdc++.so.6 [0]; searching
+      8581:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8581:	  trying file=./tls/haswell/x86_64/libstdc++.so.6
+      8581:	  trying file=./tls/haswell/libstdc++.so.6
+      8581:	  trying file=./tls/x86_64/libstdc++.so.6
+      8581:	  trying file=./tls/libstdc++.so.6
+      8581:	  trying file=./haswell/x86_64/libstdc++.so.6
+      8581:	  trying file=./haswell/libstdc++.so.6
+      8581:	  trying file=./x86_64/libstdc++.so.6
+      8581:	  trying file=./libstdc++.so.6
+      8581:	 search cache=/etc/ld.so.cache
+      8581:	  trying file=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
+      8581:
+      8581:	find library=libm.so.6 [0]; searching
+      8581:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8581:	  trying file=./tls/haswell/x86_64/libm.so.6
+      8581:	  trying file=./tls/haswell/libm.so.6
+      8581:	  trying file=./tls/x86_64/libm.so.6
+      8581:	  trying file=./tls/libm.so.6
+      8581:	  trying file=./haswell/x86_64/libm.so.6
+      8581:	  trying file=./haswell/libm.so.6
+      8581:	  trying file=./x86_64/libm.so.6
+      8581:	  trying file=./libm.so.6
+      8581:	 search cache=/etc/ld.so.cache
+      8581:	  trying file=/lib/x86_64-linux-gnu/libm.so.6
+      8581:
+      8581:	find library=libgcc_s.so.1 [0]; searching
+      8581:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8581:	  trying file=./tls/haswell/x86_64/libgcc_s.so.1
+      8581:	  trying file=./tls/haswell/libgcc_s.so.1
+      8581:	  trying file=./tls/x86_64/libgcc_s.so.1
+      8581:	  trying file=./tls/libgcc_s.so.1
+      8581:	  trying file=./haswell/x86_64/libgcc_s.so.1
+      8581:	  trying file=./haswell/libgcc_s.so.1
+      8581:	  trying file=./x86_64/libgcc_s.so.1
+      8581:	  trying file=./libgcc_s.so.1
+      8581:	 search cache=/etc/ld.so.cache
+      8581:	  trying file=/lib/x86_64-linux-gnu/libgcc_s.so.1
+      8581:
+      8581:	find library=libc.so.6 [0]; searching
+      8581:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8581:	  trying file=./tls/haswell/x86_64/libc.so.6
+      8581:	  trying file=./tls/haswell/libc.so.6
+      8581:	  trying file=./tls/x86_64/libc.so.6
+      8581:	  trying file=./tls/libc.so.6
+      8581:	  trying file=./haswell/x86_64/libc.so.6
+      8581:	  trying file=./haswell/libc.so.6
+      8581:	  trying file=./x86_64/libc.so.6
+      8581:	  trying file=./libc.so.6
+      8581:	 search cache=/etc/ld.so.cache
+      8581:	  trying file=/lib/x86_64-linux-gnu/libc.so.6
+      8581:
+      8581:	find library=libffi.so.6 [0]; searching
+      8581:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8581:	  trying file=./tls/haswell/x86_64/libffi.so.6
+      8581:	  trying file=./tls/haswell/libffi.so.6
+      8581:	  trying file=./tls/x86_64/libffi.so.6
+      8581:	  trying file=./tls/libffi.so.6
+      8581:	  trying file=./haswell/x86_64/libffi.so.6
+      8581:	  trying file=./haswell/libffi.so.6
+      8581:	  trying file=./x86_64/libffi.so.6
+      8581:	  trying file=./libffi.so.6
+      8581:	 search path=/usr/lib/x86_64-linux-gnu/../lib/tls/haswell/x86_64:/usr/lib/x86_64-linux-gnu/../lib/tls/haswell:/usr/lib/x86_64-linux-gnu/../lib/tls/x86_64:/usr/lib/x86_64-linux-gnu/../lib/tls:/usr/lib/x86_64-linux-gnu/../lib/haswell/x86_64:/usr/lib/x86_64-linux-gnu/../lib/haswell:/usr/lib/x86_64-linux-gnu/../lib/x86_64:/usr/lib/x86_64-linux-gnu/../lib		(RUNPATH from file /usr/lib/x86_64-linux-gnu/libLLVM-9.so.1)
+      8581:	  trying file=/usr/lib/x86_64-linux-gnu/../lib/tls/haswell/x86_64/libffi.so.6
+      8581:	  trying file=/usr/lib/x86_64-linux-gnu/../lib/tls/haswell/libffi.so.6
+      8581:	  trying file=/usr/lib/x86_64-linux-gnu/../lib/tls/x86_64/libffi.so.6
+      8581:	  trying file=/usr/lib/x86_64-linux-gnu/../lib/tls/libffi.so.6
+      8581:	  trying file=/usr/lib/x86_64-linux-gnu/../lib/haswell/x86_64/libffi.so.6
+      8581:	  trying file=/usr/lib/x86_64-linux-gnu/../lib/haswell/libffi.so.6
+      8581:	  trying file=/usr/lib/x86_64-linux-gnu/../lib/x86_64/libffi.so.6
+      8581:	  trying file=/usr/lib/x86_64-linux-gnu/../lib/libffi.so.6
+      8581:	 search cache=/etc/ld.so.cache
+      8581:	  trying file=/usr/lib/x86_64-linux-gnu/libffi.so.6
+      8581:
+      8581:	find library=libedit.so.2 [0]; searching
+      8581:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8581:	  trying file=./tls/haswell/x86_64/libedit.so.2
+      8581:	  trying file=./tls/haswell/libedit.so.2
+      8581:	  trying file=./tls/x86_64/libedit.so.2
+      8581:	  trying file=./tls/libedit.so.2
+      8581:	  trying file=./haswell/x86_64/libedit.so.2
+      8581:	  trying file=./haswell/libedit.so.2
+      8581:	  trying file=./x86_64/libedit.so.2
+      8581:	  trying file=./libedit.so.2
+      8581:	 search cache=/etc/ld.so.cache
+      8581:	  trying file=/usr/lib/x86_64-linux-gnu/libedit.so.2
+      8581:
+      8581:	find library=libz.so.1 [0]; searching
+      8581:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8581:	  trying file=./tls/haswell/x86_64/libz.so.1
+      8581:	  trying file=./tls/haswell/libz.so.1
+      8581:	  trying file=./tls/x86_64/libz.so.1
+      8581:	  trying file=./tls/libz.so.1
+      8581:	  trying file=./haswell/x86_64/libz.so.1
+      8581:	  trying file=./haswell/libz.so.1
+      8581:	  trying file=./x86_64/libz.so.1
+      8581:	  trying file=./libz.so.1
+      8581:	 search cache=/etc/ld.so.cache
+      8581:	  trying file=/lib/x86_64-linux-gnu/libz.so.1
+      8581:
+      8581:	find library=librt.so.1 [0]; searching
+      8581:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8581:	  trying file=./tls/haswell/x86_64/librt.so.1
+      8581:	  trying file=./tls/haswell/librt.so.1
+      8581:	  trying file=./tls/x86_64/librt.so.1
+      8581:	  trying file=./tls/librt.so.1
+      8581:	  trying file=./haswell/x86_64/librt.so.1
+      8581:	  trying file=./haswell/librt.so.1
+      8581:	  trying file=./x86_64/librt.so.1
+      8581:	  trying file=./librt.so.1
+      8581:	 search cache=/etc/ld.so.cache
+      8581:	  trying file=/lib/x86_64-linux-gnu/librt.so.1
+      8581:
+      8581:	find library=libdl.so.2 [0]; searching
+      8581:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8581:	  trying file=./tls/haswell/x86_64/libdl.so.2
+      8581:	  trying file=./tls/haswell/libdl.so.2
+      8581:	  trying file=./tls/x86_64/libdl.so.2
+      8581:	  trying file=./tls/libdl.so.2
+      8581:	  trying file=./haswell/x86_64/libdl.so.2
+      8581:	  trying file=./haswell/libdl.so.2
+      8581:	  trying file=./x86_64/libdl.so.2
+      8581:	  trying file=./libdl.so.2
+      8581:	 search cache=/etc/ld.so.cache
+      8581:	  trying file=/lib/x86_64-linux-gnu/libdl.so.2
+      8581:
+      8581:	find library=libtinfo.so.5 [0]; searching
+      8581:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+      8581:	  trying file=./tls/haswell/x86_64/libtinfo.so.5
+      8581:	  trying file=./tls/haswell/libtinfo.so.5
+      8581:	  trying file=./tls/x86_64/libtinfo.so.5
+      8581:	  trying file=./tls/libtinfo.so.5
+      8581:	  trying file=./haswell/x86_64/libtinfo.so.5
+      8581:	  trying file=./haswell/libtinfo.so.5
+      8581:	  trying file=./x86_64/libtinfo.so.5
+      8581:	  trying file=./libtinfo.so.5
+      8581:	 search cache=/etc/ld.so.cache
+      8581:	  trying file=/lib/x86_64-linux-gnu/libtinfo.so.5
+      8581:
+      8581:
+      8581:	calling init: /lib/x86_64-linux-gnu/libpthread.so.0
+      8581:
+      8581:
+      8581:	calling init: /lib/x86_64-linux-gnu/libc.so.6
+      8581:
+      8581:
+      8581:	calling init: /lib/x86_64-linux-gnu/libtinfo.so.5
+      8581:
+      8581:
+      8581:	calling init: /lib/x86_64-linux-gnu/libdl.so.2
+      8581:
+      8581:
+      8581:	calling init: /lib/x86_64-linux-gnu/librt.so.1
+      8581:
+      8581:
+      8581:	calling init: /lib/x86_64-linux-gnu/libz.so.1
+      8581:
+      8581:
+      8581:	calling init: /usr/lib/x86_64-linux-gnu/libedit.so.2
+      8581:
+      8581:
+      8581:	calling init: /usr/lib/x86_64-linux-gnu/libffi.so.6
+      8581:
+      8581:
+      8581:	calling init: /lib/x86_64-linux-gnu/libgcc_s.so.1
+      8581:
+      8581:
+      8581:	calling init: /lib/x86_64-linux-gnu/libm.so.6
+      8581:
+      8581:
+      8581:	calling init: /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+      8581:
+      8581:
+      8581:	calling init: /usr/lib/x86_64-linux-gnu/libLLVM-9.so.1
+      8581:
+      8581:
+      8581:	initialize program: /usr/bin/llvm-symbolizer-9
+      8581:
+      8581:
+      8581:	transferring control: /usr/bin/llvm-symbolizer-9
+      8581:
+    #0 0x4d5eb1 in __sanitizer_print_stack_trace (/home/user/fuzz.exe+0x4d5eb1)
+    #1 0x454f4b in fuzzer::PrintStackTrace() (/home/user/fuzz.exe+0x454f4b)
+    #2 0x439d53 in fuzzer::Fuzzer::CrashCallback() (/home/user/fuzz.exe+0x439d53)
+    #3 0x7fc0ead4f97f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1297f)
+    #4 0x7fc0e9fc8e86 in __libc_signal_restore_set /build/glibc-uZu3wS/glibc-2.27/signal/../sysdeps/unix/sysv/linux/nptl-signals.h:80
+    #5 0x7fc0e9fc8e86 in raise /build/glibc-uZu3wS/glibc-2.27/signal/../sysdeps/unix/sysv/linux/raise.c:48
+    #6 0x7fc0e9fca7f0 in abort /build/glibc-uZu3wS/glibc-2.27/stdlib/abort.c:79
+    #7 0x7fc0e9fba3f9 in __assert_fail_base /build/glibc-uZu3wS/glibc-2.27/assert/assert.c:92
+    #8 0x7fc0e9fba471 in __assert_fail /build/glibc-uZu3wS/glibc-2.27/assert/assert.c:101
+    #9 0x4fcf43 in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer-dlopen/main.c:37:5
+    #10 0x43b281 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/user/fuzz.exe+0x43b281)
+    #11 0x423777 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/user/fuzz.exe+0x423777)
+    #12 0x429751 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/user/fuzz.exe+0x429751)
+    #13 0x4557b2 in main (/home/user/fuzz.exe+0x4557b2)
+    #14 0x7fc0e9fabc86 in __libc_start_main /build/glibc-uZu3wS/glibc-2.27/csu/../csu/libc-start.c:310
+    #15 0x41db69 in _start (/home/user/fuzz.exe+0x41db69)
+
+NOTE: libFuzzer has rudimentary signal handlers.
+      Combine libFuzzer with AddressSanitizer or similar for better crash reports.
+SUMMARY: libFuzzer: deadly signal
+      8581:
+      8581:	calling fini: /usr/bin/llvm-symbolizer-9 [0]
+      8581:
+      8581:
+      8581:	calling fini: /usr/lib/x86_64-linux-gnu/libLLVM-9.so.1 [0]
+      8581:
+      8581:
+      8581:	calling fini: /usr/lib/x86_64-linux-gnu/libstdc++.so.6 [0]
+      8581:
+      8581:
+      8581:	calling fini: /lib/x86_64-linux-gnu/libm.so.6 [0]
+      8581:
+      8581:
+      8581:	calling fini: /lib/x86_64-linux-gnu/libgcc_s.so.1 [0]
+      8581:
+      8581:
+      8581:	calling fini: /usr/lib/x86_64-linux-gnu/libffi.so.6 [0]
+      8581:
+      8581:
+      8581:	calling fini: /usr/lib/x86_64-linux-gnu/libedit.so.2 [0]
+      8581:
+      8581:
+      8581:	calling fini: /lib/x86_64-linux-gnu/libz.so.1 [0]
+      8581:
+      8581:
+      8581:	calling fini: /lib/x86_64-linux-gnu/librt.so.1 [0]
+      8581:
+      8581:
+      8581:	calling fini: /lib/x86_64-linux-gnu/libpthread.so.0 [0]
+      8581:
+      8581:
+      8581:	calling fini: /lib/x86_64-linux-gnu/libdl.so.2 [0]
+      8581:
+      8581:
+      8581:	calling fini: /lib/x86_64-linux-gnu/libtinfo.so.5 [0]
+      8581:

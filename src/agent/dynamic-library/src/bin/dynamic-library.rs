@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-
-#![allow(unused, warnings)]
+#![cfg_attr(target_os = "macos", allow(unused, warnings))]
 
 use std::process::{Command, Stdio};
 
@@ -17,7 +16,6 @@ struct Opt {
     quiet: bool,
 }
 
-#[cfg(target_os = "windows")]
 fn main() -> Result<()> {
     let opt = Opt::from_args();
 
@@ -33,7 +31,7 @@ fn main() -> Result<()> {
         cmd.stderr(Stdio::null());
     }
 
-    let missing = dynamic_library::windows::find_missing(cmd)?;
+    let missing = find_missing(cmd)?;
 
     if missing.is_empty() {
         println!("no missing libraries");
@@ -47,11 +45,22 @@ fn main() -> Result<()> {
 }
 
 #[cfg(target_os = "linux")]
-fn main() -> Result<()> {
-    todo!()
+fn find_missing(cmd: Command) -> Result<Vec<String>> {
+    Ok(dynamic_library::linux::find_missing(cmd)?
+        .drain()
+        .map(|m| m.name)
+        .collect())
+}
+
+#[cfg(target_os = "windows")]
+fn find_missing(cmd: Command) -> Result<Vec<String>> {
+    Ok(dynamic_library::windows::find_missing(cmd)?
+        .into_iter()
+        .map(|m| m.name)
+        .collect())
 }
 
 #[cfg(target_os = "macos")]
-fn main() -> Result<()> {
+fn find_missing(cmd: Command) -> Result<Vec<String>> {
     todo!()
 }

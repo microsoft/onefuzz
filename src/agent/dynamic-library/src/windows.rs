@@ -217,9 +217,9 @@ impl Drop for ImageLoaderSnapsGuard {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissingDynamicLibrary {
-    name: String,
-    parent: String,
-    status: u32,
+    pub name: String,
+    pub parent: String,
+    pub status: u32,
 }
 
 impl MissingDynamicLibrary {
