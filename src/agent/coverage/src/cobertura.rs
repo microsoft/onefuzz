@@ -1,10 +1,10 @@
 use crate::source::SourceCoverage;
 use crate::source::SourceCoverageLocation;
 use crate::source::SourceFileCoverage;
-use std::path::Path;
 use anyhow::Context;
 use anyhow::Error;
 use anyhow::Result;
+use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use xml::writer::{EmitterConfig, XmlEvent};
 
@@ -46,14 +46,14 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
                 .attr("complexity", "0"),
         )?;
         emitter.write(XmlEvent::start_element("classes"))?;
-            emitter.write(
-                XmlEvent::start_element("class")
-                    .attr("name", &file.file)
-                    .attr("filename", &file.file)
-                    .attr("line-rate", "0")
-                    .attr("branch-rate", "0")
-                    .attr("complexity", "0"),
-            )?;  
+        emitter.write(
+            XmlEvent::start_element("class")
+                .attr("name", &file.file)
+                .attr("filename", &file.file)
+                .attr("line-rate", "0")
+                .attr("branch-rate", "0")
+                .attr("complexity", "0"),
+        )?;
         let locations: Vec<SourceCoverageLocation> = file.locations;
         emitter.write(XmlEvent::start_element("lines"))?;
         for location in locations {
@@ -66,7 +66,7 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
             emitter.write(XmlEvent::end_element())?; // line
         }
         emitter.write(XmlEvent::end_element())?; // lines
-        emitter.write(XmlEvent::end_element())?; // class     
+        emitter.write(XmlEvent::end_element())?; // class
 
         emitter.write(XmlEvent::end_element())?; // classes
         emitter.write(XmlEvent::end_element())?; // package
@@ -194,7 +194,7 @@ mod tests {
         )?;
 
         _emitter_test.write(XmlEvent::start_element("classes"))?;
-        
+
         _emitter_test.write(
             XmlEvent::start_element("class")
                 .attr("name", "C:/Users/file2.txt")
