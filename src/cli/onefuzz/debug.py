@@ -15,7 +15,8 @@ from uuid import UUID
 import jmespath
 from azure.applicationinsights import ApplicationInsightsDataClient
 from azure.applicationinsights.models import QueryBody
-from azure.identity import AzureCliCredential
+from azure.identity import AzureCliCredential, DefaultAzureCredential
+from azure.storage.blob import ContainerClient
 from onefuzztypes.enums import ContainerType, TaskType
 from onefuzztypes.models import BlobRef, Job, NodeAssignment, Report, Task, TaskConfig
 from onefuzztypes.primitives import Container, Directory, PoolName
@@ -612,6 +613,34 @@ class DebugLog(Command):
             query_parts.append(f"take {limit}")
 
         return self.onefuzz.debug.logs._query_parts(query_parts, timespan=timespan)
+
+    def get(self, job_id: str, task_id: Optional[str], machine_id: Optional[str], last: Optional[int] = 1, all: bool = False) -> None:
+        """
+        Download the latest agent logs.
+
+        :param str job_id: Which job you would like the logs for.
+        :param str task_id: Which task you would like the logs for.
+        :param str machine_id: Which machine you would like the logs for.
+        :param int last: The logs are split in files. Starting with the newest files, how many files you would you like to download.
+        :param bool all: Download all log files.
+        """
+        
+        file_path = f"{job_id}/"
+
+        if task_id is not None:
+            file_path += f"{task_id}/"
+
+            if machine_id is not None:
+                file_path += f"{machine_id}/"
+
+        
+        logs_container = self.onefuzz.containers.get("logs")
+        relevant_files = self.onefuzz.containers.files.list(logs_container.name, file_path)
+
+        for f in relevant_files:
+            print(f)
+
+        return None
 
 
 class DebugNotification(Command):
