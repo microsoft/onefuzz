@@ -15,7 +15,7 @@ from uuid import UUID
 import jmespath
 from azure.applicationinsights import ApplicationInsightsDataClient
 from azure.applicationinsights.models import QueryBody
-from azure.identity import AzureCliCredential, DefaultAzureCredential
+from azure.identity import AzureCliCredential
 from azure.storage.blob import ContainerClient
 from onefuzztypes.enums import ContainerType, TaskType
 from onefuzztypes.models import BlobRef, Job, NodeAssignment, Report, Task, TaskConfig
@@ -624,7 +624,7 @@ class DebugLog(Command):
         :param int last: The logs are split in files. Starting with the newest files, how many files you would you like to download.
         :param bool all: Download all log files.
         """
-        
+
         file_path = f"{job_id}/"
 
         if task_id is not None:
@@ -633,12 +633,42 @@ class DebugLog(Command):
             if machine_id is not None:
                 file_path += f"{machine_id}/"
 
-        
-        logs_container = self.onefuzz.containers.get("logs")
-        relevant_files = self.onefuzz.containers.files.list(logs_container.name, file_path)
 
-        for f in relevant_files:
-            print(f)
+        # Pretending the job object has a logs property
+        # job = self.onefuzz.jobs.get(job_id)
+        # container = job.config.logs
+
+        token_credential = AzureCliCredential()
+
+        container_client = ContainerClient.from_container_url(container_url, credential=token_credential)
+
+        blobs = container_client.list_blobs(name_starts_with=file_path)
+
+        files = []
+
+        for f in blobs:
+            files.append({
+                'name': f.name,
+                'creation_time': f.creation_time
+            })
+
+        files.sort(key=lambda x: x['creation_time'], reverse=True)
+
+        if not all:
+            files = files[:last]
+
+        self.logger.info(f"Found {len(files)} matching files to download")
+        for f in files:
+            self.logger.info(f"Downloading {f['name']}")
+
+            local_path = os.path.join(os.getcwd(), f['name'])
+            local_directory = os.path.dirname(local_path)
+            if not os.path.exists(local_directory):
+                os.makedirs(local_directory)
+
+            with open(local_path, 'wb') as download_file:
+                data = container_client.download_blob(f['name'])
+                data.readinto(download_file)
 
         return None
 
