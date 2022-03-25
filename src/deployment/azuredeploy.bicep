@@ -230,17 +230,17 @@ var linuxDataSources = [
   {
     name: 'syslogDataSourcesKern'
     syslogName: 'kern'
-    kind: 'LinuixSyslog'
+    kind: 'LinuxSyslog'
   }
   {
     name: 'syslogDataSourcesUser'
     syslogName: 'user'
-    kind: 'LinuixSyslog'
+    kind: 'LinuxSyslog'
   }
   {
     name: 'syslogDataSourcesCron'
     syslogName: 'cron'
-    kind: 'LinuixSyslog'
+    kind: 'LinuxSyslog'
   }
   {
     name: 'syslogDataSourcesDaemon'

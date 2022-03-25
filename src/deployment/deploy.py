@@ -101,7 +101,9 @@ def gen_guid() -> str:
     return str(uuid.uuid4())
 
 def bicep_to_arm(bicep_template) -> str:
-    import azure.cli.core
+    from azure.cli.core import (
+        get_default_cli
+    )
     az_cli = get_default_cli()
     az_cli.invoke(['bicep', 'install'])
     az_cli.invoke(['bicep', 'build', '--file', bicep_template, '--outfile', 'azuredeploy-bicep.json'])
