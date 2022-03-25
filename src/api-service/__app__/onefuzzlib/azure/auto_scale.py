@@ -14,8 +14,11 @@ from azure.mgmt.monitor.models import (
     AutoscaleProfile,
     AutoscaleSettingResource,
     ComparisonOperationType,
+    DiagnosticSettingsResource,
+    LogSettings,
     MetricStatisticType,
     MetricTrigger,
+    RetentionPolicy,
     ScaleAction,
     ScaleCapacity,
     ScaleDirection,
@@ -34,6 +37,7 @@ from .creds import (
     get_subscription,
     retry_on_auth_failure,
 )
+from .log_analytics import get_workspace_id
 from .monitor import get_monitor_client
 
 
@@ -68,11 +72,18 @@ def add_auto_scale_to_vmss(
         logging.warning("Scaleset %s already has auto scale resource" % vmss)
         return None
 
-    resource_creation = create_auto_scale_resource_for(
+    auto_scale_resource = create_auto_scale_resource_for(
         vmss, get_base_region(), auto_scale_profile
     )
-    if isinstance(resource_creation, Error):
-        return resource_creation
+    if isinstance(auto_scale_resource, Error):
+        return auto_scale_resource
+
+    diagnostics_resource = setup_auto_scale_diagnostics(
+        auto_scale_resource.id, auto_scale_resource.name, get_workspace_id()
+    )
+    if isinstance(diagnostics_resource, Error):
+        return diagnostics_resource
+
     return None
 
 
@@ -118,28 +129,91 @@ def create_auto_scale_profile(min: int, max: int, queue_uri: str) -> AutoscalePr
     return AutoscaleProfile(
         name=str(uuid.uuid4()),
         capacity=ScaleCapacity(minimum=min, maximum=max, default=max),
+        # Auto scale tuning guidance:
+        # https://docs.microsoft.com/en-us/azure/architecture/best-practices/auto-scaling
         rules=[
             ScaleRule(
                 metric_trigger=MetricTrigger(
                     metric_name="ApproximateMessageCount",
                     metric_resource_uri=queue_uri,
-                    # Check every minute
-                    time_grain=timedelta(minutes=1),
+                    # Check every 15 minutes
+                    time_grain=timedelta(minutes=15),
                     # The average amount of messages there are in the pool queue
                     time_aggregation=TimeAggregationType.AVERAGE,
                     statistic=MetricStatisticType.COUNT,
-                    # Over the past 10 minutes
-                    time_window=timedelta(minutes=10),
+                    # Over the past 15 minutes
+                    time_window=timedelta(minutes=15),
                     # When there's more than 1 message in the pool queue
-                    operator=ComparisonOperationType.GREATER_THAN,
+                    operator=ComparisonOperationType.GREATER_THAN_OR_EQUAL,
                     threshold=1,
                 ),
                 scale_action=ScaleAction(
                     direction=ScaleDirection.INCREASE,
                     type=ScaleType.CHANGE_COUNT,
-                    value=1,
-                    cooldown=timedelta(minutes=5),
+                    value=2,
+                    cooldown=timedelta(minutes=10),
                 ),
-            )
+            ),
+            # Scale in
+            ScaleRule(
+                # Scale in if no work in the past 20 mins
+                metric_trigger=MetricTrigger(
+                    metric_name="ApproximateMessageCount",
+                    metric_resource_uri=queue_uri,
+                    # Check every 20 minutes
+                    time_grain=timedelta(minutes=20),
+                    # The average amount of messages there are in the pool queue
+                    time_aggregation=TimeAggregationType.AVERAGE,
+                    statistic=MetricStatisticType.SUM,
+                    # Over the past 20 minutes
+                    time_window=timedelta(minutes=20),
+                    # When there's no messages in the pool queue
+                    operator=ComparisonOperationType.EQUALS,
+                    threshold=0,
+                ),
+                scale_action=ScaleAction(
+                    direction=ScaleDirection.DECREASE,
+                    type=ScaleType.CHANGE_COUNT,
+                    value=1,
+                    cooldown=timedelta(minutes=15),
+                ),
+            ),
         ],
     )
+
+
+def setup_auto_scale_diagnostics(
+    auto_scale_resource_uri: str,
+    auto_scale_resource_name: str,
+    log_analytics_workspace_id: str,
+) -> Union[DiagnosticSettingsResource, Error]:
+    logging.info("Setting up diagnostics for auto scale")
+    client = get_monitor_client()
+
+    log_settings = LogSettings(
+        enabled=True,
+        category_group="allLogs",
+        retention_policy=RetentionPolicy(enabled=True, days=30),
+    )
+
+    params: Dict[str, Any] = {
+        "logs": [log_settings],
+        "workspace_id": log_analytics_workspace_id,
+    }
+
+    try:
+        diagnostics = client.diagnostic_settings.create_or_update(
+            auto_scale_resource_uri, "%s-diagnostics" % auto_scale_resource_name, params
+        )
+        logging.info(
+            "Diagnostics created for auto scale resource: %s" % auto_scale_resource_uri
+        )
+        return diagnostics
+    except (ResourceNotFoundError, CloudError):
+        return Error(
+            code=ErrorCode.UNABLE_TO_CREATE,
+            errors=[
+                "unable to setup diagnostics for auto scale resource: %s"
+                % (auto_scale_resource_uri)
+            ],
+        )

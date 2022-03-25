@@ -18,7 +18,7 @@ hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 notify = "4.0"
-regex = "1.4"
+regex = "1.5.5"
 reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"], default-features=false }
 sha2 = "0.10.1"
 url = { version = "2.2", features = ["serde"] }
@@ -41,7 +41,7 @@ process_control = "3.0"
 reqwest-retry = { path = "../reqwest-retry"}
 onefuzz-telemetry = { path = "../onefuzz-telemetry"}
 stacktrace-parser = { path = "../stacktrace-parser" }
-backoff = { version = "0.3", features = ["tokio"] }
+backoff = { version = "0.4", features = ["tokio"] }
 
 [target.'cfg(target_family = "windows")'.dependencies]
 winreg = "0.10"

@@ -3,6 +3,7 @@ members = [
     "atexit",
     "coverage",
     "debugger",
+    "dynamic-library",
     "input-tester",
     "onefuzz",
     "onefuzz-agent",

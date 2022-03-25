@@ -411,3 +411,7 @@ class UserFieldType(Enum):
     Str = "Str"
     DictStr = "DictStr"
     ListStr = "ListStr"
+
+
+class NodeDisaposalStrategy(Enum):
+    scale_in = "scale_in"
