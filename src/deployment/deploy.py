@@ -100,6 +100,12 @@ logger = logging.getLogger("deploy")
 def gen_guid() -> str:
     return str(uuid.uuid4())
 
+def bicep_to_arm(bicep_template) -> str:
+    import azure.cli.core
+    az_cli = get_default_cli()
+    az_cli.invoke(['bicep', 'install'])
+    az_cli.invoke(['bicep', 'build', '--file', bicep_template, '--outfile', 'azuredeploy-bicep.json'])
+    return 'azuredeploy-bicep.json'
 
 class Client:
     def __init__(
@@ -116,7 +122,7 @@ class Client:
         tools: str,
         instance_specific: str,
         third_party: str,
-        arm_template: str,
+        arm_or_bicep_template: str,
         workbook_data: str,
         create_registration: bool,
         migrations: List[str],
@@ -129,7 +135,6 @@ class Client:
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
-        self.arm_template = arm_template
         self.location = location
         self.application_name = application_name
         self.owner = owner
@@ -157,6 +162,13 @@ class Client:
         self.export_appinsights = export_appinsights
         self.admins = admins
         self.allowed_aad_tenants = allowed_aad_tenants
+
+        if arm_or_bicep_template:
+            file_name, file_extension = os.path.splitext(arm_or_bicep_template)
+            if file_extension == '.bicep':
+                self.arm_template = bicep_to_arm(arm_or_bicep_template)
+            else:
+                self.arm_template = arm_or_bicep_template
 
         machine = platform.machine()
         system = platform.system()
@@ -1067,9 +1079,9 @@ def main() -> None:
     parser.add_argument("owner")
     parser.add_argument("nsg_config")
     parser.add_argument(
-        "--arm-template",
+        "--arm-or-bicep-template",
         type=arg_file,
-        default="azuredeploy.json",
+        default="azuredeploy.bicep",
         help="(default: %(default)s)",
     )
     parser.add_argument(
@@ -1168,6 +1180,7 @@ def main() -> None:
         logger.error(FUNC_TOOLS_ERROR)
         sys.exit(1)
 
+
     client = Client(
         resource_group=args.resource_group,
         location=args.location,
@@ -1180,7 +1193,7 @@ def main() -> None:
         tools=args.tools,
         instance_specific=args.instance_specific,
         third_party=args.third_party,
-        arm_template=args.arm_template,
+        arm_or_bicep_template=args.arm_or_bicep_template,
         workbook_data=args.workbook_data,
         create_registration=args.create_pool_registration,
         migrations=args.apply_migrations,

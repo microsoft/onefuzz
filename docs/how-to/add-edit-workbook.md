@@ -38,7 +38,7 @@ While viewing an open workbook instance:
 Each workbook is stored as a serialized JSON string value in
 `deployments/workbook-data.json`.
 
-The serialized workbook data will be referenced in `azuredeploy.json` using the
+The serialized workbook data will be referenced in `azuredeploy.json` or `azuredeploy.bicep` using the
 property in `workbook-data.json`.
 
 The value must be the exact string you copied from the example ARM Template in
@@ -47,10 +47,10 @@ the Advanced Editor view.
 If adding a new workbook, add a new property and value. If editing a workbook,
 overwrite the existing value.
 
-4. Ensure the resource is deployed in `azuredeploy.json`
+4. Ensure the resource is deployed in `azuredeploy.json` or `azuredeploy.bicep`
 
 To actually deploy a workbook instance, you must include it as a resource in
-`azuredeploy.json`.
+`azuredeploy.json` or `azuredeploy.bicep`.
 
 It should be a child resource of the Log Analytics workspace resource
 (`Microsoft.Insights/components` component).
