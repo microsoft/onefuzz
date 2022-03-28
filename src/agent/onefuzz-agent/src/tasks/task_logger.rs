@@ -51,10 +51,7 @@ pub struct BlobLogWriter {
 
 impl BlobLogWriter {
     fn get_blob_name(&self) -> String {
-        format!(
-            "{}/{}/{}",
-            self.task_id, self.machine_id, self.blob_id
-        )
+        format!("{}/{}/{}", self.task_id, self.machine_id, self.blob_id)
     }
 
     pub async fn create(
