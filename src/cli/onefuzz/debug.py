@@ -8,6 +8,7 @@ import logging
 import os
 import tempfile
 import time
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from urllib.parse import urlparse
 from uuid import UUID
@@ -632,7 +633,8 @@ class DebugLog(Command):
         :param bool all: Download all log files.
         """
 
-        from azure.storage.blob import BlobProperties
+        from typing import cast
+
         file_path = f"{job_id}/"
 
         if task_id is not None:
@@ -654,28 +656,39 @@ class DebugLog(Command):
 
         blobs = container_client.list_blobs(name_starts_with=file_path)
 
-        files: List[BlobProperties] = []
+        class CustomFile:
+            def __init__(self, name: str, creation_time: datetime):
+                self.name = name
+                self.creation_time = creation_time
+
+        files: List[CustomFile] = []
 
         for f in blobs:
-            files.append(f)
+            if f.creation_time is not None:
+                creation_time = cast(datetime, f.creation_time)
+            else:
+                creation_time = datetime.min
 
-        creation_time_sort = lambda x: x["creation_time"]
-        files.sort(key=creation_time_sort, reverse=True)
+            files.append(CustomFile(f.name, creation_time))
 
-        if not all:
-            files = files[:last]
+        files.sort(key=lambda x: x.creation_time, reverse=True)
 
         self.logger.info(f"Found {len(files)} matching files to download")
-        for f in files:
-            self.logger.info(f"Downloading {f['name']}")
 
-            local_path = os.path.join(os.getcwd(), f["name"])
+        if not all:
+            self.logger.info(f"Downloading only the {last} most recent files")
+            files = files[:last]
+
+        for f in files:
+            self.logger.info(f"Downloading {f.name}")
+
+            local_path = os.path.join(os.getcwd(), f.name)
             local_directory = os.path.dirname(local_path)
             if not os.path.exists(local_directory):
                 os.makedirs(local_directory)
 
             with open(local_path, "wb") as download_file:
-                data = container_client.download_blob(f["name"])
+                data = container_client.download_blob(f.name)
                 data.readinto(download_file)
 
         return None
