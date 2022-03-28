@@ -28,16 +28,15 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     for file in coverage_files {
         let locations: Vec<SourceCoverageLocation> = file.locations;
         for location in locations {
-            total_valid_lines+=1;
+            total_valid_lines += 1;
             if &location.count > &0 {
-              total_hit_lines+=1;
+                total_hit_lines += 1;
             }
         }
     }
     if total_valid_lines > 0 {
-        total_line_rate = total_hit_lines as f32 /total_valid_lines as f32;  
+        total_line_rate = total_hit_lines as f32 / total_valid_lines as f32;
     }
-
 
     emitter.write(
         XmlEvent::start_element("coverage")
@@ -62,20 +61,20 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         let copy_file = file.clone();
         let package_locations: Vec<SourceCoverageLocation> = file.locations;
         for location in package_locations {
-            package_valid_lines+=1;
+            package_valid_lines += 1;
             if &location.count > &0 {
-              package_hit_lines+=1;
+                package_hit_lines += 1;
             }
         }
         if package_valid_lines > 0 {
-          package_line_rate = package_hit_lines as f32 /package_valid_lines as f32;
+            package_line_rate = package_hit_lines as f32 / package_valid_lines as f32;
         }
         let full_path_file = Path::new(&file.file);
         let path = full_path_file.parent().unwrap();
         emitter.write(
             XmlEvent::start_element("package")
                 .attr("name", &path.display().to_string())
-                .attr("line-rate", &format!("{:.02}",package_line_rate))
+                .attr("line-rate", &format!("{:.02}", package_line_rate))
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
@@ -84,7 +83,7 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
             XmlEvent::start_element("class")
                 .attr("name", &file.file)
                 .attr("filename", &file.file)
-                .attr("line-rate", &format!("{:.02}",package_line_rate))
+                .attr("line-rate", &format!("{:.02}", package_line_rate))
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
