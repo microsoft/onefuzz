@@ -3,6 +3,7 @@ mypy==0.910
 pytest
 isort
 vulture
+click==8.0.4
 black
 bandit
 types-requests

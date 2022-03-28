@@ -137,7 +137,7 @@ jobs:
       run: |
         set -ex
         cd contrib/webhook-teams-service
-        python -m pip install --upgrade pip isort black mypy==0.910 flake8
+        python -m pip install --upgrade pip isort click==8.0.4 black mypy==0.910 flake8
         pip install -r requirements.txt
         mypy webhook
         black webhook --check
@@ -312,7 +312,7 @@ jobs:
         set -ex
         cd src/deployment
         python -m pip install --upgrade pip
-        pip install mypy==0.910 isort black types-requests flake8
+        pip install mypy==0.910 isort click==8.0.4 black types-requests flake8
         mypy .
         isort --profile black . --check
         black . --check
