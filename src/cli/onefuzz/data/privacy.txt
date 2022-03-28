@@ -9,7 +9,7 @@ copy of Microsoft's privacy statement. You can learn more about data
 collection and use in the help documentation and our privacy statement. Your
 use of the software operates as your consent to these practices.
 
-Privacy Statment: 
+Privacy Statement: 
 * External Users - https://go.microsoft.com/fwlink/?LinkID=824704.
 * Microsoft Employees - https://privacy.microsoft.com/en-US/data-privacy-notice
 
