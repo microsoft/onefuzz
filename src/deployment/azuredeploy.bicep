@@ -245,7 +245,7 @@ var linuxDataSources = [
   {
     name: 'syslogDataSourcesDaemon'
     syslogName: 'daemon'
-    kind: 'LinuixSyslog'
+    kind: 'LinuxSyslog'
   }
 ]
 
