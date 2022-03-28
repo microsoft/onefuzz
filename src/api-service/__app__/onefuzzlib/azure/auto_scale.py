@@ -192,11 +192,11 @@ def create_auto_scale_profile(
     )
 
 
-
 def default_auto_scale_profile(queue_uri: str, scaleset_size: int) -> AutoscaleProfile:
     return create_auto_scale_profile(
         queue_uri, 1, scaleset_size, scaleset_size, 1, 10, 1, 15
     )
+
 
 def setup_auto_scale_diagnostics(
     auto_scale_resource_uri: str,
