@@ -1,0 +1,179 @@
+     10448:	find library=libstdc++.so.6 [0]; searching
+     10448:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+     10448:	  trying file=./tls/haswell/x86_64/libstdc++.so.6
+     10448:	  trying file=./tls/haswell/libstdc++.so.6
+     10448:	  trying file=./tls/x86_64/libstdc++.so.6
+     10448:	  trying file=./tls/libstdc++.so.6
+     10448:	  trying file=./haswell/x86_64/libstdc++.so.6
+     10448:	  trying file=./haswell/libstdc++.so.6
+     10448:	  trying file=./x86_64/libstdc++.so.6
+     10448:	  trying file=./libstdc++.so.6
+     10448:	 search cache=/etc/ld.so.cache
+     10448:	  trying file=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
+     10448:
+     10448:	find library=libpthread.so.0 [0]; searching
+     10448:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+     10448:	  trying file=./tls/haswell/x86_64/libpthread.so.0
+     10448:	  trying file=./tls/haswell/libpthread.so.0
+     10448:	  trying file=./tls/x86_64/libpthread.so.0
+     10448:	  trying file=./tls/libpthread.so.0
+     10448:	  trying file=./haswell/x86_64/libpthread.so.0
+     10448:	  trying file=./haswell/libpthread.so.0
+     10448:	  trying file=./x86_64/libpthread.so.0
+     10448:	  trying file=./libpthread.so.0
+     10448:	 search cache=/etc/ld.so.cache
+     10448:	  trying file=/lib/x86_64-linux-gnu/libpthread.so.0
+     10448:
+     10448:	find library=librt.so.1 [0]; searching
+     10448:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+     10448:	  trying file=./tls/haswell/x86_64/librt.so.1
+     10448:	  trying file=./tls/haswell/librt.so.1
+     10448:	  trying file=./tls/x86_64/librt.so.1
+     10448:	  trying file=./tls/librt.so.1
+     10448:	  trying file=./haswell/x86_64/librt.so.1
+     10448:	  trying file=./haswell/librt.so.1
+     10448:	  trying file=./x86_64/librt.so.1
+     10448:	  trying file=./librt.so.1
+     10448:	 search cache=/etc/ld.so.cache
+     10448:	  trying file=/lib/x86_64-linux-gnu/librt.so.1
+     10448:
+     10448:	find library=libm.so.6 [0]; searching
+     10448:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+     10448:	  trying file=./tls/haswell/x86_64/libm.so.6
+     10448:	  trying file=./tls/haswell/libm.so.6
+     10448:	  trying file=./tls/x86_64/libm.so.6
+     10448:	  trying file=./tls/libm.so.6
+     10448:	  trying file=./haswell/x86_64/libm.so.6
+     10448:	  trying file=./haswell/libm.so.6
+     10448:	  trying file=./x86_64/libm.so.6
+     10448:	  trying file=./libm.so.6
+     10448:	 search cache=/etc/ld.so.cache
+     10448:	  trying file=/lib/x86_64-linux-gnu/libm.so.6
+     10448:
+     10448:	find library=libdl.so.2 [0]; searching
+     10448:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+     10448:	  trying file=./tls/haswell/x86_64/libdl.so.2
+     10448:	  trying file=./tls/haswell/libdl.so.2
+     10448:	  trying file=./tls/x86_64/libdl.so.2
+     10448:	  trying file=./tls/libdl.so.2
+     10448:	  trying file=./haswell/x86_64/libdl.so.2
+     10448:	  trying file=./haswell/libdl.so.2
+     10448:	  trying file=./x86_64/libdl.so.2
+     10448:	  trying file=./libdl.so.2
+     10448:	 search cache=/etc/ld.so.cache
+     10448:	  trying file=/lib/x86_64-linux-gnu/libdl.so.2
+     10448:
+     10448:	find library=libgcc_s.so.1 [0]; searching
+     10448:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+     10448:	  trying file=./tls/haswell/x86_64/libgcc_s.so.1
+     10448:	  trying file=./tls/haswell/libgcc_s.so.1
+     10448:	  trying file=./tls/x86_64/libgcc_s.so.1
+     10448:	  trying file=./tls/libgcc_s.so.1
+     10448:	  trying file=./haswell/x86_64/libgcc_s.so.1
+     10448:	  trying file=./haswell/libgcc_s.so.1
+     10448:	  trying file=./x86_64/libgcc_s.so.1
+     10448:	  trying file=./libgcc_s.so.1
+     10448:	 search cache=/etc/ld.so.cache
+     10448:	  trying file=/lib/x86_64-linux-gnu/libgcc_s.so.1
+     10448:
+     10448:	find library=libc.so.6 [0]; searching
+     10448:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+     10448:	  trying file=./tls/haswell/x86_64/libc.so.6
+     10448:	  trying file=./tls/haswell/libc.so.6
+     10448:	  trying file=./tls/x86_64/libc.so.6
+     10448:	  trying file=./tls/libc.so.6
+     10448:	  trying file=./haswell/x86_64/libc.so.6
+     10448:	  trying file=./haswell/libc.so.6
+     10448:	  trying file=./x86_64/libc.so.6
+     10448:	  trying file=./libc.so.6
+     10448:	 search cache=/etc/ld.so.cache
+     10448:	  trying file=/lib/x86_64-linux-gnu/libc.so.6
+     10448:
+     10448:
+     10448:	calling init: /lib/x86_64-linux-gnu/libpthread.so.0
+     10448:
+     10448:
+     10448:	calling preinit: ./fuzz.exe
+     10448:
+     10448:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_printf (fatal)
+     10448:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_sprintf (fatal)
+     10448:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_snprintf (fatal)
+     10448:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_fprintf (fatal)
+     10448:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_vprintf (fatal)
+     10448:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_vsprintf (fatal)
+     10448:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_vsnprintf (fatal)
+     10448:	./fuzz.exe: error: symbol lookup error: undefined symbol: __isoc99_vfprintf (fatal)
+     10448:	./fuzz.exe: error: symbol lookup error: undefined symbol: __cxa_rethrow_primary_exception (fatal)
+     10448:	./fuzz.exe: error: symbol lookup error: undefined symbol: swift_demangle (fatal)
+     10448:
+     10448:	calling init: /lib/x86_64-linux-gnu/libc.so.6
+     10448:
+     10448:
+     10448:	calling init: /lib/x86_64-linux-gnu/libgcc_s.so.1
+     10448:
+     10448:
+     10448:	calling init: /lib/x86_64-linux-gnu/libdl.so.2
+     10448:
+     10448:
+     10448:	calling init: /lib/x86_64-linux-gnu/libm.so.6
+     10448:
+     10448:
+     10448:	calling init: /lib/x86_64-linux-gnu/librt.so.1
+     10448:
+     10448:
+     10448:	calling init: /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+     10448:
+     10448:
+     10448:	initialize program: ./fuzz.exe
+     10448:
+     10448:
+     10448:	transferring control: ./fuzz.exe
+     10448:
+     10448:	find library=libmycode.so [0]; searching
+     10448:	 search path=./tls/haswell/x86_64:./tls/haswell:./tls/x86_64:./tls:./haswell/x86_64:./haswell:./x86_64:.		(LD_LIBRARY_PATH)
+     10448:	  trying file=./tls/haswell/x86_64/libmycode.so
+     10448:	  trying file=./tls/haswell/libmycode.so
+     10448:	  trying file=./tls/x86_64/libmycode.so
+     10448:	  trying file=./tls/libmycode.so
+     10448:	  trying file=./haswell/x86_64/libmycode.so
+     10448:	  trying file=./haswell/libmycode.so
+     10448:	  trying file=./x86_64/libmycode.so
+     10448:	  trying file=./libmycode.so
+     10448:
+     10448:
+     10448:	calling init: ./libmycode.so
+     10448:
+INFO: Seed: 1508909392
+INFO: Loaded 2 modules   (28 inline 8-bit counters): 7 [0x7380d0, 0x7380d7), 21 [0x7fa8a17ff0e0, 0x7fa8a17ff0f5),
+INFO: Loaded 2 PC tables (28 PCs): 7 [0x7380d8,0x738148), 21 [0x7fa8a17ff0f8,0x7fa8a17ff248),
+./fuzz.exe: Running 1 inputs 1 time(s) each.
+Running: seeds/good.txt
+Executed seeds/good.txt in 0 ms
+***
+*** NOTE: fuzzing was not performed, you have only
+***       executed the target code on a fixed set of inputs.
+***
+     10448:
+     10448:	calling fini: ./fuzz.exe [0]
+     10448:
+     10448:
+     10448:	calling fini: /usr/lib/x86_64-linux-gnu/libstdc++.so.6 [0]
+     10448:
+     10448:
+     10448:	calling fini: /lib/x86_64-linux-gnu/librt.so.1 [0]
+     10448:
+     10448:
+     10448:	calling fini: /lib/x86_64-linux-gnu/libpthread.so.0 [0]
+     10448:
+     10448:
+     10448:	calling fini: /lib/x86_64-linux-gnu/libm.so.6 [0]
+     10448:
+     10448:
+     10448:	calling fini: /lib/x86_64-linux-gnu/libdl.so.2 [0]
+     10448:
+     10448:
+     10448:	calling fini: /lib/x86_64-linux-gnu/libgcc_s.so.1 [0]
+     10448:
+     10448:
+     10448:	calling fini: ./libmycode.so [0]
+     10448:
