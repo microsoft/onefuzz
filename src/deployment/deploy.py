@@ -100,7 +100,7 @@ logger = logging.getLogger("deploy")
 def gen_guid() -> str:
     return str(uuid.uuid4())
 
-def bicep_to_arm(bicep_template) -> str:
+def bicep_to_arm(bicep_template: str) -> str:
     from azure.cli.core import (
         get_default_cli
     )
