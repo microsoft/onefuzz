@@ -390,7 +390,6 @@ class Node(BASE_NODE, ORMMixin):
         # if we're going to reimage, make sure the node doesn't pick up new work
         # too.
         self.send_stop_if_free()
-        self.release_scale_in_protection()
 
         self.save()
 
