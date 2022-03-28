@@ -21,7 +21,8 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
 
     // compute line rate, lines-covered, lines-valid by summing total lines and summing lines that have at least 1 hit, will do this for overall, and for each file (package and class in this case)
     let mut total_valid_lines = 0;
-    let mut  total_hit_lines = 0;
+    let mut total_hit_lines = 0;
+    let mut total_line_rate = 0_f32;
     let copy_source_coverage: SourceCoverage = source_coverage.clone();
     let coverage_files: Vec<SourceFileCoverage> = source_coverage.files;
     for file in coverage_files {
@@ -33,7 +34,10 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
             }
         }
     }
-    let total_line_rate = total_valid_lines/total_hit_lines;
+    if total_valid_lines > 0 {
+        total_line_rate = total_hit_lines as f32 /total_valid_lines as f32;  
+    }
+
 
     emitter.write(
         XmlEvent::start_element("coverage")
@@ -51,8 +55,9 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     emitter.write(XmlEvent::start_element("packages"))?;
     // loop through files, path (excluding file name) will be package name for better results with ReportGenerator
     let package_files: Vec<SourceFileCoverage> = copy_source_coverage.files;
-    let mut package_valid_lines = 2;
-    let mut package_hit_lines = 1;
+    let mut package_valid_lines = 0;
+    let mut package_hit_lines = 0;
+    let mut package_line_rate = 0_f32;
     for file in package_files {
         let copy_file = file.clone();
         let package_locations: Vec<SourceCoverageLocation> = file.locations;
@@ -62,7 +67,9 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
               package_hit_lines+=1;
             }
         }
-        let package_line_rate = package_hit_lines/package_valid_lines;
+        if package_valid_lines > 0 {
+          package_line_rate = package_hit_lines as f32 /package_valid_lines as f32;
+        }
         let full_path_file = Path::new(&file.file);
         let path = full_path_file.parent().unwrap();
         emitter.write(
@@ -81,6 +88,9 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
+        package_valid_lines = 0;
+        package_hit_lines = 0;
+        package_line_rate = 0_f32;
         emitter.write(XmlEvent::start_element("lines"))?;
         let line_locations: Vec<SourceCoverageLocation> = copy_file.locations;
         for location in line_locations {
@@ -127,7 +137,7 @@ mod tests {
 
         let mut coverage_locations_vec2: Vec<SourceCoverageLocation> = Vec::new();
         coverage_locations_vec2.push(SourceCoverageLocation {
-            line: 0,
+            line: 1,
             column: None,
             count: 0,
         });
@@ -158,10 +168,10 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("coverage")
-                .attr("line-rate", "0")
+                .attr("line-rate", "0.33")
                 .attr("branch-rate", "0")
-                .attr("lines-covered", "0")
-                .attr("lines-valid", "0")
+                .attr("lines-covered", "1")
+                .attr("lines-valid", "3")
                 .attr("branches-covered", "0")
                 .attr("branches-valid", "0")
                 .attr("complexity", "0")
@@ -174,7 +184,7 @@ mod tests {
         _emitter_test.write(
             XmlEvent::start_element("package")
                 .attr("name", "C:/Users")
-                .attr("line-rate", "0")
+                .attr("line-rate", "0.50")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
@@ -185,7 +195,7 @@ mod tests {
             XmlEvent::start_element("class")
                 .attr("name", "C:/Users/file1.txt")
                 .attr("filename", "C:/Users/file1.txt")
-                .attr("line-rate", "0")
+                .attr("line-rate", "0.50")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
@@ -215,7 +225,7 @@ mod tests {
         _emitter_test.write(
             XmlEvent::start_element("package")
                 .attr("name", "C:/Users")
-                .attr("line-rate", "0")
+                .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
@@ -226,7 +236,7 @@ mod tests {
             XmlEvent::start_element("class")
                 .attr("name", "C:/Users/file2.txt")
                 .attr("filename", "C:/Users/file2.txt")
-                .attr("line-rate", "0")
+                .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
@@ -235,7 +245,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("line")
-                .attr("number", "0")
+                .attr("number", "1")
                 .attr("hits", "0")
                 .attr("branch", "false"),
         )?;
@@ -248,9 +258,9 @@ mod tests {
         _emitter_test.write(XmlEvent::end_element())?; // packages
         _emitter_test.write(XmlEvent::end_element())?; // coverage
 
-        println!("{}", source_coverage_result?);
-        //assert_eq!(source_coverage_result?, String::from_utf8(backing_test)?);
-        assert!(true);
+        //println!("{}", source_coverage_result?);
+        assert_eq!(source_coverage_result?, String::from_utf8(backing_test)?);
+        //assert!(true);
 
         Ok(())
     }
