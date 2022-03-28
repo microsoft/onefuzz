@@ -19,12 +19,28 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         .context("system time before unix epoch")?
         .as_secs();
 
+    // compute line rate, lines-covered, lines-valid by summing total lines and summing lines that have at least 1 hit, will do this for overall, and for each file (package and class in this case)
+    let mut total_valid_lines = 0;
+    let mut  total_hit_lines = 0;
+    let copy_source_coverage: SourceCoverage = source_coverage.clone();
+    let coverage_files: Vec<SourceFileCoverage> = source_coverage.files;
+    for file in coverage_files {
+        let locations: Vec<SourceCoverageLocation> = file.locations;
+        for location in locations {
+            total_valid_lines+=1;
+            if &location.count > &0 {
+              total_hit_lines+=1;
+            }
+        }
+    }
+    let total_line_rate = total_valid_lines/total_hit_lines;
+
     emitter.write(
         XmlEvent::start_element("coverage")
-            .attr("line-rate", "0")
+            .attr("line-rate", &format!("{:.02}", total_line_rate))
             .attr("branch-rate", "0")
-            .attr("lines-covered", "0")
-            .attr("lines-valid", "0")
+            .attr("lines-covered", &format!("{}", total_hit_lines))
+            .attr("lines-valid", &format!("{}", total_valid_lines))
             .attr("branches-covered", "0")
             .attr("branches-valid", "0")
             .attr("complexity", "0")
@@ -34,14 +50,25 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
 
     emitter.write(XmlEvent::start_element("packages"))?;
     // loop through files, path (excluding file name) will be package name for better results with ReportGenerator
-    let files: Vec<SourceFileCoverage> = source_coverage.files;
-    for file in files {
+    let package_files: Vec<SourceFileCoverage> = copy_source_coverage.files;
+    let mut package_valid_lines = 2;
+    let mut package_hit_lines = 1;
+    for file in package_files {
+        let copy_file = file.clone();
+        let package_locations: Vec<SourceCoverageLocation> = file.locations;
+        for location in package_locations {
+            package_valid_lines+=1;
+            if &location.count > &0 {
+              package_hit_lines+=1;
+            }
+        }
+        let package_line_rate = package_hit_lines/package_valid_lines;
         let full_path_file = Path::new(&file.file);
         let path = full_path_file.parent().unwrap();
         emitter.write(
             XmlEvent::start_element("package")
                 .attr("name", &path.display().to_string())
-                .attr("line-rate", "0")
+                .attr("line-rate", &format!("{:.02}",package_line_rate))
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
@@ -50,13 +77,13 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
             XmlEvent::start_element("class")
                 .attr("name", &file.file)
                 .attr("filename", &file.file)
-                .attr("line-rate", "0")
+                .attr("line-rate", &format!("{:.02}",package_line_rate))
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
-        let locations: Vec<SourceCoverageLocation> = file.locations;
         emitter.write(XmlEvent::start_element("lines"))?;
-        for location in locations {
+        let line_locations: Vec<SourceCoverageLocation> = copy_file.locations;
+        for location in line_locations {
             emitter.write(
                 XmlEvent::start_element("line")
                     .attr("number", &location.line.to_string())
