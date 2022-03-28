@@ -23,10 +23,10 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     let mut total_valid_lines = 0;
     let mut total_hit_lines = 0;
     let mut total_line_rate = 0_f32;
-    let copy_source_coverage: SourceCoverage = source_coverage.clone();
-    let coverage_files: Vec<SourceFileCoverage> = source_coverage.files;
+    let copy_source_coverage = source_coverage.clone();
+    let coverage_files = source_coverage.files;
     for file in coverage_files {
-        let locations: Vec<SourceCoverageLocation> = file.locations;
+        let locations = file.locations;
         for location in locations {
             total_valid_lines += 1;
             if &location.count > &0 {
@@ -53,13 +53,13 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
 
     emitter.write(XmlEvent::start_element("packages"))?;
     // loop through files, path (excluding file name) will be package name for better results with ReportGenerator
-    let package_files: Vec<SourceFileCoverage> = copy_source_coverage.files;
+    let package_files = copy_source_coverage.files;
     let mut package_valid_lines = 0;
     let mut package_hit_lines = 0;
     let mut package_line_rate = 0_f32;
     for file in package_files {
         let copy_file = file.clone();
-        let package_locations: Vec<SourceCoverageLocation> = file.locations;
+        let package_locations = file.locations;
         for location in package_locations {
             package_valid_lines += 1;
             if &location.count > &0 {
@@ -91,7 +91,7 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         package_hit_lines = 0;
         package_line_rate = 0_f32;
         emitter.write(XmlEvent::start_element("lines"))?;
-        let line_locations: Vec<SourceCoverageLocation> = copy_file.locations;
+        let line_locations = copy_file.locations;
         for location in line_locations {
             emitter.write(
                 XmlEvent::start_element("line")
