@@ -257,10 +257,8 @@ mod tests {
         _emitter_test.write(XmlEvent::end_element())?; // packages
         _emitter_test.write(XmlEvent::end_element())?; // coverage
 
-        //println!("{}", source_coverage_result?);
         assert_eq!(source_coverage_result?, String::from_utf8(backing_test)?);
-        //assert!(true);
-
+        
         Ok(())
     }
 }
