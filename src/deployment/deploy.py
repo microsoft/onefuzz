@@ -100,14 +100,31 @@ logger = logging.getLogger("deploy")
 def gen_guid() -> str:
     return str(uuid.uuid4())
 
+
 def bicep_to_arm(bicep_template: str) -> str:
-    from azure.cli.core import (
-        get_default_cli
-    )
+    from azure.cli.core import get_default_cli
+
     az_cli = get_default_cli()
-    az_cli.invoke(['bicep', 'install'])
-    az_cli.invoke(['bicep', 'build', '--file', bicep_template, '--outfile', 'azuredeploy-bicep.json'])
-    return 'azuredeploy-bicep.json'
+    az_cli.invoke(["bicep", "install"])
+    az_cli.invoke(
+        [
+            "bicep",
+            "build",
+            "--file",
+            bicep_template,
+            "--outfile",
+            "azuredeploy-bicep.json",
+        ]
+    )
+    from importlib import reload
+
+    # az_cli hijacks logging, so need to reset it
+    logging.shutdown()
+    reload(logging)
+    global logger
+    logger = logging.getLogger("deploy")
+    return "azuredeploy-bicep.json"
+
 
 class Client:
     def __init__(
@@ -167,7 +184,7 @@ class Client:
 
         if arm_or_bicep_template:
             file_name, file_extension = os.path.splitext(arm_or_bicep_template)
-            if file_extension == '.bicep':
+            if file_extension == ".bicep":
                 self.arm_template = bicep_to_arm(arm_or_bicep_template)
             else:
                 self.arm_template = arm_or_bicep_template
@@ -225,37 +242,42 @@ class Client:
         client = ResourceManagementClient(
             credential, subscription_id=self.get_subscription_id()
         )
-        providers = {x.namespace: x for x in client.providers.list()}
-
+        providers = {x.namespace.lower(): x for x in client.providers.list()}
         unsupported = []
 
+        # we cannot validate site/config resources since they require resource group
+        # to exist. check_region only validates subscription level resources.
+        resource_group_level_resources = ["sites/config"]
+
         for resource in arm["resources"]:
-            namespace, name = resource["type"].split("/", 1)
+            namespace, name = resource["type"].lower().split("/", 1)
 
             # resource types are in the form of a/b/c....
             # only the top two are listed as resource types within providers
             name = "/".join(name.split("/")[:2])
-
             if namespace not in providers:
                 unsupported.append("Unsupported provider: %s" % namespace)
                 continue
 
             provider = providers[namespace]
-            resource_types = {x.resource_type: x for x in provider.resource_types}
-            if name not in resource_types:
-                unsupported.append(
-                    "Unsupported resource type: %s/%s" % (namespace, name)
-                )
-                continue
+            resource_types = {
+                x.resource_type.lower(): x for x in provider.resource_types
+            }
+            if name not in resource_group_level_resources:
+                if name not in resource_types:
+                    unsupported.append(
+                        "Unsupported resource type: %s/%s" % (namespace, name)
+                    )
+                    continue
 
-            resource_type = resource_types[name]
-            if (
-                location not in resource_type.locations
-                and len(resource_type.locations) > 0
-            ):
-                unsupported.append(
-                    "%s/%s is unsupported in %s" % (namespace, name, self.location)
-                )
+                resource_type = resource_types[name]
+                if (
+                    location not in resource_type.locations
+                    and len(resource_type.locations) > 0
+                ):
+                    unsupported.append(
+                        "%s/%s is unsupported in %s" % (namespace, name, self.location)
+                    )
 
         if unsupported:
             print("The following resources required by onefuzz are not supported:")
@@ -619,7 +641,7 @@ class Client:
         logger.info("assigning the user managed identity role")
         assign_instance_app_role(
             self.application_name,
-            self.results["deploy"]["scaleset-identity"]["value"],
+            self.results["deploy"]["scaleset_identity"]["value"],
             self.get_subscription_id(),
             OnefuzzAppRole.ManagedNode,
         )
@@ -660,15 +682,15 @@ class Client:
 
     def apply_migrations(self) -> None:
         logger.info("applying database migrations")
-        name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
+        name = self.results["deploy"]["func_name"]["value"]
+        key = self.results["deploy"]["func_key"]["value"]
         table_service = TableService(account_name=name, account_key=key)
         migrate(table_service, self.migrations)
 
     def set_instance_config(self) -> None:
         logger.info("setting instance config")
-        name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
+        name = self.results["deploy"]["func_name"]["value"]
+        key = self.results["deploy"]["func_key"]["value"]
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
         table_service = TableService(account_name=name, account_key=key)
 
@@ -761,8 +783,8 @@ class Client:
 
         container_name = "base-config"
         blob_name = "instance_id"
-        account_name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
+        account_name = self.results["deploy"]["func_name"]["value"]
+        key = self.results["deploy"]["func_key"]["value"]
         account_url = "https://%s.blob.core.windows.net" % account_name
         client = BlobServiceClient(account_url, credential=key)
         if container_name not in [x["name"] for x in client.list_containers()]:
@@ -787,8 +809,8 @@ class Client:
         container_name = "app-insights"
 
         logger.info("adding appinsight log export")
-        account_name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
+        account_name = self.results["deploy"]["func_name"]["value"]
+        key = self.results["deploy"]["func_key"]["value"]
         account_url = "https://%s.blob.core.windows.net" % account_name
         client = BlobServiceClient(account_url, credential=key)
         if container_name not in [x["name"] for x in client.list_containers()]:
@@ -847,8 +869,8 @@ class Client:
 
     def upload_tools(self) -> None:
         logger.info("uploading tools from %s", self.tools)
-        account_name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
+        account_name = self.results["deploy"]["func_name"]["value"]
+        key = self.results["deploy"]["func_key"]["value"]
         account_url = "https://%s.blob.core.windows.net" % account_name
         client = BlobServiceClient(account_url, credential=key)
         if "tools" not in [x["name"] for x in client.list_containers()]:
@@ -884,8 +906,8 @@ class Client:
 
     def upload_instance_setup(self) -> None:
         logger.info("uploading instance-specific-setup from %s", self.instance_specific)
-        account_name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
+        account_name = self.results["deploy"]["func_name"]["value"]
+        key = self.results["deploy"]["func_key"]["value"]
         account_url = "https://%s.blob.core.windows.net" % account_name
         client = BlobServiceClient(account_url, credential=key)
         if "instance-specific-setup" not in [
@@ -930,8 +952,8 @@ class Client:
 
     def upload_third_party(self) -> None:
         logger.info("uploading third-party tools from %s", self.third_party)
-        account_name = self.results["deploy"]["fuzz-name"]["value"]
-        key = self.results["deploy"]["fuzz-key"]["value"]
+        account_name = self.results["deploy"]["fuzz_name"]["value"]
+        key = self.results["deploy"]["fuzz_key"]["value"]
         account_url = "https://%s.blob.core.windows.net" % account_name
 
         client = BlobServiceClient(account_url, credential=key)
@@ -1181,7 +1203,6 @@ def main() -> None:
     if shutil.which("func") is None:
         logger.error(FUNC_TOOLS_ERROR)
         sys.exit(1)
-
 
     client = Client(
         resource_group=args.resource_group,

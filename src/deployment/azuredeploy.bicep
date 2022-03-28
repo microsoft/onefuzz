@@ -4,7 +4,7 @@ param clientId string
 param clientSecret string
 param signedExpiry string
 param app_func_issuer string
-param app_func_audience string
+param app_func_audiences array
 param multi_tenant_domain string
 
 param location string = resourceGroup().location
@@ -26,13 +26,13 @@ var tenantId = subscription().tenantId
 
 var autoscale_name = 'onefuzz-autoscale-${suffix}' 
 var log_retention = 30
-var monitorAccountName = 'logs-wb-${suffix}'
+var monitorAccountName = name
 var scaleset_identity = '${name}-scalesetid'
 var signalr_name = 'onefuzz-${suffix}'
 var storage_account_sas = {
   signedExpiry: signedExpiry
-  signedPermissions: 'rwdlacup'
-  signedResrouceTypes: 'sco'
+  signedPermission: 'rwdlacup'
+  signedResourceTypes: 'sco'
   signedServices: 'bfqt'
 }
 
@@ -71,35 +71,29 @@ var roleAssignmentsParams = [
 ]
 
 var onefuzz = {
-  severitiesAtMostInfo: {
-    parameters: []
-    output: {
-      type: 'array'
-      value: [
+  severitiesAtMostInfo: [
         {
           severity: 'emerg'
         }
         {
-            severity: 'alert'
+          severity: 'alert'
         }
         {
-            severity: 'crit'
+          severity: 'crit'
         }
         {
-            severity: 'err'
+          severity: 'err'
         }
         {
-            severity: 'warning'
+          severity: 'warning'
         }
         {
-            severity: 'notice'
+          severity: 'notice'
         }
         {
-            severity: 'info'
+          severity: 'info'
         }
-      ]
-    }
-  }
+    ]
 }
 
 resource scalesetIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
@@ -221,11 +215,6 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
   }
 }
 
-resource insightsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
-  name: name
-  location: location
-}
-
 var linuxDataSources = [
   {
     name: 'syslogDataSourcesKern'
@@ -313,9 +302,13 @@ resource insightsMonitorAccount 'Microsoft.OperationalInsights/workspaces@2021-0
 
 resource vmInsights 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = {
   name: 'VMInsights(${monitorAccountName})'
+  location: location
   dependsOn: [
     insightsMonitorAccount
   ]
+  properties: {
+    workspaceResourceId: resourceId('Microsoft.OperationalInsights/workspaces', monitorAccountName) 
+  }
   plan: {
     name: 'VMInsights(${monitorAccountName})'
     publisher: 'Microsoft'
@@ -331,7 +324,7 @@ resource insightsComponents 'Microsoft.Insights/components@2020-02-02' = {
   properties: {
     Application_Type: 'other'
     RetentionInDays: log_retention
-    WorkspaceResourceId: insightsWorkspace.id
+    WorkspaceResourceId: insightsMonitorAccount.id
   }
   tags: {
     OWNER: owner
@@ -351,17 +344,6 @@ resource insightsWorkbooks 'Microsoft.Insights/workbooks@2021-08-01' = {
   }
 }
 
-var storageAccountsParams = [
-  {
-    name: storageAccountName
-  }
-  {
-    name: storageAccountNameFunc
-  }
-]
-
-var storageAccountIndex = 0
-var storageAccountFuncIndex = 1
 var storageAccountFuncContainersParams = [
   'vm-scripts'
   'repro-scripts'
@@ -380,8 +362,10 @@ var storageAccountFuncQueuesParams = [
   'signalr-events'
 ]
 
-resource storageAccounts 'Microsoft.Storage/storageAccounts@2021-08-01' = [for p in storageAccountsParams : {
-  name: p.name
+var fileChangesIndex = 0
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+  name: storageAccountName
   location: location
   sku: {
     name: 'Standard_LRS'
@@ -395,54 +379,84 @@ resource storageAccounts 'Microsoft.Storage/storageAccounts@2021-08-01' = [for p
   tags: {
     OWNER: owner
   }
-}]
 
-resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2021-08-01' = [for (p,i) in storageAccountsParams : {
-  name: 'default'
-  properties: {
-    deleteRetentionPolicy: {
-      enabled: true
-      days: 30
+  resource blobServices 'blobServices' = {
+    name: 'default'
+    properties: {
+      deleteRetentionPolicy: {
+        enabled: true
+        days: 30
+      }
     }
   }
-  parent: storageAccounts[i]
-}]
-
-resource storageAccountFuncQueueServices 'Microsoft.Storage/storageAccounts/queueServices@2021-08-01' = {
-  name: 'funcQueues'
-  parent: storageAccounts[storageAccountFuncIndex]
 }
 
-resource storageAccountFunBlobContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = [for c in storageAccountFuncContainersParams: {
-  name: c
-  parent: blobServices[storageAccountFuncIndex]
-}]
+resource storageAccountFunc 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+  name: storageAccountNameFunc
+  location: location
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+  properties: {
+    supportsHttpsTrafficOnly: true
+    accessTier: 'Hot'
+    allowBlobPublicAccess: false
+  }
+  tags: {
+    OWNER: owner
+  }
+
+  resource blobServices 'blobServices' = {
+    name: 'default'
+    properties: {
+      deleteRetentionPolicy: {
+        enabled: true
+        days: 30
+      }
+    }
+  }
+}
 
 resource storageAccountFuncQueues 'Microsoft.Storage/storageAccounts/queueServices/queues@2021-08-01' = [for q in storageAccountFuncQueuesParams: {
-  name: q
-  parent: storageAccountFuncQueueServices
+  name: '${storageAccountNameFunc}/default/${q}'
+  dependsOn: [
+    storageAccountFunc
+  ]
 }]
 
+resource storageAccountFunBlobContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = [for c in storageAccountFuncContainersParams: {
+  name: '${storageAccountNameFunc}/default/${c}'
+  dependsOn: [
+    storageAccountFunc
+  ]
+}]
+
+// try to make role assignments to deploy as late as possible in order to has principalId ready
 resource roleAssigments 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
   name: guid('${resourceGroup().id}${r.suffix}')
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${r.role}'
-    principalId: reference(resourceId('Microsoft.Web/sites', name), '2018-02-01', 'Full').identity.principalId
+    principalId: reference(pythonFunction.id, pythonFunction.apiVersion, 'Full').identity.principalId
   }
   dependsOn: [
-    pythonFunction
+    eventSubscriptions
+    keyVault
+    serverFarms
   ]
 }]
 
-//this gets configured differently from roleAssignments
-resource readBlogUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+// try to make role assignments to deploy as late as possible in order to has principalId ready
+resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
   name: guid('${resourceGroup().id}-user_managed_idenity_read_blob')
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${StorageBlobDataReader}'
-    principalId: reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', scaleset_identity), '2018-11-30', 'Full').properties.principalId
+    principalId: reference(scalesetIdentity.id, scalesetIdentity.apiVersion, 'Full').properties.principalId
   }
   dependsOn: [
-    storageAccounts[storageAccountFuncIndex]
+    eventSubscriptions
+    keyVault
+    serverFarms
   ]
 }
 
@@ -477,32 +491,42 @@ resource signalR 'Microsoft.SignalRService/signalR@2021-10-01' = {
 
 resource eventGridSystemTopics 'Microsoft.EventGrid/systemTopics@2021-12-01' = {
   name: fuzz_blob_topic_name
+  dependsOn: [
+    storageAccountFuncQueues[fileChangesIndex]
+    storageAccountFunc
+  ]
   location: location
   properties: {
-    source: storageAccounts[storageAccountIndex].id
+    source: storageAccount.id
     topicType: 'microsoft.storage.storageaccounts'
   }
-  resource evetnSubscriptions 'eventSubscriptions' = {
-    name: 'onefuzz1_subscription'
-    properties: {
-      destination: {
-        properties: {
-          resourceId: storageAccounts[storageAccountFuncIndex].id
-          queueName: 'file-changes'
-        }
-        endpointType: 'StorageQueue'
+}
+
+resource eventSubscriptions 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2021-12-01' = {
+  name: 'onefuzz1_subscription'
+  parent: eventGridSystemTopics
+  dependsOn: [
+    storageAccountFuncQueues[fileChangesIndex]
+    storageAccount
+  ]
+  properties: {
+    destination: {
+      properties: {
+        resourceId: storageAccountFunc.id
+        queueName: storageAccountFuncQueuesParams[fileChangesIndex]
       }
-      filter: {
-        includedEventTypes: [
-          'Microsoft.Storage.BlobCreated'
-          'Microsoft.Storage.BlobDeleted'
-        ]
-      }
-      eventDeliverySchema: 'EventGridSchema'
-      retryPolicy: {
-        maxDeliveryAttempts: 30
-        eventTimeToLiveInMinutes: 1440
-      }
+      endpointType: 'StorageQueue'
+    }
+    filter: {
+      includedEventTypes: [
+        'Microsoft.Storage.BlobCreated'
+        'Microsoft.Storage.BlobDeleted'
+      ]
+    }
+    eventDeliverySchema: 'EventGridSchema'
+    retryPolicy: {
+      maxDeliveryAttempts: 30
+      eventTimeToLiveInMinutes: 1440
     }
   }
 }
@@ -514,7 +538,7 @@ resource funcLogs 'Microsoft.Web/sites/config@2021-03-01' = {
       azureBlobStorage: {
         level: diagnosticsLogLevel
         retentionInDays: log_retention
-        sasUrl: '${storageAccounts[storageAccountIndex].properties.primaryEndpoints.blob}app-logs?${storageAccounts[storageAccountFuncIndex].listAccountSas('2021-08-01', storage_account_sas).accountSasToken}'
+        sasUrl: '${storageAccountFunc.properties.primaryEndpoints.blob}app-logs?${storageAccountFunc.listAccountSas('2021-08-01', storage_account_sas).accountSasToken}'
       }
     }
   }
@@ -546,9 +570,7 @@ resource funcAuthSettings 'Microsoft.Web/sites/config@2021-03-01' = {
           clientSecretSettingName: 'ONEFUZZ_CLIENT_SECRET'
         }
         validation: {
-          allowedAudiences: [
-            app_func_audience
-          ]
+          allowedAudiences: app_func_audiences
         }
       }
     }
@@ -595,7 +617,7 @@ resource pythonFunction 'Microsoft.Web/sites@2021-03-01' = {
           }
           {
               name: 'AzureWebJobsStorage'
-              value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccounts[storageAccountFuncIndex].name};AccountKey=${storageAccounts[storageAccountFuncIndex].listKeys().keys[0]};EndpointSuffix=core.windows.net'
+              value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountFunc.name};AccountKey=${storageAccountFunc.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
           }
           {
               name: 'MULTI_TENANT_DOMAIN'
@@ -627,11 +649,11 @@ resource pythonFunction 'Microsoft.Web/sites@2021-03-01' = {
           }
           {
               name: 'ONEFUZZ_DATA_STORAGE'
-              value: storageAccounts[storageAccountIndex].id
+              value: storageAccount.id
           }
           {
               name: 'ONEFUZZ_FUNC_STORAGE'
-              value: storageAccounts[storageAccountFuncIndex].id
+              value: storageAccountFunc.id
           }
           {
               name: 'ONEFUZZ_MONITOR'
@@ -665,13 +687,15 @@ resource pythonFunction 'Microsoft.Web/sites@2021-03-01' = {
   }
 }
 
-output fuzz_storage string = storageAccounts[storageAccountIndex].id
+var fuzz_key = storageAccount.listKeys().keys[0].value
+output fuzz_storage string = storageAccount.id
 output fuzz_name string = storageAccountName
-output fuzz_key string = storageAccounts[storageAccountIndex].listKeys().keys[0].value
+output fuzz_key string = fuzz_key
 
-output func_storage string = storageAccounts[storageAccountFuncIndex].id
+var func_key = storageAccountFunc.listKeys().keys[0].value
+output func_storage string = storageAccountFunc.id
 output func_name string = storageAccountNameFunc
-output func_key string = storageAccounts[storageAccountFuncIndex].listKeys().keys[0].value
+output func_key string = func_key
 
 output scaleset_identity string = scaleset_identity
 output tenant_id string = tenantId
