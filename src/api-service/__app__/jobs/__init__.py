@@ -53,9 +53,12 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(user_info, Error):
         return not_ok(user_info, context="jobs create")
 
+    job = Job(config=request, user_info=user_info)
+    job.save()
+
     # create the job logs container
     log_container_sas = create_container(
-        Container("logs"),
+        Container(f"logs-{job.job_id}"),
         StorageType.corpus,
         metadata={"container_type": ContainerType.logs.name},
     )
@@ -67,19 +70,15 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             ),
             context="logs",
         )
-
-    job_config = request
-
     sep_index = log_container_sas.find("?")
     if sep_index > 0:
         log_container = log_container_sas[:sep_index]
     else:
         log_container = log_container_sas
 
-    job_config.logs = log_container
-
-    job = Job(config=request, user_info=user_info)
+    job.config.logs = log_container
     job.save()
+
     return ok(job)
 
 
