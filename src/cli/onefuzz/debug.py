@@ -614,7 +614,14 @@ class DebugLog(Command):
 
         return self.onefuzz.debug.logs._query_parts(query_parts, timespan=timespan)
 
-    def get(self, job_id: str, task_id: Optional[str], machine_id: Optional[str], last: Optional[int] = 1, all: bool = False) -> None:
+    def get(
+        self,
+        job_id: str,
+        task_id: Optional[str],
+        machine_id: Optional[str],
+        last: Optional[int] = 1,
+        all: bool = False,
+    ) -> None:
         """
         Download the latest agent logs.
 
@@ -625,6 +632,7 @@ class DebugLog(Command):
         :param bool all: Download all log files.
         """
 
+        from azure.storage.blob import BlobProperties
         file_path = f"{job_id}/"
 
         if task_id is not None:
@@ -633,26 +641,26 @@ class DebugLog(Command):
             if machine_id is not None:
                 file_path += f"{machine_id}/"
 
-
         # Pretending the job object has a logs property
         # job = self.onefuzz.jobs.get(job_id)
-        # container = job.config.logs
+        # container_url = job.config.logs
 
         token_credential = AzureCliCredential()
+        container_url = ""
 
-        container_client = ContainerClient.from_container_url(container_url, credential=token_credential)
+        container_client = ContainerClient.from_container_url(
+            container_url, credential=token_credential
+        )
 
         blobs = container_client.list_blobs(name_starts_with=file_path)
 
-        files = []
+        files: List[BlobProperties] = []
 
         for f in blobs:
-            files.append({
-                'name': f.name,
-                'creation_time': f.creation_time
-            })
+            files.append(f)
 
-        files.sort(key=lambda x: x['creation_time'], reverse=True)
+        creation_time_sort = lambda x: x["creation_time"]
+        files.sort(key=creation_time_sort, reverse=True)
 
         if not all:
             files = files[:last]
@@ -661,13 +669,13 @@ class DebugLog(Command):
         for f in files:
             self.logger.info(f"Downloading {f['name']}")
 
-            local_path = os.path.join(os.getcwd(), f['name'])
+            local_path = os.path.join(os.getcwd(), f["name"])
             local_directory = os.path.dirname(local_path)
             if not os.path.exists(local_directory):
                 os.makedirs(local_directory)
 
-            with open(local_path, 'wb') as download_file:
-                data = container_client.download_blob(f['name'])
+            with open(local_path, "wb") as download_file:
+                data = container_client.download_blob(f["name"])
                 data.readinto(download_file)
 
         return None
