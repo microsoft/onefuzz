@@ -20,7 +20,7 @@ from ..onefuzzlib.config import InstanceConfig
 from ..onefuzzlib.endpoint_authorization import call_if_user, check_can_manage_pools
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.workers.pools import Pool
-from ..onefuzzlib.workers.scalesets import Scaleset
+from ..onefuzzlib.workers.scalesets import AutoScale, Scaleset
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
@@ -104,6 +104,19 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         ephemeral_os_disks=request.ephemeral_os_disks,
         tags=tags,
     )
+
+    if request.auto_scale:
+        AutoScale.create(
+            scaleset_id=scaleset.scaleset_id,
+            min=request.auto_scale.min,
+            max=request.auto_scale.max,
+            default=request.auto_scale.default,
+            scale_out_amount=request.auto_scale.scale_out_amount,
+            scale_out_cooldown=request.auto_scale.scale_out_cooldown,
+            scale_in_amount=request.auto_scale.scale_in_amount,
+            scale_in_cooldown=request.auto_scale.scale_in_cooldown,
+        )
+
     # don't return auths during create, only 'get' with include_auth
     scaleset.auth = None
     return ok(scaleset)
