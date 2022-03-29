@@ -663,6 +663,17 @@ class Scaleset(BaseModel):
     tags: Dict[str, str] = Field(default_factory=lambda: {})
 
 
+class AutoScale(BaseModel):
+    scaleset_id: UUID
+    min: int = Field(ge=1)
+    max: int = Field(ge=1)
+    default: int = Field(ge=1)
+    scale_out_amount: int = Field(ge=1)
+    scale_out_cooldown: int = Field(ge=1)
+    scale_in_amount: int = Field(ge=1)
+    scale_in_cooldown: int = Field(ge=1)
+
+
 class NotificationConfig(BaseModel):
     config: NotificationTemplate
 
