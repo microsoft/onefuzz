@@ -120,6 +120,7 @@ class JobConfig(BaseModel):
     name: str
     build: str
     duration: int = Field(ge=ONE_HOUR, le=SEVEN_DAYS)
+    logs: Optional[str]
 
 
 class ReproConfig(BaseModel):
@@ -336,6 +337,7 @@ class AgentConfig(BaseModel):
 
 class TaskUnitConfig(BaseModel):
     instance_id: UUID
+    logs: str
     job_id: UUID
     task_id: UUID
     task_type: TaskType
