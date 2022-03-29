@@ -332,7 +332,7 @@ impl TaskLogger {
                         }
 
                         if !data.is_empty() {
-                            return Result::<_, anyhow::Error>::Ok(LoopContext {
+                            Result::<_, anyhow::Error>::Ok(LoopContext {
                                 state: LoopState::Send {
                                     start: 0,
                                     count: data.len(),
@@ -340,7 +340,7 @@ impl TaskLogger {
                                 pending_logs: data,
                                 event,
                                 ..context
-                            });
+                            })
                         } else {
                             Result::<_, anyhow::Error>::Ok(LoopContext { event, ..context })
                         }
