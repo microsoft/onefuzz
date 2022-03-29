@@ -635,7 +635,7 @@ class DebugLog(Command):
 
         from typing import cast
 
-        file_path = f"{job_id}/"
+        file_path = ""
 
         if task_id is not None:
             file_path += f"{task_id}/"
@@ -645,6 +645,7 @@ class DebugLog(Command):
 
         # Pretending the job object has a logs property
         # job = self.onefuzz.jobs.get(job_id)
+        # This will be {fuzz storage account}/logs-{job_id}
         # container_url = job.config.logs
 
         token_credential = AzureCliCredential()
