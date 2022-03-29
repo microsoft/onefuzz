@@ -9,7 +9,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use xml::writer::{EmitterConfig, XmlEvent};
 
 // Will compute line values overall and for each file (package and class)
-pub fn compute_line_values(files: Vec<SourceFileCoverage>) -> Vec<u32> {
+pub fn compute_line_values(files: Vec<SourceFileCoverage>) -> (Vec<u32>, f32) {
     let mut line_values: Vec<u32> = Vec::new();
     let mut valid_lines = 0;
     let mut hit_lines = 0;
@@ -24,7 +24,8 @@ pub fn compute_line_values(files: Vec<SourceFileCoverage>) -> Vec<u32> {
     }
     line_values.push(valid_lines);
     line_values.push(hit_lines);
-    return line_values;
+    let line_rate = compute_line_rate(line_values.clone());
+    return (line_values, line_rate);
 }
 
 pub fn compute_line_rate(line_values: Vec<u32>) -> f32 {
@@ -48,13 +49,13 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
 
     let copy_source_coverage = source_coverage.clone();
     let line_values = compute_line_values(source_coverage.files);
-    let line_rate = compute_line_rate(line_values.clone());
+
     emitter.write(
         XmlEvent::start_element("coverage")
-            .attr("line-rate", &format!("{:.02}", line_rate))
+            .attr("line-rate", &format!("{:.02}", line_values.1))
             .attr("branch-rate", "0")
-            .attr("lines-covered", &format!("{}", line_values[1]))
-            .attr("lines-valid", &format!("{}", line_values[0]))
+            .attr("lines-covered", &format!("{}", line_values.0[1]))
+            .attr("lines-valid", &format!("{}", line_values.0[0]))
             .attr("branches-covered", "0")
             .attr("branches-valid", "0")
             .attr("complexity", "0")
