@@ -16,8 +16,8 @@ use tokio::sync::broadcast::Receiver;
 
 const LOGS_BUFFER_SIZE: usize = 100;
 const MAX_LOG_SIZE: u64 = 100000000; // 100 MB
-const DEFAULT_LOGGING_PERIOD: Duration = Duration::from_secs(60);
-const DEFAULT_POLLING_PERIOD: Duration = Duration::from_secs(5);
+const DEFAULT_LOGGING_INTERVAL: Duration = Duration::from_secs(60);
+const DEFAULT_POLLING_INTERVAL: Duration = Duration::from_secs(5);
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -143,7 +143,6 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
             .condition_max_size(self.max_log_size)
             .execute()
             .await;
-        //.map_err(|e| anyhow!(e.to_string()));
 
         match result {
             Ok(_r) => Ok(WriteLogResponse::Success),
@@ -192,15 +191,14 @@ pub struct TaskLogger {
     job_id: Uuid,
     task_id: Uuid,
     machine_id: Uuid,
-    logging_period: Duration,
+    logging_interval: Duration,
     log_buffer_size: usize,
-    // max_log_size: u64,
-    polling_period: Duration,
+    polling_interval: Duration,
 }
 
 enum LoopState {
     Receive,
-    InitLog,
+    InitLog { start: usize, count: usize },
     Send { start: usize, count: usize },
 }
 
@@ -217,9 +215,9 @@ impl TaskLogger {
             job_id,
             task_id,
             machine_id,
-            logging_period: DEFAULT_LOGGING_PERIOD,
+            logging_interval: DEFAULT_LOGGING_INTERVAL,
             log_buffer_size: LOGS_BUFFER_SIZE,
-            polling_period: DEFAULT_POLLING_PERIOD,
+            polling_interval: DEFAULT_POLLING_INTERVAL,
         }
     }
 
@@ -261,6 +259,7 @@ impl TaskLogger {
             .try_fold(initial_state, |context, _i| async {
                 match context.state {
                     LoopState::Send { start, count } => {
+                        println!("*** Sending start {} count {} ", start, count);
                         match context
                             .log_writer
                             .write_logs(&context.pending_logs[start..start + count])
@@ -269,18 +268,17 @@ impl TaskLogger {
                             WriteLogResponse::Success => {
                                 if start + count >= context.pending_logs.len() {
                                     Result::<_, anyhow::Error>::Ok(LoopContext {
-                                        // log_writer: context.log_writer,
                                         pending_logs: vec![],
                                         state: LoopState::Receive,
                                         ..context
                                     })
                                 } else {
+                                    let new_start = start + 1;
+                                    let new_count = context.pending_logs.len() - new_start;
                                     Result::<_, anyhow::Error>::Ok(LoopContext {
-                                        // log_writer: context.log_writer,
-                                        pending_logs: vec![],
                                         state: LoopState::Send {
-                                            start: start + count,
-                                            count: context.pending_logs.len() - start - count,
+                                            start: new_start,
+                                            count: new_count,
                                         },
                                         ..context
                                     })
@@ -289,12 +287,12 @@ impl TaskLogger {
 
                             WriteLogResponse::MaxSizeReached => {
                                 Result::<_, anyhow::Error>::Ok(LoopContext {
-                                    state: LoopState::InitLog,
+                                    state: LoopState::InitLog { start, count },
                                     ..context
                                 })
                             }
                             WriteLogResponse::MessageTooLarge => {
-                                // slit the logs here
+                                // split the logs here
                                 Result::<_, anyhow::Error>::Ok(LoopContext {
                                     state: LoopState::Send {
                                         start,
@@ -305,61 +303,46 @@ impl TaskLogger {
                             }
                         }
                     }
-                    LoopState::InitLog => {
+                    LoopState::InitLog { start, count } => {
                         let new_writer = context.log_writer.get_next_writer().await?;
                         Result::<_, anyhow::Error>::Ok(LoopContext {
                             log_writer: new_writer,
-                            state: if context.pending_logs.is_empty() {
-                                LoopState::Receive
-                            } else {
-                                LoopState::Send {
-                                    start: 0,
-                                    count: context.pending_logs.len(),
-                                }
-                            },
+                            state: LoopState::Send { start, count },
                             ..context
                         })
                     }
                     LoopState::Receive => {
                         let mut event = context.event;
+                        let mut data = Vec::with_capacity(self.log_buffer_size);
+                        let now = tokio::time::Instant::now();
                         loop {
-                            let mut data = Vec::with_capacity(self.log_buffer_size);
-                            let now = tokio::time::Instant::now();
-                            loop {
-                                if data.len() >= self.log_buffer_size {
-                                    break;
-                                }
-
-                                if tokio::time::Instant::now() - now > self.logging_period {
-                                    break;
-                                }
-
-                                if let Ok(v) = event.try_recv() {
-                                    data.push(v);
-                                } else {
-                                    tokio::time::sleep(self.polling_period).await;
-                                }
+                            if data.len() >= self.log_buffer_size {
+                                break;
                             }
 
-                            if !data.is_empty() {
-                                return Result::<_, anyhow::Error>::Ok(LoopContext {
-                                    state: LoopState::Send {
-                                        start: 0,
-                                        count: data.len(),
-                                    },
-                                    pending_logs: data,
-                                    event,
-                                    ..context
-                                });
+                            if tokio::time::Instant::now() - now > self.logging_interval {
+                                break;
                             }
-                            // else {
-                            //     Result::<_, anyhow::Error>::Ok(LoopContext {
-                            //         log_writer: context.log_writer,
-                            //         state: LoopState2::Send{start: 0, count: data.len()},
-                            //         pending_logs: context.pending_logs,
-                            //     })
 
-                            // }
+                            if let Ok(v) = event.try_recv() {
+                                data.push(v);
+                            } else {
+                                tokio::time::sleep(self.polling_interval).await;
+                            }
+                        }
+
+                        if !data.is_empty() {
+                            return Result::<_, anyhow::Error>::Ok(LoopContext {
+                                state: LoopState::Send {
+                                    start: 0,
+                                    count: data.len(),
+                                },
+                                pending_logs: data,
+                                event,
+                                ..context
+                            });
+                        } else {
+                            Result::<_, anyhow::Error>::Ok(LoopContext { event, ..context })
                         }
                     }
                 }
@@ -449,6 +432,8 @@ mod tests {
             let entry = &mut *events.entry(self.id).or_insert(Vec::new());
             if entry.len() >= self.max_size {
                 Ok(WriteLogResponse::MaxSizeReached)
+            } else if logs.len() > 1 {
+                Ok(WriteLogResponse::MessageTooLarge)
             } else {
                 for v in logs {
                     println!("***** current id {:?}", self.id);
@@ -459,9 +444,7 @@ mod tests {
             }
         }
         async fn get_next_writer(&self) -> Result<Box<dyn LogWriter<TestLogWriter>>> {
-            //let events = self.events.get_mut().unwrap();
             println!("***** get_next_writer");
-            // let events = self.events.read().unwrap();
             Ok(Box::new(Self {
                 events: self.events.clone(),
                 id: self.id + 1,
@@ -471,7 +454,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_task_logger() -> Result<()> {
+    async fn test_task_logger_normal_messages() -> Result<()> {
         let events = Arc::new(RwLock::new(HashMap::new()));
         let log_writer = Box::new(TestLogWriter {
             id: 0,
@@ -479,15 +462,13 @@ mod tests {
             max_size: 1,
         });
 
-        // let events = log_writer.events.clone();
-
         let blob_logger = TaskLogger {
             job_id: Uuid::new_v4(),
             task_id: Uuid::new_v4(),
             machine_id: Uuid::new_v4(),
-            logging_period: Duration::from_secs(1),
+            logging_interval: Duration::from_secs(1),
             log_buffer_size: 1,
-            polling_period: Duration::from_secs(1),
+            polling_interval: Duration::from_secs(1),
         };
 
         let (tx, rx) = tokio::sync::broadcast::channel(16);
@@ -509,7 +490,48 @@ mod tests {
             }
         }
 
-        assert_eq!(x.keys().len(), 5, "failed ******");
+        assert_eq!(x.keys().len(), 5, "expected 5 groups of messages");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_task_logger_big_messages() -> Result<()> {
+        let events = Arc::new(RwLock::new(HashMap::new()));
+        let log_writer = Box::new(TestLogWriter {
+            id: 0,
+            events: events.clone(),
+            max_size: 2,
+        });
+
+        let blob_logger = TaskLogger {
+            job_id: Uuid::new_v4(),
+            task_id: Uuid::new_v4(),
+            machine_id: Uuid::new_v4(),
+            logging_interval: Duration::from_secs(3),
+            log_buffer_size: 2,
+            polling_interval: Duration::from_secs(1),
+        };
+
+        let (tx, rx) = tokio::sync::broadcast::channel(16);
+        tx.send(LogEvent::Trace((log::Level::Info, "test1".into())))?;
+        tx.send(LogEvent::Trace((log::Level::Info, "test2".into())))?;
+        tx.send(LogEvent::Trace((log::Level::Info, "test3".into())))?;
+        tx.send(LogEvent::Trace((log::Level::Info, "test4".into())))?;
+        tx.send(LogEvent::Trace((log::Level::Info, "test5".into())))?;
+
+        let _res =
+            tokio::time::timeout(Duration::from_secs(15), blob_logger._start(rx, log_writer)).await;
+
+        let x = events.read().unwrap();
+
+        for (k, values) in x.iter() {
+            println!("{}", k);
+            for v in values {
+                println!(" {:?}", v);
+            }
+        }
+
+        assert_eq!(x.keys().len(), 3, "expected 3 groups of messages");
         Ok(())
     }
 
@@ -588,5 +610,11 @@ mod tests {
         );
 
         Ok(())
+    }
+
+    #[test]
+    fn simple_test() {
+        let data = vec![1, 2, 3, 4, 5];
+        print!("{:?}", &[0..6]);
     }
 }
