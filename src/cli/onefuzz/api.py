@@ -1357,6 +1357,11 @@ class Scaleset(Endpoint):
         spot_instances: bool = False,
         ephemeral_os_disks: bool = False,
         tags: Optional[Dict[str, str]] = None,
+        min_instances: Optional[int] = 1,
+        scale_out_amount: Optional[int] = 1,
+        scale_out_cooldown: Optional[int] = 10,
+        scale_in_amount: Optional[int] = 1,
+        scale_in_cooldown: Optional[int] = 15,
     ) -> models.Scaleset:
         self.logger.debug("create scaleset")
 
@@ -1372,6 +1377,16 @@ class Scaleset(Endpoint):
             else:
                 raise NotImplementedError
 
+        auto_scale = requests.AutoScaleOptions(
+            min=min_instances,
+            max=size,
+            default=size,
+            scale_out_amount=scale_out_amount,
+            scale_out_cooldown=scale_out_cooldown,
+            scale_in_amount=scale_in_amount,
+            scale_in_cooldown=scale_in_cooldown,
+        )
+
         return self._req_model(
             "POST",
             models.Scaleset,
@@ -1384,6 +1399,7 @@ class Scaleset(Endpoint):
                 spot_instances=spot_instances,
                 ephemeral_os_disks=ephemeral_os_disks,
                 tags=tags,
+                auto_scale=auto_scale,
             ),
         )
 
