@@ -8,6 +8,24 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use xml::writer::{EmitterConfig, XmlEvent};
 
+// Will compute line values overall and for each file (package and class)
+pub fn compute_line_values(files: Vec<SourceFileCoverage>) -> Vec<u32> {
+    let mut line_values: Vec<u32> = Vec::new();
+    let mut valid_lines = 0;
+    let mut hit_lines = 0;
+    for file in files {
+        let locations = file.locations;
+        for location in locations {
+            valid_lines += 1;
+            if &location.count > &0 {
+                hit_lines += 1;
+            }
+        }
+    }
+    line_values.push(valid_lines);
+    line_values.push(hit_lines);
+    return line_values;
+}
 pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     let mut backing: Vec<u8> = Vec::new();
     let mut emitter = EmitterConfig::new()
@@ -19,31 +37,19 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         .context("system time before unix epoch")?
         .as_secs();
 
-    // compute line rate, lines-covered, lines-valid by summing total lines and summing lines that have at least 1 hit, will do this for overall, and for each file (package and class in this case)
-    let mut total_valid_lines = 0;
-    let mut total_hit_lines = 0;
-    let mut total_line_rate = 0_f32;
     let copy_source_coverage = source_coverage.clone();
-    let coverage_files = source_coverage.files;
-    for file in coverage_files {
-        let locations = file.locations;
-        for location in locations {
-            total_valid_lines += 1;
-            if &location.count > &0 {
-                total_hit_lines += 1;
-            }
-        }
-    }
-    if total_valid_lines > 0 {
-        total_line_rate = total_hit_lines as f32 / total_valid_lines as f32;
+    let line_values = compute_line_values(source_coverage.files);
+    let mut line_rate = 0_f32;
+    if line_values[1] > 0 {
+        line_rate = line_values[1] as f32 / line_values[0] as f32;
     }
 
     emitter.write(
         XmlEvent::start_element("coverage")
-            .attr("line-rate", &format!("{:.02}", total_line_rate))
+            .attr("line-rate", &format!("{:.02}", line_rate))
             .attr("branch-rate", "0")
-            .attr("lines-covered", &format!("{}", total_hit_lines))
-            .attr("lines-valid", &format!("{}", total_valid_lines))
+            .attr("lines-covered", &format!("{}", line_values[1]))
+            .attr("lines-valid", &format!("{}", line_values[0]))
             .attr("branches-covered", "0")
             .attr("branches-valid", "0")
             .attr("complexity", "0")
@@ -52,7 +58,7 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     )?;
 
     emitter.write(XmlEvent::start_element("packages"))?;
-    // loop through files, path (excluding file name) will be package name for better results with ReportGenerator
+    //path (excluding file name) will be package name for better results with ReportGenerator
     let package_files = copy_source_coverage.files;
     let mut package_valid_lines = 0;
     let mut package_hit_lines = 0;
@@ -258,7 +264,7 @@ mod tests {
         _emitter_test.write(XmlEvent::end_element())?; // coverage
 
         assert_eq!(source_coverage_result?, String::from_utf8(backing_test)?);
-        
+
         Ok(())
     }
 }
