@@ -85,8 +85,7 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     for file in package_files {
         let copy_file = file.clone();
         let package_line_rate = compute_line_values_package(file.clone());
-        let full_path_file = Path::new(&file.file);
-        let path = full_path_file.parent().unwrap();
+        let path = Path::new(&file.file).parent().expect("No parent of path.");
         emitter.write(
             XmlEvent::start_element("package")
                 .attr("name", &path.display().to_string())
