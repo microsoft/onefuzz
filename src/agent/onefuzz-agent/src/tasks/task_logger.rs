@@ -226,15 +226,12 @@ impl TaskLogger {
     fn create_container_client(log_container: &Url) -> Result<Arc<ContainerClient>> {
         let account = log_container
             .domain()
-            .unwrap()
-            .split('.')
-            .next()
+            .and_then(|d| d.split('.').next())
             .ok_or(anyhow!("Invalid log container"))?
             .to_owned();
         let container = log_container
             .path_segments()
-            .unwrap()
-            .next()
+            .and_then(|mut ps| ps.next())
             .ok_or(anyhow!("Invalid log container"))?
             .to_owned();
         let sas_token = log_container
