@@ -27,6 +27,7 @@ struct RequestError {
     message: String,
 }
 
+#[derive(PartialEq, Debug)]
 enum WriteLogResponse {
     Success,
     MessageTooLarge,
@@ -42,7 +43,6 @@ trait LogWriter<T>: Send + Sync {
 
 pub struct BlobLogWriter {
     container_client: Arc<ContainerClient>,
-    job_id: Uuid,
     task_id: Uuid,
     machine_id: Uuid,
     blob_id: usize,
@@ -51,11 +51,10 @@ pub struct BlobLogWriter {
 
 impl BlobLogWriter {
     fn get_blob_name(&self) -> String {
-        format!("{}/{}/{}", self.task_id, self.machine_id, self.blob_id)
+        format!("{}/{}/{}.log", self.task_id, self.machine_id, self.blob_id)
     }
 
     pub async fn create(
-        job_id: Uuid,
         task_id: Uuid,
         machine_id: Uuid,
         log_container: Url,
@@ -106,7 +105,6 @@ impl BlobLogWriter {
 
         Ok(Self {
             container_client,
-            job_id,
             task_id,
             machine_id,
             blob_id,
@@ -119,6 +117,7 @@ impl BlobLogWriter {
 impl LogWriter<BlobLogWriter> for BlobLogWriter {
     async fn write_logs(&self, logs: &[LogEvent]) -> Result<WriteLogResponse> {
         let blob_name = self.get_blob_name();
+        print!("{}", blob_name);
         let blob_client = self.container_client.as_blob_client(blob_name);
         let data_stream = logs
             .iter()
@@ -143,46 +142,33 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
             .append_block(data_stream)
             .condition_max_size(self.max_log_size)
             .execute()
-            .await
-            .map_err(|e| anyhow!(e.to_string()));
+            .await;
+        //.map_err(|e| anyhow!(e.to_string()));
 
         match result {
             Ok(_r) => Ok(WriteLogResponse::Success),
-            Err(e) => {
-                let zz = Arc::new(e.source());
-                match zz.map(|e| e.downcast_ref::<HttpError>().unwrap()) {
-                    Some(HttpError::StatusCode { status: s, body: b }) => {
-                        // StatusCode::PRECONDITION_FAILED
-                        // StatusCode::CONFLICT
-                        if let Ok(RequestError { code, message: _ }) = serde_xml_rs::from_str(b) {
-                            if s == &StatusCode::PRECONDITION_FAILED
-                                && code == "MaxBlobSizeConditionNotMet"
-                            {
-                                return Ok(WriteLogResponse::MaxSizeReached);
-                            } else if s == &StatusCode::CONFLICT && code == "BlockCountExceedsLimit"
-                            {
-                                return Ok(WriteLogResponse::MaxSizeReached);
-                            } else if s == &StatusCode::PAYLOAD_TOO_LARGE {
-                                return Ok(WriteLogResponse::MessageTooLarge);
-                            } else {
-                                return Err(e);
-                            }
-                        } else {
-                            return Err(e);
-                        }
-
-                        // The log is too large, so we need to split it up
+            Err(e) => match e.downcast_ref::<HttpError>() {
+                Some(HttpError::StatusCode { status: s, body: b }) => {
+                    if s == &StatusCode::PRECONDITION_FAILED
+                        && b.contains("MaxBlobSizeConditionNotMet")
+                    {
+                        Ok(WriteLogResponse::MaxSizeReached)
+                    } else if s == &StatusCode::CONFLICT && b.contains("BlockCountExceedsLimit") {
+                        Ok(WriteLogResponse::MaxSizeReached)
+                    } else if s == &StatusCode::PAYLOAD_TOO_LARGE {
+                        Ok(WriteLogResponse::MessageTooLarge)
+                    } else {
+                        Err(anyhow!(e.to_string()))
                     }
-                    _ => return Err(e),
                 }
-            }
+                _ => Err(anyhow!(e.to_string())),
+            },
         }
     }
     async fn get_next_writer(&self) -> Result<Box<dyn LogWriter<BlobLogWriter>>> {
         let new_writer = Self {
             blob_id: self.blob_id + 1,
             container_client: self.container_client.clone(),
-            job_id: self.job_id,
             task_id: self.task_id,
             machine_id: self.machine_id,
             max_log_size: self.max_log_size,
@@ -387,14 +373,9 @@ impl TaskLogger {
     }
 
     pub async fn start(&self, event: Receiver<LogEvent>, log_container: Url) -> Result<()> {
-        let blob_writer = BlobLogWriter::create(
-            self.job_id,
-            self.task_id,
-            self.machine_id,
-            log_container,
-            MAX_LOG_SIZE,
-        )
-        .await?;
+        let blob_writer =
+            BlobLogWriter::create(self.task_id, self.machine_id, log_container, MAX_LOG_SIZE)
+                .await?;
 
         self._start(event, Box::new(blob_writer)).await
     }
@@ -493,8 +474,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
-    async fn test() -> Result<()> {
+    async fn test_task_logger() -> Result<()> {
         let events = Arc::new(RwLock::new(HashMap::new()));
         let log_writer = Box::new(TestLogWriter {
             id: 0,
@@ -510,7 +490,6 @@ mod tests {
             machine_id: Uuid::new_v4(),
             logging_period: Duration::from_secs(1),
             log_buffer_size: 1,
-            // max_log_size: 1,
             polling_period: Duration::from_secs(1),
         };
 
@@ -534,6 +513,83 @@ mod tests {
         }
 
         assert_eq!(x.keys().len(), 5, "failed ******");
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_blob_writer_create() -> Result<()> {
+        let url = std::env::var("test_blob_logger_container")?;
+        let blob_writer =
+            BlobLogWriter::create(Uuid::new_v4(), Uuid::new_v4(), Url::parse(&url)?, 15).await?;
+
+        let blob_prefix = format!("{}/{}", blob_writer.task_id, blob_writer.machine_id);
+
+        print!("blob prefix {}", &blob_prefix);
+
+        let container_client = blob_writer.container_client.clone();
+
+        let blobs = container_client
+            .list_blobs()
+            .prefix(blob_prefix.clone())
+            .execute()
+            .await
+            .map_err(|e| anyhow!(e.to_string()))?;
+
+        // test initial blobl creation
+        assert_eq!(blobs.blobs.blobs.len(), 1, "expected exactly one blob");
+        assert_eq!(
+            blobs.blobs.blobs[0].name,
+            format!("{}/1.log", &blob_prefix),
+            "Wrong file name"
+        );
+        println!("logging test event");
+        let result = blob_writer
+            .write_logs(&[LogEvent::Trace((log::Level::Info, "test".into()))])
+            .await
+            .map_err(|e| anyhow!(e.to_string()))?;
+
+        assert_eq!(result, WriteLogResponse::Success, "expected success");
+
+        let result = blob_writer
+            .write_logs(&[LogEvent::Trace((log::Level::Info, "test".into()))])
+            .await
+            .map_err(|e| anyhow!(e.to_string()))?;
+
+        assert_eq!(
+            result,
+            WriteLogResponse::MaxSizeReached,
+            "expected MaxSizeReached"
+        );
+
+        let blob_writer = blob_writer.get_next_writer().await?;
+
+        // let result = new_writer
+        //     .write_logs(&[LogEvent::Trace((log::Level::Info, "test".into()))])
+        //     .await
+        //     .map_err(|e| anyhow!(e.to_string()))?;
+
+        let blobs = container_client
+            .list_blobs()
+            .prefix(blob_prefix.clone())
+            .execute()
+            .await
+            .map_err(|e| anyhow!(e.to_string()))?;
+
+        // test initial blobl creation
+        assert_eq!(blobs.blobs.blobs.len(), 2, "expected exactly 2 blob");
+        let blob_names = blobs
+            .blobs
+            .blobs
+            .iter()
+            .map(|b| b.name.clone())
+            .collect::<Vec<_>>();
+
+        assert!(
+            blob_names.contains(&format!("{}/2.log", &blob_prefix)),
+            "expected 2.log"
+        );
+
         Ok(())
     }
 }
