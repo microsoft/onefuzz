@@ -215,6 +215,7 @@ class ContainerType(Enum):
     unique_inputs = "unique_inputs"
     unique_reports = "unique_reports"
     regression_reports = "regression_reports"
+    logs = "logs"
 
     @classmethod
     def reset_defaults(cls) -> List["ContainerType"]:
@@ -266,6 +267,7 @@ class ErrorCode(Enum):
     UNABLE_TO_UPDATE = 471
     PROXY_FAILED = 472
     INVALID_CONFIGURATION = 473
+    UNABLE_TO_CREATE_CONTAINER = 474
 
 
 class HeartbeatType(Enum):

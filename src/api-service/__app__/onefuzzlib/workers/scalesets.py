@@ -22,6 +22,7 @@ from onefuzztypes.events import (
     EventScalesetResizeScheduled,
     EventScalesetStateUpdated,
 )
+from onefuzztypes.models import AutoScale as BASE_AUTOSCALE
 from onefuzztypes.models import Error
 from onefuzztypes.models import Scaleset as BASE_SCALESET
 from onefuzztypes.models import ScalesetNodeState
@@ -29,7 +30,11 @@ from onefuzztypes.primitives import PoolName, Region
 
 from ..__version__ import __version__
 from ..azure.auth import build_auth
-from ..azure.auto_scale import add_auto_scale_to_vmss, create_auto_scale_profile
+from ..azure.auto_scale import (
+    add_auto_scale_to_vmss,
+    create_auto_scale_profile,
+    default_auto_scale_profile,
+)
 from ..azure.image import get_os
 from ..azure.network import Network
 from ..azure.queue import get_resource_id
@@ -104,6 +109,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             tags=tags,
         )
         entry.save()
+
         send_event(
             EventScalesetCreated(
                 scaleset_id=entry.scaleset_id,
@@ -874,8 +880,67 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.error(capacity_failed)
             return capacity_failed
 
-        auto_scale_profile = create_auto_scale_profile(
-            capacity, capacity, pool_queue_uri
-        )
+        auto_scale_config = AutoScale.get_settings_for_scaleset(self.scaleset_id)
+        if auto_scale_config is None:
+            auto_scale_profile = default_auto_scale_profile(pool_queue_uri, capacity)
+        else:
+            logging.error("Using existing auto scale settings from database")
+            auto_scale_profile = create_auto_scale_profile(
+                pool_queue_uri,
+                auto_scale_config.min,
+                auto_scale_config.max,
+                auto_scale_config.default,
+                auto_scale_config.scale_out_amount,
+                auto_scale_config.scale_out_cooldown,
+                auto_scale_config.scale_in_amount,
+                auto_scale_config.scale_in_cooldown,
+            )
         logging.info("Added auto scale resource to scaleset: %s" % self.scaleset_id)
         return add_auto_scale_to_vmss(self.scaleset_id, auto_scale_profile)
+
+
+class AutoScale(BASE_AUTOSCALE, ORMMixin):
+    @classmethod
+    def create(
+        cls,
+        *,
+        scaleset_id: UUID,
+        min: int,
+        max: int,
+        default: int,
+        scale_out_amount: int,
+        scale_out_cooldown: int,
+        scale_in_amount: int,
+        scale_in_cooldown: int,
+    ) -> "AutoScale":
+        entry = cls(
+            scaleset_id=scaleset_id,
+            min=min,
+            max=max,
+            default=default,
+            scale_out_amount=scale_out_amount,
+            scale_out_cooldown=scale_out_cooldown,
+            scale_in_amount=scale_in_amount,
+            scale_in_cooldown=scale_in_cooldown,
+        )
+        entry.save()
+        return entry
+
+    @classmethod
+    def get_settings_for_scaleset(cls, scaleset_id: UUID) -> Union["AutoScale", None]:
+        autoscale = cls.search(query={"scaleset_id": [scaleset_id]})
+        if not autoscale:
+            logging.info(
+                "Could not find any auto scale settings for scaleset %s" % scaleset_id
+            )
+            return None
+        if len(autoscale) != 1:
+            logging.info(
+                "Found more than one autoscaling setting for scaleset %s" % scaleset_id
+            )
+
+        return autoscale[0]
+
+    @classmethod
+    def key_fields(cls) -> Tuple[str, None]:
+        return ("scaleset_id", None)

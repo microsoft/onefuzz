@@ -184,7 +184,23 @@ def update_scale_in_protection(
         compute_client.virtual_machine_scale_set_vms.begin_update(
             resource_group, name, instance_id, instance_vm
         )
-    except (ResourceNotFoundError, CloudError):
+    except (ResourceNotFoundError, CloudError, HttpResponseError) as err:
+        if isinstance(err, HttpResponseError):
+            err_str = str(err)
+            instance_not_found = (
+                " is not an active Virtual Machine Scale Set VM instanceId."
+            )
+            if (
+                instance_not_found in err_str
+                and instance_vm.protection_policy.protect_from_scale_in is False
+                and protect_from_scale_in
+                == instance_vm.protection_policy.protect_from_scale_in
+            ):
+                logging.info(
+                    "Tried to remove scale in protection on node %s but the instance no longer exists"  # noqa: E501
+                    % instance_id
+                )
+                return None
         return Error(
             code=ErrorCode.UNABLE_TO_UPDATE,
             errors=["unable to set protection policy on: %s:%s" % (vm_id, instance_id)],
