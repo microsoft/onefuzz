@@ -26,6 +26,15 @@ pub fn compute_line_values(files: Vec<SourceFileCoverage>) -> Vec<u32> {
     line_values.push(hit_lines);
     return line_values;
 }
+
+pub fn compute_line_rate(line_values: Vec<u32>) -> f32 {
+    let mut line_rate = 0_f32;
+    if line_values[1] > 0 {
+        line_rate = line_values[1] as f32 / line_values[0] as f32;
+    }
+    return line_rate;
+}
+
 pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     let mut backing: Vec<u8> = Vec::new();
     let mut emitter = EmitterConfig::new()
@@ -39,11 +48,7 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
 
     let copy_source_coverage = source_coverage.clone();
     let line_values = compute_line_values(source_coverage.files);
-    let mut line_rate = 0_f32;
-    if line_values[1] > 0 {
-        line_rate = line_values[1] as f32 / line_values[0] as f32;
-    }
-
+    let line_rate = compute_line_rate(line_values.clone());
     emitter.write(
         XmlEvent::start_element("coverage")
             .attr("line-rate", &format!("{:.02}", line_rate))
