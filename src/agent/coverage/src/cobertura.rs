@@ -94,10 +94,22 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     // class name will be full file path and name
     for file in &source_coverage.files {
         let package_line_values = compute_line_values_package(file);
-        let path = Path::new(&file.file).parent().expect("No parent of path.");
+        let path = Path::new(&file.file);
+        let full_file_path = &file.file;
+        let mut parent_path = Path::new("Invalid file format");
+        let _file_check = path.file_name();
+        if let Some(_file_check) = path.file_name() {
+            parent_path = path.parent().unwrap();
+        } else {
+            continue;
+        }
+        //     let message: String = "Invalid file format".to_string();
+        //     full_file_path = &message;
+        // }
+
         emitter.write(
             XmlEvent::start_element("package")
-                .attr("name", &path.display().to_string())
+                .attr("name", &parent_path.display().to_string())
                 .attr(
                     "line-rate",
                     &format!("{:.02}", package_line_values.line_rate),
@@ -108,8 +120,8 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         emitter.write(XmlEvent::start_element("classes"))?;
         emitter.write(
             XmlEvent::start_element("class")
-                .attr("name", &file.file)
-                .attr("filename", &file.file)
+                .attr("name", &full_file_path)
+                .attr("filename", &full_file_path)
                 .attr(
                     "line-rate",
                     &format!("{:.02}", package_line_values.line_rate),
