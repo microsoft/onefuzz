@@ -217,54 +217,6 @@ impl Config {
         self.report_event();
 
         let common = self.common().clone();
-        let task = tokio::spawn(async move {
-            match self {
-                #[cfg(any(target_os = "linux", target_os = "windows"))]
-                Config::Coverage(config) => {
-                    coverage::generic::CoverageTask::new(config).run().await
-                }
-                Config::LibFuzzerFuzz(config) => {
-                    fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
-                        .run()
-                        .await
-                }
-                Config::LibFuzzerReport(config) => {
-                    report::libfuzzer_report::ReportTask::new(config)
-                        .managed_run()
-                        .await
-                }
-                #[cfg(any(target_os = "linux", target_os = "windows"))]
-                Config::LibFuzzerCoverage(config) => {
-                    coverage::libfuzzer_coverage::CoverageTask::new(config)
-                        .managed_run()
-                        .await
-                }
-                Config::LibFuzzerMerge(config) => {
-                    merge::libfuzzer_merge::spawn(Arc::new(config)).await
-                }
-                Config::GenericAnalysis(config) => analysis::generic::run(config).await,
-
-                Config::GenericGenerator(config) => {
-                    fuzz::generator::GeneratorTask::new(config).run().await
-                }
-                Config::GenericSupervisor(config) => fuzz::supervisor::spawn(config).await,
-                Config::GenericMerge(config) => merge::generic::spawn(Arc::new(config)).await,
-                Config::GenericReport(config) => {
-                    report::generic::ReportTask::new(config).managed_run().await
-                }
-                Config::GenericRegression(config) => {
-                    regression::generic::GenericRegressionTask::new(config)
-                        .run()
-                        .await
-                }
-                Config::LibFuzzerRegression(config) => {
-                    regression::libfuzzer::LibFuzzerRegressionTask::new(config)
-                        .run()
-                        .await
-                }
-            }
-        });
-
         if let Some(logs) = common.logs.clone() {
             let rx = onefuzz_telemetry::subscribe_to_events();
 
@@ -277,6 +229,47 @@ impl Config {
                 logger.start(rx, logs).await
             });
         }
-        task.await?
+
+        match self {
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
+            Config::Coverage(config) => coverage::generic::CoverageTask::new(config).run().await,
+            Config::LibFuzzerFuzz(config) => {
+                fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
+                    .run()
+                    .await
+            }
+            Config::LibFuzzerReport(config) => {
+                report::libfuzzer_report::ReportTask::new(config)
+                    .managed_run()
+                    .await
+            }
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
+            Config::LibFuzzerCoverage(config) => {
+                coverage::libfuzzer_coverage::CoverageTask::new(config)
+                    .managed_run()
+                    .await
+            }
+            Config::LibFuzzerMerge(config) => merge::libfuzzer_merge::spawn(Arc::new(config)).await,
+            Config::GenericAnalysis(config) => analysis::generic::run(config).await,
+
+            Config::GenericGenerator(config) => {
+                fuzz::generator::GeneratorTask::new(config).run().await
+            }
+            Config::GenericSupervisor(config) => fuzz::supervisor::spawn(config).await,
+            Config::GenericMerge(config) => merge::generic::spawn(Arc::new(config)).await,
+            Config::GenericReport(config) => {
+                report::generic::ReportTask::new(config).managed_run().await
+            }
+            Config::GenericRegression(config) => {
+                regression::generic::GenericRegressionTask::new(config)
+                    .run()
+                    .await
+            }
+            Config::LibFuzzerRegression(config) => {
+                regression::libfuzzer::LibFuzzerRegressionTask::new(config)
+                    .run()
+                    .await
+            }
+        }
     }
 }
