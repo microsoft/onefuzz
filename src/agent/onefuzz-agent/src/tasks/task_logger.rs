@@ -30,7 +30,9 @@ struct RequestError {
 #[derive(PartialEq, Debug)]
 enum WriteLogResponse {
     Success,
+    /// The message needs to be split into multiple parts.
     MessageTooLarge,
+    /// the log file is full we need a new file
     MaxSizeReached,
 }
 
@@ -38,9 +40,11 @@ enum WriteLogResponse {
 #[async_trait]
 trait LogWriter<T>: Send + Sync {
     async fn write_logs(&self, logs: &[LogEvent]) -> Result<WriteLogResponse>;
+    /// creates a new blob file and returns the logWriter associated with it
     async fn get_next_writer(&self) -> Result<Box<dyn LogWriter<T>>>;
 }
 
+/// Writes logs on azure blobs
 pub struct BlobLogWriter {
     container_client: Arc<ContainerClient>,
     task_id: Uuid,
@@ -254,12 +258,11 @@ impl TaskLogger {
             event,
         };
 
-        let _loop_result = futures::stream::repeat(123)
+        let _loop_result = futures::stream::repeat(0)
             .map(Ok)
-            .try_fold(initial_state, |context, _i| async {
+            .try_fold(initial_state, |context, _| async {
                 match context.state {
                     LoopState::Send { start, count } => {
-                        println!("*** Sending start {} count {} ", start, count);
                         match context
                             .log_writer
                             .write_logs(&context.pending_logs[start..start + count])
@@ -379,7 +382,7 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
-    async fn test_stream() -> Result<()> {
+    async fn test_get_blob() -> Result<()> {
         let url = std::env::var("test_blob_logger_container")?;
         let log_container = Url::parse(&url)?;
         let client = TaskLogger::create_container_client(&log_container)?;
@@ -391,14 +394,10 @@ mod tests {
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 
-        println!("********************");
         println!("blob prefix {:?}", response.blobs.blob_prefix);
-
         for blob in response.blobs.blobs {
             println!("{}", blob.name);
         }
-        println!("********************");
-
         Ok(())
     }
 
@@ -426,8 +425,6 @@ mod tests {
     #[async_trait]
     impl LogWriter<TestLogWriter> for TestLogWriter {
         async fn write_logs(&self, logs: &[LogEvent]) -> Result<WriteLogResponse> {
-            println!("***** write_logs");
-
             let mut events = self.events.write().unwrap();
             let entry = &mut *events.entry(self.id).or_insert(Vec::new());
             if entry.len() >= self.max_size {
@@ -436,15 +433,12 @@ mod tests {
                 Ok(WriteLogResponse::MessageTooLarge)
             } else {
                 for v in logs {
-                    println!("***** current id {:?}", self.id);
-                    println!("***** pushing value {:?}", v);
                     entry.push(v.clone());
                 }
                 Ok(WriteLogResponse::Success)
             }
         }
         async fn get_next_writer(&self) -> Result<Box<dyn LogWriter<TestLogWriter>>> {
-            println!("***** get_next_writer");
             Ok(Box::new(Self {
                 events: self.events.clone(),
                 id: self.id + 1,
@@ -555,7 +549,7 @@ mod tests {
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 
-        // test initial blobl creation
+        // test initial blob creation
         assert_eq!(blobs.blobs.blobs.len(), 1, "expected exactly one blob");
         assert_eq!(
             blobs.blobs.blobs[0].name,
@@ -570,6 +564,7 @@ mod tests {
 
         assert_eq!(result, WriteLogResponse::Success, "expected success");
 
+        // testing that we return MaxSizeReached when the size is exceeded
         let result = blob_writer
             .write_logs(&[LogEvent::Trace((log::Level::Info, "test".into()))])
             .await
@@ -581,12 +576,8 @@ mod tests {
             "expected MaxSizeReached"
         );
 
-        let blob_writer = blob_writer.get_next_writer().await?;
-
-        // let result = new_writer
-        //     .write_logs(&[LogEvent::Trace((log::Level::Info, "test".into()))])
-        //     .await
-        //     .map_err(|e| anyhow!(e.to_string()))?;
+        // testing the creation of new blob when we call get_next_writer()
+        let _blob_writer = blob_writer.get_next_writer().await?;
 
         let blobs = container_client
             .list_blobs()
@@ -595,7 +586,6 @@ mod tests {
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 
-        // test initial blobl creation
         assert_eq!(blobs.blobs.blobs.len(), 2, "expected exactly 2 blob");
         let blob_names = blobs
             .blobs
@@ -610,11 +600,5 @@ mod tests {
         );
 
         Ok(())
-    }
-
-    #[test]
-    fn simple_test() {
-        let data = vec![1, 2, 3, 4, 5];
-        print!("{:?}", &[0..6]);
     }
 }
