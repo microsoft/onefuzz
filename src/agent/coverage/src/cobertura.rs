@@ -7,16 +7,25 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use xml::writer::{EmitterConfig, XmlEvent};
 
-pub fn compute_line_rate(valid_lines: u64, hit_lines: u64) -> f64 {
-    let mut line_rate = 0_f64;
-    if valid_lines > 0 {
-        line_rate = hit_lines as f64 / valid_lines as f64;
-    }
-    line_rate
+pub struct LineValues {
+    pub valid_lines: u64,
+    pub hit_lines: u64,
+    pub line_rate: f64,
 }
 
-pub fn compute_line_values_coverage(files: Vec<SourceFileCoverage>) -> (Vec<u64>, f64) {
-    let mut line_values: Vec<u64> = Vec::new();
+impl LineValues {
+    pub fn new(valid_lines: u64, hit_lines: u64) -> Self {
+        let line_rate = if valid_lines == 0 {
+            0.0
+        } else {
+            (hit_lines as f64) / (valid_lines as f64)
+        };
+
+        Self {valid_lines, hit_lines, line_rate}
+    }
+}
+
+pub fn compute_line_values_coverage(files: Vec<SourceFileCoverage>) -> LineValues {
     let mut valid_lines = 0;
     let mut hit_lines = 0;
     for file in files {
@@ -28,10 +37,8 @@ pub fn compute_line_values_coverage(files: Vec<SourceFileCoverage>) -> (Vec<u64>
             }
         }
     }
-    line_values.push(valid_lines);
-    line_values.push(hit_lines);
-    let line_rate = compute_line_rate(valid_lines, hit_lines);
-    (line_values, line_rate)
+    let line_values = LineValues::new(valid_lines, hit_lines);
+    line_values
 }
 
 pub fn compute_line_values_package(file: SourceFileCoverage) -> f64 {
@@ -44,7 +51,8 @@ pub fn compute_line_values_package(file: SourceFileCoverage) -> f64 {
             hit_lines += 1;
         }
     }
-    compute_line_rate(valid_lines, hit_lines)
+    let line_rate = LineValues::new(valid_lines, hit_lines).line_rate;
+    line_rate
 }
 
 pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
@@ -63,10 +71,10 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
 
     emitter.write(
         XmlEvent::start_element("coverage")
-            .attr("line-rate", &format!("{:.02}", coverage_line_values.1))
+            .attr("line-rate", &format!("{:.02}", coverage_line_values.line_rate))
             .attr("branch-rate", "0")
-            .attr("lines-covered", &format!("{}", coverage_line_values.0[1]))
-            .attr("lines-valid", &format!("{}", coverage_line_values.0[0]))
+            .attr("lines-covered", &format!("{}", coverage_line_values.hit_lines))
+            .attr("lines-valid", &format!("{}", coverage_line_values.valid_lines))
             .attr("branches-covered", "0")
             .attr("branches-valid", "0")
             .attr("complexity", "0")
