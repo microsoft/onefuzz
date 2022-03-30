@@ -11,7 +11,7 @@ use crossterm::{
 use futures::{StreamExt, TryStreamExt};
 use log::Level;
 use onefuzz::utils::try_wait_all_join_handles;
-use onefuzz_telemetry::{self, EventData};
+use onefuzz_telemetry::{self, EventData, LogEvent};
 use std::{
     collections::HashMap,
     io::{self, Stdout},
@@ -233,13 +233,14 @@ impl TerminalUi {
 
         while cancellation_rx.try_recv() == Err(broadcast::error::TryRecvError::Empty) {
             match rx.try_recv() {
-                Ok((_event, data)) => {
+                Ok(LogEvent::Event((_event, data))) => {
                     let data = data
                         .into_iter()
                         .filter(Self::filter_event)
                         .collect::<Vec<_>>();
                     let _ = ui_event_tx.send(TerminalEvent::Telemetry(data));
                 }
+                Ok(_) => continue,
                 Err(TryRecvError::Empty) => sleep(EVENT_POLLING_PERIOD).await,
                 Err(TryRecvError::Lagged(_)) => continue,
                 Err(TryRecvError::Closed) => break,
