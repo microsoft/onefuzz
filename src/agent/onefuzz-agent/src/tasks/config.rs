@@ -206,7 +206,6 @@ impl Config {
         telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
         telemetry::set_property(EventData::InstanceId(self.common().instance_id));
         telemetry::set_property(EventData::Role(Role::Agent));
-        telemetry::set_property(EventData::Role(Role::Agent));
 
         let scaleset = get_scaleset_name().await?;
         if let Some(scaleset_name) = &scaleset {
