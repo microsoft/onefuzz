@@ -21,7 +21,11 @@ impl LineValues {
             (hit_lines as f64) / (valid_lines as f64)
         };
 
-        Self {valid_lines, hit_lines, line_rate}
+        Self {
+            valid_lines,
+            hit_lines,
+            line_rate,
+        }
     }
 }
 
@@ -65,10 +69,19 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
 
     emitter.write(
         XmlEvent::start_element("coverage")
-            .attr("line-rate", &format!("{:.02}", coverage_line_values.line_rate))
+            .attr(
+                "line-rate",
+                &format!("{:.02}", coverage_line_values.line_rate),
+            )
             .attr("branch-rate", "0")
-            .attr("lines-covered", &format!("{}", coverage_line_values.hit_lines))
-            .attr("lines-valid", &format!("{}", coverage_line_values.valid_lines))
+            .attr(
+                "lines-covered",
+                &format!("{}", coverage_line_values.hit_lines),
+            )
+            .attr(
+                "lines-valid",
+                &format!("{}", coverage_line_values.valid_lines),
+            )
             .attr("branches-covered", "0")
             .attr("branches-valid", "0")
             .attr("complexity", "0")
@@ -85,7 +98,10 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         emitter.write(
             XmlEvent::start_element("package")
                 .attr("name", &path.display().to_string())
-                .attr("line-rate", &format!("{:.02}", package_line_values.line_rate))
+                .attr(
+                    "line-rate",
+                    &format!("{:.02}", package_line_values.line_rate),
+                )
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
@@ -94,7 +110,10 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
             XmlEvent::start_element("class")
                 .attr("name", &file.file)
                 .attr("filename", &file.file)
-                .attr("line-rate", &format!("{:.02}", package_line_values.line_rate))
+                .attr(
+                    "line-rate",
+                    &format!("{:.02}", package_line_values.line_rate),
+                )
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
