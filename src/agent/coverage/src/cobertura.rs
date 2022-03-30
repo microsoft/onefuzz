@@ -1,5 +1,4 @@
 use crate::source::SourceCoverage;
-use crate::source::SourceCoverageLocation;
 use crate::source::SourceFileCoverage;
 use anyhow::Context;
 use anyhow::Error;
@@ -13,7 +12,7 @@ pub fn compute_line_rate(line_values: Vec<u32>) -> f32 {
     if line_values[1] > 0 {
         line_rate = line_values[1] as f32 / line_values[0] as f32;
     }
-    return line_rate;
+    line_rate
 }
 
 pub fn compute_line_values_coverage(files: Vec<SourceFileCoverage>) -> (Vec<u32>, f32) {
@@ -24,7 +23,7 @@ pub fn compute_line_values_coverage(files: Vec<SourceFileCoverage>) -> (Vec<u32>
         let locations = file.locations;
         for location in locations {
             valid_lines += 1;
-            if &location.count > &0 {
+            if location.count > 0 {
                 hit_lines += 1;
             }
         }
@@ -32,7 +31,7 @@ pub fn compute_line_values_coverage(files: Vec<SourceFileCoverage>) -> (Vec<u32>
     line_values.push(valid_lines);
     line_values.push(hit_lines);
     let line_rate = compute_line_rate(line_values.clone());
-    return (line_values, line_rate);
+    (line_values, line_rate)
 }
 
 pub fn compute_line_values_package(file: SourceFileCoverage) -> f32 {
@@ -42,14 +41,14 @@ pub fn compute_line_values_package(file: SourceFileCoverage) -> f32 {
     let locations = file.locations;
     for location in locations {
         valid_lines += 1;
-        if &location.count > &0 {
+        if location.count > 0 {
             hit_lines += 1;
         }
     }
     line_values.push(valid_lines);
     line_values.push(hit_lines);
     let line_rate = compute_line_rate(line_values);
-    return line_rate;
+    line_rate
 }
 
 pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
@@ -130,6 +129,7 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
 
 mod tests {
     use super::*;
+    use crate::source::SourceCoverageLocation;
     use anyhow::Result;
 
     #[test]
