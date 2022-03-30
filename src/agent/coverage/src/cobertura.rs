@@ -47,8 +47,7 @@ pub fn compute_line_values_package(file: SourceFileCoverage) -> f32 {
     }
     line_values.push(valid_lines);
     line_values.push(hit_lines);
-    let line_rate = compute_line_rate(line_values);
-    line_rate
+    compute_line_rate(line_values)
 }
 
 pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
