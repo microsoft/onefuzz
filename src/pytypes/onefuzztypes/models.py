@@ -120,6 +120,7 @@ class JobConfig(BaseModel):
     name: str
     build: str
     duration: int = Field(ge=ONE_HOUR, le=SEVEN_DAYS)
+    logs: Optional[str]
 
 
 class ReproConfig(BaseModel):
@@ -336,6 +337,7 @@ class AgentConfig(BaseModel):
 
 class TaskUnitConfig(BaseModel):
     instance_id: UUID
+    logs: str
     job_id: UUID
     task_id: UUID
     task_type: TaskType
@@ -659,6 +661,17 @@ class Scaleset(BaseModel):
     client_id: Optional[UUID]
     client_object_id: Optional[UUID]
     tags: Dict[str, str] = Field(default_factory=lambda: {})
+
+
+class AutoScale(BaseModel):
+    scaleset_id: UUID
+    min: int = Field(ge=1)
+    max: int = Field(ge=1)
+    default: int = Field(ge=1)
+    scale_out_amount: int = Field(ge=1)
+    scale_out_cooldown: int = Field(ge=1)
+    scale_in_amount: int = Field(ge=1)
+    scale_in_cooldown: int = Field(ge=1)
 
 
 class NotificationConfig(BaseModel):

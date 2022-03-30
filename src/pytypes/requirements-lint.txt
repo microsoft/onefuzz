@@ -4,5 +4,6 @@ pytest
 isort
 pydantic
 vulture
+click==8.0.4
 black
 bandit
