@@ -25,11 +25,11 @@ impl LineValues {
     }
 }
 
-pub fn compute_line_values_coverage(files: Vec<SourceFileCoverage>) -> LineValues {
+pub fn compute_line_values_coverage(files: &[SourceFileCoverage]) -> LineValues {
     let mut valid_lines = 0;
     let mut hit_lines = 0;
     for file in files {
-        let locations = file.locations;
+        let locations = &file.locations;
         for location in locations {
             valid_lines += 1;
             if location.count > 0 {
@@ -67,7 +67,7 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         .as_secs();
 
     let copy_source_coverage = source_coverage.clone();
-    let coverage_line_values = compute_line_values_coverage(source_coverage.files);
+    let coverage_line_values = compute_line_values_coverage(&(source_coverage.files).as_slice());
 
     emitter.write(
         XmlEvent::start_element("coverage")
