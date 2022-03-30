@@ -7,16 +7,16 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use xml::writer::{EmitterConfig, XmlEvent};
 
-pub fn compute_line_rate(line_values: Vec<u32>) -> f32 {
-    let mut line_rate = 0_f32;
-    if line_values[1] > 0 {
-        line_rate = line_values[1] as f32 / line_values[0] as f32;
+pub fn compute_line_rate(valid_lines: u64, hit_lines: u64) -> f64 {
+    let mut line_rate = 0_f64;
+    if valid_lines > 0 {
+        line_rate = hit_lines as f64 / valid_lines as f64;
     }
     line_rate
 }
 
-pub fn compute_line_values_coverage(files: Vec<SourceFileCoverage>) -> (Vec<u32>, f32) {
-    let mut line_values: Vec<u32> = Vec::new();
+pub fn compute_line_values_coverage(files: Vec<SourceFileCoverage>) -> (Vec<u64>, f64) {
+    let mut line_values: Vec<u64> = Vec::new();
     let mut valid_lines = 0;
     let mut hit_lines = 0;
     for file in files {
@@ -30,12 +30,11 @@ pub fn compute_line_values_coverage(files: Vec<SourceFileCoverage>) -> (Vec<u32>
     }
     line_values.push(valid_lines);
     line_values.push(hit_lines);
-    let line_rate = compute_line_rate(line_values.clone());
+    let line_rate = compute_line_rate(valid_lines, hit_lines);
     (line_values, line_rate)
 }
 
-pub fn compute_line_values_package(file: SourceFileCoverage) -> f32 {
-    let mut line_values: Vec<u32> = Vec::new();
+pub fn compute_line_values_package(file: SourceFileCoverage) -> f64 {
     let mut valid_lines = 0;
     let mut hit_lines = 0;
     let locations = file.locations;
@@ -45,9 +44,7 @@ pub fn compute_line_values_package(file: SourceFileCoverage) -> f32 {
             hit_lines += 1;
         }
     }
-    line_values.push(valid_lines);
-    line_values.push(hit_lines);
-    compute_line_rate(line_values)
+    compute_line_rate(valid_lines, hit_lines)
 }
 
 pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
