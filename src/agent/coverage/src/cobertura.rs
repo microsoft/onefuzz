@@ -25,34 +25,29 @@ impl LineValues {
     }
 }
 
+// compute line values (total) for coverage xml element
 pub fn compute_line_values_coverage(files: &[SourceFileCoverage]) -> LineValues {
     let mut valid_lines = 0;
     let mut hit_lines = 0;
     for file in files {
-        let locations = &file.locations;
-        for location in locations {
-            valid_lines += 1;
-            if location.count > 0 {
-                hit_lines += 1;
-            }
-        }
+        let file_line_values = compute_line_values_package(file);
+        valid_lines += file_line_values.valid_lines;
+        hit_lines += file_line_values.hit_lines;
     }
-    let line_values = LineValues::new(valid_lines, hit_lines);
-    line_values
+    LineValues::new(valid_lines, hit_lines)
 }
 
-pub fn compute_line_values_package(file: SourceFileCoverage) -> f64 {
+// compute line values for individual file package xml element
+pub fn compute_line_values_package(file: &SourceFileCoverage) -> LineValues {
     let mut valid_lines = 0;
     let mut hit_lines = 0;
-    let locations = file.locations;
-    for location in locations {
+    for location in &file.locations {
         valid_lines += 1;
         if location.count > 0 {
             hit_lines += 1;
         }
     }
-    let line_rate = LineValues::new(valid_lines, hit_lines).line_rate;
-    line_rate
+    LineValues::new(valid_lines, hit_lines)
 }
 
 pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
@@ -66,8 +61,7 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         .context("system time before unix epoch")?
         .as_secs();
 
-    let copy_source_coverage = source_coverage.clone();
-    let coverage_line_values = compute_line_values_coverage(&(source_coverage.files).as_slice());
+    let coverage_line_values = compute_line_values_coverage(&source_coverage.files);
 
     emitter.write(
         XmlEvent::start_element("coverage")
@@ -83,16 +77,15 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     )?;
 
     emitter.write(XmlEvent::start_element("packages"))?;
-    //path (excluding file name) will be package name for better results with ReportGenerator
-    let package_files = copy_source_coverage.files;
-    for file in package_files {
-        let copy_file = file.clone();
-        let package_line_rate = compute_line_values_package(file.clone());
+    // path (excluding file name) will be package name for better results with ReportGenerator
+    // class name will be full file path and name
+    for file in &source_coverage.files {
+        let package_line_values = compute_line_values_package(file);
         let path = Path::new(&file.file).parent().expect("No parent of path.");
         emitter.write(
             XmlEvent::start_element("package")
                 .attr("name", &path.display().to_string())
-                .attr("line-rate", &format!("{:.02}", package_line_rate))
+                .attr("line-rate", &format!("{:.02}", package_line_values.line_rate))
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
@@ -101,12 +94,12 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
             XmlEvent::start_element("class")
                 .attr("name", &file.file)
                 .attr("filename", &file.file)
-                .attr("line-rate", &format!("{:.02}", package_line_rate))
+                .attr("line-rate", &format!("{:.02}", package_line_values.line_rate))
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
         )?;
         emitter.write(XmlEvent::start_element("lines"))?;
-        let line_locations = copy_file.locations;
+        let line_locations = &file.locations;
         for location in line_locations {
             emitter.write(
                 XmlEvent::start_element("line")
