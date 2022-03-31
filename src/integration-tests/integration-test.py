@@ -27,13 +27,12 @@ from enum import Enum
 from shutil import which
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar
 from uuid import UUID, uuid4
-from build.lib.onefuzztypes.enums import ScalesetState
 
 import requests
 from onefuzz.api import Command, Onefuzz
 from onefuzz.backend import ContainerWrapper, wait
 from onefuzz.cli import execute_api
-from onefuzztypes.enums import OS, ContainerType, TaskState, VmState
+from onefuzztypes.enums import OS, ContainerType, TaskState, VmState, ScalesetState
 from onefuzztypes.models import Job, Pool, Repro, Scaleset, Task
 from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, Field
