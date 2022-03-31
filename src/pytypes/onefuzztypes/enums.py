@@ -325,7 +325,7 @@ class ScalesetState(Enum):
     @classmethod
     def available(cls) -> List["ScalesetState"]:
         """set of states that indicate if it's available for work"""
-        unavailable = [cls.shutdown, cls.halt, cls.creation_failed]
+        unavailable = [cls.shutdown, cls.halt, cls.creation_failed, cls.setup]
         return [x for x in cls if x not in unavailable]
 
     @classmethod
