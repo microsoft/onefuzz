@@ -24,7 +24,7 @@ var storageAccountFuncContainersParams = [
 ]
 
 var storageAccountFuncQueuesParams = [
-  'file-chages'
+  'file-changes'
   'task-heartbeat'
   'node-heartbeat'
   'proxy'
