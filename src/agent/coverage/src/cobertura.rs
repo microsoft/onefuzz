@@ -186,15 +186,15 @@ mod tests {
         let mut file_coverage_vec1: Vec<SourceFileCoverage> = Vec::new();
         file_coverage_vec1.push(SourceFileCoverage {
             locations: coverage_locations_vec1,
-            file: "C:/Users/file1.txt".to_string(),
+            file: "C:\\Users\\file1.txt".to_string(),
         });
         file_coverage_vec1.push(SourceFileCoverage {
             locations: coverage_locations_vec2,
-            file: "C:/Users/file2.txt".to_string(),
+            file: "C:\\Users\\file2.txt".to_string(),
         });
         file_coverage_vec1.push(SourceFileCoverage {
             locations: coverage_locations_vec3,
-            file: "C:/Users/file/..".to_string(),
+            file: "C:\\Users\\file\\..".to_string(),
         });
 
         let source_coverage_result = cobertura(SourceCoverage {
@@ -228,7 +228,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "C:/Users")
+                .attr("name", "C:\\Users")
                 .attr("line-rate", "0.50")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -238,8 +238,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file1.txt")
-                .attr("filename", "C:/Users/file1.txt")
+                .attr("name", "C:\\Users\\file1.txt")
+                .attr("filename", "C:\\Users\\file1.txt")
                 .attr("line-rate", "0.50")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -269,7 +269,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "C:/Users")
+                .attr("name", "C:\\Users")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -279,8 +279,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file2.txt")
-                .attr("filename", "C:/Users/file2.txt")
+                .attr("name", "C:\\Users\\file2.txt")
+                .attr("filename", "C:\\Users\\file2.txt")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -303,7 +303,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "Invalid file format: C:/Users/file/..")
+                .attr("name", "Invalid file format: C:\\Users\\file\\..")
                 .attr("line-rate", "1.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -313,8 +313,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file/..")
-                .attr("filename", "C:/Users/file/..")
+                .attr("name", "C:\\Users\\file\\..")
+                .attr("filename", "C:\\Users\\file\\..")
                 .attr("line-rate", "1.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
