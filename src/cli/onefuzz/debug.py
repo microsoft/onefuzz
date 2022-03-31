@@ -617,7 +617,7 @@ class DebugLog(Command):
 
     def get(
         self,
-        job_id: str,
+        job_id: Optional[str],
         task_id: Optional[str],
         machine_id: Optional[str],
         last: Optional[int] = 1,
@@ -635,21 +635,24 @@ class DebugLog(Command):
 
         from typing import cast
 
-        file_path = ""
+        if job_id is None:
+            if task_id is None:
+                raise Exception("You need to specify at least one of job_id or task_id")
+            
+            task = self.onefuzz.tasks.get(task_id)
+            job_id = task.job_id
+
+        job = self.onefuzz.jobs.get(job_id)
+        # This will be {fuzz storage account}/logs-{job_id}
+        container_url = job.config.logs
 
         if task_id is not None:
-            file_path += f"{task_id}/"
+            file_path = f"{task_id}/"
 
             if machine_id is not None:
                 file_path += f"{machine_id}/"
 
-        # Pretending the job object has a logs property
-        # job = self.onefuzz.jobs.get(job_id)
-        # This will be {fuzz storage account}/logs-{job_id}
-        # container_url = job.config.logs
-
         token_credential = AzureCliCredential()
-        container_url = ""
 
         container_client = ContainerClient.from_container_url(
             container_url, credential=token_credential
