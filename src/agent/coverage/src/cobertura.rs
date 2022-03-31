@@ -97,14 +97,15 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         let path = Path::new(&file.file);
         let parent_path;
         let _file_check = path.file_name();
+        let none_message = "Invalid file format: ".to_owned() + &file.file;
         match _file_check {
             Some(_file_check) => parent_path = path.parent().unwrap(),
-            None => parent_path = Path::new("Invalid file format"),
+            None => parent_path = Path::new(&none_message),
         }
 
         emitter.write(
             XmlEvent::start_element("package")
-                .attr("name", &parent_path.display().to_string())
+                .attr("name", &(parent_path.display().to_string()))
                 .attr(
                     "line-rate",
                     &format!("{:.02}", package_line_values.line_rate),
@@ -303,7 +304,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "Invalid file format")
+                .attr("name", "Invalid file format: C:/Users/file/..")
                 .attr("line-rate", "1.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
