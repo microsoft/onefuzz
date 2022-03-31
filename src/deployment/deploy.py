@@ -141,7 +141,7 @@ class Client:
         tools: str,
         instance_specific: str,
         third_party: str,
-        arm_or_bicep_template: str,
+        bicep_template: str,
         workbook_data: str,
         create_registration: bool,
         migrations: List[str],
@@ -182,12 +182,7 @@ class Client:
         self.admins = admins
         self.allowed_aad_tenants = allowed_aad_tenants
 
-        if arm_or_bicep_template:
-            file_name, file_extension = os.path.splitext(arm_or_bicep_template)
-            if file_extension == ".bicep":
-                self.arm_template = bicep_to_arm(arm_or_bicep_template)
-            else:
-                self.arm_template = arm_or_bicep_template
+        self.arm_template = bicep_to_arm(bicep_template)
 
         machine = platform.machine()
         system = platform.system()
@@ -1103,7 +1098,7 @@ def main() -> None:
     parser.add_argument("owner")
     parser.add_argument("nsg_config")
     parser.add_argument(
-        "--arm-or-bicep-template",
+        "--bicep-template",
         type=arg_file,
         default="azuredeploy.bicep",
         help="(default: %(default)s)",
@@ -1216,7 +1211,7 @@ def main() -> None:
         tools=args.tools,
         instance_specific=args.instance_specific,
         third_party=args.third_party,
-        arm_or_bicep_template=args.arm_or_bicep_template,
+        bicep_template=args.bicep_template,
         workbook_data=args.workbook_data,
         create_registration=args.create_pool_registration,
         migrations=args.apply_migrations,

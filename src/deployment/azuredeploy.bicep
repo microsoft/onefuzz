@@ -21,27 +21,13 @@ param workbookData object
 ])
 param diagnosticsLogLevel string = 'Verbose'
 
-var suffix = uniqueString(resourceGroup().id)
+var log_retention = 30
 var tenantId = subscription().tenantId
 
-var autoscale_name = 'onefuzz-autoscale-${suffix}' 
-var log_retention = 30
-var monitorAccountName = name
 var scaleset_identity = '${name}-scalesetid'
-var signalr_name = 'onefuzz-${suffix}'
-var storage_account_sas = {
-  signedExpiry: signedExpiry
-  signedPermission: 'rwdlacup'
-  signedResourceTypes: 'sco'
-  signedServices: 'bfqt'
-}
 
-var storageAccountName = 'fuzz${suffix}'
-var storageAccountNameFunc = 'func${suffix}'
 var telemetry = 'd7a73cf4-5a1a-4030-85e1-e5b25867e45a'
 var StorageBlobDataReader = '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
-var keyVaultName = 'of-kv-${suffix}'
-var fuzz_blob_topic_name ='fuzz-blob-topic-${suffix}'
 
 var roleAssignmentsParams = [
   {
@@ -69,368 +55,77 @@ var roleAssignmentsParams = [
     role: 'b24988ac-6180-42a0-ab88-20f7382dd24c'//Contributor
   }
 ]
-
-var onefuzz = {
-  severitiesAtMostInfo: [
-        {
-          severity: 'emerg'
-        }
-        {
-          severity: 'alert'
-        }
-        {
-          severity: 'crit'
-        }
-        {
-          severity: 'err'
-        }
-        {
-          severity: 'warning'
-        }
-        {
-          severity: 'notice'
-        }
-        {
-          severity: 'info'
-        }
-    ]
-}
-
 resource scalesetIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: scaleset_identity
   location: location
 }
 
-resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
-  name: keyVaultName
-  location: location
-  properties: {
-    enabledForDiskEncryption: false
-    enabledForTemplateDeployment: true
-    sku: {
-      family: 'A'
-      name: 'standard'
-    }
-    networkAcls: {
-      defaultAction: 'Allow'
-      bypass: 'AzureServices'
-    }
-    tenantId: tenantId
-    accessPolicies: [
-      {
-        objectId: reference(resourceId('Microsoft.Web/sites', name), '2019-08-01', 'full').identity.principalId
-        tenantId: tenantId
-        permissions: {
-          secrets: [
-            'get'
-            'list'
-            'set'
-            'delete'
-          ]
-        }
-      }
-    ]
+module serverFarms 'bicep-templates/server-farms.bicep' = {
+  name: 'server-farms' 
+  params: {
+    server_farm_name: name
+    owner: owner
+    location: location
   }
 }
 
-resource serverFarms 'Microsoft.Web/serverfarms@2021-03-01' = {
-  name: name
-  location: location
-  kind: 'linux'
-  properties: {
-    reserved: true
-  }
-  sku: {
-    name: 'P2v2'
-    tier: 'PremiumV2'
-    family: 'Pv2'
-    capacity: 1
-  }
-  tags: {
-    OWNER: owner
+module keyVaults 'bicep-templates/keyvaults.bicep' = {
+  name: 'keyvaults'
+  params: {
+    location: location
+    principal_id: reference(pythonFunction.id, pythonFunction.apiVersion, 'Full').identity.principalId
+    tenant_id: tenantId
   }
 }
 
-resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
-  name: autoscale_name
-  location: location 
-  properties: {
-    name: autoscale_name
-    enabled: true
-    targetResourceUri: serverFarms.id
-    targetResourceLocation: location
-    notifications: []
-    profiles:[
-      {
-        name: 'Auto scale condition'
-        capacity: {
-          default: '1'
-          maximum: '20'
-          minimum: '1'
-        }
-        rules: [
-          {
-            metricTrigger: {
-              metricName: 'CpuPercentage' 
-              metricResourceUri: serverFarms.id
-              operator: 'GreaterThanOrEqual'
-              statistic: 'Average'
-              threshold: 20
-              timeAggregation: 'Average'
-              timeGrain: 'PT1M'
-              timeWindow: 'PT1M'
-            }
-            scaleAction: {
-              cooldown: 'PT1M'
-              direction: 'Increase'
-              type: 'ChangeCount'
-              value: '5'
-            }
-          }
-          {
-            metricTrigger: {
-              metricName: 'CpuPercentage'
-              metricResourceUri: serverFarms.id
-              operator: 'LessThan'
-              statistic: 'Average'
-              threshold: 20
-              timeAggregation:'Average' 
-              timeGrain: 'PT1M'
-              timeWindow: 'PT1M'
-            }
-            scaleAction: {
-              cooldown: 'PT5M'
-              direction: 'Decrease'
-              type: 'ChangeCount'
-              value: '1'
-            }
-          }
-
-        ]
-      }
-    ]
-  }
-  tags: {
-    OWNER: owner
+module signalR 'bicep-templates/signalR.bicep' = {
+  name: 'signalR'
+  params: {
+    location: location
   }
 }
 
-var linuxDataSources = [
-  {
-    name: 'syslogDataSourcesKern'
-    syslogName: 'kern'
-    kind: 'LinuxSyslog'
+module storage 'bicep-templates/storageAccounts.bicep' = {
+  name: 'storage'
+  params: {
+    location: location
+    owner: owner
+    signedExpiry: signedExpiry
   }
-  {
-    name: 'syslogDataSourcesUser'
-    syslogName: 'user'
-    kind: 'LinuxSyslog'
-  }
-  {
-    name: 'syslogDataSourcesCron'
-    syslogName: 'cron'
-    kind: 'LinuxSyslog'
-  }
-  {
-    name: 'syslogDataSourcesDaemon'
-    syslogName: 'daemon'
-    kind: 'LinuxSyslog'
-  }
-]
-
-var windowsDataSources = [
-  {
-    name: 'windowsEventSystem'
-    eventLogName: 'System'
-    kind: 'WindowsEvent'
-  }
-  {
-    name: 'windowsEventApplication'
-    eventLogName: 'Application'
-    kind: 'WindowsEvent'
-  }
-]
-
-resource insightsMonitorAccount 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
-  name: monitorAccountName
-  location: location 
-  properties: {
-    sku: {
-      name: 'PerGB2018'
-    }
-    retentionInDays: log_retention
-    features: {
-      enableLogAccessUsingOnlyResourcePermissions: true
-    }
-  }
-  resource linux 'dataSources@2020-08-01' = [for d in linuxDataSources : {
-    name: d.name
-    kind: d.kind
-    properties: {
-      syslogName: d.syslogName
-      syslogSeverities: onefuzz.severitiesAtMostInfo
-    }
-  }]
-
-  resource linuxCollection 'dataSources@2020-08-01' = {
-    name: 'syslogDataSourceCollection'
-    kind: 'LinuxSyslogCollection'
-    properties: {
-      state: 'Enabled'
-    }
-  }
-
-  resource windows 'dataSources@2020-08-01' = [for d in windowsDataSources : {
-    name: d.name
-    kind: d.kind
-    properties: {
-      eventLogName: d.eventLogName
-      eventTypes: [
-        {
-          eventType: 'Error'
-        }
-        {
-          eventType: 'Warning'
-        }
-        {
-          eventType: 'Information'
-        }
-      ]
-    }
-  }]
 }
 
-resource vmInsights 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = {
-  name: 'VMInsights(${monitorAccountName})'
-  location: location
+module autoscaleSettings 'bicep-templates/autoscale-settings.bicep' = {
+  name: 'autoscaleSettings'
+  params: {
+    location: location
+    server_farm_id: serverFarms.outputs.id
+    owner: owner
+  }
+}
+
+module operationalInsights 'bicep-templates/operational-insights.bicep' = {
+  name: 'operational-insights'
+  params: {
+    name: name
+    location: location
+    log_retention: log_retention
+    owner: owner
+    workbookData: workbookData
+  }
+}
+
+module eventGrid 'bicep-templates/event-grid.bicep' = {
+  name: 'event-grid'
+  params:{
+    location: location
+    storageFuzzId: storage.outputs.FuzzId
+    storageFuncId: storage.outputs.FuncId
+    fileChangesQueueName: storage.outputs.FileChangesQueueName
+  }
   dependsOn: [
-    insightsMonitorAccount
+    storage
   ]
-  properties: {
-    workspaceResourceId: resourceId('Microsoft.OperationalInsights/workspaces', monitorAccountName) 
-  }
-  plan: {
-    name: 'VMInsights(${monitorAccountName})'
-    publisher: 'Microsoft'
-    product: 'OMSGallery/VMInsights'
-    promotionCode: ''
-  }
 }
-
-resource insightsComponents 'Microsoft.Insights/components@2020-02-02' = {
-  name: name
-  location: location
-  kind: ''
-  properties: {
-    Application_Type: 'other'
-    RetentionInDays: log_retention
-    WorkspaceResourceId: insightsMonitorAccount.id
-  }
-  tags: {
-    OWNER: owner
-  }
-}
-
-resource insightsWorkbooks 'Microsoft.Insights/workbooks@2021-08-01' = {
-  name: 'df20765c-ed5b-46f9-a47b-20f4aaf7936d'
-  location: location
-  kind: 'shared'
-  properties: {
-    displayName: 'Libfuzzer Job Dashboard'
-    serializedData: workbookData.libFuzzerJob
-    version: '1.0'
-    sourceId: insightsComponents.id
-    category: 'tsg'
-  }
-}
-
-var storageAccountFuncContainersParams = [
-  'vm-scripts'
-  'repro-scripts'
-  'proxy-configs'
-  'task-configs'
-  'app-logs'
-]
-
-var storageAccountFuncQueuesParams = [
-  'file-chages'
-  'task-heartbeat'
-  'node-heartbeat'
-  'proxy'
-  'update-queue'
-  'webhooks'
-  'signalr-events'
-]
-
-var fileChangesIndex = 0
-
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
-  name: storageAccountName
-  location: location
-  sku: {
-    name: 'Standard_LRS'
-  }
-  kind: 'StorageV2'
-  properties: {
-    supportsHttpsTrafficOnly: true
-    accessTier: 'Hot'
-    allowBlobPublicAccess: false
-  }
-  tags: {
-    OWNER: owner
-  }
-
-  resource blobServices 'blobServices' = {
-    name: 'default'
-    properties: {
-      deleteRetentionPolicy: {
-        enabled: true
-        days: 30
-      }
-    }
-  }
-}
-
-resource storageAccountFunc 'Microsoft.Storage/storageAccounts@2021-08-01' = {
-  name: storageAccountNameFunc
-  location: location
-  sku: {
-    name: 'Standard_LRS'
-  }
-  kind: 'StorageV2'
-  properties: {
-    supportsHttpsTrafficOnly: true
-    accessTier: 'Hot'
-    allowBlobPublicAccess: false
-  }
-  tags: {
-    OWNER: owner
-  }
-
-  resource blobServices 'blobServices' = {
-    name: 'default'
-    properties: {
-      deleteRetentionPolicy: {
-        enabled: true
-        days: 30
-      }
-    }
-  }
-}
-
-resource storageAccountFuncQueues 'Microsoft.Storage/storageAccounts/queueServices/queues@2021-08-01' = [for q in storageAccountFuncQueuesParams: {
-  name: '${storageAccountNameFunc}/default/${q}'
-  dependsOn: [
-    storageAccountFunc
-  ]
-}]
-
-resource storageAccountFunBlobContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = [for c in storageAccountFuncContainersParams: {
-  name: '${storageAccountNameFunc}/default/${c}'
-  dependsOn: [
-    storageAccountFunc
-  ]
-}]
 
 // try to make role assignments to deploy as late as possible in order to has principalId ready
 resource roleAssigments 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
@@ -440,8 +135,8 @@ resource roleAssigments 'Microsoft.Authorization/roleAssignments@2020-10-01-prev
     principalId: reference(pythonFunction.id, pythonFunction.apiVersion, 'Full').identity.principalId
   }
   dependsOn: [
-    eventSubscriptions
-    keyVault
+    eventGrid
+    keyVaults
     serverFarms
   ]
 }]
@@ -454,95 +149,37 @@ resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10
     principalId: reference(scalesetIdentity.id, scalesetIdentity.apiVersion, 'Full').properties.principalId
   }
   dependsOn: [
-    eventSubscriptions
-    keyVault
+    eventGrid
+    keyVaults
     serverFarms
   ]
 }
 
-resource signalR 'Microsoft.SignalRService/signalR@2021-10-01' = {
-  name: signalr_name
+resource pythonFunction 'Microsoft.Web/sites@2021-03-01' = {
+  name: name
   location: location
-  sku: {
-    name: 'Standard_S1'
-    tier: 'Standard'
-    capacity: 1
+  kind: 'functionapp,linux'
+  tags: {
+    'OWNER': owner
+  }
+  identity: {
+    type: 'SystemAssigned'
   }
   properties: {
-    features: [
-      {
-          flag: 'ServiceMode'
-          value: 'Serverless'
-          properties: {}
-      }
-      {
-          flag: 'EnableConnectivityLogs'
-          value: 'True'
-          properties: {}
-      }
-      {
-          flag: 'EnableMessagingLogs'
-          value: 'False'
-          properties: {}
-      }
-    ]
-  }
-}
-
-resource eventGridSystemTopics 'Microsoft.EventGrid/systemTopics@2021-12-01' = {
-  name: fuzz_blob_topic_name
-  dependsOn: [
-    storageAccountFuncQueues[fileChangesIndex]
-    storageAccountFunc
-  ]
-  location: location
-  properties: {
-    source: storageAccount.id
-    topicType: 'microsoft.storage.storageaccounts'
-  }
-}
-
-resource eventSubscriptions 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2021-12-01' = {
-  name: 'onefuzz1_subscription'
-  parent: eventGridSystemTopics
-  dependsOn: [
-    storageAccountFuncQueues[fileChangesIndex]
-    storageAccount
-  ]
-  properties: {
-    destination: {
-      properties: {
-        resourceId: storageAccountFunc.id
-        queueName: storageAccountFuncQueuesParams[fileChangesIndex]
-      }
-      endpointType: 'StorageQueue'
+    siteConfig: {
+      linuxFxVersion: 'Python|3.8'
+      alwaysOn: true
+      defaultDocuments: []
+      httpLoggingEnabled: true
+      logsDirectorySizeLimit: 100
+      detailedErrorLoggingEnabled: true
+      http20Enabled: true
+      ftpsState: 'Disabled'
     }
-    filter: {
-      includedEventTypes: [
-        'Microsoft.Storage.BlobCreated'
-        'Microsoft.Storage.BlobDeleted'
-      ]
-    }
-    eventDeliverySchema: 'EventGridSchema'
-    retryPolicy: {
-      maxDeliveryAttempts: 30
-      eventTimeToLiveInMinutes: 1440
-    }
+    httpsOnly: true
+    serverFarmId: serverFarms.outputs.id
+    clientAffinityEnabled: true
   }
-}
-
-resource funcLogs 'Microsoft.Web/sites/config@2021-03-01' = {
-  name: 'logs'
-  properties: {
-    applicationLogs: {
-      azureBlobStorage: {
-        level: diagnosticsLogLevel
-        retentionInDays: log_retention
-        sasUrl: '${storageAccountFunc.properties.primaryEndpoints.blob}app-logs?${storageAccountFunc.listAccountSas('2021-08-01', storage_account_sas).accountSasToken}'
-      }
-    }
-  }
-  parent: pythonFunction
 }
 
 resource funcAuthSettings 'Microsoft.Web/sites/config@2021-03-01' = {
@@ -578,124 +215,54 @@ resource funcAuthSettings 'Microsoft.Web/sites/config@2021-03-01' = {
   parent: pythonFunction
 }
 
-resource pythonFunction 'Microsoft.Web/sites@2021-03-01' = {
-  name: name
-  location: location
-  kind: 'functionapp,linux'
-  tags: {
-    'OWNER': owner
-  }
-  identity: {
-    type: 'SystemAssigned'
-  }
+resource funcLogs 'Microsoft.Web/sites/config@2021-03-01' = {
+  name: 'logs'
   properties: {
-    siteConfig: {
-      appSettings: [
-          {
-              name: 'FUNCTIONS_EXTENSION_VERSION'
-              value: '~3'
-          }
-          {
-              name: 'FUNCTIONS_WORKER_RUNTIME'
-              value: 'python'
-          }
-          {
-              name: 'FUNCTIONS_WORKER_PROCESS_COUNT'
-              value: '1'
-          }
-          {
-              name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-              value: insightsComponents.properties.InstrumentationKey
-          }
-          {
-              name: 'APPINSIGHTS_APPID'
-              value: insightsComponents.properties.AppId
-          }
-          {
-              name: 'ONEFUZZ_TELEMETRY'
-              value: telemetry
-          }
-          {
-              name: 'AzureWebJobsStorage'
-              value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountFunc.name};AccountKey=${storageAccountFunc.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
-          }
-          {
-              name: 'MULTI_TENANT_DOMAIN'
-              value: multi_tenant_domain
-          }
-          {
-              name: 'AzureWebJobsDisableHomepage'
-              value: 'true'
-          }
-          {
-              name: 'AzureSignalRConnectionString'
-              value: signalR.listKeys().primaryConnectionString
-          }
-          {
-              name: 'AzureSignalRServiceTransportType'
-              value: 'Transient'
-          }
-          {
-              name: 'ONEFUZZ_INSTANCE_NAME'
-              value: name
-          }
-          {
-              name: 'ONEFUZZ_INSTANCE'
-              value: 'https://${name}.azurewebsites.net'
-          }
-          {
-              name: 'ONEFUZZ_RESOURCE_GROUP'
-              value: resourceGroup().id
-          }
-          {
-              name: 'ONEFUZZ_DATA_STORAGE'
-              value: storageAccount.id
-          }
-          {
-              name: 'ONEFUZZ_FUNC_STORAGE'
-              value: storageAccountFunc.id
-          }
-          {
-              name: 'ONEFUZZ_MONITOR'
-              value: monitorAccountName
-          }
-          {
-              name: 'ONEFUZZ_KEYVAULT'
-              value: keyVaultName
-          }
-          {
-              name: 'ONEFUZZ_OWNER'
-              value: owner
-          }
-          {
-              name: 'ONEFUZZ_CLIENT_SECRET'
-              value: clientSecret
-          }
-      ]
-      linuxFxVersion: 'Python|3.8'
-      alwaysOn: true
-      defaultDocuments: []
-      httpLoggingEnabled: true
-      logsDirectorySizeLimit: 100
-      detailedErrorLoggingEnabled: true
-      http20Enabled: true
-      ftpsState: 'Disabled'
+    applicationLogs: {
+      azureBlobStorage: {
+        level: diagnosticsLogLevel
+        retentionInDays: log_retention
+        sasUrl: storage.outputs.FuncSasUrlBlobAppLogs
+      }
     }
-    httpsOnly: true
-    serverFarmId: serverFarms.id
-    clientAffinityEnabled: true
+  }
+  parent: pythonFunction
+}
+
+resource pythonFunctionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
+  name: 'appsettings'
+  parent: pythonFunction
+  properties: {
+      'FUNCTIONS_EXTENSION_VERSION': '~3'
+      'FUNCTIONS_WORKER_RUNTIME': 'python'
+      'FUNCTIONS_WORKER_PROCESS_COUNT': '1'
+      'APPINSIGHTS_INSTRUMENTATIONKEY': operationalInsights.outputs.appInsightsInstrumentationKey
+      'APPINSIGHTS_APPID': operationalInsights.outputs.appInsightsAppId
+      'ONEFUZZ_TELEMETRY': telemetry
+      'AzureWebJobsStorage': storage.outputs.FuncSasUrl
+      'MULTI_TENANT_DOMAIN': multi_tenant_domain
+      'AzureWebJobsDisableHomepage': 'true'
+      'AzureSignalRConnectionString': signalR.outputs.connectionString
+      'AzureSignalRServiceTransportType': 'Transient'
+      'ONEFUZZ_INSTANCE_NAME': name
+      'ONEFUZZ_INSTANCE': 'https://${name}.azurewebsites.net'
+      'ONEFUZZ_RESOURCE_GROUP': resourceGroup().id
+      'ONEFUZZ_DATA_STORAGE': storage.outputs.FuzzId
+      'ONEFUZZ_FUNC_STORAGE': storage.outputs.FuncId
+      'ONEFUZZ_MONITOR': operationalInsights.outputs.monitorAccountName
+      'ONEFUZZ_KEYVAULT': keyVaults.outputs.name
+      'ONEFUZZ_OWNER': owner
+      'ONEFUZZ_CLIENT_SECRET': clientSecret
   }
 }
 
-var fuzz_key = storageAccount.listKeys().keys[0].value
-output fuzz_storage string = storageAccount.id
-output fuzz_name string = storageAccountName
-output fuzz_key string = fuzz_key
+output fuzz_storage string = storage.outputs.FuzzId
+output fuzz_name string = storage.outputs.FuzzName
+output fuzz_key string = storage.outputs.FuzzKey
 
-var func_key = storageAccountFunc.listKeys().keys[0].value
-output func_storage string = storageAccountFunc.id
-output func_name string = storageAccountNameFunc
-output func_key string = func_key
+output func_storage string = storage.outputs.FuncId
+output func_name string = storage.outputs.FuncName
+output func_key string = storage.outputs.FuncKey
 
 output scaleset_identity string = scaleset_identity
 output tenant_id string = tenantId
