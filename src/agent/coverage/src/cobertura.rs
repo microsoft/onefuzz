@@ -95,13 +95,12 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     for file in &source_coverage.files {
         let package_line_values = compute_line_values_package(file);
         let path = Path::new(&file.file);
-        let parent_path;
         let _file_check = path.file_name();
         let none_message = "Invalid file format: ".to_owned() + &file.file;
-        match _file_check {
-            Some(_file_check) => parent_path = path.parent().unwrap(),
-            None => parent_path = Path::new(&none_message),
-        }
+        let parent_path = match _file_check {
+            Some(_file_check) => path.parent().unwrap(),
+            None => Path::new(&none_message),
+        };
 
         emitter.write(
             XmlEvent::start_element("package")
