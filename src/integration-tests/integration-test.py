@@ -27,6 +27,7 @@ from enum import Enum
 from shutil import which
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar
 from uuid import UUID, uuid4
+from build.lib.onefuzztypes.enums import ScalesetState
 
 import requests
 from onefuzz.api import Command, Onefuzz
@@ -415,6 +416,8 @@ class TestOnefuzz:
                 task.config.pool is not None
                 and scaleset.pool_name == task.config.pool.pool_name
                 and scaleset.state not in scaleset.state.available()
+                # not available() does not mean failed
+                and scaleset.state not in [ScalesetState.init, ScalesetState.setup]
             ):
                 self.logger.error(
                     "task scaleset failed: %s - %s - %s (%s)",
