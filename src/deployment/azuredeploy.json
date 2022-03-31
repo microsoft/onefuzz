@@ -921,31 +921,31 @@
         }
     ],
     "outputs": {
-        "fuzz-storage": {
+        "fuzz_storage": {
             "type": "string",
             "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
         },
-        "fuzz-name": {
+        "fuzz_name": {
             "type": "string",
             "value": "[variables('storageAccountName')]"
         },
-        "fuzz-key": {
+        "fuzz_key": {
             "type": "string",
             "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value]"
         },
-        "func-name": {
+        "func_name": {
             "type": "string",
             "value": "[variables('storageAccountNameFunc')]"
         },
-        "func-storage": {
+        "func_storage": {
             "type": "string",
             "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
         },
-        "func-key": {
+        "func_key": {
             "type": "string",
             "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc')), '2019-06-01').keys[0].value]"
         },
-        "scaleset-identity": {
+        "scaleset_identity": {
             "type": "string",
             "value": "[variables('scaleset_identity')]"
         },
