@@ -4,8 +4,7 @@ param log_retention int
 param owner string
 param workbookData object
 
-var suffix = uniqueString(resourceGroup().id)
-var monitorAccountName = 'logs-wb-${suffix}'
+var monitorAccountName = name
 
 var linuxDataSources = [
   {
