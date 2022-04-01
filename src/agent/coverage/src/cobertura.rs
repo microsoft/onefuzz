@@ -65,7 +65,7 @@ pub fn convert_path(file: &SourceFileCoverage) -> String {
 }
 
 // get directory of file if valid file path, otherwise make package name include and error message
-pub fn get_parent_path(path_slash: &String) -> PathBuf {
+pub fn get_parent_path(path_slash: &str) -> PathBuf {
     let path = Path::new(&path_slash);
     let none_message = "Invalid file format: ".to_owned() + path_slash;
     let parent_path = match path.file_name() {
