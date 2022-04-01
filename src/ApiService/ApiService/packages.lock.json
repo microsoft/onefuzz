@@ -107,6 +107,12 @@
           "System.Text.Json": "4.7.2"
         }
       },
+      "CaseExtensions": {
+        "type": "Direct",
+        "requested": "[1.1.0, )",
+        "resolved": "1.1.0",
+        "contentHash": "zEvNeodNmNai8aQ4YfhHKCTWmlMwXM8NHR+8x8WsgY5eT4eDW0yFGrO+voQ1lCzyAXJ1Djv6dUAiyraVTueapA=="
+      },
       "Microsoft.Azure.Functions.Worker": {
         "type": "Direct",
         "requested": "[1.5.2, )",
