@@ -3,10 +3,10 @@ use crate::source::SourceFileCoverage;
 use anyhow::Context;
 use anyhow::Error;
 use anyhow::Result;
+use path_slash::PathExt;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use xml::writer::{EmitterConfig, XmlEvent};
-use path_slash::PathExt;
 
 pub struct LineValues {
     pub valid_lines: u64,
@@ -103,7 +103,7 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         let none_message = "Invalid file format: ".to_owned() + &file.file;
         let parent_path = match path.file_name() {
             Some(file_name) => path.parent().unwrap(),
-            None => Path::new(&none_message),  
+            None => Path::new(&none_message),
         };
 
         emitter.write(
@@ -350,7 +350,6 @@ mod tests {
         _emitter_test.write(XmlEvent::end_element())?; // classes
         _emitter_test.write(XmlEvent::end_element())?; // package
 
-
         _emitter_test.write(
             XmlEvent::start_element("package")
                 .attr("name", "Invalid file format: C:/Users/file/..")
@@ -370,7 +369,6 @@ mod tests {
                 .attr("complexity", "0"),
         )?;
 
-
         _emitter_test.write(XmlEvent::start_element("lines"))?;
 
         _emitter_test.write(
@@ -379,7 +377,6 @@ mod tests {
                 .attr("hits", "0")
                 .attr("branch", "false"),
         )?;
-
 
         _emitter_test.write(XmlEvent::end_element())?; // line
         _emitter_test.write(XmlEvent::end_element())?; // lines
