@@ -1,7 +1,20 @@
 ﻿using System;
 namespace Microsoft.OneFuzz.Service;
 
+public enum LogDestination
+{
+    Console,
+    AppInsights,
+}
+
 public static class EnvironmentVariables {
+
+    static EnvironmentVariables() { 
+        LogDestinations = new LogDestination[] { LogDestination.AppInsights };
+    }
+
+    //TODO: Add environment variable to control where to write logs to
+    public static LogDestination[] LogDestinations { get; set; }
 
     public static class AppInsights {
         public static string? AppId { get => Environment.GetEnvironmentVariable("APPINSIGHTS_APPID"); }
