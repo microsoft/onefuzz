@@ -95,16 +95,14 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     // class name will be full file path and name
     for file in &source_coverage.files {
         let package_line_values = compute_line_values_package(file);
-        let _path_slash = Path::new(&file.file).to_slash();
-        let path_slash = match _path_slash {
-            Some(_path_slash) => Path::new(&file.file).to_slash().unwrap(),
+        let path_slash = match Path::new(&file.file).to_slash() {
+            Some(to_slash) => Path::new(&file.file).to_slash().unwrap(),
             None => "Cannot convert path to unix-format".to_owned() + &file.file,
         };
         let path = Path::new(&path_slash);
-        let _file_check = path.file_name();
         let none_message = "Invalid file format: ".to_owned() + &file.file;
-        let parent_path = match _file_check {
-            Some(_file_check) => path.parent().unwrap(),
+        let parent_path = match path.file_name() {
+            Some(file_name) => path.parent().unwrap(),
             None => Path::new(&none_message),  
         };
 
@@ -337,6 +335,22 @@ mod tests {
                 .attr("complexity", "0"),
         )?;
 
+        _emitter_test.write(XmlEvent::start_element("lines"))?;
+
+        _emitter_test.write(
+            XmlEvent::start_element("line")
+                .attr("number", "1")
+                .attr("hits", "1")
+                .attr("branch", "false"),
+        )?;
+
+        _emitter_test.write(XmlEvent::end_element())?; // line
+        _emitter_test.write(XmlEvent::end_element())?; // lines
+        _emitter_test.write(XmlEvent::end_element())?; // class
+        _emitter_test.write(XmlEvent::end_element())?; // classes
+        _emitter_test.write(XmlEvent::end_element())?; // package
+
+
         _emitter_test.write(
             XmlEvent::start_element("package")
                 .attr("name", "Invalid file format: C:/Users/file/..")
@@ -365,6 +379,7 @@ mod tests {
                 .attr("hits", "0")
                 .attr("branch", "false"),
         )?;
+
 
         _emitter_test.write(XmlEvent::end_element())?; // line
         _emitter_test.write(XmlEvent::end_element())?; // lines
