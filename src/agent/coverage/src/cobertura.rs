@@ -170,7 +170,7 @@ mod tests {
     use anyhow::Result;
 
     #[test]
-    fn test_conversion_windows_to_posix_path() {
+    fn test_cobertura_conversion_windows_to_posix_path() {
         let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
         coverage_locations_vec1.push(SourceCoverageLocation {
             line: 5,
@@ -190,7 +190,7 @@ mod tests {
     }
 
     #[test]
-    fn test_conversion_posix_to_posix_path() {
+    fn test_cobertura_conversion_posix_to_posix_path() {
         let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
         coverage_locations_vec1.push(SourceCoverageLocation {
             line: 5,
@@ -211,7 +211,7 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_path_windows() {
+    fn test_cobertura_invalid_path_windows() {
         let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
         coverage_locations_vec1.push(SourceCoverageLocation {
             line: 5,
@@ -235,7 +235,7 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_path_posix() {
+    fn test_cobertura_invalid_path_posix() {
         let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
         coverage_locations_vec1.push(SourceCoverageLocation {
             line: 5,
@@ -258,7 +258,7 @@ mod tests {
     }
 
     #[test]
-    fn test_source_to_cobertura_mixed() -> Result<()> {
+    fn test_cobertura_source_to_cobertura_mixed() -> Result<()> {
         let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
         coverage_locations_vec1.push(SourceCoverageLocation {
             line: 5,
@@ -489,7 +489,7 @@ mod tests {
     }
 
     #[test]
-    fn test_source_to_cobertura_posix_paths() -> Result<()> {
+    fn test_cobertura_source_to_cobertura_posix_paths() -> Result<()> {
         let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
         coverage_locations_vec1.push(SourceCoverageLocation {
             line: 5,
@@ -720,7 +720,7 @@ mod tests {
     }
 
     #[test]
-    fn test_source_to_cobertura_windows_paths() -> Result<()> {
+    fn test_cobertura_source_to_cobertura_windows_paths() -> Result<()> {
         let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
         coverage_locations_vec1.push(SourceCoverageLocation {
             line: 5,
