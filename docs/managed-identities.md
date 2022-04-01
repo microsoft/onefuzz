@@ -18,6 +18,11 @@ There are currently two uses of Managed Identities within OneFuzz:
    See [azuredeploy.json](../src/deployment/azuredeploy.json) for the specific
    implementation of these role assignments.
 
+   or
+
+   See [azuredeploy.bicep](../src/deployment/azuredeploy.bicep) for the specific
+   implementation of these role assignments.
+
 1. VMs created by OneFuzz are created using the Managed Identities without roles
    assigned in order to enable the OneFuzz agent running in the VMs to
    authenticate to the service itself.
