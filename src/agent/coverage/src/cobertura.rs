@@ -6,6 +6,7 @@ use anyhow::Result;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use xml::writer::{EmitterConfig, XmlEvent};
+use relative_path::RelativePath;
 
 pub struct LineValues {
     pub valid_lines: u64,
@@ -94,7 +95,11 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     // class name will be full file path and name
     for file in &source_coverage.files {
         let package_line_values = compute_line_values_package(file);
-        let path = Path::new(&file.file);
+        let path = if cfg!(windows) {
+            Path::new(&file.file)
+        } else {
+            RelativePath::new(&file.file)
+        };
         let _file_check = path.file_name();
         let none_message = "Invalid file format: ".to_owned() + &file.file;
         let parent_path = match _file_check {
