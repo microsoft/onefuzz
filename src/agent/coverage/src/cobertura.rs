@@ -65,9 +65,9 @@ pub fn convert_path(file: &SourceFileCoverage) -> String {
 }
 
 // get directory of file if valid file path, otherwise make package name include and error message
-pub fn get_parent_path(path_slash: String, file: &SourceFileCoverage) -> PathBuf {
+pub fn get_parent_path(path_slash: &String) -> PathBuf {
     let path = Path::new(&path_slash);
-    let none_message = "Invalid file format: ".to_owned() + &file.file;
+    let none_message = "Invalid file format: ".to_owned() + path_slash;
     let parent_path = match path.file_name() {
         Some(_parent_path) => path.parent().unwrap(),
         None => Path::new(&none_message),
@@ -113,9 +113,9 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     // path (excluding file name) will be package name for better results with ReportGenerator
     // class name will be full file path and name
     for file in &source_coverage.files {
+        let path = convert_path(file);
+        let parent_path = get_parent_path(&path);
         let package_line_values = compute_line_values_package(file);
-        let path_slash = convert_path(file);
-        let parent_path = get_parent_path(path_slash, file);
 
         emitter.write(
             XmlEvent::start_element("package")
@@ -130,8 +130,8 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         emitter.write(XmlEvent::start_element("classes"))?;
         emitter.write(
             XmlEvent::start_element("class")
-                .attr("name", &file.file)
-                .attr("filename", &file.file)
+                .attr("name", &path)
+                .attr("filename", &path)
                 .attr(
                     "line-rate",
                     &format!("{:.02}", package_line_values.line_rate),
