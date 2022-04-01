@@ -55,21 +55,25 @@ pub fn compute_line_values_package(file: &SourceFileCoverage) -> LineValues {
     }
     LineValues::new(valid_lines, hit_lines)
 }
-
-pub fn get_parent_path(file: &SourceFileCoverage) -> PathBuf {
+// handle OSs and path formats accordingly
+pub fn convert_path(file: &SourceFileCoverage) -> String {
     let path_slash = match Path::new(&file.file).to_slash() {
-        Some(path_slash) => Path::new(&file.file).to_slash().unwrap(),
+        Some(_path_slash) => Path::new(&file.file).to_slash().unwrap(),
         None => "Cannot convert path to posix-format".to_owned() + &file.file,
     };
+    path_slash
+}
+
+// get directory of file if valid file path, otherwise make package name include and error message
+pub fn get_parent_path(path_slash: String, file: &SourceFileCoverage) -> PathBuf {
     let path = Path::new(&path_slash);
     let none_message = "Invalid file format: ".to_owned() + &file.file;
     let parent_path = match path.file_name() {
-        Some(parent_path) => path.parent().unwrap(),
+        Some(_parent_path) => path.parent().unwrap(),
         None => Path::new(&none_message),
     };
-    (&parent_path).to_path_buf()
+    (parent_path).to_path_buf()
 }
-
 pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     let mut backing: Vec<u8> = Vec::new();
     let mut emitter = EmitterConfig::new()
@@ -110,7 +114,8 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     // class name will be full file path and name
     for file in &source_coverage.files {
         let package_line_values = compute_line_values_package(file);
-        let parent_path = get_parent_path(file);
+        let path_slash = convert_path(file);
+        let parent_path = get_parent_path(path_slash, file);
 
         emitter.write(
             XmlEvent::start_element("package")
