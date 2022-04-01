@@ -55,7 +55,6 @@ pub fn compute_line_values_package(file: &SourceFileCoverage) -> LineValues {
     }
     LineValues::new(valid_lines, hit_lines)
 }
-// handle OSs and path formats accordingly
 pub fn convert_path(file: &SourceFileCoverage) -> String {
     let path_slash = match Path::new(&file.file).to_slash() {
         Some(_path_slash) => Path::new(&file.file).to_slash().unwrap(),
@@ -72,7 +71,7 @@ pub fn get_parent_path(path_slash: &str) -> PathBuf {
         Some(_parent_path) => path.parent().unwrap(),
         None => Path::new(&none_message),
     };
-    (parent_path).to_path_buf()
+    parent_path.to_path_buf()
 }
 pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     let mut backing: Vec<u8> = Vec::new();
