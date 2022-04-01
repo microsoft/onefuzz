@@ -26,7 +26,6 @@ var tenantId = subscription().tenantId
 
 var scaleset_identity = '${name}-scalesetid'
 
-var telemetry = 'd7a73cf4-5a1a-4030-85e1-e5b25867e45a'
 var StorageBlobDataReader = '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
 
 var roleAssignmentsParams = [
@@ -68,13 +67,49 @@ module serverFarms 'bicep-templates/server-farms.bicep' = {
     location: location
   }
 }
+var keyVaultName = 'of-kv-${uniqueString(resourceGroup().id)}'
+resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
+  name: keyVaultName
+  location: location
+  properties: {
+    enabledForDiskEncryption: false
+    enabledForTemplateDeployment: true
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    networkAcls: {
+      defaultAction: 'Allow'
+      bypass: 'AzureServices'
+    }
+    accessPolicies: [
+      {
+        objectId: pythonFunction.outputs.principalId
+        tenantId: tenantId
+        permissions: {
+          secrets: [
+            'get'
+            'list'
+            'set'
+            'delete'
+          ]
+        }
+      }
+      {
+        objectId: netFunction.outputs.principalId
+        tenantId: tenantId
+        permissions: {
+          secrets: [
+            'get'
+            'list'
+            'set'
+            'delete'
+          ]
+        }
+      }
 
-module keyVaults 'bicep-templates/keyvaults.bicep' = {
-  name: 'keyvaults'
-  params: {
-    location: location
-    principal_id: reference(pythonFunction.id, pythonFunction.apiVersion, 'Full').identity.principalId
-    tenant_id: tenantId
+    ]
+    tenantId: tenantId
   }
 }
 
@@ -128,18 +163,33 @@ module eventGrid 'bicep-templates/event-grid.bicep' = {
 }
 
 // try to make role assignments to deploy as late as possible in order to has principalId ready
-resource roleAssigments 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
+resource roleAssigmentsPy 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
   name: guid('${resourceGroup().id}${r.suffix}')
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${r.role}'
-    principalId: reference(pythonFunction.id, pythonFunction.apiVersion, 'Full').identity.principalId
+    principalId: pythonFunction.outputs.principalId
   }
   dependsOn: [
     eventGrid
-    keyVaults
+    keyVault
     serverFarms
   ]
 }]
+
+// try to make role assignments to deploy as late as possible in order to has principalId ready
+resource roleAssigmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
+  name: guid('${resourceGroup().id}${r.suffix}-net')
+  properties: {
+    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${r.role}'
+    principalId: netFunction.outputs.principalId
+  }
+  dependsOn: [
+    eventGrid
+    keyVault
+    serverFarms
+  ]
+}]
+
 
 // try to make role assignments to deploy as late as possible in order to has principalId ready
 resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
@@ -150,111 +200,72 @@ resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10
   }
   dependsOn: [
     eventGrid
-    keyVaults
+    keyVault
     serverFarms
   ]
 }
 
-resource pythonFunction 'Microsoft.Web/sites@2021-03-01' = {
-  name: name
-  location: location
-  kind: 'functionapp,linux'
-  tags: {
-    'OWNER': owner
-  }
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    siteConfig: {
-      linuxFxVersion: 'Python|3.8'
-      alwaysOn: true
-      defaultDocuments: []
-      httpLoggingEnabled: true
-      logsDirectorySizeLimit: 100
-      detailedErrorLoggingEnabled: true
-      http20Enabled: true
-      ftpsState: 'Disabled'
-    }
-    httpsOnly: true
-    serverFarmId: serverFarms.outputs.id
-    clientAffinityEnabled: true
+
+module pythonFunction 'bicep-templates/function.bicep' = {
+  name: 'pythonFunction'
+  params: {
+    functions_worker_runtime: 'python'
+    linux_fx_version: 'Python|3.8'
+    functions_extension_version: '~3'
+    name: name
+
+    app_logs_sas_url: storage.outputs.FuncSasUrlBlobAppLogs
+    app_func_audiences: app_func_audiences
+    app_func_issuer: app_func_issuer
+    app_insights_app_id: operationalInsights.outputs.appInsightsAppId
+    app_insights_key: operationalInsights.outputs.appInsightsInstrumentationKey
+    client_id: clientId
+    client_secret: clientSecret
+    diagnostics_log_level: diagnosticsLogLevel
+    func_sas_url: storage.outputs.FuncSasUrl
+    func_storage_resource_id: storage.outputs.FuncId
+    fuzz_storage_resource_id: storage.outputs.FuzzId
+    keyvault_name: keyVaultName
+    location: location
+    log_retention: log_retention
+    monitor_account_name: operationalInsights.outputs.monitorAccountName
+    multi_tenant_domain: multi_tenant_domain
+    owner: owner
+    server_farm_id: serverFarms.outputs.id
+    signal_r_connection_string: signalR.outputs.connectionString
   }
 }
 
-resource funcAuthSettings 'Microsoft.Web/sites/config@2021-03-01' = {
-  name: 'authsettingsV2'
-  properties: {
-    login:{
-      tokenStore: {
-        enabled: true
-      }
-    }
-    globalValidation: {
-      unauthenticatedClientAction: 'RedirectToLoginPage'
-      requireAuthentication: true
-    }
-    httpSettings: {
-      requireHttps: true
-    }
-    identityProviders: {
-      azureActiveDirectory: {
-        enabled: true
-        isAutoProvisioned: false
-        registration: {
-          clientId: clientId
-          openIdIssuer: app_func_issuer
-          clientSecretSettingName: 'ONEFUZZ_CLIENT_SECRET'
-        }
-        validation: {
-          allowedAudiences: app_func_audiences
-        }
-      }
-    }
+module netFunction 'bicep-templates/function.bicep' = {
+  name: 'netFunction'
+  params: {
+    functions_worker_runtime: 'dotnet-isolated'
+    linux_fx_version: 'DOTNET-ISOLATED|6.0'
+    functions_extension_version: '~4'
+    name: '${name}-net'
+
+    app_logs_sas_url: storage.outputs.FuncSasUrlBlobAppLogs
+    app_func_audiences: app_func_audiences
+    app_func_issuer: app_func_issuer
+    app_insights_app_id: operationalInsights.outputs.appInsightsAppId
+    app_insights_key: operationalInsights.outputs.appInsightsInstrumentationKey
+    client_id: clientId
+    client_secret: clientSecret
+    diagnostics_log_level: diagnosticsLogLevel
+    func_sas_url: storage.outputs.FuncSasUrl
+    func_storage_resource_id: storage.outputs.FuncId
+    fuzz_storage_resource_id: storage.outputs.FuzzId
+    keyvault_name: keyVaultName
+    location: location
+    log_retention: log_retention
+    monitor_account_name: operationalInsights.outputs.monitorAccountName
+    multi_tenant_domain: multi_tenant_domain
+    owner: owner
+    server_farm_id: serverFarms.outputs.id
+    signal_r_connection_string: signalR.outputs.connectionString
   }
-  parent: pythonFunction
 }
 
-resource funcLogs 'Microsoft.Web/sites/config@2021-03-01' = {
-  name: 'logs'
-  properties: {
-    applicationLogs: {
-      azureBlobStorage: {
-        level: diagnosticsLogLevel
-        retentionInDays: log_retention
-        sasUrl: storage.outputs.FuncSasUrlBlobAppLogs
-      }
-    }
-  }
-  parent: pythonFunction
-}
-
-resource pythonFunctionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
-  name: 'appsettings'
-  parent: pythonFunction
-  properties: {
-      'FUNCTIONS_EXTENSION_VERSION': '~3'
-      'FUNCTIONS_WORKER_RUNTIME': 'python'
-      'FUNCTIONS_WORKER_PROCESS_COUNT': '1'
-      'APPINSIGHTS_INSTRUMENTATIONKEY': operationalInsights.outputs.appInsightsInstrumentationKey
-      'APPINSIGHTS_APPID': operationalInsights.outputs.appInsightsAppId
-      'ONEFUZZ_TELEMETRY': telemetry
-      'AzureWebJobsStorage': storage.outputs.FuncSasUrl
-      'MULTI_TENANT_DOMAIN': multi_tenant_domain
-      'AzureWebJobsDisableHomepage': 'true'
-      'AzureSignalRConnectionString': signalR.outputs.connectionString
-      'AzureSignalRServiceTransportType': 'Transient'
-      'ONEFUZZ_INSTANCE_NAME': name
-      'ONEFUZZ_INSTANCE': 'https://${name}.azurewebsites.net'
-      'ONEFUZZ_RESOURCE_GROUP': resourceGroup().id
-      'ONEFUZZ_DATA_STORAGE': storage.outputs.FuzzId
-      'ONEFUZZ_FUNC_STORAGE': storage.outputs.FuncId
-      'ONEFUZZ_MONITOR': operationalInsights.outputs.monitorAccountName
-      'ONEFUZZ_KEYVAULT': keyVaults.outputs.name
-      'ONEFUZZ_OWNER': owner
-      'ONEFUZZ_CLIENT_SECRET': clientSecret
-  }
-}
 
 output fuzz_storage string = storage.outputs.FuzzId
 output fuzz_name string = storage.outputs.FuzzName
