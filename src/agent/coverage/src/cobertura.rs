@@ -184,8 +184,25 @@ mod tests {
         };
 
         let path = convert_path(&file);
-        let parent_path = get_parent_path(&path);
         assert_eq!(&path, "C:/Users/file1.txt");
+    }
+
+    #[test]
+    fn test_cobertura_conversion_windows_to_posix_parent_path() {
+        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
+        coverage_locations_vec1.push(SourceCoverageLocation {
+            line: 5,
+            column: None,
+            count: 3,
+        });
+
+        let file = SourceFileCoverage {
+            locations: coverage_locations_vec1,
+            file: "C:\\Users\\file1.txt".to_string(),
+        };
+
+        let path = convert_path(&file);
+        let parent_path = get_parent_path(&path);
         assert_eq!(&(parent_path.display().to_string()), "C:/Users");
     }
 
@@ -204,14 +221,51 @@ mod tests {
         };
 
         let path = convert_path(&file);
-        let parent_path = get_parent_path(&path);
 
         assert_eq!(&path, "C:/Users/file1.txt");
+    }
+
+    #[test]
+    fn test_cobertura_conversion_posix_to_posix_parent_path() {
+        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
+        coverage_locations_vec1.push(SourceCoverageLocation {
+            line: 5,
+            column: None,
+            count: 3,
+        });
+
+        let file = SourceFileCoverage {
+            locations: coverage_locations_vec1,
+            file: "C:/Users/file1.txt".to_string(),
+        };
+
+        let path = convert_path(&file);
+        let parent_path = get_parent_path(&path);
+
         assert_eq!(&(parent_path.display().to_string()), "C:/Users");
     }
 
     #[test]
-    fn test_cobertura_invalid_path_windows() {
+    fn test_cobertura_invalid_windows_path() {
+        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
+        coverage_locations_vec1.push(SourceCoverageLocation {
+            line: 5,
+            column: None,
+            count: 3,
+        });
+
+        let file = SourceFileCoverage {
+            locations: coverage_locations_vec1,
+            file: "C:\\Users\\file\\..".to_string(),
+        };
+
+        let path = convert_path(&file);
+
+        assert_eq!(&path, "C:/Users/file/..");
+    }
+
+    #[test]
+    fn test_cobertura_invalid_windows_parent_path() {
         let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
         coverage_locations_vec1.push(SourceCoverageLocation {
             line: 5,
@@ -227,7 +281,6 @@ mod tests {
         let path = convert_path(&file);
         let parent_path = get_parent_path(&path);
 
-        assert_eq!(&path, "C:/Users/file/..");
         assert_eq!(
             &(parent_path.display().to_string()),
             "Invalid file format: C:/Users/file/.."
@@ -235,7 +288,25 @@ mod tests {
     }
 
     #[test]
-    fn test_cobertura_invalid_path_posix() {
+    fn test_cobertura_invalid_posix_path() {
+        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
+        coverage_locations_vec1.push(SourceCoverageLocation {
+            line: 5,
+            column: None,
+            count: 3,
+        });
+
+        let file = SourceFileCoverage {
+            locations: coverage_locations_vec1,
+            file: "C:/Users/file/..".to_string(),
+        };
+
+        let path = convert_path(&file);
+        assert_eq!(&path, "C:/Users/file/..");
+    }
+
+    #[test]
+    fn test_cobertura_invalid_posix_parent_path() {
         let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
         coverage_locations_vec1.push(SourceCoverageLocation {
             line: 5,
@@ -250,7 +321,7 @@ mod tests {
 
         let path = convert_path(&file);
         let parent_path = get_parent_path(&path);
-        assert_eq!(&path, "C:/Users/file/..");
+
         assert_eq!(
             &(parent_path.display().to_string()),
             "Invalid file format: C:/Users/file/.."
