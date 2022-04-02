@@ -1,14 +1,12 @@
 using Azure.Data.Tables;
 using CaseExtensions;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.Serialization;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-
-
 using System;
 using System.Reflection;
 using System.Linq;
+using System.Linq.Expressions;
+
+namespace Microsoft.OneFuzz.Service;
+
 
 public class RowKeyAttribute : Attribute { }
 public class PartitionKeyAttribute : Attribute { }
@@ -19,10 +17,31 @@ public enum EntityPropertyKind
     Column
 }
 public record EntityProperty(string name, string dbName, Type type, EntityPropertyKind kind);
-public record EntityInfo(Type type, EntityProperty[] properties, ConstructorInfo constructor);
+public record EntityInfo(Type type, EntityProperty[] properties, Func<object[], object> constructor);
 
 public class EntityConverter
 {
+
+    internal Func<object[], object> BuildConstructerFrom(ConstructorInfo constructorInfo)
+    {
+        var constructorParameters = Expression.Parameter(typeof(object?[]));
+
+        var parameterExpressions =
+            constructorInfo.GetParameters().Select((parameterInfo, i) =>
+            {
+                var ithIndex = Expression.Constant(i);
+                var ithParameter = Expression.ArrayIndex(constructorParameters, ithIndex);
+                var unboxedIthParameter = Expression.Convert(ithParameter, parameterInfo.ParameterType);
+                return unboxedIthParameter;
+
+            }).ToArray();
+
+        NewExpression constructorCall = Expression.New(constructorInfo, parameterExpressions);
+
+        Func<object[], object> ctor = (Func<object[], object>)Expression.Lambda<Func<object[], object>>(constructorCall, constructorParameters).Compile();
+        return ctor;
+    }
+
     private EntityInfo GetEntityInfo<T>()
     {
         var constructor = typeof(T).GetConstructors()[0];
@@ -71,12 +90,7 @@ public class EntityConverter
                 return new EntityProperty(f.Name, dbName, f.ParameterType, kind);
             }).ToArray();
 
-        ;
-
-        // use dynamic method instead of constructorInfo  for better perf
-        // https://andrewlock.net/benchmarking-4-reflection-methods-for-calling-a-constructor-in-dotnet/#4-reflection-emit
-
-        return new EntityInfo(typeof(T), parameters, constructor);
+        return new EntityInfo(typeof(T), parameters, BuildConstructerFrom(constructor));
     }
 
     public TableEntity ToTableEntity<T>(T typedEntity)
@@ -110,6 +124,8 @@ public class EntityConverter
                || prop.type == typeof(int?)
                || prop.type == typeof(Int64)
                || prop.type == typeof(Int64?)
+               || prop.type == typeof(double)
+               || prop.type == typeof(double?)
            )
             {
                 tableEntity.Add(prop.dbName, value);
@@ -147,23 +163,23 @@ public class EntityConverter
                 var fieldName = ef.dbName;
                 if (ef.type == typeof(string))
                 {
-                    return (object)entity.GetString(fieldName);
+                    return entity.GetString(fieldName);
                 }
                 else if (ef.type == typeof(bool))
                 {
-                    return (object?)entity.GetBoolean(fieldName);
+                    return entity.GetBoolean(fieldName);
                 }
                 else if (ef.type == typeof(DateTimeOffset) || ef.type == typeof(DateTimeOffset?))
                 {
-                    return (object?)entity.GetDateTimeOffset(fieldName);
+                    return entity.GetDateTimeOffset(fieldName);
                 }
                 else if (ef.type == typeof(DateTime))
                 {
-                    return (object?)entity.GetDateTime(fieldName);
+                    return entity.GetDateTime(fieldName);
                 }
                 else if (ef.type == typeof(double))
                 {
-                    return (object?)entity.GetDouble(fieldName);
+                    return entity.GetDouble(fieldName);
                 }
                 else if (ef.type == typeof(Guid) || ef.type == typeof(Guid?))
                 {
@@ -171,11 +187,11 @@ public class EntityConverter
                 }
                 else if (ef.type == typeof(int))
                 {
-                    return (object?)entity.GetInt32(fieldName);
+                    return entity.GetInt32(fieldName);
                 }
                 else if (ef.type == typeof(Int64))
                 {
-                    return (object?)entity.GetInt64(fieldName);
+                    return entity.GetInt64(fieldName);
                 }
                 else
                 {
