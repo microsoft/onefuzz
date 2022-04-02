@@ -11,7 +11,7 @@ namespace Microsoft.OneFuzz.Service;
 
 public class Program
 {
-    private static List<ILog> GetLoggers() {
+    public static List<ILog> GetLoggers() {
         List<ILog> loggers = new List<ILog>();
         foreach (var dest in EnvironmentVariables.LogDestinations)
         {
