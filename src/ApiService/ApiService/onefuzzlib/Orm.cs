@@ -6,6 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text.Json;
 using ApiService;
+using System.Threading.Tasks;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -27,6 +28,10 @@ class OnefuzzNamingPolicy : JsonNamingPolicy
     {
         return name.ToSnakeCase();
     }
+}
+
+public interface IStorageProvider { 
+    
 }
 
 public class EntityConverter
@@ -213,4 +218,34 @@ public class EntityConverter
 
         return (T)entityInfo.constructor.Invoke(parameters);
     }
+
+
+    public interface IStorageProvider
+    {
+        Task<TableServiceClient> GetStorageClient(string? table, string? accounId);
+    }
+
+    public class StorageProvider : IStorageProvider
+    {
+        public async Task<TableServiceClient> GetStorageClient(string? table, string? accounId)
+        {
+            accounId ??= System.Environment.GetEnvironmentVariable("ONEFUZZ_FUNC_STORAGE");
+            if (accounId == null)
+            {
+                throw new Exception("ONEFUZZ_FUNC_STORAGE environment variable not set");
+            }
+            var (name, key) = GetStorageAccountNameAndKey(accounId);
+            var tableClient = new TableServiceClient(new Uri(accounId), new TableSharedKeyCredential(name, key));
+            await tableClient.CreateTableIfNotExistsAsync(table);
+            return tableClient;
+        }
+
+        private (string, string) GetStorageAccountNameAndKey(string accounId)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }
+
+
+

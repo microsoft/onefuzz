@@ -24,7 +24,6 @@ public class QueueNodeHearbeat
 
     private (string, string) GetStorageAccountNameAndKey(string? accountId)
     {
-        //TableEntity
         return ("test", "test");
     }
 
