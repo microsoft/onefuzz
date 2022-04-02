@@ -91,29 +91,16 @@ class Console : ILog {
     }
 }
 
-public class Log {
+public class LogTracer {
 
-    static List<ILog> loggers;
-
-    static Log() {
-        loggers = new List<ILog>();
-        foreach (var dest in EnvironmentVariables.LogDestinations) {
-            loggers.Add(
-                dest switch {
-                    LogDestination.AppInsights => new AppInsights(),
-                    LogDestination.Console => new Console(),
-                    _ => throw new Exception(string.Format("Unhandled Log Destination type: {0}", dest)),
-                }
-                
-            );
-        }
-    }
+    private List<ILog> loggers;
 
     private IDictionary<string, string> tags = new Dictionary<string, string>();
     private Guid correlationId;
 
-    public Log(Guid correlationId) {
+    public LogTracer(Guid correlationId, List<ILog> loggers) {
         this.correlationId = correlationId;
+        this.loggers = loggers;
     }
 
     public IDictionary<string, string> Tags => tags;
@@ -169,4 +156,18 @@ public class Log {
             logger.Flush();
         }
     }
+}
+
+public class LogTracerFactory {
+
+    private List<ILog> loggers;
+
+    public LogTracerFactory(List<ILog> loggers) {
+        this.loggers = loggers;
+    }
+
+    public LogTracer MakeLogTracer(Guid correlationId) {
+        return new LogTracer(correlationId, this.loggers);
+    }
+
 }
