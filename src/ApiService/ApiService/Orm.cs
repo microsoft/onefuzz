@@ -4,6 +4,8 @@ using System;
 using System.Reflection;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text.Json;
+using ApiService;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -19,8 +21,31 @@ public enum EntityPropertyKind
 public record EntityProperty(string name, string dbName, Type type, EntityPropertyKind kind);
 public record EntityInfo(Type type, EntityProperty[] properties, Func<object[], object> constructor);
 
+class OnefuzzNamingPolicy : JsonNamingPolicy
+{
+    public override string ConvertName(string name)
+    {
+        return name.ToSnakeCase();
+    }
+}
+
 public class EntityConverter
 {
+    private readonly JsonSerializerOptions _options = new JsonSerializerOptions()
+    {
+        PropertyNamingPolicy = new OnefuzzNamingPolicy(),
+    };
+
+
+
+    public EntityConverter()
+    {
+        _options = new JsonSerializerOptions()
+        {
+            PropertyNamingPolicy = new OnefuzzNamingPolicy(),
+        };
+        _options.Converters.Add(new CustomEnumConverterFactory());
+    }
 
     internal Func<object[], object> BuildConstructerFrom(ConstructorInfo constructorInfo)
     {
@@ -45,8 +70,6 @@ public class EntityConverter
     private EntityInfo GetEntityInfo<T>()
     {
         var constructor = typeof(T).GetConstructors()[0];
-        //Delegate.CreateDelegate(typeof(Func<object[], object>), null, constructor.method);
-
         var parameterInfos = constructor.GetParameters();
         var parameters =
         parameterInfos.Select(f =>
@@ -54,29 +77,6 @@ public class EntityConverter
                 var isRowkey = f.GetCustomAttribute(typeof(RowKeyAttribute)) != null;
                 var isPartitionkey = f.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
                 var (dbName, kind) = isRowkey ? ("RowKey", EntityPropertyKind.RowKey) : isPartitionkey ? ("PartitionKey", EntityPropertyKind.PartitionKey) : (f.Name.ToSnakeCase(), EntityPropertyKind.Column);
-                Func<object, object> parser;
-                if (isRowkey || isPartitionkey)
-                {
-                    if (f.ParameterType == typeof(string))
-                    {
-                        parser = (x) => x;
-                    }
-                    else
-                    {
-                        var parserFunc = f.ParameterType?.GetMethod("Parse", new[] { typeof(string) });
-                        //var serializerFunc = f.ParameterType?.GetMethod("ToString", new Type[] {});
-                        if (parserFunc == null)
-                        {
-                            throw new NullReferenceException($"no parser for type {f.ParameterType}");
-                        }
-                        //parser = (Func<object,object>) Delegate.CreateDelegate(typeof(Func<object,object>),null,parserFunc);
-                    }
-                }
-                else
-                {
-                    //todo:
-                    parser = x => x;
-                }
                 if (f.Name == null)
                 {
                     throw new Exception();
@@ -126,13 +126,19 @@ public class EntityConverter
                || prop.type == typeof(Int64?)
                || prop.type == typeof(double)
                || prop.type == typeof(double?)
+
            )
             {
                 tableEntity.Add(prop.dbName, value);
             }
+            else if (prop.type.IsEnum)
+            {
+                tableEntity.Add(prop.dbName, value?.ToString().ToSnakeCase());
+            }
             else
             {
-                tableEntity.Add(prop.dbName, System.Text.Json.JsonSerializer.Serialize(value));
+                var serialized = JsonSerializer.Serialize(value, _options);
+                tableEntity.Add(prop.dbName, serialized);
             }
 
         }
@@ -150,9 +156,9 @@ public class EntityConverter
                 if (ef.kind == EntityPropertyKind.PartitionKey || ef.kind == EntityPropertyKind.RowKey)
                 {
                     if (ef.type == typeof(string))
-                        return (object)entity.GetString(ef.kind.ToString());
+                        return entity.GetString(ef.kind.ToString());
                     else if (ef.type == typeof(Guid))
-                        return (object)Guid.Parse(entity.GetString(ef.kind.ToString()));
+                        return Guid.Parse(entity.GetString(ef.kind.ToString()));
                     else
                     {
                         throw new Exception("invalid ");
@@ -193,18 +199,17 @@ public class EntityConverter
                 {
                     return entity.GetInt64(fieldName);
                 }
+                else if (ef.type.IsEnum)
+                {
+                    return Enum.Parse(ef.type, entity.GetString(fieldName).ToPascalCase());
+                }
                 else
                 {
-                    // todo: deserialize the object using system.text.json
-                    // we expect a string at this point
                     var value = entity.GetString(fieldName);
-                    System.Text.Json.JsonSerializer.Deserialize(value, ef.type);
-                    return System.Text.Json.JsonSerializer.Deserialize(value, ef.type); ;
+                    return JsonSerializer.Deserialize(value, ef.type, options: _options); ;
                 }
             }
         ).ToArray();
-
-
 
         return (T)entityInfo.constructor.Invoke(parameters);
     }
