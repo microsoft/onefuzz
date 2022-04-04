@@ -195,6 +195,7 @@ mod tests {
         assert_eq!(&path, "C:/Users/file1.txt");
     }
 
+    #[test]
     fn test_cobertura_conversion_windows_to_posix_path_TEST() {
         let file = "C:\\Users\\file1.txt".to_string();
 
