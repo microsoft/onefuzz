@@ -8,6 +8,7 @@ using ApiService;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using ApiService.onefuzzlib.orm;
+using System.Text.Json.Serialization;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -30,11 +31,6 @@ class OnefuzzNamingPolicy : JsonNamingPolicy
         return CaseConverter.PascalToSnake(name);
     }
 }
-
-public interface IStorageProvider {
-
-}
-
 public class EntityConverter
 {
     private readonly JsonSerializerOptions _options = new JsonSerializerOptions()
@@ -69,7 +65,7 @@ public class EntityConverter
 
         NewExpression constructorCall = Expression.New(constructorInfo, parameterExpressions);
 
-        Func<object[], object> ctor = (Func<object[], object>)Expression.Lambda<Func<object[], object>>(constructorCall, constructorParameters).Compile();
+        Func<object[], object> ctor = Expression.Lambda<Func<object[], object>>(constructorCall, constructorParameters).Compile();
         return ctor;
     }
 
@@ -82,12 +78,18 @@ public class EntityConverter
             {
                 var isRowkey = f.GetCustomAttribute(typeof(RowKeyAttribute)) != null;
                 var isPartitionkey = f.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
-                var (dbName, kind) = 
-                    isRowkey 
-                        ? ("RowKey", EntityPropertyKind.RowKey) 
-                        : isPartitionkey 
-                            ? ("PartitionKey", EntityPropertyKind.PartitionKey) 
-                            : (CaseConverter.PascalToSnake(f.Name), EntityPropertyKind.Column);
+
+
+                var (dbName, kind) =
+                    isRowkey
+                        ? ("RowKey", EntityPropertyKind.RowKey)
+                        : isPartitionkey
+                            ? ("PartitionKey", EntityPropertyKind.PartitionKey)
+                            : (// JsonPropertyNameAttribute can only be applied to properties
+                                typeof(T).GetProperty(f.Name)?.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name
+                                    ?? CaseConverter.PascalToSnake(f.Name),
+                                EntityPropertyKind.Column
+                            );
                 if (f.Name == null)
                 {
                     throw new Exception();
@@ -145,10 +147,10 @@ public class EntityConverter
             else if (prop.type.IsEnum)
             {
                 var values =
-                    value?.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries| StringSplitOptions.TrimEntries)
+                    value?.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                         .Select(CaseConverter.PascalToSnake);
-                    
-                tableEntity.Add(prop.dbName, string.Join(",", values) );
+
+                tableEntity.Add(prop.dbName, string.Join(",", values));
             }
             else
             {
@@ -216,11 +218,11 @@ public class EntityConverter
                 }
                 else if (ef.type.IsEnum)
                 {
-                    var stringValues = 
-                        entity.GetString(fieldName).Split(",", StringSplitOptions.RemoveEmptyEntries| StringSplitOptions.TrimEntries)
+                    var stringValues =
+                        entity.GetString(fieldName).Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                         .Select(CaseConverter.SnakeToPascal);
 
-                    return Enum.Parse(ef.type, string.Join(",", stringValues) );
+                    return Enum.Parse(ef.type, string.Join(",", stringValues));
                 }
                 else
                 {
