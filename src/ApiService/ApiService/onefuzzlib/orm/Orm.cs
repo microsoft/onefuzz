@@ -240,18 +240,13 @@ public class EntityConverter
 
     public interface IStorageProvider
     {
-        Task<TableServiceClient> GetStorageClient(string? table, string? accounId);
+        Task<TableServiceClient> GetStorageClient(string table, string accounId);
     }
 
     public class StorageProvider : IStorageProvider
     {
-        public async Task<TableServiceClient> GetStorageClient(string? table, string? accounId)
+        public async Task<TableServiceClient> GetStorageClient(string table, string accounId)
         {
-            accounId ??= System.Environment.GetEnvironmentVariable("ONEFUZZ_FUNC_STORAGE");
-            if (accounId == null)
-            {
-                throw new Exception("ONEFUZZ_FUNC_STORAGE environment variable not set");
-            }
             var (name, key) = GetStorageAccountNameAndKey(accounId);
             var tableClient = new TableServiceClient(new Uri(accounId), new TableSharedKeyCredential(name, key));
             await tableClient.CreateTableIfNotExistsAsync(table);
