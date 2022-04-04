@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.3.0
+### Added
+* Agent: Add a compiler flag to generate debug info for the windows-libfuzzer load library test target. [#1684](https://github.com/microsoft/onefuzz/pull/1684)
+* Agent: Add a rust crate to debug missing dynamic library errors on Windows. [#1713](https://github.com/microsoft/onefuzz/pull/1713)
+* Agent: Add support for detecting missing dynamic libraries on Linux.. [#1718](https://github.com/microsoft/onefuzz/pull/1718)
+* Service: Connect the auto scaling diagnostics to the log analytics workspace. [#1708](https://github.com/microsoft/onefuzz/pull/1708)
+* Service: Handle the situation where a VM scale set instance is destroyed  before we have removed scale-in protection. [#1719](https://github.com/microsoft/onefuzz/pull/1719)
+* Service: Add additional support for auto scaling including changes to the CLI. [#1717](https://github.com/microsoft/onefuzz/pull/1717), [#1763](https://github.com/microsoft/onefuzz/pull/1763)
+* Agent/Service/CLI: Add support for generating log files that can be downloaded using the CLI. [#1727](https://github.com/microsoft/onefuzz/pull/1727), [#1723](https://github.com/microsoft/onefuzz/pull/1723), [#1721](https://github.com/microsoft/onefuzz/pull/1721)
+* Service: Port ARM templates to Bicep. [#1724](https://github.com/microsoft/onefuzz/pull/1724), [#1732](https://github.com/microsoft/onefuzz/pull/1732)
+* Service: Initial changes to port the service from python to C#. [#1734](https://github.com/microsoft/onefuzz/pull/1734), [#1733](https://github.com/microsoft/onefuzz/pull/1733), [#1736](https://github.com/microsoft/onefuzz/pull/1736), [#1737](https://github.com/microsoft/onefuzz/pull/1737), [#1738](https://github.com/microsoft/onefuzz/pull/1738), [#1742](https://github.com/microsoft/onefuzz/pull/1742), [#1744](https://github.com/microsoft/onefuzz/pull/1744), [#1749](https://github.com/microsoft/onefuzz/pull/1749), [#1750](https://github.com/microsoft/onefuzz/pull/1750), [#1753](https://github.com/microsoft/onefuzz/pull/1753), [#1755](https://github.com/microsoft/onefuzz/pull/1755), [#1760](https://github.com/microsoft/onefuzz/pull/1760), [#1761](https://github.com/microsoft/onefuzz/pull/1761), [#1762](https://github.com/microsoft/onefuzz/pull/1762), [#1765](https://github.com/microsoft/onefuzz/pull/1765), [#1757](https://github.com/microsoft/onefuzz/pull/1757), [#1780](https://github.com/microsoft/onefuzz/pull/1780), [#1782](https://github.com/microsoft/onefuzz/pull/1782)
+* Service: Make sure the scale set nodes are unable to accept work while in the `setup` state. [#1731](https://github.com/microsoft/onefuzz/pull/1731)
+
+### Changed
+* Agent: Reduce the logging level down from `warn` to `debug` when we are unable to parse an asan log. [#1705](https://github.com/microsoft/onefuzz/pull/1705)
+* Service: Move the creation of the event grid topic to the deployment template from the `deploy.py` script. [#1591](https://github.com/microsoft/onefuzz/pull/1591)
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1548](https://github.com/microsoft/onefuzz/pull/1548), [#1617](https://github.com/microsoft/onefuzz/pull/1617), [#1618](https://github.com/microsoft/onefuzz/pull/1618)
+* Service: Consolidate the two log analytics down to one. [#1679](https://github.com/microsoft/onefuzz/pull/1679)
+
+### Fixed
+* Service: Auto scale setting log statement is not an `error` changed it to `info`. [#1745](https://github.com/microsoft/onefuzz/pull/1745)
+* Agent: Fixed Cobertera output so that coverage summary renders in Azure Devops correctly. [#1728](https://github.com/microsoft/onefuzz/pull/1728)
+
 ## 5.2.0
 ### Added
 * Service: Added additional auto-scaling support for VM scale sets. [#1686](https://github.com/microsoft/onefuzz/pull/1686), [#1698](https://github.com/microsoft/onefuzz/pull/1698)
