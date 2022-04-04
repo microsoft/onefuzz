@@ -22,7 +22,7 @@ public enum EntityPropertyKind
     RowKey,
     Column
 }
-public record EntityProperty(string name, string dbName, Type type, EntityPropertyKind kind);
+public record EntityProperty(string name, string columnName, Type type, EntityPropertyKind kind);
 public record EntityInfo(Type type, EntityProperty[] properties, Func<object[], object> constructor);
 
 class OnefuzzNamingPolicy : JsonNamingPolicy
@@ -82,7 +82,7 @@ public class EntityConverter
                 var isPartitionkey = f.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
 
 
-                var (dbName, kind) =
+                var (columnName, kind) =
                 isRowkey
                     ? ("RowKey", EntityPropertyKind.RowKey)
                     : isPartitionkey
@@ -102,7 +102,7 @@ public class EntityConverter
                     throw new Exception();
                 }
 
-                return new EntityProperty(f.Name, dbName, f.ParameterType, kind);
+                return new EntityProperty(f.Name, columnName, f.ParameterType, kind);
             }).ToArray();
 
             return new EntityInfo(typeof(T), parameters, BuildConstructerFrom(constructor));
@@ -127,7 +127,7 @@ public class EntityConverter
             var value = entityInfo.type.GetProperty(prop.name)?.GetValue(typedEntity);
             if (prop.type == typeof(Guid) || prop.type == typeof(Guid?))
             {
-                tableEntity.Add(prop.dbName, value?.ToString());
+                tableEntity.Add(prop.columnName, value?.ToString());
             }
             else if (prop.type == typeof(bool)
                || prop.type == typeof(bool?)
@@ -145,7 +145,7 @@ public class EntityConverter
 
            )
             {
-                tableEntity.Add(prop.dbName, value);
+                tableEntity.Add(prop.columnName, value);
             }
             else if (prop.type.IsEnum)
             {
@@ -153,12 +153,12 @@ public class EntityConverter
                     value?.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                         .Select(CaseConverter.PascalToSnake);
 
-                tableEntity.Add(prop.dbName, string.Join(",", values));
+                tableEntity.Add(prop.columnName, string.Join(",", values));
             }
             else
             {
                 var serialized = JsonSerializer.Serialize(value, _options);
-                tableEntity.Add(prop.dbName, serialized);
+                tableEntity.Add(prop.columnName, serialized);
             }
 
         }
@@ -186,7 +186,7 @@ public class EntityConverter
 
                 }
 
-                var fieldName = ef.dbName;
+                var fieldName = ef.columnName;
                 if (ef.type == typeof(string))
                 {
                     return entity.GetString(fieldName);
