@@ -3,7 +3,6 @@ use crate::source::SourceFileCoverage;
 use anyhow::Context;
 use anyhow::Error;
 use anyhow::Result;
-use path_slash::PathExt;
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -56,11 +55,7 @@ pub fn compute_line_values_package(file: &SourceFileCoverage) -> LineValues {
     LineValues::new(valid_lines, hit_lines)
 }
 pub fn convert_path(file: &SourceFileCoverage) -> String {
-    let path_slash = match Path::new(&file.file).to_slash() {
-        Some(_path_slash) => Path::new(&file.file).to_slash().unwrap(),
-        None => "Cannot convert path to posix-format".to_owned() + &file.file,
-    };
-    path_slash
+    file.file.replace("\\", "/")
 }
 
 pub fn test_convert_path(file: String) -> String {
@@ -192,14 +187,6 @@ mod tests {
         };
 
         let path = convert_path(&file);
-        assert_eq!(&path, "C:/Users/file1.txt");
-    }
-
-    #[test]
-    fn test_cobertura_conversion_windows_to_posix_path_TEST() {
-        let file = "C:\\Users\\file1.txt".to_string();
-
-        let path = test_convert_path(file);
         assert_eq!(&path, "C:/Users/file1.txt");
     }
 

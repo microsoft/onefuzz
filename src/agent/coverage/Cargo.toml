@@ -28,7 +28,6 @@ symbolic = { version = "8.5", features = ["debuginfo", "demangle", "symcache"] }
 uuid = { version = "0.8", features = ["guid"] }
 win-util = { path = "../win-util" }
 xml-rs = "0.8"
-path-slash = "0.1.4"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 pdb = "0.7"
