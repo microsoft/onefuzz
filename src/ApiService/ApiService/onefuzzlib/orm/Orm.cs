@@ -10,9 +10,15 @@ using System.Collections.Generic;
 using ApiService.onefuzzlib.orm;
 using System.Text.Json.Serialization;
 using System.Collections.Concurrent;
+using Azure;
 
 namespace Microsoft.OneFuzz.Service;
 
+public abstract record EntityBase
+{
+    public ETag? ETag { get; set; }
+    public DateTimeOffset? TimeStamp { get; set; }
+}
 
 public class RowKeyAttribute : Attribute { }
 public class PartitionKeyAttribute : Attribute { }
@@ -109,7 +115,7 @@ public class EntityConverter
         });
     }
 
-    public TableEntity ToTableEntity<T>(T typedEntity)
+    public TableEntity ToTableEntity<T>(T typedEntity) where T: EntityBase
     {
         if (typedEntity == null)
         {
@@ -163,11 +169,15 @@ public class EntityConverter
 
         }
 
+        if (typedEntity.ETag.HasValue) { 
+            tableEntity.ETag = typedEntity.ETag.Value;
+        }
+
         return tableEntity;
     }
 
 
-    public T ToRecord<T>(TableEntity entity)
+    public T ToRecord<T>(TableEntity entity) where T: EntityBase
     {
         var entityInfo = GetEntityInfo<T>();
         var parameters =
@@ -235,30 +245,13 @@ public class EntityConverter
             }
         ).ToArray();
 
-        return (T)entityInfo.constructor.Invoke(parameters);
+        var entityRecord = (T)entityInfo.constructor.Invoke(parameters);
+        entityRecord.ETag = entity.ETag;
+        entityRecord.TimeStamp = entity.Timestamp;
+
+        return entityRecord;
     }
 
-
-    public interface IStorageProvider
-    {
-        Task<TableServiceClient> GetStorageClient(string table, string accounId);
-    }
-
-    public class StorageProvider : IStorageProvider
-    {
-        public async Task<TableServiceClient> GetStorageClient(string table, string accounId)
-        {
-            var (name, key) = GetStorageAccountNameAndKey(accounId);
-            var tableClient = new TableServiceClient(new Uri(accounId), new TableSharedKeyCredential(name, key));
-            await tableClient.CreateTableIfNotExistsAsync(table);
-            return tableClient;
-        }
-
-        private (string, string) GetStorageAccountNameAndKey(string accounId)
-        {
-            throw new NotImplementedException();
-        }
-    }
 }
 
 

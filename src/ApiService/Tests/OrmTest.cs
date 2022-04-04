@@ -41,8 +41,7 @@ namespace Tests
             TestFlagEnum TheFlag,
             [property:JsonPropertyName("a__special__name")] string Renamed,
             TestObject TheObject
-
-            );
+            ): EntityBase();
 
 
         [Fact]
