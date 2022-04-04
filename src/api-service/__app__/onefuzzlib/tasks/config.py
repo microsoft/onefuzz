@@ -411,6 +411,13 @@ def build_task_config(
             else True
         )
 
+    if TaskFeature.preserve_existing_outputs in definition.features:
+        config.preserve_existing_outputs = (
+            task_config.task.preserve_existing_outputs
+            if task_config.task.preserve_existing_outputs is not None
+            else True
+        )
+
     if TaskFeature.report_list in definition.features:
         config.report_list = task_config.task.report_list
 

@@ -219,6 +219,7 @@ TASK_DEFINITIONS = {
             TaskFeature.target_env,
             TaskFeature.target_options,
             TaskFeature.check_fuzzer_help,
+            TaskFeature.preserve_existing_outputs,
         ],
         vm=VmDefinition(compare=Compare.Equal, value=1),
         containers=[
