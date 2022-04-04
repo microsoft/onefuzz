@@ -95,7 +95,8 @@ namespace ApiService.onefuzzlib.orm
             }
 
             var value = json.Split(ValueSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(x => {
+                .Select(x =>
+                {
                     if (!_readCache.TryGetValue(x, out T value))
                     {
                         throw new JsonException();
@@ -104,13 +105,14 @@ namespace ApiService.onefuzzlib.orm
 
                 }).ToArray();
 
-            if (value.Length == 1) {
+            if (value.Length == 1)
+            {
                 return value[0];
             }
 
             var result = default(T);
 
-            return (T) (object) value.Aggregate(0, (state, value) => (int) (object) state | (int) (object) value);
+            return (T)(object)value.Aggregate(0, (state, value) => (int)(object)state | (int)(object)value);
         }
 
         public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)

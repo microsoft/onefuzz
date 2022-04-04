@@ -71,7 +71,8 @@ public class EntityConverter
 
     private EntityInfo GetEntityInfo<T>()
     {
-        return _cache.GetOrAdd(typeof(T),  type => {
+        return _cache.GetOrAdd(typeof(T), type =>
+        {
             var constructor = type.GetConstructors()[0];
             var parameterInfos = constructor.GetParameters();
             var parameters =
