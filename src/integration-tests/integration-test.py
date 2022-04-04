@@ -32,7 +32,7 @@ import requests
 from onefuzz.api import Command, Onefuzz
 from onefuzz.backend import ContainerWrapper, wait
 from onefuzz.cli import execute_api
-from onefuzztypes.enums import OS, ContainerType, TaskState, VmState
+from onefuzztypes.enums import OS, ContainerType, TaskState, VmState, ScalesetState
 from onefuzztypes.models import Job, Pool, Repro, Scaleset, Task
 from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, Field
@@ -415,6 +415,8 @@ class TestOnefuzz:
                 task.config.pool is not None
                 and scaleset.pool_name == task.config.pool.pool_name
                 and scaleset.state not in scaleset.state.available()
+                # not available() does not mean failed
+                and scaleset.state not in [ScalesetState.init, ScalesetState.setup]
             ):
                 self.logger.error(
                     "task scaleset failed: %s - %s - %s (%s)",
