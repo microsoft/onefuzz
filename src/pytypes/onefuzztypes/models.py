@@ -373,6 +373,7 @@ class TaskUnitConfig(BaseModel):
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
     coverage_filter: Optional[str]
+    preserve_existing_outputs: Optional[bool]
 
     # from here forwards are Container definitions.  These need to be inline
     # with TaskDefinitions and ContainerTypes
