@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using ApiService.onefuzzlib.orm;
 using System.Text.Json.Serialization;
+using System.Collections.Concurrent;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -33,11 +34,9 @@ class OnefuzzNamingPolicy : JsonNamingPolicy
 }
 public class EntityConverter
 {
-    private readonly JsonSerializerOptions _options = new JsonSerializerOptions()
-    {
-        PropertyNamingPolicy = new OnefuzzNamingPolicy(),
-    };
+    private readonly JsonSerializerOptions _options;
 
+    private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
 
 
     public EntityConverter()
@@ -47,6 +46,7 @@ public class EntityConverter
             PropertyNamingPolicy = new OnefuzzNamingPolicy(),
         };
         _options.Converters.Add(new CustomEnumConverterFactory());
+        _cache = new ConcurrentDictionary<Type, EntityInfo>();
     }
 
     internal Func<object[], object> BuildConstructerFrom(ConstructorInfo constructorInfo)
@@ -71,25 +71,26 @@ public class EntityConverter
 
     private EntityInfo GetEntityInfo<T>()
     {
-        var constructor = typeof(T).GetConstructors()[0];
-        var parameterInfos = constructor.GetParameters();
-        var parameters =
-        parameterInfos.Select(f =>
+        return _cache.GetOrAdd(typeof(T),  type => {
+            var constructor = type.GetConstructors()[0];
+            var parameterInfos = constructor.GetParameters();
+            var parameters =
+            parameterInfos.Select(f =>
             {
                 var isRowkey = f.GetCustomAttribute(typeof(RowKeyAttribute)) != null;
                 var isPartitionkey = f.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
 
 
                 var (dbName, kind) =
-                    isRowkey
-                        ? ("RowKey", EntityPropertyKind.RowKey)
-                        : isPartitionkey
-                            ? ("PartitionKey", EntityPropertyKind.PartitionKey)
-                            : (// JsonPropertyNameAttribute can only be applied to properties
-                                typeof(T).GetProperty(f.Name)?.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name
-                                    ?? CaseConverter.PascalToSnake(f.Name),
-                                EntityPropertyKind.Column
-                            );
+                isRowkey
+                    ? ("RowKey", EntityPropertyKind.RowKey)
+                    : isPartitionkey
+                        ? ("PartitionKey", EntityPropertyKind.PartitionKey)
+                        : (// JsonPropertyNameAttribute can only be applied to properties
+                            typeof(T).GetProperty(f.Name)?.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name
+                                ?? CaseConverter.PascalToSnake(f.Name),
+                            EntityPropertyKind.Column
+                        );
                 if (f.Name == null)
                 {
                     throw new Exception();
@@ -103,7 +104,8 @@ public class EntityConverter
                 return new EntityProperty(f.Name, dbName, f.ParameterType, kind);
             }).ToArray();
 
-        return new EntityInfo(typeof(T), parameters, BuildConstructerFrom(constructor));
+            return new EntityInfo(typeof(T), parameters, BuildConstructerFrom(constructor));
+        });
     }
 
     public TableEntity ToTableEntity<T>(T typedEntity)
