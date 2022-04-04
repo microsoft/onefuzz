@@ -1,14 +1,13 @@
-using Azure.Data.Tables;
-using Microsoft.OneFuzz.Service;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 
-namespace ApiService;
+namespace Microsoft.OneFuzz.Service;
 
 
-/// Convention for databse entoties:
-/// All entities are represented by immuable records
+/// Convention for database entities:
+/// All entities are represented by immutable records
+/// All database entities need to derive from EntityBase
 /// Only properties that also apears as parameter initializers are mapped to the database
 /// The name of the property will be tranlated to snake case and used as the column name
 /// It is possible to rename the column name by using the [property:JsonPropertyName("column_name")] attribute

@@ -6,8 +6,7 @@ using System.Text.Json;
 using Azure.Data.Tables;
 using System.Threading.Tasks;
 using Azure;
-using ApiService.onefuzzlib.orm;
-using ApiService;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -16,12 +15,11 @@ enum HeartbeatType
 {
     MachineAlive,
     TaskAlive,
-}
+}   
 
 
 public class QueueNodeHearbeat
 {
-
     private readonly ILogger _logger;
     private readonly IStorageProvider _storageProvider;
 

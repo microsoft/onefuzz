@@ -3,8 +3,8 @@ using Xunit;
 using Microsoft.OneFuzz.Service;
 using Azure.Data.Tables;
 using System.Text.Json.Nodes;
-using ApiService.onefuzzlib.orm;
 using System.Text.Json.Serialization;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Tests
 {

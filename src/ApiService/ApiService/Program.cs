@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Azure.Functions.Worker.Configuration;
 using Azure.ResourceManager.Storage.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -33,7 +34,8 @@ public class Program
         var host = new HostBuilder()
         .ConfigureFunctionsWorkerDefaults()
         .ConfigureServices((context, services) =>
-            services.AddSingleton<LogTracerFactory>(_ => new LogTracerFactory(GetLoggers()))
+            services.AddSingleton(_ => new LogTracerFactory(GetLoggers()))
+            .AddSingleton<IStorageProvider>(_ => new StorageProvider(EnvironmentVariables.OneFuzz.FuncStorage))
         )
         .Build();
 
