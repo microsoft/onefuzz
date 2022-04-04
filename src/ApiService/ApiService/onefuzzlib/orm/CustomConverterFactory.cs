@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace ApiService
+namespace ApiService.onefuzzlib.orm
 {
     public sealed class CustomEnumConverterFactory : JsonConverterFactory
     {
@@ -40,7 +41,7 @@ namespace ApiService
         // This converter will only support up to 64 enum values (including flags) on serialization and deserialization
         private const int NameCacheLimit = 64;
 
-        private const string ValueSeparator = ", ";
+        private const string ValueSeparator = ",";
 
         public CustomEnumConverter(JsonNamingPolicy namingPolicy, JsonSerializerOptions options, object[]? knownValues)
         {
@@ -88,12 +89,28 @@ namespace ApiService
         {
             string? json;
 
-            if (reader.TokenType != JsonTokenType.String || (json = reader.GetString()) == null || !_readCache.TryGetValue(json, out T value))
+            if (reader.TokenType != JsonTokenType.String || (json = reader.GetString()) == null)
             {
                 throw new JsonException();
             }
 
-            return value;
+            var value = json.Split(ValueSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(x => {
+                    if (!_readCache.TryGetValue(x, out T value))
+                    {
+                        throw new JsonException();
+                    }
+                    return value;
+
+                }).ToArray();
+
+            if (value.Length == 1) {
+                return value[0];
+            }
+
+            var result = default(T);
+
+            return (T) (object) value.Aggregate(0, (state, value) => (int) (object) state | (int) (object) value);
         }
 
         public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
@@ -135,7 +152,7 @@ namespace ApiService
 
                 for (int i = 0; i < enumValues.Length; i++)
                 {
-                    enumValues[i] = namingPolicy.ConvertName(enumValues[i]);
+                    enumValues[i] = namingPolicy.ConvertName(enumValues[i].Trim());
                 }
 
                 converted = string.Join(ValueSeparator, enumValues);

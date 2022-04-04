@@ -1,5 +1,4 @@
 using Azure.Data.Tables;
-using CaseExtensions;
 using System;
 using System.Reflection;
 using System.Linq;
@@ -7,6 +6,8 @@ using System.Linq.Expressions;
 using System.Text.Json;
 using ApiService;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using ApiService.onefuzzlib.orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -26,12 +27,12 @@ class OnefuzzNamingPolicy : JsonNamingPolicy
 {
     public override string ConvertName(string name)
     {
-        return name.ToSnakeCase();
+        return CaseConverter.PascalToSnake(name);
     }
 }
 
-public interface IStorageProvider { 
-    
+public interface IStorageProvider {
+
 }
 
 public class EntityConverter
@@ -81,7 +82,12 @@ public class EntityConverter
             {
                 var isRowkey = f.GetCustomAttribute(typeof(RowKeyAttribute)) != null;
                 var isPartitionkey = f.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
-                var (dbName, kind) = isRowkey ? ("RowKey", EntityPropertyKind.RowKey) : isPartitionkey ? ("PartitionKey", EntityPropertyKind.PartitionKey) : (f.Name.ToSnakeCase(), EntityPropertyKind.Column);
+                var (dbName, kind) = 
+                    isRowkey 
+                        ? ("RowKey", EntityPropertyKind.RowKey) 
+                        : isPartitionkey 
+                            ? ("PartitionKey", EntityPropertyKind.PartitionKey) 
+                            : (CaseConverter.PascalToSnake(f.Name), EntityPropertyKind.Column);
                 if (f.Name == null)
                 {
                     throw new Exception();
@@ -138,7 +144,11 @@ public class EntityConverter
             }
             else if (prop.type.IsEnum)
             {
-                tableEntity.Add(prop.dbName, value?.ToString().ToSnakeCase());
+                var values =
+                    value?.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries| StringSplitOptions.TrimEntries)
+                        .Select(CaseConverter.PascalToSnake);
+                    
+                tableEntity.Add(prop.dbName, string.Join(",", values) );
             }
             else
             {
@@ -206,7 +216,11 @@ public class EntityConverter
                 }
                 else if (ef.type.IsEnum)
                 {
-                    return Enum.Parse(ef.type, entity.GetString(fieldName).ToPascalCase());
+                    var stringValues = 
+                        entity.GetString(fieldName).Split(",", StringSplitOptions.RemoveEmptyEntries| StringSplitOptions.TrimEntries)
+                        .Select(CaseConverter.SnakeToPascal);
+
+                    return Enum.Parse(ef.type, string.Join(",", stringValues) );
                 }
                 else
                 {
