@@ -63,6 +63,14 @@ pub fn convert_path(file: &SourceFileCoverage) -> String {
     path_slash
 }
 
+pub fn test_convert_path(file: String) -> String {
+    let path_slash = match Path::new(&file).to_slash() {
+        Some(_path_slash) => Path::new(&file).to_slash().unwrap(),
+        None => "Cannot convert path to posix-format".to_owned() + &file,
+    };
+    path_slash
+}
+
 // get directory of file if valid file path, otherwise make package name include and error message
 pub fn get_parent_path(path_slash: &str) -> PathBuf {
     let path = Path::new(&path_slash);
@@ -186,6 +194,15 @@ mod tests {
         let path = convert_path(&file);
         assert_eq!(&path, "C:/Users/file1.txt");
     }
+
+    fn test_cobertura_conversion_windows_to_posix_path_TEST() {
+
+        let file = "C:\\Users\\file1.txt".to_string();
+
+        let path = test_convert_path(file);
+        assert_eq!(&path, "C:/Users/file1.txt");
+    }
+
 
     #[test]
     fn test_cobertura_conversion_windows_to_posix_parent_path() {
