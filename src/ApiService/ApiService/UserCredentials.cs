@@ -3,7 +3,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using ApiService;
 using Azure.ResourceManager.Compute.Models;
 using Azure.ResourceManager.Network.Models;
 using Microsoft.Azure.Functions.Worker.Http;
