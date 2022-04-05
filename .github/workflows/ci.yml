@@ -251,7 +251,7 @@ jobs:
   service-net:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@
+    - uses: actions/checkout@v2
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v2
       with:
