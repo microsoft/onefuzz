@@ -25,7 +25,7 @@ public class QueueNodeHearbeat
     [Function("QueueNodeHearbeat")]
     public async Task Run([QueueTrigger("myqueue-items", Connection = "AzureWebJobsStorage")] string msg)
     {
-        var hb = JsonSerializer.Deserialize<NodeHeartbeatEntry>(msg, EntityConverter.GetJsonSerializerOptions());
+        var hb = JsonSerializer.Deserialize<NodeHeartbeatEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 
         var node = await Node.GetByMachineId(_storageProvider, hb.NodeId);
 

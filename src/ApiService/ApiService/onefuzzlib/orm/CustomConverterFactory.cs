@@ -99,7 +99,7 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum
         var value = json.Split(ValueSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(x =>
             {
-                if (!_readCache.TryGetValue(x, out T value))
+                if (!_readCache.TryGetValue(x, out T? value))
                 {
                     throw new JsonException();
                 }
@@ -111,8 +111,6 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum
         {
             return value[0];
         }
-
-        var result = default(T);
 
         return (T)(object)value.Aggregate(0, (state, value) => (int)(object)state | (int)(object)value);
     }

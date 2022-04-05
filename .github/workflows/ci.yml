@@ -248,6 +248,26 @@ jobs:
 
         ../ci/disable-py-cache.sh
         mypy __app__ ./tests
+  service-net:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '6.0.x'
+    - name: Install dependencies
+      run: |
+        cd src/ApiService/
+        dotnet restore
+    - name: Build Service
+      run: |
+        cd src/ApiService/
+        dotnet build -warnaserror --configuration Release
+    - name: Test
+      run: |
+        cd src/ApiService/
+        dotnet test --no-restore
   afl:
     runs-on: ubuntu-18.04
     steps:
@@ -257,6 +277,7 @@ jobs:
       with:
         name: build-artifacts
         path: artifacts
+
   aflpp:
     runs-on: ubuntu-18.04
     steps:
