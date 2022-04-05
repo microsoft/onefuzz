@@ -11,9 +11,9 @@ using AccessToken = String;
 public class Request {
     private static HttpClient httpClient = new HttpClient();
 
-    Func<Task<Tuple<TokenType, AccessToken>>>? auth;
+    Func<Task<(TokenType, AccessToken)>>? auth;
 
-    public Request(Func<Task<Tuple<TokenType, AccessToken>>>? auth = null) {
+    public Request(Func<Task<(TokenType, AccessToken)>>? auth = null) {
         this.auth = auth;
     }
     
@@ -21,8 +21,8 @@ public class Request {
         var request = new HttpRequestMessage(method: method, requestUri: url);
 
         if (auth is not null) {
-            Tuple<TokenType, AccessToken> token = await auth();
-            request.Headers.Authorization = new AuthenticationHeaderValue(token.Item1, token.Item2);
+            var (tokenType, accessToken) = await auth();
+            request.Headers.Authorization = new AuthenticationHeaderValue(tokenType, accessToken);
         }
 
         if (content is not null) {
