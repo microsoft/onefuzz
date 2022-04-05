@@ -267,7 +267,7 @@ jobs:
     - name: Test
       run: |
         cd src/ApiService/
-        dotnet test --no-restore --verbosity normal
+        dotnet test --no-restore
   afl:
     runs-on: ubuntu-18.04
     steps:
