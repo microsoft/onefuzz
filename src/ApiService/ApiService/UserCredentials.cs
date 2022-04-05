@@ -51,12 +51,12 @@ public class UserCredentials {
     }
 
 
-    static async Task<OneFuzzResult<string[]>> GetAllowedTenants() {
-        return OneFuzzResult<string[]>.Ok(Array.Empty<string>());
+    static Task<OneFuzzResult<string[]>> GetAllowedTenants() {
+        return Task.FromResult(OneFuzzResult<string[]>.Ok(Array.Empty<string>()));
     }
 
     /*
-        TODO: GetAllowedTenants blocked on Models and ORM since this requires 
+        TODO: GetAllowedTenants blocked on Models and ORM since this requires
         let getAllowedTenants() =
             task {
                 match! InstanceConfig.fetch() with
