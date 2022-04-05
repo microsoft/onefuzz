@@ -1,87 +1,87 @@
-using Azure.Data.Tables;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
-using System.Runtime.Serialization;
+using System.Collections.Generic;
 
-namespace ApiService;
+namespace Microsoft.OneFuzz.Service;
 
 
-record NodeCommandStopIfFree { }
+/// Convention for database entities:
+/// All entities are represented by immutable records
+/// All database entities need to derive from EntityBase
+/// Only properties that also apears as parameter initializers are mapped to the database
+/// The name of the property will be tranlated to snake case and used as the column name
+/// It is possible to rename the column name by using the [property:JsonPropertyName("column_name")] attribute
+/// the "partion key" and "row key" are identified by the [PartitionKey] and [RowKey] attributes
+/// Guids are mapped to string in the db
 
-record StopNodeCommand{}
 
-record StopTaskNodeCommand{
-    Guid TaskId;
-}
-
-record NodeCommandAddSshKey{
-    string PublicKey;
-}
-
-record NodeCommand
+[SkipRename]
+public enum HeartbeatType
 {
-    StopNodeCommand? Stop;
-    StopTaskNodeCommand? StopTask;
-    NodeCommandAddSshKey? AddSshKey;
-    NodeCommandStopIfFree? StopIfFree;
+    MachineAlive,
+    TaskAlive,
 }
 
-enum NodeTaskState
+public record HeartbeatData(HeartbeatType type);
+
+public record NodeHeartbeatEntry(Guid NodeId, HeartbeatData[] data);
+
+public record NodeCommandStopIfFree();
+
+public record StopNodeCommand();
+
+public record StopTaskNodeCommand(Guid TaskId);
+
+public record NodeCommandAddSshKey(string PublicKey);
+
+
+public record NodeCommand
+(
+    StopNodeCommand? Stop,
+    StopTaskNodeCommand? StopTask,
+    NodeCommandAddSshKey? AddSshKey,
+    NodeCommandStopIfFree? StopIfFree
+);
+
+public enum NodeTaskState
 {
-    init,
-    setting_up,
-    running,
+    Init,
+    SettingUp,
+    Running,
 }
 
-record NodeTasks
-{
-    Guid MachineId;
-    Guid TaskId;
-    NodeTaskState State = NodeTaskState.init;
+public record NodeTasks
+(
+    Guid MachineId,
+    Guid TaskId,
+    NodeTaskState State = NodeTaskState.Init
+);
 
-}
-
-enum NodeState
+public enum NodeState
 {
-    init,
+    Init,
     free,
-    setting_up,
-    rebooting,
-    ready,
-    busy,
-    done,
-    shutdown,
-    halt,
+    SettingUp,
+    Rebooting,
+    Ready,
+    Busy,
+    Done,
+    Shutdown,
+    Halt,
 }
 
 
-record Node : ITableEntity
-{
-	[DataMember(Name = "initialized_at")]
-	public DateTimeOffset? InitializedAt;
-	[DataMember(Name = "pool_name")]
-	public string PoolName;
-	[DataMember(Name = "pool_id")]
-	public Guid? PoolId;
-	[DataMember(Name = "machine_id")]
-	public Guid MachineId;
-	[DataMember(Name = "state")]
-	public NodeState State;
-	[DataMember(Name = "scaleset_id")]
-	public Guid? ScalesetId;
-	[DataMember(Name = "heartbeat")]
-	public DateTimeOffset Heartbeat;
-	[DataMember(Name = "version")]
-	public Version Version;
-	[DataMember(Name = "reimage_requested")]
-	public bool ReimageRequested;
-	[DataMember(Name = "delete_requested")]
-	public bool DeleteRequested;
-	[DataMember(Name = "debug_keep_node")]
-	public bool DebugKeepNode;
-
-	public string PartitionKey { get => PoolName; set => PoolName = value; }
-	public string RowKey { get => MachineId.ToString(); set => MachineId = Guid.Parse(value); }
-	public Azure.ETag ETag { get; set; }
-	DateTimeOffset? ITableEntity.Timestamp { get; set; }
-
-}
+public partial record Node
+(
+    DateTimeOffset? InitializedAt,
+    [PartitionKey] string PoolName,
+    Guid? PoolId,
+    [RowKey] Guid MachineId,
+    NodeState State,
+    Guid? ScalesetId,
+    DateTimeOffset Heartbeat,
+    Version Version,
+    bool ReimageRequested,
+    bool DeleteRequested,
+    bool DebugKeepNode
+): EntityBase();

@@ -4,15 +4,22 @@ using System.Reflection;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text.Json;
-using ApiService;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using ApiService.onefuzzlib.orm;
 using System.Text.Json.Serialization;
 using System.Collections.Concurrent;
+using Azure;
 
-namespace Microsoft.OneFuzz.Service;
+namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
+public abstract record EntityBase
+{
+    public ETag? ETag { get; set; }
+    public DateTimeOffset? TimeStamp { get; set; }
+
+}
+
+/// Indicates that the enum cases should no be renamed
+[AttributeUsage(AttributeTargets.Enum)]
+public class SkipRename : Attribute {  }
 
 public class RowKeyAttribute : Attribute { }
 public class PartitionKeyAttribute : Attribute { }
@@ -41,12 +48,18 @@ public class EntityConverter
 
     public EntityConverter()
     {
-        _options = new JsonSerializerOptions()
+        _options = GetJsonSerializerOptions();
+        _cache = new ConcurrentDictionary<Type, EntityInfo>();
+    }
+
+
+    public static JsonSerializerOptions GetJsonSerializerOptions() {
+        var options = new JsonSerializerOptions()
         {
             PropertyNamingPolicy = new OnefuzzNamingPolicy(),
         };
-        _options.Converters.Add(new CustomEnumConverterFactory());
-        _cache = new ConcurrentDictionary<Type, EntityInfo>();
+        options.Converters.Add(new CustomEnumConverterFactory());
+        return options;
     }
 
     internal Func<object[], object> BuildConstructerFrom(ConstructorInfo constructorInfo)
@@ -109,7 +122,7 @@ public class EntityConverter
         });
     }
 
-    public TableEntity ToTableEntity<T>(T typedEntity)
+    public TableEntity ToTableEntity<T>(T typedEntity) where T: EntityBase
     {
         if (typedEntity == null)
         {
@@ -163,11 +176,15 @@ public class EntityConverter
 
         }
 
+        if (typedEntity.ETag.HasValue) {
+            tableEntity.ETag = typedEntity.ETag.Value;
+        }
+
         return tableEntity;
     }
 
 
-    public T ToRecord<T>(TableEntity entity)
+    public T ToRecord<T>(TableEntity entity) where T: EntityBase
     {
         var entityInfo = GetEntityInfo<T>();
         var parameters =
@@ -235,30 +252,13 @@ public class EntityConverter
             }
         ).ToArray();
 
-        return (T)entityInfo.constructor.Invoke(parameters);
+        var entityRecord = (T)entityInfo.constructor.Invoke(parameters);
+        entityRecord.ETag = entity.ETag;
+        entityRecord.TimeStamp = entity.Timestamp;
+
+        return entityRecord;
     }
 
-
-    public interface IStorageProvider
-    {
-        Task<TableServiceClient> GetStorageClient(string table, string accounId);
-    }
-
-    public class StorageProvider : IStorageProvider
-    {
-        public async Task<TableServiceClient> GetStorageClient(string table, string accounId)
-        {
-            var (name, key) = GetStorageAccountNameAndKey(accounId);
-            var tableClient = new TableServiceClient(new Uri(accounId), new TableSharedKeyCredential(name, key));
-            await tableClient.CreateTableIfNotExistsAsync(table);
-            return tableClient;
-        }
-
-        private (string, string) GetStorageAccountNameAndKey(string accounId)
-        {
-            throw new NotImplementedException();
-        }
-    }
 }
 
 

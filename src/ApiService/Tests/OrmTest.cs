@@ -3,8 +3,8 @@ using Xunit;
 using Microsoft.OneFuzz.Service;
 using Azure.Data.Tables;
 using System.Text.Json.Nodes;
-using ApiService.onefuzzlib.orm;
 using System.Text.Json.Serialization;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Tests
 {
@@ -41,8 +41,7 @@ namespace Tests
             TestFlagEnum TheFlag,
             [property:JsonPropertyName("a__special__name")] string Renamed,
             TestObject TheObject
-
-            );
+            ): EntityBase();
 
 
         [Fact]
@@ -128,7 +127,10 @@ namespace Tests
                 ("AString", "a_string"),
                 ("Some4Numbers234", "some4_numbers234"),
                 ("TEST123String", "test123_string"),
-                ("TheTwo", "the_two")
+                ("TheTwo", "the_two"),
+                ("___Value2", "___value2"),
+                ("V_A_L_U_E_3", "v_a_l_u_e_3"),
+                ("ALLCAPS", "allcaps"),
             };
 
             foreach (var (input, expected) in testCases)
@@ -151,7 +153,7 @@ namespace Tests
                 ("a_string" , "AString"),
                 ("some4_numbers234" , "Some4Numbers234"),
                 ("test123_string" , "Test123String"),
-                ("the_two" , "TheTwo"),
+                ("the_two" , "TheTwo")
             };
 
             foreach (var (input, expected) in testCases)
@@ -160,6 +162,5 @@ namespace Tests
                 Assert.Equal(expected, actual);
             }
         }
-
     }
 }
