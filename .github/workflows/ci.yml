@@ -265,7 +265,9 @@ jobs:
         cd src/ApiService/
         dotnet build --configuration Release
     - name: Test
-      run: dotnet test --no-restore --verbosity normal
+      run: |
+        cd src/ApiService/
+        dotnet test --no-restore --verbosity normal
   afl:
     runs-on: ubuntu-18.04
     steps:
