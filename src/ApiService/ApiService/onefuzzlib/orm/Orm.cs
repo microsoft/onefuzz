@@ -14,8 +14,11 @@ public abstract record EntityBase
 {
     public ETag? ETag { get; set; }
     public DateTimeOffset? TimeStamp { get; set; }
+
 }
 
+[AttributeUsage(AttributeTargets.Enum)]
+public class SkipRename : Attribute {  }
 public class RowKeyAttribute : Attribute { }
 public class PartitionKeyAttribute : Attribute { }
 public enum EntityPropertyKind
@@ -43,12 +46,18 @@ public class EntityConverter
 
     public EntityConverter()
     {
-        _options = new JsonSerializerOptions()
+        _options = GetJsonSerializerOptions();
+        _cache = new ConcurrentDictionary<Type, EntityInfo>();
+    }
+
+
+    public static JsonSerializerOptions GetJsonSerializerOptions() {
+        var options = new JsonSerializerOptions()
         {
             PropertyNamingPolicy = new OnefuzzNamingPolicy(),
         };
-        _options.Converters.Add(new CustomEnumConverterFactory());
-        _cache = new ConcurrentDictionary<Type, EntityInfo>();
+        options.Converters.Add(new CustomEnumConverterFactory());
+        return options;
     }
 
     internal Func<object[], object> BuildConstructerFrom(ConstructorInfo constructorInfo)

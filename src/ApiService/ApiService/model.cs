@@ -15,7 +15,16 @@ namespace Microsoft.OneFuzz.Service;
 /// Guids are mapped to string in the db
 
 
-record NodeHeartbeatEntry(Guid NodeId, Dictionary<string, HeartbeatType>[] data);
+[SkipRename]
+public enum HeartbeatType
+{
+    MachineAlive,
+    TaskAlive,
+}
+
+public record HeartbeatData(HeartbeatType type);
+
+public record NodeHeartbeatEntry(Guid NodeId, HeartbeatData[] data);
 
 public record NodeCommandStopIfFree();
 

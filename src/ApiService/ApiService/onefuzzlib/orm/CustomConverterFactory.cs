@@ -57,22 +57,24 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum
             }
         }
 
+        var type = typeof(T);
+        var skipFormat = type.GetCustomAttribute<SkipRename>() != null;
         if (continueProcessing)
         {
-            Array values = Enum.GetValues(typeof(T));
+            Array values = Enum.GetValues(type);
 
             for (int i = 0; i < values.Length; i++)
             {
                 T value = (T)values.GetValue(i)!;
 
-                if (!TryProcessValue(value))
+                if (!TryProcessValue(value, skipFormat))
                 {
                     break;
                 }
             }
         }
 
-        bool TryProcessValue(T value)
+        bool TryProcessValue(T value, bool skipFormat=false)
         {
             if (_readCache.Count == NameCacheLimit)
             {
@@ -80,7 +82,7 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum
                 return false;
             }
 
-            FormatAndAddToCaches(value, options.Encoder);
+            FormatAndAddToCaches(value, options.Encoder, skipFormat);
             return true;
         }
     }
@@ -131,21 +133,21 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum
         writer.WriteStringValue(formatted);
     }
 
-    private JsonEncodedText FormatAndAddToCaches(T value, JavaScriptEncoder? encoder)
+    private JsonEncodedText FormatAndAddToCaches(T value, JavaScriptEncoder? encoder, bool skipFormat = false)
     {
-        (string valueFormattedToStr, JsonEncodedText valueEncoded) = FormatEnumValue(value.ToString(), _namingPolicy, encoder);
+        (string valueFormattedToStr, JsonEncodedText valueEncoded) = FormatEnumValue(value.ToString(), _namingPolicy, encoder, skipFormat);
         _readCache[valueFormattedToStr] = value;
         _writeCache[value] = valueEncoded;
         return valueEncoded;
     }
 
-    private ValueTuple<string, JsonEncodedText> FormatEnumValue(string value, JsonNamingPolicy namingPolicy, JavaScriptEncoder? encoder)
+    private ValueTuple<string, JsonEncodedText> FormatEnumValue(string value, JsonNamingPolicy namingPolicy, JavaScriptEncoder? encoder, bool skipFormat = false)
     {
         string converted;
 
         if (!value.Contains(ValueSeparator))
         {
-            converted = namingPolicy.ConvertName(value);
+            converted = skipFormat ? value : namingPolicy.ConvertName(value);
         }
         else
         {
@@ -154,7 +156,8 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum
 
             for (int i = 0; i < enumValues.Length; i++)
             {
-                enumValues[i] = namingPolicy.ConvertName(enumValues[i].Trim());
+                var trimmed = enumValues[i].Trim();
+                enumValues[i] = skipFormat? trimmed : namingPolicy.ConvertName(trimmed);
             }
 
             converted = string.Join(ValueSeparator, enumValues);
