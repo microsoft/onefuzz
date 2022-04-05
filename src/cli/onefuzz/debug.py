@@ -660,7 +660,7 @@ class DebugLog(Command):
 
         token_credential = AzureCliCredential()
 
-        container_client = ContainerClient.from_container_url(
+        container_client: ContainerClient = ContainerClient.from_container_url(
             container_url, credential=token_credential
         )
 
