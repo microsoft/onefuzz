@@ -32,7 +32,8 @@ public class StorageProvider : IStorageProvider
     public async Task<TableClient> GetTableClient(string table)
     {
         var (name, key) = GetStorageAccountNameAndKey(_accountId);
-        var tableClient = new TableServiceClient(new Uri(_accountId), new TableSharedKeyCredential(name, key));
+        var identifier = new ResourceIdentifier(_accountId);
+        var tableClient = new TableServiceClient(new Uri($"https://{identifier.Name}.table.core.windows.net"), new TableSharedKeyCredential(name, key));
         await tableClient.CreateTableIfNotExistsAsync(table);
         return tableClient.GetTableClient(table);
     }

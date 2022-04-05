@@ -10,7 +10,7 @@ public partial record Node
     public async static Task<Node?> GetByMachineId(IStorageProvider storageProvider, Guid machineId) {
         var tableClient  = await storageProvider.GetTableClient("Node");
 
-        var data = storageProvider.QueryAsync<Node>(filter: $"RowKey eq {machineId}");
+        var data = storageProvider.QueryAsync<Node>(filter: $"RowKey eq '{machineId}'");
 
         return await data.FirstOrDefaultAsync();
     }

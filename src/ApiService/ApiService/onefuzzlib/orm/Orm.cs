@@ -17,8 +17,10 @@ public abstract record EntityBase
 
 }
 
+/// Indicates that the enum cases should no be renamed
 [AttributeUsage(AttributeTargets.Enum)]
 public class SkipRename : Attribute {  }
+
 public class RowKeyAttribute : Attribute { }
 public class PartitionKeyAttribute : Attribute { }
 public enum EntityPropertyKind
@@ -174,7 +176,7 @@ public class EntityConverter
 
         }
 
-        if (typedEntity.ETag.HasValue) { 
+        if (typedEntity.ETag.HasValue) {
             tableEntity.ETag = typedEntity.ETag.Value;
         }
 
