@@ -35,7 +35,7 @@ public class Program
         .ConfigureFunctionsWorkerDefaults()
         .ConfigureServices((context, services) =>
             services.AddSingleton(_ => new LogTracerFactory(GetLoggers()))
-            .AddSingleton<IStorageProvider>(_ => new StorageProvider(EnvironmentVariables.OneFuzz.FuncStorage))
+            .AddSingleton<IStorageProvider>(_ => new StorageProvider(EnvironmentVariables.OneFuzz.FuncStorage ?? throw new InvalidOperationException("Missing account id") ))
         )
         .Build();
 

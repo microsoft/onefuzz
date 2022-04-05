@@ -23,10 +23,12 @@ public class StorageProvider : IStorageProvider
 {
     private readonly string _accountId;
     private readonly EntityConverter _entityConverter;
+    private readonly ArmClient _armClient;
 
     public StorageProvider(string accountId) {
         _accountId = accountId;
         _entityConverter = new EntityConverter();
+        _armClient = new ArmClient(new DefaultAzureCredential());
     }
 
     public async Task<TableClient> GetTableClient(string table)
@@ -40,9 +42,8 @@ public class StorageProvider : IStorageProvider
 
 
     public (string?, string?) GetStorageAccountNameAndKey(string accountId) {
-        ArmClient armClient = new ArmClient(new DefaultAzureCredential());
         var resourceId = new ResourceIdentifier(accountId);
-        var storageAccount = armClient.GetStorageAccount(resourceId);
+        var storageAccount = _armClient.GetStorageAccount(resourceId);
         var key = storageAccount.GetKeys().Value.Keys.FirstOrDefault();
         return (resourceId.Name, key?.Value);
     }
