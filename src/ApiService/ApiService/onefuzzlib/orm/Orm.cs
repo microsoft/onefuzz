@@ -91,14 +91,11 @@ public class EntityConverter
             var parameters =
             parameterInfos.Select(f =>
             {
-                if (f.Name == null)
-                {
-                    throw new Exception();
-                }
-
-
+                var name = f.Name.EnsureNotNull($"Invalid paramter {f}");
+                var parameterType = f.ParameterType.EnsureNotNull($"Invalid paramter {f}");
                 var isRowkey = f.GetCustomAttribute(typeof(RowKeyAttribute)) != null;
                 var isPartitionkey = f.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
+
 
 
                 var (columnName, kind) =
@@ -107,18 +104,12 @@ public class EntityConverter
                     : isPartitionkey
                         ? ("PartitionKey", EntityPropertyKind.PartitionKey)
                         : (// JsonPropertyNameAttribute can only be applied to properties
-                            typeof(T).GetProperty(f.Name)?.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name
-                                ?? CaseConverter.PascalToSnake(f.Name),
+                            typeof(T).GetProperty(name)?.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name
+                                ?? CaseConverter.PascalToSnake(name),
                             EntityPropertyKind.Column
                         );
-                
 
-                if (f.ParameterType == null)
-                {
-                    throw new Exception();
-                }
-
-                return new EntityProperty(f.Name, columnName, f.ParameterType, kind);
+                return new EntityProperty(name, columnName, parameterType, kind);
             }).ToArray();
 
             return new EntityInfo(typeof(T), parameters, BuildConstructerFrom(constructor));
