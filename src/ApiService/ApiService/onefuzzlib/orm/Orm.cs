@@ -30,7 +30,7 @@ public enum EntityPropertyKind
     Column
 }
 public record EntityProperty(string name, string columnName, Type type, EntityPropertyKind kind);
-public record EntityInfo(Type type, EntityProperty[] properties, Func<object[], object> constructor);
+public record EntityInfo(Type type, EntityProperty[] properties, Func<object?[], object> constructor);
 
 class OnefuzzNamingPolicy : JsonNamingPolicy
 {
@@ -62,7 +62,7 @@ public class EntityConverter
         return options;
     }
 
-    internal Func<object[], object> BuildConstructerFrom(ConstructorInfo constructorInfo)
+    internal Func<object?[], object> BuildConstructerFrom(ConstructorInfo constructorInfo)
     {
         var constructorParameters = Expression.Parameter(typeof(object?[]));
 
@@ -78,7 +78,7 @@ public class EntityConverter
 
         NewExpression constructorCall = Expression.New(constructorInfo, parameterExpressions);
 
-        Func<object[], object> ctor = Expression.Lambda<Func<object[], object>>(constructorCall, constructorParameters).Compile();
+        Func<object?[], object> ctor = Expression.Lambda<Func<object?[], object>>(constructorCall, constructorParameters).Compile();
         return ctor;
     }
 
@@ -91,6 +91,12 @@ public class EntityConverter
             var parameters =
             parameterInfos.Select(f =>
             {
+                if (f.Name == null)
+                {
+                    throw new Exception();
+                }
+
+
                 var isRowkey = f.GetCustomAttribute(typeof(RowKeyAttribute)) != null;
                 var isPartitionkey = f.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
 
@@ -105,10 +111,7 @@ public class EntityConverter
                                 ?? CaseConverter.PascalToSnake(f.Name),
                             EntityPropertyKind.Column
                         );
-                if (f.Name == null)
-                {
-                    throw new Exception();
-                }
+                
 
                 if (f.ParameterType == null)
                 {
@@ -163,8 +166,8 @@ public class EntityConverter
             else if (prop.type.IsEnum)
             {
                 var values =
-                    value?.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                        .Select(CaseConverter.PascalToSnake);
+                    (value?.ToString()?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Select(CaseConverter.PascalToSnake)).EnsureNotNull($"Unable to read enum data {value}");
 
                 tableEntity.Add(prop.columnName, string.Join(",", values));
             }
@@ -188,71 +191,71 @@ public class EntityConverter
     {
         var entityInfo = GetEntityInfo<T>();
         var parameters =
-        entityInfo.properties.Select(ef =>
-            {
-                if (ef.kind == EntityPropertyKind.PartitionKey || ef.kind == EntityPropertyKind.RowKey)
+            entityInfo.properties.Select(ef =>
                 {
-                    if (ef.type == typeof(string))
-                        return entity.GetString(ef.kind.ToString());
-                    else if (ef.type == typeof(Guid))
-                        return Guid.Parse(entity.GetString(ef.kind.ToString()));
-                    else
+                    if (ef.kind == EntityPropertyKind.PartitionKey || ef.kind == EntityPropertyKind.RowKey)
                     {
-                        throw new Exception("invalid ");
+                        if (ef.type == typeof(string))
+                            return entity.GetString(ef.kind.ToString());
+                        else if (ef.type == typeof(Guid))
+                            return Guid.Parse(entity.GetString(ef.kind.ToString()));
+                        else
+                        {
+                            throw new Exception("invalid ");
+                        }
+
                     }
 
-                }
+                    var fieldName = ef.columnName;
+                    if (ef.type == typeof(string))
+                    {
+                        return entity.GetString(fieldName);
+                    }
+                    else if (ef.type == typeof(bool))
+                    {
+                        return entity.GetBoolean(fieldName);
+                    }
+                    else if (ef.type == typeof(DateTimeOffset) || ef.type == typeof(DateTimeOffset?))
+                    {
+                        return entity.GetDateTimeOffset(fieldName);
+                    }
+                    else if (ef.type == typeof(DateTime))
+                    {
+                        return entity.GetDateTime(fieldName);
+                    }
+                    else if (ef.type == typeof(double))
+                    {
+                        return entity.GetDouble(fieldName);
+                    }
+                    else if (ef.type == typeof(Guid) || ef.type == typeof(Guid?))
+                    {
+                        return (object?)Guid.Parse(entity.GetString(fieldName));
+                    }
+                    else if (ef.type == typeof(int))
+                    {
+                        return entity.GetInt32(fieldName);
+                    }
+                    else if (ef.type == typeof(Int64))
+                    {
+                        return entity.GetInt64(fieldName);
+                    }
+                    else if (ef.type.IsEnum)
+                    {
+                        var stringValues =
+                            entity.GetString(fieldName).Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                            .Select(CaseConverter.SnakeToPascal);
 
-                var fieldName = ef.columnName;
-                if (ef.type == typeof(string))
-                {
-                    return entity.GetString(fieldName);
+                        return Enum.Parse(ef.type, string.Join(",", stringValues));
+                    }
+                    else
+                    {
+                        var value = entity.GetString(fieldName);
+                        return JsonSerializer.Deserialize(value, ef.type, options: _options); ;
+                    }
                 }
-                else if (ef.type == typeof(bool))
-                {
-                    return entity.GetBoolean(fieldName);
-                }
-                else if (ef.type == typeof(DateTimeOffset) || ef.type == typeof(DateTimeOffset?))
-                {
-                    return entity.GetDateTimeOffset(fieldName);
-                }
-                else if (ef.type == typeof(DateTime))
-                {
-                    return entity.GetDateTime(fieldName);
-                }
-                else if (ef.type == typeof(double))
-                {
-                    return entity.GetDouble(fieldName);
-                }
-                else if (ef.type == typeof(Guid) || ef.type == typeof(Guid?))
-                {
-                    return (object?)Guid.Parse(entity.GetString(fieldName));
-                }
-                else if (ef.type == typeof(int))
-                {
-                    return entity.GetInt32(fieldName);
-                }
-                else if (ef.type == typeof(Int64))
-                {
-                    return entity.GetInt64(fieldName);
-                }
-                else if (ef.type.IsEnum)
-                {
-                    var stringValues =
-                        entity.GetString(fieldName).Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                        .Select(CaseConverter.SnakeToPascal);
+            ).ToArray();
 
-                    return Enum.Parse(ef.type, string.Join(",", stringValues));
-                }
-                else
-                {
-                    var value = entity.GetString(fieldName);
-                    return JsonSerializer.Deserialize(value, ef.type, options: _options); ;
-                }
-            }
-        ).ToArray();
-
-        var entityRecord = (T)entityInfo.constructor.Invoke(parameters);
+        var entityRecord = (T)entityInfo.constructor.Invoke(parameters ?? new object[] { });
         entityRecord.ETag = entity.ETag;
         entityRecord.TimeStamp = entity.Timestamp;
 
