@@ -260,10 +260,10 @@ jobs:
       run: |
         cd src/ApiService/
         dotnet restore
-    - name: Build Service dotnet --no-restore
+    - name: Build Service
       run: |
         cd src/ApiService/
-        dotnet build --configuration Release
+        dotnet build -warnaserror --configuration Release
     - name: Test
       run: |
         cd src/ApiService/

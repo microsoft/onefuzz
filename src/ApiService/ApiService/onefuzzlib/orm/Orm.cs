@@ -255,7 +255,7 @@ public class EntityConverter
                 }
             ).ToArray();
 
-        var entityRecord = (T)entityInfo.constructor.Invoke(parameters ?? new object[] { });
+        var entityRecord = (T)entityInfo.constructor.Invoke(parameters);
         entityRecord.ETag = entity.ETag;
         entityRecord.TimeStamp = entity.Timestamp;
 
