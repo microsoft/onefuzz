@@ -625,6 +625,7 @@ class DebugLog(Command):
     ) -> None:
         """
         Download the latest agent logs.
+        Make sure you have Storage Blob Data Reader permission.
 
         :param str job_id: Which job you would like the logs for.
         :param str task_id: Which task you would like the logs for.
@@ -638,14 +639,19 @@ class DebugLog(Command):
         if job_id is None:
             if task_id is None:
                 raise Exception("You need to specify at least one of job_id or task_id")
-            
+
             task = self.onefuzz.tasks.get(task_id)
-            job_id = task.job_id
+            job_id = str(task.job_id)
 
         job = self.onefuzz.jobs.get(job_id)
-        # This will be {fuzz storage account}/logs-{job_id}
         container_url = job.config.logs
 
+        if container_url is None:
+            raise Exception(
+                f"Job with id {job_id} does not have a logging location configured"
+            )
+
+        file_path = None
         if task_id is not None:
             file_path = f"{task_id}/"
 
