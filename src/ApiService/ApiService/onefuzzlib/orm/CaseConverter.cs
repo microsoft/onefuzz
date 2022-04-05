@@ -27,6 +27,10 @@ public class CaseConverter
             // is the current letter uppercase
             if (Char.IsUpper(input[i]))
             {
+                if (input[i - 1] == '_') {
+                    continue;
+                }
+
                 if (i < input.Length - 1 && !Char.IsUpper(input[i + 1]))
                 {
                     yield return i;

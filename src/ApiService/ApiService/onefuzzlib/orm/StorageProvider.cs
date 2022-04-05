@@ -3,6 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Core;
+using Azure.ResourceManager.Storage;
+using Azure.ResourceManager;
+using Azure.Identity;
 
 namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -33,16 +37,20 @@ public class StorageProvider : IStorageProvider
         return tableClient.GetTableClient(table);
     }
 
-    private (string, string) GetStorageAccountNameAndKey(string accounId)
-    {
-        throw new NotImplementedException();
+
+    public (string?, string?) GetStorageAccountNameAndKey(string accountId) {
+        ArmClient armClient = new ArmClient(new DefaultAzureCredential());
+        var resourceId = new ResourceIdentifier(accountId);
+        var storageAccount = armClient.GetStorageAccount(resourceId);
+        var key = storageAccount.GetKeys().Value.Keys.FirstOrDefault();
+        return (resourceId.Name, key?.Value);
     }
 
     public async IAsyncEnumerable<T> QueryAsync<T>(string filter) where T : EntityBase
     {
         var tableClient = await GetTableClient(typeof(T).Name);
 
-        await foreach (var x in tableClient.QueryAsync<TableEntity>(filter).Select(x => _entityConverter.ToRecord<T>(x))) { 
+        await foreach (var x in tableClient.QueryAsync<TableEntity>(filter).Select(x => _entityConverter.ToRecord<T>(x))) {
             yield return x;
         }
     }
@@ -56,4 +64,3 @@ public class StorageProvider : IStorageProvider
 
     }
 }
-
