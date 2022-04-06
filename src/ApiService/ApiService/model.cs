@@ -1,6 +1,7 @@
 using Azure.Data.Tables;
 using System;
 using System.Runtime.Serialization;
+using System.Collections.Generic;
 
 namespace ApiService;
 
@@ -81,6 +82,48 @@ record Node : ITableEntity
 
 	public string PartitionKey { get => PoolName; set => PoolName = value; }
 	public string RowKey { get => MachineId.ToString(); set => MachineId = Guid.Parse(value); }
+	public Azure.ETag ETag { get; set; }
+	DateTimeOffset? ITableEntity.Timestamp { get; set; }
+
+}
+
+record ProxyForward : ITableEntity 
+{ 
+	[DataMember(Name = "region")]
+	public string Region;
+	[DataMember(Name = "src_port")]
+	public int SrcPort;
+    [DataMember(Name = "dst_port")]
+	public int DstPort;
+    [DataMember(Name = "dst_ip")]
+	public int DstIp;
+
+	public string PartitionKey { get => Region; set => Region = value; }
+	public string RowKey { get => SrcPort.ToString(); set => SrcPort = Int32.Parse(value); }
+	public Azure.ETag ETag { get; set; }
+	DateTimeOffset? ITableEntity.Timestamp { get; set; }
+
+}
+
+record ProxyConfig : ITableEntity
+{	
+	[DataMember(Name = "url")]
+	public string Url;
+	[DataMember(Name = "notification")]
+	public string Notifcation;
+	[DataMember(Name = "region")]
+	public string Region;
+	[DataMember(Name = "proxy_id")]
+	public Guid? ProxyId;
+	[DataMember(Name = "forwards")]
+	public List<ProxyForward> Forwards;
+	[DataMember(Name = "instance_telemetry_key")]
+	public string InstanceTelemetryKey;
+	[DataMember(Name = "microsoft_telemetry_key")]
+	public string MicrosoftTelemetryKey;
+
+	public string PartitionKey { get => Region; set => Region = value; }
+	public string RowKey { get => ProxyId.ToString(); set => ProxyId = Guid.Parse(value); }
 	public Azure.ETag ETag { get; set; }
 	DateTimeOffset? ITableEntity.Timestamp { get; set; }
 
