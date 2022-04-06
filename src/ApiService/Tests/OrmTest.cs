@@ -13,7 +13,7 @@ namespace Tests
 
         class TestObject
         {
-            public String TheName { get; set; }
+            public String? TheName { get; set; }
             public TestEnum TheEnum { get; set; }
             public TestFlagEnum TheFlag { get; set; }
         }
@@ -72,14 +72,15 @@ namespace Tests
             Assert.Equal("flag_one,flag_two", tableEntity.GetString("the_flag"));
             Assert.Equal("renamed", tableEntity.GetString("a__special__name"));
 
-            var json = JsonNode.Parse(tableEntity.GetString("the_object"))?.AsObject();
+            var json = JsonNode.Parse(tableEntity.GetString("the_object"))?.AsObject() ?? throw new InvalidOperationException("Could not parse objec");
+            
             json.TryGetPropertyValue("the_name", out var theName);
             json.TryGetPropertyValue("the_enum", out var theEnum);
             json.TryGetPropertyValue("the_flag", out var theFlag);
 
-            Assert.Equal(entity1.TheObject.TheName, theName.GetValue<string>());
-            Assert.Equal("the_two", theEnum.GetValue<string>());
-            Assert.Equal("flag_one,flag_two", theFlag.GetValue<string>());
+            Assert.Equal(entity1.TheObject.TheName, theName?.GetValue<string>());
+            Assert.Equal("the_two", theEnum?.GetValue<string>());
+            Assert.Equal("flag_one,flag_two", theFlag?.GetValue<string>());
 
         }
 
