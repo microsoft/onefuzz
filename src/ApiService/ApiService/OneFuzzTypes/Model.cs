@@ -70,6 +70,13 @@ public enum NodeState
     Halt,
 }
 
+public record ProxyHeartbeat
+(
+    string Region,
+    string ProxyId,
+    List<ProxyForward> Forwards,
+    DateTimeOffset Timestamp
+);
 
 public partial record Node
 (
@@ -86,6 +93,26 @@ public partial record Node
     bool DebugKeepNode
 ) : EntityBase();
 
+
+public partial record ProxyForward
+(
+	string Region,
+	int SrcPort,
+	int DstPort,
+	int DstIp
+) : EntityBase();
+
+public partial record ProxyConfig 
+(	
+	string Url,
+	string Notifcation,
+	string Region,
+	Guid? ProxyId,
+	List<ProxyForward> Forwards,
+	string InstanceTelemetryKey,
+	string MicrosoftTelemetryKey
+
+) : EntityBase();
 
 public record Error (ErrorCode Code, string[]? Errors = null);
 
