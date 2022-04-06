@@ -7,161 +7,161 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace ApiService.onefuzzlib.orm
+namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+
+public sealed class CustomEnumConverterFactory : JsonConverterFactory
 {
-    public sealed class CustomEnumConverterFactory : JsonConverterFactory
+    public override bool CanConvert(Type typeToConvert) => typeToConvert.IsEnum;
+
+    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
-        public override bool CanConvert(Type typeToConvert) => typeToConvert.IsEnum;
+        object[]? knownValues = null;
 
-        public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+        if (typeToConvert == typeof(BindingFlags))
         {
-            object[]? knownValues = null;
-
-            if (typeToConvert == typeof(BindingFlags))
-            {
-                knownValues = new object[] { BindingFlags.CreateInstance | BindingFlags.DeclaredOnly };
-            }
-
-            return (JsonConverter)Activator.CreateInstance(
-                typeof(CustomEnumConverter<>).MakeGenericType(typeToConvert),
-                BindingFlags.Instance | BindingFlags.Public,
-                binder: null,
-                args: new object?[] { options.PropertyNamingPolicy, options, knownValues },
-                culture: null)!;
+            knownValues = new object[] { BindingFlags.CreateInstance | BindingFlags.DeclaredOnly };
         }
+
+        return (JsonConverter)Activator.CreateInstance(
+            typeof(CustomEnumConverter<>).MakeGenericType(typeToConvert),
+            BindingFlags.Instance | BindingFlags.Public,
+            binder: null,
+            args: new object?[] { options.PropertyNamingPolicy, options, knownValues },
+            culture: null)!;
     }
+}
 
-    public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum
+public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum
+{
+    private readonly JsonNamingPolicy _namingPolicy;
+
+    private readonly Dictionary<string, T> _readCache = new();
+    private readonly Dictionary<T, JsonEncodedText> _writeCache = new();
+
+    // This converter will only support up to 64 enum values (including flags) on serialization and deserialization
+    private const int NameCacheLimit = 64;
+
+    private const string ValueSeparator = ",";
+
+    public CustomEnumConverter(JsonNamingPolicy namingPolicy, JsonSerializerOptions options, object[]? knownValues)
     {
-        private readonly JsonNamingPolicy _namingPolicy;
+        _namingPolicy = namingPolicy;
 
-        private readonly Dictionary<string, T> _readCache = new();
-        private readonly Dictionary<T, JsonEncodedText> _writeCache = new();
-
-        // This converter will only support up to 64 enum values (including flags) on serialization and deserialization
-        private const int NameCacheLimit = 64;
-
-        private const string ValueSeparator = ",";
-
-        public CustomEnumConverter(JsonNamingPolicy namingPolicy, JsonSerializerOptions options, object[]? knownValues)
+        bool continueProcessing = true;
+        for (int i = 0; i < knownValues?.Length; i++)
         {
-            _namingPolicy = namingPolicy;
-
-            bool continueProcessing = true;
-            for (int i = 0; i < knownValues?.Length; i++)
+            if (!TryProcessValue((T)knownValues[i]))
             {
-                if (!TryProcessValue((T)knownValues[i]))
+                continueProcessing = false;
+                break;
+            }
+        }
+
+        var type = typeof(T);
+        var skipFormat = type.GetCustomAttribute<SkipRename>() != null;
+        if (continueProcessing)
+        {
+            Array values = Enum.GetValues(type);
+
+            for (int i = 0; i < values.Length; i++)
+            {
+                T value = (T)values.GetValue(i)!;
+
+                if (!TryProcessValue(value, skipFormat))
                 {
-                    continueProcessing = false;
                     break;
                 }
             }
-
-            if (continueProcessing)
-            {
-                Array values = Enum.GetValues(typeof(T));
-
-                for (int i = 0; i < values.Length; i++)
-                {
-                    T value = (T)values.GetValue(i)!;
-
-                    if (!TryProcessValue(value))
-                    {
-                        break;
-                    }
-                }
-            }
-
-            bool TryProcessValue(T value)
-            {
-                if (_readCache.Count == NameCacheLimit)
-                {
-                    Debug.Assert(_writeCache.Count == NameCacheLimit);
-                    return false;
-                }
-
-                FormatAndAddToCaches(value, options.Encoder);
-                return true;
-            }
         }
 
-        public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        bool TryProcessValue(T value, bool skipFormat=false)
         {
-            string? json;
-
-            if (reader.TokenType != JsonTokenType.String || (json = reader.GetString()) == null)
+            if (_readCache.Count == NameCacheLimit)
             {
-                throw new JsonException();
+                Debug.Assert(_writeCache.Count == NameCacheLimit);
+                return false;
             }
 
-            var value = json.Split(ValueSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(x =>
-                {
-                    if (!_readCache.TryGetValue(x, out T value))
-                    {
-                        throw new JsonException();
-                    }
-                    return value;
+            FormatAndAddToCaches(value, options.Encoder, skipFormat);
+            return true;
+        }
+    }
 
-                }).ToArray();
+    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        string? json;
 
-            if (value.Length == 1)
-            {
-                return value[0];
-            }
-
-            var result = default(T);
-
-            return (T)(object)value.Aggregate(0, (state, value) => (int)(object)state | (int)(object)value);
+        if (reader.TokenType != JsonTokenType.String || (json = reader.GetString()) == null)
+        {
+            throw new JsonException();
         }
 
-        public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
-        {
-            if (!_writeCache.TryGetValue(value, out JsonEncodedText formatted))
+        var value = json.Split(ValueSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(x =>
             {
-                if (_writeCache.Count == NameCacheLimit)
+                if (!_readCache.TryGetValue(x, out T? value))
                 {
-                    Debug.Assert(_readCache.Count == NameCacheLimit);
-                    throw new ArgumentOutOfRangeException();
+                    throw new JsonException();
                 }
+                return value;
 
-                formatted = FormatAndAddToCaches(value, options.Encoder);
-            }
+            }).ToArray();
 
-            writer.WriteStringValue(formatted);
-        }
-
-        private JsonEncodedText FormatAndAddToCaches(T value, JavaScriptEncoder? encoder)
+        if (value.Length == 1)
         {
-            (string valueFormattedToStr, JsonEncodedText valueEncoded) = FormatEnumValue(value.ToString(), _namingPolicy, encoder);
-            _readCache[valueFormattedToStr] = value;
-            _writeCache[value] = valueEncoded;
-            return valueEncoded;
+            return value[0];
         }
 
-        private ValueTuple<string, JsonEncodedText> FormatEnumValue(string value, JsonNamingPolicy namingPolicy, JavaScriptEncoder? encoder)
+        return (T)(object)value.Aggregate(0, (state, value) => (int)(object)state | (int)(object)value);
+    }
+
+    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+    {
+        if (!_writeCache.TryGetValue(value, out JsonEncodedText formatted))
         {
-            string converted;
-
-            if (!value.Contains(ValueSeparator))
+            if (_writeCache.Count == NameCacheLimit)
             {
-                converted = namingPolicy.ConvertName(value);
-            }
-            else
-            {
-                // todo: optimize implementation here by leveraging https://github.com/dotnet/runtime/issues/934.
-                string[] enumValues = value.Split(ValueSeparator);
-
-                for (int i = 0; i < enumValues.Length; i++)
-                {
-                    enumValues[i] = namingPolicy.ConvertName(enumValues[i].Trim());
-                }
-
-                converted = string.Join(ValueSeparator, enumValues);
+                Debug.Assert(_readCache.Count == NameCacheLimit);
+                throw new ArgumentOutOfRangeException();
             }
 
-            return (converted, JsonEncodedText.Encode(converted, encoder));
+            formatted = FormatAndAddToCaches(value, options.Encoder);
         }
+
+        writer.WriteStringValue(formatted);
+    }
+
+    private JsonEncodedText FormatAndAddToCaches(T value, JavaScriptEncoder? encoder, bool skipFormat = false)
+    {
+        (string valueFormattedToStr, JsonEncodedText valueEncoded) = FormatEnumValue(value.ToString(), _namingPolicy, encoder, skipFormat);
+        _readCache[valueFormattedToStr] = value;
+        _writeCache[value] = valueEncoded;
+        return valueEncoded;
+    }
+
+    private ValueTuple<string, JsonEncodedText> FormatEnumValue(string value, JsonNamingPolicy namingPolicy, JavaScriptEncoder? encoder, bool skipFormat = false)
+    {
+        string converted;
+
+        if (!value.Contains(ValueSeparator))
+        {
+            converted = skipFormat ? value : namingPolicy.ConvertName(value);
+        }
+        else
+        {
+            // todo: optimize implementation here by leveraging https://github.com/dotnet/runtime/issues/934.
+            string[] enumValues = value.Split(ValueSeparator);
+
+            for (int i = 0; i < enumValues.Length; i++)
+            {
+                var trimmed = enumValues[i].Trim();
+                enumValues[i] = skipFormat? trimmed : namingPolicy.ConvertName(trimmed);
+            }
+
+            converted = string.Join(ValueSeparator, enumValues);
+        }
+
+        return (converted, JsonEncodedText.Encode(converted, encoder));
     }
 }
 
