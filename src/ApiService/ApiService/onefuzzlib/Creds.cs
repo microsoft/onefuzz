@@ -9,6 +9,8 @@ public interface ICreds {
     public string GetSubcription();
 
     public string GetBaseResourceGroup();
+
+    public ResourceIdentifier GetResourceGroupResourceIdentifier();
 }
 
 public class Creds : ICreds {
@@ -34,5 +36,11 @@ public class Creds : ICreds {
             ?? throw new System.Exception("Data storage env var is not present");
         var storageResource = new ResourceIdentifier(storageResourceId);
         return storageResource.ResourceGroupName!;
+    }
+
+    public ResourceIdentifier GetResourceGroupResourceIdentifier() {
+        var resourceId = EnvironmentVariables.OneFuzz.ResourceGroup
+            ?? throw new System.Exception("Resource group env var is not present");
+        return new ResourceIdentifier(resourceId);
     }
 }

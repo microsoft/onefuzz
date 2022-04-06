@@ -28,10 +28,12 @@ public class QueueFileChanges {
     }
 
     [Function("QueueFileChanges")]
-    public async Task Run([QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] QueueMessage msg)
+    public async Task Run(
+        [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
+        int dequeueCount)
     {
-        var fileChangeEvent = JsonSerializer.Deserialize<Dictionary<string, string>>(msg.Body.ToString());
-        var lastTry = msg.DequeueCount == MAX_DEQUEUE_COUNT;
+        var fileChangeEvent = JsonSerializer.Deserialize<Dictionary<string, string>>(msg);
+        var lastTry = dequeueCount == MAX_DEQUEUE_COUNT;
 
         var _ = fileChangeEvent ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
 

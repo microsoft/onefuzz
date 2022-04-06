@@ -47,7 +47,7 @@ public class Storage : IStorage {
         var results = new List<string> {GetFuzzStorage()};
 
         var client = GetMgmtClient();
-        var group = new ResourceIdentifier(_creds.GetBaseResourceGroup());
+        var group = _creds.GetResourceGroupResourceIdentifier();
 
         const string storageTypeTagKey = "storage_type";
 
