@@ -32,7 +32,7 @@ public class QueueFileChanges {
         [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount)
     {
-        var fileChangeEvent = JsonSerializer.Deserialize<Dictionary<string, string>>(msg);
+        var fileChangeEvent = JsonSerializer.Deserialize<Dictionary<string, string>>(msg, EntityConverter.GetJsonSerializerOptions());        
         var lastTry = dequeueCount == MAX_DEQUEUE_COUNT;
 
         var _ = fileChangeEvent ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
