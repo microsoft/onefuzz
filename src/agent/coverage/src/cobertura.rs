@@ -58,6 +58,15 @@ pub fn convert_path(file: &SourceFileCoverage) -> String {
     file.file.replace('\\', "/").to_lowercase()
 }
 
+// if full file name does not have / , keep full file name
+pub fn get_file_name(file: &str) -> String {
+    let file_name = match file.split('/').next_back() {
+        Some(_file_name) => file.split('/').next_back().unwrap(),
+        None => file,
+    };
+    file_name.to_string()
+
+}
 
 // get directory of file if valid file path, otherwise make package name include and error message
 pub fn get_parent_path(path_slash: &str) -> PathBuf {
@@ -105,12 +114,13 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
     )?;
 
     emitter.write(XmlEvent::start_element("packages"))?;
-    // path (excluding file name) will be package name for better results with ReportGenerator
-    // class name will be full file path and name
+    // path (excluding file name) is package name for better results with ReportGenerator
+    // class name is only file name (no path)
     for file in &source_coverage.files {
         let path = convert_path(file);
         let parent_path = get_parent_path(&path);
         let package_line_values = compute_line_values_package(file);
+        let class_name = get_file_name(&path);
 
         emitter.write(
             XmlEvent::start_element("package")
@@ -125,7 +135,7 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         emitter.write(XmlEvent::start_element("classes"))?;
         emitter.write(
             XmlEvent::start_element("class")
-                .attr("name", &path)
+                .attr("name", &class_name)
                 .attr("filename", &path)
                 .attr(
                     "line-rate",
@@ -418,7 +428,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "c:/users/file1.txt")
+                .attr("name", "file1.txt")
                 .attr("filename", "c:/users/file1.txt")
                 .attr("line-rate", "0.50")
                 .attr("branch-rate", "0")
@@ -459,7 +469,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "c:/users/file2.txt")
+                .attr("name", "file2.txt")
                 .attr("filename", "c:/users/file2.txt")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
@@ -493,7 +503,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "c:/users/file/..")
+                .attr("name", "..")
                 .attr("filename", "c:/users/file/..")
                 .attr("line-rate", "1.00")
                 .attr("branch-rate", "0")
@@ -527,7 +537,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "c:/users/file/..")
+                .attr("name", "..")
                 .attr("filename", "c:/users/file/..")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
@@ -649,7 +659,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "c:/users/file1.txt")
+                .attr("name", "file1.txt")
                 .attr("filename", "c:/users/file1.txt")
                 .attr("line-rate", "0.50")
                 .attr("branch-rate", "0")
@@ -690,7 +700,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "c:/users/file2.txt")
+                .attr("name", "file2.txt")
                 .attr("filename", "c:/users/file2.txt")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
@@ -724,7 +734,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "c:/users/file/..")
+                .attr("name", "..")
                 .attr("filename", "c:/users/file/..")
                 .attr("line-rate", "1.00")
                 .attr("branch-rate", "0")
@@ -758,7 +768,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "c:/users/file/..")
+                .attr("name", "..")
                 .attr("filename", "c:/users/file/..")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
@@ -879,7 +889,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "c:/users/file1.txt")
+                .attr("name", "file1.txt")
                 .attr("filename", "c:/users/file1.txt")
                 .attr("line-rate", "0.50")
                 .attr("branch-rate", "0")
@@ -920,7 +930,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "c:/users/file2.txt")
+                .attr("name", "file2.txt")
                 .attr("filename", "c:/users/file2.txt")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
@@ -954,7 +964,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "c:/users/file/..")
+                .attr("name", "..")
                 .attr("filename", "c:/users/file/..")
                 .attr("line-rate", "1.00")
                 .attr("branch-rate", "0")
@@ -988,7 +998,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "c:/users/file/..")
+                .attr("name", "..")
                 .attr("filename", "c:/users/file/..")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
