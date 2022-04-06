@@ -2,7 +2,7 @@ using System;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using static ApiService.ProxyHeartbeat;
+using ApiService;
 
 namespace Microsoft.OneFuzz.Service;
 
