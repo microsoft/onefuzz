@@ -28,7 +28,7 @@ public class QueueFileChanges {
     }
 
     [Function("QueueFileChanges")]
-    public async Task Run(
+    public Task Run(
         [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount)
     {
@@ -42,17 +42,18 @@ public class QueueFileChanges {
         if (!fileChangeEvent.ContainsKey(eventType)
             || fileChangeEvent[eventType] != "Microsoft.Storage.BlobCreated")
         {
-            return;
+            return Task.CompletedTask;
         }
 
         const string topic = "topic";
         if (!fileChangeEvent.ContainsKey(topic)
             || !_storage.CorpusAccounts().Contains(fileChangeEvent[topic]))
         {
-            return;
+            return Task.CompletedTask;
         }
 
         file_added(fileChangeEvent, lastTry);
+        return Task.CompletedTask;
     }
 
     private void file_added(Dictionary<string, string> fileChangeEvent, bool failTaskOnTransientError) {

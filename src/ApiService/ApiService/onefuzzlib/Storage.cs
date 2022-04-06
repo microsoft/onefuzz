@@ -57,7 +57,7 @@ public class Storage : IStorage {
                 continue;
             }
 
-            if (results.Contains(account.Id)) {
+            if (results.Contains(account.Id!)) {
                 continue;
             }
 
@@ -70,7 +70,7 @@ public class Storage : IStorage {
                 continue;
             }
 
-            results.Add(account.Id);
+            results.Add(account.Id!);
         }
 
         _logger.LogInformation($"corpus accounts: {JsonSerializer.Serialize(results)}");
