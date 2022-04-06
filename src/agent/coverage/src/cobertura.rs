@@ -65,7 +65,6 @@ pub fn get_file_name(file: &str) -> String {
         None => file,
     };
     file_name.to_string()
-
 }
 
 // get directory of file if valid file path, otherwise make package name include and error message
