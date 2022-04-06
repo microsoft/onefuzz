@@ -55,8 +55,9 @@ pub fn compute_line_values_package(file: &SourceFileCoverage) -> LineValues {
     LineValues::new(valid_lines, hit_lines)
 }
 pub fn convert_path(file: &SourceFileCoverage) -> String {
-    file.file.replace('\\', "/")
+    file.file.replace('\\', "/").to_lowercase()
 }
+
 
 // get directory of file if valid file path, otherwise make package name include and error message
 pub fn get_parent_path(path_slash: &str) -> PathBuf {
@@ -179,7 +180,7 @@ mod tests {
         };
 
         let path = convert_path(&file);
-        assert_eq!(&path, "C:/Users/file1.txt");
+        assert_eq!(&path, "c:/users/file1.txt");
     }
 
     #[test]
@@ -198,7 +199,7 @@ mod tests {
 
         let path = convert_path(&file);
         let parent_path = get_parent_path(&path);
-        assert_eq!(&(parent_path.display().to_string()), "C:/Users");
+        assert_eq!(&(parent_path.display().to_string()), "c:/users");
     }
 
     #[test]
@@ -217,7 +218,7 @@ mod tests {
 
         let path = convert_path(&file);
 
-        assert_eq!(&path, "C:/Users/file1.txt");
+        assert_eq!(&path, "c:/users/file1.txt");
     }
 
     #[test]
@@ -237,7 +238,7 @@ mod tests {
         let path = convert_path(&file);
         let parent_path = get_parent_path(&path);
 
-        assert_eq!(&(parent_path.display().to_string()), "C:/Users");
+        assert_eq!(&(parent_path.display().to_string()), "c:/users");
     }
 
     #[test]
@@ -256,7 +257,7 @@ mod tests {
 
         let path = convert_path(&file);
 
-        assert_eq!(&path, "C:/Users/file/..");
+        assert_eq!(&path, "c:/users/file/..");
     }
 
     #[test]
@@ -278,7 +279,7 @@ mod tests {
 
         assert_eq!(
             &(parent_path.display().to_string()),
-            "Invalid file format: C:/Users/file/.."
+            "Invalid file format: c:/users/file/.."
         );
     }
 
@@ -297,7 +298,7 @@ mod tests {
         };
 
         let path = convert_path(&file);
-        assert_eq!(&path, "C:/Users/file/..");
+        assert_eq!(&path, "c:/users/file/..");
     }
 
     #[test]
@@ -319,7 +320,7 @@ mod tests {
 
         assert_eq!(
             &(parent_path.display().to_string()),
-            "Invalid file format: C:/Users/file/.."
+            "Invalid file format: c:/users/file/.."
         );
     }
 
@@ -407,7 +408,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "C:/Users")
+                .attr("name", "c:/users")
                 .attr("line-rate", "0.50")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -417,8 +418,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file1.txt")
-                .attr("filename", "C:/Users/file1.txt")
+                .attr("name", "c:/users/file1.txt")
+                .attr("filename", "c:/users/file1.txt")
                 .attr("line-rate", "0.50")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -448,7 +449,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "C:/Users")
+                .attr("name", "c:/users")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -458,8 +459,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file2.txt")
-                .attr("filename", "C:/Users/file2.txt")
+                .attr("name", "c:/users/file2.txt")
+                .attr("filename", "c:/users/file2.txt")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -482,7 +483,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "Invalid file format: C:/Users/file/..")
+                .attr("name", "Invalid file format: c:/users/file/..")
                 .attr("line-rate", "1.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -492,8 +493,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file/..")
-                .attr("filename", "C:/Users/file/..")
+                .attr("name", "c:/users/file/..")
+                .attr("filename", "c:/users/file/..")
                 .attr("line-rate", "1.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -516,7 +517,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "Invalid file format: C:/Users/file/..")
+                .attr("name", "Invalid file format: c:/users/file/..")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -526,8 +527,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file/..")
-                .attr("filename", "C:/Users/file/..")
+                .attr("name", "c:/users/file/..")
+                .attr("filename", "c:/users/file/..")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -638,7 +639,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "C:/Users")
+                .attr("name", "c:/users")
                 .attr("line-rate", "0.50")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -648,8 +649,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file1.txt")
-                .attr("filename", "C:/Users/file1.txt")
+                .attr("name", "c:/users/file1.txt")
+                .attr("filename", "c:/users/file1.txt")
                 .attr("line-rate", "0.50")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -679,7 +680,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "C:/Users")
+                .attr("name", "c:/users")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -689,8 +690,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file2.txt")
-                .attr("filename", "C:/Users/file2.txt")
+                .attr("name", "c:/users/file2.txt")
+                .attr("filename", "c:/users/file2.txt")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -713,7 +714,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "Invalid file format: C:/Users/file/..")
+                .attr("name", "Invalid file format: c:/users/file/..")
                 .attr("line-rate", "1.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -723,8 +724,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file/..")
-                .attr("filename", "C:/Users/file/..")
+                .attr("name", "c:/users/file/..")
+                .attr("filename", "c:/users/file/..")
                 .attr("line-rate", "1.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -747,7 +748,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "Invalid file format: C:/Users/file/..")
+                .attr("name", "Invalid file format: c:/users/file/..")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -757,8 +758,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file/..")
-                .attr("filename", "C:/Users/file/..")
+                .attr("name", "c:/users/file/..")
+                .attr("filename", "c:/users/file/..")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -868,7 +869,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "C:/Users")
+                .attr("name", "c:/users")
                 .attr("line-rate", "0.50")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -878,8 +879,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file1.txt")
-                .attr("filename", "C:/Users/file1.txt")
+                .attr("name", "c:/users/file1.txt")
+                .attr("filename", "c:/users/file1.txt")
                 .attr("line-rate", "0.50")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -909,7 +910,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "C:/Users")
+                .attr("name", "c:/users")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -919,8 +920,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file2.txt")
-                .attr("filename", "C:/Users/file2.txt")
+                .attr("name", "c:/users/file2.txt")
+                .attr("filename", "c:/users/file2.txt")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -943,7 +944,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "Invalid file format: C:/Users/file/..")
+                .attr("name", "Invalid file format: c:/users/file/..")
                 .attr("line-rate", "1.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -953,8 +954,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file/..")
-                .attr("filename", "C:/Users/file/..")
+                .attr("name", "c:/users/file/..")
+                .attr("filename", "c:/users/file/..")
                 .attr("line-rate", "1.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -977,7 +978,7 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("package")
-                .attr("name", "Invalid file format: C:/Users/file/..")
+                .attr("name", "Invalid file format: c:/users/file/..")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
@@ -987,8 +988,8 @@ mod tests {
 
         _emitter_test.write(
             XmlEvent::start_element("class")
-                .attr("name", "C:/Users/file/..")
-                .attr("filename", "C:/Users/file/..")
+                .attr("name", "c:/users/file/..")
+                .attr("filename", "c:/users/file/..")
                 .attr("line-rate", "0.00")
                 .attr("branch-rate", "0")
                 .attr("complexity", "0"),
