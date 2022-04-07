@@ -7,3 +7,5 @@
 
 # vim
 *.swp
+
+/.ionide/symbolCache.db
