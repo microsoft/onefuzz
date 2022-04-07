@@ -32,7 +32,7 @@ public class Queue : IQueue
             {
                 await queue.SendMessageAsync(Convert.ToBase64String(message), visibilityTimeout: visibilityTimeout, timeToLive: timeToLive);
             }
-            catch (Exception ex) { 
+            catch (Exception) { 
                 
             }
         }
@@ -44,7 +44,7 @@ public class Queue : IQueue
         {
             return client.GetQueueClient(name);
         }
-        catch (Exception ex) {
+        catch (Exception) {
             return null;
         }
     }

@@ -14,14 +14,14 @@ namespace Microsoft.OneFuzz.Service;
 public class QueueNodeHearbeat
 {
     private readonly ILogger _logger;
-    private readonly IStorageProvider _storageProvider;
 
     private readonly IEvents _events;
+    private readonly INodeOperations _nodes;
 
-    public QueueNodeHearbeat(ILoggerFactory loggerFactory, IStorageProvider storageProvider, IEvents events)
+    public QueueNodeHearbeat(ILoggerFactory loggerFactory, INodeOperations nodes, IEvents events)
     {
         _logger = loggerFactory.CreateLogger<QueueNodeHearbeat>();
-        _storageProvider = storageProvider;
+        _nodes = nodes;
         _events = events;
     }
 
@@ -32,7 +32,7 @@ public class QueueNodeHearbeat
 
         var hb = JsonSerializer.Deserialize<NodeHeartbeatEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 
-        var node = await Node.GetByMachineId(_storageProvider, hb.NodeId);
+        var node = await _nodes.GetByMachineId(hb.NodeId);
 
         if (node == null) {
             _logger.LogWarning($"invalid node id: {hb.NodeId}");
@@ -41,7 +41,7 @@ public class QueueNodeHearbeat
 
         var newNode = node with { Heartbeat = DateTimeOffset.UtcNow };
 
-        await _storageProvider.Replace(newNode);
+        await _nodes.Replace(newNode);
 
         await _events.SendEvent(new EventNodeHeartbeat(node.MachineId, node.ScalesetId, node.PoolName));
     }

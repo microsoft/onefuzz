@@ -32,9 +32,9 @@ namespace ApiService.OneFuzzLib
             //webhook._add_event(event_message)
         }
 
-        public async IAsyncEnumerable<Webhook> GetWebhooksCached()
+        public IAsyncEnumerable<Webhook> GetWebhooksCached()
         {
-
+            throw new NotImplementedException();
         }
 
     }

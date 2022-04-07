@@ -1,26 +1,34 @@
 ﻿using ApiService.OneFuzzLib.Orm;
+using Azure.Data.Tables;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Microsoft.OneFuzz.Service;
 
-public class Nodes
+public interface INodeOperations : IOrm<Node>
 {
-    public readonly IOrm _orm;
-    public readonly IStorage _storage;
-    public Nodes(IOrm orm, IStorage storage)
+    Task<Node?> GetByMachineId(Guid machineId);
+}
+
+public class NodeOperations : Orm<Node>, INodeOperations
+{
+    
+    public NodeOperations(IStorage storage)
+        :base(storage)
     {
-        _orm = orm;
-        _storage = storage;
+        
     }
 
-    public async Task<Node?> GetByMachineId(IStorageProvider storageProvider, Guid machineId) {
-        var tableClient  = await _orm.GetTableClient("Node");
+    public async Task<Node?> GetByMachineId(Guid machineId)
+    {
+        var tableClient = await GetTableClient("Node");
 
-        var data = _storage.QueryAsync<Node>(filter: $"RowKey eq '{machineId}'");
+        var data = QueryAsync(filter: $"RowKey eq '{machineId}'");
 
         return await data.FirstOrDefaultAsync();
     }
+    
 }

@@ -10,12 +10,14 @@ using System.Threading.Tasks;
 
 namespace ApiService.OneFuzzLib.Orm
 {
-    public interface IOrm
+    public interface IOrm<T> where T : EntityBase
     {
-
+        Task<TableClient> GetTableClient(string table, string? accountId = null);
+        IAsyncEnumerable<T> QueryAsync(string filter);
+        Task<bool> Replace(T entity);
     }
 
-    public class Orm : IOrm
+    public class Orm<T> : IOrm<T> where T : EntityBase
     {
         IStorage _storage;
         EntityConverter _entityConverter;
@@ -26,7 +28,7 @@ namespace ApiService.OneFuzzLib.Orm
             _entityConverter = new EntityConverter();
         }
 
-        public async IAsyncEnumerable<T> QueryAsync<T>(string filter) where T : EntityBase
+        public async IAsyncEnumerable<T> QueryAsync(string filter) 
         {
             var tableClient = await GetTableClient(typeof(T).Name);
 
@@ -36,7 +38,7 @@ namespace ApiService.OneFuzzLib.Orm
             }
         }
 
-        public async Task<bool> Replace<T>(T entity) where T : EntityBase
+        public async Task<bool> Replace(T entity)
         {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
