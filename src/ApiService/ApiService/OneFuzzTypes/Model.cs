@@ -81,7 +81,7 @@ public enum NodeState
 public record ProxyHeartbeat
 (
     string Region,
-    string ProxyId,
+    Guid ProxyId,
     List<ProxyForward> Forwards,
     DateTimeOffset Timestamp
 );
@@ -112,7 +112,7 @@ public partial record ProxyForward
 
 public partial record ProxyConfig 
 (	
-	string Url,
+	Uri Url,
 	string Notifcation,
 	string Region,
 	Guid? ProxyId,
