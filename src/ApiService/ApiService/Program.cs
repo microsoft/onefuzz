@@ -1,10 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Azure.Functions.Worker.Configuration;
-using Azure.ResourceManager.Storage.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 

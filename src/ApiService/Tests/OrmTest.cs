@@ -1,6 +1,5 @@
 ﻿using System;
 using Xunit;
-using Microsoft.OneFuzz.Service;
 using Azure.Data.Tables;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;

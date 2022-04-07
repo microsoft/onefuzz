@@ -1,11 +1,4 @@
-﻿using Azure.ResourceManager.Network.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Microsoft.OneFuzz.Service
+﻿namespace Microsoft.OneFuzz.Service
 {
 
     public struct Result<T_Ok, T_Error>

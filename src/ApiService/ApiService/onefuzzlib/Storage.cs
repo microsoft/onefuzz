@@ -6,8 +6,6 @@ using Azure.Core;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Linq;
-using System.Threading.Tasks;
-using Azure.Data.Tables;
 
 namespace Microsoft.OneFuzz.Service;
 

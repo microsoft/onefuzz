@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using Azure.Storage.Queues.Models;
 using System.Linq;
 
 namespace Microsoft.OneFuzz.Service;

@@ -1,11 +1,8 @@
 using System;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 using System.Text.Json;
-using Azure.Data.Tables;
 using System.Threading.Tasks;
-using Azure;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;

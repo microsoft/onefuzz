@@ -1,6 +1,4 @@
-﻿using Microsoft.OneFuzz.Service;
-
-public enum ErrorCode
+﻿public enum ErrorCode
 {
     INVALID_REQUEST = 450,
     INVALID_PERMISSION = 451,

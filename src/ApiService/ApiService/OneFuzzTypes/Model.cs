@@ -1,6 +1,5 @@
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
-using System.Collections.Generic;
 using PoolName = System.String;
 
 namespace Microsoft.OneFuzz.Service;
