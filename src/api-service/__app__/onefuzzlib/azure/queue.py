@@ -107,7 +107,7 @@ def clear_queue(name: QueueNameType, storage_type: StorageType) -> None:
             pass
 
 
-def send_message(
+def  send_message(
     name: QueueNameType,
     message: bytes,
     storage_type: StorageType,
