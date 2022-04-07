@@ -16,7 +16,7 @@ public class QueueProxyUpdate
     }
 
     [Function("QueueProxyUpdate")]
-    public void Run([QueueTrigger("myqueue-items", Connection = "AzureWebJobsStorage")] string msg)
+    public void Run([QueueTrigger("proxy", Connection = "funcsamlrs3qn2nls_STORAGE")] string msg)
     {
         var hb = JsonSerializer.Deserialize<ProxyHeartbeat>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");;
         

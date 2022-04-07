@@ -26,3 +26,13 @@ public enum ErrorCode {
     PROXY_FAILED = 472,
     INVALID_CONFIGURATION = 473,
 }
+
+public enum VmState {
+    INIT, 
+    EXTENSIONS_LAUNCH,
+    EXTENSIONS_FAILED,
+    VM_ALLOCATION_FAILED,
+    RUNNING,
+    STOPPING,
+    STOPPED
+}
