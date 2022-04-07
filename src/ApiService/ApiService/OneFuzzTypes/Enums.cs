@@ -36,3 +36,10 @@ public enum VmState {
     STOPPING,
     STOPPED
 }
+
+public enum WebhookMessageState {
+    Queued,
+    Retrying,
+    Succeeded,
+    Failed
+}
