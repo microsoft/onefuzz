@@ -2,6 +2,7 @@ using System;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
@@ -19,7 +20,7 @@ public class QueueProxyHearbeat
     }
 
     [Function("QueueProxyHearbeat")]
-    public async void Run([QueueTrigger("proxy", Connection = "funcsamlrs3qn2nls_STORAGE")] string msg)
+    public async Task Run([QueueTrigger("proxy", Connection = "funcsamlrs3qn2nls_STORAGE")] string msg)
     {
         _logger.LogInformation($"heartbeat: {msg}");
 
@@ -35,6 +36,6 @@ public class QueueProxyHearbeat
         var newProxy = proxy with { heartbeat = hb };
 
         await _proxy.Replace(newProxy);
-        
+
     }
 }
