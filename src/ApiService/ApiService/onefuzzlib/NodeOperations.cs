@@ -15,20 +15,18 @@ public interface INodeOperations : IOrm<Node>
 
 public class NodeOperations : Orm<Node>, INodeOperations
 {
-    
+
     public NodeOperations(IStorage storage)
         :base(storage)
     {
-        
+
     }
 
     public async Task<Node?> GetByMachineId(Guid machineId)
     {
-        var tableClient = await GetTableClient("Node");
-
         var data = QueryAsync(filter: $"RowKey eq '{machineId}'");
 
         return await data.FirstOrDefaultAsync();
     }
-    
+
 }

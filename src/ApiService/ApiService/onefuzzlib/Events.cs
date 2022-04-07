@@ -10,7 +10,7 @@ namespace Microsoft.OneFuzz.Service
 
     public record SignalREvent
     (
-        string Targe,
+        string Target,
         List<EventMessage> arguments
     );
 
