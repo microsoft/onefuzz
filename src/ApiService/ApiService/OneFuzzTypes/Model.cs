@@ -1,6 +1,7 @@
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Collections.Generic;
+using PoolName = System.String;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -74,7 +75,7 @@ public enum NodeState
 public partial record Node
 (
     DateTimeOffset? InitializedAt,
-    [PartitionKey] string PoolName,
+    [PartitionKey] PoolName PoolName,
     Guid? PoolId,
     [RowKey] Guid MachineId,
     NodeState State,
@@ -90,3 +91,34 @@ public partial record Node
 public record Error (ErrorCode Code, string[]? Errors = null);
 
 public record UserInfo (Guid? ApplicationId, Guid? ObjectId, String? Upn);
+
+
+public record EventMessage(
+    Guid EventId,
+    EventType EventType,
+    BaseEvent Event,
+    Guid InstanceId,
+    String InstanceName
+): EntityBase();
+
+
+//record AnyHttpUrl(AnyUrl):
+//    allowed_schemes = {'http', 'https
+//    
+
+
+
+
+
+//public record TaskConfig(
+//    Guid jobId,
+//    List<Guid> PrereqTasks,
+//    TaskDetails Task,
+//    TaskVm? vm,
+//    TaskPool pool: Optional[]
+//    containers: List[TaskContainers]
+//    tags: Dict[str, str]
+//    debug: Optional[List[TaskDebugFlag]]
+//    colocate: Optional[bool]
+//    ): EntityBase();
+
