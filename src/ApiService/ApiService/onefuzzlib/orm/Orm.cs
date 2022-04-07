@@ -28,7 +28,7 @@ namespace ApiService.OneFuzzLib.Orm
             _entityConverter = new EntityConverter();
         }
 
-        public async IAsyncEnumerable<T> QueryAsync(string filter) 
+        public async IAsyncEnumerable<T> QueryAsync(string? filter=null) 
         {
             var tableClient = await GetTableClient(typeof(T).Name);
 

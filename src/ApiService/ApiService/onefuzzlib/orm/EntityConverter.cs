@@ -15,6 +15,8 @@ public abstract record EntityBase
     public ETag? ETag { get; set; }
     public DateTimeOffset? TimeStamp { get; set; }
 
+    //public ApiService.OneFuzzLib.Orm.IOrm<EntityBase>? Orm { get; set; }
+
 }
 
 /// Indicates that the enum cases should no be renamed

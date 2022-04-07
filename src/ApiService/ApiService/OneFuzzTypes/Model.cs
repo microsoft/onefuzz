@@ -99,7 +99,13 @@ public record EventMessage(
     BaseEvent Event,
     Guid InstanceId,
     String InstanceName
-);
+): EntityBase();
+
+
+//record AnyHttpUrl(AnyUrl):
+//    allowed_schemes = {'http', 'https
+//    
+
 
 
 

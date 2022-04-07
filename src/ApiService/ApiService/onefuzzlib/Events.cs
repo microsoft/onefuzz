@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ApiService.OneFuzzLib;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,12 +25,14 @@ namespace Microsoft.OneFuzz.Service
     public class Events : IEvents
     {
         private readonly IQueue _queue;
-        private readonly ILog _logger;
+        private readonly ILogTracer _logger;
+        private readonly IWebhookOperations _webhook;
 
-        public Events(IQueue queue, ILog logger)
+        public Events(IQueue queue, ILogTracer logger, IWebhookOperations webhook)
         {
             _queue = queue;
             _logger = logger;
+            _webhook = webhook;
         }
 
         public async Task QueueSignalrEvent(EventMessage eventMessage)
@@ -50,9 +53,21 @@ namespace Microsoft.OneFuzz.Service
                 "test" //todo
             );
             await QueueSignalrEvent(eventMessage);
-            //Webhook.send_event(event_message)
+            await _webhook.SendEvent(eventMessage);
+            LogEvent(anEvent, eventType);
+        }
 
-            //_logger.LogEvent(Guid.NewGuid(), eventType, new Dictionary<string, string>());
+        public void LogEvent(BaseEvent anEvent, EventType eventType)
+        {
+            //todo
+            //var scrubedEvent = FilterEvent(anEvent);
+            //throw new NotImplementedException();
+
+        }
+
+        private object FilterEvent(BaseEvent anEvent)
+        {
+            throw new NotImplementedException();
         }
     }
 }

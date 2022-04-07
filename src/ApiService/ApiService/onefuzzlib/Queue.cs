@@ -1,15 +1,18 @@
 ﻿using Azure.Storage;
 using Azure.Storage.Queues;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Microsoft.OneFuzz.Service;
 public interface IQueue
 {
     Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
+    Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout);
 }
 
 
@@ -58,5 +61,21 @@ public class Queue : IQueue
         var accountUrl = new Uri($"https://%s.queue.core.windows.net{name}");
         var client = new QueueServiceClient(accountUrl, new StorageSharedKeyCredential(name, key));
         return client;
+    }
+
+    public async Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout)
+    {
+        var queue = GetQueue(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
+
+        var serialized = JsonSerializer.Serialize(obj, EntityConverter.GetJsonSerializerOptions()) ;
+        //var encoded = Encoding.UTF8.GetBytes(serialized);
+
+        try
+        {
+            await queue.SendMessageAsync(serialized, visibilityTimeout: visibilityTimeout);
+            return true;
+        } catch (Exception) { 
+            return false;
+        }
     }
 }
