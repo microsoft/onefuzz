@@ -5,13 +5,23 @@ using Azure.ResourceManager.Storage;
 using Azure.Core;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using System.Linq;
+using System.Threading.Tasks;
+using Azure.Data.Tables;
 
 namespace Microsoft.OneFuzz.Service;
+
+public enum StorageType {
+    Corpus,
+    Config
+}
 
 public interface IStorage {
     public ArmClient GetMgmtClient();
 
     public IEnumerable<string> CorpusAccounts();
+    string GetPrimaryAccount(StorageType storageType);
+    public (string?, string?) GetStorageAccountNameAndKey(string accountId);
 }
 
 public class Storage : IStorage {
@@ -75,5 +85,25 @@ public class Storage : IStorage {
 
         _logger.LogInformation($"corpus accounts: {JsonSerializer.Serialize(results)}");
         return results;
+    }
+
+    public string GetPrimaryAccount(StorageType storageType)
+    {
+        return
+            storageType switch
+            {
+                StorageType.Corpus => GetFuzzStorage(),
+                StorageType.Config => GetFuncStorage(),
+                _ => throw new NotImplementedException(),
+            };
+    }
+
+    public (string?, string?) GetStorageAccountNameAndKey(string accountId)
+    {
+        var resourceId = new ResourceIdentifier(accountId);
+        var armClient = GetMgmtClient();
+        var storageAccount = armClient.GetStorageAccount(resourceId);
+        var key = storageAccount.GetKeys().Value.Keys.FirstOrDefault();
+        return (resourceId.Name, key?.Value);
     }
 }
