@@ -17,7 +17,7 @@ public class NodeOperations : Orm<Node>, INodeOperations
 {
 
     public NodeOperations(IStorage storage)
-        :base(storage)
+        : base(storage)
     {
 
     }

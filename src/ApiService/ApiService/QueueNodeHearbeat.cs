@@ -34,7 +34,8 @@ public class QueueNodeHearbeat
 
         var node = await _nodes.GetByMachineId(hb.NodeId);
 
-        if (node == null) {
+        if (node == null)
+        {
             _logger.LogWarning($"invalid node id: {hb.NodeId}");
             return;
         }

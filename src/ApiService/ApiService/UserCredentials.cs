@@ -11,10 +11,12 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.OneFuzz.Service;
 
-public class UserCredentials {
+public class UserCredentials
+{
 
 
-    public static string? GetBearerToken(HttpRequestData req) {
+    public static string? GetBearerToken(HttpRequestData req)
+    {
         var authHeader = req.Headers.GetValues("Authorization");
         if (authHeader.IsNullOrEmpty())
         {
@@ -31,7 +33,8 @@ public class UserCredentials {
         }
     }
 
-    public static string? GetAuthToken(HttpRequestData req) {
+    public static string? GetAuthToken(HttpRequestData req)
+    {
         var token = GetBearerToken(req);
         if (token is not null)
         {
@@ -44,14 +47,16 @@ public class UserCredentials {
             {
                 return null;
             }
-            else {
+            else
+            {
                 return tokenHeader.First();
             }
         }
     }
 
 
-    static Task<OneFuzzResult<string[]>> GetAllowedTenants() {
+    static Task<OneFuzzResult<string[]>> GetAllowedTenants()
+    {
         return Task.FromResult(OneFuzzResult<string[]>.Ok(Array.Empty<string>()));
     }
 
@@ -68,7 +73,8 @@ public class UserCredentials {
     */
 
 
-    static async Task<OneFuzzResult<UserInfo>> ParseJwtToken(LogTracer log, HttpRequestData req) {
+    static async Task<OneFuzzResult<UserInfo>> ParseJwtToken(LogTracer log, HttpRequestData req)
+    {
         var authToken = GetAuthToken(req);
         if (authToken is null)
         {

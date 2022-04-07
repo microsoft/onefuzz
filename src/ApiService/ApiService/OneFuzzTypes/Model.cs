@@ -88,9 +88,9 @@ public partial record Node
 ) : EntityBase();
 
 
-public record Error (ErrorCode Code, string[]? Errors = null);
+public record Error(ErrorCode Code, string[]? Errors = null);
 
-public record UserInfo (Guid? ApplicationId, Guid? ObjectId, String? Upn);
+public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
 
 
 public record EventMessage(
@@ -99,7 +99,7 @@ public record EventMessage(
     BaseEvent Event,
     Guid InstanceId,
     String InstanceName
-): EntityBase();
+) : EntityBase();
 
 
 //record AnyHttpUrl(AnyUrl):

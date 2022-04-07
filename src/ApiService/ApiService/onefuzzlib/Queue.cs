@@ -28,26 +28,31 @@ public class Queue : IQueue
     }
 
 
-    public async Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout=null, TimeSpan? timeToLive=null ) {
+    public async Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null)
+    {
         var queue = GetQueue(name, storageType);
-        if (queue != null) {
+        if (queue != null)
+        {
             try
             {
                 await queue.SendMessageAsync(Convert.ToBase64String(message), visibilityTimeout: visibilityTimeout, timeToLive: timeToLive);
             }
-            catch (Exception) { 
-                
+            catch (Exception)
+            {
+
             }
         }
     }
 
-    public QueueClient? GetQueue(string name, StorageType storageType ) {
+    public QueueClient? GetQueue(string name, StorageType storageType)
+    {
         var client = GetQueueClient(storageType);
         try
         {
             return client.GetQueueClient(name);
         }
-        catch (Exception) {
+        catch (Exception)
+        {
             return null;
         }
     }
@@ -67,14 +72,16 @@ public class Queue : IQueue
     {
         var queue = GetQueue(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
 
-        var serialized = JsonSerializer.Serialize(obj, EntityConverter.GetJsonSerializerOptions()) ;
+        var serialized = JsonSerializer.Serialize(obj, EntityConverter.GetJsonSerializerOptions());
         //var encoded = Encoding.UTF8.GetBytes(serialized);
 
         try
         {
             await queue.SendMessageAsync(serialized, visibilityTimeout: visibilityTimeout);
             return true;
-        } catch (Exception) { 
+        }
+        catch (Exception)
+        {
             return false;
         }
     }

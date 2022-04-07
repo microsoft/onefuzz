@@ -40,7 +40,7 @@ namespace Microsoft.OneFuzz.Service
 
         private OneFuzzResult(T_Ok ok) => (this.ok, error, isOk) = (ok, NoError, true);
 
-        private OneFuzzResult(ErrorCode errorCode, string[] errors) => (ok, error, isOk) = (default, new Error (errorCode, errors ), false);
+        private OneFuzzResult(ErrorCode errorCode, string[] errors) => (ok, error, isOk) = (default, new Error(errorCode, errors), false);
 
         private OneFuzzResult(Error err) => (ok, error, isOk) = (default, err, false);
 

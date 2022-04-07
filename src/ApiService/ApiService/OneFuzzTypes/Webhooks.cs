@@ -20,13 +20,13 @@ public record WebhookMessage(Guid EventId,
     BaseEvent Event,
     Guid InstanceId,
     String InstanceName,
-    Guid WebhookId): EventMessage(EventId, EventType, Event, InstanceId, InstanceName);
+    Guid WebhookId) : EventMessage(EventId, EventType, Event, InstanceId, InstanceName);
 
 
-public record  WebhookMessageEventGrid(
-    [property: JsonPropertyName("dataVersion")]  string DataVersion,
+public record WebhookMessageEventGrid(
+    [property: JsonPropertyName("dataVersion")] string DataVersion,
     string Subject,
-    [property: JsonPropertyName("EventType")]  EventType EventType,
+    [property: JsonPropertyName("EventType")] EventType EventType,
     [property: JsonPropertyName("eventTime")] DateTimeOffset eventTime,
     Guid Id,
     BaseEvent data);
@@ -47,7 +47,7 @@ public record WebhookMessageLog(
             Event,
             InstanceId,
             InstanceName,
-            WebhookId); 
+            WebhookId);
 
 public record Webhook(
     [PartitionKey] Guid WebhookId,

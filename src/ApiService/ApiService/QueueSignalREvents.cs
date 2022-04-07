@@ -10,7 +10,8 @@ using System.Linq;
 
 namespace Microsoft.OneFuzz.Service;
 
-public class QueueSignalREvents {
+public class QueueSignalREvents
+{
     private readonly ILogger _logger;
 
     public QueueSignalREvents(ILoggerFactory loggerFactory)
@@ -19,7 +20,7 @@ public class QueueSignalREvents {
     }
 
     [Function("QueueSignalREvents")]
-    [SignalROutput(HubName="dashboard")]
+    [SignalROutput(HubName = "dashboard")]
     public static string Run(
         [QueueTrigger("signalr-events-refactored", Connection = "AzureWebJobsStorage")] string msg)
     {
