@@ -1,11 +1,4 @@
-﻿using Azure.ResourceManager.Network.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Microsoft.OneFuzz.Service
+﻿namespace Microsoft.OneFuzz.Service
 {
 
     public struct Result<T_Ok, T_Error>
@@ -40,7 +33,7 @@ namespace Microsoft.OneFuzz.Service
 
         private OneFuzzResult(T_Ok ok) => (this.ok, error, isOk) = (ok, NoError, true);
 
-        private OneFuzzResult(ErrorCode errorCode, string[] errors) => (ok, error, isOk) = (default, new Error (errorCode, errors ), false);
+        private OneFuzzResult(ErrorCode errorCode, string[] errors) => (ok, error, isOk) = (default, new Error(errorCode, errors), false);
 
         private OneFuzzResult(Error err) => (ok, error, isOk) = (default, err, false);
 

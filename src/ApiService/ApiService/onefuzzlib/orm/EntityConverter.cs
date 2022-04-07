@@ -21,7 +21,7 @@ public abstract record EntityBase
 
 /// Indicates that the enum cases should no be renamed
 [AttributeUsage(AttributeTargets.Enum)]
-public class SkipRename : Attribute {  }
+public class SkipRename : Attribute { }
 
 public class RowKeyAttribute : Attribute { }
 public class PartitionKeyAttribute : Attribute { }
@@ -55,7 +55,8 @@ public class EntityConverter
     }
 
 
-    public static JsonSerializerOptions GetJsonSerializerOptions() {
+    public static JsonSerializerOptions GetJsonSerializerOptions()
+    {
         var options = new JsonSerializerOptions()
         {
             PropertyNamingPolicy = new OnefuzzNamingPolicy(),
@@ -118,7 +119,7 @@ public class EntityConverter
         });
     }
 
-    public TableEntity ToTableEntity<T>(T typedEntity) where T: EntityBase
+    public TableEntity ToTableEntity<T>(T typedEntity) where T : EntityBase
     {
         if (typedEntity == null)
         {
@@ -172,7 +173,8 @@ public class EntityConverter
 
         }
 
-        if (typedEntity.ETag.HasValue) {
+        if (typedEntity.ETag.HasValue)
+        {
             tableEntity.ETag = typedEntity.ETag.Value;
         }
 
@@ -180,7 +182,7 @@ public class EntityConverter
     }
 
 
-    public T ToRecord<T>(TableEntity entity) where T: EntityBase
+    public T ToRecord<T>(TableEntity entity) where T : EntityBase
     {
         var entityInfo = GetEntityInfo<T>();
         var parameters =

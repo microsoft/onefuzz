@@ -2,14 +2,12 @@
 using Microsoft.OneFuzz.Service;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ApiService.OneFuzzLib;
 
 
-public interface IWebhookMessageLogOperations: IOrm<WebhookMessageLog>
+public interface IWebhookMessageLogOperations : IOrm<WebhookMessageLog>
 {
 
 }
@@ -17,7 +15,7 @@ public interface IWebhookMessageLogOperations: IOrm<WebhookMessageLog>
 
 public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessageLogOperations
 {
-    record WebhookMessageQueueObj (
+    record WebhookMessageQueueObj(
         Guid WebhookId,
         Guid EventId
         );
@@ -31,7 +29,8 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     }
 
 
-    public async Task QueueWebhook(WebhookMessageLog webhookLog) {
+    public async Task QueueWebhook(WebhookMessageLog webhookLog)
+    {
         var obj = new WebhookMessageQueueObj(webhookLog.WebhookId, webhookLog.EventId);
 
         TimeSpan? visibilityTimeout = webhookLog.State switch
@@ -45,7 +44,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         if (visibilityTimeout == null)
         {
             _log.Error($"invalid WebhookMessage queue state, not queuing. {webhookLog.WebhookId}:{webhookLog.EventId} - {webhookLog.State}");
-            
+
         }
         else
         {
@@ -65,11 +64,11 @@ public interface IWebhookOperations
     Task SendEvent(EventMessage eventMessage);
 }
 
-public class WebhookOperations: Orm<Webhook>, IWebhookOperations
+public class WebhookOperations : Orm<Webhook>, IWebhookOperations
 {
     private readonly IWebhookMessageLogOperations _webhookMessageLogOperations;
     public WebhookOperations(IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations)
-        :base(storage)
+        : base(storage)
     {
         _webhookMessageLogOperations = webhookMessageLogOperations;
     }

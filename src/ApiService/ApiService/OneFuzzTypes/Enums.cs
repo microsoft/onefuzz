@@ -1,6 +1,5 @@
-﻿using Microsoft.OneFuzz.Service;
-
-public enum ErrorCode {
+﻿public enum ErrorCode
+{
     INVALID_REQUEST = 450,
     INVALID_PERMISSION = 451,
     MISSING_EULA_AGREEMENT = 452,
@@ -28,7 +27,8 @@ public enum ErrorCode {
 }
 
 
-public enum WebhookMessageState {
+public enum WebhookMessageState
+{
     Queued,
     Retrying,
     Succeeded,
