@@ -26,3 +26,11 @@ public enum ErrorCode {
     PROXY_FAILED = 472,
     INVALID_CONFIGURATION = 473,
 }
+
+
+public enum WebhookMessageState {
+    Queued,
+    Retrying,
+    Succeeded,
+    Failed
+}
