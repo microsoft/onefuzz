@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using PoolName = System.String;
 
 namespace Microsoft.OneFuzz.Service
@@ -39,12 +34,15 @@ namespace Microsoft.OneFuzz.Service
         InstanceConfigUpdated
     }
 
-    public abstract record BaseEvent() {
+    public abstract record BaseEvent()
+    {
 
-        public EventType GetEventType() {
+        public EventType GetEventType()
+        {
             return
-                this switch {
-                    EventNodeHeartbeat _ =>  EventType.NodeHeartbeat,
+                this switch
+                {
+                    EventNodeHeartbeat _ => EventType.NodeHeartbeat,
                     _ => throw new NotImplementedException(),
                 };
 
@@ -137,7 +135,7 @@ namespace Microsoft.OneFuzz.Service
     //record EventScalesetDeleted(
     //    Guid ScalesetId,
     //    PoolName PoolName,
-    
+
     //    ) : BaseEvent();
 
 
@@ -165,7 +163,7 @@ namespace Microsoft.OneFuzz.Service
     //record EventProxyCreated(
     //    Region Region,
     //    Guid? ProxyId,
-    
+
     //    ) : BaseEvent();
 
 
@@ -204,48 +202,48 @@ namespace Microsoft.OneFuzz.Service
         ) : BaseEvent();
 
 
-//    record EventNodeDeleted(
-//        Guid MachineId,
-//        Guid ScalesetId,
-//        PoolName PoolName
-//        ) : BaseEvent();
+    //    record EventNodeDeleted(
+    //        Guid MachineId,
+    //        Guid ScalesetId,
+    //        PoolName PoolName
+    //        ) : BaseEvent();
 
 
-//    record EventScalesetStateUpdated(
-//        Guid ScalesetId,
-//        PoolName PoolName,
-//        ScalesetState State
-//        ) : BaseEvent();
+    //    record EventScalesetStateUpdated(
+    //        Guid ScalesetId,
+    //        PoolName PoolName,
+    //        ScalesetState State
+    //        ) : BaseEvent();
 
-//    record EventNodeStateUpdated(
-//        Guid MachineId,
-//        Guid? ScalesetId,
-//        PoolName PoolName,
-//        NodeState state
-//        ) : BaseEvent();
+    //    record EventNodeStateUpdated(
+    //        Guid MachineId,
+    //        Guid? ScalesetId,
+    //        PoolName PoolName,
+    //        NodeState state
+    //        ) : BaseEvent();
 
-//    record EventCrashReported(
-//        Report Report,
-//        Container Container,
-//        [property: JsonPropertyName("filename")] String FileName,
-//        TaskConfig? TaskConfig
-//        ) : BaseEvent();
+    //    record EventCrashReported(
+    //        Report Report,
+    //        Container Container,
+    //        [property: JsonPropertyName("filename")] String FileName,
+    //        TaskConfig? TaskConfig
+    //        ) : BaseEvent();
 
-//    record EventRegressionReported(
-//        RegressionReport RegressionReport,
-//        Container Container,
-//        [property: JsonPropertyName("filename")] String FileName,
-//        TaskConfig? TaskConfig
-//        ) : BaseEvent();
-
-
-//    record EventFileAdded(
-//        Container Container,
-//        [property: JsonPropertyName("filename")] String FileName
-//        ) : BaseEvent();
+    //    record EventRegressionReported(
+    //        RegressionReport RegressionReport,
+    //        Container Container,
+    //        [property: JsonPropertyName("filename")] String FileName,
+    //        TaskConfig? TaskConfig
+    //        ) : BaseEvent();
 
 
-//    record EventInstanceConfigUpdated(
-//        InstanceConfig Config
-//        ) : BaseEvent();
+    //    record EventFileAdded(
+    //        Container Container,
+    //        [property: JsonPropertyName("filename")] String FileName
+    //        ) : BaseEvent();
+
+
+    //    record EventInstanceConfigUpdated(
+    //        InstanceConfig Config
+    //        ) : BaseEvent();
 }

@@ -1,8 +1,5 @@
 ﻿using ApiService.OneFuzzLib.Orm;
-using Azure.Data.Tables;
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -17,7 +14,7 @@ public class NodeOperations : Orm<Node>, INodeOperations
 {
 
     public NodeOperations(IStorage storage)
-        :base(storage)
+        : base(storage)
     {
 
     }

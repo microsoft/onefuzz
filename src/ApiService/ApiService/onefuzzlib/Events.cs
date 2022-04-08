@@ -1,7 +1,6 @@
 ﻿using ApiService.OneFuzzLib;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,7 +15,8 @@ namespace Microsoft.OneFuzz.Service
 
 
 
-    public interface IEvents {
+    public interface IEvents
+    {
         public Task SendEvent(BaseEvent anEvent);
 
         public Task QueueSignalrEvent(EventMessage message);
@@ -38,11 +38,12 @@ namespace Microsoft.OneFuzz.Service
         public async Task QueueSignalrEvent(EventMessage eventMessage)
         {
             var message = new SignalREvent("events", new List<EventMessage>() { eventMessage });
-            var encodedMessage = Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(message)) ;
+            var encodedMessage = Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(message));
             await _queue.SendMessage("signalr-events", encodedMessage, StorageType.Config);
         }
 
-        public async Task SendEvent(BaseEvent anEvent) {
+        public async Task SendEvent(BaseEvent anEvent)
+        {
             var eventType = anEvent.GetEventType();
 
             var eventMessage = new EventMessage(

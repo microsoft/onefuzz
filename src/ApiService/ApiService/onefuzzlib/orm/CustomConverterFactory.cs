@@ -74,7 +74,7 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum
             }
         }
 
-        bool TryProcessValue(T value, bool skipFormat=false)
+        bool TryProcessValue(T value, bool skipFormat = false)
         {
             if (_readCache.Count == NameCacheLimit)
             {
@@ -155,7 +155,7 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum
             for (int i = 0; i < enumValues.Length; i++)
             {
                 var trimmed = enumValues[i].Trim();
-                enumValues[i] = skipFormat? trimmed : namingPolicy.ConvertName(trimmed);
+                enumValues[i] = skipFormat ? trimmed : namingPolicy.ConvertName(trimmed);
             }
 
             converted = string.Join(ValueSeparator, enumValues);
