@@ -3,7 +3,6 @@ using System;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Core;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Linq;
 

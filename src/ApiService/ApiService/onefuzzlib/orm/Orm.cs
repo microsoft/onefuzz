@@ -1,5 +1,4 @@
-﻿using Azure.Core;
-using Azure.Data.Tables;
+﻿using Azure.Data.Tables;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
