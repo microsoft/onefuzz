@@ -1,10 +1,9 @@
 ﻿using System;
 using Xunit;
-using Microsoft.OneFuzz.Service;
 using Azure.Data.Tables;
 using System.Text.Json.Nodes;
-using ApiService.onefuzzlib.orm;
 using System.Text.Json.Serialization;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Tests
 {
@@ -13,7 +12,7 @@ namespace Tests
 
         class TestObject
         {
-            public String TheName { get; set; }
+            public String? TheName { get; set; }
             public TestEnum TheEnum { get; set; }
             public TestFlagEnum TheFlag { get; set; }
         }
@@ -27,7 +26,7 @@ namespace Tests
         [Flags]
         enum TestFlagEnum
         {
-            FlagOne = 1 ,
+            FlagOne = 1,
             FlagTwo = 2,
         }
 
@@ -39,10 +38,9 @@ namespace Tests
             double TheFloat,
             TestEnum TheEnum,
             TestFlagEnum TheFlag,
-            [property:JsonPropertyName("a__special__name")] string Renamed,
+            [property: JsonPropertyName("a__special__name")] string Renamed,
             TestObject TheObject
-
-            );
+            ) : EntityBase();
 
 
         [Fact]
@@ -57,7 +55,9 @@ namespace Tests
                             12.44,
                             TestEnum.TheTwo, TestFlagEnum.FlagOne | TestFlagEnum.FlagTwo,
                             "renamed",
-                            new TestObject { TheName = "testobject",
+                            new TestObject
+                            {
+                                TheName = "testobject",
                                 TheEnum = TestEnum.TheTwo,
                                 TheFlag = TestFlagEnum.FlagOne | TestFlagEnum.FlagTwo
                             });
@@ -73,14 +73,15 @@ namespace Tests
             Assert.Equal("flag_one,flag_two", tableEntity.GetString("the_flag"));
             Assert.Equal("renamed", tableEntity.GetString("a__special__name"));
 
-            var json = JsonNode.Parse(tableEntity.GetString("the_object"))?.AsObject();
+            var json = JsonNode.Parse(tableEntity.GetString("the_object"))?.AsObject() ?? throw new InvalidOperationException("Could not parse objec");
+
             json.TryGetPropertyValue("the_name", out var theName);
             json.TryGetPropertyValue("the_enum", out var theEnum);
             json.TryGetPropertyValue("the_flag", out var theFlag);
 
-            Assert.Equal(entity1.TheObject.TheName, theName.GetValue<string>());
-            Assert.Equal("the_two", theEnum.GetValue<string>());
-            Assert.Equal("flag_one,flag_two", theFlag.GetValue<string>());
+            Assert.Equal(entity1.TheObject.TheName, theName?.GetValue<string>());
+            Assert.Equal("the_two", theEnum?.GetValue<string>());
+            Assert.Equal("flag_one,flag_two", theFlag?.GetValue<string>());
 
         }
 
@@ -128,7 +129,10 @@ namespace Tests
                 ("AString", "a_string"),
                 ("Some4Numbers234", "some4_numbers234"),
                 ("TEST123String", "test123_string"),
-                ("TheTwo", "the_two")
+                ("TheTwo", "the_two"),
+                ("___Value2", "___value2"),
+                ("V_A_L_U_E_3", "v_a_l_u_e_3"),
+                ("ALLCAPS", "allcaps"),
             };
 
             foreach (var (input, expected) in testCases)
@@ -151,7 +155,7 @@ namespace Tests
                 ("a_string" , "AString"),
                 ("some4_numbers234" , "Some4Numbers234"),
                 ("test123_string" , "Test123String"),
-                ("the_two" , "TheTwo"),
+                ("the_two" , "TheTwo")
             };
 
             foreach (var (input, expected) in testCases)
@@ -160,6 +164,5 @@ namespace Tests
                 Assert.Equal(expected, actual);
             }
         }
-
     }
 }

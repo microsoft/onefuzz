@@ -884,7 +884,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         if auto_scale_config is None:
             auto_scale_profile = default_auto_scale_profile(pool_queue_uri, capacity)
         else:
-            logging.error("Using existing auto scale settings from database")
+            logging.info("Using existing auto scale settings from database")
             auto_scale_profile = create_auto_scale_profile(
                 pool_queue_uri,
                 auto_scale_config.min,
