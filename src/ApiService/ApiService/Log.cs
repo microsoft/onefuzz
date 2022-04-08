@@ -48,7 +48,7 @@ class AppInsights : ILog
     }
 }
 
-//TODO: Should we write errors and Exception to std err ? 
+//TODO: Should we write errors and Exception to std err ?
 class Console : ILog
 {
 
@@ -140,7 +140,7 @@ public class LogTracer : ILogTracer
         var caller = new StackTrace()?.GetFrame(1)?.GetMethod()?.Name;
         foreach (var logger in loggers)
         {
-            logger.Log(correlationId, message, SeverityLevel.Information, Tags, caller);
+            logger.Log(correlationId, message, SeverityLevel.Information, new Dictionary<string, string>(Tags), caller);
         }
     }
 
@@ -149,7 +149,7 @@ public class LogTracer : ILogTracer
         var caller = new StackTrace()?.GetFrame(1)?.GetMethod()?.Name;
         foreach (var logger in loggers)
         {
-            logger.Log(correlationId, message, SeverityLevel.Warning, Tags, caller);
+            logger.Log(correlationId, message, SeverityLevel.Warning, new Dictionary<string, string>(Tags), caller);
         }
     }
 
@@ -158,7 +158,7 @@ public class LogTracer : ILogTracer
         var caller = new StackTrace()?.GetFrame(1)?.GetMethod()?.Name;
         foreach (var logger in loggers)
         {
-            logger.Log(correlationId, message, SeverityLevel.Error, Tags, caller);
+            logger.Log(correlationId, message, SeverityLevel.Error, new Dictionary<string, string>(Tags), caller);
         }
     }
 
@@ -167,7 +167,7 @@ public class LogTracer : ILogTracer
         var caller = new StackTrace()?.GetFrame(1)?.GetMethod()?.Name;
         foreach (var logger in loggers)
         {
-            logger.Log(correlationId, message, SeverityLevel.Critical, Tags, caller);
+            logger.Log(correlationId, message, SeverityLevel.Critical, new Dictionary<string, string>(Tags), caller);
         }
     }
 
@@ -176,7 +176,7 @@ public class LogTracer : ILogTracer
         var caller = new StackTrace()?.GetFrame(1)?.GetMethod()?.Name;
         foreach (var logger in loggers)
         {
-            logger.LogEvent(correlationId, evt, Tags, metrics, caller);
+            logger.LogEvent(correlationId, evt, new Dictionary<string, string>(Tags), metrics, caller);
         }
     }
 
@@ -185,7 +185,7 @@ public class LogTracer : ILogTracer
         var caller = new StackTrace()?.GetFrame(1)?.GetMethod()?.Name;
         foreach (var logger in loggers)
         {
-            logger.LogException(correlationId, ex, Tags, metrics, caller);
+            logger.LogException(correlationId, ex, new Dictionary<string, string>(Tags), metrics, caller);
         }
     }
 

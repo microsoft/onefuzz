@@ -28,12 +28,12 @@ public class Storage : IStorage
 {
 
     private ICreds _creds;
-    private readonly ILogger _logger;
+    private readonly ILogTracer _logger;
 
-    public Storage(ILoggerFactory loggerFactory, ICreds creds)
+    public Storage(ILogTracer logger, ICreds creds)
     {
         _creds = creds;
-        _logger = loggerFactory.CreateLogger<Storage>();
+        _logger = logger;
     }
 
     // TODO: @cached
@@ -94,7 +94,7 @@ public class Storage : IStorage
             results.Add(account.Id!);
         }
 
-        _logger.LogInformation($"corpus accounts: {JsonSerializer.Serialize(results)}");
+        _logger.Info($"corpus accounts: {JsonSerializer.Serialize(results)}");
         return results;
     }
 

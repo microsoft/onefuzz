@@ -60,7 +60,7 @@ public record NodeTasks
 public enum NodeState
 {
     Init,
-    free,
+    Free,
     SettingUp,
     Rebooting,
     Ready,
@@ -80,7 +80,7 @@ public partial record Node
     NodeState State,
     Guid? ScalesetId,
     DateTimeOffset Heartbeat,
-    Version Version,
+    string Version,
     bool ReimageRequested,
     bool DeleteRequested,
     bool DebugKeepNode
@@ -103,7 +103,7 @@ public record EventMessage(
 
 //record AnyHttpUrl(AnyUrl):
 //    allowed_schemes = {'http', 'https
-//    
+//
 
 
 

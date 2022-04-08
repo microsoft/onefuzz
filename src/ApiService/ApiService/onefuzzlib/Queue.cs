@@ -36,7 +36,6 @@ public class Queue : IQueue
             }
             catch (Exception)
             {
-
             }
         }
     }
@@ -60,7 +59,7 @@ public class Queue : IQueue
         var accountId = _storage.GetPrimaryAccount(storageType);
         //_logger.LogDEbug("getting blob container (account_id: %s)", account_id)
         (var name, var key) = _storage.GetStorageAccountNameAndKey(accountId);
-        var accountUrl = new Uri($"https://%s.queue.core.windows.net{name}");
+        var accountUrl = new Uri($"https://{name}.queue.core.windows.net");
         var client = new QueueServiceClient(accountUrl, new StorageSharedKeyCredential(name, key));
         return client;
     }

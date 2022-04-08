@@ -50,8 +50,7 @@ namespace ApiService.OneFuzzLib.Orm
         {
             var account = accountId ?? EnvironmentVariables.OneFuzz.FuncStorage ?? throw new ArgumentNullException(nameof(accountId));
             var (name, key) = _storage.GetStorageAccountNameAndKey(account);
-            var identifier = new ResourceIdentifier(account);
-            var tableClient = new TableServiceClient(new Uri($"https://{identifier.Name}.table.core.windows.net"), new TableSharedKeyCredential(name, key));
+            var tableClient = new TableServiceClient(new Uri($"https://{name}.table.core.windows.net"), new TableSharedKeyCredential(name, key));
             await tableClient.CreateTableIfNotExistsAsync(table);
             return tableClient.GetTableClient(table);
         }
