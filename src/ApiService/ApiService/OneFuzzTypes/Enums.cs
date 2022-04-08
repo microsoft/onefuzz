@@ -27,13 +27,13 @@
 }
 
 public enum VmState {
-    INIT, 
-    EXTENSIONS_LAUNCH,
-    EXTENSIONS_FAILED,
-    VM_ALLOCATION_FAILED,
-    RUNNING,
-    STOPPING,
-    STOPPED
+    Init, 
+    ExtensionsLaunched,
+    ExtensionsFailed,
+    VmAllocationFailed,
+    Running,
+    Stopping,
+    Stopped
 }
 
 public enum WebhookMessageState

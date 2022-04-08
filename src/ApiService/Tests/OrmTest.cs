@@ -39,7 +39,8 @@ namespace Tests
             TestEnum TheEnum,
             TestFlagEnum TheFlag,
             [property: JsonPropertyName("a__special__name")] string Renamed,
-            TestObject TheObject
+            TestObject TheObject,
+            TestObject? TestNull
             ) : EntityBase();
 
 
@@ -96,7 +97,8 @@ namespace Tests
                 { "the_enum", "the_two"},
                 { "the_flag", "flag_one,flag_two"},
                 { "a__special__name", "renamed"},
-                { "the_object", "{\"the_name\": \"testName\", \"the_enum\": \"the_one\", \"the_flag\": \"flag_one,flag_two\"}"},
+                { "the_object", "{\"the_name\": \"testName\", \"the_enum\": \"the_one\", \"the_flag\": \"flag_one,flag_two\"}"}
+                { "test_null", null},
             };
 
             var entity1 = converter.ToRecord<Entity1>(tableEntity);
@@ -109,6 +111,7 @@ namespace Tests
             Assert.Equal(tableEntity.GetDouble("the_float"), entity1.TheFloat);
             Assert.Equal(TestEnum.TheTwo, entity1.TheEnum);
             Assert.Equal(tableEntity.GetString("a__special__name"), entity1.Renamed);
+            Assert.Equal(tableEntity.GetString("test_null"), null);
 
             Assert.Equal("testName", entity1.TheObject.TheName);
             Assert.Equal(TestEnum.TheOne, entity1.TheObject.TheEnum);

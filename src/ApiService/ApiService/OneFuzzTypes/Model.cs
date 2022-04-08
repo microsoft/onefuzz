@@ -83,7 +83,7 @@ public record ProxyHeartbeat
     string Region,
     Guid ProxyId,
     List<ProxyForward> Forwards,
-    DateTimeOffset Timestamp
+    DateTimeOffset TimeStamp
 );
 
 public partial record Node
@@ -113,7 +113,7 @@ public partial record ProxyForward
 public partial record ProxyConfig 
 (	
 	Uri Url,
-	string Notifcation,
+	string Notification,
 	string Region,
 	Guid? ProxyId,
 	List<ProxyForward> Forwards,
@@ -132,8 +132,7 @@ public partial record Proxy
     string? Ip, 
     Error? Error, 
     string Version, 
-    ProxyHeartbeat? heartbeat, 
-    bool Outdated
+    ProxyHeartbeat? heartbeat
 ) : EntityBase();
 
 public record Error (ErrorCode Code, string[]? Errors = null);
