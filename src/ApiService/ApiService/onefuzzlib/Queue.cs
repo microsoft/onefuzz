@@ -16,9 +16,9 @@ public interface IQueue
 public class Queue : IQueue
 {
     IStorage _storage;
-    ILog _logger;
+    ILogTracer _logger;
 
-    public Queue(IStorage storage, ILog logger)
+    public Queue(IStorage storage, ILogTracer logger)
     {
         _storage = storage;
         _logger = logger;

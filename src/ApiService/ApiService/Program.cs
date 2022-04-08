@@ -34,11 +34,12 @@ public class Program
         .ConfigureServices((context, services) =>
             services
             .AddSingleton<ILogTracerFactory>(_ => new LogTracerFactory(GetLoggers()))
-            .AddScoped<ILogTracer>(s => s.GetService<LogTracerFactory>()?.MakeLogTracer(Guid.NewGuid()) ?? throw new InvalidOperationException("Unable to create a logger"))
+            .AddScoped<ILogTracer>(s => s.GetService<ILogTracerFactory>()?.MakeLogTracer(Guid.NewGuid()) ?? throw new InvalidOperationException("Unable to create a logger"))
             .AddSingleton<IStorageProvider>(_ => new StorageProvider(EnvironmentVariables.OneFuzz.FuncStorage ?? throw new InvalidOperationException("Missing account id")))
             .AddSingleton<INodeOperations, NodeOperations>()
             .AddSingleton<IEvents, Events>()
             .AddSingleton<IWebhookOperations, WebhookOperations>()
+            .AddSingleton<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
             .AddSingleton<IQueue, Queue>()
             .AddSingleton<ICreds>(_ => new Creds())
             .AddSingleton<IStorage, Storage>()
