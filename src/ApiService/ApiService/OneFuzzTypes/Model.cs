@@ -125,14 +125,14 @@ public partial record ProxyConfig
 public partial record Proxy
 (
     [PartitionKey] string Region, 
-    [RowKey] Guid? ProxyId,
-    DateTimeOffset? InitializedAt,
+    [RowKey] Guid ProxyId,
+    DateTimeOffset? CreatedTimestamp,
     VmState State, 
     Authentication Auth, 
-    string Ip, 
-    Error Error, 
+    string? Ip, 
+    Error? Error, 
     string Version, 
-    ProxyHeartbeat heartbeat, 
+    ProxyHeartbeat? heartbeat, 
     bool Outdated
 ) : EntityBase();
 

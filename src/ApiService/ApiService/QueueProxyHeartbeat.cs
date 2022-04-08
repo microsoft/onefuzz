@@ -20,7 +20,7 @@ public class QueueProxyHearbeat
     }
 
     [Function("QueueProxyHearbeat")]
-    public async Task Run([QueueTrigger("proxy", Connection = "funcsamlrs3qn2nls_STORAGE")] string msg)
+    public async Task Run([QueueTrigger("Proxy", Connection = "funcsamlrs3qn2nls_STORAGE")] string msg)
     {
         _logger.LogInformation($"heartbeat: {msg}");
 
@@ -32,7 +32,6 @@ public class QueueProxyHearbeat
             _logger.LogWarning($"invalid proxy id: {hb.ProxyId}");
             return;
         }
-
         var newProxy = proxy with { heartbeat = hb };
 
         await _proxy.Replace(newProxy);

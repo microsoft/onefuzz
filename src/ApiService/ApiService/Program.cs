@@ -40,6 +40,7 @@ public class Program
             .AddSingleton<IStorageProvider>(_ => new StorageProvider(EnvironmentVariables.OneFuzz.FuncStorage ?? throw new InvalidOperationException("Missing account id") ))
             .AddSingleton<ICreds>(_ => new Creds())
             .AddSingleton<IStorage, Storage>()
+            .AddSingleton<IProxyOperations, ProxyOperations>()
         )
         .Build();
 
