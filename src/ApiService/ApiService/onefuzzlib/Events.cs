@@ -1,7 +1,10 @@
 ﻿using ApiService.OneFuzzLib;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Microsoft.OneFuzz.Service
@@ -38,7 +41,7 @@ namespace Microsoft.OneFuzz.Service
         public async Task QueueSignalrEvent(EventMessage eventMessage)
         {
             var message = new SignalREvent("events", new List<EventMessage>() { eventMessage });
-            var encodedMessage = Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(message));
+            var encodedMessage = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
             await _queue.SendMessage("signalr-events", encodedMessage, StorageType.Config);
         }
 
@@ -60,15 +63,42 @@ namespace Microsoft.OneFuzz.Service
 
         public void LogEvent(BaseEvent anEvent, EventType eventType)
         {
-            //todo
-            //var scrubedEvent = FilterEvent(anEvent);
-            //throw new NotImplementedException();
+            var options = EntityConverter.GetJsonSerializerOptions();
+            options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+            options.Converters.Add(new RemoveUserInfo());
+            var serializedEvent = JsonSerializer.Serialize(anEvent, options);
+            _logger.Info($"sending event: {eventType} - {serializedEvent}");
+        }
+    }
 
+
+
+    internal class RemoveUserInfo : JsonConverter<UserInfo>
+    {
+        public override UserInfo? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            var newOptions = new JsonSerializerOptions(options);
+            RemoveUserInfo? self = null;
+            foreach (var converter in newOptions.Converters)
+            {
+                if (converter is RemoveUserInfo)
+                {
+                    self = (RemoveUserInfo)converter;
+                    break;
+                }
+            }
+
+            if (self != null)
+            {
+                newOptions.Converters.Remove(self);
+            }
+
+            return JsonSerializer.Deserialize<UserInfo>(ref reader, newOptions);
         }
 
-        private object FilterEvent(BaseEvent anEvent)
+        public override void Write(Utf8JsonWriter writer, UserInfo value, JsonSerializerOptions options)
         {
-            throw new NotImplementedException();
+            writer.WriteStringValue("{}");
         }
     }
 }
