@@ -274,12 +274,12 @@ jobs:
         dotnet test --no-restore
     - name: Build service-net
       run: |
-      cd src/ApiService/ApiService/
-      echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
-      echo ${GITHUB_SHA} | tee onefuzzlib/git.version
-      zip -r api-service-net.zip bin/Release/*
-      mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
-      cp api-service-net.zip ${GITHUB_WORKSPACE}/artifacts/service-net
+        cd src/ApiService/ApiService/
+        echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
+        echo ${GITHUB_SHA} | tee onefuzzlib/git.version
+        zip -r api-service-net.zip bin/Release/*
+        mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
+        cp api-service-net.zip ${GITHUB_WORKSPACE}/artifacts/service-net
     - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts
