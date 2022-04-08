@@ -5,7 +5,6 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ApiService.OneFuzzLib.Orm
@@ -28,7 +27,7 @@ namespace ApiService.OneFuzzLib.Orm
             _entityConverter = new EntityConverter();
         }
 
-        public async IAsyncEnumerable<T> QueryAsync(string? filter=null) 
+        public async IAsyncEnumerable<T> QueryAsync(string? filter = null)
         {
             var tableClient = await GetTableClient(typeof(T).Name);
 

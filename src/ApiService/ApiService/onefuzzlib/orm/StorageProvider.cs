@@ -1,6 +1,5 @@
 ﻿using Azure.Data.Tables;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Azure.Core;
@@ -25,7 +24,8 @@ public class StorageProvider : IStorageProvider
     private readonly EntityConverter _entityConverter;
     private readonly ArmClient _armClient;
 
-    public StorageProvider(string accountId) {
+    public StorageProvider(string accountId)
+    {
         _accountId = accountId;
         _entityConverter = new EntityConverter();
         _armClient = new ArmClient(new DefaultAzureCredential());
@@ -41,12 +41,13 @@ public class StorageProvider : IStorageProvider
     }
 
 
-    public (string?, string?) GetStorageAccountNameAndKey(string accountId) {
+    public (string?, string?) GetStorageAccountNameAndKey(string accountId)
+    {
         var resourceId = new ResourceIdentifier(accountId);
         var storageAccount = _armClient.GetStorageAccount(resourceId);
         var key = storageAccount.GetKeys().Value.Keys.FirstOrDefault();
         return (resourceId.Name, key?.Value);
     }
 
-    
+
 }

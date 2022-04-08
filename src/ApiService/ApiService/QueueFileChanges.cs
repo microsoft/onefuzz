@@ -5,12 +5,12 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using Azure.Storage.Queues.Models;
 using System.Linq;
 
 namespace Microsoft.OneFuzz.Service;
 
-public class QueueFileChanges {
+public class QueueFileChanges
+{
     // The number of time the function will be retried if an error occurs
     // https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-storage-queue-trigger?tabs=csharp#poison-messages
     const int MAX_DEQUEUE_COUNT = 5;
@@ -32,7 +32,7 @@ public class QueueFileChanges {
         [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount)
     {
-        var fileChangeEvent = JsonSerializer.Deserialize<Dictionary<string, string>>(msg, EntityConverter.GetJsonSerializerOptions());        
+        var fileChangeEvent = JsonSerializer.Deserialize<Dictionary<string, string>>(msg, EntityConverter.GetJsonSerializerOptions());
         var lastTry = dequeueCount == MAX_DEQUEUE_COUNT;
 
         var _ = fileChangeEvent ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
@@ -56,7 +56,8 @@ public class QueueFileChanges {
         return Task.CompletedTask;
     }
 
-    private void file_added(Dictionary<string, string> fileChangeEvent, bool failTaskOnTransientError) {
+    private void file_added(Dictionary<string, string> fileChangeEvent, bool failTaskOnTransientError)
+    {
         var data = JsonSerializer.Deserialize<Dictionary<string, string>>(fileChangeEvent["data"])!;
         var url = data["url"];
         var parts = url.Split("/").Skip(3).ToList();

@@ -8,29 +8,36 @@ namespace Microsoft.OneFuzz.Service;
 using TokenType = String;
 using AccessToken = String;
 
-public class Request {
+public class Request
+{
     private static HttpClient httpClient = new HttpClient();
 
     Func<Task<(TokenType, AccessToken)>>? auth;
 
-    public Request(Func<Task<(TokenType, AccessToken)>>? auth = null) {
+    public Request(Func<Task<(TokenType, AccessToken)>>? auth = null)
+    {
         this.auth = auth;
     }
-    
-    private async Task<HttpResponseMessage> Send(HttpMethod method, Uri url, HttpContent? content = null, IDictionary<string, string>? headers = null) {
+
+    private async Task<HttpResponseMessage> Send(HttpMethod method, Uri url, HttpContent? content = null, IDictionary<string, string>? headers = null)
+    {
         var request = new HttpRequestMessage(method: method, requestUri: url);
 
-        if (auth is not null) {
+        if (auth is not null)
+        {
             var (tokenType, accessToken) = await auth();
             request.Headers.Authorization = new AuthenticationHeaderValue(tokenType, accessToken);
         }
 
-        if (content is not null) {
+        if (content is not null)
+        {
             request.Content = content;
         }
 
-        if (headers is not null) {
-            foreach(var v in headers) {
+        if (headers is not null)
+        {
+            foreach (var v in headers)
+            {
                 request.Headers.Add(v.Key, v.Value);
             }
         }
@@ -38,7 +45,8 @@ public class Request {
         return await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
     }
 
-    public async Task<HttpResponseMessage> Get(Uri url) {
+    public async Task<HttpResponseMessage> Get(Uri url)
+    {
         return await Send(method: HttpMethod.Get, url: url);
     }
     public async Task<HttpResponseMessage> Delete(Uri url)
@@ -46,13 +54,15 @@ public class Request {
         return await Send(method: HttpMethod.Delete, url: url);
     }
 
-    public async Task<HttpResponseMessage> Post(Uri url, String json, IDictionary<string, string>? headers = null) {
+    public async Task<HttpResponseMessage> Post(Uri url, String json, IDictionary<string, string>? headers = null)
+    {
         using var b = new StringContent(json);
         b.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
-        return await Send(method: HttpMethod.Post, url: url, headers:headers);
+        return await Send(method: HttpMethod.Post, url: url, headers: headers);
     }
 
-    public async Task<HttpResponseMessage> Put(Uri url, String json, IDictionary<string, string>? headers = null) {
+    public async Task<HttpResponseMessage> Put(Uri url, String json, IDictionary<string, string>? headers = null)
+    {
         using var b = new StringContent(json);
         b.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
         return await Send(method: HttpMethod.Put, url: url, headers: headers);
