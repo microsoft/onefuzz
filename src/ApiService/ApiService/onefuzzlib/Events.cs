@@ -1,4 +1,5 @@
 ﻿using ApiService.OneFuzzLib;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Collections.Generic;
@@ -28,13 +29,13 @@ namespace Microsoft.OneFuzz.Service
     public class Events : IEvents
     {
         private readonly IQueue _queue;
-        private readonly ILogTracer _logger;
+        private readonly ILogger _logger;
         private readonly IWebhookOperations _webhook;
 
-        public Events(IQueue queue, ILogTracer logger, IWebhookOperations webhook)
+        public Events(IQueue queue, ILoggerFactory loggerFactory, IWebhookOperations webhook)
         {
             _queue = queue;
-            _logger = logger;
+            _logger = loggerFactory.CreateLogger<Events>();
             _webhook = webhook;
         }
 
@@ -67,7 +68,7 @@ namespace Microsoft.OneFuzz.Service
             options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             options.Converters.Add(new RemoveUserInfo());
             var serializedEvent = JsonSerializer.Serialize(anEvent, options);
-            _logger.Info($"sending event: {eventType} - {serializedEvent}");
+            _logger.LogInformation($"sending event: {eventType} - {serializedEvent}");
         }
     }
 

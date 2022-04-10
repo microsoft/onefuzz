@@ -34,7 +34,6 @@ public class Program
         .ConfigureServices((context, services) =>
             services
             .AddSingleton<ILogTracerFactory>(_ => new LogTracerFactory(GetLoggers()))
-            .AddScoped<ILogTracer>(s => s.GetService<ILogTracerFactory>()?.MakeLogTracer(Guid.NewGuid()) ?? throw new InvalidOperationException("Unable to create a logger"))
             .AddSingleton<IStorageProvider>(_ => new StorageProvider(EnvironmentVariables.OneFuzz.FuncStorage ?? throw new InvalidOperationException("Missing account id")))
             .AddSingleton<INodeOperations, NodeOperations>()
             .AddSingleton<IEvents, Events>()

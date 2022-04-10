@@ -1,5 +1,6 @@
 ﻿using Azure.Storage;
 using Azure.Storage.Queues;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Text.Json;
@@ -16,12 +17,12 @@ public interface IQueue
 public class Queue : IQueue
 {
     IStorage _storage;
-    ILogTracer _logger;
+    ILogger _logger;
 
-    public Queue(IStorage storage, ILogTracer logger)
+    public Queue(IStorage storage, ILoggerFactory loggerFactory)
     {
         _storage = storage;
-        _logger = logger;
+        _logger = loggerFactory.CreateLogger<Queue>();
     }
 
 
