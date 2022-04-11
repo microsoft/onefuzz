@@ -5,7 +5,6 @@ using Azure.ResourceManager.Storage;
 using Azure.Core;
 using System.Text.Json;
 using System.Linq;
-using Microsoft.Extensions.Logging;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -28,12 +27,12 @@ public class Storage : IStorage
 {
 
     private ICreds _creds;
-    private readonly ILogger _logger;
+    private readonly ILogTracerFactory _loggerFactory;
 
-    public Storage(ILoggerFactory loggerFactory, ICreds creds)
+    public Storage(ILogTracerFactory loggerFactory, ICreds creds)
     {
         _creds = creds;
-        _logger = loggerFactory.CreateLogger<Storage>(); ;
+        _loggerFactory = loggerFactory;
     }
 
     // TODO: @cached
@@ -59,6 +58,7 @@ public class Storage : IStorage
     // TODO: @cached
     public IEnumerable<string> CorpusAccounts()
     {
+        var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
         var skip = GetFuncStorage();
         var results = new List<string> { GetFuzzStorage() };
 
@@ -94,7 +94,7 @@ public class Storage : IStorage
             results.Add(account.Id!);
         }
 
-        _logger.LogInformation($"corpus accounts: {JsonSerializer.Serialize(results)}");
+        log.Info($"corpus accounts: {JsonSerializer.Serialize(results)}");
         return results;
     }
 
