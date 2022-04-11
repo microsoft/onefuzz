@@ -61,7 +61,7 @@ namespace Tests
                                 TheName = "testobject",
                                 TheEnum = TestEnum.TheTwo,
                                 TheFlag = TestFlagEnum.FlagOne | TestFlagEnum.FlagTwo
-                            }, 
+                            },
                             null);
             var tableEntity = converter.ToTableEntity(entity1);
 
