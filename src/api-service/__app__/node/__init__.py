@@ -9,7 +9,7 @@ from onefuzztypes.models import Error
 from onefuzztypes.requests import NodeGet, NodeSearch, NodeUpdate
 from onefuzztypes.responses import BoolResult
 
-from ..onefuzzlib.endpoint_authorization import call_if_user
+from ..onefuzzlib.endpoint_authorization import call_if_user, check_can_manage_pools
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.workers.nodes import Node, NodeMessage, NodeTasks
 
