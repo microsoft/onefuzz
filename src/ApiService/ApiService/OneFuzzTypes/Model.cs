@@ -25,15 +25,15 @@ public enum HeartbeatType
     TaskAlive,
 }
 
-public record HeartbeatData(HeartbeatType type);
+public record HeartbeatData(HeartbeatType Type);
 
 public record TaskHeartbeatEntry(
     Guid TaskId,
     Guid? JobId,
     Guid MachineId,
-    HeartbeatData[] data
+    HeartbeatData[] Data
     );
-public record NodeHeartbeatEntry(Guid NodeId, HeartbeatData[] data);
+public record NodeHeartbeatEntry(Guid NodeId, HeartbeatData[] Data);
 
 public record NodeCommandStopIfFree();
 
@@ -167,8 +167,8 @@ public record TaskPool(
 );
 
 public record TaskContainers(
-    ContainerType type,
-    Container name
+    ContainerType Type,
+    Container Name
 );
 public record TaskConfig(
    Guid JobId,
@@ -179,7 +179,7 @@ public record TaskConfig(
    List<TaskContainers> Containers,
    Dictionary<string, string> Tags,
    List<TaskDebugFlag> Debug,
-   bool? colocate
+   bool? Colocate
    );
 
 public record Authentication(
@@ -192,12 +192,12 @@ public record Authentication(
 public record TaskEventSummary(
     DateTimeOffset? Timestamp,
     string EventData,
-    string eventType
+    string EventType
     );
 
 
 public record NodeAssignment(
-    Guid nodeId,
+    Guid NodeId,
     Guid? ScalesetId,
     NodeTaskState State
     );
@@ -214,9 +214,9 @@ public record Task(
     Authentication? Auth,
     DateTimeOffset? Heartbeat,
     DateTimeOffset? EndTime,
-    UserInfo? user_info) : EntityBase()
+    UserInfo? UserInfo) : EntityBase()
 {
-    List<TaskEventSummary> events { get; set; } = new List<TaskEventSummary>();
-    List<NodeAssignment> nodes { get; set; } = new List<NodeAssignment>();
+    List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
+    List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
 
 }
