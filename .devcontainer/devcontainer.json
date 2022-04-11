@@ -24,10 +24,11 @@
 
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
+	// Note: available features are listed in: https://github.com/microsoft/vscode-dev-containers/blob/main/script-library/container-features/src/devcontainer-features.json
 	"features": {
 		"azure-cli": "latest",
 		"dotnet": "6.0",
 		"python": "os-provided",
-		"rust": "1.55"
+		"rust": "1.60" 
 	}
 }
