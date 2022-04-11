@@ -3,9 +3,9 @@ using System;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Core;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -33,7 +33,7 @@ public class Storage : IStorage
     public Storage(ILoggerFactory loggerFactory, ICreds creds)
     {
         _creds = creds;
-        _logger = loggerFactory.CreateLogger<Storage>();
+        _logger = loggerFactory.CreateLogger<Storage>(); ;
     }
 
     // TODO: @cached
