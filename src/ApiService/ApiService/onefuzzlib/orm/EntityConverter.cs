@@ -245,7 +245,7 @@ public class EntityConverter
                     else
                     {
                         var value = entity.GetString(fieldName);
-                        if (value == null) 
+                        if (value == null)
                         {
                             return null;
                         }

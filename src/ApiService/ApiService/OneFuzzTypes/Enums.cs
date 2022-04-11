@@ -26,8 +26,9 @@
     INVALID_CONFIGURATION = 473,
 }
 
-public enum VmState {
-    Init, 
+public enum VmState
+{
+    Init,
     ExtensionsLaunched,
     ExtensionsFailed,
     VmAllocationFailed,

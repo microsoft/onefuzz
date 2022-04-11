@@ -1,7 +1,6 @@
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Collections.Generic;
-using System.Net;
 using PoolName = System.String;
 
 namespace Microsoft.OneFuzz.Service;
@@ -104,38 +103,38 @@ public partial record Node
 
 public partial record ProxyForward
 (
-	[PartitionKey] string Region,
-	[RowKey] int DstPort,
+    [PartitionKey] string Region,
+    [RowKey] int DstPort,
     int SrcPort,
-	string DstIp
+    string DstIp
 ) : EntityBase();
 
-public partial record ProxyConfig 
-(	
-	Uri Url,
-	string Notification,
-	string Region,
-	Guid? ProxyId,
-	List<ProxyForward> Forwards,
-	string InstanceTelemetryKey,
-	string MicrosoftTelemetryKey
+public partial record ProxyConfig
+(
+    Uri Url,
+    string Notification,
+    string Region,
+    Guid? ProxyId,
+    List<ProxyForward> Forwards,
+    string InstanceTelemetryKey,
+    string MicrosoftTelemetryKey
 
 );
 
 public partial record Proxy
 (
-    [PartitionKey] string Region, 
+    [PartitionKey] string Region,
     [RowKey] Guid ProxyId,
     DateTimeOffset? CreatedTimestamp,
-    VmState State, 
-    Authentication Auth, 
-    string? Ip, 
-    Error? Error, 
-    string Version, 
+    VmState State,
+    Authentication Auth,
+    string? Ip,
+    Error? Error,
+    string Version,
     ProxyHeartbeat? heartbeat
 ) : EntityBase();
 
-public record Error (ErrorCode Code, string[]? Errors = null);
+public record Error(ErrorCode Code, string[]? Errors = null);
 
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
 

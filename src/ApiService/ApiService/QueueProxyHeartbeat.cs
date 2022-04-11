@@ -7,7 +7,7 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
-public class QueueProxyHearbeat 
+public class QueueProxyHearbeat
 {
     private readonly ILogger _logger;
 
@@ -24,18 +24,19 @@ public class QueueProxyHearbeat
     {
         _logger.LogInformation($"heartbeat: {msg}");
 
-        var hb = JsonSerializer.Deserialize<ProxyHeartbeat>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");;
-        var newHb = hb with {TimeStamp = DateTimeOffset.UtcNow};    
-        
+        var hb = JsonSerializer.Deserialize<ProxyHeartbeat>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}"); ;
+        var newHb = hb with { TimeStamp = DateTimeOffset.UtcNow };
+
         var proxy = await _proxy.GetByProxyId(newHb.ProxyId);
 
-        if (proxy == null) {
+        if (proxy == null)
+        {
             _logger.LogWarning($"invalid proxy id: {newHb.ProxyId}");
             return;
         }
         var newProxy = proxy with { heartbeat = newHb };
-        
+
         await _proxy.Replace(newProxy);
-        
+
     }
 }
