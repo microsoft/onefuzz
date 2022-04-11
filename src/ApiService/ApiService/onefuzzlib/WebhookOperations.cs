@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ApiService.OneFuzzLib;
 
@@ -30,7 +29,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     }
 
 
-    public async Task QueueWebhook(WebhookMessageLog webhookLog)
+    public async Tasks.Task QueueWebhook(WebhookMessageLog webhookLog)
     {
         var obj = new WebhookMessageQueueObj(webhookLog.WebhookId, webhookLog.EventId);
 
@@ -62,7 +61,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
 
 public interface IWebhookOperations
 {
-    Task SendEvent(EventMessage eventMessage);
+    Tasks.Task SendEvent(EventMessage eventMessage);
 }
 
 public class WebhookOperations : Orm<Webhook>, IWebhookOperations
@@ -74,7 +73,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
         _webhookMessageLogOperations = webhookMessageLogOperations;
     }
 
-    async public Task SendEvent(EventMessage eventMessage)
+    async public Tasks.Task SendEvent(EventMessage eventMessage)
     {
         await foreach (var webhook in GetWebhooksCached())
         {
@@ -86,7 +85,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
         }
     }
 
-    async private Task AddEvent(Webhook webhook, EventMessage eventMessage)
+    async private Tasks.Task AddEvent(Webhook webhook, EventMessage eventMessage)
     {
         var message = new WebhookMessageLog(
              EventId: eventMessage.EventId,

@@ -1,6 +1,9 @@
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
+using System.Collections.Generic;
 using PoolName = System.String;
+using Region = System.String;
+using Container = System.String;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -24,6 +27,12 @@ public enum HeartbeatType
 
 public record HeartbeatData(HeartbeatType type);
 
+public record TaskHeartbeatEntry(
+    Guid TaskId,
+    Guid? JobId,
+    Guid MachineId,
+    HeartbeatData[] data
+    );
 public record NodeHeartbeatEntry(Guid NodeId, HeartbeatData[] data);
 
 public record NodeCommandStopIfFree();
@@ -106,18 +115,108 @@ public record EventMessage(
 //
 
 
+public record TaskDetails(
+
+    TaskType Type,
+    int Duration,
+    string? TargetExe,
+    Dictionary<string, string> TargetEnv,
+    List<string> TargetOptions,
+    int? TargetWorkers,
+    bool? TargetOptionsMerge,
+    bool? CheckAsanLog,
+    bool? CheckDebugger,
+    int? CheckRetryCount,
+    bool? CheckFuzzerHelp,
+    bool? ExpectCrashOnFailure,
+    bool? RenameOutput,
+    string? SupervisorExe,
+    Dictionary<string, string> SupervisorEnv,
+    List<string> SupervisorOptions,
+    string? SupervisorInputMarker,
+    string? GeneratorExe,
+    Dictionary<string, string> GeneratorEnv,
+    List<string> GeneratorOptions,
+    string? AnalyzerExe,
+    Dictionary<string, string> AnalyzerEnv,
+    List<string> AnalyzerOptions,
+    ContainerType? WaitForFiles,
+    string? StatsFile,
+    StatsFormat? StatsFormat,
+    bool? RebootAfterSetup,
+    int? TargetTimeout,
+    int? EnsembleSyncDelay,
+    bool? PreserveExistingOutputs,
+    List<string> ReportList,
+    int? MinimizedStackDepth,
+    string? CoverageFilter
+);
+
+public record TaskVm(
+    Region Region,
+    string Sku,
+    string Image,
+    int Count,
+    bool SpotInstance,
+    bool? RebootAfterSetup
+);
+
+public record TaskPool(
+    int Count,
+    PoolName PoolName
+);
+
+public record TaskContainers(
+    ContainerType type,
+    Container name
+);
+public record TaskConfig(
+   Guid JobId,
+   List<Guid> PrereqTasks,
+   TaskDetails Task,
+   TaskVm? Vm,
+   TaskPool? Pool,
+   List<TaskContainers> Containers,
+   Dictionary<string, string> Tags,
+   List<TaskDebugFlag> Debug,
+   bool? colocate
+   );
+
+public record Authentication(
+    string Password,
+    string PublicKey,
+    string PrivateKey
+);
 
 
+public record TaskEventSummary(
+    DateTimeOffset? Timestamp,
+    string EventData,
+    string eventType
+    );
 
-//public record TaskConfig(
-//    Guid jobId,
-//    List<Guid> PrereqTasks,
-//    TaskDetails Task,
-//    TaskVm? vm,
-//    TaskPool pool: Optional[]
-//    containers: List[TaskContainers]
-//    tags: Dict[str, str]
-//    debug: Optional[List[TaskDebugFlag]]
-//    colocate: Optional[bool]
-//    ): EntityBase();
 
+public record NodeAssignment(
+    Guid nodeId,
+    Guid? ScalesetId,
+    NodeTaskState State
+    );
+
+
+public record Task(
+    // Timestamp: Optional[datetime] = Field(alias="Timestamp")
+    [PartitionKey] Guid JobId,
+    [RowKey] Guid TaskId,
+    TaskState State,
+    Os Os,
+    TaskConfig Config,
+    Error? Error,
+    Authentication? Auth,
+    DateTimeOffset? Heartbeat,
+    DateTimeOffset? EndTime,
+    UserInfo? user_info) : EntityBase()
+{
+    List<TaskEventSummary> events { get; set; } = new List<TaskEventSummary>();
+    List<NodeAssignment> nodes { get; set; } = new List<NodeAssignment>();
+
+}

@@ -34,3 +34,66 @@ public enum WebhookMessageState
     Succeeded,
     Failed
 }
+
+public enum TaskState
+{
+    Init,
+    Waiting,
+    Scheduled,
+    Setting_up,
+    Running,
+    Stopping,
+    Stopped,
+    WaitJob
+}
+
+public enum TaskType
+{
+    Coverage,
+    LibfuzzerFuzz,
+    LibfuzzerCoverage,
+    LibfuzzerCrashReport,
+    LibfuzzerMerge,
+    LibfuzzerRegression,
+    GenericAnalysis,
+    GenericSupervisor,
+    GenericMerge,
+    GenericGenerator,
+    GenericCrashReport,
+    GenericRegression
+}
+
+public enum Os
+{
+    Windows,
+    Linux
+}
+
+public enum ContainerType
+{
+    Analysis,
+    Coverage,
+    Crashes,
+    Inputs,
+    NoRepro,
+    ReadonlyInputs,
+    Reports,
+    Setup,
+    Tools,
+    UniqueInputs,
+    UniqueReports,
+    RegressionReports,
+    Logs
+}
+
+
+public enum StatsFormat
+{
+    AFL
+}
+
+public enum TaskDebugFlag
+{
+    KeepNodeOnFailure,
+    KeepNodeOnCompletion,
+}

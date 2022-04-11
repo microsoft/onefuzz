@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.IdentityModel.Tokens;
 
+
 namespace Microsoft.OneFuzz.Service;
 
 public class UserCredentials
@@ -53,7 +54,7 @@ public class UserCredentials
 
     static Task<OneFuzzResult<string[]>> GetAllowedTenants()
     {
-        return Task.FromResult(OneFuzzResult<string[]>.Ok(Array.Empty<string>()));
+        return Tasks.Task.FromResult(OneFuzzResult<string[]>.Ok(Array.Empty<string>()));
     }
 
     /*

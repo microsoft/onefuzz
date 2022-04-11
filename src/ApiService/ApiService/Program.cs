@@ -1,9 +1,14 @@
+// to avoid collision with Task in model.cs
+global using Tasks = System.Threading.Tasks;
+
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using ApiService.OneFuzzLib;
+
+
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -39,6 +44,7 @@ public class Program
             .AddSingleton<IEvents, Events>()
             .AddSingleton<IWebhookOperations, WebhookOperations>()
             .AddSingleton<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
+            .AddSingleton<ITaskOperations, TaskOperations>()
             .AddSingleton<IQueue, Queue>()
             .AddSingleton<ICreds>(_ => new Creds())
             .AddSingleton<IStorage, Storage>()

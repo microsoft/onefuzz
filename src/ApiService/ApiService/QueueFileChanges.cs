@@ -3,7 +3,6 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System.Linq;
 
@@ -28,7 +27,7 @@ public class QueueFileChanges
     }
 
     [Function("QueueFileChanges")]
-    public Task Run(
+    public Tasks.Task Run(
         [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount)
     {
@@ -42,18 +41,18 @@ public class QueueFileChanges
         if (!fileChangeEvent.ContainsKey(eventType)
             || fileChangeEvent[eventType] != "Microsoft.Storage.BlobCreated")
         {
-            return Task.CompletedTask;
+            return Tasks.Task.CompletedTask;
         }
 
         const string topic = "topic";
         if (!fileChangeEvent.ContainsKey(topic)
             || !_storage.CorpusAccounts().Contains(fileChangeEvent[topic]))
         {
-            return Task.CompletedTask;
+            return Tasks.Task.CompletedTask;
         }
 
         file_added(fileChangeEvent, lastTry);
-        return Task.CompletedTask;
+        return Tasks.Task.CompletedTask;
     }
 
     private void file_added(Dictionary<string, string> fileChangeEvent, bool failTaskOnTransientError)
