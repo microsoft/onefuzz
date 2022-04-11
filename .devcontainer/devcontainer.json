@@ -28,7 +28,6 @@
 	"features": {
 		"azure-cli": "latest",
 		"dotnet": "6.0",
-		"python": "os-provided",
-		"rust": "1.60" 
+		"python": "os-provided"
 	}
 }
