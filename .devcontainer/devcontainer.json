@@ -6,28 +6,36 @@
 		"dockerfile": "Dockerfile",
 		// Update 'VARIANT' to pick an Ubuntu version: hirsute, focal, bionic
 		// Use hirsute or bionic on local arm64/Apple Silicon.
-		"args": { "VARIANT": "focal" }
+		"args": {
+			"VARIANT": "focal"
+		}
 	},
-
 	// Set *default* container specific settings.json values on container create.
-	"settings": {},
-
+	"settings": {
+		"lldb.executable": "/usr/bin/lldb",
+		"files.watcherExclude": {
+			"**/target/**": true
+		},
+		"rust-analyzer.checkOnSave.command": "clippy"
+	},
 	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [],
-
+	"extensions": [
+		"vadimcn.vscode-lldb",
+		"mutantdino.resourcemonitor",
+		"matklad.rust-analyzer",
+		"tamasfe.even-better-toml",
+		"serayuzgur.crates"
+	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-
 	// Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": "find -iname '*.csproj' -exec dotnet restore '{}' \\;",
 	// - ensure all nuget packages are present
-
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
 	// Note: available features are listed in: https://github.com/microsoft/vscode-dev-containers/blob/main/script-library/container-features/src/devcontainer-features.json
 	"features": {
 		"azure-cli": "latest",
-		"dotnet": "6.0",
-		"python": "os-provided"
+		"dotnet": "6.0"
 	}
 }

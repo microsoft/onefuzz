@@ -6,7 +6,7 @@ FROM mcr.microsoft.com/vscode/devcontainers/base:0-${VARIANT}
 
 # Install basic packages required for build:
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends libunwind-dev clang build-essential libssl-dev pkg-config
+    && apt-get -y install --no-install-recommends libunwind-dev clang build-essential libssl-dev pkg-config lldb python3-minimal
 
 ### Setup Rust for 'vscode' user:
 USER vscode
