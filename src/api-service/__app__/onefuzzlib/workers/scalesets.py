@@ -438,7 +438,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         # Perform operations until they fail due to scaleset getting locked
         try:
-            strategy_str = os.getenv('ONEFUZZ_NODE_DISPOSAL_STRATEGY', "scale_in")
+            strategy_str = os.getenv("ONEFUZZ_NODE_DISPOSAL_STRATEGY", "scale_in")
             if strategy_str == "aggressive_delete":
                 strategy = NodeDisaposalStrategy.aggressive_delete
             else:
@@ -674,17 +674,17 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             self.delete_nodes(list(nodes_to_delete), disposal_strategy)
         else:
             result = reimage_vmss_nodes(self.scaleset_id, machine_ids)
-        if isinstance(result, Error):
-            raise Exception(
-                "unable to reimage nodes: %s:%s - %s"
-                % (self.scaleset_id, machine_ids, result)
-            )
+            if isinstance(result, Error):
+                raise Exception(
+                    "unable to reimage nodes: %s:%s - %s"
+                    % (self.scaleset_id, machine_ids, result)
+                )
 
-        for node in nodes:
-            if node.machine_id in machine_ids:
-                node.delete()
-                if disposal_strategy == NodeDisaposalStrategy.scale_in:
-                    node.release_scale_in_protection()
+            for node in nodes:
+                if node.machine_id in machine_ids:
+                    node.delete()
+                    if disposal_strategy == NodeDisaposalStrategy.scale_in:
+                        node.release_scale_in_protection()
 
     def set_shutdown(self, now: bool) -> None:
         if now:
