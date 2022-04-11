@@ -111,8 +111,8 @@ namespace Tests
             Assert.Equal(tableEntity.GetDouble("the_float"), entity1.TheFloat);
             Assert.Equal(TestEnum.TheTwo, entity1.TheEnum);
             Assert.Equal(tableEntity.GetString("a__special__name"), entity1.Renamed);
-            Assert.Equal(null, tableEntity.GetString("test_null"));
-            Assert.Equal(null, entity1.TestNull);
+            Assert.NotNull(tableEntity.GetString("test_null"));
+            Assert.NotNull(entity1.TestNull);
 
             Assert.Equal("testName", entity1.TheObject.TheName);
             Assert.Equal(TestEnum.TheOne, entity1.TheObject.TheEnum);
