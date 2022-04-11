@@ -65,21 +65,16 @@ public class Program
         )
         .ConfigureServices((context, services) =>
             services
-            .AddScoped<ILogTracer>(s => new LogTracerFactory(GetLoggers()).CreateLogTracer(Guid.Empty, severityLevel: EnvironmentVariables.LogSeverityLevel()))
-            .AddScoped<INodeOperations, NodeOperations>()
-            .AddScoped<IEvents, Events>()
-            .AddScoped<IWebhookOperations, WebhookOperations>()
-            .AddScoped<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
-            .AddScoped<ITaskOperations, TaskOperations>()
-            .AddScoped<IQueue, Queue>()
-            .AddScoped<ICreds, Creds>()
-            .AddScoped<IStorage, Storage>()
-            .AddScoped<IProxyOperations, ProxyOperations>()
-            .AddScoped<IConfigOperations, ConfigOperations>()
-
-        //TODO: move out expensive resources into separate class, and add those as Singleton
-        // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
-
+            .AddSingleton<ILogTracerFactory>(_ => new LogTracerFactory(GetLoggers()))
+            .AddSingleton<IStorageProvider>(_ => new StorageProvider(EnvironmentVariables.OneFuzz.FuncStorage ?? throw new InvalidOperationException("Missing account id")))
+            .AddSingleton<INodeOperations, NodeOperations>()
+            .AddSingleton<IEvents, Events>()
+            .AddSingleton<IWebhookOperations, WebhookOperations>()
+            .AddSingleton<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
+            .AddSingleton<IQueue, Queue>()
+            .AddSingleton<ICreds>(_ => new Creds())
+            .AddSingleton<IStorage, Storage>()
+            .AddSingleton<IProxyOperations, ProxyOperations>()
         )
         .Build();
 

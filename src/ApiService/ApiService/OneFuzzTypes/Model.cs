@@ -1,10 +1,6 @@
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
-
-using Container = System.String;
-using Region = System.String;
 using PoolName = System.String;
 using Endpoint = System.String;
 using GroupId = System.Guid;
@@ -21,6 +17,12 @@ namespace Microsoft.OneFuzz.Service;
 /// the "partion key" and "row key" are identified by the [PartitionKey] and [RowKey] attributes
 /// Guids are mapped to string in the db
 
+public record Authentication
+(
+    string Password,
+    string PublicKey,
+    string PrivateKey
+);
 
 public record Authentication
 (
@@ -92,7 +94,7 @@ public enum NodeState
 
 public record ProxyHeartbeat
 (
-    Region Region,
+    string Region,
     Guid ProxyId,
     List<ProxyForward> Forwards,
     DateTimeOffset TimeStamp
@@ -116,7 +118,7 @@ public partial record Node
 
 public partial record ProxyForward
 (
-    [PartitionKey] Region Region,
+    [PartitionKey] string Region,
     [RowKey] int DstPort,
     int SrcPort,
     string DstIp
@@ -126,7 +128,7 @@ public partial record ProxyConfig
 (
     Uri Url,
     string Notification,
-    Region Region,
+    string Region,
     Guid? ProxyId,
     List<ProxyForward> Forwards,
     string InstanceTelemetryKey,
@@ -136,7 +138,7 @@ public partial record ProxyConfig
 
 public partial record Proxy
 (
-    [PartitionKey] Region Region,
+    [PartitionKey] string Region,
     [RowKey] Guid ProxyId,
     DateTimeOffset? CreatedTimestamp,
     VmState State,

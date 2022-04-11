@@ -2,6 +2,7 @@ using ApiService.OneFuzzLib.Orm;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -11,12 +12,12 @@ public interface IProxyOperations : IOrm<Proxy>
 }
 public class ProxyOperations : Orm<Proxy>, IProxyOperations
 {
-    private readonly ILogTracer _log;
+    private readonly ILogger _logger;
 
-    public ProxyOperations(ILogTracer log, IStorage storage)
+    public ProxyOperations(ILoggerFactory loggerFactory, IStorage storage)
         : base(storage)
     {
-        _log = log;
+        _logger = loggerFactory.CreateLogger<QueueProxyHearbeat>();
     }
 
     public async Task<Proxy?> GetByProxyId(Guid proxyId)
