@@ -33,7 +33,7 @@ public class Storage : IStorage
     public Storage(ILoggerFactory loggerFactory, ICreds creds)
     {
         _creds = creds;
-        _logger = _logger = loggerFactory.CreateLogger<Storage>(); ;
+        _logger = loggerFactory.CreateLogger<Storage>(); ;
     }
 
     // TODO: @cached
