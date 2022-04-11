@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 namespace Microsoft.OneFuzz.Service;
 public interface IQueue
 {
-    Tasks.Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
-    Tasks.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout);
+    Async.Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
+    Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout);
 }
 
 
@@ -26,7 +26,7 @@ public class Queue : IQueue
     }
 
 
-    public async Tasks.Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null)
+    public async Async.Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null)
     {
         var queue = GetQueue(name, storageType);
         if (queue != null)

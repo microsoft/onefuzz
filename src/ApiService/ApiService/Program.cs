@@ -1,5 +1,5 @@
 // to avoid collision with Task in model.cs
-global using Tasks = System.Threading.Tasks;
+global using Async = System.Threading.Tasks;
 
 using System;
 using System.Collections.Generic;

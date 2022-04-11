@@ -20,9 +20,9 @@ namespace Microsoft.OneFuzz.Service
 
     public interface IEvents
     {
-        public Tasks.Task SendEvent(BaseEvent anEvent);
+        public Async.Task SendEvent(BaseEvent anEvent);
 
-        public Tasks.Task QueueSignalrEvent(EventMessage message);
+        public Async.Task QueueSignalrEvent(EventMessage message);
     }
 
     public class Events : IEvents
@@ -38,14 +38,14 @@ namespace Microsoft.OneFuzz.Service
             _webhook = webhook;
         }
 
-        public async Tasks.Task QueueSignalrEvent(EventMessage eventMessage)
+        public async Async.Task QueueSignalrEvent(EventMessage eventMessage)
         {
             var message = new SignalREvent("events", new List<EventMessage>() { eventMessage });
             var encodedMessage = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
             await _queue.SendMessage("signalr-events", encodedMessage, StorageType.Config);
         }
 
-        public async Tasks.Task SendEvent(BaseEvent anEvent)
+        public async Async.Task SendEvent(BaseEvent anEvent)
         {
             var eventType = anEvent.GetEventType();
 

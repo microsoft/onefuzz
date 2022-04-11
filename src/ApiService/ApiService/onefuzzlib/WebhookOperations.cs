@@ -29,7 +29,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     }
 
 
-    public async Tasks.Task QueueWebhook(WebhookMessageLog webhookLog)
+    public async Async.Task QueueWebhook(WebhookMessageLog webhookLog)
     {
         var obj = new WebhookMessageQueueObj(webhookLog.WebhookId, webhookLog.EventId);
 
@@ -61,7 +61,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
 
 public interface IWebhookOperations
 {
-    Tasks.Task SendEvent(EventMessage eventMessage);
+    Async.Task SendEvent(EventMessage eventMessage);
 }
 
 public class WebhookOperations : Orm<Webhook>, IWebhookOperations
@@ -73,7 +73,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
         _webhookMessageLogOperations = webhookMessageLogOperations;
     }
 
-    async public Tasks.Task SendEvent(EventMessage eventMessage)
+    async public Async.Task SendEvent(EventMessage eventMessage)
     {
         await foreach (var webhook in GetWebhooksCached())
         {
@@ -85,7 +85,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
         }
     }
 
-    async private Tasks.Task AddEvent(Webhook webhook, EventMessage eventMessage)
+    async private Async.Task AddEvent(Webhook webhook, EventMessage eventMessage)
     {
         var message = new WebhookMessageLog(
              EventId: eventMessage.EventId,

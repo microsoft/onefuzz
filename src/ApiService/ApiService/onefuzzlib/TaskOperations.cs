@@ -6,7 +6,7 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface ITaskOperations : IOrm<Task>
 {
-    Tasks.Task<Task?> GetByTaskId(Guid taskId);
+    Async.Task<Task?> GetByTaskId(Guid taskId);
 }
 
 public class TaskOperations : Orm<Task>, ITaskOperations
@@ -18,7 +18,7 @@ public class TaskOperations : Orm<Task>, ITaskOperations
 
     }
 
-    public async Tasks.Task<Task?> GetByTaskId(Guid taskId)
+    public async Async.Task<Task?> GetByTaskId(Guid taskId)
     {
         var data = QueryAsync(filter: $"RowKey eq '{taskId}'");
 

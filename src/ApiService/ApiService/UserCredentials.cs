@@ -54,7 +54,7 @@ public class UserCredentials
 
     static Task<OneFuzzResult<string[]>> GetAllowedTenants()
     {
-        return Tasks.Task.FromResult(OneFuzzResult<string[]>.Ok(Array.Empty<string>()));
+        return Async.Task.FromResult(OneFuzzResult<string[]>.Ok(Array.Empty<string>()));
     }
 
     /*

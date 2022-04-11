@@ -22,7 +22,7 @@ public class QueueNodeHearbeat
     }
 
     [Function("QueueNodeHearbeat")]
-    public async Tasks.Task Run([QueueTrigger("myqueue-items", Connection = "AzureWebJobsStorage")] string msg)
+    public async Async.Task Run([QueueTrigger("myqueue-items", Connection = "AzureWebJobsStorage")] string msg)
     {
         _logger.LogInformation($"heartbeat: {msg}");
 
