@@ -26,6 +26,16 @@
     INVALID_CONFIGURATION = 473,
 }
 
+public enum VmState
+{
+    Init,
+    ExtensionsLaunched,
+    ExtensionsFailed,
+    VmAllocationFailed,
+    Running,
+    Stopping,
+    Stopped
+}
 
 public enum WebhookMessageState
 {
