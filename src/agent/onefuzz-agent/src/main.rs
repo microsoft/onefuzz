@@ -44,6 +44,12 @@ fn main() -> Result<()> {
 }
 
 async fn run(args: ArgMatches<'static>) -> Result<()> {
+    // It'd be best to initialize these environment vars in the same abstraction that
+    // pulls in user-provided task vars that set the environment, e.g. `target_env`.
+    // For now, just ensure that sanitizer environment vars will be inherited by child
+    // processes of the task worker (still allowing user overrides).
+    set_sanitizer_env_vars()?;
+
     match args.subcommand() {
         (LICENSE_CMD, Some(_)) => licenses(),
         (LOCAL_CMD, Some(sub)) => local::cmd::run(sub.to_owned()).await,
@@ -56,5 +62,15 @@ async fn run(args: ArgMatches<'static>) -> Result<()> {
 
 fn licenses() -> Result<()> {
     stdout().write_all(include_bytes!("../../data/licenses.json"))?;
+    Ok(())
+}
+
+fn set_sanitizer_env_vars() -> Result<()> {
+    let sanitizer_env_vars = onefuzz::sanitizer::default_sanitizer_env_vars()?;
+
+    for (k, v) in sanitizer_env_vars {
+        std::env::set_var(k, v);
+    }
+
     Ok(())
 }
