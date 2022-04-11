@@ -5,6 +5,7 @@
 
 import datetime
 import logging
+import os 
 from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
@@ -437,8 +438,13 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         # Perform operations until they fail due to scaleset getting locked
         try:
-            self.reimage_nodes(to_reimage, NodeDisaposalStrategy.aggressive_delete)
-            self.delete_nodes(to_delete, NodeDisaposalStrategy.aggressive_delete)
+            strategy_str = os.getenv('ONEFUZZ_NODE_DISPOSAL_STRATEGY', "scale_in")
+            if strategy_str == "aggressive_delete":
+                strategy = NodeDisaposalStrategy.aggressive_delete
+            else:
+                strategy = NodeDisaposalStrategy.scale_in
+            self.reimage_nodes(to_reimage, strategy)
+            self.delete_nodes(to_delete, strategy)
         except UnableToUpdate:
             logging.info(
                 SCALESET_LOG_PREFIX
