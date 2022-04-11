@@ -439,8 +439,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         # Perform operations until they fail due to scaleset getting locked
         try:
             strategy_str = os.getenv("ONEFUZZ_NODE_DISPOSAL_STRATEGY", "scale_in")
-            if strategy_str == "aggressive_delete":
-                strategy = NodeDisaposalStrategy.aggressive_delete
+            if strategy_str == "decomission":
+                strategy = NodeDisaposalStrategy.decomission
             else:
                 strategy = NodeDisaposalStrategy.scale_in
             self.reimage_nodes(to_reimage, strategy)
@@ -604,17 +604,23 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             else:
                 machine_ids.add(node.machine_id)
 
-        logging.info(
-            SCALESET_LOG_PREFIX + "deleting nodes scaleset_id:%s machine_id:%s",
-            self.scaleset_id,
-            machine_ids,
-        )
-        delete_vmss_nodes(self.scaleset_id, machine_ids)
-        for node in nodes:
-            if node.machine_id in machine_ids:
-                node.delete()
-                if disposal_strategy == NodeDisaposalStrategy.scale_in:
+        if disposal_strategy == NodeDisaposalStrategy.decomission:
+            logging.info(SCALESET_LOG_PREFIX + "decomissioning nodes")
+            for node in nodes:
+                if node.machine_id in machine_ids:
                     node.release_scale_in_protection()
+        else:
+            logging.info(
+                SCALESET_LOG_PREFIX + "deleting nodes scaleset_id:%s machine_id:%s",
+                self.scaleset_id,
+                machine_ids,
+            )
+            delete_vmss_nodes(self.scaleset_id, machine_ids)
+            for node in nodes:
+                if node.machine_id in machine_ids:
+                    node.delete()
+                    if disposal_strategy == NodeDisaposalStrategy.scale_in:
+                        node.release_scale_in_protection()
 
     def reimage_nodes(
         self, nodes: List[Node], disposal_strategy: NodeDisaposalStrategy
@@ -665,13 +671,12 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             )
             return
 
-        if disposal_strategy == NodeDisaposalStrategy.aggressive_delete:
+        if disposal_strategy == NodeDisaposalStrategy.decomission:
             logging.info("Using aggressive delete strategy")
-            nodes_to_delete = []
+            logging.info(SCALESET_LOG_PREFIX + "decomissioning nodes")
             for node in nodes:
                 if node.machine_id in machine_ids:
-                    nodes_to_delete.append(node)
-            self.delete_nodes(list(nodes_to_delete), disposal_strategy)
+                    node.release_scale_in_protection()
         else:
             result = reimage_vmss_nodes(self.scaleset_id, machine_ids)
             if isinstance(result, Error):
