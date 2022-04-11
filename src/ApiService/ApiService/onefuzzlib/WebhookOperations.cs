@@ -1,4 +1,5 @@
 ﻿using ApiService.OneFuzzLib.Orm;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service;
 using System;
 using System.Collections.Generic;
@@ -21,11 +22,11 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         );
 
     private readonly IQueue _queue;
-    private readonly ILogTracer _log;
-    public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILogTracer log) : base(storage)
+    private readonly ILogger _logger;
+    public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILoggerFactory loggerFactory) : base(storage)
     {
         _queue = queue;
-        _log = log;
+        _logger = loggerFactory.CreateLogger<WebhookMessageLogOperations>(); ;
     }
 
 
@@ -43,7 +44,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
 
         if (visibilityTimeout == null)
         {
-            _log.Error($"invalid WebhookMessage queue state, not queuing. {webhookLog.WebhookId}:{webhookLog.EventId} - {webhookLog.State}");
+            _logger.LogError($"invalid WebhookMessage queue state, not queuing. {webhookLog.WebhookId}:{webhookLog.EventId} - {webhookLog.State}");
 
         }
         else
