@@ -98,7 +98,7 @@ namespace Tests
                 { "the_enum", "the_two"},
                 { "the_flag", "flag_one,flag_two"},
                 { "a__special__name", "renamed"},
-                { "the_object", "{\"the_name\": \"testName\", \"the_enum\": \"the_one\", \"the_flag\": \"flag_one,flag_two\"}"}
+                { "the_object", "{\"the_name\": \"testName\", \"the_enum\": \"the_one\", \"the_flag\": \"flag_one,flag_two\"}"},
                 { "test_null", null},
             };
 
