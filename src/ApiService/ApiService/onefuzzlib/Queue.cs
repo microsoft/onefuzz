@@ -16,12 +16,12 @@ public interface IQueue
 public class Queue : IQueue
 {
     IStorage _storage;
-    ILogTracer _log;
+    ILogTracerFactory _loggerFactory;
 
-    public Queue(IStorage storage, ILogTracer log)
+    public Queue(IStorage storage, ILogTracerFactory loggerFactory)
     {
         _storage = storage;
-        _log = log;
+        _loggerFactory = loggerFactory;
     }
 
 

@@ -8,14 +8,14 @@ namespace Microsoft.OneFuzz.Service;
 
 public class QueueNodeHearbeat
 {
-    private readonly ILogTracer _log;
+    private readonly ILogTracerFactory _loggerFactory;
 
     private readonly IEvents _events;
     private readonly INodeOperations _nodes;
 
-    public QueueNodeHearbeat(ILogTracer log, INodeOperations nodes, IEvents events)
+    public QueueNodeHearbeat(ILogTracerFactory loggerFactory, INodeOperations nodes, IEvents events)
     {
-        _log = log;
+        _loggerFactory = loggerFactory;
         _nodes = nodes;
         _events = events;
     }
@@ -23,7 +23,8 @@ public class QueueNodeHearbeat
     [Function("QueueNodeHearbeat")]
     public async Async.Task Run([QueueTrigger("myqueue-items", Connection = "AzureWebJobsStorage")] string msg)
     {
-        _log.Info($"heartbeat: {msg}");
+        var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
+        log.Info($"heartbeat: {msg}");
 
         var hb = JsonSerializer.Deserialize<NodeHeartbeatEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 

@@ -20,16 +20,17 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         );
 
     private readonly IQueue _queue;
-    private readonly ILogTracer _log;
-    public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILogTracer log) : base(storage)
+    private readonly ILogTracerFactory _loggerFactory;
+    public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILogTracerFactory loggerFactory) : base(storage)
     {
         _queue = queue;
-        _log = log;
+        _loggerFactory = loggerFactory;
     }
 
 
     public async Async.Task QueueWebhook(WebhookMessageLog webhookLog)
     {
+        var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
         var obj = new WebhookMessageQueueObj(webhookLog.WebhookId, webhookLog.EventId);
 
         TimeSpan? visibilityTimeout = webhookLog.State switch
@@ -41,12 +42,9 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
 
         if (visibilityTimeout == null)
         {
-            _log.WithTags(
-                    new[] {
-                        ("WebhookId", webhookLog.WebhookId.ToString()),
-                        ("EventId", webhookLog.EventId.ToString()) }
-                    ).
-                Error($"invalid WebhookMessage queue state, not queuing. {webhookLog.WebhookId}:{webhookLog.EventId} - {webhookLog.State}");
+            log.Tags["WebhookId"] = webhookLog.WebhookId.ToString();
+            log.Tags["EventId"] = webhookLog.EventId.ToString();
+            log.Error($"invalid WebhookMessage queue state, not queuing. {webhookLog.WebhookId}:{webhookLog.EventId} - {webhookLog.State}");
         }
         else
         {

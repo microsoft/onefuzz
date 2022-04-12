@@ -18,7 +18,7 @@ public interface IStorage
 {
     public ArmClient GetMgmtClient();
 
-    public IEnumerable<string> CorpusAccounts();
+    public IEnumerable<string> CorpusAccounts(ILogTracer log);
     string GetPrimaryAccount(StorageType storageType);
     public (string?, string?) GetStorageAccountNameAndKey(string accountId);
 }
@@ -26,14 +26,10 @@ public interface IStorage
 public class Storage : IStorage
 {
     private ICreds _creds;
-    private ArmClient _armClient;
-    private ILogTracer _log;
 
-    public Storage(ICreds creds, ILogTracer log)
+    public Storage(ICreds creds)
     {
         _creds = creds;
-        _armClient = new ArmClient(credential: _creds.GetIdentity(), defaultSubscriptionId: _creds.GetSubcription());
-        _log = log;
     }
 
     public static string GetFuncStorage()
@@ -54,7 +50,7 @@ public class Storage : IStorage
     }
 
     // TODO: @cached
-    public IEnumerable<string> CorpusAccounts()
+    public IEnumerable<string> CorpusAccounts(ILogTracer log)
     {
         var skip = GetFuncStorage();
         var results = new List<string> { GetFuzzStorage() };
@@ -91,7 +87,7 @@ public class Storage : IStorage
             results.Add(account.Id!);
         }
 
-        _log.Info($"corpus accounts: {JsonSerializer.Serialize(results)}");
+        log.Info($"corpus accounts: {JsonSerializer.Serialize(results)}");
         return results;
     }
 
