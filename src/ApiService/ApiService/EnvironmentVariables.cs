@@ -7,38 +7,49 @@ public enum LogDestination
     AppInsights,
 }
 
-public static class EnvironmentVariables {
+public static class EnvironmentVariables
+{
 
-    static EnvironmentVariables() { 
+    static EnvironmentVariables()
+    {
+#if DEBUG
+        LogDestinations = new LogDestination[] { LogDestination.AppInsights, LogDestination.Console };
+#else
         LogDestinations = new LogDestination[] { LogDestination.AppInsights };
+#endif
     }
 
     //TODO: Add environment variable to control where to write logs to
     public static LogDestination[] LogDestinations { get; set; }
 
-    public static class AppInsights {
+    public static class AppInsights
+    {
         public static string? AppId { get => Environment.GetEnvironmentVariable("APPINSIGHTS_APPID"); }
         public static string? InstrumentationKey { get => Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATIONKEY"); }
     }
 
-    public static class AzureSignalR {
+    public static class AzureSignalR
+    {
         public static string? ConnectionString { get => Environment.GetEnvironmentVariable("AzureSignalRConnectionString"); }
         public static string? ServiceTransportType { get => Environment.GetEnvironmentVariable("AzureSignalRServiceTransportType"); }
     }
 
-    public static class AzureWebJob {
+    public static class AzureWebJob
+    {
         public static string? DisableHomePage { get => Environment.GetEnvironmentVariable("AzureWebJobsDisableHomepage"); }
         public static string? Storage { get => Environment.GetEnvironmentVariable("AzureWebJobsStorage"); }
     }
 
-    public static class DiagnosticsAzureBlob {
+    public static class DiagnosticsAzureBlob
+    {
         public static string? ContainerSasUrl { get => Environment.GetEnvironmentVariable("DIAGNOSTICS_AZUREBLOBCONTAINERSASURL"); }
         public static string? RetentionDays { get => Environment.GetEnvironmentVariable("DIAGNOSTICS_AZUREBLOBRETENTIONINDAYS"); }
     }
 
     public static string? MultiTenantDomain { get => Environment.GetEnvironmentVariable("MULTI_TENANT_DOMAIN"); }
 
-    public static class OneFuzz {
+    public static class OneFuzz
+    {
         public static string? DataStorage { get => Environment.GetEnvironmentVariable("ONEFUZZ_DATA_STORAGE"); }
         public static string? FuncStorage { get => Environment.GetEnvironmentVariable("ONEFUZZ_FUNC_STORAGE"); }
         public static string? Instance { get => Environment.GetEnvironmentVariable("ONEFUZZ_INSTANCE"); }

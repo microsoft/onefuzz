@@ -1,20 +1,18 @@
 ﻿using System;
 using System.Linq;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using Azure.ResourceManager.Compute.Models;
-using Azure.ResourceManager.Network.Models;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Graph;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.OneFuzz.Service;
 
-public class UserCredentials {
+public class UserCredentials
+{
 
 
-    public static string? GetBearerToken(HttpRequestData req) {
+    public static string? GetBearerToken(HttpRequestData req)
+    {
         var authHeader = req.Headers.GetValues("Authorization");
         if (authHeader.IsNullOrEmpty())
         {
@@ -31,7 +29,8 @@ public class UserCredentials {
         }
     }
 
-    public static string? GetAuthToken(HttpRequestData req) {
+    public static string? GetAuthToken(HttpRequestData req)
+    {
         var token = GetBearerToken(req);
         if (token is not null)
         {
@@ -44,14 +43,16 @@ public class UserCredentials {
             {
                 return null;
             }
-            else {
+            else
+            {
                 return tokenHeader.First();
             }
         }
     }
 
 
-    static Task<OneFuzzResult<string[]>> GetAllowedTenants() {
+    static Task<OneFuzzResult<string[]>> GetAllowedTenants()
+    {
         return Task.FromResult(OneFuzzResult<string[]>.Ok(Array.Empty<string>()));
     }
 
@@ -68,7 +69,8 @@ public class UserCredentials {
     */
 
 
-    static async Task<OneFuzzResult<UserInfo>> ParseJwtToken(LogTracer log, HttpRequestData req) {
+    static async Task<OneFuzzResult<UserInfo>> ParseJwtToken(LogTracer log, HttpRequestData req)
+    {
         var authToken = GetAuthToken(req);
         if (authToken is null)
         {
@@ -107,6 +109,7 @@ public class UserCredentials {
             }
             else
             {
+                log.Error("Failed to get allowed tenants");
                 return OneFuzzResult<UserInfo>.Error(allowedTenants.ErrorV);
             }
         }

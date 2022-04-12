@@ -1,6 +1,5 @@
-﻿using Microsoft.OneFuzz.Service;
-
-public enum ErrorCode {
+﻿public enum ErrorCode
+{
     INVALID_REQUEST = 450,
     INVALID_PERMISSION = 451,
     MISSING_EULA_AGREEMENT = 452,
@@ -25,4 +24,23 @@ public enum ErrorCode {
     UNABLE_TO_UPDATE = 471,
     PROXY_FAILED = 472,
     INVALID_CONFIGURATION = 473,
+}
+
+public enum VmState
+{
+    Init,
+    ExtensionsLaunched,
+    ExtensionsFailed,
+    VmAllocationFailed,
+    Running,
+    Stopping,
+    Stopped
+}
+
+public enum WebhookMessageState
+{
+    Queued,
+    Retrying,
+    Succeeded,
+    Failed
 }

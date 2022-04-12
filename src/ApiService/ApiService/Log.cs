@@ -8,44 +8,52 @@ using System.Diagnostics;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface ILog {
+public interface ILog
+{
     void Log(Guid correlationId, String message, SeverityLevel level, IDictionary<string, string> tags, string? caller);
     void LogEvent(Guid correlationId, String evt, IDictionary<string, string> tags, IDictionary<string, double>? metrics, string? caller);
     void LogException(Guid correlationId, Exception ex, IDictionary<string, string> tags, IDictionary<string, double>? metrics, string? caller);
     void Flush();
 }
 
-class AppInsights : ILog {
+class AppInsights : ILog
+{
     private TelemetryClient telemetryClient =
             new TelemetryClient(
                 new TelemetryConfiguration(EnvironmentVariables.AppInsights.InstrumentationKey));
 
-    public void Log(Guid correlationId, String message, SeverityLevel level, IDictionary<string, string> tags, string? caller) {
-        tags.Add("Correlation ID", correlationId.ToString());
-        if (caller is not null) tags.Add("CalledBy", caller);
+    public void Log(Guid correlationId, String message, SeverityLevel level, IDictionary<string, string> tags, string? caller)
+    {
+        tags["Correlation ID"] = correlationId.ToString();
+        if (caller is not null) tags["CalledBy"] = caller;
         telemetryClient.TrackTrace(message, level, tags);
     }
-    public void LogEvent(Guid correlationId, String evt, IDictionary<string, string> tags, IDictionary<string, double>? metrics, string? caller) {
-        tags.Add("Correlation ID", correlationId.ToString());
-        if (caller is not null) tags.Add("CalledBy", caller);
+    public void LogEvent(Guid correlationId, String evt, IDictionary<string, string> tags, IDictionary<string, double>? metrics, string? caller)
+    {
+        tags["Correlation ID"] = correlationId.ToString();
+        if (caller is not null) tags["CalledBy"] = caller;
         telemetryClient.TrackEvent(evt, properties: tags, metrics: metrics);
     }
-    public void LogException(Guid correlationId, Exception ex, IDictionary<string, string> tags, IDictionary<string, double>? metrics, string? caller) {
-        tags.Add("Correlation ID", correlationId.ToString());
+    public void LogException(Guid correlationId, Exception ex, IDictionary<string, string> tags, IDictionary<string, double>? metrics, string? caller)
+    {
+        tags["Correlation ID"] = correlationId.ToString();
 
-        if (caller is not null) tags.Add("CalledBy", caller);
+        if (caller is not null) tags["CalledBy"] = caller;
         telemetryClient.TrackException(ex, tags, metrics);
     }
 
-    public void Flush() {
+    public void Flush()
+    {
         telemetryClient.Flush();
     }
 }
 
 //TODO: Should we write errors and Exception to std err ? 
-class Console : ILog {
+class Console : ILog
+{
 
-    private string DictToString<T>(IDictionary<string, T>? d) {
+    private string DictToString<T>(IDictionary<string, T>? d)
+    {
         if (d is null)
         {
             return string.Empty;
@@ -56,118 +64,160 @@ class Console : ILog {
         }
     }
 
-    private void LogTags(Guid correlationId, string? caller, IDictionary<string, string> tags) {
+    private void LogTags(Guid correlationId, string? caller, IDictionary<string, string> tags)
+    {
         var ts = DictToString(tags);
         if (!string.IsNullOrEmpty(ts))
         {
-            System.Console.WriteLine("[{0}:{1}] Tags:{2}", correlationId, caller, ts);
+            System.Console.WriteLine($"[{correlationId}:{caller}] Tags:{ts}");
         }
     }
 
-    private void LogMetrics(Guid correlationId, string? caller, IDictionary<string, double>? metrics) {
+    private void LogMetrics(Guid correlationId, string? caller, IDictionary<string, double>? metrics)
+    {
         var ms = DictToString(metrics);
-        if (!string.IsNullOrEmpty(ms)) {
-            System.Console.Out.WriteLine("[{0}:{1}] Metrics:{2}", correlationId, caller, DictToString(metrics));
+        if (!string.IsNullOrEmpty(ms))
+        {
+            System.Console.Out.WriteLine($"[{correlationId}:{caller}] Metrics:{DictToString(metrics)}");
         }
     }
 
-    public void Log(Guid correlationId, String message, SeverityLevel level, IDictionary<string, string> tags, string? caller) {
-        System.Console.Out.WriteLine("[{0}:{1}][{2}] {3}", correlationId, caller, level, message);
+    public void Log(Guid correlationId, String message, SeverityLevel level, IDictionary<string, string> tags, string? caller)
+    {
+        System.Console.Out.WriteLine($"[{correlationId}:{caller}][{level}] {message}");
         LogTags(correlationId, caller, tags);
     }
 
-    public void LogEvent(Guid correlationId, String evt, IDictionary<string, string> tags, IDictionary<string, double>? metrics, string? caller) {
-        System.Console.Out.WriteLine("[{0}:{1}][Event] {2}", correlationId, caller, evt);
+    public void LogEvent(Guid correlationId, String evt, IDictionary<string, string> tags, IDictionary<string, double>? metrics, string? caller)
+    {
+        System.Console.Out.WriteLine($"[{correlationId}:{caller}][Event] {evt}");
         LogTags(correlationId, caller, tags);
         LogMetrics(correlationId, caller, metrics);
     }
-    public void LogException(Guid correlationId, Exception ex, IDictionary<string, string> tags, IDictionary<string, double>? metrics, string? caller) {
-        System.Console.Out.WriteLine("[{0}:{1}][Exception] {2}", correlationId, caller, ex);
+    public void LogException(Guid correlationId, Exception ex, IDictionary<string, string> tags, IDictionary<string, double>? metrics, string? caller)
+    {
+        System.Console.Out.WriteLine($"[{correlationId}:{caller}][Exception] {ex}");
         LogTags(correlationId, caller, tags);
         LogMetrics(correlationId, caller, metrics);
     }
-    public void Flush() {
+    public void Flush()
+    {
         System.Console.Out.Flush();
     }
 }
 
-public class LogTracer {
+public interface ILogTracer
+{
+    IDictionary<string, string> Tags { get; }
 
-    private List<ILog> loggers;
+    void Critical(string message);
+    void Error(string message);
+    void Event(string evt, IDictionary<string, double>? metrics);
+    void Exception(Exception ex, IDictionary<string, double>? metrics);
+    void ForceFlush();
+    void Info(string message);
+    void Warning(string message);
+}
 
-    private IDictionary<string, string> tags = new Dictionary<string, string>();
-    private Guid correlationId;
-
-    public LogTracer(Guid correlationId, List<ILog> loggers) {
-        this.correlationId = correlationId;
-        this.loggers = loggers;
+public class LogTracer : ILogTracer
+{
+    private string? GetCaller()
+    {
+        return new StackTrace()?.GetFrame(2)?.GetMethod()?.DeclaringType?.FullName;
     }
 
-    public IDictionary<string, string> Tags => tags;
+    private List<ILog> _loggers;
 
-    public void Info(string message) {
-        var caller = new StackTrace()?.GetFrame(1)?.GetMethod()?.Name;
-        foreach (var logger in loggers) {
-            logger.Log(correlationId, message, SeverityLevel.Information, Tags, caller);
+    public Guid CorrelationId { get; }
+    public IDictionary<string, string> Tags { get; }
+
+    public LogTracer(Guid correlationId, List<ILog> loggers)
+    {
+        CorrelationId = correlationId;
+        Tags = new Dictionary<string, string>();
+        _loggers = loggers;
+    }
+
+    public void Info(string message)
+    {
+        var caller = GetCaller();
+        foreach (var logger in _loggers)
+        {
+            logger.Log(CorrelationId, message, SeverityLevel.Information, Tags, caller);
         }
     }
 
-    public void Warning(string message) {
-        var caller = new StackTrace()?.GetFrame(1)?.GetMethod()?.Name;
-        foreach (var logger in loggers) {
-            logger.Log(correlationId, message, SeverityLevel.Warning, Tags, caller);
+    public void Warning(string message)
+    {
+        var caller = GetCaller();
+        foreach (var logger in _loggers)
+        {
+            logger.Log(CorrelationId, message, SeverityLevel.Warning, Tags, caller);
         }
     }
 
     public void Error(string message)
     {
-        var caller = new StackTrace()?.GetFrame(1)?.GetMethod()?.Name;
-        foreach (var logger in loggers)
+        var caller = GetCaller();
+        foreach (var logger in _loggers)
         {
-            logger.Log(correlationId, message, SeverityLevel.Error, Tags, caller);
+            logger.Log(CorrelationId, message, SeverityLevel.Error, Tags, caller);
         }
     }
 
     public void Critical(string message)
     {
-        var caller = new StackTrace()?.GetFrame(1)?.GetMethod()?.Name;
-        foreach (var logger in loggers)
+        var caller = GetCaller();
+        foreach (var logger in _loggers)
         {
-            logger.Log(correlationId, message, SeverityLevel.Critical, Tags, caller);
+            logger.Log(CorrelationId, message, SeverityLevel.Critical, Tags, caller);
         }
     }
 
-    public void Event(string evt, IDictionary<string, double>? metrics) {
-        var caller = new StackTrace()?.GetFrame(1)?.GetMethod()?.Name;
-        foreach (var logger in loggers) {
-            logger.LogEvent(correlationId, evt, Tags, metrics, caller);
+    public void Event(string evt, IDictionary<string, double>? metrics)
+    {
+        var caller = GetCaller();
+        foreach (var logger in _loggers)
+        {
+            logger.LogEvent(CorrelationId, evt, Tags, metrics, caller);
         }
     }
 
-    public void Exception(Exception ex, IDictionary<string, double>? metrics) {
-        var caller = new StackTrace()?.GetFrame(1)?.GetMethod()?.Name;
-        foreach (var logger in loggers) {
-            logger.LogException(correlationId, ex, Tags, metrics, caller);
+    public void Exception(Exception ex, IDictionary<string, double>? metrics)
+    {
+        var caller = GetCaller();
+        foreach (var logger in _loggers)
+        {
+            logger.LogException(CorrelationId, ex, Tags, metrics, caller);
         }
     }
 
-    public void ForceFlush() {
-        foreach (var logger in loggers) {
+    public void ForceFlush()
+    {
+        foreach (var logger in _loggers)
+        {
             logger.Flush();
         }
     }
 }
 
-public class LogTracerFactory {
+public interface ILogTracerFactory
+{
+    LogTracer MakeLogTracer(Guid correlationId);
+}
 
-    private List<ILog> loggers;
+public class LogTracerFactory : ILogTracerFactory
+{
+    private List<ILog> _loggers;
 
-    public LogTracerFactory(List<ILog> loggers) {
-        this.loggers = loggers;
+    public LogTracerFactory(List<ILog> loggers)
+    {
+        _loggers = loggers;
     }
 
-    public LogTracer MakeLogTracer(Guid correlationId) {
-        return new LogTracer(correlationId, this.loggers);
+    public LogTracer MakeLogTracer(Guid correlationId)
+    {
+        return new(correlationId, _loggers);
     }
 
 }

@@ -1,6 +1,7 @@
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Collections.Generic;
+using PoolName = System.String;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -14,6 +15,12 @@ namespace Microsoft.OneFuzz.Service;
 /// the "partion key" and "row key" are identified by the [PartitionKey] and [RowKey] attributes
 /// Guids are mapped to string in the db
 
+public record Authentication
+(
+    string Password,
+    string PublicKey,
+    string PrivateKey
+);
 
 [SkipRename]
 public enum HeartbeatType
@@ -60,7 +67,7 @@ public record NodeTasks
 public enum NodeState
 {
     Init,
-    free,
+    Free,
     SettingUp,
     Rebooting,
     Ready,
@@ -70,23 +77,94 @@ public enum NodeState
     Halt,
 }
 
+public record ProxyHeartbeat
+(
+    string Region,
+    Guid ProxyId,
+    List<ProxyForward> Forwards,
+    DateTimeOffset TimeStamp
+);
 
 public partial record Node
 (
     DateTimeOffset? InitializedAt,
-    [PartitionKey] string PoolName,
+    [PartitionKey] PoolName PoolName,
     Guid? PoolId,
     [RowKey] Guid MachineId,
     NodeState State,
     Guid? ScalesetId,
     DateTimeOffset Heartbeat,
-    Version Version,
+    string Version,
     bool ReimageRequested,
     bool DeleteRequested,
     bool DebugKeepNode
 ) : EntityBase();
 
 
-public record Error (ErrorCode Code, string[]? Errors = null);
+public partial record ProxyForward
+(
+    [PartitionKey] string Region,
+    [RowKey] int DstPort,
+    int SrcPort,
+    string DstIp
+) : EntityBase();
 
-public record UserInfo (Guid? ApplicationId, Guid? ObjectId, String? Upn);
+public partial record ProxyConfig
+(
+    Uri Url,
+    string Notification,
+    string Region,
+    Guid? ProxyId,
+    List<ProxyForward> Forwards,
+    string InstanceTelemetryKey,
+    string MicrosoftTelemetryKey
+
+);
+
+public partial record Proxy
+(
+    [PartitionKey] string Region,
+    [RowKey] Guid ProxyId,
+    DateTimeOffset? CreatedTimestamp,
+    VmState State,
+    Authentication Auth,
+    string? Ip,
+    Error? Error,
+    string Version,
+    ProxyHeartbeat? heartbeat
+) : EntityBase();
+
+public record Error(ErrorCode Code, string[]? Errors = null);
+
+public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
+
+
+public record EventMessage(
+    Guid EventId,
+    EventType EventType,
+    BaseEvent Event,
+    Guid InstanceId,
+    String InstanceName
+) : EntityBase();
+
+
+//record AnyHttpUrl(AnyUrl):
+//    allowed_schemes = {'http', 'https
+//
+
+
+
+
+
+//public record TaskConfig(
+//    Guid jobId,
+//    List<Guid> PrereqTasks,
+//    TaskDetails Task,
+//    TaskVm? vm,
+//    TaskPool pool: Optional[]
+//    containers: List[TaskContainers]
+//    tags: Dict[str, str]
+//    debug: Optional[List[TaskDebugFlag]]
+//    colocate: Optional[bool]
+//    ): EntityBase();
+
