@@ -5,7 +5,6 @@ using Azure.ResourceManager.Storage;
 using Azure.Core;
 using System.Text.Json;
 using System.Linq;
-using Microsoft.Extensions.Logging;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -19,45 +18,41 @@ public interface IStorage
 {
     public ArmClient GetMgmtClient();
 
-    public IEnumerable<string> CorpusAccounts();
+    public IEnumerable<string> CorpusAccounts(ILogTracer log);
     string GetPrimaryAccount(StorageType storageType);
     public (string?, string?) GetStorageAccountNameAndKey(string accountId);
 }
 
 public class Storage : IStorage
 {
-
     private ICreds _creds;
-    private readonly ILogger _logger;
+    private ArmClient _armClient;
 
-    public Storage(ILoggerFactory loggerFactory, ICreds creds)
+    public Storage(ICreds creds)
     {
         _creds = creds;
-        _logger = loggerFactory.CreateLogger<Storage>(); ;
+        _armClient = new ArmClient(credential: _creds.GetIdentity(), defaultSubscriptionId: _creds.GetSubcription());
     }
 
-    // TODO: @cached
     public static string GetFuncStorage()
     {
         return EnvironmentVariables.OneFuzz.FuncStorage
             ?? throw new Exception("Func storage env var is missing");
     }
 
-    // TODO: @cached
     public static string GetFuzzStorage()
     {
         return EnvironmentVariables.OneFuzz.DataStorage
             ?? throw new Exception("Fuzz storage env var is missing");
     }
 
-    // TODO: @cached
     public ArmClient GetMgmtClient()
     {
-        return new ArmClient(credential: _creds.GetIdentity(), defaultSubscriptionId: _creds.GetSubcription());
+        return _armClient;
     }
 
     // TODO: @cached
-    public IEnumerable<string> CorpusAccounts()
+    public IEnumerable<string> CorpusAccounts(ILogTracer log)
     {
         var skip = GetFuncStorage();
         var results = new List<string> { GetFuzzStorage() };
@@ -67,7 +62,7 @@ public class Storage : IStorage
 
         const string storageTypeTagKey = "storage_type";
 
-        var resourceGroup = client.GetResourceGroup(group);
+        var resourceGroup = client.GetResourceGroupResource(group);
         foreach (var account in resourceGroup.GetStorageAccounts())
         {
             if (account.Id == skip)
@@ -94,7 +89,7 @@ public class Storage : IStorage
             results.Add(account.Id!);
         }
 
-        _logger.LogInformation($"corpus accounts: {JsonSerializer.Serialize(results)}");
+        log.Info($"corpus accounts: {JsonSerializer.Serialize(results)}");
         return results;
     }
 
@@ -113,7 +108,7 @@ public class Storage : IStorage
     {
         var resourceId = new ResourceIdentifier(accountId);
         var armClient = GetMgmtClient();
-        var storageAccount = armClient.GetStorageAccount(resourceId);
+        var storageAccount = armClient.GetStorageAccountResource(resourceId);
         var key = storageAccount.GetKeys().Value.Keys.FirstOrDefault();
         return (resourceId.Name, key?.Value);
     }
