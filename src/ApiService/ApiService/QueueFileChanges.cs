@@ -14,14 +14,12 @@ public class QueueFileChanges
     const int MAX_DEQUEUE_COUNT = 5;
 
     private readonly ILogTracerFactory _loggerFactory;
-    private readonly IStorageProvider _storageProvider;
 
     private readonly IStorage _storage;
 
-    public QueueFileChanges(ILogTracerFactory loggerFactory, IStorageProvider storageProvider, IStorage storage)
+    public QueueFileChanges(ILogTracerFactory loggerFactory, IStorage storage)
     {
         _loggerFactory = loggerFactory;
-        _storageProvider = storageProvider;
         _storage = storage;
     }
 
