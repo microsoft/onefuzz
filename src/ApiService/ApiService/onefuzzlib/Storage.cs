@@ -18,21 +18,18 @@ public interface IStorage
 {
     public ArmClient GetMgmtClient();
 
-    public IEnumerable<string> CorpusAccounts();
+    public IEnumerable<string> CorpusAccounts(ILogTracer log);
     string GetPrimaryAccount(StorageType storageType);
     public (string?, string?) GetStorageAccountNameAndKey(string accountId);
 }
 
 public class Storage : IStorage
 {
-
     private ICreds _creds;
-    private readonly ILogTracerFactory _loggerFactory;
 
-    public Storage(ILogTracerFactory loggerFactory, ICreds creds)
+    public Storage(ICreds creds)
     {
         _creds = creds;
-        _loggerFactory = loggerFactory;
     }
 
     // TODO: @cached
@@ -56,9 +53,8 @@ public class Storage : IStorage
     }
 
     // TODO: @cached
-    public IEnumerable<string> CorpusAccounts()
+    public IEnumerable<string> CorpusAccounts(ILogTracer log)
     {
-        var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
         var skip = GetFuncStorage();
         var results = new List<string> { GetFuzzStorage() };
 

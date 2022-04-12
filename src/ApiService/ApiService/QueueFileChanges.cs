@@ -47,7 +47,7 @@ public class QueueFileChanges
 
         const string topic = "topic";
         if (!fileChangeEvent.ContainsKey(topic)
-            || !_storage.CorpusAccounts().Contains(fileChangeEvent[topic]))
+            || !_storage.CorpusAccounts(log).Contains(fileChangeEvent[topic]))
         {
             return Task.CompletedTask;
         }
