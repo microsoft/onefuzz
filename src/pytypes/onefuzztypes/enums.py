@@ -417,4 +417,4 @@ class UserFieldType(Enum):
 
 class NodeDisaposalStrategy(Enum):
     scale_in = "scale_in"
-    aggressive_delete = "aggressive_delete"
+    decomission = "decomission"

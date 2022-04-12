@@ -171,12 +171,12 @@ def create_auto_scale_profile(
                 metric_trigger=MetricTrigger(
                     metric_name="ApproximateMessageCount",
                     metric_resource_uri=queue_uri,
-                    # Check every 20 minutes
+                    # Check every 10 minutes
                     time_grain=timedelta(minutes=10),
                     # The average amount of messages there are in the pool queue
                     time_aggregation=TimeAggregationType.AVERAGE,
                     statistic=MetricStatisticType.SUM,
-                    # Over the past 20 minutes
+                    # Over the past 10 minutes
                     time_window=timedelta(minutes=10),
                     # When there's no messages in the pool queue
                     operator=ComparisonOperationType.EQUALS,
@@ -196,7 +196,7 @@ def create_auto_scale_profile(
 
 def default_auto_scale_profile(queue_uri: str, scaleset_size: int) -> AutoscaleProfile:
     return create_auto_scale_profile(
-        queue_uri, 1, scaleset_size, scaleset_size, 1, 10, 1, 15
+        queue_uri, 1, scaleset_size, scaleset_size, 1, 10, 1, 5
     )
 
 
