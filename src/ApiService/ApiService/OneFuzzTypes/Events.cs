@@ -243,7 +243,7 @@ namespace Microsoft.OneFuzz.Service
     //        ) : BaseEvent();
 
 
-    //    record EventInstanceConfigUpdated(
-    //        InstanceConfig Config
-    //        ) : BaseEvent();
+    record EventInstanceConfigUpdated(
+        InstanceConfig Config
+    ) : BaseEvent();
 }

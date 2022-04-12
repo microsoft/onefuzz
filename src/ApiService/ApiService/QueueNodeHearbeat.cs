@@ -30,16 +30,25 @@ public class QueueNodeHearbeat
 
         var node = await _nodes.GetByMachineId(hb.NodeId);
 
+        var log2 = log.AddTag("NodeId", hb.NodeId.ToString());
+
         if (node == null)
         {
-            log.Warning($"invalid node id: {hb.NodeId}");
+            log2.Warning($"invalid node id: {hb.NodeId}");
             return;
         }
 
         var newNode = node with { Heartbeat = DateTimeOffset.UtcNow };
 
-        await _nodes.Replace(newNode);
+        var r = await _nodes.Replace(newNode);
 
+        if (!r.IsOk)
+        {
+            var (status, reason) = r.ErrorV;
+            log2.Error($"Failed to replace heartbeat info due to [{status}] {reason}");
+        }
+
+        // TODO: do we still send event if we fail do update the table ?
         await _events.SendEvent(new EventNodeHeartbeat(node.MachineId, node.ScalesetId, node.PoolName));
     }
 }

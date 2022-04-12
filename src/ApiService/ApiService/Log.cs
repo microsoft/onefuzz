@@ -133,6 +133,7 @@ public interface ILogTracer
     void Info(string message);
     void Warning(string message);
 
+    ILogTracer AddTag(string k, string v);
     ILogTracer AddTags((string, string)[]? tags);
 }
 
@@ -174,6 +175,11 @@ public class LogTracer : ILogTracer
         CorrelationId = correlationId;
         Tags = tags;
         _loggers = loggers;
+    }
+
+    public ILogTracer AddTag(string k, string v)
+    {
+        return AddTags(new[] { (k, v) });
     }
 
     public ILogTracer AddTags((string, string)[]? tags)

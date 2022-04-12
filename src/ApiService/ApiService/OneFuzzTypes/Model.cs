@@ -1,12 +1,16 @@
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Collections.Generic;
-using PoolName = System.String;
-using Region = System.String;
+using System.Text.Json.Serialization;
+
 using Container = System.String;
+using Region = System.String;
+using PoolName = System.String;
+using Endpoint = System.String;
+using GroupId = System.Guid;
+using PrincipalId = System.Guid;
 
 namespace Microsoft.OneFuzz.Service;
-
 
 /// Convention for database entities:
 /// All entities are represented by immutable records
@@ -16,6 +20,7 @@ namespace Microsoft.OneFuzz.Service;
 /// It is possible to rename the column name by using the [property:JsonPropertyName("column_name")] attribute
 /// the "partion key" and "row key" are identified by the [PartitionKey] and [RowKey] attributes
 /// Guids are mapped to string in the db
+
 
 public record Authentication
 (
@@ -254,4 +259,101 @@ public record Task(
     List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
     List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
 
+public record AzureSecurityExtensionConfig();
+public record GenevaExtensionConfig();
+
+
+public record KeyvaultExtensionConfig(
+    string KeyVaultName,
+    string CertName,
+    string CertPath,
+    string ExtensionStore
+);
+
+public record AzureMonitorExtensionConfig(
+    string ConfigVersion,
+    string Moniker,
+    string Namespace,
+    [property: JsonPropertyName("monitoringGSEnvironment")] string MonitoringGSEnvironment,
+    [property: JsonPropertyName("monitoringGCSAccount")] string MonitoringGCSAccount,
+    [property: JsonPropertyName("monitoringGCSAuthId")] string MonitoringGCSAuthId,
+    [property: JsonPropertyName("monitoringGCSAuthIdType")] string MonitoringGCSAuthIdType
+);
+
+public record AzureVmExtensionConfig(
+    KeyvaultExtensionConfig? Keyvault,
+    AzureMonitorExtensionConfig AzureMonitor
+);
+
+public record NetworkConfig(
+    string AddressSpace,
+    string Subnet
+)
+{
+    public NetworkConfig() : this("10.0.0.0/8", "10.0.0.0/16") { }
+}
+
+public record NetworkSecurityGroupConfig(
+    string[] AllowedServiceTags,
+    string[] AllowedIps
+)
+{
+    public NetworkSecurityGroupConfig() : this(Array.Empty<string>(), Array.Empty<string>()) { }
+}
+
+public record ApiAccessRule(
+    string[] Methods,
+    Guid[] AllowedGroups
+);
+
+public record InstanceConfig
+(
+    [PartitionKey, RowKey] string InstanceName,
+    //# initial set of admins can only be set during deployment.
+    //# if admins are set, only admins can update instance configs.
+    Guid[]? Admins,
+    //# if set, only admins can manage pools or scalesets
+    bool AllowPoolManagement,
+    string[] AllowedAadTenants,
+    NetworkConfig NetworkConfig,
+    NetworkSecurityGroupConfig ProxyNsgConfig,
+    AzureVmExtensionConfig? Extensions,
+    string ProxyVmSku,
+    IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules,
+    IDictionary<PrincipalId, GroupId[]>? GroupMembership,
+
+    IDictionary<string, string>? VmTags,
+    IDictionary<string, string>? VmssTags
+) : EntityBase()
+{
+    public InstanceConfig(string instanceName) : this(
+        instanceName,
+        null,
+        true,
+        Array.Empty<string>(),
+        new NetworkConfig(),
+        new NetworkSecurityGroupConfig(),
+        null,
+        "Standard_B2s",
+        null,
+        null,
+        null,
+        null)
+    { }
+
+
+    /// <summary>
+    /// Check if instance config is valid
+    /// </summary>
+    /// <returns>true, [] if instance config is valid;
+    /// otherwise false, with a list of errors</returns>
+    public (bool, List<string>) CheckInstanceConfig()
+    {
+        List<string> errors = new();
+        if (AllowedAadTenants.Length == 0)
+        {
+            errors.Add("allowed_aad_tenants must not be empty");
+        }
+        return (errors.Count == 0, errors);
+    }
 }

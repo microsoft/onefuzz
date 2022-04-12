@@ -64,7 +64,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
 
 public interface IWebhookOperations
 {
-    Async.Task SendEvent(EventMessage eventMessage);
+    Task SendEvent(ILogTracer log, EventMessage eventMessage);
 }
 
 public class WebhookOperations : Orm<Webhook>, IWebhookOperations
@@ -76,7 +76,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
         _webhookMessageLogOperations = webhookMessageLogOperations;
     }
 
-    async public Async.Task SendEvent(EventMessage eventMessage)
+    async public Task SendEvent(ILogTracer log, EventMessage eventMessage)
     {
         await foreach (var webhook in GetWebhooksCached())
         {
@@ -84,11 +84,11 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
             {
                 continue;
             }
-            await AddEvent(webhook, eventMessage);
+            await AddEvent(log, webhook, eventMessage);
         }
     }
 
-    async private Async.Task AddEvent(Webhook webhook, EventMessage eventMessage)
+    async private Task AddEvent(ILogTracer log, Webhook webhook, EventMessage eventMessage)
     {
         var message = new WebhookMessageLog(
              EventId: eventMessage.EventId,
@@ -99,7 +99,12 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
              WebhookId: webhook.WebhookId
             );
 
-        await _webhookMessageLogOperations.Replace(message);
+        var r = await _webhookMessageLogOperations.Replace(message);
+        if (!r.IsOk)
+        {
+            var (status, reason) = r.ErrorV;
+            log.Error($"Failed to replace webhook message log due to [{status}] {reason}");
+        }
     }
 
 

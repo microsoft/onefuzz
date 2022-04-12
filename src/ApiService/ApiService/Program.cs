@@ -47,6 +47,7 @@ public class Program
             .AddSingleton<ICreds>(_ => new Creds())
             .AddSingleton<IStorage, Storage>()
             .AddSingleton<IProxyOperations, ProxyOperations>()
+            .AddSingleton<IConfigOperations, ConfigOperations>()
         )
         .Build();
 

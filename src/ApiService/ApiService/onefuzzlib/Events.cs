@@ -57,7 +57,7 @@ namespace Microsoft.OneFuzz.Service
                 "test" //todo
             );
             await QueueSignalrEvent(eventMessage);
-            await _webhook.SendEvent(eventMessage);
+            await _webhook.SendEvent(log, eventMessage);
             LogEvent(log, anEvent, eventType);
         }
 
