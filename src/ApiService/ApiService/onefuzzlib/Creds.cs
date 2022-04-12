@@ -25,7 +25,6 @@ public class Creds : ICreds
         return new DefaultAzureCredential();
     }
 
-    // TODO: @cached
     public string GetSubcription()
     {
         var storageResourceId = EnvironmentVariables.OneFuzz.DataStorage
@@ -34,7 +33,6 @@ public class Creds : ICreds
         return storageResource.SubscriptionId!;
     }
 
-    // TODO: @cached
     public string GetBaseResourceGroup()
     {
         var storageResourceId = EnvironmentVariables.OneFuzz.DataStorage
