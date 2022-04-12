@@ -24,22 +24,37 @@ class AppInsights : ILog
 
     public void Log(Guid correlationId, String message, SeverityLevel level, IReadOnlyDictionary<string, string> tags, string? caller)
     {
-        tags["Correlation ID"] = correlationId.ToString();
-        if (caller is not null) tags["CalledBy"] = caller;
-        telemetryClient.TrackTrace(message, level, tags);
+        Dictionary<string, string> copyTags = new(tags);
+        copyTags["Correlation ID"] = correlationId.ToString();
+        if (caller is not null) copyTags["CalledBy"] = caller;
+        telemetryClient.TrackTrace(message, level, copyTags);
     }
     public void LogEvent(Guid correlationId, String evt, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller)
     {
-        tags["Correlation ID"] = correlationId.ToString();
-        if (caller is not null) tags["CalledBy"] = caller;
-        telemetryClient.TrackEvent(evt, properties: tags, metrics: metrics);
-    }
-    public void LogException(Guid correlationId, Exception ex, IDictionary<string, string> tags, IDictionary<string, double>? metrics, string? caller)
-    {
-        tags["Correlation ID"] = correlationId.ToString();
+        Dictionary<string, string> copyTags = new(tags);
+        copyTags["Correlation ID"] = correlationId.ToString();
+        if (caller is not null) copyTags["CalledBy"] = caller;
 
-        if (caller is not null) tags["CalledBy"] = caller;
-        telemetryClient.TrackException(ex, tags, metrics);
+        Dictionary<string, double>? copyMetrics = null;
+        if (metrics is not null)
+        {
+            copyMetrics = new(metrics);
+        }
+
+        telemetryClient.TrackEvent(evt, properties: copyTags, metrics: copyMetrics);
+    }
+    public void LogException(Guid correlationId, Exception ex, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller)
+    {
+        Dictionary<string, string> copyTags = new(tags);
+        copyTags["Correlation ID"] = correlationId.ToString();
+        if (caller is not null) copyTags["CalledBy"] = caller;
+
+        Dictionary<string, double>? copyMetrics = null;
+        if (metrics is not null)
+        {
+            copyMetrics = new(metrics);
+        }
+        telemetryClient.TrackException(ex, copyTags, copyMetrics);
     }
 
     public void Flush()
@@ -69,7 +84,7 @@ class Console : ILog
         var ts = DictToString(tags);
         if (!string.IsNullOrEmpty(ts))
         {
-            System.Console.WriteLine($"[{correlationId}:{caller}] Tags:{ts}");
+            System.Console.WriteLine($"[{correlationId}] Tags:{ts}");
         }
     }
 
@@ -78,27 +93,27 @@ class Console : ILog
         var ms = DictToString(metrics);
         if (!string.IsNullOrEmpty(ms))
         {
-            System.Console.Out.WriteLine($"[{correlationId}:{caller}] Metrics:{DictToString(metrics)}");
+            System.Console.Out.WriteLine($"[{correlationId}] Metrics:{DictToString(metrics)}");
         }
     }
 
     public void Log(Guid correlationId, String message, SeverityLevel level, IReadOnlyDictionary<string, string> tags, string? caller)
     {
-        System.Console.Out.WriteLine($"[{correlationId}:{caller}][{level}] {message}");
-        LogTags(correlationId, caller, tags);
+        System.Console.Out.WriteLine($"[{correlationId}][{level}] {message}");
+        LogTags(correlationId, tags);
     }
 
     public void LogEvent(Guid correlationId, String evt, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller)
     {
-        System.Console.Out.WriteLine($"[{correlationId}:{caller}][Event] {evt}");
-        LogTags(correlationId, caller, tags);
-        LogMetrics(correlationId, caller, metrics);
+        System.Console.Out.WriteLine($"[{correlationId}][Event] {evt}");
+        LogTags(correlationId, tags);
+        LogMetrics(correlationId, metrics);
     }
     public void LogException(Guid correlationId, Exception ex, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller)
     {
-        System.Console.Out.WriteLine($"[{correlationId}:{caller}][Exception] {ex}");
-        LogTags(correlationId, caller, tags);
-        LogMetrics(correlationId, caller, metrics);
+        System.Console.Out.WriteLine($"[{correlationId}][Exception] {ex}");
+        LogTags(correlationId, tags);
+        LogMetrics(correlationId, metrics);
     }
     public void Flush()
     {
@@ -117,10 +132,8 @@ public interface ILogTracer
     void ForceFlush();
     void Info(string message);
     void Warning(string message);
-    void Verbose(string message);
 
-    ILogTracer WithTag(string k, string v);
-    ILogTracer WithTags((string, string)[]? tags);
+    ILogTracer AddTags((string, string)[]? tags);
 }
 
 internal interface ILogTracerInternal : ILogTracer
@@ -133,15 +146,47 @@ internal interface ILogTracerInternal : ILogTracer
     private List<ILog> _loggers;
 
     public Guid CorrelationId { get; }
-    public IDictionary<string, string> Tags { get; }
+    public IReadOnlyDictionary<string, string> Tags { get; }
 
-public class LogTracer : ILogTracerInternal
-{
-    private string? GetCaller()
+
+    private static List<KeyValuePair<string, string>> ConvertTags((string, string)[]? tags)
+    {
+        List<KeyValuePair<string, string>> converted = new List<KeyValuePair<string, string>>();
+        if (tags is null)
+        {
+            return converted;
+        }
+        else
+        {
+            foreach (var (k, v) in tags)
+            {
+                converted.Add(new KeyValuePair<string, string>(k, v));
+            }
+            return converted;
+        }
+    }
+
+    public LogTracer(Guid correlationId, (string, string)[]? tags, List<ILog> loggers) : this(correlationId, new Dictionary<string, string>(ConvertTags(tags)), loggers) { }
+
+
+    public LogTracer(Guid correlationId, IReadOnlyDictionary<string, string> tags, List<ILog> loggers)
     {
         CorrelationId = correlationId;
-        Tags = new Dictionary<string, string>();
+        Tags = tags;
         _loggers = loggers;
+    }
+
+    public ILogTracer AddTags((string, string)[]? tags)
+    {
+        var newTags = new Dictionary<string, string>(Tags);
+        if (tags is not null)
+        {
+            foreach (var (k, v) in tags)
+            {
+                newTags[k] = v;
+            }
+        }
+        return new LogTracer(CorrelationId, newTags, _loggers);
     }
 
     public void Info(string message)
@@ -209,7 +254,7 @@ public class LogTracer : ILogTracerInternal
 
 public interface ILogTracerFactory
 {
-    LogTracer CreateLogTracer(Guid correlationId, (string, string)[]? tags = null, SeverityLevel severityLevel = SeverityLevel.Verbose);
+    LogTracer MakeLogTracer(Guid correlationId, (string, string)[]? tags = null);
 }
 
 public class LogTracerFactory : ILogTracerFactory
@@ -221,9 +266,9 @@ public class LogTracerFactory : ILogTracerFactory
         _loggers = loggers;
     }
 
-    public LogTracer CreateLogTracer(Guid correlationId, (string, string)[]? tags = null, SeverityLevel severityLevel = SeverityLevel.Verbose)
+    public LogTracer MakeLogTracer(Guid correlationId, (string, string)[]? tags = null)
     {
-        return new(correlationId, _loggers);
+        return new(correlationId, tags, _loggers);
     }
 
 }
