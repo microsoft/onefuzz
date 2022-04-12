@@ -1,6 +1,5 @@
 using System;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -15,14 +14,14 @@ public class QueueFileChanges
     // https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-storage-queue-trigger?tabs=csharp#poison-messages
     const int MAX_DEQUEUE_COUNT = 5;
 
-    private readonly ILogger _logger;
+    private readonly ILogTracerFactory _loggerFactory;
     private readonly IStorageProvider _storageProvider;
 
     private readonly IStorage _storage;
 
-    public QueueFileChanges(ILoggerFactory loggerFactory, IStorageProvider storageProvider, IStorage storage)
+    public QueueFileChanges(ILogTracerFactory loggerFactory, IStorageProvider storageProvider, IStorage storage)
     {
-        _logger = loggerFactory.CreateLogger<QueueFileChanges>();
+        _loggerFactory = loggerFactory;
         _storageProvider = storageProvider;
         _storage = storage;
     }
@@ -32,6 +31,7 @@ public class QueueFileChanges
         [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount)
     {
+        var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
         var fileChangeEvent = JsonSerializer.Deserialize<Dictionary<string, string>>(msg, EntityConverter.GetJsonSerializerOptions());
         var lastTry = dequeueCount == MAX_DEQUEUE_COUNT;
 
@@ -47,16 +47,16 @@ public class QueueFileChanges
 
         const string topic = "topic";
         if (!fileChangeEvent.ContainsKey(topic)
-            || !_storage.CorpusAccounts().Contains(fileChangeEvent[topic]))
+            || !_storage.CorpusAccounts(log).Contains(fileChangeEvent[topic]))
         {
             return Task.CompletedTask;
         }
 
-        file_added(fileChangeEvent, lastTry);
+        file_added(log, fileChangeEvent, lastTry);
         return Task.CompletedTask;
     }
 
-    private void file_added(Dictionary<string, string> fileChangeEvent, bool failTaskOnTransientError)
+    private void file_added(ILogTracer log, Dictionary<string, string> fileChangeEvent, bool failTaskOnTransientError)
     {
         var data = JsonSerializer.Deserialize<Dictionary<string, string>>(fileChangeEvent["data"])!;
         var url = data["url"];
@@ -65,7 +65,7 @@ public class QueueFileChanges
         var container = parts[0];
         var path = string.Join('/', parts.Skip(1));
 
-        _logger.LogInformation($"file added container: {container} - path: {path}");
+        log.Info($"file added container: {container} - path: {path}");
         // TODO: new_files(container, path, fail_task_on_transient_error)
     }
 }
