@@ -672,7 +672,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             return
 
         if disposal_strategy == NodeDisaposalStrategy.decomission:
-            logging.info("Using aggressive delete strategy")
             logging.info(SCALESET_LOG_PREFIX + "decomissioning nodes")
             for node in nodes:
                 if node.machine_id in machine_ids:
