@@ -44,7 +44,7 @@ public class StorageProvider : IStorageProvider
     public (string?, string?) GetStorageAccountNameAndKey(string accountId)
     {
         var resourceId = new ResourceIdentifier(accountId);
-        var storageAccount = _armClient.GetStorageAccount(resourceId);
+        var storageAccount = _armClient.GetStorageAccountResource(resourceId);
         var key = storageAccount.GetKeys().Value.Keys.FirstOrDefault();
         return (resourceId.Name, key?.Value);
     }
