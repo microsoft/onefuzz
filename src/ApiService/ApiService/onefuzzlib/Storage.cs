@@ -26,10 +26,12 @@ public interface IStorage
 public class Storage : IStorage
 {
     private ICreds _creds;
+    private ArmClient _armClient;
 
     public Storage(ICreds creds)
     {
         _creds = creds;
+        _armClient = new ArmClient(credential: _creds.GetIdentity(), defaultSubscriptionId: _creds.GetSubcription());
     }
 
     public static string GetFuncStorage()
