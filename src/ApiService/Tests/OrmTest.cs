@@ -1,6 +1,5 @@
 ﻿using System;
 using Xunit;
-using Microsoft.OneFuzz.Service;
 using Azure.Data.Tables;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -27,7 +26,7 @@ namespace Tests
         [Flags]
         enum TestFlagEnum
         {
-            FlagOne = 1 ,
+            FlagOne = 1,
             FlagTwo = 2,
         }
 
@@ -39,9 +38,10 @@ namespace Tests
             double TheFloat,
             TestEnum TheEnum,
             TestFlagEnum TheFlag,
-            [property:JsonPropertyName("a__special__name")] string Renamed,
-            TestObject TheObject
-            ): EntityBase();
+            [property: JsonPropertyName("a__special__name")] string Renamed,
+            TestObject TheObject,
+            TestObject? TestNull
+            ) : EntityBase();
 
 
         [Fact]
@@ -56,10 +56,13 @@ namespace Tests
                             12.44,
                             TestEnum.TheTwo, TestFlagEnum.FlagOne | TestFlagEnum.FlagTwo,
                             "renamed",
-                            new TestObject { TheName = "testobject",
+                            new TestObject
+                            {
+                                TheName = "testobject",
                                 TheEnum = TestEnum.TheTwo,
                                 TheFlag = TestFlagEnum.FlagOne | TestFlagEnum.FlagTwo
-                            });
+                            },
+                            null);
             var tableEntity = converter.ToTableEntity(entity1);
 
             Assert.NotNull(tableEntity);
@@ -73,7 +76,7 @@ namespace Tests
             Assert.Equal("renamed", tableEntity.GetString("a__special__name"));
 
             var json = JsonNode.Parse(tableEntity.GetString("the_object"))?.AsObject() ?? throw new InvalidOperationException("Could not parse objec");
-            
+
             json.TryGetPropertyValue("the_name", out var theName);
             json.TryGetPropertyValue("the_enum", out var theEnum);
             json.TryGetPropertyValue("the_flag", out var theFlag);
@@ -96,6 +99,7 @@ namespace Tests
                 { "the_flag", "flag_one,flag_two"},
                 { "a__special__name", "renamed"},
                 { "the_object", "{\"the_name\": \"testName\", \"the_enum\": \"the_one\", \"the_flag\": \"flag_one,flag_two\"}"},
+                { "test_null", null},
             };
 
             var entity1 = converter.ToRecord<Entity1>(tableEntity);
@@ -108,6 +112,8 @@ namespace Tests
             Assert.Equal(tableEntity.GetDouble("the_float"), entity1.TheFloat);
             Assert.Equal(TestEnum.TheTwo, entity1.TheEnum);
             Assert.Equal(tableEntity.GetString("a__special__name"), entity1.Renamed);
+            Assert.Null(tableEntity.GetString("test_null"));
+            Assert.Null(entity1.TestNull);
 
             Assert.Equal("testName", entity1.TheObject.TheName);
             Assert.Equal(TestEnum.TheOne, entity1.TheObject.TheEnum);

@@ -149,6 +149,17 @@
           "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.0.0"
         }
       },
+      "Microsoft.Azure.Functions.Worker.Extensions.SignalRService": {
+        "type": "Direct",
+        "requested": "[1.7.0, )",
+        "resolved": "1.7.0",
+        "contentHash": "mgk7ZnrXLPCI70cYgqxi+TJMJJgRMPYzZwIFMpxP2cto3D6XSxbF8eGj46T4DwopBBqWpfJ4Y2QFB93hNb4Yxg==",
+        "dependencies": {
+          "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.1.0",
+          "Microsoft.Extensions.Primitives": "5.0.1",
+          "System.Text.Json": "5.0.2"
+        }
+      },
       "Microsoft.Azure.Functions.Worker.Extensions.Storage": {
         "type": "Direct",
         "requested": "[5.0.0, )",
@@ -662,8 +673,8 @@
       },
       "Microsoft.Extensions.Primitives": {
         "type": "Transitive",
-        "resolved": "5.0.0",
-        "contentHash": "cI/VWn9G1fghXrNDagX9nYaaB/nokkZn0HYAawGaELQrl8InSezfe9OnfPZLcJq3esXxygh3hkq2c3qoV3SDyQ=="
+        "resolved": "5.0.1",
+        "contentHash": "5WPSmL4YeP7eW+Vc8XZ4DwjYWBAiSwDV9Hm63JJWcz1Ie3Xjv4KuJXzgCstj48LkLfVCYa7mLcx7y+q6yqVvtw=="
       },
       "Microsoft.Graph.Core": {
         "type": "Transitive",

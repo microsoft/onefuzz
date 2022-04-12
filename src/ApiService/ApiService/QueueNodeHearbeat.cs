@@ -1,11 +1,8 @@
 using System;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 using System.Text.Json;
-using Azure.Data.Tables;
 using System.Threading.Tasks;
-using Azure;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
@@ -14,38 +11,36 @@ namespace Microsoft.OneFuzz.Service;
 public class QueueNodeHearbeat
 {
     private readonly ILogger _logger;
-    private readonly IStorageProvider _storageProvider;
 
-    public QueueNodeHearbeat(ILoggerFactory loggerFactory, IStorageProvider storageProvider)
+    private readonly IEvents _events;
+    private readonly INodeOperations _nodes;
+
+    public QueueNodeHearbeat(ILoggerFactory loggerFactory, INodeOperations nodes, IEvents events)
     {
         _logger = loggerFactory.CreateLogger<QueueNodeHearbeat>();
-        _storageProvider = storageProvider;
+        _nodes = nodes;
+        _events = events;
     }
 
     [Function("QueueNodeHearbeat")]
     public async Task Run([QueueTrigger("myqueue-items", Connection = "AzureWebJobsStorage")] string msg)
     {
+        _logger.LogInformation($"heartbeat: {msg}");
+
         var hb = JsonSerializer.Deserialize<NodeHeartbeatEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 
-        var node = await Node.GetByMachineId(_storageProvider, hb.NodeId);
+        var node = await _nodes.GetByMachineId(hb.NodeId);
 
-        if (node == null) {
+        if (node == null)
+        {
             _logger.LogWarning($"invalid node id: {hb.NodeId}");
             return;
         }
 
         var newNode = node with { Heartbeat = DateTimeOffset.UtcNow };
 
-        await _storageProvider.Replace(newNode);
+        await _nodes.Replace(newNode);
 
-        //send_event(
-        //    EventNodeHeartbeat(
-        //        machine_id = node.machine_id,
-        //        scaleset_id = node.scaleset_id,
-        //        pool_name = node.pool_name,
-        //    )
-        //)
-
-        _logger.LogInformation($"heartbeat: {msg}");
+        await _events.SendEvent(new EventNodeHeartbeat(node.MachineId, node.ScalesetId, node.PoolName));
     }
 }
