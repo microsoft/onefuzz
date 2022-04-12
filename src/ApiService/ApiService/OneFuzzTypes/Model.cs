@@ -17,6 +17,12 @@ namespace Microsoft.OneFuzz.Service;
 /// the "partion key" and "row key" are identified by the [PartitionKey] and [RowKey] attributes
 /// Guids are mapped to string in the db
 
+public record Authentication
+(
+    string Password,
+    string PublicKey,
+    string PrivateKey
+);
 
 [SkipRename]
 public enum HeartbeatType
@@ -79,6 +85,13 @@ public enum NodeState
     Halt,
 }
 
+public record ProxyHeartbeat
+(
+    string Region,
+    Guid ProxyId,
+    List<ProxyForward> Forwards,
+    DateTimeOffset TimeStamp
+);
 
 public partial record Node
 (
@@ -95,6 +108,39 @@ public partial record Node
     bool DebugKeepNode
 ) : EntityBase();
 
+
+public partial record ProxyForward
+(
+    [PartitionKey] string Region,
+    [RowKey] int DstPort,
+    int SrcPort,
+    string DstIp
+) : EntityBase();
+
+public partial record ProxyConfig
+(
+    Uri Url,
+    string Notification,
+    string Region,
+    Guid? ProxyId,
+    List<ProxyForward> Forwards,
+    string InstanceTelemetryKey,
+    string MicrosoftTelemetryKey
+
+);
+
+public partial record Proxy
+(
+    [PartitionKey] string Region,
+    [RowKey] Guid ProxyId,
+    DateTimeOffset? CreatedTimestamp,
+    VmState State,
+    Authentication Auth,
+    string? Ip,
+    Error? Error,
+    string Version,
+    ProxyHeartbeat? heartbeat
+) : EntityBase();
 
 public record Error(ErrorCode Code, string[]? Errors = null);
 
@@ -181,12 +227,6 @@ public record TaskConfig(
    List<TaskDebugFlag> Debug,
    bool? Colocate
    );
-
-public record Authentication(
-    string Password,
-    string PublicKey,
-    string PrivateKey
-);
 
 
 public record TaskEventSummary(

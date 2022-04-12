@@ -1,5 +1,4 @@
 ﻿using ApiService.OneFuzzLib;
-using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Collections.Generic;
@@ -28,13 +27,13 @@ namespace Microsoft.OneFuzz.Service
     public class Events : IEvents
     {
         private readonly IQueue _queue;
-        private readonly ILogger _logger;
+        private readonly ILogTracerFactory _loggerFactory;
         private readonly IWebhookOperations _webhook;
 
-        public Events(IQueue queue, ILoggerFactory loggerFactory, IWebhookOperations webhook)
+        public Events(IQueue queue, ILogTracerFactory loggerFactory, IWebhookOperations webhook)
         {
             _queue = queue;
-            _logger = loggerFactory.CreateLogger<Events>();
+            _loggerFactory = loggerFactory;
             _webhook = webhook;
         }
 
@@ -47,6 +46,7 @@ namespace Microsoft.OneFuzz.Service
 
         public async Async.Task SendEvent(BaseEvent anEvent)
         {
+            var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
             var eventType = anEvent.GetEventType();
 
             var eventMessage = new EventMessage(
@@ -58,16 +58,17 @@ namespace Microsoft.OneFuzz.Service
             );
             await QueueSignalrEvent(eventMessage);
             await _webhook.SendEvent(eventMessage);
-            LogEvent(anEvent, eventType);
+            LogEvent(log, anEvent, eventType);
         }
 
-        public void LogEvent(BaseEvent anEvent, EventType eventType)
+        public void LogEvent(ILogTracer log, BaseEvent anEvent, EventType eventType)
         {
             var options = EntityConverter.GetJsonSerializerOptions();
             options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             options.Converters.Add(new RemoveUserInfo());
             var serializedEvent = JsonSerializer.Serialize(anEvent, options);
-            _logger.LogInformation($"sending event: {eventType} - {serializedEvent}");
+            log.Tags["Event Type"] = eventType.ToString();
+            log.Info($"sending event: {eventType} - {serializedEvent}");
         }
     }
 

@@ -110,6 +110,7 @@ public class UserCredentials
             }
             else
             {
+                log.Error("Failed to get allowed tenants");
                 return OneFuzzResult<UserInfo>.Error(allowedTenants.ErrorV);
             }
         }

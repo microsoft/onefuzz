@@ -48,6 +48,7 @@ public class Program
             .AddSingleton<IQueue, Queue>()
             .AddSingleton<ICreds>(_ => new Creds())
             .AddSingleton<IStorage, Storage>()
+            .AddSingleton<IProxyOperations, ProxyOperations>()
         )
         .Build();
 
