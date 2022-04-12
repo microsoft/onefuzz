@@ -156,18 +156,13 @@ public record EventMessage(
 ) : EntityBase();
 
 
-//record AnyHttpUrl(AnyUrl):
-//    allowed_schemes = {'http', 'https
-//
-
-
 public record TaskDetails(
 
     TaskType Type,
     int Duration,
     string? TargetExe,
-    Dictionary<string, string> TargetEnv,
-    List<string> TargetOptions,
+    Dictionary<string, string>? TargetEnv,
+    List<string>? TargetOptions,
     int? TargetWorkers,
     bool? TargetOptionsMerge,
     bool? CheckAsanLog,
@@ -177,14 +172,14 @@ public record TaskDetails(
     bool? ExpectCrashOnFailure,
     bool? RenameOutput,
     string? SupervisorExe,
-    Dictionary<string, string> SupervisorEnv,
-    List<string> SupervisorOptions,
+    Dictionary<string, string>? SupervisorEnv,
+    List<string>? SupervisorOptions,
     string? SupervisorInputMarker,
     string? GeneratorExe,
-    Dictionary<string, string> GeneratorEnv,
-    List<string> GeneratorOptions,
+    Dictionary<string, string>? GeneratorEnv,
+    List<string>? GeneratorOptions,
     string? AnalyzerExe,
-    Dictionary<string, string> AnalyzerEnv,
+    Dictionary<string, string>? AnalyzerEnv,
     List<string> AnalyzerOptions,
     ContainerType? WaitForFiles,
     string? StatsFile,
@@ -193,7 +188,7 @@ public record TaskDetails(
     int? TargetTimeout,
     int? EnsembleSyncDelay,
     bool? PreserveExistingOutputs,
-    List<string> ReportList,
+    List<string>? ReportList,
     int? MinimizedStackDepth,
     string? CoverageFilter
 );
@@ -218,13 +213,13 @@ public record TaskContainers(
 );
 public record TaskConfig(
    Guid JobId,
-   List<Guid> PrereqTasks,
+   List<Guid>? PrereqTasks,
    TaskDetails Task,
    TaskVm? Vm,
    TaskPool? Pool,
-   List<TaskContainers> Containers,
-   Dictionary<string, string> Tags,
-   List<TaskDebugFlag> Debug,
+   List<TaskContainers>? Containers,
+   Dictionary<string, string>? Tags,
+   List<TaskDebugFlag>? Debug,
    bool? Colocate
    );
 
