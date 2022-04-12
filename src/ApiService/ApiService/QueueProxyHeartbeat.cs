@@ -28,14 +28,11 @@ public class QueueProxyHearbeat
         var hb = JsonSerializer.Deserialize<ProxyHeartbeat>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}"); ;
         var newHb = hb with { TimeStamp = DateTimeOffset.UtcNow };
 
-        log.Tags["Proxy ID"] = newHb.ProxyId.ToString();
-
-
         var proxy = await _proxy.GetByProxyId(newHb.ProxyId);
 
         if (proxy == null)
         {
-            log.Warning($"invalid proxy id: {newHb.ProxyId}");
+            log.AddTags(new[] { ("Proxy ID", newHb.ProxyId.ToString()) }).Warning($"invalid proxy id: {newHb.ProxyId}");
             return;
         }
         var newProxy = proxy with { heartbeat = newHb };
