@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Add a Rust crate to debug missing dynamic library errors on Windows. [#1713](https://github.com/microsoft/onefuzz/pull/1713)
 * Agent: Add support for detecting missing dynamic libraries on Linux. [#1718](https://github.com/microsoft/onefuzz/pull/1718)
 * Service: Connect the auto scaling diagnostics to the log analytics workspace. [#1708](https://github.com/microsoft/onefuzz/pull/1708)
-* Service: Handle the situation where a VM scale set instance is destroyed  before we have removed scale-in protection. [#1719](https://github.com/microsoft/onefuzz/pull/1719)
+* Service: Handle the situation where a VM scale set instance is destroyed before we have removed scale-in protection. [#1719](https://github.com/microsoft/onefuzz/pull/1719)
 * Service: Add additional support for auto scaling including changes to the CLI. [#1717](https://github.com/microsoft/onefuzz/pull/1717), [#1763](https://github.com/microsoft/onefuzz/pull/1763)
 * Agent/Service/CLI: Add support for generating log files that can be downloaded using the CLI. [#1727](https://github.com/microsoft/onefuzz/pull/1727), [#1723](https://github.com/microsoft/onefuzz/pull/1723), [#1721](https://github.com/microsoft/onefuzz/pull/1721)
 * Service: Port ARM templates to Bicep. [#1724](https://github.com/microsoft/onefuzz/pull/1724), [#1732](https://github.com/microsoft/onefuzz/pull/1732)
