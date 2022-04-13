@@ -1,6 +1,5 @@
 using System;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
@@ -10,14 +9,14 @@ namespace Microsoft.OneFuzz.Service;
 
 public class QueueNodeHearbeat
 {
-    private readonly ILogger _logger;
+    private readonly ILogTracerFactory _loggerFactory;
 
     private readonly IEvents _events;
     private readonly INodeOperations _nodes;
 
-    public QueueNodeHearbeat(ILoggerFactory loggerFactory, INodeOperations nodes, IEvents events)
+    public QueueNodeHearbeat(ILogTracerFactory loggerFactory, INodeOperations nodes, IEvents events)
     {
-        _logger = loggerFactory.CreateLogger<QueueNodeHearbeat>();
+        _loggerFactory = loggerFactory;
         _nodes = nodes;
         _events = events;
     }
@@ -25,7 +24,8 @@ public class QueueNodeHearbeat
     [Function("QueueNodeHearbeat")]
     public async Task Run([QueueTrigger("myqueue-items", Connection = "AzureWebJobsStorage")] string msg)
     {
-        _logger.LogInformation($"heartbeat: {msg}");
+        var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
+        log.Info($"heartbeat: {msg}");
 
         var hb = JsonSerializer.Deserialize<NodeHeartbeatEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 
@@ -33,7 +33,7 @@ public class QueueNodeHearbeat
 
         if (node == null)
         {
-            _logger.LogWarning($"invalid node id: {hb.NodeId}");
+            log.Warning($"invalid node id: {hb.NodeId}");
             return;
         }
 
