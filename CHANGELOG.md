@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Make sure the scale set nodes are unable to accept work while in the `setup` state. [#1731](https://github.com/microsoft/onefuzz/pull/1731)
 
 ### Changed
-* Agent: Reduce the logging level down from `warn` to `debug` when we are unable to parse an asan log. [#1705](https://github.com/microsoft/onefuzz/pull/1705)
+* Agent: Reduce the logging level down from `warn` to `debug` when we are unable to parse an ASan log. [#1705](https://github.com/microsoft/onefuzz/pull/1705)
 * Service: Move the creation of the event grid topic to the deployment template from the `deploy.py` script. [#1591](https://github.com/microsoft/onefuzz/pull/1591)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1548](https://github.com/microsoft/onefuzz/pull/1548), [#1617](https://github.com/microsoft/onefuzz/pull/1617), [#1618](https://github.com/microsoft/onefuzz/pull/1618)
 * Service: Consolidate the two log analytics down to one. [#1679](https://github.com/microsoft/onefuzz/pull/1679)
