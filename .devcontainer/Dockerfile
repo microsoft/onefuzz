@@ -20,7 +20,7 @@ ENV PATH="/home/vscode/.cargo/bin:${PATH}"
 RUN rustup component add rls rust-analysis rust-src rustfmt clippy
 
 # Install required cargo commands:
-RUN cargo install cargo-audit
+RUN cargo install cargo-audit cargo-license sccache
 
 USER root
 ### Done setting up Rust.
