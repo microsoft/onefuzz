@@ -68,11 +68,9 @@ namespace Microsoft.OneFuzz.Service
             options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             options.Converters.Add(new RemoveUserInfo());
             var serializedEvent = JsonSerializer.Serialize(anEvent, options);
-            log.Tags["Event Type"] = eventType.ToString();
-            log.Info($"sending event: {eventType} - {serializedEvent}");
+            log.AddTags(new[] { ("Event Type", eventType.ToString()) }).Info($"sending event: {eventType} - {serializedEvent}");
         }
     }
-
 
 
     internal class RemoveUserInfo : JsonConverter<UserInfo>
