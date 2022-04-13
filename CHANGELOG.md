@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 5.3.0
 ### Added
 * Agent: Add a compiler flag to generate debug info for the `windows-libfuzzer` load library test target. [#1684](https://github.com/microsoft/onefuzz/pull/1684)
-* Agent: Add a rust crate to debug missing dynamic library errors on Windows. [#1713](https://github.com/microsoft/onefuzz/pull/1713)
+* Agent: Add a Rust crate to debug missing dynamic library errors on Windows. [#1713](https://github.com/microsoft/onefuzz/pull/1713)
 * Agent: Add support for detecting missing dynamic libraries on Linux. [#1718](https://github.com/microsoft/onefuzz/pull/1718)
 * Service: Connect the auto scaling diagnostics to the log analytics workspace. [#1708](https://github.com/microsoft/onefuzz/pull/1708)
 * Service: Handle the situation where a VM scale set instance is destroyed  before we have removed scale-in protection. [#1719](https://github.com/microsoft/onefuzz/pull/1719)
