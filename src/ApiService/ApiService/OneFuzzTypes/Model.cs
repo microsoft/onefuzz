@@ -342,18 +342,35 @@ public record InstanceConfig
     { }
 
 
-    /// <summary>
-    /// Check if instance config is valid
-    /// </summary>
-    /// <returns>true, [] if instance config is valid;
-    /// otherwise false, with a list of errors</returns>
-    public (bool, List<string>) CheckInstanceConfig()
+    public List<Guid>? CheckAdmins(List<Guid>? value)
+    {
+        if (value is not null && value.Count == 0)
+        {
+            throw new ArgumentException("admins must be null or contain at least one UUID");
+        }
+        else
+        {
+            return value;
+        }
+    }
+
+
+    //# At the moment, this only checks allowed_aad_tenants, however adding
+    //# support for 3rd party JWT validation is anticipated in a future release.
+    public ResultOk<List<string>> CheckInstanceConfig()
     {
         List<string> errors = new();
         if (AllowedAadTenants.Length == 0)
         {
             errors.Add("allowed_aad_tenants must not be empty");
         }
-        return (errors.Count == 0, errors);
+        if (errors.Count == 0)
+        {
+            return ResultOk<List<string>>.Ok();
+        }
+        else
+        {
+            return ResultOk<List<string>>.Error(errors);
+        }
     }
 }
