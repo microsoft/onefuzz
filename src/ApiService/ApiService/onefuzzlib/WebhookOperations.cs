@@ -42,9 +42,12 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
 
         if (visibilityTimeout == null)
         {
-            log.Tags["WebhookId"] = webhookLog.WebhookId.ToString();
-            log.Tags["EventId"] = webhookLog.EventId.ToString();
-            log.Error($"invalid WebhookMessage queue state, not queuing. {webhookLog.WebhookId}:{webhookLog.EventId} - {webhookLog.State}");
+            log.AddTags(
+                    new[] {
+                        ("WebhookId", webhookLog.WebhookId.ToString()),
+                        ("EventId", webhookLog.EventId.ToString()) }
+                    ).
+                Error($"invalid WebhookMessage queue state, not queuing. {webhookLog.WebhookId}:{webhookLog.EventId} - {webhookLog.State}");
         }
         else
         {
