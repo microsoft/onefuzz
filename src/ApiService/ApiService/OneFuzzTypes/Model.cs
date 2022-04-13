@@ -147,6 +147,24 @@ public record EventMessage(
     String InstanceName
 ) : EntityBase();
 
+public record Update(
+    UpdateType UpdateType,
+    [PartitionKey] string? ParititionKey,
+    [RowKey] string? RowKey,
+    string? Method
+);
+
+public enum UpdateType
+{
+    Task,
+    Job,
+    Repro,
+    Proxy,
+    Pool,
+    Node,
+    Scaleset,
+    TaskScheduler
+}
 
 //record AnyHttpUrl(AnyUrl):
 //    allowed_schemes = {'http', 'https
