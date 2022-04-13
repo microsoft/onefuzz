@@ -87,7 +87,7 @@ public enum NodeState
 
 public record ProxyHeartbeat
 (
-    string Region,
+    Region Region,
     Guid ProxyId,
     List<ProxyForward> Forwards,
     DateTimeOffset TimeStamp
@@ -111,7 +111,7 @@ public partial record Node
 
 public partial record ProxyForward
 (
-    [PartitionKey] string Region,
+    [PartitionKey] Region Region,
     [RowKey] int DstPort,
     int SrcPort,
     string DstIp
@@ -121,7 +121,7 @@ public partial record ProxyConfig
 (
     Uri Url,
     string Notification,
-    string Region,
+    Region Region,
     Guid? ProxyId,
     List<ProxyForward> Forwards,
     string InstanceTelemetryKey,
@@ -131,7 +131,7 @@ public partial record ProxyConfig
 
 public partial record Proxy
 (
-    [PartitionKey] string Region,
+    [PartitionKey] Region Region,
     [RowKey] Guid ProxyId,
     DateTimeOffset? CreatedTimestamp,
     VmState State,
