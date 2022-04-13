@@ -4,11 +4,6 @@
 	"name": "Ubuntu",
 	"build": {
 		"dockerfile": "Dockerfile",
-		// Update 'VARIANT' to pick an Ubuntu version: hirsute, focal, bionic
-		// Use hirsute or bionic on local arm64/Apple Silicon.
-		"args": {
-			"VARIANT": "focal"
-		}
 	},
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
@@ -24,7 +19,8 @@
 		"mutantdino.resourcemonitor",
 		"matklad.rust-analyzer",
 		"tamasfe.even-better-toml",
-		"serayuzgur.crates"
+		"serayuzgur.crates",
+		"ms-dotnettools.csharp"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
@@ -35,7 +31,5 @@
 	"remoteUser": "vscode",
 	// Note: available features are listed in: https://github.com/microsoft/vscode-dev-containers/blob/main/script-library/container-features/src/devcontainer-features.json
 	"features": {
-		"azure-cli": "latest",
-		"dotnet": "6.0"
 	}
 }
