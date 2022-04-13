@@ -20,7 +20,8 @@
 		"matklad.rust-analyzer",
 		"tamasfe.even-better-toml",
 		"serayuzgur.crates",
-		"ms-dotnettools.csharp"
+		"ms-dotnettools.csharp",
+		"ms-python.python"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
