@@ -2,6 +2,7 @@ using Microsoft.Azure.Functions.Worker;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -23,7 +24,7 @@ public class QueueUpdates
     {
         var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
 
-        var update = JsonSerializer.Deserialize<Update>(msg);
+        var update = JsonSerializer.Deserialize<Update>(msg, EntityConverter.GetJsonSerializerOptions());
         if (update == null)
         {
             log.Error($"Failed to deserialize message into {typeof(Update)}: {msg}");

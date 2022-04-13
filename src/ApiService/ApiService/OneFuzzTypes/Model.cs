@@ -154,6 +154,7 @@ public record Update(
     string? Method
 );
 
+// TODO: We probably need to do some json deserialization magic to make this work with strings
 public enum UpdateType
 {
     Task,
