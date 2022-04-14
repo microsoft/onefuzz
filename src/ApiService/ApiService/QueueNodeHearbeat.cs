@@ -1,7 +1,6 @@
 using System;
 using Microsoft.Azure.Functions.Worker;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
@@ -22,7 +21,7 @@ public class QueueNodeHearbeat
     }
 
     [Function("QueueNodeHearbeat")]
-    public async Task Run([QueueTrigger("myqueue-items", Connection = "AzureWebJobsStorage")] string msg)
+    public async Async.Task Run([QueueTrigger("myqueue-items", Connection = "AzureWebJobsStorage")] string msg)
     {
         var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
         log.Info($"heartbeat: {msg}");
