@@ -198,10 +198,16 @@ public class EntityConverter
                         {
                             throw new Exception("invalid ");
                         }
-
                     }
 
                     var fieldName = ef.columnName;
+                    var obj = entity[fieldName];
+                    if (obj == null)
+                    {
+                        return null;
+                    }
+                    var objType = obj.GetType();
+
                     if (ef.type == typeof(string))
                     {
                         return entity.GetString(fieldName);

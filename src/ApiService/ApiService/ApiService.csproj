@@ -5,6 +5,7 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
+    <WarningLevel>5</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage" Version="5.0.0" />
@@ -15,19 +16,19 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.3.0" OutputItemType="Analyzer" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.6.0" />
     <PackageReference Include="Azure.Data.Tables" Version="12.5.0" />
-    <PackageReference Include="Azure.ResourceManager.Compute" Version="1.0.0-beta.6" />
-    <PackageReference Include="Azure.Core" Version="1.23.0" />
-    <PackageReference Include="Azure.Identity" Version="1.5.0" />
-    <PackageReference Include="Azure.Messaging.EventGrid" Version="4.9.0" />
-    <PackageReference Include="Azure.ResourceManager" Version="1.0.0-beta.8" />
-    <PackageReference Include="Azure.ResourceManager.Network" Version="1.0.0-beta.5" />
-    <PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0-beta.6" />
-    <PackageReference Include="Azure.ResourceManager.Storage" Version="1.0.0-beta.6" />
+    <PackageReference Include="Azure.ResourceManager.Compute" Version="1.0.0-beta.8" />
+    <PackageReference Include="Azure.Core" Version="1.24.0" />
+    <PackageReference Include="Azure.Identity" Version="1.6.0" />
+    <PackageReference Include="Azure.Messaging.EventGrid" Version="4.10.0" />
+    <PackageReference Include="Azure.ResourceManager" Version="1.0.0" />
+    <PackageReference Include="Azure.ResourceManager.Network" Version="1.0.0-beta.7" />
+    <PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0" />
+    <PackageReference Include="Azure.ResourceManager.Storage" Version="1.0.0-beta.8" />
     <PackageReference Include="Azure.Storage.Queues" Version="12.9.0" />
-    <PackageReference Include="Microsoft.Graph" Version="4.20.0" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.42.0" />
-    <PackageReference Include="Microsoft.Identity.Web.TokenCache" Version="1.23.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.16.0" />
+    <PackageReference Include="Microsoft.Graph" Version="4.24.0" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.43.0" />
+    <PackageReference Include="Microsoft.Identity.Web.TokenCache" Version="1.23.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.17.0" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.SignalRService" Version="1.7.0" />
   </ItemGroup>

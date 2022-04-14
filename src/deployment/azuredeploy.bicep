@@ -217,6 +217,7 @@ module pythonFunction 'bicep-templates/function.bicep' = {
     functions_extension_version: '~3'
     name: name
 
+    instance_name: name
     app_logs_sas_url: storage.outputs.FuncSasUrlBlobAppLogs
     app_func_audiences: app_func_audiences
     app_func_issuer: app_func_issuer
@@ -247,6 +248,7 @@ module netFunction 'bicep-templates/function.bicep' = {
     functions_extension_version: '~4'
     name: '${name}-net'
 
+    instance_name: name
     app_logs_sas_url: storage.outputs.FuncSasUrlBlobAppLogs
     app_func_audiences: app_func_audiences
     app_func_issuer: app_func_issuer

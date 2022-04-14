@@ -1,4 +1,5 @@
-﻿public enum ErrorCode
+﻿namespace Microsoft.OneFuzz.Service;
+public enum ErrorCode
 {
     INVALID_REQUEST = 450,
     INVALID_PERMISSION = 451,
@@ -26,6 +27,16 @@
     INVALID_CONFIGURATION = 473,
 }
 
+public enum VmState
+{
+    Init,
+    ExtensionsLaunched,
+    ExtensionsFailed,
+    VmAllocationFailed,
+    Running,
+    Stopping,
+    Stopped
+}
 
 public enum WebhookMessageState
 {
@@ -33,4 +44,67 @@ public enum WebhookMessageState
     Retrying,
     Succeeded,
     Failed
+}
+
+public enum TaskState
+{
+    Init,
+    Waiting,
+    Scheduled,
+    Setting_up,
+    Running,
+    Stopping,
+    Stopped,
+    WaitJob
+}
+
+public enum TaskType
+{
+    Coverage,
+    LibfuzzerFuzz,
+    LibfuzzerCoverage,
+    LibfuzzerCrashReport,
+    LibfuzzerMerge,
+    LibfuzzerRegression,
+    GenericAnalysis,
+    GenericSupervisor,
+    GenericMerge,
+    GenericGenerator,
+    GenericCrashReport,
+    GenericRegression
+}
+
+public enum Os
+{
+    Windows,
+    Linux
+}
+
+public enum ContainerType
+{
+    Analysis,
+    Coverage,
+    Crashes,
+    Inputs,
+    NoRepro,
+    ReadonlyInputs,
+    Reports,
+    Setup,
+    Tools,
+    UniqueInputs,
+    UniqueReports,
+    RegressionReports,
+    Logs
+}
+
+
+public enum StatsFormat
+{
+    AFL
+}
+
+public enum TaskDebugFlag
+{
+    KeepNodeOnFailure,
+    KeepNodeOnCompletion,
 }

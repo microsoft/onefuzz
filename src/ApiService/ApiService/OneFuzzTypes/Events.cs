@@ -43,6 +43,7 @@ namespace Microsoft.OneFuzz.Service
                 this switch
                 {
                     EventNodeHeartbeat _ => EventType.NodeHeartbeat,
+                    EventInstanceConfigUpdated _ => EventType.InstanceConfigUpdated,
                     _ => throw new NotImplementedException(),
                 };
 
@@ -104,11 +105,11 @@ namespace Microsoft.OneFuzz.Service
     //    ) : BaseEvent();
 
 
-    //record EventTaskHeartbeat(
-    //    JobId: Guid,
-    //    TaskId: Guid,
-    //    Config: TaskConfig
-    //): BaseEvent();
+    record EventTaskHeartbeat(
+       Guid JobId,
+       Guid TaskId,
+       TaskConfig Config
+    ) : BaseEvent();
 
 
     //record EventPing(
@@ -243,7 +244,7 @@ namespace Microsoft.OneFuzz.Service
     //        ) : BaseEvent();
 
 
-    //    record EventInstanceConfigUpdated(
-    //        InstanceConfig Config
-    //        ) : BaseEvent();
+    record EventInstanceConfigUpdated(
+        InstanceConfig Config
+    ) : BaseEvent();
 }
