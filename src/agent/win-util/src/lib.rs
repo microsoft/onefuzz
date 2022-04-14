@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 #![cfg(windows)]
-
 // Allow safe functions that take `HANDLE` arguments.
 //
 // Though they type alias raw pointers, they are opaque. In the future, we will
