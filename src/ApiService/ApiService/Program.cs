@@ -65,7 +65,7 @@ public class Program
         )
         .ConfigureServices((context, services) =>
             services
-            .AddScoped<ILogTracer>(_ => new LogTracerFactory(GetLoggers()).CreateLogTracer(Guid.NewGuid()))
+            .AddScoped<ILogTracer>(_ => new LogTracerFactory(GetLoggers()).CreateLogTracer(Guid.NewGuid(), severityLevel: EnvironmentVariables.LogSeverityLevel()))
             .AddSingleton<INodeOperations, NodeOperations>()
             .AddSingleton<IEvents, Events>()
             .AddSingleton<IWebhookOperations, WebhookOperations>()

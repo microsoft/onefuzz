@@ -60,9 +60,6 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations
             }
         }
 
-        if (r.IsOk)
-        {
-            await _events.SendEvent(new EventInstanceConfigUpdated(config));
-        }
+        await _events.SendEvent(new EventInstanceConfigUpdated(config));
     }
 }
