@@ -21,6 +21,8 @@ public interface IStorage
     public IEnumerable<string> CorpusAccounts(ILogTracer log);
     string GetPrimaryAccount(StorageType storageType);
     public (string?, string?) GetStorageAccountNameAndKey(string accountId);
+
+    public IEnumerable<string> GetAccounts(ILogTracer logTracer, StorageType storageType);
 }
 
 public class Storage : IStorage
@@ -111,5 +113,23 @@ public class Storage : IStorage
         var storageAccount = armClient.GetStorageAccountResource(resourceId);
         var key = storageAccount.GetKeys().Value.Keys.FirstOrDefault();
         return (resourceId.Name, key?.Value);
+    }
+
+    public IEnumerable<string> GetAccounts(ILogTracer logTracer, StorageType storageType)
+    {
+        switch (storageType)
+        {
+            case StorageType.Corpus:
+                return CorpusAccounts(logTracer);
+            case StorageType.Config:
+                return new [] {GetFuncStorage()};
+            default:
+                throw new NotImplementedException();
+        }
+    }
+
+    public void GetStorageAccountNameKey(string accountId)
+    {
+
     }
 }

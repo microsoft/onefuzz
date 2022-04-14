@@ -2,6 +2,7 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Collections.Generic;
 using PoolName = System.String;
+using System.Linq;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -145,6 +146,18 @@ public record EventMessage(
     BaseEvent Event,
     Guid InstanceId,
     String InstanceName
+) : EntityBase();
+
+public record Container(string ContainerName)
+{
+    public string ContainerName {get;} = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
+}
+
+public record Notification(
+    DateTime? Timestamp,
+    Container container,
+    Guid NotificationId
+    // NotificationTemplate
 ) : EntityBase();
 
 
