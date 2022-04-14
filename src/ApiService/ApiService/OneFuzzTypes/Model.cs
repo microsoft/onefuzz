@@ -258,7 +258,7 @@ public record Task(
 {
     List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
     List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
-
+}
 public record AzureSecurityExtensionConfig();
 public record GenevaExtensionConfig();
 
@@ -340,7 +340,6 @@ public record InstanceConfig
         null,
         null)
     { }
-
 
     public List<Guid>? CheckAdmins(List<Guid>? value)
     {

@@ -8,14 +8,14 @@ namespace Microsoft.OneFuzz.Service;
 
 public class QueueNodeHearbeat
 {
-    private readonly ILogTracerFactory _loggerFactory;
+    private readonly ILogTracer _log;
 
     private readonly IEvents _events;
     private readonly INodeOperations _nodes;
 
-    public QueueNodeHearbeat(ILogTracerFactory loggerFactory, INodeOperations nodes, IEvents events)
+    public QueueNodeHearbeat(ILogTracer log, INodeOperations nodes, IEvents events)
     {
-        _loggerFactory = loggerFactory;
+        _log = log;
         _nodes = nodes;
         _events = events;
     }
@@ -23,18 +23,17 @@ public class QueueNodeHearbeat
     [Function("QueueNodeHearbeat")]
     public async Async.Task Run([QueueTrigger("myqueue-items", Connection = "AzureWebJobsStorage")] string msg)
     {
-        var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
-        log.Info($"heartbeat: {msg}");
+        _log.Info($"heartbeat: {msg}");
 
         var hb = JsonSerializer.Deserialize<NodeHeartbeatEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 
         var node = await _nodes.GetByMachineId(hb.NodeId);
 
-        var log2 = log.AddTag("NodeId", hb.NodeId.ToString());
+        var log = _log.WithTag("NodeId", hb.NodeId.ToString());
 
         if (node == null)
         {
-            log2.Warning($"invalid node id: {hb.NodeId}");
+            log.Warning($"invalid node id: {hb.NodeId}");
             return;
         }
 
@@ -45,7 +44,7 @@ public class QueueNodeHearbeat
         if (!r.IsOk)
         {
             var (status, reason) = r.ErrorV;
-            log2.Error($"Failed to replace heartbeat info due to [{status}] {reason}");
+            log.Error($"Failed to replace heartbeat info due to [{status}] {reason}");
         }
 
         // TODO: do we still send event if we fail do update the table ?

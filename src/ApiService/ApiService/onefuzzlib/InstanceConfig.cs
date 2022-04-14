@@ -9,15 +9,17 @@ public interface IConfigOperations : IOrm<InstanceConfig>
 {
     Task<InstanceConfig> Fetch();
 
-    Task Save(ILogTracer log, InstanceConfig config, bool isNew, bool requireEtag);
+    Async.Task Save(InstanceConfig config, bool isNew, bool requireEtag);
 }
 
 public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations
 {
     private readonly IEvents _events;
-    public ConfigOperations(IStorage storage, IEvents events) : base(storage)
+    private readonly ILogTracer _log;
+    public ConfigOperations(IStorage storage, IEvents events, ILogTracer log) : base(storage)
     {
         _events = events;
+        _log = log;
     }
 
     public async Task<InstanceConfig> Fetch()
@@ -27,7 +29,7 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations
         return config;
     }
 
-    public async Task Save(ILogTracer log, InstanceConfig config, bool isNew = false, bool requireEtag = false)
+    public async Async.Task Save(InstanceConfig config, bool isNew = false, bool requireEtag = false)
     {
         ResultOk<(int, string)> r;
         if (isNew)
@@ -36,7 +38,7 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations
             if (!r.IsOk)
             {
                 var (status, reason) = r.ErrorV;
-                log.Error($"Failed to save new instance config record with result [{status}] {reason}");
+                _log.Error($"Failed to save new instance config record with result [{status}] {reason}");
             }
         }
         else if (requireEtag && config.ETag.HasValue)
@@ -45,7 +47,7 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations
             if (!r.IsOk)
             {
                 var (status, reason) = r.ErrorV;
-                log.Error($"Failed to update instance config record with result: [{status}] {reason}");
+                _log.Error($"Failed to update instance config record with result: [{status}] {reason}");
             }
         }
         else
@@ -54,7 +56,7 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations
             if (!r.IsOk)
             {
                 var (status, reason) = r.ErrorV;
-                log.Error($"Failed to replace instance config record with result [{status}] {reason}");
+                _log.Error($"Failed to replace instance config record with result [{status}] {reason}");
             }
         }
 

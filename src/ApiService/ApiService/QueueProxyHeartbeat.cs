@@ -7,33 +7,31 @@ namespace Microsoft.OneFuzz.Service;
 
 public class QueueProxyHearbeat
 {
-    private readonly ILogTracerFactory _loggerFactory;
+    private readonly ILogTracer _log;
 
     private readonly IProxyOperations _proxy;
 
-    public QueueProxyHearbeat(ILogTracerFactory loggerFactory, IProxyOperations proxy)
+    public QueueProxyHearbeat(ILogTracer log, IProxyOperations proxy)
     {
-        _loggerFactory = loggerFactory;
+        _log = log;
         _proxy = proxy;
     }
 
     [Function("QueueProxyHearbeat")]
     public async Async.Task Run([QueueTrigger("myqueue-items", Connection = "AzureWebJobsStorage")] string msg)
     {
-        var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
-
-        log.Info($"heartbeat: {msg}");
+        _log.Info($"heartbeat: {msg}");
 
         var hb = JsonSerializer.Deserialize<ProxyHeartbeat>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}"); ;
         var newHb = hb with { TimeStamp = DateTimeOffset.UtcNow };
 
         var proxy = await _proxy.GetByProxyId(newHb.ProxyId);
 
-        var log2 = log.AddTag("ProxyId", newHb.ProxyId.ToString());
+        var log = _log.WithTag("ProxyId", newHb.ProxyId.ToString());
 
         if (proxy == null)
         {
-            log2.Warning($"invalid proxy id: {newHb.ProxyId}");
+            log.Warning($"invalid proxy id: {newHb.ProxyId}");
             return;
         }
         var newProxy = proxy with { heartbeat = newHb };

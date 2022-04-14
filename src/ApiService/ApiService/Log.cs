@@ -133,21 +133,31 @@ public interface ILogTracer
     void Info(string message);
     void Warning(string message);
 
-    ILogTracer AddTag(string k, string v);
-    ILogTracer AddTags((string, string)[]? tags);
+    ILogTracer WithTag(string k, string v);
+    ILogTracer WithTags((string, string)[]? tags);
 }
 
-public class LogTracer : ILogTracer
+internal interface ILogTracerInternal : ILogTracer
+{
+    void ReplaceCorrelationId(Guid newCorrelationId);
+    void AddTags((string, string)[] tags);
+}
+
+
+
+public class LogTracer : ILogTracerInternal
 {
     private string? GetCaller()
     {
         return new StackTrace()?.GetFrame(2)?.GetMethod()?.DeclaringType?.FullName;
     }
 
+    private Guid _correlationId;
     private List<ILog> _loggers;
+    private Dictionary<string, string> _tags;
 
-    public Guid CorrelationId { get; }
-    public IReadOnlyDictionary<string, string> Tags { get; }
+    public Guid CorrelationId => _correlationId;
+    public IReadOnlyDictionary<string, string> Tags => _tags;
 
 
     private static List<KeyValuePair<string, string>> ConvertTags((string, string)[]? tags)
@@ -172,17 +182,35 @@ public class LogTracer : ILogTracer
 
     public LogTracer(Guid correlationId, IReadOnlyDictionary<string, string> tags, List<ILog> loggers)
     {
-        CorrelationId = correlationId;
-        Tags = tags;
+        _correlationId = correlationId;
+        _tags = new(tags);
         _loggers = loggers;
     }
 
-    public ILogTracer AddTag(string k, string v)
+    //Single threaded only
+    public void ReplaceCorrelationId(Guid newCorrelationId)
     {
-        return AddTags(new[] { (k, v) });
+        _correlationId = newCorrelationId;
     }
 
-    public ILogTracer AddTags((string, string)[]? tags)
+    //single threaded only
+    public void AddTags((string, string)[] tags)
+    {
+        if (tags is not null)
+        {
+            foreach (var (k, v) in tags)
+            {
+                _tags[k] = v;
+            }
+        }
+    }
+
+    public ILogTracer WithTag(string k, string v)
+    {
+        return WithTags(new[] { (k, v) });
+    }
+
+    public ILogTracer WithTags((string, string)[]? tags)
     {
         var newTags = new Dictionary<string, string>(Tags);
         if (tags is not null)
@@ -260,7 +288,7 @@ public class LogTracer : ILogTracer
 
 public interface ILogTracerFactory
 {
-    LogTracer MakeLogTracer(Guid correlationId, (string, string)[]? tags = null);
+    LogTracer CreateLogTracer(Guid correlationId, (string, string)[]? tags = null);
 }
 
 public class LogTracerFactory : ILogTracerFactory
@@ -272,7 +300,7 @@ public class LogTracerFactory : ILogTracerFactory
         _loggers = loggers;
     }
 
-    public LogTracer MakeLogTracer(Guid correlationId, (string, string)[]? tags = null)
+    public LogTracer CreateLogTracer(Guid correlationId, (string, string)[]? tags = null)
     {
         return new(correlationId, tags, _loggers);
     }

@@ -20,17 +20,16 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         );
 
     private readonly IQueue _queue;
-    private readonly ILogTracerFactory _loggerFactory;
-    public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILogTracerFactory loggerFactory) : base(storage)
+    private readonly ILogTracer _log;
+    public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILogTracer log) : base(storage)
     {
         _queue = queue;
-        _loggerFactory = loggerFactory;
+        _log = log;
     }
 
 
     public async Async.Task QueueWebhook(WebhookMessageLog webhookLog)
     {
-        var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
         var obj = new WebhookMessageQueueObj(webhookLog.WebhookId, webhookLog.EventId);
 
         TimeSpan? visibilityTimeout = webhookLog.State switch
@@ -42,7 +41,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
 
         if (visibilityTimeout == null)
         {
-            log.AddTags(
+            _log.WithTags(
                     new[] {
                         ("WebhookId", webhookLog.WebhookId.ToString()),
                         ("EventId", webhookLog.EventId.ToString()) }
@@ -64,19 +63,21 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
 
 public interface IWebhookOperations
 {
-    Task SendEvent(ILogTracer log, EventMessage eventMessage);
+    Async.Task SendEvent(EventMessage eventMessage);
 }
 
 public class WebhookOperations : Orm<Webhook>, IWebhookOperations
 {
     private readonly IWebhookMessageLogOperations _webhookMessageLogOperations;
-    public WebhookOperations(IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations)
+    private readonly ILogTracer _log;
+    public WebhookOperations(IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations, ILogTracer log)
         : base(storage)
     {
         _webhookMessageLogOperations = webhookMessageLogOperations;
+        _log = log;
     }
 
-    async public Task SendEvent(ILogTracer log, EventMessage eventMessage)
+    async public Async.Task SendEvent(EventMessage eventMessage)
     {
         await foreach (var webhook in GetWebhooksCached())
         {
@@ -84,11 +85,11 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
             {
                 continue;
             }
-            await AddEvent(log, webhook, eventMessage);
+            await AddEvent(webhook, eventMessage);
         }
     }
 
-    async private Task AddEvent(ILogTracer log, Webhook webhook, EventMessage eventMessage)
+    async private Async.Task AddEvent(Webhook webhook, EventMessage eventMessage)
     {
         var message = new WebhookMessageLog(
              EventId: eventMessage.EventId,
@@ -103,7 +104,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
         if (!r.IsOk)
         {
             var (status, reason) = r.ErrorV;
-            log.Error($"Failed to replace webhook message log due to [{status}] {reason}");
+            _log.Error($"Failed to replace webhook message log due to [{status}] {reason}");
         }
     }
 
