@@ -13,13 +13,13 @@ public class QueueFileChanges
     // https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-storage-queue-trigger?tabs=csharp#poison-messages
     const int MAX_DEQUEUE_COUNT = 5;
 
-    private readonly ILogTracerFactory _loggerFactory;
+    private readonly ILogTracer _log;
 
     private readonly IStorage _storage;
 
-    public QueueFileChanges(ILogTracerFactory loggerFactory, IStorage storage)
+    public QueueFileChanges(ILogTracer log, IStorage storage)
     {
-        _loggerFactory = loggerFactory;
+        _log = log;
         _storage = storage;
     }
 
@@ -28,7 +28,6 @@ public class QueueFileChanges
         [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount)
     {
-        var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
         var fileChangeEvent = JsonSerializer.Deserialize<Dictionary<string, string>>(msg, EntityConverter.GetJsonSerializerOptions());
         var lastTry = dequeueCount == MAX_DEQUEUE_COUNT;
 
@@ -44,12 +43,12 @@ public class QueueFileChanges
 
         const string topic = "topic";
         if (!fileChangeEvent.ContainsKey(topic)
-            || !_storage.CorpusAccounts(log).Contains(fileChangeEvent[topic]))
+            || !_storage.CorpusAccounts().Contains(fileChangeEvent[topic]))
         {
             return Async.Task.CompletedTask;
         }
 
-        file_added(log, fileChangeEvent, lastTry);
+        file_added(_log, fileChangeEvent, lastTry);
         return Async.Task.CompletedTask;
     }
 

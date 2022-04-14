@@ -257,10 +257,6 @@ public class EntityConverter
                     else
                     {
                         var value = entity.GetString(fieldName);
-                        if (value == null)
-                        {
-                            return null;
-                        }
                         return JsonSerializer.Deserialize(value, ef.type, options: _options); ;
                     }
                 }

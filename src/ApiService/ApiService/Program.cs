@@ -9,8 +9,6 @@ using ApiService.OneFuzzLib;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Azure.Functions.Worker;
 
-
-
 namespace Microsoft.OneFuzz.Service;
 
 public class Program
@@ -19,17 +17,17 @@ public class Program
     {
         public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next)
         {
+            //TODO
+            //if correlation ID is available in HTTP request
+            //if correlation ID is available in Queue message 
+            //log.ReplaceCorrelationId
+
             var log = (ILogTracerInternal?)context.InstanceServices.GetService<ILogTracer>();
             if (log is not null)
             {
-                //TODO
-                //if correlation ID is available in HTTP request
-                //if correlation ID is available in Queue message 
-                //log.ReplaceCorrelationId(Guid from request)
-
-                log.ReplaceCorrelationId(Guid.NewGuid());
                 log.AddTags(new[] {
-                    ("InvocationId", context.InvocationId.ToString())
+                ("InvocationId", context.InvocationId.ToString())
+
                 });
             }
 
@@ -67,16 +65,17 @@ public class Program
         )
         .ConfigureServices((context, services) =>
             services
-            .AddSingleton<ILogTracerFactory>(_ => new LogTracerFactory(GetLoggers()))
+            .AddScoped<ILogTracer>(_ => new LogTracerFactory(GetLoggers()).CreateLogTracer(Guid.NewGuid(), severityLevel: EnvironmentVariables.LogSeverityLevel()))
             .AddSingleton<INodeOperations, NodeOperations>()
             .AddSingleton<IEvents, Events>()
             .AddSingleton<IWebhookOperations, WebhookOperations>()
             .AddSingleton<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
             .AddSingleton<ITaskOperations, TaskOperations>()
             .AddSingleton<IQueue, Queue>()
-            .AddSingleton<ICreds>(_ => new Creds())
+            .AddSingleton<ICreds, Creds>()
             .AddSingleton<IStorage, Storage>()
             .AddSingleton<IProxyOperations, ProxyOperations>()
+            .AddSingleton<IConfigOperations, ConfigOperations>()
         )
         .Build();
 

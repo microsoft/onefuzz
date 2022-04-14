@@ -3,7 +3,6 @@ using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -58,10 +57,8 @@ public class TestHooks
         {
             await _events.SendEvent(new EventInstanceConfigUpdated(config));
 
-            var str = (new EntityConverter()).ToJsonString(config);
-
             var resp = req.CreateResponse(HttpStatusCode.OK);
-            await resp.WriteStringAsync(str);
+            await resp.WriteAsJsonAsync(config);
             return resp;
         }
     }
