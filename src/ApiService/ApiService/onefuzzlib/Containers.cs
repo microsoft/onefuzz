@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading.Tasks;
-using System.Linq;
 using Azure.ResourceManager;
 using Azure.Storage.Blobs;
 using Azure.Storage;
@@ -10,13 +6,15 @@ using Azure;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IContainers {
+public interface IContainers
+{
     public Task<IEnumerable<byte>?> GetBlob(Container container, string name, StorageType storageType);
 
     public BlobContainerClient? FindContainer(Container container, StorageType storageType);
 }
 
-public class Containers : IContainers {
+public class Containers : IContainers
+{
     private LogTracer _loggerTracer;
     private IStorage _storage;
     private ICreds _creds;

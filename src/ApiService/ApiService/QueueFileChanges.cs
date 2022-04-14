@@ -1,10 +1,7 @@
-using System;
 using Microsoft.Azure.Functions.Worker;
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using System.Linq;
 
 namespace Microsoft.OneFuzz.Service;
 

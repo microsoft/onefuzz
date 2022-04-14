@@ -1,4 +1,3 @@
-using System;
 using Microsoft.Azure.Functions.Worker;
 using System.Text.Json;
 using System.Threading.Tasks;

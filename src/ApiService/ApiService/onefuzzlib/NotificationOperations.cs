@@ -1,12 +1,11 @@
-using System.Linq;
-using System.Collections.Generic;
 using ApiService.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
-public class NotificationOperations: Orm<Notification> {
+public class NotificationOperations : Orm<Notification>
+{
     public NotificationOperations(IStorage storage)
-        :base(storage)
+        : base(storage)
     {
     }
     public void NewFiles(Container container, string filename, bool failTaskOnTransientError)

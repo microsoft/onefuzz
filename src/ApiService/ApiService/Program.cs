@@ -1,5 +1,6 @@
-using System;
-using System.Collections.Generic;
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;

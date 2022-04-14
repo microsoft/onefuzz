@@ -1,10 +1,7 @@
-using System.Collections.Generic;
-using System;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Core;
 using System.Text.Json;
-using System.Linq;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -122,7 +119,7 @@ public class Storage : IStorage
             case StorageType.Corpus:
                 return CorpusAccounts(logTracer);
             case StorageType.Config:
-                return new [] {GetFuncStorage()};
+                return new[] { GetFuncStorage() };
             default:
                 throw new NotImplementedException();
         }

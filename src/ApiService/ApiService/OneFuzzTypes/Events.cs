@@ -1,5 +1,4 @@
-﻿using System;
-using PoolName = System.String;
+﻿using PoolName = System.String;
 
 namespace Microsoft.OneFuzz.Service
 {

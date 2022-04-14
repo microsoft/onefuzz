@@ -1,7 +1,5 @@
 using Azure.Data.Tables;
-using System;
 using System.Reflection;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Text.Json;
 using System.Text.Json.Serialization;

@@ -1,8 +1,6 @@
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using System;
-using System.Collections.Generic;
 using PoolName = System.String;
-using System.Linq;
+using System.Security.Cryptography;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -150,15 +148,63 @@ public record EventMessage(
 
 public record Container(string ContainerName)
 {
-    public string ContainerName {get;} = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
+    public string ContainerName { get; } = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
 }
 
 public record Notification(
     DateTime? Timestamp,
     Container container,
     Guid NotificationId
-    // NotificationTemplate
+// NotificationTemplate
 ) : EntityBase();
+
+public record BlobRef(
+    string Account,
+    Container container,
+    string name
+);
+
+public record Report(
+    string? InputUrl,
+    BlobRef? InputBlob,
+    string Executable,
+    string CrashType,
+    string CrashSite,
+    IEnumerable<string> CallStack,
+    SHA256 CallStackSha256,
+    SHA256 InputSha256,
+    string? AsanLog,
+    Guid TaskId,
+    Guid JobId,
+    int? ScarinessScore,
+    string? ScarinessDescription,
+    IEnumerable<string>? MinimizedStack,
+    SHA256? MinimizedStackSha256,
+    IEnumerable<string>? MinimizedStackFunctionNames,
+    SHA256? MinimizedStackFunctionNamesSha256,
+    IEnumerable<string>? MinimizedStackFunctionLines,
+    SHA256? MinimizedStackFunctionLinesSha256
+);
+
+public record NoReproReport(
+    SHA256 InputSha,
+    BlobRef? InputBlob,
+    string? Executable,
+    Guid TaskId,
+    Guid JobId,
+    int Tries,
+    string? Error
+);
+
+public record CrashTestResult(
+    Report? CrashReport,
+    NoReproReport? NoRepor
+);
+
+public record RegressionReport(
+    CrashTestResult CrashTestResult,
+    CrashTestResult? OriginalCrashTestResult
+);
 
 
 //record AnyHttpUrl(AnyUrl):

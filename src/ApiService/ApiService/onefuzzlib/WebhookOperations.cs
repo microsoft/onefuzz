@@ -1,7 +1,5 @@
 ﻿using ApiService.OneFuzzLib.Orm;
 using Microsoft.OneFuzz.Service;
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ApiService.OneFuzzLib;
