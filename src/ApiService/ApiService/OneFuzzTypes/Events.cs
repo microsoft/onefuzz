@@ -104,11 +104,11 @@ namespace Microsoft.OneFuzz.Service
     //    ) : BaseEvent();
 
 
-    //record EventTaskHeartbeat(
-    //    JobId: Guid,
-    //    TaskId: Guid,
-    //    Config: TaskConfig
-    //): BaseEvent();
+    record EventTaskHeartbeat(
+       Guid JobId,
+       Guid TaskId,
+       TaskConfig Config
+    ) : BaseEvent();
 
 
     //record EventPing(
