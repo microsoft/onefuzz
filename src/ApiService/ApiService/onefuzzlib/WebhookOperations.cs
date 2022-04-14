@@ -20,17 +20,16 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         );
 
     private readonly IQueue _queue;
-    private readonly ILogTracerFactory _loggerFactory;
-    public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILogTracerFactory loggerFactory) : base(storage)
+    private readonly ILogTracer _log;
+    public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILogTracer log) : base(storage)
     {
         _queue = queue;
-        _loggerFactory = loggerFactory;
+        _log = log;
     }
 
 
     public async Async.Task QueueWebhook(WebhookMessageLog webhookLog)
     {
-        var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
         var obj = new WebhookMessageQueueObj(webhookLog.WebhookId, webhookLog.EventId);
 
         TimeSpan? visibilityTimeout = webhookLog.State switch
@@ -42,7 +41,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
 
         if (visibilityTimeout == null)
         {
-            log.AddTags(
+            _log.WithTags(
                     new[] {
                         ("WebhookId", webhookLog.WebhookId.ToString()),
                         ("EventId", webhookLog.EventId.ToString()) }
@@ -70,10 +69,12 @@ public interface IWebhookOperations
 public class WebhookOperations : Orm<Webhook>, IWebhookOperations
 {
     private readonly IWebhookMessageLogOperations _webhookMessageLogOperations;
-    public WebhookOperations(IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations)
+    private readonly ILogTracer _log;
+    public WebhookOperations(IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations, ILogTracer log)
         : base(storage)
     {
         _webhookMessageLogOperations = webhookMessageLogOperations;
+        _log = log;
     }
 
     async public Async.Task SendEvent(EventMessage eventMessage)
@@ -99,7 +100,12 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
              WebhookId: webhook.WebhookId
             );
 
-        await _webhookMessageLogOperations.Replace(message);
+        var r = await _webhookMessageLogOperations.Replace(message);
+        if (!r.IsOk)
+        {
+            var (status, reason) = r.ErrorV;
+            _log.Error($"Failed to replace webhook message log due to [{status}] {reason}");
+        }
     }
 
 
