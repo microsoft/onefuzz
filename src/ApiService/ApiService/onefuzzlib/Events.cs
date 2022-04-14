@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace Microsoft.OneFuzz.Service
 {
@@ -20,9 +19,9 @@ namespace Microsoft.OneFuzz.Service
 
     public interface IEvents
     {
-        public Task SendEvent(BaseEvent anEvent);
+        public Async.Task SendEvent(BaseEvent anEvent);
 
-        public Task QueueSignalrEvent(EventMessage message);
+        public Async.Task QueueSignalrEvent(EventMessage message);
     }
 
     public class Events : IEvents
@@ -38,14 +37,14 @@ namespace Microsoft.OneFuzz.Service
             _webhook = webhook;
         }
 
-        public async Task QueueSignalrEvent(EventMessage eventMessage)
+        public async Async.Task QueueSignalrEvent(EventMessage eventMessage)
         {
             var message = new SignalREvent("events", new List<EventMessage>() { eventMessage });
             var encodedMessage = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
             await _queue.SendMessage("signalr-events", encodedMessage, StorageType.Config);
         }
 
-        public async Task SendEvent(BaseEvent anEvent)
+        public async Async.Task SendEvent(BaseEvent anEvent)
         {
             var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
             var eventType = anEvent.GetEventType();

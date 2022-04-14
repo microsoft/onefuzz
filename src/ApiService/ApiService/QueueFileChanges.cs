@@ -2,7 +2,6 @@ using System;
 using Microsoft.Azure.Functions.Worker;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System.Linq;
 
@@ -15,19 +14,17 @@ public class QueueFileChanges
     const int MAX_DEQUEUE_COUNT = 5;
 
     private readonly ILogTracerFactory _loggerFactory;
-    private readonly IStorageProvider _storageProvider;
 
     private readonly IStorage _storage;
 
-    public QueueFileChanges(ILogTracerFactory loggerFactory, IStorageProvider storageProvider, IStorage storage)
+    public QueueFileChanges(ILogTracerFactory loggerFactory, IStorage storage)
     {
         _loggerFactory = loggerFactory;
-        _storageProvider = storageProvider;
         _storage = storage;
     }
 
     [Function("QueueFileChanges")]
-    public Task Run(
+    public Async.Task Run(
         [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount)
     {
@@ -42,18 +39,18 @@ public class QueueFileChanges
         if (!fileChangeEvent.ContainsKey(eventType)
             || fileChangeEvent[eventType] != "Microsoft.Storage.BlobCreated")
         {
-            return Task.CompletedTask;
+            return Async.Task.CompletedTask;
         }
 
         const string topic = "topic";
         if (!fileChangeEvent.ContainsKey(topic)
             || !_storage.CorpusAccounts(log).Contains(fileChangeEvent[topic]))
         {
-            return Task.CompletedTask;
+            return Async.Task.CompletedTask;
         }
 
         file_added(log, fileChangeEvent, lastTry);
-        return Task.CompletedTask;
+        return Async.Task.CompletedTask;
     }
 
     private void file_added(ILogTracer log, Dictionary<string, string> fileChangeEvent, bool failTaskOnTransientError)
