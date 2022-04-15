@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using ApiService.OneFuzzLib;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Azure.Functions.Worker;
 
@@ -22,7 +21,7 @@ public class Program
             {
                 //TODO
                 //if correlation ID is available in HTTP request
-                //if correlation ID is available in Queue message 
+                //if correlation ID is available in Queue message
                 //log.ReplaceCorrelationId(Guid from request)
 
                 log.ReplaceCorrelationId(Guid.NewGuid());
@@ -76,6 +75,7 @@ public class Program
             .AddScoped<IStorage, Storage>()
             .AddScoped<IProxyOperations, ProxyOperations>()
             .AddScoped<IConfigOperations, ConfigOperations>()
+            .AddScoped<IScalesetOperations, ScalesetOperations>()
 
         //TODO: move out expensive resources into separate class, and add those as Singleton
         // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.

@@ -1,5 +1,4 @@
-﻿using ApiService.OneFuzzLib;
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
 using System.Collections.Generic;
 using System.Text;
