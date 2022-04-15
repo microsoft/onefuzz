@@ -384,8 +384,8 @@ public record ScalesetNodeState(
 
 
 public record Scaleset(
-    PoolName PoolName,
-    Guid ScalesetId,
+    [PartitionKey] PoolName PoolName,
+    [RowKey] Guid ScalesetId,
     ScalesetState State,
     Authentication? Auth,
     string VmSku,
