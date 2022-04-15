@@ -198,10 +198,16 @@ public class EntityConverter
                         {
                             throw new Exception("invalid ");
                         }
-
                     }
 
                     var fieldName = ef.columnName;
+                    var obj = entity[fieldName];
+                    if (obj == null)
+                    {
+                        return null;
+                    }
+                    var objType = obj.GetType();
+
                     if (ef.type == typeof(string))
                     {
                         return entity.GetString(fieldName);
@@ -245,10 +251,6 @@ public class EntityConverter
                     else
                     {
                         var value = entity.GetString(fieldName);
-                        if (value == null)
-                        {
-                            return null;
-                        }
                         return JsonSerializer.Deserialize(value, ef.type, options: _options); ;
                     }
                 }
