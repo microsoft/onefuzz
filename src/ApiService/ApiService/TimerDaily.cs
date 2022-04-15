@@ -26,7 +26,7 @@ public class TimerDaily
         await foreach (var scaleset in scalesets)
         {
             _logger.LogInformation($"updating scaleset configs: {scaleset.ScalesetId}");
-            // todo: do ti in batches
+            // todo: do it in batches
             await _scalesets.Replace(scaleset with { NeedsConfigUpdate = true });
         }
 

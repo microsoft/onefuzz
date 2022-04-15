@@ -401,3 +401,33 @@ public record Scaleset(
     Dictionary<string, string> Tags
 
 ) : EntityBase();
+
+
+public record BlobRef(
+    string Account,
+    Container Container,
+    string Name
+);
+
+
+public record Report(
+    string? InputURL,
+    BlobRef? InputBlob,
+    string? Executable,
+    string CrashType,
+    string CrashSite,
+    List<string> CallStack,
+    string CallStackSha256,
+    string InputSha256,
+    string? AsanLog,
+    Guid TaskID,
+    Guid JobID,
+    int? ScarinessScore,
+    string? ScarinessDescription,
+    List<string> MinimizedStack,
+    string? MinimizedStackSha256,
+    List<string> MinimizedStackFunctionNames,
+    string? MinimizedStackFunctionNamesSha256,
+    List<string> MinimizedStackFunctionLines,
+    string? MinimizedStackFunctionLinesSha256
+);
