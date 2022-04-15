@@ -200,6 +200,8 @@ public class EntityConverter
                             return entity.GetString(ef.kind.ToString());
                         else if (ef.type == typeof(Guid))
                             return Guid.Parse(entity.GetString(ef.kind.ToString()));
+                        else if (ef.type == typeof(int))
+                            return int.Parse(entity.GetString(ef.kind.ToString()));
                         else
                         {
                             throw new Exception("invalid ");
