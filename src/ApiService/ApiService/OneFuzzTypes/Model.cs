@@ -373,3 +373,31 @@ public record InstanceConfig
         }
     }
 }
+
+
+public record ScalesetNodeState(
+    Guid MachineId,
+    string InstanceId,
+    NodeState? State
+
+);
+
+
+public record Scaleset(
+    PoolName PoolName,
+    Guid ScalesetId,
+    ScalesetState State,
+    Authentication? Auth,
+    string VmSku,
+    string Image,
+    Region Region,
+    int Size,
+    bool SpotInstance,
+    bool EphemeralOsDisks,
+    bool NeedsConfigUpdate,
+    List<ScalesetNodeState> Nodes,
+    Guid? ClientId,
+    Guid? ClientObjectId,
+    Dictionary<string, string> Tags
+
+) : EntityBase();
