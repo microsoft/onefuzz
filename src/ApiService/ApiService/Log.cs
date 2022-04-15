@@ -229,7 +229,7 @@ public class LogTracer : ILogTracerInternal
 
     public void Verbose(string message)
     {
-        if (_logSeverityLevel >= SeverityLevel.Verbose)
+        if (_logSeverityLevel <= SeverityLevel.Verbose)
         {
             var caller = GetCaller();
             foreach (var logger in _loggers)
@@ -241,7 +241,7 @@ public class LogTracer : ILogTracerInternal
 
     public void Info(string message)
     {
-        if (_logSeverityLevel >= SeverityLevel.Information)
+        if (_logSeverityLevel <= SeverityLevel.Information)
         {
             var caller = GetCaller();
             foreach (var logger in _loggers)
@@ -253,7 +253,7 @@ public class LogTracer : ILogTracerInternal
 
     public void Warning(string message)
     {
-        if (_logSeverityLevel >= SeverityLevel.Warning)
+        if (_logSeverityLevel <= SeverityLevel.Warning)
         {
             var caller = GetCaller();
             foreach (var logger in _loggers)
@@ -265,7 +265,7 @@ public class LogTracer : ILogTracerInternal
 
     public void Error(string message)
     {
-        if (_logSeverityLevel >= SeverityLevel.Error)
+        if (_logSeverityLevel <= SeverityLevel.Error)
         {
             var caller = GetCaller();
             foreach (var logger in _loggers)
@@ -277,7 +277,7 @@ public class LogTracer : ILogTracerInternal
 
     public void Critical(string message)
     {
-        if (_logSeverityLevel >= SeverityLevel.Critical)
+        if (_logSeverityLevel <= SeverityLevel.Critical)
         {
             var caller = GetCaller();
             foreach (var logger in _loggers)
