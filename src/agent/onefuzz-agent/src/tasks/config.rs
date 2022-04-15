@@ -7,7 +7,7 @@ use crate::tasks::coverage;
 use crate::tasks::{
     analysis, fuzz,
     heartbeat::{init_task_heartbeat, TaskHeartbeatClient},
-    merge, regression, report,
+    merge, regression, report, task_logger,
 };
 use anyhow::Result;
 use onefuzz::machine_id::{get_machine_id, get_scaleset_name};
@@ -45,6 +45,8 @@ pub struct CommonConfig {
     pub instance_telemetry_key: Option<InstanceTelemetryKey>,
 
     pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
+
+    pub logs: Option<Url>,
 
     #[serde(default)]
     pub setup_dir: PathBuf,
@@ -204,6 +206,7 @@ impl Config {
         telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
         telemetry::set_property(EventData::InstanceId(self.common().instance_id));
         telemetry::set_property(EventData::Role(Role::Agent));
+
         let scaleset = get_scaleset_name().await?;
         if let Some(scaleset_name) = &scaleset {
             telemetry::set_property(EventData::ScalesetId(scaleset_name.to_string()));
@@ -211,6 +214,20 @@ impl Config {
 
         info!("agent ready, dispatching task");
         self.report_event();
+
+        let common = self.common().clone();
+        if let Some(logs) = common.logs.clone() {
+            let rx = onefuzz_telemetry::subscribe_to_events();
+
+            let _logging = tokio::spawn(async move {
+                let logger = task_logger::TaskLogger::new(
+                    common.job_id,
+                    common.task_id,
+                    get_machine_id().await?,
+                );
+                logger.start(rx, logs).await
+            });
+        }
 
         match self {
             #[cfg(any(target_os = "linux", target_os = "windows"))]

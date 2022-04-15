@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 from ..azure.containers import blob_exists, get_container_sas_url
 from ..azure.storage import StorageType
+from ..jobs import Job
 from ..workers.pools import Pool
 from .config import build_task_config, get_setup_container
 from .main import Task
@@ -116,7 +117,11 @@ def build_work_unit(task: Task) -> Optional[Tuple[BucketConfig, WorkUnit]]:
 
     logging.info("scheduling task: %s", task.task_id)
 
-    task_config = build_task_config(task.job_id, task.task_id, task.config)
+    job = Job.get(task.job_id)
+    if not job:
+        raise Exception(f"invalid job_id {task.job_id} for task {task.task_id}")
+
+    task_config = build_task_config(job, task)
 
     setup_container = get_setup_container(task.config)
     setup_script = None

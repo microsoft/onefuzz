@@ -7,13 +7,17 @@ import logging
 import os
 import pathlib
 from typing import Dict, List, Optional
-from uuid import UUID
 
 from onefuzztypes.enums import Compare, ContainerPermission, ContainerType, TaskFeature
-from onefuzztypes.models import TaskConfig, TaskDefinition, TaskUnitConfig
+from onefuzztypes.models import Job, Task, TaskConfig, TaskDefinition, TaskUnitConfig
 from onefuzztypes.primitives import Container
 
-from ..azure.containers import blob_exists, container_exists, get_container_sas_url
+from ..azure.containers import (
+    add_container_sas_url,
+    blob_exists,
+    container_exists,
+    get_container_sas_url,
+)
 from ..azure.creds import get_instance_id
 from ..azure.queue import get_queue_sas
 from ..azure.storage import StorageType
@@ -255,18 +259,25 @@ def check_config(config: TaskConfig) -> None:
             raise TaskConfigError(err)
 
 
-def build_task_config(
-    job_id: UUID, task_id: UUID, task_config: TaskConfig
-) -> TaskUnitConfig:
+def build_task_config(job: Job, task: Task) -> TaskUnitConfig:
+    job_id = job.job_id
+    task_id = task.task_id
+    task_config = task.config
 
     if task_config.task.type not in TASK_DEFINITIONS:
         raise TaskConfigError("unsupported task type: %s" % task_config.task.type.name)
+
+    if job.config.logs is None:
+        raise TaskConfigError(
+            "Missing log container:  job_id %s, task_id %s", job_id, task_id
+        )
 
     definition = TASK_DEFINITIONS[task_config.task.type]
 
     config = TaskUnitConfig(
         job_id=job_id,
         task_id=task_id,
+        logs=add_container_sas_url(job.config.logs),
         task_type=task_config.task.type,
         instance_telemetry_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
         microsoft_telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),

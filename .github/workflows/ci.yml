@@ -137,7 +137,7 @@ jobs:
       run: |
         set -ex
         cd contrib/webhook-teams-service
-        python -m pip install --upgrade pip isort black mypy==0.910 flake8
+        python -m pip install --upgrade pip isort click==8.0.4 black mypy==0.910 flake8
         pip install -r requirements.txt
         mypy webhook
         black webhook --check
@@ -248,6 +248,30 @@ jobs:
 
         ../ci/disable-py-cache.sh
         mypy __app__ ./tests
+  service-net:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '6.0.x'
+    - name: Install dependencies
+      run: |
+        cd src/ApiService/
+        dotnet restore
+    - name: Check Formatting
+      run: |
+        cd src/ApiService/
+        dotnet format --verify-no-changes --no-restore
+    - name: Build Service
+      run: |
+        cd src/ApiService/
+        dotnet build -warnaserror --configuration Release
+    - name: Test
+      run: |
+        cd src/ApiService/
+        dotnet test --no-restore
   afl:
     runs-on: ubuntu-18.04
     steps:
@@ -257,6 +281,7 @@ jobs:
       with:
         name: build-artifacts
         path: artifacts
+
   aflpp:
     runs-on: ubuntu-18.04
     steps:
@@ -312,7 +337,7 @@ jobs:
         set -ex
         cd src/deployment
         python -m pip install --upgrade pip
-        pip install mypy==0.910 isort black types-requests flake8
+        pip install mypy==0.910 isort click==8.0.4 black types-requests flake8
         mypy .
         isort --profile black . --check
         black . --check

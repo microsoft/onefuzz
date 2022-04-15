@@ -150,7 +150,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -985,6 +986,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Duration",
                     "type": "integer"
                 },
+                "logs": {
+                    "title": "Logs",
+                    "type": "string"
+                },
                 "name": {
                     "title": "Name",
                     "type": "string"
@@ -1128,7 +1133,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         },
@@ -1143,6 +1149,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
+                },
+                "logs": {
+                    "title": "Logs",
+                    "type": "string"
                 },
                 "name": {
                     "title": "Name",
@@ -1740,7 +1750,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         }
@@ -1932,7 +1943,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -2648,7 +2660,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         }
@@ -2834,7 +2847,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -3289,7 +3303,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -3338,7 +3353,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         },
@@ -3786,7 +3802,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -4208,7 +4225,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -4657,7 +4675,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -5236,7 +5255,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -5297,7 +5317,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         },
@@ -6062,6 +6083,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
+                },
+                "logs": {
+                    "title": "Logs",
+                    "type": "string"
                 },
                 "name": {
                     "title": "Name",
