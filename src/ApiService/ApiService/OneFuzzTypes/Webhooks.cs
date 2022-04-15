@@ -49,7 +49,7 @@ public record WebhookMessageLog(
 public record Webhook(
     [PartitionKey] Guid WebhookId,
     [RowKey] string Name,
-    Uri? url,
+    Uri? Url,
     List<EventType> EventTypes,
     string SecretToken, // SecretString??
     WebhookMessageFormat? MessageFormat

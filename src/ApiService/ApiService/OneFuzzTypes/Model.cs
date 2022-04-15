@@ -144,7 +144,7 @@ public partial record Proxy
     string? Ip,
     Error? Error,
     string Version,
-    ProxyHeartbeat? heartbeat
+    ProxyHeartbeat? Heartbeat
 ) : EntityBase();
 
 public record Error(ErrorCode Code, string[]? Errors = null);
