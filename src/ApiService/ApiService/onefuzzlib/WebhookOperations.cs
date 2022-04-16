@@ -1,19 +1,20 @@
 ﻿using ApiService.OneFuzzLib.Orm;
-using Microsoft.OneFuzz.Service;
 using System;
 using System.Collections.Generic;
 
-namespace ApiService.OneFuzzLib;
+namespace Microsoft.OneFuzz.Service;
 
 
 public interface IWebhookMessageLogOperations : IOrm<WebhookMessageLog>
 {
-
+    IAsyncEnumerable<WebhookMessageLog> SearchExpired();
 }
 
 
 public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessageLogOperations
 {
+    const int EXPIRE_DAYS = 7;
+
     record WebhookMessageQueueObj(
         Guid WebhookId,
         Guid EventId
@@ -57,6 +58,14 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     private void QueueObject(string v, WebhookMessageQueueObj obj, StorageType config, int? visibility_timeout)
     {
         throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<WebhookMessageLog> SearchExpired()
+    {
+        var expireTime = (DateTimeOffset.UtcNow - TimeSpan.FromDays(EXPIRE_DAYS)).ToString("o");
+
+        var timeFilter = $"Timestamp lt datetime'{expireTime}'";
+        return QueryAsync(filter: timeFilter);
     }
 }
 

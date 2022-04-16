@@ -152,13 +152,6 @@ public record Error(ErrorCode Code, string[]? Errors = null);
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
 
 
-public record EventMessage(
-    Guid EventId,
-    EventType EventType,
-    BaseEvent Event,
-    Guid InstanceId,
-    String InstanceName
-) : EntityBase();
 
 
 public record TaskDetails(
@@ -373,3 +366,61 @@ public record InstanceConfig
         }
     }
 }
+
+
+public record ScalesetNodeState(
+    Guid MachineId,
+    string InstanceId,
+    NodeState? State
+
+);
+
+
+public record Scaleset(
+    [PartitionKey] PoolName PoolName,
+    [RowKey] Guid ScalesetId,
+    ScalesetState State,
+    Authentication? Auth,
+    string VmSku,
+    string Image,
+    Region Region,
+    int Size,
+    bool SpotInstance,
+    bool EphemeralOsDisks,
+    bool NeedsConfigUpdate,
+    List<ScalesetNodeState> Nodes,
+    Guid? ClientId,
+    Guid? ClientObjectId,
+    Dictionary<string, string> Tags
+
+) : EntityBase();
+
+
+public record BlobRef(
+    string Account,
+    Container Container,
+    string Name
+);
+
+
+public record Report(
+    string? InputURL,
+    BlobRef? InputBlob,
+    string? Executable,
+    string CrashType,
+    string CrashSite,
+    List<string> CallStack,
+    string CallStackSha256,
+    string InputSha256,
+    string? AsanLog,
+    Guid TaskID,
+    Guid JobID,
+    int? ScarinessScore,
+    string? ScarinessDescription,
+    List<string> MinimizedStack,
+    string? MinimizedStackSha256,
+    List<string> MinimizedStackFunctionNames,
+    string? MinimizedStackFunctionNamesSha256,
+    List<string> MinimizedStackFunctionLines,
+    string? MinimizedStackFunctionLinesSha256
+);
