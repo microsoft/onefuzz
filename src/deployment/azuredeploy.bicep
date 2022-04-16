@@ -21,9 +21,6 @@ param workbookData object
 ])
 param diagnosticsLogLevel string = 'Verbose'
 
-@description('Generating new GUID for role assignment IDs.')
-param new_guid string = newGuid()
-
 var log_retention = 30
 var tenantId = subscription().tenantId
 
@@ -167,7 +164,7 @@ module eventGrid 'bicep-templates/event-grid.bicep' = {
 
 // try to make role assignments to deploy as late as possible in order to has principalId ready
 resource roleAssigmentsPy 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
-  name: guid('${new_guid}${r.suffix}')
+  name: guid('${resourceGroup().id}${r.suffix}-python')
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${r.role}'
     principalId: pythonFunction.outputs.principalId
@@ -181,7 +178,7 @@ resource roleAssigmentsPy 'Microsoft.Authorization/roleAssignments@2020-10-01-pr
 
 // try to make role assignments to deploy as late as possible in order to has principalId ready
 resource roleAssigmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
-  name: guid('${new_guid}${r.suffix}-net')
+  name: guid('${resourceGroup().id}${r.suffix}-net')
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${r.role}'
     principalId: netFunction.outputs.principalId
@@ -196,7 +193,7 @@ resource roleAssigmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-p
 
 // try to make role assignments to deploy as late as possible in order to has principalId ready
 resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
-  name: guid('${new_guid}-user_managed_idenity_read_blob')
+  name: guid('${resourceGroup().id}-user_managed_idenity_read_blob')
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${StorageBlobDataReader}'
     principalId: reference(scalesetIdentity.id, scalesetIdentity.apiVersion, 'Full').properties.principalId
