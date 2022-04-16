@@ -40,13 +40,18 @@ namespace Tests
             TestFlagEnum TheFlag,
             [property: JsonPropertyName("a__special__name")] string Renamed,
             TestObject TheObject,
-            TestObject? TestNull
+            TestObject? TestNull,
+
+            Uri TestUri,
+            Uri? TestUriNull
+
             ) : EntityBase();
 
 
         [Fact]
-        public void TestConvertToTableEntity()
+        public void TestBothDirections()
         {
+            var uriString = "https://localhost:9090";
             var converter = new EntityConverter();
             var entity1 = new Entity1(
                             Guid.NewGuid(),
@@ -62,7 +67,60 @@ namespace Tests
                                 TheEnum = TestEnum.TheTwo,
                                 TheFlag = TestFlagEnum.FlagOne | TestFlagEnum.FlagTwo
                             },
-                            null);
+                            null,
+                            new Uri(uriString),
+                            null
+                            );
+
+
+            var tableEntity = converter.ToTableEntity(entity1);
+            var fromTableEntity = converter.ToRecord<Entity1>(tableEntity);
+            var eq = fromTableEntity == entity1;
+
+            Assert.Equal(fromTableEntity.TimeStamp, entity1.TimeStamp);
+            Assert.Equal(fromTableEntity.Id, entity1.Id);
+            Assert.Equal(fromTableEntity.Renamed, entity1.Renamed);
+            Assert.Equal(fromTableEntity.TestNull, entity1.TestNull);
+            Assert.Equal(fromTableEntity.TestUri, entity1.TestUri);
+            Assert.Equal(fromTableEntity.TestUriNull, entity1.TestUriNull);
+            Assert.Equal(fromTableEntity.TheDate, entity1.TheDate);
+            Assert.Equal(fromTableEntity.TheEnum, entity1.TheEnum);
+
+            Assert.Equal(fromTableEntity.TheFlag, entity1.TheFlag);
+            Assert.Equal(fromTableEntity.TheFloat, entity1.TheFloat);
+            Assert.Equal(fromTableEntity.TheName, entity1.TheName);
+            Assert.Equal(fromTableEntity.TheNumber, entity1.TheNumber);
+            Assert.Equal(fromTableEntity.TimeStamp, entity1.TimeStamp);
+
+            Assert.Equal(fromTableEntity.TheObject.TheEnum, entity1.TheObject.TheEnum);
+            Assert.Equal(fromTableEntity.TheObject.TheFlag, entity1.TheObject.TheFlag);
+            Assert.Equal(fromTableEntity.TheObject.TheName, entity1.TheObject.TheName);
+        }
+
+
+        [Fact]
+        public void TestConvertToTableEntity()
+        {
+            var uriString = "https://localhost:9090";
+            var converter = new EntityConverter();
+            var entity1 = new Entity1(
+                            Guid.NewGuid(),
+                            "test",
+                            DateTimeOffset.UtcNow,
+                            123,
+                            12.44,
+                            TestEnum.TheTwo, TestFlagEnum.FlagOne | TestFlagEnum.FlagTwo,
+                            "renamed",
+                            new TestObject
+                            {
+                                TheName = "testobject",
+                                TheEnum = TestEnum.TheTwo,
+                                TheFlag = TestFlagEnum.FlagOne | TestFlagEnum.FlagTwo
+                            },
+                            null,
+                            new Uri(uriString),
+                            null
+                            );
             var tableEntity = converter.ToTableEntity(entity1);
 
             Assert.NotNull(tableEntity);
@@ -74,6 +132,9 @@ namespace Tests
             Assert.Equal("the_two", tableEntity.GetString("the_enum"));
             Assert.Equal("flag_one,flag_two", tableEntity.GetString("the_flag"));
             Assert.Equal("renamed", tableEntity.GetString("a__special__name"));
+
+            Assert.Equal(uriString, tableEntity.GetString("test_uri"));
+
 
             var json = JsonNode.Parse(tableEntity.GetString("the_object"))?.AsObject() ?? throw new InvalidOperationException("Could not parse objec");
 

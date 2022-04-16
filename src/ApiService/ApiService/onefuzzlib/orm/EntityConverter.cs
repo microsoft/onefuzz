@@ -12,7 +12,7 @@ namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 public abstract record EntityBase
 {
-    public ETag? ETag { get; set; }
+    [JsonIgnore] public ETag? ETag { get; set; }
     public DateTimeOffset? TimeStamp { get; set; }
 
     //public ApiService.OneFuzzLib.Orm.IOrm<EntityBase>? Orm { get; set; }
@@ -119,6 +119,12 @@ public class EntityConverter
         });
     }
 
+    public string ToJsonString<T>(T typedEntity) where T : EntityBase
+    {
+        var serialized = JsonSerializer.Serialize(typedEntity, _options);
+        return serialized;
+    }
+
     public TableEntity ToTableEntity<T>(T typedEntity) where T : EntityBase
     {
         if (typedEntity == null)
@@ -168,7 +174,7 @@ public class EntityConverter
             else
             {
                 var serialized = JsonSerializer.Serialize(value, _options);
-                tableEntity.Add(prop.columnName, serialized);
+                tableEntity.Add(prop.columnName, serialized.Trim('"'));
             }
 
         }
@@ -250,8 +256,23 @@ public class EntityConverter
                     }
                     else
                     {
-                        var value = entity.GetString(fieldName);
-                        return JsonSerializer.Deserialize(value, ef.type, options: _options); ;
+                        if (objType == typeof(string))
+                        {
+                            var value = entity.GetString(fieldName);
+                            if (value.StartsWith('[') || value.StartsWith('{') || value == "null")
+                            {
+                                return JsonSerializer.Deserialize(value, ef.type, options: _options);
+                            }
+                            else
+                            {
+                                return JsonSerializer.Deserialize($"\"{value}\"", ef.type, options: _options);
+                            }
+                        }
+                        else
+                        {
+                            var value = entity.GetString(fieldName);
+                            return JsonSerializer.Deserialize(value, ef.type, options: _options);
+                        }
                     }
                 }
             ).ToArray();

@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using ApiService.OneFuzzLib;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Azure.Functions.Worker;
 
@@ -17,17 +16,17 @@ public class Program
     {
         public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next)
         {
-            //TODO
-            //if correlation ID is available in HTTP request
-            //if correlation ID is available in Queue message 
-            //log.ReplaceCorrelationId
-
             var log = (ILogTracerInternal?)context.InstanceServices.GetService<ILogTracer>();
             if (log is not null)
             {
-                log.AddTags(new[] {
-                ("InvocationId", context.InvocationId.ToString())
+                //TODO
+                //if correlation ID is available in HTTP request
+                //if correlation ID is available in Queue message
+                //log.ReplaceCorrelationId(Guid from request)
 
+                log.ReplaceCorrelationId(Guid.NewGuid());
+                log.AddTags(new[] {
+                    ("InvocationId", context.InvocationId.ToString())
                 });
             }
 
@@ -65,17 +64,22 @@ public class Program
         )
         .ConfigureServices((context, services) =>
             services
-            .AddScoped<ILogTracer>(_ => new LogTracerFactory(GetLoggers()).CreateLogTracer(Guid.NewGuid(), severityLevel: EnvironmentVariables.LogSeverityLevel()))
-            .AddSingleton<INodeOperations, NodeOperations>()
-            .AddSingleton<IEvents, Events>()
-            .AddSingleton<IWebhookOperations, WebhookOperations>()
-            .AddSingleton<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
-            .AddSingleton<ITaskOperations, TaskOperations>()
-            .AddSingleton<IQueue, Queue>()
-            .AddSingleton<ICreds, Creds>()
-            .AddSingleton<IStorage, Storage>()
-            .AddSingleton<IProxyOperations, ProxyOperations>()
-            .AddSingleton<IConfigOperations, ConfigOperations>()
+            .AddScoped<ILogTracer>(s => new LogTracerFactory(GetLoggers()).CreateLogTracer(Guid.Empty, severityLevel: EnvironmentVariables.LogSeverityLevel()))
+            .AddScoped<INodeOperations, NodeOperations>()
+            .AddScoped<IEvents, Events>()
+            .AddScoped<IWebhookOperations, WebhookOperations>()
+            .AddScoped<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
+            .AddScoped<ITaskOperations, TaskOperations>()
+            .AddScoped<IQueue, Queue>()
+            .AddScoped<ICreds, Creds>()
+            .AddScoped<IStorage, Storage>()
+            .AddScoped<IProxyOperations, ProxyOperations>()
+            .AddScoped<IConfigOperations, ConfigOperations>()
+            .AddScoped<IScalesetOperations, ScalesetOperations>()
+
+        //TODO: move out expensive resources into separate class, and add those as Singleton
+        // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
+
         )
         .Build();
 
