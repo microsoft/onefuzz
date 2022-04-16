@@ -152,13 +152,6 @@ public record Error(ErrorCode Code, string[]? Errors = null);
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
 
 
-public record EventMessage(
-    Guid EventId,
-    EventType EventType,
-    BaseEvent Event,
-    Guid InstanceId,
-    String InstanceName
-) : EntityBase();
 
 
 public record TaskDetails(
