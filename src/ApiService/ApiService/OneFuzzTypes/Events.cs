@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -262,17 +264,22 @@ public record EventMessage(
     BaseEvent Event,
     Guid InstanceId,
     String InstanceName
-);
+) : EntityBase();
 
 public class EventConverter : JsonConverter<EventMessage>
 {
-    public override bool CanConvert(Type typeToConvert)
+
+    private readonly Dictionary<string, Type> _allBaseEvents;
+
+    public EventConverter()
     {
-        return typeToConvert == typeof(EventMessage);
+        _allBaseEvents = typeof(BaseEvent).Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(BaseEvent))).ToDictionary(x => x.Name);
     }
+
 
     public override EventMessage? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
+
 
         if (reader.TokenType != JsonTokenType.StartObject)
         {
@@ -302,16 +309,17 @@ public class EventConverter : JsonConverter<EventMessage>
                 throw new JsonException();
             }
 
-            var allBaseEvents = typeof(BaseEvent).Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(BaseEvent))).ToDictionary(x => x.Name);
+
             var eventTypeName = eventType.GetString() ?? throw new JsonException();
 
-            if (!allBaseEvents.TryGetValue(eventTypeName, out var eType))
+            if (!_allBaseEvents.TryGetValue($"Event{CaseConverter.SnakeToPascal(eventTypeName)}", out var eType))
             {
                 throw new JsonException($"Unknown eventType {eventTypeName}");
             }
 
+            var rawTest = eventData.GetRawText();
             var eventClass = (BaseEvent)(JsonSerializer.Deserialize(eventData.GetRawText(), eType, options: options) ?? throw new JsonException());
-            var eventTypeEnum = JsonSerializer.Deserialize<EventType>(eventTypeName, options: options);
+            var eventTypeEnum = Enum.Parse<EventType>(CaseConverter.SnakeToPascal(eventTypeName));
 
 
             return new EventMessage(
@@ -326,6 +334,14 @@ public class EventConverter : JsonConverter<EventMessage>
 
     public override void Write(Utf8JsonWriter writer, EventMessage value, JsonSerializerOptions options)
     {
-        JsonSerializer.Serialize(writer, (object)value, options);
+        writer.WriteStartObject();
+        writer.WriteString("event_id", value.EventId.ToString());
+        writer.WriteString("event_type", CaseConverter.PascalToSnake(value.EventType.ToString()));
+        writer.WritePropertyName("event");
+        var eventstr = JsonSerializer.Serialize(value.Event, value.Event.GetType(), options);
+        writer.WriteRawValue(eventstr);
+        writer.WriteString("instance_id", value.InstanceId.ToString());
+        writer.WriteString("instance_name", value.InstanceName);
+        writer.WriteEndObject();
     }
 }
