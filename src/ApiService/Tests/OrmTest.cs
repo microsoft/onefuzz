@@ -4,6 +4,8 @@ using Azure.Data.Tables;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using Microsoft.OneFuzz.Service;
+using System.Text.Json;
 
 namespace Tests
 {
@@ -229,6 +231,35 @@ namespace Tests
                 var actual = CaseConverter.SnakeToPascal(input);
                 Assert.Equal(expected, actual);
             }
+        }
+
+
+
+        [Fact]
+        public void TestEventSerialization()
+        {
+            var expectedEvent = new EventMessage(Guid.NewGuid(), EventType.NodeHeartbeat, new EventNodeHeartbeat(Guid.NewGuid(), Guid.NewGuid(), "test Poool"), Guid.NewGuid(), "test");
+            var serialized = JsonSerializer.Serialize(expectedEvent, EntityConverter.GetJsonSerializerOptions());
+            var actualEvent = JsonSerializer.Deserialize<EventMessage>(serialized, EntityConverter.GetJsonSerializerOptions());
+            Assert.Equal(expectedEvent, actualEvent);
+        }
+
+
+        record Entity2(
+            [PartitionKey] int Id,
+            [RowKey] string TheName
+            ) : EntityBase();
+
+        [Fact]
+        public void TestIntKey()
+        {
+            var expected = new Entity2(10, "test");
+            var converter = new EntityConverter();
+            var tableEntity = converter.ToTableEntity(expected);
+            var actual = converter.ToRecord<Entity2>(tableEntity);
+
+            Assert.Equal(expected.Id, actual.Id);
+            Assert.Equal(expected.TheName, actual.TheName);
         }
     }
 }

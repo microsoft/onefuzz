@@ -140,8 +140,13 @@ public class EntityConverter
         var entityInfo = GetEntityInfo<T>();
         foreach (var prop in entityInfo.properties)
         {
+
             var value = entityInfo.type.GetProperty(prop.name)?.GetValue(typedEntity);
-            if (prop.type == typeof(Guid) || prop.type == typeof(Guid?))
+            if (prop.kind == EntityPropertyKind.PartitionKey || prop.kind == EntityPropertyKind.RowKey)
+            {
+                tableEntity.Add(prop.columnName, value?.ToString());
+            }
+            else if (prop.type == typeof(Guid) || prop.type == typeof(Guid?))
             {
                 tableEntity.Add(prop.columnName, value?.ToString());
             }
@@ -200,6 +205,8 @@ public class EntityConverter
                             return entity.GetString(ef.kind.ToString());
                         else if (ef.type == typeof(Guid))
                             return Guid.Parse(entity.GetString(ef.kind.ToString()));
+                        else if (ef.type == typeof(int))
+                            return int.Parse(entity.GetString(ef.kind.ToString()));
                         else
                         {
                             throw new Exception("invalid ");

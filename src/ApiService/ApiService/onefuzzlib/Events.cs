@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 namespace Microsoft.OneFuzz.Service
 {
 
+
     public record SignalREvent
     (
         string Target,
