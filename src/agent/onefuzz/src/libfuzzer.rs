@@ -217,6 +217,9 @@ impl<'a> LibFuzzer<'a> {
         Ok(())
     }
 
+    /// Invoke `{target_exe} -help=1`. If this succeeds, then the dynamic linker is at
+    /// least able to satisfy the fuzzer's shared library dependencies. User-authored
+    /// dynamic loading may still fail later on, e.g. in `LLVMFuzzerInitialize()`.
     async fn check_help(&self) -> Result<()> {
         let mut cmd = self.build_command(None, None, None).await?;
         cmd.arg("-help=1");
