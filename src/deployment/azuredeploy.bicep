@@ -164,7 +164,7 @@ module eventGrid 'bicep-templates/event-grid.bicep' = {
 
 // try to make role assignments to deploy as late as possible in order to has principalId ready
 resource roleAssigmentsPy 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
-  name: guid('${resourceGroup().id}${r.suffix}')
+  name: guid('${resourceGroup().id}${r.suffix}-python')
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${r.role}'
     principalId: pythonFunction.outputs.principalId
