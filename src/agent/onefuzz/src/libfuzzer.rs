@@ -64,7 +64,9 @@ impl<'a> LibFuzzer<'a> {
         corpus_dir: Option<&Path>,
         extra_corpus_dirs: Option<&[&Path]>,
     ) -> Result<Command> {
-        let std_cmd = self.build_std_command(fault_dir, corpus_dir, extra_corpus_dirs).await?;
+        let std_cmd = self
+            .build_std_command(fault_dir, corpus_dir, extra_corpus_dirs)
+            .await?;
 
         // Make async.
         let mut cmd = Command::from(std_cmd);
@@ -243,10 +245,10 @@ impl<'a> LibFuzzer<'a> {
 
                         bail!("fuzzer does not respond to '-help=1'. missing shared libraries: {}. output: {:?}", missing, result);
                     }
-                },
+                }
                 Err(err) => {
                     bail!("fuzzer does not respond to '-help=1'. additional error while checking for missing shared libraries: {}. output: {:?}", err, result);
-                },
+                }
             }
         }
 
