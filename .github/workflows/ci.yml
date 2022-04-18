@@ -272,7 +272,7 @@ jobs:
       run: |
         cd src/ApiService/
         dotnet test --no-restore
-    - name: Build service-net
+    - name: copy artifacts
       run: |
         cd src/ApiService/ApiService/
         echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
