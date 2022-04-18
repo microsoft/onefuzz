@@ -264,6 +264,9 @@ impl<'a> LibFuzzer<'a> {
         #[cfg(target_os = "windows")]
         let blocking = move || dynamic_library::windows::find_missing(cmd);
 
+        #[cfg(target_os = "macos")]
+        let blocking = move || todo!();
+
         let missing = spawn_blocking(blocking).await??;
         let missing = missing.into_iter().map(|m| m.name).collect();
 
