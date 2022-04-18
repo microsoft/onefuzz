@@ -18,6 +18,7 @@ use std::{
 };
 use tempfile::tempdir;
 use tokio::process::{Child, Command};
+use tokio::task::spawn_blocking;
 
 const DEFAULT_MAX_TOTAL_SECONDS: i32 = 10 * 60;
 
@@ -230,10 +231,41 @@ impl<'a> LibFuzzer<'a> {
             .wait_with_output()
             .await
             .with_context(|| format_err!("libfuzzer failed to run: {}", self.exe.display()))?;
+
         if !result.status.success() {
-            bail!("fuzzer does not respond to '-help=1'. output:{:?}", result);
+            // To provide user-actionable errors, try to identify any missing shared libraries.
+            match self.find_missing_libraries().await {
+                Ok(missing) => {
+                    if missing.is_empty() {
+                        bail!("fuzzer does not respond to '-help=1'. no missing shared libraries detected. output: {:?}", result);
+                    } else {
+                        let missing = missing.join(", ");
+
+                        bail!("fuzzer does not respond to '-help=1'. missing shared libraries: {}. output: {:?}", missing, result);
+                    }
+                },
+                Err(err) => {
+                    bail!("fuzzer does not respond to '-help=1'. additional error while checking for missing shared libraries: {}. output: {:?}", err, result);
+                },
+            }
         }
+
         Ok(())
+    }
+
+    async fn find_missing_libraries(&self) -> Result<Vec<String>> {
+        let cmd = self.build_std_command(None, None, None).await?;
+
+        #[cfg(target_os = "linux")]
+        let blocking = move || dynamic_library::linux::find_missing(cmd);
+
+        #[cfg(target_os = "windows")]
+        let blocking = move || dynamic_library::windows::find_missing(cmd);
+
+        let missing = spawn_blocking(blocking).await??;
+        let missing = missing.into_iter().map(|m| m.name).collect();
+
+        Ok(missing)
     }
 
     pub async fn fuzz(

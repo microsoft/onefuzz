@@ -1979,6 +1979,7 @@ dependencies = [
  "cpp_demangle",
  "debugger",
  "dunce",
+ "dynamic-library",
  "futures",
  "futures-util",
  "hex",
