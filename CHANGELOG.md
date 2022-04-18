@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Move the creation of the event grid topic to the deployment template from the `deploy.py` script. [#1591](https://github.com/microsoft/onefuzz/pull/1591)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1548](https://github.com/microsoft/onefuzz/pull/1548), [#1617](https://github.com/microsoft/onefuzz/pull/1617), [#1618](https://github.com/microsoft/onefuzz/pull/1618)
 * Service: Consolidate the two log analytics down to one. [#1679](https://github.com/microsoft/onefuzz/pull/1679)
-* Service: Updated resource name in bicep file to prevent name clash when deploying 5.3.0. [#1808](https://github.com/microsoft/onefuzz/pull/1808)
+* Service: Updated resource name in Bicep file to prevent name clash when deploying 5.3.0. [#1808](https://github.com/microsoft/onefuzz/pull/1808)
 
 ### Fixed
 * Service: Auto scale setting log statement is not an `error` changed it to `info`. [#1745](https://github.com/microsoft/onefuzz/pull/1745)
