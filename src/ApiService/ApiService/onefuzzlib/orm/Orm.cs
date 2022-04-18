@@ -16,6 +16,7 @@ namespace ApiService.OneFuzzLib.Orm
 
         Task<T> GetEntityAsync(string partitionKey, string rowKey);
         Task<ResultOk<(int, string)>> Insert(T entity);
+        Task<ResultOk<(int, string)>> Delete(T entity);
     }
 
     public class Orm<T> : IOrm<T> where T : EntityBase
@@ -107,6 +108,21 @@ namespace ApiService.OneFuzzLib.Orm
             var tableClient = new TableServiceClient(new Uri($"https://{name}.table.core.windows.net"), new TableSharedKeyCredential(name, key));
             await tableClient.CreateTableIfNotExistsAsync(table);
             return tableClient.GetTableClient(table);
+        }
+
+        public async Task<ResultOk<(int, string)>> Delete(T entity)
+        {
+            var tableClient = await GetTableClient(typeof(T).Name);
+            var tableEntity = _entityConverter.ToTableEntity(entity);
+            var response = await tableClient.DeleteEntityAsync(tableEntity.PartitionKey, tableEntity.RowKey);
+            if (response.IsError)
+            {
+                return ResultOk<(int, string)>.Error((response.Status, response.ReasonPhrase));
+            }
+            else
+            {
+                return ResultOk<(int, string)>.Ok();
+            }
         }
     }
 }
