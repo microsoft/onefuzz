@@ -56,15 +56,33 @@ impl<'a> LibFuzzer<'a> {
         }
     }
 
+    // Build an async `Command`.
     async fn build_command(
         &self,
         fault_dir: Option<&Path>,
         corpus_dir: Option<&Path>,
         extra_corpus_dirs: Option<&[&Path]>,
     ) -> Result<Command> {
-        let mut cmd = Command::new(&self.exe);
-        cmd.kill_on_drop(true)
-            .env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
+        let std_cmd = self.build_std_command(fault_dir, corpus_dir, extra_corpus_dirs).await?;
+
+        // Make async.
+        let mut cmd = Command::from(std_cmd);
+
+        // Terminate the process if the `Child` handle is dropped.
+        cmd.kill_on_drop(true);
+
+        Ok(cmd)
+    }
+
+    // Build a non-async `Command`.
+    async fn build_std_command(
+        &self,
+        fault_dir: Option<&Path>,
+        corpus_dir: Option<&Path>,
+        extra_corpus_dirs: Option<&[&Path]>,
+    ) -> Result<std::process::Command> {
+        let mut cmd = std::process::Command::new(&self.exe);
+        cmd.env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
             .env_remove("RUST_LOG")
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
