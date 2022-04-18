@@ -18,7 +18,6 @@ use std::{
 };
 use tempfile::tempdir;
 use tokio::process::{Child, Command};
-use tokio::task::spawn_blocking;
 
 const DEFAULT_MAX_TOTAL_SECONDS: i32 = 10 * 60;
 
@@ -265,7 +264,7 @@ impl<'a> LibFuzzer<'a> {
         #[cfg(target_os = "windows")]
         let blocking = move || dynamic_library::windows::find_missing(cmd);
 
-        let missing = spawn_blocking(blocking).await??;
+        let missing = tokio::task::spawn_blocking(blocking).await??;
         let missing = missing.into_iter().map(|m| m.name).collect();
 
         Ok(missing)
