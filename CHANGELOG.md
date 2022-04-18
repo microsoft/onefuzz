@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Auto scale setting log statement is not an `error` changed it to `info`. [#1745](https://github.com/microsoft/onefuzz/pull/1745)
 * Agent: Fixed Cobertera output so that coverage summary renders in Azure Devops correctly. [#1728](https://github.com/microsoft/onefuzz/pull/1728)
 * Agent: When finding local data while scanning proceedure code, continue without errors. This resolves a failure in the code coverage task. [#1796](https://github.com/microsoft/onefuzz/pull/1796)
-* Service: Fixed name generation for a few resources in the bicep file to increase uniqueness which prevents resource name clash. [#1800](https://github.com/microsoft/onefuzz/pull/1800)
+* Service: Fixed name generation for a few resources in the Bicep file to increase uniqueness which prevents resource name clash. [#1800](https://github.com/microsoft/onefuzz/pull/1800)
 
 ## 5.2.0
 ### Added
