@@ -51,7 +51,6 @@ public abstract record BaseEvent()
                 EventNodeHeartbeat _ => EventType.NodeHeartbeat,
                 EventTaskHeartbeat _ => EventType.TaskHeartbeat,
                 EventInstanceConfigUpdated _ => EventType.InstanceConfigUpdated,
-                EventTaskHeartbeat _ =>  EventType.TaskHeartbeat,
                 _ => throw new NotImplementedException(),
             };
 
