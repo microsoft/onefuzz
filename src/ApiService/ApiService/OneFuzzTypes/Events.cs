@@ -42,7 +42,6 @@ public enum EventType
 
 public abstract record BaseEvent()
 {
-
     public EventType GetEventType()
     {
         return
@@ -55,20 +54,25 @@ public abstract record BaseEvent()
             };
 
     }
+
+    public static Type GetTypeInfo(EventType eventType)
+    {
+        return (eventType) switch
+        {
+            EventType.NodeHeartbeat => typeof(EventNodeHeartbeat),
+            EventType.InstanceConfigUpdated => typeof(EventInstanceConfigUpdated),
+            EventType.TaskHeartbeat => typeof(EventTaskHeartbeat),
+            _ => throw new ArgumentException($"invalid input {eventType}"),
+
+        };
+    }
 };
 
 public class EventTypeProvider : ITypeProvider
 {
     public Type GetTypeInfo(object input)
     {
-        return (input as EventType?) switch
-        {
-            EventType.NodeHeartbeat => typeof(EventNodeHeartbeat),
-            EventType.InstanceConfigUpdated => typeof(EventInstanceConfigUpdated),
-            EventType.TaskHeartbeat => typeof(EventTaskHeartbeat),
-            _ => throw new ArgumentException($"invalid input {input}"),
-
-        };
+        return BaseEvent.GetTypeInfo((input as EventType?) ?? throw new ArgumentException($"input is expected to be an EventType {input}"));
     }
 }
 
