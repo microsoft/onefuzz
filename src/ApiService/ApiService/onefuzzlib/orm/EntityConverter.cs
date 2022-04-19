@@ -47,6 +47,7 @@ public class EntityConverter
 
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
 
+    private readonly ETag _emptyETag = new ETag();
 
     public EntityConverter()
     {
@@ -285,7 +286,11 @@ public class EntityConverter
             ).ToArray();
 
         var entityRecord = (T)entityInfo.constructor.Invoke(parameters);
-        entityRecord.ETag = entity.ETag;
+
+        if (entity.ETag != _emptyETag)
+        {
+            entityRecord.ETag = entity.ETag;
+        }
         entityRecord.TimeStamp = entity.Timestamp;
 
         return entityRecord;

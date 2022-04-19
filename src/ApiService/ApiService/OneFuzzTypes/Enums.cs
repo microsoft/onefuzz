@@ -53,7 +53,7 @@ public enum TaskState
     Init,
     Waiting,
     Scheduled,
-    Setting_up,
+    SettingUp,
     Running,
     Stopping,
     Stopped,
