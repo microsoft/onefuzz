@@ -54,7 +54,7 @@ public enum EntityPropertyKind
     RowKey,
     Column
 }
-public record EntityProperty(string name, string columnName, Type type, EntityPropertyKind kind, TypeDiscrimnatorAttribute? discriminator);
+public record EntityProperty(string name, string columnName, Type type, EntityPropertyKind kind, (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator);
 public record EntityInfo(Type type, Dictionary<string, EntityProperty> properties, Func<object?[], object> constructor);
 
 class OnefuzzNamingPolicy : JsonNamingPolicy
@@ -136,7 +136,14 @@ public class EntityConverter
                                 ?? CaseConverter.PascalToSnake(name),
                             EntityPropertyKind.Column
                         );
-                var discriminator = type.GetProperty(name)?.GetCustomAttribute<TypeDiscrimnatorAttribute>();
+                var discriminatorAttribute = type.GetProperty(name)?.GetCustomAttribute<TypeDiscrimnatorAttribute>();
+
+                (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator = null;
+                if (discriminatorAttribute != null)
+                {
+                    var t = (ITypeProvider)(discriminatorAttribute.ConverterType.GetConstructor(new Type[] { })?.Invoke(null) ?? throw new Exception("unable to retrive the type provider"));
+                    discriminator = (discriminatorAttribute, t);
+                }
                 return new EntityProperty(name, columnName, parameterType, kind, discriminator);
             }).ToArray();
 
@@ -285,13 +292,12 @@ public class EntityConverter
         }
         else
         {
-
             var outputType = ef.type;
             if (ef.discriminator != null)
             {
-                var t = (ITypeProvider)(ef.discriminator.ConverterType.GetConstructor(new Type[] { })?.Invoke(null) ?? throw new Exception("unable to retrive the type provider"));
-                var v = GetFieldValue(info, ef.discriminator.FieldName, entity) ?? throw new Exception($"No value for {ef.discriminator.FieldName}");
-                outputType = t.GetTypeInfo(v);
+                var (attr, typeProvider) = ef.discriminator.Value;
+                var v = GetFieldValue(info, attr.FieldName, entity) ?? throw new Exception($"No value for {attr.FieldName}");
+                outputType = typeProvider.GetTypeInfo(v);
             }
 
 
