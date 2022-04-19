@@ -11,6 +11,9 @@ public interface IContainers
     public Task<IEnumerable<byte>?> GetBlob(Container container, string name, StorageType storageType);
 
     public BlobContainerClient? FindContainer(Container container, StorageType storageType);
+
+    public Uri GetFileSasUrl(Container container, string name, StorageType storageType, bool read = false, bool add = false, bool create = false, bool write = false, bool delete = false, bool delete_previous_version = false, bool tag = false, int days = 30, int hours = 0, int minutes = 0);
+
 }
 
 public class Containers : IContainers
@@ -86,6 +89,11 @@ public class Containers : IContainers
     private static Uri GetUrl(string accountName)
     {
         return new Uri($"https://{accountName}.blob.core.windows.net/");
+    }
+
+    public Uri GetFileSasUrl(Container container, string name, StorageType storageType, bool read = false, bool add = false, bool create = false, bool write = false, bool delete = false, bool delete_previous_version = false, bool tag = false, int days = 30, int hours = 0, int minutes = 0)
+    {
+        throw new NotImplementedException();
     }
 }
 

@@ -178,6 +178,24 @@ public static class ScalesetStateHelper
             };
         });
     }
+}
 
-
+public static class TaskStateHelper
+{
+    static ConcurrentDictionary<string, TaskState[]> _states = new ConcurrentDictionary<string, TaskState[]>();
+    public static TaskState[] Available()
+    {
+        return
+        _states.GetOrAdd("Available", k =>
+        {
+            return
+                 new[] {
+                    TaskState.Waiting,
+                    TaskState.Scheduled,
+                    TaskState.Setting_up,
+                    TaskState.Running,
+                    TaskState.WaitJob
+                 };
+        });
+    }
 }

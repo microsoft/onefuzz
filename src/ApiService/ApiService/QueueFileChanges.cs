@@ -14,14 +14,17 @@ public class QueueFileChanges
 
     private readonly IStorage _storage;
 
-    public QueueFileChanges(ILogTracer log, IStorage storage)
+    private readonly INotificationOperations _notificationOperations;
+
+    public QueueFileChanges(ILogTracer log, IStorage storage, INotificationOperations notificationOperations)
     {
         _log = log;
         _storage = storage;
+        _notificationOperations = notificationOperations;
     }
 
     [Function("QueueFileChanges")]
-    public Async.Task Run(
+    public async Async.Task Run(
         [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount)
     {
@@ -35,23 +38,22 @@ public class QueueFileChanges
         if (!fileChangeEvent.ContainsKey(eventType)
             || fileChangeEvent[eventType] != "Microsoft.Storage.BlobCreated")
         {
-            return Async.Task.CompletedTask;
+            return;
         }
 
         const string topic = "topic";
         if (!fileChangeEvent.ContainsKey(topic)
             || !_storage.CorpusAccounts().Contains(fileChangeEvent[topic]))
         {
-            return Async.Task.CompletedTask;
+            return;
         }
 
-        file_added(_log, fileChangeEvent, lastTry);
-        return Async.Task.CompletedTask;
+        await file_added(_log, fileChangeEvent, lastTry);
     }
 
-    private void file_added(ILogTracer log, Dictionary<string, string> fileChangeEvent, bool failTaskOnTransientError)
+    private async Async.Task file_added(ILogTracer log, Dictionary<string, string> fileChangeEvent, bool failTaskOnTransientError)
     {
-        var data = JsonSerializer.Deserialize<Dictionary<string, string>>(fileChangeEvent["data"])!;
+        var data = JsonSerializer.Deserialize<Dictionary<string, string>>(fileChangeEvent["data"], EntityConverter.GetJsonSerializerOptions())!;
         var url = data["url"];
         var parts = url.Split("/").Skip(3).ToList();
 
@@ -59,6 +61,6 @@ public class QueueFileChanges
         var path = string.Join('/', parts.Skip(1));
 
         log.Info($"file added container: {container} - path: {path}");
-        // TODO: new_files(container, path, fail_task_on_transient_error)
+        await _notificationOperations.NewFiles(new Container(container), path, failTaskOnTransientError);
     }
 }

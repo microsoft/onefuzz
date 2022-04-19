@@ -400,8 +400,8 @@ public record Container(string ContainerName)
 public record Notification(
     DateTime? Timestamp,
     Container container,
-    Guid NotificationId
-// NotificationTemplate
+    Guid NotificationId,
+NotificationTemplate Config
 ) : EntityBase();
 
 public record BlobRef(
@@ -452,3 +452,14 @@ public record RegressionReport(
     CrashTestResult? OriginalCrashTestResult
 );
 
+public record NotificationTemplate(
+    AdoTemplate? AdoTemplate,
+    TeamsTemplate? TeamsTemplate,
+    GithubIssuesTemplate? GithubIssuesTemplate
+);
+
+public record AdoTemplate();
+
+public record TeamsTemplate();
+
+public record GithubIssuesTemplate();

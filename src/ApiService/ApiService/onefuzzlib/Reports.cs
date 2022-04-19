@@ -1,6 +1,14 @@
+using System.Text.Json;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+
 namespace Microsoft.OneFuzz.Service;
 
-public class Reports
+public interface IReports
+{
+    public Async.Task<RegressionReportOrReport?> GetReportOrRegression(Container container, string fileName, bool expectReports = false, params string[] args);
+}
+
+public class Reports : IReports
 {
     private ILogTracer _log;
     private IContainers _containers;
@@ -10,43 +18,67 @@ public class Reports
         _containers = containers;
     }
 
-    public async void GetReportOrRegression(Container container, string fileName, bool ExactReports = false, params string[] args)
+    public async Async.Task<RegressionReportOrReport?> GetReportOrRegression(Container container, string fileName, bool expectReports = false, params string[] args)
     {
         var filePath = String.Join("/", new[] { container.ContainerName, fileName });
         if (!fileName.EndsWith(".json"))
         {
-            if (ExactReports)
+            if (expectReports)
             {
                 _log.Error($"get_report invalid extension: {filePath}");
             }
-            return;
+            return null;
         }
 
         var blob = await _containers.GetBlob(container, fileName, StorageType.Corpus);
 
         if (blob == null)
         {
-            if (ExactReports)
+            if (expectReports)
             {
                 _log.Error($"get_report invalid blob: {filePath}");
             }
-            return;
+            return null;
         }
 
-        //return parse_report_or_regression(blob, file_path=file_path, expect_reports=expect_reports)
+        return ParseReportOrRegression(blob, filePath, expectReports);
     }
 
-    private void ParseReportOrRegression(string content, string? filePath, bool expectReports = false)
+    private RegressionReportOrReport? ParseReportOrRegression(string content, string? filePath, bool expectReports = false)
     {
-        // var data = JsonSerializer.Deserialize<Dictionary
+        try
+        {
+            return new RegressionReportOrReport
+            {
+                RegressionReport = JsonSerializer.Deserialize<RegressionReport>(content, EntityConverter.GetJsonSerializerOptions())
+            };
+        }
+        catch (JsonException e)
+        {
+            try
+            {
+                return new RegressionReportOrReport
+                {
+                    Report = JsonSerializer.Deserialize<Report>(content, EntityConverter.GetJsonSerializerOptions())
+                };
+            }
+            catch (JsonException e2)
+            {
+                if (expectReports)
+                {
+                    _log.Error($"unable to parse report ({filePath}) as a report or regression. regression error: {e.Message} report error: {e2.Message}");
+                }
+                return null;
+            }
+        }
     }
 
-    private void ParseReportOrRegression(IEnumerable<byte> content, string? filePath, bool expectReports = false)
+    private RegressionReportOrReport? ParseReportOrRegression(IEnumerable<byte> content, string? filePath, bool expectReports = false)
     {
         try
         {
             var str = System.Text.Encoding.UTF8.GetString(content.ToArray());
-            ParseReportOrRegression(str, filePath, expectReports);
+            return ParseReportOrRegression(str, filePath, expectReports);
         }
         catch (Exception e)
         {
@@ -54,7 +86,13 @@ public class Reports
             {
                 _log.Error($"unable to parse report ({filePath}): unicode decode of report failed - {e.Message} {e.StackTrace}");
             }
-            return;
+            return null;
         }
     }
+}
+
+public class RegressionReportOrReport
+{
+    public RegressionReport? RegressionReport { get; set; }
+    public Report? Report { get; set; }
 }

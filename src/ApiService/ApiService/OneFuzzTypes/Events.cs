@@ -228,25 +228,25 @@ public record EventNodeHeartbeat(
 //        NodeState state
 //        ) : BaseEvent();
 
-//    record EventCrashReported(
-//        Report Report,
-//        Container Container,
-//        [property: JsonPropertyName("filename")] String FileName,
-//        TaskConfig? TaskConfig
-//        ) : BaseEvent();
+record EventCrashReported(
+    Report Report,
+    Container Container,
+    [property: JsonPropertyName("filename")] String FileName,
+    TaskConfig? TaskConfig
+) : BaseEvent();
 
-//    record EventRegressionReported(
-//        RegressionReport RegressionReport,
-//        Container Container,
-//        [property: JsonPropertyName("filename")] String FileName,
-//        TaskConfig? TaskConfig
-//        ) : BaseEvent();
+record EventRegressionReported(
+    RegressionReport RegressionReport,
+    Container Container,
+    [property: JsonPropertyName("filename")] String FileName,
+    TaskConfig? TaskConfig
+) : BaseEvent();
 
 
-//    record EventFileAdded(
-//        Container Container,
-//        [property: JsonPropertyName("filename")] String FileName
-//        ) : BaseEvent();
+record EventFileAdded(
+    Container Container,
+    [property: JsonPropertyName("filename")] String FileName
+) : BaseEvent();
 
 
 record EventInstanceConfigUpdated(
