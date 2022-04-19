@@ -334,6 +334,8 @@ public record InstanceConfig
         null)
     { }
 
+    public InstanceConfig() : this(String.Empty) { }
+
     public List<Guid>? CheckAdmins(List<Guid>? value)
     {
         if (value is not null && value.Count == 0)

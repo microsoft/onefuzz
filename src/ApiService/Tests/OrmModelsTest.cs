@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using System.Security;
+using System.Text.Json;
 
 namespace Tests
 {
@@ -21,6 +22,16 @@ namespace Tests
                 Arb.Generate<EventTaskHeartbeat>().Select(e => e as BaseEvent),
                 Arb.Generate<EventInstanceConfigUpdated>().Select(e => e as BaseEvent)
             });
+        }
+
+        public static Gen<EventType> EventType()
+        {
+            return Gen.OneOf(new[] {
+                Gen.Constant(Microsoft.OneFuzz.Service.EventType.NodeHeartbeat),
+                Gen.Constant(Microsoft.OneFuzz.Service.EventType.TaskHeartbeat),
+                Gen.Constant(Microsoft.OneFuzz.Service.EventType.InstanceConfigUpdated)
+            });
+
         }
 
 
@@ -222,6 +233,22 @@ namespace Tests
                 );
 
         }
+
+        public static Gen<WebhookMessage> WebhookMessage()
+        {
+            return Arb.Generate<Tuple<Guid, EventType, BaseEvent, Guid, string, Guid>>().Select(
+                arg =>
+                    new WebhookMessage(
+                        EventId: arg.Item1,
+                        EventType: arg.Item2,
+                        Event: arg.Item3,
+                        InstanceId: arg.Item4,
+                        InstanceName: arg.Item5,
+                        WebhookId: arg.Item6
+                    )
+            );
+
+        }
     }
 
     public class OrmArb
@@ -234,6 +261,11 @@ namespace Tests
         public static Arbitrary<BaseEvent> BaseEvent()
         {
             return Arb.From(OrmGenerators.BaseEvent());
+        }
+
+        public static Arbitrary<EventType> EventType()
+        {
+            return Arb.From(OrmGenerators.EventType());
         }
 
         public static Arbitrary<Node> Node()
@@ -290,15 +322,17 @@ namespace Tests
         {
             return Arb.From(OrmGenerators.Webhook());
         }
+
+        public static Arbitrary<WebhookMessage> WebhookMessage()
+        {
+            return Arb.From(OrmGenerators.WebhookMessage());
+        }
     }
 
 
-    public class OrmModelsTest
+    public static class EqualityComparison
     {
-        EntityConverter _converter = new EntityConverter();
-        ITestOutputHelper _output;
-
-        private HashSet<Type> _baseTypes = new HashSet<Type>(
+        private static HashSet<Type> _baseTypes = new HashSet<Type>(
             new[]{
             typeof(byte),
             typeof(char),
@@ -316,13 +350,7 @@ namespace Tests
             typeof(DateTimeOffset?),
             typeof(SecureString)
         });
-
-        public OrmModelsTest(ITestOutputHelper output)
-        {
-            Arb.Register<OrmArb>();
-            _output = output;
-        }
-        bool IEnumerableEqual<T>(IEnumerable<T>? a, IEnumerable<T>? b)
+        static bool IEnumerableEqual<T>(IEnumerable<T>? a, IEnumerable<T>? b)
         {
             if (a is null && b is null)
             {
@@ -349,7 +377,7 @@ namespace Tests
             return true;
         }
 
-        bool IDictionaryEqual<TKey, TValue>(IDictionary<TKey, TValue>? a, IDictionary<TKey, TValue>? b, Func<TValue, TValue, bool> cmp)
+        static bool IDictionaryEqual<TKey, TValue>(IDictionary<TKey, TValue>? a, IDictionary<TKey, TValue>? b, Func<TValue, TValue, bool> cmp)
         {
             if (a is null && b is null)
                 return true;
@@ -363,7 +391,7 @@ namespace Tests
             return a!.Any(v => cmp(v.Value, b[v.Key]));
         }
 
-        bool IDictionaryEqual<TKey, TValue>(IDictionary<TKey, TValue>? a, IDictionary<TKey, TValue>? b)
+        static bool IDictionaryEqual<TKey, TValue>(IDictionary<TKey, TValue>? a, IDictionary<TKey, TValue>? b)
         {
             if (a is null && b is null)
                 return true;
@@ -378,7 +406,7 @@ namespace Tests
         }
 
 
-        private bool AreEqual<T>(T r1, T r2)
+        public static bool AreEqual<T>(T r1, T r2)
         {
             var t = typeof(T);
 
@@ -397,6 +425,9 @@ namespace Tests
                 if (v1 is null && v2 is null)
                     continue;
 
+                if (v1 is null || v2 is null)
+                    return false;
+
                 if (_baseTypes.Contains(tt) && !v1!.Equals(v2))
                     return false;
 
@@ -414,64 +445,69 @@ namespace Tests
             }
             return true;
         }
+    }
 
+    public class OrmModelsTest
+    {
+        EntityConverter _converter = new EntityConverter();
+        ITestOutputHelper _output;
+
+        public OrmModelsTest(ITestOutputHelper output)
+        {
+            Arb.Register<OrmArb>();
+            _output = output;
+        }
+
+        bool Test<T>(T e) where T : EntityBase
+        {
+            var v = _converter.ToTableEntity(e);
+            var r = _converter.ToRecord<T>(v);
+            return EqualityComparison.AreEqual(e, r);
+
+        }
 
         [Property]
         public bool Node(Node node)
         {
-            var entity = _converter.ToTableEntity(node);
-            var node2 = _converter.ToRecord<Node>(entity);
-            return AreEqual(node2, node);
+            return Test(node);
         }
 
         [Property]
         public bool ProxyForward(ProxyForward proxyForward)
         {
-            var entity = _converter.ToTableEntity(proxyForward);
-            var r = _converter.ToRecord<ProxyForward>(entity);
-            return AreEqual(proxyForward, r);
+            return Test(proxyForward);
         }
 
         [Property]
         public bool Proxy(Proxy proxy)
         {
-            var entity = _converter.ToTableEntity(proxy);
-            var r = _converter.ToRecord<Proxy>(entity);
-            return AreEqual(proxy, r);
+            return Test(proxy);
         }
 
         [Property]
         public bool Task(Task task)
         {
-            var entity = _converter.ToTableEntity(task);
-            var r = _converter.ToRecord<Task>(entity);
-            return AreEqual(r, task);
+            return Test(task);
         }
 
 
         [Property]
         public bool InstanceConfig(InstanceConfig cfg)
         {
-            var entity = _converter.ToTableEntity(cfg);
-            var r = _converter.ToRecord<InstanceConfig>(entity);
-            return AreEqual(cfg, r);
+            return Test(cfg);
         }
 
         [Property]
         public bool Scaleset(Scaleset ss)
         {
-            var entity = _converter.ToTableEntity(ss);
-            var r = _converter.ToRecord<Scaleset>(entity);
-            return AreEqual(ss, r);
+            return Test(ss);
         }
 
-        /*
+        /* @Cheick
         [Property]
         public bool WebhookMessageLog(WebhookMessageLog log)
         {
-            var entity = _converter.ToTableEntity(log);
-            var r = _converter.ToRecord<WebhookMessageLog>(entity);
-            return AreEqual(r, log);
+            return Test(log);
         }
         */
 
@@ -479,9 +515,7 @@ namespace Tests
         [Property]
         public bool Webhook(Webhook wh)
         {
-            var entity = _converter.ToTableEntity(wh);
-            var r = _converter.ToRecord<Webhook>(entity);
-            return AreEqual(wh, r);
+            return Test(wh);
         }
 
 
@@ -496,7 +530,221 @@ namespace Tests
             var p = Prop.ForAll((Task x) => Task(x) );
             p.Check(new Configuration { Replay = seed });
         }
-
         */
     }
+
+
+    public class OrmJsonSerialization
+    {
+
+        JsonSerializerOptions _opts = EntityConverter.GetJsonSerializerOptions();
+        ITestOutputHelper _output;
+
+        public OrmJsonSerialization(ITestOutputHelper output)
+        {
+            Arb.Register<OrmArb>();
+            _output = output;
+        }
+
+
+        string serialize<T>(T x)
+        {
+            return JsonSerializer.Serialize(x, _opts);
+        }
+
+        T? deserialize<T>(string json)
+        {
+            return JsonSerializer.Deserialize<T>(json, _opts);
+        }
+
+
+        bool Test<T>(T v)
+        {
+            var j = serialize(v);
+            var r = deserialize<T>(j);
+            return EqualityComparison.AreEqual(v, r);
+        }
+
+        [Property]
+        public bool Node(Node node)
+        {
+            return Test(node);
+        }
+
+        [Property]
+        public bool ProxyForward(ProxyForward proxyForward)
+        {
+            return Test(proxyForward);
+        }
+
+        [Property]
+        public bool Proxy(Proxy proxy)
+        {
+            return Test(proxy);
+        }
+
+
+        [Property]
+        public bool Task(Task task)
+        {
+            return Test(task);
+        }
+
+
+        [Property]
+        public bool InstanceConfig(InstanceConfig cfg)
+        {
+            return Test(cfg);
+        }
+
+
+        [Property]
+        public bool Scaleset(Scaleset ss)
+        {
+            return Test(ss);
+        }
+
+        /* @Cheick
+        [Property]
+        public bool WebhookMessageLog(WebhookMessageLog log)
+        {
+            return Test(log);
+        }
+        */
+
+        [Property]
+        public bool Webhook(Webhook wh)
+        {
+            return Test(wh);
+        }
+
+        /* @Cheick
+        [Property]
+        public bool WebhookMessageEventGrid(WebhookMessageEventGrid evt)
+        { 
+            return Teste(evt);
+        }
+        */
+
+        /* @Cheick
+        [Property]
+        public bool WebhookMessage(WebhookMessage msg)
+        {
+            return Test(msg);
+        }
+        */
+
+
+        [Property]
+        public bool TaskHeartbeatEntry(TaskHeartbeatEntry e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool NodeCommand(NodeCommand e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool NodeTasks(NodeTasks e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool ProxyHeartbeat(ProxyHeartbeat e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool ProxyConfig(ProxyConfig e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool TaskDetails(TaskDetails e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool TaskVm(TaskVm e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool TaskPool(TaskPool e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool TaskContainers(TaskContainers e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool TaskConfig(TaskConfig e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool TaskEventSummary(TaskEventSummary e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool NodeAssignment(NodeAssignment e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool KeyvaultExtensionConfig(KeyvaultExtensionConfig e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool AzureMonitorExtensionConfig(AzureMonitorExtensionConfig e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool AzureVmExtensionConfig(AzureVmExtensionConfig e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool NetworkConfig(NetworkConfig e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool NetworkSecurityGroupConfig(NetworkSecurityGroupConfig e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool Report(Report e)
+        {
+            return Test(e);
+        }
+    }
+
 }
+
+
+

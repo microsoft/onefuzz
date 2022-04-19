@@ -29,7 +29,8 @@ public record WebhookMessageEventGrid(
     BaseEvent data);
 
 
-
+// TODO: This should inherit from Entity Base ? no, since there is
+// a table WebhookMessaageLog
 public record WebhookMessageLog(
     [RowKey] Guid EventId,
     EventType EventType,
