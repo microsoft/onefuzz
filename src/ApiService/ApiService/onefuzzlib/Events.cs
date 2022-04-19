@@ -1,12 +1,13 @@
-﻿using ApiService.OneFuzzLib;
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace Microsoft.OneFuzz.Service
 {
+
 
     public record SignalREvent
     (
@@ -15,37 +16,35 @@ namespace Microsoft.OneFuzz.Service
     );
 
 
-
     public interface IEvents
     {
-        public Task SendEvent(BaseEvent anEvent);
+        public Async.Task SendEvent(BaseEvent anEvent);
 
-        public Task QueueSignalrEvent(EventMessage message);
+        public Async.Task QueueSignalrEvent(EventMessage message);
     }
 
     public class Events : IEvents
     {
         private readonly IQueue _queue;
-        private readonly ILogTracerFactory _loggerFactory;
         private readonly IWebhookOperations _webhook;
+        private ILogTracer _log;
 
-        public Events(IQueue queue, ILogTracerFactory loggerFactory, IWebhookOperations webhook)
+        public Events(IQueue queue, IWebhookOperations webhook, ILogTracer log)
         {
             _queue = queue;
-            _loggerFactory = loggerFactory;
             _webhook = webhook;
+            _log = log;
         }
 
-        public async Task QueueSignalrEvent(EventMessage eventMessage)
+        public async Async.Task QueueSignalrEvent(EventMessage eventMessage)
         {
             var message = new SignalREvent("events", new List<EventMessage>() { eventMessage });
             var encodedMessage = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
             await _queue.SendMessage("signalr-events", encodedMessage, StorageType.Config);
         }
 
-        public async Task SendEvent(BaseEvent anEvent)
+        public async Async.Task SendEvent(BaseEvent anEvent)
         {
-            var log = _loggerFactory.MakeLogTracer(Guid.NewGuid());
             var eventType = anEvent.GetEventType();
 
             var eventMessage = new EventMessage(
@@ -57,20 +56,18 @@ namespace Microsoft.OneFuzz.Service
             );
             await QueueSignalrEvent(eventMessage);
             await _webhook.SendEvent(eventMessage);
-            LogEvent(log, anEvent, eventType);
+            LogEvent(anEvent, eventType);
         }
 
-        public void LogEvent(ILogTracer log, BaseEvent anEvent, EventType eventType)
+        public void LogEvent(BaseEvent anEvent, EventType eventType)
         {
             var options = EntityConverter.GetJsonSerializerOptions();
             options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             options.Converters.Add(new RemoveUserInfo());
             var serializedEvent = JsonSerializer.Serialize(anEvent, options);
-            log.Tags["Event Type"] = eventType.ToString();
-            log.Info($"sending event: {eventType} - {serializedEvent}");
+            _log.WithTag("Event Type", eventType.ToString()).Info($"sending event: {eventType} - {serializedEvent}");
         }
     }
-
 
 
     internal class RemoveUserInfo : JsonConverter<UserInfo>

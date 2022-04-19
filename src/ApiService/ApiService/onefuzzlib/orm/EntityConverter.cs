@@ -10,7 +10,7 @@ namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 public abstract record EntityBase
 {
-    public ETag? ETag { get; set; }
+    [JsonIgnore] public ETag? ETag { get; set; }
     public DateTimeOffset? TimeStamp { get; set; }
 
     //public ApiService.OneFuzzLib.Orm.IOrm<EntityBase>? Orm { get; set; }
@@ -117,6 +117,12 @@ public class EntityConverter
         });
     }
 
+    public string ToJsonString<T>(T typedEntity) where T : EntityBase
+    {
+        var serialized = JsonSerializer.Serialize(typedEntity, _options);
+        return serialized;
+    }
+
     public TableEntity ToTableEntity<T>(T typedEntity) where T : EntityBase
     {
         if (typedEntity == null)
@@ -132,8 +138,13 @@ public class EntityConverter
         var entityInfo = GetEntityInfo<T>();
         foreach (var prop in entityInfo.properties)
         {
+
             var value = entityInfo.type.GetProperty(prop.name)?.GetValue(typedEntity);
-            if (prop.type == typeof(Guid) || prop.type == typeof(Guid?))
+            if (prop.kind == EntityPropertyKind.PartitionKey || prop.kind == EntityPropertyKind.RowKey)
+            {
+                tableEntity.Add(prop.columnName, value?.ToString());
+            }
+            else if (prop.type == typeof(Guid) || prop.type == typeof(Guid?))
             {
                 tableEntity.Add(prop.columnName, value?.ToString());
             }
@@ -166,7 +177,7 @@ public class EntityConverter
             else
             {
                 var serialized = JsonSerializer.Serialize(value, _options);
-                tableEntity.Add(prop.columnName, serialized);
+                tableEntity.Add(prop.columnName, serialized.Trim('"'));
             }
 
         }
@@ -192,14 +203,22 @@ public class EntityConverter
                             return entity.GetString(ef.kind.ToString());
                         else if (ef.type == typeof(Guid))
                             return Guid.Parse(entity.GetString(ef.kind.ToString()));
+                        else if (ef.type == typeof(int))
+                            return int.Parse(entity.GetString(ef.kind.ToString()));
                         else
                         {
                             throw new Exception("invalid ");
                         }
-
                     }
 
                     var fieldName = ef.columnName;
+                    var obj = entity[fieldName];
+                    if (obj == null)
+                    {
+                        return null;
+                    }
+                    var objType = obj.GetType();
+
                     if (ef.type == typeof(string))
                     {
                         return entity.GetString(fieldName);
@@ -242,12 +261,23 @@ public class EntityConverter
                     }
                     else
                     {
-                        var value = entity.GetString(fieldName);
-                        if (value == null)
+                        if (objType == typeof(string))
                         {
-                            return null;
+                            var value = entity.GetString(fieldName);
+                            if (value.StartsWith('[') || value.StartsWith('{') || value == "null")
+                            {
+                                return JsonSerializer.Deserialize(value, ef.type, options: _options);
+                            }
+                            else
+                            {
+                                return JsonSerializer.Deserialize($"\"{value}\"", ef.type, options: _options);
+                            }
                         }
-                        return JsonSerializer.Deserialize(value, ef.type, options: _options); ;
+                        else
+                        {
+                            var value = entity.GetString(fieldName);
+                            return JsonSerializer.Deserialize(value, ef.type, options: _options);
+                        }
                     }
                 }
             ).ToArray();

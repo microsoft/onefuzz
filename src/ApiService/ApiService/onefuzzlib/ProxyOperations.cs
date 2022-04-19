@@ -9,12 +9,12 @@ public interface IProxyOperations : IOrm<Proxy>
 }
 public class ProxyOperations : Orm<Proxy>, IProxyOperations
 {
-    private readonly ILogTracerFactory _logger;
+    private readonly ILogTracer _log;
 
-    public ProxyOperations(ILogTracerFactory loggerFactory, IStorage storage)
+    public ProxyOperations(ILogTracer log, IStorage storage)
         : base(storage)
     {
-        _logger = loggerFactory;
+        _log = log;
     }
 
     public async Task<Proxy?> GetByProxyId(Guid proxyId)

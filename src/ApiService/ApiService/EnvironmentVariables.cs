@@ -21,6 +21,9 @@ public static class EnvironmentVariables
     //TODO: Add environment variable to control where to write logs to
     public static LogDestination[] LogDestinations { get; set; }
 
+    //TODO: Get this from Environment variable
+    public static ApplicationInsights.DataContracts.SeverityLevel LogSeverityLevel() { return ApplicationInsights.DataContracts.SeverityLevel.Verbose; }
+
     public static class AppInsights
     {
         public static string? AppId { get => Environment.GetEnvironmentVariable("APPINSIGHTS_APPID"); }
