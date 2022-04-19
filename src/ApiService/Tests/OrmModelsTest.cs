@@ -465,6 +465,7 @@ namespace Tests
             return AreEqual(ss, r);
         }
 
+        /*
         [Property]
         public bool WebhookMessageLog(WebhookMessageLog log)
         {
@@ -472,6 +473,8 @@ namespace Tests
             var r = _converter.ToRecord<WebhookMessageLog>(entity);
             return AreEqual(r, log);
         }
+        */
+
 
         [Property]
         public bool Webhook(Webhook wh)
