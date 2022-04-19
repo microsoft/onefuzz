@@ -50,6 +50,7 @@ public abstract record BaseEvent()
             {
                 EventNodeHeartbeat _ => EventType.NodeHeartbeat,
                 EventInstanceConfigUpdated _ => EventType.InstanceConfigUpdated,
+                EventTaskHeartbeat _ =>  EventType.TaskHeartbeat,
                 _ => throw new NotImplementedException(),
             };
 
@@ -78,6 +79,7 @@ public class EventTypeProvider : ITypeProvider
         {
             EventType.NodeHeartbeat => typeof(EventNodeHeartbeat),
             EventType.InstanceConfigUpdated => typeof(EventInstanceConfigUpdated),
+            EventType.TaskHeartbeat => typeof(EventTaskHeartbeat),
             _ => throw new ArgumentException($"invalid input {input}"),
 
         };
