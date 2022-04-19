@@ -1,7 +1,5 @@
 ﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PoolName = System.String;
@@ -57,6 +55,34 @@ public abstract record BaseEvent()
 
     }
 };
+
+public class BaseEventConverter : JsonConverter<BaseEvent>
+{
+    public override BaseEvent? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return null;
+    }
+
+    public override void Write(Utf8JsonWriter writer, BaseEvent value, JsonSerializerOptions options)
+    {
+        var eventType = value.GetType();
+        JsonSerializer.Serialize(writer, value, eventType, options);
+    }
+}
+
+public class EventTypeProvider : ITypeProvider
+{
+    public Type GetTypeInfo(object input)
+    {
+        return (input as EventType?) switch
+        {
+            EventType.NodeHeartbeat => typeof(EventNodeHeartbeat),
+            EventType.InstanceConfigUpdated => typeof(EventInstanceConfigUpdated),
+            _ => throw new ArgumentException($"invalid input {input}"),
+
+        };
+    }
+}
 
 //public record EventTaskStopped(
 //    Guid JobId,
@@ -256,92 +282,79 @@ record EventInstanceConfigUpdated(
     InstanceConfig Config
 ) : BaseEvent();
 
+public interface IEvent<out T> where T : BaseEvent
+{
+    public T Event { get; }
+}
 
-[JsonConverter(typeof(EventConverter))]
+
+public record EventMessage<T>(
+    Guid EventId,
+    EventType EventType,
+    [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))] T Event,
+    Guid InstanceId,
+    String? InstanceName
+) : EntityBase() where T : BaseEvent;
+
+//[JsonConverter(typeof(EventConverter))]
 public record EventMessage(
     Guid EventId,
     EventType EventType,
+    [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
+    [property: JsonConverter(typeof(BaseEventConverter))]
     BaseEvent Event,
     Guid InstanceId,
-    String InstanceName
-) : EntityBase();
+    String? InstanceName
+) : EntityBase();// : EventMessage<BaseEvent>(EventId, EventType, Event, InstanceId, InstanceName) ;
 
-public class EventConverter : JsonConverter<EventMessage>
-{
+//public class EventConverter : JsonConverter<EventMessage>
+//{
 
-    private readonly Dictionary<string, Type> _allBaseEvents;
+//    private readonly Dictionary<string, Type> _allBaseEvents;
 
-    public EventConverter()
-    {
-        _allBaseEvents = typeof(BaseEvent).Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(BaseEvent))).ToDictionary(x => x.Name);
-    }
+//    public EventConverter()
+//    {
+//        _allBaseEvents = typeof(BaseEvent).Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(BaseEvent))).ToDictionary(x => x.Name);
+//    }
 
-
-    public override EventMessage? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-
-
-        if (reader.TokenType != JsonTokenType.StartObject)
-        {
-            throw new JsonException();
-        }
-
-        using (var jsonDocument = JsonDocument.ParseValue(ref reader))
-        {
-            if (!jsonDocument.RootElement.TryGetProperty("event_type", out var eventType))
-            {
-                throw new JsonException();
-            }
-            if (!jsonDocument.RootElement.TryGetProperty("event", out var eventData))
-            {
-                throw new JsonException();
-            }
-            if (!jsonDocument.RootElement.TryGetProperty("event_id", out var eventId))
-            {
-                throw new JsonException();
-            }
-            if (!jsonDocument.RootElement.TryGetProperty("instance_id", out var instanceId))
-            {
-                throw new JsonException();
-            }
-            if (!jsonDocument.RootElement.TryGetProperty("instance_name", out var instanceName))
-            {
-                throw new JsonException();
-            }
+//    private string ConvertName(string name, JsonSerializerOptions options)
+//    {
+//        return options.PropertyNamingPolicy?.ConvertName(name) ?? name;
+//    }
 
 
-            var eventTypeName = eventType.GetString() ?? throw new JsonException();
+//    public override EventMessage? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+//    {
 
-            if (!_allBaseEvents.TryGetValue($"Event{CaseConverter.SnakeToPascal(eventTypeName)}", out var eType))
-            {
-                throw new JsonException($"Unknown eventType {eventTypeName}");
-            }
+//        if (reader.TokenType != JsonTokenType.StartObject)
+//        {
+//            throw new JsonException();
+//        }
 
-            var rawTest = eventData.GetRawText();
-            var eventClass = (BaseEvent)(JsonSerializer.Deserialize(eventData.GetRawText(), eType, options: options) ?? throw new JsonException());
-            var eventTypeEnum = Enum.Parse<EventType>(CaseConverter.SnakeToPascal(eventTypeName));
+//        using (var jsonDocument = JsonDocument.ParseValue(ref reader))
+//        {
+//            //options.
+//            var x = JsonSerializer.Deserialize<EventMessage<BaseEvent>>(jsonDocument, options);
+//            if (x == null)
+//            {
+//                return null;
+//            }
+//            //return new EventMessage(x.EventId, x.EventType, x.Event, x.InstanceId, x.InstanceName);
+//            return x as EventMessage;
+//        }
+//    }
 
+//    public override void Write(Utf8JsonWriter writer, EventMessage value, JsonSerializerOptions options)
+//    {
+//        var newOption = new JsonSerializerOptions(options);
 
-            return new EventMessage(
-                eventId.GetGuid(),
-                eventTypeEnum,
-                eventClass,
-                instanceId.GetGuid(),
-                instanceName.GetString() ?? throw new JsonException()
-            );
-        }
-    }
+//        var s = options.Converters.OfType<EventConverter>().FirstOrDefault();
+//        if (s != null)
+//        {
+//            newOption.Converters.Remove(s);
+//        }
 
-    public override void Write(Utf8JsonWriter writer, EventMessage value, JsonSerializerOptions options)
-    {
-        writer.WriteStartObject();
-        writer.WriteString("event_id", value.EventId.ToString());
-        writer.WriteString("event_type", CaseConverter.PascalToSnake(value.EventType.ToString()));
-        writer.WritePropertyName("event");
-        var eventstr = JsonSerializer.Serialize(value.Event, value.Event.GetType(), options);
-        writer.WriteRawValue(eventstr);
-        writer.WriteString("instance_id", value.InstanceId.ToString());
-        writer.WriteString("instance_name", value.InstanceName);
-        writer.WriteEndObject();
-    }
-}
+//        var document = JsonSerializer.SerializeToDocument(value, typeof(object), newOption);
+//        return;
+//    }
+//}
