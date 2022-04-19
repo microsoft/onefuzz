@@ -1,6 +1,4 @@
 ﻿using ApiService.OneFuzzLib.Orm;
-using System;
-using System.Collections.Generic;
 
 namespace Microsoft.OneFuzz.Service;
 

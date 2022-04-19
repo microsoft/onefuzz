@@ -15,13 +15,13 @@ public interface IContainers
 
 public class Containers : IContainers
 {
-    private LogTracer _loggerTracer;
+    private ILogTracer _log;
     private IStorage _storage;
     private ICreds _creds;
     private ArmClient _armClient;
-    public Containers(ILogTracerFactory loggerFactory, IStorage storage, ICreds creds)
+    public Containers(ILogTracer log, IStorage storage, ICreds creds)
     {
-        _loggerTracer = loggerFactory.MakeLogTracer(Guid.NewGuid());
+        _log = log;
         _storage = storage;
         _creds = creds;
         _armClient = new ArmClient(credential: _creds.GetIdentity(), defaultSubscriptionId: _creds.GetSubcription());
@@ -48,7 +48,7 @@ public class Containers : IContainers
 
     public BlobContainerClient? FindContainer(Container container, StorageType storageType)
     {
-        var accounts = _storage.GetAccounts(_loggerTracer, storageType);
+        var accounts = _storage.GetAccounts(storageType);
 
         // # check secondary accounts first by searching in reverse.
         // #
@@ -71,11 +71,11 @@ public class Containers : IContainers
 
     private BlobServiceClient? GetBlobService(string accountId)
     {
-        _loggerTracer.Info($"getting blob container (account_id: {accountId}");
+        _log.Info($"getting blob container (account_id: {accountId}");
         var (accountName, accountKey) = _storage.GetStorageAccountNameAndKey(accountId);
         if (accountName == null)
         {
-            _loggerTracer.Error("Failed to get storage account name");
+            _log.Error("Failed to get storage account name");
             return null;
         }
         var storageKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);

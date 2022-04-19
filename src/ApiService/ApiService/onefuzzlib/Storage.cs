@@ -19,7 +19,7 @@ public interface IStorage
     string GetPrimaryAccount(StorageType storageType);
     public (string?, string?) GetStorageAccountNameAndKey(string accountId);
 
-    public IEnumerable<string> GetAccounts(ILogTracer logTracer, StorageType storageType);
+    public IEnumerable<string> GetAccounts(StorageType storageType);
 }
 
 public class Storage : IStorage
@@ -114,12 +114,12 @@ public class Storage : IStorage
         return (resourceId.Name, key?.Value);
     }
 
-    public IEnumerable<string> GetAccounts(ILogTracer logTracer, StorageType storageType)
+    public IEnumerable<string> GetAccounts(StorageType storageType)
     {
         switch (storageType)
         {
             case StorageType.Corpus:
-                return CorpusAccounts(logTracer);
+                return CorpusAccounts();
             case StorageType.Config:
                 return new[] { GetFuncStorage() };
             default:

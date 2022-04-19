@@ -2,11 +2,11 @@ namespace Microsoft.OneFuzz.Service;
 
 public class Reports
 {
-    private LogTracer _loggerTracer;
+    private ILogTracer _log;
     private IContainers _containers;
-    public Reports(ILogTracerFactory loggerFactory, IContainers containers)
+    public Reports(ILogTracer log, IContainers containers)
     {
-        _loggerTracer = loggerFactory.MakeLogTracer(Guid.NewGuid());
+        _log = log;
         _containers = containers;
     }
 
@@ -17,7 +17,7 @@ public class Reports
         {
             if (ExactReports)
             {
-                _loggerTracer.Error($"get_report invalid extension: {filePath}");
+                _log.Error($"get_report invalid extension: {filePath}");
             }
             return;
         }
@@ -28,7 +28,7 @@ public class Reports
         {
             if (ExactReports)
             {
-                _loggerTracer.Error($"get_report invalid blob: {filePath}");
+                _log.Error($"get_report invalid blob: {filePath}");
             }
             return;
         }
@@ -52,7 +52,7 @@ public class Reports
         {
             if (expectReports)
             {
-                _loggerTracer.Error($"unable to parse report ({filePath}): unicode decode of report failed - {e.Message} {e.StackTrace}");
+                _log.Error($"unable to parse report ({filePath}): unicode decode of report failed - {e.Message} {e.StackTrace}");
             }
             return;
         }

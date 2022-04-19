@@ -1,10 +1,6 @@
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using System;
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Security.Cryptography;
-
-using Container = System.String;
 using Region = System.String;
 using PoolName = System.String;
 using Endpoint = System.String;
