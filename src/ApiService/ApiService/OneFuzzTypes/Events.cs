@@ -274,12 +274,6 @@ public record EventInstanceConfigUpdated(
     InstanceConfig Config
 ) : BaseEvent();
 
-public interface IEvent<out T> where T : BaseEvent
-{
-    public T Event { get; }
-}
-
-
 public record EventMessage(
     Guid EventId,
     EventType EventType,
