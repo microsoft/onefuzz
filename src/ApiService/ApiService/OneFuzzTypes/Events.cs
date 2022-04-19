@@ -51,6 +51,7 @@ public abstract record BaseEvent()
             this switch
             {
                 EventNodeHeartbeat _ => EventType.NodeHeartbeat,
+                EventTaskHeartbeat _ => EventType.TaskHeartbeat,
                 EventInstanceConfigUpdated _ => EventType.InstanceConfigUpdated,
                 _ => throw new NotImplementedException(),
             };
@@ -113,7 +114,7 @@ public abstract record BaseEvent()
 //    ) : BaseEvent();
 
 
-record EventTaskHeartbeat(
+public record EventTaskHeartbeat(
    Guid JobId,
    Guid TaskId,
    TaskConfig Config
@@ -252,7 +253,7 @@ public record EventNodeHeartbeat(
 //        ) : BaseEvent();
 
 
-record EventInstanceConfigUpdated(
+public record EventInstanceConfigUpdated(
     InstanceConfig Config
 ) : BaseEvent();
 
