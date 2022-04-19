@@ -57,20 +57,6 @@ public abstract record BaseEvent()
     }
 };
 
-public class BaseEventConverter : JsonConverter<BaseEvent>
-{
-    public override BaseEvent? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        return null;
-    }
-
-    public override void Write(Utf8JsonWriter writer, BaseEvent value, JsonSerializerOptions options)
-    {
-        var eventType = value.GetType();
-        JsonSerializer.Serialize(writer, value, eventType, options);
-    }
-}
-
 public class EventTypeProvider : ITypeProvider
 {
     public Type GetTypeInfo(object input)
@@ -290,15 +276,6 @@ public interface IEvent<out T> where T : BaseEvent
 }
 
 
-public record EventMessage<T>(
-    Guid EventId,
-    EventType EventType,
-    [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))] T Event,
-    Guid InstanceId,
-    String? InstanceName
-) : EntityBase() where T : BaseEvent;
-
-//[JsonConverter(typeof(EventConverter))]
 public record EventMessage(
     Guid EventId,
     EventType EventType,
@@ -306,57 +283,19 @@ public record EventMessage(
     [property: JsonConverter(typeof(BaseEventConverter))]
     BaseEvent Event,
     Guid InstanceId,
-    String? InstanceName
-) : EntityBase();// : EventMessage<BaseEvent>(EventId, EventType, Event, InstanceId, InstanceName) ;
+    String InstanceName
+) : EntityBase();
 
-//public class EventConverter : JsonConverter<EventMessage>
-//{
+public class BaseEventConverter : JsonConverter<BaseEvent>
+{
+    public override BaseEvent? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return null;
+    }
 
-//    private readonly Dictionary<string, Type> _allBaseEvents;
-
-//    public EventConverter()
-//    {
-//        _allBaseEvents = typeof(BaseEvent).Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(BaseEvent))).ToDictionary(x => x.Name);
-//    }
-
-//    private string ConvertName(string name, JsonSerializerOptions options)
-//    {
-//        return options.PropertyNamingPolicy?.ConvertName(name) ?? name;
-//    }
-
-
-//    public override EventMessage? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-//    {
-
-//        if (reader.TokenType != JsonTokenType.StartObject)
-//        {
-//            throw new JsonException();
-//        }
-
-//        using (var jsonDocument = JsonDocument.ParseValue(ref reader))
-//        {
-//            //options.
-//            var x = JsonSerializer.Deserialize<EventMessage<BaseEvent>>(jsonDocument, options);
-//            if (x == null)
-//            {
-//                return null;
-//            }
-//            //return new EventMessage(x.EventId, x.EventType, x.Event, x.InstanceId, x.InstanceName);
-//            return x as EventMessage;
-//        }
-//    }
-
-//    public override void Write(Utf8JsonWriter writer, EventMessage value, JsonSerializerOptions options)
-//    {
-//        var newOption = new JsonSerializerOptions(options);
-
-//        var s = options.Converters.OfType<EventConverter>().FirstOrDefault();
-//        if (s != null)
-//        {
-//            newOption.Converters.Remove(s);
-//        }
-
-//        var document = JsonSerializer.SerializeToDocument(value, typeof(object), newOption);
-//        return;
-//    }
-//}
+    public override void Write(Utf8JsonWriter writer, BaseEvent value, JsonSerializerOptions options)
+    {
+        var eventType = value.GetType();
+        JsonSerializer.Serialize(writer, value, eventType, options);
+    }
+}

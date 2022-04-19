@@ -28,7 +28,7 @@ public class PartitionKeyAttribute : Attribute { }
 public class TypeDiscrimnatorAttribute : Attribute
 {
     public string FieldName { get; }
-    // the type of a function that takes the value of fieldName as an input and return the type 
+    // the type of a function that takes the value of fieldName as an input and return the type
     public Type ConverterType { get; }
 
     public TypeDiscrimnatorAttribute(string fieldName, Type converterType)
@@ -46,7 +46,6 @@ public class TypeDiscrimnatorAttribute : Attribute
 public interface ITypeProvider
 {
     Type GetTypeInfo(object input);
-
 }
 
 public enum EntityPropertyKind
