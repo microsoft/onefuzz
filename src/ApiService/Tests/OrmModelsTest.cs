@@ -508,7 +508,7 @@ namespace Tests
         {
             return Test(log);
         }
-        
+
 
 
         [Property]
@@ -617,7 +617,7 @@ namespace Tests
 
         [Property]
         public bool WebhookMessageEventGrid(WebhookMessageEventGrid evt)
-        { 
+        {
             return Test(evt);
         }
 

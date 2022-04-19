@@ -233,24 +233,26 @@ public sealed class PolymorphicConverter<T> : JsonConverter<T>
     public PolymorphicConverter(TypeDiscrimnatorAttribute typeDiscriminator, string discriminatedField) : base()
     {
         _discriminatorField = typeDiscriminator.FieldName;
-        _typeProvider = (ITypeProvider) (typeDiscriminator.ConverterType.GetConstructor(new Type[] { })?.Invoke(null) ??  throw new JsonException());
+        _typeProvider = (ITypeProvider)(typeDiscriminator.ConverterType.GetConstructor(new Type[] { })?.Invoke(null) ?? throw new JsonException());
         _discriminatedField = discriminatedField;
         _constructorInfo = typeof(T).GetConstructors().FirstOrDefault() ?? throw new JsonException("No Constructor found");
         _parameters = _constructorInfo.GetParameters()?.ToDictionary(x => x.Name ?? "") ?? throw new JsonException();
         _constructor = EntityConverter.BuildConstructerFrom(_constructorInfo);
         _discriminatorType = _parameters[_discriminatorField].ParameterType;
         _options = new ConditionalWeakTable<JsonSerializerOptions, JsonSerializerOptions>();
-        
-        _renamedViaJsonPropery = 
+
+        _renamedViaJsonPropery =
             typeof(T).GetProperties()
                 .Select(x => (x.Name, x.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name))
                 .Where(x => x.Item2 != null)
-                .ToDictionary(x => x.Item1, x => x.Item2! ) ?? new Dictionary<string, string>();
+                .ToDictionary(x => x.Item1, x => x.Item2!) ?? new Dictionary<string, string>();
     }
 
-    private string ConvertName(string name, JsonSerializerOptions options) {
-        
-        if (_renamedViaJsonPropery.TryGetValue(name, out var renamed)){
+    private string ConvertName(string name, JsonSerializerOptions options)
+    {
+
+        if (_renamedViaJsonPropery.TryGetValue(name, out var renamed))
+        {
             return renamed;
         }
 
@@ -268,7 +270,7 @@ public sealed class PolymorphicConverter<T> : JsonConverter<T>
         {
             var discriminatorName = ConvertName(_discriminatorField, options);
             var discriminatorValue = jsonDocument.RootElement.GetProperty(discriminatorName).GetRawText();
-            var discriminatorTypedValue = JsonSerializer.Deserialize(discriminatorValue, _discriminatorType, options) ??  throw new JsonException("unable to read deserialize discriminator value");
+            var discriminatorTypedValue = JsonSerializer.Deserialize(discriminatorValue, _discriminatorType, options) ?? throw new JsonException("unable to read deserialize discriminator value");
             var discriminatedType = _typeProvider.GetTypeInfo(discriminatorTypedValue);
             var constructorParams =
                 _constructorInfo.GetParameters().Select(p =>
@@ -286,7 +288,7 @@ public sealed class PolymorphicConverter<T> : JsonConverter<T>
 
     public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
     {
-        var newOptions = 
+        var newOptions =
             _options.GetValue(options, k =>
             {
                 var newOptions = new JsonSerializerOptions(k);
