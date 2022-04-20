@@ -189,10 +189,10 @@ public static class TaskStateHelper
         _states.GetOrAdd("Available", k =>
         {
             return
-                 new[] {
+                 new[]{
                     TaskState.Waiting,
                     TaskState.Scheduled,
-                    TaskState.Setting_up,
+                    TaskState.SettingUp,
                     TaskState.Running,
                     TaskState.WaitJob
                  };

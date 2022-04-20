@@ -5,7 +5,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Collections.Concurrent;
 using Azure;
-using System.Collections.Generic;
 
 namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
