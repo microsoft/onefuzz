@@ -1,20 +1,20 @@
 ﻿using ApiService.OneFuzzLib.Orm;
-using Microsoft.OneFuzz.Service;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace ApiService.OneFuzzLib;
+namespace Microsoft.OneFuzz.Service;
 
 
 public interface IWebhookMessageLogOperations : IOrm<WebhookMessageLog>
 {
-
+    IAsyncEnumerable<WebhookMessageLog> SearchExpired();
 }
 
 
 public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessageLogOperations
 {
+    const int EXPIRE_DAYS = 7;
+
     record WebhookMessageQueueObj(
         Guid WebhookId,
         Guid EventId
@@ -29,7 +29,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     }
 
 
-    public async Task QueueWebhook(WebhookMessageLog webhookLog)
+    public async Async.Task QueueWebhook(WebhookMessageLog webhookLog)
     {
         var obj = new WebhookMessageQueueObj(webhookLog.WebhookId, webhookLog.EventId);
 
@@ -40,11 +40,14 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
             _ => null
         };
 
-
         if (visibilityTimeout == null)
         {
-            _log.Error($"invalid WebhookMessage queue state, not queuing. {webhookLog.WebhookId}:{webhookLog.EventId} - {webhookLog.State}");
-
+            _log.WithTags(
+                    new[] {
+                        ("WebhookId", webhookLog.WebhookId.ToString()),
+                        ("EventId", webhookLog.EventId.ToString()) }
+                    ).
+                Error($"invalid WebhookMessage queue state, not queuing. {webhookLog.WebhookId}:{webhookLog.EventId} - {webhookLog.State}");
         }
         else
         {
@@ -56,24 +59,34 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     {
         throw new NotImplementedException();
     }
+
+    public IAsyncEnumerable<WebhookMessageLog> SearchExpired()
+    {
+        var expireTime = (DateTimeOffset.UtcNow - TimeSpan.FromDays(EXPIRE_DAYS)).ToString("o");
+
+        var timeFilter = $"Timestamp lt datetime'{expireTime}'";
+        return QueryAsync(filter: timeFilter);
+    }
 }
 
 
 public interface IWebhookOperations
 {
-    Task SendEvent(EventMessage eventMessage);
+    Async.Task SendEvent(EventMessage eventMessage);
 }
 
 public class WebhookOperations : Orm<Webhook>, IWebhookOperations
 {
     private readonly IWebhookMessageLogOperations _webhookMessageLogOperations;
-    public WebhookOperations(IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations)
+    private readonly ILogTracer _log;
+    public WebhookOperations(IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations, ILogTracer log)
         : base(storage)
     {
         _webhookMessageLogOperations = webhookMessageLogOperations;
+        _log = log;
     }
 
-    async public Task SendEvent(EventMessage eventMessage)
+    async public Async.Task SendEvent(EventMessage eventMessage)
     {
         await foreach (var webhook in GetWebhooksCached())
         {
@@ -85,7 +98,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
         }
     }
 
-    async private Task AddEvent(Webhook webhook, EventMessage eventMessage)
+    async private Async.Task AddEvent(Webhook webhook, EventMessage eventMessage)
     {
         var message = new WebhookMessageLog(
              EventId: eventMessage.EventId,
@@ -96,7 +109,12 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
              WebhookId: webhook.WebhookId
             );
 
-        await _webhookMessageLogOperations.Replace(message);
+        var r = await _webhookMessageLogOperations.Replace(message);
+        if (!r.IsOk)
+        {
+            var (status, reason) = r.ErrorV;
+            _log.Error($"Failed to replace webhook message log due to [{status}] {reason}");
+        }
     }
 
 

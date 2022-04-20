@@ -3,7 +3,6 @@ using System;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Core;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Linq;
 
@@ -26,34 +25,32 @@ public interface IStorage
 
 public class Storage : IStorage
 {
-
     private ICreds _creds;
-    private readonly ILogger _logger;
+    private ArmClient _armClient;
+    private ILogTracer _log;
 
-    public Storage(ILoggerFactory loggerFactory, ICreds creds)
+    public Storage(ICreds creds, ILogTracer log)
     {
         _creds = creds;
-        _logger = loggerFactory.CreateLogger<Storage>();
+        _armClient = new ArmClient(credential: _creds.GetIdentity(), defaultSubscriptionId: _creds.GetSubcription());
+        _log = log;
     }
 
-    // TODO: @cached
     public static string GetFuncStorage()
     {
         return EnvironmentVariables.OneFuzz.FuncStorage
             ?? throw new Exception("Func storage env var is missing");
     }
 
-    // TODO: @cached
     public static string GetFuzzStorage()
     {
         return EnvironmentVariables.OneFuzz.DataStorage
             ?? throw new Exception("Fuzz storage env var is missing");
     }
 
-    // TODO: @cached
     public ArmClient GetMgmtClient()
     {
-        return new ArmClient(credential: _creds.GetIdentity(), defaultSubscriptionId: _creds.GetSubcription());
+        return _armClient;
     }
 
     // TODO: @cached
@@ -67,7 +64,7 @@ public class Storage : IStorage
 
         const string storageTypeTagKey = "storage_type";
 
-        var resourceGroup = client.GetResourceGroup(group);
+        var resourceGroup = client.GetResourceGroupResource(group);
         foreach (var account in resourceGroup.GetStorageAccounts())
         {
             if (account.Id == skip)
@@ -94,7 +91,7 @@ public class Storage : IStorage
             results.Add(account.Id!);
         }
 
-        _logger.LogInformation($"corpus accounts: {JsonSerializer.Serialize(results)}");
+        _log.Info($"corpus accounts: {JsonSerializer.Serialize(results)}");
         return results;
     }
 
@@ -113,7 +110,7 @@ public class Storage : IStorage
     {
         var resourceId = new ResourceIdentifier(accountId);
         var armClient = GetMgmtClient();
-        var storageAccount = armClient.GetStorageAccount(resourceId);
+        var storageAccount = armClient.GetStorageAccountResource(resourceId);
         var key = storageAccount.GetKeys().Value.Keys.FirstOrDefault();
         return (resourceId.Name, key?.Value);
     }

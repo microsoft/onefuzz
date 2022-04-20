@@ -98,9 +98,12 @@ If webhook is set to have Event Grid message format then the payload will look a
         },
         "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "job_id": "00000000-0000-0000-0000-000000000000",
+        "onefuzz_version": "1.2.3",
         "scariness_description": "example-scariness",
         "scariness_score": 10,
-        "task_id": "00000000-0000-0000-0000-000000000000"
+        "task_id": "00000000-0000-0000-0000-000000000000",
+        "tool_name": "libfuzzer",
+        "tool_version": "1.2.3"
     }
 }
 ```
@@ -230,6 +233,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Sha256",
                     "type": "string"
                 },
+                "onefuzz_version": {
+                    "title": "Onefuzz Version",
+                    "type": "string"
+                },
                 "scariness_description": {
                     "title": "Scariness Description",
                     "type": "string"
@@ -242,6 +249,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "format": "uuid",
                     "title": "Task Id",
                     "type": "string"
+                },
+                "tool_name": {
+                    "title": "Tool Name",
+                    "type": "string"
+                },
+                "tool_version": {
+                    "title": "Tool Version",
+                    "type": "string"
                 }
             },
             "required": [
@@ -252,7 +267,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "call_stack_sha256",
                 "input_sha256",
                 "task_id",
-                "job_id"
+                "job_id",
+                "tool_name",
+                "tool_version",
+                "onefuzz_version"
             ],
             "title": "Report",
             "type": "object"
@@ -1844,9 +1862,12 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "job_id": "00000000-0000-0000-0000-000000000000",
+                "onefuzz_version": "1.2.3",
                 "scariness_description": "example-scariness",
                 "scariness_score": 10,
-                "task_id": "00000000-0000-0000-0000-000000000000"
+                "task_id": "00000000-0000-0000-0000-000000000000",
+                "tool_name": "libfuzzer",
+                "tool_version": "1.2.3"
             }
         },
         "original_crash_test_result": {
@@ -1868,9 +1889,12 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "job_id": "00000000-0000-0000-0000-000000000000",
+                "onefuzz_version": "1.2.3",
                 "scariness_description": "example-scariness",
                 "scariness_score": 10,
-                "task_id": "00000000-0000-0000-0000-000000000000"
+                "task_id": "00000000-0000-0000-0000-000000000000",
+                "tool_name": "libfuzzer",
+                "tool_version": "1.2.3"
             }
         }
     }
@@ -2071,6 +2095,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Sha256",
                     "type": "string"
                 },
+                "onefuzz_version": {
+                    "title": "Onefuzz Version",
+                    "type": "string"
+                },
                 "scariness_description": {
                     "title": "Scariness Description",
                     "type": "string"
@@ -2083,6 +2111,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "format": "uuid",
                     "title": "Task Id",
                     "type": "string"
+                },
+                "tool_name": {
+                    "title": "Tool Name",
+                    "type": "string"
+                },
+                "tool_version": {
+                    "title": "Tool Version",
+                    "type": "string"
                 }
             },
             "required": [
@@ -2093,7 +2129,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "call_stack_sha256",
                 "input_sha256",
                 "task_id",
-                "job_id"
+                "job_id",
+                "tool_name",
+                "tool_version",
+                "onefuzz_version"
             ],
             "title": "Report",
             "type": "object"
@@ -6310,6 +6349,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Sha256",
                     "type": "string"
                 },
+                "onefuzz_version": {
+                    "title": "Onefuzz Version",
+                    "type": "string"
+                },
                 "scariness_description": {
                     "title": "Scariness Description",
                     "type": "string"
@@ -6322,6 +6365,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "format": "uuid",
                     "title": "Task Id",
                     "type": "string"
+                },
+                "tool_name": {
+                    "title": "Tool Name",
+                    "type": "string"
+                },
+                "tool_version": {
+                    "title": "Tool Version",
+                    "type": "string"
                 }
             },
             "required": [
@@ -6332,7 +6383,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "call_stack_sha256",
                 "input_sha256",
                 "task_id",
-                "job_id"
+                "job_id",
+                "tool_name",
+                "tool_version",
+                "onefuzz_version"
             ],
             "title": "Report",
             "type": "object"

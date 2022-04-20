@@ -1,15 +1,14 @@
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
 
 namespace Microsoft.OneFuzz.Service;
 
 public class QueueSignalREvents
 {
-    private readonly ILogger _logger;
+    private readonly ILogTracerFactory _loggerFactory;
 
-    public QueueSignalREvents(ILoggerFactory loggerFactory)
+    public QueueSignalREvents(ILogTracerFactory loggerFactory)
     {
-        _logger = loggerFactory.CreateLogger<QueueSignalREvents>();
+        _loggerFactory = loggerFactory;
     }
 
     [Function("QueueSignalREvents")]
