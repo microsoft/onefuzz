@@ -39,7 +39,7 @@ public class TaskOperations : Orm<Task>, ITaskOperations
         {
             if (jobId != null)
             {
-                queryString += " or ";
+                queryString += " and ";
             }
 
             var statesString = string.Join(",", states);
