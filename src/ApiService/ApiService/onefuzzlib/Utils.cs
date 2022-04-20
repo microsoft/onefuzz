@@ -1,6 +1,3 @@
-
-using System;
-
 namespace Microsoft.OneFuzz.Service;
 
 public static class ObjectExtention
