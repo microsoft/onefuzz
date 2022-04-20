@@ -503,13 +503,12 @@ namespace Tests
             return Test(ss);
         }
 
-        /* @Cheick
         [Property]
         public bool WebhookMessageLog(WebhookMessageLog log)
         {
             return Test(log);
         }
-        */
+
 
 
         [Property]
@@ -604,13 +603,11 @@ namespace Tests
             return Test(ss);
         }
 
-        /* @Cheick
         [Property]
         public bool WebhookMessageLog(WebhookMessageLog log)
         {
             return Test(log);
         }
-        */
 
         [Property]
         public bool Webhook(Webhook wh)
@@ -618,21 +615,18 @@ namespace Tests
             return Test(wh);
         }
 
-        /* @Cheick
         [Property]
         public bool WebhookMessageEventGrid(WebhookMessageEventGrid evt)
-        { 
-            return Teste(evt);
+        {
+            return Test(evt);
         }
-        */
 
-        /* @Cheick
+
         [Property]
         public bool WebhookMessage(WebhookMessage msg)
         {
             return Test(msg);
         }
-        */
 
 
         [Property]
