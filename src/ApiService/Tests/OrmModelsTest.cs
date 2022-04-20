@@ -8,7 +8,6 @@ using System;
 using System.Linq;
 using System.Security;
 using System.Text.Json;
-using System.Security.Cryptography;
 
 namespace Tests
 {
@@ -254,7 +253,7 @@ namespace Tests
         public static Gen<Report> Report()
         {
             return Arb.Generate<Tuple<string, BlobRef, List<string>, Guid, int>>().Select(
-                arg => 
+                arg =>
                     new Report(
                         InputUrl: arg.Item1,
                         InputBlob: arg.Item2,
