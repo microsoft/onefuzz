@@ -1,10 +1,7 @@
-using System.Collections.Generic;
-using System;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Core;
 using System.Text.Json;
-using System.Linq;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -18,20 +15,24 @@ public interface IStorage
 {
     public ArmClient GetMgmtClient();
 
-    public IEnumerable<string> CorpusAccounts(ILogTracer log);
+    public IEnumerable<string> CorpusAccounts();
     string GetPrimaryAccount(StorageType storageType);
     public (string?, string?) GetStorageAccountNameAndKey(string accountId);
+
+    public IEnumerable<string> GetAccounts(StorageType storageType);
 }
 
 public class Storage : IStorage
 {
     private ICreds _creds;
     private ArmClient _armClient;
+    private ILogTracer _log;
 
-    public Storage(ICreds creds)
+    public Storage(ICreds creds, ILogTracer log)
     {
         _creds = creds;
         _armClient = new ArmClient(credential: _creds.GetIdentity(), defaultSubscriptionId: _creds.GetSubcription());
+        _log = log;
     }
 
     public static string GetFuncStorage()
@@ -52,7 +53,7 @@ public class Storage : IStorage
     }
 
     // TODO: @cached
-    public IEnumerable<string> CorpusAccounts(ILogTracer log)
+    public IEnumerable<string> CorpusAccounts()
     {
         var skip = GetFuncStorage();
         var results = new List<string> { GetFuzzStorage() };
@@ -89,7 +90,7 @@ public class Storage : IStorage
             results.Add(account.Id!);
         }
 
-        log.Info($"corpus accounts: {JsonSerializer.Serialize(results)}");
+        _log.Info($"corpus accounts: {JsonSerializer.Serialize(results)}");
         return results;
     }
 
@@ -111,5 +112,18 @@ public class Storage : IStorage
         var storageAccount = armClient.GetStorageAccountResource(resourceId);
         var key = storageAccount.GetKeys().Value.Keys.FirstOrDefault();
         return (resourceId.Name, key?.Value);
+    }
+
+    public IEnumerable<string> GetAccounts(StorageType storageType)
+    {
+        switch (storageType)
+        {
+            case StorageType.Corpus:
+                return CorpusAccounts();
+            case StorageType.Config:
+                return new[] { GetFuncStorage() };
+            default:
+                throw new NotImplementedException();
+        }
     }
 }

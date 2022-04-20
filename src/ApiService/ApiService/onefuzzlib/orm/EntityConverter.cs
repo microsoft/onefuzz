@@ -1,7 +1,5 @@
 using Azure.Data.Tables;
-using System;
 using System.Reflection;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,7 +10,7 @@ namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 public abstract record EntityBase
 {
-    public ETag? ETag { get; set; }
+    [JsonIgnore] public ETag? ETag { get; set; }
     public DateTimeOffset? TimeStamp { get; set; }
 
     //public ApiService.OneFuzzLib.Orm.IOrm<EntityBase>? Orm { get; set; }
@@ -22,17 +20,39 @@ public abstract record EntityBase
 /// Indicates that the enum cases should no be renamed
 [AttributeUsage(AttributeTargets.Enum)]
 public class SkipRename : Attribute { }
-
 public class RowKeyAttribute : Attribute { }
 public class PartitionKeyAttribute : Attribute { }
+public class TypeDiscrimnatorAttribute : Attribute
+{
+    public string FieldName { get; }
+    // the type of a function that takes the value of fieldName as an input and return the type
+    public Type ConverterType { get; }
+
+    public TypeDiscrimnatorAttribute(string fieldName, Type converterType)
+    {
+        if (!converterType.IsAssignableTo(typeof(ITypeProvider)))
+        {
+            throw new ArgumentException($"the provided type needs to implement ITypeProvider");
+        }
+
+        FieldName = fieldName;
+        ConverterType = converterType;
+    }
+}
+
+public interface ITypeProvider
+{
+    Type GetTypeInfo(object input);
+}
+
 public enum EntityPropertyKind
 {
     PartitionKey,
     RowKey,
     Column
 }
-public record EntityProperty(string name, string columnName, Type type, EntityPropertyKind kind);
-public record EntityInfo(Type type, EntityProperty[] properties, Func<object?[], object> constructor);
+public record EntityProperty(string name, string columnName, Type type, EntityPropertyKind kind, (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator);
+public record EntityInfo(Type type, Dictionary<string, EntityProperty> properties, Func<object?[], object> constructor);
 
 class OnefuzzNamingPolicy : JsonNamingPolicy
 {
@@ -47,6 +67,7 @@ public class EntityConverter
 
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
 
+    private readonly ETag _emptyETag = new ETag();
 
     public EntityConverter()
     {
@@ -62,10 +83,11 @@ public class EntityConverter
             PropertyNamingPolicy = new OnefuzzNamingPolicy(),
         };
         options.Converters.Add(new CustomEnumConverterFactory());
+        options.Converters.Add(new PolymorphicConverterFactory());
         return options;
     }
 
-    internal Func<object?[], object> BuildConstructerFrom(ConstructorInfo constructorInfo)
+    internal static Func<object?[], object> BuildConstructerFrom(ConstructorInfo constructorInfo)
     {
         var constructorParameters = Expression.Parameter(typeof(object?[]));
 
@@ -111,12 +133,25 @@ public class EntityConverter
                                 ?? CaseConverter.PascalToSnake(name),
                             EntityPropertyKind.Column
                         );
+                var discriminatorAttribute = type.GetProperty(name)?.GetCustomAttribute<TypeDiscrimnatorAttribute>();
 
-                return new EntityProperty(name, columnName, parameterType, kind);
+                (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator = null;
+                if (discriminatorAttribute != null)
+                {
+                    var t = (ITypeProvider)(discriminatorAttribute.ConverterType.GetConstructor(new Type[] { })?.Invoke(null) ?? throw new Exception("unable to retrive the type provider"));
+                    discriminator = (discriminatorAttribute, t);
+                }
+                return new EntityProperty(name, columnName, parameterType, kind, discriminator);
             }).ToArray();
 
-            return new EntityInfo(typeof(T), parameters, BuildConstructerFrom(constructor));
+            return new EntityInfo(typeof(T), parameters.ToDictionary(x => x.name), BuildConstructerFrom(constructor));
         });
+    }
+
+    public string ToJsonString<T>(T typedEntity) where T : EntityBase
+    {
+        var serialized = JsonSerializer.Serialize(typedEntity, _options);
+        return serialized;
     }
 
     public TableEntity ToTableEntity<T>(T typedEntity) where T : EntityBase
@@ -132,10 +167,15 @@ public class EntityConverter
         }
         var tableEntity = new TableEntity();
         var entityInfo = GetEntityInfo<T>();
-        foreach (var prop in entityInfo.properties)
+        foreach (var kvp in entityInfo.properties)
         {
+            var prop = kvp.Value;
             var value = entityInfo.type.GetProperty(prop.name)?.GetValue(typedEntity);
-            if (prop.type == typeof(Guid) || prop.type == typeof(Guid?))
+            if (prop.kind == EntityPropertyKind.PartitionKey || prop.kind == EntityPropertyKind.RowKey)
+            {
+                tableEntity.Add(prop.columnName, value?.ToString());
+            }
+            else if (prop.type == typeof(Guid) || prop.type == typeof(Guid?))
             {
                 tableEntity.Add(prop.columnName, value?.ToString());
             }
@@ -168,7 +208,7 @@ public class EntityConverter
             else
             {
                 var serialized = JsonSerializer.Serialize(value, _options);
-                tableEntity.Add(prop.columnName, serialized);
+                tableEntity.Add(prop.columnName, serialized.Trim('"'));
             }
 
         }
@@ -182,80 +222,115 @@ public class EntityConverter
     }
 
 
+    private object? GetFieldValue(EntityInfo info, string name, TableEntity entity)
+    {
+        var ef = info.properties[name];
+        if (ef.kind == EntityPropertyKind.PartitionKey || ef.kind == EntityPropertyKind.RowKey)
+        {
+            if (ef.type == typeof(string))
+                return entity.GetString(ef.kind.ToString());
+            else if (ef.type == typeof(Guid))
+                return Guid.Parse(entity.GetString(ef.kind.ToString()));
+            else if (ef.type == typeof(int))
+                return int.Parse(entity.GetString(ef.kind.ToString()));
+            else
+            {
+                throw new Exception("invalid ");
+            }
+        }
+
+        var fieldName = ef.columnName;
+        var obj = entity[fieldName];
+        if (obj == null)
+        {
+            return null;
+        }
+        var objType = obj.GetType();
+
+        if (ef.type == typeof(string))
+        {
+            return entity.GetString(fieldName);
+        }
+        else if (ef.type == typeof(bool))
+        {
+            return entity.GetBoolean(fieldName);
+        }
+        else if (ef.type == typeof(DateTimeOffset) || ef.type == typeof(DateTimeOffset?))
+        {
+            return entity.GetDateTimeOffset(fieldName);
+        }
+        else if (ef.type == typeof(DateTime))
+        {
+            return entity.GetDateTime(fieldName);
+        }
+        else if (ef.type == typeof(double))
+        {
+            return entity.GetDouble(fieldName);
+        }
+        else if (ef.type == typeof(Guid) || ef.type == typeof(Guid?))
+        {
+            return (object?)Guid.Parse(entity.GetString(fieldName));
+        }
+        else if (ef.type == typeof(int))
+        {
+            return entity.GetInt32(fieldName);
+        }
+        else if (ef.type == typeof(Int64))
+        {
+            return entity.GetInt64(fieldName);
+        }
+        else if (ef.type.IsEnum)
+        {
+            var stringValues =
+                entity.GetString(fieldName).Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(CaseConverter.SnakeToPascal);
+
+            return Enum.Parse(ef.type, string.Join(",", stringValues));
+        }
+        else
+        {
+            var outputType = ef.type;
+            if (ef.discriminator != null)
+            {
+                var (attr, typeProvider) = ef.discriminator.Value;
+                var v = GetFieldValue(info, attr.FieldName, entity) ?? throw new Exception($"No value for {attr.FieldName}");
+                outputType = typeProvider.GetTypeInfo(v);
+            }
+
+
+            if (objType == typeof(string))
+            {
+                var value = entity.GetString(fieldName);
+                if (value.StartsWith('[') || value.StartsWith('{') || value == "null")
+                {
+                    return JsonSerializer.Deserialize(value, outputType, options: _options);
+                }
+                else
+                {
+                    return JsonSerializer.Deserialize($"\"{value}\"", outputType, options: _options);
+                }
+            }
+            else
+            {
+                var value = entity.GetString(fieldName);
+                return JsonSerializer.Deserialize(value, outputType, options: _options);
+            }
+        }
+    }
+
+
     public T ToRecord<T>(TableEntity entity) where T : EntityBase
     {
         var entityInfo = GetEntityInfo<T>();
         var parameters =
-            entityInfo.properties.Select(ef =>
-                {
-                    if (ef.kind == EntityPropertyKind.PartitionKey || ef.kind == EntityPropertyKind.RowKey)
-                    {
-                        if (ef.type == typeof(string))
-                            return entity.GetString(ef.kind.ToString());
-                        else if (ef.type == typeof(Guid))
-                            return Guid.Parse(entity.GetString(ef.kind.ToString()));
-                        else
-                        {
-                            throw new Exception("invalid ");
-                        }
-
-                    }
-
-                    var fieldName = ef.columnName;
-                    if (ef.type == typeof(string))
-                    {
-                        return entity.GetString(fieldName);
-                    }
-                    else if (ef.type == typeof(bool))
-                    {
-                        return entity.GetBoolean(fieldName);
-                    }
-                    else if (ef.type == typeof(DateTimeOffset) || ef.type == typeof(DateTimeOffset?))
-                    {
-                        return entity.GetDateTimeOffset(fieldName);
-                    }
-                    else if (ef.type == typeof(DateTime))
-                    {
-                        return entity.GetDateTime(fieldName);
-                    }
-                    else if (ef.type == typeof(double))
-                    {
-                        return entity.GetDouble(fieldName);
-                    }
-                    else if (ef.type == typeof(Guid) || ef.type == typeof(Guid?))
-                    {
-                        return (object?)Guid.Parse(entity.GetString(fieldName));
-                    }
-                    else if (ef.type == typeof(int))
-                    {
-                        return entity.GetInt32(fieldName);
-                    }
-                    else if (ef.type == typeof(Int64))
-                    {
-                        return entity.GetInt64(fieldName);
-                    }
-                    else if (ef.type.IsEnum)
-                    {
-                        var stringValues =
-                            entity.GetString(fieldName).Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                            .Select(CaseConverter.SnakeToPascal);
-
-                        return Enum.Parse(ef.type, string.Join(",", stringValues));
-                    }
-                    else
-                    {
-                        var value = entity.GetString(fieldName);
-                        if (value == null)
-                        {
-                            return null;
-                        }
-                        return JsonSerializer.Deserialize(value, ef.type, options: _options); ;
-                    }
-                }
-            ).ToArray();
+            entityInfo.properties.Keys.Select(k => GetFieldValue(entityInfo, k, entity)).ToArray();
 
         var entityRecord = (T)entityInfo.constructor.Invoke(parameters);
-        entityRecord.ETag = entity.ETag;
+
+        if (entity.ETag != _emptyETag)
+        {
+            entityRecord.ETag = entity.ETag;
+        }
         entityRecord.TimeStamp = entity.Timestamp;
 
         return entityRecord;

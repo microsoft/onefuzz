@@ -1,5 +1,4 @@
-﻿using System;
-namespace Microsoft.OneFuzz.Service;
+﻿namespace Microsoft.OneFuzz.Service;
 
 public enum LogDestination
 {
@@ -21,6 +20,9 @@ public static class EnvironmentVariables
 
     //TODO: Add environment variable to control where to write logs to
     public static LogDestination[] LogDestinations { get; set; }
+
+    //TODO: Get this from Environment variable
+    public static ApplicationInsights.DataContracts.SeverityLevel LogSeverityLevel() { return ApplicationInsights.DataContracts.SeverityLevel.Verbose; }
 
     public static class AppInsights
     {

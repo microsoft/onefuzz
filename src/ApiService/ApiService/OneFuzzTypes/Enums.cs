@@ -1,4 +1,7 @@
-﻿public enum ErrorCode
+﻿using System.Collections.Concurrent;
+
+namespace Microsoft.OneFuzz.Service;
+public enum ErrorCode
 {
     INVALID_REQUEST = 450,
     INVALID_PERMISSION = 451,
@@ -50,7 +53,7 @@ public enum TaskState
     Init,
     Waiting,
     Scheduled,
-    Setting_up,
+    SettingUp,
     Running,
     Stopping,
     Stopped,
@@ -106,4 +109,93 @@ public enum TaskDebugFlag
 {
     KeepNodeOnFailure,
     KeepNodeOnCompletion,
+}
+
+public enum ScalesetState
+{
+    Init,
+    Setup,
+    Resize,
+    Running,
+    Shutdown,
+    Halt,
+    CreationFailed
+}
+
+public static class ScalesetStateHelper
+{
+
+    static ConcurrentDictionary<string, ScalesetState[]> _states = new ConcurrentDictionary<string, ScalesetState[]>();
+
+    /// set of states that indicate the scaleset can be updated
+    public static ScalesetState[] CanUpdate()
+    {
+        return
+        _states.GetOrAdd("CanUpdate", k => new[]{
+            ScalesetState.Running,
+            ScalesetState.Resize
+        });
+    }
+
+    /// set of states that indicate work is needed during eventing
+    public static ScalesetState[] NeedsWork()
+    {
+        return
+        _states.GetOrAdd("CanUpdate", k => new[]{
+            ScalesetState.Init,
+            ScalesetState.Setup,
+            ScalesetState.Resize,
+            ScalesetState.Shutdown,
+            ScalesetState.Halt,
+        });
+    }
+
+    /// set of states that indicate if it's available for work
+    public static ScalesetState[] Available()
+    {
+        return
+        _states.GetOrAdd("CanUpdate", k =>
+        {
+            return
+                new[]{
+                ScalesetState.Resize,
+                ScalesetState.Running,
+            };
+        });
+    }
+
+    /// set of states that indicate scaleset is resizing
+    public static ScalesetState[] Resizing()
+    {
+        return
+        _states.GetOrAdd("CanDelete", k =>
+        {
+            return
+                new[]{
+                ScalesetState.Halt,
+                ScalesetState.Init,
+                ScalesetState.Setup,
+            };
+        });
+    }
+}
+
+public static class TaskStateHelper
+{
+    static ConcurrentDictionary<string, TaskState[]> _states = new ConcurrentDictionary<string, TaskState[]>();
+    public static TaskState[] Available()
+    {
+        return
+        _states.GetOrAdd("Available", k =>
+        {
+            return
+                 new[]{
+                    TaskState.Waiting,
+                    TaskState.Scheduled,
+                    TaskState.SettingUp,
+                    TaskState.Running,
+                    TaskState.WaitJob
+                 };
+        });
+    }
 }

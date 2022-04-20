@@ -254,7 +254,17 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
 
         let offset: u64 = rva.try_into()?;
         let va: u64 = self.scanner.base + offset;
-        self.scanner.scan(data, va)?;
+
+        if let Err(err) = self.scanner.scan(data, va) {
+            // Errors here are aren't fatal to the larger reversing of inline accesses.
+            //
+            // Typically, it means we attempted to disassemble local data (like jump tables).
+            log::warn!(
+                "error scanning procedure code for inline accesses; procedure = {}, error = {}",
+                proc.name,
+                err
+            );
+        }
 
         Ok(())
     }
