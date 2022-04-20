@@ -8,6 +8,7 @@ using System;
 using System.Linq;
 using System.Security;
 using System.Text.Json;
+using System.Security.Cryptography;
 
 namespace Tests
 {
@@ -249,6 +250,41 @@ namespace Tests
             );
 
         }
+
+        public static Gen<Report> Report()
+        {
+            return Arb.Generate<Tuple<string, BlobRef, List<string>, Guid, int>>().Select(
+                arg => 
+                    new Report(
+                        InputUrl: arg.Item1,
+                        InputBlob: arg.Item2,
+                        Executable: arg.Item1,
+                        CrashType: arg.Item1,
+                        CrashSite: arg.Item1,
+                        CallStack: arg.Item3,
+                        CallStackSha256: arg.Item1,
+                        InputSha256: arg.Item1,
+                        AsanLog: arg.Item1,
+                        TaskId: arg.Item4,
+                        JobId: arg.Item4,
+                        ScarinessScore: arg.Item5,
+                        ScarinessDescription: arg.Item1,
+                        MinimizedStack: arg.Item3,
+                        MinimizedStackSha256: arg.Item1,
+                        MinimizedStackFunctionNames: arg.Item3,
+                        MinimizedStackFunctionNamesSha256: arg.Item1,
+                        MinimizedStackFunctionLines: arg.Item3,
+                        MinimizedStackFunctionLinesSha256: arg.Item1
+                    )
+            );
+        }
+
+        public static Gen<Container> Container()
+        {
+            return Arb.Generate<Tuple<NonNull<string>>>().Select(
+                arg => new Container(string.Join("", arg.Item1.Get.Where(c => char.IsLetterOrDigit(c) || c == '-'))!)
+            );
+        }
     }
 
     public class OrmArb
@@ -326,6 +362,16 @@ namespace Tests
         public static Arbitrary<WebhookMessage> WebhookMessage()
         {
             return Arb.From(OrmGenerators.WebhookMessage());
+        }
+
+        public static Arbitrary<Report> Report()
+        {
+            return Arb.From(OrmGenerators.Report());
+        }
+
+        public static Arbitrary<Container> Container()
+        {
+            return Arb.From(OrmGenerators.Container());
         }
     }
 

@@ -419,23 +419,23 @@ public record Report(
     string CrashType,
     string CrashSite,
     IEnumerable<string> CallStack,
-    SHA256 CallStackSha256,
-    SHA256 InputSha256,
+    string CallStackSha256,
+    string InputSha256,
     string? AsanLog,
     Guid TaskId,
     Guid JobId,
     int? ScarinessScore,
     string? ScarinessDescription,
     IEnumerable<string>? MinimizedStack,
-    SHA256? MinimizedStackSha256,
+    string? MinimizedStackSha256,
     IEnumerable<string>? MinimizedStackFunctionNames,
-    SHA256? MinimizedStackFunctionNamesSha256,
+    string? MinimizedStackFunctionNamesSha256,
     IEnumerable<string>? MinimizedStackFunctionLines,
-    SHA256? MinimizedStackFunctionLinesSha256
+    string? MinimizedStackFunctionLinesSha256
 );
 
 public record NoReproReport(
-    SHA256 InputSha,
+    string InputSha,
     BlobRef? InputBlob,
     string? Executable,
     Guid TaskId,
