@@ -418,7 +418,7 @@ public record Report(
     string Executable,
     string CrashType,
     string CrashSite,
-    IEnumerable<string> CallStack,
+    List<string> CallStack,
     string CallStackSha256,
     string InputSha256,
     string? AsanLog,
@@ -426,11 +426,11 @@ public record Report(
     Guid JobId,
     int? ScarinessScore,
     string? ScarinessDescription,
-    IEnumerable<string>? MinimizedStack,
+    List<string>? MinimizedStack,
     string? MinimizedStackSha256,
-    IEnumerable<string>? MinimizedStackFunctionNames,
+    List<string>? MinimizedStackFunctionNames,
     string? MinimizedStackFunctionNamesSha256,
-    IEnumerable<string>? MinimizedStackFunctionLines,
+    List<string>? MinimizedStackFunctionLines,
     string? MinimizedStackFunctionLinesSha256
 );
 

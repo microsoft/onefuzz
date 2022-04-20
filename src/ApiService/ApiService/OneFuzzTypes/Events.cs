@@ -36,7 +36,7 @@ public enum EventType
     FileAdded,
     TaskHeartbeat,
     NodeHeartbeat,
-    InstanceConfigUpdated
+    InstanceConfigUpdated,    
 }
 
 public abstract record BaseEvent()
@@ -49,6 +49,9 @@ public abstract record BaseEvent()
                 EventNodeHeartbeat _ => EventType.NodeHeartbeat,
                 EventTaskHeartbeat _ => EventType.TaskHeartbeat,
                 EventInstanceConfigUpdated _ => EventType.InstanceConfigUpdated,
+                EventCrashReported _ => EventType.CrashReported,
+                EventRegressionReported _ => EventType.RegressionReported,
+                EventFileAdded _ => EventType.FileAdded,
                 _ => throw new NotImplementedException(),
             };
 
@@ -61,6 +64,9 @@ public abstract record BaseEvent()
             EventType.NodeHeartbeat => typeof(EventNodeHeartbeat),
             EventType.InstanceConfigUpdated => typeof(EventInstanceConfigUpdated),
             EventType.TaskHeartbeat => typeof(EventTaskHeartbeat),
+            EventType.CrashReported => typeof(EventCrashReported),
+            EventType.RegressionReported => typeof(EventRegressionReported),
+            EventType.FileAdded => typeof(EventFileAdded),
             _ => throw new ArgumentException($"invalid input {eventType}"),
 
         };

@@ -10,7 +10,7 @@ public interface IContainers
 {
     public Task<IEnumerable<byte>?> GetBlob(Container container, string name, StorageType storageType);
 
-    public BlobContainerClient? FindContainer(Container container, StorageType storageType);
+    public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
     public Uri GetFileSasUrl(Container container, string name, StorageType storageType, bool read = false, bool add = false, bool create = false, bool write = false, bool delete = false, bool delete_previous_version = false, bool tag = false, int days = 30, int hours = 0, int minutes = 0);
 
@@ -31,7 +31,7 @@ public class Containers : IContainers
     }
     public async Task<IEnumerable<byte>?> GetBlob(Container container, string name, StorageType storageType)
     {
-        var client = FindContainer(container, storageType);
+        var client = await FindContainer(container, storageType);
 
         if (client == null)
         {
@@ -49,7 +49,7 @@ public class Containers : IContainers
         }
     }
 
-    public BlobContainerClient? FindContainer(Container container, StorageType storageType)
+    public async Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType)
     {
         // # check secondary accounts first by searching in reverse.
         // #
@@ -58,11 +58,12 @@ public class Containers : IContainers
         // #
         // # Secondary accounts, if they exist, are preferred for containers and have
         // # increased IOP rates, this should be a slight optimization
-        return _storage.GetAccounts(storageType)
+        return await _storage.GetAccounts(storageType)
             .Reverse()
             .Select(account => GetBlobService(account)?.GetBlobContainerClient(container.ContainerName))
-            .Where(client => client?.Exists().Value ?? false)
-            .FirstOrDefault();
+            .ToAsyncEnumerable()
+            .WhereAwait(async client => client != null && (await client.ExistsAsync()).Value)
+            .FirstOrDefaultAsync();
     }
 
     private BlobServiceClient? GetBlobService(string accountId)
