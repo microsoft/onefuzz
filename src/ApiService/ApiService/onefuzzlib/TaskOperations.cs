@@ -6,6 +6,9 @@ public interface ITaskOperations : IOrm<Task>
 {
     Async.Task<Task?> GetByTaskId(Guid taskId);
 
+    Async.Task<Task?> GetByJobIdAndTaskId(Guid jobId, Guid taskId);
+
+
     IAsyncEnumerable<Task> SearchStates(Guid? jobId = null, IEnumerable<TaskState>? states = null);
 
     IEnumerable<string>? GetInputContainerQueues(TaskConfig config);
@@ -24,6 +27,13 @@ public class TaskOperations : Orm<Task>, ITaskOperations
     public async Async.Task<Task?> GetByTaskId(Guid taskId)
     {
         var data = QueryAsync(filter: $"RowKey eq '{taskId}'");
+
+        return await data.FirstOrDefaultAsync();
+    }
+
+    public async Async.Task<Task?> GetByJobIdAndTaskId(Guid jobId, Guid taskId)
+    {
+        var data = QueryAsync(filter: $"PartitionKey eq '{jobId}' and RowKey eq '{taskId}'");
 
         return await data.FirstOrDefaultAsync();
     }

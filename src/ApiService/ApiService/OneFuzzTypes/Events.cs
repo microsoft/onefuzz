@@ -36,7 +36,7 @@ public enum EventType
     FileAdded,
     TaskHeartbeat,
     NodeHeartbeat,
-    InstanceConfigUpdated,    
+    InstanceConfigUpdated,
 }
 
 public abstract record BaseEvent()

@@ -88,7 +88,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         }
         else if (report.Report != null)
         {
-            var reportTask = await _taskOperations.GetByTaskId(report.Report.TaskId);
+            var reportTask = await _taskOperations.GetByJobIdAndTaskId(report.Report.JobId, report.Report.TaskId);
 
             var crashReportedEvent = new EventCrashReported(report.Report, container, filename, reportTask?.Config);
             await _events.SendEvent(crashReportedEvent);
@@ -118,11 +118,11 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     {
         if (report.CrashTestResult.CrashReport != null)
         {
-            return await _taskOperations.GetByTaskId(report.CrashTestResult.CrashReport.TaskId);
+            return await _taskOperations.GetByJobIdAndTaskId(report.CrashTestResult.CrashReport.JobId, report.CrashTestResult.CrashReport.TaskId);
         }
         if (report.CrashTestResult.NoReproReport != null)
         {
-            return await _taskOperations.GetByTaskId(report.CrashTestResult.NoReproReport.TaskId);
+            return await _taskOperations.GetByJobIdAndTaskId(report.CrashTestResult.NoReproReport.JobId, report.CrashTestResult.NoReproReport.TaskId);
         }
 
         _log.Error($"unable to find crash_report or no repro entry for report: {JsonSerializer.Serialize(report)}");

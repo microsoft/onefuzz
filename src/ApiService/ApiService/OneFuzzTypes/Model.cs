@@ -1,6 +1,5 @@
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System.Text.Json.Serialization;
-using System.Security.Cryptography;
 using Region = System.String;
 using PoolName = System.String;
 using Endpoint = System.String;
