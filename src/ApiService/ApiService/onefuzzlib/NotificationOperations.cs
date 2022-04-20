@@ -89,23 +89,15 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         else if (report.Report != null)
         {
             var reportTask = await _taskOperations.GetByTaskId(report.Report.TaskId);
-            TaskConfig? taskConfig = null;
-            if (reportTask != null)
-            {
-                taskConfig = reportTask.Config;
-            }
-            var crashReportedEvent = new EventCrashReported(report.Report, container, filename, taskConfig);
+
+            var crashReportedEvent = new EventCrashReported(report.Report, container, filename, reportTask?.Config);
             await _events.SendEvent(crashReportedEvent);
         }
         else if (report.RegressionReport != null)
         {
             var reportTask = await GetRegressionReportTask(report.RegressionReport);
-            TaskConfig? taskConfig = null;
-            if (reportTask != null)
-            {
-                taskConfig = reportTask.Config;
-            }
-            var regressionEvent = new EventRegressionReported(report.RegressionReport, container, filename, taskConfig);
+
+            var regressionEvent = new EventRegressionReported(report.RegressionReport, container, filename, reportTask?.Config);
         }
     }
 

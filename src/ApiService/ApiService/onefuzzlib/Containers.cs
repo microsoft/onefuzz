@@ -51,8 +51,6 @@ public class Containers : IContainers
 
     public BlobContainerClient? FindContainer(Container container, StorageType storageType)
     {
-        var accounts = _storage.GetAccounts(storageType);
-
         // # check secondary accounts first by searching in reverse.
         // #
         // # By implementation, the primary account is specified first, followed by
@@ -60,16 +58,11 @@ public class Containers : IContainers
         // #
         // # Secondary accounts, if they exist, are preferred for containers and have
         // # increased IOP rates, this should be a slight optimization
-
-        foreach (var account in accounts.Reverse())
-        {
-            var client = GetBlobService(account)?.GetBlobContainerClient(container.ContainerName);
-            if (client?.Exists().Value ?? false)
-            {
-                return client;
-            }
-        }
-        return null;
+        return _storage.GetAccounts(storageType)
+            .Reverse()
+            .Select(account => GetBlobService(account)?.GetBlobContainerClient(container.ContainerName))
+            .Where(client => client?.Exists().Value ?? false)
+            .FirstOrDefault();
     }
 
     private BlobServiceClient? GetBlobService(string accountId)
