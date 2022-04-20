@@ -25,7 +25,7 @@ public class QueueFileChanges
 
     [Function("QueueFileChanges")]
     public async Async.Task Run(
-        [QueueTrigger("file-changes", Connection = "AzureWebJobsStorage")] string msg,
+        [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount)
     {
         var fileChangeEvent = JsonSerializer.Deserialize<JsonDocument>(msg, EntityConverter.GetJsonSerializerOptions());
