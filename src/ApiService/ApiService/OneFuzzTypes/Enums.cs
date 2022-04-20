@@ -1,4 +1,7 @@
-﻿public enum ErrorCode
+﻿using System.Collections.Concurrent;
+
+namespace Microsoft.OneFuzz.Service;
+public enum ErrorCode
 {
     INVALID_REQUEST = 450,
     INVALID_PERMISSION = 451,
@@ -43,4 +46,138 @@ public enum WebhookMessageState
     Retrying,
     Succeeded,
     Failed
+}
+
+public enum TaskState
+{
+    Init,
+    Waiting,
+    Scheduled,
+    SettingUp,
+    Running,
+    Stopping,
+    Stopped,
+    WaitJob
+}
+
+public enum TaskType
+{
+    Coverage,
+    LibfuzzerFuzz,
+    LibfuzzerCoverage,
+    LibfuzzerCrashReport,
+    LibfuzzerMerge,
+    LibfuzzerRegression,
+    GenericAnalysis,
+    GenericSupervisor,
+    GenericMerge,
+    GenericGenerator,
+    GenericCrashReport,
+    GenericRegression
+}
+
+public enum Os
+{
+    Windows,
+    Linux
+}
+
+public enum ContainerType
+{
+    Analysis,
+    Coverage,
+    Crashes,
+    Inputs,
+    NoRepro,
+    ReadonlyInputs,
+    Reports,
+    Setup,
+    Tools,
+    UniqueInputs,
+    UniqueReports,
+    RegressionReports,
+    Logs
+}
+
+
+public enum StatsFormat
+{
+    AFL
+}
+
+public enum TaskDebugFlag
+{
+    KeepNodeOnFailure,
+    KeepNodeOnCompletion,
+}
+
+public enum ScalesetState
+{
+    Init,
+    Setup,
+    Resize,
+    Running,
+    Shutdown,
+    Halt,
+    CreationFailed
+}
+
+public static class ScalesetStateHelper
+{
+
+    static ConcurrentDictionary<string, ScalesetState[]> _states = new ConcurrentDictionary<string, ScalesetState[]>();
+
+    /// set of states that indicate the scaleset can be updated
+    public static ScalesetState[] CanUpdate()
+    {
+        return
+        _states.GetOrAdd("CanUpdate", k => new[]{
+            ScalesetState.Running,
+            ScalesetState.Resize
+        });
+    }
+
+    /// set of states that indicate work is needed during eventing
+    public static ScalesetState[] NeedsWork()
+    {
+        return
+        _states.GetOrAdd("CanUpdate", k => new[]{
+            ScalesetState.Init,
+            ScalesetState.Setup,
+            ScalesetState.Resize,
+            ScalesetState.Shutdown,
+            ScalesetState.Halt,
+        });
+    }
+
+    /// set of states that indicate if it's available for work
+    public static ScalesetState[] Available()
+    {
+        return
+        _states.GetOrAdd("CanUpdate", k =>
+        {
+            return
+                new[]{
+                ScalesetState.Resize,
+                ScalesetState.Running,
+            };
+        });
+    }
+
+    /// set of states that indicate scaleset is resizing
+    public static ScalesetState[] Resizing()
+    {
+        return
+        _states.GetOrAdd("CanDelete", k =>
+        {
+            return
+                new[]{
+                ScalesetState.Halt,
+                ScalesetState.Init,
+                ScalesetState.Setup,
+            };
+        });
+    }
+
+
 }
