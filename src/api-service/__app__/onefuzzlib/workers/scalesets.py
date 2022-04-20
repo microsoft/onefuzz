@@ -5,6 +5,7 @@
 
 import datetime
 import logging
+import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
@@ -437,8 +438,13 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         # Perform operations until they fail due to scaleset getting locked
         try:
-            self.reimage_nodes(to_reimage, NodeDisaposalStrategy.scale_in)
-            self.delete_nodes(to_delete, NodeDisaposalStrategy.scale_in)
+            strategy_str = os.getenv("ONEFUZZ_NODE_DISPOSAL_STRATEGY", "scale_in")
+            if strategy_str == "decomission":
+                strategy = NodeDisaposalStrategy.decomission
+            else:
+                strategy = NodeDisaposalStrategy.scale_in
+            self.reimage_nodes(to_reimage, strategy)
+            self.delete_nodes(to_delete, strategy)
         except UnableToUpdate:
             logging.info(
                 SCALESET_LOG_PREFIX
@@ -598,17 +604,23 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             else:
                 machine_ids.add(node.machine_id)
 
-        logging.info(
-            SCALESET_LOG_PREFIX + "deleting nodes scaleset_id:%s machine_id:%s",
-            self.scaleset_id,
-            machine_ids,
-        )
-        delete_vmss_nodes(self.scaleset_id, machine_ids)
-        for node in nodes:
-            if node.machine_id in machine_ids:
-                node.delete()
-                if disposal_strategy == NodeDisaposalStrategy.scale_in:
+        if disposal_strategy == NodeDisaposalStrategy.decomission:
+            logging.info(SCALESET_LOG_PREFIX + "decomissioning nodes")
+            for node in nodes:
+                if node.machine_id in machine_ids:
                     node.release_scale_in_protection()
+        else:
+            logging.info(
+                SCALESET_LOG_PREFIX + "deleting nodes scaleset_id:%s machine_id:%s",
+                self.scaleset_id,
+                machine_ids,
+            )
+            delete_vmss_nodes(self.scaleset_id, machine_ids)
+            for node in nodes:
+                if node.machine_id in machine_ids:
+                    node.delete()
+                    if disposal_strategy == NodeDisaposalStrategy.scale_in:
+                        node.release_scale_in_protection()
 
     def reimage_nodes(
         self, nodes: List[Node], disposal_strategy: NodeDisaposalStrategy
@@ -659,18 +671,24 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             )
             return
 
-        result = reimage_vmss_nodes(self.scaleset_id, machine_ids)
-        if isinstance(result, Error):
-            raise Exception(
-                "unable to reimage nodes: %s:%s - %s"
-                % (self.scaleset_id, machine_ids, result)
-            )
-
-        for node in nodes:
-            if node.machine_id in machine_ids:
-                node.delete()
-                if disposal_strategy == NodeDisaposalStrategy.scale_in:
+        if disposal_strategy == NodeDisaposalStrategy.decomission:
+            logging.info(SCALESET_LOG_PREFIX + "decomissioning nodes")
+            for node in nodes:
+                if node.machine_id in machine_ids:
                     node.release_scale_in_protection()
+        else:
+            result = reimage_vmss_nodes(self.scaleset_id, machine_ids)
+            if isinstance(result, Error):
+                raise Exception(
+                    "unable to reimage nodes: %s:%s - %s"
+                    % (self.scaleset_id, machine_ids, result)
+                )
+
+            for node in nodes:
+                if node.machine_id in machine_ids:
+                    node.delete()
+                    if disposal_strategy == NodeDisaposalStrategy.scale_in:
+                        node.release_scale_in_protection()
 
     def set_shutdown(self, now: bool) -> None:
         if now:

@@ -8,24 +8,24 @@ using System.Threading.Tasks;
 namespace Microsoft.OneFuzz.Service;
 public interface IQueue
 {
-    Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
-    Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout);
+    Async.Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
+    Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout);
 }
 
 
 public class Queue : IQueue
 {
     IStorage _storage;
-    ILog _logger;
+    ILogTracer _log;
 
-    public Queue(IStorage storage, ILog logger)
+    public Queue(IStorage storage, ILogTracer log)
     {
         _storage = storage;
-        _logger = logger;
+        _log = log;
     }
 
 
-    public async Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null)
+    public async Async.Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null)
     {
         var queue = GetQueue(name, storageType);
         if (queue != null)
@@ -36,7 +36,6 @@ public class Queue : IQueue
             }
             catch (Exception)
             {
-
             }
         }
     }
@@ -60,7 +59,7 @@ public class Queue : IQueue
         var accountId = _storage.GetPrimaryAccount(storageType);
         //_logger.LogDEbug("getting blob container (account_id: %s)", account_id)
         (var name, var key) = _storage.GetStorageAccountNameAndKey(accountId);
-        var accountUrl = new Uri($"https://%s.queue.core.windows.net{name}");
+        var accountUrl = new Uri($"https://{name}.queue.core.windows.net");
         var client = new QueueServiceClient(accountUrl, new StorageSharedKeyCredential(name, key));
         return client;
     }

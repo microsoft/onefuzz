@@ -20,6 +20,8 @@ use std::{
 use storage_queue::{Message, QueueClient};
 use uuid::Uuid;
 
+const GENERIC_TOOL_NAME: &str = "generic";
+
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub target_exe: PathBuf,
@@ -151,6 +153,9 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
             input_blob,
             input_sha256,
             args.minimized_stack_depth,
+            GENERIC_TOOL_NAME.into(),
+            env!("ONEFUZZ_VERSION").to_string(),
+            env!("ONEFUZZ_VERSION").to_string(),
         );
         Ok(CrashTestResult::CrashReport(Box::new(crash_report)))
     } else {
