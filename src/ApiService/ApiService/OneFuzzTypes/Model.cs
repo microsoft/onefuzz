@@ -141,7 +141,7 @@ public partial record Proxy
     string? Ip,
     Error? Error,
     string Version,
-    ProxyHeartbeat? heartbeat
+    ProxyHeartbeat? Heartbeat
 ) : EntityBase();
 
 public record Error(ErrorCode Code, string[]? Errors = null);
@@ -330,6 +330,8 @@ public record InstanceConfig
         null,
         null)
     { }
+
+    public InstanceConfig() : this(String.Empty) { }
 
     public List<Guid>? CheckAdmins(List<Guid>? value)
     {

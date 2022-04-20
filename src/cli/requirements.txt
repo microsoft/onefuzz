@@ -1,4 +1,4 @@
-msal~=1.16.0
+msal~=1.17.0
 requests~=2.27.1
 jmespath~=0.10.0
 semver~=2.13.0
@@ -12,16 +12,16 @@ azure-applicationinsights==0.1.0
 tenacity==8.0.1
 docstring_parser==0.8.1
 azure-identity==1.7.1
-azure-cli-core==2.32.0
+azure-cli-core==2.35.0
 # packaging is required but not specified by azure-cli-core
 packaging==20.9
 # urllib3[secure] needs to be specifically stated for azure-cli-core
-urllib3[secure]>=1.26.5
+urllib3[secure]>=1.26.8
 # iDNA needs to be specifically stated for azure-cli-core
-idna<3,>=2.5
+idna<3,>=2.10
 # cryptography needs to be pinned to the version used by azure-cli-core
-cryptography<3.4,>=3.2
+cryptography<3.4,>=3.3.2
 # PyJWT needs to be pinned to the version used by azure-cli-core
-PyJWT>=2.1.0
+PyJWT>=2.3.0
 # onefuzztypes version is set during build
 onefuzztypes==0.0.0
