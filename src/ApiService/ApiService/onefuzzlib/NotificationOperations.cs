@@ -53,7 +53,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
             if (notification.Config.TeamsTemplate != null)
             {
-                // TODO: notify_teams
+                NotifyTeams(notification.Config.TeamsTemplate, container, filename, report);
             }
 
             if (report == null)
@@ -63,12 +63,12 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
             if (notification.Config.AdoTemplate != null)
             {
-                // TODO: notify_ado
+                NotifyAdo(notification.Config.AdoTemplate, container, filename, report, failTaskOnTransientError);
             }
 
             if (notification.Config.GithubIssuesTemplate != null)
             {
-                // TODO: github_issue
+                GithubIssue(notification.Config.GithubIssuesTemplate, container, filename, report);
             }
         }
 
@@ -128,12 +128,27 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         {
             return await _taskOperations.GetByTaskId(report.CrashTestResult.CrashReport.TaskId);
         }
-        if (report.CrashTestResult.NoRepor != null)
+        if (report.CrashTestResult.NoReproReport != null)
         {
-            return await _taskOperations.GetByTaskId(report.CrashTestResult.NoRepor.TaskId);
+            return await _taskOperations.GetByTaskId(report.CrashTestResult.NoReproReport.TaskId);
         }
 
         _log.Error($"unable to find crash_report or no repro entry for report: {JsonSerializer.Serialize(report)}");
         return null;
+    }
+
+    private void GithubIssue(GithubIssuesTemplate config, Container container, string filename, RegressionReportOrReport? report)
+    {
+        throw new NotImplementedException();
+    }
+
+    private void NotifyAdo(AdoTemplate config, Container container, string filename, RegressionReportOrReport report, bool failTaskOnTransientError)
+    {
+        throw new NotImplementedException();
+    }
+
+    private void NotifyTeams(TeamsTemplate config, Container container, string filename, RegressionReportOrReport? report)
+    {
+        throw new NotImplementedException();
     }
 }

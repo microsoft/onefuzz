@@ -126,9 +126,4 @@ public class Storage : IStorage
                 throw new NotImplementedException();
         }
     }
-
-    public void GetStorageAccountNameKey(string accountId)
-    {
-
-    }
 }

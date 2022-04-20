@@ -25,25 +25,25 @@ public class QueueFileChanges
 
     [Function("QueueFileChanges")]
     public async Async.Task Run(
-        [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
+        [QueueTrigger("file-changes", Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount)
     {
-        var fileChangeEvent = JsonSerializer.Deserialize<Dictionary<string, string>>(msg, EntityConverter.GetJsonSerializerOptions());
+        var fileChangeEvent = JsonSerializer.Deserialize<JsonDocument>(msg, EntityConverter.GetJsonSerializerOptions());
         var lastTry = dequeueCount == MAX_DEQUEUE_COUNT;
 
         var _ = fileChangeEvent ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
 
         // check type first before calling Azure APIs
         const string eventType = "eventType";
-        if (!fileChangeEvent.ContainsKey(eventType)
-            || fileChangeEvent[eventType] != "Microsoft.Storage.BlobCreated")
+        if (!fileChangeEvent.RootElement.TryGetProperty(eventType, out var eventTypeElement)
+            || eventTypeElement.GetString() != "Microsoft.Storage.BlobCreated")
         {
             return;
         }
 
         const string topic = "topic";
-        if (!fileChangeEvent.ContainsKey(topic)
-            || !_storage.CorpusAccounts().Contains(fileChangeEvent[topic]))
+        if (!fileChangeEvent.RootElement.TryGetProperty(topic, out var topicElement)
+            || !_storage.CorpusAccounts().Contains(topicElement.GetString()))
         {
             return;
         }
@@ -51,10 +51,10 @@ public class QueueFileChanges
         await file_added(_log, fileChangeEvent, lastTry);
     }
 
-    private async Async.Task file_added(ILogTracer log, Dictionary<string, string> fileChangeEvent, bool failTaskOnTransientError)
+    private async Async.Task file_added(ILogTracer log, JsonDocument fileChangeEvent, bool failTaskOnTransientError)
     {
-        var data = JsonSerializer.Deserialize<Dictionary<string, string>>(fileChangeEvent["data"], EntityConverter.GetJsonSerializerOptions())!;
-        var url = data["url"];
+        var data = fileChangeEvent.RootElement.GetProperty("data");
+        var url = data.GetProperty("url").GetString()!;
         var parts = url.Split("/").Skip(3).ToList();
 
         var container = parts[0];

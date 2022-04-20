@@ -399,9 +399,9 @@ public record Container(string ContainerName)
 
 public record Notification(
     DateTime? Timestamp,
-    Container container,
+    Container Container,
     Guid NotificationId,
-NotificationTemplate Config
+    NotificationTemplate Config
 ) : EntityBase();
 
 public record BlobRef(
@@ -444,7 +444,7 @@ public record NoReproReport(
 
 public record CrashTestResult(
     Report? CrashReport,
-    NoReproReport? NoRepor
+    NoReproReport? NoReproReport
 );
 
 public record RegressionReport(
