@@ -1,7 +1,6 @@
 using Azure.Identity;
 using Azure.Core;
 using Azure.ResourceManager;
-using System;
 using Azure.ResourceManager.Resources;
 
 namespace Microsoft.OneFuzz.Service;

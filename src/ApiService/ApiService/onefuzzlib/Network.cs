@@ -1,5 +1,4 @@
-﻿using System;
-using Azure.ResourceManager.Network;
+﻿using Azure.ResourceManager.Network;
 
 namespace Microsoft.OneFuzz.Service;
 

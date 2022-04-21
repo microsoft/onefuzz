@@ -1,6 +1,5 @@
 ﻿using Azure;
 using Azure.ResourceManager.Network;
-using System.Collections.Generic;
 
 
 namespace Microsoft.OneFuzz.Service

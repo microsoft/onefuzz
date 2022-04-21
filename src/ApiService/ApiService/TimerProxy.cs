@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Microsoft.Azure.Functions.Worker;
 
 namespace Microsoft.OneFuzz.Service;
