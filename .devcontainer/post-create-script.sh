@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Install Azure Functions Core Tools 4
 # Source: https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=v4%2Clinux%2Ccsharp%2Cportal%2Cbash
 echo "Installing Azure Functions Core Tools 4 ..."

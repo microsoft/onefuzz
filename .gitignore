@@ -4,6 +4,7 @@
 .idea
 **/.direnv
 **/.envrc
+**/venv
 
 # vim
 *.swp
