@@ -1,9 +1,9 @@
-using ApiService.OneFuzzLib.Orm;
+﻿using ApiService.OneFuzzLib.Orm;
 using System.Threading.Tasks;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IProxyOperations : IOrm<Proxy>
+public interface IProxyOperations : IStatefulOrm<Proxy, VmState>
 {
     Task<Proxy?> GetByProxyId(Guid proxyId);
 
@@ -13,14 +13,14 @@ public interface IProxyOperations : IOrm<Proxy>
     bool IsOutdated(Proxy proxy);
     System.Threading.Tasks.Task GetOrCreate(string region);
 }
-public class ProxyOperations : Orm<Proxy>, IProxyOperations
+public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations
 {
     private readonly ILogTracer _log;
 
     private readonly IEvents _events;
 
     public ProxyOperations(ILogTracer log, IStorage storage, IEvents events)
-        : base(storage)
+        : base(storage, log)
     {
         _log = log;
         _events = events;

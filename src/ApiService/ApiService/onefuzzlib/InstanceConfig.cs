@@ -15,7 +15,7 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations
 {
     private readonly IEvents _events;
     private readonly ILogTracer _log;
-    public ConfigOperations(IStorage storage, IEvents events, ILogTracer log) : base(storage)
+    public ConfigOperations(IStorage storage, IEvents events, ILogTracer log) : base(storage, log)
     {
         _events = events;
         _log = log;

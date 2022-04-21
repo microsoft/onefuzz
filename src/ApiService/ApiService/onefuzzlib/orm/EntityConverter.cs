@@ -12,10 +12,9 @@ public abstract record EntityBase
 {
     [JsonIgnore] public ETag? ETag { get; set; }
     public DateTimeOffset? TimeStamp { get; set; }
-
-    //public ApiService.OneFuzzLib.Orm.IOrm<EntityBase>? Orm { get; set; }
-
 }
+
+public abstract record StatefulEntityBase<T>([property: JsonIgnore] T state) : EntityBase() where T : Enum;
 
 /// Indicates that the enum cases should no be renamed
 [AttributeUsage(AttributeTargets.Enum)]
