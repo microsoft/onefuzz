@@ -393,7 +393,7 @@ public record Scaleset(
 
 ) : EntityBase();
 
-public record Container(string ContainerName)
+public record Container(string ContainerName) : EntityBase()
 {
     public string ContainerName { get; } = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
 }
