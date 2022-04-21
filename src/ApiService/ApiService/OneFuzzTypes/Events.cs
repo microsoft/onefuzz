@@ -1,5 +1,4 @@
-﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using System;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PoolName = System.String;
@@ -38,7 +37,7 @@ public enum EventType
     FileAdded,
     TaskHeartbeat,
     NodeHeartbeat,
-    InstanceConfigUpdated
+    InstanceConfigUpdated,
 }
 
 public abstract record BaseEvent()
@@ -55,7 +54,9 @@ public abstract record BaseEvent()
                 EventProxyDeleted _ => EventType.ProxyDeleted,
                 EventProxyFailed _ => EventType.ProxyFailed,
                 EventProxyStateUpdated _ => EventType.ProxyStateUpdated,
-
+                EventCrashReported _ => EventType.CrashReported,
+                EventRegressionReported _ => EventType.RegressionReported,
+                EventFileAdded _ => EventType.FileAdded,
                 _ => throw new NotImplementedException(),
             };
 
@@ -72,6 +73,9 @@ public abstract record BaseEvent()
             EventType.ProxyDeleted => typeof(EventProxyDeleted),
             EventType.ProxyFailed => typeof(EventProxyFailed),
             EventType.ProxyStateUpdated => typeof(EventProxyStateUpdated),
+            EventType.CrashReported => typeof(EventCrashReported),
+            EventType.RegressionReported => typeof(EventRegressionReported),
+            EventType.FileAdded => typeof(EventFileAdded),
             _ => throw new ArgumentException($"invalid input {eventType}"),
 
         };
@@ -258,25 +262,25 @@ public record EventNodeHeartbeat(
 //        NodeState state
 //        ) : BaseEvent();
 
-//    record EventCrashReported(
-//        Report Report,
-//        Container Container,
-//        [property: JsonPropertyName("filename")] String FileName,
-//        TaskConfig? TaskConfig
-//        ) : BaseEvent();
+record EventCrashReported(
+    Report Report,
+    Container Container,
+    [property: JsonPropertyName("filename")] String FileName,
+    TaskConfig? TaskConfig
+) : BaseEvent();
 
-//    record EventRegressionReported(
-//        RegressionReport RegressionReport,
-//        Container Container,
-//        [property: JsonPropertyName("filename")] String FileName,
-//        TaskConfig? TaskConfig
-//        ) : BaseEvent();
+record EventRegressionReported(
+    RegressionReport RegressionReport,
+    Container Container,
+    [property: JsonPropertyName("filename")] String FileName,
+    TaskConfig? TaskConfig
+) : BaseEvent();
 
 
-//    record EventFileAdded(
-//        Container Container,
-//        [property: JsonPropertyName("filename")] String FileName
-//        ) : BaseEvent();
+record EventFileAdded(
+    Container Container,
+    [property: JsonPropertyName("filename")] String FileName
+) : BaseEvent();
 
 
 public record EventInstanceConfigUpdated(
