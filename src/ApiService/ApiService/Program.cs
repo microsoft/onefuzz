@@ -1,8 +1,10 @@
 // to avoid collision with Task in model.cs
 global using Async = System.Threading.Tasks;
 
-using System;
-using System.Collections.Generic;
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Azure.Functions.Worker.Middleware;
@@ -76,6 +78,9 @@ public class Program
             .AddScoped<IProxyOperations, ProxyOperations>()
             .AddScoped<IConfigOperations, ConfigOperations>()
             .AddScoped<IScalesetOperations, ScalesetOperations>()
+            .AddScoped<IContainers, Containers>()
+            .AddScoped<IReports, Reports>()
+            .AddScoped<INotificationOperations, NotificationOperations>()
 
         //TODO: move out expensive resources into separate class, and add those as Singleton
         // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
