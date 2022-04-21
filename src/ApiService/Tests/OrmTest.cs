@@ -296,5 +296,21 @@ namespace Tests
             Assert.Equal(expected.Container.ContainerName, actual.Container.ContainerName);
             Assert.Equal(expected.Container.ContainerName, tableEntity.GetString("container"));
         }
+
+        [Fact]
+        public void TestContainerSerialization2()
+        {
+            var entityJson = 
+@"{
+    ""Id"": 123,
+    ""TheName"": ""abc"",
+    ""Container"": ""abc-123""
+}";
+            var entity = JsonSerializer.Deserialize<Entity3>(entityJson);
+
+            Assert.Equal(entity.Id, 123);
+            Assert.Equal(entity.TheName, "abc");
+            Assert.Equal(entity.Container.ContainerName, "abc-123");
+        }
     }
 }

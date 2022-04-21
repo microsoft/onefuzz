@@ -205,11 +205,6 @@ public class EntityConverter
 
                 tableEntity.Add(prop.columnName, string.Join(",", values));
             }
-            else if (prop.type == typeof(Container))
-            {
-                var containerStr = value == null ? String.Empty : ((Container)value).ContainerName;
-                tableEntity.Add(prop.columnName, containerStr);
-            }
             else
             {
                 var serialized = JsonSerializer.Serialize(value, _options);
@@ -275,10 +270,6 @@ public class EntityConverter
         else if (ef.type == typeof(Guid) || ef.type == typeof(Guid?))
         {
             return (object?)Guid.Parse(entity.GetString(fieldName));
-        }
-        else if (ef.type == typeof(Container))
-        {
-            return (object?)new Container(entity.GetString(fieldName));
         }
         else if (ef.type == typeof(int))
         {
