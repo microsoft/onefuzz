@@ -1,10 +1,7 @@
-using System.Collections.Generic;
-using System;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Core;
 using System.Text.Json;
-using System.Linq;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -22,6 +19,7 @@ public interface IStorage
     string GetPrimaryAccount(StorageType storageType);
     public (string?, string?) GetStorageAccountNameAndKey(string accountId);
     public List<string> GetAccounts(StorageType storageType);
+    public IEnumerable<string> GetAccounts(StorageType storageType);
 }
 
 public class Storage : IStorage
@@ -139,16 +137,17 @@ public class Storage : IStorage
 
         return accounts[index];  // nosec
     }
-    public List<string> GetAccounts(StorageType storageType)
+  
+    public IEnumerable<string> GetAccounts(StorageType storageType)
     {
-        if (storageType == StorageType.Corpus)
+        switch (storageType)
         {
-            return CorpusAccounts().ToList();
-        } else if(storageType == StorageType.Config)
-        {
-            return new List<string> { GetFuncStorage() };
-        } else {
-            throw new NotImplementedException();
+            case StorageType.Corpus:
+                return CorpusAccounts();
+            case StorageType.Config:
+                return new[] { GetFuncStorage() };
+            default:
+                throw new NotImplementedException();
         }
     }
 }

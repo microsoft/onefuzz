@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+﻿namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 public class CaseConverter
 {
