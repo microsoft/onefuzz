@@ -207,7 +207,7 @@ public class EntityConverter
             }
             else if (prop.type == typeof(Container))
             {
-                var containerStr = value == null ? String.Empty : ((Container)value).ContainerName; 
+                var containerStr = value == null ? String.Empty : ((Container)value).ContainerName;
                 tableEntity.Add(prop.columnName, containerStr);
             }
             else
