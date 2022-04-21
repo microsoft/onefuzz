@@ -21,6 +21,7 @@ public interface IStorage
     public IEnumerable<string> CorpusAccounts();
     string GetPrimaryAccount(StorageType storageType);
     public (string?, string?) GetStorageAccountNameAndKey(string accountId);
+    public List<string> GetAccounts(StorageType storageType);
 }
 
 public class Storage : IStorage
@@ -113,5 +114,41 @@ public class Storage : IStorage
         var storageAccount = armClient.GetStorageAccountResource(resourceId);
         var key = storageAccount.GetKeys().Value.Keys.FirstOrDefault();
         return (resourceId.Name, key?.Value);
+    }
+
+    public string ChooseAccounts(StorageType storageType)
+    {
+        var accounts = GetAccounts(storageType);
+        if (!accounts.Any())
+        {
+            throw new Exception($"No Storage Accounts for {storageType}");
+        }
+
+        if (accounts.Count == 1)
+        {
+            return accounts[0];
+        }
+
+        // Use a random secondary storage account if any are available.  This
+        // reduces IOP contention for the Storage Queues, which are only available
+        // on primary accounts
+        //
+        // security note: this is not used as a security feature
+        var random = new Random();
+        var index = random.Next(accounts.Count);
+
+        return accounts[index];  // nosec
+    }
+    public List<string> GetAccounts(StorageType storageType)
+    {
+        if (storageType == StorageType.Corpus)
+        {
+            return CorpusAccounts().ToList();
+        } else if(storageType == StorageType.Config)
+        {
+            return new List<string> { GetFuncStorage() };
+        } else {
+            throw new NotImplementedException();
+        }
     }
 }

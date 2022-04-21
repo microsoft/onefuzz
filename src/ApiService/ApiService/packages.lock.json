@@ -107,6 +107,16 @@
           "System.Text.Json": "4.7.2"
         }
       },
+      "Azure.Storage.Blobs": {
+        "type": "Direct",
+        "requested": "[12.11.0, )",
+        "resolved": "12.11.0",
+        "contentHash": "50eRjIhY7Q1JN7kT2MSawDKCcwSb7uRZUkz00P/BLjSg47gm2hxUYsnJPyvzCHntYMbOWzrvaVQTwYwXabaR5Q==",
+        "dependencies": {
+          "Azure.Storage.Common": "12.10.0",
+          "System.Text.Json": "4.7.2"
+        }
+      },
       "Azure.Storage.Queues": {
         "type": "Direct",
         "requested": "[12.9.0, )",
