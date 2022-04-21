@@ -181,3 +181,39 @@ public static class ScalesetStateHelper
 
 
 }
+
+
+public static class VmStateHelper
+{
+
+    static ConcurrentDictionary<string, VmState[]> _states = new ConcurrentDictionary<string, VmState[]>();
+    public static VmState[] NeedsWork()
+    {
+        return
+        _states.GetOrAdd(nameof(VmStateHelper.NeedsWork), k =>
+        {
+            return
+                new[]{
+                VmState.Init,
+                VmState.ExtensionsLaunched,
+                VmState.Stopping
+            };
+        });
+    }
+
+    public static VmState[] Available()
+    {
+        return
+        _states.GetOrAdd(nameof(VmStateHelper.Available), k =>
+        {
+            return
+                new[]{
+                VmState.Init,
+                VmState.ExtensionsLaunched,
+                VmState.ExtensionsFailed,
+                VmState.VmAllocationFailed,
+                VmState.Running,
+            };
+        });
+    }
+}

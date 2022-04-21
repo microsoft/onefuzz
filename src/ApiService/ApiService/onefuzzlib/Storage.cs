@@ -16,8 +16,6 @@ public enum StorageType
 
 public interface IStorage
 {
-    public ArmClient GetMgmtClient();
-
     public IEnumerable<string> CorpusAccounts();
     string GetPrimaryAccount(StorageType storageType);
     public (string?, string?) GetStorageAccountNameAndKey(string accountId);

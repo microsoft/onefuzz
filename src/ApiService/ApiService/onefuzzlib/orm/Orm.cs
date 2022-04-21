@@ -11,12 +11,15 @@ namespace ApiService.OneFuzzLib.Orm
     public interface IOrm<T> where T : EntityBase
     {
         Task<TableClient> GetTableClient(string table, string? accountId = null);
-        IAsyncEnumerable<T> QueryAsync(string filter);
+        IAsyncEnumerable<T> QueryAsync(string? filter = null);
         Task<ResultOk<(int, string)>> Replace(T entity);
 
         Task<T> GetEntityAsync(string partitionKey, string rowKey);
         Task<ResultOk<(int, string)>> Insert(T entity);
         Task<ResultOk<(int, string)>> Delete(T entity);
+        Async.Task ProcessStateUpdate(T entity);
+
+        Async.Task ProcessStateUpdates(T entity, int MaxUpdates = 5);
     }
 
     public class Orm<T> : IOrm<T> where T : EntityBase
@@ -123,6 +126,16 @@ namespace ApiService.OneFuzzLib.Orm
             {
                 return ResultOk<(int, string)>.Ok();
             }
+        }
+
+        public System.Threading.Tasks.Task ProcessStateUpdate(T entity)
+        {
+            throw new NotImplementedException();
+        }
+
+        public System.Threading.Tasks.Task ProcessStateUpdates(T entity, int MaxUpdates = 5)
+        {
+            throw new NotImplementedException();
         }
     }
 }

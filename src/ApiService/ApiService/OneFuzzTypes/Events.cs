@@ -3,6 +3,7 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PoolName = System.String;
+using Region = System.String;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -50,6 +51,11 @@ public abstract record BaseEvent()
                 EventNodeHeartbeat _ => EventType.NodeHeartbeat,
                 EventTaskHeartbeat _ => EventType.TaskHeartbeat,
                 EventInstanceConfigUpdated _ => EventType.InstanceConfigUpdated,
+                EventProxyCreated _ => EventType.ProxyCreated,
+                EventProxyDeleted _ => EventType.ProxyDeleted,
+                EventProxyFailed _ => EventType.ProxyFailed,
+                EventProxyStateUpdated _ => EventType.ProxyStateUpdated,
+
                 _ => throw new NotImplementedException(),
             };
 
@@ -62,6 +68,10 @@ public abstract record BaseEvent()
             EventType.NodeHeartbeat => typeof(EventNodeHeartbeat),
             EventType.InstanceConfigUpdated => typeof(EventInstanceConfigUpdated),
             EventType.TaskHeartbeat => typeof(EventTaskHeartbeat),
+            EventType.ProxyCreated => typeof(EventProxyCreated),
+            EventType.ProxyDeleted => typeof(EventProxyDeleted),
+            EventType.ProxyFailed => typeof(EventProxyFailed),
+            EventType.ProxyStateUpdated => typeof(EventProxyStateUpdated),
             _ => throw new ArgumentException($"invalid input {eventType}"),
 
         };
@@ -187,31 +197,30 @@ public record EventTaskHeartbeat(
 //    ) : BaseEvent();
 
 
-//record EventProxyCreated(
-//    Region Region,
-//    Guid? ProxyId,
-
-//    ) : BaseEvent();
-
-
-//record EventProxyDeleted(
-//    Region Region,
-//    Guid? ProxyId
-//) : BaseEvent();
+public record EventProxyCreated(
+   Region Region,
+   Guid? ProxyId
+   ) : BaseEvent();
 
 
-//record EventProxyFailed(
-//    Region Region,
-//    Guid? ProxyId,
-//    Error Error
-//) : BaseEvent();
+record EventProxyDeleted(
+   Region Region,
+   Guid? ProxyId
+) : BaseEvent();
 
 
-//record EventProxyStateUpdated(
-//    Region Region,
-//    Guid ProxyId,
-//    VmState State
-//    ) : BaseEvent();
+record EventProxyFailed(
+   Region Region,
+   Guid? ProxyId,
+   Error Error
+) : BaseEvent();
+
+
+record EventProxyStateUpdated(
+   Region Region,
+   Guid ProxyId,
+   VmState State
+   ) : BaseEvent();
 
 
 //record EventNodeCreated(

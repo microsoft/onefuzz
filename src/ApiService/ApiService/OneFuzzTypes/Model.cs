@@ -144,7 +144,8 @@ public partial record Proxy
     string? Ip,
     Error? Error,
     string Version,
-    ProxyHeartbeat? Heartbeat
+    ProxyHeartbeat? Heartbeat,
+    bool Outdated
 ) : EntityBase();
 
 public record Error(ErrorCode Code, string[]? Errors = null);
@@ -283,6 +284,9 @@ public record NetworkConfig(
     string Subnet
 )
 {
+    public static NetworkConfig Default { get; } = new NetworkConfig("10.0.0.0/8", "10.0.0.0/16");
+
+
     public NetworkConfig() : this("10.0.0.0/8", "10.0.0.0/16") { }
 }
 

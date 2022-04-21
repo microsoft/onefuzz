@@ -1,5 +1,8 @@
 using Azure.Identity;
 using Azure.Core;
+using Azure.ResourceManager;
+using System;
+using Azure.ResourceManager.Resources;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -12,10 +15,23 @@ public interface ICreds
     public string GetBaseResourceGroup();
 
     public ResourceIdentifier GetResourceGroupResourceIdentifier();
+
+
+    public ArmClient ArmClient { get; }
+
+    public ResourceGroupResource GetResourceGroupResource();
 }
 
 public class Creds : ICreds
 {
+    private readonly Lazy<ArmClient> _armClient;
+
+    public ArmClient ArmClient => _armClient.Value;
+
+    public Creds()
+    {
+        _armClient = new Lazy<ArmClient>(() => new ArmClient(this.GetIdentity(), this.GetSubcription()), true);
+    }
 
     // TODO: @cached
     public DefaultAzureCredential GetIdentity()
@@ -46,5 +62,11 @@ public class Creds : ICreds
         var resourceId = EnvironmentVariables.OneFuzz.ResourceGroup
             ?? throw new System.Exception("Resource group env var is not present");
         return new ResourceIdentifier(resourceId);
+    }
+
+    public ResourceGroupResource GetResourceGroupResource()
+    {
+        var resourceId = GetResourceGroupResourceIdentifier();
+        return ArmClient.GetResourceGroupResource(resourceId);
     }
 }
