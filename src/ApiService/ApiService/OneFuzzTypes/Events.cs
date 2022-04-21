@@ -1,7 +1,4 @@
-﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PoolName = System.String;
@@ -39,24 +36,50 @@ public enum EventType
     FileAdded,
     TaskHeartbeat,
     NodeHeartbeat,
-    InstanceConfigUpdated
+    InstanceConfigUpdated,
 }
 
 public abstract record BaseEvent()
 {
-
     public EventType GetEventType()
     {
         return
             this switch
             {
                 EventNodeHeartbeat _ => EventType.NodeHeartbeat,
+                EventTaskHeartbeat _ => EventType.TaskHeartbeat,
                 EventInstanceConfigUpdated _ => EventType.InstanceConfigUpdated,
+                EventCrashReported _ => EventType.CrashReported,
+                EventRegressionReported _ => EventType.RegressionReported,
+                EventFileAdded _ => EventType.FileAdded,
                 _ => throw new NotImplementedException(),
             };
 
     }
+
+    public static Type GetTypeInfo(EventType eventType)
+    {
+        return (eventType) switch
+        {
+            EventType.NodeHeartbeat => typeof(EventNodeHeartbeat),
+            EventType.InstanceConfigUpdated => typeof(EventInstanceConfigUpdated),
+            EventType.TaskHeartbeat => typeof(EventTaskHeartbeat),
+            EventType.CrashReported => typeof(EventCrashReported),
+            EventType.RegressionReported => typeof(EventRegressionReported),
+            EventType.FileAdded => typeof(EventFileAdded),
+            _ => throw new ArgumentException($"invalid input {eventType}"),
+
+        };
+    }
 };
+
+public class EventTypeProvider : ITypeProvider
+{
+    public Type GetTypeInfo(object input)
+    {
+        return BaseEvent.GetTypeInfo((input as EventType?) ?? throw new ArgumentException($"input is expected to be an EventType {input}"));
+    }
+}
 
 //public record EventTaskStopped(
 //    Guid JobId,
@@ -113,7 +136,7 @@ public abstract record BaseEvent()
 //    ) : BaseEvent();
 
 
-record EventTaskHeartbeat(
+public record EventTaskHeartbeat(
    Guid JobId,
    Guid TaskId,
    TaskConfig Config
@@ -231,117 +254,51 @@ public record EventNodeHeartbeat(
 //        NodeState state
 //        ) : BaseEvent();
 
-//    record EventCrashReported(
-//        Report Report,
-//        Container Container,
-//        [property: JsonPropertyName("filename")] String FileName,
-//        TaskConfig? TaskConfig
-//        ) : BaseEvent();
+record EventCrashReported(
+    Report Report,
+    Container Container,
+    [property: JsonPropertyName("filename")] String FileName,
+    TaskConfig? TaskConfig
+) : BaseEvent();
 
-//    record EventRegressionReported(
-//        RegressionReport RegressionReport,
-//        Container Container,
-//        [property: JsonPropertyName("filename")] String FileName,
-//        TaskConfig? TaskConfig
-//        ) : BaseEvent();
-
-
-//    record EventFileAdded(
-//        Container Container,
-//        [property: JsonPropertyName("filename")] String FileName
-//        ) : BaseEvent();
-
-
-record EventInstanceConfigUpdated(
-    InstanceConfig Config
+record EventRegressionReported(
+    RegressionReport RegressionReport,
+    Container Container,
+    [property: JsonPropertyName("filename")] String FileName,
+    TaskConfig? TaskConfig
 ) : BaseEvent();
 
 
-[JsonConverter(typeof(EventConverter))]
+record EventFileAdded(
+    Container Container,
+    [property: JsonPropertyName("filename")] String FileName
+) : BaseEvent();
+
+
+public record EventInstanceConfigUpdated(
+    InstanceConfig Config
+) : BaseEvent();
+
 public record EventMessage(
     Guid EventId,
     EventType EventType,
+    [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
+    [property: JsonConverter(typeof(BaseEventConverter))]
     BaseEvent Event,
     Guid InstanceId,
     String InstanceName
 ) : EntityBase();
 
-public class EventConverter : JsonConverter<EventMessage>
+public class BaseEventConverter : JsonConverter<BaseEvent>
 {
-
-    private readonly Dictionary<string, Type> _allBaseEvents;
-
-    public EventConverter()
+    public override BaseEvent? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        _allBaseEvents = typeof(BaseEvent).Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(BaseEvent))).ToDictionary(x => x.Name);
+        return null;
     }
 
-
-    public override EventMessage? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, BaseEvent value, JsonSerializerOptions options)
     {
-
-
-        if (reader.TokenType != JsonTokenType.StartObject)
-        {
-            throw new JsonException();
-        }
-
-        using (var jsonDocument = JsonDocument.ParseValue(ref reader))
-        {
-            if (!jsonDocument.RootElement.TryGetProperty("event_type", out var eventType))
-            {
-                throw new JsonException();
-            }
-            if (!jsonDocument.RootElement.TryGetProperty("event", out var eventData))
-            {
-                throw new JsonException();
-            }
-            if (!jsonDocument.RootElement.TryGetProperty("event_id", out var eventId))
-            {
-                throw new JsonException();
-            }
-            if (!jsonDocument.RootElement.TryGetProperty("instance_id", out var instanceId))
-            {
-                throw new JsonException();
-            }
-            if (!jsonDocument.RootElement.TryGetProperty("instance_name", out var instanceName))
-            {
-                throw new JsonException();
-            }
-
-
-            var eventTypeName = eventType.GetString() ?? throw new JsonException();
-
-            if (!_allBaseEvents.TryGetValue($"Event{CaseConverter.SnakeToPascal(eventTypeName)}", out var eType))
-            {
-                throw new JsonException($"Unknown eventType {eventTypeName}");
-            }
-
-            var rawTest = eventData.GetRawText();
-            var eventClass = (BaseEvent)(JsonSerializer.Deserialize(eventData.GetRawText(), eType, options: options) ?? throw new JsonException());
-            var eventTypeEnum = Enum.Parse<EventType>(CaseConverter.SnakeToPascal(eventTypeName));
-
-
-            return new EventMessage(
-                eventId.GetGuid(),
-                eventTypeEnum,
-                eventClass,
-                instanceId.GetGuid(),
-                instanceName.GetString() ?? throw new JsonException()
-            );
-        }
-    }
-
-    public override void Write(Utf8JsonWriter writer, EventMessage value, JsonSerializerOptions options)
-    {
-        writer.WriteStartObject();
-        writer.WriteString("event_id", value.EventId.ToString());
-        writer.WriteString("event_type", CaseConverter.PascalToSnake(value.EventType.ToString()));
-        writer.WritePropertyName("event");
-        var eventstr = JsonSerializer.Serialize(value.Event, value.Event.GetType(), options);
-        writer.WriteRawValue(eventstr);
-        writer.WriteString("instance_id", value.InstanceId.ToString());
-        writer.WriteString("instance_name", value.InstanceName);
-        writer.WriteEndObject();
+        var eventType = value.GetType();
+        JsonSerializer.Serialize(writer, value, eventType, options);
     }
 }

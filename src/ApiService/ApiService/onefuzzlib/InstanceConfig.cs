@@ -1,5 +1,4 @@
 ﻿using ApiService.OneFuzzLib.Orm;
-using System;
 using System.Threading.Tasks;
 
 namespace Microsoft.OneFuzz.Service;

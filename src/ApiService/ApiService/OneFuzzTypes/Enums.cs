@@ -53,7 +53,7 @@ public enum TaskState
     Init,
     Waiting,
     Scheduled,
-    Setting_up,
+    SettingUp,
     Running,
     Stopping,
     Stopped,
@@ -178,6 +178,24 @@ public static class ScalesetStateHelper
             };
         });
     }
+}
 
-
+public static class TaskStateHelper
+{
+    static ConcurrentDictionary<string, TaskState[]> _states = new ConcurrentDictionary<string, TaskState[]>();
+    public static TaskState[] Available()
+    {
+        return
+        _states.GetOrAdd("Available", k =>
+        {
+            return
+                 new[]{
+                    TaskState.Waiting,
+                    TaskState.Scheduled,
+                    TaskState.SettingUp,
+                    TaskState.Running,
+                    TaskState.WaitJob
+                 };
+        });
+    }
 }

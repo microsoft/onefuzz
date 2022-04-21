@@ -261,5 +261,20 @@ namespace Tests
             Assert.Equal(expected.Id, actual.Id);
             Assert.Equal(expected.TheName, actual.TheName);
         }
+
+
+        [Fact]
+        public void TestEventSerialization2()
+        {
+
+            var converter = new EntityConverter();
+            var expectedEvent = new EventMessage(Guid.NewGuid(), EventType.NodeHeartbeat, new EventNodeHeartbeat(Guid.NewGuid(), Guid.NewGuid(), "test Poool"), Guid.NewGuid(), "test")
+            {
+                ETag = new Azure.ETag("33a64df551425fcc55e4d42a148795d9f25f89d4")
+            };
+            var te = converter.ToTableEntity(expectedEvent);
+            var actualEvent = converter.ToRecord<EventMessage>(te);
+            Assert.Equal(expectedEvent, actualEvent);
+        }
     }
 }
