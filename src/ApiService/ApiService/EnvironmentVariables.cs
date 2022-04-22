@@ -1,5 +1,4 @@
-﻿using System;
-namespace Microsoft.OneFuzz.Service;
+﻿namespace Microsoft.OneFuzz.Service;
 
 public enum LogDestination
 {

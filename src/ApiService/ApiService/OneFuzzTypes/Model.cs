@@ -1,14 +1,11 @@
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using System;
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
-
-using Container = System.String;
 using Region = System.String;
 using PoolName = System.String;
 using Endpoint = System.String;
 using GroupId = System.Guid;
 using PrincipalId = System.Guid;
+using System.Text.Json;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -111,7 +108,7 @@ public partial record Node
     bool ReimageRequested,
     bool DeleteRequested,
     bool DebugKeepNode
-) : EntityBase();
+) : StatefulEntityBase<NodeState>(State);
 
 
 public partial record ProxyForward
@@ -144,8 +141,9 @@ public partial record Proxy
     string? Ip,
     Error? Error,
     string Version,
-    ProxyHeartbeat? heartbeat
-) : EntityBase();
+    ProxyHeartbeat? Heartbeat,
+    bool Outdated
+) : StatefulEntityBase<VmState>(State);
 
 public record Error(ErrorCode Code, string[]? Errors = null);
 
@@ -247,7 +245,7 @@ public record Task(
     Authentication? Auth,
     DateTimeOffset? Heartbeat,
     DateTimeOffset? EndTime,
-    UserInfo? UserInfo) : EntityBase()
+    UserInfo? UserInfo) : StatefulEntityBase<TaskState>(State)
 {
     List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
     List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
@@ -283,6 +281,9 @@ public record NetworkConfig(
     string Subnet
 )
 {
+    public static NetworkConfig Default { get; } = new NetworkConfig("10.0.0.0/8", "10.0.0.0/16");
+
+
     public NetworkConfig() : this("10.0.0.0/8", "10.0.0.0/16") { }
 }
 
@@ -333,6 +334,8 @@ public record InstanceConfig
         null,
         null)
     { }
+
+    public InstanceConfig() : this(String.Empty) { }
 
     public List<Guid>? CheckAdmins(List<Guid>? value)
     {
@@ -393,34 +396,91 @@ public record Scaleset(
     Guid? ClientObjectId,
     Dictionary<string, string> Tags
 
-) : EntityBase();
+) : StatefulEntityBase<ScalesetState>(State);
 
+[JsonConverter(typeof(ContainerConverter))]
+public record Container(string ContainerName)
+{
+    public string ContainerName { get; } = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
+}
+
+public class ContainerConverter : JsonConverter<Container>
+{
+    public override Container? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var containerName = reader.GetString();
+        return containerName == null ? null : new Container(containerName);
+    }
+
+    public override void Write(Utf8JsonWriter writer, Container value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.ContainerName);
+    }
+}
+
+public record Notification(
+    DateTime? Timestamp,
+    Container Container,
+    Guid NotificationId,
+    NotificationTemplate Config
+) : EntityBase();
 
 public record BlobRef(
     string Account,
-    Container Container,
-    string Name
+    Container container,
+    string name
 );
 
-
 public record Report(
-    string? InputURL,
+    string? InputUrl,
     BlobRef? InputBlob,
-    string? Executable,
+    string Executable,
     string CrashType,
     string CrashSite,
     List<string> CallStack,
     string CallStackSha256,
     string InputSha256,
     string? AsanLog,
-    Guid TaskID,
-    Guid JobID,
+    Guid TaskId,
+    Guid JobId,
     int? ScarinessScore,
     string? ScarinessDescription,
-    List<string> MinimizedStack,
+    List<string>? MinimizedStack,
     string? MinimizedStackSha256,
-    List<string> MinimizedStackFunctionNames,
+    List<string>? MinimizedStackFunctionNames,
     string? MinimizedStackFunctionNamesSha256,
-    List<string> MinimizedStackFunctionLines,
+    List<string>? MinimizedStackFunctionLines,
     string? MinimizedStackFunctionLinesSha256
 );
+
+public record NoReproReport(
+    string InputSha,
+    BlobRef? InputBlob,
+    string? Executable,
+    Guid TaskId,
+    Guid JobId,
+    int Tries,
+    string? Error
+);
+
+public record CrashTestResult(
+    Report? CrashReport,
+    NoReproReport? NoReproReport
+);
+
+public record RegressionReport(
+    CrashTestResult CrashTestResult,
+    CrashTestResult? OriginalCrashTestResult
+);
+
+public record NotificationTemplate(
+    AdoTemplate? AdoTemplate,
+    TeamsTemplate? TeamsTemplate,
+    GithubIssuesTemplate? GithubIssuesTemplate
+);
+
+public record AdoTemplate();
+
+public record TeamsTemplate();
+
+public record GithubIssuesTemplate();

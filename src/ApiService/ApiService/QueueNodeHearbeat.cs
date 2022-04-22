@@ -1,4 +1,3 @@
-using System;
 using Microsoft.Azure.Functions.Worker;
 using System.Text.Json;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;

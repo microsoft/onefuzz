@@ -1,6 +1,4 @@
 ﻿using ApiService.OneFuzzLib.Orm;
-using System;
-using System.Collections.Generic;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -22,7 +20,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
 
     private readonly IQueue _queue;
     private readonly ILogTracer _log;
-    public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILogTracer log) : base(storage)
+    public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILogTracer log) : base(storage, log)
     {
         _queue = queue;
         _log = log;
@@ -80,7 +78,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
     private readonly IWebhookMessageLogOperations _webhookMessageLogOperations;
     private readonly ILogTracer _log;
     public WebhookOperations(IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations, ILogTracer log)
-        : base(storage)
+        : base(storage, log)
     {
         _webhookMessageLogOperations = webhookMessageLogOperations;
         _log = log;

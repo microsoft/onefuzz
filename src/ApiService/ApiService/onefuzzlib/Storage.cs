@@ -1,10 +1,7 @@
-using System.Collections.Generic;
-using System;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Core;
 using System.Text.Json;
-using System.Linq;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -16,11 +13,11 @@ public enum StorageType
 
 public interface IStorage
 {
-    public ArmClient GetMgmtClient();
-
     public IEnumerable<string> CorpusAccounts();
     string GetPrimaryAccount(StorageType storageType);
     public (string?, string?) GetStorageAccountNameAndKey(string accountId);
+
+    public IEnumerable<string> GetAccounts(StorageType storageType);
 }
 
 public class Storage : IStorage
@@ -113,5 +110,18 @@ public class Storage : IStorage
         var storageAccount = armClient.GetStorageAccountResource(resourceId);
         var key = storageAccount.GetKeys().Value.Keys.FirstOrDefault();
         return (resourceId.Name, key?.Value);
+    }
+
+    public IEnumerable<string> GetAccounts(StorageType storageType)
+    {
+        switch (storageType)
+        {
+            case StorageType.Corpus:
+                return CorpusAccounts();
+            case StorageType.Config:
+                return new[] { GetFuncStorage() };
+            default:
+                throw new NotImplementedException();
+        }
     }
 }

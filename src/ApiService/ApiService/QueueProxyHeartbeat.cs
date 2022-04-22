@@ -1,4 +1,3 @@
-using System;
 using Microsoft.Azure.Functions.Worker;
 using System.Text.Json;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
@@ -34,7 +33,7 @@ public class QueueProxyHearbeat
             log.Warning($"invalid proxy id: {newHb.ProxyId}");
             return;
         }
-        var newProxy = proxy with { heartbeat = newHb };
+        var newProxy = proxy with { Heartbeat = newHb };
 
         var r = await _proxy.Replace(newProxy);
         if (!r.IsOk)
