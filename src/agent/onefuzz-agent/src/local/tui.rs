@@ -11,7 +11,7 @@ use crossterm::{
 use futures::{StreamExt, TryStreamExt};
 use log::Level;
 use onefuzz::utils::try_wait_all_join_handles;
-use onefuzz_telemetry::{self, EventData};
+use onefuzz_telemetry::{self, EventData, LogEvent};
 use std::{
     collections::HashMap,
     io::{self, Stdout},
@@ -233,13 +233,14 @@ impl TerminalUi {
 
         while cancellation_rx.try_recv() == Err(broadcast::error::TryRecvError::Empty) {
             match rx.try_recv() {
-                Ok((_event, data)) => {
+                Ok(LogEvent::Event((_event, data))) => {
                     let data = data
                         .into_iter()
                         .filter(Self::filter_event)
                         .collect::<Vec<_>>();
                     let _ = ui_event_tx.send(TerminalEvent::Telemetry(data));
                 }
+                Ok(_) => continue,
                 Err(TryRecvError::Empty) => sleep(EVENT_POLLING_PERIOD).await,
                 Err(TryRecvError::Lagged(_)) => continue,
                 Err(TryRecvError::Closed) => break,
@@ -337,19 +338,14 @@ impl TerminalUi {
             "Stats: ",
             Style::default().add_modifier(Modifier::BOLD),
         ))
-        .chain(
-            event_values
-                .into_iter()
-                .map(|(name, value)| {
-                    vec![
-                        Span::raw(name),
-                        Span::raw(" "),
-                        Span::styled(value, Style::default().add_modifier(Modifier::BOLD)),
-                        Span::raw(", "),
-                    ]
-                })
-                .flatten(),
-        )
+        .chain(event_values.into_iter().flat_map(|(name, value)| {
+            vec![
+                Span::raw(name),
+                Span::raw(" "),
+                Span::styled(value, Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(", "),
+            ]
+        }))
         .collect::<Vec<_>>();
 
         if stats_spans.len() > 1 {
@@ -372,26 +368,21 @@ impl TerminalUi {
             "Files: ",
             Style::default().add_modifier(Modifier::BOLD),
         ))
-        .chain(
-            sorted_file_count
-                .iter()
-                .map(|(path, count)| {
-                    vec![
-                        Span::raw(
-                            path.file_name()
-                                .map(|f| f.to_string_lossy())
-                                .unwrap_or_default(),
-                        ),
-                        Span::raw(" "),
-                        Span::styled(
-                            format!("{}", count),
-                            Style::default().add_modifier(Modifier::BOLD),
-                        ),
-                        Span::raw(", "),
-                    ]
-                })
-                .flatten(),
-        )
+        .chain(sorted_file_count.iter().flat_map(|(path, count)| {
+            vec![
+                Span::raw(
+                    path.file_name()
+                        .map(|f| f.to_string_lossy())
+                        .unwrap_or_default(),
+                ),
+                Span::raw(" "),
+                Span::styled(
+                    format!("{}", count),
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(", "),
+            ]
+        }))
         .collect::<Vec<_>>();
 
         if files_spans.len() > 1 {

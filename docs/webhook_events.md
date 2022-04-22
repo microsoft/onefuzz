@@ -21,6 +21,27 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
+## Event Grid Payload format
+
+If webhook is set to have Event Grid message format then the payload will look as follows:
+
+### Example
+
+```json
+[
+    {
+        "data": {
+            "ping_id": "00000000-0000-0000-0000-000000000000"
+        },
+        "dataVersion": "1.0.0",
+        "eventTime": "0001-01-01T00:00:00",
+        "eventType": "ping",
+        "id": "00000000-0000-0000-0000-000000000000",
+        "subject": "example"
+    }
+]
+```
+
 ## Event Types (EventType)
 
 * [crash_reported](#crash_reported)
@@ -77,9 +98,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "job_id": "00000000-0000-0000-0000-000000000000",
+        "onefuzz_version": "1.2.3",
         "scariness_description": "example-scariness",
         "scariness_score": 10,
-        "task_id": "00000000-0000-0000-0000-000000000000"
+        "task_id": "00000000-0000-0000-0000-000000000000",
+        "tool_name": "libfuzzer",
+        "tool_version": "1.2.3"
     }
 }
 ```
@@ -126,7 +150,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -208,6 +233,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Minimized Stack Sha256",
                     "type": "string"
                 },
+                "onefuzz_version": {
+                    "title": "Onefuzz Version",
+                    "type": "string"
+                },
                 "scariness_description": {
                     "title": "Scariness Description",
                     "type": "string"
@@ -220,6 +249,14 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "format": "uuid",
                     "title": "Task Id",
                     "type": "string"
+                },
+                "tool_name": {
+                    "title": "Tool Name",
+                    "type": "string"
+                },
+                "tool_version": {
+                    "title": "Tool Version",
+                    "type": "string"
                 }
             },
             "required": [
@@ -230,7 +267,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "call_stack_sha256",
                 "input_sha256",
                 "task_id",
-                "job_id"
+                "job_id",
+                "tool_name",
+                "tool_version",
+                "onefuzz_version"
             ],
             "title": "Report",
             "type": "object"
@@ -813,6 +853,20 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "default": "Standard_B2s",
                     "title": "Proxy Vm Sku",
                     "type": "string"
+                },
+                "vm_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Vm Tags",
+                    "type": "object"
+                },
+                "vmss_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Vmss Tags",
+                    "type": "object"
                 }
             },
             "required": [
@@ -931,6 +985,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
+                },
+                "logs": {
+                    "title": "Logs",
+                    "type": "string"
                 },
                 "name": {
                     "title": "Name",
@@ -1075,7 +1133,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         },
@@ -1090,6 +1149,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
+                },
+                "logs": {
+                    "title": "Logs",
+                    "type": "string"
                 },
                 "name": {
                     "title": "Name",
@@ -1687,7 +1750,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         }
@@ -1798,9 +1862,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "job_id": "00000000-0000-0000-0000-000000000000",
+                "onefuzz_version": "1.2.3",
                 "scariness_description": "example-scariness",
                 "scariness_score": 10,
-                "task_id": "00000000-0000-0000-0000-000000000000"
+                "task_id": "00000000-0000-0000-0000-000000000000",
+                "tool_name": "libfuzzer",
+                "tool_version": "1.2.3"
             }
         },
         "original_crash_test_result": {
@@ -1822,9 +1889,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "job_id": "00000000-0000-0000-0000-000000000000",
+                "onefuzz_version": "1.2.3",
                 "scariness_description": "example-scariness",
                 "scariness_score": 10,
-                "task_id": "00000000-0000-0000-0000-000000000000"
+                "task_id": "00000000-0000-0000-0000-000000000000",
+                "tool_name": "libfuzzer",
+                "tool_version": "1.2.3"
             }
         }
     }
@@ -1873,7 +1943,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -2024,6 +2095,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Minimized Stack Sha256",
                     "type": "string"
                 },
+                "onefuzz_version": {
+                    "title": "Onefuzz Version",
+                    "type": "string"
+                },
                 "scariness_description": {
                     "title": "Scariness Description",
                     "type": "string"
@@ -2036,6 +2111,14 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "format": "uuid",
                     "title": "Task Id",
                     "type": "string"
+                },
+                "tool_name": {
+                    "title": "Tool Name",
+                    "type": "string"
+                },
+                "tool_version": {
+                    "title": "Tool Version",
+                    "type": "string"
                 }
             },
             "required": [
@@ -2046,7 +2129,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "call_stack_sha256",
                 "input_sha256",
                 "task_id",
-                "job_id"
+                "job_id",
+                "tool_name",
+                "tool_version",
+                "onefuzz_version"
             ],
             "title": "Report",
             "type": "object"
@@ -2574,7 +2660,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         }
@@ -2760,7 +2847,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -3215,7 +3303,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -3264,7 +3353,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         },
@@ -3712,7 +3802,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -4134,7 +4225,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -4583,7 +4675,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -5162,7 +5255,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "regression_reports"
+                "regression_reports",
+                "logs"
             ],
             "title": "ContainerType"
         },
@@ -5223,7 +5317,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 470,
                 471,
                 472,
-                473
+                473,
+                474
             ],
             "title": "ErrorCode"
         },
@@ -5955,6 +6050,20 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "default": "Standard_B2s",
                     "title": "Proxy Vm Sku",
                     "type": "string"
+                },
+                "vm_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Vm Tags",
+                    "type": "object"
+                },
+                "vmss_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Vmss Tags",
+                    "type": "object"
                 }
             },
             "required": [
@@ -5974,6 +6083,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
+                },
+                "logs": {
+                    "title": "Logs",
+                    "type": "string"
                 },
                 "name": {
                     "title": "Name",
@@ -6236,6 +6349,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Minimized Stack Sha256",
                     "type": "string"
                 },
+                "onefuzz_version": {
+                    "title": "Onefuzz Version",
+                    "type": "string"
+                },
                 "scariness_description": {
                     "title": "Scariness Description",
                     "type": "string"
@@ -6248,6 +6365,14 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "format": "uuid",
                     "title": "Task Id",
                     "type": "string"
+                },
+                "tool_name": {
+                    "title": "Tool Name",
+                    "type": "string"
+                },
+                "tool_version": {
+                    "title": "Tool Version",
+                    "type": "string"
                 }
             },
             "required": [
@@ -6258,7 +6383,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "call_stack_sha256",
                 "input_sha256",
                 "task_id",
-                "job_id"
+                "job_id",
+                "tool_name",
+                "tool_version",
+                "onefuzz_version"
             ],
             "title": "Report",
             "type": "object"

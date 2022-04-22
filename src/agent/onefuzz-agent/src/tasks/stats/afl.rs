@@ -77,7 +77,7 @@ pub async fn read_stats(output_path: impl AsRef<Path>) -> Result<Vec<EventData>,
                 }
             }
             "bitmap_cvg" => {
-                let value = value.replace("%", "");
+                let value = value.replace('%', "");
                 if let Ok(value) = value.parse::<f64>() {
                     stats.push(EventData::Coverage(value));
                 } else {

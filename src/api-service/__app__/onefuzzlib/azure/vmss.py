@@ -18,6 +18,7 @@ from azure.mgmt.compute.models import (
     ResourceSkuRestrictionsType,
     VirtualMachineScaleSetVMInstanceIDs,
     VirtualMachineScaleSetVMInstanceRequiredIDs,
+    VirtualMachineScaleSetVMProtectionPolicy,
 )
 from memoization import cached
 from msrestazure.azure_exceptions import CloudError
@@ -148,6 +149,70 @@ def get_instance_id(name: UUID, vm_id: UUID) -> Union[str, Error]:
     )
 
 
+@retry_on_auth_failure()
+def update_scale_in_protection(
+    name: UUID, vm_id: UUID, protect_from_scale_in: bool
+) -> Optional[Error]:
+    instance_id = get_instance_id(name, vm_id)
+
+    if isinstance(instance_id, Error):
+        return instance_id
+
+    compute_client = get_compute_client()
+    resource_group = get_base_resource_group()
+
+    try:
+        instance_vm = compute_client.virtual_machine_scale_set_vms.get(
+            resource_group, name, instance_id
+        )
+    except (ResourceNotFoundError, CloudError):
+        return Error(
+            code=ErrorCode.UNABLE_TO_FIND,
+            errors=["unable to find vm instance: %s:%s" % (name, instance_id)],
+        )
+
+    new_protection_policy = VirtualMachineScaleSetVMProtectionPolicy(
+        protect_from_scale_in=protect_from_scale_in
+    )
+    if instance_vm.protection_policy is not None:
+        new_protection_policy = instance_vm.protection_policy
+        new_protection_policy.protect_from_scale_in = protect_from_scale_in
+
+    instance_vm.protection_policy = new_protection_policy
+
+    try:
+        compute_client.virtual_machine_scale_set_vms.begin_update(
+            resource_group, name, instance_id, instance_vm
+        )
+    except (ResourceNotFoundError, CloudError, HttpResponseError) as err:
+        if isinstance(err, HttpResponseError):
+            err_str = str(err)
+            instance_not_found = (
+                " is not an active Virtual Machine Scale Set VM instanceId."
+            )
+            if (
+                instance_not_found in err_str
+                and instance_vm.protection_policy.protect_from_scale_in is False
+                and protect_from_scale_in
+                == instance_vm.protection_policy.protect_from_scale_in
+            ):
+                logging.info(
+                    "Tried to remove scale in protection on node %s but the instance no longer exists"  # noqa: E501
+                    % instance_id
+                )
+                return None
+        return Error(
+            code=ErrorCode.UNABLE_TO_UPDATE,
+            errors=["unable to set protection policy on: %s:%s" % (vm_id, instance_id)],
+        )
+
+    logging.info(
+        "Successfully set scale in protection on node %s to %s"
+        % (vm_id, protect_from_scale_in)
+    )
+    return None
+
+
 class UnableToUpdate(Exception):
     pass
 
@@ -168,7 +233,6 @@ def reimage_vmss_nodes(name: UUID, vm_ids: Set[UUID]) -> Optional[Error]:
     check_can_update(name)
 
     resource_group = get_base_resource_group()
-    logging.info("reimaging scaleset VM - name: %s vm_ids:%s", name, vm_ids)
     compute_client = get_compute_client()
 
     instance_ids = set()
@@ -179,7 +243,18 @@ def reimage_vmss_nodes(name: UUID, vm_ids: Set[UUID]) -> Optional[Error]:
         else:
             logging.info("unable to find vm_id for %s:%s", name, vm_id)
 
+    # Nodes that must be are 'upgraded' before the reimage. This call makes sure
+    # the instance is up-to-date with the VMSS model.
+    # The expectation is that these requests are queued and handled subsequently.
+    # The VMSS Team confirmed this expectation and testing supports it, as well.
     if instance_ids:
+        logging.info("upgrading VMSS nodes - name: %s vm_ids: %s", name, vm_id)
+        compute_client.virtual_machine_scale_sets.begin_update_instances(
+            resource_group,
+            str(name),
+            VirtualMachineScaleSetVMInstanceIDs(instance_ids=list(instance_ids)),
+        )
+        logging.info("reimaging VMSS nodes - name: %s vm_ids: %s", name, vm_id)
         compute_client.virtual_machine_scale_sets.begin_reimage_all(
             resource_group,
             str(name),
@@ -356,6 +431,7 @@ def create_vmss(
         )
 
     params["tags"] = tags.copy()
+
     owner = os.environ.get("ONEFUZZ_OWNER")
     if owner:
         params["tags"]["OWNER"] = owner

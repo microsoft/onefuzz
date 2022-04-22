@@ -8,6 +8,7 @@ import logging
 import os
 import tempfile
 import time
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from urllib.parse import urlparse
 from uuid import UUID
@@ -15,13 +16,15 @@ from uuid import UUID
 import jmespath
 from azure.applicationinsights import ApplicationInsightsDataClient
 from azure.applicationinsights.models import QueryBody
-from azure.common.client_factory import get_azure_cli_credentials
+from azure.identity import AzureCliCredential
+from azure.storage.blob import ContainerClient
 from onefuzztypes.enums import ContainerType, TaskType
 from onefuzztypes.models import BlobRef, Job, NodeAssignment, Report, Task, TaskConfig
 from onefuzztypes.primitives import Container, Directory, PoolName
 
 from onefuzz.api import UUID_EXPANSION, Command, Onefuzz
 
+from .azure_identity_credential_adapter import AzureIdentityCredentialAdapter
 from .backend import wait
 from .rdp import rdp_connect
 from .ssh import ssh_connect
@@ -455,8 +458,8 @@ class DebugLog(Command):
             raise Exception("instance does not have an insights_appid")
         if self._client is None:
 
-            creds, _ = get_azure_cli_credentials(
-                resource="https://api.applicationinsights.io"
+            creds = AzureIdentityCredentialAdapter(
+                AzureCliCredential(), resource_id="https://api.applicationinsights.io"
             )
             self._client = ApplicationInsightsDataClient(creds)
 
@@ -612,6 +615,94 @@ class DebugLog(Command):
 
         return self.onefuzz.debug.logs._query_parts(query_parts, timespan=timespan)
 
+    def get(
+        self,
+        job_id: Optional[str],
+        task_id: Optional[str],
+        machine_id: Optional[str],
+        last: Optional[int] = 1,
+        all: bool = False,
+    ) -> None:
+        """
+        Download the latest agent logs.
+        Make sure you have Storage Blob Data Reader permission.
+
+        :param str job_id: Which job you would like the logs for.
+        :param str task_id: Which task you would like the logs for.
+        :param str machine_id: Which machine you would like the logs for.
+        :param int last: The logs are split in files. Starting with the newest files, how many files you would you like to download.
+        :param bool all: Download all log files.
+        """
+
+        from typing import cast
+
+        if job_id is None:
+            if task_id is None:
+                raise Exception("You need to specify at least one of job_id or task_id")
+
+            task = self.onefuzz.tasks.get(task_id)
+            job_id = str(task.job_id)
+
+        job = self.onefuzz.jobs.get(job_id)
+        container_url = job.config.logs
+
+        if container_url is None:
+            raise Exception(
+                f"Job with id {job_id} does not have a logging location configured"
+            )
+
+        file_path = None
+        if task_id is not None:
+            file_path = f"{task_id}/"
+
+            if machine_id is not None:
+                file_path += f"{machine_id}/"
+
+        token_credential = AzureCliCredential()
+
+        container_client: ContainerClient = ContainerClient.from_container_url(
+            container_url, credential=token_credential
+        )
+
+        blobs = container_client.list_blobs(name_starts_with=file_path)
+
+        class CustomFile:
+            def __init__(self, name: str, creation_time: datetime):
+                self.name = name
+                self.creation_time = creation_time
+
+        files: List[CustomFile] = []
+
+        for f in blobs:
+            if f.creation_time is not None:
+                creation_time = cast(datetime, f.creation_time)
+            else:
+                creation_time = datetime.min
+
+            files.append(CustomFile(f.name, creation_time))
+
+        files.sort(key=lambda x: x.creation_time, reverse=True)
+
+        self.logger.info(f"Found {len(files)} matching files to download")
+
+        if not all:
+            self.logger.info(f"Downloading only the {last} most recent files")
+            files = files[:last]
+
+        for f in files:
+            self.logger.info(f"Downloading {f.name}")
+
+            local_path = os.path.join(os.getcwd(), f.name)
+            local_directory = os.path.dirname(local_path)
+            if not os.path.exists(local_directory):
+                os.makedirs(local_directory)
+
+            with open(local_path, "wb") as download_file:
+                data = container_client.download_blob(f.name)
+                data.readinto(download_file)
+
+        return None
+
 
 class DebugNotification(Command):
     """Debug notification integrations"""
@@ -697,6 +788,9 @@ class DebugNotification(Command):
             job_id=task.job_id,
             minimized_stack=[],
             minimized_stack_function_names=[],
+            tool_name="libfuzzer",
+            tool_version="1.2.3",
+            onefuzz_version="1.2.3",
         )
 
         with tempfile.TemporaryDirectory() as tempdir:

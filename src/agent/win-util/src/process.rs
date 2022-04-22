@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#![allow(clippy::uninit_vec)]
+
 use std::{
     ffi::OsString,
     mem::{size_of, MaybeUninit},

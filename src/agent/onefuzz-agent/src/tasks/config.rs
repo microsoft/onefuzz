@@ -7,7 +7,7 @@ use crate::tasks::coverage;
 use crate::tasks::{
     analysis, fuzz,
     heartbeat::{init_task_heartbeat, TaskHeartbeatClient},
-    merge, regression, report,
+    merge, regression, report, task_logger,
 };
 use anyhow::Result;
 use onefuzz::machine_id::{get_machine_id, get_scaleset_name};
@@ -19,6 +19,12 @@ use reqwest::Url;
 use serde::{self, Deserialize};
 use std::{path::PathBuf, sync::Arc, time::Duration};
 use uuid::Uuid;
+
+const DEFAULT_MIN_AVAILABLE_MEMORY_MB: u64 = 100;
+
+fn default_min_available_memory_mb() -> u64 {
+    DEFAULT_MIN_AVAILABLE_MEMORY_MB
+}
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 pub enum ContainerType {
@@ -40,8 +46,18 @@ pub struct CommonConfig {
 
     pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
 
+    pub logs: Option<Url>,
+
     #[serde(default)]
     pub setup_dir: PathBuf,
+
+    /// Lower bound on available system memory. If the available memory drops
+    /// below the limit, the task will exit with an error. This is a fail-fast
+    /// mechanism to support debugging.
+    ///
+    /// Can be disabled by setting to 0.
+    #[serde(default = "default_min_available_memory_mb")]
+    pub min_available_memory_mb: u64,
 }
 
 impl CommonConfig {
@@ -190,6 +206,7 @@ impl Config {
         telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
         telemetry::set_property(EventData::InstanceId(self.common().instance_id));
         telemetry::set_property(EventData::Role(Role::Agent));
+
         let scaleset = get_scaleset_name().await?;
         if let Some(scaleset_name) = &scaleset {
             telemetry::set_property(EventData::ScalesetId(scaleset_name.to_string()));
@@ -197,6 +214,20 @@ impl Config {
 
         info!("agent ready, dispatching task");
         self.report_event();
+
+        let common = self.common().clone();
+        if let Some(logs) = common.logs.clone() {
+            let rx = onefuzz_telemetry::subscribe_to_events();
+
+            let _logging = tokio::spawn(async move {
+                let logger = task_logger::TaskLogger::new(
+                    common.job_id,
+                    common.task_id,
+                    get_machine_id().await?,
+                );
+                logger.start(rx, logs).await
+            });
+        }
 
         match self {
             #[cfg(any(target_os = "linux", target_os = "windows"))]

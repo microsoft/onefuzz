@@ -19,20 +19,15 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Union, cast
 from uuid import UUID
 
-from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
+from azure.core.exceptions import ResourceNotFoundError
 from azure.cosmosdb.table.tableservice import TableService
+from azure.identity import AzureCliCredential
 from azure.mgmt.applicationinsights import ApplicationInsightsManagementClient
 from azure.mgmt.applicationinsights.models import (
     ApplicationInsightsComponentExportRequest,
 )
 from azure.mgmt.eventgrid import EventGridManagementClient
-from azure.mgmt.eventgrid.models import (
-    EventSubscription,
-    EventSubscriptionFilter,
-    RetryPolicy,
-    StorageQueueEventSubscriptionDestination,
-)
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
 from azure.mgmt.resource.resources.models import (
     Deployment,
@@ -106,6 +101,31 @@ def gen_guid() -> str:
     return str(uuid.uuid4())
 
 
+def bicep_to_arm(bicep_template: str) -> str:
+    from azure.cli.core import get_default_cli
+
+    az_cli = get_default_cli()
+    az_cli.invoke(["bicep", "install"])
+    az_cli.invoke(
+        [
+            "bicep",
+            "build",
+            "--file",
+            bicep_template,
+            "--outfile",
+            "azuredeploy-bicep.json",
+        ]
+    )
+    from importlib import reload
+
+    # az_cli hijacks logging, so need to reset it
+    logging.shutdown()
+    reload(logging)
+    global logger
+    logger = logging.getLogger("deploy")
+    return "azuredeploy-bicep.json"
+
+
 class Client:
     def __init__(
         self,
@@ -121,7 +141,7 @@ class Client:
         tools: str,
         instance_specific: str,
         third_party: str,
-        arm_template: str,
+        bicep_template: str,
         workbook_data: str,
         create_registration: bool,
         migrations: List[str],
@@ -134,7 +154,6 @@ class Client:
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
-        self.arm_template = arm_template
         self.location = location
         self.application_name = application_name
         self.owner = owner
@@ -163,6 +182,8 @@ class Client:
         self.admins = admins
         self.allowed_aad_tenants = allowed_aad_tenants
 
+        self.arm_template = bicep_to_arm(bicep_template)
+
         machine = platform.machine()
         system = platform.system()
 
@@ -176,7 +197,7 @@ class Client:
             if not azcopy:
                 raise Exception(AZCOPY_MISSING_ERROR)
             else:
-                logger.warn("unable to use built-in azcopy, using system install")
+                logger.warning("unable to use built-in azcopy, using system install")
                 self.azcopy = azcopy
 
         with open(workbook_data) as f:
@@ -190,8 +211,9 @@ class Client:
         return self.subscription_id
 
     def get_location_display_name(self) -> str:
-        location_client = get_client_from_cli_profile(
-            SubscriptionClient, subscription_id=self.get_subscription_id()
+        credential = AzureCliCredential()
+        location_client = SubscriptionClient(
+            credential, subscription_id=self.get_subscription_id()
         )
         locations = location_client.subscriptions.list_locations(
             self.get_subscription_id()
@@ -211,40 +233,46 @@ class Client:
         with open(self.arm_template, "r") as handle:
             arm = json.load(handle)
 
-        client = get_client_from_cli_profile(
-            ResourceManagementClient, subscription_id=self.get_subscription_id()
+        credential = AzureCliCredential()
+        client = ResourceManagementClient(
+            credential, subscription_id=self.get_subscription_id()
         )
-        providers = {x.namespace: x for x in client.providers.list()}
-
+        providers = {x.namespace.lower(): x for x in client.providers.list()}
         unsupported = []
 
+        # we cannot validate site/config resources since they require resource group
+        # to exist. check_region only validates subscription level resources.
+        resource_group_level_resources = ["sites/config"]
+
         for resource in arm["resources"]:
-            namespace, name = resource["type"].split("/", 1)
+            namespace, name = resource["type"].lower().split("/", 1)
 
             # resource types are in the form of a/b/c....
             # only the top two are listed as resource types within providers
             name = "/".join(name.split("/")[:2])
-
             if namespace not in providers:
                 unsupported.append("Unsupported provider: %s" % namespace)
                 continue
 
             provider = providers[namespace]
-            resource_types = {x.resource_type: x for x in provider.resource_types}
-            if name not in resource_types:
-                unsupported.append(
-                    "Unsupported resource type: %s/%s" % (namespace, name)
-                )
-                continue
+            resource_types = {
+                x.resource_type.lower(): x for x in provider.resource_types
+            }
+            if name not in resource_group_level_resources:
+                if name not in resource_types:
+                    unsupported.append(
+                        "Unsupported resource type: %s/%s" % (namespace, name)
+                    )
+                    continue
 
-            resource_type = resource_types[name]
-            if (
-                location not in resource_type.locations
-                and len(resource_type.locations) > 0
-            ):
-                unsupported.append(
-                    "%s/%s is unsupported in %s" % (namespace, name, self.location)
-                )
+                resource_type = resource_types[name]
+                if (
+                    location not in resource_type.locations
+                    and len(resource_type.locations) > 0
+                ):
+                    unsupported.append(
+                        "%s/%s is unsupported in %s" % (namespace, name, self.location)
+                    )
 
         if unsupported:
             print("The following resources required by onefuzz are not supported:")
@@ -322,7 +350,7 @@ class Client:
             },
             {
                 "allowedMemberTypes": ["User"],
-                "description": "Allows user access from the CLI.",
+                "description": "Allows user to access the OneFuzz instance.",
                 "displayName": OnefuzzAppRole.UserAssignment.value,
                 "id": str(uuid.uuid4()),
                 "isEnabled": True,
@@ -524,8 +552,9 @@ class Client:
         with open(self.arm_template, "r") as template_handle:
             template = json.load(template_handle)
 
-        client = get_client_from_cli_profile(
-            ResourceManagementClient, subscription_id=self.get_subscription_id()
+        credential = AzureCliCredential()
+        client = ResourceManagementClient(
+            credential, subscription_id=self.get_subscription_id()
         )
         client.resource_groups.create_or_update(
             self.resource_group, {"location": self.location}
@@ -607,7 +636,7 @@ class Client:
         logger.info("assigning the user managed identity role")
         assign_instance_app_role(
             self.application_name,
-            self.results["deploy"]["scaleset-identity"]["value"],
+            self.results["deploy"]["scaleset_identity"]["value"],
             self.get_subscription_id(),
             OnefuzzAppRole.ManagedNode,
         )
@@ -648,15 +677,15 @@ class Client:
 
     def apply_migrations(self) -> None:
         logger.info("applying database migrations")
-        name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
+        name = self.results["deploy"]["func_name"]["value"]
+        key = self.results["deploy"]["func_key"]["value"]
         table_service = TableService(account_name=name, account_key=key)
         migrate(table_service, self.migrations)
 
     def set_instance_config(self) -> None:
         logger.info("setting instance config")
-        name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
+        name = self.results["deploy"]["func_name"]["value"]
+        key = self.results["deploy"]["func_key"]["value"]
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
         table_service = TableService(account_name=name, account_key=key)
 
@@ -691,48 +720,66 @@ class Client:
             tenants.append(tenant)
         update_allowed_aad_tenants(config_client, tenants)
 
-    def create_eventgrid(self) -> None:
-        logger.info("creating eventgrid subscription")
-        src_resource_id = self.results["deploy"]["fuzz-storage"]["value"]
-        dst_resource_id = self.results["deploy"]["func-storage"]["value"]
-        client = get_client_from_cli_profile(
-            StorageManagementClient, subscription_id=self.get_subscription_id()
-        )
-        event_subscription_info = EventSubscription(
-            destination=StorageQueueEventSubscriptionDestination(
-                resource_id=dst_resource_id, queue_name="file-changes"
-            ),
-            filter=EventSubscriptionFilter(
-                included_event_types=[
-                    "Microsoft.Storage.BlobCreated",
-                    "Microsoft.Storage.BlobDeleted",
-                ]
-            ),
-            retry_policy=RetryPolicy(
-                max_delivery_attempts=30,
-                event_time_to_live_in_minutes=1440,
-            ),
+    @staticmethod
+    def event_subscription_exists(
+        client: EventGridManagementClient, resource_id: str, subscription_name: str
+    ) -> bool:
+        try:
+            client.event_subscriptions.get(resource_id, subscription_name)
+            return True
+        except ResourceNotFoundError:
+            return False
+
+    @staticmethod
+    def get_storage_account_id(
+        client: StorageManagementClient, resource_group: str, prefix: str
+    ) -> Optional[str]:
+        try:
+            storage_accounts = client.storage_accounts.list_by_resource_group(
+                resource_group
+            )
+            for storage_account in storage_accounts:
+                if storage_account.name.startswith(prefix):
+                    return str(storage_account.id)
+            return None
+        except ResourceNotFoundError:
+            return None
+
+    def remove_eventgrid(self) -> None:
+        credential = AzureCliCredential()
+        storage_account_client = StorageManagementClient(
+            credential, subscription_id=self.get_subscription_id()
         )
 
-        client = get_client_from_cli_profile(
-            EventGridManagementClient, subscription_id=self.get_subscription_id()
+        src_resource_id = Client.get_storage_account_id(
+            storage_account_client, self.resource_group, "fuzz"
         )
-        result = client.event_subscriptions.begin_create_or_update(
-            src_resource_id, "onefuzz1", event_subscription_info
-        ).result()
-        if result.provisioning_state != "Succeeded":
-            raise Exception(
-                "eventgrid subscription failed: %s"
-                % json.dumps(result.as_dict(), indent=4, sort_keys=True),
-            )
+        if not src_resource_id:
+            return
+
+        event_grid_client = EventGridManagementClient(
+            credential, subscription_id=self.get_subscription_id()
+        )
+
+        # Event subscription for version up to 5.1.0
+        old_subscription_name = "onefuzz1"
+        old_subscription_exists = Client.event_subscription_exists(
+            event_grid_client, src_resource_id, old_subscription_name
+        )
+
+        if old_subscription_exists:
+            logger.info("removing deprecated event subscription")
+            event_grid_client.event_subscriptions.begin_delete(
+                src_resource_id, old_subscription_name
+            ).wait()
 
     def add_instance_id(self) -> None:
         logger.info("setting instance_id log export")
 
         container_name = "base-config"
         blob_name = "instance_id"
-        account_name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
+        account_name = self.results["deploy"]["func_name"]["value"]
+        key = self.results["deploy"]["func_key"]["value"]
         account_url = "https://%s.blob.core.windows.net" % account_name
         client = BlobServiceClient(account_url, credential=key)
         if container_name not in [x["name"] for x in client.list_containers()]:
@@ -757,8 +804,8 @@ class Client:
         container_name = "app-insights"
 
         logger.info("adding appinsight log export")
-        account_name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
+        account_name = self.results["deploy"]["func_name"]["value"]
+        key = self.results["deploy"]["func_key"]["value"]
         account_url = "https://%s.blob.core.windows.net" % account_name
         client = BlobServiceClient(account_url, credential=key)
         if container_name not in [x["name"] for x in client.list_containers()]:
@@ -789,8 +836,9 @@ class Client:
             destination_address=url,
         )
 
-        app_insight_client = get_client_from_cli_profile(
-            ApplicationInsightsManagementClient,
+        credential = AzureCliCredential()
+        app_insight_client = ApplicationInsightsManagementClient(
+            credential,
             subscription_id=self.get_subscription_id(),
         )
 
@@ -816,8 +864,8 @@ class Client:
 
     def upload_tools(self) -> None:
         logger.info("uploading tools from %s", self.tools)
-        account_name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
+        account_name = self.results["deploy"]["func_name"]["value"]
+        key = self.results["deploy"]["func_key"]["value"]
         account_url = "https://%s.blob.core.windows.net" % account_name
         client = BlobServiceClient(account_url, credential=key)
         if "tools" not in [x["name"] for x in client.list_containers()]:
@@ -853,8 +901,8 @@ class Client:
 
     def upload_instance_setup(self) -> None:
         logger.info("uploading instance-specific-setup from %s", self.instance_specific)
-        account_name = self.results["deploy"]["func-name"]["value"]
-        key = self.results["deploy"]["func-key"]["value"]
+        account_name = self.results["deploy"]["func_name"]["value"]
+        key = self.results["deploy"]["func_key"]["value"]
         account_url = "https://%s.blob.core.windows.net" % account_name
         client = BlobServiceClient(account_url, credential=key)
         if "instance-specific-setup" not in [
@@ -899,8 +947,8 @@ class Client:
 
     def upload_third_party(self) -> None:
         logger.info("uploading third-party tools from %s", self.third_party)
-        account_name = self.results["deploy"]["fuzz-name"]["value"]
-        key = self.results["deploy"]["fuzz-key"]["value"]
+        account_name = self.results["deploy"]["fuzz_name"]["value"]
+        key = self.results["deploy"]["fuzz_key"]["value"]
         account_url = "https://%s.blob.core.windows.net" % account_name
 
         client = BlobServiceClient(account_url, credential=key)
@@ -1024,6 +1072,7 @@ def main() -> None:
     rbac_only_states = [
         ("check_region", Client.check_region),
         ("rbac", Client.setup_rbac),
+        ("eventgrid", Client.remove_eventgrid),
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
         ("assign_user_access", Client.assign_user_access),
@@ -1032,7 +1081,6 @@ def main() -> None:
     full_deployment_states = rbac_only_states + [
         ("apply_migrations", Client.apply_migrations),
         ("set_instance_config", Client.set_instance_config),
-        ("eventgrid", Client.create_eventgrid),
         ("tools", Client.upload_tools),
         ("add_instance_id", Client.add_instance_id),
         ("instance-specific-setup", Client.upload_instance_setup),
@@ -1050,9 +1098,9 @@ def main() -> None:
     parser.add_argument("owner")
     parser.add_argument("nsg_config")
     parser.add_argument(
-        "--arm-template",
+        "--bicep-template",
         type=arg_file,
-        default="azuredeploy.json",
+        default="azuredeploy.bicep",
         help="(default: %(default)s)",
     )
     parser.add_argument(
@@ -1163,7 +1211,7 @@ def main() -> None:
         tools=args.tools,
         instance_specific=args.instance_specific,
         third_party=args.third_party,
-        arm_template=args.arm_template,
+        bicep_template=args.bicep_template,
         workbook_data=args.workbook_data,
         create_registration=args.create_pool_registration,
         migrations=args.apply_migrations,

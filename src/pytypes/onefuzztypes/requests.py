@@ -22,6 +22,7 @@ from .enums import (
 from .events import EventType
 from .models import AutoScaleConfig, InstanceConfig, NotificationConfig
 from .primitives import Container, PoolName, Region
+from .webhooks import WebhookMessageFormat
 
 
 class BaseRequest(BaseModel):
@@ -168,6 +169,16 @@ class ScalesetUpdate(BaseRequest):
     size: Optional[int] = Field(ge=1)
 
 
+class AutoScaleOptions(BaseModel):
+    min: int = Field(ge=1)
+    max: int = Field(ge=1)
+    default: int = Field(ge=1)
+    scale_out_amount: int = Field(ge=1)
+    scale_out_cooldown: int = Field(ge=1)
+    scale_in_amount: int = Field(ge=1)
+    scale_in_cooldown: int = Field(ge=1)
+
+
 class ScalesetCreate(BaseRequest):
     pool_name: PoolName
     vm_sku: str
@@ -177,6 +188,7 @@ class ScalesetCreate(BaseRequest):
     spot_instances: bool
     ephemeral_os_disks: bool = Field(default=False)
     tags: Dict[str, str]
+    auto_scale: Optional[AutoScaleOptions]
 
 
 class ContainerGet(BaseRequest):
@@ -211,6 +223,7 @@ class WebhookCreate(BaseRequest):
     url: AnyHttpUrl
     event_types: List[EventType]
     secret_token: Optional[str]
+    message_format: Optional[WebhookMessageFormat]
 
 
 class WebhookSearch(BaseModel):
@@ -227,6 +240,7 @@ class WebhookUpdate(BaseModel):
     event_types: Optional[List[EventType]]
     url: Optional[AnyHttpUrl]
     secret_token: Optional[str]
+    message_format: Optional[WebhookMessageFormat]
 
 
 class NodeAddSshKey(BaseModel):

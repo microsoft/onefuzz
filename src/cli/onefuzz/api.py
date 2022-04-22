@@ -326,6 +326,7 @@ class Webhooks(Endpoint):
         event_types: List[events.EventType],
         *,
         secret_token: Optional[str] = None,
+        message_format: Optional[webhooks.WebhookMessageFormat] = None,
     ) -> webhooks.Webhook:
         """Create a webhook"""
         self.logger.debug("creating webhook.  name: %s", name)
@@ -333,7 +334,11 @@ class Webhooks(Endpoint):
             "POST",
             webhooks.Webhook,
             data=requests.WebhookCreate(
-                name=name, url=url, event_types=event_types, secret_token=secret_token
+                name=name,
+                url=url,
+                event_types=event_types,
+                secret_token=secret_token,
+                message_format=message_format,
             ),
         )
 
@@ -345,6 +350,7 @@ class Webhooks(Endpoint):
         url: Optional[str] = None,
         event_types: Optional[List[events.EventType]] = None,
         secret_token: Optional[str] = None,
+        message_format: Optional[webhooks.WebhookMessageFormat] = None,
     ) -> webhooks.Webhook:
         """Update a webhook"""
 
@@ -362,6 +368,7 @@ class Webhooks(Endpoint):
                 url=url,
                 event_types=event_types,
                 secret_token=secret_token,
+                message_format=message_format,
             ),
         )
 
@@ -1350,6 +1357,11 @@ class Scaleset(Endpoint):
         spot_instances: bool = False,
         ephemeral_os_disks: bool = False,
         tags: Optional[Dict[str, str]] = None,
+        min_instances: Optional[int] = 1,
+        scale_out_amount: Optional[int] = 1,
+        scale_out_cooldown: Optional[int] = 10,
+        scale_in_amount: Optional[int] = 1,
+        scale_in_cooldown: Optional[int] = 15,
     ) -> models.Scaleset:
         self.logger.debug("create scaleset")
 
@@ -1365,6 +1377,16 @@ class Scaleset(Endpoint):
             else:
                 raise NotImplementedError
 
+        auto_scale = requests.AutoScaleOptions(
+            min=min_instances,
+            max=size,
+            default=size,
+            scale_out_amount=scale_out_amount,
+            scale_out_cooldown=scale_out_cooldown,
+            scale_in_amount=scale_in_amount,
+            scale_in_cooldown=scale_in_cooldown,
+        )
+
         return self._req_model(
             "POST",
             models.Scaleset,
@@ -1377,6 +1399,7 @@ class Scaleset(Endpoint):
                 spot_instances=spot_instances,
                 ephemeral_os_disks=ephemeral_os_disks,
                 tags=tags,
+                auto_scale=auto_scale,
             ),
         )
 

@@ -49,7 +49,9 @@ def create_vm(
     password: str,
     ssh_public_key: str,
     nsg: Optional[NSG],
+    tags: Optional[Dict[str, str]],
 ) -> Union[None, Error]:
+
     resource_group = get_base_resource_group()
     logging.info("creating vm %s:%s:%s", resource_group, location, name)
 
@@ -116,6 +118,9 @@ def create_vm(
 
     if "ONEFUZZ_OWNER" in os.environ:
         params["tags"] = {"OWNER": os.environ["ONEFUZZ_OWNER"]}
+
+    if tags:
+        params["tags"].update(tags.copy())
 
     try:
         compute_client.virtual_machines.begin_create_or_update(
@@ -230,6 +235,7 @@ class VM(BaseModel):
     image: str
     auth: Authentication
     nsg: Optional[NSG]
+    tags: Optional[Dict[str, str]]
 
     @validator("name", allow_reuse=True)
     def check_name(cls, value: Union[UUID, str]) -> Union[UUID, str]:
@@ -264,6 +270,7 @@ class VM(BaseModel):
             self.auth.password,
             self.auth.public_key,
             self.nsg,
+            self.tags,
         )
 
     def delete(self) -> bool:
