@@ -29,5 +29,5 @@ There are three different scenarios that get enabled with OneFuzz CLI Docker con
 
 2. If you have used OneFuzz CLI in your dev environment, and want to re-use configuration and authentication cache. Run following command (PowerShell example)  `docker run -it -v $env:USERPROFILE\.cache\onefuzz:/root/.cache/onefuzz <CONTAINER_TAG>`. It will mount your OneFuzz cache folder into OneFuzz CLI Docker container.
 
-3. If you have several OneFuzz deployments. You can store OneFuzz configuration per deploymnet in your dev environment by creating a different folder for each OneFuzz deployment and then mountint that folder as OneFuzz CLI cache when running the Docker container.
+3. If you have several OneFuzz deployments. You can store OneFuzz configuration per deployment in your dev environment by creating a different folder for each OneFuzz deployment and then mounting that folder as OneFuzz CLI cache when running the Docker container.
 `docker run -it -v <ONEFUZZ_CONFIG_FOLDER>:/root/.cache/onefuzz <CONTAINER_TAG>`
