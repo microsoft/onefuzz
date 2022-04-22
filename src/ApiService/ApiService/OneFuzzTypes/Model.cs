@@ -307,7 +307,7 @@ public record InstanceConfig
     //# if admins are set, only admins can update instance configs.
     Guid[]? Admins,
     //# if set, only admins can manage pools or scalesets
-    bool AllowPoolManagement,
+    bool? AllowPoolManagement,
     string[] AllowedAadTenants,
     NetworkConfig NetworkConfig,
     NetworkSecurityGroupConfig ProxyNsgConfig,

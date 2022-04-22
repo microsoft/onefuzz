@@ -250,7 +250,7 @@ public class EntityConverter
         {
             return entity.GetString(fieldName);
         }
-        else if (ef.type == typeof(bool))
+        else if (ef.type == typeof(bool) || ef.type == typeof(bool?))
         {
             return entity.GetBoolean(fieldName);
         }
@@ -262,7 +262,7 @@ public class EntityConverter
         {
             return entity.GetDateTime(fieldName);
         }
-        else if (ef.type == typeof(double))
+        else if (ef.type == typeof(double) || ef.type == typeof(double?))
         {
             return entity.GetDouble(fieldName);
         }
@@ -270,11 +270,11 @@ public class EntityConverter
         {
             return (object?)Guid.Parse(entity.GetString(fieldName));
         }
-        else if (ef.type == typeof(int))
+        else if (ef.type == typeof(int) || ef.type == typeof(short) || ef.type == typeof(int?) || ef.type == typeof(short?))
         {
             return entity.GetInt32(fieldName);
         }
-        else if (ef.type == typeof(Int64))
+        else if (ef.type == typeof(long) || ef.type == typeof(long?))
         {
             return entity.GetInt64(fieldName);
         }
