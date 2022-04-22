@@ -258,7 +258,7 @@ public class EntityConverter
         {
             return entity.GetDateTimeOffset(fieldName);
         }
-        else if (ef.type == typeof(DateTime))
+        else if (ef.type == typeof(DateTime) || ef.type == typeof(DateTime?))
         {
             return entity.GetDateTime(fieldName);
         }

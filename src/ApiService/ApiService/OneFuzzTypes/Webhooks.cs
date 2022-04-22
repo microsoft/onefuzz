@@ -22,11 +22,11 @@ public record WebhookMessageEventGrid(
     [property: JsonPropertyName("dataVersion")] string DataVersion,
     string Subject,
     [property: JsonPropertyName("EventType")] EventType EventType,
-    [property: JsonPropertyName("eventTime")] DateTimeOffset eventTime,
+    [property: JsonPropertyName("eventTime")] DateTimeOffset EventTime,
     Guid Id,
     [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
     [property: JsonConverter(typeof(BaseEventConverter))]
-    BaseEvent data);
+    BaseEvent Data);
 
 
 // TODO: This should inherit from Entity Base ? no, since there is
