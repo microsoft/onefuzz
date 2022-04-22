@@ -21,7 +21,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     private IEvents _events;
 
     public NotificationOperations(ILogTracer log, IStorage storage, IReports reports, ITaskOperations taskOperations, IContainers containers, IQueue queue, IEvents events)
-        : base(storage)
+        : base(storage, log)
     {
         _log = log;
         _reports = reports;
