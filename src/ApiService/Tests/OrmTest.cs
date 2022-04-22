@@ -300,7 +300,7 @@ namespace Tests
         [Fact]
         public void TestContainerSerialization2()
         {
-            var entityJson = 
+            var entityJson =
 @"{
     ""Id"": 123,
     ""TheName"": ""abc"",
