@@ -10,7 +10,6 @@ public interface INotificationOperations
 
 public class NotificationOperations : Orm<Notification>, INotificationOperations
 {
-    private ILogTracer _log;
     private IReports _reports;
     private ITaskOperations _taskOperations;
 
@@ -23,7 +22,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     public NotificationOperations(ILogTracer log, IStorage storage, IReports reports, ITaskOperations taskOperations, IContainers containers, IQueue queue, IEvents events)
         : base(storage, log)
     {
-        _log = log;
+
         _reports = reports;
         _taskOperations = taskOperations;
         _containers = containers;
@@ -76,7 +75,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         {
             if (containers.Contains(container.ContainerName))
             {
-                _log.Info($"queuing input {container.ContainerName} {filename} {task.TaskId}");
+                _logTracer.Info($"queuing input {container.ContainerName} {filename} {task.TaskId}");
                 var url = _containers.GetFileSasUrl(container, filename, StorageType.Corpus, read: true, delete: true);
                 await _queue.SendMessage(task.TaskId.ToString(), System.Text.Encoding.UTF8.GetBytes(url.ToString()), StorageType.Corpus);
             }
@@ -125,7 +124,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             return await _taskOperations.GetByJobIdAndTaskId(report.CrashTestResult.NoReproReport.JobId, report.CrashTestResult.NoReproReport.TaskId);
         }
 
-        _log.Error($"unable to find crash_report or no repro entry for report: {JsonSerializer.Serialize(report)}");
+        _logTracer.Error($"unable to find crash_report or no repro entry for report: {JsonSerializer.Serialize(report)}");
         return null;
     }
 
