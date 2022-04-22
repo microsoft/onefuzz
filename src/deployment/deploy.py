@@ -1123,6 +1123,7 @@ def main() -> None:
         ("add_instance_id", Client.add_instance_id),
         ("instance-specific-setup", Client.upload_instance_setup),
         ("third-party", Client.upload_third_party),
+        ("api", Client.deploy_app),
         ("export_appinsights", Client.add_log_export),
         ("update_registration", Client.update_registration),
     ]
@@ -1232,7 +1233,7 @@ def main() -> None:
     parser.add_argument(
         "--dotnet_deploy",
         action="store_true",
-        help="deploys the dotnet version of the app, instead of python version",
+        help="deploys the dotnet version of the app along with the python version",
     )
 
     args = parser.parse_args()
@@ -1282,11 +1283,11 @@ def main() -> None:
     else:
         if args.dotnet_deploy:
             logger.info(
-                "deploying dotnet services for Azure functions instead of python"
+                "deploying dotnet and python services for Azure functions"
             )
             states = full_deployment_states + [("api", Client.deploy_dotnet_app)]
         else:
-            states = full_deployment_states + [("api", Client.deploy_app)]
+            states = full_deployment_states
 
 
     if args.start_at != states[0][0]:
