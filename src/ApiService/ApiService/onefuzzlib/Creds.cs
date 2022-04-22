@@ -33,12 +33,6 @@ public class Creds : ICreds
         _armClient = new Lazy<ArmClient>(() => new ArmClient(this.GetIdentity(), this.GetSubcription()), true);
     }
 
-    private IContainers _containers;
-
-    public Creds(IContainers containers)
-    {
-        _containers = containers;
-    }
     // TODO: @cached
     public DefaultAzureCredential GetIdentity()
     {
