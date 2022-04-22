@@ -7,11 +7,11 @@ public interface IScalesetOperations : IOrm<Scaleset>
     IAsyncEnumerable<Scaleset> Search();
 }
 
-public class ScalesetOperations : Orm<Scaleset>, IScalesetOperations
+public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalesetOperations
 {
 
-    public ScalesetOperations(IStorage storage)
-        : base(storage)
+    public ScalesetOperations(IStorage storage, ILogTracer log)
+        : base(storage, log)
     {
 
     }

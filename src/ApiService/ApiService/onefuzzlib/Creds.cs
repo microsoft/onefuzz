@@ -1,6 +1,8 @@
 using Azure.Identity;
 using Azure.Core;
 using System;
+using Azure.ResourceManager;
+using Azure.ResourceManager.Resources;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -17,10 +19,22 @@ public interface ICreds
     public string GetInstanceName();
 
     public Async.Task<Guid> GetInstanceId();
+
+    public ArmClient ArmClient { get; }
+
+    public ResourceGroupResource GetResourceGroupResource();
 }
 
 public class Creds : ICreds
 {
+    private readonly Lazy<ArmClient> _armClient;
+
+    public ArmClient ArmClient => _armClient.Value;
+
+    public Creds()
+    {
+        _armClient = new Lazy<ArmClient>(() => new ArmClient(this.GetIdentity(), this.GetSubcription()), true);
+    }
 
     private IContainers _containers;
 
@@ -75,5 +89,10 @@ public class Creds : ICreds
             throw new System.Exception("Blob Not Found");
         }
         return System.Guid.Parse(System.Text.Encoding.Default.GetString(blob.ToArray()));
+        
+    public ResourceGroupResource GetResourceGroupResource()
+    {
+        var resourceId = GetResourceGroupResourceIdentifier();
+        return ArmClient.GetResourceGroupResource(resourceId);
     }
 }

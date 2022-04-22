@@ -276,5 +276,41 @@ namespace Tests
             var actualEvent = converter.ToRecord<EventMessage>(te);
             Assert.Equal(expectedEvent, actualEvent);
         }
+
+        record Entity3(
+            [PartitionKey] int Id,
+            [RowKey] string TheName,
+            Container Container
+        ) : EntityBase();
+
+        [Fact]
+        public void TestContainerSerialization()
+        {
+            var container = new Container("abc-123");
+            var expected = new Entity3(123, "abc", container);
+            var converter = new EntityConverter();
+
+            var tableEntity = converter.ToTableEntity(expected);
+            var actual = converter.ToRecord<Entity3>(tableEntity);
+
+            Assert.Equal(expected.Container.ContainerName, actual.Container.ContainerName);
+            Assert.Equal(expected.Container.ContainerName, tableEntity.GetString("container"));
+        }
+
+        [Fact]
+        public void TestContainerSerialization2()
+        {
+            var entityJson =
+@"{
+    ""Id"": 123,
+    ""TheName"": ""abc"",
+    ""Container"": ""abc-123""
+}";
+            var entity = JsonSerializer.Deserialize<Entity3>(entityJson);
+
+            Assert.Equal(123, entity?.Id);
+            Assert.Equal("abc", entity?.TheName);
+            Assert.Equal("abc-123", entity?.Container.ContainerName);
+        }
     }
 }

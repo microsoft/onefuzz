@@ -2,7 +2,7 @@
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface ITaskOperations : IOrm<Task>
+public interface ITaskOperations : IStatefulOrm<Task, TaskState>
 {
     Async.Task<Task?> GetByTaskId(Guid taskId);
 
@@ -15,11 +15,11 @@ public interface ITaskOperations : IOrm<Task>
 
 }
 
-public class TaskOperations : Orm<Task>, ITaskOperations
+public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
 {
 
-    public TaskOperations(IStorage storage)
-        : base(storage)
+    public TaskOperations(IStorage storage, ILogTracer log)
+        : base(storage, log)
     {
 
     }
