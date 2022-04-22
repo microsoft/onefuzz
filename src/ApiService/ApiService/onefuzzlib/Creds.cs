@@ -18,8 +18,6 @@ public interface ICreds
 
     public string GetInstanceName();
 
-    public Async.Task<Guid> GetInstanceId();
-
     public ArmClient ArmClient { get; }
 
     public ResourceGroupResource GetResourceGroupResource();
@@ -80,15 +78,6 @@ public class Creds : ICreds
 
         return instanceName;
     }
-
-    public async Async.Task<Guid> GetInstanceId()
-    {
-        var blob = await _containers.GetBlob(new Container("base-config"), "instance_id", StorageType.Config);
-        if (blob == null)
-        {
-            throw new System.Exception("Blob Not Found");
-        }
-        return System.Guid.Parse(System.Text.Encoding.Default.GetString(blob.ToArray()));
         
     public ResourceGroupResource GetResourceGroupResource()
     {
