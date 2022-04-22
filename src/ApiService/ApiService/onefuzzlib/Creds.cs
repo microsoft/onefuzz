@@ -69,11 +69,11 @@ public class Creds : ICreds
 
     public async Async.Task<Guid> GetInstanceId()
     {
-        var blob = await _containers.GetBlob("base-config", "instance_id", StorageType.Config);
+        var blob = await _containers.GetBlob(new Container("base-config"), "instance_id", StorageType.Config);
         if (blob == null)
         {
             throw new System.Exception("Blob Not Found");
         }
-        return System.Guid.Parse(System.Text.Encoding.Default.GetString(blob));
+        return System.Guid.Parse(System.Text.Encoding.Default.GetString(blob.ToArray()));
     }
 }

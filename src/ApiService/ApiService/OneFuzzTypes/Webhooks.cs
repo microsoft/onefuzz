@@ -10,6 +10,11 @@ public enum WebhookMessageFormat
     EventGrid
 }
 
+public record WebhookMessageQueueObj(
+        Guid WebhookId,
+        Guid EventId
+        );
+
 public record WebhookMessage(Guid EventId,
     EventType EventType,
     BaseEvent Event,
@@ -22,11 +27,11 @@ public record WebhookMessageEventGrid(
     [property: JsonPropertyName("dataVersion")] string DataVersion,
     string Subject,
     [property: JsonPropertyName("EventType")] EventType EventType,
-    [property: JsonPropertyName("eventTime")] DateTimeOffset eventTime,
+    [property: JsonPropertyName("eventTime")] DateTimeOffset EventTime,
     Guid Id,
     [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
     [property: JsonConverter(typeof(BaseEventConverter))]
-    BaseEvent data);
+    BaseEvent data) : EntityBase();
 
 public record WebhookMessageLog(
     [RowKey] Guid EventId,

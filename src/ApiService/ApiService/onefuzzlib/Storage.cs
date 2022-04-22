@@ -18,7 +18,6 @@ public interface IStorage
     public IEnumerable<string> CorpusAccounts();
     string GetPrimaryAccount(StorageType storageType);
     public (string?, string?) GetStorageAccountNameAndKey(string accountId);
-    public List<string> GetAccounts(StorageType storageType);
     public IEnumerable<string> GetAccounts(StorageType storageType);
 }
 
@@ -122,9 +121,10 @@ public class Storage : IStorage
             throw new Exception($"No Storage Accounts for {storageType}");
         }
 
-        if (accounts.Count == 1)
+        var account_list = accounts.ToList();
+        if (account_list.Count == 1)
         {
-            return accounts[0];
+            return account_list[0];
         }
 
         // Use a random secondary storage account if any are available.  This
@@ -133,9 +133,9 @@ public class Storage : IStorage
         //
         // security note: this is not used as a security feature
         var random = new Random();
-        var index = random.Next(accounts.Count);
+        var index = random.Next(account_list.Count);
 
-        return accounts[index];  // nosec
+        return account_list[index];  // nosec
     }
   
     public IEnumerable<string> GetAccounts(StorageType storageType)
