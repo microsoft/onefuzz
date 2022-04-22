@@ -1,4 +1,4 @@
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+    using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System.Text.Json.Serialization;
 using Region = System.String;
 using PoolName = System.String;
@@ -235,7 +235,6 @@ public record NodeAssignment(
 
 
 public record Task(
-    // Timestamp: Optional[datetime] = Field(alias="Timestamp")
     [PartitionKey] Guid JobId,
     [RowKey] Guid TaskId,
     TaskState State,
