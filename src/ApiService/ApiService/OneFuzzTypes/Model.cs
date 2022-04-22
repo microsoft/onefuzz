@@ -5,6 +5,7 @@ using PoolName = System.String;
 using Endpoint = System.String;
 using GroupId = System.Guid;
 using PrincipalId = System.Guid;
+using System.Text.Json;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -393,9 +394,24 @@ public record Scaleset(
 
 ) : EntityBase();
 
+[JsonConverter(typeof(ContainerConverter))]
 public record Container(string ContainerName)
 {
     public string ContainerName { get; } = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
+}
+
+public class ContainerConverter : JsonConverter<Container>
+{
+    public override Container? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var containerName = reader.GetString();
+        return containerName == null ? null : new Container(containerName);
+    }
+
+    public override void Write(Utf8JsonWriter writer, Container value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.ContainerName);
+    }
 }
 
 public record Notification(
