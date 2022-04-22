@@ -66,6 +66,7 @@ public class Program
         )
         .ConfigureServices((context, services) =>
             services
+            .AddSingleton<ICreds, Creds>()
             .AddScoped<ILogTracer>(s => new LogTracerFactory(GetLoggers()).CreateLogTracer(Guid.Empty, severityLevel: EnvironmentVariables.LogSeverityLevel()))
             .AddScoped<INodeOperations, NodeOperations>()
             .AddScoped<IEvents, Events>()
@@ -73,7 +74,6 @@ public class Program
             .AddScoped<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
             .AddScoped<ITaskOperations, TaskOperations>()
             .AddScoped<IQueue, Queue>()
-            .AddScoped<ICreds, Creds>()
             .AddScoped<IStorage, Storage>()
             .AddScoped<IProxyOperations, ProxyOperations>()
             .AddScoped<IConfigOperations, ConfigOperations>()
