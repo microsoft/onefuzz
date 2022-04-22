@@ -1285,9 +1285,9 @@ def main() -> None:
             logger.info(
                 "deploying dotnet and python services for Azure functions"
             )
-            states = full_deployment_states + [("dotnet-api", Client.deploy_dotnet_app)]
-        else:
-            states = full_deployment_states
+            after_python = (full_deployment_states.index(("api", Client.deploy_app)) + 1)
+            full_deployment_states.insert(after_python, ("dotnet-api", Client.deploy_dotnet_app))
+        states = full_deployment_states
 
 
     if args.start_at != states[0][0]:
