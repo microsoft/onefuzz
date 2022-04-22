@@ -21,15 +21,15 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
     private readonly IWebhookMessageLogOperations _webhookMessageLogOperations;
     private readonly ILogTracer _log;
     private ICreds _creds;
-    private readonly IStorage _storage;
+    private readonly IContainers _containers;
 
-    public WebhookOperations(ICreds creds, IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations, ILogTracer log)
+    public WebhookOperations(ICreds creds, IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations, IContainers containers, ILogTracer log)
         : base(storage, log)
     {
         _webhookMessageLogOperations = webhookMessageLogOperations;
         _log = log;
         _creds = creds;
-        _storage = storage;
+        _containers = containers;
     }
 
     async public Async.Task SendEvent(EventMessage eventMessage)
@@ -102,7 +102,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
         }
         else
         {
-            var instanceId = await _storage.GetInstanceId();
+            var instanceId = await _containers.GetInstanceId();
             var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _creds.GetInstanceName());
             data = JsonSerializer.Serialize(webhookMessage, options: EntityConverter.GetJsonSerializerOptions());
         }

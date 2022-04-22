@@ -14,6 +14,7 @@ public interface IContainers
 
     public Uri GetFileSasUrl(Container container, string name, StorageType storageType, bool read = false, bool add = false, bool create = false, bool write = false, bool delete = false, bool delete_previous_version = false, bool tag = false, int days = 30, int hours = 0, int minutes = 0);
 
+    public Async.Task<Guid> GetInstanceId();
 }
 
 public class Containers : IContainers
@@ -88,5 +89,16 @@ public class Containers : IContainers
     public Uri GetFileSasUrl(Container container, string name, StorageType storageType, bool read = false, bool add = false, bool create = false, bool write = false, bool delete = false, bool delete_previous_version = false, bool tag = false, int days = 30, int hours = 0, int minutes = 0)
     {
         throw new NotImplementedException();
+    }
+
+    // Moved From Creds.cs
+    public async Async.Task<Guid> GetInstanceId()
+    {
+        var blob = await GetBlob(new Container("base-config"), "instance_id", StorageType.Config);
+        if (blob == null)
+        {
+            throw new System.Exception("Blob Not Found");
+        }
+        return System.Guid.Parse(System.Text.Encoding.Default.GetString(blob.ToArray()));
     }
 }

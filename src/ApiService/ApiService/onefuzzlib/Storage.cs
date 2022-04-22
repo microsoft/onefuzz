@@ -17,7 +17,6 @@ public interface IStorage
     string GetPrimaryAccount(StorageType storageType);
     public (string?, string?) GetStorageAccountNameAndKey(string accountId);
     public IEnumerable<string> GetAccounts(StorageType storageType);
-    public Async.Task<Guid> GetInstanceId();
 }
 
 public class Storage : IStorage
@@ -150,16 +149,5 @@ public class Storage : IStorage
             default:
                 throw new NotImplementedException();
         }
-    }
-
-    // Moved From Creds.cs
-    public async Async.Task<Guid> GetInstanceId()
-    {
-        var blob = await _containers.GetBlob(new Container("base-config"), "instance_id", StorageType.Config);
-        if (blob == null)
-        {
-            throw new System.Exception("Blob Not Found");
-        }
-        return System.Guid.Parse(System.Text.Encoding.Default.GetString(blob.ToArray()));
     }
 }
