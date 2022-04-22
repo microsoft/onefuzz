@@ -207,20 +207,20 @@ public record EventProxyCreated(
    ) : BaseEvent();
 
 
-record EventProxyDeleted(
+public record EventProxyDeleted(
    Region Region,
    Guid? ProxyId
 ) : BaseEvent();
 
 
-record EventProxyFailed(
+public record EventProxyFailed(
    Region Region,
    Guid? ProxyId,
    Error Error
 ) : BaseEvent();
 
 
-record EventProxyStateUpdated(
+public record EventProxyStateUpdated(
    Region Region,
    Guid ProxyId,
    VmState State
@@ -262,14 +262,14 @@ public record EventNodeHeartbeat(
 //        NodeState state
 //        ) : BaseEvent();
 
-record EventCrashReported(
+public record EventCrashReported(
     Report Report,
     Container Container,
     [property: JsonPropertyName("filename")] String FileName,
     TaskConfig? TaskConfig
 ) : BaseEvent();
 
-record EventRegressionReported(
+public record EventRegressionReported(
     RegressionReport RegressionReport,
     Container Container,
     [property: JsonPropertyName("filename")] String FileName,
@@ -277,7 +277,7 @@ record EventRegressionReported(
 ) : BaseEvent();
 
 
-record EventFileAdded(
+public record EventFileAdded(
     Container Container,
     [property: JsonPropertyName("filename")] String FileName
 ) : BaseEvent();
