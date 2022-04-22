@@ -81,6 +81,7 @@ public class Program
             .AddScoped<IContainers, Containers>()
             .AddScoped<IReports, Reports>()
             .AddScoped<INotificationOperations, NotificationOperations>()
+            .AddScoped<IUserCredentials, UserCredentials>()
 
         //TODO: move out expensive resources into separate class, and add those as Singleton
         // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
