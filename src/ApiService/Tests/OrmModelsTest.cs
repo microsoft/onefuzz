@@ -375,6 +375,11 @@ namespace Tests
             return Arb.From(OrmGenerators.Webhook());
         }
 
+        public static Arbitrary<WebhookMessageEventGrid> WebhookMessageEventGrid()
+        {
+            return Arb.From(OrmGenerators.WebhookMessageEventGrid());
+        }
+
         public static Arbitrary<WebhookMessage> WebhookMessage()
         {
             return Arb.From(OrmGenerators.WebhookMessage());
@@ -577,6 +582,12 @@ namespace Tests
         public bool Webhook(Webhook wh)
         {
             return Test(wh);
+        }
+
+        [Property]
+        public bool WebhookMessageEventGrid(WebhookMessageEventGrid grid)
+        {
+            return Test(grid);
         }
 
 
