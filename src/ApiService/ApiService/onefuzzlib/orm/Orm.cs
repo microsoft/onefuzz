@@ -1,30 +1,40 @@
 ﻿using Azure.Data.Tables;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using System.Reflection;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace ApiService.OneFuzzLib.Orm
 {
     public interface IOrm<T> where T : EntityBase
     {
         Task<TableClient> GetTableClient(string table, string? accountId = null);
-        IAsyncEnumerable<T> QueryAsync(string filter);
+        IAsyncEnumerable<T> QueryAsync(string? filter = null);
         Task<ResultOk<(int, string)>> Replace(T entity);
 
         Task<T> GetEntityAsync(string partitionKey, string rowKey);
         Task<ResultOk<(int, string)>> Insert(T entity);
         Task<ResultOk<(int, string)>> Delete(T entity);
+
     }
+
+
+
 
     public class Orm<T> : IOrm<T> where T : EntityBase
     {
         IStorage _storage;
         EntityConverter _entityConverter;
+        protected ILogTracer _logTracer;
 
-        public Orm(IStorage storage)
+
+        public Orm(IStorage storage, ILogTracer logTracer)
         {
             _storage = storage;
             _entityConverter = new EntityConverter();
+            _logTracer = logTracer;
+
         }
 
         public async IAsyncEnumerable<T> QueryAsync(string? filter = null)
@@ -122,4 +132,93 @@ namespace ApiService.OneFuzzLib.Orm
             }
         }
     }
+
+
+    public interface IStatefulOrm<T, TState> : IOrm<T> where T : StatefulEntityBase<TState> where TState : Enum
+    {
+        System.Threading.Tasks.Task<T?> ProcessStateUpdate(T entity);
+
+        System.Threading.Tasks.Task<T?> ProcessStateUpdates(T entity, int MaxUpdates = 5);
+    }
+
+
+    public class StatefulOrm<T, TState> : Orm<T>, IStatefulOrm<T, TState> where T : StatefulEntityBase<TState> where TState : Enum
+    {
+        static Lazy<Func<object>>? _partitionKeyGetter;
+        static Lazy<Func<object>>? _rowKeyGetter;
+        static ConcurrentDictionary<string, Func<T, Async.Task<T>>?> _stateFuncs = new ConcurrentDictionary<string, Func<T, Async.Task<T>>?>();
+
+
+        static StatefulOrm()
+        {
+            _partitionKeyGetter =
+                typeof(T).GetProperties().FirstOrDefault(p => p.GetCustomAttributes(true).OfType<PartitionKeyAttribute>().Any())?.GetMethod switch
+                {
+                    null => null,
+                    MethodInfo info => new Lazy<Func<object>>(() => (Func<object>)Delegate.CreateDelegate(typeof(Func<object>), info), true)
+                };
+
+            _rowKeyGetter =
+                typeof(T).GetProperties().FirstOrDefault(p => p.GetCustomAttributes(true).OfType<RowKeyAttribute>().Any())?.GetMethod switch
+                {
+                    null => null,
+                    MethodInfo info => new Lazy<Func<object>>(() => (Func<object>)Delegate.CreateDelegate(typeof(Func<object>), info), true)
+                };
+        }
+
+        public StatefulOrm(IStorage storage, ILogTracer logTracer) : base(storage, logTracer)
+        {
+        }
+
+        /// <summary>
+        /// process a single state update, if the obj
+        /// implements a function for that state
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public async System.Threading.Tasks.Task<T?> ProcessStateUpdate(T entity)
+        {
+            TState state = entity.state;
+            var func = _stateFuncs.GetOrAdd(state.ToString(), (string k) =>
+                typeof(T).GetMethod(k) switch
+                {
+                    null => null,
+                    MethodInfo info => (Func<T, Async.Task<T>>)Delegate.CreateDelegate(typeof(Func<T, Async.Task<T>>), info)
+                });
+
+            if (func != null)
+            {
+                _logTracer.Info($"processing state update: {typeof(T)} - PartitionKey {_partitionKeyGetter?.Value() } {_rowKeyGetter?.Value() } - %s");
+                return await func(entity);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// process through the state machine for an object
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="MaxUpdates"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async System.Threading.Tasks.Task<T?> ProcessStateUpdates(T entity, int MaxUpdates = 5)
+        {
+            for (int i = 0; i < MaxUpdates; i++)
+            {
+                var state = entity.state;
+                var newEntity = await ProcessStateUpdate(entity);
+
+                if (newEntity == null)
+                    return null;
+
+                if (newEntity.state.Equals(state))
+                {
+                    return newEntity;
+                }
+            }
+
+            return null;
+        }
+    }
+
 }

@@ -5,6 +5,7 @@ using PoolName = System.String;
 using Endpoint = System.String;
 using GroupId = System.Guid;
 using PrincipalId = System.Guid;
+using System.Text.Json;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -107,7 +108,7 @@ public partial record Node
     bool ReimageRequested,
     bool DeleteRequested,
     bool DebugKeepNode
-) : EntityBase();
+) : StatefulEntityBase<NodeState>(State);
 
 
 public partial record ProxyForward
@@ -140,8 +141,9 @@ public partial record Proxy
     string? Ip,
     Error? Error,
     string Version,
-    ProxyHeartbeat? Heartbeat
-) : EntityBase();
+    ProxyHeartbeat? Heartbeat,
+    bool Outdated
+) : StatefulEntityBase<VmState>(State);
 
 public record Error(ErrorCode Code, string[]? Errors = null);
 
@@ -243,7 +245,7 @@ public record Task(
     Authentication? Auth,
     DateTimeOffset? Heartbeat,
     DateTimeOffset? EndTime,
-    UserInfo? UserInfo) : EntityBase()
+    UserInfo? UserInfo) : StatefulEntityBase<TaskState>(State)
 {
     List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
     List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
@@ -279,6 +281,9 @@ public record NetworkConfig(
     string Subnet
 )
 {
+    public static NetworkConfig Default { get; } = new NetworkConfig("10.0.0.0/8", "10.0.0.0/16");
+
+
     public NetworkConfig() : this("10.0.0.0/8", "10.0.0.0/16") { }
 }
 
@@ -302,7 +307,7 @@ public record InstanceConfig
     //# if admins are set, only admins can update instance configs.
     Guid[]? Admins,
     //# if set, only admins can manage pools or scalesets
-    bool AllowPoolManagement,
+    bool? AllowPoolManagement,
     string[] AllowedAadTenants,
     NetworkConfig NetworkConfig,
     NetworkSecurityGroupConfig ProxyNsgConfig,
@@ -391,15 +396,29 @@ public record Scaleset(
     Guid? ClientObjectId,
     Dictionary<string, string> Tags
 
-) : EntityBase();
+) : StatefulEntityBase<ScalesetState>(State);
 
+[JsonConverter(typeof(ContainerConverter))]
 public record Container(string ContainerName)
 {
     public string ContainerName { get; } = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
 }
 
+public class ContainerConverter : JsonConverter<Container>
+{
+    public override Container? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var containerName = reader.GetString();
+        return containerName == null ? null : new Container(containerName);
+    }
+
+    public override void Write(Utf8JsonWriter writer, Container value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.ContainerName);
+    }
+}
+
 public record Notification(
-    DateTime? Timestamp,
     Container Container,
     Guid NotificationId,
     NotificationTemplate Config

@@ -3,16 +3,16 @@ using System.Threading.Tasks;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface INodeOperations : IOrm<Node>
+public interface INodeOperations : IStatefulOrm<Node, NodeState>
 {
     Task<Node?> GetByMachineId(Guid machineId);
 }
 
-public class NodeOperations : Orm<Node>, INodeOperations
+public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations
 {
 
-    public NodeOperations(IStorage storage)
-        : base(storage)
+    public NodeOperations(IStorage storage, ILogTracer log)
+        : base(storage, log)
     {
 
     }
