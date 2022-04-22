@@ -69,7 +69,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         }
         else
         {
-            Process(message);
+            await Process(message);
         }
     }
 
@@ -84,6 +84,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
                     ("EventId", message.EventId.ToString()) }
             ).
             Error($"webhook message already handled. {message.WebhookId}:{message.EventId}");
+            return;
         }
 
         var newMessage = message with { TryCount = message.TryCount + 1 };
