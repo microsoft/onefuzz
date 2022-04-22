@@ -1,6 +1,5 @@
 using Azure.Identity;
 using Azure.Core;
-using System;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 
@@ -78,7 +77,7 @@ public class Creds : ICreds
 
         return instanceName;
     }
-        
+
     public ResourceGroupResource GetResourceGroupResource()
     {
         var resourceId = GetResourceGroupResourceIdentifier();

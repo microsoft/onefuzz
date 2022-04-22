@@ -1,9 +1,5 @@
 ﻿using ApiService.OneFuzzLib.Orm;
-using Microsoft.OneFuzz.Service;
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Linq;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -23,7 +19,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     private readonly IQueue _queue;
     private readonly ILogTracer _log;
     private readonly IWebhookOperations _webhook;
-    
+
     public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILogTracer log, IWebhookOperations webhook) : base(storage, log)
     {
         _queue = queue;
@@ -61,7 +57,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     public async Async.Task ProcessFromQueue(WebhookMessageQueueObj obj)
     {
         var message = await GetWebhookMessageById(obj.WebhookId, obj.EventId);
-        
+
         if (message == null)
         {
             _log.WithTags(
@@ -70,14 +66,15 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
                     ("EventId", obj.EventId.ToString()) }
             ).
             Error($"webhook message log not found for webhookId: {obj.WebhookId} and eventId: {obj.EventId}");
-        } else 
+        }
+        else
         {
-            Process(message);    
+            Process(message);
         }
     }
 
-    private async void Process(WebhookMessageLog message)
-    {   
+    private async System.Threading.Tasks.Task Process(WebhookMessageLog message)
+    {
 
         if (message.State == WebhookMessageState.Failed || message.State == WebhookMessageState.Succeeded)
         {
@@ -86,11 +83,11 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
                     ("WebhookId", message.WebhookId.ToString()),
                     ("EventId", message.EventId.ToString()) }
             ).
-            Error($"webhook message already handled. {message.WebhookId}:{message.EventId}");  
+            Error($"webhook message already handled. {message.WebhookId}:{message.EventId}");
         }
 
         var newMessage = message with { TryCount = message.TryCount + 1 };
-        
+
         _log.Info($"sending webhook: {message.WebhookId}:{message.EventId}");
         var success = await Send(newMessage);
         if (success)
@@ -98,24 +95,26 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
             newMessage = newMessage with { State = WebhookMessageState.Succeeded };
             await Replace(newMessage);
             _log.Info($"sent webhook event {newMessage.WebhookId}:{newMessage.EventId}");
-        } else if (newMessage.TryCount < MAX_TRIES)
+        }
+        else if (newMessage.TryCount < MAX_TRIES)
         {
             newMessage = newMessage with { State = WebhookMessageState.Retrying };
             await Replace(newMessage);
             await QueueWebhook(newMessage);
             _log.Warning($"sending webhook event failed, re-queued {newMessage.WebhookId}:{newMessage.EventId}");
-        } else
+        }
+        else
         {
             newMessage = newMessage with { State = WebhookMessageState.Failed };
             await Replace(newMessage);
             _log.Info($"sending webhook: {newMessage.WebhookId} event: {newMessage.EventId} failed {newMessage.TryCount} times.");
         }
-        
+
     }
 
     private async Task<bool> Send(WebhookMessageLog message)
     {
-        var webhook = await _webhook.GetByWebhookId(message.WebhookId); 
+        var webhook = await _webhook.GetByWebhookId(message.WebhookId);
         if (webhook == null)
         {
             _log.WithTags(
@@ -123,11 +122,11 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
                     ("WebhookId", message.WebhookId.ToString()),
                 }
             ).
-            Error($"webhook not found for webhookId: {message.WebhookId}");  
+            Error($"webhook not found for webhookId: {message.WebhookId}");
             return false;
         }
 
-        try 
+        try
         {
             return await _webhook.Send(message);
         }

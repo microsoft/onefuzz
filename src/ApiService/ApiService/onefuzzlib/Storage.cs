@@ -138,7 +138,7 @@ public class Storage : IStorage
 
         return account_list[index];  // nosec
     }
-  
+
     public IEnumerable<string> GetAccounts(StorageType storageType)
     {
         switch (storageType)

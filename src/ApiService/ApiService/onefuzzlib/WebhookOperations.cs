@@ -3,7 +3,6 @@ using ApiService.OneFuzzLib.Orm;
 using System.Text.Json;
 using System.Security.Cryptography;
 using System.Net;
-using System.Text;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -23,7 +22,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
     private readonly ILogTracer _log;
     private ICreds _creds;
     private readonly IStorage _storage;
-    
+
     public WebhookOperations(ICreds creds, IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations, ILogTracer log)
         : base(storage, log)
     {
@@ -74,7 +73,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
 
         var (data, digest) = await BuildMessage(webhookId: webhook.WebhookId, eventId: messageLog.EventId, eventType: messageLog.EventType, webhookEvent: messageLog.Event, secretToken: webhook.SecretToken, messageFormat: webhook.MessageFormat);
 
-        var headers = new Dictionary<string, string> {{"Content-type", "application/json"}, {"User-Agent", USER_AGENT}};
+        var headers = new Dictionary<string, string> { { "Content-type", "application/json" }, { "User-Agent", USER_AGENT } };
 
         if (digest != null)
         {
@@ -98,27 +97,28 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
         string data = "";
         if (messageFormat != null && messageFormat == WebhookMessageFormat.EventGrid)
         {
-            var eventGridMessage = new [] {new WebhookMessageEventGrid(Id: eventId, data: webhookEvent, DataVersion: "1.0.0", Subject: _creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
+            var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, data: webhookEvent, DataVersion: "1.0.0", Subject: _creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
             data = JsonSerializer.Serialize(eventGridMessage, options: EntityConverter.GetJsonSerializerOptions());
-        } else 
+        }
+        else
         {
             var instanceId = await _storage.GetInstanceId();
             var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _creds.GetInstanceName());
-            data =  JsonSerializer.Serialize(webhookMessage, options: EntityConverter.GetJsonSerializerOptions());
+            data = JsonSerializer.Serialize(webhookMessage, options: EntityConverter.GetJsonSerializerOptions());
         }
 
         string? digest = null;
         var hmac = HMAC.Create("HMACSHA512");
         if (secretToken != null && hmac != null)
         {
-            hmac.Key =  System.Text.Encoding.UTF8.GetBytes(secretToken);            
+            hmac.Key = System.Text.Encoding.UTF8.GetBytes(secretToken);
             digest = Convert.ToHexString(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(data)));
         }
 
-        return new Tuple<string, string?> (data, digest);
+        return new Tuple<string, string?>(data, digest);
 
     }
-    
+
     public async Async.Task<Webhook?> GetByWebhookId(Guid webhookId)
     {
         var data = QueryAsync(filter: $"PartitionKey eq '{webhookId}'");
