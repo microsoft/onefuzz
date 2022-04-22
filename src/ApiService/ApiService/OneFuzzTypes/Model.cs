@@ -352,7 +352,7 @@ public record InstanceConfig
 
     //# At the moment, this only checks allowed_aad_tenants, however adding
     //# support for 3rd party JWT validation is anticipated in a future release.
-    public ResultOk<List<string>> CheckInstanceConfig()
+    public ResultVoid<List<string>> CheckInstanceConfig()
     {
         List<string> errors = new();
         if (AllowedAadTenants.Length == 0)
@@ -361,11 +361,11 @@ public record InstanceConfig
         }
         if (errors.Count == 0)
         {
-            return ResultOk<List<string>>.Ok();
+            return ResultVoid<List<string>>.Ok();
         }
         else
         {
-            return ResultOk<List<string>>.Error(errors);
+            return ResultVoid<List<string>>.Error(errors);
         }
     }
 }

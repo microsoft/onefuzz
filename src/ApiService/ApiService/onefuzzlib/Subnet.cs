@@ -1,8 +1,5 @@
-﻿using Azure.Core;
-using Azure.ResourceManager.Network;
-
+﻿using Azure.ResourceManager.Network;
 namespace Microsoft.OneFuzz.Service;
-
 
 public interface ISubnet
 {
@@ -35,7 +32,7 @@ public partial class TimerProxy
 
         public async System.Threading.Tasks.Task<VirtualNetworkResource?> GetVnet(string vnetName)
         {
-            var resourceGroupId = new ResourceIdentifier(EnvironmentVariables.OneFuzz.ResourceGroup ?? throw new Exception("Missing resource group"));
+            var resourceGroupId = _creds.GetResourceGroupResourceIdentifier();
             var response = await _creds.ArmClient.GetResourceGroupResource(resourceGroupId).GetVirtualNetworkAsync(vnetName);
             return response.Value;
         }

@@ -72,6 +72,8 @@ namespace Microsoft.OneFuzz.Service
     {
         public override UserInfo? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
+            //TODO: I might be wrong but seems like better way of doing this is to have a separate type,
+            //that if object of the type - then ignore user info...
             var newOptions = new JsonSerializerOptions(options);
             RemoveUserInfo? self = null;
             foreach (var converter in newOptions.Converters)
