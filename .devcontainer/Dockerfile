@@ -16,23 +16,10 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -
 # Install packages required for build:
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
-    libunwind-dev clang build-essential libssl-dev pkg-config lldb \
-    python3-minimal \
-    dotnet-sdk-6.0 
+    libunwind-dev clang build-essential libssl-dev pkg-config lldb
 
 ### Setup Rust for 'vscode' user:
 USER vscode
-
-# Install Rust:
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain 1.60 -y
-
-ENV PATH="/home/vscode/.cargo/bin:${PATH}"
-
-# Install Rust components:
-RUN rustup component add rls rust-analysis rust-src rustfmt clippy
-
-# Install required cargo commands:
-RUN cargo install cargo-audit cargo-license sccache
 
 USER root
 ### Done setting up Rust.
