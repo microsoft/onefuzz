@@ -140,7 +140,7 @@ namespace Tests
         public static Gen<InstanceConfig> InstanceConfig()
         {
             return Arb.Generate<Tuple<
-                Tuple<string, Guid[]?, bool, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?>,
+                Tuple<string, Guid[]?, bool?, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?>,
                 Tuple<string, IDictionary<string, ApiAccessRule>?, IDictionary<Guid, Guid[]>?, IDictionary<string, string>?, IDictionary<string, string>?>>>().Select(
                 arg =>
                     new InstanceConfig(
@@ -594,15 +594,14 @@ namespace Tests
         }
 
 
-
+        /*
         //Sample function on how repro a failing test run, using Replay
         //functionality of FsCheck. Feel free to 
-        /*
         [Property]
         void Replay()
         {
-            var seed = FsCheck.Random.StdGen.NewStdGen(1384212554,297026222);
-            var p = Prop.ForAll((Task x) => Task(x) );
+            var seed = FsCheck.Random.StdGen.NewStdGen(515508280, 297027790);
+            var p = Prop.ForAll((InstanceConfig x) => InstanceConfig(x) );
             p.Check(new Configuration { Replay = seed });
         }
         */
