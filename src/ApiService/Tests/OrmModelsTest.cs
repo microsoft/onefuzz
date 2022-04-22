@@ -89,7 +89,7 @@ namespace Tests
 
         public static Gen<Proxy> Proxy()
         {
-            return Arb.Generate<Tuple<Tuple<string, Guid, DateTimeOffset?, VmState, Authentication, string?, Error?>, Tuple<string, ProxyHeartbeat?>>>().Select(
+            return Arb.Generate<Tuple<Tuple<string, Guid, DateTimeOffset?, VmState, Authentication, string?, Error?>, Tuple<string, ProxyHeartbeat?, bool>>>().Select(
                 arg =>
                     new Proxy(
                         Region: arg.Item1.Item1,
@@ -100,7 +100,8 @@ namespace Tests
                         Ip: arg.Item1.Item6,
                         Error: arg.Item1.Item7,
                         Version: arg.Item2.Item1,
-                        Heartbeat: arg.Item2.Item2
+                        Heartbeat: arg.Item2.Item2,
+                        Outdated: arg.Item2.Item3
                     )
             );
         }

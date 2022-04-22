@@ -108,7 +108,7 @@ public partial record Node
     bool ReimageRequested,
     bool DeleteRequested,
     bool DebugKeepNode
-) : EntityBase();
+) : StatefulEntityBase<NodeState>(State);
 
 
 public partial record ProxyForward
@@ -141,8 +141,9 @@ public partial record Proxy
     string? Ip,
     Error? Error,
     string Version,
-    ProxyHeartbeat? Heartbeat
-) : EntityBase();
+    ProxyHeartbeat? Heartbeat,
+    bool Outdated
+) : StatefulEntityBase<VmState>(State);
 
 public record Error(ErrorCode Code, string[]? Errors = null);
 
@@ -244,7 +245,7 @@ public record Task(
     Authentication? Auth,
     DateTimeOffset? Heartbeat,
     DateTimeOffset? EndTime,
-    UserInfo? UserInfo) : EntityBase()
+    UserInfo? UserInfo) : StatefulEntityBase<TaskState>(State)
 {
     List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
     List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
@@ -280,6 +281,9 @@ public record NetworkConfig(
     string Subnet
 )
 {
+    public static NetworkConfig Default { get; } = new NetworkConfig("10.0.0.0/8", "10.0.0.0/16");
+
+
     public NetworkConfig() : this("10.0.0.0/8", "10.0.0.0/16") { }
 }
 
@@ -392,7 +396,7 @@ public record Scaleset(
     Guid? ClientObjectId,
     Dictionary<string, string> Tags
 
-) : EntityBase();
+) : StatefulEntityBase<ScalesetState>(State);
 
 [JsonConverter(typeof(ContainerConverter))]
 public record Container(string ContainerName)
