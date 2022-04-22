@@ -1,4 +1,4 @@
-    using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System.Text.Json.Serialization;
 using Region = System.String;
 using PoolName = System.String;
@@ -299,13 +299,13 @@ public record ApiAccessRule(
     Guid[] AllowedGroups
 );
 
+//# initial set of admins can only be set during deployment.
+//# if admins are set, only admins can update instance configs.
+//# if set, only admins can manage pools or scalesets
 public record InstanceConfig
 (
     [PartitionKey, RowKey] string InstanceName,
-    //# initial set of admins can only be set during deployment.
-    //# if admins are set, only admins can update instance configs.
     Guid[]? Admins,
-    //# if set, only admins can manage pools or scalesets
     bool AllowPoolManagement,
     string[] AllowedAadTenants,
     NetworkConfig NetworkConfig,
