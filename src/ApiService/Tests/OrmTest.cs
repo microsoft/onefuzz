@@ -308,9 +308,9 @@ namespace Tests
 }";
             var entity = JsonSerializer.Deserialize<Entity3>(entityJson);
 
-            Assert.Equal(entity.Id, 123);
-            Assert.Equal(entity.TheName, "abc");
-            Assert.Equal(entity.Container.ContainerName, "abc-123");
+            Assert.Equal(123, entity?.Id);
+            Assert.Equal("abc", entity?.TheName);
+            Assert.Equal("abc-123", entity?.Container.ContainerName);
         }
     }
 }
