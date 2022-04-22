@@ -251,6 +251,22 @@ namespace Tests
 
         }
 
+        public static Gen<WebhookMessageEventGrid> WebhookMessageEventGrid()
+        {
+            return Arb.Generate<Tuple<string, EventType, DateTimeOffset, Guid, BaseEvent>>().Select(
+                arg =>
+                    new WebhookMessageEventGrid(
+                        DataVersion: arg.Item1,
+                        Subject: arg.Item1,
+                        EventType: arg.Item2,
+                        EventTime: arg.Item3,
+                        Id: arg.Item4,
+                        data: arg.Item5
+                    )
+            );
+
+        }
+
         public static Gen<Report> Report()
         {
             return Arb.Generate<Tuple<string, BlobRef, List<string>, Guid, int>>().Select(
