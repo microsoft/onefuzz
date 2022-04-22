@@ -419,7 +419,6 @@ public class ContainerConverter : JsonConverter<Container>
 }
 
 public record Notification(
-    DateTime? Timestamp,
     Container Container,
     Guid NotificationId,
     NotificationTemplate Config
