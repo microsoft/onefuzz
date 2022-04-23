@@ -3,8 +3,21 @@ using Azure.ResourceManager;
 using Azure.Storage.Blobs;
 using Azure.Storage;
 using Azure;
+using Azure.Storage.Sas;
 
 namespace Microsoft.OneFuzz.Service;
+
+[Flags]
+public enum ContainerPermissions
+{
+    Add     = 1 << 0,
+    Create  = 1 << 1,
+    Read    = 1 << 2,
+    Write   = 1 << 3,
+    Delete  = 1 << 4
+}
+
+
 
 public interface IContainers
 {
@@ -12,8 +25,8 @@ public interface IContainers
 
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
-    public Uri GetFileSasUrl(Container container, string name, StorageType storageType, bool read = false, bool add = false, bool create = false, bool write = false, bool delete = false, bool delete_previous_version = false, bool tag = false, int days = 30, int hours = 0, int minutes = 0);
-
+    public Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
+    Async.Task saveBlob(Container container, string v1, string v2, StorageType config);
 }
 
 public class Containers : IContainers
@@ -85,9 +98,48 @@ public class Containers : IContainers
         return new Uri($"https://{accountName}.blob.core.windows.net/");
     }
 
-    public Uri GetFileSasUrl(Container container, string name, StorageType storageType, bool read = false, bool add = false, bool create = false, bool write = false, bool delete = false, bool delete_previous_version = false, bool tag = false, int days = 30, int hours = 0, int minutes = 0)
+    public async Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null)
     {
-        throw new NotImplementedException();
+        var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
+        var (accountName, accountKey) = _storage.GetStorageAccountNameAndKey(client.AccountName);
+
+        var (startTime, endTime) = SasTimeWindow(duration ?? TimeSpan.FromDays(30));
+
+        var sasBuilder = new BlobSasBuilder(permissions, endTime)
+        {
+            StartsOn = startTime,
+            BlobContainerName = container.ContainerName,
+            BlobName = name
+        };
+
+        var sasUrl = client.GetBlobClient(name).GenerateSasUri(sasBuilder);
+        return sasUrl;
+    }
+
+    public (DateTimeOffset, DateTimeOffset) SasTimeWindow(TimeSpan timeSpan) {
+        // SAS URLs are valid 6 hours earlier, primarily to work around dev
+        // workstations having out-of-sync time.  Additionally, SAS URLs are stopped
+        // 15 minutes later than requested based on "Be careful with SAS start time"
+        // guidance.
+        // Ref: https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview
+
+        var SAS_START_TIME_DELTA = TimeSpan.FromHours(6);
+        var SAS_END_TIME_DELTA = TimeSpan.FromMinutes(6);
+
+        //    SAS_START_TIME_DELTA = datetime.timedelta(hours = 6)
+        //SAS_END_TIME_DELTA = datetime.timedelta(minutes = 15)
+
+        var now = DateTimeOffset.UtcNow;
+        var start = now - SAS_START_TIME_DELTA;
+        var expiry = now + timeSpan + SAS_END_TIME_DELTA;
+        return (start, expiry);
+    }
+
+    public async System.Threading.Tasks.Task saveBlob(Container container, string name, string data, StorageType storageType)
+    {
+        var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
+
+        await client.UploadBlobAsync(name, new BinaryData(data));
     }
 }
 

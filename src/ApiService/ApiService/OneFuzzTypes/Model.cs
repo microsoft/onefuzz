@@ -95,7 +95,7 @@ public record ProxyHeartbeat
     DateTimeOffset TimeStamp
 );
 
-public partial record Node
+public record Node
 (
     DateTimeOffset? InitializedAt,
     [PartitionKey] PoolName PoolName,
@@ -111,27 +111,40 @@ public partial record Node
 ) : StatefulEntityBase<NodeState>(State);
 
 
-public partial record ProxyForward
+public record Forward
+(
+    int SrcPort,
+    int DstPort,
+    string DstIp
+);
+
+
+public record ProxyForward
 (
     [PartitionKey] Region Region,
+    int Port,
+    Guid ScalesetId,
+    Guid MachineId,
+    Guid? ProxyId,
     [RowKey] int DstPort,
-    int SrcPort,
-    string DstIp
+    string DstIp,
+    DateTimeOffset EndTime
 ) : EntityBase();
 
-public partial record ProxyConfig
+public record ProxyConfig
 (
     Uri Url,
-    string Notification,
+    Uri Notification,
     Region Region,
     Guid? ProxyId,
-    List<ProxyForward> Forwards,
+    List<Forward> Forwards,
     string InstanceTelemetryKey,
-    string MicrosoftTelemetryKey
+    string MicrosoftTelemetryKey,
+    Guid InstanceId
 
 );
 
-public partial record Proxy
+public record Proxy
 (
     [PartitionKey] Region Region,
     [RowKey] Guid ProxyId,

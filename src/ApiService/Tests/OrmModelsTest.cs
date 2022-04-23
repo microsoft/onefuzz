@@ -76,13 +76,17 @@ namespace Tests
 
         public static Gen<ProxyForward> ProxyForward()
         {
-            return Arb.Generate<Tuple<string, int, int, IPv4Address>>().Select(
+            return Arb.Generate<((string, int, Guid, Guid, Guid?, int, IPv4Address), DateTimeOffset)>().Select(
                 arg =>
                     new ProxyForward(
-                        Region: arg.Item1,
-                        DstPort: arg.Item2,
-                        SrcPort: arg.Item3,
-                        DstIp: arg.Item4.Item.ToString()
+                        Region: arg.Item1.Item1,
+                        Port: arg.Item1.Item2,
+                        ScalesetId: arg.Item1.Item3,
+                        MachineId: arg.Item1.Item4,
+                        ProxyId: arg.Item1.Item5,
+                        DstPort: arg.Item1.Item6,
+                        DstIp: arg.Item1.Item7.ToString(),
+                        EndTime: arg.Item2
                     )
             );
         }
@@ -556,7 +560,6 @@ namespace Tests
         }
 
 
-
         [Property]
         public bool Webhook(Webhook wh)
         {
@@ -564,18 +567,9 @@ namespace Tests
         }
 
 
+        
+        
 
-        //Sample function on how repro a failing test run, using Replay
-        //functionality of FsCheck. Feel free to 
-        /*
-        [Property]
-        void Replay()
-        {
-            var seed = FsCheck.Random.StdGen.NewStdGen(1384212554,297026222);
-            var p = Prop.ForAll((Task x) => Task(x) );
-            p.Check(new Configuration { Replay = seed });
-        }
-        */
     }
 
 
@@ -781,6 +775,16 @@ namespace Tests
         public bool Report(Report e)
         {
             return Test(e);
+        }
+
+        //Sample function on how repro a failing test run, using Replay
+        //functionality of FsCheck. Feel free to
+        [Property]
+        void Replay()
+        {
+            var seed = FsCheck.Random.StdGen.NewStdGen(4570702, 297027754);
+            var p = Prop.ForAll((WebhookMessageEventGrid x) => this.WebhookMessageEventGrid(x));
+            p.Check(new Configuration { Replay = seed });
         }
     }
 

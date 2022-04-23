@@ -25,12 +25,6 @@ public partial class TimerProxy
             _subnet = subnet;
         }
 
-
-        private static Guid GenerateGuidv5(Guid nameSpace, string name)
-        {
-            throw new NotImplementedException();
-        }
-
         public static async Async.Task<Network> Create(string region, ICreds creds, IConfigOperations configOperations, ISubnet subnet)
         {
             var group = creds.GetBaseResourceGroup();
@@ -50,7 +44,7 @@ public partial class TimerProxy
             }
             else
             {
-                var networkId = GenerateGuidv5(NETWORK_GUID_NAMESPACE, string.Join("|", networkConfig.AddressSpace, networkConfig.Subnet));
+                var networkId = Faithlife.Utility.GuidUtility.Create(NETWORK_GUID_NAMESPACE, string.Join("|", networkConfig.AddressSpace, networkConfig.Subnet), 5);
                 name = $"{region}-{networkId}";
             }
 

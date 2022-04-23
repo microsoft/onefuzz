@@ -26,7 +26,7 @@ public record WebhookMessageEventGrid(
     Guid Id,
     [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
     [property: JsonConverter(typeof(BaseEventConverter))]
-    BaseEvent data);
+    BaseEvent data): EntityBase();
 
 
 // TODO: This should inherit from Entity Base ? no, since there is
