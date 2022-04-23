@@ -1,29 +1,53 @@
 // to avoid collision with Task in model.cs
 global using Async = System.Threading.Tasks;
 
-using System;
-using System.Collections.Generic;
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using ApiService.OneFuzzLib;
-
-
+using Microsoft.Azure.Functions.Worker.Middleware;
+using Microsoft.Azure.Functions.Worker;
 
 namespace Microsoft.OneFuzz.Service;
 
 public class Program
 {
-    public static List<ILog> GetLoggers()
+    public class LoggingMiddleware : IFunctionsWorkerMiddleware
+    {
+        public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next)
+        {
+            var log = (ILogTracerInternal?)context.InstanceServices.GetService<ILogTracer>();
+            if (log is not null)
+            {
+                //TODO
+                //if correlation ID is available in HTTP request
+                //if correlation ID is available in Queue message
+                //log.ReplaceCorrelationId(Guid from request)
+
+                log.ReplaceCorrelationId(Guid.NewGuid());
+                log.AddTags(new[] {
+                    ("InvocationId", context.InvocationId.ToString())
+                });
+            }
+
+            await next(context);
+        }
+    }
+
+
+    public static List<ILog> GetLoggers(IServiceConfig config)
     {
         List<ILog> loggers = new List<ILog>();
-        foreach (var dest in EnvironmentVariables.LogDestinations)
+        foreach (var dest in config.LogDestinations)
         {
             loggers.Add(
                 dest switch
                 {
-                    LogDestination.AppInsights => new AppInsights(),
+                    LogDestination.AppInsights => new AppInsights(config.ApplicationInsightsInstrumentationKey!),
                     LogDestination.Console => new Console(),
-                    _ => throw new Exception(string.Format("Unhandled Log Destination type: {0}", dest)),
+                    _ => throw new Exception($"Unhandled Log Destination type: {dest}"),
                 }
             );
         }
@@ -34,19 +58,36 @@ public class Program
     public static void Main()
     {
         var host = new HostBuilder()
-        .ConfigureFunctionsWorkerDefaults()
+        .ConfigureFunctionsWorkerDefaults(
+            builder =>
+            {
+                builder.UseMiddleware<LoggingMiddleware>();
+            }
+        )
         .ConfigureServices((context, services) =>
             services
-            .AddSingleton<ILogTracerFactory>(_ => new LogTracerFactory(GetLoggers()))
-            .AddSingleton<INodeOperations, NodeOperations>()
-            .AddSingleton<IEvents, Events>()
-            .AddSingleton<IWebhookOperations, WebhookOperations>()
-            .AddSingleton<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
-            .AddSingleton<ITaskOperations, TaskOperations>()
-            .AddSingleton<IQueue, Queue>()
-            .AddSingleton<ICreds>(_ => new Creds())
-            .AddSingleton<IStorage, Storage>()
-            .AddSingleton<IProxyOperations, ProxyOperations>()
+            .AddScoped<ILogTracer>(s =>
+                new LogTracerFactory(GetLoggers(s.GetService<IServiceConfig>()!)).CreateLogTracer(Guid.Empty, severityLevel: s.GetService<IServiceConfig>()!.LogSeverityLevel))
+            .AddScoped<INodeOperations, NodeOperations>()
+            .AddScoped<IEvents, Events>()
+            .AddScoped<IWebhookOperations, WebhookOperations>()
+            .AddScoped<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
+            .AddScoped<ITaskOperations, TaskOperations>()
+            .AddScoped<IQueue, Queue>()
+            .AddScoped<IStorage, Storage>()
+            .AddScoped<IProxyOperations, ProxyOperations>()
+            .AddScoped<IConfigOperations, ConfigOperations>()
+            .AddScoped<IScalesetOperations, ScalesetOperations>()
+            .AddScoped<IContainers, Containers>()
+            .AddScoped<IReports, Reports>()
+            .AddScoped<INotificationOperations, NotificationOperations>()
+            .AddScoped<IUserCredentials, UserCredentials>()
+
+
+            //Move out expensive resources into separate class, and add those as Singleton
+            // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
+            .AddSingleton<ICreds, Creds>()
+            .AddSingleton<IServiceConfig, ServiceConfiguration>()
         )
         .Build();
 

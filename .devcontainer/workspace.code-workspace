@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../src/agent"
+		},
+		{
+			"path": "../src/api-service"
+		},
+		{
+			"path": "../src/ApiService"
+		},
+		{
+			"path": "../src/cli"
+		},
+		{
+			"path": "../src/pytypes"
+		}
+	],
+	"settings": {}
+}

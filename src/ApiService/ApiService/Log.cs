@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.ApplicationInsights;
+﻿using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights.DataContracts;
 
@@ -18,16 +16,19 @@ public interface ILog
 
 class AppInsights : ILog
 {
-    private TelemetryClient telemetryClient =
-            new TelemetryClient(
-                new TelemetryConfiguration(EnvironmentVariables.AppInsights.InstrumentationKey));
+    private TelemetryClient _telemetryClient;
+
+    public AppInsights(string instrumentationKey)
+    {
+        _telemetryClient = new TelemetryClient(new TelemetryConfiguration(instrumentationKey));
+    }
 
     public void Log(Guid correlationId, String message, SeverityLevel level, IReadOnlyDictionary<string, string> tags, string? caller)
     {
         Dictionary<string, string> copyTags = new(tags);
         copyTags["Correlation ID"] = correlationId.ToString();
         if (caller is not null) copyTags["CalledBy"] = caller;
-        telemetryClient.TrackTrace(message, level, copyTags);
+        _telemetryClient.TrackTrace(message, level, copyTags);
     }
     public void LogEvent(Guid correlationId, String evt, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller)
     {
@@ -41,7 +42,7 @@ class AppInsights : ILog
             copyMetrics = new(metrics);
         }
 
-        telemetryClient.TrackEvent(evt, properties: copyTags, metrics: copyMetrics);
+        _telemetryClient.TrackEvent(evt, properties: copyTags, metrics: copyMetrics);
     }
     public void LogException(Guid correlationId, Exception ex, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller)
     {
@@ -54,12 +55,12 @@ class AppInsights : ILog
         {
             copyMetrics = new(metrics);
         }
-        telemetryClient.TrackException(ex, copyTags, copyMetrics);
+        _telemetryClient.TrackException(ex, copyTags, copyMetrics);
     }
 
     public void Flush()
     {
-        telemetryClient.Flush();
+        _telemetryClient.Flush();
     }
 }
 
@@ -132,22 +133,34 @@ public interface ILogTracer
     void ForceFlush();
     void Info(string message);
     void Warning(string message);
+    void Verbose(string message);
 
-    ILogTracer AddTags((string, string)[]? tags);
+    ILogTracer WithTag(string k, string v);
+    ILogTracer WithTags((string, string)[]? tags);
 }
 
-public class LogTracer : ILogTracer
+internal interface ILogTracerInternal : ILogTracer
+{
+    void ReplaceCorrelationId(Guid newCorrelationId);
+    void AddTags((string, string)[] tags);
+}
+
+
+
+public class LogTracer : ILogTracerInternal
 {
     private string? GetCaller()
     {
         return new StackTrace()?.GetFrame(2)?.GetMethod()?.DeclaringType?.FullName;
     }
 
+    private Guid _correlationId;
     private List<ILog> _loggers;
+    private Dictionary<string, string> _tags;
+    private SeverityLevel _logSeverityLevel;
 
-    public Guid CorrelationId { get; }
-    public IReadOnlyDictionary<string, string> Tags { get; }
-
+    public Guid CorrelationId => _correlationId;
+    public IReadOnlyDictionary<string, string> Tags => _tags;
 
     private static List<KeyValuePair<string, string>> ConvertTags((string, string)[]? tags)
     {
@@ -166,17 +179,43 @@ public class LogTracer : ILogTracer
         }
     }
 
-    public LogTracer(Guid correlationId, (string, string)[]? tags, List<ILog> loggers) : this(correlationId, new Dictionary<string, string>(ConvertTags(tags)), loggers) { }
+    public LogTracer(Guid correlationId, (string, string)[]? tags, List<ILog> loggers, SeverityLevel logSeverityLevel) :
+        this(correlationId, new Dictionary<string, string>(ConvertTags(tags)), loggers, logSeverityLevel)
+    { }
 
 
-    public LogTracer(Guid correlationId, IReadOnlyDictionary<string, string> tags, List<ILog> loggers)
+    public LogTracer(Guid correlationId, IReadOnlyDictionary<string, string> tags, List<ILog> loggers, SeverityLevel logSeverityLevel)
     {
-        CorrelationId = correlationId;
-        Tags = tags;
+        _correlationId = correlationId;
+        _tags = new(tags);
         _loggers = loggers;
+        _logSeverityLevel = logSeverityLevel;
     }
 
-    public ILogTracer AddTags((string, string)[]? tags)
+    //Single threaded only
+    public void ReplaceCorrelationId(Guid newCorrelationId)
+    {
+        _correlationId = newCorrelationId;
+    }
+
+    //single threaded only
+    public void AddTags((string, string)[] tags)
+    {
+        if (tags is not null)
+        {
+            foreach (var (k, v) in tags)
+            {
+                _tags[k] = v;
+            }
+        }
+    }
+
+    public ILogTracer WithTag(string k, string v)
+    {
+        return WithTags(new[] { (k, v) });
+    }
+
+    public ILogTracer WithTags((string, string)[]? tags)
     {
         var newTags = new Dictionary<string, string>(Tags);
         if (tags is not null)
@@ -186,42 +225,66 @@ public class LogTracer : ILogTracer
                 newTags[k] = v;
             }
         }
-        return new LogTracer(CorrelationId, newTags, _loggers);
+        return new LogTracer(CorrelationId, newTags, _loggers, _logSeverityLevel);
+    }
+
+    public void Verbose(string message)
+    {
+        if (_logSeverityLevel <= SeverityLevel.Verbose)
+        {
+            var caller = GetCaller();
+            foreach (var logger in _loggers)
+            {
+                logger.Log(CorrelationId, message, SeverityLevel.Verbose, Tags, caller);
+            }
+        }
     }
 
     public void Info(string message)
     {
-        var caller = GetCaller();
-        foreach (var logger in _loggers)
+        if (_logSeverityLevel <= SeverityLevel.Information)
         {
-            logger.Log(CorrelationId, message, SeverityLevel.Information, Tags, caller);
+            var caller = GetCaller();
+            foreach (var logger in _loggers)
+            {
+                logger.Log(CorrelationId, message, SeverityLevel.Information, Tags, caller);
+            }
         }
     }
 
     public void Warning(string message)
     {
-        var caller = GetCaller();
-        foreach (var logger in _loggers)
+        if (_logSeverityLevel <= SeverityLevel.Warning)
         {
-            logger.Log(CorrelationId, message, SeverityLevel.Warning, Tags, caller);
+            var caller = GetCaller();
+            foreach (var logger in _loggers)
+            {
+                logger.Log(CorrelationId, message, SeverityLevel.Warning, Tags, caller);
+            }
         }
     }
 
     public void Error(string message)
     {
-        var caller = GetCaller();
-        foreach (var logger in _loggers)
+        if (_logSeverityLevel <= SeverityLevel.Error)
         {
-            logger.Log(CorrelationId, message, SeverityLevel.Error, Tags, caller);
+            var caller = GetCaller();
+            foreach (var logger in _loggers)
+            {
+                logger.Log(CorrelationId, message, SeverityLevel.Error, Tags, caller);
+            }
         }
     }
 
     public void Critical(string message)
     {
-        var caller = GetCaller();
-        foreach (var logger in _loggers)
+        if (_logSeverityLevel <= SeverityLevel.Critical)
         {
-            logger.Log(CorrelationId, message, SeverityLevel.Critical, Tags, caller);
+            var caller = GetCaller();
+            foreach (var logger in _loggers)
+            {
+                logger.Log(CorrelationId, message, SeverityLevel.Critical, Tags, caller);
+            }
         }
     }
 
@@ -254,7 +317,7 @@ public class LogTracer : ILogTracer
 
 public interface ILogTracerFactory
 {
-    LogTracer MakeLogTracer(Guid correlationId, (string, string)[]? tags = null);
+    LogTracer CreateLogTracer(Guid correlationId, (string, string)[]? tags = null, SeverityLevel severityLevel = SeverityLevel.Verbose);
 }
 
 public class LogTracerFactory : ILogTracerFactory
@@ -266,9 +329,9 @@ public class LogTracerFactory : ILogTracerFactory
         _loggers = loggers;
     }
 
-    public LogTracer MakeLogTracer(Guid correlationId, (string, string)[]? tags = null)
+    public LogTracer CreateLogTracer(Guid correlationId, (string, string)[]? tags = null, SeverityLevel severityLevel = SeverityLevel.Verbose)
     {
-        return new(correlationId, tags, _loggers);
+        return new(correlationId, tags, _loggers, severityLevel);
     }
 
 }
