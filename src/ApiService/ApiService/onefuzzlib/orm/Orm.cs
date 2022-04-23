@@ -11,11 +11,11 @@ namespace ApiService.OneFuzzLib.Orm
     {
         Task<TableClient> GetTableClient(string table, string? accountId = null);
         IAsyncEnumerable<T> QueryAsync(string? filter = null);
-        Task<ResultOk<(int, string)>> Replace(T entity);
+        Task<ResultVoid<(int, string)>> Replace(T entity);
 
         Task<T> GetEntityAsync(string partitionKey, string rowKey);
-        Task<ResultOk<(int, string)>> Insert(T entity);
-        Task<ResultOk<(int, string)>> Delete(T entity);
+        Task<ResultVoid<(int, string)>> Insert(T entity);
+        Task<ResultVoid<(int, string)>> Delete(T entity);
 
     }
 
@@ -26,15 +26,16 @@ namespace ApiService.OneFuzzLib.Orm
     {
         IStorage _storage;
         EntityConverter _entityConverter;
+        IServiceConfig _config;
         protected ILogTracer _logTracer;
 
 
-        public Orm(IStorage storage, ILogTracer logTracer)
+        public Orm(IStorage storage, ILogTracer logTracer, IServiceConfig config)
         {
             _storage = storage;
             _entityConverter = new EntityConverter();
             _logTracer = logTracer;
-
+            _config = config;
         }
 
         public async IAsyncEnumerable<T> QueryAsync(string? filter = null)
@@ -47,7 +48,7 @@ namespace ApiService.OneFuzzLib.Orm
             }
         }
 
-        public async Task<ResultOk<(int, string)>> Insert(T entity)
+        public async Task<ResultVoid<(int, string)>> Insert(T entity)
         {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
@@ -55,48 +56,48 @@ namespace ApiService.OneFuzzLib.Orm
 
             if (response.IsError)
             {
-                return ResultOk<(int, string)>.Error((response.Status, response.ReasonPhrase));
+                return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
             }
             else
             {
-                return ResultOk<(int, string)>.Ok();
+                return ResultVoid<(int, string)>.Ok();
             }
         }
 
-        public async Task<ResultOk<(int, string)>> Replace(T entity)
+        public async Task<ResultVoid<(int, string)>> Replace(T entity)
         {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
             var response = await tableClient.UpsertEntityAsync(tableEntity);
             if (response.IsError)
             {
-                return ResultOk<(int, string)>.Error((response.Status, response.ReasonPhrase));
+                return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
             }
             else
             {
-                return ResultOk<(int, string)>.Ok();
+                return ResultVoid<(int, string)>.Ok();
             }
         }
 
-        public async Task<ResultOk<(int, string)>> Update(T entity)
+        public async Task<ResultVoid<(int, string)>> Update(T entity)
         {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
 
             if (entity.ETag is null)
             {
-                return ResultOk<(int, string)>.Error((0, "ETag must be set when updating an entity"));
+                return ResultVoid<(int, string)>.Error((0, "ETag must be set when updating an entity"));
             }
             else
             {
                 var response = await tableClient.UpdateEntityAsync(tableEntity, entity.ETag.Value);
                 if (response.IsError)
                 {
-                    return ResultOk<(int, string)>.Error((response.Status, response.ReasonPhrase));
+                    return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
                 }
                 else
                 {
-                    return ResultOk<(int, string)>.Ok();
+                    return ResultVoid<(int, string)>.Ok();
                 }
             }
         }
@@ -110,25 +111,25 @@ namespace ApiService.OneFuzzLib.Orm
 
         public async Task<TableClient> GetTableClient(string table, string? accountId = null)
         {
-            var account = accountId ?? EnvironmentVariables.OneFuzz.FuncStorage ?? throw new ArgumentNullException(nameof(accountId));
+            var account = accountId ?? _config.OneFuzzFuncStorage ?? throw new ArgumentNullException(nameof(accountId));
             var (name, key) = _storage.GetStorageAccountNameAndKey(account);
             var tableClient = new TableServiceClient(new Uri($"https://{name}.table.core.windows.net"), new TableSharedKeyCredential(name, key));
             await tableClient.CreateTableIfNotExistsAsync(table);
             return tableClient.GetTableClient(table);
         }
 
-        public async Task<ResultOk<(int, string)>> Delete(T entity)
+        public async Task<ResultVoid<(int, string)>> Delete(T entity)
         {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
             var response = await tableClient.DeleteEntityAsync(tableEntity.PartitionKey, tableEntity.RowKey);
             if (response.IsError)
             {
-                return ResultOk<(int, string)>.Error((response.Status, response.ReasonPhrase));
+                return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
             }
             else
             {
-                return ResultOk<(int, string)>.Ok();
+                return ResultVoid<(int, string)>.Ok();
             }
         }
     }
@@ -166,7 +167,7 @@ namespace ApiService.OneFuzzLib.Orm
                 };
         }
 
-        public StatefulOrm(IStorage storage, ILogTracer logTracer) : base(storage, logTracer)
+        public StatefulOrm(IStorage storage, ILogTracer logTracer, IServiceConfig config) : base(storage, logTracer, config)
         {
         }
 

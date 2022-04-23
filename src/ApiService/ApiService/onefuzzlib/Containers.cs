@@ -27,7 +27,7 @@ public class Containers : IContainers
         _log = log;
         _storage = storage;
         _creds = creds;
-        _armClient = new ArmClient(credential: _creds.GetIdentity(), defaultSubscriptionId: _creds.GetSubcription());
+        _armClient = creds.ArmClient;
     }
     public async Task<IEnumerable<byte>?> GetBlob(Container container, string name, StorageType storageType)
     {

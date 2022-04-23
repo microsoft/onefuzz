@@ -1,17 +1,17 @@
 ﻿namespace Microsoft.OneFuzz.Service
 {
 
-    public struct ResultOk<T_Error>
+    public struct ResultVoid<T_Error>
     {
-        public static ResultOk<T_Error> Ok() => new();
-        public static ResultOk<T_Error> Error(T_Error err) => new(err);
+        public static ResultVoid<T_Error> Ok() => new();
+        public static ResultVoid<T_Error> Error(T_Error err) => new(err);
 
         readonly T_Error? error;
         readonly bool isOk;
 
-        public ResultOk() => (error, isOk) = (default, true);
+        public ResultVoid() => (error, isOk) = (default, true);
 
-        public ResultOk(T_Error error) => (this.error, isOk) = (error, false);
+        public ResultVoid(T_Error error) => (this.error, isOk) = (error, false);
 
         public bool IsOk => isOk;
 

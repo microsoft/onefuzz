@@ -19,8 +19,8 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations
 
     private readonly IEvents _events;
 
-    public ProxyOperations(ILogTracer log, IStorage storage, IEvents events)
-        : base(storage, log)
+    public ProxyOperations(ILogTracer log, IStorage storage, IEvents events, IServiceConfig config)
+        : base(storage, log, config)
     {
         _log = log;
         _events = events;

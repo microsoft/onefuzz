@@ -7,20 +7,20 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 namespace Microsoft.OneFuzz.Service;
 
 public record FunctionInfo(string Name, string ResourceGroup, string? SlotName);
-
-
 public class TestHooks
 {
 
     private readonly ILogTracer _log;
     private readonly IConfigOperations _configOps;
     private readonly IEvents _events;
+    private readonly IServiceConfig _config;
 
-    public TestHooks(ILogTracer log, IConfigOperations configOps, IEvents events)
+    public TestHooks(ILogTracer log, IConfigOperations configOps, IEvents events, IServiceConfig config)
     {
         _log = log;
         _configOps = configOps;
         _events = events;
+        _config = config;
     }
 
     [Function("Info")]
@@ -29,8 +29,8 @@ public class TestHooks
         _log.Info("Creating function info response");
         var response = req.CreateResponse();
         FunctionInfo info = new(
-                $"{EnvironmentVariables.OneFuzz.InstanceName}",
-                $"{EnvironmentVariables.OneFuzz.ResourceGroup}",
+                $"{_config.OneFuzzInstanceName}",
+                $"{_config.OneFuzzResourceGroup}",
                 Environment.GetEnvironmentVariable("WEBSITE_SLOT_NAME"));
 
         _log.Info("Returning function info");
