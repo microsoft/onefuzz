@@ -25,8 +25,8 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations
 
     static TimeSpan PROXY_LIFESPAN = TimeSpan.FromDays(7);
 
-    public ProxyOperations(ILogTracer log, IStorage storage, IEvents events, IProxyForwardOperations proxyForwardOperations, IContainers containers, IQueue queue, ICreds creds)
-            : base(storage, log.WithTag("Component", "scaleset-proxy"))
+    public ProxyOperations(ILogTracer log, IStorage storage, IEvents events, IProxyForwardOperations proxyForwardOperations, IContainers containers, IQueue queue, ICreds creds, IServiceConfig config)
+            : base(storage, log.WithTag("Component", "scaleset-proxy"), config)
     {
         _events = events;
         _proxyForwardOperations = proxyForwardOperations;
@@ -53,7 +53,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations
                 await Replace(proxy with { Outdated = true });
                 continue;
             }
-            
+
             if (!VmStateHelper.Available().Contains(proxy.State)) {
                 continue;
             }
@@ -95,7 +95,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations
             return false;
         }
 
-        // todo: add version check 
+        // todo: add version check
         if (proxy.Version != "")
         {
             _logTracer.Info($"mismatch version: proxy:{proxy.Version} service:{""} state:{proxy.State}");
@@ -124,15 +124,15 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations
             Region: proxy.Region,
             ProxyId: proxy.ProxyId,
             Forwards: forwards,
-            InstanceTelemetryKey: EnvironmentVariables.AppInsights.InstrumentationKey.EnsureNotNull("missing InstrumentationKey"),
-            MicrosoftTelemetryKey: EnvironmentVariables.OneFuzz.Telemetry.EnsureNotNull("missing Telemetry"),
-            InstanceId: Guid.NewGuid()); //todo : 
+            InstanceTelemetryKey: _config.ApplicationInsightsInstrumentationKey.EnsureNotNull("missing InstrumentationKey"),
+            MicrosoftTelemetryKey: _config.OneFuzzTelemetry.EnsureNotNull("missing Telemetry"),
+            InstanceId: Guid.NewGuid()); //todo :
 
 
         await _containers.saveBlob(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", _entityConverter.ToJsonString(proxyConfig), StorageType.Config);
     }
 
-    
+
 
     public async Async.Task SetState(Proxy proxy, VmState state)
     {

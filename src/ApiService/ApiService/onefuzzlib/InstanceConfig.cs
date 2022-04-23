@@ -15,7 +15,8 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations
 {
     private readonly IEvents _events;
     private readonly ILogTracer _log;
-    public ConfigOperations(IStorage storage, IEvents events, ILogTracer log) : base(storage, log)
+    
+    public ConfigOperations(IStorage storage, IEvents events, ILogTracer log, IServiceConfig config) : base(storage, log, config)
     {
         _events = events;
         _log = log;
@@ -23,14 +24,14 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations
 
     public async Task<InstanceConfig> Fetch()
     {
-        var key = EnvironmentVariables.OneFuzz.InstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set");
+        var key = _config.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set");
         var config = await GetEntityAsync(key, key);
         return config;
     }
 
     public async Async.Task Save(InstanceConfig config, bool isNew = false, bool requireEtag = false)
     {
-        ResultOk<(int, string)> r;
+        ResultVoid<(int, string)> r;
         if (isNew)
         {
             r = await Insert(config);

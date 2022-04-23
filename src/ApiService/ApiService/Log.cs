@@ -16,16 +16,19 @@ public interface ILog
 
 class AppInsights : ILog
 {
-    private TelemetryClient telemetryClient =
-            new TelemetryClient(
-                new TelemetryConfiguration(EnvironmentVariables.AppInsights.InstrumentationKey));
+    private TelemetryClient _telemetryClient;
+
+    public AppInsights(string instrumentationKey)
+    {
+        _telemetryClient = new TelemetryClient(new TelemetryConfiguration(instrumentationKey));
+    }
 
     public void Log(Guid correlationId, String message, SeverityLevel level, IReadOnlyDictionary<string, string> tags, string? caller)
     {
         Dictionary<string, string> copyTags = new(tags);
         copyTags["Correlation ID"] = correlationId.ToString();
         if (caller is not null) copyTags["CalledBy"] = caller;
-        telemetryClient.TrackTrace(message, level, copyTags);
+        _telemetryClient.TrackTrace(message, level, copyTags);
     }
     public void LogEvent(Guid correlationId, String evt, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller)
     {
@@ -39,7 +42,7 @@ class AppInsights : ILog
             copyMetrics = new(metrics);
         }
 
-        telemetryClient.TrackEvent(evt, properties: copyTags, metrics: copyMetrics);
+        _telemetryClient.TrackEvent(evt, properties: copyTags, metrics: copyMetrics);
     }
     public void LogException(Guid correlationId, Exception ex, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller)
     {
@@ -52,12 +55,12 @@ class AppInsights : ILog
         {
             copyMetrics = new(metrics);
         }
-        telemetryClient.TrackException(ex, copyTags, copyMetrics);
+        _telemetryClient.TrackException(ex, copyTags, copyMetrics);
     }
 
     public void Flush()
     {
-        telemetryClient.Flush();
+        _telemetryClient.Flush();
     }
 }
 

@@ -14,26 +14,21 @@ namespace Tests
 
     public class OrmGenerators
     {
-
         public static Gen<BaseEvent> BaseEvent()
         {
             return Gen.OneOf(new[] {
                 Arb.Generate<EventNodeHeartbeat>().Select(e => e as BaseEvent),
                 Arb.Generate<EventTaskHeartbeat>().Select(e => e as BaseEvent),
-                Arb.Generate<EventInstanceConfigUpdated>().Select(e => e as BaseEvent)
+                Arb.Generate<EventInstanceConfigUpdated>().Select(e => e as BaseEvent),
+                Arb.Generate<EventProxyCreated>().Select(e => e as BaseEvent),
+                Arb.Generate<EventProxyDeleted>().Select(e => e as BaseEvent),
+                Arb.Generate<EventProxyFailed>().Select(e => e as BaseEvent),
+                Arb.Generate<EventProxyStateUpdated>().Select(e => e as BaseEvent),
+                Arb.Generate<EventCrashReported>().Select(e => e as BaseEvent),
+                Arb.Generate<EventRegressionReported>().Select(e => e as BaseEvent),
+                Arb.Generate<EventFileAdded>().Select(e => e as BaseEvent),
             });
         }
-
-        public static Gen<EventType> EventType()
-        {
-            return Gen.OneOf(new[] {
-                Gen.Constant(Microsoft.OneFuzz.Service.EventType.NodeHeartbeat),
-                Gen.Constant(Microsoft.OneFuzz.Service.EventType.TaskHeartbeat),
-                Gen.Constant(Microsoft.OneFuzz.Service.EventType.InstanceConfigUpdated)
-            });
-
-        }
-
 
         public static Gen<Uri> Uri()
         {
@@ -44,14 +39,14 @@ namespace Tests
 
         public static Gen<WebhookMessageLog> WebhookMessageLog()
         {
-            return Arb.Generate<Tuple<Tuple<Guid, EventType, BaseEvent, Guid, string, Guid>, Tuple<WebhookMessageState, int>>>().Select(
+            return Arb.Generate<Tuple<Tuple<Guid, BaseEvent, Guid, string, Guid>, Tuple<WebhookMessageState, int>>>().Select(
                     arg => new WebhookMessageLog(
                         EventId: arg.Item1.Item1,
-                        EventType: arg.Item1.Item2,
-                        Event: arg.Item1.Item3,
-                        InstanceId: arg.Item1.Item4,
-                        InstanceName: arg.Item1.Item5,
-                        WebhookId: arg.Item1.Item6,
+                        EventType: arg.Item1.Item2.GetEventType(),
+                        Event: arg.Item1.Item2,
+                        InstanceId: arg.Item1.Item3,
+                        InstanceName: arg.Item1.Item4,
+                        WebhookId: arg.Item1.Item5,
                         State: arg.Item2.Item1,
                         TryCount: arg.Item2.Item2
             ));
@@ -76,7 +71,7 @@ namespace Tests
 
         public static Gen<ProxyForward> ProxyForward()
         {
-            return Arb.Generate<((string, int, Guid, Guid, Guid?, int, IPv4Address), DateTimeOffset)>().Select(
+            return Arb.Generate<Tuple<Tuple<string, int, Guid, Guid, Guid?, int>, Tuple<IPv4Address, DateTimeOffset>>>().Select(
                 arg =>
                     new ProxyForward(
                         Region: arg.Item1.Item1,
@@ -85,8 +80,8 @@ namespace Tests
                         MachineId: arg.Item1.Item4,
                         ProxyId: arg.Item1.Item5,
                         DstPort: arg.Item1.Item6,
-                        DstIp: arg.Item1.Item7.ToString(),
-                        EndTime: arg.Item2
+                        DstIp: arg.Item2.Item1.ToString(),
+                        EndTime: arg.Item2.Item2
                     )
             );
         }
@@ -149,7 +144,7 @@ namespace Tests
         public static Gen<InstanceConfig> InstanceConfig()
         {
             return Arb.Generate<Tuple<
-                Tuple<string, Guid[]?, bool, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?>,
+                Tuple<string, Guid[]?, bool?, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?>,
                 Tuple<string, IDictionary<string, ApiAccessRule>?, IDictionary<Guid, Guid[]>?, IDictionary<string, string>?, IDictionary<string, string>?>>>().Select(
                 arg =>
                     new InstanceConfig(
@@ -191,8 +186,6 @@ namespace Tests
                         )
                 );
         }
-
-
         public static Gen<Scaleset> Scaleset()
         {
             return Arb.Generate<Tuple<
@@ -236,24 +229,40 @@ namespace Tests
                         MessageFormat: arg.Item6
                     )
                 );
-
         }
 
         public static Gen<WebhookMessage> WebhookMessage()
         {
-            return Arb.Generate<Tuple<Guid, EventType, BaseEvent, Guid, string, Guid>>().Select(
+            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, Guid>>().Select(
                 arg =>
                     new WebhookMessage(
                         EventId: arg.Item1,
-                        EventType: arg.Item2,
-                        Event: arg.Item3,
-                        InstanceId: arg.Item4,
-                        InstanceName: arg.Item5,
-                        WebhookId: arg.Item6
+                        EventType: arg.Item2.GetEventType(),
+                        Event: arg.Item2,
+                        InstanceId: arg.Item3,
+                        InstanceName: arg.Item4,
+                        WebhookId: arg.Item5
                     )
-            );
-
+            ); ;
         }
+
+        public static Gen<WebhookMessageEventGrid> WebhookMessageEventGrid()
+        {
+            return Arb.Generate<Tuple<string, string, BaseEvent, Guid, DateTimeOffset>>().Select(
+                arg =>
+                    new WebhookMessageEventGrid(
+                        DataVersion: arg.Item1,
+                        Subject: arg.Item2,
+                        EventType: arg.Item3.GetEventType(),
+                        Data: arg.Item3,
+                        Id: arg.Item4,
+                        EventTime: arg.Item5
+                    )
+            ); ;
+        }
+
+
+
 
         public static Gen<Report> Report()
         {
@@ -289,6 +298,18 @@ namespace Tests
                 arg => new Container(string.Join("", arg.Item1.Get.Where(c => char.IsLetterOrDigit(c) || c == '-'))!)
             );
         }
+
+
+        public static Gen<Notification> Notification()
+        {
+            return Arb.Generate<Tuple<Container, Guid, NotificationTemplate>>().Select(
+                arg => new Notification(
+                    Container: arg.Item1,
+                    NotificationId: arg.Item2,
+                    Config: arg.Item3
+                )
+            );
+        }
     }
 
     public class OrmArb
@@ -301,11 +322,6 @@ namespace Tests
         public static Arbitrary<BaseEvent> BaseEvent()
         {
             return Arb.From(OrmGenerators.BaseEvent());
-        }
-
-        public static Arbitrary<EventType> EventType()
-        {
-            return Arb.From(OrmGenerators.EventType());
         }
 
         public static Arbitrary<Node> Node()
@@ -376,6 +392,16 @@ namespace Tests
         public static Arbitrary<Container> Container()
         {
             return Arb.From(OrmGenerators.Container());
+        }
+
+        public static Arbitrary<Notification> Notification()
+        {
+            return Arb.From(OrmGenerators.Notification());
+        }
+
+        public static Arbitrary<WebhookMessageEventGrid> WebhookMessageEventGrid()
+        {
+            return Arb.From(OrmGenerators.WebhookMessageEventGrid());
         }
     }
 
@@ -559,17 +585,32 @@ namespace Tests
             return Test(log);
         }
 
-
         [Property]
         public bool Webhook(Webhook wh)
         {
             return Test(wh);
         }
 
+        [Property]
+        public bool Notification(Notification n)
+        {
+            return Test(n);
+        }
 
-        
-        
 
+
+
+        /*
+        //Sample function on how repro a failing test run, using Replay
+        //functionality of FsCheck. Feel free to
+        [Property]
+        void Replay()
+        {
+            var seed = FsCheck.Random.StdGen.NewStdGen(515508280, 297027790);
+            var p = Prop.ForAll((InstanceConfig x) => InstanceConfig(x) );
+            p.Check(new Configuration { Replay = seed });
+        }
+        */
     }
 
 
@@ -777,15 +818,48 @@ namespace Tests
             return Test(e);
         }
 
+        [Property]
+        public bool Notification(Notification e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool NoReproReport(NoReproReport e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool CrashTestResult(CrashTestResult e)
+        {
+            return Test(e);
+        }
+
+        [Property]
+        public bool NotificationTemplate(NotificationTemplate e)
+        {
+            return Test(e);
+        }
+
+
+        [Property]
+        public bool RegressionReportOrReport(RegressionReportOrReport e)
+        {
+            return Test(e);
+        }
+
+        /*
         //Sample function on how repro a failing test run, using Replay
         //functionality of FsCheck. Feel free to
         [Property]
         void Replay()
         {
             var seed = FsCheck.Random.StdGen.NewStdGen(4570702, 297027754);
-            var p = Prop.ForAll((WebhookMessageEventGrid x) => this.WebhookMessageEventGrid(x));
+            var p = Prop.ForAll((WebhookMessageEventGrid x) => WebhookMessageEventGrid(x) );
             p.Check(new Configuration { Replay = seed });
         }
+        */
     }
 
 }

@@ -11,7 +11,7 @@ public interface IProxyForwardOperations : IOrm<ProxyForward>
 
 public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
 {
-    public ProxyForwardOperations(IStorage storage, ILogTracer logTracer) : base(storage, logTracer)
+    public ProxyForwardOperations(IStorage storage, ILogTracer logTracer, IServiceConfig config) : base(storage, logTracer, config)
     {
     }
 
