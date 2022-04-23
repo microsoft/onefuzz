@@ -47,14 +47,16 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations
     {
         var proxyList = QueryAsync(filter: $"region eq '{region}' and outdated eq false");
 
-        await foreach (var proxy in proxyList) {
+        await foreach (var proxy in proxyList)
+        {
             if (IsOutdated(proxy))
             {
                 await Replace(proxy with { Outdated = true });
                 continue;
             }
 
-            if (!VmStateHelper.Available().Contains(proxy.State)) {
+            if (!VmStateHelper.Available().Contains(proxy.State))
+            {
                 continue;
             }
             return proxy;
@@ -79,7 +81,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations
             return false;
         }
 
-        if (proxy.Heartbeat != null && proxy.TimeStamp != null  && proxy.TimeStamp < tenMinutesAgo)
+        if (proxy.Heartbeat != null && proxy.TimeStamp != null && proxy.TimeStamp < tenMinutesAgo)
         {
             _logTracer.Error($"no heartbeat in the last 10 minutes: {proxy.Region} timestamp: {proxy.TimeStamp} compared_to:{tenMinutesAgo}");
             return false;
@@ -147,15 +149,18 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations
     }
 
 
-    public async Async.Task<List<Forward>> GetForwards(Proxy proxy) {
+    public async Async.Task<List<Forward>> GetForwards(Proxy proxy)
+    {
         var forwards = new List<Forward>();
 
-        await foreach( var entry in _proxyForwardOperations.SearchForward(region: proxy.Region, proxyId: proxy.ProxyId)){
+        await foreach (var entry in _proxyForwardOperations.SearchForward(region: proxy.Region, proxyId: proxy.ProxyId))
+        {
             if (entry.EndTime < DateTimeOffset.UtcNow)
             {
                 await _proxyForwardOperations.Delete(entry);
             }
-            else {
+            else
+            {
                 forwards.Add(new Forward(entry.Port, entry.DstPort, entry.DstIp));
             }
         }

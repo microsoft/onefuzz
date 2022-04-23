@@ -7,17 +7,6 @@ using Azure.Storage.Sas;
 
 namespace Microsoft.OneFuzz.Service;
 
-[Flags]
-public enum ContainerPermissions
-{
-    Add     = 1 << 0,
-    Create  = 1 << 1,
-    Read    = 1 << 2,
-    Write   = 1 << 3,
-    Delete  = 1 << 4
-}
-
-
 
 public interface IContainers
 {
@@ -116,7 +105,8 @@ public class Containers : IContainers
         return sasUrl;
     }
 
-    public (DateTimeOffset, DateTimeOffset) SasTimeWindow(TimeSpan timeSpan) {
+    public (DateTimeOffset, DateTimeOffset) SasTimeWindow(TimeSpan timeSpan)
+    {
         // SAS URLs are valid 6 hours earlier, primarily to work around dev
         // workstations having out-of-sync time.  Additionally, SAS URLs are stopped
         // 15 minutes later than requested based on "Be careful with SAS start time"

@@ -15,9 +15,10 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
     {
     }
 
-    public IAsyncEnumerable<ProxyForward> SearchForward(Guid? scalesetId = null, string? region = null, Guid? machineId= null, Guid? proxyId = null, int? dstPort = null ) {
+    public IAsyncEnumerable<ProxyForward> SearchForward(Guid? scalesetId = null, string? region = null, Guid? machineId = null, Guid? proxyId = null, int? dstPort = null)
+    {
 
-        var conditions = 
+        var conditions =
             new[] {
                 scalesetId != null ? $"scaleset_id eq '{scalesetId}'" : null,
                 region != null ? $"region eq '{region}'" : null ,
