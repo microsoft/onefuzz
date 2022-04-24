@@ -1282,13 +1282,12 @@ def main() -> None:
         states = rbac_only_states
     else:
         if args.dotnet_deploy:
-            logger.info(
-                "deploying dotnet and python services for Azure functions"
+            logger.info("deploying dotnet and python services for Azure functions")
+            after_python = full_deployment_states.index(("api", Client.deploy_app)) + 1
+            full_deployment_states.insert(
+                after_python, ("dotnet-api", Client.deploy_dotnet_app)
             )
-            after_python = (full_deployment_states.index(("api", Client.deploy_app)) + 1)
-            full_deployment_states.insert(after_python, ("dotnet-api", Client.deploy_dotnet_app))
         states = full_deployment_states
-
 
     if args.start_at != states[0][0]:
         logger.warning(
