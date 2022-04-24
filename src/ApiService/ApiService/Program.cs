@@ -37,15 +37,15 @@ public class Program
     }
 
 
-    public static List<ILog> GetLoggers()
+    public static List<ILog> GetLoggers(IServiceConfig config)
     {
         List<ILog> loggers = new List<ILog>();
-        foreach (var dest in EnvironmentVariables.LogDestinations)
+        foreach (var dest in config.LogDestinations)
         {
             loggers.Add(
                 dest switch
                 {
-                    LogDestination.AppInsights => new AppInsights(),
+                    LogDestination.AppInsights => new AppInsights(config.ApplicationInsightsInstrumentationKey!),
                     LogDestination.Console => new Console(),
                     _ => throw new Exception($"Unhandled Log Destination type: {dest}"),
                 }
@@ -66,14 +66,14 @@ public class Program
         )
         .ConfigureServices((context, services) =>
             services
-            .AddScoped<ILogTracer>(s => new LogTracerFactory(GetLoggers()).CreateLogTracer(Guid.Empty, severityLevel: EnvironmentVariables.LogSeverityLevel()))
+            .AddScoped<ILogTracer>(s =>
+                new LogTracerFactory(GetLoggers(s.GetService<IServiceConfig>()!)).CreateLogTracer(Guid.Empty, severityLevel: s.GetService<IServiceConfig>()!.LogSeverityLevel))
             .AddScoped<INodeOperations, NodeOperations>()
             .AddScoped<IEvents, Events>()
             .AddScoped<IWebhookOperations, WebhookOperations>()
             .AddScoped<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
             .AddScoped<ITaskOperations, TaskOperations>()
             .AddScoped<IQueue, Queue>()
-            .AddScoped<ICreds, Creds>()
             .AddScoped<IStorage, Storage>()
             .AddScoped<IProxyOperations, ProxyOperations>()
             .AddScoped<IConfigOperations, ConfigOperations>()
@@ -81,10 +81,13 @@ public class Program
             .AddScoped<IContainers, Containers>()
             .AddScoped<IReports, Reports>()
             .AddScoped<INotificationOperations, NotificationOperations>()
+            .AddScoped<IUserCredentials, UserCredentials>()
 
-        //TODO: move out expensive resources into separate class, and add those as Singleton
-        // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
 
+            //Move out expensive resources into separate class, and add those as Singleton
+            // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
+            .AddSingleton<ICreds, Creds>()
+            .AddSingleton<IServiceConfig, ServiceConfiguration>()
         )
         .Build();
 

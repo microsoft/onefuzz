@@ -11,8 +11,8 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState>
 public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations
 {
 
-    public NodeOperations(IStorage storage, ILogTracer log)
-        : base(storage, log)
+    public NodeOperations(IStorage storage, ILogTracer log, IServiceConfig config)
+        : base(storage, log, config)
     {
 
     }

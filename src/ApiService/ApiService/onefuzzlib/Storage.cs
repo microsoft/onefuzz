@@ -25,23 +25,25 @@ public class Storage : IStorage
     private ICreds _creds;
     private ArmClient _armClient;
     private ILogTracer _log;
+    private IServiceConfig _config;
 
-    public Storage(ICreds creds, ILogTracer log)
+    public Storage(ICreds creds, ILogTracer log, IServiceConfig config)
     {
         _creds = creds;
-        _armClient = new ArmClient(credential: _creds.GetIdentity(), defaultSubscriptionId: _creds.GetSubcription());
+        _armClient = creds.ArmClient;
         _log = log;
+        _config = config;
     }
 
-    public static string GetFuncStorage()
+    public string GetFuncStorage()
     {
-        return EnvironmentVariables.OneFuzz.FuncStorage
+        return _config.OneFuzzFuncStorage
             ?? throw new Exception("Func storage env var is missing");
     }
 
-    public static string GetFuzzStorage()
+    public string GetFuzzStorage()
     {
-        return EnvironmentVariables.OneFuzz.DataStorage
+        return _config.OneFuzzDataStorage
             ?? throw new Exception("Fuzz storage env var is missing");
     }
 
