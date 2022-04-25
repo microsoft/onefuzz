@@ -524,3 +524,27 @@ public record SecretData<T>(T Secret)
             return "[REDACTED]";
     }
 }
+
+public record JobConfig(
+    string Project,
+    string Name,
+    string Build,
+    int Duration,
+    string? Logs
+);
+
+public record JobTaskInfo(
+    Guid TaskId,
+    TaskType Type,
+    TaskState State
+);
+
+public record Job(
+    [PartitionKey] Guid JobId,
+    JobState State,
+    JobConfig Config,
+    string? Error,
+    DateTimeOffset? EndTime,
+    List<JobTaskInfo>? TaskInfo,
+    UserInfo UserInfo
+) : StatefulEntityBase<JobState>(State);
