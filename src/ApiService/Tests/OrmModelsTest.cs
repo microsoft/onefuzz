@@ -310,6 +310,21 @@ namespace Tests
                 )
             );
         }
+
+        public static Gen<Job> Job()
+        {
+            return Arb.Generate<Tuple<Guid, JobState, JobConfig, string?, DateTimeOffset?, List<JobTaskInfo>?, UserInfo>>().Select(
+                arg => new Job(
+                    JobId: arg.Item1,
+                    State: arg.Item2,
+                    Config: arg.Item3,
+                    Error: arg.Item4,
+                    EndTime: arg.Item5,
+                    TaskInfo: arg.Item6,
+                    UserInfo: arg.Item7
+                )
+            );
+        }
     }
 
     public class OrmArb
@@ -402,6 +417,10 @@ namespace Tests
         public static Arbitrary<WebhookMessageEventGrid> WebhookMessageEventGrid()
         {
             return Arb.From(OrmGenerators.WebhookMessageEventGrid());
+        }
+        public static Arbitrary<Job> Job()
+        {
+            return Arb.From(OrmGenerators.Job());
         }
     }
 
@@ -598,7 +617,11 @@ namespace Tests
         }
 
 
-
+        [Property]
+        public bool Job(Job j)
+        {
+            return Test(j);
+        }
 
         /*
         //Sample function on how repro a failing test run, using Replay
