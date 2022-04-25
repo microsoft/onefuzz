@@ -19,6 +19,8 @@ public interface ICreds
     public ArmClient ArmClient { get; }
 
     public ResourceGroupResource GetResourceGroupResource();
+
+    public string GetBaseRegion();
 }
 
 public class Creds : ICreds
@@ -68,5 +70,10 @@ public class Creds : ICreds
     {
         var resourceId = GetResourceGroupResourceIdentifier();
         return ArmClient.GetResourceGroupResource(resourceId);
+    }
+
+    public string GetBaseRegion()
+    {
+        return ArmClient.GetResourceGroupResource(GetResourceGroupResourceIdentifier()).Data.Location.Name;
     }
 }

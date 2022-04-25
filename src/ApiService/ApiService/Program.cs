@@ -82,6 +82,11 @@ public class Program
             .AddScoped<IReports, Reports>()
             .AddScoped<INotificationOperations, NotificationOperations>()
             .AddScoped<IUserCredentials, UserCredentials>()
+            .AddScoped<IReproOperations, ReproOperations>()
+            .AddScoped<IPoolOperations, PoolOperations>()
+            .AddScoped<IIpOperations, IpOperations>()
+            .AddScoped<IDiskOperations, DiskOperations>()
+            .AddScoped<IVmOperations, VmOperations>()
 
 
             //Move out expensive resources into separate class, and add those as Singleton
