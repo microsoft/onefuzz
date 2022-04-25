@@ -1,5 +1,7 @@
 ﻿using Azure.ResourceManager.Network;
+
 namespace Microsoft.OneFuzz.Service;
+
 
 public interface ISubnet
 {

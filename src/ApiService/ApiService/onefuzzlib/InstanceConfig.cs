@@ -15,12 +15,11 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations
 {
     private readonly IEvents _events;
     private readonly ILogTracer _log;
-    private readonly IServiceConfig _config;
+
     public ConfigOperations(IStorage storage, IEvents events, ILogTracer log, IServiceConfig config) : base(storage, log, config)
     {
         _events = events;
         _log = log;
-        _config = config;
     }
 
     public async Task<InstanceConfig> Fetch()

@@ -1,5 +1,6 @@
 ﻿using Azure.Storage;
 using Azure.Storage.Queues;
+using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ public interface IQueue
 {
     Async.Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
     Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout);
+    Uri? GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
 }
 
 
@@ -16,6 +18,8 @@ public class Queue : IQueue
 {
     IStorage _storage;
     ILogTracer _log;
+
+    static TimeSpan DEFAULT_DURATION = TimeSpan.FromDays(30);
 
     public Queue(IStorage storage, ILogTracer log)
     {
@@ -79,5 +83,13 @@ public class Queue : IQueue
         {
             return false;
         }
+    }
+
+    public Uri? GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration)
+    {
+        var queue = GetQueue(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
+        var sasaBuilder = new QueueSasBuilder(permissions, DateTimeOffset.UtcNow + (duration ?? DEFAULT_DURATION));
+        var url = queue.GenerateSasUri(sasaBuilder);
+        return url;
     }
 }

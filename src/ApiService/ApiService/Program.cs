@@ -1,4 +1,4 @@
-// to avoid collision with Task in model.cs
+﻿// to avoid collision with Task in model.cs
 global using Async = System.Threading.Tasks;
 
 global using System;

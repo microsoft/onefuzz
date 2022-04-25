@@ -41,7 +41,7 @@ public class Reports : IReports
             return null;
         }
 
-        return ParseReportOrRegression(blob, filePath, expectReports);
+        return ParseReportOrRegression(blob.ToString(), filePath, expectReports);
     }
 
     private RegressionReportOrReport? ParseReportOrRegression(string content, string? filePath, bool expectReports = false)
