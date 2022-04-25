@@ -32,9 +32,9 @@ public class Creds : ICreds
 
     public Creds(IServiceConfig config)
     {
-        _armClient = new ArmClient(this.GetIdentity(), this.GetSubcription());
-        _azureCredential = new DefaultAzureCredential();
         _config = config;
+        _azureCredential = new DefaultAzureCredential();
+        _armClient = new ArmClient(this.GetIdentity(), this.GetSubcription());
     }
 
     public DefaultAzureCredential GetIdentity()
