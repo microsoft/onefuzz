@@ -24,6 +24,13 @@ namespace Tests {
                 Arb.Generate<EventCrashReported>().Select(e => e as BaseEvent),
                 Arb.Generate<EventRegressionReported>().Select(e => e as BaseEvent),
                 Arb.Generate<EventFileAdded>().Select(e => e as BaseEvent),
+                Arb.Generate<EventTaskFailed>().Select(e => e as BaseEvent),
+                Arb.Generate<EventTaskStopped>().Select(e => e as BaseEvent),
+                Arb.Generate<EventTaskStateUpdated>().Select(e => e as BaseEvent),
+                Arb.Generate<EventScalesetFailed>().Select(e => e as BaseEvent),
+                Arb.Generate<EventScalesetResizeScheduled>().Select(e => e as BaseEvent),
+                Arb.Generate<EventScalesetStateUpdated>().Select(e => e as BaseEvent),
+                Arb.Generate<EventNodeDeleted>().Select(e => e as BaseEvent),
             });
         }
 
@@ -45,6 +52,17 @@ namespace Tests {
                         State: arg.Item2.Item1,
                         TryCount: arg.Item2.Item2
             ));
+        }
+
+        public static Gen<NodeTasks> NodeTasks() {
+            return Arb.Generate<Tuple<Guid, Guid, NodeTaskState>>().Select(
+                arg =>
+                    new NodeTasks(
+                        MachineId: arg.Item1,
+                        TaskId: arg.Item2,
+                        State: arg.Item3
+                    )
+            );
         }
 
         public static Gen<Node> Node() {
@@ -309,6 +327,10 @@ namespace Tests {
 
         public static Arbitrary<BaseEvent> BaseEvent() {
             return Arb.From(OrmGenerators.BaseEvent());
+        }
+
+        public static Arbitrary<NodeTasks> NodeTasks() {
+            return Arb.From(OrmGenerators.NodeTasks());
         }
 
         public static Arbitrary<Node> Node() {
