@@ -47,7 +47,7 @@ impl LlvmSymbolizer {
 
         env.insert("ASAN_SYMBOLIZER_PATH".to_owned(), self.path.clone());
 
-        let options = format!("external_symbolizer={}", self.path);
+        let options = format!("external_symbolizer_path={}", self.path);
         env.insert("TSAN_OPTIONS".to_owned(), options);
 
         env
@@ -129,7 +129,7 @@ mod tests {
 
         assert_eq!(vars["ASAN_SYMBOLIZER_PATH"], SYMBOLIZER_PATH);
 
-        let tsan_options = format!("external_symbolizer={}", SYMBOLIZER_PATH);
+        let tsan_options = format!("external_symbolizer_path={}", SYMBOLIZER_PATH);
         assert_eq!(vars["TSAN_OPTIONS"], tsan_options);
 
         assert_eq!(vars.len(), 2);
