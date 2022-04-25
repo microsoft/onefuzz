@@ -128,6 +128,12 @@
           "System.Text.Json": "4.7.2"
         }
       },
+      "Faithlife.Utility": {
+        "type": "Direct",
+        "requested": "[0.12.2, )",
+        "resolved": "0.12.2",
+        "contentHash": "JgMAGj8ekeAzKkagubXqf1UqgfHq89GyA1UQYWbkAe441uRr2Rh2rktkx5Z0LPwmD/aOqu9cxjekD2GZjP8rbw=="
+      },
       "Microsoft.Azure.Functions.Worker": {
         "type": "Direct",
         "requested": "[1.6.0, )",

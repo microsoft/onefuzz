@@ -10,8 +10,8 @@ public interface IScalesetOperations : IOrm<Scaleset>
 public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalesetOperations
 {
 
-    public ScalesetOperations(IStorage storage, ILogTracer log)
-        : base(storage, log)
+    public ScalesetOperations(IStorage storage, ILogTracer log, IServiceConfig config)
+        : base(storage, log, config)
     {
 
     }

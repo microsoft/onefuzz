@@ -18,8 +18,8 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState>
 public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
 {
 
-    public TaskOperations(IStorage storage, ILogTracer log)
-        : base(storage, log)
+    public TaskOperations(IStorage storage, ILogTracer log, IServiceConfig config)
+        : base(storage, log, config)
     {
 
     }

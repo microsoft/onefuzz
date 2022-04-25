@@ -24,26 +24,27 @@ public interface ICreds
 
 public class Creds : ICreds
 {
-    private readonly Lazy<ArmClient> _armClient;
+    private readonly ArmClient _armClient;
+    private readonly DefaultAzureCredential _azureCredential;
+    private readonly IServiceConfig _config;
 
-    public ArmClient ArmClient => _armClient.Value;
+    public ArmClient ArmClient => _armClient;
 
-    public Creds()
+    public Creds(IServiceConfig config)
     {
-        _armClient = new Lazy<ArmClient>(() => new ArmClient(this.GetIdentity(), this.GetSubcription()), true);
+        _armClient = new ArmClient(this.GetIdentity(), this.GetSubcription());
+        _azureCredential = new DefaultAzureCredential();
+        _config = config;
     }
 
-    // TODO: @cached
     public DefaultAzureCredential GetIdentity()
     {
-        // TODO: AllowMoreWorkers
-        // TODO: ReduceLogging
-        return new DefaultAzureCredential();
+        return _azureCredential;
     }
 
     public string GetSubcription()
     {
-        var storageResourceId = EnvironmentVariables.OneFuzz.DataStorage
+        var storageResourceId = _config.OneFuzzDataStorage
             ?? throw new System.Exception("Data storage env var is not present");
         var storageResource = new ResourceIdentifier(storageResourceId);
         return storageResource.SubscriptionId!;
@@ -51,7 +52,7 @@ public class Creds : ICreds
 
     public string GetBaseResourceGroup()
     {
-        var storageResourceId = EnvironmentVariables.OneFuzz.DataStorage
+        var storageResourceId = _config.OneFuzzDataStorage
             ?? throw new System.Exception("Data storage env var is not present");
         var storageResource = new ResourceIdentifier(storageResourceId);
         return storageResource.ResourceGroupName!;
@@ -59,7 +60,7 @@ public class Creds : ICreds
 
     public ResourceIdentifier GetResourceGroupResourceIdentifier()
     {
-        var resourceId = EnvironmentVariables.OneFuzz.ResourceGroup
+        var resourceId = _config.OneFuzzResourceGroup
             ?? throw new System.Exception("Resource group env var is not present");
         return new ResourceIdentifier(resourceId);
     }

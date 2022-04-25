@@ -95,7 +95,7 @@ public record ProxyHeartbeat
     DateTimeOffset TimeStamp
 );
 
-public partial record Node
+public record Node
 (
     DateTimeOffset? InitializedAt,
     [PartitionKey] PoolName PoolName,
@@ -111,27 +111,40 @@ public partial record Node
 ) : StatefulEntityBase<NodeState>(State);
 
 
-public partial record ProxyForward
+public record Forward
+(
+    int SrcPort,
+    int DstPort,
+    string DstIp
+);
+
+
+public record ProxyForward
 (
     [PartitionKey] Region Region,
+    int Port,
+    Guid ScalesetId,
+    Guid MachineId,
+    Guid? ProxyId,
     [RowKey] int DstPort,
-    int SrcPort,
-    string DstIp
+    string DstIp,
+    DateTimeOffset EndTime
 ) : EntityBase();
 
-public partial record ProxyConfig
+public record ProxyConfig
 (
     Uri Url,
-    string Notification,
+    Uri Notification,
     Region Region,
     Guid? ProxyId,
-    List<ProxyForward> Forwards,
+    List<Forward> Forwards,
     string InstanceTelemetryKey,
-    string MicrosoftTelemetryKey
+    string MicrosoftTelemetryKey,
+    Guid InstanceId
 
 );
 
-public partial record Proxy
+public record Proxy
 (
     [PartitionKey] Region Region,
     [RowKey] Guid ProxyId,
@@ -306,7 +319,6 @@ public record InstanceConfig
 (
     [PartitionKey, RowKey] string InstanceName,
     Guid[]? Admins,
-    bool AllowPoolManagement,
     string[] AllowedAadTenants,
     NetworkConfig NetworkConfig,
     NetworkSecurityGroupConfig ProxyNsgConfig,
@@ -351,7 +363,7 @@ public record InstanceConfig
 
     //# At the moment, this only checks allowed_aad_tenants, however adding
     //# support for 3rd party JWT validation is anticipated in a future release.
-    public ResultOk<List<string>> CheckInstanceConfig()
+    public ResultVoid<List<string>> CheckInstanceConfig()
     {
         List<string> errors = new();
         if (AllowedAadTenants.Length == 0)
@@ -360,11 +372,11 @@ public record InstanceConfig
         }
         if (errors.Count == 0)
         {
-            return ResultOk<List<string>>.Ok();
+            return ResultVoid<List<string>>.Ok();
         }
         else
         {
-            return ResultOk<List<string>>.Error(errors);
+            return ResultVoid<List<string>>.Error(errors);
         }
     }
 }
@@ -418,7 +430,6 @@ public class ContainerConverter : JsonConverter<Container>
 }
 
 public record Notification(
-    DateTime? Timestamp,
     Container Container,
     Guid NotificationId,
     NotificationTemplate Config
