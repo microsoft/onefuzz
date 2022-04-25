@@ -20,7 +20,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     private readonly ILogTracer _log;
     private readonly IWebhookOperations _webhook;
 
-    public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILogTracer log, IWebhookOperations webhook) : base(storage, log)
+    public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILogTracer log, IWebhookOperations webhook, IServiceConfig config) : base(storage, log, config)
     {
         _queue = queue;
         _log = log;

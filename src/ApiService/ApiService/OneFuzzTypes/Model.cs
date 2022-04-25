@@ -318,7 +318,11 @@ public record ApiAccessRule(
 public record InstanceConfig
 (
     [PartitionKey, RowKey] string InstanceName,
+    //# initial set of admins can only be set during deployment.
+    //# if admins are set, only admins can update instance configs.
     Guid[]? Admins,
+    //# if set, only admins can manage pools or scalesets
+    bool? AllowPoolManagement,
     string[] AllowedAadTenants,
     NetworkConfig NetworkConfig,
     NetworkSecurityGroupConfig ProxyNsgConfig,

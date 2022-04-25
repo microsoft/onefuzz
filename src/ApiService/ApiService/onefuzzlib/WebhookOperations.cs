@@ -23,8 +23,8 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
     private ICreds _creds;
     private readonly IContainers _containers;
 
-    public WebhookOperations(ICreds creds, IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations, IContainers containers, ILogTracer log)
-        : base(storage, log)
+    public WebhookOperations(ICreds creds, IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations, IContainers containers, ILogTracer log, IServiceConfig config)
+        : base(storage, log, config)
     {
         _webhookMessageLogOperations = webhookMessageLogOperations;
         _log = log;

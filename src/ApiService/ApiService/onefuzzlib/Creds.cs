@@ -67,7 +67,7 @@ public class Creds : ICreds
 
     public string GetInstanceName()
     {
-        var instanceName = EnvironmentVariables.OneFuzz.InstanceName
+        var instanceName = _config.OneFuzzInstanceName
             ?? throw new System.Exception("Instance Name env var is not present");
 
         return instanceName;
