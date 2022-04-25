@@ -23,6 +23,7 @@ pub mod machine_id;
 pub mod memory;
 pub mod monitor;
 pub mod process;
+pub mod sanitizer;
 pub mod sha256;
 pub mod syncdir;
 pub mod utils;
