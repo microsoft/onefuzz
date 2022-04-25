@@ -56,7 +56,32 @@
 
         public static OneFuzzResult<T_Ok> Ok(T_Ok ok) => new(ok);
         public static OneFuzzResult<T_Ok> Error(ErrorCode errorCode, string[] errors) => new(errorCode, errors);
+        public static OneFuzzResult<T_Ok> Error(ErrorCode errorCode, string error) => new(errorCode, new[] { error });
 
         public static OneFuzzResult<T_Ok> Error(Error err) => new(err);
     }
+
+
+    public struct OneFuzzResultVoid {
+        static Error NoError = new(0);
+
+        readonly Error error;
+        readonly bool isOk;
+
+        public bool IsOk => isOk;
+
+        public Error ErrorV => error;
+
+        private OneFuzzResultVoid(ErrorCode errorCode, string[] errors) => (error, isOk) = (new Error(errorCode, errors), false);
+
+        private OneFuzzResultVoid(Error err) => (error, isOk) = (err, false);
+
+        public static OneFuzzResultVoid Ok() => new();
+        public static OneFuzzResultVoid Error(ErrorCode errorCode, string[] errors) => new(errorCode, errors);
+        public static OneFuzzResultVoid Error(ErrorCode errorCode, string error) => new(errorCode, new[] { error });
+        public static OneFuzzResultVoid Error(Error err) => new(err);
+    }
+
+
+
 }
