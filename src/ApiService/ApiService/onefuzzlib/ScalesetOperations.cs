@@ -24,7 +24,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
         return QueryAsync();
     }
 
-    public IAsyncEnumerable<Scaleset?> SearchByPool(string poolName) {
+    public IAsyncEnumerable<Scaleset?> SearchByPool(string poolName)
+    {
         return QueryAsync(filter: $"pool_name eq '{poolName}'");
     }
 

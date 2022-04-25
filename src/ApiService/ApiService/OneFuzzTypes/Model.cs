@@ -537,5 +537,5 @@ public record Vm(
     IDictionary<string, string>? Tags
 )
 {
-    public string Name {get;} = Name.Length > 40 ? throw new ArgumentOutOfRangeException("VM name too long") : Name;
+    public string Name { get; } = Name.Length > 40 ? throw new ArgumentOutOfRangeException("VM name too long") : Name;
 };

@@ -274,6 +274,7 @@ public static class PoolStateHelper
     }
 }
 
-public enum Architecture {
+public enum Architecture
+{
     x86_64
 }

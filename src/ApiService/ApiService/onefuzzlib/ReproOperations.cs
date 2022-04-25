@@ -42,7 +42,8 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations
     {
         var tags = config.VmTags;
         var task = await _taskOperations.GetByTaskId(repro.TaskId);
-        if (task == null) {
+        if (task == null)
+        {
             throw new Exception($"previous existing task missing: {repro.TaskId}");
         }
 
@@ -78,7 +79,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations
         );
     }
 
-    public async void Stopping(Repro repro)
+    public async System.Threading.Tasks.Task Stopping(Repro repro)
     {
         var config = await _configOperations.Fetch();
         var vm = await GetVm(repro, config);
@@ -88,7 +89,8 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations
             await _vmOperations.Delete(vm);
             await Replace(repro);
         }
-        else {
+        else
+        {
             await Stopped(repro);
         }
     }

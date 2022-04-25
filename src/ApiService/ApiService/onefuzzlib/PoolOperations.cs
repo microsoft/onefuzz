@@ -24,12 +24,14 @@ public class PoolOperations : StatefulOrm<Pool, PoolState>, IPoolOperations
     {
         var pools = QueryAsync(filter: $"name eq '{poolName}'");
 
-        if (pools == null) {
-            return new Result<Pool, Error>(new Error(ErrorCode.INVALID_REQUEST, new [] {"unable to find pool"}));
+        if (pools == null)
+        {
+            return new Result<Pool, Error>(new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find pool" }));
         }
 
-        if (await pools.CountAsync() != 1) {
-            return new Result<Pool, Error>(new Error(ErrorCode.INVALID_REQUEST, new [] {"error identifying pool"}));
+        if (await pools.CountAsync() != 1)
+        {
+            return new Result<Pool, Error>(new Error(ErrorCode.INVALID_REQUEST, new[] { "error identifying pool" }));
         }
 
         return new Result<Pool, Error>(await pools.SingleAsync());

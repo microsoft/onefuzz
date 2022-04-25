@@ -83,14 +83,16 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
 
         var pool = await _poolOperations.GetByName(task.Config.Pool.PoolName);
 
-        if (!pool.IsOk) {
+        if (!pool.IsOk)
+        {
             _logTracer.Info($"unable to find pool from task: {task.TaskId}");
             return null;
         }
 
         var scaleset = await _scalesetOperations.SearchByPool(task.Config.Pool.PoolName).FirstOrDefaultAsync();
 
-        if (scaleset == null) {
+        if (scaleset == null)
+        {
             _logTracer.Warning($"no scalesets are defined for task: {task.JobId}:{task.TaskId}");
             return null;
         }

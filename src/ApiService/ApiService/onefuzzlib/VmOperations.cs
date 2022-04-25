@@ -1,10 +1,10 @@
-using Region = System.String;
 using Azure.ResourceManager.Compute;
 
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IVmOperations {
+public interface IVmOperations
+{
     Async.Task<bool> IsDeleted(Vm vm);
 
     Async.Task<bool> HasComponents(string name);
@@ -15,7 +15,8 @@ public interface IVmOperations {
 
 }
 
-public class VmOperations : IVmOperations {
+public class VmOperations : IVmOperations
+{
     private ILogTracer _logTracer;
 
     private ICreds _creds;
@@ -36,17 +37,21 @@ public class VmOperations : IVmOperations {
         return !(await HasComponents(vm.Name));
     }
 
-    public async Async.Task<bool> HasComponents(string name) {
+    public async Async.Task<bool> HasComponents(string name)
+    {
         var resourceGroup = _creds.GetBaseResourceGroup();
-        if (await GetVm(name) != null) {
+        if (await GetVm(name) != null)
+        {
             return true;
         }
 
-        if (await _ipOperations.GetPublicNic(resourceGroup, name) != null) {
+        if (await _ipOperations.GetPublicNic(resourceGroup, name) != null)
+        {
             return true;
         }
 
-        if (await _ipOperations.GetIp(resourceGroup, name) != null) {
+        if (await _ipOperations.GetIp(resourceGroup, name) != null)
+        {
             return true;
         }
 
@@ -55,14 +60,16 @@ public class VmOperations : IVmOperations {
             .Where(disk => disk.Data.Name.StartsWith(name))
             .AnyAsync();
 
-        if (disks) {
+        if (disks)
+        {
             return true;
         }
 
         return false;
     }
 
-    public async Async.Task<VirtualMachineResource?> GetVm(string name) {
+    public async Async.Task<VirtualMachineResource?> GetVm(string name)
+    {
         return await _creds.GetResourceGroupResource().GetVirtualMachineAsync(name);
     }
 

@@ -13,7 +13,8 @@ public interface IIpOperations
     public Async.Task DeleteIp(string resourceGroup, string name);
 }
 
-public class IpOperations : IIpOperations {
+public class IpOperations : IIpOperations
+{
     private ILogTracer _logTracer;
 
     private ICreds _creds;

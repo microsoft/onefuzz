@@ -3,13 +3,15 @@ using Azure.ResourceManager.Compute;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IDiskOperations {
+public interface IDiskOperations
+{
     DiskCollection ListDisks(string resourceGroup);
 
     Async.Task<bool> DeleteDisk(string resourceGroup, string name);
 }
 
-public class DiskOperations :IDiskOperations {
+public class DiskOperations : IDiskOperations
+{
     private ILogTracer _logTracer;
 
     private ICreds _creds;
@@ -25,7 +27,8 @@ public class DiskOperations :IDiskOperations {
         throw new NotImplementedException();
     }
 
-    public DiskCollection ListDisks(string resourceGroup) {
+    public DiskCollection ListDisks(string resourceGroup)
+    {
         _logTracer.Info($"listing disks {resourceGroup}");
         return _creds.GetResourceGroupResource().GetDisks();
     }
