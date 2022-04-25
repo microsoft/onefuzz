@@ -1,4 +1,4 @@
-using Azure.Data.Tables;
+﻿using Azure.Data.Tables;
 using System.Reflection;
 using System.Linq.Expressions;
 using System.Text.Json;
@@ -14,7 +14,7 @@ public abstract record EntityBase
     public DateTimeOffset? TimeStamp { get; set; }
 }
 
-public abstract record StatefulEntityBase<T>([property: JsonIgnore] T state) : EntityBase() where T : Enum;
+public abstract record StatefulEntityBase<T>([property: JsonIgnore] T State) : EntityBase() where T : Enum;
 
 /// Indicates that the enum cases should no be renamed
 [AttributeUsage(AttributeTargets.Enum)]
@@ -147,7 +147,7 @@ public class EntityConverter
         });
     }
 
-    public string ToJsonString<T>(T typedEntity) where T : EntityBase
+    public string ToJsonString<T>(T typedEntity)
     {
         var serialized = JsonSerializer.Serialize(typedEntity, _options);
         return serialized;

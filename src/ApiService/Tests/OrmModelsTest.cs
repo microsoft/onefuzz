@@ -71,13 +71,17 @@ namespace Tests
 
         public static Gen<ProxyForward> ProxyForward()
         {
-            return Arb.Generate<Tuple<string, int, int, IPv4Address>>().Select(
+            return Arb.Generate<Tuple<Tuple<string, int, Guid, Guid, Guid?, int>, Tuple<IPv4Address, DateTimeOffset>>>().Select(
                 arg =>
                     new ProxyForward(
-                        Region: arg.Item1,
-                        DstPort: arg.Item2,
-                        SrcPort: arg.Item3,
-                        DstIp: arg.Item4.Item.ToString()
+                        Region: arg.Item1.Item1,
+                        Port: arg.Item1.Item2,
+                        ScalesetId: arg.Item1.Item3,
+                        MachineId: arg.Item1.Item4,
+                        ProxyId: arg.Item1.Item5,
+                        DstPort: arg.Item1.Item6,
+                        DstIp: arg.Item2.Item1.ToString(),
+                        EndTime: arg.Item2.Item2
                     )
             );
         }
@@ -594,9 +598,11 @@ namespace Tests
         }
 
 
+
+
         /*
         //Sample function on how repro a failing test run, using Replay
-        //functionality of FsCheck. Feel free to 
+        //functionality of FsCheck. Feel free to
         [Property]
         void Replay()
         {
@@ -845,7 +851,7 @@ namespace Tests
 
         /*
         //Sample function on how repro a failing test run, using Replay
-        //functionality of FsCheck. Feel free to 
+        //functionality of FsCheck. Feel free to
         [Property]
         void Replay()
         {

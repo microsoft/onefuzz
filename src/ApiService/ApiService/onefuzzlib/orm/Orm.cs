@@ -20,14 +20,13 @@ namespace ApiService.OneFuzzLib.Orm
     }
 
 
-
-
     public class Orm<T> : IOrm<T> where T : EntityBase
     {
-        IStorage _storage;
-        EntityConverter _entityConverter;
-        IServiceConfig _config;
-        protected ILogTracer _logTracer;
+        protected readonly IStorage _storage;
+        protected readonly EntityConverter _entityConverter;
+        protected readonly ILogTracer _logTracer;
+
+        protected readonly IServiceConfig _config;
 
 
         public Orm(IStorage storage, ILogTracer logTracer, IServiceConfig config)
@@ -179,7 +178,7 @@ namespace ApiService.OneFuzzLib.Orm
         /// <returns></returns>
         public async System.Threading.Tasks.Task<T?> ProcessStateUpdate(T entity)
         {
-            TState state = entity.state;
+            TState state = entity.State;
             var func = _stateFuncs.GetOrAdd(state.ToString(), (string k) =>
                 typeof(T).GetMethod(k) switch
                 {
@@ -206,13 +205,13 @@ namespace ApiService.OneFuzzLib.Orm
         {
             for (int i = 0; i < MaxUpdates; i++)
             {
-                var state = entity.state;
+                var state = entity.State;
                 var newEntity = await ProcessStateUpdate(entity);
 
                 if (newEntity == null)
                     return null;
 
-                if (newEntity.state.Equals(state))
+                if (newEntity.State.Equals(state))
                 {
                     return newEntity;
                 }
