@@ -3,6 +3,7 @@ using ApiService.OneFuzzLib.Orm;
 using System.Text.Json;
 using System.Security.Cryptography;
 using System.Net;
+using System.Net.Http;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -20,16 +21,18 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
     const string USER_AGENT = "onefuzz-webhook 0.0.0";
     private readonly IWebhookMessageLogOperations _webhookMessageLogOperations;
     private readonly ILogTracer _log;
-    private ICreds _creds;
+    private readonly ICreds _creds;
     private readonly IContainers _containers;
+    private readonly IHttpClientFactory _httpFactory;
 
-    public WebhookOperations(ICreds creds, IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations, IContainers containers, ILogTracer log, IServiceConfig config)
+    public WebhookOperations(IHttpClientFactory httpFactory, ICreds creds, IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations, IContainers containers, ILogTracer log, IServiceConfig config)
         : base(storage, log, config)
     {
         _webhookMessageLogOperations = webhookMessageLogOperations;
         _log = log;
         _creds = creds;
         _containers = containers;
+        _httpFactory = httpFactory;
     }
 
     async public Async.Task SendEvent(EventMessage eventMessage)
@@ -80,7 +83,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
             headers["X-Onefuzz-Digest"] = digest;
         }
 
-        var client = new Request();
+        var client = new Request(_httpFactory.CreateClient());
         var response = client.Post(url: webhook.Url, json: data, headers: headers);
         var result = response.Result;
         if (result.StatusCode == HttpStatusCode.Accepted)
@@ -97,7 +100,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
         string data = "";
         if (messageFormat != null && messageFormat == WebhookMessageFormat.EventGrid)
         {
-            var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, data: webhookEvent, DataVersion: "1.0.0", Subject: _creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
+            var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: webhookEvent, DataVersion: "1.0.0", Subject: _creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
             data = JsonSerializer.Serialize(eventGridMessage, options: EntityConverter.GetJsonSerializerOptions());
         }
         else
