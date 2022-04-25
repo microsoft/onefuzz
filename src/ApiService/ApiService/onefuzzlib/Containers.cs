@@ -10,12 +10,13 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface IContainers
 {
-    public Task<IEnumerable<byte>?> GetBlob(Container container, string name, StorageType storageType);
+    public Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType);
 
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
     public Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
     Async.Task saveBlob(Container container, string v1, string v2, StorageType config);
+    Task<Guid> GetInstanceId();
 }
 
 public class Containers : IContainers
@@ -31,7 +32,7 @@ public class Containers : IContainers
         _creds = creds;
         _armClient = creds.ArmClient;
     }
-    public async Task<IEnumerable<byte>?> GetBlob(Container container, string name, StorageType storageType)
+    public async Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType)
     {
         var client = await FindContainer(container, storageType);
 
@@ -43,7 +44,7 @@ public class Containers : IContainers
         try
         {
             return (await client.GetBlobClient(name).DownloadContentAsync())
-                .Value.Content.ToArray();
+                .Value.Content;
         }
         catch (RequestFailedException)
         {
@@ -130,6 +131,16 @@ public class Containers : IContainers
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
 
         await client.UploadBlobAsync(name, new BinaryData(data));
+    }
+
+    public async Async.Task<Guid> GetInstanceId()
+    {
+        var blob = await GetBlob(new Container("base-config"), "instance_id", StorageType.Config);
+        if (blob == null)
+        {
+            throw new System.Exception("Blob Not Found");
+        }
+        return System.Guid.Parse(blob.ToString());
     }
 }
 

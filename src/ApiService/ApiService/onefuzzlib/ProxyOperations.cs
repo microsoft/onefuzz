@@ -63,8 +63,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations
         }
 
         _logTracer.Info($"creating proxy: region:{region}");
-        // todo: version param
-        var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, Auth.BuildAuth(), null, null, "", null, false);
+        var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, Auth.BuildAuth(), null, null, _config.OnefuzzVersion, null, false);
 
         await Replace(newProxy);
         await _events.SendEvent(new EventProxyCreated(region, newProxy.ProxyId));
@@ -97,10 +96,9 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations
             return false;
         }
 
-        // todo: add version check
-        if (proxy.Version != "")
+        if (proxy.Version != _config.OnefuzzVersion)
         {
-            _logTracer.Info($"mismatch version: proxy:{proxy.Version} service:{""} state:{proxy.State}");
+            _logTracer.Info($"mismatch version: proxy:{proxy.Version} service:{_config.OnefuzzVersion} state:{proxy.State}");
             return true;
         }
 
@@ -128,7 +126,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations
             Forwards: forwards,
             InstanceTelemetryKey: _config.ApplicationInsightsInstrumentationKey.EnsureNotNull("missing InstrumentationKey"),
             MicrosoftTelemetryKey: _config.OneFuzzTelemetry.EnsureNotNull("missing Telemetry"),
-            InstanceId: Guid.NewGuid()); //todo :
+            InstanceId: await _containers.GetInstanceId());
 
 
         await _containers.saveBlob(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", _entityConverter.ToJsonString(proxyConfig), StorageType.Config);
