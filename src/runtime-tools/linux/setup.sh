@@ -13,7 +13,7 @@ TASK_SETUP="/onefuzz/bin/task-setup.sh"
 MANAGED_SETUP="/onefuzz/bin/managed.sh"
 SCALESET_SETUP="/onefuzz/bin/scaleset-setup.sh"
 export ONEFUZZ_ROOT=/onefuzz
-export ASAN_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
+export LLVM_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 
 logger "onefuzz: making directories"
 sudo mkdir -p /onefuzz/downloaded
@@ -34,7 +34,7 @@ export PATH=$PATH:/onefuzz/bin:/onefuzz/tools/linux:/onefuzz/tools/linux/afl:/on
 mv /onefuzz/downloaded/config.json /onefuzz
 mv /onefuzz/downloaded/azcopy /onefuzz/bin
 mv /onefuzz/downloaded/managed.sh /onefuzz/bin
- 
+
 if [ -f /onefuzz/downloaded/task-setup.sh ]; then
     mv /onefuzz/downloaded/task-setup.sh /onefuzz/bin/
 fi
@@ -112,7 +112,7 @@ if type apt > /dev/null 2> /dev/null; then
         sleep 10
     done
 
-    if ! [ -f ${ASAN_SYMBOLIZER_PATH} ]; then
+    if ! [ -f ${LLVM_SYMBOLIZER_PATH} ]; then
         until sudo apt install -y llvm-10; do
             echo "apt failed, sleeping 10s then retrying"
             sleep 10
@@ -120,7 +120,7 @@ if type apt > /dev/null 2> /dev/null; then
 
         # If specifying symbolizer, exe name must be a "known symbolizer".
         # Using `llvm-symbolizer` works for clang 8 .. 10.
-        sudo ln -f -s $(which llvm-symbolizer-10) $ASAN_SYMBOLIZER_PATH
+        sudo ln -f -s $(which llvm-symbolizer-10) $LLVM_SYMBOLIZER_PATH
     fi
 fi
 
@@ -154,7 +154,7 @@ elif [ -d /etc/init.d ]; then
     else
         logger "onefuzz: starting via init"
         sudo /etc/init.d/onefuzz start
-    fi 
+    fi
 else
     logger "onefuzz: unknown startup"
     if [ "X$2" == "Xreboot" ]; then

@@ -107,6 +107,16 @@
           "System.Text.Json": "4.7.2"
         }
       },
+      "Azure.Storage.Blobs": {
+        "type": "Direct",
+        "requested": "[12.11.0, )",
+        "resolved": "12.11.0",
+        "contentHash": "50eRjIhY7Q1JN7kT2MSawDKCcwSb7uRZUkz00P/BLjSg47gm2hxUYsnJPyvzCHntYMbOWzrvaVQTwYwXabaR5Q==",
+        "dependencies": {
+          "Azure.Storage.Common": "12.10.0",
+          "System.Text.Json": "4.7.2"
+        }
+      },
       "Azure.Storage.Queues": {
         "type": "Direct",
         "requested": "[12.9.0, )",
@@ -117,6 +127,12 @@
           "System.Memory.Data": "1.0.2",
           "System.Text.Json": "4.7.2"
         }
+      },
+      "Faithlife.Utility": {
+        "type": "Direct",
+        "requested": "[0.12.2, )",
+        "resolved": "0.12.2",
+        "contentHash": "JgMAGj8ekeAzKkagubXqf1UqgfHq89GyA1UQYWbkAe441uRr2Rh2rktkx5Z0LPwmD/aOqu9cxjekD2GZjP8rbw=="
       },
       "Microsoft.Azure.Functions.Worker": {
         "type": "Direct",

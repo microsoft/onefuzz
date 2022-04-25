@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
 
@@ -10,22 +8,23 @@ using AccessToken = String;
 
 public class Request
 {
-    private static HttpClient httpClient = new HttpClient();
+    private readonly HttpClient _httpClient;
 
-    Func<Task<(TokenType, AccessToken)>>? auth;
+    Func<Task<(TokenType, AccessToken)>>? _auth;
 
-    public Request(Func<Task<(TokenType, AccessToken)>>? auth = null)
+    public Request(HttpClient httpClient, Func<Task<(TokenType, AccessToken)>>? auth = null)
     {
-        this.auth = auth;
+        _auth = auth;
+        _httpClient = httpClient;
     }
 
     private async Task<HttpResponseMessage> Send(HttpMethod method, Uri url, HttpContent? content = null, IDictionary<string, string>? headers = null)
     {
         var request = new HttpRequestMessage(method: method, requestUri: url);
 
-        if (auth is not null)
+        if (_auth is not null)
         {
-            var (tokenType, accessToken) = await auth();
+            var (tokenType, accessToken) = await _auth();
             request.Headers.Authorization = new AuthenticationHeaderValue(tokenType, accessToken);
         }
 
@@ -42,7 +41,7 @@ public class Request
             }
         }
 
-        return await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        return await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
     }
 
     public async Task<HttpResponseMessage> Get(Uri url)

@@ -1,31 +1,34 @@
 ﻿using Azure.Storage;
 using Azure.Storage.Queues;
+using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Microsoft.OneFuzz.Service;
 public interface IQueue
 {
-    Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
-    Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout);
+    Async.Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
+    Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout);
+    Uri? GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
 }
 
 
 public class Queue : IQueue
 {
     IStorage _storage;
-    ILogTracerFactory _loggerFactory;
+    ILogTracer _log;
 
-    public Queue(IStorage storage, ILogTracerFactory loggerFactory)
+    static TimeSpan DEFAULT_DURATION = TimeSpan.FromDays(30);
+
+    public Queue(IStorage storage, ILogTracer log)
     {
         _storage = storage;
-        _loggerFactory = loggerFactory;
+        _log = log;
     }
 
 
-    public async Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null)
+    public async Async.Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null)
     {
         var queue = GetQueue(name, storageType);
         if (queue != null)
@@ -80,5 +83,13 @@ public class Queue : IQueue
         {
             return false;
         }
+    }
+
+    public Uri? GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration)
+    {
+        var queue = GetQueue(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
+        var sasaBuilder = new QueueSasBuilder(permissions, DateTimeOffset.UtcNow + (duration ?? DEFAULT_DURATION));
+        var url = queue.GenerateSasUri(sasaBuilder);
+        return url;
     }
 }

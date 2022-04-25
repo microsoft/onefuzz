@@ -164,7 +164,7 @@ module eventGrid 'bicep-templates/event-grid.bicep' = {
 
 // try to make role assignments to deploy as late as possible in order to has principalId ready
 resource roleAssigmentsPy 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
-  name: guid('${resourceGroup().id}${r.suffix}')
+  name: guid('${resourceGroup().id}${r.suffix}-python')
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${r.role}'
     principalId: pythonFunction.outputs.principalId
@@ -214,6 +214,7 @@ module pythonFunction 'bicep-templates/function.bicep' = {
     functions_extension_version: '~3'
     name: name
 
+    instance_name: name
     app_logs_sas_url: storage.outputs.FuncSasUrlBlobAppLogs
     app_func_audiences: app_func_audiences
     app_func_issuer: app_func_issuer
@@ -244,6 +245,7 @@ module netFunction 'bicep-templates/function.bicep' = {
     functions_extension_version: '~4'
     name: '${name}-net'
 
+    instance_name: name
     app_logs_sas_url: storage.outputs.FuncSasUrlBlobAppLogs
     app_func_audiences: app_func_audiences
     app_func_issuer: app_func_issuer
