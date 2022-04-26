@@ -43,7 +43,7 @@ public class Scheduler : IScheduler
         throw new NotImplementedException();
     }
 
-    record struct BucketId(Os os, Guid jobId, (string, string)? vm, string? pool, string setupContainer, bool? reboot, Guid unique);
+    record struct BucketId(Os os, Guid jobId, (string, string)? vm, string? pool, string setupContainer, bool? reboot, Guid? unique);
 
     private ILookup<BucketId, Task> BucketTasks(IEnumerable<Task> tasks)
     {
@@ -80,7 +80,7 @@ public class Scheduler : IScheduler
                 unique = Guid.NewGuid();
             }
 
-            return new BucketId(task.Os, task.JobId, vm, pool, _config.GetSetupContainer(task.Config), task.Config.Task.RebootAfterSetup, (Guid)unique);
+            return new BucketId(task.Os, task.JobId, vm, pool, _config.GetSetupContainer(task.Config), task.Config.Task.RebootAfterSetup, unique);
 
         });
     }

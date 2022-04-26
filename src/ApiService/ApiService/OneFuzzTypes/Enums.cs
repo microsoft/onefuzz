@@ -260,41 +260,38 @@ public static class TaskStateHelper
     {
         return
         _states.GetOrAdd(nameof(TaskStateHelper.HasStarted), k =>
-        {
-            return
-                 new[]{
-                    TaskState.Init,
-                    TaskState.Stopping
-            };
-        });
-     }
-  
-  
+            new[]{
+                TaskState.Init,
+                TaskState.Stopping
+            }
+        );
+    }
+
+
     public static TaskState[] ShuttingDown()
     {
         return
         _states.GetOrAdd(nameof(TaskStateHelper.ShuttingDown), k =>
-        {
-            return
-                 new[]{
-                    TaskState.Stopping,
-                    TaskState.Stopping,
-                 };
-        });
+            new[]{
+                TaskState.Stopping,
+                TaskState.Stopping,
+            }
+        );
     }
 
     internal static TaskState[] HasStarted()
     {
         return
         _states.GetOrAdd(nameof(TaskStateHelper.HasStarted), k =>
-        {
-            return
-                 new[]{
-                    TaskState.Running,
-                    TaskState.Stopping,
-                    TaskState.Stopped
+            new[]{
+                TaskState.Running,
+                TaskState.Stopping,
+                TaskState.Stopped
+            }
+        );
+    }
 
-
+}
 public enum PoolState
 {
     Init,
@@ -310,26 +307,22 @@ public static class PoolStateHelper
     {
         return
         _states.GetOrAdd("NeedsWork", k =>
-        {
-            return
-                 new[]{
-                    PoolState.Init,
-                    PoolState.Shutdown,
-                    PoolState.Halt
-                 };
-        });
+            new[]{
+                PoolState.Init,
+                PoolState.Shutdown,
+                PoolState.Halt
+            }
+        );
     }
 
     public static PoolState[] Available()
     {
         return
         _states.GetOrAdd("Available", k =>
-        {
-            return
-                 new[]{
-                    PoolState.Running
-                 };
-        });
+                new[]{
+                PoolState.Running
+                }
+        );
     }
 }
 
@@ -337,4 +330,3 @@ public enum Architecture
 {
     x86_64
 }
-
