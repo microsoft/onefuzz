@@ -1,12 +1,11 @@
+﻿using Azure.Core;
 using Azure.Identity;
-using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface ICreds
-{
+public interface ICreds {
     public DefaultAzureCredential GetIdentity();
 
     public string GetSubcription();
@@ -23,57 +22,49 @@ public interface ICreds
     public string GetBaseRegion();
 }
 
-public class Creds : ICreds
-{
+public class Creds : ICreds {
     private readonly ArmClient _armClient;
     private readonly DefaultAzureCredential _azureCredential;
     private readonly IServiceConfig _config;
 
     public ArmClient ArmClient => _armClient;
 
-    public Creds(IServiceConfig config)
-    {
+    public Creds(IServiceConfig config) {
         _config = config;
         _azureCredential = new DefaultAzureCredential();
         _armClient = new ArmClient(this.GetIdentity(), this.GetSubcription());
     }
 
-    public DefaultAzureCredential GetIdentity()
-    {
+    public DefaultAzureCredential GetIdentity() {
         return _azureCredential;
     }
 
-    public string GetSubcription()
-    {
+    public string GetSubcription() {
         var storageResourceId = _config.OneFuzzDataStorage
             ?? throw new System.Exception("Data storage env var is not present");
         var storageResource = new ResourceIdentifier(storageResourceId);
         return storageResource.SubscriptionId!;
     }
 
-    public string GetBaseResourceGroup()
-    {
+    public string GetBaseResourceGroup() {
         var storageResourceId = _config.OneFuzzDataStorage
             ?? throw new System.Exception("Data storage env var is not present");
         var storageResource = new ResourceIdentifier(storageResourceId);
         return storageResource.ResourceGroupName!;
     }
 
-    public ResourceIdentifier GetResourceGroupResourceIdentifier()
-    {
+    public ResourceIdentifier GetResourceGroupResourceIdentifier() {
         var resourceId = _config.OneFuzzResourceGroup
             ?? throw new System.Exception("Resource group env var is not present");
         return new ResourceIdentifier(resourceId);
     }
 
-    public ResourceGroupResource GetResourceGroupResource()
-    {
+    public ResourceGroupResource GetResourceGroupResource() {
         var resourceId = GetResourceGroupResourceIdentifier();
         return ArmClient.GetResourceGroupResource(resourceId);
     }
 
-    public string GetBaseRegion()
-    {
+    public string GetBaseRegion() {
         return ArmClient.GetResourceGroupResource(GetResourceGroupResourceIdentifier()).Data.Location.Name;
     }
 }
