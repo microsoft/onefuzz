@@ -117,9 +117,6 @@ public class Containers : IContainers
         var SAS_START_TIME_DELTA = TimeSpan.FromHours(6);
         var SAS_END_TIME_DELTA = TimeSpan.FromMinutes(6);
 
-        //    SAS_START_TIME_DELTA = datetime.timedelta(hours = 6)
-        //SAS_END_TIME_DELTA = datetime.timedelta(minutes = 15)
-
         var now = DateTimeOffset.UtcNow;
         var start = now - SAS_START_TIME_DELTA;
         var expiry = now + timeSpan + SAS_END_TIME_DELTA;
@@ -143,4 +140,3 @@ public class Containers : IContainers
         return System.Guid.Parse(blob.ToString());
     }
 }
-
