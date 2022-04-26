@@ -57,20 +57,20 @@ public class Request
     {
         using var b = new StringContent(json);
         b.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
-        return await Send(method: HttpMethod.Post, url: url, headers: headers);
+        return await Send(method: HttpMethod.Post, content: b, url: url, headers: headers);
     }
 
     public async Task<HttpResponseMessage> Put(Uri url, String json, IDictionary<string, string>? headers = null)
     {
         using var b = new StringContent(json);
         b.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
-        return await Send(method: HttpMethod.Put, url: url, headers: headers);
+        return await Send(method: HttpMethod.Put, content: b, url: url, headers: headers);
     }
 
     public async Task<HttpResponseMessage> Patch(Uri url, String json, IDictionary<string, string>? headers = null)
     {
         using var b = new StringContent(json);
         b.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
-        return await Send(method: HttpMethod.Patch, url: url, headers: headers);
+        return await Send(method: HttpMethod.Patch, content: b, url: url, headers: headers);
     }
 }

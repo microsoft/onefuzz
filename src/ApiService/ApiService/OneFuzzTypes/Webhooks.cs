@@ -36,18 +36,15 @@ public record WebhookMessageEventGrid(
 public record WebhookMessageLog(
     [RowKey] Guid EventId,
     EventType EventType,
+    [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
+    [property: JsonConverter(typeof(BaseEventConverter))]
     BaseEvent Event,
     Guid InstanceId,
     String InstanceName,
     [PartitionKey] Guid WebhookId,
-    WebhookMessageState State = WebhookMessageState.Queued,
-    int TryCount = 0
-    ) : WebhookMessage(EventId,
-            EventType,
-            Event,
-            InstanceId,
-            InstanceName,
-            WebhookId);
+    long TryCount,
+    WebhookMessageState State = WebhookMessageState.Queued
+    ) : EntityBase();
 
 public record Webhook(
     [PartitionKey] Guid WebhookId,

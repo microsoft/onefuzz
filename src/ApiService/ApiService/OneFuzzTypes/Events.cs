@@ -49,6 +49,7 @@ public abstract record BaseEvent()
             {
                 EventNodeHeartbeat _ => EventType.NodeHeartbeat,
                 EventTaskHeartbeat _ => EventType.TaskHeartbeat,
+                EventPing _ => EventType.Ping,
                 EventInstanceConfigUpdated _ => EventType.InstanceConfigUpdated,
                 EventProxyCreated _ => EventType.ProxyCreated,
                 EventProxyDeleted _ => EventType.ProxyDeleted,
@@ -69,6 +70,7 @@ public abstract record BaseEvent()
             EventType.NodeHeartbeat => typeof(EventNodeHeartbeat),
             EventType.InstanceConfigUpdated => typeof(EventInstanceConfigUpdated),
             EventType.TaskHeartbeat => typeof(EventTaskHeartbeat),
+            EventType.Ping => typeof(EventPing),
             EventType.ProxyCreated => typeof(EventProxyCreated),
             EventType.ProxyDeleted => typeof(EventProxyDeleted),
             EventType.ProxyFailed => typeof(EventProxyFailed),
@@ -151,11 +153,9 @@ public record EventTaskHeartbeat(
    TaskConfig Config
 ) : BaseEvent();
 
-
-//record EventPing(
-//    PingId: Guid
-//): BaseEvent();
-
+public record EventPing(
+    Guid PingId
+) : BaseEvent();
 
 //record EventScalesetCreated(
 //    Guid ScalesetId,
@@ -295,7 +295,7 @@ public record EventMessage(
     BaseEvent Event,
     Guid InstanceId,
     String InstanceName
-) : EntityBase();
+);
 
 public class BaseEventConverter : JsonConverter<BaseEvent>
 {
