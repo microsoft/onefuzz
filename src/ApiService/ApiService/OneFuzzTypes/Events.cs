@@ -1,6 +1,6 @@
-﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using PoolName = System.String;
 using Region = System.String;
 
@@ -9,8 +9,7 @@ namespace Microsoft.OneFuzz.Service;
 
 
 
-public enum EventType
-{
+public enum EventType {
     JobCreated,
     JobStopped,
     NodeCreated,
@@ -40,13 +39,10 @@ public enum EventType
     InstanceConfigUpdated,
 }
 
-public abstract record BaseEvent()
-{
-    public EventType GetEventType()
-    {
+public abstract record BaseEvent() {
+    public EventType GetEventType() {
         return
-            this switch
-            {
+            this switch {
                 EventNodeHeartbeat _ => EventType.NodeHeartbeat,
                 EventTaskHeartbeat _ => EventType.TaskHeartbeat,
                 EventInstanceConfigUpdated _ => EventType.InstanceConfigUpdated,
@@ -65,10 +61,8 @@ public abstract record BaseEvent()
 
     }
 
-    public static Type GetTypeInfo(EventType eventType)
-    {
-        return (eventType) switch
-        {
+    public static Type GetTypeInfo(EventType eventType) {
+        return (eventType) switch {
             EventType.NodeHeartbeat => typeof(EventNodeHeartbeat),
             EventType.InstanceConfigUpdated => typeof(EventInstanceConfigUpdated),
             EventType.TaskHeartbeat => typeof(EventTaskHeartbeat),
@@ -89,10 +83,8 @@ public abstract record BaseEvent()
     }
 };
 
-public class EventTypeProvider : ITypeProvider
-{
-    public Type GetTypeInfo(object input)
-    {
+public class EventTypeProvider : ITypeProvider {
+    public Type GetTypeInfo(object input) {
         return BaseEvent.GetTypeInfo((input as EventType?) ?? throw new ArgumentException($"input is expected to be an EventType {input}"));
     }
 }
@@ -305,15 +297,12 @@ public record EventMessage(
     String InstanceName
 ) : EntityBase();
 
-public class BaseEventConverter : JsonConverter<BaseEvent>
-{
-    public override BaseEvent? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
+public class BaseEventConverter : JsonConverter<BaseEvent> {
+    public override BaseEvent? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         return null;
     }
 
-    public override void Write(Utf8JsonWriter writer, BaseEvent value, JsonSerializerOptions options)
-    {
+    public override void Write(Utf8JsonWriter writer, BaseEvent value, JsonSerializerOptions options) {
         var eventType = value.GetType();
         JsonSerializer.Serialize(writer, value, eventType, options);
     }
