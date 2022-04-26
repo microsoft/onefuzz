@@ -12,18 +12,25 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState>
     IAsyncEnumerable<Task> SearchStates(Guid? jobId = null, IEnumerable<TaskState>? states = null);
 
     IEnumerable<string>? GetInputContainerQueues(TaskConfig config);
+
     IAsyncEnumerable<Task> SearchExpired();
     Async.Task MarkStopping(Task task);
+    Async.Task<TaskVm?> GetReproVmConfig(Task task);
+
 }
 
 public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
 {
     private readonly IEvents _events;
     private readonly IJobOperations _jobOperations;
+    private readonly IPoolOperations _poolOperations;
+    private readonly IScalesetOperations _scalesetOperations;
 
-    public TaskOperations(IStorage storage, ILogTracer log, IServiceConfig config, IEvents events, IJobOperations jobOperations)
+    public TaskOperations(IStorage storage, ILogTracer log, IServiceConfig config, IPoolOperations poolOperations, IScalesetOperations scalesetOperations, IEvents events, IJobOperations jobOperations)
         : base(storage, log, config)
     {
+        _poolOperations = poolOperations;
+        _scalesetOperations = scalesetOperations;
         _events = events;
         _jobOperations = jobOperations;
     }
@@ -67,6 +74,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
     {
         throw new NotImplementedException();
     }
+
 
     public IAsyncEnumerable<Task> SearchExpired()
     {
@@ -197,4 +205,37 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
         return task;
 
     }
+
+    public async Async.Task<TaskVm?> GetReproVmConfig(Task task)
+    {
+        if (task.Config.Vm != null)
+        {
+            return task.Config.Vm;
+        }
+
+        if (task.Config.Pool == null)
+        {
+            throw new Exception($"either pool or vm must be specified: {task.TaskId}");
+        }
+
+        var pool = await _poolOperations.GetByName(task.Config.Pool.PoolName);
+
+        if (!pool.IsOk)
+        {
+            _logTracer.Info($"unable to find pool from task: {task.TaskId}");
+            return null;
+        }
+
+        var scaleset = await _scalesetOperations.SearchByPool(task.Config.Pool.PoolName).FirstOrDefaultAsync();
+
+        if (scaleset == null)
+        {
+            _logTracer.Warning($"no scalesets are defined for task: {task.JobId}:{task.TaskId}");
+            return null;
+        }
+
+        return new TaskVm(scaleset.Region, scaleset.VmSku, scaleset.Image, null);
+    }
+
+
 }

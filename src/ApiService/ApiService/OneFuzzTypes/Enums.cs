@@ -256,6 +256,20 @@ public static class TaskStateHelper
         });
     }
 
+    internal static TaskState[] NeedsWork()
+    {
+        return
+        _states.GetOrAdd(nameof(TaskStateHelper.HasStarted), k =>
+        {
+            return
+                 new[]{
+                    TaskState.Init,
+                    TaskState.Stopping
+            };
+        });
+     }
+  
+  
     public static TaskState[] ShuttingDown()
     {
         return
@@ -280,20 +294,47 @@ public static class TaskStateHelper
                     TaskState.Stopping,
                     TaskState.Stopped
 
+
+public enum PoolState
+{
+    Init,
+    Running,
+    Shutdown,
+    Halt
+}
+
+public static class PoolStateHelper
+{
+    static ConcurrentDictionary<string, PoolState[]> _states = new ConcurrentDictionary<string, PoolState[]>();
+    public static PoolState[] NeedsWork()
+    {
+        return
+        _states.GetOrAdd("NeedsWork", k =>
+        {
+            return
+                 new[]{
+                    PoolState.Init,
+                    PoolState.Shutdown,
+                    PoolState.Halt
                  };
         });
     }
 
-    internal static TaskState[] NeedsWork()
+    public static PoolState[] Available()
     {
         return
-        _states.GetOrAdd(nameof(TaskStateHelper.HasStarted), k =>
+        _states.GetOrAdd("Available", k =>
         {
             return
                  new[]{
-                    TaskState.Init,
-                    TaskState.Stopping,
+                    PoolState.Running
                  };
         });
     }
 }
+
+public enum Architecture
+{
+    x86_64
+}
+

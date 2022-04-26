@@ -870,6 +870,13 @@ namespace Tests
             return Test(e);
         }
 
+        [Property]
+        public bool Job(Job e)
+        {
+            return Test(e);
+        }
+
+
         /*
         //Sample function on how repro a failing test run, using Replay
         //functionality of FsCheck. Feel free to
