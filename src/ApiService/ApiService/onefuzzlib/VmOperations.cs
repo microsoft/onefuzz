@@ -84,7 +84,7 @@ public class VmOperations : IVmOperations {
         if (nic != null) {
             _logTracer.Info($"deleting nic {resourceGroup}:{name}");
             if (nic.Data.NetworkSecurityGroup != null && nsg != null) {
-                await _nsgOperations.DissociateNic(nsg, nic);
+                await _nsgOperations.DissociateNic((Nsg)nsg, nic);
                 return false;
             }
             await _ipOperations.DeleteNic(resourceGroup, name);

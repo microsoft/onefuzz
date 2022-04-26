@@ -8,8 +8,6 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
     public System.Threading.Tasks.Task Stopping(Repro repro);
 
     public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? States);
-
-    public IAsyncEnumerable<Repro?> SearchExpired();
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations {
