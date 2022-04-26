@@ -26,13 +26,22 @@ public class Scheduler : IScheduler {
         foreach (var bucketedTasks in buckets) {
             foreach (var chunks in bucketedTasks.Chunk(MAX_TASKS_PER_SET)) {
                 var result = BuildWorkSet(chunks);
+                if (result == null ) {
+                    continue;
+                }
             }
         }
 
         throw new NotImplementedException();
     }
 
-    private object BuildWorkSet(Task[] chunks) {
+    private object BuildWorkSet(Task[] tasks) {
+        var taskIds = tasks.Select(x => x.TaskId).ToHashSet();
+
+
+        foreach (var task in tasks) {
+
+        }
         throw new NotImplementedException();
     }
 
