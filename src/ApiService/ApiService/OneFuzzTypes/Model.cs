@@ -496,3 +496,36 @@ public record AdoTemplate();
 public record TeamsTemplate();
 
 public record GithubIssuesTemplate();
+
+public record JobConfig(
+    string Project, 
+    string Name, 
+    string Build, 
+    int Duration,
+    Uri Logs
+);
+
+public record JobTaskInfo(
+    Guid TaskId,
+    Guid JobId,
+    TaskState State
+    );
+
+//public record UserInfo(
+//    Guid? ApplicationId,
+//    Guid ObjectId,
+//    string? Upn);
+
+
+public record Job
+(
+    Guid JobId,
+    JobState State,
+    JobConfig Config,
+    Error Error,
+    DateTimeOffset? EndTime
+) : StatefulEntityBase<JobState>(State)
+{
+    public List<JobTaskInfo>? TaskInfo { get; set; }
+    public UserInfo? UserInfo { get; set; }
+}

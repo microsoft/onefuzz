@@ -222,7 +222,7 @@ public static class TaskStateHelper
     public static TaskState[] Available()
     {
         return
-        _states.GetOrAdd("Available", k =>
+        _states.GetOrAdd(nameof(TaskStateHelper.Available), k =>
         {
             return
                  new[]{
@@ -234,5 +234,42 @@ public static class TaskStateHelper
                  };
         });
     }
+
+    public static TaskState[] ShuttingDown()
+    {
+        return
+        _states.GetOrAdd(nameof(TaskStateHelper.ShuttingDown), k =>
+        {
+            return
+                 new[]{
+                    TaskState.Stopping,
+                    TaskState.Stopping,
+                 };
+        });
+    }
+
+    internal static TaskState[] HasStarted()
+    {
+        return
+        _states.GetOrAdd(nameof(TaskStateHelper.HasStarted), k =>
+        {
+            return
+                 new[]{
+                    TaskState.Running,
+                    TaskState.Stopping,
+                    TaskState.Stopped
+                    
+                 };
+        });
+    }
+}
+
+
+public enum JobState
+{
+    Init,
+    Enabled,
+    Stopping,
+    Stopped
 }
 
