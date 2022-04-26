@@ -4,7 +4,7 @@ using Azure.ResourceManager.Network;
 
 namespace Microsoft.OneFuzz.Service
 {
-    public interface INsg
+    public interface INsgOperations
     {
         Async.Task<NetworkSecurityGroupResource?> GetNsg(string name);
         public Async.Task<Error?> AssociateSubnet(string name, VirtualNetworkResource vnet, SubnetResource subnet);
@@ -12,18 +12,18 @@ namespace Microsoft.OneFuzz.Service
         bool OkToDelete(HashSet<string> active_regions, string nsg_region, string nsg_name);
         Async.Task<bool> StartDeleteNsg(string name);
 
-        Async.Task DissociateNic(NetworkInterfaceResource nic);
+        Async.Task<ResultVoid<Error>> DissociateNic(Nsg nsg, NetworkInterfaceResource nic);
     }
 
 
-    public class Nsg : INsg
+    public class NsgOperations : INsgOperations
     {
 
         private readonly ICreds _creds;
         private readonly ILogTracer _logTracer;
 
 
-        public Nsg(ICreds creds, ILogTracer logTracer)
+        public NsgOperations(ICreds creds, ILogTracer logTracer)
         {
             _creds = creds;
             _logTracer = logTracer;
@@ -54,9 +54,62 @@ namespace Microsoft.OneFuzz.Service
             return null;
         }
 
-        public System.Threading.Tasks.Task DissociateNic(NetworkInterfaceResource nic)
+        public async Async.Task<ResultVoid<Error>> DissociateNic(Nsg nsg, NetworkInterfaceResource nic)
         {
-            throw new NotImplementedException();
+            if (nic.Data.NetworkSecurityGroup == null)
+            {
+                return ResultVoid<Error>.Ok();
+            }
+
+            var azureNsg = await GetNsg(nsg.Name);
+            if (azureNsg == null)
+            {
+                return new ResultVoid<Error>(new Error(
+                    ErrorCode.UNABLE_TO_FIND,
+                    new[] { $"cannot update nsg rules. nsg {nsg.Name} not found" }
+                ));
+            }
+            if (azureNsg.Data.Id != nic.Data.NetworkSecurityGroup.Id)
+            {
+                return new ResultVoid<Error>(new Error(
+                    ErrorCode.UNABLE_TO_UPDATE,
+                    new[] {
+                        "network interface is not associated with this nsg.",
+                        $"nsg: {azureNsg.Id}, nic: {nic.Data.Name}, nic.nsg: {nic.Data.NetworkSecurityGroup.Id}"
+                    }
+                ));
+            }
+
+            _logTracer.Info($"dissociating nic {nic.Data.Name} with nsg: {_creds.GetBaseResourceGroup()} {nsg.Name}");
+            nic.Data.NetworkSecurityGroup = null;
+            try
+            {
+                await _creds.GetResourceGroupResource()
+                    .GetNetworkInterfaces()
+                    .CreateOrUpdateAsync(WaitUntil.Started, nic.Data.Name, nic.Data);
+            }
+            catch (Exception e)
+            {
+                if (IsConcurrentRequestError(e.Message))
+                {
+                    /*
+                    logging.debug(
+                        "dissociate nsg with nic had conflicts with ",
+                        "concurrent request, ignoring %s",
+                        err,
+                    )
+                    */
+                    return ResultVoid<Error>.Ok();
+                }
+                return new ResultVoid<Error>(new Error(
+                    ErrorCode.UNABLE_TO_UPDATE,
+                    new[] {
+                        $"Unable to dissociate nsg {nsg.Name} with nic {nic.Data.Name} due to {e.Message} {e.StackTrace}"
+                    }
+                ));
+            }
+
+            return ResultVoid<Error>.Ok();
         }
 
         public async Async.Task<NetworkSecurityGroupResource?> GetNsg(string name)
@@ -89,6 +142,11 @@ namespace Microsoft.OneFuzz.Service
             var nsg = await _creds.GetResourceGroupResource().GetNetworkSecurityGroupAsync(name);
             await nsg.Value.DeleteAsync(WaitUntil.Completed);
             return true;
+        }
+
+        private static bool IsConcurrentRequestError(string err)
+        {
+            return err.Contains("The request failed due to conflict with a concurrent request");
         }
     }
 }

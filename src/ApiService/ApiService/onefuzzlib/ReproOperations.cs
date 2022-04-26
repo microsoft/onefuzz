@@ -2,9 +2,14 @@ using ApiService.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IReproOperations
+public interface IReproOperations : IStatefulOrm<Repro, VmState>
 {
-    public IAsyncEnumerable<Repro?> SearchExpired();
+    public IAsyncEnumerable<Repro> SearchExpired();
+
+    public System.Threading.Tasks.Task Stopping(Repro repro);
+
+    public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? States);
+
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations
@@ -33,7 +38,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations
         _vmOperations = vmOperations;
     }
 
-    public IAsyncEnumerable<Repro?> SearchExpired()
+    public IAsyncEnumerable<Repro> SearchExpired()
     {
         return QueryAsync(filter: $"end_time lt datetime'{DateTime.UtcNow.ToString("o")}'");
     }
@@ -99,5 +104,16 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations
     {
         _logTracer.Info($"vm stopped: {repro.VmId}");
         await Delete(repro);
+    }
+
+    public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? states)
+    {
+        string? queryString = null;
+        if (states != null)
+        {
+            var statesString = String.Join(",", states);
+            queryString = $"state in ({statesString})";
+        }
+        return QueryAsync(queryString);
     }
 }

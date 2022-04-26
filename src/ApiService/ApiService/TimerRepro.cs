@@ -22,7 +22,21 @@ public class TimerRepro
         var expired = _reproOperations.SearchExpired();
         await foreach (var repro in expired)
         {
-            _log.Info($"stopping repro: {repro?.VmId}");
+            _log.Info($"stopping repro: {repro.VmId}");
+            await _reproOperations.Stopping(repro);
+        }
+
+        var expiredVmIds = expired.Select(repro => repro?.VmId);
+
+        await foreach (var repro in _reproOperations.SearchStates(VmStateHelper.NeedsWork()))
+        {
+            if (await expiredVmIds.ContainsAsync(repro.VmId))
+            {
+                // this VM already got processed during the expired phase
+                continue;
+            }
+            _log.Info($"update repro: {repro.VmId}");
+            await _reproOperations.ProcessStateUpdates(repro);
         }
     }
 

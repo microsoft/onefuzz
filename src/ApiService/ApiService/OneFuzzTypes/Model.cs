@@ -604,3 +604,5 @@ public record Job(
     List<JobTaskInfo>? TaskInfo,
     UserInfo UserInfo
 ) : StatefulEntityBase<JobState>(State);
+
+public record Nsg(string Name, Region Region);
