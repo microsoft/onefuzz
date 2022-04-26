@@ -105,7 +105,7 @@ public interface ILogTracer {
     void Critical(string message);
     void Error(string message);
     void Event(string evt, IReadOnlyDictionary<string, double>? metrics);
-    void Exception(Exception ex, IReadOnlyDictionary<string, double>? metrics);
+    void Exception(Exception ex, IReadOnlyDictionary<string, double>? metrics = null);
     void ForceFlush();
     void Info(string message);
     void Warning(string message);

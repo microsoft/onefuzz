@@ -9,6 +9,11 @@ public enum WebhookMessageFormat {
     EventGrid
 }
 
+public record WebhookMessageQueueObj(
+        Guid WebhookId,
+        Guid EventId
+        );
+
 public record WebhookMessage(Guid EventId,
     EventType EventType,
     BaseEvent Event,
@@ -27,24 +32,18 @@ public record WebhookMessageEventGrid(
     [property: JsonConverter(typeof(BaseEventConverter))]
     BaseEvent Data);
 
-
-// TODO: This should inherit from Entity Base ? no, since there is
-// a table WebhookMessaageLog
 public record WebhookMessageLog(
     [RowKey] Guid EventId,
     EventType EventType,
+    [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
+    [property: JsonConverter(typeof(BaseEventConverter))]
     BaseEvent Event,
     Guid InstanceId,
     String InstanceName,
     [PartitionKey] Guid WebhookId,
-    WebhookMessageState State = WebhookMessageState.Queued,
-    int TryCount = 0
-    ) : WebhookMessage(EventId,
-            EventType,
-            Event,
-            InstanceId,
-            InstanceName,
-            WebhookId);
+    long TryCount,
+    WebhookMessageState State = WebhookMessageState.Queued
+    ) : EntityBase();
 
 public record Webhook(
     [PartitionKey] Guid WebhookId,
