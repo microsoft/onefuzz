@@ -22,7 +22,7 @@ public class TimerRepro
         var expired = _reproOperations.SearchExpired();
         await foreach (var repro in expired)
         {
-            _log.Info($"stopping repro: {repro.VmId}");
+            _log.Info($"stopping repro: {repro?.VmId}");
         }
     }
 

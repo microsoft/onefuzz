@@ -118,7 +118,7 @@ public class VmOperations : IVmOperations
             await foreach (var disk in disks)
             {
                 _logTracer.Info($"deleting disk {resourceGroup}:{disk?.Data.Name}");
-                await _diskOperations.DeleteDisk(resourceGroup, disk?.Data.Name);
+                await _diskOperations.DeleteDisk(resourceGroup, disk?.Data.Name!);
             }
             return false;
         }
