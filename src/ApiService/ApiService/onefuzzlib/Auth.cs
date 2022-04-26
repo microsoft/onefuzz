@@ -2,10 +2,8 @@
 
 using System.Security.Cryptography;
 
-public class Auth
-{
-    public static Authentication BuildAuth()
-    {
+public class Auth {
+    public static Authentication BuildAuth() {
         var rsa = RSA.Create(2048);
         string header = "-----BEGIN RSA PRIVATE KEY-----";
         string footer = "-----END RSA PRIVATE KEY-----";

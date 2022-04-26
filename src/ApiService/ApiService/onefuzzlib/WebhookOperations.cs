@@ -299,4 +299,3 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         return await data.FirstOrDefaultAsync();
     }
 }
-

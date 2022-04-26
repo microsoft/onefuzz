@@ -1,11 +1,11 @@
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using Region = System.String;
-using PoolName = System.String;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
 using GroupId = System.Guid;
+using PoolName = System.String;
 using PrincipalId = System.Guid;
-using System.Text.Json;
+using Region = System.String;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -27,8 +27,7 @@ public record Authentication
 );
 
 [SkipRename]
-public enum HeartbeatType
-{
+public enum HeartbeatType {
     MachineAlive,
     TaskAlive,
 }
@@ -60,8 +59,7 @@ public record NodeCommand
     NodeCommandStopIfFree? StopIfFree
 );
 
-public enum NodeTaskState
-{
+public enum NodeTaskState {
     Init,
     SettingUp,
     Running,
@@ -74,8 +72,7 @@ public record NodeTasks
     NodeTaskState State = NodeTaskState.Init
 );
 
-public enum NodeState
-{
+public enum NodeState {
     Init,
     Free,
     SettingUp,
@@ -257,8 +254,7 @@ public record Task(
     Authentication? Auth,
     DateTimeOffset? Heartbeat,
     DateTimeOffset? EndTime,
-    UserInfo? UserInfo) : StatefulEntityBase<TaskState>(State)
-{
+    UserInfo? UserInfo) : StatefulEntityBase<TaskState>(State) {
     List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
     List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
 }
@@ -291,8 +287,7 @@ public record AzureVmExtensionConfig(
 public record NetworkConfig(
     string AddressSpace,
     string Subnet
-)
-{
+) {
     public static NetworkConfig Default { get; } = new NetworkConfig("10.0.0.0/8", "10.0.0.0/16");
 
 
@@ -302,8 +297,7 @@ public record NetworkConfig(
 public record NetworkSecurityGroupConfig(
     string[] AllowedServiceTags,
     string[] AllowedIps
-)
-{
+) {
     public NetworkSecurityGroupConfig() : this(Array.Empty<string>(), Array.Empty<string>()) { }
 }
 
@@ -333,8 +327,7 @@ public record InstanceConfig
 
     IDictionary<string, string>? VmTags,
     IDictionary<string, string>? VmssTags
-) : EntityBase()
-{
+) : EntityBase() {
     public InstanceConfig(string instanceName) : this(
         instanceName,
         null,
@@ -347,19 +340,14 @@ public record InstanceConfig
         null,
         null,
         null,
-        null)
-    { }
+        null) { }
 
     public InstanceConfig() : this(String.Empty) { }
 
-    public List<Guid>? CheckAdmins(List<Guid>? value)
-    {
-        if (value is not null && value.Count == 0)
-        {
+    public List<Guid>? CheckAdmins(List<Guid>? value) {
+        if (value is not null && value.Count == 0) {
             throw new ArgumentException("admins must be null or contain at least one UUID");
-        }
-        else
-        {
+        } else {
             return value;
         }
     }
@@ -367,19 +355,14 @@ public record InstanceConfig
 
     //# At the moment, this only checks allowed_aad_tenants, however adding
     //# support for 3rd party JWT validation is anticipated in a future release.
-    public ResultVoid<List<string>> CheckInstanceConfig()
-    {
+    public ResultVoid<List<string>> CheckInstanceConfig() {
         List<string> errors = new();
-        if (AllowedAadTenants.Length == 0)
-        {
+        if (AllowedAadTenants.Length == 0) {
             errors.Add("allowed_aad_tenants must not be empty");
         }
-        if (errors.Count == 0)
-        {
+        if (errors.Count == 0) {
             return ResultVoid<List<string>>.Ok();
-        }
-        else
-        {
+        } else {
             return ResultVoid<List<string>>.Error(errors);
         }
     }
@@ -414,21 +397,17 @@ public record Scaleset(
 ) : StatefulEntityBase<ScalesetState>(State);
 
 [JsonConverter(typeof(ContainerConverter))]
-public record Container(string ContainerName)
-{
+public record Container(string ContainerName) {
     public string ContainerName { get; } = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
 }
 
-public class ContainerConverter : JsonConverter<Container>
-{
-    public override Container? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
+public class ContainerConverter : JsonConverter<Container> {
+    public override Container? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         var containerName = reader.GetString();
         return containerName == null ? null : new Container(containerName);
     }
 
-    public override void Write(Utf8JsonWriter writer, Container value, JsonSerializerOptions options)
-    {
+    public override void Write(Utf8JsonWriter writer, Container value, JsonSerializerOptions options) {
         writer.WriteStringValue(value.ContainerName);
     }
 }
@@ -550,8 +529,7 @@ public record Vm(
     Authentication Auth,
     Nsg? Nsg,
     IDictionary<string, string>? Tags
-)
-{
+) {
     public string Name { get; } = Name.Length > 40 ? throw new ArgumentOutOfRangeException("VM name too long") : Name;
 };
 
@@ -563,22 +541,15 @@ public record SecretAddress(Uri Url);
 /// The secret field stores either the raw data or the address of that data
 /// This class allows us to maintain backward compatibility with existing
 /// NotificationTemplate classes
-public record SecretData<T>(T Secret)
-{
-    public override string ToString()
-    {
-        if (Secret is SecretAddress)
-        {
-            if (Secret is null)
-            {
+public record SecretData<T>(T Secret) {
+    public override string ToString() {
+        if (Secret is SecretAddress) {
+            if (Secret is null) {
                 return string.Empty;
-            }
-            else
-            {
+            } else {
                 return Secret.ToString()!;
             }
-        }
-        else
+        } else
             return "[REDACTED]";
     }
 }
@@ -602,7 +573,8 @@ public record Job(
     JobState State,
     JobConfig Config,
     string? Error,
-    DateTimeOffset? EndTime,
-    List<JobTaskInfo>? TaskInfo,
-    UserInfo UserInfo
-) : StatefulEntityBase<JobState>(State);
+    DateTimeOffset? EndTime
+) : StatefulEntityBase<JobState>(State) {
+    public List<JobTaskInfo>? TaskInfo { get; set; }
+    public UserInfo? UserInfo { get; set; }
+}

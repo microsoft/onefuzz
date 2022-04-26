@@ -1,8 +1,6 @@
-﻿namespace Microsoft.OneFuzz.Service
-{
+﻿namespace Microsoft.OneFuzz.Service {
 
-    public struct ResultVoid<T_Error>
-    {
+    public struct ResultVoid<T_Error> {
         public static ResultVoid<T_Error> Ok() => new();
         public static ResultVoid<T_Error> Error(T_Error err) => new(err);
 
@@ -19,8 +17,7 @@
     }
 
 
-    public struct Result<T_Ok, T_Error>
-    {
+    public struct Result<T_Ok, T_Error> {
         public static Result<T_Ok, T_Error> Ok(T_Ok ok) => new(ok);
         public static Result<T_Ok, T_Error> Error(T_Error err) => new(err);
 
@@ -39,8 +36,7 @@
     }
 
 
-    public struct OneFuzzResult<T_Ok>
-    {
+    public struct OneFuzzResult<T_Ok> {
         static Error NoError = new(0);
 
         readonly T_Ok? ok;
