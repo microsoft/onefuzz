@@ -541,7 +541,6 @@ namespace Tests {
             return Test(wh);
         }
 
-        
         [Property]
         public bool Notification(Notification n) {
             return Test(n);
