@@ -79,6 +79,8 @@ public class Program {
             .AddScoped<ISecretsOperations, SecretsOperations>()
             .AddScoped<IJobOperations, JobOperations>()
             .AddScoped<INsgOperations, NsgOperations>()
+            .AddScoped<IScheduler, Scheduler>()
+            .AddScoped<IConfig, Config>()
 
             //Move out expensive resources into separate class, and add those as Singleton
             // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
