@@ -44,8 +44,7 @@ public partial class TimerProxy
             }
             else
             {
-                var hash = System.Text.Encoding.UTF8.GetBytes(string.Join("|", networkConfig.AddressSpace, networkConfig.Subnet));
-                var networkId = new Guid(hash);
+                var networkId = Faithlife.Utility.GuidUtility.Create(NETWORK_GUID_NAMESPACE, string.Join("|", networkConfig.AddressSpace, networkConfig.Subnet), 5);
                 name = $"{region}-{networkId}";
             }
 

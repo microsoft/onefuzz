@@ -1,4 +1,4 @@
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System.Text.Json.Serialization;
 using Region = System.String;
 using PoolName = System.String;
@@ -497,35 +497,55 @@ public record TeamsTemplate();
 
 public record GithubIssuesTemplate();
 
+
+public record SecretAddress(Uri Url);
+
+
+/// This class allows us to store some data that are intended to be secret
+/// The secret field stores either the raw data or the address of that data
+/// This class allows us to maintain backward compatibility with existing
+/// NotificationTemplate classes
+public record SecretData<T>(T Secret)
+{
+    public override string ToString()
+    {
+        if (Secret is SecretAddress)
+        {
+            if (Secret is null)
+            {
+                return string.Empty;
+            }
+            else
+            {
+                return Secret.ToString()!;
+            }
+        }
+        else
+            return "[REDACTED]";
+    }
+}
+
 public record JobConfig(
-    string Project, 
-    string Name, 
-    string Build, 
+    string Project,
+    string Name,
+    string Build,
     int Duration,
-    Uri Logs
+    string? Logs
 );
 
 public record JobTaskInfo(
     Guid TaskId,
-    Guid JobId,
+    TaskType Type,
     TaskState State
-    );
+);
 
-//public record UserInfo(
-//    Guid? ApplicationId,
-//    Guid ObjectId,
-//    string? Upn);
-
-
-public record Job
-(
-    Guid JobId,
+public record Job(
+    [PartitionKey] Guid JobId,
     JobState State,
     JobConfig Config,
-    Error Error,
+    string? Error,
     DateTimeOffset? EndTime
-) : StatefulEntityBase<JobState>(State)
-{
+) : StatefulEntityBase<JobState>(State){
     public List<JobTaskInfo>? TaskInfo { get; set; }
     public UserInfo? UserInfo { get; set; }
 }

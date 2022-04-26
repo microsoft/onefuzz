@@ -122,16 +122,37 @@ public enum ScalesetState
     CreationFailed
 }
 
+
+public enum JobState
+{
+    Init,
+    Enabled,
+    Stopping,
+    Stopped
+}
+
+public static class JobStateHelper
+{
+    private static readonly HashSet<JobState> _shuttingDown = new HashSet<JobState>(new[] { JobState.Stopping, JobState.Stopped });
+    private static readonly HashSet<JobState> _avaiable = new HashSet<JobState>(new[] { JobState.Init, JobState.Enabled });
+    private static readonly HashSet<JobState> _needsWork = new HashSet<JobState>(new[] { JobState.Init, JobState.Stopping });
+
+    public static IReadOnlySet<JobState> Available => _avaiable;
+    public static IReadOnlySet<JobState> NeedsWork => _needsWork;
+    public static IReadOnlySet<JobState> ShuttingDown => _shuttingDown;
+}
+
+
+
 public static class ScalesetStateHelper
 {
-
     static ConcurrentDictionary<string, ScalesetState[]> _states = new ConcurrentDictionary<string, ScalesetState[]>();
 
     /// set of states that indicate the scaleset can be updated
     public static ScalesetState[] CanUpdate()
     {
         return
-        _states.GetOrAdd("CanUpdate", k => new[]{
+        _states.GetOrAdd(nameof(CanUpdate), k => new[]{
             ScalesetState.Running,
             ScalesetState.Resize
         });
@@ -141,7 +162,7 @@ public static class ScalesetStateHelper
     public static ScalesetState[] NeedsWork()
     {
         return
-        _states.GetOrAdd("CanUpdate", k => new[]{
+        _states.GetOrAdd(nameof(NeedsWork), k => new[]{
             ScalesetState.Init,
             ScalesetState.Setup,
             ScalesetState.Resize,
@@ -154,7 +175,7 @@ public static class ScalesetStateHelper
     public static ScalesetState[] Available()
     {
         return
-        _states.GetOrAdd("CanUpdate", k =>
+        _states.GetOrAdd(nameof(Available), k =>
         {
             return
                 new[]{
@@ -168,7 +189,7 @@ public static class ScalesetStateHelper
     public static ScalesetState[] Resizing()
     {
         return
-        _states.GetOrAdd("CanDelete", k =>
+        _states.GetOrAdd(nameof(Resizing), k =>
         {
             return
                 new[]{
@@ -222,7 +243,7 @@ public static class TaskStateHelper
     public static TaskState[] Available()
     {
         return
-        _states.GetOrAdd(nameof(TaskStateHelper.Available), k =>
+        _states.GetOrAdd(nameof(Available), k =>
         {
             return
                  new[]{
@@ -258,18 +279,8 @@ public static class TaskStateHelper
                     TaskState.Running,
                     TaskState.Stopping,
                     TaskState.Stopped
-                    
+
                  };
         });
     }
 }
-
-
-public enum JobState
-{
-    Init,
-    Enabled,
-    Stopping,
-    Stopped
-}
-
