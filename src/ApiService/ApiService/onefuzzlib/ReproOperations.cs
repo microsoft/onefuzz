@@ -1,9 +1,8 @@
-using ApiService.OneFuzzLib.Orm;
+﻿using ApiService.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IReproOperations : IStatefulOrm<Repro, VmState>
-{
+public interface IReproOperations : IStatefulOrm<Repro, VmState> {
     public IAsyncEnumerable<Repro> SearchExpired();
 
     public System.Threading.Tasks.Task Stopping(Repro repro);
@@ -12,8 +11,7 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState>
 
 }
 
-public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations
-{
+public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations {
     private static readonly Dictionary<Os, string> DEFAULT_OS = new Dictionary<Os, string>
     {
         {Os.Linux, "Canonical:UbuntuServer:18.04-LTS:latest"},
@@ -30,33 +28,27 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations
     private ICreds _creds;
 
     public ReproOperations(IStorage storage, ILogTracer log, IServiceConfig config, IConfigOperations configOperations, ITaskOperations taskOperations, ICreds creds, IVmOperations vmOperations)
-        : base(storage, log, config)
-    {
+        : base(storage, log, config) {
         _configOperations = configOperations;
         _taskOperations = taskOperations;
         _creds = creds;
         _vmOperations = vmOperations;
     }
 
-    public IAsyncEnumerable<Repro> SearchExpired()
-    {
+    public IAsyncEnumerable<Repro> SearchExpired() {
         return QueryAsync(filter: $"end_time lt datetime'{DateTime.UtcNow.ToString("o")}'");
     }
 
-    public async Async.Task<Vm> GetVm(Repro repro, InstanceConfig config)
-    {
+    public async Async.Task<Vm> GetVm(Repro repro, InstanceConfig config) {
         var tags = config.VmTags;
         var task = await _taskOperations.GetByTaskId(repro.TaskId);
-        if (task == null)
-        {
+        if (task == null) {
             throw new Exception($"previous existing task missing: {repro.TaskId}");
         }
 
         var vmConfig = await _taskOperations.GetReproVmConfig(task);
-        if (vmConfig == null)
-        {
-            if (!DEFAULT_OS.ContainsKey(task.Os))
-            {
+        if (vmConfig == null) {
+            if (!DEFAULT_OS.ContainsKey(task.Os)) {
                 throw new NotImplementedException($"unsupport OS for repro {task.Os}");
             }
 
@@ -68,8 +60,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations
             );
         }
 
-        if (repro.Auth == null)
-        {
+        if (repro.Auth == null) {
             throw new Exception("missing auth");
         }
 
@@ -84,33 +75,26 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations
         );
     }
 
-    public async System.Threading.Tasks.Task Stopping(Repro repro)
-    {
+    public async System.Threading.Tasks.Task Stopping(Repro repro) {
         var config = await _configOperations.Fetch();
         var vm = await GetVm(repro, config);
-        if (!await _vmOperations.IsDeleted(vm))
-        {
+        if (!await _vmOperations.IsDeleted(vm)) {
             _logTracer.Info($"vm stopping: {repro.VmId}");
             await _vmOperations.Delete(vm);
             await Replace(repro);
-        }
-        else
-        {
+        } else {
             await Stopped(repro);
         }
     }
 
-    public async Async.Task Stopped(Repro repro)
-    {
+    public async Async.Task Stopped(Repro repro) {
         _logTracer.Info($"vm stopped: {repro.VmId}");
         await Delete(repro);
     }
 
-    public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? states)
-    {
+    public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? states) {
         string? queryString = null;
-        if (states != null)
-        {
+        if (states != null) {
             queryString = string.Join(
                 " or ",
                 states.Select(s => $"state eq '{s}'")

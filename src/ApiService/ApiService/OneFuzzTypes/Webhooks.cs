@@ -1,11 +1,10 @@
-﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
 
-public enum WebhookMessageFormat
-{
+public enum WebhookMessageFormat {
     Onefuzz,
     EventGrid
 }

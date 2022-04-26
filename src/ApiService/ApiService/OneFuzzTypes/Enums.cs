@@ -1,8 +1,7 @@
 ﻿using System.Collections.Concurrent;
 
 namespace Microsoft.OneFuzz.Service;
-public enum ErrorCode
-{
+public enum ErrorCode {
     INVALID_REQUEST = 450,
     INVALID_PERMISSION = 451,
     MISSING_EULA_AGREEMENT = 452,
@@ -29,8 +28,7 @@ public enum ErrorCode
     INVALID_CONFIGURATION = 473,
 }
 
-public enum VmState
-{
+public enum VmState {
     Init,
     ExtensionsLaunched,
     ExtensionsFailed,
@@ -40,16 +38,14 @@ public enum VmState
     Stopped
 }
 
-public enum WebhookMessageState
-{
+public enum WebhookMessageState {
     Queued,
     Retrying,
     Succeeded,
     Failed
 }
 
-public enum TaskState
-{
+public enum TaskState {
     Init,
     Waiting,
     Scheduled,
@@ -60,8 +56,7 @@ public enum TaskState
     WaitJob
 }
 
-public enum TaskType
-{
+public enum TaskType {
     Coverage,
     LibfuzzerFuzz,
     LibfuzzerCoverage,
@@ -76,14 +71,12 @@ public enum TaskType
     GenericRegression
 }
 
-public enum Os
-{
+public enum Os {
     Windows,
     Linux
 }
 
-public enum ContainerType
-{
+public enum ContainerType {
     Analysis,
     Coverage,
     Crashes,
@@ -100,19 +93,16 @@ public enum ContainerType
 }
 
 
-public enum StatsFormat
-{
+public enum StatsFormat {
     AFL
 }
 
-public enum TaskDebugFlag
-{
+public enum TaskDebugFlag {
     KeepNodeOnFailure,
     KeepNodeOnCompletion,
 }
 
-public enum ScalesetState
-{
+public enum ScalesetState {
     Init,
     Setup,
     Resize,
@@ -123,16 +113,14 @@ public enum ScalesetState
 }
 
 
-public enum JobState
-{
+public enum JobState {
     Init,
     Enabled,
     Stopping,
     Stopped
 }
 
-public static class JobStateHelper
-{
+public static class JobStateHelper {
     private static readonly HashSet<JobState> _shuttingDown = new HashSet<JobState>(new[] { JobState.Stopping, JobState.Stopped });
     private static readonly HashSet<JobState> _avaiable = new HashSet<JobState>(new[] { JobState.Init, JobState.Enabled });
     private static readonly HashSet<JobState> _needsWork = new HashSet<JobState>(new[] { JobState.Init, JobState.Stopping });
@@ -144,13 +132,11 @@ public static class JobStateHelper
 
 
 
-public static class ScalesetStateHelper
-{
+public static class ScalesetStateHelper {
     static ConcurrentDictionary<string, ScalesetState[]> _states = new ConcurrentDictionary<string, ScalesetState[]>();
 
     /// set of states that indicate the scaleset can be updated
-    public static ScalesetState[] CanUpdate()
-    {
+    public static ScalesetState[] CanUpdate() {
         return
         _states.GetOrAdd(nameof(CanUpdate), k => new[]{
             ScalesetState.Running,
@@ -159,8 +145,7 @@ public static class ScalesetStateHelper
     }
 
     /// set of states that indicate work is needed during eventing
-    public static ScalesetState[] NeedsWork()
-    {
+    public static ScalesetState[] NeedsWork() {
         return
         _states.GetOrAdd(nameof(NeedsWork), k => new[]{
             ScalesetState.Init,
@@ -172,11 +157,9 @@ public static class ScalesetStateHelper
     }
 
     /// set of states that indicate if it's available for work
-    public static ScalesetState[] Available()
-    {
+    public static ScalesetState[] Available() {
         return
-        _states.GetOrAdd(nameof(Available), k =>
-        {
+        _states.GetOrAdd(nameof(Available), k => {
             return
                 new[]{
                 ScalesetState.Resize,
@@ -186,11 +169,9 @@ public static class ScalesetStateHelper
     }
 
     /// set of states that indicate scaleset is resizing
-    public static ScalesetState[] Resizing()
-    {
+    public static ScalesetState[] Resizing() {
         return
-        _states.GetOrAdd(nameof(Resizing), k =>
-        {
+        _states.GetOrAdd(nameof(Resizing), k => {
             return
                 new[]{
                 ScalesetState.Halt,
@@ -202,15 +183,12 @@ public static class ScalesetStateHelper
 }
 
 
-public static class VmStateHelper
-{
+public static class VmStateHelper {
 
     static ConcurrentDictionary<string, VmState[]> _states = new ConcurrentDictionary<string, VmState[]>();
-    public static VmState[] NeedsWork()
-    {
+    public static VmState[] NeedsWork() {
         return
-        _states.GetOrAdd(nameof(VmStateHelper.NeedsWork), k =>
-        {
+        _states.GetOrAdd(nameof(VmStateHelper.NeedsWork), k => {
             return
                 new[]{
                 VmState.Init,
@@ -220,11 +198,9 @@ public static class VmStateHelper
         });
     }
 
-    public static VmState[] Available()
-    {
+    public static VmState[] Available() {
         return
-        _states.GetOrAdd(nameof(VmStateHelper.Available), k =>
-        {
+        _states.GetOrAdd(nameof(VmStateHelper.Available), k => {
             return
                 new[]{
                 VmState.Init,
@@ -237,14 +213,11 @@ public static class VmStateHelper
     }
 }
 
-public static class TaskStateHelper
-{
+public static class TaskStateHelper {
     static ConcurrentDictionary<string, TaskState[]> _states = new ConcurrentDictionary<string, TaskState[]>();
-    public static TaskState[] Available()
-    {
+    public static TaskState[] Available() {
         return
-        _states.GetOrAdd(nameof(Available), k =>
-        {
+        _states.GetOrAdd(nameof(Available), k => {
             return
                  new[]{
                     TaskState.Waiting,
@@ -257,22 +230,18 @@ public static class TaskStateHelper
     }
 }
 
-public enum PoolState
-{
+public enum PoolState {
     Init,
     Running,
     Shutdown,
     Halt
 }
 
-public static class PoolStateHelper
-{
+public static class PoolStateHelper {
     static ConcurrentDictionary<string, PoolState[]> _states = new ConcurrentDictionary<string, PoolState[]>();
-    public static PoolState[] NeedsWork()
-    {
+    public static PoolState[] NeedsWork() {
         return
-        _states.GetOrAdd("NeedsWork", k =>
-        {
+        _states.GetOrAdd("NeedsWork", k => {
             return
                  new[]{
                     PoolState.Init,
@@ -282,11 +251,9 @@ public static class PoolStateHelper
         });
     }
 
-    public static PoolState[] Available()
-    {
+    public static PoolState[] Available() {
         return
-        _states.GetOrAdd("Available", k =>
-        {
+        _states.GetOrAdd("Available", k => {
             return
                  new[]{
                     PoolState.Running
@@ -295,7 +262,6 @@ public static class PoolStateHelper
     }
 }
 
-public enum Architecture
-{
+public enum Architecture {
     x86_64
 }

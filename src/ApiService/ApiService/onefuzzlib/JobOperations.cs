@@ -2,18 +2,15 @@
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IJobOperations : IStatefulOrm<Job, JobState>
-{
+public interface IJobOperations : IStatefulOrm<Job, JobState> {
 
 }
 
 
-public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations
-{
+public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
 
     public JobOperations(IStorage storage, ILogTracer log, IServiceConfig config)
-        : base(storage, log, config)
-    {
+        : base(storage, log, config) {
     }
 
 }

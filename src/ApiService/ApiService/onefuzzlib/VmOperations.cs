@@ -1,11 +1,10 @@
+﻿using Azure;
 using Azure.ResourceManager.Compute;
-using Azure;
 
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IVmOperations
-{
+public interface IVmOperations {
     Async.Task<bool> IsDeleted(Vm vm);
 
     Async.Task<bool> HasComponents(string name);
@@ -16,8 +15,7 @@ public interface IVmOperations
 
 }
 
-public class VmOperations : IVmOperations
-{
+public class VmOperations : IVmOperations {
     private ILogTracer _logTracer;
 
     private ICreds _creds;
@@ -28,34 +26,28 @@ public class VmOperations : IVmOperations
 
     private INsgOperations _nsgOperations;
 
-    public VmOperations(ILogTracer log, ICreds creds, IIpOperations ipOperations, IDiskOperations diskOperations, INsgOperations nsgOperations)
-    {
+    public VmOperations(ILogTracer log, ICreds creds, IIpOperations ipOperations, IDiskOperations diskOperations, INsgOperations nsgOperations) {
         _logTracer = log;
         _creds = creds;
         _ipOperations = ipOperations;
         _diskOperations = diskOperations;
         _nsgOperations = nsgOperations;
     }
-    public async Async.Task<bool> IsDeleted(Vm vm)
-    {
+    public async Async.Task<bool> IsDeleted(Vm vm) {
         return !(await HasComponents(vm.Name));
     }
 
-    public async Async.Task<bool> HasComponents(string name)
-    {
+    public async Async.Task<bool> HasComponents(string name) {
         var resourceGroup = _creds.GetBaseResourceGroup();
-        if (await GetVm(name) != null)
-        {
+        if (await GetVm(name) != null) {
             return true;
         }
 
-        if (await _ipOperations.GetPublicNic(resourceGroup, name) != null)
-        {
+        if (await _ipOperations.GetPublicNic(resourceGroup, name) != null) {
             return true;
         }
 
-        if (await _ipOperations.GetIp(resourceGroup, name) != null)
-        {
+        if (await _ipOperations.GetIp(resourceGroup, name) != null) {
             return true;
         }
 
@@ -64,41 +56,34 @@ public class VmOperations : IVmOperations
             .Where(disk => disk.Data.Name.StartsWith(name))
             .AnyAsync();
 
-        if (disks)
-        {
+        if (disks) {
             return true;
         }
 
         return false;
     }
 
-    public async Async.Task<VirtualMachineResource?> GetVm(string name)
-    {
+    public async Async.Task<VirtualMachineResource?> GetVm(string name) {
         return await _creds.GetResourceGroupResource().GetVirtualMachineAsync(name);
     }
 
-    public async Async.Task<bool> Delete(Vm vm)
-    {
+    public async Async.Task<bool> Delete(Vm vm) {
         return await DeleteVmComponents(vm.Name, vm.Nsg);
     }
 
-    public async Async.Task<bool> DeleteVmComponents(string name, Nsg? nsg)
-    {
+    public async Async.Task<bool> DeleteVmComponents(string name, Nsg? nsg) {
         var resourceGroup = _creds.GetBaseResourceGroup();
         _logTracer.Info($"deleting vm components {resourceGroup}:{name}");
-        if (GetVm(name) != null)
-        {
+        if (GetVm(name) != null) {
             _logTracer.Info($"deleting vm {resourceGroup}:{name}");
             await DeleteVm(name);
             return false;
         }
 
         var nic = await _ipOperations.GetPublicNic(resourceGroup, name);
-        if (nic != null)
-        {
+        if (nic != null) {
             _logTracer.Info($"deleting nic {resourceGroup}:{name}");
-            if (nic.Data.NetworkSecurityGroup != null && nsg != null)
-            {
+            if (nic.Data.NetworkSecurityGroup != null && nsg != null) {
                 await _nsgOperations.DissociateNic(nsg, nic);
                 return false;
             }
@@ -106,8 +91,7 @@ public class VmOperations : IVmOperations
             return false;
         }
 
-        if (await _ipOperations.GetIp(resourceGroup, name) != null)
-        {
+        if (await _ipOperations.GetIp(resourceGroup, name) != null) {
             _logTracer.Info($"deleting ip {resourceGroup}:{name}");
             await _ipOperations.DeleteIp(resourceGroup, name);
             return false;
@@ -117,10 +101,8 @@ public class VmOperations : IVmOperations
             .ToAsyncEnumerable()
             .Where(disk => disk.Data.Name.StartsWith(name));
 
-        if (await disks.AnyAsync())
-        {
-            await foreach (var disk in disks)
-            {
+        if (await disks.AnyAsync()) {
+            await foreach (var disk in disks) {
                 _logTracer.Info($"deleting disk {resourceGroup}:{disk?.Data.Name}");
                 await _diskOperations.DeleteDisk(resourceGroup, disk?.Data.Name!);
             }
@@ -130,8 +112,7 @@ public class VmOperations : IVmOperations
         return true;
     }
 
-    public async System.Threading.Tasks.Task DeleteVm(string name)
-    {
+    public async System.Threading.Tasks.Task DeleteVm(string name) {
         _logTracer.Info($"deleting vm: {_creds.GetBaseResourceGroup()} {name}");
         await _creds.GetResourceGroupResource()
             .GetVirtualMachineAsync(name).Result.Value
