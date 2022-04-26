@@ -6,17 +6,15 @@ public interface IJobOperations : IStatefulOrm<Job, JobState> {
     System.Threading.Tasks.Task<Job?> Get(Guid jobId);
     System.Threading.Tasks.Task OnStart(Job job);
     IAsyncEnumerable<Job> SearchExpired();
-    System.Threading.Tasks.Task Stopping(Job job);
+    System.Threading.Tasks.Task Stopping(Job job, ITaskOperations taskOperations);
     IAsyncEnumerable<Job> SearchState(IEnumerable<JobState> states);
     System.Threading.Tasks.Task StopNeverStartedJobs();
 }
 
 public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
-    private readonly ITaskOperations _taskOperations;
     private readonly IEvents _events;
 
-    public JobOperations(IStorage storage, ILogTracer logTracer, IServiceConfig config, ITaskOperations taskOperations, IEvents events) : base(storage, logTracer, config) {
-        _taskOperations = taskOperations;
+    public JobOperations(IStorage storage, ILogTracer logTracer, IServiceConfig config, IEvents events) : base(storage, logTracer, config) {
         _events = events;
     }
 
@@ -31,7 +29,7 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
     }
 
     public IAsyncEnumerable<Job> SearchExpired() {
-        return QueryAsync(filter: $"end_time lt datetime'{DateTimeOffset.UtcNow}'");
+        return QueryAsync(filter: $"end_time lt datetime'{DateTimeOffset.UtcNow.ToString("o")}'");
     }
 
     public IAsyncEnumerable<Job> SearchState(IEnumerable<JobState> states) {
@@ -46,9 +44,9 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
         throw new NotImplementedException();
     }
 
-    public async System.Threading.Tasks.Task Stopping(Job job) {
+    public async System.Threading.Tasks.Task Stopping(Job job, ITaskOperations taskOperations) {
         job = job with { State = JobState.Stopping };
-        var tasks = await _taskOperations.QueryAsync(filter: $"job_id eq '{job.JobId}'").ToListAsync();
+        var tasks = await taskOperations.QueryAsync(filter: $"job_id eq '{job.JobId}'").ToListAsync();
         var taskNotStopped = tasks.ToLookup(task => task.State != TaskState.Stopped);
 
         var notStopped = taskNotStopped[true];
@@ -56,7 +54,7 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
 
         if (notStopped.Any()) {
             foreach (var task in notStopped) {
-                await _taskOperations.MarkStopping(task);
+                await taskOperations.MarkStopping(task);
             }
         } else {
             job = job with { State = JobState.Stopped };
