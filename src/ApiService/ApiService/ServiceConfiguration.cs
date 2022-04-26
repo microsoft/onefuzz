@@ -1,14 +1,12 @@
 ﻿namespace Microsoft.OneFuzz.Service;
 
-public enum LogDestination
-{
+public enum LogDestination {
     Console,
     AppInsights,
 }
 
 
-public interface IServiceConfig
-{
+public interface IServiceConfig {
     public LogDestination[] LogDestinations { get; set; }
 
     public ApplicationInsights.DataContracts.SeverityLevel LogSeverityLevel { get; }
@@ -40,11 +38,9 @@ public interface IServiceConfig
     public string OnefuzzVersion { get; }
 }
 
-public class ServiceConfiguration : IServiceConfig
-{
+public class ServiceConfiguration : IServiceConfig {
 
-    public ServiceConfiguration()
-    {
+    public ServiceConfiguration() {
 #if DEBUG
         LogDestinations = new LogDestination[] { LogDestination.AppInsights, LogDestination.Console };
 #else

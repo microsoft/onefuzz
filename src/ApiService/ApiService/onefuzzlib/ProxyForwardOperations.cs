@@ -3,20 +3,16 @@
 namespace Microsoft.OneFuzz.Service;
 
 
-public interface IProxyForwardOperations : IOrm<ProxyForward>
-{
+public interface IProxyForwardOperations : IOrm<ProxyForward> {
     IAsyncEnumerable<ProxyForward> SearchForward(Guid? scalesetId = null, string? region = null, Guid? machineId = null, Guid? proxyId = null, int? dstPort = null);
 }
 
 
-public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
-{
-    public ProxyForwardOperations(IStorage storage, ILogTracer logTracer, IServiceConfig config) : base(storage, logTracer, config)
-    {
+public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations {
+    public ProxyForwardOperations(IStorage storage, ILogTracer logTracer, IServiceConfig config) : base(storage, logTracer, config) {
     }
 
-    public IAsyncEnumerable<ProxyForward> SearchForward(Guid? scalesetId = null, string? region = null, Guid? machineId = null, Guid? proxyId = null, int? dstPort = null)
-    {
+    public IAsyncEnumerable<ProxyForward> SearchForward(Guid? scalesetId = null, string? region = null, Guid? machineId = null, Guid? proxyId = null, int? dstPort = null) {
 
         var conditions =
             new[] {
