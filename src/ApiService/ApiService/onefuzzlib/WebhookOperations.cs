@@ -77,7 +77,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
 
         var (data, digest) = await BuildMessage(webhookId: webhook.WebhookId, eventId: messageLog.EventId, eventType: messageLog.EventType, webhookEvent: messageLog.Event, secretToken: webhook.SecretToken, messageFormat: webhook.MessageFormat);
 
-        var headers = new Dictionary<string, string> { { "User-Agent", USER_AGENT }};
+        var headers = new Dictionary<string, string> { { "User-Agent", USER_AGENT } };
 
         if (digest != null)
         {
@@ -109,7 +109,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations
         {
             var instanceId = await _containers.GetInstanceId();
             var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _creds.GetInstanceName());
-            
+
             data = JsonSerializer.Serialize(webhookMessage, options: EntityConverter.GetJsonSerializerOptions());
         }
 
