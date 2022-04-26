@@ -28,7 +28,7 @@ public partial class TimerProxy {
         _subnet = subnet;
     }
 
-    //[Function("TimerDaily")]
+    //[Function("TimerProxy")]
     public async Async.Task Run([TimerTrigger("1.00:00:00")] TimerInfo myTimer) {
         var proxies = await _proxYOperations.QueryAsync().ToListAsync();
 

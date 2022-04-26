@@ -9,6 +9,7 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 
     public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? States);
 
+    public IAsyncEnumerable<Repro?> SearchExpired();
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations {

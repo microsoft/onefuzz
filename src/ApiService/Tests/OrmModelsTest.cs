@@ -298,9 +298,7 @@ namespace Tests {
                     State: arg.Item2,
                     Config: arg.Item3,
                     Error: arg.Item4,
-                    EndTime: arg.Item5,
-                    TaskInfo: arg.Item6,
-                    UserInfo: arg.Item7
+                    EndTime: arg.Item5
                 )
             );
         }
@@ -766,6 +764,12 @@ namespace Tests {
         public bool RegressionReportOrReport(RegressionReportOrReport e) {
             return Test(e);
         }
+
+        [Property]
+        public bool Job(Job e) {
+            return Test(e);
+        }
+
 
         /*
         //Sample function on how repro a failing test run, using Replay

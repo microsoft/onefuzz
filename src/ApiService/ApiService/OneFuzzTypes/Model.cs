@@ -571,9 +571,10 @@ public record Job(
     JobState State,
     JobConfig Config,
     string? Error,
-    DateTimeOffset? EndTime,
-    List<JobTaskInfo>? TaskInfo,
-    UserInfo UserInfo
-) : StatefulEntityBase<JobState>(State);
+    DateTimeOffset? EndTime
+) : StatefulEntityBase<JobState>(State) {
+    public List<JobTaskInfo>? TaskInfo { get; set; }
+    public UserInfo? UserInfo { get; set; }
+}
 
 public record Nsg(string Name, Region Region);

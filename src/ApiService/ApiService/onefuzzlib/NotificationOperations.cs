@@ -4,7 +4,7 @@ using Azure.Storage.Sas;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface INotificationOperations {
+public interface INotificationOperations : IOrm<Notification> {
     Async.Task NewFiles(Container container, string filename, bool failTaskOnTransientError);
 }
 
