@@ -120,14 +120,13 @@ public class Storage : IStorage {
     }
 
     public IEnumerable<string> GetAccounts(StorageType storageType) {
-        switch (storageType)
-        {
+        switch (storageType) {
             case StorageType.Corpus:
-            return CorpusAccounts();
-        case StorageType.Config:
-            return new[] { GetFuncStorage() };
-        default:
-            throw new NotImplementedException();
+                return CorpusAccounts();
+            case StorageType.Config:
+                return new[] { GetFuncStorage() };
+            default:
+                throw new NotImplementedException();
         }
     }
 }
