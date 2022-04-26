@@ -1,4 +1,4 @@
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using System.Text.Json.Serialization;
 using Region = System.String;
 using PoolName = System.String;
@@ -600,7 +600,9 @@ public record Job(
     JobState State,
     JobConfig Config,
     string? Error,
-    DateTimeOffset? EndTime,
-    List<JobTaskInfo>? TaskInfo,
-    UserInfo UserInfo
-) : StatefulEntityBase<JobState>(State);
+    DateTimeOffset? EndTime
+) : StatefulEntityBase<JobState>(State)
+{
+    public List<JobTaskInfo>? TaskInfo { get; set; }
+    public UserInfo? UserInfo { get; set; }
+}
