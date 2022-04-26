@@ -1,4 +1,4 @@
-// to avoid collision with Task in model.cs
+﻿// to avoid collision with Task in model.cs
 global using Async = System.Threading.Tasks;
 
 global using System;
@@ -87,15 +87,19 @@ public class Program
             .AddScoped<IIpOperations, IpOperations>()
             .AddScoped<IDiskOperations, DiskOperations>()
             .AddScoped<IVmOperations, VmOperations>()
-
+            .AddScoped<ISecretsOperations, SecretsOperations>()
+            .AddScoped<IJobOperations, JobOperations>()
 
             //Move out expensive resources into separate class, and add those as Singleton
             // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
+            .AddHttpClient()
         )
         .Build();
 
         host.Run();
     }
+
+
 }

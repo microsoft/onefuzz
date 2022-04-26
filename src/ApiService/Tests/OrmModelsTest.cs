@@ -71,13 +71,17 @@ namespace Tests
 
         public static Gen<ProxyForward> ProxyForward()
         {
-            return Arb.Generate<Tuple<string, int, int, IPv4Address>>().Select(
+            return Arb.Generate<Tuple<Tuple<string, int, Guid, Guid, Guid?, int>, Tuple<IPv4Address, DateTimeOffset>>>().Select(
                 arg =>
                     new ProxyForward(
-                        Region: arg.Item1,
-                        DstPort: arg.Item2,
-                        SrcPort: arg.Item3,
-                        DstIp: arg.Item4.Item.ToString()
+                        Region: arg.Item1.Item1,
+                        Port: arg.Item1.Item2,
+                        ScalesetId: arg.Item1.Item3,
+                        MachineId: arg.Item1.Item4,
+                        ProxyId: arg.Item1.Item5,
+                        DstPort: arg.Item1.Item6,
+                        DstIp: arg.Item2.Item1.ToString(),
+                        EndTime: arg.Item2.Item2
                     )
             );
         }
@@ -306,6 +310,21 @@ namespace Tests
                 )
             );
         }
+
+        public static Gen<Job> Job()
+        {
+            return Arb.Generate<Tuple<Guid, JobState, JobConfig, string?, DateTimeOffset?, List<JobTaskInfo>?, UserInfo>>().Select(
+                arg => new Job(
+                    JobId: arg.Item1,
+                    State: arg.Item2,
+                    Config: arg.Item3,
+                    Error: arg.Item4,
+                    EndTime: arg.Item5,
+                    TaskInfo: arg.Item6,
+                    UserInfo: arg.Item7
+                )
+            );
+        }
     }
 
     public class OrmArb
@@ -398,6 +417,10 @@ namespace Tests
         public static Arbitrary<WebhookMessageEventGrid> WebhookMessageEventGrid()
         {
             return Arb.From(OrmGenerators.WebhookMessageEventGrid());
+        }
+        public static Arbitrary<Job> Job()
+        {
+            return Arb.From(OrmGenerators.Job());
         }
     }
 
@@ -594,9 +617,15 @@ namespace Tests
         }
 
 
+        [Property]
+        public bool Job(Job j)
+        {
+            return Test(j);
+        }
+
         /*
         //Sample function on how repro a failing test run, using Replay
-        //functionality of FsCheck. Feel free to 
+        //functionality of FsCheck. Feel free to
         [Property]
         void Replay()
         {
@@ -845,7 +874,7 @@ namespace Tests
 
         /*
         //Sample function on how repro a failing test run, using Replay
-        //functionality of FsCheck. Feel free to 
+        //functionality of FsCheck. Feel free to
         [Property]
         void Replay()
         {

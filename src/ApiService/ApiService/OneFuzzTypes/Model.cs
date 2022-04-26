@@ -95,7 +95,7 @@ public record ProxyHeartbeat
     DateTimeOffset TimeStamp
 );
 
-public partial record Node
+public record Node
 (
     DateTimeOffset? InitializedAt,
     [PartitionKey] PoolName PoolName,
@@ -111,27 +111,40 @@ public partial record Node
 ) : StatefulEntityBase<NodeState>(State);
 
 
-public partial record ProxyForward
+public record Forward
+(
+    int SrcPort,
+    int DstPort,
+    string DstIp
+);
+
+
+public record ProxyForward
 (
     [PartitionKey] Region Region,
+    int Port,
+    Guid ScalesetId,
+    Guid MachineId,
+    Guid? ProxyId,
     [RowKey] int DstPort,
-    int SrcPort,
-    string DstIp
+    string DstIp,
+    DateTimeOffset EndTime
 ) : EntityBase();
 
-public partial record ProxyConfig
+public record ProxyConfig
 (
     Uri Url,
-    string Notification,
+    Uri Notification,
     Region Region,
     Guid? ProxyId,
-    List<ProxyForward> Forwards,
+    List<Forward> Forwards,
     string InstanceTelemetryKey,
-    string MicrosoftTelemetryKey
+    string MicrosoftTelemetryKey,
+    Guid InstanceId
 
 );
 
-public partial record Proxy
+public record Proxy
 (
     [PartitionKey] Region Region,
     [RowKey] Guid ProxyId,
@@ -539,3 +552,55 @@ public record Vm(
 {
     public string Name { get; } = Name.Length > 40 ? throw new ArgumentOutOfRangeException("VM name too long") : Name;
 };
+
+
+public record SecretAddress(Uri Url);
+
+
+/// This class allows us to store some data that are intended to be secret
+/// The secret field stores either the raw data or the address of that data
+/// This class allows us to maintain backward compatibility with existing
+/// NotificationTemplate classes
+public record SecretData<T>(T Secret)
+{
+    public override string ToString()
+    {
+        if (Secret is SecretAddress)
+        {
+            if (Secret is null)
+            {
+                return string.Empty;
+            }
+            else
+            {
+                return Secret.ToString()!;
+            }
+        }
+        else
+            return "[REDACTED]";
+    }
+}
+
+public record JobConfig(
+    string Project,
+    string Name,
+    string Build,
+    int Duration,
+    string? Logs
+);
+
+public record JobTaskInfo(
+    Guid TaskId,
+    TaskType Type,
+    TaskState State
+);
+
+public record Job(
+    [PartitionKey] Guid JobId,
+    JobState State,
+    JobConfig Config,
+    string? Error,
+    DateTimeOffset? EndTime,
+    List<JobTaskInfo>? TaskInfo,
+    UserInfo UserInfo
+) : StatefulEntityBase<JobState>(State);

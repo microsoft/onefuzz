@@ -79,8 +79,10 @@ namespace Microsoft.OneFuzz.Service
             return !active_regions.Contains(nsg_region) && nsg_region == nsg_name;
         }
 
-        // Returns True if deletion completed (thus resource not found) or successfully started.
-        // Returns False if failed to start deletion.
+        /// <summary>
+        /// Returns True if deletion completed (thus resource not found) or successfully started.
+        /// Returns False if failed to start deletion.
+        /// </summary>
         public async Async.Task<bool> StartDeleteNsg(string name)
         {
             _logTracer.Info($"deleting nsg: {name}");
