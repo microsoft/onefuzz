@@ -57,8 +57,10 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
                 queryString += " and ";
             }
 
-            var statesString = string.Join(",", states);
-            queryString += $"state in ({statesString})";
+            queryString += "(" + string.Join(
+                " or ",
+                states.Select(s => $"state eq '{s}'")
+            ) + ")";
         }
 
         return QueryAsync(filter: queryString);

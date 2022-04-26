@@ -111,8 +111,10 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations
         string? queryString = null;
         if (states != null)
         {
-            var statesString = String.Join(",", states);
-            queryString = $"state in ({statesString})";
+            queryString = string.Join(
+                " or ",
+                states.Select(s => $"state eq '{s}'")
+            );
         }
         return QueryAsync(queryString);
     }

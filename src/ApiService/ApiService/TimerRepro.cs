@@ -17,6 +17,7 @@ public class TimerRepro
         _reproOperations = reproOperations;
     }
 
+    [Function("TimerRepro")]
     public async Async.Task Run([TimerTrigger("00:00:30")] TimerInfo myTimer)
     {
         var expired = _reproOperations.SearchExpired();

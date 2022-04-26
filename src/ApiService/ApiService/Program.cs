@@ -89,6 +89,7 @@ public class Program
             .AddScoped<IVmOperations, VmOperations>()
             .AddScoped<ISecretsOperations, SecretsOperations>()
             .AddScoped<IJobOperations, JobOperations>()
+            .AddScoped<INsgOperations, NsgOperations>()
 
             //Move out expensive resources into separate class, and add those as Singleton
             // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.

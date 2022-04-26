@@ -11,13 +11,11 @@ public interface IPoolOperations
 public class PoolOperations : StatefulOrm<Pool, PoolState>, IPoolOperations
 {
     private IConfigOperations _configOperations;
-    private ITaskOperations _taskOperations;
 
-    public PoolOperations(IStorage storage, ILogTracer log, IServiceConfig config, IConfigOperations configOperations, ITaskOperations taskOperations)
+    public PoolOperations(IStorage storage, ILogTracer log, IServiceConfig config, IConfigOperations configOperations)
         : base(storage, log, config)
     {
         _configOperations = configOperations;
-        _taskOperations = taskOperations;
     }
 
     public async Async.Task<Result<Pool, Error>> GetByName(string poolName)
