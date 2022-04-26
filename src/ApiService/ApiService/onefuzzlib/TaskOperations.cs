@@ -76,7 +76,8 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
 
     public async System.Threading.Tasks.Task MarkStopping(Task task)
     {
-        if (TaskStateHelper.ShuttingDown().Contains(task.State)) {
+        if (TaskStateHelper.ShuttingDown().Contains(task.State))
+        {
             _logTracer.Verbose($"ignoring post - task stop calls to stop {task.JobId}:{task.TaskId}");
             return;
         }
@@ -88,7 +89,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
         }
     }
 
-    public async Async.Task MarkFailed(Task task, Error error, List<Task>? taskInJob =null )
+    public async Async.Task MarkFailed(Task task, Error error, List<Task>? taskInJob = null)
     {
         if (TaskStateHelper.ShuttingDown().Contains(task.State))
         {
@@ -98,7 +99,8 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
             return;
         }
 
-        if (task.Error != null) {
+        if (task.Error != null)
+        {
             _logTracer.Verbose(
                 $"ignoring additional task error {task.JobId}:{task.TaskId}"
             );
@@ -120,7 +122,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
         {
             if (t.Config.PrereqTasks != null)
             {
-                if (t.Config.PrereqTasks.Contains( t.TaskId ))
+                if (t.Config.PrereqTasks.Contains(t.TaskId))
                 {
                     await MarkFailed(task, new Error(ErrorCode.TASK_FAILED, new[] { $"prerequisite task failed.  task_id:{t.TaskId}" }), taskInJob);
                 }
@@ -128,9 +130,10 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
         }
     }
 
-    private async  Async.Task<Task> SetState(Task task, TaskState state)
+    private async Async.Task<Task> SetState(Task task, TaskState state)
     {
-        if (task.State == state) {
+        if (task.State == state)
+        {
             return task;
         }
 
@@ -149,10 +152,11 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
                     JobId: task.JobId,
                     TaskId: task.TaskId,
                     Error: task.Error,
-                    UserInfo: task.UserInfo, 
+                    UserInfo: task.UserInfo,
                     Config: task.Config)
                     );
-            } else
+            }
+            else
             {
                 await _events.SendEvent(new EventTaskStopped(
                    JobId: task.JobId,
@@ -180,16 +184,17 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations
     {
         if (task.EndTime == null)
         {
-            task = task with {EndTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(task.Config.Task.Duration)};
+            task = task with { EndTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(task.Config.Task.Duration) };
 
             Job? job = await _jobOperations.Get(task.JobId);
-            if (job != null) {
+            if (job != null)
+            {
                 await _jobOperations.OnStart(job);
             }
 
         }
 
         return task;
-        
+
     }
 }

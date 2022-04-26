@@ -8,6 +8,8 @@ public interface IJobOperations : IStatefulOrm<Job, JobState>
     System.Threading.Tasks.Task OnStart(Job job);
     IAsyncEnumerable<Job> SearchExpired();
     System.Threading.Tasks.Task Stopping(Job job);
+    IAsyncEnumerable<Job> SearchState(IEnumerable<JobState> states);
+    System.Threading.Tasks.Task StopNeverStartedJobs();
 }
 
 public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations
@@ -37,6 +39,20 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations
     public IAsyncEnumerable<Job> SearchExpired()
     {
         return QueryAsync(filter: $"end_time lt datetime'{DateTimeOffset.UtcNow}'");
+    }
+
+    public IAsyncEnumerable<Job> SearchState(IEnumerable<JobState> states)
+    {
+        var query =
+        string.Join(" or ",
+            states.Select(x => $"state eq '{x}'"));
+
+        return QueryAsync(filter: query);
+    }
+
+    public System.Threading.Tasks.Task StopNeverStartedJobs()
+    {
+        throw new NotImplementedException();
     }
 
     public async System.Threading.Tasks.Task Stopping(Job job)

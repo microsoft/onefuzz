@@ -283,4 +283,17 @@ public static class TaskStateHelper
                  };
         });
     }
+
+    internal static TaskState[] NeedsWork()
+    {
+        return
+        _states.GetOrAdd(nameof(TaskStateHelper.HasStarted), k =>
+        {
+            return
+                 new[]{
+                    TaskState.Init,
+                    TaskState.Stopping,
+                 };
+        });
+    }
 }

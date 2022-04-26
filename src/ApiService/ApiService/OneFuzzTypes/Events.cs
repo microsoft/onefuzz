@@ -133,7 +133,7 @@ record EventJobStopped(
     JobConfig Config,
     UserInfo? UserInfo,
     List<JobTaskStopped> TaskInfo
-): BaseEvent();
+) : BaseEvent();
 
 
 //record EventTaskCreated(

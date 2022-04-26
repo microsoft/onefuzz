@@ -545,7 +545,8 @@ public record Job(
     JobConfig Config,
     string? Error,
     DateTimeOffset? EndTime
-) : StatefulEntityBase<JobState>(State){
+) : StatefulEntityBase<JobState>(State)
+{
     public List<JobTaskInfo>? TaskInfo { get; set; }
     public UserInfo? UserInfo { get; set; }
 }
