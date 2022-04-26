@@ -2,7 +2,7 @@ using ApiService.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IReproOperations
+public interface IReproOperations : IStatefulOrm<Repro, VmState>
 {
     public IAsyncEnumerable<Repro?> SearchExpired();
 }
