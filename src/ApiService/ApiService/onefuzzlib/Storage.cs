@@ -121,6 +121,7 @@ public class Storage : IStorage {
 
     public IEnumerable<string> GetAccounts(StorageType storageType) {
         switch (storageType)
+        {
             case StorageType.Corpus:
             return CorpusAccounts();
         case StorageType.Config:
