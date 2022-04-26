@@ -15,8 +15,6 @@ public interface IWebhookOperations {
 
 public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
-    // Needs to eventually pull from global __version__
-    const string USER_AGENT = "onefuzz-webhook 0.0.0";
     private readonly IWebhookMessageLogOperations _webhookMessageLogOperations;
     private readonly ILogTracer _log;
     private readonly ICreds _creds;
@@ -67,7 +65,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
         var (data, digest) = await BuildMessage(webhookId: webhook.WebhookId, eventId: messageLog.EventId, eventType: messageLog.EventType, webhookEvent: messageLog.Event, secretToken: webhook.SecretToken, messageFormat: webhook.MessageFormat);
 
-        var headers = new Dictionary<string, string> { { "User-Agent", USER_AGENT } };
+        var headers = new Dictionary<string, string> { { "User-Agent", $"onefuzz-webhook {_config.OneFuzzVersion}" } };
 
         if (digest != null) {
             headers["X-Onefuzz-Digest"] = digest;
