@@ -225,13 +225,13 @@ impl SyncedDir {
     ) -> Result<()> {
         debug!("monitoring {}", path.display());
 
-        let mut monitor = DirectoryMonitor::new(path.clone());
+        let mut monitor = DirectoryMonitor::new(path.clone())?;
         monitor.start()?;
 
         if let Some(path) = url.as_file_path() {
             fs::create_dir_all(&path).await?;
 
-            while let Some(item) = monitor.next_file().await {
+            while let Some(item) = monitor.next_file().await? {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
@@ -267,7 +267,7 @@ impl SyncedDir {
         } else {
             let mut uploader = BlobUploader::new(url.url()?);
 
-            while let Some(item) = monitor.next_file().await {
+            while let Some(item) = monitor.next_file().await? {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
