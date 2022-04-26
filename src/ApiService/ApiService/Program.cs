@@ -1,26 +1,20 @@
-// to avoid collision with Task in model.cs
-global using Async = System.Threading.Tasks;
-
+﻿// to avoid collision with Task in model.cs
 global using System;
 global using System.Collections.Generic;
 global using System.Linq;
-
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Azure.Functions.Worker.Middleware;
+global using Async = System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Middleware;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Microsoft.OneFuzz.Service;
 
-public class Program
-{
-    public class LoggingMiddleware : IFunctionsWorkerMiddleware
-    {
-        public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next)
-        {
+public class Program {
+    public class LoggingMiddleware : IFunctionsWorkerMiddleware {
+        public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
             var log = (ILogTracerInternal?)context.InstanceServices.GetService<ILogTracer>();
-            if (log is not null)
-            {
+            if (log is not null) {
                 //TODO
                 //if correlation ID is available in HTTP request
                 //if correlation ID is available in Queue message
@@ -37,14 +31,11 @@ public class Program
     }
 
 
-    public static List<ILog> GetLoggers(IServiceConfig config)
-    {
+    public static List<ILog> GetLoggers(IServiceConfig config) {
         List<ILog> loggers = new List<ILog>();
-        foreach (var dest in config.LogDestinations)
-        {
+        foreach (var dest in config.LogDestinations) {
             loggers.Add(
-                dest switch
-                {
+                dest switch {
                     LogDestination.AppInsights => new AppInsights(config.ApplicationInsightsInstrumentationKey!),
                     LogDestination.Console => new Console(),
                     _ => throw new Exception($"Unhandled Log Destination type: {dest}"),
@@ -54,13 +45,12 @@ public class Program
         return loggers;
     }
 
-
-    public static void Main()
-    {
+    //Move out expensive resources into separate class, and add those as Singleton
+    // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
+    public static void Main() {
         var host = new HostBuilder()
         .ConfigureFunctionsWorkerDefaults(
-            builder =>
-            {
+            builder => {
                 builder.UseMiddleware<LoggingMiddleware>();
             }
         )
@@ -82,15 +72,26 @@ public class Program
             .AddScoped<IReports, Reports>()
             .AddScoped<INotificationOperations, NotificationOperations>()
             .AddScoped<IUserCredentials, UserCredentials>()
-
+            .AddScoped<IReproOperations, ReproOperations>()
+            .AddScoped<IPoolOperations, PoolOperations>()
+            .AddScoped<IIpOperations, IpOperations>()
+            .AddScoped<IDiskOperations, DiskOperations>()
+            .AddScoped<IVmOperations, VmOperations>()
+            .AddScoped<ISecretsOperations, SecretsOperations>()
+            .AddScoped<IJobOperations, JobOperations>()
+            .AddScoped<IScheduler, Scheduler>()
+            .AddScoped<IConfig, Config>()
 
             //Move out expensive resources into separate class, and add those as Singleton
-            // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
+            // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.\
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
+            .AddHttpClient()
         )
         .Build();
 
         host.Run();
     }
+
+
 }

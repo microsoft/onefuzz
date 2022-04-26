@@ -1,14 +1,12 @@
 ﻿namespace Microsoft.OneFuzz.Service;
 
-public enum LogDestination
-{
+public enum LogDestination {
     Console,
     AppInsights,
 }
 
 
-public interface IServiceConfig
-{
+public interface IServiceConfig {
     public LogDestination[] LogDestinations { get; set; }
 
     public ApplicationInsights.DataContracts.SeverityLevel LogSeverityLevel { get; }
@@ -36,13 +34,13 @@ public interface IServiceConfig
 
     public string? OneFuzzResourceGroup { get; }
     public string? OneFuzzTelemetry { get; }
+
+    public string OneFuzzVersion { get; }
 }
 
-public class ServiceConfiguration : IServiceConfig
-{
+public class ServiceConfiguration : IServiceConfig {
 
-    public ServiceConfiguration()
-    {
+    public ServiceConfiguration() {
 #if DEBUG
         LogDestinations = new LogDestination[] { LogDestination.AppInsights, LogDestination.Console };
 #else
@@ -79,4 +77,5 @@ public class ServiceConfiguration : IServiceConfig
     public string? OneFuzzOwner { get => Environment.GetEnvironmentVariable("ONEFUZZ_OWNER"); }
     public string? OneFuzzResourceGroup { get => Environment.GetEnvironmentVariable("ONEFUZZ_RESOURCE_GROUP"); }
     public string? OneFuzzTelemetry { get => Environment.GetEnvironmentVariable("ONEFUZZ_TELEMETRY"); }
+    public string OneFuzzVersion { get => Environment.GetEnvironmentVariable("ONEFUZZ_VERSION") ?? "0.0.0"; }
 }
