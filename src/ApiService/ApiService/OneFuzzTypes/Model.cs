@@ -206,9 +206,9 @@ public record TaskVm(
     Region Region,
     string Sku,
     string Image,
-    int Count,
-    bool SpotInstance,
-    bool? RebootAfterSetup
+    bool? RebootAfterSetup,
+    int Count = 1,
+    bool SpotInstance = false
 );
 
 public record TaskPool(
@@ -496,6 +496,62 @@ public record AdoTemplate();
 public record TeamsTemplate();
 
 public record GithubIssuesTemplate();
+
+public record Repro(
+    DateTimeOffset Timestamp,
+    Guid VmId,
+    Guid TaskId,
+    ReproConfig Config,
+    VmState State,
+    Authentication? Auth,
+    Os Os,
+    Error? Error,
+    string? Ip,
+    DateTime? EndTime,
+    UserInfo? UserInfo
+) : StatefulEntityBase<VmState>(State);
+
+public record ReproConfig(
+    Container Container,
+    string Path,
+    // TODO: Make this >1 and < 7*24 (more than one hour, less than seven days)
+    int Duration
+);
+
+public record Pool(
+    DateTimeOffset Timestamp,
+    PoolName Name,
+    Guid PoolId,
+    Os Os,
+    bool Managed,
+    // Skipping AutoScaleConfig because it's not used anymore
+    Architecture Architecture,
+    PoolState State,
+    Guid? ClientId,
+    List<Node>? Nodes,
+    AgentConfig? Config,
+    List<WorkSetSummary>? WorkQueue,
+    List<ScalesetSummary>? ScalesetSummary
+) : StatefulEntityBase<PoolState>(State);
+
+
+// TODO
+public record AgentConfig();
+public record WorkSetSummary();
+public record ScalesetSummary();
+
+public record Vm(
+    string Name,
+    Region Region,
+    string Sku,
+    string Image,
+    Authentication Auth,
+    Nsg? Nsg,
+    IDictionary<string, string>? Tags
+)
+{
+    public string Name { get; } = Name.Length > 40 ? throw new ArgumentOutOfRangeException("VM name too long") : Name;
+};
 
 
 public record SecretAddress(Uri Url);

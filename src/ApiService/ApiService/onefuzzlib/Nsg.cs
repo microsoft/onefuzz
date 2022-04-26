@@ -11,6 +11,8 @@ namespace Microsoft.OneFuzz.Service
         IAsyncEnumerable<NetworkSecurityGroupResource> ListNsgs();
         bool OkToDelete(HashSet<string> active_regions, string nsg_region, string nsg_name);
         Async.Task<bool> StartDeleteNsg(string name);
+
+        Async.Task DissociateNic(NetworkInterfaceResource nic);
     }
 
 
@@ -50,6 +52,11 @@ namespace Microsoft.OneFuzz.Service
             subnet.Data.NetworkSecurityGroup = nsg.Data;
             var result = await vnet.GetSubnets().CreateOrUpdateAsync(WaitUntil.Started, subnet.Data.Name, subnet.Data);
             return null;
+        }
+
+        public System.Threading.Tasks.Task DissociateNic(NetworkInterfaceResource nic)
+        {
+            throw new NotImplementedException();
         }
 
         public async Async.Task<NetworkSecurityGroupResource?> GetNsg(string name)

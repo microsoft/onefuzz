@@ -257,3 +257,45 @@ public static class TaskStateHelper
     }
 }
 
+public enum PoolState
+{
+    Init,
+    Running,
+    Shutdown,
+    Halt
+}
+
+public static class PoolStateHelper
+{
+    static ConcurrentDictionary<string, PoolState[]> _states = new ConcurrentDictionary<string, PoolState[]>();
+    public static PoolState[] NeedsWork()
+    {
+        return
+        _states.GetOrAdd("NeedsWork", k =>
+        {
+            return
+                 new[]{
+                    PoolState.Init,
+                    PoolState.Shutdown,
+                    PoolState.Halt
+                 };
+        });
+    }
+
+    public static PoolState[] Available()
+    {
+        return
+        _states.GetOrAdd("Available", k =>
+        {
+            return
+                 new[]{
+                    PoolState.Running
+                 };
+        });
+    }
+}
+
+public enum Architecture
+{
+    x86_64
+}
