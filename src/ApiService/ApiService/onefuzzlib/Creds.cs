@@ -60,16 +60,14 @@ public class Creds : ICreds {
         return new ResourceIdentifier(resourceId);
     }
 
-    public string GetInstanceName()
-    {
+    public string GetInstanceName() {
         var instanceName = _config.OneFuzzInstanceName
             ?? throw new System.Exception("Instance Name env var is not present");
 
         return instanceName;
     }
 
-    public ResourceGroupResource GetResourceGroupResource()
-    {
+    public ResourceGroupResource GetResourceGroupResource() {
         var resourceId = GetResourceGroupResourceIdentifier();
         return ArmClient.GetResourceGroupResource(resourceId);
     }

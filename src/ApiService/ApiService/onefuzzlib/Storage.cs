@@ -97,17 +97,14 @@ public class Storage : IStorage {
         return (resourceId.Name, key?.Value);
     }
 
-    public string ChooseAccounts(StorageType storageType)
-    {
+    public string ChooseAccounts(StorageType storageType) {
         var accounts = GetAccounts(storageType);
-        if (!accounts.Any())
-        {
+        if (!accounts.Any()) {
             throw new Exception($"No Storage Accounts for {storageType}");
         }
 
         var account_list = accounts.ToList();
-        if (account_list.Count == 1)
-        {
+        if (account_list.Count == 1) {
             return account_list[0];
         }
 
@@ -122,15 +119,14 @@ public class Storage : IStorage {
         return account_list[index];  // nosec
     }
 
-    public IEnumerable<string> GetAccounts(StorageType storageType)
-    {
+    public IEnumerable<string> GetAccounts(StorageType storageType) {
         switch (storageType)
             case StorageType.Corpus:
-                return CorpusAccounts();
-            case StorageType.Config:
-                return new[] { GetFuncStorage() };
-            default:
-                throw new NotImplementedException();
+            return CorpusAccounts();
+        case StorageType.Config:
+            return new[] { GetFuncStorage() };
+        default:
+            throw new NotImplementedException();
         }
     }
 }
