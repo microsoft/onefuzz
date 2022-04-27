@@ -65,6 +65,7 @@ public class Creds : ICreds {
     }
 
     public string GetBaseRegion() {
-        return ArmClient.GetResourceGroupResource(GetResourceGroupResourceIdentifier()).Data.Location.Name;
+        return ArmClient.GetResourceGroupResource(GetResourceGroupResourceIdentifier())
+            .Get().Value.Data.Location.Name;
     }
 }
