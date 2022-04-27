@@ -17,7 +17,7 @@ public class Scheduler : IScheduler {
         _config = config;
     }
 
-    public async System.Threading.Tasks.Task ScheduleTasks() {
+    public async Async.Task ScheduleTasks() {
         var tasks = await _taskOperations.SearchStates(states: new[] { TaskState.Waiting }).ToDictionaryAsync(x => x.TaskId);
         var seen = new HashSet<Guid>();
 
