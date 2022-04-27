@@ -37,6 +37,20 @@ timed_test!(test_monitor_nonexistent_path, async move {
     Ok(())
 });
 
+timed_test!(test_monitor_file, async move {
+    let dir = tempdir()?;
+
+    // Create a file to erroneously watch.
+    let file_path = dir.path().join("some-file.txt");
+    tokio::fs::write(&file_path, "aaaaaa").await?;
+
+    let mut monitor = DirectoryMonitor::new(&file_path)?;
+
+    assert!(monitor.start().await.is_err());
+
+    Ok(())
+});
+
 timed_test!(test_monitor_dir, async move {
     let dir = tempdir()?;
     let mut monitor = DirectoryMonitor::new(dir.path())?;
