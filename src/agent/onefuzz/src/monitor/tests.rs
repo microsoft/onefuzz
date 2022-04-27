@@ -91,9 +91,13 @@ timed_test!(test_monitor_dir_create_files, async move {
     assert_eq!(monitor.next_file().await?, Some(canonicalize(&file_b)?));
     assert_eq!(monitor.next_file().await?, Some(canonicalize(&file_c)?));
 
-    dir.close()?;
-
-    assert_eq!(monitor.next_file().await?, None);
+    // TODO: on Windows, `notify` doesn't provide an event for the removal of a
+    // watched directory, so we can't proactively close our channel.
+    #[cfg(not(target_os = "windows"))]
+    {
+        dir.close()?;
+        assert_eq!(monitor.next_file().await?, None);
+    }
 
     let _ = monitor.stop();
 
