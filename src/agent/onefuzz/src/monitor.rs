@@ -5,7 +5,10 @@ use std::path::PathBuf;
 
 use anyhow::{format_err, Result};
 use notify::{Event, EventKind, Watcher};
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
+use tokio::{
+    fs,
+    sync::mpsc::{unbounded_channel, UnboundedReceiver},
+};
 
 pub struct DirectoryMonitor {
     dir: PathBuf,
@@ -31,11 +34,13 @@ impl DirectoryMonitor {
         })
     }
 
-    pub fn start(&mut self) -> Result<()> {
+    pub async fn start(&mut self) -> Result<()> {
         use notify::RecursiveMode;
 
         // Canonicalize so we can compare the watched dir to paths in the events.
-        self.dir = std::fs::canonicalize(&self.dir)?;
+        self.dir = fs::canonicalize(&self.dir).await?;
+
+        // Initialize the watcher.
         self.watcher.watch(&self.dir, RecursiveMode::NonRecursive)?;
 
         Ok(())
@@ -100,3 +105,6 @@ impl DirectoryMonitor {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

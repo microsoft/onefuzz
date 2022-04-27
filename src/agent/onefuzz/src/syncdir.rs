@@ -226,7 +226,7 @@ impl SyncedDir {
         debug!("monitoring {}", path.display());
 
         let mut monitor = DirectoryMonitor::new(path.clone())?;
-        monitor.start()?;
+        monitor.start().await?;
 
         if let Some(path) = url.as_file_path() {
             fs::create_dir_all(&path).await?;

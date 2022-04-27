@@ -312,7 +312,7 @@ pub async fn monitor_reports(
     }
 
     let mut monitor = DirectoryMonitor::new(base_dir)?;
-    monitor.start()?;
+    monitor.start().await?;
     while let Some(file) = monitor.next_file().await? {
         let result = parse_report_file(file).await?;
         result.save(unique_reports, reports, no_crash).await?;
