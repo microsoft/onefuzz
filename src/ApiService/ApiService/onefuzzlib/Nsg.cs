@@ -46,7 +46,7 @@ namespace Microsoft.OneFuzz.Service {
             return null;
         }
 
-        public System.Threading.Tasks.Task DissociateNic(NetworkInterfaceResource nic) {
+        public Async.Task DissociateNic(NetworkInterfaceResource nic) {
             throw new NotImplementedException();
         }
 
