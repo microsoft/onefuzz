@@ -72,18 +72,24 @@ timed_test!(test_monitor_dir_symlink, async move {
 });
 
 timed_test!(test_monitor_dir_create_files, async move {
+    use std::fs::canonicalize;
+
     let dir = tempdir()?;
     let mut monitor = DirectoryMonitor::new(dir.path())?;
 
     assert!(monitor.start().await.is_ok());
 
-    fs::write(dir.path().join("a.txt"), "aaa").await?;
-    fs::write(dir.path().join("b.txt"), "bbb").await?;
-    fs::write(dir.path().join("c.txt"), "ccc").await?;
+    let file_a = dir.path().join("a.txt");
+    let file_b = dir.path().join("b.txt");
+    let file_c = dir.path().join("c.txt");
 
-    assert_eq!(monitor.next_file().await?, Some(dir.path().join("a.txt")));
-    assert_eq!(monitor.next_file().await?, Some(dir.path().join("b.txt")));
-    assert_eq!(monitor.next_file().await?, Some(dir.path().join("c.txt")));
+    fs::write(&file_a, "aaa").await?;
+    fs::write(&file_b, "bbb").await?;
+    fs::write(&file_c, "ccc").await?;
+
+    assert_eq!(monitor.next_file().await?, Some(canonicalize(&file_a)?));
+    assert_eq!(monitor.next_file().await?, Some(canonicalize(&file_b)?));
+    assert_eq!(monitor.next_file().await?, Some(canonicalize(&file_c)?));
 
     dir.close()?;
 
