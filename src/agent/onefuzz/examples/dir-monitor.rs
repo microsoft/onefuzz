@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 use anyhow::Result;
 use onefuzz::monitor::DirectoryMonitor;
 use structopt::StructOpt;
