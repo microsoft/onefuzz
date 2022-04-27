@@ -275,12 +275,6 @@ public class EntityConverter {
             var stringParam = string.Join(", ", parameters);
             throw new Exception($"Could not initialize object of type {typeof(T)} with the following parameters: {stringParam} constructor {entityInfo.constructor}");
         }
-        // var entityRecord = (T)entityInfo.constructor.Invoke(parameters);
-        // if (entity.ETag != _emptyETag) {
-        //     entityRecord.ETag = entity.ETag;
-        // }
-        // entityRecord.TimeStamp = entity.Timestamp;
-        
         
     }
 
