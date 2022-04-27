@@ -55,30 +55,15 @@ namespace Microsoft.OneFuzz.Service {
             var options = EntityConverter.GetJsonSerializerOptions();
             options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             options.Converters.Add(new RemoveUserInfo());
-            var serializedEvent = JsonSerializer.Serialize(anEvent, options);
+            var serializedEvent = JsonSerializer.Serialize(anEvent, anEvent.GetType(), options);
             _log.WithTag("Event Type", eventType.ToString()).Info($"sending event: {eventType} - {serializedEvent}");
         }
     }
 
 
-    internal class RemoveUserInfo : JsonConverter<UserInfo> {
+    public class RemoveUserInfo : JsonConverter<UserInfo> {
         public override UserInfo? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-            //TODO: I might be wrong but seems like better way of doing this is to have a separate type,
-            //that if object of the type - then ignore user info...
-            var newOptions = new JsonSerializerOptions(options);
-            RemoveUserInfo? self = null;
-            foreach (var converter in newOptions.Converters) {
-                if (converter is RemoveUserInfo) {
-                    self = (RemoveUserInfo)converter;
-                    break;
-                }
-            }
-
-            if (self != null) {
-                newOptions.Converters.Remove(self);
-            }
-
-            return JsonSerializer.Deserialize<UserInfo>(ref reader, newOptions);
+            throw new NotImplementedException();
         }
 
         public override void Write(Utf8JsonWriter writer, UserInfo value, JsonSerializerOptions options) {
