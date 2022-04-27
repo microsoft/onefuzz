@@ -9,7 +9,7 @@ from onefuzztypes.models import Error
 from onefuzztypes.requests import NodeGet, NodeSearch, NodeUpdate
 from onefuzztypes.responses import BoolResult
 
-from ..onefuzzlib.endpoint_authorization import call_if_user
+from ..onefuzzlib.endpoint_authorization import call_if_user, check_require_admins
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.workers.nodes import Node, NodeMessage, NodeTasks
 
@@ -50,6 +50,10 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="NodeUpdate")
 
+    answer = check_require_admins(req)
+    if isinstance(answer, Error):
+        return not_ok(answer, context="NodeUpdate")
+
     node = Node.get_by_machine_id(request.machine_id)
     if not node:
         return not_ok(
@@ -67,6 +71,10 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     request = parse_request(NodeGet, req)
     if isinstance(request, Error):
         return not_ok(request, context="NodeDelete")
+
+    answer = check_require_admins(req)
+    if isinstance(answer, Error):
+        return not_ok(answer, context="NodeDelete")
 
     node = Node.get_by_machine_id(request.machine_id)
     if not node:
@@ -87,6 +95,10 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
     request = parse_request(NodeGet, req)
     if isinstance(request, Error):
         return not_ok(request, context="NodeReimage")
+
+    answer = check_require_admins(req)
+    if isinstance(answer, Error):
+        return not_ok(answer, context="NodeReimage")
 
     node = Node.get_by_machine_id(request.machine_id)
     if not node:
