@@ -16,6 +16,8 @@ public interface IContainers {
     public Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
     Async.Task saveBlob(Container container, string v1, string v2, StorageType config);
     Task<Guid> GetInstanceId();
+    Uri AddContainerSasUrl(Uri uri);
+    Async.Task<Uri> GetContainerSasUrl(Container container, StorageType storageType, BlobContainerSasPermissions permissions, TimeSpan? duration = null);
 }
 
 public class Containers : IContainers {
@@ -120,6 +122,38 @@ public class Containers : IContainers {
             throw new System.Exception("Blob Not Found");
         }
         return System.Guid.Parse(blob.ToString());
+    }
+
+    public Uri AddContainerSasUrl(Uri uri) {
+        if (uri.Query.Contains("sig")){
+            return uri;
+        }
+
+        var accountName = uri.Host.Split('.')[0];
+        var (_, accountKey) = _storage.GetStorageAccountNameAndKey(accountName);
+        var sasBuilder = new BlobSasBuilder(
+                BlobContainerSasPermissions.Read | BlobContainerSasPermissions.Write | BlobContainerSasPermissions.Delete | BlobContainerSasPermissions.List,
+                DateTimeOffset.UtcNow + TimeSpan.FromHours(1));
+
+        var sas = sasBuilder.ToSasQueryParameters(new StorageSharedKeyCredential(accountName, accountKey)).ToString();
+        return new UriBuilder(uri){
+            Query = sas
+        }.Uri ;
+    }
+
+    public async Async.Task<Uri> GetContainerSasUrl(Container container, StorageType storageType, BlobContainerSasPermissions permissions, TimeSpan? duration = null) {
+        var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
+        var (accountName, accountKey) = _storage.GetStorageAccountNameAndKey(client.AccountName);
+
+        var (startTime, endTime) = SasTimeWindow(duration ?? TimeSpan.FromDays(30));
+
+        var sasBuilder = new BlobSasBuilder(permissions, endTime) {
+            StartsOn = startTime,
+            BlobContainerName = container.ContainerName,
+        };
+
+        var sasUrl = client.GenerateSasUri(sasBuilder);
+        return sasUrl;
     }
 }
 

@@ -576,3 +576,103 @@ public record Job(
     public List<JobTaskInfo>? TaskInfo { get; set; }
     public UserInfo? UserInfo { get; set; }
 }
+
+
+public record WorkUnit(
+    Guid JobId,
+    Guid TaskId,
+    TaskType TaskType,
+    string Config
+);
+
+public record VmDefinition(
+    Compare Compare,
+    int Value
+);
+
+public record TaskDefinition(
+    TaskFeature[] Features,
+    VmDefinition Vm,
+    ContainerDefinition[] Containers,
+    ContainerType? MonitorQueue = null
+);
+
+
+
+
+public record ContainerDefinition(
+    ContainerType Type,
+    Compare Compare,
+    int Value,
+    ContainerPermission Permissions);
+
+
+// TODO: service shouldn't pass SyncedDir, but just the url and let the agent
+// come up with paths
+public record SyncedDir(string Path, Uri url);
+
+
+public interface IContainerDef{}
+public record SingleContainer(SyncedDir SyncedDir) :IContainerDef ;
+public record MultipleContainer(List<SyncedDir> SyncedDirs) :IContainerDef ;
+
+
+public record  TaskUnitConfig(
+    Guid InstanceId,
+    Guid JobId,
+    Guid TaskId,
+    Uri logs,
+    TaskType TaskType,
+    string? InstanceTelemetryKey,
+    string? MicrosoftTelemetryKey,
+    Uri HeartbeatQueue
+    ){
+
+
+
+    public Uri? inputQueue {get; set;}
+    public String? SupervisorExe {get; set;}
+    public Dictionary<string, string>? SupervisorEnv {get; set;}
+    public List<string>? SupervisorOptions {get; set;}
+    public string? SupervisorInputMarker {get; set;}
+    public string? TargetExe {get; set;}
+    public Dictionary<string, string>? TargetEnv {get; set;}
+    public List<string>? TargetOptions {get; set;}
+    public int? TargetTimeout {get; set;}
+    public bool? TargetOptionsMerge {get; set;}
+    public int? TargetWorkers {get; set;}
+    public bool? CheckAsanLog {get; set;}
+    public bool? CheckDebugger {get; set;}
+    public int? CheckRetryCount {get; set;}
+    public bool? CheckFuzzerHelp {get; set;}
+    public bool? ExpectCrashOnFailure {get; set;}
+    public bool? RenameOutput {get; set;}
+    public string? GeneratorExe {get; set;}
+    public Dictionary<string, string>? GeneratorEnv {get; set;}
+    public List<string>? GeneratorOptions {get; set;}
+    public string? WaitForFiles {get; set;}
+    public string? AnalyzerExe {get; set;}
+    public Dictionary<string, string>? AnalyzerEnv {get; set;}
+    public List<string>? AnalyzerOptions {get; set;}
+    public string? StatsFile {get; set;}
+    public StatsFormat? StatsFormat {get; set;}
+    public int? EnsembleSyncDelay {get; set;}
+    public List<string>? ReportList {get; set;}
+    public int? MinimizedStackDepth {get; set;}
+    public string? CoverageFilter {get; set;}
+
+    // from here forwards are Container definitions.  These need to be inline
+    // with TaskDefinitions and ContainerTypes
+    public IContainerDef? Analysis {get; set;}
+    public IContainerDef? Coverage {get; set;}
+    public IContainerDef? Crashes {get; set;}
+    public IContainerDef? Inputs {get; set;}
+    public IContainerDef? NoRepro {get; set;}
+    public IContainerDef? ReadonlyInputs {get; set;}
+    public IContainerDef? Reports {get; set;}
+    public IContainerDef? Tools {get; set;}
+    public IContainerDef? UniqueInputs {get; set;}
+    public IContainerDef? UniqueReports {get; set;}
+    public IContainerDef? RegressionReport {get; set;}
+
+    }

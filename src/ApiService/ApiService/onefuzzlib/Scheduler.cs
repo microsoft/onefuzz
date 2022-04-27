@@ -8,13 +8,19 @@ public interface IScheduler {
 public class Scheduler : IScheduler {
     private readonly ITaskOperations _taskOperations;
     private readonly IConfig _config;
+    private readonly IPoolOperations _poolOperations;
+    private readonly ILogTracer _logTracer;
+    private readonly IJobOperations _jobOperations;
 
     // TODO: eventually, this should be tied to the pool.
     const int MAX_TASKS_PER_SET = 10;
 
-    public Scheduler(ITaskOperations taskOperations, IConfig config) {
+    public Scheduler(ITaskOperations taskOperations, IConfig config, IPoolOperations poolOperations, ILogTracer logTracer, IJobOperations jobOperations) {
         _taskOperations = taskOperations;
         _config = config;
+        _poolOperations = poolOperations;
+        _logTracer = logTracer;
+        _jobOperations = jobOperations;
     }
 
     public async System.Threading.Tasks.Task ScheduleTasks() {
@@ -26,7 +32,7 @@ public class Scheduler : IScheduler {
         foreach (var bucketedTasks in buckets) {
             foreach (var chunks in bucketedTasks.Chunk(MAX_TASKS_PER_SET)) {
                 var result = BuildWorkSet(chunks);
-                if (result == null ) {
+                if (result == null) {
                     continue;
                 }
             }
@@ -35,13 +41,48 @@ public class Scheduler : IScheduler {
         throw new NotImplementedException();
     }
 
-    private object BuildWorkSet(Task[] tasks) {
+    private async Async.Task BuildWorkSet(Task[] tasks) {
         var taskIds = tasks.Select(x => x.TaskId).ToHashSet();
 
 
         foreach (var task in tasks) {
+            if ((task.Config.PrereqTasks?.Count ?? 0) > 0) {
+                // if all of the prereqs are in this bucket, they will be
+                // scheduled together
+                if (!taskIds.IsSupersetOf(task.Config.PrereqTasks!)) {
+                    if (!(await _taskOperations.CheckPrereqTasks(task))) {
+                        continue;
+                    }
+                }
+            }
+
+            var result = await BuildWorkunit(task);
 
         }
+        throw new NotImplementedException();
+    }
+
+
+    record BucketConfig(int count, bool reboot, Container setupContainer, string? setupScript, Pool pool);
+
+    private async System.Threading.Tasks.Task<(BucketConfig, WorkUnit)?> BuildWorkunit(Task task) {
+        Pool? pool = await _taskOperations.GetPool(task);
+        if (pool == null) {
+            _logTracer.Info($"unable to find pool for task: {task.TaskId}");
+            return null;
+        }
+
+        _logTracer.Info($"scheduling task: {task.TaskId}");
+
+        var job = await _jobOperations.Get(task.JobId);
+
+        if (job == null) {
+            throw new Exception($"invalid job_id {task.JobId} for task {task.TaskId}");
+        }
+
+        TaskConfig taskConfig = _config.BuildTaskConfig(job, task);
+
+
         throw new NotImplementedException();
     }
 
@@ -84,19 +125,3 @@ public class Scheduler : IScheduler {
 }
 
 
-public interface IConfig {
-    string GetSetupContainer(TaskConfig config);
-}
-
-public class Config : IConfig {
-    public string GetSetupContainer(TaskConfig config) {
-
-        foreach (var container in config.Containers ?? throw new Exception("Missing containers")) {
-            if (container.Type == ContainerType.Setup) {
-                return container.Name.ContainerName;
-            }
-        }
-
-        throw new Exception($"task missing setup container: task_type = {config.Task.Type}");
-    }
-}
