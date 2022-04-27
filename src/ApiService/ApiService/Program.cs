@@ -81,9 +81,6 @@ public class Program {
             .AddScoped<IJobOperations, JobOperations>()
             .AddScoped<IScheduler, Scheduler>()
             .AddScoped<IConfig, Config>()
-
-            //Move out expensive resources into separate class, and add those as Singleton
-            // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.\
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
             .AddHttpClient()
