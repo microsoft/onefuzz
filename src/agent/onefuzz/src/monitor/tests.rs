@@ -55,7 +55,12 @@ timed_test!(test_monitor_dir_symlink, async move {
     fs::create_dir(&child).await?;
 
     let symlink = parent.path().join("link-to-child");
+
+    #[cfg(target_family = "unix")]
     fs::symlink(&child, &symlink).await?;
+
+    #[cfg(target_family = "windows")]
+    fs::symlink_dir(&child, &symlink).await?;
 
     let mut monitor = DirectoryMonitor::new(&symlink)?;
 
