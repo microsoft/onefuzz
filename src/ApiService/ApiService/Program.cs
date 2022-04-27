@@ -45,7 +45,8 @@ public class Program {
         return loggers;
     }
 
-
+    //Move out expensive resources into separate class, and add those as Singleton
+    // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
     public static void Main() {
         var host = new HostBuilder()
         .ConfigureFunctionsWorkerDefaults(
@@ -78,9 +79,11 @@ public class Program {
             .AddScoped<IVmOperations, VmOperations>()
             .AddScoped<ISecretsOperations, SecretsOperations>()
             .AddScoped<IJobOperations, JobOperations>()
+            .AddScoped<IScheduler, Scheduler>()
+            .AddScoped<IConfig, Config>()
 
             //Move out expensive resources into separate class, and add those as Singleton
-            // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
+            // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.\
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
             .AddHttpClient()

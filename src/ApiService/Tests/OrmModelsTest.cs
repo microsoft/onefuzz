@@ -244,9 +244,6 @@ namespace Tests {
             ); ;
         }
 
-
-
-
         public static Gen<Report> Report() {
             return Arb.Generate<Tuple<string, BlobRef, List<string>, Guid, int>>().Select(
                 arg =>
@@ -372,6 +369,7 @@ namespace Tests {
         public static Arbitrary<Notification> Notification() {
             return Arb.From(OrmGenerators.Notification());
         }
+
 
         public static Arbitrary<WebhookMessageEventGrid> WebhookMessageEventGrid() {
             return Arb.From(OrmGenerators.WebhookMessageEventGrid());
@@ -547,7 +545,6 @@ namespace Tests {
         public bool Notification(Notification n) {
             return Test(n);
         }
-
 
         [Property]
         public bool Job(Job j) {
