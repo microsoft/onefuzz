@@ -3,12 +3,12 @@
 namespace Microsoft.OneFuzz.Service;
 
 public interface IJobOperations : IStatefulOrm<Job, JobState> {
-    System.Threading.Tasks.Task<Job?> Get(Guid jobId);
-    System.Threading.Tasks.Task OnStart(Job job);
+    Async.Task<Job?> Get(Guid jobId);
+    Async.Task OnStart(Job job);
     IAsyncEnumerable<Job> SearchExpired();
-    System.Threading.Tasks.Task Stopping(Job job, ITaskOperations taskOperations);
+    Async.Task Stopping(Job job, ITaskOperations taskOperations);
     IAsyncEnumerable<Job> SearchState(IEnumerable<JobState> states);
-    System.Threading.Tasks.Task StopNeverStartedJobs();
+    Async.Task StopNeverStartedJobs();
 }
 
 public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
@@ -18,11 +18,11 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
         _events = events;
     }
 
-    public async System.Threading.Tasks.Task<Job?> Get(Guid jobId) {
+    public async Async.Task<Job?> Get(Guid jobId) {
         return await QueryAsync($"PartitionKey eq '{jobId}'").FirstOrDefaultAsync();
     }
 
-    public async System.Threading.Tasks.Task OnStart(Job job) {
+    public async Async.Task OnStart(Job job) {
         if (job.EndTime == null) {
             await Replace(job with { EndTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(job.Config.Duration) });
         }
@@ -40,11 +40,11 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
         return QueryAsync(filter: query);
     }
 
-    public System.Threading.Tasks.Task StopNeverStartedJobs() {
+    public Async.Task StopNeverStartedJobs() {
         throw new NotImplementedException();
     }
 
-    public async System.Threading.Tasks.Task Stopping(Job job, ITaskOperations taskOperations) {
+    public async Async.Task Stopping(Job job, ITaskOperations taskOperations) {
         job = job with { State = JobState.Stopping };
         var tasks = await taskOperations.QueryAsync(filter: $"job_id eq '{job.JobId}'").ToListAsync();
         var taskNotStopped = tasks.ToLookup(task => task.State != TaskState.Stopped);

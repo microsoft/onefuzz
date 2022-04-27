@@ -32,11 +32,11 @@ public class IpOperations : IIpOperations {
         return await _creds.GetResourceGroupResource().GetPublicIPAddressAsync(name);
     }
 
-    public System.Threading.Tasks.Task DeleteNic(string resourceGroup, string name) {
+    public Async.Task DeleteNic(string resourceGroup, string name) {
         throw new NotImplementedException();
     }
 
-    public System.Threading.Tasks.Task DeleteIp(string resourceGroup, string name) {
+    public Async.Task DeleteIp(string resourceGroup, string name) {
         throw new NotImplementedException();
     }
 }
