@@ -260,9 +260,7 @@ public class EntityConverter {
         var entityInfo = GetEntityInfo<T>();
         var parameters =
             entityInfo.properties.Keys.Select(k => GetFieldValue(entityInfo, k, entity)).ToArray();
-        
-        try
-        {
+        try {
             var entityRecord = (T)entityInfo.constructor.Invoke(parameters);
             if (entity.ETag != _emptyETag) {
                 entityRecord.ETag = entity.ETag;
@@ -270,12 +268,11 @@ public class EntityConverter {
             entityRecord.TimeStamp = entity.Timestamp;
             return entityRecord;
 
-        } catch(Exception)
-        {
+        } catch (Exception) {
             var stringParam = string.Join(", ", parameters);
             throw new Exception($"Could not initialize object of type {typeof(T)} with the following parameters: {stringParam} constructor {entityInfo.constructor}");
         }
-        
+
     }
 
 }
