@@ -4,9 +4,9 @@ namespace Microsoft.OneFuzz.Service;
 
 
 public interface ISubnet {
-    System.Threading.Tasks.Task<VirtualNetworkResource?> GetVnet(string vnetName);
+    Async.Task<VirtualNetworkResource?> GetVnet(string vnetName);
 
-    System.Threading.Tasks.Task<SubnetResource?> GetSubnet(string vnetName, string subnetName);
+    Async.Task<SubnetResource?> GetSubnet(string vnetName, string subnetName);
 }
 
 public partial class TimerProxy {
@@ -17,7 +17,7 @@ public partial class TimerProxy {
             _creds = creds;
         }
 
-        public async System.Threading.Tasks.Task<SubnetResource?> GetSubnet(string vnetName, string subnetName) {
+        public async Async.Task<SubnetResource?> GetSubnet(string vnetName, string subnetName) {
             var vnet = await this.GetVnet(vnetName);
 
             if (vnet != null) {
@@ -26,7 +26,7 @@ public partial class TimerProxy {
             return null;
         }
 
-        public async System.Threading.Tasks.Task<VirtualNetworkResource?> GetVnet(string vnetName) {
+        public async Async.Task<VirtualNetworkResource?> GetVnet(string vnetName) {
             var resourceGroupId = _creds.GetResourceGroupResourceIdentifier();
             var response = await _creds.ArmClient.GetResourceGroupResource(resourceGroupId).GetVirtualNetworkAsync(vnetName);
             return response.Value;

@@ -1,35 +1,50 @@
-﻿using System.Threading.Tasks;
-using Azure;
+﻿using Azure;
 using Azure.ResourceManager;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
 
+
 namespace Microsoft.OneFuzz.Service;
 
 
 public interface IContainers {
-    public Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType);
+    public Async.Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType);
 
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
     public Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
-    Async.Task saveBlob(Container container, string v1, string v2, StorageType config);
-    Task<Guid> GetInstanceId();
+    public Async.Task SaveBlob(Container container, string v1, string v2, StorageType config);
+    public Async.Task<Guid> GetInstanceId();
+
+    public Async.Task<Uri?> GetFileUrl(Container container, string name, StorageType storageType);
+
+    public Async.Task<Uri?> GetContainerSasUrl(Container container, StorageType storageType, BlobSasPermissions permissions);
 }
+
 
 public class Containers : IContainers {
     private ILogTracer _log;
     private IStorage _storage;
     private ICreds _creds;
     private ArmClient _armClient;
+
     public Containers(ILogTracer log, IStorage storage, ICreds creds) {
         _log = log;
         _storage = storage;
         _creds = creds;
         _armClient = creds.ArmClient;
     }
-    public async Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType) {
+
+    public async Async.Task<Uri?> GetFileUrl(Container container, string name, StorageType storageType) {
+        var client = await FindContainer(container, storageType);
+        if (client is null)
+            return null;
+
+        return new Uri($"{GetUrl(client.AccountName)}{container}/{name}");
+    }
+
+    public async Async.Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType) {
         var client = await FindContainer(container, storageType);
 
         if (client == null) {
@@ -52,17 +67,23 @@ public class Containers : IContainers {
         // #
         // # Secondary accounts, if they exist, are preferred for containers and have
         // # increased IOP rates, this should be a slight optimization
-        return await _storage.GetAccounts(storageType)
+
+        var containers = _storage.GetAccounts(storageType)
             .Reverse()
-            .Select(account => GetBlobService(account)?.GetBlobContainerClient(container.ContainerName))
-            .ToAsyncEnumerable()
-            .WhereAwait(async client => client != null && (await client.ExistsAsync()).Value)
-            .FirstOrDefaultAsync();
+            .Select(async account => (await GetBlobService(account))?.GetBlobContainerClient(container.ContainerName));
+
+        foreach (var c in containers) {
+            var client = await c;
+            if (client != null && (await client.ExistsAsync()).Value) {
+                return client;
+            }
+        }
+        return null;
     }
 
-    private BlobServiceClient? GetBlobService(string accountId) {
+    private async Async.Task<BlobServiceClient?> GetBlobService(string accountId) {
         _log.Info($"getting blob container (account_id: {accountId}");
-        var (accountName, accountKey) = _storage.GetStorageAccountNameAndKey(accountId);
+        var (accountName, accountKey) = await _storage.GetStorageAccountNameAndKey(accountId);
         if (accountName == null) {
             _log.Error("Failed to get storage account name");
             return null;
@@ -78,7 +99,7 @@ public class Containers : IContainers {
 
     public async Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
-        var (accountName, accountKey) = _storage.GetStorageAccountNameAndKey(client.AccountName);
+        var (accountName, accountKey) = await _storage.GetStorageAccountNameAndKey(client.AccountName);
 
         var (startTime, endTime) = SasTimeWindow(duration ?? TimeSpan.FromDays(30));
 
@@ -108,12 +129,12 @@ public class Containers : IContainers {
         return (start, expiry);
     }
 
-    public async System.Threading.Tasks.Task saveBlob(Container container, string name, string data, StorageType storageType) {
+    public async Async.Task SaveBlob(Container container, string name, string data, StorageType storageType) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
-
         await client.UploadBlobAsync(name, new BinaryData(data));
     }
 
+    //TODO: get this ones on startup and cache (and make this method un-accessible to everyone else)
     public async Async.Task<Guid> GetInstanceId() {
         var blob = await GetBlob(new Container("base-config"), "instance_id", StorageType.Config);
         if (blob == null) {
@@ -121,4 +142,35 @@ public class Containers : IContainers {
         }
         return System.Guid.Parse(blob.ToString());
     }
+
+    public Uri? GetContainerSasUrlService(
+        BlobContainerClient client,
+        BlobSasPermissions permissions,
+        bool tag = false,
+        TimeSpan? timeSpan = null) {
+        var (start, expiry) = SasTimeWindow(timeSpan ?? TimeSpan.FromDays(30.0));
+        var sasBuilder = new BlobSasBuilder(permissions, expiry) { StartsOn = start };
+        var sas = client.GenerateSasUri(sasBuilder);
+        return sas;
+    }
+
+
+    //TODO: instead of returning null when container not found, convert to return to "Result" type and set appropriate error
+    public async Async.Task<Uri?> GetContainerSasUrl(Container container, StorageType storageType, BlobSasPermissions permissions) {
+        var client = await FindContainer(container, storageType);
+
+        if (client is null) {
+            return null;
+        }
+
+        var uri = GetContainerSasUrlService(client, permissions);
+
+        if (uri is null) {
+            //TODO: return result error
+            return uri;
+        } else {
+            return uri;
+        }
+    }
 }
+

@@ -1,8 +1,11 @@
 ﻿// to avoid collision with Task in model.cs
 global using System;
-global using System.Collections.Generic;
-global using System.Linq;
-global using Async = System.Threading.Tasks;
+global
+using System.Collections.Generic;
+global
+using System.Linq;
+global
+using Async = System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.DependencyInjection;
@@ -82,6 +85,7 @@ public class Program {
             .AddScoped<IJobOperations, JobOperations>()
             .AddScoped<IScheduler, Scheduler>()
             .AddScoped<IConfig, Config>()
+            .AddScoped<ILogAnalytics, LogAnalytics>()
 
             //Move out expensive resources into separate class, and add those as Singleton
             // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.\

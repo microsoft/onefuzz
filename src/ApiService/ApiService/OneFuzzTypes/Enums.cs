@@ -295,3 +295,10 @@ public static class PoolStateHelper {
 public enum Architecture {
     x86_64
 }
+
+
+public enum AgentMode {
+    Fuzz,
+    Repro,
+    Proxy
+}

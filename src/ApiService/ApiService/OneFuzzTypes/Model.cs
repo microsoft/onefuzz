@@ -386,6 +386,7 @@ public record Scaleset(
     bool SpotInstance,
     bool EphemeralOsDisks,
     bool NeedsConfigUpdate,
+    Error? Error,
     List<ScalesetNodeState> Nodes,
     Guid? ClientId,
     Guid? ClientObjectId,
@@ -513,8 +514,26 @@ public record Pool(
 ) : StatefulEntityBase<PoolState>(State);
 
 
-// TODO
-public record AgentConfig();
+public record ClientCredentials
+(
+    Guid ClientId,
+    string ClientSecret
+);
+
+
+public record AgentConfig(
+    ClientCredentials? ClientCredentials,
+    [property: JsonPropertyName("onefuzz_url")] Uri OneFuzzUrl,
+    PoolName PoolName,
+    Uri? HeartbeatQueue,
+    string? InstanceTelemetryKey,
+    string? MicrosoftTelemetryKey,
+    string? MultiTenantDomain,
+    Guid InstanceId
+);
+
+
+
 public record WorkSetSummary();
 public record ScalesetSummary();
 
