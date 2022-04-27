@@ -21,7 +21,7 @@ from ..onefuzzlib.azure.creds import (
 from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.azure.storage import StorageType
 from ..onefuzzlib.azure.vmss import list_available_skus
-from ..onefuzzlib.endpoint_authorization import call_if_user, check_can_manage_pools
+from ..onefuzzlib.endpoint_authorization import call_if_user, check_require_admins
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.workers.pools import Pool
 
@@ -77,7 +77,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="PoolCreate")
 
-    answer = check_can_manage_pools(req)
+    answer = check_require_admins(req)
     if isinstance(answer, Error):
         return not_ok(answer, context="PoolCreate")
 
@@ -133,7 +133,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="PoolDelete")
 
-    answer = check_can_manage_pools(req)
+    answer = check_require_admins(req)
     if isinstance(answer, Error):
         return not_ok(answer, context="PoolDelete")
 
