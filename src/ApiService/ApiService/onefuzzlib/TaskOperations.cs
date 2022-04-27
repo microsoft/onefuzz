@@ -233,6 +233,9 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
             var scalesets = _scalesetOperations.Search().Where(s => s.VmSku == task.Config.Vm.Sku && s.Image == task.Config.Vm.Image);
 
             await foreach (var scaleset in scalesets) {
+                if (task.Config.Pool == null){
+                    continue;
+                }
                 var pool = await _poolOperations.GetByName(task.Config.Pool.PoolName);
                 if (!pool.IsOk) {
                     _logTracer.Info(

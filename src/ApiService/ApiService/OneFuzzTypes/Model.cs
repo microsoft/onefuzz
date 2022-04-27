@@ -245,7 +245,6 @@ public record NodeAssignment(
 
 
 public record Task(
-    // Timestamp: Optional[datetime] = Field(alias="Timestamp")
     [PartitionKey] Guid JobId,
     [RowKey] Guid TaskId,
     TaskState State,
@@ -307,13 +306,13 @@ public record ApiAccessRule(
     Guid[] AllowedGroups
 );
 
+//# initial set of admins can only be set during deployment.
+//# if admins are set, only admins can update instance configs.
+//# if set, only admins can manage pools or scalesets
 public record InstanceConfig
 (
     [PartitionKey, RowKey] string InstanceName,
-    //# initial set of admins can only be set during deployment.
-    //# if admins are set, only admins can update instance configs.
     Guid[]? Admins,
-    //# if set, only admins can manage pools or scalesets
     bool? AllowPoolManagement,
     string[] AllowedAadTenants,
     NetworkConfig NetworkConfig,
@@ -490,20 +489,20 @@ public record Repro(
     UserInfo? UserInfo
 ) : StatefulEntityBase<VmState>(State);
 
+// TODO: Make this >1 and < 7*24 (more than one hour, less than seven days)
 public record ReproConfig(
     Container Container,
     string Path,
-    // TODO: Make this >1 and < 7*24 (more than one hour, less than seven days)
     int Duration
 );
 
+// Skipping AutoScaleConfig because it's not used anymore
 public record Pool(
     DateTimeOffset Timestamp,
     PoolName Name,
     Guid PoolId,
     Os Os,
     bool Managed,
-    // Skipping AutoScaleConfig because it's not used anymore
     Architecture Architecture,
     PoolState State,
     Guid? ClientId,

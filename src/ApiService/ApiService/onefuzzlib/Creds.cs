@@ -14,6 +14,7 @@ public interface ICreds {
 
     public ResourceIdentifier GetResourceGroupResourceIdentifier();
 
+    public string GetInstanceName();
 
     public ArmClient ArmClient { get; }
 
@@ -57,6 +58,13 @@ public class Creds : ICreds {
         var resourceId = _config.OneFuzzResourceGroup
             ?? throw new System.Exception("Resource group env var is not present");
         return new ResourceIdentifier(resourceId);
+    }
+
+    public string GetInstanceName() {
+        var instanceName = _config.OneFuzzInstanceName
+            ?? throw new System.Exception("Instance Name env var is not present");
+
+        return instanceName;
     }
 
     public ResourceGroupResource GetResourceGroupResource() {

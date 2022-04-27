@@ -274,10 +274,10 @@ impl DirectoryMonitorQueue {
         );
         let queue = queue_client.clone();
         let handle: tokio::task::JoinHandle<Result<()>> = tokio::spawn(async move {
-            let mut monitor = DirectoryMonitor::new(directory_path_clone.clone());
-            monitor.start()?;
+            let mut monitor = DirectoryMonitor::new(directory_path_clone.clone())?;
+            monitor.start().await?;
 
-            while let Some(file_path) = monitor.next_file().await {
+            while let Some(file_path) = monitor.next_file().await? {
                 let file_url =
                     Url::from_file_path(file_path).map_err(|_| anyhow!("invalid file path"))?;
                 queue.enqueue(file_url).await?;
