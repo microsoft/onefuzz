@@ -66,11 +66,11 @@ public class Config : IConfig {
             HeartbeatQueue: _queue.GetQueueSas("task-heartbeat", StorageType.Config, QueueSasPermissions.Add) ?? throw new Exception("unable to get heartbeat queue sas")
         );
 
-        if (definition.MonitorQueue != null){
+        if (definition.MonitorQueue != null) {
             config.inputQueue = _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Config, QueueSasPermissions.Add | QueueSasPermissions.Read | QueueSasPermissions.Update | QueueSasPermissions.Process);
         }
 
-        var containersByType = definition.Containers.Where(c => c.Type !=ContainerType.Setup && task.Config.Containers != null)
+        var containersByType = definition.Containers.Where(c => c.Type != ContainerType.Setup && task.Config.Containers != null)
             .ToAsyncEnumerable()
             .SelectAwait(async countainerDef => {
                 var containers = await
@@ -83,11 +83,11 @@ public class Config : IConfig {
                                     string.Join("_", "task", x.Item1.Type.ToString().ToLower(), i),
                                     await _containers.GetContainerSasUrl(x.Item2.Name, StorageType.Corpus, ConvertPermissions(x.Item1.Permissions)))
                         ).ToListAsync();
-                      return (countainerDef, containers);
-                    }
+                return (countainerDef, containers);
+            }
                 );
 
-        await foreach ( var data in containersByType) {
+        await foreach (var data in containersByType) {
 
             IContainerDef def = data.countainerDef switch {
                 ContainerDefinition { Compare: Compare.Equal, Value: 1 } or
@@ -138,7 +138,7 @@ public class Config : IConfig {
         }
 
         if (definition.Features.Contains(TaskFeature.SupervisorOptions)) {
-            config.SupervisorOptions = task.Config.Task.SupervisorOptions ??  new List<string>() ;
+            config.SupervisorOptions = task.Config.Task.SupervisorOptions ?? new List<string>();
         }
 
         if (definition.Features.Contains(TaskFeature.SupervisorInputMarker)) {
@@ -158,11 +158,11 @@ public class Config : IConfig {
         }
 
         if (definition.Features.Contains(TaskFeature.TargetOptions)) {
-            config.TargetOptions = task.Config.Task.TargetOptions ?? new List<string>() ;
+            config.TargetOptions = task.Config.Task.TargetOptions ?? new List<string>();
         }
 
         if (definition.Features.Contains(TaskFeature.TargetOptionsMerge)) {
-            config.TargetOptionsMerge = task.Config.Task.TargetOptionsMerge ?? false ;
+            config.TargetOptionsMerge = task.Config.Task.TargetOptionsMerge ?? false;
         }
 
 

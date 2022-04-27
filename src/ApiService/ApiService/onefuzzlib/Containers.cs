@@ -1,4 +1,4 @@
-﻿﻿using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager;
 using Azure.Storage;
@@ -125,7 +125,7 @@ public class Containers : IContainers {
     }
 
     public Uri AddContainerSasUrl(Uri uri) {
-        if (uri.Query.Contains("sig")){
+        if (uri.Query.Contains("sig")) {
             return uri;
         }
 
@@ -136,9 +136,9 @@ public class Containers : IContainers {
                 DateTimeOffset.UtcNow + TimeSpan.FromHours(1));
 
         var sas = sasBuilder.ToSasQueryParameters(new StorageSharedKeyCredential(accountName, accountKey)).ToString();
-        return new UriBuilder(uri){
+        return new UriBuilder(uri) {
             Query = sas
-        }.Uri ;
+        }.Uri;
     }
 
     public async Async.Task<Uri> GetContainerSasUrl(Container container, StorageType storageType, BlobContainerSasPermissions permissions, TimeSpan? duration = null) {
