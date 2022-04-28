@@ -6,7 +6,7 @@ using Xunit;
 namespace Tests {
     public class RemoveUserInfoTest {
 
-        [Fact] 
+        [Fact]
         void TestSerilize() {
             var userInfo = new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "test");
             var options = new JsonSerializerOptions();
