@@ -281,7 +281,9 @@ public record AzureMonitorExtensionConfig(
 
 public record AzureVmExtensionConfig(
     KeyvaultExtensionConfig? Keyvault,
-    AzureMonitorExtensionConfig AzureMonitor
+    AzureMonitorExtensionConfig? AzureMonitor,
+    AzureSecurityExtensionConfig? AzureSecurity,
+    GenevaExtensionConfig? Geneva
 );
 
 public record NetworkConfig(
