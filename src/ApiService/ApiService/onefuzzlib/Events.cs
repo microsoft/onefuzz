@@ -67,7 +67,8 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         public override void Write(Utf8JsonWriter writer, UserInfo value, JsonSerializerOptions options) {
-            writer.WriteStringValue("{}");
+            writer.WriteStartObject();
+            writer.WriteEndObject();
         }
     }
 }
