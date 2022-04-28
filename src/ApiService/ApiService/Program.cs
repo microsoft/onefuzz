@@ -69,6 +69,7 @@ public class Program {
             .AddScoped<IQueue, Queue>()
             .AddScoped<IStorage, Storage>()
             .AddScoped<IProxyOperations, ProxyOperations>()
+            .AddScoped<IProxyForwardOperations, ProxyForwardOperations>()
             .AddScoped<IConfigOperations, ConfigOperations>()
             .AddScoped<IScalesetOperations, ScalesetOperations>()
             .AddScoped<IContainers, Containers>()
@@ -85,9 +86,8 @@ public class Program {
             .AddScoped<IScheduler, Scheduler>()
             .AddScoped<IConfig, Config>()
             .AddScoped<ILogAnalytics, LogAnalytics>()
-
-            //Move out expensive resources into separate class, and add those as Singleton
-            // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.\
+            .AddScoped<IExtensions, Extensions>()
+            .AddScoped<IVmssOperations, VmssOperations>()
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
             .AddHttpClient()
