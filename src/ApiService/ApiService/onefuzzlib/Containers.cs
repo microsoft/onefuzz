@@ -19,7 +19,11 @@ public interface IContainers {
 
     public Async.Task<Uri?> GetFileUrl(Container container, string name, StorageType storageType);
 
-    public Async.Task<Uri?> GetContainerSasUrl(Container container, StorageType storageType, BlobSasPermissions permissions);
+    public Async.Task<Uri> GetContainerSasUrl(Container container, StorageType storageType, BlobContainerSasPermissions permissions, TimeSpan? duration = null);
+
+    public Async.Task<bool> BlobExists(Container container, string name, StorageType storageType);
+
+    public Async.Task<Uri> AddContainerSasUrl(Uri uri);
 }
 
 
@@ -99,7 +103,6 @@ public class Containers : IContainers {
 
     public async Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
-        var (accountName, accountKey) = await _storage.GetStorageAccountNameAndKey(client.AccountName);
 
         var (startTime, endTime) = SasTimeWindow(duration ?? TimeSpan.FromDays(30));
 
@@ -154,23 +157,41 @@ public class Containers : IContainers {
         return sas;
     }
 
-
-    //TODO: instead of returning null when container not found, convert to return to "Result" type and set appropriate error
-    public async Async.Task<Uri?> GetContainerSasUrl(Container container, StorageType storageType, BlobSasPermissions permissions) {
-        var client = await FindContainer(container, storageType);
-
-        if (client is null) {
-            return null;
-        }
-
-        var uri = GetContainerSasUrlService(client, permissions);
-
-        if (uri is null) {
-            //TODO: return result error
-            return uri;
-        } else {
+    public async Async.Task<Uri> AddContainerSasUrl(Uri uri) {
+        if (uri.Query.Contains("sig")) {
             return uri;
         }
+
+        var accountName = uri.Host.Split('.')[0];
+        var (_, accountKey) = await _storage.GetStorageAccountNameAndKey(accountName);
+        var sasBuilder = new BlobSasBuilder(
+                BlobContainerSasPermissions.Read | BlobContainerSasPermissions.Write | BlobContainerSasPermissions.Delete | BlobContainerSasPermissions.List,
+                DateTimeOffset.UtcNow + TimeSpan.FromHours(1));
+
+        var sas = sasBuilder.ToSasQueryParameters(new StorageSharedKeyCredential(accountName, accountKey)).ToString();
+        return new UriBuilder(uri) {
+            Query = sas
+        }.Uri;
+    }
+
+    public async Async.Task<Uri> GetContainerSasUrl(Container container, StorageType storageType, BlobContainerSasPermissions permissions, TimeSpan? duration = null) {
+        var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
+        var (accountName, accountKey) = await _storage.GetStorageAccountNameAndKey(client.AccountName);
+
+        var (startTime, endTime) = SasTimeWindow(duration ?? TimeSpan.FromDays(30));
+
+        var sasBuilder = new BlobSasBuilder(permissions, endTime) {
+            StartsOn = startTime,
+            BlobContainerName = container.ContainerName,
+        };
+
+        var sasUrl = client.GenerateSasUri(sasBuilder);
+        return sasUrl;
+    }
+
+    public async Async.Task<bool> BlobExists(Container container, string name, StorageType storageType) {
+        var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
+        return await client.GetBlobClient(name).ExistsAsync();
     }
 }
 
