@@ -49,7 +49,7 @@ public partial class TimerProxy {
             return _subnet.GetSubnet(_name, _name);
         }
 
-        internal System.Threading.Tasks.Task<VirtualNetworkResource?> GetVnet() {
+        internal Async.Task<VirtualNetworkResource?> GetVnet() {
             return _subnet.GetVnet(_name);
         }
     }

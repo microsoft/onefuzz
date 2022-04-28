@@ -59,15 +59,15 @@ public class Config : IConfig {
             InstanceId: await _containers.GetInstanceId(),
             JobId: job.JobId,
             TaskId: task.TaskId,
-            logs: _containers.AddContainerSasUrl(new Uri(job.Config.Logs)),
+            logs: await _containers.AddContainerSasUrl(new Uri(job.Config.Logs)),
             TaskType: task.Config.Task.Type,
             InstanceTelemetryKey: _serviceConfig.ApplicationInsightsInstrumentationKey,
             MicrosoftTelemetryKey: _serviceConfig.OneFuzzTelemetry,
-            HeartbeatQueue: _queue.GetQueueSas("task-heartbeat", StorageType.Config, QueueSasPermissions.Add) ?? throw new Exception("unable to get heartbeat queue sas")
+            HeartbeatQueue: await _queue.GetQueueSas("task-heartbeat", StorageType.Config, QueueSasPermissions.Add) ?? throw new Exception("unable to get heartbeat queue sas")
         );
 
         if (definition.MonitorQueue != null) {
-            config.inputQueue = _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Config, QueueSasPermissions.Add | QueueSasPermissions.Read | QueueSasPermissions.Update | QueueSasPermissions.Process);
+            config.inputQueue = await _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Config, QueueSasPermissions.Add | QueueSasPermissions.Read | QueueSasPermissions.Update | QueueSasPermissions.Process);
         }
 
         var containersByType = definition.Containers.Where(c => c.Type != ContainerType.Setup && task.Config.Containers != null)

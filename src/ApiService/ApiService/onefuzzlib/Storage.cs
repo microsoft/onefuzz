@@ -13,7 +13,10 @@ public enum StorageType {
 public interface IStorage {
     public IEnumerable<string> CorpusAccounts();
     string GetPrimaryAccount(StorageType storageType);
-    public (string?, string?) GetStorageAccountNameAndKey(string accountId);
+    public Async.Task<(string?, string?)> GetStorageAccountNameAndKey(string accountId);
+
+    public Async.Task<string?> GetStorageAccountNameAndKeyByName(string accountName);
+
     public IEnumerable<string> GetAccounts(StorageType storageType);
 }
 
@@ -89,12 +92,22 @@ public class Storage : IStorage {
             };
     }
 
-    public (string?, string?) GetStorageAccountNameAndKey(string accountId) {
+    public async Async.Task<(string?, string?)> GetStorageAccountNameAndKey(string accountId) {
         var resourceId = new ResourceIdentifier(accountId);
         var armClient = GetMgmtClient();
         var storageAccount = armClient.GetStorageAccountResource(resourceId);
-        var key = storageAccount.GetKeys().Value.Keys.FirstOrDefault();
+        var keys = await storageAccount.GetKeysAsync();
+        var key = keys.Value.Keys.FirstOrDefault();
         return (resourceId.Name, key?.Value);
+    }
+
+    public async Async.Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {
+        var armClient = GetMgmtClient();
+        var resourceGroup = _creds.GetResourceGroupResourceIdentifier();
+        var storageAccount = await armClient.GetResourceGroupResource(resourceGroup).GetStorageAccountAsync(accountName);
+        var keys = await storageAccount.Value.GetKeysAsync();
+        var key = keys.Value.Keys.FirstOrDefault();
+        return key?.Value;
     }
 
     public string ChooseAccounts(StorageType storageType) {

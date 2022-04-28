@@ -14,9 +14,9 @@ public interface IContainers {
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
     public Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
-    Async.Task saveBlob(Container container, string v1, string v2, StorageType config);
+    Async.Task SaveBlob(Container container, string v1, string v2, StorageType config);
     Task<Guid> GetInstanceId();
-    Uri AddContainerSasUrl(Uri uri);
+    Async.Task<Uri> AddContainerSasUrl(Uri uri);
     Async.Task<Uri> GetContainerSasUrl(Container container, StorageType storageType, BlobContainerSasPermissions permissions, TimeSpan? duration = null);
     Async.Task<bool> BlobExists(Container container, string name, StorageType storageType);
 }
@@ -55,17 +55,23 @@ public class Containers : IContainers {
         // #
         // # Secondary accounts, if they exist, are preferred for containers and have
         // # increased IOP rates, this should be a slight optimization
-        return await _storage.GetAccounts(storageType)
+
+        var containers = _storage.GetAccounts(storageType)
             .Reverse()
-            .Select(account => GetBlobService(account)?.GetBlobContainerClient(container.ContainerName))
-            .ToAsyncEnumerable()
-            .WhereAwait(async client => client != null && (await client.ExistsAsync()).Value)
-            .FirstOrDefaultAsync();
+            .Select(async account => (await GetBlobService(account))?.GetBlobContainerClient(container.ContainerName));
+
+        foreach (var c in containers) {
+            var client = await c;
+            if (client != null && (await client.ExistsAsync()).Value) {
+                return client;
+            }
+        }
+        return null;
     }
 
-    private BlobServiceClient? GetBlobService(string accountId) {
+    private async Async.Task<BlobServiceClient?> GetBlobService(string accountId) {
         _log.Info($"getting blob container (account_id: {accountId}");
-        var (accountName, accountKey) = _storage.GetStorageAccountNameAndKey(accountId);
+        var (accountName, accountKey) = await _storage.GetStorageAccountNameAndKey(accountId);
         if (accountName == null) {
             _log.Error("Failed to get storage account name");
             return null;
@@ -110,9 +116,8 @@ public class Containers : IContainers {
         return (start, expiry);
     }
 
-    public async System.Threading.Tasks.Task saveBlob(Container container, string name, string data, StorageType storageType) {
+    public async System.Threading.Tasks.Task SaveBlob(Container container, string name, string data, StorageType storageType) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
-
         await client.UploadBlobAsync(name, new BinaryData(data));
     }
 
@@ -124,13 +129,13 @@ public class Containers : IContainers {
         return System.Guid.Parse(blob.ToString());
     }
 
-    public Uri AddContainerSasUrl(Uri uri) {
+    public async Async.Task<Uri> AddContainerSasUrl(Uri uri) {
         if (uri.Query.Contains("sig")) {
             return uri;
         }
 
         var accountName = uri.Host.Split('.')[0];
-        var (_, accountKey) = _storage.GetStorageAccountNameAndKey(accountName);
+        var (_, accountKey) = await _storage.GetStorageAccountNameAndKey(accountName);
         var sasBuilder = new BlobSasBuilder(
                 BlobContainerSasPermissions.Read | BlobContainerSasPermissions.Write | BlobContainerSasPermissions.Delete | BlobContainerSasPermissions.List,
                 DateTimeOffset.UtcNow + TimeSpan.FromHours(1));
@@ -143,7 +148,7 @@ public class Containers : IContainers {
 
     public async Async.Task<Uri> GetContainerSasUrl(Container container, StorageType storageType, BlobContainerSasPermissions permissions, TimeSpan? duration = null) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
-        var (accountName, accountKey) = _storage.GetStorageAccountNameAndKey(client.AccountName);
+        var (accountName, accountKey) = await _storage.GetStorageAccountNameAndKey(client.AccountName);
 
         var (startTime, endTime) = SasTimeWindow(duration ?? TimeSpan.FromDays(30));
 

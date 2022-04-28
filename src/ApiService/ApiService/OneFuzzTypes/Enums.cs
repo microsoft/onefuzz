@@ -296,7 +296,6 @@ public enum Architecture {
     x86_64
 }
 
-
 public enum TaskFeature {
     InputQueueFromContainer,
     SupervisorExe,
@@ -349,4 +348,9 @@ public enum Compare {
     Equal,
     AtLeast,
     AtMost
+}
+public enum AgentMode {
+    Fuzz,
+    Repro,
+    Proxy
 }

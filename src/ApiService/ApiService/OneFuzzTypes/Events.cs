@@ -57,6 +57,9 @@ public abstract record BaseEvent() {
                 EventTaskFailed _ => EventType.TaskFailed,
                 EventTaskStopped _ => EventType.TaskStopped,
                 EventTaskStateUpdated _ => EventType.TaskStateUpdated,
+                EventScalesetFailed _ => EventType.ScalesetFailed,
+                EventScalesetResizeScheduled _ => EventType.ScalesetResizeScheduled,
+                EventScalesetStateUpdated _ => EventType.ScalesetStateUpdated,
                 _ => throw new NotImplementedException(),
             };
 
@@ -166,11 +169,11 @@ public record EventPing(
 //    int Size) : BaseEvent();
 
 
-//record EventScalesetFailed(
-//    Guid ScalesetId,
-//    PoolName: PoolName,
-//    Error: Error
-//): BaseEvent();
+public record EventScalesetFailed(
+    Guid ScalesetId,
+    PoolName PoolName,
+    Error Error
+) : BaseEvent();
 
 
 //record EventScalesetDeleted(
@@ -180,11 +183,11 @@ public record EventPing(
 //    ) : BaseEvent();
 
 
-//record EventScalesetResizeScheduled(
-//    Guid ScalesetId,
-//    PoolName PoolName,
-//    int size
-//    ) : BaseEvent();
+public record EventScalesetResizeScheduled(
+    Guid ScalesetId,
+    PoolName PoolName,
+    int size
+    ) : BaseEvent();
 
 
 //record EventPoolDeleted(
@@ -249,11 +252,11 @@ public record EventNodeHeartbeat(
 //        ) : BaseEvent();
 
 
-//    record EventScalesetStateUpdated(
-//        Guid ScalesetId,
-//        PoolName PoolName,
-//        ScalesetState State
-//        ) : BaseEvent();
+public record EventScalesetStateUpdated(
+    Guid ScalesetId,
+    PoolName PoolName,
+    ScalesetState State
+) : BaseEvent();
 
 //    record EventNodeStateUpdated(
 //        Guid MachineId,
