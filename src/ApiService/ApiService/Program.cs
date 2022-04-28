@@ -86,6 +86,8 @@ public class Program {
             .AddScoped<IScheduler, Scheduler>()
             .AddScoped<IConfig, Config>()
             .AddScoped<ILogAnalytics, LogAnalytics>()
+            .AddScoped<IExtensions, Extensions>()
+            .AddScoped<IVmssOperations, VmssOperations>()
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
             .AddHttpClient()

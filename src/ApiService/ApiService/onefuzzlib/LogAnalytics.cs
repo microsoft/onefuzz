@@ -3,7 +3,7 @@ using Microsoft.Azure.Management.OperationalInsights;
 
 namespace Microsoft.OneFuzz.Service;
 
-public record MonitorSettings(string CustomerId, string Key);
+public record MonitorSettings(string Id, string Key);
 
 public interface ILogAnalytics {
     public ResourceIdentifier GetWorkspaceId();
