@@ -88,7 +88,7 @@ namespace ApiService.OneFuzzLib.Orm {
 
         public async Task<TableClient> GetTableClient(string table, string? accountId = null) {
             var account = accountId ?? _config.OneFuzzFuncStorage ?? throw new ArgumentNullException(nameof(accountId));
-            var (name, key) = _storage.GetStorageAccountNameAndKey(account);
+            var (name, key) = await _storage.GetStorageAccountNameAndKey(account);
             var tableClient = new TableServiceClient(new Uri($"https://{name}.table.core.windows.net"), new TableSharedKeyCredential(name, key));
             await tableClient.CreateTableIfNotExistsAsync(table);
             return tableClient.GetTableClient(table);
@@ -108,9 +108,9 @@ namespace ApiService.OneFuzzLib.Orm {
 
 
     public interface IStatefulOrm<T, TState> : IOrm<T> where T : StatefulEntityBase<TState> where TState : Enum {
-        System.Threading.Tasks.Task<T?> ProcessStateUpdate(T entity);
+        Async.Task<T?> ProcessStateUpdate(T entity);
 
-        System.Threading.Tasks.Task<T?> ProcessStateUpdates(T entity, int MaxUpdates = 5);
+        Async.Task<T?> ProcessStateUpdates(T entity, int MaxUpdates = 5);
     }
 
 
@@ -143,7 +143,7 @@ namespace ApiService.OneFuzzLib.Orm {
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public async System.Threading.Tasks.Task<T?> ProcessStateUpdate(T entity) {
+        public async Async.Task<T?> ProcessStateUpdate(T entity) {
             TState state = entity.State;
             var func = _stateFuncs.GetOrAdd(state.ToString(), (string k) =>
                 typeof(T).GetMethod(k) switch {
@@ -165,7 +165,7 @@ namespace ApiService.OneFuzzLib.Orm {
         /// <param name="MaxUpdates"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public async System.Threading.Tasks.Task<T?> ProcessStateUpdates(T entity, int MaxUpdates = 5) {
+        public async Async.Task<T?> ProcessStateUpdates(T entity, int MaxUpdates = 5) {
             for (int i = 0; i < MaxUpdates; i++) {
                 var state = entity.State;
                 var newEntity = await ProcessStateUpdate(entity);

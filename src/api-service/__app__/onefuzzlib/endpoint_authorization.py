@@ -110,10 +110,10 @@ def can_modify_config(req: func.HttpRequest, config: InstanceConfig) -> bool:
     return can_modify_config_impl(config, user_info)
 
 
-def check_can_manage_pools_impl(
+def check_require_admins_impl(
     config: InstanceConfig, user_info: UserInfo
 ) -> Optional[Error]:
-    if config.allow_pool_management:
+    if config.require_admin_privileges:
         return None
 
     if config.admins is None:
@@ -125,25 +125,25 @@ def check_can_manage_pools_impl(
     return Error(code=ErrorCode.UNAUTHORIZED, errors=["not authorized to manage pools"])
 
 
-def check_can_manage_pools(req: func.HttpRequest) -> Optional[Error]:
+def check_require_admins(req: func.HttpRequest) -> Optional[Error]:
     user_info = parse_jwt_token(req)
     if isinstance(user_info, Error):
         return user_info
 
     # When there are no admins in the `admins` list, all users are considered
-    # admins.  However, `allow_pool_management` is still useful to protect from
+    # admins.  However, `require_admin_privileges` is still useful to protect from
     # mistakes.
     #
     # To make changes while still protecting against accidental changes to
     # pools, do the following:
     #
-    # 1. set `allow_pool_management` to `True`
+    # 1. set `require_admin_privileges` to `True`
     # 2. make the change
-    # 3. set `allow_pool_management` to `False`
+    # 3. set `require_admin_privileges` to `False`
 
     config = InstanceConfig.fetch()
 
-    return check_can_manage_pools_impl(config, user_info)
+    return check_require_admins_impl(config, user_info)
 
 
 def is_user(token_data: UserInfo) -> bool:

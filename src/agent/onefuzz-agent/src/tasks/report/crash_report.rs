@@ -311,9 +311,9 @@ pub async fn monitor_reports(
         return Ok(());
     }
 
-    let mut monitor = DirectoryMonitor::new(base_dir);
-    monitor.start()?;
-    while let Some(file) = monitor.next_file().await {
+    let mut monitor = DirectoryMonitor::new(base_dir)?;
+    monitor.start().await?;
+    while let Some(file) = monitor.next_file().await? {
         let result = parse_report_file(file).await?;
         result.save(unique_reports, reports, no_crash).await?;
     }

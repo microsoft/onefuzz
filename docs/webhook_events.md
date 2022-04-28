@@ -681,7 +681,6 @@ If webhook is set to have Event Grid message format then the payload will look a
         "admins": [
             "00000000-0000-0000-0000-000000000000"
         ],
-        "allow_pool_management": true,
         "allowed_aad_tenants": [
             "00000000-0000-0000-0000-000000000000"
         ],
@@ -693,7 +692,8 @@ If webhook is set to have Event Grid message format then the payload will look a
             "allowed_ips": [],
             "allowed_service_tags": []
         },
-        "proxy_vm_sku": "Standard_B2s"
+        "proxy_vm_sku": "Standard_B2s",
+        "require_admin_privileges": true
     }
 }
 ```
@@ -809,11 +809,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Admins",
                     "type": "array"
                 },
-                "allow_pool_management": {
-                    "default": true,
-                    "title": "Allow Pool Management",
-                    "type": "boolean"
-                },
                 "allowed_aad_tenants": {
                     "items": {
                         "format": "uuid",
@@ -853,6 +848,11 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "default": "Standard_B2s",
                     "title": "Proxy Vm Sku",
                     "type": "string"
+                },
+                "require_admin_privileges": {
+                    "default": true,
+                    "title": "Require Admin Privileges",
+                    "type": "boolean"
                 },
                 "vm_tags": {
                     "additionalProperties": {
@@ -6006,11 +6006,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Admins",
                     "type": "array"
                 },
-                "allow_pool_management": {
-                    "default": true,
-                    "title": "Allow Pool Management",
-                    "type": "boolean"
-                },
                 "allowed_aad_tenants": {
                     "items": {
                         "format": "uuid",
@@ -6050,6 +6045,11 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "default": "Standard_B2s",
                     "title": "Proxy Vm Sku",
                     "type": "string"
+                },
+                "require_admin_privileges": {
+                    "default": true,
+                    "title": "Require Admin Privileges",
+                    "type": "boolean"
                 },
                 "vm_tags": {
                     "additionalProperties": {
