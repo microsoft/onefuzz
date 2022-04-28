@@ -6,7 +6,7 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface IConfig {
     string GetSetupContainer(TaskConfig config);
-    TaskConfig BuildTaskConfig(Job job, Task task);
+    Async.Task<TaskUnitConfig> BuildTaskConfig(Job job, Task task);
 }
 
 public class Config : IConfig {
@@ -43,7 +43,7 @@ public class Config : IConfig {
         return blobPermissions;
     }
 
-    public async Async.Task<TaskConfig> BuildTaskConfig(Job job, Task task) {
+    public async Async.Task<TaskUnitConfig> BuildTaskConfig(Job job, Task task) {
 
         if (!Defs.TASK_DEFINITIONS.ContainsKey(task.Config.Task.Type)) {
             throw new Exception($"unsupported task type: {task.Config.Task.Type}");
@@ -165,12 +165,91 @@ public class Config : IConfig {
             config.TargetOptionsMerge = task.Config.Task.TargetOptionsMerge ?? false;
         }
 
+        if (definition.Features.Contains(TaskFeature.TargetWorkers)) {
+            config.TargetWorkers = task.Config.Task.TargetWorkers;
+        }
+
+        if (definition.Features.Contains(TaskFeature.RenameOutput)) {
+            config.RenameOutput = task.Config.Task.RenameOutput;
+        }
+
+        if (definition.Features.Contains(TaskFeature.GeneratorExe)) {
+            config.GeneratorExe = task.Config.Task.GeneratorExe;
+        }
+
+        if (definition.Features.Contains(TaskFeature.GeneratorOptions)) {
+            config.GeneratorOptions = task.Config.Task.GeneratorOptions ?? new List<string>();
+        }
+
+        if (definition.Features.Contains(TaskFeature.WaitForFiles) && task.Config.Task.WaitForFiles != null) {
+            config.WaitForFiles = task.Config.Task.WaitForFiles;
+        }
 
 
 
+        if (definition.Features.Contains(TaskFeature.AnalyzerExe)) {
+            config.AnalyzerExe = task.Config.Task.AnalyzerExe;
+        }
 
-        throw new NotImplementedException();
+        if (definition.Features.Contains(TaskFeature.AnalyzerOptions)) {
+            config.AnalyzerOptions = task.Config.Task.AnalyzerOptions ?? new List<string>();
+        }
+
+        if (definition.Features.Contains(TaskFeature.AnalyzerEnv)) {
+            config.AnalyzerEnv = task.Config.Task.AnalyzerEnv ?? new Dictionary<string, string>();
+        }
+
+        if (definition.Features.Contains(TaskFeature.StatsFile)) {
+            config.StatsFile = task.Config.Task.StatsFile;
+            config.StatsFormat = task.Config.Task.StatsFormat;
+        }
+
+        if (definition.Features.Contains(TaskFeature.TargetTimeout)) {
+            config.TargetTimeout = task.Config.Task.TargetTimeout;
+        }
+
+        if (definition.Features.Contains(TaskFeature.CheckAsanLog)) {
+            config.CheckAsanLog = task.Config.Task.CheckAsanLog;
+        }
+
+        if (definition.Features.Contains(TaskFeature.CheckDebugger)) {
+            config.CheckDebugger = task.Config.Task.CheckDebugger;
+        }
+
+        if (definition.Features.Contains(TaskFeature.CheckRetryCount)) {
+            config.CheckRetryCount = task.Config.Task.CheckRetryCount ?? 0;
+        }
+
+        if (definition.Features.Contains(TaskFeature.EnsembleSyncDelay)) {
+            config.EnsembleSyncDelay = task.Config.Task.EnsembleSyncDelay;
+        }
+
+        if (definition.Features.Contains(TaskFeature.CheckFuzzerHelp)) {
+            config.CheckFuzzerHelp = task.Config.Task.CheckFuzzerHelp ?? true;
+        }
+
+        if (definition.Features.Contains(TaskFeature.ReportList)) {
+            config.ReportList = task.Config.Task.ReportList;
+        }
+
+        if (definition.Features.Contains(TaskFeature.MinimizedStackDepth)) {
+            config.MinimizedStackDepth = task.Config.Task.MinimizedStackDepth;
+        }
+
+        if (definition.Features.Contains(TaskFeature.ExpectCrashOnFailure)) {
+            config.ExpectCrashOnFailure = task.Config.Task.ExpectCrashOnFailure ?? true;
+        }
+
+        if (definition.Features.Contains(TaskFeature.CoverageFilter)) {
+            var coverageFilter = task.Config.Task.CoverageFilter;
+            if (coverageFilter != null) {
+                config.CoverageFilter = $"setup/{coverageFilter}";
+            }
+        }
+
+        return config;
     }
+
 
     public string GetSetupContainer(TaskConfig config) {
 
@@ -181,9 +260,5 @@ public class Config : IConfig {
         }
 
         throw new Exception($"task missing setup container: task_type = {config.Task.Type}");
-    }
-
-    TaskConfig IConfig.BuildTaskConfig(Job job, Task task) {
-        throw new NotImplementedException();
     }
 }

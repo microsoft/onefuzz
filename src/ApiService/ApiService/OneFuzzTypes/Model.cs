@@ -581,7 +581,7 @@ public record WorkUnit(
     Guid JobId,
     Guid TaskId,
     TaskType TaskType,
-    string Config
+    TaskUnitConfig Config
 );
 
 public record VmDefinition(
@@ -595,6 +595,14 @@ public record TaskDefinition(
     ContainerDefinition[] Containers,
     ContainerType? MonitorQueue = null
 );
+
+public record WorkSet(
+    bool Reboot,
+    Uri SetupUrl,
+    bool Script,
+    List<WorkUnit> WorkUnits
+);
+
 
 
 
@@ -646,7 +654,7 @@ public record TaskUnitConfig(
     public string? GeneratorExe { get; set; }
     public Dictionary<string, string>? GeneratorEnv { get; set; }
     public List<string>? GeneratorOptions { get; set; }
-    public string? WaitForFiles { get; set; }
+    public ContainerType? WaitForFiles { get; set; }
     public string? AnalyzerExe { get; set; }
     public Dictionary<string, string>? AnalyzerEnv { get; set; }
     public List<string>? AnalyzerOptions { get; set; }

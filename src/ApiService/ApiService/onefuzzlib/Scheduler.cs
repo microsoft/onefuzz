@@ -1,4 +1,6 @@
-﻿namespace Microsoft.OneFuzz.Service;
+﻿using Azure.Storage.Sas;
+
+namespace Microsoft.OneFuzz.Service;
 
 
 public interface IScheduler {
@@ -11,16 +13,18 @@ public class Scheduler : IScheduler {
     private readonly IPoolOperations _poolOperations;
     private readonly ILogTracer _logTracer;
     private readonly IJobOperations _jobOperations;
+    private readonly IContainers _containers;
 
     // TODO: eventually, this should be tied to the pool.
     const int MAX_TASKS_PER_SET = 10;
 
-    public Scheduler(ITaskOperations taskOperations, IConfig config, IPoolOperations poolOperations, ILogTracer logTracer, IJobOperations jobOperations) {
+    public Scheduler(ITaskOperations taskOperations, IConfig config, IPoolOperations poolOperations, ILogTracer logTracer, IJobOperations jobOperations, IContainers containers) {
         _taskOperations = taskOperations;
         _config = config;
         _poolOperations = poolOperations;
         _logTracer = logTracer;
         _jobOperations = jobOperations;
+        _containers = containers;
     }
 
     public async System.Threading.Tasks.Task ScheduleTasks() {
@@ -31,20 +35,37 @@ public class Scheduler : IScheduler {
 
         foreach (var bucketedTasks in buckets) {
             foreach (var chunks in bucketedTasks.Chunk(MAX_TASKS_PER_SET)) {
-                var result = BuildWorkSet(chunks);
+                var result = await BuildWorkSet(chunks);
                 if (result == null) {
                     continue;
+                }
+                var (bucketConfig, workSet) = result.Value;
+
+                if (await ScheduleWorkset(workSet, bucketConfig.pool, bucketConfig.count)) {
+                    foreach (var workUnit in workSet.WorkUnits) {
+                        var task1 = tasks[workUnit.TaskId];
+                        Task task = await _taskOperations.SetState(task1, TaskState.Scheduled);
+                        seen.Add(task.TaskId);
+                    }
                 }
             }
         }
 
+        var notReadyCount = tasks.Count - seen.Count;
+        if (notReadyCount > 0) {
+            _logTracer.Info($"tasks not ready {notReadyCount}");
+        }
+    }
+
+    private System.Threading.Tasks.Task<bool> ScheduleWorkset(WorkSet workSet, Pool pool, int count) {
         throw new NotImplementedException();
     }
 
-    private async Async.Task BuildWorkSet(Task[] tasks) {
+    private async Async.Task<(BucketConfig, WorkSet)?> BuildWorkSet(Task[] tasks) {
         var taskIds = tasks.Select(x => x.TaskId).ToHashSet();
+        var work_units = new List<WorkUnit>();
 
-
+        BucketConfig? bucketConfig = null;
         foreach (var task in tasks) {
             if ((task.Config.PrereqTasks?.Count ?? 0) > 0) {
                 // if all of the prereqs are in this bucket, they will be
@@ -57,9 +78,32 @@ public class Scheduler : IScheduler {
             }
 
             var result = await BuildWorkunit(task);
+            if (result == null) {
+                continue;
+            }
 
+            if (bucketConfig == null) {
+                bucketConfig = result.Value.Item1;
+            } else if (bucketConfig != result.Value.Item1) {
+                throw new Exception($"bucket configs differ: {bucketConfig} VS {result.Value.Item1}");
+            }
+
+            work_units.Add(result.Value.Item2);
         }
-        throw new NotImplementedException();
+
+        if (bucketConfig != null) {
+            var setupUrl = await _containers.GetContainerSasUrl(bucketConfig.setupContainer, StorageType.Corpus, BlobContainerSasPermissions.Read | BlobContainerSasPermissions.List) ?? throw new Exception("container not found");
+            var workSet = new WorkSet(
+                Reboot: bucketConfig.reboot,
+                Script: bucketConfig.setupScript != null,
+                SetupUrl: setupUrl,
+                WorkUnits: work_units
+            );
+
+            return (bucketConfig, workSet);
+        }
+
+        return null;
     }
 
 
@@ -80,10 +124,51 @@ public class Scheduler : IScheduler {
             throw new Exception($"invalid job_id {task.JobId} for task {task.TaskId}");
         }
 
-        TaskConfig taskConfig = _config.BuildTaskConfig(job, task);
+        var taskConfig = await _config.BuildTaskConfig(job, task);
+        var setupContainer = task.Config.Containers?.FirstOrDefault(c => c.Type == ContainerType.Setup) ?? throw new Exception($"task missing setup container: task_type = {task.Config.Task.Type}");
+
+        var setupPs1Exist = _containers.BlobExists(setupContainer.Name, "setup.ps1", StorageType.Corpus);
+        var setupShExist = _containers.BlobExists(setupContainer.Name, "setup.sh", StorageType.Corpus);
+
+        string? setupScript = null;
+        if (task.Os == Os.Windows && await setupPs1Exist) {
+            setupScript = "setup.ps1";
+        }
+
+        if (task.Os == Os.Linux && await setupShExist) {
+            setupScript = "setup.sh";
+        }
+
+        var reboot = false;
+        var count = 1;
+        if (task.Config.Pool != null) {
+            count = task.Config.Pool.Count;
+            reboot = task.Config.Task.RebootAfterSetup ?? false;
+        } else if (task.Config.Vm != null) {
+            count = task.Config.Vm.Count;
+            reboot = (task.Config.Vm.RebootAfterSetup ?? false) || (task.Config.Task.RebootAfterSetup ?? false);
+        } else {
+            throw new Exception();
+        }
+
+        var workUnit = new WorkUnit(
+            JobId: taskConfig.JobId,
+            TaskId: taskConfig.TaskId,
+            TaskType: taskConfig.TaskType,
+            // todo: make sure that we exclude nulls when serializing
+            // config = task_config.json(exclude_none = True, exclude_unset = True),
+            Config: taskConfig);
+
+        var bucketConfig = new BucketConfig(
+            count,
+            reboot,
+            setupContainer.Name,
+            setupScript,
+            pool);
 
 
-        throw new NotImplementedException();
+
+        return (bucketConfig, workUnit);
     }
 
     record struct BucketId(Os os, Guid jobId, (string, string)? vm, string? pool, string setupContainer, bool? reboot, Guid? unique);
