@@ -138,6 +138,7 @@ class Client:
         client_id: Optional[str],
         client_secret: Optional[str],
         app_zip: str,
+        app_net_zip: str,
         tools: str,
         instance_specific: str,
         third_party: str,
@@ -159,6 +160,7 @@ class Client:
         self.owner = owner
         self.nsg_config = nsg_config
         self.app_zip = app_zip
+        self.app_net_zip = app_net_zip
         self.tools = tools
         self.instance_specific = instance_specific
         self.third_party = third_party
@@ -1027,9 +1029,9 @@ class Client:
                     raise error
 
     def deploy_dotnet_app(self) -> None:
-        logger.info("deploying function app %s", self.app_zip)
+        logger.info("deploying function app %s ", self.app_net_zip)
         with tempfile.TemporaryDirectory() as tmpdirname:
-            with zipfile.ZipFile(self.app_zip, "r") as zip_ref:
+            with zipfile.ZipFile(self.app_net_zip, "r") as zip_ref:
                 func = shutil.which("func")
                 assert func is not None
 
@@ -1044,8 +1046,7 @@ class Client:
                                 "azure",
                                 "functionapp",
                                 "publish",
-                                self.application_name,
-                                "--dotnet",
+                                self.application_name + '-net',
                                 "--no-build",
                             ],
                             env=dict(os.environ, CLI_DEBUG="1"),
@@ -1154,6 +1155,12 @@ def main() -> None:
         help="(default: %(default)s)",
     )
     parser.add_argument(
+        "--app-net-zip",
+        type=arg_file,
+        default="api-service-net.zip",
+        help="(default: %(default)s)",
+    )
+    parser.add_argument(
         "--tools", type=arg_dir, default="tools", help="(default: %(default)s)"
     )
     parser.add_argument(
@@ -1251,6 +1258,7 @@ def main() -> None:
         client_id=args.client_id,
         client_secret=args.client_secret,
         app_zip=args.app_zip,
+        app_net_zip=args.app_net_zip,
         tools=args.tools,
         instance_specific=args.instance_specific,
         third_party=args.third_party,
