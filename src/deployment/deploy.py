@@ -1046,7 +1046,7 @@ class Client:
                                 "azure",
                                 "functionapp",
                                 "publish",
-                                self.application_name + '-net',
+                                self.application_name + "-net",
                                 "--no-build",
                             ],
                             env=dict(os.environ, CLI_DEBUG="1"),
