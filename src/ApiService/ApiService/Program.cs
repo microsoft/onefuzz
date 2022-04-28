@@ -69,6 +69,7 @@ public class Program {
             .AddScoped<IQueue, Queue>()
             .AddScoped<IStorage, Storage>()
             .AddScoped<IProxyOperations, ProxyOperations>()
+            .AddScoped<IProxyForwardOperations, ProxyForwardOperations>()
             .AddScoped<IConfigOperations, ConfigOperations>()
             .AddScoped<IScalesetOperations, ScalesetOperations>()
             .AddScoped<IContainers, Containers>()
