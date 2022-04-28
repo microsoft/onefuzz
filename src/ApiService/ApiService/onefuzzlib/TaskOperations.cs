@@ -17,7 +17,7 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
     Async.Task<TaskVm?> GetReproVmConfig(Task task);
     Async.Task<bool> CheckPrereqTasks(Task task);
     System.Threading.Tasks.Task<Pool?> GetPool(Task task);
-    System.Threading.Tasks.Task<Task> SetState(Task task1, TaskState scheduled);
+    System.Threading.Tasks.Task<Task> SetState(Task task, TaskState state);
 }
 
 public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
@@ -119,7 +119,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
         }
     }
 
-    private async Async.Task<Task> SetState(Task task, TaskState state) {
+    public async Async.Task<Task> SetState(Task task, TaskState state) {
         if (task.State == state) {
             return task;
         }
@@ -251,9 +251,5 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
         _logTracer.Warning($"unable to find a scaleset that matches the task prereqs: {task.TaskId}");
         return null;
 
-    }
-
-    System.Threading.Tasks.Task<Task> ITaskOperations.SetState(Task task1, TaskState scheduled) {
-        throw new NotImplementedException();
     }
 }

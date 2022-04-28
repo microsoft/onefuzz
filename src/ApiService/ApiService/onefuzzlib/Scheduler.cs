@@ -57,8 +57,19 @@ public class Scheduler : IScheduler {
         }
     }
 
-    private System.Threading.Tasks.Task<bool> ScheduleWorkset(WorkSet workSet, Pool pool, int count) {
-        throw new NotImplementedException();
+    private async System.Threading.Tasks.Task<bool> ScheduleWorkset(WorkSet workSet, Pool pool, int count) {
+        if (!PoolStateHelper.Available().Contains(pool.State)) {
+            _logTracer.Info($"pool not available for work: {pool.Name} state: {pool.State}");
+            return false;
+        }
+
+        for (var i = 0; i < count; i++) {
+            if (!await _poolOperations.ScheduleWorkset(pool, workSet)) {
+                _logTracer.Error($"unable to schedule workset. pool:{pool.Name} workset: {workSet}");
+                return false;
+            }
+        }
+        return true;
     }
 
     private async Async.Task<(BucketConfig, WorkSet)?> BuildWorkSet(Task[] tasks) {

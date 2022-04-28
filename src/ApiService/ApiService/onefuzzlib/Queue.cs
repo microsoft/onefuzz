@@ -8,7 +8,7 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 namespace Microsoft.OneFuzz.Service;
 public interface IQueue {
     Async.Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
-    Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout);
+    Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null);
     Uri? GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
 }
 
