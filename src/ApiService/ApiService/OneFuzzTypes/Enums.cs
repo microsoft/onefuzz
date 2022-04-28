@@ -335,7 +335,7 @@ public enum TaskFeature {
 
 [Flags]
 public enum ContainerPermission {
-    Read = 1,
+    Read = 1 << 0,
     Write = 1 << 1,
     List = 1 << 2,
     Delete = 1 << 3,
