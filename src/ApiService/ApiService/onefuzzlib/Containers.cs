@@ -1,38 +1,54 @@
-﻿using System.Threading.Tasks;
-using Azure;
+﻿﻿using Azure;
 using Azure.ResourceManager;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
 
+
 namespace Microsoft.OneFuzz.Service;
 
 
 public interface IContainers {
-    public Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType);
+    public Async.Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType);
 
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
     public Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
-    Async.Task SaveBlob(Container container, string v1, string v2, StorageType config);
-    Task<Guid> GetInstanceId();
-    Async.Task<Uri> AddContainerSasUrl(Uri uri);
-    Async.Task<Uri> GetContainerSasUrl(Container container, StorageType storageType, BlobContainerSasPermissions permissions, TimeSpan? duration = null);
-    Async.Task<bool> BlobExists(Container container, string name, StorageType storageType);
+    public Async.Task SaveBlob(Container container, string v1, string v2, StorageType config);
+    public Async.Task<Guid> GetInstanceId();
+
+    public Async.Task<Uri?> GetFileUrl(Container container, string name, StorageType storageType);
+
+    public Async.Task<Uri> GetContainerSasUrl(Container container, StorageType storageType, BlobContainerSasPermissions permissions, TimeSpan? duration = null);
+
+    public Async.Task<bool> BlobExists(Container container, string name, StorageType storageType);
+
+    public Async.Task<Uri> AddContainerSasUrl(Uri uri);
 }
+
 
 public class Containers : IContainers {
     private ILogTracer _log;
     private IStorage _storage;
     private ICreds _creds;
     private ArmClient _armClient;
+
     public Containers(ILogTracer log, IStorage storage, ICreds creds) {
         _log = log;
         _storage = storage;
         _creds = creds;
         _armClient = creds.ArmClient;
     }
-    public async Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType) {
+
+    public async Async.Task<Uri?> GetFileUrl(Container container, string name, StorageType storageType) {
+        var client = await FindContainer(container, storageType);
+        if (client is null)
+            return null;
+
+        return new Uri($"{GetUrl(client.AccountName)}{container}/{name}");
+    }
+
+    public async Async.Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType) {
         var client = await FindContainer(container, storageType);
 
         if (client == null) {
@@ -116,17 +132,29 @@ public class Containers : IContainers {
         return (start, expiry);
     }
 
-    public async System.Threading.Tasks.Task SaveBlob(Container container, string name, string data, StorageType storageType) {
+    public async Async.Task SaveBlob(Container container, string name, string data, StorageType storageType) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
         await client.UploadBlobAsync(name, new BinaryData(data));
     }
 
+    //TODO: get this ones on startup and cache (and make this method un-accessible to everyone else)
     public async Async.Task<Guid> GetInstanceId() {
         var blob = await GetBlob(new Container("base-config"), "instance_id", StorageType.Config);
         if (blob == null) {
             throw new System.Exception("Blob Not Found");
         }
         return System.Guid.Parse(blob.ToString());
+    }
+
+    public Uri? GetContainerSasUrlService(
+        BlobContainerClient client,
+        BlobSasPermissions permissions,
+        bool tag = false,
+        TimeSpan? timeSpan = null) {
+        var (start, expiry) = SasTimeWindow(timeSpan ?? TimeSpan.FromDays(30.0));
+        var sasBuilder = new BlobSasBuilder(permissions, expiry) { StartsOn = start };
+        var sas = client.GenerateSasUri(sasBuilder);
+        return sas;
     }
 
     public async Async.Task<Uri> AddContainerSasUrl(Uri uri) {
