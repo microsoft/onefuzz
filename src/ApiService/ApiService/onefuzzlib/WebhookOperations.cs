@@ -175,7 +175,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         }
     }
 
-    private async System.Threading.Tasks.Task Process(WebhookMessageLog message) {
+    private async Async.Task Process(WebhookMessageLog message) {
 
         if (message.State == WebhookMessageState.Failed || message.State == WebhookMessageState.Succeeded) {
             _log.WithTags(
