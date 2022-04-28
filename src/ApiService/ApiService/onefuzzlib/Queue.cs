@@ -28,20 +28,13 @@ public class Queue : IQueue {
     public async Async.Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
         var queue = await GetQueue(name, storageType);
         if (queue != null) {
-            try {
-                await queue.SendMessageAsync(Convert.ToBase64String(message), visibilityTimeout: visibilityTimeout, timeToLive: timeToLive);
-            } catch (Exception) {
-            }
+            await queue.SendMessageAsync(Convert.ToBase64String(message), visibilityTimeout: visibilityTimeout, timeToLive: timeToLive);
         }
     }
 
     public async Task<QueueClient?> GetQueue(string name, StorageType storageType) {
         var client = await GetQueueClient(storageType);
-        try {
-            return client.GetQueueClient(name);
-        } catch (Exception) {
-            return null;
-        }
+        return client.GetQueueClient(name);
     }
 
 
@@ -59,13 +52,8 @@ public class Queue : IQueue {
 
         var serialized = JsonSerializer.Serialize(obj, EntityConverter.GetJsonSerializerOptions());
         //var encoded = Encoding.UTF8.GetBytes(serialized);
-
-        try {
-            await queue.SendMessageAsync(serialized, visibilityTimeout: visibilityTimeout);
-            return true;
-        } catch (Exception) {
-            return false;
-        }
+        var response = await queue.SendMessageAsync(serialized, visibilityTimeout: visibilityTimeout);
+        return !response.GetRawResponse().IsError;
     }
 
     public async Task<Uri?> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
