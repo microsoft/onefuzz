@@ -30,6 +30,7 @@ public class DiskOperations : IDiskOperations {
             }
         } catch (Exception e) {
             _logTracer.Error($"unable to delete disk: {name} {e.Message}");
+            _logTracer.Exception(e);
         }
         return false;
     }

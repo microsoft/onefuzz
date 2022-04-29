@@ -10,7 +10,7 @@ namespace Microsoft.OneFuzz.Service {
         bool OkToDelete(HashSet<string> active_regions, string nsg_region, string nsg_name);
         Async.Task<bool> StartDeleteNsg(string name);
 
-        Async.Task<ResultVoid<Error>> DissociateNic(Nsg nsg, NetworkInterfaceResource nic);
+        Async.Task<OneFuzzResultVoid> DissociateNic(Nsg nsg, NetworkInterfaceResource nic);
     }
 
 
@@ -46,26 +46,26 @@ namespace Microsoft.OneFuzz.Service {
             return null;
         }
 
-        public async Async.Task<ResultVoid<Error>> DissociateNic(Nsg nsg, NetworkInterfaceResource nic) {
+        public async Async.Task<OneFuzzResultVoid> DissociateNic(Nsg nsg, NetworkInterfaceResource nic) {
             if (nic.Data.NetworkSecurityGroup == null) {
-                return ResultVoid<Error>.Ok();
+                return OneFuzzResultVoid.Ok();
             }
 
             var azureNsg = await GetNsg(nsg.Name);
             if (azureNsg == null) {
-                return new ResultVoid<Error>(new Error(
+                return OneFuzzResultVoid.Error(
                     ErrorCode.UNABLE_TO_FIND,
                     new[] { $"cannot update nsg rules. nsg {nsg.Name} not found" }
-                ));
+                );
             }
             if (azureNsg.Data.Id != nic.Data.NetworkSecurityGroup.Id) {
-                return new ResultVoid<Error>(new Error(
+                return OneFuzzResultVoid.Error(
                     ErrorCode.UNABLE_TO_UPDATE,
                     new[] {
                         "network interface is not associated with this nsg.",
                         $"nsg: {azureNsg.Id}, nic: {nic.Data.Name}, nic.nsg: {nic.Data.NetworkSecurityGroup.Id}"
                     }
-                ));
+                );
             }
 
             _logTracer.Info($"dissociating nic {nic.Data.Name} with nsg: {_creds.GetBaseResourceGroup()} {nsg.Name}");
@@ -83,17 +83,17 @@ namespace Microsoft.OneFuzz.Service {
                         err,
                     )
                     */
-                    return ResultVoid<Error>.Ok();
+                    return OneFuzzResultVoid.Ok();
                 }
-                return new ResultVoid<Error>(new Error(
+                return OneFuzzResultVoid.Error(
                     ErrorCode.UNABLE_TO_UPDATE,
                     new[] {
                         $"Unable to dissociate nsg {nsg.Name} with nic {nic.Data.Name} due to {e.Message} {e.StackTrace}"
                     }
-                ));
+                );
             }
 
-            return ResultVoid<Error>.Ok();
+            return OneFuzzResultVoid.Ok();
         }
 
         public async Async.Task<NetworkSecurityGroupResource?> GetNsg(string name) {
