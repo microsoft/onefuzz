@@ -296,7 +296,59 @@ public enum Architecture {
     x86_64
 }
 
+public enum TaskFeature {
+    InputQueueFromContainer,
+    SupervisorExe,
+    SupervisorEnv,
+    SupervisorOptions,
+    SupervisorInputMarker,
+    StatsFile,
+    StatsFormat,
+    TargetExe,
+    TargetExeOptional,
+    TargetEnv,
+    TargetOptions,
+    AnalyzerExe,
+    AnalyzerEnv,
+    AnalyzerOptions,
+    RenameOutput,
+    TargetOptionsMerge,
+    TargetWorkers,
+    GeneratorExe,
+    GeneratorEnv,
+    GeneratorOptions,
+    WaitForFiles,
+    TargetTimeout,
+    CheckAsanLog,
+    CheckDebugger,
+    CheckRetryCount,
+    EnsembleSyncDelay,
+    PreserveExistingOutputs,
+    CheckFuzzerHelp,
+    ExpectCrashOnFailure,
+    ReportList,
+    MinimizedStackDepth,
+    CoverageFilter,
+    TargetMustUseInput
+}
 
+
+[Flags]
+public enum ContainerPermission {
+    Read = 1 << 0,
+    Write = 1 << 1,
+    List = 1 << 2,
+    Delete = 1 << 3,
+}
+
+
+
+
+public enum Compare {
+    Equal,
+    AtLeast,
+    AtMost
+}
 public enum AgentMode {
     Fuzz,
     Repro,

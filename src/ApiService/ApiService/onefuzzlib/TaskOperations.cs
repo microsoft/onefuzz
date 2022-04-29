@@ -15,7 +15,9 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
     IAsyncEnumerable<Task> SearchExpired();
     Async.Task MarkStopping(Task task);
     Async.Task<TaskVm?> GetReproVmConfig(Task task);
-
+    Async.Task<bool> CheckPrereqTasks(Task task);
+    System.Threading.Tasks.Task<Pool?> GetPool(Task task);
+    System.Threading.Tasks.Task<Task> SetState(Task task, TaskState state);
 }
 
 public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
@@ -117,7 +119,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
         }
     }
 
-    private async Async.Task<Task> SetState(Task task, TaskState state) {
+    public async Async.Task<Task> SetState(Task task, TaskState state) {
         if (task.State == state) {
             return task;
         }
@@ -199,5 +201,55 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
         return new TaskVm(scaleset.Region, scaleset.VmSku, scaleset.Image, null);
     }
 
+    public async Async.Task<bool> CheckPrereqTasks(Task task) {
+        if (task.Config.PrereqTasks != null) {
+            foreach (var taskId in task.Config.PrereqTasks) {
+                var t = await GetByTaskId(taskId);
 
+                // if a prereq task fails, then mark this task as failed
+                if (t == null) {
+                    await MarkFailed(task, new Error(ErrorCode.INVALID_REQUEST, Errors: new[] { "unable to find task" }));
+                    return false;
+                }
+
+                if (!TaskStateHelper.HasStarted().Contains(t.State)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public async System.Threading.Tasks.Task<Pool?> GetPool(Task task) {
+        if (task.Config.Pool != null) {
+            var pool = await _poolOperations.GetByName(task.Config.Pool.PoolName);
+            if (!pool.IsOk) {
+                _logTracer.Info(
+                    $"unable to schedule task to pool: {task.TaskId} - {pool.ErrorV}"
+                );
+                return null;
+            }
+            return pool.OkV;
+        } else if (task.Config.Vm != null) {
+            var scalesets = _scalesetOperations.Search().Where(s => s.VmSku == task.Config.Vm.Sku && s.Image == task.Config.Vm.Image);
+
+            await foreach (var scaleset in scalesets) {
+                if (task.Config.Pool == null) {
+                    continue;
+                }
+                var pool = await _poolOperations.GetByName(task.Config.Pool.PoolName);
+                if (!pool.IsOk) {
+                    _logTracer.Info(
+                        $"unable to schedule task to pool: {task.TaskId} - {pool.ErrorV}"
+                    );
+                    return null;
+                }
+                return pool.OkV;
+            }
+        }
+
+        _logTracer.Warning($"unable to find a scaleset that matches the task prereqs: {task.TaskId}");
+        return null;
+
+    }
 }

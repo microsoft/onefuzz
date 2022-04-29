@@ -239,8 +239,8 @@ public class Extensions : IExtensions {
     }
 
     public async Async.Task UpdateManagedScripts() {
-        var instanceSpecificSetupSas = _containers.GetContainerSasUrl(new Container("instance-specific-setup"), StorageType.Config, BlobSasPermissions.List | BlobSasPermissions.Read);
-        var toolsSas = _containers.GetContainerSasUrl(new Container("tools"), StorageType.Config, BlobSasPermissions.List | BlobSasPermissions.Read);
+        var instanceSpecificSetupSas = _containers.GetContainerSasUrl(new Container("instance-specific-setup"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
+        var toolsSas = _containers.GetContainerSasUrl(new Container("tools"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
 
         string[] commands = {
             $"azcopy sync '{instanceSpecificSetupSas}' instance-specific-setup",
