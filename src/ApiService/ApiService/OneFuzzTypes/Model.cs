@@ -245,7 +245,6 @@ public record NodeAssignment(
 
 
 public record Task(
-    // Timestamp: Optional[datetime] = Field(alias="Timestamp")
     [PartitionKey] Guid JobId,
     [RowKey] Guid TaskId,
     TaskState State,
@@ -282,7 +281,9 @@ public record AzureMonitorExtensionConfig(
 
 public record AzureVmExtensionConfig(
     KeyvaultExtensionConfig? Keyvault,
-    AzureMonitorExtensionConfig AzureMonitor
+    AzureMonitorExtensionConfig? AzureMonitor,
+    AzureSecurityExtensionConfig? AzureSecurity,
+    GenevaExtensionConfig? Geneva
 );
 
 public record NetworkConfig(
@@ -307,13 +308,13 @@ public record ApiAccessRule(
     Guid[] AllowedGroups
 );
 
+//# initial set of admins can only be set during deployment.
+//# if admins are set, only admins can update instance configs.
+//# if set, only admins can manage pools or scalesets
 public record InstanceConfig
 (
     [PartitionKey, RowKey] string InstanceName,
-    //# initial set of admins can only be set during deployment.
-    //# if admins are set, only admins can update instance configs.
     Guid[]? Admins,
-    //# if set, only admins can manage pools or scalesets
     bool? AllowPoolManagement,
     string[] AllowedAadTenants,
     NetworkConfig NetworkConfig,
@@ -387,6 +388,7 @@ public record Scaleset(
     bool SpotInstance,
     bool EphemeralOsDisks,
     bool NeedsConfigUpdate,
+    Error? Error,
     List<ScalesetNodeState> Nodes,
     Guid? ClientId,
     Guid? ClientObjectId,
@@ -490,20 +492,20 @@ public record Repro(
     UserInfo? UserInfo
 ) : StatefulEntityBase<VmState>(State);
 
+// TODO: Make this >1 and < 7*24 (more than one hour, less than seven days)
 public record ReproConfig(
     Container Container,
     string Path,
-    // TODO: Make this >1 and < 7*24 (more than one hour, less than seven days)
     int Duration
 );
 
+// Skipping AutoScaleConfig because it's not used anymore
 public record Pool(
     DateTimeOffset Timestamp,
     PoolName Name,
     Guid PoolId,
     Os Os,
     bool Managed,
-    // Skipping AutoScaleConfig because it's not used anymore
     Architecture Architecture,
     PoolState State,
     Guid? ClientId,
@@ -514,8 +516,26 @@ public record Pool(
 ) : StatefulEntityBase<PoolState>(State);
 
 
-// TODO
-public record AgentConfig();
+public record ClientCredentials
+(
+    Guid ClientId,
+    string ClientSecret
+);
+
+
+public record AgentConfig(
+    ClientCredentials? ClientCredentials,
+    [property: JsonPropertyName("onefuzz_url")] Uri OneFuzzUrl,
+    PoolName PoolName,
+    Uri? HeartbeatQueue,
+    string? InstanceTelemetryKey,
+    string? MicrosoftTelemetryKey,
+    string? MultiTenantDomain,
+    Guid InstanceId
+);
+
+
+
 public record WorkSetSummary();
 public record ScalesetSummary();
 
@@ -578,3 +598,107 @@ public record Job(
 }
 
 public record Nsg(string Name, Region Region);
+
+public record WorkUnit(
+    Guid JobId,
+    Guid TaskId,
+    TaskType TaskType,
+    TaskUnitConfig Config
+);
+
+public record VmDefinition(
+    Compare Compare,
+    int Value
+);
+
+public record TaskDefinition(
+    TaskFeature[] Features,
+    VmDefinition Vm,
+    ContainerDefinition[] Containers,
+    ContainerType? MonitorQueue = null
+);
+
+public record WorkSet(
+    bool Reboot,
+    Uri SetupUrl,
+    bool Script,
+    List<WorkUnit> WorkUnits
+);
+
+
+
+
+
+public record ContainerDefinition(
+    ContainerType Type,
+    Compare Compare,
+    int Value,
+    ContainerPermission Permissions);
+
+
+// TODO: service shouldn't pass SyncedDir, but just the url and let the agent
+// come up with paths
+public record SyncedDir(string Path, Uri url);
+
+
+public interface IContainerDef { }
+public record SingleContainer(SyncedDir SyncedDir) : IContainerDef;
+public record MultipleContainer(List<SyncedDir> SyncedDirs) : IContainerDef;
+
+
+public record TaskUnitConfig(
+    Guid InstanceId,
+    Guid JobId,
+    Guid TaskId,
+    Uri logs,
+    TaskType TaskType,
+    string? InstanceTelemetryKey,
+    string? MicrosoftTelemetryKey,
+    Uri HeartbeatQueue
+    ) {
+    public Uri? inputQueue { get; set; }
+    public String? SupervisorExe { get; set; }
+    public Dictionary<string, string>? SupervisorEnv { get; set; }
+    public List<string>? SupervisorOptions { get; set; }
+    public string? SupervisorInputMarker { get; set; }
+    public string? TargetExe { get; set; }
+    public Dictionary<string, string>? TargetEnv { get; set; }
+    public List<string>? TargetOptions { get; set; }
+    public int? TargetTimeout { get; set; }
+    public bool? TargetOptionsMerge { get; set; }
+    public int? TargetWorkers { get; set; }
+    public bool? CheckAsanLog { get; set; }
+    public bool? CheckDebugger { get; set; }
+    public int? CheckRetryCount { get; set; }
+    public bool? CheckFuzzerHelp { get; set; }
+    public bool? ExpectCrashOnFailure { get; set; }
+    public bool? RenameOutput { get; set; }
+    public string? GeneratorExe { get; set; }
+    public Dictionary<string, string>? GeneratorEnv { get; set; }
+    public List<string>? GeneratorOptions { get; set; }
+    public ContainerType? WaitForFiles { get; set; }
+    public string? AnalyzerExe { get; set; }
+    public Dictionary<string, string>? AnalyzerEnv { get; set; }
+    public List<string>? AnalyzerOptions { get; set; }
+    public string? StatsFile { get; set; }
+    public StatsFormat? StatsFormat { get; set; }
+    public int? EnsembleSyncDelay { get; set; }
+    public List<string>? ReportList { get; set; }
+    public int? MinimizedStackDepth { get; set; }
+    public string? CoverageFilter { get; set; }
+
+    // from here forwards are Container definitions.  These need to be inline
+    // with TaskDefinitions and ContainerTypes
+    public IContainerDef? Analysis { get; set; }
+    public IContainerDef? Coverage { get; set; }
+    public IContainerDef? Crashes { get; set; }
+    public IContainerDef? Inputs { get; set; }
+    public IContainerDef? NoRepro { get; set; }
+    public IContainerDef? ReadonlyInputs { get; set; }
+    public IContainerDef? Reports { get; set; }
+    public IContainerDef? Tools { get; set; }
+    public IContainerDef? UniqueInputs { get; set; }
+    public IContainerDef? UniqueReports { get; set; }
+    public IContainerDef? RegressionReport { get; set; }
+
+}

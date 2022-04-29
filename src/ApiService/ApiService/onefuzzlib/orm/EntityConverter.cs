@@ -62,6 +62,7 @@ public class EntityConverter {
     public EntityConverter() {
         _options = GetJsonSerializerOptions();
         _cache = new ConcurrentDictionary<Type, EntityInfo>();
+
     }
 
 
@@ -259,15 +260,19 @@ public class EntityConverter {
         var entityInfo = GetEntityInfo<T>();
         var parameters =
             entityInfo.properties.Keys.Select(k => GetFieldValue(entityInfo, k, entity)).ToArray();
+        try {
+            var entityRecord = (T)entityInfo.constructor.Invoke(parameters);
+            if (entity.ETag != _emptyETag) {
+                entityRecord.ETag = entity.ETag;
+            }
+            entityRecord.TimeStamp = entity.Timestamp;
+            return entityRecord;
 
-        var entityRecord = (T)entityInfo.constructor.Invoke(parameters);
-
-        if (entity.ETag != _emptyETag) {
-            entityRecord.ETag = entity.ETag;
+        } catch (Exception) {
+            var stringParam = string.Join(", ", parameters);
+            throw new Exception($"Could not initialize object of type {typeof(T)} with the following parameters: {stringParam} constructor {entityInfo.constructor}");
         }
-        entityRecord.TimeStamp = entity.Timestamp;
 
-        return entityRecord;
     }
 
 }

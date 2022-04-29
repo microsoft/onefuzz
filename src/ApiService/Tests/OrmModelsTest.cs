@@ -176,8 +176,8 @@ namespace Tests {
         public static Gen<Scaleset> Scaleset() {
             return Arb.Generate<Tuple<
                 Tuple<string, Guid, ScalesetState, Authentication?, string, string, string>,
-                Tuple<int, bool, bool, bool, List<ScalesetNodeState>, Guid?, Guid?>,
-                Tuple<Dictionary<string, string>>>>().Select(
+                Tuple<int, bool, bool, bool, Error?, List<ScalesetNodeState>, Guid?>,
+                Tuple<Guid?, Dictionary<string, string>>>>().Select(
                     arg =>
                         new Scaleset(
                             PoolName: arg.Item1.Item1,
@@ -192,11 +192,12 @@ namespace Tests {
                             SpotInstance: arg.Item2.Item2,
                             EphemeralOsDisks: arg.Item2.Item3,
                             NeedsConfigUpdate: arg.Item2.Item4,
-                            Nodes: arg.Item2.Item5,
-                            ClientId: arg.Item2.Item6,
-                            ClientObjectId: arg.Item2.Item7,
+                            Error: arg.Item2.Item5,
+                            Nodes: arg.Item2.Item6,
+                            ClientId: arg.Item2.Item7,
 
-                            Tags: arg.Item3.Item1
+                            ClientObjectId: arg.Item3.Item1,
+                            Tags: arg.Item3.Item2
                         )
                 );
         }
@@ -243,9 +244,6 @@ namespace Tests {
                     )
             ); ;
         }
-
-
-
 
         public static Gen<Report> Report() {
             return Arb.Generate<Tuple<string, BlobRef, List<string>, Guid, int>>().Select(
@@ -372,6 +370,7 @@ namespace Tests {
         public static Arbitrary<Notification> Notification() {
             return Arb.From(OrmGenerators.Notification());
         }
+
 
         public static Arbitrary<WebhookMessageEventGrid> WebhookMessageEventGrid() {
             return Arb.From(OrmGenerators.WebhookMessageEventGrid());
@@ -547,7 +546,6 @@ namespace Tests {
         public bool Notification(Notification n) {
             return Test(n);
         }
-
 
         [Property]
         public bool Job(Job j) {

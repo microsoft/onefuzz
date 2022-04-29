@@ -45,6 +45,7 @@ public abstract record BaseEvent() {
             this switch {
                 EventNodeHeartbeat _ => EventType.NodeHeartbeat,
                 EventTaskHeartbeat _ => EventType.TaskHeartbeat,
+                EventPing _ => EventType.Ping,
                 EventInstanceConfigUpdated _ => EventType.InstanceConfigUpdated,
                 EventProxyCreated _ => EventType.ProxyCreated,
                 EventProxyDeleted _ => EventType.ProxyDeleted,
@@ -56,6 +57,9 @@ public abstract record BaseEvent() {
                 EventTaskFailed _ => EventType.TaskFailed,
                 EventTaskStopped _ => EventType.TaskStopped,
                 EventTaskStateUpdated _ => EventType.TaskStateUpdated,
+                EventScalesetFailed _ => EventType.ScalesetFailed,
+                EventScalesetResizeScheduled _ => EventType.ScalesetResizeScheduled,
+                EventScalesetStateUpdated _ => EventType.ScalesetStateUpdated,
                 _ => throw new NotImplementedException(),
             };
 
@@ -66,6 +70,7 @@ public abstract record BaseEvent() {
             EventType.NodeHeartbeat => typeof(EventNodeHeartbeat),
             EventType.InstanceConfigUpdated => typeof(EventInstanceConfigUpdated),
             EventType.TaskHeartbeat => typeof(EventTaskHeartbeat),
+            EventType.Ping => typeof(EventPing),
             EventType.ProxyCreated => typeof(EventProxyCreated),
             EventType.ProxyDeleted => typeof(EventProxyDeleted),
             EventType.ProxyFailed => typeof(EventProxyFailed),
@@ -151,11 +156,9 @@ public record EventTaskHeartbeat(
    TaskConfig Config
 ) : BaseEvent();
 
-
-//record EventPing(
-//    PingId: Guid
-//): BaseEvent();
-
+public record EventPing(
+    Guid PingId
+) : BaseEvent();
 
 //record EventScalesetCreated(
 //    Guid ScalesetId,
@@ -166,11 +169,11 @@ public record EventTaskHeartbeat(
 //    int Size) : BaseEvent();
 
 
-//record EventScalesetFailed(
-//    Guid ScalesetId,
-//    PoolName: PoolName,
-//    Error: Error
-//): BaseEvent();
+public record EventScalesetFailed(
+    Guid ScalesetId,
+    PoolName PoolName,
+    Error Error
+) : BaseEvent();
 
 
 //record EventScalesetDeleted(
@@ -180,11 +183,11 @@ public record EventTaskHeartbeat(
 //    ) : BaseEvent();
 
 
-//record EventScalesetResizeScheduled(
-//    Guid ScalesetId,
-//    PoolName PoolName,
-//    int size
-//    ) : BaseEvent();
+public record EventScalesetResizeScheduled(
+    Guid ScalesetId,
+    PoolName PoolName,
+    int size
+    ) : BaseEvent();
 
 
 //record EventPoolDeleted(
@@ -249,11 +252,11 @@ public record EventNodeHeartbeat(
 //        ) : BaseEvent();
 
 
-//    record EventScalesetStateUpdated(
-//        Guid ScalesetId,
-//        PoolName PoolName,
-//        ScalesetState State
-//        ) : BaseEvent();
+public record EventScalesetStateUpdated(
+    Guid ScalesetId,
+    PoolName PoolName,
+    ScalesetState State
+) : BaseEvent();
 
 //    record EventNodeStateUpdated(
 //        Guid MachineId,
@@ -295,7 +298,7 @@ public record EventMessage(
     BaseEvent Event,
     Guid InstanceId,
     String InstanceName
-) : EntityBase();
+);
 
 public class BaseEventConverter : JsonConverter<BaseEvent> {
     public override BaseEvent? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {

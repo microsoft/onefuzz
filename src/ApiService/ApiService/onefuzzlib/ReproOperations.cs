@@ -74,7 +74,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations {
         );
     }
 
-    public async System.Threading.Tasks.Task Stopping(Repro repro) {
+    public async Async.Task Stopping(Repro repro) {
         var config = await _configOperations.Fetch();
         var vm = await GetVm(repro, config);
         if (!await _vmOperations.IsDeleted(vm)) {

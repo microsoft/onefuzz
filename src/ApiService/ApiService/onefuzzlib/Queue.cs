@@ -8,8 +8,8 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 namespace Microsoft.OneFuzz.Service;
 public interface IQueue {
     Async.Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
-    Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout);
-    Uri? GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
+    Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null);
+    Async.Task<Uri?> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
 }
 
 
@@ -26,50 +26,38 @@ public class Queue : IQueue {
 
 
     public async Async.Task SendMessage(string name, byte[] message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
-        var queue = GetQueue(name, storageType);
+        var queue = await GetQueue(name, storageType);
         if (queue != null) {
-            try {
-                await queue.SendMessageAsync(Convert.ToBase64String(message), visibilityTimeout: visibilityTimeout, timeToLive: timeToLive);
-            } catch (Exception) {
-            }
+            await queue.SendMessageAsync(Convert.ToBase64String(message), visibilityTimeout: visibilityTimeout, timeToLive: timeToLive);
         }
     }
 
-    public QueueClient? GetQueue(string name, StorageType storageType) {
-        var client = GetQueueClient(storageType);
-        try {
-            return client.GetQueueClient(name);
-        } catch (Exception) {
-            return null;
-        }
+    public async Task<QueueClient?> GetQueue(string name, StorageType storageType) {
+        var client = await GetQueueClient(storageType);
+        return client.GetQueueClient(name);
     }
 
 
-    public QueueServiceClient GetQueueClient(StorageType storageType) {
+    public async Task<QueueServiceClient> GetQueueClient(StorageType storageType) {
         var accountId = _storage.GetPrimaryAccount(storageType);
         //_logger.LogDEbug("getting blob container (account_id: %s)", account_id)
-        (var name, var key) = _storage.GetStorageAccountNameAndKey(accountId);
+        var (name, key) = await _storage.GetStorageAccountNameAndKey(accountId);
         var accountUrl = new Uri($"https://{name}.queue.core.windows.net");
         var client = new QueueServiceClient(accountUrl, new StorageSharedKeyCredential(name, key));
         return client;
     }
 
     public async Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout) {
-        var queue = GetQueue(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
+        var queue = await GetQueue(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
 
         var serialized = JsonSerializer.Serialize(obj, EntityConverter.GetJsonSerializerOptions());
         //var encoded = Encoding.UTF8.GetBytes(serialized);
-
-        try {
-            await queue.SendMessageAsync(serialized, visibilityTimeout: visibilityTimeout);
-            return true;
-        } catch (Exception) {
-            return false;
-        }
+        var response = await queue.SendMessageAsync(serialized, visibilityTimeout: visibilityTimeout);
+        return !response.GetRawResponse().IsError;
     }
 
-    public Uri? GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
-        var queue = GetQueue(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
+    public async Task<Uri?> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
+        var queue = await GetQueue(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
         var sasaBuilder = new QueueSasBuilder(permissions, DateTimeOffset.UtcNow + (duration ?? DEFAULT_DURATION));
         var url = queue.GenerateSasUri(sasaBuilder);
         return url;

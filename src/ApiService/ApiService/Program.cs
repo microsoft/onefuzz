@@ -1,8 +1,11 @@
 ﻿// to avoid collision with Task in model.cs
 global using System;
-global using System.Collections.Generic;
-global using System.Linq;
-global using Async = System.Threading.Tasks;
+global
+using System.Collections.Generic;
+global
+using System.Linq;
+global
+using Async = System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,7 +48,8 @@ public class Program {
         return loggers;
     }
 
-
+    //Move out expensive resources into separate class, and add those as Singleton
+    // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
     public static void Main() {
         var host = new HostBuilder()
         .ConfigureFunctionsWorkerDefaults(
@@ -65,6 +69,7 @@ public class Program {
             .AddScoped<IQueue, Queue>()
             .AddScoped<IStorage, Storage>()
             .AddScoped<IProxyOperations, ProxyOperations>()
+            .AddScoped<IProxyForwardOperations, ProxyForwardOperations>()
             .AddScoped<IConfigOperations, ConfigOperations>()
             .AddScoped<IScalesetOperations, ScalesetOperations>()
             .AddScoped<IContainers, Containers>()
@@ -81,9 +86,9 @@ public class Program {
             .AddScoped<INsgOperations, NsgOperations>()
             .AddScoped<IScheduler, Scheduler>()
             .AddScoped<IConfig, Config>()
-
-            //Move out expensive resources into separate class, and add those as Singleton
-            // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
+            .AddScoped<ILogAnalytics, LogAnalytics>()
+            .AddScoped<IExtensions, Extensions>()
+            .AddScoped<IVmssOperations, VmssOperations>()
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
             .AddHttpClient()

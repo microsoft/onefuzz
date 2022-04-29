@@ -9,9 +9,9 @@ public interface IProxyOperations : IStatefulOrm<Proxy, VmState> {
 
     Async.Task SetState(Proxy proxy, VmState state);
     bool IsAlive(Proxy proxy);
-    System.Threading.Tasks.Task SaveProxyConfig(Proxy proxy);
+    Async.Task SaveProxyConfig(Proxy proxy);
     bool IsOutdated(Proxy proxy);
-    System.Threading.Tasks.Task<Proxy?> GetOrCreate(string region);
+    Async.Task<Proxy?> GetOrCreate(string region);
 }
 public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
 
@@ -39,7 +39,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
         return await data.FirstOrDefaultAsync();
     }
 
-    public async System.Threading.Tasks.Task<Proxy?> GetOrCreate(string region) {
+    public async Async.Task<Proxy?> GetOrCreate(string region) {
         var proxyList = QueryAsync(filter: $"region eq '{region}' and outdated eq false");
 
         await foreach (var proxy in proxyList) {
@@ -55,7 +55,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
         }
 
         _logTracer.Info($"creating proxy: region:{region}");
-        var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, Auth.BuildAuth(), null, null, _config.OnefuzzVersion, null, false);
+        var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, Auth.BuildAuth(), null, null, _config.OneFuzzVersion, null, false);
 
         await Replace(newProxy);
         await _events.SendEvent(new EventProxyCreated(region, newProxy.ProxyId));
@@ -83,8 +83,8 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
             return false;
         }
 
-        if (proxy.Version != _config.OnefuzzVersion) {
-            _logTracer.Info($"mismatch version: proxy:{proxy.Version} service:{_config.OnefuzzVersion} state:{proxy.State}");
+        if (proxy.Version != _config.OneFuzzVersion) {
+            _logTracer.Info($"mismatch version: proxy:{proxy.Version} service:{_config.OneFuzzVersion} state:{proxy.State}");
             return true;
         }
 
@@ -97,13 +97,14 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
         return false;
     }
 
-    public async System.Threading.Tasks.Task SaveProxyConfig(Proxy proxy) {
+    public async Async.Task SaveProxyConfig(Proxy proxy) {
         var forwards = await GetForwards(proxy);
         var url = (await _containers.GetFileSasUrl(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", StorageType.Config, BlobSasPermissions.Read)).EnsureNotNull("Can't generate file sas");
+        var queueSas = await _queue.GetQueueSas("proxy", StorageType.Config, QueueSasPermissions.Add).EnsureNotNull("can't generate queue sas") ?? throw new Exception("Queue sas is null");
 
         var proxyConfig = new ProxyConfig(
             Url: url,
-            Notification: _queue.GetQueueSas("proxy", StorageType.Config, QueueSasPermissions.Add).EnsureNotNull("can't generate queue sas"),
+            Notification: queueSas,
             Region: proxy.Region,
             ProxyId: proxy.ProxyId,
             Forwards: forwards,
@@ -111,8 +112,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
             MicrosoftTelemetryKey: _config.OneFuzzTelemetry.EnsureNotNull("missing Telemetry"),
             InstanceId: await _containers.GetInstanceId());
 
-
-        await _containers.saveBlob(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", _entityConverter.ToJsonString(proxyConfig), StorageType.Config);
+        await _containers.SaveBlob(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", _entityConverter.ToJsonString(proxyConfig), StorageType.Config);
     }
 
 

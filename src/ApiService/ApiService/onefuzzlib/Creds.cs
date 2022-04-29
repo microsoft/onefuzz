@@ -8,18 +8,21 @@ namespace Microsoft.OneFuzz.Service;
 public interface ICreds {
     public DefaultAzureCredential GetIdentity();
 
-    public string GetSubcription();
+    public string GetSubscription();
 
     public string GetBaseResourceGroup();
 
     public ResourceIdentifier GetResourceGroupResourceIdentifier();
 
+    public string GetInstanceName();
 
     public ArmClient ArmClient { get; }
 
     public ResourceGroupResource GetResourceGroupResource();
 
     public string GetBaseRegion();
+
+    public Uri GetInstanceUrl();
 }
 
 public class Creds : ICreds {
@@ -32,14 +35,14 @@ public class Creds : ICreds {
     public Creds(IServiceConfig config) {
         _config = config;
         _azureCredential = new DefaultAzureCredential();
-        _armClient = new ArmClient(this.GetIdentity(), this.GetSubcription());
+        _armClient = new ArmClient(this.GetIdentity(), this.GetSubscription());
     }
 
     public DefaultAzureCredential GetIdentity() {
         return _azureCredential;
     }
 
-    public string GetSubcription() {
+    public string GetSubscription() {
         var storageResourceId = _config.OneFuzzDataStorage
             ?? throw new System.Exception("Data storage env var is not present");
         var storageResource = new ResourceIdentifier(storageResourceId);
@@ -59,6 +62,13 @@ public class Creds : ICreds {
         return new ResourceIdentifier(resourceId);
     }
 
+    public string GetInstanceName() {
+        var instanceName = _config.OneFuzzInstanceName
+            ?? throw new System.Exception("Instance Name env var is not present");
+
+        return instanceName;
+    }
+
     public ResourceGroupResource GetResourceGroupResource() {
         var resourceId = GetResourceGroupResourceIdentifier();
         return ArmClient.GetResourceGroupResource(resourceId);
@@ -67,5 +77,9 @@ public class Creds : ICreds {
     public string GetBaseRegion() {
         return ArmClient.GetResourceGroupResource(GetResourceGroupResourceIdentifier())
             .Get().Value.Data.Location.Name;
+    }
+
+    public Uri GetInstanceUrl() {
+        return new Uri($"https://{GetInstanceName()}.azurewebsites.net");
     }
 }
