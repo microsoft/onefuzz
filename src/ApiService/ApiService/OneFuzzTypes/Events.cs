@@ -60,6 +60,7 @@ public abstract record BaseEvent() {
                 EventScalesetFailed _ => EventType.ScalesetFailed,
                 EventScalesetResizeScheduled _ => EventType.ScalesetResizeScheduled,
                 EventScalesetStateUpdated _ => EventType.ScalesetStateUpdated,
+                EventNodeDeleted _ => EventType.NodeDeleted,
                 _ => throw new NotImplementedException(),
             };
 
@@ -81,7 +82,10 @@ public abstract record BaseEvent() {
             EventType.TaskFailed => typeof(EventTaskFailed),
             EventType.TaskStopped => typeof(EventTaskStopped),
             EventType.TaskStateUpdated => typeof(EventTaskStateUpdated),
-
+            EventType.ScalesetFailed => typeof(EventScalesetFailed),
+            EventType.ScalesetResizeScheduled => typeof(EventScalesetResizeScheduled),
+            EventType.ScalesetStateUpdated => typeof(EventScalesetStateUpdated),
+            EventType.NodeDeleted => typeof(EventNodeDeleted),
             _ => throw new ArgumentException($"invalid input {eventType}"),
 
         };
@@ -102,7 +106,7 @@ public record EventTaskStopped(
 ) : BaseEvent();
 
 
-record EventTaskFailed(
+public record EventTaskFailed(
     Guid JobId,
     Guid TaskId,
     Error Error,
@@ -118,14 +122,14 @@ record EventTaskFailed(
 //    ) : BaseEvent();
 
 
-record JobTaskStopped(
+public record JobTaskStopped(
     Guid TaskId,
     TaskType TaskType,
     Error? Error
     ) : BaseEvent();
 
 
-record EventJobStopped(
+public record EventJobStopped(
     Guid JobId,
     JobConfig Config,
     UserInfo? UserInfo,
@@ -141,7 +145,7 @@ record EventJobStopped(
 //    ) : BaseEvent();
 
 
-record EventTaskStateUpdated(
+public record EventTaskStateUpdated(
     Guid JobId,
     Guid TaskId,
     TaskState State,
@@ -245,11 +249,11 @@ public record EventNodeHeartbeat(
     ) : BaseEvent();
 
 
-//    record EventNodeDeleted(
-//        Guid MachineId,
-//        Guid ScalesetId,
-//        PoolName PoolName
-//        ) : BaseEvent();
+public record EventNodeDeleted(
+    Guid MachineId,
+    Guid? ScalesetId,
+    PoolName PoolName
+) : BaseEvent();
 
 
 public record EventScalesetStateUpdated(

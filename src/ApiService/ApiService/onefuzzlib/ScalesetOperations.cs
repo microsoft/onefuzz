@@ -17,14 +17,18 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
     IEvents _events;
     IExtensions _extensions;
     IVmssOperations _vmssOps;
+    IQueue _queue;
+    INodeOperations _nodeOps;
 
-    public ScalesetOperations(IStorage storage, ILogTracer log, IServiceConfig config, IPoolOperations poolOps, IEvents events, IExtensions extensions, IVmssOperations vmssOps)
+    public ScalesetOperations(IStorage storage, ILogTracer log, IServiceConfig config, IPoolOperations poolOps, IEvents events, IExtensions extensions, IVmssOperations vmssOps, IQueue queue, INodeOperations nodeOps)
         : base(storage, log, config) {
         _log = log;
         _poolOps = poolOps;
         _events = events;
         _extensions = extensions;
         _vmssOps = vmssOps;
+        _queue = queue;
+        _nodeOps = nodeOps;
     }
 
     public IAsyncEnumerable<Scaleset> Search() {
@@ -87,7 +91,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
         var pool = await _poolOps.GetByName(scaleSet.PoolName);
 
         if (!pool.IsOk || pool.OkV is null) {
-            _log.Error($"{SCALESET_LOG_PREFIX}: unable to find pool during config update. pool:{scaleSet.PoolName}, scaleset_id:{scaleSet.ScalesetId}");
+            _log.Error($"{SCALESET_LOG_PREFIX} unable to find pool during config update. pool:{scaleSet.PoolName}, scaleset_id:{scaleSet.ScalesetId}");
             await SetFailed(scaleSet, pool.ErrorV!);
             return;
         }
@@ -97,7 +101,44 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
         var res = await _vmssOps.UpdateExtensions(scaleSet.ScalesetId, extensions);
 
         if (!res.IsOk) {
-            _log.Info($"{SCALESET_LOG_PREFIX}: unable to update configs {string.Join(',', res.ErrorV.Errors!)}");
+            _log.Info($"{SCALESET_LOG_PREFIX} unable to update configs {string.Join(',', res.ErrorV.Errors!)}");
         }
     }
+
+
+    public async Async.Task Halt(Scaleset scaleset) {
+        var shrinkQueue = new ShrinkQueue(scaleset.ScalesetId, _queue, _log);
+        await shrinkQueue.Delete();
+
+        await foreach (var node in _nodeOps.SearchStates(scaleSetId: scaleset.ScalesetId)) {
+            _log.Info($"{SCALESET_LOG_PREFIX} deleting node scaleset_id {scaleset.ScalesetId} machine_id {node.MachineId}");
+
+
+        }
+        //_nodeOps.
+
+
+    }
+
+
+    /// <summary>
+    /// Cleanup scaleset nodes
+    /// </summary>
+    /// <param name="scaleSet"></param>
+    /// <returns>true if scaleset got modified</returns>
+    public async Async.Task<bool> CleanupNodes(Scaleset scaleSet) {
+        _log.Info($"{SCALESET_LOG_PREFIX} cleaning up nodes. scaleset_id {scaleSet.ScalesetId}");
+
+        if (scaleSet.State == ScalesetState.Halt) {
+            _log.Info($"{SCALESET_LOG_PREFIX} halting scaleset scaleset_id {scaleSet.ScalesetId}");
+
+            await Halt(scaleSet);
+
+            return true;
+        }
+
+        throw new NotImplementedException();
+    }
+
+
 }
