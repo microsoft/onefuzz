@@ -18,8 +18,8 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
 
     Async.Task<TaskVm?> GetReproVmConfig(Task task);
     Async.Task<bool> CheckPrereqTasks(Task task);
-    System.Threading.Tasks.Task<Pool?> GetPool(Task task);
-    System.Threading.Tasks.Task<Task> SetState(Task task, TaskState state);
+    Async.Task<Pool?> GetPool(Task task);
+    Async.Task<Task> SetState(Task task, TaskState state);
 }
 
 public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
@@ -222,7 +222,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
         return true;
     }
 
-    public async System.Threading.Tasks.Task<Pool?> GetPool(Task task) {
+    public async Async.Task<Pool?> GetPool(Task task) {
         if (task.Config.Pool != null) {
             var pool = await _poolOperations.GetByName(task.Config.Pool.PoolName);
             if (!pool.IsOk) {

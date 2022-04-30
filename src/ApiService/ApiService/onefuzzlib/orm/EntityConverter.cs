@@ -11,6 +11,10 @@ namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 public abstract record EntityBase {
     [JsonIgnore] public ETag? ETag { get; set; }
     public DateTimeOffset? TimeStamp { get; set; }
+
+    // https://docs.microsoft.com/en-us/rest/api/storageservices/designing-a-scalable-partitioning-strategy-for-azure-table-storage#yyy
+    // Produce "good-quality-table-key" based on a DateTimeOffset timestamp
+    public static string NewSortedKey => $"{DateTimeOffset.MaxValue.Ticks - DateTimeOffset.UtcNow.Ticks}";
 }
 
 public abstract record StatefulEntityBase<T>([property: JsonIgnore] T State) : EntityBase() where T : Enum;
