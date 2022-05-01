@@ -40,6 +40,13 @@ impl DirectoryMonitor {
         // Canonicalize so we can compare the watched dir to paths in the events.
         self.dir = fs::canonicalize(&self.dir).await?;
 
+        // Make sure we are watching a directory.
+        //
+        // This check will pass for symlinks to directories.
+        if !fs::metadata(&self.dir).await?.is_dir() {
+            bail!("monitored path is not a directory: {}", self.dir.display());
+        }
+
         // Initialize the watcher.
         self.watcher.watch(&self.dir, RecursiveMode::NonRecursive)?;
 
