@@ -22,17 +22,17 @@ macro_rules! timed_test {
 }
 
 timed_test!(test_monitor_empty_path, async move {
-    let mut monitor = DirectoryMonitor::new("")?;
+    let monitor = DirectoryMonitor::new("").await;
 
-    assert!(monitor.start().await.is_err());
+    assert!(monitor.is_err());
 
     Ok(())
 });
 
 timed_test!(test_monitor_nonexistent_path, async move {
-    let mut monitor = DirectoryMonitor::new("some-nonexistent-path")?;
+    let monitor = DirectoryMonitor::new("some-nonexistent-path").await;
 
-    assert!(monitor.start().await.is_err());
+    assert!(monitor.is_err());
 
     Ok(())
 });
@@ -44,18 +44,19 @@ timed_test!(test_monitor_file, async move {
     let file_path = dir.path().join("some-file.txt");
     tokio::fs::write(&file_path, "aaaaaa").await?;
 
-    let mut monitor = DirectoryMonitor::new(&file_path)?;
+    let monitor = DirectoryMonitor::new(&file_path).await;
 
-    assert!(monitor.start().await.is_err());
+    // Ctor must fail.
+    assert!(monitor.is_err());
 
     Ok(())
 });
 
 timed_test!(test_monitor_dir, async move {
     let dir = tempdir()?;
-    let mut monitor = DirectoryMonitor::new(dir.path())?;
 
-    assert!(monitor.start().await.is_ok());
+    // Ctor must succeed.
+    let mut monitor = DirectoryMonitor::new(dir.path()).await?;
 
     let _ = monitor.stop();
 
@@ -76,9 +77,8 @@ timed_test!(test_monitor_dir_symlink, async move {
     #[cfg(target_family = "windows")]
     fs::symlink_dir(&child, &symlink).await?;
 
-    let mut monitor = DirectoryMonitor::new(&symlink)?;
-
-    assert!(monitor.start().await.is_ok());
+    // Ctor must succeed.
+    let mut monitor = DirectoryMonitor::new(&symlink).await?;
 
     let _ = monitor.stop();
 
@@ -89,9 +89,7 @@ timed_test!(test_monitor_dir_create_files, async move {
     use std::fs::canonicalize;
 
     let dir = tempdir()?;
-    let mut monitor = DirectoryMonitor::new(dir.path())?;
-
-    assert!(monitor.start().await.is_ok());
+    let mut monitor = DirectoryMonitor::new(dir.path()).await?;
 
     let file_a = dir.path().join("a.txt");
     let file_b = dir.path().join("b.txt");
