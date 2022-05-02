@@ -8,7 +8,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface ILog {
     void Log(Guid correlationId, String message, SeverityLevel level, IReadOnlyDictionary<string, string> tags, string? caller);
     void LogEvent(Guid correlationId, String evt, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller);
-    void LogException(Guid correlationId, Exception ex, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller);
+    void LogException(Guid correlationId, Exception ex, string message, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller);
     void Flush();
 }
 
@@ -37,7 +37,7 @@ class AppInsights : ILog {
 
         _telemetryClient.TrackEvent(evt, properties: copyTags, metrics: copyMetrics);
     }
-    public void LogException(Guid correlationId, Exception ex, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller) {
+    public void LogException(Guid correlationId, Exception ex, string message, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller) {
         Dictionary<string, string> copyTags = new(tags);
         copyTags["Correlation ID"] = correlationId.ToString();
         if (caller is not null) copyTags["CalledBy"] = caller;
@@ -47,6 +47,8 @@ class AppInsights : ILog {
             copyMetrics = new(metrics);
         }
         _telemetryClient.TrackException(ex, copyTags, copyMetrics);
+
+        Log(correlationId, $"{message} : {ex.Message}", SeverityLevel.Error, tags, caller);
     }
 
     public void Flush() {
@@ -89,8 +91,8 @@ class Console : ILog {
         LogTags(correlationId, tags);
         LogMetrics(correlationId, metrics);
     }
-    public void LogException(Guid correlationId, Exception ex, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller) {
-        System.Console.Out.WriteLine($"[{correlationId}][Exception] {ex}");
+    public void LogException(Guid correlationId, Exception ex, string message, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller) {
+        System.Console.Out.WriteLine($"[{correlationId}][Exception] {message}:{ex}");
         LogTags(correlationId, tags);
         LogMetrics(correlationId, metrics);
     }
@@ -105,7 +107,7 @@ public interface ILogTracer {
     void Critical(string message);
     void Error(string message);
     void Event(string evt, IReadOnlyDictionary<string, double>? metrics);
-    void Exception(Exception ex, IReadOnlyDictionary<string, double>? metrics = null);
+    void Exception(Exception ex, string message = "", IReadOnlyDictionary<string, double>? metrics = null);
     void ForceFlush();
     void Info(string message);
     void Warning(string message);
@@ -238,10 +240,10 @@ public class LogTracer : ILogTracerInternal {
         }
     }
 
-    public void Exception(Exception ex, IReadOnlyDictionary<string, double>? metrics) {
+    public void Exception(Exception ex, string message, IReadOnlyDictionary<string, double>? metrics) {
         var caller = GetCaller();
         foreach (var logger in _loggers) {
-            logger.LogException(CorrelationId, ex, Tags, metrics, caller);
+            logger.LogException(CorrelationId, ex, message, Tags, metrics, caller);
         }
     }
 
