@@ -70,19 +70,8 @@ public record NodeTasks
     Guid MachineId,
     Guid TaskId,
     NodeTaskState State = NodeTaskState.Init
-);
+) : StatefulEntityBase<NodeTaskState>(State);
 
-public enum NodeState {
-    Init,
-    Free,
-    SettingUp,
-    Rebooting,
-    Ready,
-    Busy,
-    Done,
-    Shutdown,
-    Halt,
-}
 
 public record ProxyHeartbeat
 (

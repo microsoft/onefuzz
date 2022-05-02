@@ -1,5 +1,4 @@
-﻿using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -32,8 +31,7 @@ namespace Microsoft.OneFuzz.Service {
 
         public async Async.Task QueueSignalrEvent(EventMessage eventMessage) {
             var message = new SignalREvent("events", new List<EventMessage>() { eventMessage });
-            var encodedMessage = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
-            await _queue.SendMessage("signalr-events", encodedMessage, StorageType.Config);
+            await _queue.SendMessage("signalr-events", JsonSerializer.Serialize(message), StorageType.Config);
         }
 
         public async Async.Task SendEvent(BaseEvent anEvent) {

@@ -89,6 +89,9 @@ public class Program {
             .AddScoped<ILogAnalytics, LogAnalytics>()
             .AddScoped<IExtensions, Extensions>()
             .AddScoped<IVmssOperations, VmssOperations>()
+            .AddScoped<INodeTasksOperations, NodeTasksOperations>()
+            .AddScoped<INodeMessageOperations, NodeMessageOperations>()
+
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
             .AddHttpClient()

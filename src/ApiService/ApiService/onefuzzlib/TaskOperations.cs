@@ -14,6 +14,8 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
 
     IAsyncEnumerable<Task> SearchExpired();
     Async.Task MarkStopping(Task task);
+    Async.Task MarkFailed(Task task, Error error, List<Task>? taskInJob = null);
+
     Async.Task<TaskVm?> GetReproVmConfig(Task task);
     Async.Task<bool> CheckPrereqTasks(Task task);
     System.Threading.Tasks.Task<Pool?> GetPool(Task task);

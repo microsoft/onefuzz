@@ -15,8 +15,7 @@ struct Opt {
 async fn main() -> Result<()> {
     let opt = Opt::from_args();
 
-    let mut monitor = DirectoryMonitor::new(opt.path)?;
-    monitor.start().await?;
+    let mut monitor = DirectoryMonitor::new(opt.path).await?;
 
     while let Some(created) = monitor.next_file().await? {
         println!("[create] {}", created.display());
