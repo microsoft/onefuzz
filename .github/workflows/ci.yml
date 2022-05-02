@@ -363,6 +363,7 @@ jobs:
           cp artifacts/agent-Linux/onefuzz-agent src/deployment/tools/linux/
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment
+          cp artifacts/service-net/api-service-net.zip src/deployment          
           cp -r artifacts/third-party src/deployment
           cp -r src/agent/script/linux/libfuzzer-coverage src/deployment/tools/linux/libfuzzer-coverage
           cp -r src/agent/script/win64/libfuzzer-coverage src/deployment/tools/win64/libfuzzer-coverage
