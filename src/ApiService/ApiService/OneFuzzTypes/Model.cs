@@ -70,7 +70,7 @@ public record NodeTasks
     Guid MachineId,
     Guid TaskId,
     NodeTaskState State = NodeTaskState.Init
-);
+) : StatefulEntityBase<NodeTaskState>(State);
 
 public record ProxyHeartbeat
 (
@@ -689,9 +689,3 @@ public record TaskUnitConfig(
     public IContainerDef? RegressionReport { get; set; }
 
 }
-
-public record NodeMessage(
-    [PartitionKey] Guid MachineId,
-    [RowKey] string MessageId,
-    NodeCommand message
-) : EntityBase();

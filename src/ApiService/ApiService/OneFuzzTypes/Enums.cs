@@ -121,9 +121,9 @@ public enum JobState {
 }
 
 public static class JobStateHelper {
-    private static readonly HashSet<JobState> _shuttingDown = new HashSet<JobState>(new[] { JobState.Stopping, JobState.Stopped });
-    private static readonly HashSet<JobState> _avaiable = new HashSet<JobState>(new[] { JobState.Init, JobState.Enabled });
-    private static readonly HashSet<JobState> _needsWork = new HashSet<JobState>(new[] { JobState.Init, JobState.Stopping });
+    private static readonly IReadOnlySet<JobState> _shuttingDown = new HashSet<JobState>(new[] { JobState.Stopping, JobState.Stopped });
+    private static readonly IReadOnlySet<JobState> _avaiable = new HashSet<JobState>(new[] { JobState.Init, JobState.Enabled });
+    private static readonly IReadOnlySet<JobState> _needsWork = new HashSet<JobState>(new[] { JobState.Init, JobState.Stopping });
 
     public static IReadOnlySet<JobState> Available => _avaiable;
     public static IReadOnlySet<JobState> NeedsWork => _needsWork;
@@ -368,35 +368,18 @@ public enum NodeState {
 }
 
 public static class NodeStateHelper {
-    static ConcurrentDictionary<string, NodeState[]> _states = new ConcurrentDictionary<string, NodeState[]>();
-    public static NodeState[] CanProcessNewWork() {
-        return
-        _states.GetOrAdd("CanProcessNewWork", k =>
-            new[]{
-                NodeState.Free
-            }
-        );
-    }
 
-    public static NodeState[] ReadyForReset() {
-        return
-        _states.GetOrAdd("ReadyForReset", k =>
-            new[]{
-                NodeState.Done,
-                NodeState.Shutdown,
-                NodeState.Halt
-            }
-        );
-    }
+    private static readonly IReadOnlySet<NodeState> _needsWork = new HashSet<NodeState>(new[] { NodeState.Done, NodeState.Shutdown, NodeState.Halt });
+    private static readonly IReadOnlySet<NodeState> _readyForReset = new HashSet<NodeState>(new[] { NodeState.Done, NodeState.Shutdown, NodeState.Halt });
+    private static readonly IReadOnlySet<NodeState> _canProcessNewWork = new HashSet<NodeState>(new[] { NodeState.Free });
 
-    public static NodeState[] NeedsWork() {
-        return
-        _states.GetOrAdd("NeedsWork", k =>
-            new[]{
-                NodeState.Done,
-                NodeState.Shutdown,
-                NodeState.Halt
-            }
-        );
-    }
+
+    public static IReadOnlySet<NodeState> NeedsWork => _needsWork;
+
+    ///If Node is in one of these states, ignore updates from the agent.
+    public static IReadOnlySet<NodeState> ReadyForReset => _readyForReset;
+
+    public static IReadOnlySet<NodeState> CanProcessNewWork => _canProcessNewWork;
 }
+
+
