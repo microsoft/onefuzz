@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{format_err, Result};
 use notify::{Event, EventKind, Watcher};
@@ -10,6 +10,7 @@ use tokio::{
     sync::mpsc::{unbounded_channel, UnboundedReceiver},
 };
 
+/// Watches a directory, and on file creation, emits the path to the file.
 pub struct DirectoryMonitor {
     dir: PathBuf,
     notify_events: UnboundedReceiver<notify::Result<Event>>,
@@ -17,40 +18,36 @@ pub struct DirectoryMonitor {
 }
 
 impl DirectoryMonitor {
-    pub fn new(dir: impl Into<PathBuf>) -> Result<Self> {
-        let dir = dir.into();
+    /// Create a new directory monitor.
+    ///
+    /// The path `dir` must name a directory, not a file.
+    pub async fn new(dir: impl AsRef<Path>) -> Result<Self> {
+        use notify::RecursiveMode;
+
+        // Canonicalize so we can compare the watched dir to paths in the events.
+        let dir = fs::canonicalize(dir).await?;
+
+        // Make sure we are watching a directory.
+        //
+        // This check will pass for symlinks to directories.
+        if !fs::metadata(&dir).await?.is_dir() {
+            bail!("monitored path is not a directory: {}", dir.display());
+        }
+
         let (sender, notify_events) = unbounded_channel();
         let event_handler = move |event_or_err| {
             // A send error only occurs when the channel is closed. No remedial
             // action is needed (or possible), so ignore it.
             let _ = sender.send(event_or_err);
         };
-        let watcher = notify::recommended_watcher(event_handler)?;
+        let mut watcher = notify::recommended_watcher(event_handler)?;
+        watcher.watch(&dir, RecursiveMode::NonRecursive)?;
 
         Ok(Self {
             dir,
             notify_events,
             watcher,
         })
-    }
-
-    pub async fn start(&mut self) -> Result<()> {
-        use notify::RecursiveMode;
-
-        // Canonicalize so we can compare the watched dir to paths in the events.
-        self.dir = fs::canonicalize(&self.dir).await?;
-
-        // Make sure we are watching a directory.
-        //
-        // This check will pass for symlinks to directories.
-        if !fs::metadata(&self.dir).await?.is_dir() {
-            bail!("monitored path is not a directory: {}", self.dir.display());
-        }
-
-        // Initialize the watcher.
-        self.watcher.watch(&self.dir, RecursiveMode::NonRecursive)?;
-
-        Ok(())
     }
 
     pub fn stop(&mut self) -> Result<()> {
