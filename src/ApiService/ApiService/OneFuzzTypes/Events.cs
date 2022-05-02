@@ -60,6 +60,7 @@ public abstract record BaseEvent() {
                 EventScalesetFailed _ => EventType.ScalesetFailed,
                 EventScalesetResizeScheduled _ => EventType.ScalesetResizeScheduled,
                 EventScalesetStateUpdated _ => EventType.ScalesetStateUpdated,
+                EventNodeStateUpdated _ => EventType.NodeStateUpdated,
                 _ => throw new NotImplementedException(),
             };
 
@@ -81,6 +82,7 @@ public abstract record BaseEvent() {
             EventType.TaskFailed => typeof(EventTaskFailed),
             EventType.TaskStopped => typeof(EventTaskStopped),
             EventType.TaskStateUpdated => typeof(EventTaskStateUpdated),
+            EventType.NodeStateUpdated => typeof(EventNodeStateUpdated),
 
             _ => throw new ArgumentException($"invalid input {eventType}"),
 
@@ -258,12 +260,12 @@ public record EventScalesetStateUpdated(
     ScalesetState State
 ) : BaseEvent();
 
-//    record EventNodeStateUpdated(
-//        Guid MachineId,
-//        Guid? ScalesetId,
-//        PoolName PoolName,
-//        NodeState state
-//        ) : BaseEvent();
+record EventNodeStateUpdated(
+    Guid MachineId,
+    Guid? ScalesetId,
+    PoolName PoolName,
+    NodeState state
+    ) : BaseEvent();
 
 public record EventCrashReported(
     Report Report,

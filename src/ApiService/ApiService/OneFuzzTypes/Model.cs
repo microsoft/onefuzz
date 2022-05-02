@@ -72,18 +72,6 @@ public record NodeTasks
     NodeTaskState State = NodeTaskState.Init
 );
 
-public enum NodeState {
-    Init,
-    Free,
-    SettingUp,
-    Rebooting,
-    Ready,
-    Busy,
-    Done,
-    Shutdown,
-    Halt,
-}
-
 public record ProxyHeartbeat
 (
     Region Region,
@@ -701,3 +689,9 @@ public record TaskUnitConfig(
     public IContainerDef? RegressionReport { get; set; }
 
 }
+
+public record NodeMessage(
+    [PartitionKey] Guid MachineId,
+    [RowKey] string MessageId,
+    NodeCommand message
+) : EntityBase();

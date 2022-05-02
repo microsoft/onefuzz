@@ -354,3 +354,49 @@ public enum AgentMode {
     Repro,
     Proxy
 }
+
+public enum NodeState {
+    Init,
+    Free,
+    SettingUp,
+    Rebooting,
+    Ready,
+    Busy,
+    Done,
+    Shutdown,
+    Halt,
+}
+
+public static class NodeStateHelper {
+    static ConcurrentDictionary<string, NodeState[]> _states = new ConcurrentDictionary<string, NodeState[]>();
+    public static NodeState[] CanProcessNewWork() {
+        return
+        _states.GetOrAdd("CanProcessNewWork", k =>
+            new[]{
+                NodeState.Free
+            }
+        );
+    }
+
+    public static NodeState[] ReadyForReset() {
+        return
+        _states.GetOrAdd("ReadyForReset", k =>
+            new[]{
+                NodeState.Done,
+                NodeState.Shutdown,
+                NodeState.Halt
+            }
+        );
+    }
+
+    public static NodeState[] NeedsWork() {
+        return
+        _states.GetOrAdd("NeedsWork", k =>
+            new[]{
+                NodeState.Done,
+                NodeState.Shutdown,
+                NodeState.Halt
+            }
+        );
+    }
+}

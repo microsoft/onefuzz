@@ -1,4 +1,5 @@
-﻿using ApiService.OneFuzzLib.Orm;
+﻿using System.Threading.Tasks;
+using ApiService.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -8,6 +9,8 @@ public interface IScalesetOperations : IOrm<Scaleset> {
     public IAsyncEnumerable<Scaleset?> SearchByPool(string poolName);
 
     public Async.Task UpdateConfigs(Scaleset scaleSet);
+
+    public Async.Task<OneFuzzResult<Scaleset>> GetById(Guid scalesetId);
 }
 
 public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalesetOperations {
@@ -99,5 +102,9 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
         if (!res.IsOk) {
             _log.Info($"{SCALESET_LOG_PREFIX}: unable to update configs {string.Join(',', res.ErrorV.Errors!)}");
         }
+    }
+
+    Task<OneFuzzResult<Scaleset>> IScalesetOperations.GetById(Guid scalesetId) {
+        throw new NotImplementedException();
     }
 }
