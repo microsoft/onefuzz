@@ -9,7 +9,7 @@ namespace Tests {
 
         [Fact]
         public void NodeOperationsSearchStatesQuery() {
-            var ver = Version.Parse("1.2.3");
+            var ver = "1.2.3";
 
             var query1 = NodeOperations.SearchStatesQuery(ver);
             Assert.Equal("(not (version eq '1.2.3'))", query1);

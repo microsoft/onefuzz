@@ -83,7 +83,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
             return false;
         }
 
-        if (Version.Parse(proxy.Version) != _config.OneFuzzVersion) {
+        if (proxy.Version != _config.OneFuzzVersion) {
             _logTracer.Info($"mismatch version: proxy:{proxy.Version} service:{_config.OneFuzzVersion} state:{proxy.State}");
             return true;
         }

@@ -23,7 +23,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
         string poolName,
         Guid machineId,
         Guid? scaleSetId,
-        Version version,
+        string version,
         bool isNew = false);
 
     Async.Task SetHalt(Node node);
@@ -127,7 +127,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         string poolName,
         Guid machineId,
         Guid? scaleSetId,
-        Version version,
+        string version,
         bool isNew = false) {
 
         var node = new Node(poolName, machineId, poolId, version, ScalesetId: scaleSetId);
@@ -171,7 +171,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
     }
 
     public async Async.Task SendStopIfFree(Node node) {
-        if (_config.OneFuzzVersion >= Version.Parse("2.16.1")) {
+        var ver = new Version(_config.OneFuzzVersion.Split('-')[0]);
+        if (ver >= Version.Parse("2.16.1")) {
             await SendMessage(node, new NodeCommand(StopIfFree: new NodeCommandStopIfFree()));
         }
     }
@@ -191,7 +192,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
     }
 
     public static string SearchStatesQuery(
-        Version oneFuzzVersion,
+        string oneFuzzVersion,
         Guid? poolId = default,
         Guid? scaleSetId = default,
         IEnumerable<NodeState>? states = default,

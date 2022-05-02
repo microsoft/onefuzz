@@ -86,7 +86,7 @@ public record Node
     [PartitionKey] PoolName PoolName,
     [RowKey] Guid MachineId,
     Guid? PoolId,
-    Version Version,
+    string Version,
 
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? InitializedAt = null,

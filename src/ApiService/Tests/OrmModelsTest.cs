@@ -75,7 +75,7 @@ namespace Tests {
         }
 
         public static Gen<Node> Node() {
-            return Arb.Generate<Tuple<Tuple<DateTimeOffset?, string, Guid?, Guid, NodeState>, Tuple<Guid?, DateTimeOffset, Version, bool, bool, bool>>>().Select(
+            return Arb.Generate<Tuple<Tuple<DateTimeOffset?, string, Guid?, Guid, NodeState>, Tuple<Guid?, DateTimeOffset, string, bool, bool, bool>>>().Select(
                 arg => new Node(
                         InitializedAt: arg.Item1.Item1,
                         PoolName: arg.Item1.Item2,
