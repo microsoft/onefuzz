@@ -279,5 +279,29 @@ namespace Tests {
             Assert.Equal("abc", entity?.TheName);
             Assert.Equal("abc-123", entity?.Container.ContainerName);
         }
+
+
+        record Entity4(
+                [RowKey][PartitionKey] int Id,
+                string TheName,
+                Container Container
+            ) : EntityBase();
+
+        [Fact]
+        public void TestPartitionKeyIsRowKey() {
+            var container = new Container("abc-123");
+            var expected = new Entity4(123, "abc", container);
+            var converter = new EntityConverter();
+
+            var tableEntity = converter.ToTableEntity(expected);
+            Assert.Equal(expected.Id.ToString(), tableEntity.RowKey);
+            Assert.Equal(expected.Id.ToString(), tableEntity.PartitionKey);
+
+            var actual = converter.ToRecord<Entity4>(tableEntity);
+
+            Assert.Equal(expected.Container.ContainerName, actual.Container.ContainerName);
+            Assert.Equal(expected.Container.ContainerName, tableEntity.GetString("container"));
+        }
+
     }
 }
