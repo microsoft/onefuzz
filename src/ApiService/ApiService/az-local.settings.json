@@ -3,4 +3,4 @@
     "Values": {
       "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated"
     }
-  }
+}
