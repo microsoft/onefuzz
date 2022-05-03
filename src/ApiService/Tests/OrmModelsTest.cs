@@ -805,6 +805,107 @@ namespace Tests {
         }
 
 
+        [Property]
+        public bool EventNodeHeartbeat(EventNodeHeartbeat e) {
+            return Test(e);
+        }
+
+
+        [Property]
+        public bool EventTaskHeartbeat(EventTaskHeartbeat e) {
+            return Test(e);
+        }
+
+        [Property]
+        public bool EventTaskStopped(EventTaskStopped e) {
+            return Test(e);
+        }
+
+        [Property]
+        public bool EventInstanceConfigUpdated(EventInstanceConfigUpdated e) {
+            return Test(e);
+        }
+
+        [Property]
+        public bool EventProxyCreated(EventProxyCreated e) {
+            return Test(e);
+        }
+
+        [Property]
+        public bool EventProxyDeleted(EventProxyDeleted e) {
+            return Test(e);
+        }
+
+        [Property]
+        public bool EventProxyFailed(EventProxyFailed e) {
+            return Test(e);
+        }
+
+        [Property]
+        public bool EventProxyStateUpdated(EventProxyStateUpdated e) {
+            return Test(e);
+        }
+
+
+        [Property]
+        public bool EventCrashReported(EventCrashReported e) {
+            return Test(e);
+        }
+
+
+        [Property]
+        public bool EventRegressionReported(EventRegressionReported e) {
+            return Test(e);
+        }
+
+
+        [Property]
+        public bool EventFileAdded(EventFileAdded e) {
+            return Test(e);
+        }
+
+        [Property]
+        public bool EventTaskFailed(EventTaskFailed e) {
+            return Test(e);
+        }
+
+        [Property]
+        public bool EventTaskStateUpdated(EventTaskStateUpdated e) {
+            return Test(e);
+        }
+
+        [Property]
+        public bool EventScalesetFailed(EventScalesetFailed e) {
+            return Test(e);
+        }
+
+
+        [Property]
+        public bool EventScalesetResizeScheduled(EventScalesetResizeScheduled e) {
+            return Test(e);
+        }
+
+
+        [Property]
+        public bool EventScalesetStateUpdated(EventScalesetStateUpdated e) {
+            return Test(e);
+        }
+
+        [Property]
+        public bool EventNodeDeleted(EventNodeDeleted e) {
+            return Test(e);
+        }
+
+        [Property]
+        public bool EventNodeCreated(EventNodeCreated e) {
+            return Test(e);
+        }
+
+        [Property]
+        public bool EventMessage(EventMessage e) {
+            return Test(e);
+        }
+
         /*
         //Sample function on how repro a failing test run, using Replay
         //functionality of FsCheck. Feel free to
