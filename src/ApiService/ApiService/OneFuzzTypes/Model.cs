@@ -471,8 +471,8 @@ public record TeamsTemplate();
 public record GithubIssuesTemplate();
 
 public record Repro(
-    DateTimeOffset Timestamp,
-    Guid VmId,
+    [PartitionKey] Guid VmId,
+    [RowKey] Guid _,
     Guid TaskId,
     ReproConfig Config,
     VmState State,
@@ -589,6 +589,7 @@ public record Job(
     public UserInfo? UserInfo { get; set; }
 }
 
+public record Nsg(string Name, Region Region);
 
 public record WorkUnit(
     Guid JobId,
