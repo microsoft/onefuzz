@@ -61,6 +61,7 @@ public abstract record BaseEvent() {
                 EventScalesetResizeScheduled _ => EventType.ScalesetResizeScheduled,
                 EventScalesetStateUpdated _ => EventType.ScalesetStateUpdated,
                 EventNodeDeleted _ => EventType.NodeDeleted,
+                EventNodeCreated _ => EventType.NodeCreated,
                 _ => throw new NotImplementedException(),
             };
 
@@ -86,6 +87,7 @@ public abstract record BaseEvent() {
             EventType.ScalesetResizeScheduled => typeof(EventScalesetResizeScheduled),
             EventType.ScalesetStateUpdated => typeof(EventScalesetStateUpdated),
             EventType.NodeDeleted => typeof(EventNodeDeleted),
+            EventType.NodeCreated => typeof(EventNodeCreated),
             _ => throw new ArgumentException($"invalid input {eventType}"),
 
         };
@@ -234,11 +236,11 @@ public record EventProxyStateUpdated(
    ) : BaseEvent();
 
 
-//record EventNodeCreated(
-//    Guid MachineId,
-//    Guid? ScalesetId,
-//    PoolName PoolName
-//    ) : BaseEvent();
+public record EventNodeCreated(
+    Guid MachineId,
+    Guid? ScalesetId,
+    PoolName PoolName
+    ) : BaseEvent();
 
 
 
