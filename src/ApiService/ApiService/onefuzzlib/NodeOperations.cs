@@ -19,7 +19,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Async.Task SetHalt(Node node);
     Async.Task SetState(Node node, NodeState state);
     Async.Task ToReimage(Node node, bool done = false);
-    void SendStopIfFree(Node node);
+    Async.Task SendStopIfFree(Node node);
     IAsyncEnumerable<Node> SearchStates(Guid? poolId = default,
         Guid? scaleSetId = default,
         IList<NodeState>? states = default,
@@ -44,6 +44,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
     private readonly INodeMessageOperations _nodeMessageOps;
     private readonly IEvents _events;
 
+    private readonly IVmssOperations _vmssOperations;
+
     public NodeOperations(
         IStorage storage,
         ILogTracer log,
@@ -53,7 +55,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         INodeMessageOperations nodeMessageOps,
         IEvents events,
         IScalesetOperations scalesetOperations,
-        IPoolOperations poolOperations
+        IPoolOperations poolOperations,
+        IVmssOperations vmssOperations
         )
         : base(storage, log, config) {
 
@@ -63,10 +66,15 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         _events = events;
         _scalesetOperations = scalesetOperations;
         _poolOperations = poolOperations;
+        _vmssOperations = vmssOperations;
     }
 
-    public Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node) {
-        throw new NotImplementedException();
+    public async Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node) {
+        if (await ScalesetNodeExists(node) && node.ScalesetId != null) {
+            _logTracer.Info($"Setting scale-in protection on node {node.MachineId}");
+            return await _vmssOperations.UpdateScaleInProtection((Guid)node.ScalesetId, node.MachineId, protectFromScaleIn: true);
+        }
+        return OneFuzzResultVoid.Ok();
     }
 
     public async Async.Task<bool> ScalesetNodeExists(Node node) {
@@ -74,10 +82,14 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
             return false;
         }
 
-        var scalesetResult = await _scalesetOperations.GetById(node.ScalesetId!);
+        var scalesetResult = await _scalesetOperations.GetById((Guid)(node.ScalesetId!));
         if (!scalesetResult.IsOk || scalesetResult.OkV == null) {
             return false;
         }
+        var scaleset = scalesetResult.OkV;
+
+        var instanceId = await _vmssOperations.GetInstanceId(scaleset.ScalesetId, node.MachineId);
+        return instanceId.IsOk;
     }
 
     public async Task<bool> CanProcessNewWork(Node node) {
@@ -210,12 +222,14 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
             newNode = newNode with { ReimageRequested = true };
         }
 
-        SendStopIfFree(node);
+        await SendStopIfFree(node);
         await Replace(newNode);
     }
 
-    public void SendStopIfFree(Node node) {
-        throw new NotImplementedException();
+    public async Async.Task SendStopIfFree(Node node) {
+        if (versions.IsMinimumVersion(node.Version, "2.16.1")) {
+            await SendMessage(node, new NodeCommand(null, null, null, new NodeCommandStopIfFree()));
+        }
     }
 
     private async Async.Task SendMessage(Node node, NodeCommand message) {

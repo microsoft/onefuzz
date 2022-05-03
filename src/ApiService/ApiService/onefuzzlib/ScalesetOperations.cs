@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using ApiService.OneFuzzLib.Orm;
+﻿using ApiService.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -108,8 +107,24 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
         }
     }
 
-    Task<OneFuzzResult<Scaleset>> IScalesetOperations.GetById(Guid scalesetId) {
-        throw new NotImplementedException();
+    public async Async.Task<OneFuzzResult<Scaleset>> GetById(Guid scalesetId) {
+        var data = QueryAsync(filter: $"scaleset_id eq '{scalesetId}'");
+        var count = await data.CountAsync();
+        if (data == null || count == 0) {
+            return OneFuzzResult<Scaleset>.Error(
+                ErrorCode.INVALID_REQUEST,
+                "unable to find scaleset"
+            );
+        }
+
+        if (count != 1) {
+            return OneFuzzResult<Scaleset>.Error(
+                ErrorCode.INVALID_REQUEST,
+                "error identifying scaleset"
+            );
+        }
+
+        return OneFuzzResult<Scaleset>.Ok(await data.SingleAsync());
     }
 
     public async Async.Task Halt(Scaleset scaleset) {
