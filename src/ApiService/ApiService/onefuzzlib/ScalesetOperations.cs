@@ -331,7 +331,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
     }
 
     public async Task<OneFuzzResult<Scaleset>> GetById(Guid scalesetId) {
-        var data = QueryAsync(filter: $"scaleset_id eq '{scalesetId}'");
+        var data = QueryAsync(filter: $"RowKey eq '{scalesetId}'");
         var count = await data.CountAsync();
         if (data == null || count == 0) {
             return OneFuzzResult<Scaleset>.Error(
