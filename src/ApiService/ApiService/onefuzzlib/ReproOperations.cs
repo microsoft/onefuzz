@@ -48,7 +48,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations {
             }
 
             vmConfig = new TaskVm(
-                _creds.GetBaseRegion(),
+                await _creds.GetBaseRegion(),
                 DEFAULT_SKU,
                 DEFAULT_OS[task.Os],
                 null
