@@ -8,7 +8,7 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 namespace ApiService.OneFuzzLib.Orm {
     public interface IOrm<T> where T : EntityBase {
         Task<TableClient> GetTableClient(string table, string? accountId = null);
-        IAsyncEnumerable<T> QueryAsync(string? filter = null, int? numResults = null);
+        IAsyncEnumerable<T> QueryAsync(string? filter = null);
         Task<ResultVoid<(int, string)>> Replace(T entity);
 
         Task<T> GetEntityAsync(string partitionKey, string rowKey);
@@ -33,18 +33,11 @@ namespace ApiService.OneFuzzLib.Orm {
             _config = config;
         }
 
-        public async IAsyncEnumerable<T> QueryAsync(string? filter = null, int? numResults = null) {
+        public async IAsyncEnumerable<T> QueryAsync(string? filter = null) {
             var tableClient = await GetTableClient(typeof(T).Name);
-            int totalResults = 0;
 
             await foreach (var x in tableClient.QueryAsync<TableEntity>(filter).Select(x => _entityConverter.ToRecord<T>(x))) {
                 yield return x;
-                if (numResults != null) {
-                    totalResults++;
-                    if (totalResults == numResults) {
-                        yield break;
-                    }
-                }
             }
         }
 

@@ -69,6 +69,17 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         throw new NotImplementedException();
     }
 
+    public async Async.Task<bool> ScalesetNodeExists(Node node) {
+        if (node.ScalesetId == null) {
+            return false;
+        }
+
+        var scalesetResult = await _scalesetOperations.GetById(node.ScalesetId!);
+        if (!scalesetResult.IsOk || scalesetResult.OkV == null) {
+            return false;
+        }
+    }
+
     public async Task<bool> CanProcessNewWork(Node node) {
         if (IsOutdated(node)) {
             _logTracer.Info($"can_process_new_work agent and service versions differ, stopping node. machine_id:{node.MachineId} agent_version:{node.Version} service_version:{_config.OneFuzzVersion}");
