@@ -12,7 +12,7 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
     public ProxyForwardOperations(ILogTracer log, IOnefuzzContext context)
         : base(log, context) {
 
-        }
+    }
 
     public IAsyncEnumerable<ProxyForward> SearchForward(Guid? scalesetId = null, string? region = null, Guid? machineId = null, Guid? proxyId = null, int? dstPort = null) {
 

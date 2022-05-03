@@ -276,7 +276,7 @@ public class EntityConverter {
             entityRecord.TimeStamp = entity.Timestamp;
             return entityRecord;
 
-        } catch (Exception ex ) {
+        } catch (Exception ex) {
             var stringParam = string.Join(", ", parameters);
             throw new Exception($"Could not initialize object of type {typeof(T)} with the following parameters: {stringParam} constructor {entityInfo.constructor} : {ex}");
         }
