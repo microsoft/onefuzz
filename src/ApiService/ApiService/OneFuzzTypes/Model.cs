@@ -96,8 +96,8 @@ public record Node
     bool DebugKeepNode = false
 ) : StatefulEntityBase<NodeState>(State) {
 
-    public List<NodeTasks>? Tasks {get; set;}
-    public List<NodeCommand>? Messages {get; set;}
+    public List<NodeTasks>? Tasks { get; set; }
+    public List<NodeCommand>? Messages { get; set; }
 }
 
 
