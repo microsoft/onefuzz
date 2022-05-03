@@ -60,7 +60,7 @@ public class TimerRetention {
                 _log.Info($"deleting expired notification: {notification.NotificationId}");
                 var r = await _notificaitonOps.Delete(notification);
                 if (!r.IsOk) {
-                    _log.Error($"failed to delete notification with id {notification.NotificationId} due to [{r.ErrorV.Item1}] {r.ErrorV.Item2}");
+                    _log.WithHttpStatus(r.ErrorV).Error($"failed to delete notification with id {notification.NotificationId}");
                 }
             }
         }
@@ -72,7 +72,7 @@ public class TimerRetention {
                 var updatedJob = job with { UserInfo = userInfo };
                 var r = await _jobOps.Replace(updatedJob);
                 if (!r.IsOk) {
-                    _log.Error($"Failed to save job {updatedJob.JobId} due to [{r.ErrorV.Item1}] {r.ErrorV.Item2}");
+                    _log.WithHttpStatus(r.ErrorV).Error($"Failed to save job {updatedJob.JobId}");
                 }
             }
         }
@@ -84,7 +84,7 @@ public class TimerRetention {
                 var updatedTask = task with { UserInfo = userInfo };
                 var r = await _taskOps.Replace(updatedTask);
                 if (!r.IsOk) {
-                    _log.Error($"Failed to save task {updatedTask.TaskId} due to [{r.ErrorV.Item1}] {r.ErrorV.Item2}");
+                    _log.WithHttpStatus(r.ErrorV).Error($"Failed to save task {updatedTask.TaskId}");
                 }
             }
         }
@@ -96,7 +96,7 @@ public class TimerRetention {
                 var updatedRepro = repro with { UserInfo = userInfo };
                 var r = await _reproOps.Replace(updatedRepro);
                 if (!r.IsOk) {
-                    _log.Error($"Failed to save repro {updatedRepro.VmId} due to [{r.ErrorV.Item1}] {r.ErrorV.Item2}");
+                    _log.WithHttpStatus(r.ErrorV).Error($"Failed to save repro {updatedRepro.VmId}");
                 }
             }
         }

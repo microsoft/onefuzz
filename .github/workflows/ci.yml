@@ -1,5 +1,10 @@
 name: Build
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -272,6 +277,21 @@ jobs:
       run: |
         cd src/ApiService/
         dotnet test --no-restore
+    - name: copy artifacts
+      run: |
+        ./src/ci/get-version.sh > src/deployment/VERSION
+        cd src/ApiService/ApiService/
+        echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
+        echo ${GITHUB_SHA} | tee onefuzzlib/git.version
+        mv az-local.settings.json bin/Release/net6.0/local.settings.json
+        cd bin/Release/net6.0/
+        zip -r api-service-net.zip .
+        mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
+        cp api-service-net.zip ${GITHUB_WORKSPACE}/artifacts/service-net
+    - uses: actions/upload-artifact@v2.2.2
+      with:
+        name: build-artifacts
+        path: artifacts
   afl:
     runs-on: ubuntu-18.04
     steps:
@@ -363,6 +383,7 @@ jobs:
           cp artifacts/agent-Linux/onefuzz-agent src/deployment/tools/linux/
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment
+          cp artifacts/service-net/api-service-net.zip src/deployment          
           cp -r artifacts/third-party src/deployment
           cp -r src/agent/script/linux/libfuzzer-coverage src/deployment/tools/linux/libfuzzer-coverage
           cp -r src/agent/script/win64/libfuzzer-coverage src/deployment/tools/win64/libfuzzer-coverage

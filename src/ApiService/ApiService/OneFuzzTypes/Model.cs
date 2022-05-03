@@ -53,10 +53,10 @@ public record NodeCommandAddSshKey(string PublicKey);
 
 public record NodeCommand
 (
-    StopNodeCommand? Stop,
-    StopTaskNodeCommand? StopTask,
-    NodeCommandAddSshKey? AddSshKey,
-    NodeCommandStopIfFree? StopIfFree
+    StopNodeCommand? Stop = default,
+    StopTaskNodeCommand? StopTask = default,
+    NodeCommandAddSshKey? AddSshKey = default,
+    NodeCommandStopIfFree? StopIfFree = default
 );
 
 public enum NodeTaskState {
@@ -82,17 +82,20 @@ public record ProxyHeartbeat
 
 public record Node
 (
-    DateTimeOffset? InitializedAt,
     [PartitionKey] PoolName PoolName,
-    Guid? PoolId,
     [RowKey] Guid MachineId,
-    NodeState State,
-    Guid? ScalesetId,
-    DateTimeOffset Heartbeat,
+    Guid? PoolId,
     string Version,
-    bool ReimageRequested,
-    bool DeleteRequested,
-    bool DebugKeepNode
+
+    DateTimeOffset? Heartbeat = null,
+    DateTimeOffset? InitializedAt = null,
+    NodeState State = NodeState.Init,
+    List<NodeTasks>? Tasks = null,
+    List<NodeCommand>? Messages = null,
+    Guid? ScalesetId = null,
+    bool ReimageRequested = false,
+    bool DeleteRequested = false,
+    bool DebugKeepNode = false
 ) : StatefulEntityBase<NodeState>(State);
 
 
@@ -467,8 +470,8 @@ public record TeamsTemplate();
 public record GithubIssuesTemplate();
 
 public record Repro(
-    DateTimeOffset Timestamp,
-    Guid VmId,
+    [PartitionKey] Guid VmId,
+    [RowKey] Guid _,
     Guid TaskId,
     ReproConfig Config,
     VmState State,
@@ -585,6 +588,7 @@ public record Job(
     public UserInfo? UserInfo { get; set; }
 }
 
+public record Nsg(string Name, Region Region);
 
 public record WorkUnit(
     Guid JobId,

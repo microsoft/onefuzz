@@ -11,6 +11,10 @@ namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 public abstract record EntityBase {
     [JsonIgnore] public ETag? ETag { get; set; }
     public DateTimeOffset? TimeStamp { get; set; }
+
+    // https://docs.microsoft.com/en-us/rest/api/storageservices/designing-a-scalable-partitioning-strategy-for-azure-table-storage#yyy
+    // Produce "good-quality-table-key" based on a DateTimeOffset timestamp
+    public static string NewSortedKey => $"{DateTimeOffset.MaxValue.Ticks - DateTimeOffset.UtcNow.Ticks}";
 }
 
 public abstract record StatefulEntityBase<T>([property: JsonIgnore] T State) : EntityBase() where T : Enum;
@@ -45,7 +49,7 @@ public enum EntityPropertyKind {
     Column
 }
 public record EntityProperty(string name, string columnName, Type type, EntityPropertyKind kind, (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator);
-public record EntityInfo(Type type, Dictionary<string, EntityProperty> properties, Func<object?[], object> constructor);
+public record EntityInfo(Type type, ILookup<string, EntityProperty> properties, Func<object?[], object> constructor);
 
 class OnefuzzNamingPolicy : JsonNamingPolicy {
     public override string ConvertName(string name) {
@@ -93,40 +97,44 @@ public class EntityConverter {
         return ctor;
     }
 
+    private IEnumerable<EntityProperty> GetEntityProperties<T>(ParameterInfo parameterInfo) {
+        var name = parameterInfo.Name.EnsureNotNull($"Invalid paramter {parameterInfo}");
+        var parameterType = parameterInfo.ParameterType.EnsureNotNull($"Invalid paramter {parameterInfo}");
+        var isRowkey = parameterInfo.GetCustomAttribute(typeof(RowKeyAttribute)) != null;
+        var isPartitionkey = parameterInfo.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
+
+        var discriminatorAttribute = typeof(T).GetProperty(name)?.GetCustomAttribute<TypeDiscrimnatorAttribute>();
+
+        (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator = null;
+        if (discriminatorAttribute != null) {
+            var t = (ITypeProvider)(discriminatorAttribute.ConverterType.GetConstructor(new Type[] { })?.Invoke(null) ?? throw new Exception("unable to retrive the type provider"));
+            discriminator = (discriminatorAttribute, t);
+        }
+
+
+        if (isPartitionkey) {
+            yield return new EntityProperty(name, "PartitionKey", parameterType, EntityPropertyKind.PartitionKey, discriminator);
+        }
+
+        if (isRowkey) {
+            yield return new EntityProperty(name, "RowKey", parameterType, EntityPropertyKind.RowKey, discriminator);
+        }
+
+        if (!isPartitionkey && !isRowkey) {
+            var columnName = typeof(T).GetProperty(name)?.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name ?? CaseConverter.PascalToSnake(name);
+            yield return new EntityProperty(name, columnName, parameterType, EntityPropertyKind.Column, discriminator);
+        }
+    }
+
+
     private EntityInfo GetEntityInfo<T>() {
         return _cache.GetOrAdd(typeof(T), type => {
             var constructor = type.GetConstructors()[0];
             var parameterInfos = constructor.GetParameters();
             var parameters =
-            parameterInfos.Select(f => {
-                var name = f.Name.EnsureNotNull($"Invalid paramter {f}");
-                var parameterType = f.ParameterType.EnsureNotNull($"Invalid paramter {f}");
-                var isRowkey = f.GetCustomAttribute(typeof(RowKeyAttribute)) != null;
-                var isPartitionkey = f.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
+            parameterInfos.SelectMany(GetEntityProperties<T>).ToArray();
 
-
-
-                var (columnName, kind) =
-                isRowkey
-                    ? ("RowKey", EntityPropertyKind.RowKey)
-                    : isPartitionkey
-                        ? ("PartitionKey", EntityPropertyKind.PartitionKey)
-                        : (// JsonPropertyNameAttribute can only be applied to properties
-                            typeof(T).GetProperty(name)?.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name
-                                ?? CaseConverter.PascalToSnake(name),
-                            EntityPropertyKind.Column
-                        );
-                var discriminatorAttribute = type.GetProperty(name)?.GetCustomAttribute<TypeDiscrimnatorAttribute>();
-
-                (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator = null;
-                if (discriminatorAttribute != null) {
-                    var t = (ITypeProvider)(discriminatorAttribute.ConverterType.GetConstructor(new Type[] { })?.Invoke(null) ?? throw new Exception("unable to retrive the type provider"));
-                    discriminator = (discriminatorAttribute, t);
-                }
-                return new EntityProperty(name, columnName, parameterType, kind, discriminator);
-            }).ToArray();
-
-            return new EntityInfo(typeof(T), parameters.ToDictionary(x => x.name), BuildConstructerFrom(constructor));
+            return new EntityInfo(typeof(T), parameters.ToLookup(x => x.name), BuildConstructerFrom(constructor));
         });
     }
 
@@ -145,8 +153,8 @@ public class EntityConverter {
         }
         var tableEntity = new TableEntity();
         var entityInfo = GetEntityInfo<T>();
-        foreach (var kvp in entityInfo.properties) {
-            var prop = kvp.Value;
+        foreach (var prop in entityInfo.properties.SelectMany(x => x)) {
+            //var prop = kvp.First();
             var value = entityInfo.type.GetProperty(prop.name)?.GetValue(typedEntity);
             if (prop.kind == EntityPropertyKind.PartitionKey || prop.kind == EntityPropertyKind.RowKey) {
                 tableEntity.Add(prop.columnName, value?.ToString());
@@ -190,7 +198,7 @@ public class EntityConverter {
 
 
     private object? GetFieldValue(EntityInfo info, string name, TableEntity entity) {
-        var ef = info.properties[name];
+        var ef = info.properties[name].First();
         if (ef.kind == EntityPropertyKind.PartitionKey || ef.kind == EntityPropertyKind.RowKey) {
             if (ef.type == typeof(string))
                 return entity.GetString(ef.kind.ToString());
@@ -259,7 +267,7 @@ public class EntityConverter {
     public T ToRecord<T>(TableEntity entity) where T : EntityBase {
         var entityInfo = GetEntityInfo<T>();
         var parameters =
-            entityInfo.properties.Keys.Select(k => GetFieldValue(entityInfo, k, entity)).ToArray();
+            entityInfo.properties.Select(grouping => GetFieldValue(entityInfo, grouping.Key, entity)).ToArray();
         try {
             var entityRecord = (T)entityInfo.constructor.Invoke(parameters);
             if (entity.ETag != _emptyETag) {

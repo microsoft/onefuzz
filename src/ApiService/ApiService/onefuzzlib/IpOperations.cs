@@ -1,4 +1,5 @@
-﻿using Azure.ResourceManager.Network;
+﻿using Azure;
+using Azure.ResourceManager.Network;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -32,11 +33,13 @@ public class IpOperations : IIpOperations {
         return await _creds.GetResourceGroupResource().GetPublicIPAddressAsync(name);
     }
 
-    public Async.Task DeleteNic(string resourceGroup, string name) {
-        throw new NotImplementedException();
+    public async System.Threading.Tasks.Task DeleteNic(string resourceGroup, string name) {
+        _logTracer.Info($"deleting nic {resourceGroup}:{name}");
+        await _creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name).Result.Value.DeleteAsync(WaitUntil.Started);
     }
 
-    public Async.Task DeleteIp(string resourceGroup, string name) {
-        throw new NotImplementedException();
+    public async System.Threading.Tasks.Task DeleteIp(string resourceGroup, string name) {
+        _logTracer.Info($"deleting ip {resourceGroup}:{name}");
+        await _creds.GetResourceGroupResource().GetPublicIPAddressAsync(name).Result.Value.DeleteAsync(WaitUntil.Started);
     }
 }

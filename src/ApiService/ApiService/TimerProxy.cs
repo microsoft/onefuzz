@@ -10,7 +10,7 @@ public partial class TimerProxy {
 
     private readonly IScalesetOperations _scalesetOperations;
 
-    private readonly INsg _nsg;
+    private readonly INsgOperations _nsg;
 
     private readonly ICreds _creds;
 
@@ -18,7 +18,7 @@ public partial class TimerProxy {
 
     private readonly ISubnet _subnet;
 
-    public TimerProxy(ILogTracer logTracer, IProxyOperations proxies, IScalesetOperations scalesets, INsg nsg, ICreds creds, IConfigOperations configOperations, ISubnet subnet) {
+    public TimerProxy(ILogTracer logTracer, IProxyOperations proxies, IScalesetOperations scalesets, INsgOperations nsg, ICreds creds, IConfigOperations configOperations, ISubnet subnet) {
         _logger = logTracer;
         _proxYOperations = proxies;
         _scalesetOperations = scalesets;

@@ -3,7 +3,11 @@
 namespace Microsoft.OneFuzz.Service;
 
 public interface IReproOperations : IStatefulOrm<Repro, VmState> {
-    public IAsyncEnumerable<Repro?> SearchExpired();
+    public IAsyncEnumerable<Repro> SearchExpired();
+
+    public System.Threading.Tasks.Task Stopping(Repro repro);
+
+    public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? States);
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations {
@@ -30,7 +34,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations {
         _vmOperations = vmOperations;
     }
 
-    public IAsyncEnumerable<Repro?> SearchExpired() {
+    public IAsyncEnumerable<Repro> SearchExpired() {
         return QueryAsync(filter: $"end_time lt datetime'{DateTime.UtcNow.ToString("o")}'");
     }
 
@@ -48,7 +52,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations {
             }
 
             vmConfig = new TaskVm(
-                _creds.GetBaseRegion(),
+                await _creds.GetBaseRegion(),
                 DEFAULT_SKU,
                 DEFAULT_OS[task.Os],
                 null
@@ -85,5 +89,16 @@ public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations {
     public async Async.Task Stopped(Repro repro) {
         _logTracer.Info($"vm stopped: {repro.VmId}");
         await Delete(repro);
+    }
+
+    public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? states) {
+        string? queryString = null;
+        if (states != null) {
+            queryString = string.Join(
+                " or ",
+                states.Select(s => $"state eq '{s}'")
+            );
+        }
+        return QueryAsync(queryString);
     }
 }

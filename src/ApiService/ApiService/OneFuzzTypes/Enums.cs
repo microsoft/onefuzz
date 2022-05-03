@@ -30,7 +30,7 @@ public enum ErrorCode {
 
 public enum VmState {
     Init,
-    ExtensionsLaunched,
+    ExtensionsLaunch,
     ExtensionsFailed,
     VmAllocationFailed,
     Running,
@@ -192,7 +192,7 @@ public static class VmStateHelper {
             return
                 new[]{
                 VmState.Init,
-                VmState.ExtensionsLaunched,
+                VmState.ExtensionsLaunch,
                 VmState.Stopping
             };
         });
@@ -204,7 +204,7 @@ public static class VmStateHelper {
             return
                 new[]{
                 VmState.Init,
-                VmState.ExtensionsLaunched,
+                VmState.ExtensionsLaunch,
                 VmState.ExtensionsFailed,
                 VmState.VmAllocationFailed,
                 VmState.Running,
@@ -383,3 +383,7 @@ public static class NodeStateHelper {
 }
 
 
+public enum NodeDisposalStrategy {
+    ScaleIn,
+    Decomission
+}
