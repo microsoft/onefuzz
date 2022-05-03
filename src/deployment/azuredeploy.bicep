@@ -162,7 +162,7 @@ module eventGrid 'bicep-templates/event-grid.bicep' = {
   ]
 }
 
-// try to make role assignments to deploy as late as possible in order to has principalId ready
+// try to make role assignments to deploy as late as possible in order to have principalId ready
 resource roleAssigmentsPy 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
   name: guid('${resourceGroup().id}${r.suffix}-python')
   properties: {
@@ -176,7 +176,7 @@ resource roleAssigmentsPy 'Microsoft.Authorization/roleAssignments@2020-10-01-pr
   ]
 }]
 
-// try to make role assignments to deploy as late as possible in order to has principalId ready
+// try to make role assignments to deploy as late as possible in order to have principalId ready
 resource roleAssigmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
   name: guid('${resourceGroup().id}${r.suffix}-net')
   properties: {
@@ -191,7 +191,7 @@ resource roleAssigmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-p
 }]
 
 
-// try to make role assignments to deploy as late as possible in order to has principalId ready
+// try to make role assignments to deploy as late as possible in order to have principalId ready
 resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
   name: guid('${resourceGroup().id}-user_managed_idenity_read_blob')
   properties: {
@@ -209,63 +209,87 @@ resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10
 module pythonFunction 'bicep-templates/function.bicep' = {
   name: 'pythonFunction'
   params: {
-    functions_worker_runtime: 'python'
-    linux_fx_version: 'Python|3.8'
-    functions_extension_version: '~3'
     name: name
+    linux_fx_version: 'Python|3.8'
 
-    instance_name: name
     app_logs_sas_url: storage.outputs.FuncSasUrlBlobAppLogs
     app_func_audiences: app_func_audiences
     app_func_issuer: app_func_issuer
-    app_insights_app_id: operationalInsights.outputs.appInsightsAppId
-    app_insights_key: operationalInsights.outputs.appInsightsInstrumentationKey
-    client_id: clientId
-    client_secret: clientSecret
+
     diagnostics_log_level: diagnosticsLogLevel
-    func_sas_url: storage.outputs.FuncSasUrl
-    func_storage_resource_id: storage.outputs.FuncId
-    fuzz_storage_resource_id: storage.outputs.FuzzId
-    keyvault_name: keyVaultName
     location: location
     log_retention: log_retention
-    monitor_account_name: operationalInsights.outputs.monitorAccountName
-    multi_tenant_domain: multi_tenant_domain
     owner: owner
     server_farm_id: serverFarms.outputs.id
-    signal_r_connection_string: signalR.outputs.connectionString
+    client_id: clientId
   }
 }
 
 module netFunction 'bicep-templates/function.bicep' = {
   name: 'netFunction'
   params: {
-    functions_worker_runtime: 'dotnet-isolated'
     linux_fx_version: 'DOTNET-ISOLATED|6.0'
-    functions_extension_version: '~4'
     name: '${name}-net'
 
-    instance_name: name
     app_logs_sas_url: storage.outputs.FuncSasUrlBlobAppLogs
     app_func_audiences: app_func_audiences
     app_func_issuer: app_func_issuer
+    client_id: clientId
+    diagnostics_log_level: diagnosticsLogLevel
+    location: location
+    log_retention: log_retention
+    owner: owner
+    server_farm_id: serverFarms.outputs.id
+  }
+}
+
+module pythonFunctionSettings 'bicep-templates/function-settings.bicep' = {
+  name: 'pythonFunctionSettings'
+  params: {
+    name: name
+    owner: owner
+    functions_worker_runtime: 'python'
+    functions_extension_version: '~3'
+    instance_name: name
     app_insights_app_id: operationalInsights.outputs.appInsightsAppId
     app_insights_key: operationalInsights.outputs.appInsightsInstrumentationKey
-    client_id: clientId
     client_secret: clientSecret
-    diagnostics_log_level: diagnosticsLogLevel
+    signal_r_connection_string: signalR.outputs.connectionString
     func_sas_url: storage.outputs.FuncSasUrl
     func_storage_resource_id: storage.outputs.FuncId
     fuzz_storage_resource_id: storage.outputs.FuzzId
     keyvault_name: keyVaultName
-    location: location
-    log_retention: log_retention
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
-    owner: owner
-    server_farm_id: serverFarms.outputs.id
-    signal_r_connection_string: signalR.outputs.connectionString
   }
+  dependsOn: [
+    pythonFunction
+  ]
+}
+
+
+module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
+  name: 'netFunctionSettings'
+  params: {
+    owner: owner
+    name: '${name}-net'
+    signal_r_connection_string: signalR.outputs.connectionString
+    app_insights_app_id: operationalInsights.outputs.appInsightsAppId
+    app_insights_key: operationalInsights.outputs.appInsightsInstrumentationKey
+    functions_worker_runtime: 'dotnet-isolated'
+    functions_extension_version: '~4'
+    instance_name: name
+    client_secret: clientSecret
+    func_sas_url: storage.outputs.FuncSasUrl
+    func_storage_resource_id: storage.outputs.FuncId
+    fuzz_storage_resource_id: storage.outputs.FuzzId
+    keyvault_name: keyVaultName
+    monitor_account_name: operationalInsights.outputs.monitorAccountName
+    multi_tenant_domain: multi_tenant_domain
+  }
+  dependsOn: [
+    netFunction
+  ]
 }
 
 

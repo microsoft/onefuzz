@@ -138,6 +138,7 @@ class Client:
         client_id: Optional[str],
         client_secret: Optional[str],
         app_zip: str,
+        app_net_zip: str,
         tools: str,
         instance_specific: str,
         third_party: str,
@@ -159,6 +160,7 @@ class Client:
         self.owner = owner
         self.nsg_config = nsg_config
         self.app_zip = app_zip
+        self.app_net_zip = app_net_zip
         self.tools = tools
         self.instance_specific = instance_specific
         self.third_party = third_party
@@ -1026,6 +1028,43 @@ class Client:
                 if error is not None:
                     raise error
 
+    def deploy_dotnet_app(self) -> None:
+        logger.info("deploying function app %s ", self.app_net_zip)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            with zipfile.ZipFile(self.app_net_zip, "r") as zip_ref:
+                func = shutil.which("func")
+                assert func is not None
+
+                zip_ref.extractall(tmpdirname)
+                error: Optional[subprocess.CalledProcessError] = None
+                max_tries = 5
+                for i in range(max_tries):
+                    try:
+                        subprocess.check_output(
+                            [
+                                func,
+                                "azure",
+                                "functionapp",
+                                "publish",
+                                self.application_name + "-net",
+                                "--no-build",
+                            ],
+                            env=dict(os.environ, CLI_DEBUG="1"),
+                            cwd=tmpdirname,
+                        )
+                        return
+                    except subprocess.CalledProcessError as err:
+                        error = err
+                        if i + 1 < max_tries:
+                            logger.debug("func failure error: %s", err)
+                            logger.warning(
+                                "function failed to deploy, waiting 60 "
+                                "seconds and trying again"
+                            )
+                            time.sleep(60)
+                if error is not None:
+                    raise error
+
     def update_registration(self) -> None:
         if not self.create_registration:
             return
@@ -1116,6 +1155,12 @@ def main() -> None:
         help="(default: %(default)s)",
     )
     parser.add_argument(
+        "--app-net-zip",
+        type=arg_file,
+        default="api-service-net.zip",
+        help="(default: %(default)s)",
+    )
+    parser.add_argument(
         "--tools", type=arg_dir, default="tools", help="(default: %(default)s)"
     )
     parser.add_argument(
@@ -1192,6 +1237,11 @@ def main() -> None:
         nargs="*",
         help="Set additional AAD tenants beyond the tenant the app is deployed in",
     )
+    parser.add_argument(
+        "--dotnet_deploy",
+        action="store_true",
+        help="deploys the dotnet version of the app along with the python version",
+    )
 
     args = parser.parse_args()
 
@@ -1208,6 +1258,7 @@ def main() -> None:
         client_id=args.client_id,
         client_secret=args.client_secret,
         app_zip=args.app_zip,
+        app_net_zip=args.app_net_zip,
         tools=args.tools,
         instance_specific=args.instance_specific,
         third_party=args.third_party,
@@ -1238,6 +1289,12 @@ def main() -> None:
         )
         states = rbac_only_states
     else:
+        if args.dotnet_deploy:
+            logger.info("deploying dotnet and python services for Azure functions")
+            after_python = full_deployment_states.index(("api", Client.deploy_app)) + 1
+            full_deployment_states.insert(
+                after_python, ("dotnet-api", Client.deploy_dotnet_app)
+            )
         states = full_deployment_states
 
     if args.start_at != states[0][0]:
