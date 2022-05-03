@@ -33,10 +33,7 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
     }
 
     public IAsyncEnumerable<Job> SearchState(IEnumerable<JobState> states) {
-        var query =
-        string.Join(" or ",
-            states.Select(x => $"state eq '{x}'"));
-
+        var query = Query.EqualAnyEnum("state", states);
         return QueryAsync(filter: query);
     }
 
