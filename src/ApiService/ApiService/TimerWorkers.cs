@@ -14,7 +14,7 @@ public class TimerWorkers {
 
         _scaleSetOps.UpdateConfigs(scaleset);
 
-
+        //if (_scaleSetOps.Cleanup)
 
     }
 

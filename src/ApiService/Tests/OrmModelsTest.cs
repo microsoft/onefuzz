@@ -31,6 +31,7 @@ namespace Tests {
                 Arb.Generate<EventScalesetResizeScheduled>().Select(e => e as BaseEvent),
                 Arb.Generate<EventScalesetStateUpdated>().Select(e => e as BaseEvent),
                 Arb.Generate<EventNodeDeleted>().Select(e => e as BaseEvent),
+                Arb.Generate<EventNodeCreated>().Select(e => e as BaseEvent),
             });
         }
 
@@ -38,6 +39,14 @@ namespace Tests {
             return Arb.Generate<IPv4Address>().Select(
                 arg => new Uri($"https://{arg.Item.ToString()}:8080")
             );
+        }
+
+        public static Gen<Version> Version() {
+            //OneFuzz version uses 3 number version
+            return Arb.Generate<Tuple<UInt16, UInt16, UInt16>>().Select(
+                arg =>
+                    new Version(arg.Item1, arg.Item2, arg.Item3)
+                );
         }
 
         public static Gen<WebhookMessageLog> WebhookMessageLog() {
@@ -321,6 +330,11 @@ namespace Tests {
     }
 
     public class OrmArb {
+
+        public static Arbitrary<Version> Vresion() {
+            return Arb.From(OrmGenerators.Version());
+        }
+
         public static Arbitrary<Uri> Uri() {
             return Arb.From(OrmGenerators.Uri());
         }
@@ -805,6 +819,3 @@ namespace Tests {
     }
 
 }
-
-
-

@@ -30,20 +30,17 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
         if (isNew) {
             r = await Insert(config);
             if (!r.IsOk) {
-                var (status, reason) = r.ErrorV;
-                _log.Error($"Failed to save new instance config record with result [{status}] {reason}");
+                _log.WithHttpStatus(r.ErrorV).Error($"Failed to save new instance config record");
             }
         } else if (requireEtag && config.ETag.HasValue) {
             r = await Update(config);
             if (!r.IsOk) {
-                var (status, reason) = r.ErrorV;
-                _log.Error($"Failed to update instance config record with result: [{status}] {reason}");
+                _log.WithHttpStatus(r.ErrorV).Error($"Failed to update instance config record");
             }
         } else {
             r = await Replace(config);
             if (!r.IsOk) {
-                var (status, reason) = r.ErrorV;
-                _log.Error($"Failed to replace instance config record with result [{status}] {reason}");
+                _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace instance config record");
             }
         }
 

@@ -114,12 +114,13 @@ public interface ILogTracer {
     void Verbose(string message);
 
     ILogTracer WithTag(string k, string v);
-    ILogTracer WithTags((string, string)[]? tags);
+    ILogTracer WithTags(IEnumerable<(string, string)>? tags);
+    ILogTracer WithHttpStatus((int, string) status);
 }
 
 internal interface ILogTracerInternal : ILogTracer {
     void ReplaceCorrelationId(Guid newCorrelationId);
-    void AddTags((string, string)[] tags);
+    void AddTags(IEnumerable<(string, string)> tags);
 }
 
 
@@ -130,14 +131,14 @@ public class LogTracer : ILogTracerInternal {
     }
 
     private Guid _correlationId;
-    private List<ILog> _loggers;
+    private IEnumerable<ILog> _loggers;
     private Dictionary<string, string> _tags;
     private SeverityLevel _logSeverityLevel;
 
     public Guid CorrelationId => _correlationId;
     public IReadOnlyDictionary<string, string> Tags => _tags;
 
-    private static List<KeyValuePair<string, string>> ConvertTags((string, string)[]? tags) {
+    private static IEnumerable<KeyValuePair<string, string>> ConvertTags(IEnumerable<(string, string)>? tags) {
         List<KeyValuePair<string, string>> converted = new List<KeyValuePair<string, string>>();
         if (tags is null) {
             return converted;
@@ -149,11 +150,11 @@ public class LogTracer : ILogTracerInternal {
         }
     }
 
-    public LogTracer(Guid correlationId, (string, string)[]? tags, List<ILog> loggers, SeverityLevel logSeverityLevel) :
+    public LogTracer(Guid correlationId, IEnumerable<(string, string)>? tags, List<ILog> loggers, SeverityLevel logSeverityLevel) :
         this(correlationId, new Dictionary<string, string>(ConvertTags(tags)), loggers, logSeverityLevel) { }
 
 
-    public LogTracer(Guid correlationId, IReadOnlyDictionary<string, string> tags, List<ILog> loggers, SeverityLevel logSeverityLevel) {
+    public LogTracer(Guid correlationId, IReadOnlyDictionary<string, string> tags, IEnumerable<ILog> loggers, SeverityLevel logSeverityLevel) {
         _correlationId = correlationId;
         _tags = new(tags);
         _loggers = loggers;
@@ -166,7 +167,7 @@ public class LogTracer : ILogTracerInternal {
     }
 
     //single threaded only
-    public void AddTags((string, string)[] tags) {
+    public void AddTags(IEnumerable<(string, string)> tags) {
         if (tags is not null) {
             foreach (var (k, v) in tags) {
                 _tags[k] = v;
@@ -178,7 +179,12 @@ public class LogTracer : ILogTracerInternal {
         return WithTags(new[] { (k, v) });
     }
 
-    public ILogTracer WithTags((string, string)[]? tags) {
+    public ILogTracer WithHttpStatus((int, string) status) {
+        (string, string)[] tags = { ("StatusCode", status.Item1.ToString()), ("ReasonPhrase", status.Item2) };
+        return WithTags(tags);
+    }
+
+    public ILogTracer WithTags(IEnumerable<(string, string)>? tags) {
         var newTags = new Dictionary<string, string>(Tags);
         if (tags is not null) {
             foreach (var (k, v) in tags) {
@@ -255,7 +261,7 @@ public class LogTracer : ILogTracerInternal {
 }
 
 public interface ILogTracerFactory {
-    LogTracer CreateLogTracer(Guid correlationId, (string, string)[]? tags = null, SeverityLevel severityLevel = SeverityLevel.Verbose);
+    LogTracer CreateLogTracer(Guid correlationId, IEnumerable<(string, string)>? tags = null, SeverityLevel severityLevel = SeverityLevel.Verbose);
 }
 
 public class LogTracerFactory : ILogTracerFactory {
@@ -265,7 +271,7 @@ public class LogTracerFactory : ILogTracerFactory {
         _loggers = loggers;
     }
 
-    public LogTracer CreateLogTracer(Guid correlationId, (string, string)[]? tags = null, SeverityLevel severityLevel = SeverityLevel.Verbose) {
+    public LogTracer CreateLogTracer(Guid correlationId, IEnumerable<(string, string)>? tags = null, SeverityLevel severityLevel = SeverityLevel.Verbose) {
         return new(correlationId, tags, _loggers, severityLevel);
     }
 
