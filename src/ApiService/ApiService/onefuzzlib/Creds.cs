@@ -20,7 +20,7 @@ public interface ICreds {
 
     public ResourceGroupResource GetResourceGroupResource();
 
-    public string GetBaseRegion();
+    public Async.Task<string> GetBaseRegion();
 
     public Uri GetInstanceUrl();
 }
@@ -74,8 +74,12 @@ public class Creds : ICreds {
         return ArmClient.GetResourceGroupResource(resourceId);
     }
 
-    public string GetBaseRegion() {
-        return ArmClient.GetResourceGroupResource(GetResourceGroupResourceIdentifier()).Data.Location.Name;
+    public async Async.Task<string> GetBaseRegion() {
+        var rg = await ArmClient.GetResourceGroupResource(GetResourceGroupResourceIdentifier()).GetAsync();
+        if (rg.GetRawResponse().IsError) {
+            throw new Exception($"Failed to get base region due to [{rg.GetRawResponse().Status}] {rg.GetRawResponse().ReasonPhrase}");
+        }
+        return rg.Value.Data.Location.Name;
     }
 
     public Uri GetInstanceUrl() {

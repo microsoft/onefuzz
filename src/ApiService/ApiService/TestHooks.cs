@@ -41,27 +41,7 @@ public class TestHooks {
         return response;
     }
 
-    [Function("InstanceConfig")]
-    public async Task<HttpResponseData> InstanceConfig([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/instance-config")] HttpRequestData req) {
-        _log.Info("Fetching instance config");
-        var config = await _configOps.Fetch();
 
-        if (config is null) {
-            _log.Error("Instance config is null");
-            Error err = new(ErrorCode.INVALID_REQUEST, new[] { "Instance config is null" });
-            var resp = req.CreateResponse(HttpStatusCode.InternalServerError);
-            await resp.WriteAsJsonAsync(err);
-            return resp;
-        } else {
-            await _events.SendEvent(new EventInstanceConfigUpdated(config));
-
-            var str = (new EntityConverter()).ToJsonString(config);
-
-            var resp = req.CreateResponse(HttpStatusCode.OK);
-            await resp.WriteStringAsync(str);
-            return resp;
-        }
-    }
 
     [Function("GetKeyvaultAddress")]
     public async Task<HttpResponseData> GetKeyVaultAddress([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/secrets/keyvaultaddress")] HttpRequestData req) {
