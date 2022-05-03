@@ -19,18 +19,15 @@ namespace ApiService.OneFuzzLib.Orm {
 
 
     public class Orm<T> : IOrm<T> where T : EntityBase {
-        protected readonly IStorage _storage;
         protected readonly EntityConverter _entityConverter;
+        protected readonly IOnefuzzContext _context;
         protected readonly ILogTracer _logTracer;
 
-        protected readonly IServiceConfig _config;
 
-
-        public Orm(IStorage storage, ILogTracer logTracer, IServiceConfig config) {
-            _storage = storage;
-            _entityConverter = new EntityConverter();
+        public Orm(ILogTracer logTracer, IOnefuzzContext context) {
+            _context = context;
             _logTracer = logTracer;
-            _config = config;
+            _entityConverter = new EntityConverter();
         }
 
         public async IAsyncEnumerable<T> QueryAsync(string? filter = null) {
@@ -87,8 +84,8 @@ namespace ApiService.OneFuzzLib.Orm {
         }
 
         public async Task<TableClient> GetTableClient(string table, string? accountId = null) {
-            var account = accountId ?? _config.OneFuzzFuncStorage ?? throw new ArgumentNullException(nameof(accountId));
-            var (name, key) = await _storage.GetStorageAccountNameAndKey(account);
+            var account = accountId ?? _context.ServiceConfiguration.OneFuzzFuncStorage ?? throw new ArgumentNullException(nameof(accountId));
+            var (name, key) = await _context.Storage.GetStorageAccountNameAndKey(account);
             var tableClient = new TableServiceClient(new Uri($"https://{name}.table.core.windows.net"), new TableSharedKeyCredential(name, key));
             await tableClient.CreateTableIfNotExistsAsync(table);
             return tableClient.GetTableClient(table);
@@ -134,7 +131,7 @@ namespace ApiService.OneFuzzLib.Orm {
                 };
         }
 
-        public StatefulOrm(IStorage storage, ILogTracer logTracer, IServiceConfig config) : base(storage, logTracer, config) {
+        public StatefulOrm(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
         }
 
         /// <summary>

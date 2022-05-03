@@ -15,18 +15,10 @@ public interface IWebhookOperations {
 
 public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
-    private readonly IWebhookMessageLogOperations _webhookMessageLogOperations;
-    private readonly ILogTracer _log;
-    private readonly ICreds _creds;
-    private readonly IContainers _containers;
     private readonly IHttpClientFactory _httpFactory;
 
-    public WebhookOperations(IHttpClientFactory httpFactory, ICreds creds, IStorage storage, IWebhookMessageLogOperations webhookMessageLogOperations, IContainers containers, ILogTracer log, IServiceConfig config)
-        : base(storage, log, config) {
-        _webhookMessageLogOperations = webhookMessageLogOperations;
-        _log = log;
-        _creds = creds;
-        _containers = containers;
+    public WebhookOperations(IHttpClientFactory httpFactory, ILogTracer log, IOnefuzzContext context)
+        : base(log, context) {
         _httpFactory = httpFactory;
     }
 
@@ -50,10 +42,10 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
              TryCount: 0
             );
 
-        var r = await _webhookMessageLogOperations.Replace(message);
+        var r = await _context.WebhookMessageLogOperations.Replace(message);
         if (!r.IsOk) {
             var (status, reason) = r.ErrorV;
-            _log.Error($"Failed to replace webhook message log due to [{status}] {reason}");
+            _logTracer.Error($"Failed to replace webhook message log due to [{status}] {reason}");
         }
     }
 
@@ -65,14 +57,14 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
         var (data, digest) = await BuildMessage(webhookId: webhook.WebhookId, eventId: messageLog.EventId, eventType: messageLog.EventType, webhookEvent: messageLog.Event, secretToken: webhook.SecretToken, messageFormat: webhook.MessageFormat);
 
-        var headers = new Dictionary<string, string> { { "User-Agent", $"onefuzz-webhook {_config.OneFuzzVersion}" } };
+        var headers = new Dictionary<string, string> { { "User-Agent", $"onefuzz-webhook {_context.ServiceConfiguration.OneFuzzVersion}" } };
 
         if (digest != null) {
             headers["X-Onefuzz-Digest"] = digest;
         }
 
         var client = new Request(_httpFactory.CreateClient());
-        _log.Info(data);
+        _logTracer.Info(data);
         var response = client.Post(url: webhook.Url, json: data, headers: headers);
         var result = response.Result;
         if (result.StatusCode == HttpStatusCode.Accepted) {
@@ -81,16 +73,16 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         return false;
     }
 
-    // Not converting to bytes, as it's not neccessary in C#. Just keeping as string. 
+    // Not converting to bytes, as it's not neccessary in C#. Just keeping as string.
     public async Async.Task<Tuple<string, string?>> BuildMessage(Guid webhookId, Guid eventId, EventType eventType, BaseEvent webhookEvent, String? secretToken, WebhookMessageFormat? messageFormat) {
         var entityConverter = new EntityConverter();
         string data = "";
         if (messageFormat != null && messageFormat == WebhookMessageFormat.EventGrid) {
-            var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: webhookEvent, DataVersion: "1.0.0", Subject: _creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
+            var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: webhookEvent, DataVersion: "1.0.0", Subject: _context.Creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
             data = JsonSerializer.Serialize(eventGridMessage, options: EntityConverter.GetJsonSerializerOptions());
         } else {
-            var instanceId = await _containers.GetInstanceId();
-            var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _creds.GetInstanceName());
+            var instanceId = await _context.Containers.GetInstanceId();
+            var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _context.Creds.GetInstanceName());
 
             data = JsonSerializer.Serialize(webhookMessage, options: EntityConverter.GetJsonSerializerOptions());
         }
@@ -128,14 +120,10 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     const int EXPIRE_DAYS = 7;
     const int MAX_TRIES = 5;
 
-    private readonly IQueue _queue;
-    private readonly ILogTracer _log;
-    private readonly IWebhookOperations _webhook;
 
-    public WebhookMessageLogOperations(IStorage storage, IQueue queue, ILogTracer log, IServiceConfig config, ICreds creds, IHttpClientFactory httpFactory, IContainers containers) : base(storage, log, config) {
-        _queue = queue;
-        _log = log;
-        _webhook = new WebhookOperations(httpFactory: httpFactory, creds: creds, storage: storage, webhookMessageLogOperations: this, containers: containers, log: log, config: config);
+    public WebhookMessageLogOperations(IHttpClientFactory httpFactory, ILogTracer log, IOnefuzzContext context)
+        : base(log, context) {
+
     }
 
 
@@ -149,14 +137,14 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         };
 
         if (visibilityTimeout == null) {
-            _log.WithTags(
+            _logTracer.WithTags(
                     new[] {
                         ("WebhookId", webhookLog.WebhookId.ToString()),
                         ("EventId", webhookLog.EventId.ToString()) }
                     ).
                 Error($"invalid WebhookMessage queue state, not queuing. {webhookLog.WebhookId}:{webhookLog.EventId} - {webhookLog.State}");
         } else {
-            await _queue.QueueObject("webhooks", obj, StorageType.Config, visibilityTimeout: visibilityTimeout);
+            await _context.Queue.QueueObject("webhooks", obj, StorageType.Config, visibilityTimeout: visibilityTimeout);
         }
     }
 
@@ -164,7 +152,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         var message = await GetWebhookMessageById(obj.WebhookId, obj.EventId);
 
         if (message == null) {
-            _log.WithTags(
+            _logTracer.WithTags(
                 new[] {
                     ("WebhookId", obj.WebhookId.ToString()),
                     ("EventId", obj.EventId.ToString()) }
@@ -178,7 +166,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     private async Async.Task Process(WebhookMessageLog message) {
 
         if (message.State == WebhookMessageState.Failed || message.State == WebhookMessageState.Succeeded) {
-            _log.WithTags(
+            _logTracer.WithTags(
                 new[] {
                     ("WebhookId", message.WebhookId.ToString()),
                     ("EventId", message.EventId.ToString()) }
@@ -189,29 +177,29 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
 
         var newMessage = message with { TryCount = message.TryCount + 1 };
 
-        _log.Info($"sending webhook: {message.WebhookId}:{message.EventId}");
+        _logTracer.Info($"sending webhook: {message.WebhookId}:{message.EventId}");
         var success = await Send(newMessage);
         if (success) {
             newMessage = newMessage with { State = WebhookMessageState.Succeeded };
             await Replace(newMessage);
-            _log.Info($"sent webhook event {newMessage.WebhookId}:{newMessage.EventId}");
+            _logTracer.Info($"sent webhook event {newMessage.WebhookId}:{newMessage.EventId}");
         } else if (newMessage.TryCount < MAX_TRIES) {
             newMessage = newMessage with { State = WebhookMessageState.Retrying };
             await Replace(newMessage);
             await QueueWebhook(newMessage);
-            _log.Warning($"sending webhook event failed, re-queued {newMessage.WebhookId}:{newMessage.EventId}");
+            _logTracer.Warning($"sending webhook event failed, re-queued {newMessage.WebhookId}:{newMessage.EventId}");
         } else {
             newMessage = newMessage with { State = WebhookMessageState.Failed };
             await Replace(newMessage);
-            _log.Info($"sending webhook: {newMessage.WebhookId} event: {newMessage.EventId} failed {newMessage.TryCount} times.");
+            _logTracer.Info($"sending webhook: {newMessage.WebhookId} event: {newMessage.EventId} failed {newMessage.TryCount} times.");
         }
 
     }
 
     private async Async.Task<bool> Send(WebhookMessageLog message) {
-        var webhook = await _webhook.GetByWebhookId(message.WebhookId);
+        var webhook = await _context.WebhookOperations.GetByWebhookId(message.WebhookId);
         if (webhook == null) {
-            _log.WithTags(
+            _logTracer.WithTags(
                 new[] {
                     ("WebhookId", message.WebhookId.ToString()),
                 }
@@ -221,9 +209,9 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         }
 
         try {
-            return await _webhook.Send(message);
+            return await _context.WebhookOperations.Send(message);
         } catch (Exception exc) {
-            _log.WithTags(
+            _logTracer.WithTags(
                 new[] {
                     ("WebhookId", message.WebhookId.ToString())
                 }
