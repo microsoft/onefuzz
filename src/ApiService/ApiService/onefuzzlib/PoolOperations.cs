@@ -9,13 +9,10 @@ public interface IPoolOperations {
 }
 
 public class PoolOperations : StatefulOrm<Pool, PoolState>, IPoolOperations {
-    private IConfigOperations _configOperations;
-    private readonly IQueue _queue;
 
-    public PoolOperations(IStorage storage, ILogTracer log, IServiceConfig config, IConfigOperations configOperations, IQueue queue)
-        : base(storage, log, config) {
-        _configOperations = configOperations;
-        _queue = queue;
+    public PoolOperations(ILogTracer log, IOnefuzzContext context)
+        : base(log, context) {
+
     }
 
     public async Async.Task<Result<Pool, Error>> GetByName(string poolName) {
@@ -37,7 +34,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState>, IPoolOperations {
             return false;
         }
 
-        return await _queue.QueueObject(GetPoolQueue(pool), workSet, StorageType.Corpus);
+        return await _context.Queue.QueueObject(GetPoolQueue(pool), workSet, StorageType.Corpus);
     }
 
     private string GetPoolQueue(Pool pool) {

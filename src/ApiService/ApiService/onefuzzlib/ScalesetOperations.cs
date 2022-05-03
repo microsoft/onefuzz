@@ -17,34 +17,11 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
     const string SCALESET_LOG_PREFIX = "scalesets: ";
 
     ILogTracer _log;
-    IPoolOperations _poolOps;
-    IEvents _events;
-    IExtensions _extensions;
-    IVmssOperations _vmssOps;
-    IQueue _queue;
-    IServiceConfig _serviceConfig;
-    ICreds _creds;
 
-    public ScalesetOperations(
-        IStorage storage,
-        ILogTracer log,
-        IServiceConfig config,
-        IPoolOperations poolOps,
-        IEvents events,
-        IExtensions extensions,
-        IVmssOperations vmssOps,
-        IQueue queue,
-        ICreds creds
-        )
-        : base(storage, log, config) {
+    public ScalesetOperations(ILogTracer log, IOnefuzzContext context)
+        : base(log, context) {
         _log = log;
-        _poolOps = poolOps;
-        _events = events;
-        _extensions = extensions;
-        _vmssOps = vmssOps;
-        _queue = queue;
-        _serviceConfig = config;
-        _creds = creds;
+
     }
 
     public IAsyncEnumerable<Scaleset> Search() {
@@ -70,11 +47,11 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
         }
 
         if (state == ScalesetState.Resize) {
-            await _events.SendEvent(
+            await _context.Events.SendEvent(
                 new EventScalesetResizeScheduled(updatedScaleSet.ScalesetId, updatedScaleSet.PoolName, updatedScaleSet.Size)
             );
         } else {
-            await _events.SendEvent(
+            await _context.Events.SendEvent(
                 new EventScalesetStateUpdated(updatedScaleSet.ScalesetId, updatedScaleSet.PoolName, updatedScaleSet.State)
             );
         }
@@ -85,7 +62,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
             return;
 
         await SetState(scaleSet with { Error = error }, ScalesetState.CreationFailed);
-        await _events.SendEvent(new EventScalesetFailed(scaleSet.ScalesetId, scaleSet.PoolName, error));
+        await _context.Events.SendEvent(new EventScalesetFailed(scaleSet.ScalesetId, scaleSet.PoolName, error));
     }
 
     public async Async.Task UpdateConfigs(Scaleset scaleSet) {
@@ -104,7 +81,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
 
         _log.Info($"{SCALESET_LOG_PREFIX} updating scalset configs. scalset_id: {scaleSet.ScalesetId}");
 
-        var pool = await _poolOps.GetByName(scaleSet.PoolName);
+        var pool = await _context.PoolOperations.GetByName(scaleSet.PoolName);
 
         if (!pool.IsOk || pool.OkV is null) {
             _log.Error($"{SCALESET_LOG_PREFIX} unable to find pool during config update. pool:{scaleSet.PoolName}, scaleset_id:{scaleSet.ScalesetId}");
@@ -112,26 +89,27 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
             return;
         }
 
-        var extensions = await _extensions.FuzzExtensions(pool.OkV, scaleSet);
+        var extensions = await _context.Extensions.FuzzExtensions(pool.OkV, scaleSet);
 
-        var res = await _vmssOps.UpdateExtensions(scaleSet.ScalesetId, extensions);
+        var res = await _context.VmssOperations.UpdateExtensions(scaleSet.ScalesetId, extensions);
 
         if (!res.IsOk) {
             _log.Info($"{SCALESET_LOG_PREFIX} unable to update configs {string.Join(',', res.ErrorV.Errors!)}");
         }
     }
 
-    public async Async.Task Halt(Scaleset scaleset, INodeOperations _nodeOps) {
-        var shrinkQueue = new ShrinkQueue(scaleset.ScalesetId, _queue, _log);
+
+    public async Async.Task Halt(Scaleset scaleset) {
+        var shrinkQueue = new ShrinkQueue(scaleset.ScalesetId, _context.Queue, _log);
         await shrinkQueue.Delete();
 
-        await foreach (var node in _nodeOps.SearchStates(scaleSetId: scaleset.ScalesetId)) {
+        await foreach (var node in _context.NodeOperations.SearchStates(scaleSetId: scaleset.ScalesetId)) {
             _log.Info($"{SCALESET_LOG_PREFIX} deleting node scaleset_id {scaleset.ScalesetId} machine_id {node.MachineId}");
-            await _nodeOps.Delete(node);
+            await _context.NodeOperations.Delete(node);
         }
         _log.Info($"{SCALESET_LOG_PREFIX} scaleset delete starting: scaleset_id:{scaleset.ScalesetId}");
 
-        if (await _vmssOps.DeleteVmss(scaleset.ScalesetId)) {
+        if (await _context.VmssOperations.DeleteVmss(scaleset.ScalesetId)) {
             _log.Info($"{SCALESET_LOG_PREFIX}scaleset deleted: scaleset_id {scaleset.ScalesetId}");
             var r = await Delete(scaleset);
             if (!r.IsOk) {
@@ -150,32 +128,32 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
     /// </summary>
     /// <param name="scaleSet"></param>
     /// <returns>true if scaleset got modified</returns>
-    public async Async.Task<bool> CleanupNodes(Scaleset scaleSet, INodeOperations _nodeOps) {
+    public async Async.Task<bool> CleanupNodes(Scaleset scaleSet) {
         _log.Info($"{SCALESET_LOG_PREFIX} cleaning up nodes. scaleset_id {scaleSet.ScalesetId}");
 
         if (scaleSet.State == ScalesetState.Halt) {
             _log.Info($"{SCALESET_LOG_PREFIX} halting scaleset scaleset_id {scaleSet.ScalesetId}");
-            await Halt(scaleSet, _nodeOps);
+            await Halt(scaleSet);
             return true;
         }
 
-        var pool = await _poolOps.GetByName(scaleSet.PoolName);
+        var pool = await _context.PoolOperations.GetByName(scaleSet.PoolName);
         if (!pool.IsOk) {
             _log.Error($"unable to find pool during cleanup {scaleSet.ScalesetId} - {scaleSet.PoolName}");
             await SetFailed(scaleSet, pool.ErrorV!);
             return true;
         }
-        await _nodeOps.ReimageLongLivedNodes(scaleSet.ScalesetId);
+        await _context.NodeOperations.ReimageLongLivedNodes(scaleSet.ScalesetId);
 
         //ground truth of existing nodes
-        var azureNodes = await _vmssOps.ListInstanceIds(scaleSet.ScalesetId);
-        var nodes = _nodeOps.SearchStates(scaleSetId: scaleSet.ScalesetId);
+        var azureNodes = await _context.VmssOperations.ListInstanceIds(scaleSet.ScalesetId);
+        var nodes = _context.NodeOperations.SearchStates(scaleSetId: scaleSet.ScalesetId);
 
         //# Nodes do not exists in scalesets but in table due to unknown failure
         await foreach (var node in nodes) {
             if (!azureNodes.ContainsKey(node.MachineId)) {
                 _log.Info($"{SCALESET_LOG_PREFIX} no longer in scaleset. scaleset_id:{scaleSet.ScalesetId} machine_id:{node.MachineId}");
-                await _nodeOps.Delete(node);
+                await _context.NodeOperations.Delete(node);
             }
         }
 
@@ -202,7 +180,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
 
             //Python code does use created node
             //pool.IsOk was handled above, OkV must be not null at this point
-            var _ = await _nodeOps.Create(pool.OkV!.PoolId, scaleSet.PoolName, machineId, scaleSet.ScalesetId, _config.OneFuzzVersion, true);
+            var _ = await _context.NodeOperations.Create(pool.OkV!.PoolId, scaleSet.PoolName, machineId, scaleSet.ScalesetId, _context.ServiceConfiguration.OneFuzzVersion, true);
         }
 
         var existingNodes =
@@ -223,11 +201,11 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
             if (node.DeleteRequested) {
                 toDelete[node.MachineId] = node;
             } else {
-                if (await new ShrinkQueue(scaleSet.ScalesetId, _queue, _log).ShouldShrink()) {
-                    await _nodeOps.SetHalt(node);
+                if (await new ShrinkQueue(scaleSet.ScalesetId, _context.Queue, _log).ShouldShrink()) {
+                    await _context.NodeOperations.SetHalt(node);
                     toDelete[node.MachineId] = node;
-                } else if (await new ShrinkQueue(pool.OkV!.PoolId, _queue, _log).ShouldShrink()) {
-                    await _nodeOps.SetHalt(node);
+                } else if (await new ShrinkQueue(pool.OkV!.PoolId, _context.Queue, _log).ShouldShrink()) {
+                    await _context.NodeOperations.SetHalt(node);
                     toDelete[node.MachineId] = node;
                 } else {
                     toReimage[node.MachineId] = node;
@@ -235,7 +213,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
             }
         }
 
-        var deadNodes = _nodeOps.GetDeadNodes(scaleSet.ScalesetId, INodeOperations.NODE_EXPIRATION_TIME);
+        var deadNodes = _context.NodeOperations.GetDeadNodes(scaleSet.ScalesetId, INodeOperations.NODE_EXPIRATION_TIME);
 
         await foreach (var deadNode in deadNodes) {
             string errorMessage;
@@ -246,14 +224,14 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
             }
 
             var error = new Error(ErrorCode.TASK_FAILED, new[] { $"{errorMessage} scaleset_id {deadNode.ScalesetId} last heartbeat:{deadNode.Heartbeat}" });
-            await _nodeOps.MarkTasksStoppedEarly(deadNode, error);
-            await _nodeOps.ToReimage(deadNode, true);
+            await _context.NodeOperations.MarkTasksStoppedEarly(deadNode, error);
+            await _context.NodeOperations.ToReimage(deadNode, true);
             toReimage[deadNode.MachineId] = deadNode;
         }
 
         // Perform operations until they fail due to scaleset getting locked
         NodeDisposalStrategy strategy =
-            (_serviceConfig.OneFuzzNodeDisposalStrategy.ToLowerInvariant()) switch {
+            (_context.ServiceConfiguration.OneFuzzNodeDisposalStrategy.ToLowerInvariant()) switch {
                 "decomission" => NodeDisposalStrategy.Decomission,
                 _ => NodeDisposalStrategy.ScaleIn
             };
@@ -262,7 +240,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
     }
 
 
-    public async Async.Task ReimageNodes(Scaleset scaleSet, IEnumerable<Node> nodes, NodeDisposalStrategy disposalStrategy, INodeOperations _nodeOps) {
+    public async Async.Task ReimageNodes(Scaleset scaleSet, IEnumerable<Node> nodes, NodeDisposalStrategy disposalStrategy) {
 
         if (nodes is null || !nodes.Any()) {
             _log.Info($"{SCALESET_LOG_PREFIX} no nodes to reimage: scaleset_id: {scaleSet.ScalesetId}");
@@ -271,7 +249,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
 
         if (scaleSet.State == ScalesetState.Shutdown) {
             _log.Info($"{SCALESET_LOG_PREFIX} scaleset shutting down, deleting rather than reimaging nodes. scaleset_id: {scaleSet.ScalesetId}");
-            await DeleteNodes(scaleSet, nodes, disposalStrategy, _nodeOps);
+            await DeleteNodes(scaleSet, nodes, disposalStrategy);
             return;
         }
 
@@ -301,7 +279,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
         throw new NotImplementedException();
     }
 
-    public async Async.Task DeleteNodes(Scaleset scaleSet, IEnumerable<Node> nodes, NodeDisposalStrategy disposalStrategy, INodeOperations _nodeOps) {
+    public async Async.Task DeleteNodes(Scaleset scaleSet, IEnumerable<Node> nodes, NodeDisposalStrategy disposalStrategy) {
         if (nodes is null || !nodes.Any()) {
             _log.Info($"{SCALESET_LOG_PREFIX} no nodes to delete: scaleset_id: {scaleSet.ScalesetId}");
             return;
@@ -309,7 +287,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
 
 
         foreach (var node in nodes) {
-            await _nodeOps.SetHalt(node);
+            await _context.NodeOperations.SetHalt(node);
         }
 
         if (scaleSet.State == ScalesetState.Halt) {
