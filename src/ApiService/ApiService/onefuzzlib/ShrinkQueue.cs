@@ -51,8 +51,10 @@ public class ShrinkQueue {
                 i++;
             }
         }
-
     }
 
+    public async Async.Task<bool> ShouldShrink() {
+        return await _queueOps.RemoveFirstMessage(QueueName, StorageType.Config);
 
+    }
 }

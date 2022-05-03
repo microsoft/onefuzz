@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -16,7 +15,34 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
         int? numResults = default);
 
     new Async.Task Delete(Node node);
+
+    Async.Task ReimageLongLivedNodes(Guid scaleSetId);
+
+    Async.Task<Node> Create(
+        Guid poolId,
+        string poolName,
+        Guid machineId,
+        Guid? scaleSetId,
+        string version,
+        bool isNew = false);
+
+    Async.Task SetHalt(Node node);
+
+    IAsyncEnumerable<Node> GetDeadNodes(Guid scaleSetId, TimeSpan expirationPeriod);
+
+    Async.Task MarkTasksStoppedEarly(Node node, Error? error = null);
+
+    Async.Task ToReimage(Node node, bool done = false);
+
+    static TimeSpan NODE_EXPIRATION_TIME = TimeSpan.FromHours(1.0);
+    static TimeSpan NODE_REIMAGE_TIME = TimeSpan.FromDays(6.0);
 }
+
+
+/// Future work:
+///
+/// Enabling autoscaling for the scalesets based on the pool work queues.
+/// https://docs.microsoft.com/en-us/azure/azure-monitor/platform/autoscale-common-metrics#commonly-used-storage-metrics
 
 public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
 
@@ -24,6 +50,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
     private readonly ITaskOperations _taskOps;
     private readonly INodeMessageOperations _nodeMessageOps;
     private readonly IEvents _events;
+    private readonly ILogTracer _log;
+    private readonly ICreds _creds;
 
     public NodeOperations(
         IStorage storage,
@@ -32,7 +60,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         ITaskOperations taskOps,
         INodeTasksOperations nodeTasksOps,
         INodeMessageOperations nodeMessageOps,
-        IEvents events
+        IEvents events,
+        ICreds creds
         )
         : base(storage, log, config) {
 
@@ -40,9 +69,123 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         _nodeTasksOps = nodeTasksOps;
         _nodeMessageOps = nodeMessageOps;
         _events = events;
+        _log = log;
+        _creds = creds;
     }
 
-    public async Task<Node?> GetByMachineId(Guid machineId) {
+
+    /// Mark any excessively long lived node to be re-imaged.
+    /// This helps keep nodes on scalesets that use `latest` OS image SKUs
+    /// reasonably up-to-date with OS patches without disrupting running
+    /// fuzzing tasks with patch reboot cycles.
+    public async Async.Task ReimageLongLivedNodes(Guid scaleSetId) {
+        var timeFilter = $"not (initialized_at ge datetime'{(DateTimeOffset.UtcNow - INodeOperations.NODE_REIMAGE_TIME).ToString("o")}')";
+
+        await foreach (var node in QueryAsync($"(scaleset_id eq {scaleSetId}) and {timeFilter}")) {
+            if (node.DebugKeepNode) {
+                _log.Info($"removing debug_keep_node for expired node. scaleset_id:{node.ScalesetId} machine_id:{node.MachineId}");
+            }
+            await ToReimage(node with { DebugKeepNode = false });
+        }
+    }
+
+    public async Async.Task ToReimage(Node node, bool done = false) {
+
+        var nodeState = node.State;
+        if (done) {
+            if (!NodeStateHelper.ReadyForReset.Contains(node.State)) {
+                nodeState = NodeState.Done;
+            }
+        }
+
+        var reimageRequested = node.ReimageRequested;
+        if (!node.ReimageRequested && !node.DeleteRequested) {
+            _log.Info($"setting reimage_requested: {node.MachineId}");
+            reimageRequested = true;
+        }
+
+        var updatedNode = node with { State = nodeState, ReimageRequested = reimageRequested };
+        //if we're going to reimage, make sure the node doesn't pick up new work too.
+        await SendStopIfFree(updatedNode);
+
+        var r = await Replace(updatedNode);
+        if (!r.IsOk) {
+            _log.WithHttpStatus(r.ErrorV).Error("Failed to save Node record");
+        }
+    }
+
+    public IAsyncEnumerable<Node> GetDeadNodes(Guid scaleSetId, TimeSpan expirationPeriod) {
+        var minDate = DateTimeOffset.UtcNow - expirationPeriod;
+
+        var filter = $"heartbeat lt datetime'{minDate.ToString("o")}' or Timestamp lt datetime'{minDate.ToString("o")}'";
+        return QueryAsync(Query.And(filter, $"scaleset_id eq ${scaleSetId}"));
+    }
+
+
+    public async Async.Task<Node> Create(
+        Guid poolId,
+        string poolName,
+        Guid machineId,
+        Guid? scaleSetId,
+        string version,
+        bool isNew = false) {
+
+        var node = new Node(poolName, machineId, poolId, version, ScalesetId: scaleSetId);
+
+        ResultVoid<(int, string)> r;
+        if (isNew) {
+            r = await Replace(node);
+        } else {
+            r = await Update(node);
+        }
+        if (!r.IsOk) {
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to save NodeRecord, isNew: {isNew}");
+        } else {
+            await _events.SendEvent(
+                new EventNodeCreated(
+                    node.MachineId,
+                    node.ScalesetId,
+                    node.PoolName
+                    )
+                );
+        }
+
+        return node;
+    }
+
+    public async Async.Task Stop(Node node, bool done = false) {
+        await ToReimage(node, done);
+        await SendMessage(node, new NodeCommand(Stop: new StopNodeCommand()));
+    }
+
+    /// <summary>
+    ///  Tell node to stop everything
+    /// </summary>
+    /// <param name="node"></param>
+    /// <returns></returns>
+    public async Async.Task SetHalt(Node node) {
+        _log.Info($"setting halt: {node.MachineId}");
+        var updatedNode = node with { DeleteRequested = true };
+        await Stop(updatedNode, true);
+        await SendStopIfFree(updatedNode);
+    }
+
+    public async Async.Task SendStopIfFree(Node node) {
+        var ver = new Version(_config.OneFuzzVersion.Split('-')[0]);
+        if (ver >= Version.Parse("2.16.1")) {
+            await SendMessage(node, new NodeCommand(StopIfFree: new NodeCommandStopIfFree()));
+        }
+    }
+
+    public async Async.Task SendMessage(Node node, NodeCommand message) {
+        var r = await _nodeMessageOps.Replace(new NodeMessage(node.MachineId, message));
+        if (!r.IsOk) {
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace NodeMessge record for machine_id: {node.MachineId}");
+        }
+    }
+
+
+    public async Async.Task<Node?> GetByMachineId(Guid machineId) {
         var data = QueryAsync(filter: $"RowKey eq '{machineId}'");
 
         return await data.FirstOrDefaultAsync();
@@ -68,8 +211,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         }
 
         if (states is not null) {
-            IEnumerable<string> convertedStates = states.Select(x => JsonSerializer.Serialize(x, EntityConverter.GetJsonSerializerOptions()).Trim('"'));
-            var q = Query.EqualAny("state", convertedStates);
+            var q = Query.EqualAnyEnum("state", states);
             queryParts.Add($"({q})");
         }
 
@@ -123,6 +265,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
 
         await _events.SendEvent(new EventNodeDeleted(node.MachineId, node.ScalesetId, node.PoolName));
     }
+
 }
 
 
@@ -145,7 +288,6 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState>, INodeT
 
     //TODO: suggest by Cheick: this can probably be optimize by query all NodesTasks then query the all machine in single request
     public async IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId, INodeOperations nodeOps) {
-        List<Node> results = new();
         await foreach (var entry in QueryAsync($"task_id eq '{taskId}'")) {
             var node = await nodeOps.GetByMachineId(entry.MachineId);
             if (node is not null) {
@@ -177,7 +319,7 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState>, INodeT
         await foreach (var entry in GetByMachineId(machineId)) {
             var res = await Delete(entry);
             if (!res.IsOk) {
-                _log.Error($"failed to delete node task entry for machine_id: {entry.MachineId} due to [{res.ErrorV.Item1}] {res.ErrorV.Item2}");
+                _log.WithHttpStatus(res.ErrorV).Error($"failed to delete node task entry for machine_id: {entry.MachineId}");
             }
         }
     }
@@ -189,7 +331,9 @@ public record NodeMessage(
     [PartitionKey] Guid MachineId,
     [RowKey] string MessageId,
     NodeCommand Message
-) : EntityBase;
+) : EntityBase {
+    public NodeMessage(Guid machineId, NodeCommand message) : this(machineId, NewSortedKey, message) { }
+};
 
 public interface INodeMessageOperations : IOrm<NodeMessage> {
     IAsyncEnumerable<NodeMessage> GetMessage(Guid machineId);
@@ -214,7 +358,7 @@ public class NodeMessageOperations : Orm<NodeMessage>, INodeMessageOperations {
         await foreach (var message in GetMessage(machineId)) {
             var r = await Delete(message);
             if (!r.IsOk) {
-                _log.Error($"failed to delete message for node {machineId} due to [{r.ErrorV.Item1}] {r.ErrorV.Item2}");
+                _log.WithHttpStatus(r.ErrorV).Error($"failed to delete message for node {machineId}");
             }
         }
     }
