@@ -21,12 +21,16 @@ namespace Microsoft.OneFuzz.Service {
     public class Events : IEvents {
         private readonly IQueue _queue;
         private readonly IWebhookOperations _webhook;
-        private ILogTracer _log;
+        private readonly ILogTracer _log;
+        private readonly IContainers _containers;
+        private readonly ICreds _creds;
 
-        public Events(IQueue queue, IWebhookOperations webhook, ILogTracer log) {
+        public Events(IQueue queue, IWebhookOperations webhook, ILogTracer log, IContainers containers, ICreds creds) {
             _queue = queue;
             _webhook = webhook;
             _log = log;
+            _containers = containers;
+            _creds = creds;
         }
 
         public async Async.Task QueueSignalrEvent(EventMessage eventMessage) {
@@ -37,12 +41,14 @@ namespace Microsoft.OneFuzz.Service {
         public async Async.Task SendEvent(BaseEvent anEvent) {
             var eventType = anEvent.GetEventType();
 
+            var instanceId = await _containers.GetInstanceId();
+
             var eventMessage = new EventMessage(
                 Guid.NewGuid(),
                 eventType,
                 anEvent,
-                Guid.NewGuid(), // todo
-                "test" //todo
+                instanceId,
+                _creds.GetInstanceName()
             );
             await QueueSignalrEvent(eventMessage);
             await _webhook.SendEvent(eventMessage);
