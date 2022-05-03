@@ -12,11 +12,14 @@ public class AgentCanSchedule {
 
     private readonly ITaskOperations _taskOperations;
 
-    public AgentCanSchedule(ILogTracer log, IStorage storage, INodeOperations nodeOperations, ITaskOperations taskOperations) {
+    private readonly IScalesetOperations _scalesetOperations;
+
+    public AgentCanSchedule(ILogTracer log, IStorage storage, INodeOperations nodeOperations, ITaskOperations taskOperations, IScalesetOperations scalesetOperations) {
         _log = log;
         _storage = storage;
         _nodeOperations = nodeOperations;
         _taskOperations = taskOperations;
+        _scalesetOperations = scalesetOperations;
     }
 
     [Function("AgentCanSchedule")]

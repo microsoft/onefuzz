@@ -86,6 +86,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         _poolOperations = poolOperations;
         _vmssOperations = vmssOperations;
         _creds = creds;
+        _log = log;
     }
 
     public async Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node) {
