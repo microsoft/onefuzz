@@ -12,6 +12,7 @@ public interface IScalesetOperations : IOrm<Scaleset> {
 
 public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalesetOperations {
     const string SCALESET_LOG_PREFIX = "scalesets: ";
+
     ILogTracer _log;
     IPoolOperations _poolOps;
     IEvents _events;
@@ -19,8 +20,21 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
     IVmssOperations _vmssOps;
     IQueue _queue;
     INodeOperations _nodeOps;
+    IServiceConfig _serviceConfig;
+    ICreds _creds;
 
-    public ScalesetOperations(IStorage storage, ILogTracer log, IServiceConfig config, IPoolOperations poolOps, IEvents events, IExtensions extensions, IVmssOperations vmssOps, IQueue queue, INodeOperations nodeOps)
+    public ScalesetOperations(
+        IStorage storage,
+        ILogTracer log,
+        IServiceConfig config,
+        IPoolOperations poolOps,
+        IEvents events,
+        IExtensions extensions,
+        IVmssOperations vmssOps,
+        IQueue queue,
+        INodeOperations nodeOps,
+        ICreds creds
+        )
         : base(storage, log, config) {
         _log = log;
         _poolOps = poolOps;
@@ -29,6 +43,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
         _vmssOps = vmssOps;
         _queue = queue;
         _nodeOps = nodeOps;
+        _serviceConfig = config;
+        _creds = creds;
     }
 
     public IAsyncEnumerable<Scaleset> Search() {
@@ -105,19 +121,28 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
         }
     }
 
-
     public async Async.Task Halt(Scaleset scaleset) {
         var shrinkQueue = new ShrinkQueue(scaleset.ScalesetId, _queue, _log);
         await shrinkQueue.Delete();
 
         await foreach (var node in _nodeOps.SearchStates(scaleSetId: scaleset.ScalesetId)) {
             _log.Info($"{SCALESET_LOG_PREFIX} deleting node scaleset_id {scaleset.ScalesetId} machine_id {node.MachineId}");
-
-
+            await _nodeOps.Delete(node);
         }
-        //_nodeOps.
+        _log.Info($"{SCALESET_LOG_PREFIX} scaleset delete starting: scaleset_id:{scaleset.ScalesetId}");
 
-
+        if (await _vmssOps.DeleteVmss(scaleset.ScalesetId)) {
+            _log.Info($"{SCALESET_LOG_PREFIX}scaleset deleted: scaleset_id {scaleset.ScalesetId}");
+            var r = await Delete(scaleset);
+            if (!r.IsOk) {
+                _log.WithHttpStatus(r.ErrorV).Error($"Failed to delete scaleset record {scaleset.ScalesetId}");
+            }
+        } else {
+            var r = await Replace(scaleset);
+            if (!r.IsOk) {
+                _log.WithHttpStatus(r.ErrorV).Error($"Failed to save scaleset record {scaleset.ScalesetId}");
+            }
+        }
     }
 
 
@@ -131,14 +156,178 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
 
         if (scaleSet.State == ScalesetState.Halt) {
             _log.Info($"{SCALESET_LOG_PREFIX} halting scaleset scaleset_id {scaleSet.ScalesetId}");
-
             await Halt(scaleSet);
-
             return true;
         }
+
+        var pool = await _poolOps.GetByName(scaleSet.PoolName);
+        if (!pool.IsOk) {
+            _log.Error($"unable to find pool during cleanup {scaleSet.ScalesetId} - {scaleSet.PoolName}");
+            await SetFailed(scaleSet, pool.ErrorV!);
+            return true;
+        }
+        await _nodeOps.ReimageLongLivedNodes(scaleSet.ScalesetId);
+
+        //ground truth of existing nodes
+        var azureNodes = await _vmssOps.ListInstanceIds(scaleSet.ScalesetId);
+        var nodes = _nodeOps.SearchStates(scaleSetId: scaleSet.ScalesetId);
+
+        //# Nodes do not exists in scalesets but in table due to unknown failure
+        await foreach (var node in nodes) {
+            if (!azureNodes.ContainsKey(node.MachineId)) {
+                _log.Info($"{SCALESET_LOG_PREFIX} no longer in scaleset. scaleset_id:{scaleSet.ScalesetId} machine_id:{node.MachineId}");
+                await _nodeOps.Delete(node);
+            }
+        }
+
+        //# Scalesets can have nodes that never check in (such as broken OS setup
+        //# scripts).
+        //
+        //# This will add nodes that Azure knows about but have not checked in
+        //# such that the `dead node` detection will eventually reimage the node.
+        //
+        //# NOTE: If node setup takes longer than NODE_EXPIRATION_TIME (1 hour),
+        //# this will cause the nodes to continuously get reimaged.
+        var nodeMachineIds = await nodes.Select(x => x.MachineId).ToHashSetAsync();
+
+        foreach (var azureNode in azureNodes) {
+            var machineId = azureNode.Key;
+
+            if (nodeMachineIds.Contains(machineId)) {
+                continue;
+            }
+            _log.Info($"{SCALESET_LOG_PREFIX} adding missing azure node. scaleset_id:{scaleSet.ScalesetId} machine_id:{machineId}");
+
+            //# Note, using `new=True` makes it such that if a node already has
+            //# checked in, this won't overwrite it.
+
+            //Python code does use created node
+            //pool.IsOk was handled above, OkV must be not null at this point
+            var _ = await _nodeOps.Create(pool.OkV!.PoolId, scaleSet.PoolName, machineId, scaleSet.ScalesetId, _config.OneFuzzVersion, true);
+        }
+
+        var existingNodes =
+                from x in nodes
+                where azureNodes.ContainsKey(x.MachineId)
+                select x;
+
+        var nodesToReset =
+                from x in existingNodes
+                where NodeStateHelper.ReadyForReset.Contains(x.State)
+                select x;
+
+
+        Dictionary<Guid, Node> toDelete = new();
+        Dictionary<Guid, Node> toReimage = new();
+
+        await foreach (var node in nodesToReset) {
+            if (node.DeleteRequested) {
+                toDelete[node.MachineId] = node;
+            } else {
+                if (await new ShrinkQueue(scaleSet.ScalesetId, _queue, _log).ShouldShrink()) {
+                    await _nodeOps.SetHalt(node);
+                    toDelete[node.MachineId] = node;
+                } else if (await new ShrinkQueue(pool.OkV!.PoolId, _queue, _log).ShouldShrink()) {
+                    await _nodeOps.SetHalt(node);
+                    toDelete[node.MachineId] = node;
+                } else {
+                    toReimage[node.MachineId] = node;
+                }
+            }
+        }
+
+        var deadNodes = _nodeOps.GetDeadNodes(scaleSet.ScalesetId, INodeOperations.NODE_EXPIRATION_TIME);
+
+        await foreach (var deadNode in deadNodes) {
+            string errorMessage;
+            if (deadNode.Heartbeat is not null) {
+                errorMessage = "node reimaged due to expired hearbeat";
+            } else {
+                errorMessage = "node reimaged due to never receiving heartbeat";
+            }
+
+            var error = new Error(ErrorCode.TASK_FAILED, new[] { $"{errorMessage} scaleset_id {deadNode.ScalesetId} last heartbeat:{deadNode.Heartbeat}" });
+            await _nodeOps.MarkTasksStoppedEarly(deadNode, error);
+            await _nodeOps.ToReimage(deadNode, true);
+            toReimage[deadNode.MachineId] = deadNode;
+        }
+
+        // Perform operations until they fail due to scaleset getting locked
+        NodeDisposalStrategy strategy =
+            (_serviceConfig.OneFuzzNodeDisposalStrategy.ToLowerInvariant()) switch {
+                "decomission" => NodeDisposalStrategy.Decomission,
+                _ => NodeDisposalStrategy.ScaleIn
+            };
 
         throw new NotImplementedException();
     }
 
 
+    public async Async.Task ReimageNodes(Scaleset scaleSet, IEnumerable<Node> nodes, NodeDisposalStrategy disposalStrategy) {
+
+        if (nodes is null || !nodes.Any()) {
+            _log.Info($"{SCALESET_LOG_PREFIX} no nodes to reimage: scaleset_id: {scaleSet.ScalesetId}");
+            return;
+        }
+
+        if (scaleSet.State == ScalesetState.Shutdown) {
+            _log.Info($"{SCALESET_LOG_PREFIX} scaleset shutting down, deleting rather than reimaging nodes. scaleset_id: {scaleSet.ScalesetId}");
+            await DeleteNodes(scaleSet, nodes, disposalStrategy);
+            return;
+        }
+
+        if (scaleSet.State == ScalesetState.Halt) {
+            _log.Info($"{SCALESET_LOG_PREFIX} scaleset halting, ignoring node reimage: scaleset_id:{scaleSet.ScalesetId}");
+            return;
+        }
+
+        var machineIds = new HashSet<Guid>();
+        foreach (var node in nodes) {
+            if (node.State == NodeState.Done) {
+                continue;
+            }
+
+            if (node.DebugKeepNode) {
+                _log.Warning($"{SCALESET_LOG_PREFIX} not reimaging manually overriden node. scaleset_id:{scaleSet.ScalesetId} machine_id:{node.MachineId}");
+            } else {
+                machineIds.Add(node.MachineId);
+            }
+        }
+
+        if (!machineIds.Any()) {
+            _log.Info($"{SCALESET_LOG_PREFIX} no nodes to reimage: {scaleSet.ScalesetId}");
+            return;
+        }
+
+        throw new NotImplementedException();
+    }
+
+    public async Async.Task DeleteNodes(Scaleset scaleSet, IEnumerable<Node> nodes, NodeDisposalStrategy disposalStrategy) {
+        if (nodes is null || !nodes.Any()) {
+            _log.Info($"{SCALESET_LOG_PREFIX} no nodes to delete: scaleset_id: {scaleSet.ScalesetId}");
+            return;
+        }
+
+
+        foreach (var node in nodes) {
+            await _nodeOps.SetHalt(node);
+        }
+
+        if (scaleSet.State == ScalesetState.Halt) {
+            _log.Info($"{SCALESET_LOG_PREFIX} scaleset halting, ignoring deletion {scaleSet.ScalesetId}");
+            return;
+        }
+
+        HashSet<Guid> machineIds = new();
+
+        foreach (var node in nodes) {
+            if (node.DebugKeepNode) {
+                _log.Warning($"{SCALESET_LOG_PREFIX} not deleting manually overriden node. scaleset_id:{scaleSet.ScalesetId} machine_id:{node.MachineId}");
+            } else {
+                machineIds.Add(node.MachineId);
+            }
+        }
+
+        throw new NotImplementedException();
+    }
 }

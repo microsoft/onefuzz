@@ -32,6 +32,8 @@ public interface IServiceConfig {
     public string? OneFuzzMonitor { get; }
     public string? OneFuzzOwner { get; }
 
+    public string OneFuzzNodeDisposalStrategy { get; }
+
     public string? OneFuzzResourceGroup { get; }
     public string? OneFuzzTelemetry { get; }
 
@@ -78,4 +80,6 @@ public class ServiceConfiguration : IServiceConfig {
     public string? OneFuzzResourceGroup { get => Environment.GetEnvironmentVariable("ONEFUZZ_RESOURCE_GROUP"); }
     public string? OneFuzzTelemetry { get => Environment.GetEnvironmentVariable("ONEFUZZ_TELEMETRY"); }
     public string OneFuzzVersion { get => Environment.GetEnvironmentVariable("ONEFUZZ_VERSION") ?? "0.0.0"; }
+
+    public string OneFuzzNodeDisposalStrategy { get => Environment.GetEnvironmentVariable("ONEFUZZ_NODE_DISPOSAL_STRATEGY") ?? "scale_in"; }
 }

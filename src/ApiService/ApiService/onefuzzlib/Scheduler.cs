@@ -57,7 +57,7 @@ public class Scheduler : IScheduler {
         }
     }
 
-    private async System.Threading.Tasks.Task<bool> ScheduleWorkset(WorkSet workSet, Pool pool, int count) {
+    private async Async.Task<bool> ScheduleWorkset(WorkSet workSet, Pool pool, int count) {
         if (!PoolStateHelper.Available().Contains(pool.State)) {
             _logTracer.Info($"pool not available for work: {pool.Name} state: {pool.State}");
             return false;
@@ -120,7 +120,7 @@ public class Scheduler : IScheduler {
 
     record BucketConfig(int count, bool reboot, Container setupContainer, string? setupScript, Pool pool);
 
-    private async System.Threading.Tasks.Task<(BucketConfig, WorkUnit)?> BuildWorkunit(Task task) {
+    private async Async.Task<(BucketConfig, WorkUnit)?> BuildWorkunit(Task task) {
         Pool? pool = await _taskOperations.GetPool(task);
         if (pool == null) {
             _logTracer.Info($"unable to find pool for task: {task.TaskId}");
