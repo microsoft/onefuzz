@@ -25,10 +25,8 @@ namespace ApiService.TestHooks {
             _log.Info("Log event");
 
             var s = await req.ReadAsStringAsync();
-            var baseEvent = JsonSerializer.Deserialize<BaseEvent>(s!, EntityConverter.GetJsonSerializerOptions());
-            var t = BaseEvent.GetTypeInfo(baseEvent!.GetEventType());
-            var evt = (JsonSerializer.Deserialize(s!, t, EntityConverter.GetJsonSerializerOptions())) as BaseEvent;
-            _events.LogEvent(evt!);
+            var msg = JsonSerializer.Deserialize<EventMessage>(s!, EntityConverter.GetJsonSerializerOptions());
+            _events.LogEvent(msg!.Event);
             var resp = req.CreateResponse(HttpStatusCode.OK);
             return resp;
         }

@@ -901,6 +901,10 @@ namespace Tests {
             return Test(e);
         }
 
+        [Property]
+        public bool EventMessage(EventMessage e) {
+            return Test(e);
+        }
 
         /*
         //Sample function on how repro a failing test run, using Replay
