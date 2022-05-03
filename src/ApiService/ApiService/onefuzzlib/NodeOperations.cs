@@ -7,6 +7,18 @@ namespace Microsoft.OneFuzz.Service;
 public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Task<Node?> GetByMachineId(Guid machineId);
 
+    Task<bool> CanProcessNewWork(Node node);
+
+    Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node);
+
+    bool IsOutdated(Node node);
+    Async.Task Stop(Node node, bool done = false);
+    bool IsTooOld(Node node);
+    bool CouldShrinkScaleset(Node node);
+    Async.Task SetHalt(Node node);
+    Async.Task SetState(Node node, NodeState state);
+    Async.Task ToReimage(Node node, bool done = false);
+    Async.Task SendStopIfFree(Node node);
     IAsyncEnumerable<Node> SearchStates(Guid? poolId = default,
         Guid? scaleSetId = default,
         IList<NodeState>? states = default,
@@ -26,14 +38,9 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
         string version,
         bool isNew = false);
 
-    Async.Task SetHalt(Node node);
-
     IAsyncEnumerable<Node> GetDeadNodes(Guid scaleSetId, TimeSpan expirationPeriod);
 
     Async.Task MarkTasksStoppedEarly(Node node, Error? error = null);
-
-    Async.Task ToReimage(Node node, bool done = false);
-
     static TimeSpan NODE_EXPIRATION_TIME = TimeSpan.FromHours(1.0);
     static TimeSpan NODE_REIMAGE_TIME = TimeSpan.FromDays(6.0);
 }
@@ -45,13 +52,16 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
 /// https://docs.microsoft.com/en-us/azure/azure-monitor/platform/autoscale-common-metrics#commonly-used-storage-metrics
 
 public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
-
+    private IScalesetOperations _scalesetOperations;
+    private IPoolOperations _poolOperations;
     private readonly INodeTasksOperations _nodeTasksOps;
     private readonly ITaskOperations _taskOps;
     private readonly INodeMessageOperations _nodeMessageOps;
     private readonly IEvents _events;
     private readonly ILogTracer _log;
     private readonly ICreds _creds;
+
+    private readonly IVmssOperations _vmssOperations;
 
     public NodeOperations(
         IStorage storage,
@@ -61,6 +71,9 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         INodeTasksOperations nodeTasksOps,
         INodeMessageOperations nodeMessageOps,
         IEvents events,
+        IScalesetOperations scalesetOperations,
+        IPoolOperations poolOperations,
+        IVmssOperations vmssOperations,
         ICreds creds
         )
         : base(storage, log, config) {
@@ -69,8 +82,104 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         _nodeTasksOps = nodeTasksOps;
         _nodeMessageOps = nodeMessageOps;
         _events = events;
-        _log = log;
+        _scalesetOperations = scalesetOperations;
+        _poolOperations = poolOperations;
+        _vmssOperations = vmssOperations;
         _creds = creds;
+        _log = log;
+    }
+
+    public async Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node) {
+        if (await ScalesetNodeExists(node) && node.ScalesetId != null) {
+            _logTracer.Info($"Setting scale-in protection on node {node.MachineId}");
+            return await _vmssOperations.UpdateScaleInProtection((Guid)node.ScalesetId, node.MachineId, protectFromScaleIn: true);
+        }
+        return OneFuzzResultVoid.Ok();
+    }
+
+    public async Async.Task<bool> ScalesetNodeExists(Node node) {
+        if (node.ScalesetId == null) {
+            return false;
+        }
+
+        var scalesetResult = await _scalesetOperations.GetById((Guid)(node.ScalesetId!));
+        if (!scalesetResult.IsOk || scalesetResult.OkV == null) {
+            return false;
+        }
+        var scaleset = scalesetResult.OkV;
+
+        var instanceId = await _vmssOperations.GetInstanceId(scaleset.ScalesetId, node.MachineId);
+        return instanceId.IsOk;
+    }
+
+    public async Task<bool> CanProcessNewWork(Node node) {
+        if (IsOutdated(node)) {
+            _logTracer.Info($"can_process_new_work agent and service versions differ, stopping node. machine_id:{node.MachineId} agent_version:{node.Version} service_version:{_config.OneFuzzVersion}");
+            await Stop(node, done: true);
+            return false;
+        }
+
+        if (IsTooOld(node)) {
+            _logTracer.Info($"can_process_new_work node is too old. machine_id:{node.MachineId}");
+            await Stop(node, done: true);
+            return false;
+        }
+
+        if (!NodeStateHelper.CanProcessNewWork.Contains(node.State)) {
+            _logTracer.Info($"can_process_new_work node not in appropriate state for new work machine_id:{node.MachineId} state:{node.State}");
+            return false;
+        }
+
+        if (NodeStateHelper.ReadyForReset.Contains(node.State)) {
+            _logTracer.Info($"can_process_new_work node is set for reset. machine_id:{node.MachineId}");
+            return false;
+        }
+
+        if (node.DeleteRequested) {
+            _logTracer.Info($"can_process_new_work is set to be deleted. machine_id:{node.MachineId}");
+            await Stop(node, done: true);
+            return false;
+        }
+
+        if (node.ReimageRequested) {
+            _logTracer.Info($"can_process_new_work is set to be reimaged. machine_id:{node.MachineId}");
+            await Stop(node, done: true);
+            return false;
+        }
+
+        if (CouldShrinkScaleset(node)) {
+            _logTracer.Info($"can_process_new_work node scheduled to shrink. machine_id:{node.MachineId}");
+            await SetHalt(node);
+            return false;
+        }
+
+        if (node.ScalesetId != null) {
+            var scalesetResult = await _scalesetOperations.GetById(node.ScalesetId.Value);
+            if (!scalesetResult.IsOk || scalesetResult.OkV == null) {
+                _logTracer.Info($"can_process_new_work invalid scaleset. scaleset_id:{node.ScalesetId} machine_id:{node.MachineId}");
+                return false;
+            }
+            var scaleset = scalesetResult.OkV!;
+
+            if (!ScalesetStateHelper.Available().Contains(scaleset.State)) {
+                _logTracer.Info($"can_process_new_work scaleset not available for work. scaleset_id:{node.ScalesetId} machine_id:{node.MachineId}");
+                return false;
+            }
+        }
+
+        var poolResult = await _poolOperations.GetByName(node.PoolName);
+        if (!poolResult.IsOk || poolResult.OkV == null) {
+            _logTracer.Info($"can_schedule - invalid pool. pool_name:{node.PoolName} machine_id:{node.MachineId}");
+            return false;
+        }
+
+        var pool = poolResult.OkV!;
+        if (!PoolStateHelper.Available().Contains(pool.State)) {
+            _logTracer.Info($"can_schedule - pool is not available for work. pool_name:{node.PoolName} machine_id:{node.MachineId}");
+            return false;
+        }
+
+        return true;
     }
 
 
@@ -189,6 +298,35 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         var data = QueryAsync(filter: $"RowKey eq '{machineId}'");
 
         return await data.FirstOrDefaultAsync();
+    }
+
+    public bool IsOutdated(Node node) {
+        return node.Version != _config.OneFuzzVersion;
+    }
+
+    public bool IsTooOld(Node node) {
+        return node.ScalesetId != null
+            && node.InitializedAt != null
+            && node.InitializedAt < DateTime.UtcNow - INodeOperations.NODE_REIMAGE_TIME;
+    }
+
+    public bool CouldShrinkScaleset(Node node) {
+        throw new NotImplementedException();
+    }
+
+    public async Async.Task SetState(Node node, NodeState state) {
+        var newNode = node;
+        if (node.State != state) {
+            newNode = newNode with { State = state };
+            await _events.SendEvent(new EventNodeStateUpdated(
+                node.MachineId,
+                node.ScalesetId,
+                node.PoolName,
+                node.State
+            ));
+        }
+
+        await Replace(newNode);
     }
 
     public static string SearchStatesQuery(
@@ -338,6 +476,8 @@ public record NodeMessage(
 public interface INodeMessageOperations : IOrm<NodeMessage> {
     IAsyncEnumerable<NodeMessage> GetMessage(Guid machineId);
     Async.Task ClearMessages(Guid machineId);
+
+    Async.Task SendMessage(Guid machineId, NodeCommand message, string? messageId = null);
 }
 
 
@@ -361,5 +501,10 @@ public class NodeMessageOperations : Orm<NodeMessage>, INodeMessageOperations {
                 _log.WithHttpStatus(r.ErrorV).Error($"failed to delete message for node {machineId}");
             }
         }
+    }
+
+    public async Async.Task SendMessage(Guid machineId, NodeCommand message, string? messageId = null) {
+        messageId = messageId ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+        await Insert(new NodeMessage(machineId, messageId, message));
     }
 }

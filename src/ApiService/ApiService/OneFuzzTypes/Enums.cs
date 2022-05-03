@@ -355,7 +355,6 @@ public enum AgentMode {
     Proxy
 }
 
-
 public enum NodeState {
     Init,
     Free,

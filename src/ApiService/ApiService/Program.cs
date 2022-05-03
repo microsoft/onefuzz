@@ -6,10 +6,13 @@ global
 using System.Linq;
 global
 using Async = System.Threading.Tasks;
+using System.Text.Json;
+using Azure.Core.Serialization;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -58,7 +61,15 @@ public class Program {
                 builder.UseMiddleware<LoggingMiddleware>();
             }
         )
-        .ConfigureServices((context, services) =>
+        .ConfigureServices((context, services) => {
+            services.Configure<JsonSerializerOptions>(options => {
+                options = EntityConverter.GetJsonSerializerOptions();
+            });
+
+            services.Configure<WorkerOptions>(options => {
+                options.Serializer = new JsonObjectSerializer(EntityConverter.GetJsonSerializerOptions());
+            });
+
             services
             .AddScoped<ILogTracer>(s =>
                 new LogTracerFactory(GetLoggers(s.GetService<IServiceConfig>()!)).CreateLogTracer(Guid.Empty, severityLevel: s.GetService<IServiceConfig>()!.LogSeverityLevel))
@@ -95,7 +106,9 @@ public class Program {
 
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
-            .AddHttpClient()
+            .AddSingleton<INodeMessageOperations, NodeMessageOperations>()
+            .AddHttpClient();
+        }
         )
         .Build();
 

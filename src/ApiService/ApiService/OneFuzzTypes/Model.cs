@@ -72,7 +72,6 @@ public record NodeTasks
     NodeTaskState State = NodeTaskState.Init
 ) : StatefulEntityBase<NodeTaskState>(State);
 
-
 public record ProxyHeartbeat
 (
     Region Region,
