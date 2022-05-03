@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Azure;
 using Azure.ResourceManager.Compute;
 
 namespace Microsoft.OneFuzz.Service;
@@ -19,8 +20,19 @@ public class DiskOperations : IDiskOperations {
         _creds = creds;
     }
 
-    public Task<bool> DeleteDisk(string resourceGroup, string name) {
-        throw new NotImplementedException();
+    public async Task<bool> DeleteDisk(string resourceGroup, string name) {
+        try {
+            _logTracer.Info($"deleting disks {resourceGroup} : {name}");
+            var disk = await _creds.GetResourceGroupResource().GetDiskAsync(name);
+            if (disk != null) {
+                await disk.Value.DeleteAsync(WaitUntil.Started);
+                return true;
+            }
+        } catch (Exception e) {
+            _logTracer.Error($"unable to delete disk: {name} {e.Message}");
+            _logTracer.Exception(e);
+        }
+        return false;
     }
 
     public DiskCollection ListDisks(string resourceGroup) {
