@@ -17,7 +17,7 @@ from onefuzztypes.responses import BoolResult
 from ..onefuzzlib.azure.creds import get_base_region, get_regions
 from ..onefuzzlib.azure.vmss import list_available_skus
 from ..onefuzzlib.config import InstanceConfig
-from ..onefuzzlib.endpoint_authorization import call_if_user, check_can_manage_pools
+from ..onefuzzlib.endpoint_authorization import call_if_user, check_require_admins
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.workers.pools import Pool
 from ..onefuzzlib.workers.scalesets import AutoScale, Scaleset
@@ -49,7 +49,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="ScalesetCreate")
 
-    answer = check_can_manage_pools(req)
+    answer = check_require_admins(req)
     if isinstance(answer, Error):
         return not_ok(answer, context="ScalesetCreate")
 
@@ -127,7 +127,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="ScalesetDelete")
 
-    answer = check_can_manage_pools(req)
+    answer = check_require_admins(req)
     if isinstance(answer, Error):
         return not_ok(answer, context="ScalesetDelete")
 
@@ -144,7 +144,7 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="ScalesetUpdate")
 
-    answer = check_can_manage_pools(req)
+    answer = check_require_admins(req)
     if isinstance(answer, Error):
         return not_ok(answer, context="ScalesetUpdate")
 

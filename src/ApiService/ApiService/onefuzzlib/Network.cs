@@ -3,10 +3,8 @@
 namespace Microsoft.OneFuzz.Service;
 
 
-public partial class TimerProxy
-{
-    public class Network
-    {
+public partial class TimerProxy {
+    public class Network {
         private readonly string _name;
         private readonly string _group;
         private readonly string _region;
@@ -16,8 +14,7 @@ public partial class TimerProxy
         // This was generated randomly and should be preserved moving forwards
         static Guid NETWORK_GUID_NAMESPACE = Guid.Parse("372977ad-b533-416a-b1b4-f770898e0b11");
 
-        public Network(string region, string group, string name, NetworkConfig networkConfig, ISubnet subnet)
-        {
+        public Network(string region, string group, string name, NetworkConfig networkConfig, ISubnet subnet) {
             _networkConfig = networkConfig;
             _region = region;
             _group = group;
@@ -25,14 +22,7 @@ public partial class TimerProxy
             _subnet = subnet;
         }
 
-
-        private static Guid GenerateGuidv5(Guid nameSpace, string name)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static async Async.Task<Network> Create(string region, ICreds creds, IConfigOperations configOperations, ISubnet subnet)
-        {
+        public static async Async.Task<Network> Create(string region, ICreds creds, IConfigOperations configOperations, ISubnet subnet) {
             var group = creds.GetBaseResourceGroup();
             var instanceConfig = await configOperations.Fetch();
             var networkConfig = instanceConfig.NetworkConfig;
@@ -44,13 +34,10 @@ public partial class TimerProxy
 
             string name;
 
-            if (networkConfig.AddressSpace == NetworkConfig.Default.AddressSpace && networkConfig.Subnet == NetworkConfig.Default.Subnet)
-            {
+            if (networkConfig.AddressSpace == NetworkConfig.Default.AddressSpace && networkConfig.Subnet == NetworkConfig.Default.Subnet) {
                 name = region;
-            }
-            else
-            {
-                var networkId = GenerateGuidv5(NETWORK_GUID_NAMESPACE, string.Join("|", networkConfig.AddressSpace, networkConfig.Subnet));
+            } else {
+                var networkId = Faithlife.Utility.GuidUtility.Create(NETWORK_GUID_NAMESPACE, string.Join("|", networkConfig.AddressSpace, networkConfig.Subnet), 5);
                 name = $"{region}-{networkId}";
             }
 
@@ -58,17 +45,14 @@ public partial class TimerProxy
             return new Network(region, group, name, networkConfig, subnet);
         }
 
-        public Async.Task<SubnetResource?> GetSubnet()
-        {
+        public Async.Task<SubnetResource?> GetSubnet() {
             return _subnet.GetSubnet(_name, _name);
         }
 
-        internal System.Threading.Tasks.Task<VirtualNetworkResource?> GetVnet()
-        {
+        internal Async.Task<VirtualNetworkResource?> GetVnet() {
             return _subnet.GetVnet(_name);
         }
     }
 
 
 }
-
