@@ -6,7 +6,7 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service;
 
 
-
+#if DEBUG
 namespace ApiService.TestHooks {
     public class DiskOperationsTestHooks {
         private readonly ILogTracer _log;
@@ -15,13 +15,13 @@ namespace ApiService.TestHooks {
         private readonly ICreds _creds;
 
         public DiskOperationsTestHooks(ILogTracer log, IConfigOperations configOps, IDiskOperations diskOps, ICreds creds) {
-            _log = log.WithTag("TestHooks", "ContainerTestHooks");
+            _log = log.WithTag("TestHooks", nameof(DiskOperationsTestHooks));
             _configOps = configOps;
             _diskOps = diskOps;
             _creds = creds;
         }
 
-        [Function("GetDiskNames")]
+        [Function("GetDiskNamesTestHook")]
         public async Task<HttpResponseData> GetSubscription([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/disks")] HttpRequestData req) {
             _log.Info("Get disk names");
             var resp = req.CreateResponse(HttpStatusCode.OK);
@@ -34,3 +34,4 @@ namespace ApiService.TestHooks {
 
     }
 }
+#endif

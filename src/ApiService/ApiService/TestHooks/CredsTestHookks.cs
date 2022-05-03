@@ -5,7 +5,7 @@ using Microsoft.Azure.Functions.Worker.Http;
 
 using Microsoft.OneFuzz.Service;
 
-
+#if DEBUG
 
 namespace ApiService.TestHooks {
     public class CredsTestHookks {
@@ -14,12 +14,12 @@ namespace ApiService.TestHooks {
         private readonly ICreds _creds;
 
         public CredsTestHookks(ILogTracer log, IConfigOperations configOps, ICreds creds) {
-            _log = log.WithTag("TestHooks", "ContainerTestHooks");
+            _log = log.WithTag("TestHooks", nameof(CredsTestHookks));
             _configOps = configOps;
             _creds = creds;
         }
 
-        [Function("GetSubscription")]
+        [Function("GetSubscriptionTestHook")]
         public async Task<HttpResponseData> GetSubscription([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/creds/subscription")] HttpRequestData req) {
             _log.Info("Get subscription");
             var resp = req.CreateResponse(HttpStatusCode.OK);
@@ -28,7 +28,7 @@ namespace ApiService.TestHooks {
         }
 
 
-        [Function("GetBaseResourceGroup")]
+        [Function("GetBaseResourceGroupTestHook")]
         public async Task<HttpResponseData> GetBaseResourceGroup([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/creds/baseResourceGroup")] HttpRequestData req) {
             _log.Info("Get base resource group");
             var resp = req.CreateResponse(HttpStatusCode.OK);
@@ -36,7 +36,7 @@ namespace ApiService.TestHooks {
             return resp;
         }
 
-        [Function("GetInstanceName")]
+        [Function("GetInstanceNameTestHook")]
         public async Task<HttpResponseData> GetInstanceName([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/creds/instanceName")] HttpRequestData req) {
             _log.Info("Get instance name");
             var resp = req.CreateResponse(HttpStatusCode.OK);
@@ -44,7 +44,7 @@ namespace ApiService.TestHooks {
             return resp;
         }
 
-        [Function("GetBaseRegion")]
+        [Function("GetBaseRegionTestHook")]
         public async Task<HttpResponseData> GetBaseRegion([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/creds/baseRegion")] HttpRequestData req) {
             _log.Info("Get base region");
             var resp = req.CreateResponse(HttpStatusCode.OK);
@@ -53,7 +53,7 @@ namespace ApiService.TestHooks {
             return resp;
         }
 
-        [Function("GetInstanceUrl")]
+        [Function("GetInstanceUrlTestHook")]
         public async Task<HttpResponseData> GetInstanceUrl([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/creds/instanceUrl")] HttpRequestData req) {
             _log.Info("Get instance url");
             var resp = req.CreateResponse(HttpStatusCode.OK);
@@ -63,3 +63,5 @@ namespace ApiService.TestHooks {
 
     }
 }
+
+#endif
