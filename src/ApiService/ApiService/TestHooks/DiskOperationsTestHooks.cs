@@ -29,9 +29,6 @@ namespace ApiService.TestHooks {
             await resp.WriteAsJsonAsync(diskNames);
             return resp;
         }
-
-
-
     }
 }
 #endif
