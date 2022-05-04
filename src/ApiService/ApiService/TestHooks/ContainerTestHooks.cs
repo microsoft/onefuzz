@@ -6,7 +6,6 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service;
 
 #if DEBUG
-
 namespace ApiService.TestHooks {
     public class ContainerTestHooks {
 
@@ -29,10 +28,6 @@ namespace ApiService.TestHooks {
             await resp.WriteStringAsync(instanceId.ToString());
             return resp;
         }
-
-
-
     }
 }
-
 #endif
