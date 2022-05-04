@@ -25,17 +25,7 @@ namespace ApiService.TestHooks {
             _log.Info("Get Generic extensions");
 
             var query = UriExtension.GetQueryComponents(req.Url);
-
-            Os os;
-            if (query["os"].ToLowerInvariant() == "windows") {
-                os = Os.Windows;
-            } else if (query["os"].ToLowerInvariant() == "linux") {
-                os = Os.Linux;
-            } else {
-                var err = req.CreateResponse(HttpStatusCode.BadRequest);
-                await err.WriteAsJsonAsync(new { error = $"unsupported os {query["os"]}" });
-                return err;
-            }
+            Os os = Enum.Parse<Os>(query["os"]);
 
             var ext = await (_extensions as Extensions)!.GenericExtensions(query["region"], os);
             var resp = req.CreateResponse(HttpStatusCode.OK);
