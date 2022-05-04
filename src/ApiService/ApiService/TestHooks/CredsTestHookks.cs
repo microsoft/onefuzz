@@ -60,8 +60,6 @@ namespace ApiService.TestHooks {
             await resp.WriteStringAsync(_creds.GetInstanceUrl().ToString());
             return resp;
         }
-
     }
 }
-
 #endif
