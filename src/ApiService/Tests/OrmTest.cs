@@ -315,9 +315,9 @@ namespace Tests {
         }
 
 
-        record TestEnumObject(TestEnumValue TheEnumValue) ;
+        record TestEnumObject(TestEnumValue TheEnumValue);
 
-            [Fact]
+        [Fact]
         public void TestSerializeEnumValue() {
             var expectedObject = new TestEnumObject(
                 TheEnumValue: TestEnumValue.One
@@ -325,7 +325,7 @@ namespace Tests {
 
             var serialized = JsonSerializer.Serialize(expectedObject, EntityConverter.GetJsonSerializerOptions());
             var json = JsonDocument.Parse(serialized);
-            Assert.Equal( (int) expectedObject.TheEnumValue, json.RootElement.GetProperty("the_enum_value").GetInt32());
+            Assert.Equal((int)expectedObject.TheEnumValue, json.RootElement.GetProperty("the_enum_value").GetInt32());
             var actual = JsonSerializer.Deserialize<TestEnumObject>(serialized, EntityConverter.GetJsonSerializerOptions());
             Assert.Equal(expectedObject, actual);
         }
