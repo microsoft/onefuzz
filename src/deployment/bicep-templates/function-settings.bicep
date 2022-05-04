@@ -56,6 +56,7 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       'ONEFUZZ_KEYVAULT': keyvault_name
       'ONEFUZZ_OWNER': owner
       'ONEFUZZ_CLIENT_SECRET': client_secret
+      'ONEFUZZ_VERSION': '0.0.0'
   }
 }
 
