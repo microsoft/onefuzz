@@ -1,6 +1,9 @@
 ﻿using System.Collections.Concurrent;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
+
+[SerializeValue]
 public enum ErrorCode {
     INVALID_REQUEST = 450,
     INVALID_PERMISSION = 451,

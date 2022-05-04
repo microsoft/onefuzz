@@ -19,6 +19,11 @@ public abstract record EntityBase {
 
 public abstract record StatefulEntityBase<T>([property: JsonIgnore] T State) : EntityBase() where T : Enum;
 
+
+/// Indicates that the enum cases should no be renamed
+[AttributeUsage(AttributeTargets.Enum)]
+public class SerializeValueAttribute : Attribute { }
+
 /// Indicates that the enum cases should no be renamed
 [AttributeUsage(AttributeTargets.Enum)]
 public class SkipRename : Attribute { }
