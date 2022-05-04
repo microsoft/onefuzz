@@ -90,7 +90,7 @@ AZCOPY_MISSING_ERROR = (
 )
 FUNC_TOOLS_ERROR = (
     "azure-functions-core-tools is not installed, "
-    "install v3 using instructions: "
+    "install v4 using instructions: "
     "https://github.com/Azure/azure-functions-core-tools#installing"
 )
 
@@ -1125,6 +1125,7 @@ def main() -> None:
         ("instance-specific-setup", Client.upload_instance_setup),
         ("third-party", Client.upload_third_party),
         ("api", Client.deploy_app),
+        ("dotnet-api", Client.deploy_dotnet_app),
         ("export_appinsights", Client.add_log_export),
         ("update_registration", Client.update_registration),
     ]
@@ -1237,11 +1238,6 @@ def main() -> None:
         nargs="*",
         help="Set additional AAD tenants beyond the tenant the app is deployed in",
     )
-    parser.add_argument(
-        "--dotnet_deploy",
-        action="store_true",
-        help="deploys the dotnet version of the app along with the python version",
-    )
 
     args = parser.parse_args()
 
@@ -1289,12 +1285,6 @@ def main() -> None:
         )
         states = rbac_only_states
     else:
-        # if args.dotnet_deploy:
-        logger.info("deploying dotnet and python services for Azure functions")
-        after_python = full_deployment_states.index(("api", Client.deploy_app)) + 1
-        full_deployment_states.insert(
-            after_python, ("dotnet-api", Client.deploy_dotnet_app)
-        )
         states = full_deployment_states
 
     if args.start_at != states[0][0]:

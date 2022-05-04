@@ -21,7 +21,7 @@ public class QueueFileChanges {
         _notificationOperations = notificationOperations;
     }
 
-    [Function("QueueFileChanges")]
+    //[Function("QueueFileChanges")]
     public async Async.Task Run(
         [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount) {
