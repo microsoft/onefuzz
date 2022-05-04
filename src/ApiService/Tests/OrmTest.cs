@@ -14,6 +14,7 @@ namespace Tests {
             public String? TheName { get; set; }
             public TestEnum TheEnum { get; set; }
             public TestFlagEnum TheFlag { get; set; }
+            public TestEnumValue TheEnumValue { get; set; }
         }
 
         enum TestEnum {
@@ -25,6 +26,12 @@ namespace Tests {
         enum TestFlagEnum {
             FlagOne = 1,
             FlagTwo = 2,
+        }
+
+        [SerializeValue]
+        enum TestEnumValue {
+            One = 1,
+            Two = 2
         }
 
         record Entity1(
@@ -60,7 +67,8 @@ namespace Tests {
                             new TestObject {
                                 TheName = "testobject",
                                 TheEnum = TestEnum.TheTwo,
-                                TheFlag = TestFlagEnum.FlagOne | TestFlagEnum.FlagTwo
+                                TheFlag = TestFlagEnum.FlagOne | TestFlagEnum.FlagTwo,
+                                TheEnumValue = TestEnumValue.Two
                             },
                             null,
                             new Uri(uriString),
@@ -90,6 +98,7 @@ namespace Tests {
             Assert.Equal(fromTableEntity.TheObject.TheEnum, entity1.TheObject.TheEnum);
             Assert.Equal(fromTableEntity.TheObject.TheFlag, entity1.TheObject.TheFlag);
             Assert.Equal(fromTableEntity.TheObject.TheName, entity1.TheObject.TheName);
+            Assert.Equal(fromTableEntity.TheObject.TheEnumValue, entity1.TheObject.TheEnumValue);
         }
 
 
@@ -108,7 +117,8 @@ namespace Tests {
                             new TestObject {
                                 TheName = "testobject",
                                 TheEnum = TestEnum.TheTwo,
-                                TheFlag = TestFlagEnum.FlagOne | TestFlagEnum.FlagTwo
+                                TheFlag = TestFlagEnum.FlagOne | TestFlagEnum.FlagTwo,
+                                TheEnumValue = TestEnumValue.One
                             },
                             null,
                             new Uri(uriString),
@@ -134,11 +144,12 @@ namespace Tests {
             json.TryGetPropertyValue("the_name", out var theName);
             json.TryGetPropertyValue("the_enum", out var theEnum);
             json.TryGetPropertyValue("the_flag", out var theFlag);
+            json.TryGetPropertyValue("the_enum_value", out var theEnumValue);
 
             Assert.Equal(entity1.TheObject.TheName, theName?.GetValue<string>());
             Assert.Equal("the_two", theEnum?.GetValue<string>());
             Assert.Equal("flag_one,flag_two", theFlag?.GetValue<string>());
-
+            Assert.Equal((int)TestEnumValue.One, theEnumValue?.GetValue<int>());
         }
 
         [Fact]
