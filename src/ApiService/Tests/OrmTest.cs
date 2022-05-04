@@ -314,5 +314,21 @@ namespace Tests {
             Assert.Equal(expected.Container.ContainerName, tableEntity.GetString("container"));
         }
 
+
+        record TestEnumObject(TestEnumValue TheEnumValue) ;
+
+            [Fact]
+        public void TestSerializeEnumValue() {
+            var expectedObject = new TestEnumObject(
+                TheEnumValue: TestEnumValue.One
+            );
+
+            var serialized = JsonSerializer.Serialize(expectedObject, EntityConverter.GetJsonSerializerOptions());
+            var json = JsonDocument.Parse(serialized);
+            Assert.Equal( (int) expectedObject.TheEnumValue, json.RootElement.GetProperty("the_enum_value").GetInt32());
+            var actual = JsonSerializer.Deserialize<TestEnumObject>(serialized, EntityConverter.GetJsonSerializerOptions());
+            Assert.Equal(expectedObject, actual);
+        }
+
     }
 }
