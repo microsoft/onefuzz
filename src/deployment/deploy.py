@@ -90,7 +90,7 @@ AZCOPY_MISSING_ERROR = (
 )
 FUNC_TOOLS_ERROR = (
     "azure-functions-core-tools is not installed, "
-    "install v3 using instructions: "
+    "install v4 using instructions: "
     "https://github.com/Azure/azure-functions-core-tools#installing"
 )
 
