@@ -268,7 +268,7 @@ namespace ApiService.TestHooks {
 
             var s = await req.ReadAsStringAsync();
             var markTasks = JsonSerializer.Deserialize<MarkTasks>(s!, EntityConverter.GetJsonSerializerOptions());
-            await _nodeOps.MarkTasksStoppedEarly(markTasks.node, markTasks.error);
+            await _nodeOps.MarkTasksStoppedEarly(markTasks!.node, markTasks.error);
 
             var resp = req.CreateResponse(HttpStatusCode.OK);
             return resp;
