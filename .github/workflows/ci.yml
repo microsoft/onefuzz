@@ -390,6 +390,7 @@ jobs:
           echo $GITHUB_RUN_ID | tee src/deployment/.build.id
           echo $GITHUB_SHA | tee src/deployment/.sha
           ./src/ci/get-version.sh > src/deployment/VERSION
+          sed -i "s/0.0.0/$(cat src/deployment/VERSION)/g" src/deployment/bicep-templates/function-settings.bicep
           (cd src/deployment ; zip -r onefuzz-deployment-$(cat VERSION).zip . )
           cp src/deployment/onefuzz-deployment*zip release-artifacts
           cp -r artifacts/sdk release-artifacts
