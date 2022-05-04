@@ -906,6 +906,11 @@ namespace Tests {
             return Test(e);
         }
 
+        [Property]
+        public bool Error(Error e) {
+            return Test(e);
+        }
+
         /*
         //Sample function on how repro a failing test run, using Replay
         //functionality of FsCheck. Feel free to

@@ -21,7 +21,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Async.Task SendStopIfFree(Node node);
     IAsyncEnumerable<Node> SearchStates(Guid? poolId = default,
         Guid? scaleSetId = default,
-        IList<NodeState>? states = default,
+        IEnumerable<NodeState>? states = default,
         string? poolName = default,
         bool excludeUpdateScheduled = false,
         int? numResults = default);
@@ -200,7 +200,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         var minDate = DateTimeOffset.UtcNow - expirationPeriod;
 
         var filter = $"heartbeat lt datetime'{minDate.ToString("o")}' or Timestamp lt datetime'{minDate.ToString("o")}'";
-        return QueryAsync(Query.And(filter, $"scaleset_id eq ${scaleSetId}"));
+        var query = Query.And(filter, $"scaleset_id eq '{scaleSetId}'");
+        return QueryAsync(query);
     }
 
 
@@ -344,12 +345,17 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
     public IAsyncEnumerable<Node> SearchStates(
         Guid? poolId = default,
         Guid? scaleSetId = default,
-        IList<NodeState>? states = default,
+        IEnumerable<NodeState>? states = default,
         string? poolName = default,
         bool excludeUpdateScheduled = false,
         int? numResults = default) {
         var query = NodeOperations.SearchStatesQuery(_context.ServiceConfiguration.OneFuzzVersion, poolId, scaleSetId, states, poolName, excludeUpdateScheduled, numResults);
-        return QueryAsync(query);
+
+        if (numResults is null) {
+            return QueryAsync(query);
+        } else {
+            return QueryAsync(query).TakeWhile((_, i) => i < numResults);
+        }
     }
 
     public async Async.Task MarkTasksStoppedEarly(Node node, Error? error = null) {
