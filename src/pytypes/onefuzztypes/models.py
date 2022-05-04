@@ -340,7 +340,7 @@ class AgentConfig(BaseModel):
 
 class TaskUnitConfig(BaseModel):
     instance_id: UUID
-    logs: str
+    logs: Optional[str]
     job_id: UUID
     task_id: UUID
     task_type: TaskType
