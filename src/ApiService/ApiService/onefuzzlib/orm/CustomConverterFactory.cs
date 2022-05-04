@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 public sealed class CustomEnumConverterFactory : JsonConverterFactory {
-    public override bool CanConvert(Type typeToConvert) => typeToConvert.IsEnum;
+    public override bool CanConvert(Type typeToConvert) => typeToConvert.IsEnum && (typeToConvert.GetCustomAttribute<SerializeValueAttribute>() == null);
 
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
         object[]? knownValues = null;
