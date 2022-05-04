@@ -53,6 +53,8 @@ REPRO_SSH_FORWARD = "1337:127.0.0.1:1337"
 
 UUID_RE = r"^[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}\Z"
 
+CLIENT_SECRET_ENV_VAR = "ONEFUZZ_CLIENT_SECRET"
+
 
 class PreviewFeature(Enum):
     job_templates = "job_templates"
@@ -1639,11 +1641,22 @@ class Utils(Command):
 
 class Onefuzz:
     def __init__(
-        self, config_path: Optional[str] = None, token_path: Optional[str] = None
+        self,
+        config_path: Optional[str] = None,
+        token_path: Optional[str] = None,
+        client_secret: Optional[str] = None,
     ) -> None:
         self.logger = logging.getLogger("onefuzz")
+
+        if client_secret is None:
+            # If not explicitly provided, check the environment for a user-provided client secret.
+            client_secret = self._client_secret_from_env()
+
         self._backend = Backend(
-            config=DEFAULT, config_path=config_path, token_path=token_path
+            config=DEFAULT,
+            config_path=config_path,
+            token_path=token_path,
+            client_secret=client_secret,
         )
         self.containers = Containers(self)
         self.repro = Repro(self)
@@ -1670,6 +1683,12 @@ class Onefuzz:
 
         self.__setup__()
 
+    # Try to obtain a confidential client secret from the environment.
+    #
+    # If not set, return `None`.
+    def _client_secret_from_env(self) -> Optional[str]:
+        return os.environ.get(CLIENT_SECRET_ENV_VAR)
+
     def __setup__(
         self,
         endpoint: Optional[str] = None,
@@ -1686,7 +1705,7 @@ class Onefuzz:
         if client_id is not None:
             self._backend.config.client_id = client_id
         if client_secret is not None:
-            self._backend.config.client_secret = client_secret
+            self._backend.client_secret = client_secret
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
 
@@ -1730,7 +1749,6 @@ class Onefuzz:
         endpoint: Optional[str] = None,
         authority: Optional[str] = None,
         client_id: Optional[str] = None,
-        client_secret: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
         tenant_domain: Optional[str] = None,
         reset: Optional[bool] = None,
@@ -1759,8 +1777,6 @@ class Onefuzz:
             self._backend.config.authority = authority
         if client_id is not None:
             self._backend.config.client_id = client_id
-        if client_secret is not None:
-            self._backend.config.client_secret = client_secret
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
         if tenant_domain is not None:
@@ -1769,9 +1785,6 @@ class Onefuzz:
         self._backend.save_config()
 
         data = self._backend.config.copy(deep=True)
-        if data.client_secret is not None:
-            # replace existing secrets with "*** for user display
-            data.client_secret = "***"  # nosec
 
         if not data.endpoint:
             self.logger.warning("endpoint not configured yet")

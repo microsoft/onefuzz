@@ -45,6 +45,7 @@ JMES_HELP = (
 )
 
 
+# Call `Onefuzz.setup()`, which enables overriding configuration and authentication parameters.
 def call_setup(api: Any, args: argparse.Namespace) -> None:
     setup = getattr(api, "__setup__", None)
     if setup is None:
