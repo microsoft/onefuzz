@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -96,6 +95,7 @@ public enum ContainerType {
 }
 
 
+[SkipRename]
 public enum StatsFormat {
     AFL
 }
@@ -136,133 +136,55 @@ public static class JobStateHelper {
 
 
 public static class ScalesetStateHelper {
-    static ConcurrentDictionary<string, ScalesetState[]> _states = new ConcurrentDictionary<string, ScalesetState[]>();
-
-    /// set of states that indicate the scaleset can be updated
-    public static ScalesetState[] CanUpdate() {
-        return
-        _states.GetOrAdd(nameof(CanUpdate), k => new[]{
-            ScalesetState.Running,
-            ScalesetState.Resize
-        });
-    }
-
-    /// set of states that indicate work is needed during eventing
-    public static ScalesetState[] NeedsWork() {
-        return
-        _states.GetOrAdd(nameof(NeedsWork), k => new[]{
+    private static readonly IReadOnlySet<ScalesetState> _canUpdate = new HashSet<ScalesetState> { ScalesetState.Init, ScalesetState.Resize };
+    private static readonly IReadOnlySet<ScalesetState> _needsWork =
+        new HashSet<ScalesetState>{
             ScalesetState.Init,
             ScalesetState.Setup,
             ScalesetState.Resize,
             ScalesetState.Shutdown,
-            ScalesetState.Halt,
-        });
-    }
+            ScalesetState.Halt
+        };
+    private static readonly IReadOnlySet<ScalesetState> _available = new HashSet<ScalesetState> { ScalesetState.Resize, ScalesetState.Running };
+    private static readonly IReadOnlySet<ScalesetState> _resizing = new HashSet<ScalesetState> { ScalesetState.Halt, ScalesetState.Init, ScalesetState.Setup };
+
+    /// set of states that indicate the scaleset can be updated
+    public static IReadOnlySet<ScalesetState> CanUpdate => _canUpdate;
+
+    /// set of states that indicate work is needed during eventing
+    public static IReadOnlySet<ScalesetState> NeedsWork => _needsWork;
 
     /// set of states that indicate if it's available for work
-    public static ScalesetState[] Available() {
-        return
-        _states.GetOrAdd(nameof(Available), k => {
-            return
-                new[]{
-                ScalesetState.Resize,
-                ScalesetState.Running,
-            };
-        });
-    }
+    public static IReadOnlySet<ScalesetState> Available => _available;
 
     /// set of states that indicate scaleset is resizing
-    public static ScalesetState[] Resizing() {
-        return
-        _states.GetOrAdd(nameof(Resizing), k => {
-            return
-                new[]{
-                ScalesetState.Halt,
-                ScalesetState.Init,
-                ScalesetState.Setup,
-            };
-        });
-    }
+    public static IReadOnlySet<ScalesetState> Resizing => _resizing;
 }
 
 
 public static class VmStateHelper {
 
-    static ConcurrentDictionary<string, VmState[]> _states = new ConcurrentDictionary<string, VmState[]>();
-    public static VmState[] NeedsWork() {
-        return
-        _states.GetOrAdd(nameof(VmStateHelper.NeedsWork), k => {
-            return
-                new[]{
-                VmState.Init,
-                VmState.ExtensionsLaunch,
-                VmState.Stopping
-            };
-        });
-    }
+    private static readonly IReadOnlySet<VmState> _needsWork = new HashSet<VmState> { VmState.Init, VmState.Init, VmState.ExtensionsLaunch, VmState.Stopping };
+    private static readonly IReadOnlySet<VmState> _available = new HashSet<VmState> { VmState.Init, VmState.ExtensionsLaunch, VmState.ExtensionsFailed, VmState.VmAllocationFailed, VmState.Running, };
 
-    public static VmState[] Available() {
-        return
-        _states.GetOrAdd(nameof(VmStateHelper.Available), k => {
-            return
-                new[]{
-                VmState.Init,
-                VmState.ExtensionsLaunch,
-                VmState.ExtensionsFailed,
-                VmState.VmAllocationFailed,
-                VmState.Running,
-            };
-        });
-    }
+    public static IReadOnlySet<VmState> NeedsWork => _needsWork;
+    public static IReadOnlySet<VmState> Available => _available;
 }
 
 public static class TaskStateHelper {
-    static ConcurrentDictionary<string, TaskState[]> _states = new ConcurrentDictionary<string, TaskState[]>();
-    public static TaskState[] Available() {
-        return
-        _states.GetOrAdd(nameof(Available), k => {
-            return
-                 new[]{
-                    TaskState.Waiting,
-                    TaskState.Scheduled,
-                    TaskState.SettingUp,
-                    TaskState.Running,
-                    TaskState.WaitJob
-                 };
-        });
-    }
 
-    internal static TaskState[] NeedsWork() {
-        return
-        _states.GetOrAdd(nameof(TaskStateHelper.HasStarted), k =>
-            new[]{
-                TaskState.Init,
-                TaskState.Stopping
-            }
-        );
-    }
+    private static readonly IReadOnlySet<TaskState> _available = new HashSet<TaskState> { TaskState.Waiting, TaskState.Scheduled, TaskState.SettingUp, TaskState.Running, TaskState.WaitJob };
+    private static readonly IReadOnlySet<TaskState> _needsWork = new HashSet<TaskState> { TaskState.Init, TaskState.Stopping };
+    private static readonly IReadOnlySet<TaskState> _shuttingDown = new HashSet<TaskState> { TaskState.Stopping, TaskState.Stopped };
+    private static readonly IReadOnlySet<TaskState> _hasStarted = new HashSet<TaskState> { TaskState.Running, TaskState.Stopping, TaskState.Stopped };
 
+    public static IReadOnlySet<TaskState> Available => _available;
 
-    public static TaskState[] ShuttingDown() {
-        return
-        _states.GetOrAdd(nameof(TaskStateHelper.ShuttingDown), k =>
-            new[]{
-                TaskState.Stopping,
-                TaskState.Stopping,
-            }
-        );
-    }
+    public static IReadOnlySet<TaskState> NeedsWork => _needsWork;
 
-    internal static TaskState[] HasStarted() {
-        return
-        _states.GetOrAdd(nameof(TaskStateHelper.HasStarted), k =>
-            new[]{
-                TaskState.Running,
-                TaskState.Stopping,
-                TaskState.Stopped
-            }
-        );
-    }
+    public static IReadOnlySet<TaskState> ShuttingDown => _shuttingDown;
+
+    public static IReadOnlySet<TaskState> HasStarted => _hasStarted;
 
 }
 public enum PoolState {
@@ -273,26 +195,11 @@ public enum PoolState {
 }
 
 public static class PoolStateHelper {
-    static ConcurrentDictionary<string, PoolState[]> _states = new ConcurrentDictionary<string, PoolState[]>();
-    public static PoolState[] NeedsWork() {
-        return
-        _states.GetOrAdd("NeedsWork", k =>
-            new[]{
-                PoolState.Init,
-                PoolState.Shutdown,
-                PoolState.Halt
-            }
-        );
-    }
+    private static readonly IReadOnlySet<PoolState> _needsWork = new HashSet<PoolState> { PoolState.Init, PoolState.Shutdown, PoolState.Halt };
+    private static readonly IReadOnlySet<PoolState> _available = new HashSet<PoolState> { PoolState.Running };
 
-    public static PoolState[] Available() {
-        return
-        _states.GetOrAdd("Available", k =>
-                new[]{
-                PoolState.Running
-                }
-        );
-    }
+    public static IReadOnlySet<PoolState> NeedsWork => _needsWork;
+    public static IReadOnlySet<PoolState> Available => _available;
 }
 
 public enum Architecture {
@@ -343,8 +250,6 @@ public enum ContainerPermission {
     List = 1 << 2,
     Delete = 1 << 3,
 }
-
-
 
 
 public enum Compare {
