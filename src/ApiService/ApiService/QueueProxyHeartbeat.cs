@@ -14,7 +14,7 @@ public class QueueProxyHearbeat {
         _proxy = proxy;
     }
 
-    [Function("QueueProxyHearbeat")]
+    //[Function("QueueProxyHearbeat")]
     public async Async.Task Run([QueueTrigger("myqueue-items", Connection = "AzureWebJobsStorage")] string msg) {
         _log.Info($"heartbeat: {msg}");
 

@@ -7,7 +7,6 @@ using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 
-
 #if DEBUG
 namespace ApiService.TestHooks {
 
@@ -186,9 +185,11 @@ namespace ApiService.TestHooks {
                 numResults = int.Parse(query["numResults"]);
             }
             var r = _nodeOps.SearchStates(poolId, scaleSetId, states, poolName, excludeUpdateScheduled, numResults);
-            var resp = req.CreateResponse(HttpStatusCode.OK);
 
-            await resp.WriteStringAsync(JsonSerializer.Serialize(await r.ToListAsync(), EntityConverter.GetJsonSerializerOptions()));
+
+            var json = JsonSerializer.Serialize(await r.ToListAsync(), EntityConverter.GetJsonSerializerOptions());
+            var resp = req.CreateResponse(HttpStatusCode.OK);
+            await resp.WriteStringAsync(json);
             return resp;
         }
 
