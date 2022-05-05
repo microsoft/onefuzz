@@ -96,6 +96,7 @@ public enum ContainerType {
 }
 
 
+[SkipRename]
 public enum StatsFormat {
     AFL
 }
