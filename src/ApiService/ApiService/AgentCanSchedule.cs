@@ -54,7 +54,7 @@ public class AgentCanSchedule {
         }
 
         var task = await _taskOperations.GetByTaskId(canScheduleRequest.TaskId);
-        workStopped = task == null || TaskStateHelper.ShuttingDown().Contains(task.State);
+        workStopped = task == null || TaskStateHelper.ShuttingDown.Contains(task.State);
 
         if (allowed) {
             allowed = (await _nodeOperations.AcquireScaleInProtection(node)).IsOk;

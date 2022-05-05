@@ -33,7 +33,7 @@ public partial class TimerProxy {
         var proxies = await _proxYOperations.QueryAsync().ToListAsync();
 
         foreach (var proxy in proxies) {
-            if (VmStateHelper.Available().Contains(proxy.State)) {
+            if (VmStateHelper.Available.Contains(proxy.State)) {
                 // Note, outdated checked at the start, but set at the end of this loop.
                 // As this function is called via a timer, this works around a user
                 // requesting to use the proxy while this function is checking if it's
@@ -49,7 +49,7 @@ public partial class TimerProxy {
                 }
             }
 
-            if (VmStateHelper.NeedsWork().Contains(proxy.State)) {
+            if (VmStateHelper.NeedsWork.Contains(proxy.State)) {
                 _logger.Error($"scaleset-proxy: update state. proxy:{proxy.Region} state:{proxy.State}");
                 await _proxYOperations.ProcessStateUpdate(proxy);
             }

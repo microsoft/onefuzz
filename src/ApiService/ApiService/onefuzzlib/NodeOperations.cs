@@ -134,7 +134,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
             }
             var scaleset = scalesetResult.OkV!;
 
-            if (!ScalesetStateHelper.Available().Contains(scaleset.State)) {
+            if (!ScalesetStateHelper.Available.Contains(scaleset.State)) {
                 _logTracer.Info($"can_process_new_work scaleset not available for work. scaleset_id:{node.ScalesetId} machine_id:{node.MachineId}");
                 return false;
             }
@@ -147,7 +147,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         }
 
         var pool = poolResult.OkV!;
-        if (!PoolStateHelper.Available().Contains(pool.State)) {
+        if (!PoolStateHelper.Available.Contains(pool.State)) {
             _logTracer.Info($"can_schedule - pool is not available for work. pool_name:{node.PoolName} machine_id:{node.MachineId}");
             return false;
         }

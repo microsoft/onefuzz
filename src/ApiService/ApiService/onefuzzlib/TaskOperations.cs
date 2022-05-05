@@ -71,19 +71,19 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
     }
 
     public async Async.Task MarkStopping(Task task) {
-        if (TaskStateHelper.ShuttingDown().Contains(task.State)) {
+        if (TaskStateHelper.ShuttingDown.Contains(task.State)) {
             _logTracer.Verbose($"ignoring post - task stop calls to stop {task.JobId}:{task.TaskId}");
             return;
         }
 
-        if (TaskStateHelper.HasStarted().Contains(task.State)) {
+        if (TaskStateHelper.HasStarted.Contains(task.State)) {
             await MarkFailed(task, new Error(Code: ErrorCode.TASK_FAILED, Errors: new[] { "task never started" }));
 
         }
     }
 
     public async Async.Task MarkFailed(Task task, Error error, List<Task>? taskInJob = null) {
-        if (TaskStateHelper.ShuttingDown().Contains(task.State)) {
+        if (TaskStateHelper.ShuttingDown.Contains(task.State)) {
             _logTracer.Verbose(
                 $"ignoring post-task stop failures for {task.JobId}:{task.TaskId}"
             );
@@ -210,7 +210,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
                     return false;
                 }
 
-                if (!TaskStateHelper.HasStarted().Contains(t.State)) {
+                if (!TaskStateHelper.HasStarted.Contains(t.State)) {
                     return false;
                 }
             }
