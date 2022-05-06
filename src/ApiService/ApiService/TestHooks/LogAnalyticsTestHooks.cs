@@ -16,7 +16,7 @@ namespace ApiService.TestHooks {
 
 
         public LogAnalyticsTestHooks(ILogTracer log, IConfigOperations configOps, ILogAnalytics logAnalytics) {
-            _log = log.WithTag("TestHooks", nameof(JobOperationsTestHooks));
+            _log = log.WithTag("TestHooks", nameof(LogAnalyticsTestHooks));
             _configOps = configOps;
             _logAnalytics = logAnalytics;
         }
