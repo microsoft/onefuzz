@@ -66,10 +66,9 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
             var regressionEvent = new EventRegressionReported(report.RegressionReport, container, filename, reportTask?.Config);
             await _context.Events.SendEvent(regressionEvent);
-        }
-        else {
+        } else {
             await _context.Events.SendEvent(new EventFileAdded(container, filename));
-        } 
+        }
     }
 
     public IAsyncEnumerable<Notification> GetNotifications(Container container) {
