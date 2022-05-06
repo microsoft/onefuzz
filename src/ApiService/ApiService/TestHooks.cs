@@ -42,7 +42,6 @@ public class TestHooks {
     }
 
 
-
     [Function("GetKeyvaultAddress")]
     public async Task<HttpResponseData> GetKeyVaultAddress([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/secrets/keyvaultaddress")] HttpRequestData req) {
         _log.Info("Getting keyvault address");
@@ -84,25 +83,6 @@ public class TestHooks {
 
         var resp = req.CreateResponse(HttpStatusCode.OK);
         await resp.WriteAsJsonAsync(d);
-        return resp;
-    }
-
-
-    [Function("GetWorkspaceId")]
-    public async Task<HttpResponseData> GetWorkspaceId([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/logAnalytics/workspaceId")] HttpRequestData req) {
-        var id = _logAnalytics.GetWorkspaceId();
-        var resp = req.CreateResponse(HttpStatusCode.OK);
-        await resp.WriteAsJsonAsync(id);
-        return resp;
-    }
-
-
-
-    [Function("GetMonitorSettings")]
-    public async Task<HttpResponseData> GetMonitorSettings([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/logAnalytics/monitorSettings")] HttpRequestData req) {
-        var settings = await _logAnalytics.GetMonitorSettings();
-        var resp = req.CreateResponse(HttpStatusCode.OK);
-        await resp.WriteAsJsonAsync(settings);
         return resp;
     }
 
