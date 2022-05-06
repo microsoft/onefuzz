@@ -213,3 +213,14 @@ public class SarifGenerator{
         return sarifLog;
     }
 }
+
+public static class SarifLogExtensions
+{
+    public static string ToJsonString(this SarifLog sarifLog)
+    {
+        using var mem = new MemoryStream();
+        using var writer = new StreamWriter(mem, leaveOpen: true);
+        sarifLog.Save(writer);
+        return System.Text.Encoding.UTF8.GetString(mem.ToArray(), 0, (int) mem.Length);
+    }
+}
