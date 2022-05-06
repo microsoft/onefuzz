@@ -58,17 +58,18 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             }
         }
 
-        if (report == null) {
-            await _context.Events.SendEvent(new EventFileAdded(container, filename));
-        } else if (report.Report != null) {
+        if (report?.Report != null) {
             var reportTask = await _context.TaskOperations.GetByJobIdAndTaskId(report.Report.JobId, report.Report.TaskId);
 
             var crashReportedEvent = new EventCrashReported(report.Report, container, filename, reportTask?.Config);
             await _context.Events.SendEvent(crashReportedEvent);
-        } else if (report.RegressionReport != null) {
+        } else if (report?.RegressionReport != null) {
             var reportTask = await GetRegressionReportTask(report.RegressionReport);
 
             var regressionEvent = new EventRegressionReported(report.RegressionReport, container, filename, reportTask?.Config);
+            await _context.Events.SendEvent(regressionEvent);
+        } else {
+            await _context.Events.SendEvent(new EventFileAdded(container, filename));
         }
     }
 
