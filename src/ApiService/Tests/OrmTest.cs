@@ -331,7 +331,7 @@ namespace Tests {
         }
 
 
-        record TestNullField(int? Id, string? Name, TestObject? Obj): EntityBase();
+        record TestNullField(int? Id, string? Name, TestObject? Obj) : EntityBase();
 
         [Fact]
         public void TestNullValue() {
@@ -339,7 +339,7 @@ namespace Tests {
             var entityConverter = new EntityConverter();
             var tableEntity = entityConverter.ToTableEntity(new TestNullField(null, null, null));
 
-            Assert.Null(tableEntity["id"] );
+            Assert.Null(tableEntity["id"]);
             Assert.Null(tableEntity["name"]);
             Assert.Null(tableEntity["obj"]);
 
