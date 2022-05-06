@@ -1,4 +1,5 @@
-﻿using Azure.ResourceManager.Compute;
+﻿using Azure;
+using Azure.ResourceManager.Compute;
 
 
 namespace Microsoft.OneFuzz.Service;
@@ -23,11 +24,14 @@ public class VmOperations : IVmOperations {
 
     private IDiskOperations _diskOperations;
 
-    public VmOperations(ILogTracer log, ICreds creds, IIpOperations ipOperations, IDiskOperations diskOperations) {
+    private INsgOperations _nsgOperations;
+
+    public VmOperations(ILogTracer log, ICreds creds, IIpOperations ipOperations, IDiskOperations diskOperations, INsgOperations nsgOperations) {
         _logTracer = log;
         _creds = creds;
         _ipOperations = ipOperations;
         _diskOperations = diskOperations;
+        _nsgOperations = nsgOperations;
     }
     public async Async.Task<bool> IsDeleted(Vm vm) {
         return !(await HasComponents(vm.Name));
@@ -72,7 +76,7 @@ public class VmOperations : IVmOperations {
         _logTracer.Info($"deleting vm components {resourceGroup}:{name}");
         if (GetVm(name) != null) {
             _logTracer.Info($"deleting vm {resourceGroup}:{name}");
-            DeleteVm(name);
+            await DeleteVm(name);
             return false;
         }
 
@@ -80,7 +84,7 @@ public class VmOperations : IVmOperations {
         if (nic != null) {
             _logTracer.Info($"deleting nic {resourceGroup}:{name}");
             if (nic.Data.NetworkSecurityGroup != null && nsg != null) {
-                await nsg.DissociateNic(nic);
+                await _nsgOperations.DissociateNic((Nsg)nsg, nic);
                 return false;
             }
             await _ipOperations.DeleteNic(resourceGroup, name);
@@ -108,7 +112,10 @@ public class VmOperations : IVmOperations {
         return true;
     }
 
-    public void DeleteVm(string name) {
-        throw new NotImplementedException();
+    public async System.Threading.Tasks.Task DeleteVm(string name) {
+        _logTracer.Info($"deleting vm: {_creds.GetBaseResourceGroup()} {name}");
+        await _creds.GetResourceGroupResource()
+            .GetVirtualMachineAsync(name).Result.Value
+            .DeleteAsync(WaitUntil.Started);
     }
 }

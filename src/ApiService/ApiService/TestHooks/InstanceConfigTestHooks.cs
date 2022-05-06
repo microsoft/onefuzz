@@ -6,6 +6,8 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
+
+#if DEBUG
 namespace ApiService.TestHooks {
     public class InstanceConfigTestHooks {
 
@@ -13,11 +15,11 @@ namespace ApiService.TestHooks {
         private readonly IConfigOperations _configOps;
 
         public InstanceConfigTestHooks(ILogTracer log, IConfigOperations configOps) {
-            _log = log.WithTag("TestHooks", "InstanceConfigTestHooks");
+            _log = log.WithTag("TestHooks", nameof(InstanceConfigTestHooks));
             _configOps = configOps;
         }
 
-        [Function("GetInstanceConfig")]
+        [Function("GetInstanceConfigTestHook")]
         public async Task<HttpResponseData> Get([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/instance-config")] HttpRequestData req) {
             _log.Info("Fetching instance config");
             var config = await _configOps.Fetch();
@@ -37,7 +39,7 @@ namespace ApiService.TestHooks {
             }
         }
 
-        [Function("PatchInstanceConfig")]
+        [Function("PatchInstanceConfigTestHook")]
         public async Task<HttpResponseData> Patch([HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "testhooks/instance-config")] HttpRequestData req) {
             _log.Info("Patch instance config");
 
@@ -64,9 +66,6 @@ namespace ApiService.TestHooks {
                 return resp;
             }
         }
-
-
-
-
     }
 }
+#endif

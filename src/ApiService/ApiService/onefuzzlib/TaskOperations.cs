@@ -23,17 +23,11 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
 }
 
 public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
-    private readonly IEvents _events;
-    private readonly IJobOperations _jobOperations;
-    private readonly IPoolOperations _poolOperations;
-    private readonly IScalesetOperations _scalesetOperations;
 
-    public TaskOperations(IStorage storage, ILogTracer log, IServiceConfig config, IPoolOperations poolOperations, IScalesetOperations scalesetOperations, IEvents events, IJobOperations jobOperations)
-        : base(storage, log, config) {
-        _poolOperations = poolOperations;
-        _scalesetOperations = scalesetOperations;
-        _events = events;
-        _jobOperations = jobOperations;
+
+    public TaskOperations(ILogTracer log, IOnefuzzContext context)
+        : base(log, context) {
+
     }
 
     public async Async.Task<Task?> GetByTaskId(Guid taskId) {
@@ -58,8 +52,10 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
                 queryString += " and ";
             }
 
-            var statesString = string.Join(",", states);
-            queryString += $"state in ({statesString})";
+            queryString += "(" + string.Join(
+                " or ",
+                states.Select(s => $"state eq '{s}'")
+            ) + ")";
         }
 
         return QueryAsync(filter: queryString);
@@ -69,26 +65,25 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
         throw new NotImplementedException();
     }
 
-
     public IAsyncEnumerable<Task> SearchExpired() {
         var timeFilter = $"end_time lt Datetime'{DateTimeOffset.UtcNow.ToString("o") }'";
         return QueryAsync(filter: timeFilter);
     }
 
     public async Async.Task MarkStopping(Task task) {
-        if (TaskStateHelper.ShuttingDown().Contains(task.State)) {
+        if (TaskStateHelper.ShuttingDown.Contains(task.State)) {
             _logTracer.Verbose($"ignoring post - task stop calls to stop {task.JobId}:{task.TaskId}");
             return;
         }
 
-        if (TaskStateHelper.HasStarted().Contains(task.State)) {
+        if (TaskStateHelper.HasStarted.Contains(task.State)) {
             await MarkFailed(task, new Error(Code: ErrorCode.TASK_FAILED, Errors: new[] { "task never started" }));
 
         }
     }
 
     public async Async.Task MarkFailed(Task task, Error error, List<Task>? taskInJob = null) {
-        if (TaskStateHelper.ShuttingDown().Contains(task.State)) {
+        if (TaskStateHelper.ShuttingDown.Contains(task.State)) {
             _logTracer.Verbose(
                 $"ignoring post-task stop failures for {task.JobId}:{task.TaskId}"
             );
@@ -131,7 +126,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
         }
 
         await this.Replace(task);
-
+        var _events = _context.Events;
         if (task.State == TaskState.Stopped) {
             if (task.Error != null) {
                 await _events.SendEvent(new EventTaskFailed(
@@ -166,9 +161,10 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
         if (task.EndTime == null) {
             task = task with { EndTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(task.Config.Task.Duration) };
 
-            Job? job = await _jobOperations.Get(task.JobId);
+            var jobOperations = _context.JobOperations;
+            Job? job = await jobOperations.Get(task.JobId);
             if (job != null) {
-                await _jobOperations.OnStart(job);
+                await jobOperations.OnStart(job);
             }
 
         }
@@ -186,14 +182,14 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
             throw new Exception($"either pool or vm must be specified: {task.TaskId}");
         }
 
-        var pool = await _poolOperations.GetByName(task.Config.Pool.PoolName);
+        var pool = await _context.PoolOperations.GetByName(task.Config.Pool.PoolName);
 
         if (!pool.IsOk) {
             _logTracer.Info($"unable to find pool from task: {task.TaskId}");
             return null;
         }
 
-        var scaleset = await _scalesetOperations.SearchByPool(task.Config.Pool.PoolName).FirstOrDefaultAsync();
+        var scaleset = await _context.ScalesetOperations.SearchByPool(task.Config.Pool.PoolName).FirstOrDefaultAsync();
 
         if (scaleset == null) {
             _logTracer.Warning($"no scalesets are defined for task: {task.JobId}:{task.TaskId}");
@@ -214,7 +210,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
                     return false;
                 }
 
-                if (!TaskStateHelper.HasStarted().Contains(t.State)) {
+                if (!TaskStateHelper.HasStarted.Contains(t.State)) {
                     return false;
                 }
             }
@@ -224,7 +220,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
 
     public async Async.Task<Pool?> GetPool(Task task) {
         if (task.Config.Pool != null) {
-            var pool = await _poolOperations.GetByName(task.Config.Pool.PoolName);
+            var pool = await _context.PoolOperations.GetByName(task.Config.Pool.PoolName);
             if (!pool.IsOk) {
                 _logTracer.Info(
                     $"unable to schedule task to pool: {task.TaskId} - {pool.ErrorV}"
@@ -233,13 +229,13 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
             }
             return pool.OkV;
         } else if (task.Config.Vm != null) {
-            var scalesets = _scalesetOperations.Search().Where(s => s.VmSku == task.Config.Vm.Sku && s.Image == task.Config.Vm.Image);
+            var scalesets = _context.ScalesetOperations.Search().Where(s => s.VmSku == task.Config.Vm.Sku && s.Image == task.Config.Vm.Image);
 
             await foreach (var scaleset in scalesets) {
                 if (task.Config.Pool == null) {
                     continue;
                 }
-                var pool = await _poolOperations.GetByName(task.Config.Pool.PoolName);
+                var pool = await _context.PoolOperations.GetByName(task.Config.Pool.PoolName);
                 if (!pool.IsOk) {
                     _logTracer.Info(
                         $"unable to schedule task to pool: {task.TaskId} - {pool.ErrorV}"

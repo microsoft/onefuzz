@@ -12,10 +12,8 @@ public interface IJobOperations : IStatefulOrm<Job, JobState> {
 }
 
 public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
-    private readonly IEvents _events;
 
-    public JobOperations(IStorage storage, ILogTracer logTracer, IServiceConfig config, IEvents events) : base(storage, logTracer, config) {
-        _events = events;
+    public JobOperations(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
 
     public async Async.Task<Job?> Get(Guid jobId) {
@@ -33,10 +31,7 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
     }
 
     public IAsyncEnumerable<Job> SearchState(IEnumerable<JobState> states) {
-        var query =
-        string.Join(" or ",
-            states.Select(x => $"state eq '{x}'"));
-
+        var query = Query.EqualAnyEnum("state", states);
         return QueryAsync(filter: query);
     }
 
@@ -59,7 +54,7 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
         } else {
             job = job with { State = JobState.Stopped };
             var taskInfo = stopped.Select(t => new JobTaskStopped(t.TaskId, t.Config.Task.Type, t.Error)).ToList();
-            await _events.SendEvent(new EventJobStopped(job.JobId, job.Config, job.UserInfo, taskInfo));
+            await _context.Events.SendEvent(new EventJobStopped(job.JobId, job.Config, job.UserInfo, taskInfo));
         }
 
         await Replace(job);

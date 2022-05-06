@@ -6,7 +6,7 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
-
+#if DEBUG
 public record FunctionInfo(string Name, string ResourceGroup, string? SlotName);
 public class TestHooks {
 
@@ -107,3 +107,4 @@ public class TestHooks {
     }
 
 }
+#endif

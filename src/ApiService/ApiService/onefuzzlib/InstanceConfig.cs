@@ -11,16 +11,14 @@ public interface IConfigOperations : IOrm<InstanceConfig> {
 }
 
 public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
-    private readonly IEvents _events;
     private readonly ILogTracer _log;
 
-    public ConfigOperations(IStorage storage, IEvents events, ILogTracer log, IServiceConfig config) : base(storage, log, config) {
-        _events = events;
+    public ConfigOperations(ILogTracer log, IOnefuzzContext context) : base(log, context) {
         _log = log;
     }
 
     public async Task<InstanceConfig> Fetch() {
-        var key = _config.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set");
+        var key = _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set");
         var config = await GetEntityAsync(key, key);
         return config;
     }
@@ -44,6 +42,6 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
             }
         }
 
-        await _events.SendEvent(new EventInstanceConfigUpdated(config));
+        await _context.Events.SendEvent(new EventInstanceConfigUpdated(config));
     }
 }

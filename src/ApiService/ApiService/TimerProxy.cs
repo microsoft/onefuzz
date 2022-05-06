@@ -10,7 +10,7 @@ public partial class TimerProxy {
 
     private readonly IScalesetOperations _scalesetOperations;
 
-    private readonly INsg _nsg;
+    private readonly INsgOperations _nsg;
 
     private readonly ICreds _creds;
 
@@ -18,7 +18,7 @@ public partial class TimerProxy {
 
     private readonly ISubnet _subnet;
 
-    public TimerProxy(ILogTracer logTracer, IProxyOperations proxies, IScalesetOperations scalesets, INsg nsg, ICreds creds, IConfigOperations configOperations, ISubnet subnet) {
+    public TimerProxy(ILogTracer logTracer, IProxyOperations proxies, IScalesetOperations scalesets, INsgOperations nsg, ICreds creds, IConfigOperations configOperations, ISubnet subnet) {
         _logger = logTracer;
         _proxYOperations = proxies;
         _scalesetOperations = scalesets;
@@ -33,7 +33,7 @@ public partial class TimerProxy {
         var proxies = await _proxYOperations.QueryAsync().ToListAsync();
 
         foreach (var proxy in proxies) {
-            if (VmStateHelper.Available().Contains(proxy.State)) {
+            if (VmStateHelper.Available.Contains(proxy.State)) {
                 // Note, outdated checked at the start, but set at the end of this loop.
                 // As this function is called via a timer, this works around a user
                 // requesting to use the proxy while this function is checking if it's
@@ -49,7 +49,7 @@ public partial class TimerProxy {
                 }
             }
 
-            if (VmStateHelper.NeedsWork().Contains(proxy.State)) {
+            if (VmStateHelper.NeedsWork.Contains(proxy.State)) {
                 _logger.Error($"scaleset-proxy: update state. proxy:{proxy.Region} state:{proxy.State}");
                 await _proxYOperations.ProcessStateUpdate(proxy);
             }

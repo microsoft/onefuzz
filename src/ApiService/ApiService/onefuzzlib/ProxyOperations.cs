@@ -15,22 +15,14 @@ public interface IProxyOperations : IStatefulOrm<Proxy, VmState> {
 }
 public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
 
-    private readonly IEvents _events;
-    private readonly IProxyForwardOperations _proxyForwardOperations;
-    private readonly IContainers _containers;
-    private readonly IQueue _queue;
-    private readonly ICreds _creds;
 
     static TimeSpan PROXY_LIFESPAN = TimeSpan.FromDays(7);
 
-    public ProxyOperations(ILogTracer log, IStorage storage, IEvents events, IProxyForwardOperations proxyForwardOperations, IContainers containers, IQueue queue, ICreds creds, IServiceConfig config)
-            : base(storage, log.WithTag("Component", "scaleset-proxy"), config) {
-        _events = events;
-        _proxyForwardOperations = proxyForwardOperations;
-        _containers = containers;
-        _queue = queue;
-        _creds = creds;
+    public ProxyOperations(ILogTracer log, IOnefuzzContext context)
+        : base(log.WithTag("Component", "scaleset-proxy"), context) {
+
     }
+
 
     public async Task<Proxy?> GetByProxyId(Guid proxyId) {
 
@@ -48,17 +40,17 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
                 continue;
             }
 
-            if (!VmStateHelper.Available().Contains(proxy.State)) {
+            if (!VmStateHelper.Available.Contains(proxy.State)) {
                 continue;
             }
             return proxy;
         }
 
         _logTracer.Info($"creating proxy: region:{region}");
-        var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, Auth.BuildAuth(), null, null, _config.OneFuzzVersion.ToString(), null, false);
+        var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, Auth.BuildAuth(), null, null, _context.ServiceConfiguration.OneFuzzVersion, null, false);
 
         await Replace(newProxy);
-        await _events.SendEvent(new EventProxyCreated(region, newProxy.ProxyId));
+        await _context.Events.SendEvent(new EventProxyCreated(region, newProxy.ProxyId));
         return newProxy;
     }
 
@@ -79,12 +71,12 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
     }
 
     public bool IsOutdated(Proxy proxy) {
-        if (!VmStateHelper.Available().Contains(proxy.State)) {
+        if (!VmStateHelper.Available.Contains(proxy.State)) {
             return false;
         }
 
-        if (proxy.Version != _config.OneFuzzVersion) {
-            _logTracer.Info($"mismatch version: proxy:{proxy.Version} service:{_config.OneFuzzVersion} state:{proxy.State}");
+        if (proxy.Version != _context.ServiceConfiguration.OneFuzzVersion) {
+            _logTracer.Info($"mismatch version: proxy:{proxy.Version} service:{_context.ServiceConfiguration.OneFuzzVersion} state:{proxy.State}");
             return true;
         }
 
@@ -99,8 +91,8 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
 
     public async Async.Task SaveProxyConfig(Proxy proxy) {
         var forwards = await GetForwards(proxy);
-        var url = (await _containers.GetFileSasUrl(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", StorageType.Config, BlobSasPermissions.Read)).EnsureNotNull("Can't generate file sas");
-        var queueSas = await _queue.GetQueueSas("proxy", StorageType.Config, QueueSasPermissions.Add).EnsureNotNull("can't generate queue sas") ?? throw new Exception("Queue sas is null");
+        var url = (await _context.Containers.GetFileSasUrl(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", StorageType.Config, BlobSasPermissions.Read)).EnsureNotNull("Can't generate file sas");
+        var queueSas = await _context.Queue.GetQueueSas("proxy", StorageType.Config, QueueSasPermissions.Add).EnsureNotNull("can't generate queue sas") ?? throw new Exception("Queue sas is null");
 
         var proxyConfig = new ProxyConfig(
             Url: url,
@@ -108,11 +100,11 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
             Region: proxy.Region,
             ProxyId: proxy.ProxyId,
             Forwards: forwards,
-            InstanceTelemetryKey: _config.ApplicationInsightsInstrumentationKey.EnsureNotNull("missing InstrumentationKey"),
-            MicrosoftTelemetryKey: _config.OneFuzzTelemetry.EnsureNotNull("missing Telemetry"),
-            InstanceId: await _containers.GetInstanceId());
+            InstanceTelemetryKey: _context.ServiceConfiguration.ApplicationInsightsInstrumentationKey.EnsureNotNull("missing InstrumentationKey"),
+            MicrosoftTelemetryKey: _context.ServiceConfiguration.OneFuzzTelemetry.EnsureNotNull("missing Telemetry"),
+            InstanceId: await _context.Containers.GetInstanceId());
 
-        await _containers.SaveBlob(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", _entityConverter.ToJsonString(proxyConfig), StorageType.Config);
+        await _context.Containers.SaveBlob(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", _entityConverter.ToJsonString(proxyConfig), StorageType.Config);
     }
 
 
@@ -124,16 +116,16 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
 
         await Replace(proxy with { State = state });
 
-        await _events.SendEvent(new EventProxyStateUpdated(proxy.Region, proxy.ProxyId, proxy.State));
+        await _context.Events.SendEvent(new EventProxyStateUpdated(proxy.Region, proxy.ProxyId, proxy.State));
     }
 
 
     public async Async.Task<List<Forward>> GetForwards(Proxy proxy) {
         var forwards = new List<Forward>();
 
-        await foreach (var entry in _proxyForwardOperations.SearchForward(region: proxy.Region, proxyId: proxy.ProxyId)) {
+        await foreach (var entry in _context.ProxyForwardOperations.SearchForward(region: proxy.Region, proxyId: proxy.ProxyId)) {
             if (entry.EndTime < DateTimeOffset.UtcNow) {
-                await _proxyForwardOperations.Delete(entry);
+                await _context.ProxyForwardOperations.Delete(entry);
             } else {
                 forwards.Add(new Forward(entry.Port, entry.DstPort, entry.DstIp));
             }

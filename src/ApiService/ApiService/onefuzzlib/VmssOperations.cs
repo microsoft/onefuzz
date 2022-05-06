@@ -6,6 +6,8 @@ using Microsoft.Rest.Azure;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IVmssOperations {
+    Async.Task<OneFuzzResultVoid> UpdateScaleInProtection(Guid name, Guid vmId, bool protectFromScaleIn);
+    Async.Task<OneFuzzResult<string>> GetInstanceId(Guid name, Guid vmId);
     Async.Task<OneFuzzResultVoid> UpdateExtensions(Guid name, IList<VirtualMachineScaleSetExtensionData> extensions);
     Async.Task<VirtualMachineScaleSetData> GetVmss(Guid name);
 

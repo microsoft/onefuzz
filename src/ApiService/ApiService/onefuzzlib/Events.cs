@@ -13,9 +13,11 @@ namespace Microsoft.OneFuzz.Service {
 
 
     public interface IEvents {
-        public Async.Task SendEvent(BaseEvent anEvent);
+        Async.Task SendEvent(BaseEvent anEvent);
 
-        public Async.Task QueueSignalrEvent(EventMessage message);
+        Async.Task QueueSignalrEvent(EventMessage message);
+
+        void LogEvent(BaseEvent anEvent);
     }
 
     public class Events : IEvents {
@@ -52,15 +54,15 @@ namespace Microsoft.OneFuzz.Service {
             );
             await QueueSignalrEvent(eventMessage);
             await _webhook.SendEvent(eventMessage);
-            LogEvent(anEvent, eventType);
+            LogEvent(anEvent);
         }
 
-        public void LogEvent(BaseEvent anEvent, EventType eventType) {
+        public void LogEvent(BaseEvent anEvent) {
             var options = EntityConverter.GetJsonSerializerOptions();
             options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             options.Converters.Add(new RemoveUserInfo());
             var serializedEvent = JsonSerializer.Serialize(anEvent, anEvent.GetType(), options);
-            _log.WithTag("Event Type", eventType.ToString()).Info($"sending event: {eventType} - {serializedEvent}");
+            _log.WithTag("Event Type", anEvent.GetEventType().ToString()).Info($"sending event: {anEvent.GetEventType()} - {serializedEvent}");
         }
     }
 

@@ -19,7 +19,7 @@ registered:
 ## Deploying an instance of OneFuzz
 
 Ensure you have Python with `python --version` >= 3.7, [Azure Functions Core Tools
-v3](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local),
+v4](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local),
 and OpenSSL installed.
 
 From the [Latest Release of

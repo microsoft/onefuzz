@@ -58,7 +58,7 @@ public class Scheduler : IScheduler {
     }
 
     private async Async.Task<bool> ScheduleWorkset(WorkSet workSet, Pool pool, int count) {
-        if (!PoolStateHelper.Available().Contains(pool.State)) {
+        if (!PoolStateHelper.Available.Contains(pool.State)) {
             _logTracer.Info($"pool not available for work: {pool.Name} state: {pool.State}");
             return false;
         }

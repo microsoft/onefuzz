@@ -72,7 +72,6 @@ public record NodeTasks
     NodeTaskState State = NodeTaskState.Init
 ) : StatefulEntityBase<NodeTaskState>(State);
 
-
 public record ProxyHeartbeat
 (
     Region Region,
@@ -87,17 +86,19 @@ public record Node
     [RowKey] Guid MachineId,
     Guid? PoolId,
     string Version,
-
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? InitializedAt = null,
     NodeState State = NodeState.Init,
-    List<NodeTasks>? Tasks = null,
-    List<NodeCommand>? Messages = null,
+
     Guid? ScalesetId = null,
     bool ReimageRequested = false,
     bool DeleteRequested = false,
     bool DebugKeepNode = false
-) : StatefulEntityBase<NodeState>(State);
+) : StatefulEntityBase<NodeState>(State) {
+
+    public List<NodeTasks>? Tasks { get; set; }
+    public List<NodeCommand>? Messages { get; set; }
+}
 
 
 public record Forward
@@ -471,8 +472,8 @@ public record TeamsTemplate();
 public record GithubIssuesTemplate();
 
 public record Repro(
-    DateTimeOffset Timestamp,
-    Guid VmId,
+    [PartitionKey] Guid VmId,
+    [RowKey] Guid _,
     Guid TaskId,
     ReproConfig Config,
     VmState State,
@@ -589,6 +590,7 @@ public record Job(
     public UserInfo? UserInfo { get; set; }
 }
 
+public record Nsg(string Name, Region Region);
 
 public record WorkUnit(
     Guid JobId,
