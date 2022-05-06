@@ -330,5 +330,22 @@ namespace Tests {
             Assert.Equal(expectedObject, actual);
         }
 
+
+        record TestNullField(int? Id, string? Name, TestObject? Obj) : EntityBase();
+
+        [Fact]
+        public void TestNullValue() {
+
+            var entityConverter = new EntityConverter();
+            var tableEntity = entityConverter.ToTableEntity(new TestNullField(null, null, null));
+
+            Assert.Null(tableEntity["id"]);
+            Assert.Null(tableEntity["name"]);
+            Assert.Null(tableEntity["obj"]);
+
+        }
+
+
+
     }
 }
