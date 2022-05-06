@@ -25,7 +25,7 @@ public class TimerRepro {
 
         var expiredVmIds = expired.Select(repro => repro?.VmId);
 
-        await foreach (var repro in _reproOperations.SearchStates(VmStateHelper.NeedsWork())) {
+        await foreach (var repro in _reproOperations.SearchStates(VmStateHelper.NeedsWork)) {
             if (await expiredVmIds.ContainsAsync(repro.VmId)) {
                 // this VM already got processed during the expired phase
                 continue;

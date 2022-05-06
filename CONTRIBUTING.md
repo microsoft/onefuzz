@@ -150,7 +150,7 @@ OneFuzz is built with multiple components and runs on Linux and Windows:
 * [Python](https://www.python.org) (at least 3.7 or later)
 * [Azure Functions Core
   Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local)
-(latest version of the 3.x)
+(latest version of the 4.x)
 
 While local builds are possible for every component of the system, new
 contributors may find [automatic builds for

@@ -6,6 +6,8 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface INotificationOperations : IOrm<Notification> {
     Async.Task NewFiles(Container container, string filename, bool failTaskOnTransientError);
+    IAsyncEnumerable<Notification> GetNotifications(Container container);
+    IAsyncEnumerable<(Task, IEnumerable<string>)> GetQueueTasks();
 }
 
 public class NotificationOperations : Orm<Notification>, INotificationOperations {
@@ -77,12 +79,12 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
     public IAsyncEnumerable<(Task, IEnumerable<string>)> GetQueueTasks() {
         // Nullability mismatch: We filter tuples where the containers are null
-        return _context.TaskOperations.SearchStates(states: TaskStateHelper.Available())
+        return _context.TaskOperations.SearchStates(states: TaskStateHelper.Available)
             .Select(task => (task, _context.TaskOperations.GetInputContainerQueues(task.Config)))
             .Where(taskTuple => taskTuple.Item2 != null)!;
     }
 
-    private async Async.Task<Task?> GetRegressionReportTask(RegressionReport report) {
+    public async Async.Task<Task?> GetRegressionReportTask(RegressionReport report) {
         if (report.CrashTestResult.CrashReport != null) {
             return await _context.TaskOperations.GetByJobIdAndTaskId(report.CrashTestResult.CrashReport.JobId, report.CrashTestResult.CrashReport.TaskId);
         }

@@ -3,7 +3,7 @@
 
 # Dockerized OneFuzz CLI
 
-FROM ubuntu:20.04 AS installer-env
+FROM mcr.microsoft.com/oss/mirror/docker.io/library/ubuntu:20.04 AS installer-env
 
 # Pull Request that contains OneFuzz release-artifacts
 # used to create the Docker container
@@ -32,7 +32,7 @@ RUN python3 /onefuzz-prep/github_client.py --destination /onefuzz-prep/ --pr ${P
     unzip /onefuzz-prep/release-artifacts.zip -d /onefuzz-prep 
 
 
-FROM ubuntu:20.04
+FROM mcr.microsoft.com/oss/mirror/docker.io/library/ubuntu:20.04
 
 COPY --from=installer-env ["/onefuzz-prep/sdk", "/onefuzz-sdk"]
 COPY --from=installer-env ["/azcopy_linux_amd64_*/azcopy", "/usr/bin"]
