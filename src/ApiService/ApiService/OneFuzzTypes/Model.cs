@@ -494,19 +494,19 @@ public record ReproConfig(
 
 // Skipping AutoScaleConfig because it's not used anymore
 public record Pool(
-    DateTimeOffset Timestamp,
-    PoolName Name,
-    Guid PoolId,
+    [PartitionKey] PoolName Name,
+    [RowKey] Guid PoolId,
     Os Os,
     bool Managed,
     Architecture Arch,
     PoolState State,
-    Guid? ClientId,
-    List<Node>? Nodes,
-    AgentConfig? Config,
-    List<WorkSetSummary>? WorkQueue,
-    List<ScalesetSummary>? ScalesetSummary
-) : StatefulEntityBase<PoolState>(State);
+    Guid? ClientId
+) : StatefulEntityBase<PoolState>(State) {
+    public List<Node>? Nodes { get; set; }
+    public AgentConfig? Config { get; set; }
+    public List<WorkSetSummary>? WorkQueue { get; set; }
+    public List<ScalesetSummary>? ScalesetSummary { get; set; }
+}
 
 
 public record ClientCredentials

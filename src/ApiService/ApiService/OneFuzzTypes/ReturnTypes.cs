@@ -8,8 +8,7 @@
         readonly bool isOk;
 
         public ResultVoid() => (error, isOk) = (default, true);
-
-        public ResultVoid(T_Error error) => (this.error, isOk) = (error, false);
+        private ResultVoid(T_Error error) => (this.error, isOk) = (error, false);
 
         public bool IsOk => isOk;
 
@@ -25,9 +24,9 @@
         readonly T_Error? error;
         readonly bool isOk;
 
-        public Result(T_Ok ok) => (this.ok, error, isOk) = (ok, default, true);
+        private Result(T_Ok ok) => (this.ok, error, isOk) = (ok, default, true);
 
-        public Result(T_Error error) => (this.error, ok, isOk) = (error, default, false);
+        private Result(T_Error error) => (this.error, ok, isOk) = (error, default, false);
 
         public bool IsOk => isOk;
 
