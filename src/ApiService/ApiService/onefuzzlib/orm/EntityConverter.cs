@@ -186,13 +186,6 @@ public class EntityConverter {
              ) {
                 return (prop.columnName, value);
             }
-            if (prop.type.IsEnum) {
-                var values =
-                    (value?.ToString()?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                        .Select(CaseConverter.PascalToSnake)).EnsureNotNull($"Unable to read enum data {value}");
-
-                return (prop.columnName, string.Join(",", values));
-            }
 
             var serialized = JsonSerializer.Serialize(value, _options);
             return (prop.columnName, serialized.Trim('"'));
@@ -246,13 +239,8 @@ public class EntityConverter {
             return entity.GetInt32(fieldName);
         } else if (ef.type == typeof(long) || ef.type == typeof(long?)) {
             return entity.GetInt64(fieldName);
-        } else if (ef.type.IsEnum) {
-            var stringValues =
-                entity.GetString(fieldName).Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(CaseConverter.SnakeToPascal);
-
-            return Enum.Parse(ef.type, string.Join(",", stringValues));
-        } else {
+        }
+        else {
             var outputType = ef.type;
             if (ef.discriminator != null) {
                 var (attr, typeProvider) = ef.discriminator.Value;

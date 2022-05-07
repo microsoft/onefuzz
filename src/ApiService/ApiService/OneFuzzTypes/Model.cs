@@ -499,7 +499,7 @@ public record Pool(
     Guid PoolId,
     Os Os,
     bool Managed,
-    Architecture Architecture,
+    Architecture Arch,
     PoolState State,
     Guid? ClientId,
     List<Node>? Nodes,

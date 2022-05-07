@@ -37,6 +37,8 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum {
 
     private const string ValueSeparator = ",";
 
+    private readonly bool _skipFormat;
+
     public CustomEnumConverter(JsonNamingPolicy namingPolicy, JsonSerializerOptions options, object[]? knownValues) {
         _namingPolicy = namingPolicy;
 
@@ -49,14 +51,14 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum {
         }
 
         var type = typeof(T);
-        var skipFormat = type.GetCustomAttribute<SkipRename>() != null;
+        _skipFormat = type.GetCustomAttribute<SkipRename>() != null;
         if (continueProcessing) {
             Array values = Enum.GetValues(type);
 
             for (int i = 0; i < values.Length; i++) {
                 T value = (T)values.GetValue(i)!;
 
-                if (!TryProcessValue(value, skipFormat)) {
+                if (!TryProcessValue(value, _skipFormat)) {
                     break;
                 }
             }
@@ -68,7 +70,7 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum {
                 return false;
             }
 
-            FormatAndAddToCaches(value, options.Encoder, skipFormat);
+            FormatAndAddToCaches(value, options.Encoder, _skipFormat);
             return true;
         }
     }
@@ -103,7 +105,7 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum {
                 throw new ArgumentOutOfRangeException();
             }
 
-            formatted = FormatAndAddToCaches(value, options.Encoder);
+            formatted = FormatAndAddToCaches(value, options.Encoder, _skipFormat);
         }
 
         writer.WriteStringValue(formatted);

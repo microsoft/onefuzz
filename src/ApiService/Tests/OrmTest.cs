@@ -346,6 +346,40 @@ namespace Tests {
         }
 
 
+        [SkipRename]
+        enum DoNotRename {
+            test1,
+            Test_2,
+            TEST3
+        }
+
+
+        [Flags]
+        [SkipRename]
+        enum DoNotRenameFlag {
+            test1 = 1 << 0,
+            Test_2 = 1 << 1,
+            TEST3 = 1 << 2,
+        }
+        record TestEntity3(DoNotRename Enum, DoNotRenameFlag flag) : EntityBase();
+
+
+        [Fact]
+        public void TestSkipRename() {
+
+            var entityConverter = new EntityConverter();
+
+            var expected = new TestEntity3(DoNotRename.TEST3, DoNotRenameFlag.Test_2 | DoNotRenameFlag.test1);
+            var tableEntity = entityConverter.ToTableEntity(expected);
+            Assert.Equal("TEST3", tableEntity.GetString("enum"));
+            Assert.Equal("test1,Test_2", tableEntity.GetString("flag"));
+
+            var actual = entityConverter.ToRecord<TestEntity3>(tableEntity);
+
+            Assert.Equal(expected, actual);
+        }
+
+
 
     }
 }
