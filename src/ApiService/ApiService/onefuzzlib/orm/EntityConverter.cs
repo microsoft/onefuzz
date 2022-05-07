@@ -239,8 +239,7 @@ public class EntityConverter {
             return entity.GetInt32(fieldName);
         } else if (ef.type == typeof(long) || ef.type == typeof(long?)) {
             return entity.GetInt64(fieldName);
-        }
-        else {
+        } else {
             var outputType = ef.type;
             if (ef.discriminator != null) {
                 var (attr, typeProvider) = ef.discriminator.Value;
