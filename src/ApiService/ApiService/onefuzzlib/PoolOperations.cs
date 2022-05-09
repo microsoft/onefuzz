@@ -6,6 +6,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IPoolOperations {
     public Async.Task<Result<Pool, Error>> GetByName(string poolName);
     Task<bool> ScheduleWorkset(Pool pool, WorkSet workSet);
+    IAsyncEnumerable<Pool> GetByClientId(Guid clientId);
 }
 
 public class PoolOperations : StatefulOrm<Pool, PoolState>, IPoolOperations {
@@ -35,6 +36,10 @@ public class PoolOperations : StatefulOrm<Pool, PoolState>, IPoolOperations {
         }
 
         return await _context.Queue.QueueObject(GetPoolQueue(pool), workSet, StorageType.Corpus);
+    }
+
+    public IAsyncEnumerable<Pool> GetByClientId(Guid clientId) {
+        return QueryAsync(filter: $"client_id eq '{clientId.ToString()}'");
     }
 
     private string GetPoolQueue(Pool pool) {

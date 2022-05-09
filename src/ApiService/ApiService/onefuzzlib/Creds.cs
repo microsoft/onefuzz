@@ -2,6 +2,7 @@
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
+using System.Text.Json;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -23,6 +24,7 @@ public interface ICreds {
     public Async.Task<string> GetBaseRegion();
 
     public Uri GetInstanceUrl();
+    Guid GetScalesetPrincipalId();
 }
 
 public class Creds : ICreds {
@@ -84,5 +86,20 @@ public class Creds : ICreds {
 
     public Uri GetInstanceUrl() {
         return new Uri($"https://{GetInstanceName()}.azurewebsites.net");
+    }
+
+    public Guid GetScalesetPrincipalId() {
+        var uid = ArmClient.GetGenericResource(
+            new ResourceIdentifier(GetScalesetIdentityResourcePath())
+        );
+        var principalId = JsonSerializer.Deserialize<JsonDocument>(uid.Data.Properties.ToString())?.RootElement.GetProperty("principalId").GetString();
+        return new Guid(principalId);
+    }
+
+    public string GetScalesetIdentityResourcePath() {
+        var scalesetIdName = $"{GetInstanceName()}-scalesetid";
+        var resourceGroupPath = $"/subscriptions/{GetSubscription()}/resourceGroups/{GetBaseResourceGroup()}/providers";
+
+        return $"{resourceGroupPath}/Microsoft.ManagedIdentity/userAssignedIdentities/{scalesetIdName}";
     }
 }
