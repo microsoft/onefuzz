@@ -19,7 +19,7 @@ public class QueueTaskHearbeat {
     }
 
     //[Function("QueueTaskHearbeat")]
-    public async Async.Task Run([QueueTrigger("myqueue-items2", Connection = "AzureWebJobsStorage")] string msg) {
+    public async Async.Task Run([QueueTrigger("task-heartbeat", Connection = "AzureWebJobsStorage")] string msg) {
         _logger.LogInformation($"heartbeat: {msg}");
 
         var hb = JsonSerializer.Deserialize<TaskHeartbeatEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");

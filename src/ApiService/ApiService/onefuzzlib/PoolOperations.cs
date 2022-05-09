@@ -4,7 +4,7 @@ using ApiService.OneFuzzLib.Orm;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IPoolOperations {
-    public Async.Task<Result<Pool, Error>> GetByName(string poolName);
+    public Async.Task<OneFuzzResult<Pool>> GetByName(string poolName);
     Task<bool> ScheduleWorkset(Pool pool, WorkSet workSet);
 }
 
@@ -15,18 +15,18 @@ public class PoolOperations : StatefulOrm<Pool, PoolState>, IPoolOperations {
 
     }
 
-    public async Async.Task<Result<Pool, Error>> GetByName(string poolName) {
-        var pools = QueryAsync(filter: $"name eq '{poolName}'");
+    public async Async.Task<OneFuzzResult<Pool>> GetByName(string poolName) {
+        var pools = QueryAsync(filter: $"PartitionKey eq '{poolName}'");
 
-        if (pools == null) {
-            return new Result<Pool, Error>(new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find pool" }));
+        if (pools == null || await pools.CountAsync() == 0) {
+            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, "unable to find pool");
         }
 
         if (await pools.CountAsync() != 1) {
-            return new Result<Pool, Error>(new Error(ErrorCode.INVALID_REQUEST, new[] { "error identifying pool" }));
+            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, "error identifying pool");
         }
 
-        return new Result<Pool, Error>(await pools.SingleAsync());
+        return OneFuzzResult<Pool>.Ok(await pools.SingleAsync());
     }
 
     public async Task<bool> ScheduleWorkset(Pool pool, WorkSet workSet) {

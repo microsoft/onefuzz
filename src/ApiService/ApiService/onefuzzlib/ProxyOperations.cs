@@ -40,7 +40,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
                 continue;
             }
 
-            if (!VmStateHelper.Available().Contains(proxy.State)) {
+            if (!VmStateHelper.Available.Contains(proxy.State)) {
                 continue;
             }
             return proxy;
@@ -71,7 +71,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
     }
 
     public bool IsOutdated(Proxy proxy) {
-        if (!VmStateHelper.Available().Contains(proxy.State)) {
+        if (!VmStateHelper.Available.Contains(proxy.State)) {
             return false;
         }
 

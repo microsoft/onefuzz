@@ -97,11 +97,18 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         public async Async.Task<NetworkSecurityGroupResource?> GetNsg(string name) {
-            var response = await _creds.GetResourceGroupResource().GetNetworkSecurityGroupAsync(name);
-            if (response == null) {
-                //_logTracer.Debug($"nsg %s does not exist: {name}");
+            try {
+                var response = await _creds.GetResourceGroupResource().GetNetworkSecurityGroupAsync(name);
+                return response?.Value;
+            } catch (RequestFailedException ex) {
+                if (ex.ErrorCode == "ResourceNotFound") {
+                    _logTracer.Verbose($"could not find nsg with name {name}");
+                    return null;
+                } else {
+                    _logTracer.Exception(ex, $"failed to get nsg {name}");
+                    throw;
+                }
             }
-            return response?.Value;
         }
 
         public IAsyncEnumerable<NetworkSecurityGroupResource> ListNsgs() {
@@ -118,9 +125,18 @@ namespace Microsoft.OneFuzz.Service {
         /// </summary>
         public async Async.Task<bool> StartDeleteNsg(string name) {
             _logTracer.Info($"deleting nsg: {name}");
-            var nsg = await _creds.GetResourceGroupResource().GetNetworkSecurityGroupAsync(name);
-            await nsg.Value.DeleteAsync(WaitUntil.Completed);
-            return true;
+            try {
+                var nsg = await _creds.GetResourceGroupResource().GetNetworkSecurityGroupAsync(name);
+                await nsg.Value.DeleteAsync(WaitUntil.Completed);
+                return true;
+            } catch (RequestFailedException ex) {
+                if (ex.ErrorCode == "ResourceNotFound") {
+                    return true;
+                } else {
+                    _logTracer.Exception(ex, $"failed to delete nsg {name}");
+                    throw;
+                }
+            }
         }
 
         private static bool IsConcurrentRequestError(string err) {
