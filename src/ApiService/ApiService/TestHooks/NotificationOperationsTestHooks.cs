@@ -70,7 +70,7 @@ namespace ApiService.TestHooks {
 
             var s = await req.ReadAsStringAsync();
             var report = JsonSerializer.Deserialize<RegressionReport>(s!, EntityConverter.GetJsonSerializerOptions());
-            var task = (_notificationOps as NotificationOperations)!.GetRegressionReportTask(report);
+            var task = (_notificationOps as NotificationOperations)!.GetRegressionReportTask(report!);
 
             var json = JsonSerializer.Serialize(task, EntityConverter.GetJsonSerializerOptions());
             var resp = req.CreateResponse(HttpStatusCode.OK);

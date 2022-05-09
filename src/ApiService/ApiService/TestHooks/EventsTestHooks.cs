@@ -30,6 +30,18 @@ namespace ApiService.TestHooks {
             var resp = req.CreateResponse(HttpStatusCode.OK);
             return resp;
         }
+
+
+        [Function("SendEventTestHook")]
+        public async Task<HttpResponseData> SendEvent([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "testhooks/events/sendEvent")] HttpRequestData req) {
+            _log.Info("Send event");
+
+            var s = await req.ReadAsStringAsync();
+            var msg = JsonSerializer.Deserialize<EventMessage>(s!, EntityConverter.GetJsonSerializerOptions());
+            await _events.SendEvent(msg!.Event);
+            var resp = req.CreateResponse(HttpStatusCode.OK);
+            return resp;
+        }
     }
 
 }

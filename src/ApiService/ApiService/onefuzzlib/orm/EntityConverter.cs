@@ -156,16 +156,20 @@ public class EntityConverter {
         if (type is null) {
             throw new NullReferenceException();
         }
-        var tableEntity = new TableEntity();
+
         var entityInfo = GetEntityInfo<T>();
-        foreach (var prop in entityInfo.properties.SelectMany(x => x)) {
-            //var prop = kvp.First();
+        Dictionary<string, object?> columnValues = entityInfo.properties.SelectMany(x => x).Select(prop => {
             var value = entityInfo.type.GetProperty(prop.name)?.GetValue(typedEntity);
+            if (value == null) {
+                return (prop.columnName, value: (object?)null);
+            }
             if (prop.kind == EntityPropertyKind.PartitionKey || prop.kind == EntityPropertyKind.RowKey) {
-                tableEntity.Add(prop.columnName, value?.ToString());
-            } else if (prop.type == typeof(Guid) || prop.type == typeof(Guid?)) {
-                tableEntity.Add(prop.columnName, value?.ToString());
-            } else if (prop.type == typeof(bool)
+                return (prop.columnName, value?.ToString());
+            }
+            if (prop.type == typeof(Guid) || prop.type == typeof(Guid?)) {
+                return (prop.columnName, value?.ToString());
+            }
+            if (prop.type == typeof(bool)
                  || prop.type == typeof(bool?)
                  || prop.type == typeof(string)
                  || prop.type == typeof(DateTime)
@@ -180,19 +184,15 @@ public class EntityConverter {
                  || prop.type == typeof(double?)
 
              ) {
-                tableEntity.Add(prop.columnName, value);
-            } else if (prop.type.IsEnum) {
-                var values =
-                    (value?.ToString()?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                        .Select(CaseConverter.PascalToSnake)).EnsureNotNull($"Unable to read enum data {value}");
-
-                tableEntity.Add(prop.columnName, string.Join(",", values));
-            } else {
-                var serialized = JsonSerializer.Serialize(value, _options);
-                tableEntity.Add(prop.columnName, serialized.Trim('"'));
+                return (prop.columnName, value);
             }
 
-        }
+            var serialized = JsonSerializer.Serialize(value, _options);
+            return (prop.columnName, serialized.Trim('"'));
+
+        }).ToDictionary(x => x.columnName, x => x.value);
+
+        var tableEntity = new TableEntity(columnValues);
 
         if (typedEntity.ETag.HasValue) {
             tableEntity.ETag = typedEntity.ETag.Value;
@@ -239,12 +239,6 @@ public class EntityConverter {
             return entity.GetInt32(fieldName);
         } else if (ef.type == typeof(long) || ef.type == typeof(long?)) {
             return entity.GetInt64(fieldName);
-        } else if (ef.type.IsEnum) {
-            var stringValues =
-                entity.GetString(fieldName).Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(CaseConverter.SnakeToPascal);
-
-            return Enum.Parse(ef.type, string.Join(",", stringValues));
         } else {
             var outputType = ef.type;
             if (ef.discriminator != null) {
