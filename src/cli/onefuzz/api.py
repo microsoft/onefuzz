@@ -53,7 +53,8 @@ REPRO_SSH_FORWARD = "1337:127.0.0.1:1337"
 
 UUID_RE = r"^[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}\Z"
 
-CLIENT_SECRET_ENV_VAR = "ONEFUZZ_CLIENT_SECRET"
+# Environment variable optionally used for setting an application client secret.
+CLIENT_SECRET_ENV_VAR = "ONEFUZZ_CLIENT_SECRET"  # nosec
 
 
 class PreviewFeature(Enum):
