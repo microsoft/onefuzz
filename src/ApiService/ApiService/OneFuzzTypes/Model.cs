@@ -696,7 +696,7 @@ public record TaskUnitConfig(
 
 }
 
-public record NodeCommandEvenlope(
+public record NodeCommandEnvelope(
     NodeCommand Command,
     string MessageId
 );

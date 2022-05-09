@@ -50,6 +50,7 @@ public class AgentCanSchedule {
             allowed = (await _context.NodeOperations.AcquireScaleInProtection(node)).IsOk;
         }
 
-        return await RequestHandling.Ok(req, new CanSchedule(allowed, workStopped));
+        var resp = req.CreateResponse();
+        return await RequestHandling.Ok(resp, new CanSchedule(allowed, workStopped));
     }
 }

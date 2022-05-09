@@ -1,6 +1,7 @@
 ﻿using System.Net;
+using System.Text.Json;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -58,23 +59,23 @@ public class RequestHandling : IRequestHandling {
         );
     }
 
-    public async static Async.Task<HttpResponseData> Ok(HttpRequestData req, IEnumerable<BaseResponse> response) {
-        var resp = req.CreateResponse();
+    public async static Async.Task<HttpResponseData> Ok(HttpResponseData resp, IEnumerable<BaseResponse> response) {
+        // var resp = req.CreateResponse();
         resp.StatusCode = HttpStatusCode.OK;
         if (response.Count() > 1) {
             await resp.WriteAsJsonAsync(response);
             return resp;
         } else if (response.Any()) {
-            await resp.WriteAsJsonAsync(response.Single());
+            var t = JsonSerializer.Serialize(response.Single(), EntityConverter.GetJsonSerializerOptions());
+            await resp.WriteStringAsync(t);
         }
-
         // TODO: ModelMixin stuff
 
         return resp;
     }
 
-    public async static Async.Task<HttpResponseData> Ok(HttpRequestData req, BaseResponse response) {
-        return await Ok(req, new BaseResponse[] { response });
+    public async static Async.Task<HttpResponseData> Ok(HttpResponseData resp, BaseResponse response) {
+        return await Ok(resp, new BaseResponse[] { response });
     }
 }
 

@@ -13,11 +13,11 @@ public class AgentCommands {
         _context = context;
     }
 
-    // [Function("AgentCommands")]
+    [Function("AgentCommands")]
     public async Async.Task<HttpResponseData> Run([HttpTrigger("get", "delete")] HttpRequestData req) {
         return req.Method switch {
-            "get" => await Get(req),
-            "delete" => await Delete(req),
+            "GET" => await Get(req),
+            "DELETE" => await Delete(req),
             _ => throw new NotImplementedException($"HTTP Method {req.Method} is not supported for this method")
         };
     }
@@ -29,15 +29,15 @@ public class AgentCommands {
         }
         var nodeCommand = request.OkV;
 
-        var message = await _context.NodeMessageOperations.GetMessage(nodeCommand.MachineId).FirstAsync();
-
+        var message = await _context.NodeMessageOperations.GetMessage(nodeCommand.MachineId).FirstOrDefaultAsync();
+        var resp = req.CreateResponse();
         if (message != null) {
             var command = message.Message;
             var messageId = message.MessageId;
-            var envelope = new NodeCommandEvenlope(command, messageId);
-            return await RequestHandling.Ok(req, new PendingNodeCommand(envelope));
+            var envelope = new NodeCommandEnvelope(command, messageId);
+            return await RequestHandling.Ok(resp, new PendingNodeCommand(envelope));
         } else {
-            return await RequestHandling.Ok(req, new PendingNodeCommand(null));
+            return await RequestHandling.Ok(resp, new PendingNodeCommand(null));
         }
     }
 
@@ -53,6 +53,7 @@ public class AgentCommands {
             await _context.NodeMessageOperations.Delete(message);
         }
 
-        return await RequestHandling.Ok(req, new BoolResult(true));
+        var resp = req.CreateResponse();
+        return await RequestHandling.Ok(resp, new BoolResult(true));
     }
 }
