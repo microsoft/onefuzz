@@ -13,7 +13,7 @@ public class AgentCommands {
         _context = context;
     }
 
-    [Function("AgentCommands")]
+    // [Function("AgentCommands")]
     public async Async.Task<HttpResponseData> Run([HttpTrigger("get", "delete")] HttpRequestData req) {
         return req.Method switch {
             "get" => await Get(req),
