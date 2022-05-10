@@ -22,7 +22,7 @@ public class EndpointAuthorization {
             return await _context.RequestHandling.NotOk(req, tokenResult.ErrorV, "token verification", HttpStatusCode.Unauthorized);
         }
         var token = tokenResult.OkV!;
-        
+
         if (await IsUser(token)) {
             if (!allowUser) {
                 return await Reject(req, token);

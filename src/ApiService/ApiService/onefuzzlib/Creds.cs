@@ -1,8 +1,8 @@
-﻿using Azure.Core;
+﻿using System.Text.Json;
+using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
-using System.Text.Json;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -92,7 +92,7 @@ public class Creds : ICreds {
         var uid = ArmClient.GetGenericResource(
             new ResourceIdentifier(GetScalesetIdentityResourcePath())
         );
-        var principalId = JsonSerializer.Deserialize<JsonDocument>(uid.Data.Properties.ToString())?.RootElement.GetProperty("principalId").GetString();
+        var principalId = JsonSerializer.Deserialize<JsonDocument>(uid.Data.Properties.ToString())?.RootElement.GetProperty("principalId").GetString()!;
         return new Guid(principalId);
     }
 
