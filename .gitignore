@@ -4,6 +4,9 @@
 .idea
 **/.direnv
 **/.envrc
+**/venv
 
 # vim
 *.swp
+
+/.ionide/symbolCache.db

@@ -19,7 +19,7 @@ registered:
 ## Deploying an instance of OneFuzz
 
 Ensure you have Python with `python --version` >= 3.7, [Azure Functions Core Tools
-v3](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local),
+v4](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local),
 and OpenSSL installed.
 
 From the [Latest Release of
@@ -120,7 +120,7 @@ Building your first target to run in OneFuzz:
 
 ```
 $ git clone -q https://github.com/microsoft/onefuzz-samples
-$ cd examples/simple-libfuzzer
+$ cd onefuzz-samples/examples/simple-libfuzzer
 $ make
 clang -g3 -fsanitize=fuzzer -fsanitize=address fuzz.c -o fuzz.exe
 $

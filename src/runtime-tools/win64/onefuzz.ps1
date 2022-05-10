@@ -4,7 +4,7 @@
 $env:Path += ";C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\;C:\onefuzz\win64;C:\onefuzz\tools\win64;C:\onefuzz\tools\win64\radamsa;$env:ProgramFiles\LLVM\bin"
 $env:ONEFUZZ_ROOT = "C:\onefuzz"
 $env:ONEFUZZ_TOOLS = "C:\onefuzz\tools"
-$env:ASAN_SYMBOLIZER_PATH = "llvm-symbolizer"
+$env:LLVM_SYMBOLIZER_PATH = "llvm-symbolizer"
 $env:RUST_LOG = "info"
 
 $logFile = "C:\onefuzz.log"
@@ -165,6 +165,6 @@ function Install-VCRedist {
   Invoke-WebRequest -Uri $x64Release -OutFile "C:\onefuzz\vcredist_x64.exe"
   Invoke-WebRequest -Uri $x86Release -OutFile "C:\onefuzz\vcredist_x86.exe"
   Start-Process -FilePath C:\onefuzz\vcredist_x64.exe -ArgumentList "/install /q /norestart" -Wait -WindowStyle Hidden
-  Start-Process -FilePath C:\onefuzz\vcredist_x86.exe -ArgumentList "/install /q /norestart" -Wait -WindowSytle Hidden
+  Start-Process -FilePath C:\onefuzz\vcredist_x86.exe -ArgumentList "/install /q /norestart" -Wait -WindowStyle Hidden
   log "installing VC Redist: done"
 }

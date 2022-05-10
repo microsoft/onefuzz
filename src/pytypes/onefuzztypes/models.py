@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, root_validator, validator
@@ -120,6 +120,7 @@ class JobConfig(BaseModel):
     name: str
     build: str
     duration: int = Field(ge=ONE_HOUR, le=SEVEN_DAYS)
+    logs: Optional[str]
 
 
 class ReproConfig(BaseModel):
@@ -213,6 +214,9 @@ class Report(BaseModel):
     asan_log: Optional[str]
     task_id: UUID
     job_id: UUID
+    tool_name: str
+    tool_version: str
+    onefuzz_version: str
     scariness_score: Optional[int]
     scariness_description: Optional[str]
     minimized_stack: Optional[List[str]]
@@ -336,6 +340,7 @@ class AgentConfig(BaseModel):
 
 class TaskUnitConfig(BaseModel):
     instance_id: UUID
+    logs: Optional[str]
     job_id: UUID
     task_id: UUID
     task_type: TaskType
@@ -561,6 +566,12 @@ class NodeCommand(EnumModel):
     stop_if_free: Optional[NodeCommandStopIfFree]
 
 
+class NodeTasks(BaseModel):
+    machine_id: UUID
+    task_id: UUID
+    state: NodeTaskState = Field(default=NodeTaskState.init)
+
+
 class NodeCommandEnvelope(BaseModel):
     command: NodeCommand
     message_id: str
@@ -568,12 +579,15 @@ class NodeCommandEnvelope(BaseModel):
 
 class Node(BaseModel):
     timestamp: Optional[datetime] = Field(alias="Timestamp")
+
+    # Set only once, when a node is initialized.
+    initialized_at: Optional[datetime]
     pool_name: PoolName
     pool_id: Optional[UUID]
     machine_id: UUID
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
-    tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
+    tasks: Optional[List[NodeTasks]] = None
     messages: Optional[List[NodeCommand]] = None
     heartbeat: Optional[datetime]
     version: str = Field(default="1.0.0")
@@ -585,12 +599,6 @@ class Node(BaseModel):
 class ScalesetSummary(BaseModel):
     scaleset_id: UUID
     state: ScalesetState
-
-
-class NodeTasks(BaseModel):
-    machine_id: UUID
-    task_id: UUID
-    state: NodeTaskState = Field(default=NodeTaskState.init)
 
 
 class AutoScaleConfig(BaseModel):
@@ -656,6 +664,17 @@ class Scaleset(BaseModel):
     client_id: Optional[UUID]
     client_object_id: Optional[UUID]
     tags: Dict[str, str] = Field(default_factory=lambda: {})
+
+
+class AutoScale(BaseModel):
+    scaleset_id: UUID
+    min: int = Field(ge=1)
+    max: int = Field(ge=1)
+    default: int = Field(ge=1)
+    scale_out_amount: int = Field(ge=1)
+    scale_out_cooldown: int = Field(ge=1)
+    scale_in_amount: int = Field(ge=1)
+    scale_in_cooldown: int = Field(ge=1)
 
 
 class NotificationConfig(BaseModel):
@@ -853,7 +872,7 @@ class InstanceConfig(BaseModel):
     admins: Optional[List[UUID]] = None
 
     # if set, only admins can manage pools or scalesets
-    allow_pool_management: bool = Field(default=True)
+    require_admin_privileges: bool = Field(default=True)
 
     allowed_aad_tenants: List[UUID]
     network_config: NetworkConfig = Field(default_factory=NetworkConfig)
@@ -864,6 +883,8 @@ class InstanceConfig(BaseModel):
     proxy_vm_sku: str = Field(default="Standard_B2s")
     api_access_rules: Optional[Dict[Endpoint, ApiAccessRule]] = None
     group_membership: Optional[Dict[PrincipalID, List[GroupId]]] = None
+    vm_tags: Optional[Dict[str, str]] = None
+    vmss_tags: Optional[Dict[str, str]] = None
 
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:

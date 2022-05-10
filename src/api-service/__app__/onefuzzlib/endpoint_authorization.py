@@ -4,20 +4,71 @@
 # Licensed under the MIT License.
 
 import logging
+import urllib
 from typing import Callable, Optional
 from uuid import UUID
 
 import azure.functions as func
+from azure.functions import HttpRequest
 from memoization import cached
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error, UserInfo
 
 from .azure.creds import get_scaleset_principal_id
+from .azure.group_membership import create_group_membership_checker
 from .config import InstanceConfig
 from .request import not_ok
+from .request_access import RequestAccess
 from .user_credentials import parse_jwt_token
 from .workers.pools import Pool
 from .workers.scalesets import Scaleset
+
+
+@cached(ttl=60)
+def get_rules() -> Optional[RequestAccess]:
+    config = InstanceConfig.fetch()
+    if config.api_access_rules:
+        return RequestAccess.build(config.api_access_rules)
+    else:
+        return None
+
+
+def check_access(req: HttpRequest) -> Optional[Error]:
+    rules = get_rules()
+
+    # Nothing to enforce if there are no rules.
+    if not rules:
+        return None
+
+    path = urllib.parse.urlparse(req.url).path
+    rule = rules.get_matching_rules(req.method, path)
+
+    # No restriction defined on this endpoint.
+    if not rule:
+        return None
+
+    member_id = UUID(req.headers["x-ms-client-principal-id"])
+
+    try:
+        membership_checker = create_group_membership_checker()
+        allowed = membership_checker.is_member(rule.allowed_groups_ids, member_id)
+        if not allowed:
+            logging.error(
+                "unauthorized access: %s is not authorized to access in %s",
+                member_id,
+                req.url,
+            )
+            return Error(
+                code=ErrorCode.UNAUTHORIZED,
+                errors=["not approved to use this endpoint"],
+            )
+    except Exception as e:
+        return Error(
+            code=ErrorCode.UNAUTHORIZED,
+            errors=["unable to interact with graph", str(e)],
+        )
+
+    return None
 
 
 @cached(ttl=60)
@@ -59,10 +110,10 @@ def can_modify_config(req: func.HttpRequest, config: InstanceConfig) -> bool:
     return can_modify_config_impl(config, user_info)
 
 
-def check_can_manage_pools_impl(
+def check_require_admins_impl(
     config: InstanceConfig, user_info: UserInfo
 ) -> Optional[Error]:
-    if config.allow_pool_management:
+    if config.require_admin_privileges:
         return None
 
     if config.admins is None:
@@ -74,25 +125,25 @@ def check_can_manage_pools_impl(
     return Error(code=ErrorCode.UNAUTHORIZED, errors=["not authorized to manage pools"])
 
 
-def check_can_manage_pools(req: func.HttpRequest) -> Optional[Error]:
+def check_require_admins(req: func.HttpRequest) -> Optional[Error]:
     user_info = parse_jwt_token(req)
     if isinstance(user_info, Error):
         return user_info
 
     # When there are no admins in the `admins` list, all users are considered
-    # admins.  However, `allow_pool_management` is still useful to protect from
+    # admins.  However, `require_admin_privileges` is still useful to protect from
     # mistakes.
     #
     # To make changes while still protecting against accidental changes to
     # pools, do the following:
     #
-    # 1. set `allow_pool_management` to `True`
+    # 1. set `require_admin_privileges` to `True`
     # 2. make the change
-    # 3. set `allow_pool_management` to `False`
+    # 3. set `require_admin_privileges` to `False`
 
     config = InstanceConfig.fetch()
 
-    return check_can_manage_pools_impl(config, user_info)
+    return check_require_admins_impl(config, user_info)
 
 
 def is_user(token_data: UserInfo) -> bool:
@@ -120,12 +171,18 @@ def call_if(
     allow_user: bool = False,
     allow_agent: bool = False
 ) -> func.HttpResponse:
+
     token = parse_jwt_token(req)
     if isinstance(token, Error):
         return not_ok(token, status_code=401, context="token verification")
 
-    if is_user(token) and not allow_user:
-        return reject(req, token)
+    if is_user(token):
+        if not allow_user:
+            return reject(req, token)
+
+        access = check_access(req)
+        if isinstance(access, Error):
+            return not_ok(access, status_code=401, context="access control")
 
     if is_agent(token) and not allow_agent:
         return reject(req, token)

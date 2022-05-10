@@ -16,10 +16,11 @@ from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.azure.creds import get_base_region, get_regions
 from ..onefuzzlib.azure.vmss import list_available_skus
-from ..onefuzzlib.endpoint_authorization import call_if_user, check_can_manage_pools
+from ..onefuzzlib.config import InstanceConfig
+from ..onefuzzlib.endpoint_authorization import call_if_user, check_require_admins
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.workers.pools import Pool
-from ..onefuzzlib.workers.scalesets import Scaleset
+from ..onefuzzlib.workers.scalesets import AutoScale, Scaleset
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
@@ -44,10 +45,11 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
     request = parse_request(ScalesetCreate, req)
+    instance_config = InstanceConfig.fetch()
     if isinstance(request, Error):
         return not_ok(request, context="ScalesetCreate")
 
-    answer = check_can_manage_pools(req)
+    answer = check_require_admins(req)
     if isinstance(answer, Error):
         return not_ok(answer, context="ScalesetCreate")
 
@@ -88,6 +90,10 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             context="scalesetcreate",
         )
 
+    tags = request.tags
+    if instance_config.vmss_tags:
+        tags.update(instance_config.vmss_tags)
+
     scaleset = Scaleset.create(
         pool_name=request.pool_name,
         vm_sku=request.vm_sku,
@@ -96,8 +102,21 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         size=request.size,
         spot_instances=request.spot_instances,
         ephemeral_os_disks=request.ephemeral_os_disks,
-        tags=request.tags,
+        tags=tags,
     )
+
+    if request.auto_scale:
+        AutoScale.create(
+            scaleset_id=scaleset.scaleset_id,
+            min=request.auto_scale.min,
+            max=request.auto_scale.max,
+            default=request.auto_scale.default,
+            scale_out_amount=request.auto_scale.scale_out_amount,
+            scale_out_cooldown=request.auto_scale.scale_out_cooldown,
+            scale_in_amount=request.auto_scale.scale_in_amount,
+            scale_in_cooldown=request.auto_scale.scale_in_cooldown,
+        )
+
     # don't return auths during create, only 'get' with include_auth
     scaleset.auth = None
     return ok(scaleset)
@@ -108,7 +127,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="ScalesetDelete")
 
-    answer = check_can_manage_pools(req)
+    answer = check_require_admins(req)
     if isinstance(answer, Error):
         return not_ok(answer, context="ScalesetDelete")
 
@@ -125,7 +144,7 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="ScalesetUpdate")
 
-    answer = check_can_manage_pools(req)
+    answer = check_require_admins(req)
     if isinstance(answer, Error):
         return not_ok(answer, context="ScalesetUpdate")
 

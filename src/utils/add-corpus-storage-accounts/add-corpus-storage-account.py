@@ -7,9 +7,10 @@ import argparse
 import json
 import uuid
 
-from azure.common.client_factory import get_client_from_cli_profile
+from azure.identity import AzureCliCredential
 from azure.mgmt.eventgrid import EventGridManagementClient
 from azure.mgmt.eventgrid.models import EventSubscription
+from azure.mgmt.resource import SubscriptionClient
 from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.storage.models import (
     AccessTier,
@@ -30,7 +31,7 @@ def get_base_event(
         resource_group, location
     ):
         if (
-            entry.name == "onefuzz1"
+            entry.name == "onefuzz1_subscription"
             and entry.type == "Microsoft.EventGrid/eventSubscriptions"
             and entry.event_delivery_schema == "EventGridSchema"
             and entry.destination.endpoint_type == "StorageQueue"
@@ -42,7 +43,8 @@ def get_base_event(
 
 
 def add_event_grid(src_account_id: str, resource_group: str, location: str) -> None:
-    client = get_client_from_cli_profile(EventGridManagementClient)
+    credential = AzureCliCredential()
+    client = EventGridManagementClient(credential)
     base = get_base_event(client, resource_group, location)
 
     event_subscription_info = EventSubscription(
@@ -74,7 +76,8 @@ def create_storage(resource_group: str, account_name: str, location: str) -> str
         minimum_tls_version="TLS1_2",
     )
 
-    client = get_client_from_cli_profile(StorageManagementClient)
+    credential = AzureCliCredential()
+    client = StorageManagementClient(credential)
     account = client.storage_accounts.begin_create(
         resource_group, account_name, params
     ).result()

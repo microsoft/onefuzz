@@ -4,6 +4,114 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.3.0
+### Added
+* Agent: Add a compiler flag to generate debug info for the `windows-libfuzzer` load library test target. [#1684](https://github.com/microsoft/onefuzz/pull/1684)
+* Agent: Add a Rust crate to debug missing dynamic library errors on Windows. [#1713](https://github.com/microsoft/onefuzz/pull/1713)
+* Agent: Add support for detecting missing dynamic libraries on Linux. [#1718](https://github.com/microsoft/onefuzz/pull/1718)
+* Service: Connect the auto scaling diagnostics to the log analytics workspace. [#1708](https://github.com/microsoft/onefuzz/pull/1708)
+* Service: Handle the situation where a VM scale set instance is destroyed before we have removed scale-in protection. [#1719](https://github.com/microsoft/onefuzz/pull/1719)
+* Service: Add additional support for auto scaling including changes to the CLI. New scale sets will automatically be created with auto scaling enabled. [#1717](https://github.com/microsoft/onefuzz/pull/1717), [#1763](https://github.com/microsoft/onefuzz/pull/1763)
+* Agent/Service/CLI: Add support for generating log files that can be downloaded using the CLI. [#1727](https://github.com/microsoft/onefuzz/pull/1727), [#1723](https://github.com/microsoft/onefuzz/pull/1723), [#1721](https://github.com/microsoft/onefuzz/pull/1721)
+* Service: Port ARM templates to Bicep. [#1724](https://github.com/microsoft/onefuzz/pull/1724), [#1732](https://github.com/microsoft/onefuzz/pull/1732)
+* Service: Initial changes to port the service from Python to C#. [#1734](https://github.com/microsoft/onefuzz/pull/1734), [#1733](https://github.com/microsoft/onefuzz/pull/1733), [#1736](https://github.com/microsoft/onefuzz/pull/1736), [#1737](https://github.com/microsoft/onefuzz/pull/1737), [#1738](https://github.com/microsoft/onefuzz/pull/1738), [#1742](https://github.com/microsoft/onefuzz/pull/1742), [#1744](https://github.com/microsoft/onefuzz/pull/1744), [#1749](https://github.com/microsoft/onefuzz/pull/1749), [#1750](https://github.com/microsoft/onefuzz/pull/1750), [#1753](https://github.com/microsoft/onefuzz/pull/1753), [#1755](https://github.com/microsoft/onefuzz/pull/1755), [#1760](https://github.com/microsoft/onefuzz/pull/1760), [#1761](https://github.com/microsoft/onefuzz/pull/1761), [#1762](https://github.com/microsoft/onefuzz/pull/1762), [#1765](https://github.com/microsoft/onefuzz/pull/1765), [#1757](https://github.com/microsoft/onefuzz/pull/1757), [#1780](https://github.com/microsoft/onefuzz/pull/1780), [#1782](https://github.com/microsoft/onefuzz/pull/1782), [#1783](https://github.com/microsoft/onefuzz/pull/1783), [#1777](https://github.com/microsoft/onefuzz/pull/1777), [#1791](https://github.com/microsoft/onefuzz/pull/1791), [#1801](https://github.com/microsoft/onefuzz/pull/1801), [#1805](https://github.com/microsoft/onefuzz/pull/1805), [#1804](https://github.com/microsoft/onefuzz/pull/1804), [#1803](https://github.com/microsoft/onefuzz/pull/1803)
+* Service: Make sure the scale set nodes are unable to accept work while in the `setup` state. [#1731](https://github.com/microsoft/onefuzz/pull/1731)
+
+### Changed
+* Agent: Reduce the logging level down from `warn` to `debug` when we are unable to parse an ASan log. [#1705](https://github.com/microsoft/onefuzz/pull/1705)
+* Service: Move the creation of the event grid topic to the deployment template from the `deploy.py` script. [#1591](https://github.com/microsoft/onefuzz/pull/1591)
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1548](https://github.com/microsoft/onefuzz/pull/1548), [#1617](https://github.com/microsoft/onefuzz/pull/1617), [#1618](https://github.com/microsoft/onefuzz/pull/1618)
+* Service: Consolidate the two log analytics down to one. [#1679](https://github.com/microsoft/onefuzz/pull/1679)
+* Service: Updated resource name in Bicep file to prevent name clash when deploying 5.3.0. [#1808](https://github.com/microsoft/onefuzz/pull/1808)
+
+### Fixed
+* Service: Auto scale setting log statement is not an `error` changed it to `info`. [#1745](https://github.com/microsoft/onefuzz/pull/1745)
+* Agent: Fixed Cobertera output so that coverage summary renders in Azure Devops correctly. [#1728](https://github.com/microsoft/onefuzz/pull/1728)
+* Agent: Continue after non-fatal errors during static recovery of SanCov coverage sites. [#1796](https://github.com/microsoft/onefuzz/pull/1796)
+* Service: Fixed name generation for a few resources in the Bicep file to increase uniqueness which prevents resource name clash. [#1800](https://github.com/microsoft/onefuzz/pull/1800)
+
+## 5.2.0
+### Added
+* Service: Added additional auto-scaling support for VM scale sets. [#1686](https://github.com/microsoft/onefuzz/pull/1686), [#1698](https://github.com/microsoft/onefuzz/pull/1698)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1699](https://github.com/microsoft/onefuzz/pull/1699), [#1589](https://github.com/microsoft/onefuzz/pull/1589)
+
+## 5.1.0
+### Added
+* Service: Added a new webhook message format compatible with Azure Event Grid. [#1640](https://github.com/microsoft/onefuzz/pull/1640)
+* Service: Added initial auto scaling support for VM scale sets. [#1647](https://github.com/microsoft/onefuzz/pull/1647), [#1661](https://github.com/microsoft/onefuzz/pull/1661)
+* Agent: Add an explicit timeout to setup scripts so hangs are easier to debug. [#1659](https://github.com/microsoft/onefuzz/pull/1659)
+
+### Changed
+* CLI/Service: Updated multiple first-party and third-party Python dependencies. [#1606](https://github.com/microsoft/onefuzz/pull/1606), [#1634](https://github.com/microsoft/onefuzz/pull/1634)
+* Agent: Check system-wide memory usage and fail tasks that are nearly out of memory. [#1657](https://github.com/microsoft/onefuzz/pull/1657)
+
+### Fixed
+* Service: Fix `task` field to the correct `NodeTasks` type so serialization works correctly.  [#1627](https://github.com/microsoft/onefuzz/pull/1627)
+* Agent: Convert escaped characters when accessing the name of a blob in a URL.  [#1673](https://github.com/microsoft/onefuzz/pull/1673)
+* Agent: Override `runs` parameter when testing inputs as we only want to test them once. [#1651](https://github.com/microsoft/onefuzz/pull/1651)
+* Service: Remove deprecated `warn()` method. [#1641](https://github.com/microsoft/onefuzz/pull/1641)
+
+## 5.0.0
+### Added
+* CLI/Service: Added `fuzzer_target_options` argument to the `libfuzzer` templates to allow passing some target options only in persistent fuzzing mode [#1610](https://github.com/microsoft/onefuzz/pull/1610)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.
+[#1530](https://github.com/microsoft/onefuzz/pull/1530)
+* CLI/Service: Updated multiple first-party and third-party Python dependencies. 
+[#1576](https://github.com/microsoft/onefuzz/pull/1576)
+[#1577](https://github.com/microsoft/onefuzz/pull/1577)
+[#1579](https://github.com/microsoft/onefuzz/pull/1579)
+[#1582](https://github.com/microsoft/onefuzz/pull/1582)
+[#1586](https://github.com/microsoft/onefuzz/pull/1586)
+[#1599](https://github.com/microsoft/onefuzz/pull/1599)
+* CLI/Service: Begin update of scale set instances before reimaging to ensure they match the latest scale set model. [#1612](https://github.com/microsoft/onefuzz/pull/1612)
+
+### Fixed
+* Agent: Removed the `process_stats` telemetry event, which fixes a class of memory leaks on Windows `libfuzzer_fuzz` tasks. [#1608](https://github.com/microsoft/onefuzz/pull/1608)
+* CLI/Service: Fixed seven day stale node reimaging check. [#1616](https://github.com/microsoft/onefuzz/pull/1616)
+
+## 4.1.0
+### Added
+* Agent: Added source line coverage data 
+[#1518](https://github.com/microsoft/onefuzz/pull/1518)
+[#1534](https://github.com/microsoft/onefuzz/pull/1534)
+[#1538](https://github.com/microsoft/onefuzz/pull/1538)
+[#1535](https://github.com/microsoft/onefuzz/pull/1535)
+[#1572](https://github.com/microsoft/onefuzz/pull/1572)
+* Agent: Added Cobertura XML output for source code visualization [#1533](https://github.com/microsoft/onefuzz/pull/1533)
+* Service: Added auto configuration properties to the monitoring agents [#1541](https://github.com/microsoft/onefuzz/pull/1541)
+* Service: Added tags to scalesets and VMs [#1560](https://github.com/microsoft/onefuzz/pull/1560)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. 
+[#1489](https://github.com/microsoft/onefuzz/pull/1489)
+[#1495](https://github.com/microsoft/onefuzz/pull/1495)
+[#1496](https://github.com/microsoft/onefuzz/pull/1496)
+[#1501](https://github.com/microsoft/onefuzz/pull/1501)
+[#1502](https://github.com/microsoft/onefuzz/pull/1502)
+[#1507](https://github.com/microsoft/onefuzz/pull/1507)
+[#1510](https://github.com/microsoft/onefuzz/pull/1510)
+[#1513](https://github.com/microsoft/onefuzz/pull/1513)
+[#1514](https://github.com/microsoft/onefuzz/pull/1514)
+[#1517](https://github.com/microsoft/onefuzz/pull/1517)
+[#1519](https://github.com/microsoft/onefuzz/pull/1519)
+[#1521](https://github.com/microsoft/onefuzz/pull/1521)
+[#1522](https://github.com/microsoft/onefuzz/pull/1522)
+[#1528](https://github.com/microsoft/onefuzz/pull/1528)
+[#1557](https://github.com/microsoft/onefuzz/pull/1557)
+[#1566](https://github.com/microsoft/onefuzz/pull/1566)
+* Agent: Changed the function that gets the `machine_id` to be `async` to avoid runtime nesting [#1468](https://github.com/microsoft/onefuzz/pull/1468)
+* Service: Removed generic reset command from the CLI [#1511](https://github.com/microsoft/onefuzz/pull/1511)
+* Service: Updated the way we check for endpoint authorization [#1472](https://github.com/microsoft/onefuzz/pull/1472)
+
+### Fixed
+* Service: Increase reliability of integration tests. [#1505](https://github.com/microsoft/onefuzz/pull/1505) 
+* Agent: Avoid leaking unused file and cache data [#1539](https://github.com/microsoft/onefuzz/pull/1539)
+* Agent: Fixed new clippy errors [#1516](https://github.com/microsoft/onefuzz/pull/1516)
+
 ## 4.0.0
 ### Added
 * Agent: Added common source coverage format. [#1403](https://github.com/microsoft/onefuzz/pull/1403)

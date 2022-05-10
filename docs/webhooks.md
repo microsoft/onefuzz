@@ -26,6 +26,21 @@ $ onefuzz webhooks create MYWEBHOOK https://contoso.com/my-custom-webhook task_c
 $
 ```
 
+Example creating a webhook subscription only the `task_created` events that produces webhook data in [Azure Event Grid](https://docs.microsoft.com/en-us/azure/event-grid/event-schema) compatible format:
+
+```
+$ onefuzz webhooks create MYWEBHOOK https://contoso.com/my-custom-webhook task_created --message_format event_grid
+{
+    "webhook_id": "cc6926de-7c6f-487e-96ec-7b632d3ed52b",
+    "name": "MYWEBHOOK",
+    "event_types": [
+        "task_created"
+    ]
+}
+$
+```
+
+
 ### Listing existing webhooks
 
 ```

@@ -57,6 +57,12 @@ pub struct CrashReport {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scariness_description: Option<String>,
+
+    pub onefuzz_version: String,
+
+    pub tool_name: String,
+
+    pub tool_version: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -177,6 +183,7 @@ impl From<BlobUrl> for InputBlob {
 }
 
 impl CrashReport {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         crash_log: CrashLog,
         task_id: Uuid,
@@ -185,6 +192,9 @@ impl CrashReport {
         input_blob: Option<InputBlob>,
         input_sha256: String,
         minimized_stack_depth: Option<usize>,
+        tool_name: String,
+        tool_version: String,
+        onefuzz_version: String,
     ) -> Self {
         let call_stack_sha256 = crash_log.call_stack_sha256();
         let minimized_stack_sha256 = if crash_log.minimized_stack.is_empty() {
@@ -240,6 +250,9 @@ impl CrashReport {
             scariness_description: crash_log.scariness_description,
             task_id,
             job_id,
+            onefuzz_version,
+            tool_name,
+            tool_version,
         }
     }
 
@@ -298,12 +311,13 @@ pub async fn monitor_reports(
         return Ok(());
     }
 
-    let mut monitor = DirectoryMonitor::new(base_dir);
-    monitor.start()?;
-    while let Some(file) = monitor.next_file().await {
+    let mut monitor = DirectoryMonitor::new(base_dir).await?;
+
+    while let Some(file) = monitor.next_file().await? {
         let result = parse_report_file(file).await?;
         result.save(unique_reports, reports, no_crash).await?;
     }
+
     Ok(())
 }
 

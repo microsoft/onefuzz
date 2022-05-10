@@ -12,7 +12,7 @@ from onefuzztypes.models import UserInfo
 from __app__.onefuzzlib.config import InstanceConfig
 from __app__.onefuzzlib.endpoint_authorization import (
     can_modify_config_impl,
-    check_can_manage_pools_impl,
+    check_require_admins_impl,
 )
 
 if "ONEFUZZ_INSTANCE_NAME" not in os.environ:
@@ -69,9 +69,9 @@ class TestAdmin(unittest.TestCase):
 
         # by default, any can modify
         self.assertIsNone(
-            check_can_manage_pools_impl(
+            check_require_admins_impl(
                 InstanceConfig(
-                    allowed_aad_tenants=[UUID(int=0)], allow_pool_management=True
+                    allowed_aad_tenants=[UUID(int=0)], require_admin_privileges=True
                 ),
                 UserInfo(),
             )
@@ -79,9 +79,9 @@ class TestAdmin(unittest.TestCase):
 
         # with oid, but no admin
         self.assertIsNone(
-            check_can_manage_pools_impl(
+            check_require_admins_impl(
                 InstanceConfig(
-                    allowed_aad_tenants=[UUID(int=0)], allow_pool_management=True
+                    allowed_aad_tenants=[UUID(int=0)], require_admin_privileges=True
                 ),
                 UserInfo(object_id=user1),
             )
@@ -89,10 +89,10 @@ class TestAdmin(unittest.TestCase):
 
         # is admin
         self.assertIsNone(
-            check_can_manage_pools_impl(
+            check_require_admins_impl(
                 InstanceConfig(
                     allowed_aad_tenants=[UUID(int=0)],
-                    allow_pool_management=False,
+                    require_admin_privileges=False,
                     admins=[user1],
                 ),
                 UserInfo(object_id=user1),
@@ -101,10 +101,10 @@ class TestAdmin(unittest.TestCase):
 
         # no user oid set
         self.assertIsNotNone(
-            check_can_manage_pools_impl(
+            check_require_admins_impl(
                 InstanceConfig(
                     allowed_aad_tenants=[UUID(int=0)],
-                    allow_pool_management=False,
+                    require_admin_privileges=False,
                     admins=[user1],
                 ),
                 UserInfo(),
@@ -113,10 +113,10 @@ class TestAdmin(unittest.TestCase):
 
         # not an admin
         self.assertIsNotNone(
-            check_can_manage_pools_impl(
+            check_require_admins_impl(
                 InstanceConfig(
                     allowed_aad_tenants=[UUID(int=0)],
-                    allow_pool_management=False,
+                    require_admin_privileges=False,
                     admins=[user1],
                 ),
                 UserInfo(object_id=user2),

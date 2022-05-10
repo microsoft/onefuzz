@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import datetime
 import logging
 from typing import Optional, cast
 from uuid import UUID
@@ -75,7 +76,9 @@ def on_state_update(
         # they send 'init' with reimage_requested, it's because the node was reimaged
         # successfully.
         node.reimage_requested = False
+        node.initialized_at = datetime.datetime.now(datetime.timezone.utc)
         node.set_state(state)
+
         return None
 
     logging.info("node state update: %s from:%s to:%s", machine_id, node.state, state)
