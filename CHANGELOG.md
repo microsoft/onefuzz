@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Separate `llvm-symbolizer` setup from sanitizer environment variable initialization. [#1778](https://github.com/microsoft/onefuzz/pull/1778)
 * Agent: Set the TSan options based on the external symbolizer. [#1787](https://github.com/microsoft/onefuzz/pull/1787)
 * Service: Removed the `client_secret` from the configuration file to eliminate the potential for the secret to be persisted. If you have persisted a client secret in your configuration file, remove it. [#1918](https://github.com/microsoft/onefuzz/pull/1918)
-* Service: Use a sas url to download log files. [#1920](https://github.com/microsoft/onefuzz/pull/1920)
+* CLI: Use a SAS URL to download log files. [#1920](https://github.com/microsoft/onefuzz/pull/1920)
 ### Fixed
 * Agent: Only watch directories for change events. [#1859](https://github.com/microsoft/onefuzz/pull/1859)
 * Agent: Switch to a smart constructor to minimize miss-use. [#1865](https://github.com/microsoft/onefuzz/pull/1865)
