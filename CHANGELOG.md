@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CLI: Use a SAS URL to download log files. [#1920](https://github.com/microsoft/onefuzz/pull/1920)
 ### Fixed
 * Agent: Only watch directories for change events. [#1859](https://github.com/microsoft/onefuzz/pull/1859)
-* Agent: Switch to a smart constructor to minimize miss-use. [#1865](https://github.com/microsoft/onefuzz/pull/1865)
+* Agent: Switch to a smart constructor to minimize misuse. [#1865](https://github.com/microsoft/onefuzz/pull/1865)
 * Service: Fixed an issue where jobs that do not have logs configured failed to get scheduled. [#1893](https://github.com/microsoft/onefuzz/pull/1893)
 
 ## 5.3.0
