@@ -1,4 +1,6 @@
 ﻿using System.IO;
+using System.Net.Http;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis.Sarif;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
@@ -14,7 +16,7 @@ public record AsanFrame (
 
 public class AsanHelper {
 
-    static Regex FrameRegex = new Regex(@"#(?<index>\d+) (?<address>0x[1234567890abcdef]+) in (?<func>.+) (?<file>[^:]+)(:(?<line>\d+))?(:(?<column>\d+))?", RegexOptions.ExplicitCapture | RegexOptions.RightToLeft);
+    static Regex FrameRegex = new Regex(@"#(?<index>\d+) (?<address>0x[1234567890abcdef]+) in (?<func>.+) \(?(?<file>[^:()+]+)(:(?<line>\d+))?(:(?<column>\d+))?\)?", RegexOptions.ExplicitCapture | RegexOptions.RightToLeft);
     public static AsanFrame? TryParseAsanFrame(string frame) {
         var match = FrameRegex.Match(frame);
         if (!match.Success) {
@@ -49,11 +51,23 @@ public class AsanHelper {
 }
 
 
-
 public class SarifGenerator{
-    Uri AsanErrorUrl = new Uri("https://github.com/google/sanitizers/wiki/AddressSanitizer");
+    static Uri AsanErrorUrl = new Uri("https://github.com/google/sanitizers/wiki/AddressSanitizer");
 
-    public Location GetLocationFromGenericFrame(string rootPath, string frame) {
+     
+    /// <summary>
+    /// Builds a URI that canonicalize the path. 
+    /// This is needed because the default serializer used in sarif log (newtonsoft)
+    /// Will use the Original string value of the url and that value will contains the . segement if present
+    /// However ,  dot segment are not authorized by the sarif validator
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
+    static Uri BuildUri(string path) {
+        return new UriBuilder(path).Uri;
+    }
+
+    public static Location GetLocationFromGenericFrame(string rootPath, string frame) {
         var rootUri = new System.Uri(rootPath);
         var splitted = frame.Split(" ");
         if (splitted.Length == 4) {
@@ -61,9 +75,7 @@ public class SarifGenerator{
             var address = splitted[1];
             var funcName = splitted[2];
             var path = splitted[3].Trim();
-            var uri = Path.IsPathRooted(path)
-                        ?  rootUri.MakeRelativeUri(new System.Uri(path))
-                        : new System.Uri(path, System.UriKind.Relative);
+            var uri = BuildUri($"file://{path}");
 
             return new Location{
                 Message = new Message { Text = frame },
@@ -71,7 +83,7 @@ public class SarifGenerator{
                 {
                     ArtifactLocation =
                         Path.IsPathRooted(uri.OriginalString)
-                            ? new ArtifactLocation { Uri = new System.Uri(path, System.UriKind.Absolute) }
+                            ? new ArtifactLocation { Uri = uri }
                             : new ArtifactLocation { Uri = uri, UriBaseId = "SRCROOT"}
                 }
             };
@@ -83,17 +95,16 @@ public class SarifGenerator{
     }
 
 
-    public Location GetLocationFromAsanFrame(string rootPath, string frame)
+    public static Location GetLocationFromAsanFrame(string rootPath, string frame)
     {
-        var rootUri = new System.Uri(rootPath.StartsWith("/") ? $"/{rootPath}": rootPath);
+        var rootUri = new System.Uri($"file://{rootPath}");
 
         var asanFrame = AsanHelper.TryParseAsanFrame(frame);
         if (asanFrame != null)
         {
-
             var relativePath = Path.IsPathRooted(asanFrame.File)
-                        ? Path.GetRelativePath(rootPath, asanFrame.File) //rootUri.MakeRelativeUri(new System.Uri(asanFrame.File))
-                        : asanFrame.File ;//new System.Uri(asanFrame.File.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), System.UriKind.Relative);
+                        ? Path.GetRelativePath(rootPath, asanFrame.File)
+                        : asanFrame.File ;
 
             return
                 new Location
@@ -102,9 +113,9 @@ public class SarifGenerator{
                     PhysicalLocation = new PhysicalLocation
                     {
                         ArtifactLocation =
-                            Path.IsPathRooted(relativePath)
-                                ? new ArtifactLocation { Uri = new System.Uri(asanFrame.File, System.UriKind.Absolute) }
-                                : new ArtifactLocation { Uri = new Uri(relativePath, System.UriKind.Relative), UriBaseId = "SRCROOT" },
+                            Path.IsPathRooted(asanFrame.File)
+                                ? new ArtifactLocation { Uri = BuildUri($"file://{asanFrame.File}") }
+                                : new ArtifactLocation { Uri = BuildUri($"file://{asanFrame.File}"), UriBaseId = "SRCROOT" },
                         Region = asanFrame.Line switch { int l => new Region { StartLine = l }, null => null },
                         // this line causes an issue in the validator
                         //ContextRegion = asanFrame.line switch { int l => new Region { StartLine = Math.Max(0, l - 1), EndLine = l }, _ => null }
@@ -116,9 +127,7 @@ public class SarifGenerator{
             return new Location { Message = new Message { Text = frame } };
         }
     }
-
-
-    public List<StackFrame> GetStackFrames(string rootPath, Report report)
+    public static List<StackFrame> GetStackFrames(string rootPath, Report report)
     {
 
         var parsedLocation = report.AsanLog switch
@@ -136,7 +145,7 @@ public class SarifGenerator{
 
 
 
-    public SarifLog ToSarif(string inputRootPath, Report report)
+    public static SarifLog ToSarif(string inputRootPath, Report report)
     {
         var rootPath =
                 System.IO.Path.EndsInDirectorySeparator(inputRootPath)
@@ -167,8 +176,8 @@ public class SarifGenerator{
                     new Run{
                         Tool = new Tool{
                                 Driver = new ToolComponent{
-                                        Name = report.ToolName, // TODO: this might need to be more specific
-                                        SemanticVersion = "0.0.1", // TODO: get the onfuzz version
+                                        Name = report.ToolName ?? "Onefuzz", // TODO: this might need to be more specific
+                                        SemanticVersion = report.OnefuzzVersion ?? "0.0.1", // TODO: get the onfuzz version
                                         Organization = "Microsoft",
                                         Product = "OneFuzz",
                                         ShortDescription = new MultiformatMessageString{Text = "Onefuzz fuzzing platform"},
@@ -208,9 +217,38 @@ public class SarifGenerator{
                     }
                 }
         };
-
-
         return sarifLog;
+    }
+
+
+    public async System.Threading.Tasks.Task<SarifLog> Validate(SarifLog sarifLog) {
+        using var mem = new MemoryStream();
+        using var writer = new StreamWriter(mem, leaveOpen: true);
+        using var jsonWriter = new Newtonsoft.Json.JsonTextWriter(writer) { Formatting = Newtonsoft.Json.Formatting.Indented};
+        var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
+        jsonSerializer.Serialize(jsonWriter, sarifLog);
+        jsonWriter.Flush();
+        mem.Position = 0;
+        using var content = new StreamContent(mem);
+        using var client = new HttpClient();
+        var multiForm = new MultipartFormDataContent();
+        multiForm.Add(content, "postedFiles", "test.sarif");
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, new UriBuilder("https://sarifweb.azurewebsites.net/Validation/ValidateFiles").Uri)
+        {
+            Content = multiForm,
+        };
+
+        var result = await client.SendAsync(httpRequest);
+        
+        var resultContent = await JsonDocument.ParseAsync(result.Content.ReadAsStream());
+        var sarifString = resultContent.RootElement.GetProperty("resultsLogContents").GetString();
+        using var mem2 = new MemoryStream();
+        using var writer2 = new StreamWriter(mem2);
+        await writer2.WriteAsync(sarifString);
+        writer2.Flush();
+        mem2.Position = 0 ;
+        var validationResult = SarifLog.Load(mem2);
+        return validationResult;
     }
 }
 
@@ -222,5 +260,34 @@ public static class SarifLogExtensions
         using var writer = new StreamWriter(mem, leaveOpen: true);
         sarifLog.Save(writer);
         return System.Text.Encoding.UTF8.GetString(mem.ToArray(), 0, (int) mem.Length);
+    }
+
+    public static async System.Threading.Tasks.Task<SarifLog> Validate(this SarifLog sarifLog) {
+        using var mem = new MemoryStream();
+        using var writer = new StreamWriter(mem, leaveOpen: true);
+        using var jsonWriter = new Newtonsoft.Json.JsonTextWriter(writer) { Formatting = Newtonsoft.Json.Formatting.Indented };
+        var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
+        jsonSerializer.Serialize(jsonWriter, sarifLog);
+        jsonWriter.Flush();
+        mem.Position = 0;
+        using var content = new StreamContent(mem);
+        using var client = new HttpClient();
+        var multiForm = new MultipartFormDataContent();
+        multiForm.Add(content, "postedFiles", "test.sarif");
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, new UriBuilder("https://sarifweb.azurewebsites.net/Validation/ValidateFiles").Uri) {
+            Content = multiForm,
+        };
+
+        var result = await client.SendAsync(httpRequest);
+
+        var resultContent = await JsonDocument.ParseAsync(result.Content.ReadAsStream());
+        var sarifString = resultContent.RootElement.GetProperty("resultsLogContents").GetString();
+        using var mem2 = new MemoryStream();
+        using var writer2 = new StreamWriter(mem2);
+        await writer2.WriteAsync(sarifString);
+        writer2.Flush();
+        mem2.Position = 0;
+        var validationResult = SarifLog.Load(mem2);
+        return validationResult;
     }
 }

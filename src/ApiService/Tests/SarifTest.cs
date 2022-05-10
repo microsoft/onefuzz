@@ -1,7 +1,9 @@
-using System;
+﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using Microsoft.CodeAnalysis.Sarif;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Xunit;
@@ -127,14 +129,13 @@ public class SarifTests{
         var report = JsonSerializer.Deserialize<Report>(test2, EntityConverter.GetJsonSerializerOptions());
         Assert.NotNull(report);
 
-        var sarifGenerator = new SarifGenerator();
-        var sarif = sarifGenerator.ToSarif(rootpath, report!);
+        var sarif = SarifGenerator.ToSarif(rootpath, report!);
         var sarifJson = sarif.ToJsonString();
 
 
         var client = new HttpClient();
 
-	    var multiForm = new MultipartFormDataContent();
+        var multiForm = new MultipartFormDataContent();
 
         using var mem = new MemoryStream();
         using var content = new StreamContent(mem);
@@ -151,6 +152,47 @@ public class SarifTests{
         // JsonDocument.ParseAsync()
 
         _output.WriteLine(await response.Content.ReadAsStringAsync());
+
+    }
+
+
+    [Fact]
+    async System.Threading.Tasks.Task ValidateSarifFile() {
+
+        var reportDir = @"./sample_reports";
+
+        var reports =
+            Directory.EnumerateFiles(reportDir, "*.json")
+            .Select(x => JsonSerializer.Deserialize<Report>(File.ReadAllText(x), EntityConverter.GetJsonSerializerOptions()) ?? throw new Exception())
+            .Select(x => SarifGenerator.ToSarif("/home/runner/work/onefuzz/onefuzz", x));
+
+
+
+        foreach (var report in reports) { 
+        
+            var validationResult = await report.Validate();
+            var results =
+            validationResult.Runs.SelectMany(
+                run => run.Results.Select(
+                    result => new {
+                        MessageId = result.Message.Id,
+                        Arguments = string.Join("\n", result.Message.Arguments) ,
+                        Location = string.Join(",", result.Locations.Select(location => $"{location.PhysicalLocation.Region.StartLine}:{location.PhysicalLocation.Region.StartColumn}"))
+                    }
+                )
+            ).ToList();
+
+            if (results.Any()) {
+                
+                _output.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(report, Newtonsoft.Json.Formatting.Indented));
+                foreach (var result in results) {
+                    _output.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented));
+                }
+
+
+            }
+            
+        }
 
     }
 }

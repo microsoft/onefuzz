@@ -436,9 +436,9 @@ public record Report(
     string? MinimizedStackFunctionNamesSha256,
     List<string>? MinimizedStackFunctionLines,
     string? MinimizedStackFunctionLinesSha256,
-    string ToolName,
-    string ToolVersion,
-    string OnefuzzVersion
+    string? ToolName,
+    string? ToolVersion,
+    string? OnefuzzVersion
 );
 
 public record NoReproReport(
