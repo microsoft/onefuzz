@@ -202,6 +202,7 @@ public static class PoolStateHelper {
     public static IReadOnlySet<PoolState> Available => _available;
 }
 
+[SkipRename]
 public enum Architecture {
     x86_64
 }

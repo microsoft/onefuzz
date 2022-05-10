@@ -13,7 +13,7 @@ public class AgentCanSchedule {
         _context = context;
     }
 
-    [Function("AgentCanSchedule")]
+    // [Function("AgentCanSchedule")]
     public async Async.Task<HttpResponseData> Run([HttpTrigger] HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<CanScheduleRequest>(req);
         if (!request.IsOk || request.OkV == null) {
