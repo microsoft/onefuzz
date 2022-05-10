@@ -13,16 +13,41 @@
             return new Dictionary<string, string>(q);
         }
 
-        public static bool GetBoolValue(string key, IDictionary<string, string> query, bool defaultValue = false) {
+        public static bool GetBool(string key, IDictionary<string, string> query, bool defaultValue = false) {
             bool v;
             if (query.ContainsKey(key)) {
-                if (!bool.TryParse(query[key], out v)) {
-                    v = defaultValue;
-                }
+                v = bool.Parse(query[key]);
             } else {
                 v = defaultValue;
             }
             return v;
+        }
+
+        public static int? GetInt(string key, IDictionary<string, string> query, int? defaultValue = null) {
+            int? v;
+            if (query.ContainsKey(key)) {
+                v = int.Parse(query[key]);
+            } else {
+                v = defaultValue;
+            }
+            return v;
+        }
+
+
+        public static string? GetString(string key, IDictionary<string, string> query, string? defaultValue = null) {
+            if (query.ContainsKey(key)) {
+                return query[key];
+            } else {
+                return defaultValue;
+            }
+        }
+
+        public static Guid? GetGuid(string key, IDictionary<string, string> query, Guid? defaultValue = null) {
+            if (query.ContainsKey(key)) {
+                return Guid.Parse(query[key]);
+            } else {
+                return defaultValue;
+            }
         }
 
 
