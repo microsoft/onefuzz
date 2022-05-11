@@ -695,3 +695,8 @@ public record TaskUnitConfig(
     public IContainerDef? RegressionReport { get; set; }
 
 }
+
+public record NodeCommandEnvelope(
+    NodeCommand Command,
+    string MessageId
+);
