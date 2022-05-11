@@ -15,6 +15,7 @@ pub struct DirectoryMonitor {
     dir: PathBuf,
     notify_events: UnboundedReceiver<notify::Result<Event>>,
     watcher: notify::RecommendedWatcher,
+    report_directories: bool,
 }
 
 impl DirectoryMonitor {
@@ -43,11 +44,19 @@ impl DirectoryMonitor {
         let mut watcher = notify::recommended_watcher(event_handler)?;
         watcher.watch(&dir, RecursiveMode::NonRecursive)?;
 
+        let report_directories = true;
+
         Ok(Self {
             dir,
             notify_events,
             watcher,
+            report_directories,
         })
+    }
+
+    pub fn set_report_directories(mut self, report_directories: bool) -> Self {
+        self.report_directories = report_directories;
+        self
     }
 
     pub fn stop(&mut self) -> Result<()> {
@@ -86,7 +95,11 @@ impl DirectoryMonitor {
                         .ok_or_else(|| format_err!("missing path for file create event"))?
                         .clone();
 
-                    return Ok(Some(path));
+                    if !self.report_directories && fs::metadata(&path).await?.is_dir() {
+                        // Ignore
+                    } else {
+                        return Ok(Some(path));
+                    }
                 }
                 EventKind::Remove(..) => {
                     let path = event
