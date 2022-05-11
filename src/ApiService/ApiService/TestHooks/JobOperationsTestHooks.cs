@@ -53,10 +53,10 @@ namespace ApiService.TestHooks {
             _log.Info("Search jobs by state");
 
             var query = UriExtension.GetQueryComponents(req.Url);
-            var init = UriExtension.GetBoolValue("init", query, false);
-            var enabled = UriExtension.GetBoolValue("enabled", query, false);
-            var stopping = UriExtension.GetBoolValue("stopping", query, false);
-            var stopped = UriExtension.GetBoolValue("stopped", query, false);
+            var init = UriExtension.GetBool("init", query, false);
+            var enabled = UriExtension.GetBool("enabled", query, false);
+            var stopping = UriExtension.GetBool("stopping", query, false);
+            var stopped = UriExtension.GetBool("stopped", query, false);
 
             var states = new List<JobState>();
             if (init) {

@@ -59,7 +59,7 @@ namespace ApiService.TestHooks {
 
             var rg = query["rg"];
             var name = query["name"];
-            var yes = UriExtension.GetBoolValue("force", query, false);
+            var yes = UriExtension.GetBool("force", query, false);
 
             if (yes) {
                 await _ipOps.DeleteNic(rg, name);
@@ -79,7 +79,7 @@ namespace ApiService.TestHooks {
 
             var rg = query["rg"];
             var name = query["name"];
-            var yes = UriExtension.GetBoolValue("force", query, false);
+            var yes = UriExtension.GetBool("force", query, false);
 
             if (yes) {
                 await _ipOps.DeleteIp(rg, name);
