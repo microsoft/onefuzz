@@ -9,8 +9,8 @@ public class QueueSignalREvents {
         _loggerFactory = loggerFactory;
     }
 
-    //[Function("QueueSignalREvents")]
-    //[SignalROutput(HubName = "dashboard")]
+    [Function("QueueSignalREvents")]
+    [SignalROutput(HubName = "dashboard")]
     public static string Run(
         [QueueTrigger("signalr-events-refactored", Connection = "AzureWebJobsStorage")] string msg) {
         return msg;

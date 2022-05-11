@@ -13,12 +13,12 @@ public class QueueFileChanges {
 
     private readonly IStorage _storage;
 
-    private readonly INotificationOperations _notificationOperations;
+    private readonly IOnefuzzContext _onefuzzContext;
 
-    public QueueFileChanges(ILogTracer log, IStorage storage, INotificationOperations notificationOperations) {
+    public QueueFileChanges(ILogTracer log, IStorage storage, IOnefuzzContext onefuzzContext) {
         _log = log;
         _storage = storage;
-        _notificationOperations = notificationOperations;
+        _onefuzzContext = onefuzzContext;
     }
 
     //[Function("QueueFileChanges")]
@@ -55,6 +55,6 @@ public class QueueFileChanges {
         var path = string.Join('/', parts.Skip(1));
 
         log.Info($"file added container: {container} - path: {path}");
-        await _notificationOperations.NewFiles(new Container(container), path, failTaskOnTransientError);
+        await _onefuzzContext.NotificationOperations.NewFiles(new Container(container), path, failTaskOnTransientError);
     }
 }
