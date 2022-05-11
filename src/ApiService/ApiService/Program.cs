@@ -103,6 +103,7 @@ public class Program {
             .AddScoped<IVmssOperations, VmssOperations>()
             .AddScoped<INodeTasksOperations, NodeTasksOperations>()
             .AddScoped<INodeMessageOperations, NodeMessageOperations>()
+            .AddScoped<IRequestHandling, RequestHandling>()
             .AddScoped<IOnefuzzContext, OnefuzzContext>()
 
             .AddSingleton<ICreds, Creds>()
