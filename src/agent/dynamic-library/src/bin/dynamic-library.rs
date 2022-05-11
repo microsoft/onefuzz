@@ -14,6 +14,9 @@ struct Opt {
 
     #[structopt(short, long)]
     quiet: bool,
+
+    #[structopt(short, long)]
+    ld_library_path: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -29,6 +32,11 @@ fn main() -> Result<()> {
     if opt.quiet {
         cmd.stdout(Stdio::null());
         cmd.stderr(Stdio::null());
+    }
+
+    if let Some(path) = &opt.ld_library_path {
+        println!("setting LD_LIBRARY_PATH = \"{}\"", path);
+        cmd.env("LD_LIBRARY_PATH", path);
     }
 
     let missing = find_missing(cmd)?;
