@@ -1,4 +1,4 @@
-using Microsoft.OneFuzz.Service;
+﻿using Microsoft.OneFuzz.Service;
 using Moq;
 using Xunit;
 
@@ -12,10 +12,10 @@ public class QueueFileChangesTests {
 
     public QueueFileChangesTests() {
         var mockCtx = new Mock<IOnefuzzContext>();
-     
+
         var mockStorage = new Mock<IStorage>();
         mockStorage.Setup(x => x.CorpusAccounts())
-            .Returns(new [] {"test"});
+            .Returns(new[] { "test" });
 
         notificationOps = new Mock<INotificationOperations>();
         mockCtx.Setup(x => x.NotificationOperations)
@@ -27,8 +27,7 @@ public class QueueFileChangesTests {
     }
 
     [Fact]
-    public async System.Threading.Tasks.Task NotifiesNewFiles()
-    {
+    public async System.Threading.Tasks.Task NotifiesNewFiles() {
         var qfc = new QueueFileChanges(log, storage, ctx);
 
         await qfc.Run(validMessage, 0);
@@ -37,8 +36,7 @@ public class QueueFileChangesTests {
     }
 
     [Fact]
-    public async System.Threading.Tasks.Task IgnoresInvalidEventTypes()
-    {
+    public async System.Threading.Tasks.Task IgnoresInvalidEventTypes() {
         var qfc = new QueueFileChanges(log, storage, ctx);
 
         await qfc.Run(invalidEventType, 0);
@@ -47,8 +45,7 @@ public class QueueFileChangesTests {
     }
 
     [Fact]
-    public async System.Threading.Tasks.Task IgnoresInvalidTopic()
-    {
+    public async System.Threading.Tasks.Task IgnoresInvalidTopic() {
         var qfc = new QueueFileChanges(log, storage, ctx);
 
         await qfc.Run(invalidTopic, 0);
