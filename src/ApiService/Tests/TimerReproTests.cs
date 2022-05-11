@@ -1,10 +1,10 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.OneFuzz.Service;
 using Moq;
 using Xunit;
-using System.Linq;
-using System.Collections.Generic;
-using System;
-using Microsoft.Azure.Functions.Worker;
 
 namespace Tests;
 
@@ -74,7 +74,7 @@ public class TimerReproTests {
     public async System.Threading.Tasks.Task DontProcessExpiredVms() {
         var expiredVm = GenerateRepro();
         var notExpiredVm = GenerateRepro();
-        
+
         mockReproOperations.Setup(x => x.SearchExpired())
             .Returns(new List<Repro> {
                 expiredVm
