@@ -21,7 +21,7 @@ namespace ApiService.TestHooks {
 
 
         [Function("GetPoolTestHook")]
-        public async Task<HttpResponseData> GetNsg([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/poolOperations/pool")] HttpRequestData req) {
+        public async Task<HttpResponseData> GetPool([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/poolOperations/pool")] HttpRequestData req) {
             _log.Info("get pool");
 
             var query = UriExtension.GetQueryComponents(req.Url);
