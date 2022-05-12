@@ -128,7 +128,7 @@ namespace ApiService.TestHooks {
             _log.Info("to reimage");
 
             var query = UriExtension.GetQueryComponents(req.Url);
-            var done = UriExtension.GetBoolValue("done", query, false);
+            var done = UriExtension.GetBool("done", query, false);
 
             var s = await req.ReadAsStringAsync();
             var node = JsonSerializer.Deserialize<Node>(s!, EntityConverter.GetJsonSerializerOptions());
@@ -158,35 +158,18 @@ namespace ApiService.TestHooks {
             _log.Info("search states");
 
             var query = UriExtension.GetQueryComponents(req.Url);
-
-            Guid? poolId = default;
-            if (query.ContainsKey("poolId")) {
-                poolId = Guid.Parse(query["poolId"]);
-            }
-
-            Guid? scaleSetId = default;
-            if (query.ContainsKey("scaleSetId")) {
-                scaleSetId = Guid.Parse(query["scaleSetId"]);
-            }
+            Guid? poolId = UriExtension.GetGuid("poolId", query);
+            Guid? scaleSetId = UriExtension.GetGuid("scaleSetId", query);
 
             List<NodeState>? states = default;
             if (query.ContainsKey("states")) {
                 states = query["states"].Split('-').Select(s => Enum.Parse<NodeState>(s)).ToList();
             }
+            string? poolName = UriExtension.GetString("poolName", query);
 
-            string? poolName = default;
-            if (query.ContainsKey("poolName")) {
-                poolName = query["poolName"];
-            }
-
-            var excludeUpdateScheduled = UriExtension.GetBoolValue("excludeUpdateScheduled", query, false);
-            int? numResults = default;
-            if (query.ContainsKey("numResults")) {
-                numResults = int.Parse(query["numResults"]);
-            }
+            var excludeUpdateScheduled = UriExtension.GetBool("excludeUpdateScheduled", query, false);
+            int? numResults = UriExtension.GetInt("numResults", query);
             var r = _nodeOps.SearchStates(poolId, scaleSetId, states, poolName, excludeUpdateScheduled, numResults);
-
-
             var json = JsonSerializer.Serialize(await r.ToListAsync(), EntityConverter.GetJsonSerializerOptions());
             var resp = req.CreateResponse(HttpStatusCode.OK);
             await resp.WriteStringAsync(json);
@@ -236,7 +219,7 @@ namespace ApiService.TestHooks {
 
             string version = query["version"];
 
-            bool isNew = UriExtension.GetBoolValue("isNew", query, false);
+            bool isNew = UriExtension.GetBool("isNew", query, false);
 
             var node = await _nodeOps.Create(poolId, poolName, machineId, scaleSetId, version, isNew);
 
