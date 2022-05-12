@@ -266,7 +266,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd src/ApiService/
-        dotnet restore
+        dotnet restore --locked-mode
     - name: Check Formatting
       run: |
         cd src/ApiService/
