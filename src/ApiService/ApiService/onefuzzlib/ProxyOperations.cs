@@ -108,7 +108,6 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
     }
 
 
-
     public async Async.Task SetState(Proxy proxy, VmState state) {
         if (proxy.State == state) {
             return;
@@ -127,7 +126,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
             if (entry.EndTime < DateTimeOffset.UtcNow) {
                 await _context.ProxyForwardOperations.Delete(entry);
             } else {
-                forwards.Add(new Forward(entry.Port, entry.DstPort, entry.DstIp));
+                forwards.Add(new Forward(long.Parse(entry.Port), entry.DstPort, entry.DstIp));
             }
         }
         return forwards;
