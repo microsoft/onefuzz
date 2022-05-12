@@ -15,7 +15,7 @@ namespace ApiService.TestHooks {
         private readonly INsgOperations _nsgOperations;
 
         public NsgOperationsTestHooks(ILogTracer log, IConfigOperations configOps, INsgOperations nsgOperations) {
-            _log = log.WithTag("TestHooks", nameof(NotificationOperationsTestHooks));
+            _log = log.WithTag("TestHooks", nameof(NsgOperationsTestHooks));
             _configOps = configOps; ;
             _nsgOperations = nsgOperations;
         }

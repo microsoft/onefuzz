@@ -19,13 +19,13 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
         var conditions =
             new[] {
                 scalesetId != null ? $"scaleset_id eq '{scalesetId}'" : null,
-                region != null ? $"region eq '{region}'" : null ,
+                region != null ? $"PartitionKey eq '{region}'" : null ,
                 machineId != null ? $"machine_id eq '{machineId}'" : null ,
                 proxyId != null ? $"proxy_id eq '{proxyId}'" : null ,
-                dstPort != null ? $"dsp_port eq {dstPort }" : null ,
+                dstPort != null ? $"dst_port eq {dstPort}" : null ,
             }.Where(x => x != null);
 
-        var filter = string.Join(" and ", conditions);
+        var filter = Query.And(conditions!);
 
         return QueryAsync(filter);
     }
