@@ -16,6 +16,7 @@ async fn main() -> Result<()> {
     let opt = Opt::from_args();
 
     let mut monitor = DirectoryMonitor::new(opt.path).await?;
+    monitor.set_report_directories(true);
 
     while let Some(created) = monitor.next_file().await? {
         println!("[create] {}", created.display());
