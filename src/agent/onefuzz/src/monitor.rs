@@ -10,6 +10,8 @@ use tokio::{
     sync::mpsc::{unbounded_channel, UnboundedReceiver},
 };
 
+const DEFAULT_REPORT_DIRECTORIES: bool = false;
+
 /// Watches a directory, and on file creation, emits the path to the file.
 pub struct DirectoryMonitor {
     dir: PathBuf,
@@ -44,19 +46,16 @@ impl DirectoryMonitor {
         let mut watcher = notify::recommended_watcher(event_handler)?;
         watcher.watch(&dir, RecursiveMode::NonRecursive)?;
 
-        let report_directories = true;
-
         Ok(Self {
             dir,
             notify_events,
             watcher,
-            report_directories,
+            report_directories: DEFAULT_REPORT_DIRECTORIES,
         })
     }
 
-    pub fn set_report_directories(mut self, report_directories: bool) -> Self {
+    pub fn set_report_directories(&mut self, report_directories: bool) {
         self.report_directories = report_directories;
-        self
     }
 
     pub fn stop(&mut self) -> Result<()> {
