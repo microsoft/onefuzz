@@ -1,17 +1,14 @@
-﻿namespace Microsoft.OneFuzz.Service
-{
+﻿namespace Microsoft.OneFuzz.Service {
 
-    public struct ResultOk<T_Error>
-    {
-        public static ResultOk<T_Error> Ok() => new();
-        public static ResultOk<T_Error> Error(T_Error err) => new(err);
+    public struct ResultVoid<T_Error> {
+        public static ResultVoid<T_Error> Ok() => new();
+        public static ResultVoid<T_Error> Error(T_Error err) => new(err);
 
         readonly T_Error? error;
         readonly bool isOk;
 
-        public ResultOk() => (error, isOk) = (default, true);
-
-        public ResultOk(T_Error error) => (this.error, isOk) = (error, false);
+        public ResultVoid() => (error, isOk) = (default, true);
+        private ResultVoid(T_Error error) => (this.error, isOk) = (error, false);
 
         public bool IsOk => isOk;
 
@@ -19,8 +16,7 @@
     }
 
 
-    public struct Result<T_Ok, T_Error>
-    {
+    public struct Result<T_Ok, T_Error> {
         public static Result<T_Ok, T_Error> Ok(T_Ok ok) => new(ok);
         public static Result<T_Ok, T_Error> Error(T_Error err) => new(err);
 
@@ -28,9 +24,9 @@
         readonly T_Error? error;
         readonly bool isOk;
 
-        public Result(T_Ok ok) => (this.ok, error, isOk) = (ok, default, true);
+        private Result(T_Ok ok) => (this.ok, error, isOk) = (ok, default, true);
 
-        public Result(T_Error error) => (this.error, ok, isOk) = (error, default, false);
+        private Result(T_Error error) => (this.error, ok, isOk) = (error, default, false);
 
         public bool IsOk => isOk;
 
@@ -39,8 +35,7 @@
     }
 
 
-    public struct OneFuzzResult<T_Ok>
-    {
+    public struct OneFuzzResult<T_Ok> {
         static Error NoError = new(0);
 
         readonly T_Ok? ok;
@@ -60,7 +55,32 @@
 
         public static OneFuzzResult<T_Ok> Ok(T_Ok ok) => new(ok);
         public static OneFuzzResult<T_Ok> Error(ErrorCode errorCode, string[] errors) => new(errorCode, errors);
+        public static OneFuzzResult<T_Ok> Error(ErrorCode errorCode, string error) => new(errorCode, new[] { error });
 
         public static OneFuzzResult<T_Ok> Error(Error err) => new(err);
     }
+
+
+    public struct OneFuzzResultVoid {
+        static Error NoError = new(0);
+
+        readonly Error error;
+        readonly bool isOk;
+
+        public bool IsOk => isOk;
+
+        public Error ErrorV => error;
+
+        private OneFuzzResultVoid(ErrorCode errorCode, string[] errors) => (error, isOk) = (new Error(errorCode, errors), false);
+
+        private OneFuzzResultVoid(Error err) => (error, isOk) = (err, false);
+
+        public static OneFuzzResultVoid Ok() => new();
+        public static OneFuzzResultVoid Error(ErrorCode errorCode, string[] errors) => new(errorCode, errors);
+        public static OneFuzzResultVoid Error(ErrorCode errorCode, string error) => new(errorCode, new[] { error });
+        public static OneFuzzResultVoid Error(Error err) => new(err);
+    }
+
+
+
 }

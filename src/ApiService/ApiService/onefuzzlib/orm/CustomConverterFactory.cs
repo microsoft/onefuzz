@@ -7,16 +7,13 @@ using System.Text.Json.Serialization;
 
 namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
-public sealed class CustomEnumConverterFactory : JsonConverterFactory
-{
-    public override bool CanConvert(Type typeToConvert) => typeToConvert.IsEnum;
+public sealed class CustomEnumConverterFactory : JsonConverterFactory {
+    public override bool CanConvert(Type typeToConvert) => typeToConvert.IsEnum && (typeToConvert.GetCustomAttribute<SerializeValueAttribute>() == null);
 
-    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
-    {
+    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
         object[]? knownValues = null;
 
-        if (typeToConvert == typeof(BindingFlags))
-        {
+        if (typeToConvert == typeof(BindingFlags)) {
             knownValues = new object[] { BindingFlags.CreateInstance | BindingFlags.DeclaredOnly };
         }
 
@@ -29,8 +26,7 @@ public sealed class CustomEnumConverterFactory : JsonConverterFactory
     }
 }
 
-public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum
-{
+public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum {
     private readonly JsonNamingPolicy _namingPolicy;
 
     private readonly Dictionary<string, T> _readCache = new();
@@ -41,117 +37,97 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum
 
     private const string ValueSeparator = ",";
 
-    public CustomEnumConverter(JsonNamingPolicy namingPolicy, JsonSerializerOptions options, object[]? knownValues)
-    {
+    private readonly bool _skipFormat;
+
+    public CustomEnumConverter(JsonNamingPolicy namingPolicy, JsonSerializerOptions options, object[]? knownValues) {
         _namingPolicy = namingPolicy;
 
         bool continueProcessing = true;
-        for (int i = 0; i < knownValues?.Length; i++)
-        {
-            if (!TryProcessValue((T)knownValues[i]))
-            {
+        for (int i = 0; i < knownValues?.Length; i++) {
+            if (!TryProcessValue((T)knownValues[i])) {
                 continueProcessing = false;
                 break;
             }
         }
 
         var type = typeof(T);
-        var skipFormat = type.GetCustomAttribute<SkipRename>() != null;
-        if (continueProcessing)
-        {
+        _skipFormat = type.GetCustomAttribute<SkipRename>() != null;
+        if (continueProcessing) {
             Array values = Enum.GetValues(type);
 
-            for (int i = 0; i < values.Length; i++)
-            {
+            for (int i = 0; i < values.Length; i++) {
                 T value = (T)values.GetValue(i)!;
 
-                if (!TryProcessValue(value, skipFormat))
-                {
+                if (!TryProcessValue(value, _skipFormat)) {
                     break;
                 }
             }
         }
 
-        bool TryProcessValue(T value, bool skipFormat = false)
-        {
-            if (_readCache.Count == NameCacheLimit)
-            {
+        bool TryProcessValue(T value, bool skipFormat = false) {
+            if (_readCache.Count == NameCacheLimit) {
                 Debug.Assert(_writeCache.Count == NameCacheLimit);
                 return false;
             }
 
-            FormatAndAddToCaches(value, options.Encoder, skipFormat);
+            FormatAndAddToCaches(value, options.Encoder, _skipFormat);
             return true;
         }
     }
 
-    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
+    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         string? json;
 
-        if (reader.TokenType != JsonTokenType.String || (json = reader.GetString()) == null)
-        {
+        if (reader.TokenType != JsonTokenType.String || (json = reader.GetString()) == null) {
             throw new JsonException();
         }
 
         var value = json.Split(ValueSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(x =>
-            {
-                if (!_readCache.TryGetValue(x, out T? value))
-                {
+            .Select(x => {
+                if (!_readCache.TryGetValue(x, out T? value)) {
                     throw new JsonException();
                 }
                 return value;
 
             }).ToArray();
 
-        if (value.Length == 1)
-        {
+        if (value.Length == 1) {
             return value[0];
         }
 
         return (T)(object)value.Aggregate(0, (state, value) => (int)(object)state | (int)(object)value);
     }
 
-    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
-    {
-        if (!_writeCache.TryGetValue(value, out JsonEncodedText formatted))
-        {
-            if (_writeCache.Count == NameCacheLimit)
-            {
+    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) {
+        if (!_writeCache.TryGetValue(value, out JsonEncodedText formatted)) {
+            if (_writeCache.Count == NameCacheLimit) {
                 Debug.Assert(_readCache.Count == NameCacheLimit);
                 throw new ArgumentOutOfRangeException();
             }
 
-            formatted = FormatAndAddToCaches(value, options.Encoder);
+            formatted = FormatAndAddToCaches(value, options.Encoder, _skipFormat);
         }
 
         writer.WriteStringValue(formatted);
     }
 
-    private JsonEncodedText FormatAndAddToCaches(T value, JavaScriptEncoder? encoder, bool skipFormat = false)
-    {
+    private JsonEncodedText FormatAndAddToCaches(T value, JavaScriptEncoder? encoder, bool skipFormat = false) {
         (string valueFormattedToStr, JsonEncodedText valueEncoded) = FormatEnumValue(value.ToString(), _namingPolicy, encoder, skipFormat);
         _readCache[valueFormattedToStr] = value;
         _writeCache[value] = valueEncoded;
         return valueEncoded;
     }
 
-    private ValueTuple<string, JsonEncodedText> FormatEnumValue(string value, JsonNamingPolicy namingPolicy, JavaScriptEncoder? encoder, bool skipFormat = false)
-    {
+    private ValueTuple<string, JsonEncodedText> FormatEnumValue(string value, JsonNamingPolicy namingPolicy, JavaScriptEncoder? encoder, bool skipFormat = false) {
         string converted;
 
-        if (!value.Contains(ValueSeparator))
-        {
+        if (!value.Contains(ValueSeparator)) {
             converted = skipFormat ? value : namingPolicy.ConvertName(value);
-        }
-        else
-        {
+        } else {
             // todo: optimize implementation here by leveraging https://github.com/dotnet/runtime/issues/934.
             string[] enumValues = value.Split(ValueSeparator);
 
-            for (int i = 0; i < enumValues.Length; i++)
-            {
+            for (int i = 0; i < enumValues.Length; i++) {
                 var trimmed = enumValues[i].Trim();
                 enumValues[i] = skipFormat ? trimmed : namingPolicy.ConvertName(trimmed);
             }
@@ -164,13 +140,10 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum
 }
 
 
-public sealed class PolymorphicConverterFactory : JsonConverterFactory
-{
-    public override bool CanConvert(Type typeToConvert)
-    {
+public sealed class PolymorphicConverterFactory : JsonConverterFactory {
+    public override bool CanConvert(Type typeToConvert) {
         var converter = typeToConvert.GetCustomAttribute<JsonConverterAttribute>();
-        if (converter != null)
-        {
+        if (converter != null) {
             return false;
         }
 
@@ -180,24 +153,18 @@ public sealed class PolymorphicConverterFactory : JsonConverterFactory
                 .Where(p => p.attribute != null)
                 .ToList();
 
-        if (propertyAndAttributes.Count == 0)
-        {
+        if (propertyAndAttributes.Count == 0) {
             return false;
         }
 
-        if (propertyAndAttributes.Count == 1)
-        {
+        if (propertyAndAttributes.Count == 1) {
             return true;
-        }
-
-        else
-        {
+        } else {
             throw new InvalidOperationException("the attribute TypeDiscrimnatorAttribute can only be aplied once");
         }
     }
 
-    public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
-    {
+    public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
         var (field, attribute) = typeToConvert.GetProperties()
                 .Select(p => (p.Name, p.GetCustomAttribute<TypeDiscrimnatorAttribute>()))
                 .Where(p => p.Item2 != null)
@@ -213,8 +180,7 @@ public sealed class PolymorphicConverterFactory : JsonConverterFactory
     }
 }
 
-public sealed class PolymorphicConverter<T> : JsonConverter<T>
-{
+public sealed class PolymorphicConverter<T> : JsonConverter<T> {
     private readonly ITypeProvider _typeProvider;
     private readonly string _discriminatorField;
     private readonly string _discriminatedField;
@@ -227,8 +193,7 @@ public sealed class PolymorphicConverter<T> : JsonConverter<T>
 
 
 
-    public PolymorphicConverter(TypeDiscrimnatorAttribute typeDiscriminator, string discriminatedField) : base()
-    {
+    public PolymorphicConverter(TypeDiscrimnatorAttribute typeDiscriminator, string discriminatedField) : base() {
         _discriminatorField = typeDiscriminator.FieldName;
         _typeProvider = (ITypeProvider)(typeDiscriminator.ConverterType.GetConstructor(new Type[] { })?.Invoke(null) ?? throw new JsonException());
         _discriminatedField = discriminatedField;
@@ -245,33 +210,27 @@ public sealed class PolymorphicConverter<T> : JsonConverter<T>
                 .ToDictionary(x => x.Item1, x => x.Item2!) ?? new Dictionary<string, string>();
     }
 
-    private string ConvertName(string name, JsonSerializerOptions options)
-    {
+    private string ConvertName(string name, JsonSerializerOptions options) {
 
-        if (_renamedViaJsonPropery.TryGetValue(name, out var renamed))
-        {
+        if (_renamedViaJsonPropery.TryGetValue(name, out var renamed)) {
             return renamed;
         }
 
         return options.PropertyNamingPolicy?.ConvertName(name) ?? name;
     }
 
-    public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        if (reader.TokenType != JsonTokenType.StartObject)
-        {
+    public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        if (reader.TokenType != JsonTokenType.StartObject) {
             throw new JsonException();
         }
 
-        using (var jsonDocument = JsonDocument.ParseValue(ref reader))
-        {
+        using (var jsonDocument = JsonDocument.ParseValue(ref reader)) {
             var discriminatorName = ConvertName(_discriminatorField, options);
             var discriminatorValue = jsonDocument.RootElement.GetProperty(discriminatorName).GetRawText();
             var discriminatorTypedValue = JsonSerializer.Deserialize(discriminatorValue, _discriminatorType, options) ?? throw new JsonException("unable to read deserialize discriminator value");
             var discriminatedType = _typeProvider.GetTypeInfo(discriminatorTypedValue);
             var constructorParams =
-                _constructorInfo.GetParameters().Select(p =>
-                {
+                _constructorInfo.GetParameters().Select(p => {
                     var parameterName = p.Name ?? throw new JsonException();
                     var parameterType = parameterName == _discriminatedField ? discriminatedType : p.ParameterType;
                     var fName = ConvertName(parameterName, options);
@@ -283,15 +242,12 @@ public sealed class PolymorphicConverter<T> : JsonConverter<T>
         }
     }
 
-    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
-    {
+    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) {
         var newOptions =
-            _options.GetValue(options, k =>
-            {
+            _options.GetValue(options, k => {
                 var newOptions = new JsonSerializerOptions(k);
                 var thisConverter = newOptions.Converters.FirstOrDefault(c => c.GetType() == typeof(PolymorphicConverterFactory));
-                if (thisConverter != null)
-                {
+                if (thisConverter != null) {
                     newOptions.Converters.Remove(thisConverter);
                 }
 

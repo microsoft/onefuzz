@@ -9,7 +9,7 @@ export ONEFUZZ_TOOLS=/onefuzz/tools
 export ONEFUZZ_ROOT=/onefuzz
 export RUST_BACKTRACE=full
 export RUST_LOG=info
-export ASAN_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
+export LLVM_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 
 logger "onefuzz: starting up onefuzz"
 

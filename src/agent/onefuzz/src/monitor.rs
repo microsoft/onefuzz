@@ -1,77 +1,108 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::path::PathBuf;
-use std::sync::{self, mpsc::Receiver as SyncReceiver};
-use std::time::Duration;
+use std::path::{Path, PathBuf};
 
-use anyhow::Result;
-use notify::{DebouncedEvent, Watcher};
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
-use tokio::task::{self, JoinHandle};
+use anyhow::{format_err, Result};
+use notify::{Event, EventKind, Watcher};
+use tokio::{
+    fs,
+    sync::mpsc::{unbounded_channel, UnboundedReceiver},
+};
 
+/// Watches a directory, and on file creation, emits the path to the file.
 pub struct DirectoryMonitor {
     dir: PathBuf,
-    notify_events: UnboundedReceiver<DebouncedEvent>,
+    notify_events: UnboundedReceiver<notify::Result<Event>>,
     watcher: notify::RecommendedWatcher,
 }
 
 impl DirectoryMonitor {
-    pub fn new(dir: impl Into<PathBuf>) -> Self {
-        let dir = dir.into();
-        let (notify_sender, notify_receiver) = sync::mpsc::channel();
-        let delay = Duration::from_millis(100);
-        let watcher = notify::watcher(notify_sender, delay).unwrap();
-
-        // We can drop the thread handle, and it will continue to run until it
-        // errors or we drop the async receiver.
-        let (notify_events, _handle) = into_async(notify_receiver);
-
-        Self {
-            dir,
-            notify_events,
-            watcher,
-        }
-    }
-
-    pub fn start(&mut self) -> Result<()> {
+    /// Create a new directory monitor.
+    ///
+    /// The path `dir` must name a directory, not a file.
+    pub async fn new(dir: impl AsRef<Path>) -> Result<Self> {
         use notify::RecursiveMode;
 
         // Canonicalize so we can compare the watched dir to paths in the events.
-        self.dir = std::fs::canonicalize(&self.dir)?;
-        self.watcher.watch(&self.dir, RecursiveMode::NonRecursive)?;
+        let dir = fs::canonicalize(dir).await?;
 
-        Ok(())
+        // Make sure we are watching a directory.
+        //
+        // This check will pass for symlinks to directories.
+        if !fs::metadata(&dir).await?.is_dir() {
+            bail!("monitored path is not a directory: {}", dir.display());
+        }
+
+        let (sender, notify_events) = unbounded_channel();
+        let event_handler = move |event_or_err| {
+            // A send error only occurs when the channel is closed. No remedial
+            // action is needed (or possible), so ignore it.
+            let _ = sender.send(event_or_err);
+        };
+        let mut watcher = notify::recommended_watcher(event_handler)?;
+        watcher.watch(&dir, RecursiveMode::NonRecursive)?;
+
+        Ok(Self {
+            dir,
+            notify_events,
+            watcher,
+        })
     }
 
     pub fn stop(&mut self) -> Result<()> {
-        self.watcher.unwatch(self.dir.clone())?;
+        self.watcher.unwatch(&self.dir)?;
         Ok(())
     }
 
-    pub async fn next_file(&mut self) -> Option<PathBuf> {
+    pub async fn next_file(&mut self) -> Result<Option<PathBuf>> {
         loop {
-            let event = self.notify_events.recv().await;
+            let event = match self.notify_events.recv().await {
+                Some(Ok(event)) => event,
+                Some(Err(err)) => {
+                    // A low-level watch error has occurred. Treat as fatal.
+                    warn!(
+                        "error watching for new files. path = {}, error = {}",
+                        self.dir.display(),
+                        err
+                    );
 
-            if event.is_none() {
-                // Make sure we stop our `Watcher` if we return early.
-                let _ = self.stop();
-            }
-
-            match event? {
-                DebouncedEvent::Create(path) => {
-                    return Some(path);
+                    // Make sure we try to stop our `Watcher` if we return early.
+                    let _ = self.stop();
+                    return Ok(None);
                 }
-                DebouncedEvent::Remove(path) => {
-                    if path == self.dir {
+                None => {
+                    // Make sure we try to stop our `Watcher` if we return early.
+                    let _ = self.stop();
+                    return Ok(None);
+                }
+            };
+
+            match event.kind {
+                EventKind::Create(..) => {
+                    let path = event
+                        .paths
+                        .get(0)
+                        .ok_or_else(|| format_err!("missing path for file create event"))?
+                        .clone();
+
+                    return Ok(Some(path));
+                }
+                EventKind::Remove(..) => {
+                    let path = event
+                        .paths
+                        .get(0)
+                        .ok_or_else(|| format_err!("missing path for file remove event"))?;
+
+                    if path == &self.dir {
                         // The directory we were watching was removed; we're done.
                         let _ = self.stop();
-                        return None;
+                        return Ok(None);
                     } else {
                         // Some file _inside_ the watched directory was removed. Ignore.
                     }
                 }
-                _event => {
+                _event_kind => {
                     // Other filesystem event. Ignore.
                 }
             }
@@ -79,28 +110,6 @@ impl DirectoryMonitor {
     }
 }
 
-/// Convert a `Receiver` from a `std::sync::mpsc` channel into an async receiver.
-///
-/// The returned `JoinHandle` does _not_ need to be held by callers. The associated task
-/// will continue to run (detached) if dropped.
-fn into_async<T: Send + 'static>(
-    sync_receiver: SyncReceiver<T>,
-) -> (UnboundedReceiver<T>, JoinHandle<()>) {
-    let (sender, receiver) = unbounded_channel();
-
-    let handle = task::spawn_blocking(move || {
-        while let Ok(msg) = sync_receiver.recv() {
-            if sender.send(msg).is_err() {
-                // The async receiver is closed. We can't do anything else, so
-                // drop this message (and the sync receiver).
-                break;
-            }
-        }
-
-        // We'll never receive any more events.
-        //
-        // Drop our `Receiver` and hang up.
-    });
-
-    (receiver, handle)
-}
+#[cfg(not(target_os = "macos"))]
+#[cfg(test)]
+mod tests;

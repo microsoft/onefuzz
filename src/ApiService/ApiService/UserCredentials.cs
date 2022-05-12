@@ -6,83 +6,67 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.OneFuzz.Service;
 
-public class UserCredentials
-{
+public interface IUserCredentials {
+    public string? GetBearerToken(HttpRequestData req);
+    public string? GetAuthToken(HttpRequestData req);
+    public Task<OneFuzzResult<UserInfo>> ParseJwtToken(HttpRequestData req);
+}
 
+public class UserCredentials : IUserCredentials {
+    ILogTracer _log;
+    IConfigOperations _instanceConfig;
 
-    public static string? GetBearerToken(HttpRequestData req)
-    {
+    public UserCredentials(ILogTracer log, IConfigOperations instanceConfig) {
+        _log = log;
+        _instanceConfig = instanceConfig;
+    }
+
+    public string? GetBearerToken(HttpRequestData req) {
         var authHeader = req.Headers.GetValues("Authorization");
-        if (authHeader.IsNullOrEmpty())
-        {
+        if (authHeader.IsNullOrEmpty()) {
             return null;
-        }
-        else
-        {
+        } else {
             var auth = AuthenticationHeaderValue.Parse(authHeader.First());
-            return auth.Scheme.ToLower() switch
-            {
+            return auth.Scheme.ToLower() switch {
                 "bearer" => auth.Parameter,
                 _ => null,
             };
         }
     }
 
-    public static string? GetAuthToken(HttpRequestData req)
-    {
+    public string? GetAuthToken(HttpRequestData req) {
         var token = GetBearerToken(req);
-        if (token is not null)
-        {
+        if (token is not null) {
             return token;
-        }
-        else
-        {
+        } else {
             var tokenHeader = req.Headers.GetValues("x-ms-token-aad-id-token");
-            if (tokenHeader.IsNullOrEmpty())
-            {
+            if (tokenHeader.IsNullOrEmpty()) {
                 return null;
-            }
-            else
-            {
+            } else {
                 return tokenHeader.First();
             }
         }
     }
 
 
-    static Task<OneFuzzResult<string[]>> GetAllowedTenants()
-    {
-        return Async.Task.FromResult(OneFuzzResult<string[]>.Ok(Array.Empty<string>()));
+    async Task<OneFuzzResult<string[]>> GetAllowedTenants() {
+        var r = await _instanceConfig.Fetch();
+        var allowedAddTenantsQuery =
+            from t in r.AllowedAadTenants
+            select $"https://sts.windows.net/{t}/";
+
+        return OneFuzzResult<string[]>.Ok(allowedAddTenantsQuery.ToArray());
     }
 
-    /*
-        TODO: GetAllowedTenants blocked on Models and ORM since this requires
-        let getAllowedTenants() =
-            task {
-                match! InstanceConfig.fetch() with
-                | Result.Ok(config, _) ->
-                    let entries = config.AllowedAadTenants |> Array.map(fun x->sprintf "https://sts.windows.net/%s/" x)
-                    return Result.Ok entries
-                | Result.Error err -> return Result.Error err
-            }
-    */
-
-
-    static async Task<OneFuzzResult<UserInfo>> ParseJwtToken(LogTracer log, HttpRequestData req)
-    {
+    public async Task<OneFuzzResult<UserInfo>> ParseJwtToken(HttpRequestData req) {
         var authToken = GetAuthToken(req);
-        if (authToken is null)
-        {
+        if (authToken is null) {
             return OneFuzzResult<UserInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find authorization token" });
-        }
-        else
-        {
+        } else {
             var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(authToken);
             var allowedTenants = await GetAllowedTenants();
-            if (allowedTenants.IsOk)
-            {
-                if (allowedTenants.OkV is not null && allowedTenants.OkV.Contains(token.Issuer))
-                {
+            if (allowedTenants.IsOk) {
+                if (allowedTenants.OkV is not null && allowedTenants.OkV.Contains(token.Issuer)) {
                     Guid? applicationId = (
                             from t in token.Claims
                             where t.Type == "appId"
@@ -99,16 +83,12 @@ public class UserCredentials
                             select t.Value).FirstOrDefault();
 
                     return OneFuzzResult<UserInfo>.Ok(new(applicationId, objectId, upn));
-                }
-                else
-                {
-                    log.Error($"issuer not from allowed tenant: {token.Issuer} - {allowedTenants}");
+                } else {
+                    _log.Error($"issuer not from allowed tenant: {token.Issuer} - {allowedTenants}");
                     return OneFuzzResult<UserInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unauthorized AAD issuer" });
                 }
-            }
-            else
-            {
-                log.Error("Failed to get allowed tenants");
+            } else {
+                _log.Error("Failed to get allowed tenants");
                 return OneFuzzResult<UserInfo>.Error(allowedTenants.ErrorV);
             }
         }

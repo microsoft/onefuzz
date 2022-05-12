@@ -1,11 +1,11 @@
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using Region = System.String;
-using PoolName = System.String;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
 using GroupId = System.Guid;
+using PoolName = System.String;
 using PrincipalId = System.Guid;
-using System.Text.Json;
+using Region = System.String;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -27,8 +27,7 @@ public record Authentication
 );
 
 [SkipRename]
-public enum HeartbeatType
-{
+public enum HeartbeatType {
     MachineAlive,
     TaskAlive,
 }
@@ -54,14 +53,13 @@ public record NodeCommandAddSshKey(string PublicKey);
 
 public record NodeCommand
 (
-    StopNodeCommand? Stop,
-    StopTaskNodeCommand? StopTask,
-    NodeCommandAddSshKey? AddSshKey,
-    NodeCommandStopIfFree? StopIfFree
+    StopNodeCommand? Stop = default,
+    StopTaskNodeCommand? StopTask = default,
+    NodeCommandAddSshKey? AddSshKey = default,
+    NodeCommandStopIfFree? StopIfFree = default
 );
 
-public enum NodeTaskState
-{
+public enum NodeTaskState {
     Init,
     SettingUp,
     Running,
@@ -72,20 +70,7 @@ public record NodeTasks
     Guid MachineId,
     Guid TaskId,
     NodeTaskState State = NodeTaskState.Init
-);
-
-public enum NodeState
-{
-    Init,
-    Free,
-    SettingUp,
-    Rebooting,
-    Ready,
-    Busy,
-    Done,
-    Shutdown,
-    Halt,
-}
+) : StatefulEntityBase<NodeTaskState>(State);
 
 public record ProxyHeartbeat
 (
@@ -95,43 +80,61 @@ public record ProxyHeartbeat
     DateTimeOffset TimeStamp
 );
 
-public partial record Node
+public record Node
 (
-    DateTimeOffset? InitializedAt,
     [PartitionKey] PoolName PoolName,
-    Guid? PoolId,
     [RowKey] Guid MachineId,
-    NodeState State,
-    Guid? ScalesetId,
-    DateTimeOffset Heartbeat,
+    Guid? PoolId,
     string Version,
-    bool ReimageRequested,
-    bool DeleteRequested,
-    bool DebugKeepNode
-) : StatefulEntityBase<NodeState>(State);
+    DateTimeOffset? Heartbeat = null,
+    DateTimeOffset? InitializedAt = null,
+    NodeState State = NodeState.Init,
+
+    Guid? ScalesetId = null,
+    bool ReimageRequested = false,
+    bool DeleteRequested = false,
+    bool DebugKeepNode = false
+) : StatefulEntityBase<NodeState>(State) {
+
+    public List<NodeTasks>? Tasks { get; set; }
+    public List<NodeCommand>? Messages { get; set; }
+}
 
 
-public partial record ProxyForward
+public record Forward
+(
+    long SrcPort,
+    long DstPort,
+    string DstIp
+);
+
+
+public record ProxyForward
 (
     [PartitionKey] Region Region,
-    [RowKey] int DstPort,
-    int SrcPort,
-    string DstIp
+    [RowKey] string Port,
+    Guid ScalesetId,
+    Guid MachineId,
+    Guid? ProxyId,
+    long DstPort,
+    string DstIp,
+    [property: JsonPropertyName("endtime")] DateTimeOffset EndTime
 ) : EntityBase();
 
-public partial record ProxyConfig
+public record ProxyConfig
 (
     Uri Url,
-    string Notification,
+    Uri Notification,
     Region Region,
     Guid? ProxyId,
-    List<ProxyForward> Forwards,
+    List<Forward> Forwards,
     string InstanceTelemetryKey,
-    string MicrosoftTelemetryKey
+    string MicrosoftTelemetryKey,
+    Guid InstanceId
 
 );
 
-public partial record Proxy
+public record Proxy
 (
     [PartitionKey] Region Region,
     [RowKey] Guid ProxyId,
@@ -193,9 +196,9 @@ public record TaskVm(
     Region Region,
     string Sku,
     string Image,
-    int Count,
-    bool SpotInstance,
-    bool? RebootAfterSetup
+    bool? RebootAfterSetup,
+    int Count = 1,
+    bool SpotInstance = false
 );
 
 public record TaskPool(
@@ -235,7 +238,6 @@ public record NodeAssignment(
 
 
 public record Task(
-    // Timestamp: Optional[datetime] = Field(alias="Timestamp")
     [PartitionKey] Guid JobId,
     [RowKey] Guid TaskId,
     TaskState State,
@@ -245,8 +247,7 @@ public record Task(
     Authentication? Auth,
     DateTimeOffset? Heartbeat,
     DateTimeOffset? EndTime,
-    UserInfo? UserInfo) : StatefulEntityBase<TaskState>(State)
-{
+    UserInfo? UserInfo) : StatefulEntityBase<TaskState>(State) {
     List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
     List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
 }
@@ -273,14 +274,15 @@ public record AzureMonitorExtensionConfig(
 
 public record AzureVmExtensionConfig(
     KeyvaultExtensionConfig? Keyvault,
-    AzureMonitorExtensionConfig AzureMonitor
+    AzureMonitorExtensionConfig? AzureMonitor,
+    AzureSecurityExtensionConfig? AzureSecurity,
+    GenevaExtensionConfig? Geneva
 );
 
 public record NetworkConfig(
     string AddressSpace,
     string Subnet
-)
-{
+) {
     public static NetworkConfig Default { get; } = new NetworkConfig("10.0.0.0/8", "10.0.0.0/16");
 
 
@@ -290,8 +292,7 @@ public record NetworkConfig(
 public record NetworkSecurityGroupConfig(
     string[] AllowedServiceTags,
     string[] AllowedIps
-)
-{
+) {
     public NetworkSecurityGroupConfig() : this(Array.Empty<string>(), Array.Empty<string>()) { }
 }
 
@@ -300,14 +301,14 @@ public record ApiAccessRule(
     Guid[] AllowedGroups
 );
 
+//# initial set of admins can only be set during deployment.
+//# if admins are set, only admins can update instance configs.
+//# if set, only admins can manage pools or scalesets
 public record InstanceConfig
 (
     [PartitionKey, RowKey] string InstanceName,
-    //# initial set of admins can only be set during deployment.
-    //# if admins are set, only admins can update instance configs.
     Guid[]? Admins,
-    //# if set, only admins can manage pools or scalesets
-    bool AllowPoolManagement,
+    bool? AllowPoolManagement,
     string[] AllowedAadTenants,
     NetworkConfig NetworkConfig,
     NetworkSecurityGroupConfig ProxyNsgConfig,
@@ -318,8 +319,7 @@ public record InstanceConfig
 
     IDictionary<string, string>? VmTags,
     IDictionary<string, string>? VmssTags
-) : EntityBase()
-{
+) : EntityBase() {
     public InstanceConfig(string instanceName) : this(
         instanceName,
         null,
@@ -332,19 +332,14 @@ public record InstanceConfig
         null,
         null,
         null,
-        null)
-    { }
+        null) { }
 
     public InstanceConfig() : this(String.Empty) { }
 
-    public List<Guid>? CheckAdmins(List<Guid>? value)
-    {
-        if (value is not null && value.Count == 0)
-        {
+    public List<Guid>? CheckAdmins(List<Guid>? value) {
+        if (value is not null && value.Count == 0) {
             throw new ArgumentException("admins must be null or contain at least one UUID");
-        }
-        else
-        {
+        } else {
             return value;
         }
     }
@@ -352,20 +347,15 @@ public record InstanceConfig
 
     //# At the moment, this only checks allowed_aad_tenants, however adding
     //# support for 3rd party JWT validation is anticipated in a future release.
-    public ResultOk<List<string>> CheckInstanceConfig()
-    {
+    public ResultVoid<List<string>> CheckInstanceConfig() {
         List<string> errors = new();
-        if (AllowedAadTenants.Length == 0)
-        {
+        if (AllowedAadTenants.Length == 0) {
             errors.Add("allowed_aad_tenants must not be empty");
         }
-        if (errors.Count == 0)
-        {
-            return ResultOk<List<string>>.Ok();
-        }
-        else
-        {
-            return ResultOk<List<string>>.Error(errors);
+        if (errors.Count == 0) {
+            return ResultVoid<List<string>>.Ok();
+        } else {
+            return ResultVoid<List<string>>.Error(errors);
         }
     }
 }
@@ -391,6 +381,7 @@ public record Scaleset(
     bool SpotInstance,
     bool EphemeralOsDisks,
     bool NeedsConfigUpdate,
+    Error? Error,
     List<ScalesetNodeState> Nodes,
     Guid? ClientId,
     Guid? ClientObjectId,
@@ -399,27 +390,22 @@ public record Scaleset(
 ) : StatefulEntityBase<ScalesetState>(State);
 
 [JsonConverter(typeof(ContainerConverter))]
-public record Container(string ContainerName)
-{
+public record Container(string ContainerName) {
     public string ContainerName { get; } = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
 }
 
-public class ContainerConverter : JsonConverter<Container>
-{
-    public override Container? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
+public class ContainerConverter : JsonConverter<Container> {
+    public override Container? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         var containerName = reader.GetString();
         return containerName == null ? null : new Container(containerName);
     }
 
-    public override void Write(Utf8JsonWriter writer, Container value, JsonSerializerOptions options)
-    {
+    public override void Write(Utf8JsonWriter writer, Container value, JsonSerializerOptions options) {
         writer.WriteStringValue(value.ContainerName);
     }
 }
 
 public record Notification(
-    DateTime? Timestamp,
     Container Container,
     Guid NotificationId,
     NotificationTemplate Config
@@ -484,3 +470,233 @@ public record AdoTemplate();
 public record TeamsTemplate();
 
 public record GithubIssuesTemplate();
+
+public record Repro(
+    [PartitionKey] Guid VmId,
+    [RowKey] Guid _,
+    Guid TaskId,
+    ReproConfig Config,
+    VmState State,
+    Authentication? Auth,
+    Os Os,
+    Error? Error,
+    string? Ip,
+    DateTime? EndTime,
+    UserInfo? UserInfo
+) : StatefulEntityBase<VmState>(State);
+
+// TODO: Make this >1 and < 7*24 (more than one hour, less than seven days)
+public record ReproConfig(
+    Container Container,
+    string Path,
+    int Duration
+);
+
+// Skipping AutoScaleConfig because it's not used anymore
+public record Pool(
+    [PartitionKey] PoolName Name,
+    [RowKey] Guid PoolId,
+    Os Os,
+    bool Managed,
+    Architecture Arch,
+    PoolState State,
+    Guid? ClientId
+) : StatefulEntityBase<PoolState>(State) {
+    public List<Node>? Nodes { get; set; }
+    public AgentConfig? Config { get; set; }
+    public List<WorkSetSummary>? WorkQueue { get; set; }
+    public List<ScalesetSummary>? ScalesetSummary { get; set; }
+}
+
+
+public record ClientCredentials
+(
+    Guid ClientId,
+    string ClientSecret
+);
+
+
+public record AgentConfig(
+    ClientCredentials? ClientCredentials,
+    [property: JsonPropertyName("onefuzz_url")] Uri OneFuzzUrl,
+    PoolName PoolName,
+    Uri? HeartbeatQueue,
+    string? InstanceTelemetryKey,
+    string? MicrosoftTelemetryKey,
+    string? MultiTenantDomain,
+    Guid InstanceId
+);
+
+
+
+public record WorkSetSummary();
+public record ScalesetSummary();
+
+public record Vm(
+    string Name,
+    Region Region,
+    string Sku,
+    string Image,
+    Authentication Auth,
+    Nsg? Nsg,
+    IDictionary<string, string>? Tags
+) {
+    public string Name { get; } = Name.Length > 40 ? throw new ArgumentOutOfRangeException("VM name too long") : Name;
+};
+
+
+public record SecretAddress(Uri Url);
+
+
+/// This class allows us to store some data that are intended to be secret
+/// The secret field stores either the raw data or the address of that data
+/// This class allows us to maintain backward compatibility with existing
+/// NotificationTemplate classes
+public record SecretData<T>(T Secret) {
+    public override string ToString() {
+        if (Secret is SecretAddress) {
+            if (Secret is null) {
+                return string.Empty;
+            } else {
+                return Secret.ToString()!;
+            }
+        } else
+            return "[REDACTED]";
+    }
+}
+
+public record JobConfig(
+    string Project,
+    string Name,
+    string Build,
+    int Duration,
+    string? Logs
+);
+
+public record JobTaskInfo(
+    Guid TaskId,
+    TaskType Type,
+    TaskState State
+);
+
+public record Job(
+    [PartitionKey] Guid JobId,
+    JobState State,
+    JobConfig Config,
+    string? Error,
+    DateTimeOffset? EndTime
+) : StatefulEntityBase<JobState>(State) {
+    public List<JobTaskInfo>? TaskInfo { get; set; }
+    public UserInfo? UserInfo { get; set; }
+}
+
+public record Nsg(string Name, Region Region);
+
+public record WorkUnit(
+    Guid JobId,
+    Guid TaskId,
+    TaskType TaskType,
+    TaskUnitConfig Config
+);
+
+public record VmDefinition(
+    Compare Compare,
+    int Value
+);
+
+public record TaskDefinition(
+    TaskFeature[] Features,
+    VmDefinition Vm,
+    ContainerDefinition[] Containers,
+    ContainerType? MonitorQueue = null
+);
+
+public record WorkSet(
+    bool Reboot,
+    Uri SetupUrl,
+    bool Script,
+    List<WorkUnit> WorkUnits
+);
+
+
+
+
+
+public record ContainerDefinition(
+    ContainerType Type,
+    Compare Compare,
+    int Value,
+    ContainerPermission Permissions);
+
+
+// TODO: service shouldn't pass SyncedDir, but just the url and let the agent
+// come up with paths
+public record SyncedDir(string Path, Uri url);
+
+
+public interface IContainerDef { }
+public record SingleContainer(SyncedDir SyncedDir) : IContainerDef;
+public record MultipleContainer(List<SyncedDir> SyncedDirs) : IContainerDef;
+
+
+public record TaskUnitConfig(
+    Guid InstanceId,
+    Guid JobId,
+    Guid TaskId,
+    Uri logs,
+    TaskType TaskType,
+    string? InstanceTelemetryKey,
+    string? MicrosoftTelemetryKey,
+    Uri HeartbeatQueue
+    ) {
+    public Uri? inputQueue { get; set; }
+    public String? SupervisorExe { get; set; }
+    public Dictionary<string, string>? SupervisorEnv { get; set; }
+    public List<string>? SupervisorOptions { get; set; }
+    public string? SupervisorInputMarker { get; set; }
+    public string? TargetExe { get; set; }
+    public Dictionary<string, string>? TargetEnv { get; set; }
+    public List<string>? TargetOptions { get; set; }
+    public int? TargetTimeout { get; set; }
+    public bool? TargetOptionsMerge { get; set; }
+    public int? TargetWorkers { get; set; }
+    public bool? CheckAsanLog { get; set; }
+    public bool? CheckDebugger { get; set; }
+    public int? CheckRetryCount { get; set; }
+    public bool? CheckFuzzerHelp { get; set; }
+    public bool? ExpectCrashOnFailure { get; set; }
+    public bool? RenameOutput { get; set; }
+    public string? GeneratorExe { get; set; }
+    public Dictionary<string, string>? GeneratorEnv { get; set; }
+    public List<string>? GeneratorOptions { get; set; }
+    public ContainerType? WaitForFiles { get; set; }
+    public string? AnalyzerExe { get; set; }
+    public Dictionary<string, string>? AnalyzerEnv { get; set; }
+    public List<string>? AnalyzerOptions { get; set; }
+    public string? StatsFile { get; set; }
+    public StatsFormat? StatsFormat { get; set; }
+    public int? EnsembleSyncDelay { get; set; }
+    public List<string>? ReportList { get; set; }
+    public int? MinimizedStackDepth { get; set; }
+    public string? CoverageFilter { get; set; }
+
+    // from here forwards are Container definitions.  These need to be inline
+    // with TaskDefinitions and ContainerTypes
+    public IContainerDef? Analysis { get; set; }
+    public IContainerDef? Coverage { get; set; }
+    public IContainerDef? Crashes { get; set; }
+    public IContainerDef? Inputs { get; set; }
+    public IContainerDef? NoRepro { get; set; }
+    public IContainerDef? ReadonlyInputs { get; set; }
+    public IContainerDef? Reports { get; set; }
+    public IContainerDef? Tools { get; set; }
+    public IContainerDef? UniqueInputs { get; set; }
+    public IContainerDef? UniqueReports { get; set; }
+    public IContainerDef? RegressionReport { get; set; }
+
+}
+
+public record NodeCommandEnvelope(
+    NodeCommand Command,
+    string MessageId
+);

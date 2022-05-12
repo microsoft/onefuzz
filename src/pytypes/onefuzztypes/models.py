@@ -340,7 +340,7 @@ class AgentConfig(BaseModel):
 
 class TaskUnitConfig(BaseModel):
     instance_id: UUID
-    logs: str
+    logs: Optional[str]
     job_id: UUID
     task_id: UUID
     task_type: TaskType
@@ -873,7 +873,7 @@ class InstanceConfig(BaseModel):
     admins: Optional[List[UUID]] = None
 
     # if set, only admins can manage pools or scalesets
-    allow_pool_management: bool = Field(default=True)
+    require_admin_privileges: bool = Field(default=True)
 
     allowed_aad_tenants: List[UUID]
     network_config: NetworkConfig = Field(default_factory=NetworkConfig)

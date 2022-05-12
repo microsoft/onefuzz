@@ -1,58 +1,54 @@
+﻿using System.Text.Json;
+using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
-using Azure.Core;
-using System.Text.Json;
 
 namespace Microsoft.OneFuzz.Service;
 
-public enum StorageType
-{
+public enum StorageType {
     Corpus,
     Config
 }
 
-public interface IStorage
-{
+public interface IStorage {
     public IEnumerable<string> CorpusAccounts();
     string GetPrimaryAccount(StorageType storageType);
-    public (string?, string?) GetStorageAccountNameAndKey(string accountId);
+    public Async.Task<(string?, string?)> GetStorageAccountNameAndKey(string accountId);
+
+    public Async.Task<string?> GetStorageAccountNameAndKeyByName(string accountName);
 
     public IEnumerable<string> GetAccounts(StorageType storageType);
 }
 
-public class Storage : IStorage
-{
+public class Storage : IStorage {
     private ICreds _creds;
     private ArmClient _armClient;
     private ILogTracer _log;
+    private IServiceConfig _config;
 
-    public Storage(ICreds creds, ILogTracer log)
-    {
+    public Storage(ICreds creds, ILogTracer log, IServiceConfig config) {
         _creds = creds;
-        _armClient = new ArmClient(credential: _creds.GetIdentity(), defaultSubscriptionId: _creds.GetSubcription());
+        _armClient = creds.ArmClient;
         _log = log;
+        _config = config;
     }
 
-    public static string GetFuncStorage()
-    {
-        return EnvironmentVariables.OneFuzz.FuncStorage
+    public string GetFuncStorage() {
+        return _config.OneFuzzFuncStorage
             ?? throw new Exception("Func storage env var is missing");
     }
 
-    public static string GetFuzzStorage()
-    {
-        return EnvironmentVariables.OneFuzz.DataStorage
+    public string GetFuzzStorage() {
+        return _config.OneFuzzDataStorage
             ?? throw new Exception("Fuzz storage env var is missing");
     }
 
-    public ArmClient GetMgmtClient()
-    {
+    public ArmClient GetMgmtClient() {
         return _armClient;
     }
 
     // TODO: @cached
-    public IEnumerable<string> CorpusAccounts()
-    {
+    public IEnumerable<string> CorpusAccounts() {
         var skip = GetFuncStorage();
         var results = new List<string> { GetFuzzStorage() };
 
@@ -62,26 +58,21 @@ public class Storage : IStorage
         const string storageTypeTagKey = "storage_type";
 
         var resourceGroup = client.GetResourceGroupResource(group);
-        foreach (var account in resourceGroup.GetStorageAccounts())
-        {
-            if (account.Id == skip)
-            {
+        foreach (var account in resourceGroup.GetStorageAccounts()) {
+            if (account.Id == skip) {
                 continue;
             }
 
-            if (results.Contains(account.Id!))
-            {
+            if (results.Contains(account.Id!)) {
                 continue;
             }
 
-            if (string.IsNullOrEmpty(account.Data.PrimaryEndpoints.Blob))
-            {
+            if (string.IsNullOrEmpty(account.Data.PrimaryEndpoints.Blob)) {
                 continue;
             }
 
             if (!account.Data.Tags.ContainsKey(storageTypeTagKey)
-                || account.Data.Tags[storageTypeTagKey] != "corpus")
-            {
+                || account.Data.Tags[storageTypeTagKey] != "corpus") {
                 continue;
             }
 
@@ -92,30 +83,57 @@ public class Storage : IStorage
         return results;
     }
 
-    public string GetPrimaryAccount(StorageType storageType)
-    {
+    public string GetPrimaryAccount(StorageType storageType) {
         return
-            storageType switch
-            {
+            storageType switch {
                 StorageType.Corpus => GetFuzzStorage(),
                 StorageType.Config => GetFuncStorage(),
                 _ => throw new NotImplementedException(),
             };
     }
 
-    public (string?, string?) GetStorageAccountNameAndKey(string accountId)
-    {
+    public async Async.Task<(string?, string?)> GetStorageAccountNameAndKey(string accountId) {
         var resourceId = new ResourceIdentifier(accountId);
         var armClient = GetMgmtClient();
         var storageAccount = armClient.GetStorageAccountResource(resourceId);
-        var key = storageAccount.GetKeys().Value.Keys.FirstOrDefault();
+        var keys = await storageAccount.GetKeysAsync();
+        var key = keys.Value.Keys.FirstOrDefault();
         return (resourceId.Name, key?.Value);
     }
 
-    public IEnumerable<string> GetAccounts(StorageType storageType)
-    {
-        switch (storageType)
-        {
+    public async Async.Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {
+        var armClient = GetMgmtClient();
+        var resourceGroup = _creds.GetResourceGroupResourceIdentifier();
+        var storageAccount = await armClient.GetResourceGroupResource(resourceGroup).GetStorageAccountAsync(accountName);
+        var keys = await storageAccount.Value.GetKeysAsync();
+        var key = keys.Value.Keys.FirstOrDefault();
+        return key?.Value;
+    }
+
+    public string ChooseAccounts(StorageType storageType) {
+        var accounts = GetAccounts(storageType);
+        if (!accounts.Any()) {
+            throw new Exception($"No Storage Accounts for {storageType}");
+        }
+
+        var account_list = accounts.ToList();
+        if (account_list.Count == 1) {
+            return account_list[0];
+        }
+
+        // Use a random secondary storage account if any are available.  This
+        // reduces IOP contention for the Storage Queues, which are only available
+        // on primary accounts
+        //
+        // security note: this is not used as a security feature
+        var random = new Random();
+        var index = random.Next(account_list.Count);
+
+        return account_list[index];  // nosec
+    }
+
+    public IEnumerable<string> GetAccounts(StorageType storageType) {
+        switch (storageType) {
             case StorageType.Corpus:
                 return CorpusAccounts();
             case StorageType.Config:

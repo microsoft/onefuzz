@@ -90,7 +90,7 @@ AZCOPY_MISSING_ERROR = (
 )
 FUNC_TOOLS_ERROR = (
     "azure-functions-core-tools is not installed, "
-    "install v3 using instructions: "
+    "install v4 using instructions: "
     "https://github.com/Azure/azure-functions-core-tools#installing"
 )
 
@@ -138,6 +138,7 @@ class Client:
         client_id: Optional[str],
         client_secret: Optional[str],
         app_zip: str,
+        app_net_zip: str,
         tools: str,
         instance_specific: str,
         third_party: str,
@@ -159,6 +160,7 @@ class Client:
         self.owner = owner
         self.nsg_config = nsg_config
         self.app_zip = app_zip
+        self.app_net_zip = app_net_zip
         self.tools = tools
         self.instance_specific = instance_specific
         self.third_party = third_party
@@ -1026,6 +1028,43 @@ class Client:
                 if error is not None:
                     raise error
 
+    def deploy_dotnet_app(self) -> None:
+        logger.info("deploying function app %s ", self.app_net_zip)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            with zipfile.ZipFile(self.app_net_zip, "r") as zip_ref:
+                func = shutil.which("func")
+                assert func is not None
+
+                zip_ref.extractall(tmpdirname)
+                error: Optional[subprocess.CalledProcessError] = None
+                max_tries = 5
+                for i in range(max_tries):
+                    try:
+                        subprocess.check_output(
+                            [
+                                func,
+                                "azure",
+                                "functionapp",
+                                "publish",
+                                self.application_name + "-net",
+                                "--no-build",
+                            ],
+                            env=dict(os.environ, CLI_DEBUG="1"),
+                            cwd=tmpdirname,
+                        )
+                        return
+                    except subprocess.CalledProcessError as err:
+                        error = err
+                        if i + 1 < max_tries:
+                            logger.debug("func failure error: %s", err)
+                            logger.warning(
+                                "function failed to deploy, waiting 60 "
+                                "seconds and trying again"
+                            )
+                            time.sleep(60)
+                if error is not None:
+                    raise error
+
     def update_registration(self) -> None:
         if not self.create_registration:
             return
@@ -1086,6 +1125,7 @@ def main() -> None:
         ("instance-specific-setup", Client.upload_instance_setup),
         ("third-party", Client.upload_third_party),
         ("api", Client.deploy_app),
+        ("dotnet-api", Client.deploy_dotnet_app),
         ("export_appinsights", Client.add_log_export),
         ("update_registration", Client.update_registration),
     ]
@@ -1113,6 +1153,12 @@ def main() -> None:
         "--app-zip",
         type=arg_file,
         default="api-service.zip",
+        help="(default: %(default)s)",
+    )
+    parser.add_argument(
+        "--app-net-zip",
+        type=arg_file,
+        default="api-service-net.zip",
         help="(default: %(default)s)",
     )
     parser.add_argument(
@@ -1208,6 +1254,7 @@ def main() -> None:
         client_id=args.client_id,
         client_secret=args.client_secret,
         app_zip=args.app_zip,
+        app_net_zip=args.app_net_zip,
         tools=args.tools,
         instance_specific=args.instance_specific,
         third_party=args.third_party,

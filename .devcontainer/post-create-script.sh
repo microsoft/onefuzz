@@ -27,7 +27,8 @@ echo "Restore dotnet dependencies"
 cd /workspaces/onefuzz/src/ApiService
 dotnet restore
 
-sudo apt-get install direnv
+sudo apt-get install direnv uuid-runtime
+pip install wheel
 
 echo "Setting up venv"
 cd /workspaces/onefuzz/src
@@ -53,3 +54,7 @@ direnv allow
 pip install -r requirements-dev.txt
 cd __app__
 pip install -r requirements.txt
+
+cd /workspaces/onefuzz/src/utils
+chmod u+x lint.sh
+pip install types-six

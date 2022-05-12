@@ -1,5 +1,10 @@
-use crate::tasks::config::CommonConfig;
-use crate::tasks::utils::parse_key_value;
+use std::{
+    collections::HashMap,
+    env::current_dir,
+    path::{Path, PathBuf},
+    time::Duration,
+};
+
 use anyhow::Result;
 use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
@@ -7,13 +12,11 @@ use flume::Sender;
 use onefuzz::{blob::url::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use path_absolutize::Absolutize;
 use reqwest::Url;
-use std::{
-    collections::HashMap,
-    env::current_dir,
-    path::{Path, PathBuf},
-    time::Duration,
-};
+use storage_queue::{local_queue::ChannelQueueClient, QueueClient};
 use uuid::Uuid;
+
+use crate::tasks::config::CommonConfig;
+use crate::tasks::utils::parse_key_value;
 
 pub const SETUP_DIR: &str = "setup_dir";
 pub const INPUTS_DIR: &str = "inputs_dir";
@@ -267,24 +270,10 @@ pub struct DirectoryMonitorQueue {
 
 impl DirectoryMonitorQueue {
     pub async fn start_monitoring(directory_path: impl AsRef<Path>) -> Result<Self> {
-        let directory_path = PathBuf::from(directory_path.as_ref());
-        let directory_path_clone = directory_path.clone();
-        let queue_client = storage_queue::QueueClient::Channel(
-            storage_queue::local_queue::ChannelQueueClient::new()?,
-        );
-        let queue = queue_client.clone();
-        let handle: tokio::task::JoinHandle<Result<()>> = tokio::spawn(async move {
-            let mut monitor = DirectoryMonitor::new(directory_path_clone.clone());
-            monitor.start()?;
-
-            while let Some(file_path) = monitor.next_file().await {
-                let file_url =
-                    Url::from_file_path(file_path).map_err(|_| anyhow!("invalid file path"))?;
-                queue.enqueue(file_url).await?;
-            }
-
-            Ok(())
-        });
+        let directory_path = directory_path.as_ref().to_owned();
+        let queue_client = QueueClient::Channel(ChannelQueueClient::new()?);
+        let monitor_task = monitor_directory(queue_client.clone(), directory_path.clone());
+        let handle = tokio::spawn(monitor_task);
 
         Ok(DirectoryMonitorQueue {
             directory_path,
@@ -292,6 +281,18 @@ impl DirectoryMonitorQueue {
             handle,
         })
     }
+}
+
+async fn monitor_directory(queue_client: QueueClient, directory: PathBuf) -> Result<()> {
+    let mut monitor = DirectoryMonitor::new(&directory).await?;
+
+    while let Some(file_path) = monitor.next_file().await? {
+        let file_url = Url::from_file_path(file_path).map_err(|_| anyhow!("invalid file path"))?;
+
+        queue_client.enqueue(file_url).await?;
+    }
+
+    Ok(())
 }
 
 pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
