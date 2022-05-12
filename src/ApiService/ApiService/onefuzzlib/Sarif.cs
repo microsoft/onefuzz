@@ -82,7 +82,7 @@ public class SarifGenerator{
                 PhysicalLocation = new PhysicalLocation
                 {
                     ArtifactLocation =
-                        Path.IsPathRooted(uri.OriginalString)
+                        Path.IsPathRooted(path)
                             ? new ArtifactLocation { Uri = uri }
                             : new ArtifactLocation { Uri = uri, UriBaseId = "SRCROOT"}
                 }
@@ -102,10 +102,6 @@ public class SarifGenerator{
         var asanFrame = AsanHelper.TryParseAsanFrame(frame);
         if (asanFrame != null)
         {
-            var relativePath = Path.IsPathRooted(asanFrame.File)
-                        ? Path.GetRelativePath(rootPath, asanFrame.File)
-                        : asanFrame.File ;
-
             return
                 new Location
                 {
