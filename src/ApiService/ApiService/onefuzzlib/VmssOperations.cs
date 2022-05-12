@@ -159,14 +159,15 @@ public class VmssOperations : IVmssOperations {
             instanceVm.Data.ProtectionPolicy = newProtectionPolicy;
 
             var scaleSet = GetVmssResource(name);
-
-            VirtualMachineScaleSetVmInstanceRequiredIds ids = new VirtualMachineScaleSetVmInstanceRequiredIds(new[] { instanceVm.Data.InstanceId });
-            var updateRes = await scaleSet.UpdateInstancesAsync(WaitUntil.Started, ids);
-
-            //TODO: finish this after UpdateInstance method is fixed
-            //https://github.com/Azure/azure-sdk-for-net/issues/28491
-
-            throw new NotImplementedException("Update instance does not work as expected. See https://github.com/Azure/azure-sdk-for-net/issues/28491");
+            var vmCollection = scaleSet.GetVirtualMachineScaleSetVms();
+            var r = await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceVm.Data.InstanceId, instanceVm.Data);
+            if (r.GetRawResponse().IsError) {
+                var msg = $"failed to update scale in protection on vm {vmId} for scaleset {name}";
+                _log.WithHttpStatus((r.GetRawResponse().Status, r.GetRawResponse().ReasonPhrase)).Error(msg);
+                return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, msg);
+            } else {
+                return OneFuzzResultVoid.Ok();
+            }
         }
     }
 
