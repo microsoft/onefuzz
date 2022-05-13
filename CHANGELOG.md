@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.4.1
+This a hotpatch to the 5.4.0 release fixing the parsing failures from old crash reports.
+
+### Fixed
+* Agent: Allow old reports to be parsed [#1943](https://github.com/microsoft/onefuzz/pull/1943)
+* Service: Allow old reports to be parsed [#1940](https://github.com/microsoft/onefuzz/pull/1940)
+
 ## 5.4.0
 ### Added
 * Agent: Added the OneFuzz version and tool name to the Crash Report. [#1635](https://github.com/microsoft/onefuzz/pull/1635)
@@ -79,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.
 [#1530](https://github.com/microsoft/onefuzz/pull/1530)
-* CLI/Service: Updated multiple first-party and third-party Python dependencies. 
+* CLI/Service: Updated multiple first-party and third-party Python dependencies.
 [#1576](https://github.com/microsoft/onefuzz/pull/1576)
 [#1577](https://github.com/microsoft/onefuzz/pull/1577)
 [#1579](https://github.com/microsoft/onefuzz/pull/1579)
@@ -94,7 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 4.1.0
 ### Added
-* Agent: Added source line coverage data 
+* Agent: Added source line coverage data
 [#1518](https://github.com/microsoft/onefuzz/pull/1518)
 [#1534](https://github.com/microsoft/onefuzz/pull/1534)
 [#1538](https://github.com/microsoft/onefuzz/pull/1538)
@@ -105,7 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Added tags to scalesets and VMs [#1560](https://github.com/microsoft/onefuzz/pull/1560)
 
 ### Changed
-* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. 
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.
 [#1489](https://github.com/microsoft/onefuzz/pull/1489)
 [#1495](https://github.com/microsoft/onefuzz/pull/1495)
 [#1496](https://github.com/microsoft/onefuzz/pull/1496)
@@ -127,7 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Updated the way we check for endpoint authorization [#1472](https://github.com/microsoft/onefuzz/pull/1472)
 
 ### Fixed
-* Service: Increase reliability of integration tests. [#1505](https://github.com/microsoft/onefuzz/pull/1505) 
+* Service: Increase reliability of integration tests. [#1505](https://github.com/microsoft/onefuzz/pull/1505)
 * Agent: Avoid leaking unused file and cache data [#1539](https://github.com/microsoft/onefuzz/pull/1539)
 * Agent: Fixed new clippy errors [#1516](https://github.com/microsoft/onefuzz/pull/1516)
 
@@ -229,7 +236,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CLI/Service/Agent: Supervisor tasks can now optionally have a managed coverage container.  [#1123](https://github.com/microsoft/onefuzz/pull/1123)
 
 ### Changed
-* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1151](https://github.com/microsoft/onefuzz/pull/1151), [#1149](https://github.com/microsoft/onefuzz/pull/1149), [#1145](https://github.com/microsoft/onefuzz/pull/1145), [#1134](https://github.com/microsoft/onefuzz/pull/1134), [#1135](https://github.com/microsoft/onefuzz/pull/1135), [#1137](https://github.com/microsoft/onefuzz/pull/1137), [#1133](https://github.com/microsoft/onefuzz/pull/1133), [#1138](https://github.com/microsoft/onefuzz/pull/1138), [#1132](https://github.com/microsoft/onefuzz/pull/1132), [#1140](https://github.com/microsoft/onefuzz/pull/1140), 
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1151](https://github.com/microsoft/onefuzz/pull/1151), [#1149](https://github.com/microsoft/onefuzz/pull/1149), [#1145](https://github.com/microsoft/onefuzz/pull/1145), [#1134](https://github.com/microsoft/onefuzz/pull/1134), [#1135](https://github.com/microsoft/onefuzz/pull/1135), [#1137](https://github.com/microsoft/onefuzz/pull/1137), [#1133](https://github.com/microsoft/onefuzz/pull/1133), [#1138](https://github.com/microsoft/onefuzz/pull/1138), [#1132](https://github.com/microsoft/onefuzz/pull/1132), [#1140](https://github.com/microsoft/onefuzz/pull/1140),
 * Service: Enabled testing of the Azure Devops work item rendering.  [#1144](https://github.com/microsoft/onefuzz/pull/1144)
 * Agent: Continued development related to upcoming features.  [#1142](https://github.com/microsoft/onefuzz/pull/1142)
 * CLI: No longer retry service API requests that fail with service-level errors.  [#1129](https://github.com/microsoft/onefuzz/pull/1129)
@@ -456,7 +463,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#884](https://github.com/microsoft/onefuzz/pull/884)
 * Agent/Supervisor/Proxy: Updated and removed third-party Rust dependencies.  [#892](https://github.com/microsoft/onefuzz/pull/892), [#873](https://github.com/microsoft/onefuzz/pull/873), [#865](https://github.com/microsoft/onefuzz/pull/865)
 * Service: Improved the Python typing signatures used in the service.  [#881](https://github.com/microsoft/onefuzz/pull/881)
-* Service: Updated multiple first-party and third-party Python libraries.  [#893](https://github.com/microsoft/onefuzz/pull/893), [#889](https://github.com/microsoft/onefuzz/pull/889), [#866](https://github.com/microsoft/onefuzz/pull/886), [#885](https://github.com/microsoft/onefuzz/pull/885), [#861](https://github.com/microsoft/onefuzz/pull/861), [#890](https://github.com/microsoft/onefuzz/pull/890), 
+* Service: Updated multiple first-party and third-party Python libraries.  [#893](https://github.com/microsoft/onefuzz/pull/893), [#889](https://github.com/microsoft/onefuzz/pull/889), [#866](https://github.com/microsoft/onefuzz/pull/886), [#885](https://github.com/microsoft/onefuzz/pull/885), [#861](https://github.com/microsoft/onefuzz/pull/861), [#890](https://github.com/microsoft/onefuzz/pull/890),
 * Supervisor: The supervisor now includes the full error context upon failure. [#879](https://github.com/microsoft/onefuzz/pull/879)
 * Service: Cleaned up scaleset update logs. [#880](https://github.com/microsoft/onefuzz/pull/880)
 * Agent: Continued development related to upcoming features. [#874](https://github.com/microsoft/onefuzz/pull/874), [#868](https://github.com/microsoft/onefuzz/pull/868), [#864](https://github.com/microsoft/onefuzz/pull/864)
@@ -482,7 +489,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Continued development related to upcoming features. [#844](https://github.com/microsoft/onefuzz/pull/844), [#852](https://github.com/microsoft/onefuzz/pull/852), [#850](https://github.com/microsoft/onefuzz/pull/850), [#843](https://github.com/microsoft/onefuzz/pull/843), [#837](https://github.com/microsoft/onefuzz/pull/837), [#838](https://github.com/microsoft/onefuzz/pull/838), [#844](https://github.com/microsoft/onefuzz/pull/844)
 
 ### Changes
-* Agent/Proxy/Supervisor : Updated multiple third-party Rust dependencies.  [#842](https://github.com/microsoft/onefuzz/pull/842), [#826](https://github.com/microsoft/onefuzz/pull/826), [#829](https://github.com/microsoft/onefuzz/pull/829), 
+* Agent/Proxy/Supervisor : Updated multiple third-party Rust dependencies.  [#842](https://github.com/microsoft/onefuzz/pull/842), [#826](https://github.com/microsoft/onefuzz/pull/826), [#829](https://github.com/microsoft/onefuzz/pull/829),
 * Service/Contrib: Updated multiple Python dependencies.  [#828](https://github.com/microsoft/onefuzz/pull/828), [#827](https://github.com/microsoft/onefuzz/pull/827), [#823](https://github.com/microsoft/onefuzz/pull/823), [#822](https://github.com/microsoft/onefuzz/pull/822), [#821](https://github.com/microsoft/onefuzz/pull/821), [#847](https://github.com/microsoft/onefuzz/pull/847)
 * Service: Resetting nodes no longer requires waiting for the node to acknowledge the shutdown in some cases. [#834](https://github.com/microsoft/onefuzz/pull/834)
 
@@ -534,7 +541,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: LibFuzzer tasks now include a verification step that verifies the fuzzer can test a small number of seeds at the start of the task.  [#752](https://github.com/microsoft/onefuzz/pull/752)
 * Integration Tests: Added verification that no errors are logged to Application Insights during testing.  [#700](https://github.com/microsoft/onefuzz/pull/700)
 * Agent/Supervisor/Service/Deployment: Added support for multi-tenant authentication.  [#746](https://github.com/microsoft/onefuzz/pull/746)
-* CLI/Service: Added support for [Ephemeral OS Disks](https://docs.microsoft.com/en-us/azure/virtual-machines/ephemeral-os-disks).  [#461](https://github.com/microsoft/onefuzz/pull/461), [#761](https://github.com/microsoft/onefuzz/pull/761) 
+* CLI/Service: Added support for [Ephemeral OS Disks](https://docs.microsoft.com/en-us/azure/virtual-machines/ephemeral-os-disks).  [#461](https://github.com/microsoft/onefuzz/pull/461), [#761](https://github.com/microsoft/onefuzz/pull/761)
 
 ### Changed
 * Agent: Continued development related to upcoming features. [#765](https://github.com/microsoft/onefuzz/pull/765), [#762](https://github.com/microsoft/onefuzz/pull/762), [#754](https://github.com/microsoft/onefuzz/pull/754), [#756](https://github.com/microsoft/onefuzz/pull/756), [#750](https://github.com/microsoft/onefuzz/pull/750), [#744](https://github.com/microsoft/onefuzz/pull/744), [#753](https://github.com/microsoft/onefuzz/pull/753)
@@ -592,7 +599,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Added `input_file_sha256` to [configuration value expansion](docs/command-replacements.md). [#641](https://github.com/microsoft/onefuzz/pull/641)
 * Agent: Added `job_id` to Task Heartbeat [#646](https://github.com/microsoft/onefuzz/pull/646)
 * Service: Added task information to [job_stopped](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md#job_stopped) events [#648](https://github.com/microsoft/onefuzz/pull/648)
- 
+
 ### Changed
 * Service: [task_stopped](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md#task_stopped) and [task_failed](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md#task_failed) now trigger once the task has stopped instead of upon entering the `stopping` state. [#651](https://github.com/microsoft/onefuzz/pull/651)
 * CLI: Authentication tokens are saved upon successful login rather than on program exit. [#665](https://github.com/microsoft/onefuzz/pull/665)
@@ -603,7 +610,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent/Proxy/Supervisor: Changed web request retry logic to always retry any request that fails, regardless of why the request failed.  [#674](https://github.com/microsoft/onefuzz/pull/674)
 * Agent: Downloading files from task queues will now automatically retry on failure.  [#676](https://github.com/microsoft/onefuzz/pull/676)
 * Service: User information is now stripped from [Events](docs/webhook_events.md) before being logged to Application Insights.  [#661](https://github.com/microsoft/onefuzz/pull/661)
- 
+
 ### Fixed
 * Service: Handle exception related to manually deleted scalesets [#672](https://github.com/microsoft/onefuzz/pull/672)
 * Agent: Fixed Rust lifetime issues exposed by an update to Rust regex library [#671](https://github.com/microsoft/onefuzz/pull/671)
@@ -770,7 +777,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Fixed an issue logging excessively large stdout/stderr from tasks.  [#460](https://github.com/microsoft/onefuzz/pull/460)
 
 ## 1.11.0
-### Added 
+### Added
 * Service: Added support for sharding corpus storage accounts using "Premium" storage accounts for improved IOPs.  [#334](https://github.com/microsoft/onefuzz/pull/334)
 * CLI/Service/Agent: Added the ability to optionally colocate multiple compatible tasks on a single machine. The coverage and crash reporting tasks in the LibFuzzer template make use of this functionality by default. [#402](https://github.com/microsoft/onefuzz/pull/402)
 * CLI: Added `onefuzz debug log tail` which enables continuously following Application Insights query results.  [#401](https://github.com/microsoft/onefuzz/pull/401)
@@ -865,7 +872,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Fixed libfuzzer_merge tasks [#240](https://github.com/microsoft/onefuzz/pull/240)
 * Service: Fixed an issue where scheduled tasks waiting in the queue for longer than 7 days would never get scheduled. [#259](https://github.com/microsoft/onefuzz/pull/259)
 * Service: Removed stale Node references from scalesets [#275](https://github.com/microsoft/onefuzz/pull/275)
- 
+
 ## 1.6.0
 ### Added
 * Service: The service now auto-scales the number of Azure Functions instances as needed [#238](https://github.com/microsoft/onefuzz/pull/238)
@@ -931,7 +938,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Service: Nodes no longer have to wait for the scaleset to finish setup before being able to fuzz [#144](https://github.com/microsoft/onefuzz/pull/144)
-* Agent: Agent now only notifies the service about its current state upon state change [#175](https://github.com/microsoft/onefuzz/pull/175) 
+* Agent: Agent now only notifies the service about its current state upon state change [#175](https://github.com/microsoft/onefuzz/pull/175)
 * Service: Task error messages now limit the stdout and stderr to the last 4096 bytes [#170](https://github.com/microsoft/onefuzz/pull/170)
 * Service: Replaced custom queue based event loop with timers [#160](https://github.com/microsoft/onefuzz/pull/160), [#159](https://github.com/microsoft/onefuzz/pull/159)
 * Agent: Uploads that fail now report the failure earlier [#166](https://github.com/microsoft/onefuzz/pull/166)
