@@ -34,6 +34,8 @@ public interface IOnefuzzContext {
     IVmssOperations VmssOperations { get; }
     IWebhookMessageLogOperations WebhookMessageLogOperations { get; }
     IWebhookOperations WebhookOperations { get; }
+
+    IRequestHandling RequestHandling { get; }
 }
 
 public class OnefuzzContext : IOnefuzzContext {
@@ -70,6 +72,8 @@ public class OnefuzzContext : IOnefuzzContext {
     public INodeMessageOperations NodeMessageOperations { get => _serviceProvider.GetService<INodeMessageOperations>() ?? throw new Exception("No INodeMessageOperations service"); }
     public ICreds Creds { get => _serviceProvider.GetService<ICreds>() ?? throw new Exception("No ICreds service"); }
     public IServiceConfig ServiceConfiguration { get => _serviceProvider.GetService<IServiceConfig>() ?? throw new Exception("No IServiceConfiguration service"); }
+
+    public IRequestHandling RequestHandling { get => _serviceProvider.GetService<IRequestHandling>() ?? throw new Exception("No IRequestHandling service"); }
 
     public OnefuzzContext(IServiceProvider serviceProvider) {
         _serviceProvider = serviceProvider;

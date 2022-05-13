@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - '*'
   workflow_dispatch:
 
 env:
@@ -260,11 +262,11 @@ jobs:
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: '6.0.x'
+        dotnet-version: '6.0.202'
     - name: Install dependencies
       run: |
         cd src/ApiService/
-        dotnet restore
+        dotnet restore --locked-mode
     - name: Check Formatting
       run: |
         cd src/ApiService/
@@ -383,7 +385,7 @@ jobs:
           cp artifacts/agent-Linux/onefuzz-agent src/deployment/tools/linux/
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment
-          cp artifacts/service-net/api-service-net.zip src/deployment          
+          cp artifacts/service-net/api-service-net.zip src/deployment
           cp -r artifacts/third-party src/deployment
           cp -r src/agent/script/linux/libfuzzer-coverage src/deployment/tools/linux/libfuzzer-coverage
           cp -r src/agent/script/win64/libfuzzer-coverage src/deployment/tools/win64/libfuzzer-coverage

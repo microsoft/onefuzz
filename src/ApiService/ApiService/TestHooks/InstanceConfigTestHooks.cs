@@ -54,10 +54,10 @@ namespace ApiService.TestHooks {
             } else {
 
                 var query = UriExtension.GetQueryComponents(req.Url);
-                bool isNew = UriExtension.GetBoolValue("isNew", query, false);
+                bool isNew = UriExtension.GetBool("isNew", query, false);
                 //requireEtag wont' work since our current schema does not return etag to the client when getting data form the table, so
                 // there is no way to know which etag to use
-                bool requireEtag = UriExtension.GetBoolValue("requireEtag", query, false);
+                bool requireEtag = UriExtension.GetBool("requireEtag", query, false);
 
                 await _configOps.Save(newInstanceConfig, isNew, requireEtag);
 

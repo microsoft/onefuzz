@@ -1,14 +1,21 @@
 ﻿using System.Net;
 using Microsoft.Azure.Functions.Worker.Http;
 
-
 namespace Microsoft.OneFuzz.Service;
 
-public class RequestHandling {
-    public static async Async.Task<HttpResponseData> NotOk(HttpRequestData request, Error error, string context, ILogTracer log, HttpStatusCode statusCode = HttpStatusCode.BadRequest) {
+public interface IRequestHandling {
+    Async.Task<HttpResponseData> NotOk(HttpRequestData request, Error error, string context, HttpStatusCode statusCode = HttpStatusCode.BadRequest);
+}
+
+public class RequestHandling : IRequestHandling {
+    private readonly ILogTracer _log;
+    public RequestHandling(ILogTracer log) {
+        _log = log;
+    }
+    public async Async.Task<HttpResponseData> NotOk(HttpRequestData request, Error error, string context, HttpStatusCode statusCode = HttpStatusCode.BadRequest) {
         var statusNum = (int)statusCode;
         if (statusNum >= 400 && statusNum <= 599) {
-            log.Error($"request error - {context}: {error}");
+            _log.Error($"request error - {context}: {error}");
 
             var response = HttpResponseData.CreateResponse(request);
             await response.WriteAsJsonAsync(error);
@@ -59,11 +66,13 @@ public class RequestHandling {
         } else if (response.Any()) {
             await resp.WriteAsJsonAsync(response.Single());
         }
-
         // TODO: ModelMixin stuff
 
         return resp;
     }
 
+    public async static Async.Task<HttpResponseData> Ok(HttpRequestData req, BaseResponse response) {
+        return await Ok(req, new BaseResponse[] { response });
+    }
 }
 

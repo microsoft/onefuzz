@@ -103,8 +103,8 @@ public record Node
 
 public record Forward
 (
-    int SrcPort,
-    int DstPort,
+    long SrcPort,
+    long DstPort,
     string DstIp
 );
 
@@ -112,13 +112,13 @@ public record Forward
 public record ProxyForward
 (
     [PartitionKey] Region Region,
-    int Port,
+    [RowKey] string Port,
     Guid ScalesetId,
     Guid MachineId,
     Guid? ProxyId,
-    [RowKey] int DstPort,
+    long DstPort,
     string DstIp,
-    DateTimeOffset EndTime
+    [property: JsonPropertyName("endtime")] DateTimeOffset EndTime
 ) : EntityBase();
 
 public record ProxyConfig
@@ -695,3 +695,8 @@ public record TaskUnitConfig(
     public IContainerDef? RegressionReport { get; set; }
 
 }
+
+public record NodeCommandEnvelope(
+    NodeCommand Command,
+    string MessageId
+);
