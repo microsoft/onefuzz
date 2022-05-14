@@ -26,6 +26,7 @@ from onefuzztypes import (
     responses,
     webhooks,
 )
+from onefuzztypes.enums import TaskType
 from pydantic import BaseModel
 from six.moves import input  # workaround for static analysis
 
@@ -802,7 +803,7 @@ class Tasks(Endpoint):
     def create(
         self,
         job_id: UUID_EXPANSION,
-        task_type: enums.TaskType,
+        task_type: TaskType,
         target_exe: str,
         containers: List[Tuple[enums.ContainerType, primitives.Container]],
         *,
@@ -851,6 +852,13 @@ class Tasks(Endpoint):
         """
 
         self.logger.debug("creating task: %s", task_type)
+
+        if task_type == TaskType.libfuzzer_coverage:
+            self.logger.warning(
+                "DEPRECATED: the `libfuzzer_coverage` task type is deprecated. "
+                "It will be removed in an upcoming release. "
+                "Please migrate to the `coverage` task type."
+            )
 
         job_id_expanded = self._disambiguate_uuid(
             "job_id",
