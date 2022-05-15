@@ -14,11 +14,11 @@ public record AsanFrame (
     int? Line
 );
 
-public class AsanHelper {
+public static class AsanHelper {
 
-    static Regex FrameRegex = new Regex(@"#(?<index>\d+) (?<address>0x[1234567890abcdef]+) in (?<func>.+) \(?(?<file>[^:()+]+)(:(?<line>\d+))?(:(?<column>\d+))?\)?", RegexOptions.ExplicitCapture | RegexOptions.RightToLeft);
+    static readonly Regex _frameRegex = new Regex(@"#(?<index>\d+) (?<address>0x[1234567890abcdef]+) in (?<func>.+) \(?(?<file>[^:()+]+)(:(?<line>\d+))?(:(?<column>\d+))?\)?", RegexOptions.ExplicitCapture | RegexOptions.RightToLeft);
     public static AsanFrame? TryParseAsanFrame(string frame) {
-        var match = FrameRegex.Match(frame);
+        var match = _frameRegex.Match(frame);
         if (!match.Success) {
             return null;
         }
@@ -32,7 +32,7 @@ public class AsanHelper {
         );
     }
 
-    static Dictionary<string, string> AsanErrorCodeMapping = new Dictionary<string, string> {
+    static readonly Dictionary<string, string> _asanErrorCodeMapping = new Dictionary<string, string> {
 
         {"use-after-free", "AS001"},
         {"heap-buffer-overflow", "AS002"},
@@ -45,14 +45,14 @@ public class AsanHelper {
     };
 
     public static  string GetAsantErrorCode(string error) {
-        return AsanErrorCodeMapping.GetValueOrDefault(error, "AS900");
+        return _asanErrorCodeMapping.GetValueOrDefault(error, "AS900");
     }
 
 }
 
 
 public class SarifGenerator{
-    static Uri AsanErrorUrl = new Uri("https://github.com/google/sanitizers/wiki/AddressSanitizer");
+    static readonly Uri _asanErrorUrl = new Uri("https://github.com/google/sanitizers/wiki/AddressSanitizer");
 
      
     /// <summary>
@@ -82,9 +82,9 @@ public class SarifGenerator{
                 PhysicalLocation = new PhysicalLocation
                 {
                     ArtifactLocation =
-                        Path.IsPathRooted(path)
-                            ? new ArtifactLocation { Uri = uri }
-                            : new ArtifactLocation { Uri = uri, UriBaseId = "SRCROOT"}
+                        rootUri.IsBaseOf(uri)
+                            ? new ArtifactLocation { Uri = rootUri.MakeRelativeUri(uri),  UriBaseId = "SRCROOT" }
+                            : new ArtifactLocation { Uri = uri}
                 }
             };
         }
@@ -102,6 +102,7 @@ public class SarifGenerator{
         var asanFrame = AsanHelper.TryParseAsanFrame(frame);
         if (asanFrame != null)
         {
+            var pathUri = BuildUri($"file://{asanFrame.File}");
             return
                 new Location
                 {
@@ -109,9 +110,9 @@ public class SarifGenerator{
                     PhysicalLocation = new PhysicalLocation
                     {
                         ArtifactLocation =
-                            Path.IsPathRooted(asanFrame.File)
-                                ? new ArtifactLocation { Uri = BuildUri($"file://{asanFrame.File}") }
-                                : new ArtifactLocation { Uri = BuildUri($"file://{asanFrame.File}"), UriBaseId = "SRCROOT" },
+                            rootUri.IsBaseOf(pathUri)
+                                ? new ArtifactLocation { Uri = rootUri.MakeRelativeUri(pathUri), UriBaseId = "SRCROOT" }
+                                : new ArtifactLocation { Uri = pathUri },
                         Region = asanFrame.Line switch { int l => new Region { StartLine = l }, null => null },
                         // this line causes an issue in the validator
                         //ContextRegion = asanFrame.line switch { int l => new Region { StartLine = Math.Max(0, l - 1), EndLine = l }, _ => null }
@@ -143,6 +144,7 @@ public class SarifGenerator{
 
     public static SarifLog ToSarif(string inputRootPath, Report report)
     {
+        // adding the directory speratator at the end
         var rootPath =
                 System.IO.Path.EndsInDirectorySeparator(inputRootPath)
                     ? inputRootPath
@@ -162,7 +164,7 @@ public class SarifGenerator{
                         {
                             Id = AsanHelper.GetAsantErrorCode(report.CrashType),
                             Name = CaseConverter.SnakeToPascal(report.CrashType),
-                            HelpUri = AsanErrorUrl
+                            HelpUri = _asanErrorUrl
                         };
 
 
@@ -219,11 +221,11 @@ public class SarifGenerator{
 
     public async System.Threading.Tasks.Task<SarifLog> Validate(SarifLog sarifLog) {
         using var mem = new MemoryStream();
-        using var writer = new StreamWriter(mem, leaveOpen: true);
+        await using var writer = new StreamWriter(mem, leaveOpen: true);
         using var jsonWriter = new Newtonsoft.Json.JsonTextWriter(writer) { Formatting = Newtonsoft.Json.Formatting.Indented};
         var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
         jsonSerializer.Serialize(jsonWriter, sarifLog);
-        jsonWriter.Flush();
+        await jsonWriter.FlushAsync();
         mem.Position = 0;
         using var content = new StreamContent(mem);
         using var client = new HttpClient();
@@ -239,9 +241,9 @@ public class SarifGenerator{
         var resultContent = await JsonDocument.ParseAsync(result.Content.ReadAsStream());
         var sarifString = resultContent.RootElement.GetProperty("resultsLogContents").GetString();
         using var mem2 = new MemoryStream();
-        using var writer2 = new StreamWriter(mem2);
+        await using var writer2 = new StreamWriter(mem2);
         await writer2.WriteAsync(sarifString);
-        writer2.Flush();
+        await writer2.FlushAsync();
         mem2.Position = 0 ;
         var validationResult = SarifLog.Load(mem2);
         return validationResult;
@@ -260,11 +262,11 @@ public static class SarifLogExtensions
 
     public static async System.Threading.Tasks.Task<SarifLog> Validate(this SarifLog sarifLog) {
         using var mem = new MemoryStream();
-        using var writer = new StreamWriter(mem, leaveOpen: true);
+        await using var writer = new StreamWriter(mem, leaveOpen: true);
         using var jsonWriter = new Newtonsoft.Json.JsonTextWriter(writer) { Formatting = Newtonsoft.Json.Formatting.Indented };
         var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
         jsonSerializer.Serialize(jsonWriter, sarifLog);
-        jsonWriter.Flush();
+        await jsonWriter.FlushAsync();
         mem.Position = 0;
         using var content = new StreamContent(mem);
         using var client = new HttpClient();
@@ -279,9 +281,9 @@ public static class SarifLogExtensions
         var resultContent = await JsonDocument.ParseAsync(result.Content.ReadAsStream());
         var sarifString = resultContent.RootElement.GetProperty("resultsLogContents").GetString();
         using var mem2 = new MemoryStream();
-        using var writer2 = new StreamWriter(mem2);
+        await using var writer2 = new StreamWriter(mem2);
         await writer2.WriteAsync(sarifString);
-        writer2.Flush();
+        await writer2.FlushAsync();
         mem2.Position = 0;
         var validationResult = SarifLog.Load(mem2);
         return validationResult;

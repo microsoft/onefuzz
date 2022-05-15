@@ -163,36 +163,41 @@ public class SarifTests{
 
         var reports =
             Directory.EnumerateFiles(reportDir, "*.json")
-            .Select(x => JsonSerializer.Deserialize<Report>(File.ReadAllText(x), EntityConverter.GetJsonSerializerOptions()) ?? throw new Exception())
-            .Select(x => SarifGenerator.ToSarif("/home/runner/work/onefuzz/onefuzz", x));
+            .Select(x => (fileName: x, report: JsonSerializer.Deserialize<Report>(File.ReadAllText(x), EntityConverter.GetJsonSerializerOptions()) ?? throw new Exception()))
+            .Select(x => ( x.fileName, sarif: SarifGenerator.ToSarif("/home/runner/work/onefuzz/onefuzz", x.report)));
 
-
-
-        foreach (var report in reports) { 
-        
-            var validationResult = await report.Validate();
-            var results =
-            validationResult.Runs.SelectMany(
-                run => run.Results.Select(
-                    result => new {
-                        MessageId = result.Message.Id,
-                        Arguments = string.Join("\n", result.Message.Arguments) ,
-                        Location = string.Join(",", result.Locations.Select(location => $"{location.PhysicalLocation.Region.StartLine}:{location.PhysicalLocation.Region.StartColumn}"))
-                    }
-                )
-            ).ToList();
-
-            if (results.Any()) {
-                
-                _output.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(report, Newtonsoft.Json.Formatting.Indented));
-                foreach (var result in results) {
-                    _output.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented));
-                }
-
-
-            }
-            
+        foreach (var (fileName, report) in reports) {
+            _output.WriteLine($"writing {fileName}");
+            await using var file = File.OpenWrite(Path.Combine(reportDir, Path.GetFileNameWithoutExtension(fileName) + ".sarif"));
+            await using var writer = new StreamWriter(file);
+            using var jsonWriter = new Newtonsoft.Json.JsonTextWriter(writer) { Formatting = Newtonsoft.Json.Formatting.Indented };
+            var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
+            jsonSerializer.Serialize(jsonWriter, report);
         }
+
+        // foreach (var report in reports) { 
+        //
+        //     var validationResult = await report.Validate();
+        //     var results =
+        //     validationResult.Runs.SelectMany(
+        //         run => run.Results.Select(
+        //             result => new {
+        //                 MessageId = result.Message.Id,
+        //                 Arguments = string.Join("\n", result.Message.Arguments) ,
+        //                 Location = string.Join(",", result.Locations.Select(location => $"{location.PhysicalLocation.Region.StartLine}:{location.PhysicalLocation.Region.StartColumn}"))
+        //             }
+        //         )
+        //     ).ToList();
+        //
+        //     if (results.Any()) {
+        //         
+        //         _output.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(report, Newtonsoft.Json.Formatting.Indented));
+        //         foreach (var result in results) {
+        //             _output.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented));
+        //         }
+        //     }
+        //     
+        // }
 
     }
 }
