@@ -1,9 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
-using Microsoft.CodeAnalysis.Sarif;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Xunit;
@@ -11,7 +9,7 @@ using Xunit.Abstractions;
 
 namespace Tests;
 
-public class SarifTests{
+public class SarifTests {
 
     ITestOutputHelper _output;
 
@@ -87,17 +85,17 @@ public class SarifTests{
 
         Assert.Equal(1, sarif.Runs.Count);
         var run = sarif.Runs[0];
-        
+
         Assert.Equal(report!.ToolName, run.Tool.Driver.Name);
         Assert.Equal(report.OnefuzzVersion, run.Tool.Driver.SemanticVersion);
-        
+
         Assert.Equal(1, run.Tool.Driver.Rules.Count);
         var rule = run.Tool.Driver.Rules[0];
-        Assert.Equal( AsanHelper.GetAsantErrorCode(report.CrashType), rule.Id);
-        
+        Assert.Equal(AsanHelper.GetAsantErrorCode(report.CrashType), rule.Id);
+
         Assert.Equal(1, run.Results.Count);
         var result = run.Results[0];
-        
+
         Assert.Equal(1, run.Results.Count);
 
 
@@ -116,7 +114,7 @@ public class SarifTests{
         var reports =
             Directory.EnumerateFiles(reportDir, "*.json")
             .Select(x => (fileName: x, report: JsonSerializer.Deserialize<Report>(File.ReadAllText(x), EntityConverter.GetJsonSerializerOptions()) ?? throw new Exception()))
-            .Select(x => ( x.fileName, sarif: SarifGenerator.ToSarif("/home/runner/work/onefuzz/onefuzz", x.report)));
+            .Select(x => (x.fileName, sarif: SarifGenerator.ToSarif("/home/runner/work/onefuzz/onefuzz", x.report)));
 
         // foreach (var (fileName, report) in reports) {
         //     _output.WriteLine($"writing {fileName}");
@@ -127,28 +125,28 @@ public class SarifTests{
         //     jsonSerializer.Serialize(jsonWriter, report);
         // }
 
-        foreach (var (_,report) in reports) { 
-        
+        foreach (var (_, report) in reports) {
+
             var validationResult = await report.Validate();
             var results =
             validationResult.Runs.SelectMany(
                 run => run.Results.Select(
                     result => new {
                         MessageId = result.Message.Id,
-                        Arguments = string.Join("\n", result.Message.Arguments) ,
+                        Arguments = string.Join("\n", result.Message.Arguments),
                         Location = string.Join(",", result.Locations.Select(location => $"{location.PhysicalLocation.Region.StartLine}:{location.PhysicalLocation.Region.StartColumn}"))
                     }
                 )
             ).ToList();
-        
+
             if (results.Any()) {
-                
+
                 _output.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(report, Newtonsoft.Json.Formatting.Indented));
                 foreach (var result in results) {
                     _output.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented));
                 }
             }
-            
+
         }
 
     }
