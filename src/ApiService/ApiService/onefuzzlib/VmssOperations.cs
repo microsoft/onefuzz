@@ -19,6 +19,8 @@ public interface IVmssOperations {
 
 public class VmssOperations : IVmssOperations {
 
+    string INSTANCE_NOT_FOUND = " is not an active Virtual Machine Scale Set VM instanceId.";
+
     ILogTracer _log;
     ICreds _creds;
 
@@ -105,7 +107,7 @@ public class VmssOperations : IVmssOperations {
                         }
                     }
                 }
-            } catch (CloudException ex) {
+            } catch (Exception ex) when (ex is RequestFailedException || ex is CloudException) {
                 _log.Exception(ex, $"vm does not exist {name}");
             }
         }
@@ -126,7 +128,7 @@ public class VmssOperations : IVmssOperations {
                     return OneFuzzResult<VirtualMachineScaleSetVmResource>.Ok(response);
                 }
             }
-        } catch (CloudException ex) {
+        } catch (Exception ex) when (ex is RequestFailedException || ex is CloudException) {
             _log.Exception(ex, $"unable to find vm instance: {name}:{vmId}");
             return OneFuzzResult<VirtualMachineScaleSetVmResource>.Error(ErrorCode.UNABLE_TO_FIND, $"unable to find vm instance: {name}:{vmId}");
         }
@@ -160,13 +162,25 @@ public class VmssOperations : IVmssOperations {
 
             var scaleSet = GetVmssResource(name);
             var vmCollection = scaleSet.GetVirtualMachineScaleSetVms();
-            var r = await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceVm.Data.InstanceId, instanceVm.Data);
-            if (r.GetRawResponse().IsError) {
-                var msg = $"failed to update scale in protection on vm {vmId} for scaleset {name}";
-                _log.WithHttpStatus((r.GetRawResponse().Status, r.GetRawResponse().ReasonPhrase)).Error(msg);
-                return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, msg);
-            } else {
-                return OneFuzzResultVoid.Ok();
+            try {
+                var r = await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceVm.Data.InstanceId, instanceVm.Data);
+                if (r.GetRawResponse().IsError) {
+                    var msg = $"failed to update scale in protection on vm {vmId} for scaleset {name}";
+                    _log.WithHttpStatus((r.GetRawResponse().Status, r.GetRawResponse().ReasonPhrase)).Error(msg);
+                    return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, msg);
+                } else {
+                    return OneFuzzResultVoid.Ok();
+                }
+            } catch (Exception ex) when (ex is RequestFailedException || ex is CloudException) {
+
+                if (ex.Message.Contains(INSTANCE_NOT_FOUND) && protectFromScaleIn == false) {
+                    _log.Info($"Tried to remove scale in protection on node {name} {vmId} but instance no longer exists");
+                    return OneFuzzResultVoid.Ok();
+                } else {
+                    var msg = $"failed to update scale in protection on vm {vmId} for scaleset {name}";
+                    _log.Exception(ex, msg);
+                    return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, ex.Message);
+                }
             }
         }
     }
