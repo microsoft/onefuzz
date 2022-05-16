@@ -33,7 +33,7 @@ public class TimerTasks {
         var expiredJobs = _jobOperations.SearchExpired();
 
         await foreach (var job in expiredJobs) {
-            _logger.Info($"stopping expired job. job_id:{job.JobId }");
+            _logger.Info($"stopping expired job. job_id:{job.JobId}");
             await _jobOperations.Stopping(job, _taskOperations);
         }
 
