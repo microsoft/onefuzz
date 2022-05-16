@@ -174,8 +174,8 @@ public class SarifGenerator{
                     new Run{
                         Tool = new Tool{
                                 Driver = new ToolComponent{
-                                        Name = report.ToolName ?? "Onefuzz", // TODO: this might need to be more specific
-                                        SemanticVersion = report.OnefuzzVersion ?? "0.0.1", // TODO: get the onfuzz version
+                                        Name = report.ToolName ?? "Onefuzz",
+                                        SemanticVersion = report.OnefuzzVersion ?? "0.0.1",
                                         Organization = "Microsoft",
                                         Product = "OneFuzz",
                                         ShortDescription = new MultiformatMessageString{Text = "Onefuzz fuzzing platform"},
@@ -219,12 +219,12 @@ public class SarifGenerator{
     }
 
 
-    public async System.Threading.Tasks.Task<SarifLog> Validate(SarifLog sarifLog) {
+    public async System.Threading.Tasks.Task<SarifLog> Validate() {
         using var mem = new MemoryStream();
         await using var writer = new StreamWriter(mem, leaveOpen: true);
         using var jsonWriter = new Newtonsoft.Json.JsonTextWriter(writer) { Formatting = Newtonsoft.Json.Formatting.Indented};
         var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
-        jsonSerializer.Serialize(jsonWriter, sarifLog);
+        jsonSerializer.Serialize(jsonWriter, this);
         await jsonWriter.FlushAsync();
         mem.Position = 0;
         using var content = new StreamContent(mem);
