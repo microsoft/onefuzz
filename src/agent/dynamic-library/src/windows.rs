@@ -117,7 +117,7 @@ pub enum ImageGlobalFlagsError {
     SetValue { image: ImageFile, source: io::Error },
 }
 
-const GFLAGS_KEY_NAME: &str = "GlobalFlag"; // Singular
+const GFLAGS_VALUE_NAME: &str = "GlobalFlag"; // Singular
 const GFLAGS_SHOW_LOADER_SNAPS: u32 = 0x2;
 
 /// The global flags for an image file.
@@ -135,7 +135,7 @@ impl ImageGlobalFlags {
     pub fn get_value(&self) -> Result<u32, ImageGlobalFlagsError> {
         let value = self
             .create_key()?
-            .get_value(GFLAGS_KEY_NAME)
+            .get_value(GFLAGS_VALUE_NAME)
             .map_err(|source| ImageGlobalFlagsError::GetValue {
                 source,
                 image: self.image.clone(),
@@ -146,7 +146,7 @@ impl ImageGlobalFlags {
 
     pub fn set_value(&self, value: u32) -> Result<(), ImageGlobalFlagsError> {
         self.create_key()?
-            .set_value(GFLAGS_KEY_NAME, &value)
+            .set_value(GFLAGS_VALUE_NAME, &value)
             .map_err(|source| ImageGlobalFlagsError::SetValue {
                 source,
                 image: self.image.clone(),
