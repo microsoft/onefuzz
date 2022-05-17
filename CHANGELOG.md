@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 5.5.0
 ### Added
-* Agent: Include `LD_LIBRARY_PATH` if set by command. [#1933](https://github.com/microsoft/onefuzz/pull/1933)
+* Agent: Include `LD_LIBRARY_PATH` if and only if set by command. [#1933](https://github.com/microsoft/onefuzz/pull/1933)
 * Service: Added new functionality to the service port from Python to C#. [#1924](https://github.com/microsoft/onefuzz/pull/1924), [#1938](https://github.com/microsoft/onefuzz/pull/1938), [#1946](https://github.com/microsoft/onefuzz/pull/1946)
 
 ### Changed
