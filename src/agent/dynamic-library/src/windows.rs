@@ -110,8 +110,11 @@ pub enum ImageGlobalFlagsError {
     #[error("could not create registry key for `{image}`")]
     CreateKey { image: ImageFile, source: io::Error },
 
-    #[error("could not access `GlobalFlag` value of registry key for `{image}`")]
-    AccessValue { image: ImageFile, source: io::Error },
+    #[error("could not get `GlobalFlag` value of registry key for `{image}`")]
+    GetValue { image: ImageFile, source: io::Error },
+
+    #[error("could not set `GlobalFlag` value of registry key for `{image}`")]
+    SetValue { image: ImageFile, source: io::Error },
 }
 
 const GFLAGS_KEY_NAME: &str = "GlobalFlag"; // Singular
@@ -133,7 +136,7 @@ impl ImageGlobalFlags {
         let value = self
             .create_key()?
             .get_value(GFLAGS_KEY_NAME)
-            .map_err(|source| ImageGlobalFlagsError::AccessValue {
+            .map_err(|source| ImageGlobalFlagsError::GetValue {
                 source,
                 image: self.image.clone(),
             })?;
@@ -144,7 +147,7 @@ impl ImageGlobalFlags {
     pub fn set_value(&self, value: u32) -> Result<(), ImageGlobalFlagsError> {
         self.create_key()?
             .set_value(GFLAGS_KEY_NAME, &value)
-            .map_err(|source| ImageGlobalFlagsError::AccessValue {
+            .map_err(|source| ImageGlobalFlagsError::SetValue {
                 source,
                 image: self.image.clone(),
             })?;
