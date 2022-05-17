@@ -12,9 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Documentation: Update coverage filtering docs. [#1950](https://github.com/microsoft/onefuzz/pull/1950/files)
 * Agent: Allow the agent to skip reporting directories. [#1931](https://github.com/microsoft/onefuzz/pull/1931)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1935](https://github.com/microsoft/onefuzz/pull/1935)
-* Service: Deprecate `libfuzzer_coverage` task. [#1944](https://github.com/microsoft/onefuzz/pull/1944/files)
-* Service: Use consistent logger names. [#1945](https://github.com/microsoft/onefuzz/pull/1945)
-* Service: Updated functionality to the service port from Python to C#. [#1922](https://github.com/microsoft/onefuzz/pull/1922), [$1925](https://github.com/microsoft/onefuzz/pull/1925), [#1947](https://github.com/microsoft/onefuzz/pull/1947)
+* CLI: Deprecate `libfuzzer_coverage` task. [#1944](https://github.com/microsoft/onefuzz/pull/1944/files)
+* CLI: Use consistent logger names. [#1945](https://github.com/microsoft/onefuzz/pull/1945)
+* Service: Updated functionality to the service port from Python to C#. [#1922](https://github.com/microsoft/onefuzz/pull/1922), [#1925](https://github.com/microsoft/onefuzz/pull/1925), [#1947](https://github.com/microsoft/onefuzz/pull/1947)
 
 ### Fixed 
 * Agent: Allow old reports to be parsed. [#1943](https://github.com/microsoft/onefuzz/pull/1943)
@@ -26,6 +26,7 @@ This a hotpatch to the 5.4.0 release fixing the parsing failures from old crash 
 
 ### Fixed
 * Agent: Allow old reports to be parsed [#1943](https://github.com/microsoft/onefuzz/pull/1943)
+* Agent: Include `LD_LIBRARY_PATH` in shared library dependency check if and only if set by command. [#1933](https://github.com/microsoft/onefuzz/pull/1933)
 * Service: Allow old reports to be parsed [#1940](https://github.com/microsoft/onefuzz/pull/1940)
 
 ## 5.4.0
