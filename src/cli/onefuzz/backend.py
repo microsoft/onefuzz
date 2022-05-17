@@ -46,7 +46,7 @@ DEFAULT_TOKEN_PATH = os.path.join(ONEFUZZ_BASE_PATH, "access_token.json")
 REQUEST_CONNECT_TIMEOUT = 30.0
 REQUEST_READ_TIMEOUT = 120.0
 
-LOGGER = logging.getLogger("nsv-backend")
+LOGGER = logging.getLogger("backend")
 
 
 @contextlib.contextmanager

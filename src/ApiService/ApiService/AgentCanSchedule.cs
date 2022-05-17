@@ -6,34 +6,25 @@ namespace Microsoft.OneFuzz.Service;
 public class AgentCanSchedule {
     private readonly ILogTracer _log;
 
-    private readonly IStorage _storage;
+    private readonly IOnefuzzContext _context;
 
-    private readonly INodeOperations _nodeOperations;
-
-    private readonly ITaskOperations _taskOperations;
-
-    private readonly IScalesetOperations _scalesetOperations;
-
-    public AgentCanSchedule(ILogTracer log, IStorage storage, INodeOperations nodeOperations, ITaskOperations taskOperations, IScalesetOperations scalesetOperations) {
+    public AgentCanSchedule(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _storage = storage;
-        _nodeOperations = nodeOperations;
-        _taskOperations = taskOperations;
-        _scalesetOperations = scalesetOperations;
+        _context = context;
     }
 
     // [Function("AgentCanSchedule")]
     public async Async.Task<HttpResponseData> Run([HttpTrigger] HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<CanScheduleRequest>(req);
         if (!request.IsOk || request.OkV == null) {
-            return await RequestHandling.NotOk(req, request.ErrorV, typeof(CanScheduleRequest).ToString(), _log);
+            return await _context.RequestHandling.NotOk(req, request.ErrorV, typeof(CanScheduleRequest).ToString());
         }
 
         var canScheduleRequest = request.OkV;
 
-        var node = await _nodeOperations.GetByMachineId(canScheduleRequest.MachineId);
+        var node = await _context.NodeOperations.GetByMachineId(canScheduleRequest.MachineId);
         if (node == null) {
-            return await RequestHandling.NotOk(
+            return await _context.RequestHandling.NotOk(
                 req,
                 new Error(
                     ErrorCode.UNABLE_TO_FIND,
@@ -41,29 +32,24 @@ public class AgentCanSchedule {
                         "unable to find node"
                     }
                 ),
-                canScheduleRequest.MachineId.ToString(),
-                _log
+                canScheduleRequest.MachineId.ToString()
             );
         }
 
         var allowed = true;
         var workStopped = false;
 
-        if (!await _nodeOperations.CanProcessNewWork(node)) {
+        if (!await _context.NodeOperations.CanProcessNewWork(node)) {
             allowed = false;
         }
 
-        var task = await _taskOperations.GetByTaskId(canScheduleRequest.TaskId);
+        var task = await _context.TaskOperations.GetByTaskId(canScheduleRequest.TaskId);
         workStopped = task == null || TaskStateHelper.ShuttingDown.Contains(task.State);
 
         if (allowed) {
-            allowed = (await _nodeOperations.AcquireScaleInProtection(node)).IsOk;
+            allowed = (await _context.NodeOperations.AcquireScaleInProtection(node)).IsOk;
         }
 
-        return await RequestHandling.Ok(
-            req,
-            new BaseResponse[] {
-            new CanSchedule(allowed, workStopped)
-        });
+        return await RequestHandling.Ok(req, new CanSchedule(allowed, workStopped));
     }
 }

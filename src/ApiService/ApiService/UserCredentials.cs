@@ -9,7 +9,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IUserCredentials {
     public string? GetBearerToken(HttpRequestData req);
     public string? GetAuthToken(HttpRequestData req);
-    public Task<OneFuzzResult<UserInfo>> ParseJwtToken(LogTracer log, HttpRequestData req);
+    public Task<OneFuzzResult<UserInfo>> ParseJwtToken(HttpRequestData req);
 }
 
 public class UserCredentials : IUserCredentials {
@@ -58,7 +58,7 @@ public class UserCredentials : IUserCredentials {
         return OneFuzzResult<string[]>.Ok(allowedAddTenantsQuery.ToArray());
     }
 
-    public async Task<OneFuzzResult<UserInfo>> ParseJwtToken(LogTracer log, HttpRequestData req) {
+    public async Task<OneFuzzResult<UserInfo>> ParseJwtToken(HttpRequestData req) {
         var authToken = GetAuthToken(req);
         if (authToken is null) {
             return OneFuzzResult<UserInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find authorization token" });
@@ -84,11 +84,11 @@ public class UserCredentials : IUserCredentials {
 
                     return OneFuzzResult<UserInfo>.Ok(new(applicationId, objectId, upn));
                 } else {
-                    log.Error($"issuer not from allowed tenant: {token.Issuer} - {allowedTenants}");
+                    _log.Error($"issuer not from allowed tenant: {token.Issuer} - {allowedTenants}");
                     return OneFuzzResult<UserInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unauthorized AAD issuer" });
                 }
             } else {
-                log.Error("Failed to get allowed tenants");
+                _log.Error("Failed to get allowed tenants");
                 return OneFuzzResult<UserInfo>.Error(allowedTenants.ErrorV);
             }
         }

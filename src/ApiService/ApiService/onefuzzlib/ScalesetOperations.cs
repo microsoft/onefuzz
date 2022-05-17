@@ -11,6 +11,7 @@ public interface IScalesetOperations : IOrm<Scaleset> {
     public Async.Task UpdateConfigs(Scaleset scaleSet);
 
     public Async.Task<OneFuzzResult<Scaleset>> GetById(Guid scalesetId);
+    IAsyncEnumerable<Scaleset> GetByObjectId(Guid objectId);
 }
 
 public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalesetOperations {
@@ -326,5 +327,9 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
         }
 
         return OneFuzzResult<Scaleset>.Ok(await data.SingleAsync());
+    }
+
+    public IAsyncEnumerable<Scaleset> GetByObjectId(Guid objectId) {
+        return QueryAsync(filter: $"client_object_id eq '{objectId}'");
     }
 }

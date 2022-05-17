@@ -71,6 +71,8 @@
 
         public Error ErrorV => error;
 
+        public OneFuzzResultVoid() => (error, isOk) = (NoError, true);
+
         private OneFuzzResultVoid(ErrorCode errorCode, string[] errors) => (error, isOk) = (new Error(errorCode, errors), false);
 
         private OneFuzzResultVoid(Error err) => (error, isOk) = (err, false);
