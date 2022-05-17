@@ -58,3 +58,6 @@ pip install -r requirements.txt
 cd /workspaces/onefuzz/src/utils
 chmod u+x lint.sh
 pip install types-six
+
+cp /workspaces/onefuzz/.devcontainer/pre-commit /workspaces/onefuzz/.git/hooks
+chmod u+x /workspaces/onefuzz/.git/hooks/pre-commit
