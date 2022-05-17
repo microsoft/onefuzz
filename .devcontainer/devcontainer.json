@@ -11,7 +11,11 @@
 		"files.watcherExclude": {
 			"**/target/**": true
 		},
-		"rust-analyzer.checkOnSave.command": "clippy"
+		"rust-analyzer.checkOnSave.command": "clippy",
+		"rust-analyzer.linkedProjects": [
+			"/workspaces/onefuzz/src/agent/Cargo.toml"
+		],
+		"python.defaultInterpreterPath": "/workspaces/onefuzz/src/venv/bin/python"
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
