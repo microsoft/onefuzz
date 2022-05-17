@@ -110,11 +110,14 @@ pub enum ImageGlobalFlagsError {
     #[error("could not create registry key for `{image}`")]
     CreateKey { image: ImageFile, source: io::Error },
 
-    #[error("could not access `GlobalFlag` value of registry key for `{image}`")]
-    AccessValue { image: ImageFile, source: io::Error },
+    #[error("could not get `GlobalFlag` value of registry key for `{image}`")]
+    GetValue { image: ImageFile, source: io::Error },
+
+    #[error("could not set `GlobalFlag` value of registry key for `{image}`")]
+    SetValue { image: ImageFile, source: io::Error },
 }
 
-const GFLAGS_KEY_NAME: &str = "GlobalFlag"; // Singular
+const GFLAGS_VALUE_NAME: &str = "GlobalFlag"; // Singular
 const GFLAGS_SHOW_LOADER_SNAPS: u32 = 0x2;
 
 /// The global flags for an image file.
@@ -132,8 +135,8 @@ impl ImageGlobalFlags {
     pub fn get_value(&self) -> Result<u32, ImageGlobalFlagsError> {
         let value = self
             .create_key()?
-            .get_value(GFLAGS_KEY_NAME)
-            .map_err(|source| ImageGlobalFlagsError::AccessValue {
+            .get_value(GFLAGS_VALUE_NAME)
+            .map_err(|source| ImageGlobalFlagsError::GetValue {
                 source,
                 image: self.image.clone(),
             })?;
@@ -143,8 +146,8 @@ impl ImageGlobalFlags {
 
     pub fn set_value(&self, value: u32) -> Result<(), ImageGlobalFlagsError> {
         self.create_key()?
-            .set_value(GFLAGS_KEY_NAME, &value)
-            .map_err(|source| ImageGlobalFlagsError::AccessValue {
+            .set_value(GFLAGS_VALUE_NAME, &value)
+            .map_err(|source| ImageGlobalFlagsError::SetValue {
                 source,
                 image: self.image.clone(),
             })?;
@@ -193,7 +196,9 @@ impl ImageLoaderSnapsGuard {
     }
 
     fn enable(&self) -> Result<(), ImageGlobalFlagsError> {
-        let mut value = self.gflags.get_value()?;
+        // Value may not yet exist.
+        let mut value = self.gflags.get_value().unwrap_or(0x0);
+
         value |= GFLAGS_SHOW_LOADER_SNAPS;
         self.gflags.set_value(value)?;
 
@@ -201,7 +206,9 @@ impl ImageLoaderSnapsGuard {
     }
 
     fn disable(&self) -> Result<(), ImageGlobalFlagsError> {
-        let mut value = self.gflags.get_value()?;
+        // Value may not yet exist.
+        let mut value = self.gflags.get_value().unwrap_or(0x0);
+
         value &= !GFLAGS_SHOW_LOADER_SNAPS;
         self.gflags.set_value(value)?;
 
