@@ -10,11 +10,14 @@ use tokio::{
     sync::mpsc::{unbounded_channel, UnboundedReceiver},
 };
 
+const DEFAULT_REPORT_DIRECTORIES: bool = false;
+
 /// Watches a directory, and on file creation, emits the path to the file.
 pub struct DirectoryMonitor {
     dir: PathBuf,
     notify_events: UnboundedReceiver<notify::Result<Event>>,
     watcher: notify::RecommendedWatcher,
+    report_directories: bool,
 }
 
 impl DirectoryMonitor {
@@ -47,7 +50,12 @@ impl DirectoryMonitor {
             dir,
             notify_events,
             watcher,
+            report_directories: DEFAULT_REPORT_DIRECTORIES,
         })
+    }
+
+    pub fn set_report_directories(&mut self, report_directories: bool) {
+        self.report_directories = report_directories;
     }
 
     pub fn stop(&mut self) -> Result<()> {
@@ -86,7 +94,11 @@ impl DirectoryMonitor {
                         .ok_or_else(|| format_err!("missing path for file create event"))?
                         .clone();
 
-                    return Ok(Some(path));
+                    if !self.report_directories && fs::metadata(&path).await?.is_dir() {
+                        // Ignore
+                    } else {
+                        return Ok(Some(path));
+                    }
                 }
                 EventKind::Remove(..) => {
                     let path = event

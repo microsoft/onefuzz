@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - '*'
   workflow_dispatch:
 
 env:
@@ -260,11 +262,11 @@ jobs:
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: '6.0.202'
+        dotnet-version: '6.0.300'
     - name: Install dependencies
       run: |
         cd src/ApiService/
-        dotnet restore
+        dotnet restore --locked-mode
     - name: Check Formatting
       run: |
         cd src/ApiService/

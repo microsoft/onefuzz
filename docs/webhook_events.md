@@ -267,10 +267,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "call_stack_sha256",
                 "input_sha256",
                 "task_id",
-                "job_id",
-                "tool_name",
-                "tool_version",
-                "onefuzz_version"
+                "job_id"
             ],
             "title": "Report",
             "type": "object"
@@ -2129,10 +2126,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "call_stack_sha256",
                 "input_sha256",
                 "task_id",
-                "job_id",
-                "tool_name",
-                "tool_version",
-                "onefuzz_version"
+                "job_id"
             ],
             "title": "Report",
             "type": "object"
@@ -6383,10 +6377,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "call_stack_sha256",
                 "input_sha256",
                 "task_id",
-                "job_id",
-                "tool_name",
-                "tool_version",
-                "onefuzz_version"
+                "job_id"
             ],
             "title": "Report",
             "type": "object"
