@@ -196,7 +196,9 @@ impl ImageLoaderSnapsGuard {
     }
 
     fn enable(&self) -> Result<(), ImageGlobalFlagsError> {
-        let mut value = self.gflags.get_value()?;
+        // Value may not yet exist.
+        let mut value = self.gflags.get_value().unwrap_or(0x0);
+
         value |= GFLAGS_SHOW_LOADER_SNAPS;
         self.gflags.set_value(value)?;
 
@@ -204,7 +206,9 @@ impl ImageLoaderSnapsGuard {
     }
 
     fn disable(&self) -> Result<(), ImageGlobalFlagsError> {
-        let mut value = self.gflags.get_value()?;
+        // Value may not yet exist.
+        let mut value = self.gflags.get_value().unwrap_or(0x0);
+
         value &= !GFLAGS_SHOW_LOADER_SNAPS;
         self.gflags.set_value(value)?;
 
