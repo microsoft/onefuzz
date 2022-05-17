@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed 
 * Agent: Allow old reports to be parsed. [#1943](https://github.com/microsoft/onefuzz/pull/1943)
 * Agent: Remove transitive OpenSSL dependency. [#1952](https://github.com/microsoft/onefuzz/pull/1952)
-* Agent: Ensure `GlobalFlag` reg value is initialized for target. [#1960](https://github.com/microsoft/onefuzz/pull/1960)
+* Agent: Ensure `GlobalFlag` registry value is initialized for target. [#1960](https://github.com/microsoft/onefuzz/pull/1960)
 * Service: Allow old reports to be parsed. [#1940](https://github.com/microsoft/onefuzz/pull/1940)
 
 ## 5.4.1
