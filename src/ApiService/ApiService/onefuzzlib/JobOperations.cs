@@ -51,7 +51,7 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
 
         await foreach (var job in jobs) {
             await foreach (var task in _context.TaskOperations.QueryAsync($"PartitionKey eq '{job.JobId}'")) {
-                await _context.TaskOperations.MarkFailed(task, new Error( ErrorCode.TASK_FAILED, new [] { "job never not start"}));
+                await _context.TaskOperations.MarkFailed(task, new Error(ErrorCode.TASK_FAILED, new[] { "job never not start" }));
             }
             _logTracer.Info($"stopping job that never started: {job.JobId}");
             await _context.JobOperations.Stopping(job);
