@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-$env:RUST_BACKTRACE="full"
+$env:RUST_BACKTRACE = "full"
 
 Start-Transcript -Append -Path c:\onefuzz-run.log
 
