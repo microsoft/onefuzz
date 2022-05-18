@@ -468,7 +468,7 @@ public class NodeMessageOperations : Orm<NodeMessage>, INodeMessageOperations {
     }
 
     public IAsyncEnumerable<NodeMessage> GetMessage(Guid machineId) {
-        return QueryAsync($"machine_id eq '{machineId}'");
+        return QueryAsync($"PartitionKey eq '{machineId}'");
     }
 
     public async Async.Task ClearMessages(Guid machineId) {

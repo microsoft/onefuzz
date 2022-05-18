@@ -58,11 +58,14 @@ pub struct CrashReport {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scariness_description: Option<String>,
 
-    pub onefuzz_version: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub onefuzz_version: Option<String>,
 
-    pub tool_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tool_name: Option<String>,
 
-    pub tool_version: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tool_version: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -250,9 +253,9 @@ impl CrashReport {
             scariness_description: crash_log.scariness_description,
             task_id,
             job_id,
-            onefuzz_version,
-            tool_name,
-            tool_version,
+            onefuzz_version: Some(onefuzz_version),
+            tool_name: Some(tool_name),
+            tool_version: Some(tool_version),
         }
     }
 
@@ -330,6 +333,20 @@ mod tests {
     async fn test_parse_fake_crash_report() -> Result<()> {
         let path = std::path::PathBuf::from("data/fake-crash-report.json");
         parse_report_file(path).await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_parse_fake_crash_report_old() -> Result<()> {
+        let path = std::path::PathBuf::from("data/fake-crash-report-old.json");
+        if let CrashTestResult::CrashReport(report) = parse_report_file(path).await? {
+            assert!(report.onefuzz_version == None);
+            assert!(report.tool_name == None);
+            assert!(report.tool_version == None);
+        } else {
+            assert!(false, "expected CrashReport");
+        }
+
         Ok(())
     }
 }

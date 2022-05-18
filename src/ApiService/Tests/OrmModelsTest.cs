@@ -91,11 +91,11 @@ namespace Tests {
         }
 
         public static Gen<ProxyForward> ProxyForward() {
-            return Arb.Generate<Tuple<Tuple<string, int, Guid, Guid, Guid?, int>, Tuple<IPv4Address, DateTimeOffset>>>().Select(
+            return Arb.Generate<Tuple<Tuple<string, long, Guid, Guid, Guid?, long>, Tuple<IPv4Address, DateTimeOffset>>>().Select(
                 arg =>
                     new ProxyForward(
                         Region: arg.Item1.Item1,
-                        Port: arg.Item1.Item2,
+                        Port: arg.Item1.Item2.ToString(),
                         ScalesetId: arg.Item1.Item3,
                         MachineId: arg.Item1.Item4,
                         ProxyId: arg.Item1.Item5,
