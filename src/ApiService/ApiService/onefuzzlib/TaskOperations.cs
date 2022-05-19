@@ -66,7 +66,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
     }
 
     public IAsyncEnumerable<Task> SearchExpired() {
-        var timeFilter = $"end_time lt Datetime'{DateTimeOffset.UtcNow.ToString("o") }'";
+        var timeFilter = $"end_time lt Datetime'{DateTimeOffset.UtcNow.ToString("o")}'";
         return QueryAsync(filter: timeFilter);
     }
 
