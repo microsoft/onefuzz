@@ -98,9 +98,6 @@ pub fn build_shared_args(local_job: bool) -> Vec<Arg<'static, 'static>> {
         Arg::with_name(COVERAGE_FILTER)
             .takes_value(true)
             .long(COVERAGE_FILTER),
-        Arg::with_name(TARGET_TIMEOUT)
-            .takes_value(true)
-            .long(TARGET_TIMEOUT),
         Arg::with_name(COVERAGE_DIR)
             .takes_value(true)
             .required(!local_job)
