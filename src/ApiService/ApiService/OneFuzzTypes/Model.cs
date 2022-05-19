@@ -580,7 +580,7 @@ public record JobTaskInfo(
 );
 
 public record Job(
-    [PartitionKey] Guid JobId,
+    [PartitionKey][RowKey] Guid JobId,
     JobState State,
     JobConfig Config,
     string? Error,
