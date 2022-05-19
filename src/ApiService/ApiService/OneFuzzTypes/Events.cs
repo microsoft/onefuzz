@@ -63,6 +63,7 @@ public abstract record BaseEvent() {
                 EventNodeStateUpdated _ => EventType.NodeStateUpdated,
                 EventNodeDeleted _ => EventType.NodeDeleted,
                 EventNodeCreated _ => EventType.NodeCreated,
+                EventJobStopped _ => EventType.JobStopped,
                 _ => throw new NotImplementedException(),
             };
 
@@ -90,6 +91,7 @@ public abstract record BaseEvent() {
             EventType.ScalesetStateUpdated => typeof(EventScalesetStateUpdated),
             EventType.NodeDeleted => typeof(EventNodeDeleted),
             EventType.NodeCreated => typeof(EventNodeCreated),
+            EventType.JobStopped => typeof(EventJobStopped),
             _ => throw new ArgumentException($"invalid input {eventType}"),
 
         };
