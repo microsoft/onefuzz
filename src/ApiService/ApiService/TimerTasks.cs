@@ -34,7 +34,7 @@ public class TimerTasks {
 
         await foreach (var job in expiredJobs) {
             _logger.Info($"stopping expired job. job_id:{job.JobId}");
-            await _jobOperations.Stopping(job, _taskOperations);
+            await _jobOperations.Stopping(job);
         }
 
         var jobs = _jobOperations.SearchState(states: JobStateHelper.NeedsWork);
