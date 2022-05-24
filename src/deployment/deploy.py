@@ -1129,8 +1129,6 @@ class Client:
                             time.sleep(60)
             if error is not None:
                 raise error
-        else:
-            print(f'*** NO DOTNET FUNCTIONS ENABLED: {self.enable_dotnet} ***')
     
 
     def update_registration(self) -> None:
@@ -1311,8 +1309,9 @@ def main() -> None:
         "--enable_dotnet",
         type=str,
         default=None,
-        help="Provide a csv list of python function names to disables the python "
-        "function and enables dotnet functions in Azure Function App deployment",
+        help="Provide a csv list of python function names to disable their "
+        "functions and enable corresponding dotnet functions in the Azure "
+        "Function App deployment",
     )
     args = parser.parse_args()
 
