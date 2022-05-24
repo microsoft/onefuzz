@@ -152,7 +152,7 @@ class Client:
         subscription_id: Optional[str],
         admins: List[UUID],
         allowed_aad_tenants: List[UUID],
-        enable_dotnet: str,
+        enable_dotnet: List[str],
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -1070,10 +1070,9 @@ class Client:
 
     def enable_dotnet_func(self) -> None:
         if self.enable_dotnet:
-            dotnet_functions = self.enable_dotnet.split(",")
             func = shutil.which("az")
             assert func is not None
-            for function_name in dotnet_functions:
+            for function_name in self.enable_dotnet:
                 format_name = function_name.split("_")
                 dotnet_name = "".join(x.title() for x in format_name)
                 error: Optional[subprocess.CalledProcessError] = None
@@ -1307,9 +1306,10 @@ def main() -> None:
     parser.add_argument(
         "--enable_dotnet",
         type=str,
-        default=None,
-        help="Provide a csv list of python function names to disable their "
-        "functions and enable corresponding dotnet functions in the Azure "
+        nargs="+",
+        default=[],
+        help="Provide a space-seperated list of python function names to disable "
+        "their functions and enable corresponding dotnet functions in the Azure "
         "Function App deployment",
     )
     args = parser.parse_args()
