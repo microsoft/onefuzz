@@ -1075,6 +1075,8 @@ class Client:
             func = shutil.which("az")
             assert func is not None
             for function_name in dotnet_functions:
+                format_name = function_name.split('_')
+                dotnet_name = ''.join(x.title() for x in format_name)
                 error: Optional[subprocess.CalledProcessError] = None
                 max_tries = 5
                 for i in range(max_tries):
@@ -1098,7 +1100,7 @@ class Client:
                             env=dict(os.environ, CLI_DEBUG="1"),
                         )
                         # enable dotnet function
-                        logger.info(f'enabling DOTNET function: {function_name}')
+                        logger.info(f'enabling DOTNET function: {dotnet_name}')
                         subprocess.check_output(
                             [
                                 func,
@@ -1111,7 +1113,7 @@ class Client:
                                 "--resource-group",
                                 self.application_name,
                                 "--settings",
-                                f"AzureWebJobs.{function_name}.Disabled=0",
+                                f"AzureWebJobs.{dotnet_name}.Disabled=0",
                             ],
                             env=dict(os.environ, CLI_DEBUG="1"),
                         )
@@ -1310,9 +1312,8 @@ def main() -> None:
         "--enable_dotnet",
         type=str,
         default=None,
-        help="Enables dotnet functions from a provided csv list and disables the python"
-        " functions in Azure Function App deployment",
-
+        help="Provide a csv list of python function names to disables the python "
+        "function and enables dotnet functions in Azure Function App deployment",
     )
     args = parser.parse_args()
 

@@ -1,46 +1,8 @@
 param functions_disabled_setting string
 
-var allFunctions = [
-  'agent_can_schedule'    //0
-  'agent_commands'        //1
-  'agent_events'          //2
-  'agent_registration'    //3
-  'containers'            //4
-  'download'              //5
-  'info'                  //6
-  'instance_config'       //7
-  'jobs'                  //8
-  'job_templates'         //9
-  'job_templates_manage'  //10
-  'negotiate'             //11
-  'node'                  //12
-  'node_add_ssh_key'      //13
-  'notifications'         //14
-  'pool'                  //15
-  'proxy'                 //16
-  'queue_file_changes'    //17
-  'queue_node_heartbeat'  //18
-  'queue_proxy_update'    //19
-  'queue_signalr_events'  //20
-  'queue_task_heartbeat'  //21
-  'queue_updates'         //22
-  'queue_webhooks'        //23
-  'repro_vms'             //24
-  'scaleset'              //25
-  'tasks'                 //26
-  'timer_daily'           //27
-  'timer_proxy'           //28
-  'timer_repro'           //29
-  'timer_retention'       //30
-  'timer_tasks'           //31
-  'timer_workers'         //32
-  'webhooks'              //33
-  'webhooks_logs'         //34
-  'webhooks_ping'         //35
-]
+param allFunctions array
 
 var disabledFunctions = [for f in allFunctions: 'AzureWebJobs.${f}.Disabled' ]
-
 
 var disabledFunctionsAppSettings = {
   '${disabledFunctions[0]}' : functions_disabled_setting
@@ -90,3 +52,4 @@ var disabledFunctionsAppSettings = {
 
 output functions array = disabledFunctions
 output appSettings object = disabledFunctionsAppSettings
+

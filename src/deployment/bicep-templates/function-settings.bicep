@@ -28,6 +28,8 @@ param functions_extension_version string
 
 param functions_disabled string
 
+param all_function_names array
+
 var disabledFunctionName = 'disabledFunctions-${functions_worker_runtime}'
 
 var telemetry = 'd7a73cf4-5a1a-4030-85e1-e5b25867e45a'
@@ -40,6 +42,7 @@ module disabledFunctions 'function-settings-disabled-apps.bicep' = {
   name: disabledFunctionName
   params:{
     functions_disabled_setting: functions_disabled
+    allFunctions: all_function_names
   }
 }
 
