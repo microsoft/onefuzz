@@ -36,7 +36,7 @@ url-escape = "0.1.0"
 ring = "0.16"
 storage-queue = { path = "../storage-queue" }
 strum = "0.23"
-strum_macros = "0.23"
+strum_macros = "0.24"
 tempfile = "3.2"
 process_control = "3.0"
 reqwest-retry = { path = "../reqwest-retry"}
