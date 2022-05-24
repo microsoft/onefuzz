@@ -152,7 +152,7 @@ class Client:
         subscription_id: Optional[str],
         admins: List[UUID],
         allowed_aad_tenants: List[UUID],
-        enable_dotnet: str
+        enable_dotnet: str,
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -1070,18 +1070,18 @@ class Client:
 
     def enable_dotnet_func(self) -> None:
         if self.enable_dotnet:
-            dotnet_functions = self.enable_dotnet.split(',')
+            dotnet_functions = self.enable_dotnet.split(",")
             func = shutil.which("az")
             assert func is not None
             for function_name in dotnet_functions:
-                format_name = function_name.split('_')
-                dotnet_name = ''.join(x.title() for x in format_name)
+                format_name = function_name.split("_")
+                dotnet_name = "".join(x.title() for x in format_name)
                 error: Optional[subprocess.CalledProcessError] = None
                 max_tries = 5
                 for i in range(max_tries):
                     try:
                         # disable python function
-                        logger.info(f'disabling PYTHON function: {function_name}')
+                        logger.info(f"disabling PYTHON function: {function_name}")
                         subprocess.check_output(
                             [
                                 func,
@@ -1099,7 +1099,7 @@ class Client:
                             env=dict(os.environ, CLI_DEBUG="1"),
                         )
                         # enable dotnet function
-                        logger.info(f'enabling DOTNET function: {dotnet_name}')
+                        logger.info(f"enabling DOTNET function: {dotnet_name}")
                         subprocess.check_output(
                             [
                                 func,
@@ -1129,7 +1129,6 @@ class Client:
                             time.sleep(60)
             if error is not None:
                 raise error
-    
 
     def update_registration(self) -> None:
         if not self.create_registration:
@@ -1194,7 +1193,7 @@ def main() -> None:
         ("dotnet-api", Client.deploy_dotnet_app),
         ("export_appinsights", Client.add_log_export),
         ("update_registration", Client.update_registration),
-        ("enable_dotnet", Client.enable_dotnet_func)
+        ("enable_dotnet", Client.enable_dotnet_func),
     ]
 
     formatter = argparse.ArgumentDefaultsHelpFormatter
