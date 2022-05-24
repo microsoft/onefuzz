@@ -606,7 +606,8 @@ macro_rules! log_events {
     ($name: expr; $events: expr) => {{
         onefuzz_telemetry::track_event(&$name, &$events);
         log::info!(
-            "{} {}",
+            "[{}] {} {}",
+            onefuzz_telemetry::Utc::now(),
             $name.as_str(),
             onefuzz_telemetry::format_events(&$events)
         );
@@ -685,10 +686,10 @@ macro_rules! metric {
 
 #[cfg(test)]
 mod tests {
-    use crate as onefuzz_telemetry;
+    use crate::{self as onefuzz_telemetry, Event, EventData};
 
     #[test]
-    fn test_log_contains_timestamp() {
+    fn test_trace_log_contains_timestamp() {
         testing_logger::setup();
         critical!("hello");
         testing_logger::validate(|captured_logs| {
@@ -697,6 +698,20 @@ mod tests {
 
             assert!(log.body.starts_with("[20"));
             assert!(log.body.ends_with(" UTC] hello"));
+        });
+    }
+
+    #[test]
+    fn test_event_log_contains_timestamp() {
+        testing_logger::setup();
+        let path = "hello";
+        event!(Event::task_start; EventData::Path = path);
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            let log = captured_logs.first().unwrap();
+
+            assert!(log.body.starts_with("[20"));
+            assert!(log.body.ends_with(" UTC] task_start path:hello"));
         });
     }
 }
