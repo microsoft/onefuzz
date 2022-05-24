@@ -20,5 +20,5 @@ tokio = { version = "1.16", features = ["macros", "rt-multi-thread", "fs", "proc
 url = { version = "2.2", features = ["serde"] }
 reqwest-retry = { path = "../agent/reqwest-retry"}
 onefuzz-telemetry = { path = "../agent/onefuzz-telemetry" }
-uuid = "0.8"
+uuid = "1.0"
 log = "0.4"
