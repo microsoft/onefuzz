@@ -24,6 +24,9 @@ param diagnosticsLogLevel string = 'Verbose'
 var log_retention = 30
 var tenantId = subscription().tenantId
 
+var python_functions_disabled = '0'
+var dotnet_functions_disabled = '1'
+
 var scaleset_identity = '${name}-scalesetid'
 
 var StorageBlobDataReader = '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
@@ -261,6 +264,7 @@ module pythonFunctionSettings 'bicep-templates/function-settings.bicep' = {
     keyvault_name: keyVaultName
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
+    functions_disabled: python_functions_disabled
   }
   dependsOn: [
     pythonFunction
@@ -286,6 +290,7 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     keyvault_name: keyVaultName
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
+    functions_disabled: dotnet_functions_disabled
   }
   dependsOn: [
     netFunction
