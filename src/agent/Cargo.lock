@@ -1964,10 +1964,12 @@ name = "onefuzz-telemetry"
 version = "0.1.0"
 dependencies = [
  "appinsights",
+ "chrono",
  "iced-x86",
  "lazy_static",
  "log",
  "serde",
+ "testing_logger",
  "tokio",
  "uuid",
  "z3-sys",
@@ -3083,6 +3085,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "testing_logger"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d92b727cb45d33ae956f7f46b966b25f1bc712092aeef9dba5ac798fc89f720"
+dependencies = [
+ "log",
 ]
 
 [[package]]

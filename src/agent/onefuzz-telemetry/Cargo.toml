@@ -23,5 +23,7 @@ z3-sys = { version = "0.6", optional = true}
 iced-x86 = { version = "1.15", optional = true}
 tokio = { version = "1.15", features = ["full"] }
 lazy_static = "1.4"
+chrono = "0.4"
 
-
+[dev-dependencies]
+testing_logger = "0.1"

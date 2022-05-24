@@ -11,6 +11,7 @@ use uuid::Uuid;
 use z3_sys::ErrorCode as Z3ErrorCode;
 
 pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
+pub use chrono::Utc;
 use tokio::sync::broadcast::{self, Receiver};
 #[macro_use]
 extern crate lazy_static;
@@ -631,7 +632,7 @@ macro_rules! log {
     ($level: expr, $($arg: tt)+) => {{
         let log_level = onefuzz_telemetry::to_log_level(&$level);
         if log_level <= log::max_level() {
-            let msg = format!("{}", format_args!($($arg)+));
+            let msg = format!("[{}] {}", onefuzz_telemetry::Utc::now(), format_args!($($arg)+));
             log::log!(log_level, "{}", msg);
             onefuzz_telemetry::try_broadcast_trace(msg.to_string(), log_level);
             onefuzz_telemetry::log_message($level, msg.to_string());
@@ -680,4 +681,22 @@ macro_rules! metric {
         let client = onefuzz_telemetry::client(onefuzz_telemetry::ClientType::Instance);
         client.track_metric($name.into(), $value);
     }};
+}
+
+#[cfg(test)]
+mod tests {
+    use crate as onefuzz_telemetry;
+
+    #[test]
+    fn test_log_contains_timestamp() {
+        testing_logger::setup();
+        critical!("hello");
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            let log = captured_logs.first().unwrap();
+
+            assert!(log.body.starts_with("[20"));
+            assert!(log.body.ends_with(" UTC] hello"));
+        });
+    }
 }
