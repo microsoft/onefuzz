@@ -221,13 +221,13 @@ impl IWorkerRunner for WorkerRunner {
         );
 
         info!(
-            "spawning `onefuzz-agent`; cwd = {}, job_id = {}, task_id = {}",
+            "spawning `onefuzz-task`; cwd = {}, job_id = {}, task_id = {}",
             working_dir.display(),
             work.job_id,
             work.task_id,
         );
 
-        let mut cmd = Command::new("onefuzz-agent");
+        let mut cmd = Command::new("onefuzz-task");
         cmd.current_dir(&working_dir);
         cmd.arg("managed");
         cmd.arg("config.json");
@@ -283,7 +283,7 @@ impl RedirectedChild {
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 
-        let mut child = cmd.spawn().context("onefuzz-agent failed to start")?;
+        let mut child = cmd.spawn().context("onefuzz-task failed to start")?;
 
         // Guaranteed by the above.
         let stderr = child.stderr.take().unwrap();
@@ -369,7 +369,7 @@ impl IWorkerChild for RedirectedChild {
             let exit_status = exit_status.into();
             let streams = self.streams.take();
             let streams = streams
-                .ok_or_else(|| format_err!("onefuzz-agent streams not captured"))?
+                .ok_or_else(|| format_err!("onefuzz-task streams not captured"))?
                 .join()?;
 
             Some(Output {

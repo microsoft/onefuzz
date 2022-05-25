@@ -1888,7 +1888,35 @@ dependencies = [
 ]
 
 [[package]]
-name = "onefuzz-agent"
+name = "onefuzz-supervisor"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "backtrace",
+ "clap",
+ "downcast-rs",
+ "env_logger 0.9.0",
+ "futures",
+ "log",
+ "nix",
+ "onefuzz",
+ "onefuzz-telemetry",
+ "reqwest",
+ "reqwest-retry",
+ "serde",
+ "serde_json",
+ "storage-queue",
+ "structopt",
+ "tokio",
+ "url",
+ "users",
+ "uuid",
+ "winapi",
+]
+
+[[package]]
+name = "onefuzz-task"
 version = "0.2.0"
 dependencies = [
  "anyhow",
@@ -1929,34 +1957,6 @@ dependencies = [
  "tui",
  "url",
  "uuid",
-]
-
-[[package]]
-name = "onefuzz-supervisor"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "backtrace",
- "clap",
- "downcast-rs",
- "env_logger 0.9.0",
- "futures",
- "log",
- "nix",
- "onefuzz",
- "onefuzz-telemetry",
- "reqwest",
- "reqwest-retry",
- "serde",
- "serde_json",
- "storage-queue",
- "structopt",
- "tokio",
- "url",
- "users",
- "uuid",
- "winapi",
 ]
 
 [[package]]

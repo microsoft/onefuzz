@@ -1,5 +1,5 @@
 [package]
-name = "onefuzz-agent"
+name = "onefuzz-task"
 version = "0.2.0"
 authors = ["fuzzing@microsoft.com"]
 edition = "2018"
