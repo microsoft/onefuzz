@@ -152,6 +152,7 @@ class Client:
         subscription_id: Optional[str],
         admins: List[UUID],
         allowed_aad_tenants: List[UUID],
+        enable_dotnet: List[str],
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -185,6 +186,8 @@ class Client:
         self.allowed_aad_tenants = allowed_aad_tenants
 
         self.arm_template = bicep_to_arm(bicep_template)
+
+        self.enable_dotnet = enable_dotnet
 
         machine = platform.machine()
         system = platform.system()
@@ -1065,6 +1068,67 @@ class Client:
                 if error is not None:
                     raise error
 
+    def enable_dotnet_func(self) -> None:
+        if self.enable_dotnet:
+            func = shutil.which("az")
+            assert func is not None
+            for function_name in self.enable_dotnet:
+                format_name = function_name.split("_")
+                dotnet_name = "".join(x.title() for x in format_name)
+                error: Optional[subprocess.CalledProcessError] = None
+                max_tries = 5
+                for i in range(max_tries):
+                    try:
+                        # disable python function
+                        logger.info(f"disabling PYTHON function: {function_name}")
+                        subprocess.check_output(
+                            [
+                                func,
+                                "functionapp",
+                                "config",
+                                "appsettings",
+                                "set",
+                                "--name",
+                                self.application_name,
+                                "--resource-group",
+                                self.application_name,
+                                "--settings",
+                                f"AzureWebJobs.{function_name}.Disabled=1",
+                            ],
+                            env=dict(os.environ, CLI_DEBUG="1"),
+                        )
+                        # enable dotnet function
+                        logger.info(f"enabling DOTNET function: {dotnet_name}")
+                        subprocess.check_output(
+                            [
+                                func,
+                                "functionapp",
+                                "config",
+                                "appsettings",
+                                "set",
+                                "--name",
+                                self.application_name + "-net",
+                                "--resource-group",
+                                self.application_name,
+                                "--settings",
+                                f"AzureWebJobs.{dotnet_name}.Disabled=0",
+                            ],
+                            env=dict(os.environ, CLI_DEBUG="1"),
+                        )
+                        break
+                    except subprocess.CalledProcessError as err:
+                        error = err
+                        if i + 1 < max_tries:
+                            logger.debug("func failure error: %s", err)
+                            logger.warning(
+                                f"{function_name} function didn't respond to "
+                                "status change request, waiting 60 seconds "
+                                "and trying again"
+                            )
+                            time.sleep(60)
+            if error is not None:
+                raise error
+
     def update_registration(self) -> None:
         if not self.create_registration:
             return
@@ -1128,6 +1192,7 @@ def main() -> None:
         ("dotnet-api", Client.deploy_dotnet_app),
         ("export_appinsights", Client.add_log_export),
         ("update_registration", Client.update_registration),
+        ("enable_dotnet", Client.enable_dotnet_func),
     ]
 
     formatter = argparse.ArgumentDefaultsHelpFormatter
@@ -1238,7 +1303,15 @@ def main() -> None:
         nargs="*",
         help="Set additional AAD tenants beyond the tenant the app is deployed in",
     )
-
+    parser.add_argument(
+        "--enable_dotnet",
+        type=str,
+        nargs="+",
+        default=[],
+        help="Provide a space-seperated list of python function names to disable "
+        "their functions and enable corresponding dotnet functions in the Azure "
+        "Function App deployment",
+    )
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -1268,6 +1341,7 @@ def main() -> None:
         subscription_id=args.subscription_id,
         admins=args.set_admins,
         allowed_aad_tenants=args.allowed_aad_tenants or [],
+        enable_dotnet=args.enable_dotnet,
     )
     if args.verbose:
         level = logging.DEBUG
