@@ -127,7 +127,8 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
             .iter()
             .flat_map(|log_event| match log_event {
                 LogEvent::Event((ev, data)) => format!(
-                    "{}: {}\n",
+                    "[{}] {}: {}\n",
+                    chrono::Utc::now(),
                     ev.as_str(),
                     data.iter()
                         .map(|p| p.as_values())
@@ -137,7 +138,7 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
                 )
                 .into_bytes(),
                 LogEvent::Trace((level, msg)) => {
-                    format!("{}: {}\n", level.as_str(), msg).into_bytes()
+                    format!("[{}] {}: {}\n", chrono::Utc::now(), level.as_str(), msg).into_bytes()
                 }
             })
             .collect::<Vec<_>>();

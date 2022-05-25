@@ -606,8 +606,7 @@ macro_rules! log_events {
     ($name: expr; $events: expr) => {{
         onefuzz_telemetry::track_event(&$name, &$events);
         log::info!(
-            "[{}] {} {}",
-            onefuzz_telemetry::Utc::now(),
+            "{} {}",
             $name.as_str(),
             onefuzz_telemetry::format_events(&$events)
         );
@@ -633,7 +632,7 @@ macro_rules! log {
     ($level: expr, $($arg: tt)+) => {{
         let log_level = onefuzz_telemetry::to_log_level(&$level);
         if log_level <= log::max_level() {
-            let msg = format!("[{}] {}", onefuzz_telemetry::Utc::now(), format_args!($($arg)+));
+            let msg = format!("{}", format_args!($($arg)+));
             log::log!(log_level, "{}", msg);
             onefuzz_telemetry::try_broadcast_trace(msg.to_string(), log_level);
             onefuzz_telemetry::log_message($level, msg.to_string());
@@ -684,6 +683,7 @@ macro_rules! metric {
     }};
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use crate::{self as onefuzz_telemetry, Event, EventData};
@@ -715,3 +715,4 @@ mod tests {
         });
     }
 }
+*/
