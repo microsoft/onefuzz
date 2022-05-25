@@ -1965,6 +1965,7 @@ name = "onefuzz-telemetry"
 version = "0.1.0"
 dependencies = [
  "appinsights",
+ "chrono",
  "iced-x86",
  "lazy_static",
  "log",
