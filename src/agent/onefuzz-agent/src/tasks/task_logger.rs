@@ -130,16 +130,22 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
                     "[{}] {}: {}\n",
                     log_event.timestamp,
                     log_event.event.as_str(),
-                    log_event.data.iter()
+                    log_event
+                        .data
+                        .iter()
                         .map(|p| p.as_values())
                         .map(|(name, val)| format!("{} {}", name, val))
                         .collect::<Vec<_>>()
                         .join(", ")
                 )
                 .into_bytes(),
-                LoggingEvent::Trace(log_trace) => {
-                    format!("[{}] {}: {}\n", log_trace.timestamp, log_trace.level.as_str(), log_trace.message).into_bytes()
-                }
+                LoggingEvent::Trace(log_trace) => format!(
+                    "[{}] {}: {}\n",
+                    log_trace.timestamp,
+                    log_trace.level.as_str(),
+                    log_trace.message
+                )
+                .into_bytes(),
             })
             .collect::<Vec<_>>();
 
@@ -386,7 +392,7 @@ mod tests {
         LogTrace {
             timestamp: chrono::Utc::now(),
             level,
-            message
+            message,
         }
     }
 
@@ -412,7 +418,7 @@ mod tests {
     }
 
     #[tokio::test]
-    // #[ignore]
+    #[ignore]
     async fn test_write_log() -> Result<()> {
         let url = std::env::var("test_blob_logger_container")?;
         let log_container = Url::parse(&url)?;
@@ -420,7 +426,10 @@ mod tests {
 
         let (tx, rx) = tokio::sync::broadcast::channel(16);
 
-        tx.send(LoggingEvent::Trace(create_log_trace(log::Level::Info, "test".into())))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test".into(),
+        )))?;
 
         blob_logger.start(rx, log_container).await?;
         Ok(())
@@ -476,11 +485,26 @@ mod tests {
         };
 
         let (tx, rx) = tokio::sync::broadcast::channel(16);
-        tx.send(LoggingEvent::Trace(create_log_trace(log::Level::Info, "test1".into())))?;
-        tx.send(LoggingEvent::Trace(create_log_trace(log::Level::Info, "test2".into())))?;
-        tx.send(LoggingEvent::Trace(create_log_trace(log::Level::Info, "test3".into())))?;
-        tx.send(LoggingEvent::Trace(create_log_trace(log::Level::Info, "test4".into())))?;
-        tx.send(LoggingEvent::Trace(create_log_trace(log::Level::Info, "test5".into())))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test1".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test2".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test3".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test4".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test5".into(),
+        )))?;
 
         let _res =
             tokio::time::timeout(Duration::from_secs(5), blob_logger._start(rx, log_writer)).await;
@@ -517,11 +541,26 @@ mod tests {
         };
 
         let (tx, rx) = tokio::sync::broadcast::channel(16);
-        tx.send(LoggingEvent::Trace(create_log_trace(log::Level::Info, "test1".into())))?;
-        tx.send(LoggingEvent::Trace(create_log_trace(log::Level::Info, "test2".into())))?;
-        tx.send(LoggingEvent::Trace(create_log_trace(log::Level::Info, "test3".into())))?;
-        tx.send(LoggingEvent::Trace(create_log_trace(log::Level::Info, "test4".into())))?;
-        tx.send(LoggingEvent::Trace(create_log_trace(log::Level::Info, "test5".into())))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test1".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test2".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test3".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test4".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test5".into(),
+        )))?;
 
         let _res =
             tokio::time::timeout(Duration::from_secs(15), blob_logger._start(rx, log_writer)).await;
@@ -568,7 +607,10 @@ mod tests {
         );
         println!("logging test event");
         let result = blob_writer
-            .write_logs(&[LoggingEvent::Trace(create_log_trace(log::Level::Info, "test".into()))])
+            .write_logs(&[LoggingEvent::Trace(create_log_trace(
+                log::Level::Info,
+                "test".into(),
+            ))])
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 
@@ -576,7 +618,10 @@ mod tests {
 
         // testing that we return MaxSizeReached when the size is exceeded
         let result = blob_writer
-            .write_logs(&[LoggingEvent::Trace(create_log_trace(log::Level::Info, "test".into()))])
+            .write_logs(&[LoggingEvent::Trace(create_log_trace(
+                log::Level::Info,
+                "test".into(),
+            ))])
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 

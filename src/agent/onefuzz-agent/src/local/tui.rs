@@ -234,7 +234,8 @@ impl TerminalUi {
         while cancellation_rx.try_recv() == Err(broadcast::error::TryRecvError::Empty) {
             match rx.try_recv() {
                 Ok(LoggingEvent::Event(log_event)) => {
-                    let data = log_event.data
+                    let data = log_event
+                        .data
                         .into_iter()
                         .filter(Self::filter_event)
                         .collect::<Vec<_>>();
