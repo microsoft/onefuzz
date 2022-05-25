@@ -11,7 +11,6 @@ use uuid::Uuid;
 use z3_sys::ErrorCode as Z3ErrorCode;
 
 pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
-pub use chrono::Utc;
 use tokio::sync::broadcast::{self, Receiver};
 #[macro_use]
 extern crate lazy_static;
@@ -682,37 +681,3 @@ macro_rules! metric {
         client.track_metric($name.into(), $value);
     }};
 }
-
-/*
-#[cfg(test)]
-mod tests {
-    use crate::{self as onefuzz_telemetry, Event, EventData};
-
-    #[test]
-    fn test_trace_log_contains_timestamp() {
-        testing_logger::setup();
-        critical!("hello");
-        testing_logger::validate(|captured_logs| {
-            assert_eq!(captured_logs.len(), 1);
-            let log = captured_logs.first().unwrap();
-
-            assert!(log.body.starts_with("[20"));
-            assert!(log.body.ends_with(" UTC] hello"));
-        });
-    }
-
-    #[test]
-    fn test_event_log_contains_timestamp() {
-        testing_logger::setup();
-        let path = "hello";
-        event!(Event::task_start; EventData::Path = path);
-        testing_logger::validate(|captured_logs| {
-            assert_eq!(captured_logs.len(), 1);
-            let log = captured_logs.first().unwrap();
-
-            assert!(log.body.starts_with("[20"));
-            assert!(log.body.ends_with(" UTC] task_start path:hello"));
-        });
-    }
-}
-*/
