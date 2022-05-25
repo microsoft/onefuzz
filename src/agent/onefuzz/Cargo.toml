@@ -32,7 +32,7 @@ tokio-stream = { version = "0.1", features = ["fs", "time", "tokio-util"] }
 tokio-util = { version = "0.6", features = ["full"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 urlparse = "0.7"
-url-escape = "0.1.0"
+url-escape = "0.1.1"
 ring = "0.16"
 storage-queue = { path = "../storage-queue" }
 strum = "0.23"
