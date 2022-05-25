@@ -551,10 +551,10 @@ pub fn format_events(events: &[EventData]) -> String {
         .join(" ")
 }
 
-fn try_broadcast_event(timestamp: &DateTime<Utc>, event: &Event, properties: &[EventData]) -> bool {
+fn try_broadcast_event(timestamp: DateTime<Utc>, event: &Event, properties: &[EventData]) -> bool {
     // we ignore any send error here because they indicate that
     // there are no receivers on the other end
-    let (timestamp, event, properties) = (*timestamp, event.clone(), properties.to_vec());
+    let (event, properties) = (event.clone(), properties.to_vec());
     global::EVENT_SOURCE
         .send(LoggingEvent::Event(LogEvent {
             timestamp,
@@ -606,7 +606,7 @@ pub fn track_event(event: &Event, properties: &[EventData]) {
         }
         client.track(evt);
     }
-    try_broadcast_event(&chrono::Utc::now(), event, properties);
+    try_broadcast_event(chrono::Utc::now(), event, properties);
 }
 
 pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level {
