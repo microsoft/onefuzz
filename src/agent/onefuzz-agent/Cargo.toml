@@ -34,7 +34,7 @@ onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 path-absolutize = "3.0"
 reqwest-retry = { path = "../reqwest-retry" }
 strum = "0.23"
-strum_macros = "0.23"
+strum_macros = "0.24"
 stacktrace-parser = { path = "../stacktrace-parser" }
 storage-queue = { path = "../storage-queue" }
 tempfile = "3.2"
@@ -46,6 +46,6 @@ tui = { version = "0.16", default-features = false, features = ['crossterm'] }
 url = { version = "2.2", features = ["serde"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 
-azure_core = "0.1.1"
-azure_storage = "0.1.0"
-azure_storage_blobs = "0.1.0"
+azure_core = { version = "0.1.1", default-features = false, features = ["enable_reqwest_rustls"] }
+azure_storage = { version = "0.1.0", default-features = false, features = ["enable_reqwest_rustls"] }
+azure_storage_blobs = { version = "0.1.0", default-features = false, features = ["enable_reqwest_rustls"] }

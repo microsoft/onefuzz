@@ -635,6 +635,7 @@ class DebugLog(Command):
         """
 
         from typing import cast
+        from urllib import parse
 
         if job_id is None:
             if task_id is None:
@@ -658,10 +659,11 @@ class DebugLog(Command):
             if machine_id is not None:
                 file_path += f"{machine_id}/"
 
-        token_credential = AzureCliCredential()
+        container_name = parse.urlsplit(container_url).path[1:]
+        container = self.onefuzz.containers.get(container_name)
 
         container_client: ContainerClient = ContainerClient.from_container_url(
-            container_url, credential=token_credential
+            container.sas_url
         )
 
         blobs = container_client.list_blobs(name_starts_with=file_path)
@@ -683,7 +685,12 @@ class DebugLog(Command):
 
         files.sort(key=lambda x: x.creation_time, reverse=True)
 
-        self.logger.info(f"Found {len(files)} matching files to download")
+        num_files = len(files)
+        if num_files > 0:
+            self.logger.info(f"Found {len(files)} matching files to download")
+        else:
+            self.logger.info("Did not find any matching files to download")
+            return None
 
         if not all:
             self.logger.info(f"Downloading only the {last} most recent files")
