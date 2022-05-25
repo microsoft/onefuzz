@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use chrono::DateTime;
 #[cfg(feature = "intel_instructions")]
 use iced_x86::{Code as IntelInstructionCode, Mnemonic as IntelInstructionMnemonic};
 use serde::{Deserialize, Serialize};
@@ -9,7 +10,6 @@ use std::sync::{LockResult, RwLockReadGuard, RwLockWriteGuard};
 use uuid::Uuid;
 #[cfg(feature = "z3")]
 use z3_sys::ErrorCode as Z3ErrorCode;
-use chrono::{DateTime};
 
 pub use chrono::Utc;
 
@@ -346,14 +346,14 @@ pub enum LoggingEvent {
 pub struct LogTrace {
     pub timestamp: DateTime<Utc>,
     pub level: log::Level,
-    pub message: String
+    pub message: String,
 }
 
 #[derive(Clone, Debug)]
 pub struct LogEvent {
     pub timestamp: DateTime<Utc>,
     pub event: Event,
-    pub data: Vec<EventData>
+    pub data: Vec<EventData>,
 }
 
 mod global {
@@ -559,7 +559,7 @@ fn try_broadcast_event(timestamp: &DateTime<Utc>, event: &Event, properties: &[E
         .send(LoggingEvent::Event(LogEvent {
             timestamp,
             event,
-            data:properties
+            data: properties,
         }))
         .is_ok()
 }
@@ -572,7 +572,7 @@ pub fn try_broadcast_trace(timestamp: DateTime<Utc>, msg: String, level: log::Le
         .send(LoggingEvent::Trace(LogTrace {
             timestamp,
             level,
-            message:msg
+            message: msg,
         }))
         .is_ok()
 }
