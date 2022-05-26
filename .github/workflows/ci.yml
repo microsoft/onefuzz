@@ -380,7 +380,7 @@ jobs:
           cp artifacts/agent-MINGW*/onefuzz-supervisor.exe src/deployment/tools/win64/
           cp artifacts/agent-MINGW*/onefuzz-task.exe src/deployment/tools/win64/
           cp artifacts/agent-MINGW*/onefuzz_supervisor.pdb src/deployment/tools/win64/
-          cp artifacts/agent-MINGW*/onefuzz_agent.pdb src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz_task.pdb src/deployment/tools/win64/
           cp artifacts/agent-Linux/onefuzz-supervisor src/deployment/tools/linux/
           cp artifacts/agent-Linux/onefuzz-task src/deployment/tools/linux/
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
