@@ -121,7 +121,6 @@ impl BlobLogWriter {
 impl LogWriter<BlobLogWriter> for BlobLogWriter {
     async fn write_logs(&self, logs: &[LoggingEvent]) -> Result<WriteLogResponse> {
         let blob_name = self.get_blob_name();
-        print!("{}", blob_name);
         let blob_client = self.container_client.as_blob_client(blob_name);
         let data_stream = logs
             .iter()
