@@ -6,7 +6,7 @@ members = [
     "dynamic-library",
     "input-tester",
     "onefuzz",
-    "onefuzz-agent",
+    "onefuzz-task",
     "onefuzz-supervisor",
     "onefuzz-telemetry",
     "reqwest-retry",

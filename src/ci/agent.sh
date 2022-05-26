@@ -57,12 +57,12 @@ export RUST_BACKTRACE=full
 cargo test --release --workspace
 
 # TODO: re-enable integration tests.
-# cargo test --release --manifest-path ./onefuzz-agent/Cargo.toml --features integration_test -- --nocapture
+# cargo test --release --manifest-path ./onefuzz-task/Cargo.toml --features integration_test -- --nocapture
 
 # TODO: once Salvo is integrated, this can get deleted
 cargo build --release --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
 
-cp target/release/onefuzz-agent* ../../artifacts/agent-$(uname)
+cp target/release/onefuzz-task* ../../artifacts/agent-$(uname)
 cp target/release/onefuzz-supervisor* ../../artifacts/agent-$(uname)
 cp target/release/srcview* ../../artifacts/agent-$(uname)
 

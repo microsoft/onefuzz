@@ -29,7 +29,7 @@ fn main() -> Result<()> {
         env!("GIT_VERSION")
     );
 
-    let app = App::new("onefuzz-agent")
+    let app = App::new("onefuzz-task")
         .version(built_version.as_str())
         .subcommand(managed::cmd::args(MANAGED_CMD))
         .subcommand(local::cmd::args(LOCAL_CMD))
