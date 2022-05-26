@@ -7,7 +7,7 @@ use azure_core::HttpError;
 use azure_storage::core::prelude::*;
 use azure_storage_blobs::prelude::*;
 use futures::{StreamExt, TryStreamExt};
-use onefuzz_telemetry::LogEvent;
+use onefuzz_telemetry::LoggingEvent;
 use reqwest::{StatusCode, Url};
 use std::{path::PathBuf, sync::Arc, time::Duration};
 use uuid::Uuid;
@@ -39,7 +39,7 @@ enum WriteLogResponse {
 /// Abstracts the operation needed to write logs
 #[async_trait]
 trait LogWriter<T>: Send + Sync {
-    async fn write_logs(&self, logs: &[LogEvent]) -> Result<WriteLogResponse>;
+    async fn write_logs(&self, logs: &[LoggingEvent]) -> Result<WriteLogResponse>;
     /// creates a new blob file and returns the logWriter associated with it
     async fn get_next_writer(&self) -> Result<Box<dyn LogWriter<T>>>;
 }
@@ -119,26 +119,33 @@ impl BlobLogWriter {
 
 #[async_trait]
 impl LogWriter<BlobLogWriter> for BlobLogWriter {
-    async fn write_logs(&self, logs: &[LogEvent]) -> Result<WriteLogResponse> {
+    async fn write_logs(&self, logs: &[LoggingEvent]) -> Result<WriteLogResponse> {
         let blob_name = self.get_blob_name();
         print!("{}", blob_name);
         let blob_client = self.container_client.as_blob_client(blob_name);
         let data_stream = logs
             .iter()
             .flat_map(|log_event| match log_event {
-                LogEvent::Event((ev, data)) => format!(
-                    "{}: {}\n",
-                    ev.as_str(),
-                    data.iter()
+                LoggingEvent::Event(log_event) => format!(
+                    "[{}] {}: {}\n",
+                    log_event.timestamp,
+                    log_event.event.as_str(),
+                    log_event
+                        .data
+                        .iter()
                         .map(|p| p.as_values())
                         .map(|(name, val)| format!("{} {}", name, val))
                         .collect::<Vec<_>>()
                         .join(", ")
                 )
                 .into_bytes(),
-                LogEvent::Trace((level, msg)) => {
-                    format!("{}: {}\n", level.as_str(), msg).into_bytes()
-                }
+                LoggingEvent::Trace(log_trace) => format!(
+                    "[{}] {}: {}\n",
+                    log_trace.timestamp,
+                    log_trace.level.as_str(),
+                    log_trace.message
+                )
+                .into_bytes(),
             })
             .collect::<Vec<_>>();
 
@@ -208,9 +215,9 @@ enum LoopState {
 
 struct LoopContext<T: Sized> {
     pub log_writer: Box<dyn LogWriter<T>>,
-    pub pending_logs: Vec<LogEvent>,
+    pub pending_logs: Vec<LoggingEvent>,
     pub state: LoopState,
-    pub event: Receiver<LogEvent>,
+    pub event: Receiver<LoggingEvent>,
 }
 
 impl TaskLogger {
@@ -249,7 +256,7 @@ impl TaskLogger {
     async fn event_loop<T: Send + Sized>(
         self,
         log_writer: Box<dyn LogWriter<T>>,
-        event: Receiver<LogEvent>,
+        event: Receiver<LoggingEvent>,
     ) -> Result<()> {
         let initial_state = LoopContext {
             log_writer,
@@ -355,7 +362,7 @@ impl TaskLogger {
         Ok(())
     }
 
-    pub async fn start(&self, event: Receiver<LogEvent>, log_container: Url) -> Result<()> {
+    pub async fn start(&self, event: Receiver<LoggingEvent>, log_container: Url) -> Result<()> {
         let blob_writer =
             BlobLogWriter::create(self.task_id, self.machine_id, log_container, MAX_LOG_SIZE)
                 .await?;
@@ -365,7 +372,7 @@ impl TaskLogger {
 
     async fn _start<T: 'static + Send>(
         &self,
-        event: Receiver<LogEvent>,
+        event: Receiver<LoggingEvent>,
         log_writer: Box<dyn LogWriter<T>>,
     ) -> Result<()> {
         self.clone().event_loop(log_writer, event).await?;
@@ -378,7 +385,16 @@ mod tests {
     use std::{collections::HashMap, sync::RwLock};
 
     use super::*;
+    use onefuzz_telemetry::LogTrace;
     use reqwest::Url;
+
+    fn create_log_trace(level: log::Level, message: String) -> LogTrace {
+        LogTrace {
+            timestamp: chrono::Utc::now(),
+            level,
+            message,
+        }
+    }
 
     #[tokio::test]
     #[ignore]
@@ -410,21 +426,24 @@ mod tests {
 
         let (tx, rx) = tokio::sync::broadcast::channel(16);
 
-        tx.send(LogEvent::Trace((log::Level::Info, "test".into())))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test".into(),
+        )))?;
 
         blob_logger.start(rx, log_container).await?;
         Ok(())
     }
 
     pub struct TestLogWriter {
-        events: Arc<RwLock<HashMap<usize, Vec<LogEvent>>>>,
+        events: Arc<RwLock<HashMap<usize, Vec<LoggingEvent>>>>,
         id: usize,
         max_size: usize,
     }
 
     #[async_trait]
     impl LogWriter<TestLogWriter> for TestLogWriter {
-        async fn write_logs(&self, logs: &[LogEvent]) -> Result<WriteLogResponse> {
+        async fn write_logs(&self, logs: &[LoggingEvent]) -> Result<WriteLogResponse> {
             let mut events = self.events.write().unwrap();
             let entry = &mut *events.entry(self.id).or_insert(Vec::new());
             if entry.len() >= self.max_size {
@@ -466,11 +485,26 @@ mod tests {
         };
 
         let (tx, rx) = tokio::sync::broadcast::channel(16);
-        tx.send(LogEvent::Trace((log::Level::Info, "test1".into())))?;
-        tx.send(LogEvent::Trace((log::Level::Info, "test2".into())))?;
-        tx.send(LogEvent::Trace((log::Level::Info, "test3".into())))?;
-        tx.send(LogEvent::Trace((log::Level::Info, "test4".into())))?;
-        tx.send(LogEvent::Trace((log::Level::Info, "test5".into())))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test1".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test2".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test3".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test4".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test5".into(),
+        )))?;
 
         let _res =
             tokio::time::timeout(Duration::from_secs(5), blob_logger._start(rx, log_writer)).await;
@@ -507,11 +541,26 @@ mod tests {
         };
 
         let (tx, rx) = tokio::sync::broadcast::channel(16);
-        tx.send(LogEvent::Trace((log::Level::Info, "test1".into())))?;
-        tx.send(LogEvent::Trace((log::Level::Info, "test2".into())))?;
-        tx.send(LogEvent::Trace((log::Level::Info, "test3".into())))?;
-        tx.send(LogEvent::Trace((log::Level::Info, "test4".into())))?;
-        tx.send(LogEvent::Trace((log::Level::Info, "test5".into())))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test1".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test2".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test3".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test4".into(),
+        )))?;
+        tx.send(LoggingEvent::Trace(create_log_trace(
+            log::Level::Info,
+            "test5".into(),
+        )))?;
 
         let _res =
             tokio::time::timeout(Duration::from_secs(15), blob_logger._start(rx, log_writer)).await;
@@ -558,7 +607,10 @@ mod tests {
         );
         println!("logging test event");
         let result = blob_writer
-            .write_logs(&[LogEvent::Trace((log::Level::Info, "test".into()))])
+            .write_logs(&[LoggingEvent::Trace(create_log_trace(
+                log::Level::Info,
+                "test".into(),
+            ))])
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 
@@ -566,7 +618,10 @@ mod tests {
 
         // testing that we return MaxSizeReached when the size is exceeded
         let result = blob_writer
-            .write_logs(&[LogEvent::Trace((log::Level::Info, "test".into()))])
+            .write_logs(&[LoggingEvent::Trace(create_log_trace(
+                log::Level::Info,
+                "test".into(),
+            ))])
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use chrono::DateTime;
 #[cfg(feature = "intel_instructions")]
 use iced_x86::{Code as IntelInstructionCode, Mnemonic as IntelInstructionMnemonic};
 use serde::{Deserialize, Serialize};
@@ -9,6 +10,8 @@ use std::sync::{LockResult, RwLockReadGuard, RwLockWriteGuard};
 use uuid::Uuid;
 #[cfg(feature = "z3")]
 use z3_sys::ErrorCode as Z3ErrorCode;
+
+pub use chrono::Utc;
 
 pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
 use tokio::sync::broadcast::{self, Receiver};
@@ -334,9 +337,23 @@ impl EventData {
 }
 
 #[derive(Clone, Debug)]
-pub enum LogEvent {
-    Trace((log::Level, String)),
-    Event((Event, Vec<EventData>)),
+pub enum LoggingEvent {
+    Trace(LogTrace),
+    Event(LogEvent),
+}
+
+#[derive(Clone, Debug)]
+pub struct LogTrace {
+    pub timestamp: DateTime<Utc>,
+    pub level: log::Level,
+    pub message: String,
+}
+
+#[derive(Clone, Debug)]
+pub struct LogEvent {
+    pub timestamp: DateTime<Utc>,
+    pub event: Event,
+    pub data: Vec<EventData>,
 }
 
 mod global {
@@ -361,7 +378,7 @@ mod global {
     };
 
     lazy_static! {
-        pub static ref EVENT_SOURCE: Sender<LogEvent> = {
+        pub static ref EVENT_SOURCE: Sender<LoggingEvent> = {
             let (telemetry_event_source, _) = broadcast::channel::<_>(100);
             telemetry_event_source
         };
@@ -534,25 +551,33 @@ pub fn format_events(events: &[EventData]) -> String {
         .join(" ")
 }
 
-fn try_broadcast_event(event: &Event, properties: &[EventData]) -> bool {
+fn try_broadcast_event(timestamp: DateTime<Utc>, event: &Event, properties: &[EventData]) -> bool {
     // we ignore any send error here because they indicate that
     // there are no receivers on the other end
     let (event, properties) = (event.clone(), properties.to_vec());
     global::EVENT_SOURCE
-        .send(LogEvent::Event((event, properties)))
+        .send(LoggingEvent::Event(LogEvent {
+            timestamp,
+            event,
+            data: properties,
+        }))
         .is_ok()
 }
 
-pub fn try_broadcast_trace(msg: String, level: log::Level) -> bool {
+pub fn try_broadcast_trace(timestamp: DateTime<Utc>, msg: String, level: log::Level) -> bool {
     // we ignore any send error here because they indicate that
     // there are no receivers on the other end
 
     global::EVENT_SOURCE
-        .send(LogEvent::Trace((level, msg)))
+        .send(LoggingEvent::Trace(LogTrace {
+            timestamp,
+            level,
+            message: msg,
+        }))
         .is_ok()
 }
 
-pub fn subscribe_to_events() -> Receiver<LogEvent> {
+pub fn subscribe_to_events() -> Receiver<LoggingEvent> {
     global::EVENT_SOURCE.subscribe()
 }
 
@@ -581,7 +606,7 @@ pub fn track_event(event: &Event, properties: &[EventData]) {
         }
         client.track(evt);
     }
-    try_broadcast_event(event, properties);
+    try_broadcast_event(chrono::Utc::now(), event, properties);
 }
 
 pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level {
@@ -633,7 +658,7 @@ macro_rules! log {
         if log_level <= log::max_level() {
             let msg = format!("{}", format_args!($($arg)+));
             log::log!(log_level, "{}", msg);
-            onefuzz_telemetry::try_broadcast_trace(msg.to_string(), log_level);
+            onefuzz_telemetry::try_broadcast_trace(onefuzz_telemetry::Utc::now(), msg.to_string(), log_level);
             onefuzz_telemetry::log_message($level, msg.to_string());
         }
     }};
