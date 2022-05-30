@@ -8,7 +8,7 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0"
 fnv = "1.0"
-goblin = "0.4"
+goblin = "0.5"
 iced-x86 = "1.15"
 log = "0.4"
 memmap2 = "0.5"
