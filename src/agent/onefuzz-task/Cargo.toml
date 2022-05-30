@@ -33,7 +33,7 @@ onefuzz = { path = "../onefuzz" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 path-absolutize = "3.0"
 reqwest-retry = { path = "../reqwest-retry" }
-strum = "0.23"
+strum = "0.24"
 strum_macros = "0.24"
 stacktrace-parser = { path = "../stacktrace-parser" }
 storage-queue = { path = "../storage-queue" }
