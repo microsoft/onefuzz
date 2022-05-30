@@ -40,7 +40,7 @@ storage-queue = { path = "../storage-queue" }
 tempfile = "3.2"
 thiserror = "1.0"
 tokio = { version = "1.15", features = ["full"] }
-tokio-util = { version = "0.6", features = ["full"] }
+tokio-util = { version = "0.7", features = ["full"] }
 tokio-stream = "0.1"
 tui = { version = "0.16", default-features = false, features = ['crossterm'] }
 url = { version = "2.2", features = ["serde"] }
