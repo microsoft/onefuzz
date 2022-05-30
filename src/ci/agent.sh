@@ -63,7 +63,7 @@ cargo test --release --workspace
 cargo build --release --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
 
 cp target/release/onefuzz-task* ../../artifacts/agent-$(uname)
-cp target/release/onefuzz-supervisor* ../../artifacts/agent-$(uname)
+cp target/release/onefuzz-agent* ../../artifacts/agent-$(uname)
 cp target/release/srcview* ../../artifacts/agent-$(uname)
 
 if exists target/release/*.pdb; then

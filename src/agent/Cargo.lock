@@ -1888,7 +1888,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "onefuzz-supervisor"
+name = "onefuzz-agent"
 version = "0.1.0"
 dependencies = [
  "anyhow",

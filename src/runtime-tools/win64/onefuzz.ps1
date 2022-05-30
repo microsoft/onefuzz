@@ -16,7 +16,7 @@ function log ($message) {
 
 function Setup-Silent-Notification {
    # https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/registry-entries-for-silent-process-exit
-   log "installing registry key for silent termination notification of onefuzz-supervisor"
+   log "installing registry key for silent termination notification of onefuzz-agent"
    reg import c:\onefuzz\tools\win64\onefuzz-silent-exit.reg
    log "done importing registry key"
 }
