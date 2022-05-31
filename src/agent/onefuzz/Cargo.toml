@@ -18,7 +18,7 @@ futures-util = "0.3"
 hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
-notify = "5.0.0-pre.14"
+notify = "5.0.0-pre.15"
 regex = "1.5.5"
 reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"], default-features=false }
 sha2 = "0.10.2"
