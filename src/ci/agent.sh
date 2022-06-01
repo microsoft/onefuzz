@@ -9,22 +9,25 @@ exists() {
     [ -e "$1" ]
 }
 
-# only set RUSTC_WRAPPER if sccache exists
 SCCACHE=$(which sccache)
 if [ ! -z "$SCCACHE" ]; then
+    # only set RUSTC_WRAPPER if sccache exists
     export RUSTC_WRAPPER=$SCCACHE
-fi
-
-# only set CARGO_INCREMENTAL on non-release builds
-#
-# This speeds up build time, but makes the resulting binaries slightly slower.
-# https://doc.rust-lang.org/cargo/reference/profiles.html?highlight=incremental#incremental
-if [ "${GITHUB_REF}" != "" ]; then
-    TAG_VERSION=${GITHUB_REF#refs/tags/}
-    if [ ${TAG_VERSION} == ${GITHUB_REF} ]; then
-        export CARGO_INCREMENTAL=1
+    # incremental interferes with (disables) sccache
+    export CARGO_INCREMENTAL=0
+else
+    # only set CARGO_INCREMENTAL on non-release builds
+    #
+    # This speeds up build time, but makes the resulting binaries slightly slower.
+    # https://doc.rust-lang.org/cargo/reference/profiles.html?highlight=incremental#incremental
+    if [ "${GITHUB_REF}" != "" ]; then
+        TAG_VERSION=${GITHUB_REF#refs/tags/}
+        if [ ${TAG_VERSION} == ${GITHUB_REF} ]; then
+            export CARGO_INCREMENTAL=1
+        fi
     fi
 fi
+
 
 mkdir -p artifacts/agent-$(uname)
 
@@ -36,10 +39,7 @@ cargo audit --version
 cargo clippy --version
 cargo fmt --version
 
-# unless we're doing incremental builds, start clean during CI
-if [ X${CARGO_INCREMENTAL} == X ]; then
-    cargo clean
-fi
+cargo clean
 
 cargo fmt -- --check
 # RUSTSEC-2020-0016: a dependency `net2` (pulled in from tokio) is deprecated
