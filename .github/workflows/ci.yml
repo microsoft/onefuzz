@@ -12,7 +12,7 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
-  ACTIONS_CACHE_KEY_DATE: 2021-08-26-01
+  ACTIONS_CACHE_KEY_DATE: 2022-06-02-01
   CI: true
 
 jobs:
