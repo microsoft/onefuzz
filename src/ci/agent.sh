@@ -10,7 +10,8 @@ exists() {
 }
 
 # only set RUSTC_WRAPPER if sccache exists
-if sccache --help; then
+SCCACHE=$(which sccache)
+if [ ! -z "$SCCACHE" ]; then
     export RUSTC_WRAPPER=$(which sccache)
 fi
 
@@ -61,6 +62,10 @@ cargo test --release --workspace
 
 # TODO: once Salvo is integrated, this can get deleted
 cargo build --release --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
+
+if [ ! -z "$SCCACHE" ]; then
+    sccache --show-stats
+fi
 
 cp target/release/onefuzz-task* ../../artifacts/agent-$(uname)
 cp target/release/onefuzz-agent* ../../artifacts/agent-$(uname)
