@@ -17,7 +17,7 @@ debugger = { path = "../debugger" }
 dunce = "1.0"
 fixedbitset = "0.4"
 goblin = "0.5"
-iced-x86 = { version = "1.15", features = ["decoder", "op_code_info", "instr_info", "masm"] }
+iced-x86 = { version = "1.17", features = ["decoder", "op_code_info", "instr_info", "masm"] }
 log = "0.4"
 memmap2 = "0.5"
 msvc-demangler = "0.9"
