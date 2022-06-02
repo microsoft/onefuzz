@@ -464,7 +464,7 @@ dependencies = [
  "dunce",
  "env_logger 0.9.0",
  "fixedbitset",
- "goblin 0.5.1",
+ "goblin",
  "iced-x86",
  "log",
  "memmap2",
@@ -656,7 +656,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "fnv",
- "goblin 0.5.1",
+ "goblin",
  "iced-x86",
  "log",
  "memmap2",
@@ -1120,17 +1120,6 @@ name = "glob"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
-
-[[package]]
-name = "goblin"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32401e89c6446dcd28185931a01b1093726d0356820ac744023e6850689bf926"
-dependencies = [
- "log",
- "plain",
- "scroll 0.10.2",
-]
 
 [[package]]
 name = "goblin"
@@ -2584,9 +2573,6 @@ name = "scroll"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fda28d4b4830b807a8b43f7b0e6b5df875311b3e7621d84577188c175b6ec1ec"
-dependencies = [
- "scroll_derive 0.10.5",
-]
 
 [[package]]
 name = "scroll"
@@ -2594,18 +2580,7 @@ version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04c565b551bafbef4157586fa379538366e4385d42082f255bfd96e4fe8519da"
 dependencies = [
- "scroll_derive 0.11.0",
-]
-
-[[package]]
-name = "scroll_derive"
-version = "0.10.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aaaae8f38bb311444cfb7f1979af0bc9240d95795f75f9ceddf6a59b79ceffa0"
-dependencies = [
- "proc-macro2 1.0.39",
- "quote 1.0.9",
- "syn 1.0.95",
+ "scroll_derive",
 ]
 
 [[package]]
@@ -2986,9 +2961,9 @@ dependencies = [
 
 [[package]]
 name = "symbolic"
-version = "8.6.0"
+version = "8.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a01baa57aea5d03248dc467ad9de7b4fd12958d5e07192e3b518291a717107e"
+checksum = "f2577f8527cb6c6521a5fe5501ff070cd20fb50e82d858f1a12ff8514bb428c9"
 dependencies = [
  "symbolic-common",
  "symbolic-debuginfo",
@@ -3010,9 +2985,9 @@ dependencies = [
 
 [[package]]
 name = "symbolic-debuginfo"
-version = "8.6.0"
+version = "8.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1765e8a63832e48ae4758b6703a512924060efbc1eff2babf259701154dfc2be"
+checksum = "0600cc268dbebcdae8f441e679e635ce14d0acbfac2c69d477cf09a70bae025d"
 dependencies = [
  "bitvec 1.0.0",
  "dmsort",
@@ -3020,15 +2995,15 @@ dependencies = [
  "fallible-iterator",
  "flate2",
  "gimli",
- "goblin 0.4.3",
+ "goblin",
  "lazy_static",
  "lazycell",
  "nom 7.1.0",
  "nom-supreme",
- "parking_lot 0.11.2",
+ "parking_lot 0.12.1",
  "pdb",
  "regex",
- "scroll 0.10.2",
+ "scroll 0.11.0",
  "serde",
  "serde_json",
  "smallvec",
@@ -3053,9 +3028,9 @@ dependencies = [
 
 [[package]]
 name = "symbolic-symcache"
-version = "8.6.0"
+version = "8.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f78551f8b8a39ab3e5b0c60aa87ee38aac3d74e05f8985f738a9ded7d023e00"
+checksum = "f697c819900d69c100db0f596c792d49af21e18f4d8e65892296c7fadd59fa52"
 dependencies = [
  "dmsort",
  "fnv",
@@ -3557,9 +3532,9 @@ checksum = "0237232789cf037d5480773fe568aac745bfe2afbc11a863e97901780a6b47cc"
 
 [[package]]
 name = "wasmparser"
-version = "0.82.0"
+version = "0.83.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0559cc0f1779240d6f894933498877ea94f693d84f3ee39c9a9932c6c312bd70"
+checksum = "718ed7c55c2add6548cca3ddd6383d738cd73b892df400e96b9aa876f0141d7a"
 
 [[package]]
 name = "web-sys"
