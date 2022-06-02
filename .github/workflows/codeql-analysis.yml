@@ -2,9 +2,10 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
   schedule:
-    - cron: '29 3 * * 0'
+    - cron: "29 3 * * 0"
 
 jobs:
   analyze:
@@ -14,18 +15,37 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['csharp', 'python']
+        language: ["csharp", "python"]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    # Initializes the CodeQL tools for scanning.
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
-      with:
-        languages: ${{ matrix.language }}
-        config-file: ./.github/codeql/codeql-config.yml
+      # Initializes the CodeQL tools for scanning.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/codeql-config.yml
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      # Compiling is required for csharp
+      - name: Setup .NET Core SDK
+        if: ${{ matrix.language == 'csharp' }}
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: "6.0.300"
+
+      - name: Install dependencies
+        if: ${{ matrix.language == 'csharp' }}
+        run: |
+          cd src/ApiService/
+          dotnet restore --locked-mode
+
+      - name: Build Service
+        if: ${{ matrix.language == 'csharp' }}
+        run: |
+          cd src/ApiService/
+          dotnet build -warnaserror --configuration Release
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
