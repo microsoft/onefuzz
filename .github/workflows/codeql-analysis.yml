@@ -27,7 +27,7 @@ jobs:
           languages: ${{ matrix.language }}
           config-file: ./.github/codeql/codeql-config.yml
 
-      # Compiling is required for chsarp
+      # Compiling is required for csharp
       - name: Setup .NET Core SDK
         if: ${{ matrix.language == 'csharp' }}
         uses: actions/setup-dotnet@v2
