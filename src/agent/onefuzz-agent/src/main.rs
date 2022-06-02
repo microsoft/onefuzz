@@ -139,7 +139,7 @@ fn redirect(opt: RunOpt) -> Result<()> {
 
     let exit_status: ExitStatus = cmd
         .spawn()
-        .context("unable to start child onefuzz-supervisor")?
+        .context("unable to start child onefuzz-agent")?
         .wait()
         .context("unable to get exit status")?
         .into();
@@ -151,10 +151,10 @@ fn redirect(opt: RunOpt) -> Result<()> {
             .open(failure_path)
             .context("unable to open log file")?;
         log.write_fmt(format_args!(
-            "onefuzz-supervisor child failed: {:?}",
+            "onefuzz-agent child failed: {:?}",
             exit_status
         ))?;
-        bail!("onefuzz-supervisor child failed: {:?}", exit_status);
+        bail!("onefuzz-agent child failed: {:?}", exit_status);
     }
 
     Ok(())
@@ -216,9 +216,9 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
     // failed, then exit as a failure.
 
     if let Some(work) = WorkSet::load_from_fs_context().await? {
-        warn!("onefuzz-supervisor unexpectedly identified an existing workset on start");
+        warn!("onefuzz-agent unexpectedly identified an existing workset on start");
         let failure = match failure::read_failure() {
-            Ok(value) => format!("onefuzz-supervisor failed: {}", value),
+            Ok(value) => format!("onefuzz-agent failed: {}", value),
             Err(failure_err) => {
                 warn!("unable to read failure: {:?}", failure_err);
                 let logs = failure::read_logs().unwrap_or_else(|logs_err| {
@@ -227,7 +227,7 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
                         failure_err, logs_err
                     )
                 });
-                format!("onefuzz-supervisor failed: {}", logs)
+                format!("onefuzz-agent failed: {}", logs)
             }
         };
 

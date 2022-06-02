@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-const FAILURE_FILE: &str = "onefuzz-supervisor-failure.txt";
+const FAILURE_FILE: &str = "onefuzz-agent-failure.txt";
 
 pub fn failure_path() -> Result<PathBuf> {
     Ok(onefuzz_root()?.join(FAILURE_FILE))

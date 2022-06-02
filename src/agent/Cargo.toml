@@ -7,7 +7,7 @@ members = [
     "input-tester",
     "onefuzz",
     "onefuzz-task",
-    "onefuzz-supervisor",
+    "onefuzz-agent",
     "onefuzz-telemetry",
     "reqwest-retry",
     "srcview",
