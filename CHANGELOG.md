@@ -20,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed 
 * Agent: Remove stray print statement from the task_logger. [#1975](https://github.com/microsoft/onefuzz/pull/1975)
 * Agent: Fix local coverage definition by removing a duplicated command line parameter. [#1962](https://github.com/microsoft/onefuzz/pull/1962)
-* Service: Bug Fix in TimerTasks Function. [#1961](https://github.com/microsoft/onefuzz/pull/1961)
 
 ## 5.5.0
 ### Added
