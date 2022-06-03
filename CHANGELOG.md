@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 5.6.0
 ### Added
 * Service: Add Function App settings to Bicep template and `deploy.py`. [#1973](https://github.com/microsoft/onefuzz/pull/1973)
-* Agent: Add a timestamp to Agent log to make it easier to correlate events. [#1972](https://github.com/microsoft/onefuzz/pull/1972)
+* Agent: Add a timestamp to agent log to make it easier to correlate events. [#1972](https://github.com/microsoft/onefuzz/pull/1972)
 
 ### Changed
 * Agent/Supervisor/Proxy: Rename the supervisor process from `onefuzz-supervisor` to `onefuzz-agent`. [#1989](https://github.com/microsoft/onefuzz/pull/1989)
