@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent/Supervisor/Proxy: Rename the supervisor process from `onefuzz-supervisor` to `onefuzz-agent`. [#1989](https://github.com/microsoft/onefuzz/pull/1989)
 * Agent/Supervisor/Proxy: Rename the task executor that runs on the VM from `onefuzz-agent` to `onefuzz-task`. [#1980](https://github.com/microsoft/onefuzz/pull/1980)
 * Agent/Supervisor/Proxy: Ensure `GlobalFlag` registry value is initialized for targets. [#1960](https://github.com/microsoft/onefuzz/pull/1960)
-* Agent/Supervisor/Proxy: Set Backtrace to Full. [#1959](https://github.com/microsoft/onefuzz/pull/1959)
+* Agent/Supervisor/Proxy: Enable full backtraces on Rust panics. [#1959](https://github.com/microsoft/onefuzz/pull/1959)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#2003](https://github.com/microsoft/onefuzz/pull/2003), [#2002](https://github.com/microsoft/onefuzz/pull/2002), [#1999](https://github.com/microsoft/onefuzz/pull/1999), [#1992](https://github.com/microsoft/onefuzz/pull/1992), [#1986](https://github.com/microsoft/onefuzz/pull/1986), [#1983](https://github.com/microsoft/onefuzz/pull/1983), [#1982](https://github.com/microsoft/onefuzz/pull/1982), [#1981](https://github.com/microsoft/onefuzz/pull/1981), [#1985](https://github.com/microsoft/onefuzz/pull/1985), [#1974](https://github.com/microsoft/onefuzz/pull/1974), [#1969](https://github.com/microsoft/onefuzz/pull/1969), [#1965](https://github.com/microsoft/onefuzz/pull/1965)
 * CLI/Service: Updated multiple first-party and third-party Python dependencies. [#2009](https://github.com/microsoft/onefuzz/pull/2009), [#1996](https://github.com/microsoft/onefuzz/pull/1996)
 
