@@ -6,7 +6,6 @@ use async_trait::async_trait;
 use azure_core::HttpError;
 use azure_storage::core::prelude::*;
 use azure_storage_blobs::prelude::*;
-use futures::{StreamExt, TryStreamExt};
 use onefuzz_telemetry::LoggingEvent;
 use reqwest::{StatusCode, Url};
 use std::{path::PathBuf, sync::Arc, time::Duration};
@@ -125,6 +124,7 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
         let data_stream = logs
             .iter()
             .flat_map(|log_event| match log_event {
+                LoggingEvent::Flush => format!("End of log").into_bytes(),
                 LoggingEvent::Event(log_event) => format!(
                     "[{}] {}: {}\n",
                     log_event.timestamp,
@@ -196,7 +196,7 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct TaskLogger {
     job_id: Uuid,
     task_id: Uuid,
@@ -208,8 +208,17 @@ pub struct TaskLogger {
 
 enum LoopState {
     Receive,
-    InitLog { start: usize, count: usize },
-    Send { start: usize, count: usize },
+    InitLog {
+        start: usize,
+        count: usize,
+        flush: bool,
+    },
+    Send {
+        start: usize,
+        count: usize,
+        flush: bool,
+    },
+    Done,
 }
 
 struct LoopContext<T: Sized> {
@@ -252,113 +261,126 @@ impl TaskLogger {
         Ok(storage_account_client.as_container_client(container))
     }
 
-    async fn event_loop<T: Send + Sized>(
-        self,
-        log_writer: Box<dyn LogWriter<T>>,
-        event: Receiver<LoggingEvent>,
-    ) -> Result<()> {
-        let initial_state = LoopContext {
-            log_writer,
-            pending_logs: vec![],
-            state: LoopState::Receive,
-            event,
-        };
-
-        let _loop_result = futures::stream::repeat(0)
-            .map(Ok)
-            .try_fold(initial_state, |context, _| async {
-                match context.state {
-                    LoopState::Send { start, count } => {
-                        match context
-                            .log_writer
-                            .write_logs(&context.pending_logs[start..start + count])
-                            .await?
-                        {
-                            WriteLogResponse::Success => {
-                                if start + count >= context.pending_logs.len() {
-                                    Result::<_, anyhow::Error>::Ok(LoopContext {
-                                        pending_logs: vec![],
-                                        state: LoopState::Receive,
-                                        ..context
-                                    })
-                                } else {
-                                    let new_start = start + 1;
-                                    let new_count = context.pending_logs.len() - new_start;
-                                    Result::<_, anyhow::Error>::Ok(LoopContext {
-                                        state: LoopState::Send {
-                                            start: new_start,
-                                            count: new_count,
-                                        },
-                                        ..context
-                                    })
-                                }
-                            }
-
-                            WriteLogResponse::MaxSizeReached => {
+    async fn event_loop<T: Send + Sized>(self, context: LoopContext<T>) -> Result<LoopContext<T>> {
+        match context.state {
+            LoopState::Send {
+                start,
+                count,
+                flush,
+            } => {
+                match context
+                    .log_writer
+                    .write_logs(&context.pending_logs[start..start + count])
+                    .await?
+                {
+                    WriteLogResponse::Success => {
+                        if start + count >= context.pending_logs.len() {
+                            if flush {
+                                bail!("done");
+                            } else {
                                 Result::<_, anyhow::Error>::Ok(LoopContext {
-                                    state: LoopState::InitLog { start, count },
+                                    pending_logs: vec![],
+                                    state: LoopState::Receive,
                                     ..context
                                 })
                             }
-                            WriteLogResponse::MessageTooLarge => {
-                                // split the logs here
-                                Result::<_, anyhow::Error>::Ok(LoopContext {
-                                    state: LoopState::Send {
-                                        start,
-                                        count: count / 2,
-                                    },
-                                    ..context
-                                })
-                            }
+                        } else {
+                            let new_start = start + 1;
+                            let new_count = context.pending_logs.len() - new_start;
+                            Result::<_, anyhow::Error>::Ok(LoopContext {
+                                state: LoopState::Send {
+                                    start: new_start,
+                                    count: new_count,
+                                    flush: flush,
+                                },
+                                ..context
+                            })
                         }
                     }
-                    LoopState::InitLog { start, count } => {
-                        let new_writer = context.log_writer.get_next_writer().await?;
+
+                    WriteLogResponse::MaxSizeReached => {
                         Result::<_, anyhow::Error>::Ok(LoopContext {
-                            log_writer: new_writer,
-                            state: LoopState::Send { start, count },
+                            state: LoopState::InitLog {
+                                start,
+                                count,
+                                flush,
+                            },
                             ..context
                         })
                     }
-                    LoopState::Receive => {
-                        let mut event = context.event;
-                        let mut data = Vec::with_capacity(self.log_buffer_size);
-                        let now = tokio::time::Instant::now();
-                        loop {
-                            if data.len() >= self.log_buffer_size {
-                                break;
-                            }
+                    WriteLogResponse::MessageTooLarge => {
+                        // split the logs here
+                        Result::<_, anyhow::Error>::Ok(LoopContext {
+                            state: LoopState::Send {
+                                start,
+                                count: count / 2,
+                                flush,
+                            },
+                            ..context
+                        })
+                    }
+                }
+            }
+            LoopState::InitLog {
+                start,
+                count,
+                flush,
+            } => {
+                let new_writer = context.log_writer.get_next_writer().await?;
+                Result::<_, anyhow::Error>::Ok(LoopContext {
+                    log_writer: new_writer,
+                    state: LoopState::Send {
+                        start,
+                        count,
+                        flush,
+                    },
+                    ..context
+                })
+            }
+            LoopState::Receive => {
+                let mut event = context.event;
+                let mut data = Vec::with_capacity(self.log_buffer_size);
+                let now = tokio::time::Instant::now();
+                let mut flush = false;
+                loop {
+                    if data.len() >= self.log_buffer_size {
+                        break;
+                    }
 
-                            if tokio::time::Instant::now() - now > self.logging_interval {
-                                break;
-                            }
-
-                            if let Ok(v) = event.try_recv() {
-                                data.push(v);
-                            } else {
-                                tokio::time::sleep(self.polling_interval).await;
-                            }
+                    if tokio::time::Instant::now() - now > self.logging_interval {
+                        break;
+                    }
+                    match event.try_recv() {
+                        Ok(LoggingEvent::Flush) => {
+                            flush = true;
+                            break;
                         }
-
-                        if !data.is_empty() {
-                            Result::<_, anyhow::Error>::Ok(LoopContext {
-                                state: LoopState::Send {
-                                    start: 0,
-                                    count: data.len(),
-                                },
-                                pending_logs: data,
-                                event,
-                                ..context
-                            })
-                        } else {
-                            Result::<_, anyhow::Error>::Ok(LoopContext { event, ..context })
+                        Ok(v) => {
+                            data.push(v);
+                        }
+                        Err(_) => {
+                            tokio::time::sleep(self.polling_interval).await;
                         }
                     }
                 }
-            })
-            .await;
 
-        Ok(())
+                if !data.is_empty() {
+                    Result::<_, anyhow::Error>::Ok(LoopContext {
+                        state: LoopState::Send {
+                            start: 0,
+                            count: data.len(),
+                            flush,
+                        },
+                        pending_logs: data,
+                        event,
+                        ..context
+                    })
+                } else {
+                    Result::<_, anyhow::Error>::Ok(LoopContext { event, ..context })
+                }
+            }
+            LoopState::Done => Result::<_, anyhow::Error>::Ok(context),
+        }
     }
 
     pub async fn start(&self, event: Receiver<LoggingEvent>, log_container: Url) -> Result<()> {
@@ -374,7 +396,30 @@ impl TaskLogger {
         event: Receiver<LoggingEvent>,
         log_writer: Box<dyn LogWriter<T>>,
     ) -> Result<()> {
-        self.clone().event_loop(log_writer, event).await?;
+        let initial_state = LoopContext {
+            log_writer,
+            pending_logs: vec![],
+            state: LoopState::Receive,
+            event,
+        };
+
+        let mut context = initial_state;
+
+        loop {
+            context = match self.event_loop(context).await {
+                Ok(LoopContext {
+                    log_writer: _,
+                    pending_logs: _,
+                    state: LoopState::Done,
+                    event: _,
+                }) => break,
+                Ok(c) => c,
+                Err(e) => {
+                    error!("{}", e);
+                    break;
+                }
+            };
+        }
         Ok(())
     }
 }
