@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CLI/Service: Updated multiple first-party and third-party Python dependencies. [#2009](https://github.com/microsoft/onefuzz/pull/2009), [#1996](https://github.com/microsoft/onefuzz/pull/1996)
 
 ### Fixed 
-* Agent: Removing Stray Print from task_logger. [#1975](https://github.com/microsoft/onefuzz/pull/1975)
+* Agent: Remove stray print statement from the task_logger. [#1975](https://github.com/microsoft/onefuzz/pull/1975)
 * Agent: Fix Local Coverage Definition. [#1962](https://github.com/microsoft/onefuzz/pull/1962)
 * Build: Fix YML Dependabot Formatting. [#1998](https://github.com/microsoft/onefuzz/pull/1998)
 * Service: Bug Fix in TimerTasks Function. [#1961](https://github.com/microsoft/onefuzz/pull/1961)
