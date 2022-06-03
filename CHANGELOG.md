@@ -10,11 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Add Timestamp to Agent Log. [#1972](https://github.com/microsoft/onefuzz/pull/1972)
 
 ### Changed
-* Build: Update CodeQL to V2 and run over CSharp Code. [#1984](https://github.com/microsoft/onefuzz/pull/1984), [#1987](https://github.com/microsoft/onefuzz/pull/1987), [#2012](https://github.com/microsoft/onefuzz/pull/2012)
-* Build: Ignore Patch PRs from Dependabot. [#1995](https://github.com/microsoft/onefuzz/pull/1995)
 * Agent/Supervisor/Proxy: Rename Supervisor to Agent. [#1989](https://github.com/microsoft/onefuzz/pull/1989)
 * Agent/Supervisor/Proxy: Rename Agent to Task. [#1980](https://github.com/microsoft/onefuzz/pull/1980)
-* Agent/Supervisor/Proxy: Ensure `GlobalFlag` Reg Value is Initialized for Target. [#1960](https://github.com/microsoft/onefuzz/pull/1960/files)
+* Agent/Supervisor/Proxy: Ensure `GlobalFlag` Reg Value is Initialized for Target. [#1960](https://github.com/microsoft/onefuzz/pull/1960)
 * Agent/Supervisor/PRoxy: Set Backtrace to Full. [#1959](https://github.com/microsoft/onefuzz/pull/1959)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#2003](https://github.com/microsoft/onefuzz/pull/2003), [#2002](https://github.com/microsoft/onefuzz/pull/2002), [#1999](https://github.com/microsoft/onefuzz/pull/1999), [#1992](https://github.com/microsoft/onefuzz/pull/1992), [#1986](https://github.com/microsoft/onefuzz/pull/1986), [#1983](https://github.com/microsoft/onefuzz/pull/1983), [#1982](https://github.com/microsoft/onefuzz/pull/1982), [#1981](https://github.com/microsoft/onefuzz/pull/1981), [#1985](https://github.com/microsoft/onefuzz/pull/1985), [#1974](https://github.com/microsoft/onefuzz/pull/1974), [#1969](https://github.com/microsoft/onefuzz/pull/1969), [#1965](https://github.com/microsoft/onefuzz/pull/1965), 
 * CLI/Service: Updated multiple first-party and third-party Python dependencies. [#2009](https://github.com/microsoft/onefuzz/pull/2009), [#1996](https://github.com/microsoft/onefuzz/pull/1996)
@@ -30,10 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Added new functionality to the service port from Python to C#. [#1924](https://github.com/microsoft/onefuzz/pull/1924), [#1938](https://github.com/microsoft/onefuzz/pull/1938), [#1946](https://github.com/microsoft/onefuzz/pull/1946), [#1934](https://github.com/microsoft/onefuzz/pull/1934)
 
 ### Changed
-* Documentation: Update coverage filtering docs. [#1950](https://github.com/microsoft/onefuzz/pull/1950/files)
+* Documentation: Update coverage filtering docs. [#1950](https://github.com/microsoft/onefuzz/pull/1950)
 * Agent: Allow the agent to skip reporting directories. [#1931](https://github.com/microsoft/onefuzz/pull/1931)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1935](https://github.com/microsoft/onefuzz/pull/1935)
-* CLI: Deprecate `libfuzzer_coverage` task. [#1944](https://github.com/microsoft/onefuzz/pull/1944/files)
+* CLI: Deprecate `libfuzzer_coverage` task. [#1944](https://github.com/microsoft/onefuzz/pull/1944)
 * CLI: Use consistent logger names. [#1945](https://github.com/microsoft/onefuzz/pull/1945)
 * Service: Updated functionality to the service port from Python to C#. [#1922](https://github.com/microsoft/onefuzz/pull/1922), [#1925](https://github.com/microsoft/onefuzz/pull/1925), [#1947](https://github.com/microsoft/onefuzz/pull/1947)
 
