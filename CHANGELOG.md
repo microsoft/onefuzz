@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.6.0
+### Added
+* Service: Add Function App Settings to Bicep Template and deploy.py. [#1973](https://github.com/microsoft/onefuzz/pull/1973)
+* Agent: Add Timestamp to Agent Log. [#1972](https://github.com/microsoft/onefuzz/pull/1972)
+
+### Changed
+* Build: Update CodeQL to V2 and run over CSharp Code. [#1984](https://github.com/microsoft/onefuzz/pull/1984), [#1987](https://github.com/microsoft/onefuzz/pull/1987), [#2012](https://github.com/microsoft/onefuzz/pull/2012)
+* Build: Ignore Patch PRs from Dependabot. [#1995](https://github.com/microsoft/onefuzz/pull/1995)
+* Agent/Supervisor/Proxy: Rename Supervisor to Agent. [#1989](https://github.com/microsoft/onefuzz/pull/1989)
+* Agent/Supervisor/Proxy: Rename Agent to Task. [#1980](https://github.com/microsoft/onefuzz/pull/1980)
+* Agent/Supervisor/Proxy: Ensure `GlobalFlag` Reg Value is Initialized for Target. [#1960](https://github.com/microsoft/onefuzz/pull/1960/files)
+* Agent/Supervisor/PRoxy: Set Backtrace to Full. [#1959](https://github.com/microsoft/onefuzz/pull/1959)
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#2003](https://github.com/microsoft/onefuzz/pull/2003), [#2002](https://github.com/microsoft/onefuzz/pull/2002), [#1999](https://github.com/microsoft/onefuzz/pull/1999), [#1992](https://github.com/microsoft/onefuzz/pull/1992), [#1986](https://github.com/microsoft/onefuzz/pull/1986), [#1983](https://github.com/microsoft/onefuzz/pull/1983), [#1982](https://github.com/microsoft/onefuzz/pull/1982), [#1981](https://github.com/microsoft/onefuzz/pull/1981), [#1985](https://github.com/microsoft/onefuzz/pull/1985), [#1974](https://github.com/microsoft/onefuzz/pull/1974), [#1969](https://github.com/microsoft/onefuzz/pull/1969), [#1965](https://github.com/microsoft/onefuzz/pull/1965), 
+* CLI/Service: Updated multiple first-party and third-party Python dependencies. [#2009](https://github.com/microsoft/onefuzz/pull/2009), [#1996](https://github.com/microsoft/onefuzz/pull/1996)
+
+### Fixed 
+* Agent: Removing Stray Print from task_logger. [#1975](https://github.com/microsoft/onefuzz/pull/1975)
+* Agent: Fix Local Coverage Definition. [#1962](https://github.com/microsoft/onefuzz/pull/1962)
+* Build: Fix YML Dependabot Formatting. [#1998](https://github.com/microsoft/onefuzz/pull/1998)
+* Service: Bug Fix in TimerTasks Function. [#1961](https://github.com/microsoft/onefuzz/pull/1961)
+
 ## 5.5.0
 ### Added
 * Service: Added new functionality to the service port from Python to C#. [#1924](https://github.com/microsoft/onefuzz/pull/1924), [#1938](https://github.com/microsoft/onefuzz/pull/1938), [#1946](https://github.com/microsoft/onefuzz/pull/1946), [#1934](https://github.com/microsoft/onefuzz/pull/1934)
