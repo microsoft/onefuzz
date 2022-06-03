@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Add Timestamp to Agent Log. [#1972](https://github.com/microsoft/onefuzz/pull/1972)
 
 ### Changed
-* Agent/Supervisor/Proxy: Rename Supervisor to Agent. [#1989](https://github.com/microsoft/onefuzz/pull/1989)
+* Agent/Supervisor/Proxy: Rename the supervisor process from `onefuzz-supervisor` to `onefuzz-agent`. [#1989](https://github.com/microsoft/onefuzz/pull/1989)
 * Agent/Supervisor/Proxy: Rename Agent to Task. [#1980](https://github.com/microsoft/onefuzz/pull/1980)
 * Agent/Supervisor/Proxy: Ensure `GlobalFlag` Reg Value is Initialized for Target. [#1960](https://github.com/microsoft/onefuzz/pull/1960)
 * Agent/Supervisor/Proxy: Set Backtrace to Full. [#1959](https://github.com/microsoft/onefuzz/pull/1959)
