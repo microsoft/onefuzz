@@ -124,7 +124,7 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
         let data_stream = logs
             .iter()
             .flat_map(|log_event| match log_event {
-                LoggingEvent::Flush => format!("End of log").into_bytes(),
+                // LoggingEvent::Flush => format!("End of log").into_bytes(),
                 LoggingEvent::Event(log_event) => format!(
                     "[{}] {}: {}\n",
                     log_event.timestamp,
@@ -261,7 +261,11 @@ impl TaskLogger {
         Ok(storage_account_client.as_container_client(container))
     }
 
-    async fn event_loop<T: Send + Sized>(self, context: LoopContext<T>) -> Result<LoopContext<T>> {
+    async fn event_loop<T: Send + Sized>(
+        self,
+        context: LoopContext<T>,
+        flush_and_close: bool,
+    ) -> Result<LoopContext<T>> {
         match context.state {
             LoopState::Send {
                 start,
@@ -341,7 +345,7 @@ impl TaskLogger {
                 let mut event = context.event;
                 let mut data = Vec::with_capacity(self.log_buffer_size);
                 let now = tokio::time::Instant::now();
-                let mut flush = false;
+
                 loop {
                     if data.len() >= self.log_buffer_size {
                         break;
@@ -351,10 +355,6 @@ impl TaskLogger {
                         break;
                     }
                     match event.try_recv() {
-                        Ok(LoggingEvent::Flush) => {
-                            flush = true;
-                            break;
-                        }
                         Ok(v) => {
                             data.push(v);
                         }
@@ -369,7 +369,7 @@ impl TaskLogger {
                         state: LoopState::Send {
                             start: 0,
                             count: data.len(),
-                            flush,
+                            flush: flush_and_close,
                         },
                         pending_logs: data,
                         event,
@@ -383,43 +383,78 @@ impl TaskLogger {
         }
     }
 
-    pub async fn start(&self, event: Receiver<LoggingEvent>, log_container: Url) -> Result<()> {
+    pub async fn start(
+        &self,
+        event: Receiver<LoggingEvent>,
+        log_container: Url,
+    ) -> Result<SpawnedLogger> {
         let blob_writer =
             BlobLogWriter::create(self.task_id, self.machine_id, log_container, MAX_LOG_SIZE)
                 .await?;
 
-        self._start(event, Box::new(blob_writer)).await
+        self._start(event, Box::new(blob_writer))
     }
 
-    async fn _start<T: 'static + Send>(
+    fn _start<T: 'static + Send>(
         &self,
         event: Receiver<LoggingEvent>,
         log_writer: Box<dyn LogWriter<T>>,
-    ) -> Result<()> {
-        let initial_state = LoopContext {
-            log_writer,
-            pending_logs: vec![],
-            state: LoopState::Receive,
-            event,
-        };
+    ) -> Result<SpawnedLogger> {
+        let (flush_and_close_sender, mut flush_and_close_receiver) =
+            tokio::sync::oneshot::channel::<()>();
 
-        let mut context = initial_state;
+        let this = self.clone();
 
-        loop {
-            context = match self.event_loop(context).await {
-                Ok(LoopContext {
-                    log_writer: _,
-                    pending_logs: _,
-                    state: LoopState::Done,
-                    event: _,
-                }) => break,
-                Ok(c) => c,
-                Err(e) => {
-                    error!("{}", e);
-                    break;
-                }
+        let logger_handle = tokio::spawn(async move {
+            let initial_state = LoopContext {
+                log_writer,
+                pending_logs: vec![],
+                state: LoopState::Receive,
+                event,
             };
-        }
+
+            let mut context = initial_state;
+
+            loop {
+                let flush_and_close = flush_and_close_receiver
+                    .try_recv()
+                    .ok()
+                    .map(|_| true)
+                    .unwrap_or_default();
+
+                context = match this.event_loop(context, flush_and_close).await {
+                    Ok(LoopContext {
+                        log_writer: _,
+                        pending_logs: _,
+                        state: LoopState::Done,
+                        event: _,
+                    }) => break,
+                    Ok(c) => c,
+                    Err(e) => {
+                        error!("{}", e);
+                        break;
+                    }
+                };
+            }
+            Ok(())
+        });
+
+        Ok(SpawnedLogger {
+            logger_handle,
+            flush_and_close_sender,
+        })
+    }
+}
+
+pub struct SpawnedLogger {
+    logger_handle: tokio::task::JoinHandle<Result<()>>,
+    flush_and_close_sender: tokio::sync::oneshot::Sender<()>,
+}
+
+impl SpawnedLogger {
+    pub async fn flush_and_stop(self, timeout: Duration) -> Result<()> {
+        let _ = self.flush_and_close_sender.send(());
+        let _ = tokio::time::timeout(timeout, self.logger_handle).await;
         Ok(())
     }
 }
@@ -550,8 +585,10 @@ mod tests {
             "test5".into(),
         )))?;
 
-        let _res =
-            tokio::time::timeout(Duration::from_secs(5), blob_logger._start(rx, log_writer)).await;
+        let _res = blob_logger
+            ._start(rx, log_writer)?
+            .flush_and_stop(Duration::from_secs(5))
+            .await;
 
         let x = events.read().unwrap();
 
@@ -606,8 +643,10 @@ mod tests {
             "test5".into(),
         )))?;
 
-        let _res =
-            tokio::time::timeout(Duration::from_secs(15), blob_logger._start(rx, log_writer)).await;
+        let _res = blob_logger
+            ._start(rx, log_writer)?
+            .flush_and_stop(Duration::from_secs(5))
+            .await;
 
         let x = events.read().unwrap();
 

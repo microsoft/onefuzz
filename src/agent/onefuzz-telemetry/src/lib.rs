@@ -340,7 +340,6 @@ impl EventData {
 pub enum LoggingEvent {
     Trace(LogTrace),
     Event(LogEvent),
-    Flush,
 }
 
 #[derive(Clone, Debug)]
@@ -482,7 +481,6 @@ pub fn set_appinsights_clients(
 /// After calling this function, any existing telemetry client will be dropped,
 /// and subsequent telemetry submission will be a silent no-op.
 pub fn try_flush_and_close() {
-    let _ = global::EVENT_SOURCE.send(LoggingEvent::Flush);
     let clients = global::take_clients();
 
     for client in clients {

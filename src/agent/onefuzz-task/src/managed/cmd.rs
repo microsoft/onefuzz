@@ -7,8 +7,12 @@ use std::time::Duration;
 
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
+use onefuzz::machine_id::get_machine_id;
 
-use crate::tasks::config::{CommonConfig, Config};
+use crate::tasks::{
+    config::{CommonConfig, Config},
+    task_logger,
+};
 
 #[cfg(not(target_os = "macos"))]
 const OOM_CHECK_INTERVAL: Duration = Duration::from_secs(5);
@@ -26,6 +30,18 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     // If the memory limit is 0, this will resolve immediately with an error.
     let check_oom = out_of_memory(min_available_memory_bytes);
 
+    let common = config.common().clone();
+    let machine_id = get_machine_id().await?;
+    let task_logger = if let Some(logs) = common.logs.clone() {
+        let rx = onefuzz_telemetry::subscribe_to_events();
+
+        let logger = task_logger::TaskLogger::new(common.job_id, common.task_id, machine_id);
+
+        Some(logger.start(rx, logs).await?)
+    } else {
+        None
+    };
+
     let result = tokio::select! {
         result = config.run() => result,
 
@@ -42,6 +58,12 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     }
 
     onefuzz_telemetry::try_flush_and_close();
+
+    // wait for the task logger to finish
+    if let Some(task_logger) = task_logger {
+        let _ = task_logger.flush_and_stop(Duration::from_secs(5)).await;
+    }
+
     result
 }
 
