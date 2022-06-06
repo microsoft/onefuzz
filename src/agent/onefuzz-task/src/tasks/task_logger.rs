@@ -295,7 +295,7 @@ impl TaskLogger {
                                 state: LoopState::Send {
                                     start: new_start,
                                     count: new_count,
-                                    flush: flush,
+                                    flush,
                                 },
                                 ..context
                             })
@@ -403,7 +403,7 @@ impl TaskLogger {
         let (flush_and_close_sender, mut flush_and_close_receiver) =
             tokio::sync::oneshot::channel::<()>();
 
-        let this = self.clone();
+        let this = *self;
 
         let logger_handle = tokio::spawn(async move {
             let initial_state = LoopContext {

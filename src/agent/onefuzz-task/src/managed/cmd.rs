@@ -2,12 +2,10 @@
 // Licensed under the MIT License.
 use std::path::PathBuf;
 
-#[cfg(not(target_os = "macos"))]
-use std::time::Duration;
-
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use onefuzz::machine_id::get_machine_id;
+use std::time::Duration;
 
 use crate::tasks::{
     config::{CommonConfig, Config},
