@@ -17,12 +17,23 @@ from .azure.containers import get_blob
 from .azure.storage import StorageType
 
 
-def fix_report_size(content: str, report: Report) -> Report:
-    keep_num_entries = 10
-    keep_string_len = 256
+# This is fix for the following error:
+# Exception while executing function:
+# Functions.queue_file_changes Result: Failure
+# Exception: AzureHttpError: Bad Request
+# "The property value exceeds the maximum allowed size (64KB).
+# If the property value is a string, it is UTF-16 encoded and
+# the maximum number of characters should be 32K or less.
+def fix_report_size(
+    content: str,
+    report: Report,
+    acceptable_report_length_kb: int = 24,
+    keep_num_entries: int = 10,
+    keep_string_len: int = 256,
+) -> Report:
     logging.info(f"report content length {getsizeof(content)}")
-    if getsizeof(content) > 24 * 1024:
-        msg = f"report data exceeds 24K {getsizeof(content)}"
+    if getsizeof(content) > acceptable_report_length_kb * 1024:
+        msg = f"report data exceeds {acceptable_report_length_kb}K {getsizeof(content)}"
         if len(report.call_stack) > keep_num_entries:
             msg = msg + "; removing some of stack frames from the report"
             report.call_stack = report.call_stack[0:keep_num_entries] + ["..."]
