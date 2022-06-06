@@ -854,11 +854,11 @@ class Tasks(Endpoint):
         self.logger.debug("creating task: %s", task_type)
 
         if task_type == TaskType.libfuzzer_coverage:
-            self.logger.warning(
-                "DEPRECATED: the `libfuzzer_coverage` task type is deprecated. "
-                "It will be removed in an upcoming release. "
+            self.logger.error(
+                "The `libfuzzer_coverage` task type is deprecated. "
                 "Please migrate to the `coverage` task type."
             )
+            raise RuntimeError("`libfuzzer_coverage` task type not supported")
 
         job_id_expanded = self._disambiguate_uuid(
             "job_id",
