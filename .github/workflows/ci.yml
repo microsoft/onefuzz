@@ -267,6 +267,7 @@ jobs:
       run: |
         cd src/ApiService/
         dotnet restore --locked-mode
+        dotnet tool restore
     - name: Check Formatting
       run: |
         cd src/ApiService/
