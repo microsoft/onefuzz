@@ -51,7 +51,7 @@ cargo fmt -- --check
 cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2020-0016 --ignore RUSTSEC-2020-0036 --ignore RUSTSEC-2019-0036 --ignore RUSTSEC-2021-0065 --ignore RUSTSEC-2020-0159 --ignore RUSTSEC-2020-0071 --ignore RUSTSEC-2020-0077
 cargo-license -j > data/licenses.json
 cargo build --release --locked
-cargo clippy --release -- -D warnings
+cargo clippy --release --all-targets -- -D warnings
 # export RUST_LOG=trace
 export RUST_BACKTRACE=full
 cargo test --release --workspace
