@@ -13,6 +13,7 @@ env:
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
   ACTIONS_CACHE_KEY_DATE: 2021-08-26-01
+  CI: true
 
 jobs:
   agent:
