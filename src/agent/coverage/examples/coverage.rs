@@ -11,7 +11,7 @@ use coverage::cache::ModuleCache;
 use coverage::code::{CmdFilter, CmdFilterDef};
 use structopt::StructOpt;
 
-#[derive(Debug, PartialEq, StructOpt)]
+#[derive(Debug, PartialEq, Eq, StructOpt)]
 struct Opt {
     #[structopt(short, long)]
     filter: Option<PathBuf>,
@@ -115,7 +115,7 @@ fn record(
 
     let now = Instant::now();
 
-    let coverage = Recorder::record(cmd, timeout, cache, filter.clone())?;
+    let coverage = Recorder::record(cmd, timeout, cache, filter)?;
 
     let elapsed = now.elapsed();
     log::info!("recorded in {:?}", elapsed);
@@ -162,7 +162,7 @@ fn print_stats(coverage: &Coverage) {
 
 fn print_modoff(coverage: &Coverage) {
     for (m, c) in coverage.iter() {
-        for (_, b) in &c.blocks {
+        for b in c.blocks.values() {
             if b.count > 0 {
                 println!("{}+{:x}", m.name_lossy(), b.offset);
             }

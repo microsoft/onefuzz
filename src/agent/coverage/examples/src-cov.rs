@@ -11,7 +11,7 @@ use coverage::cache::ModuleCache;
 use coverage::code::CmdFilter;
 use structopt::StructOpt;
 
-#[derive(Debug, PartialEq, StructOpt)]
+#[derive(Debug, PartialEq, Eq, StructOpt)]
 struct Opt {
     #[structopt(short, long, min_values = 1)]
     inputs: Vec<PathBuf>,
@@ -114,7 +114,7 @@ fn record(
 
     let now = Instant::now();
 
-    let coverage = Recorder::record(cmd, timeout, cache, filter.clone())?;
+    let coverage = Recorder::record(cmd, timeout, cache, filter)?;
 
     let elapsed = now.elapsed();
     log::info!("recorded in {:?}", elapsed);

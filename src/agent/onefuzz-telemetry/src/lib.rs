@@ -72,7 +72,7 @@ pub enum ClientType {
     Microsoft,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Role {
     Agent,
     Proxy,

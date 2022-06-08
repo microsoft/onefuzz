@@ -26,7 +26,7 @@ fn default_min_available_memory_mb() -> u64 {
     DEFAULT_MIN_AVAILABLE_MEMORY_MB
 }
 
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub enum ContainerType {
     #[serde(alias = "inputs")]
     Inputs,
