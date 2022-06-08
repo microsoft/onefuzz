@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use std::path::{Path, PathBuf};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use std::{process::Command, process::Stdio};
 
 use anyhow::Result;
@@ -113,7 +113,7 @@ fn record(
 ) -> Result<Coverage> {
     use coverage::block::linux::Recorder;
 
-    let now = Instant::now();
+    let now = std::time::Instant::now();
 
     let coverage = Recorder::record(cmd, timeout, cache, filter)?;
 
@@ -135,7 +135,7 @@ fn record(
     let mut recorder = Recorder::new(cache, filter);
     let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
 
-    let now = Instant::now();
+    let now = std::time::Instant::now();
 
     handler.run(cmd)?;
 
