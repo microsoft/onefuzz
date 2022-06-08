@@ -690,7 +690,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             "allowed_service_tags": []
         },
         "proxy_vm_sku": "Standard_B2s",
-        "require_admin_privileges": false
+        "require_admin_privileges": true
     }
 }
 ```
@@ -847,7 +847,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "require_admin_privileges": {
-                    "default": false,
+                    "default": true,
                     "title": "Require Admin Privileges",
                     "type": "boolean"
                 },
@@ -6041,7 +6041,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "require_admin_privileges": {
-                    "default": false,
+                    "default": true,
                     "title": "Require Admin Privileges",
                     "type": "boolean"
                 },
