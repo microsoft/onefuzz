@@ -3,29 +3,29 @@
 ```mermaid
 flowchart TB
 
-  subgraph clients
+  subgraph clients[Clients]
     CLI
     script.py
   end
 
-  subgraph service
+  subgraph service[Service]
     AzFunc("Azure\nFunctions\n⚡")
 
-    EventGrid{Event Grid}
-    SystemData[(System Data)]
+    pool-linux[/Linux queue/]
+    pool-win[/Windows queue/]
     
-    pool-linux[/linux queue/]
-    pool-win[/windows queue/]
+    EventGrid{Event Grid}
+    SystemData[(System Data)]  
   end
   
   UserData[(User Data)]
 
-  subgraph linux-compute
+  subgraph linux-compute[Linux VMs]
     vmss1
     vmss2
   end
 
-  subgraph windows-compute
+  subgraph windows-compute[Windows VMs]
     vmss3
     vmss4
   end
