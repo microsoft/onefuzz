@@ -25,7 +25,10 @@
 		"tamasfe.even-better-toml",
 		"serayuzgur.crates",
 		"ms-dotnettools.csharp",
-		"ms-python.python"
+		"ms-python.python",
+		"ms-azuretools.vscode-bicep",
+		"formulahendry.dotnet-test-explorer",
+		"ms-azuretools.vscode-azurefunctions"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
