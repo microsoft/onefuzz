@@ -1,6 +1,6 @@
 # OneFuzz Documentation
 
-A brief index of the documentation.
+A brief index of the documentation follows:
 
 ## For Users
 
