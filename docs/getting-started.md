@@ -39,9 +39,11 @@ pip install -r requirements.txt
 When running `deploy.py` the first time for an instance, you will be prompted
 to follow a manual step to initialize your CLI config.
 
-The $NSG_CONFIG_FILE is a required parameter that specifies the 'allow rules' for the OneFuzz Network Security Group. A default `config.json` is provided in the deployment zip. 
+The `$NSG_CONFIG_FILE` is a required parameter that specifies the 'allow rules' for the OneFuzz Network Security Group. A default `config.json` is provided in the deployment zip. 
+
 This 'allow' config resembles the following: 
-```
+
+```json
 {
     "proxy_nsg_config": {
         "allowed_ips": ["*"],
@@ -49,6 +51,7 @@ This 'allow' config resembles the following:
     }
 }
 ```
+
 Future updates can be made to this configuration via the OneFuzz CLI. 
 
 ## Install the CLI
@@ -66,11 +69,10 @@ pip install ./onefuzz*.whl
 
 Use the `onefuzz config` command to specify your instance of OneFuzz.
 
-```
+```console
 $ onefuzz config --endpoint https://$ONEFUZZ_INSTANCE_NAME.azurewebsites.net
 $ onefuzz versions check --exact
 "compatible"
-$
 ```
 
 From here, you can use OneFuzz.
@@ -81,17 +83,16 @@ OneFuzz distributes tasks to pools of workers, and manages workers using [VM Sca
 
 To create a pool:
 
-```
+```console
 $ onefuzz pools create my-pool linux --query pool_id
 "9e779388-a9c2-4934-9fa2-6ed6f6a7792a"
-$
 ```
 
 To create a managed scaleset of Ubuntu 18.04 VMs using a [general purpose
 Azure VM](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes) that
 belongs to the pool:
 
-```
+```console
 $ onefuzz scalesets create my-pool $VM_COUNT
 {
     "image": "Canonical:UbuntuServer:18.04-LTS:latest",
@@ -104,7 +105,6 @@ $ onefuzz scalesets create my-pool $VM_COUNT
     "tags": {},
     "vm_sku": "Standard_DS1_v2"
 }
-$
 ```
 
 ## Deploying Jobs
@@ -118,12 +118,11 @@ For most use cases, pre-built templates are the best choice.
 
 Building your first target to run in OneFuzz:
 
-```
+```console
 $ git clone -q https://github.com/microsoft/onefuzz-samples
 $ cd onefuzz-samples/examples/simple-libfuzzer
 $ make
 clang -g3 -fsanitize=fuzzer -fsanitize=address fuzz.c -o fuzz.exe
-$
 ```
 
 ### Launching a Job
@@ -131,7 +130,7 @@ $
 With a built fuzzing target, launching a libFuzzer-based job can be done in
 a single command:
 
-```
+```console
 $ onefuzz template libfuzzer basic my-project my-target build-1 my-pool --target_exe fuzz.exe
 INFO:onefuzz:creating libfuzzer from template
 INFO:onefuzz:creating job (runtime: 24 hours)
@@ -156,7 +155,7 @@ $
 Every action from the CLI is exposed in the SDK.  Launching the same template as above
 can be done with the Python SDK:
 
-```
+```console
 $ python
 >>> from onefuzz.api import Onefuzz
 >>> Onefuzz().template.libfuzzer.basic('my-project', 'my-first-job', 'build-1', 'my-pool', target_exe="fuzz.exe")
@@ -168,18 +167,17 @@ $ python
 Enabling [notifications](notifications.md) provides automatic reporting of identified
 crashes.  The CLI can be used to manually monitor for crash reports:
 
-```
+```console
 $ onefuzz jobs containers list a6eda06f-d2e3-4a50-8754-1c1de5c6ea23 --container_type unique_reports
 {
 "oft-unique-reports-05ca06fd172b5db6a862a38e95c83730": [
         "972a371a291ed5668a77576368ead0c46c2bac9f9a16b7fa7c0b48aec5b059b1.json"
     ]
 }
-$
 ```
 
 Then view the results of a crash report with [jq](https://github.com/stedolan/jq):
-```
+```console
 $ onefuzz containers files get oft-unique-reports-05ca06fd172b5db6a862a38e95c83730 972a371a291ed5668a77576368ead0c46c2bac9f9a16b7fa7c0b48aec5b059b1.json > report.json
 $ jq .call_stack report.json
 [
@@ -191,7 +189,6 @@ $ jq .call_stack report.json
   "#5 0x7ffff6a9bb96 in __libc_start_main /build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c:310",
   "#6 0x41db59 in _start (/onefuzz/setup/fuzz.exe+0x41db59)"
 ]
-$
 ```
 
 ### Live debugging of a crash sample
@@ -199,7 +196,7 @@ $
 Using the crash report, OneFuzz can enable live remote debugging of the crash
 using a platform-appropriate debugger (gdb for Linux and cdb for Windows):
 
-```
+```console
 $ onefuzz repro create_and_connect get oft-unique-reports-05ca06fd172b5db6a862a38e95c83730 972a371a291ed5668a77576368ead0c46c2bac9f9a16b7fa7c0b48aec5b059b1.json
 INFO:onefuzz:creating repro vm: get oft-unique-reports-05ca06fd172b5db6a862a38e95c83730 972a371a291ed5668a77576368ead0c46c2bac9f9a16b7fa7c0b48aec5b059b1.json (24 hours)
 INFO:onefuzz:connecting to reproduction VM: c6525b82-7269-45ee-8a62-2d9d61d1e269
