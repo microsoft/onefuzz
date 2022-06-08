@@ -62,7 +62,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sm",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -155,7 +155,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "url",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -181,7 +181,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "url",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -206,7 +206,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "url",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -508,7 +508,7 @@ dependencies = [
  "log",
  "memmap2",
  "msvc-demangler",
- "pdb",
+ "pdb 0.8.0",
  "pete",
  "procfs",
  "regex",
@@ -517,7 +517,7 @@ dependencies = [
  "serde_json",
  "structopt",
  "symbolic",
- "uuid",
+ "uuid 0.8.2",
  "win-util",
  "winapi",
  "xml-rs",
@@ -711,7 +711,7 @@ version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f91cf5a8c2f2097e2a32627123508635d47ce10563d999ec1a95addf08b502ba"
 dependencies = [
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -1899,7 +1899,7 @@ dependencies = [
  "url",
  "url-escape",
  "urlparse",
- "uuid",
+ "uuid 0.8.2",
  "winapi",
  "winreg 0.10.1",
 ]
@@ -1927,7 +1927,7 @@ dependencies = [
  "tokio",
  "url",
  "users",
- "uuid",
+ "uuid 0.8.2",
  "winapi",
 ]
 
@@ -1973,7 +1973,7 @@ dependencies = [
  "tokio-util 0.7.2",
  "tui",
  "url",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -1987,7 +1987,7 @@ dependencies = [
  "log",
  "serde",
  "tokio",
- "uuid",
+ "uuid 0.8.2",
  "z3-sys",
 ]
 
@@ -2108,7 +2108,18 @@ checksum = "13f4d162ecaaa1467de5afbe62d597757b674b51da8bb4e587430c5fdb2af7aa"
 dependencies = [
  "fallible-iterator",
  "scroll 0.10.2",
- "uuid",
+ "uuid 0.8.2",
+]
+
+[[package]]
+name = "pdb"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "82040a392923abe6279c00ab4aff62d5250d1c8555dc780e4b02783a7aa74863"
+dependencies = [
+ "fallible-iterator",
+ "scroll 0.11.0",
+ "uuid 1.1.1",
 ]
 
 [[package]]
@@ -2908,7 +2919,7 @@ dependencies = [
  "env_logger 0.9.0",
  "log",
  "nom 7.1.0",
- "pdb",
+ "pdb 0.8.0",
  "regex",
  "serde",
  "structopt",
@@ -2962,7 +2973,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "tokio",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -3055,7 +3066,7 @@ dependencies = [
  "debugid",
  "memmap2",
  "stable_deref_trait",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -3076,7 +3087,7 @@ dependencies = [
  "nom 7.1.0",
  "nom-supreme",
  "parking_lot 0.11.2",
- "pdb",
+ "pdb 0.7.0",
  "regex",
  "scroll 0.10.2",
  "serde",
@@ -3487,6 +3498,12 @@ dependencies = [
  "serde",
  "winapi",
 ]
+
+[[package]]
+name = "uuid"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6d5d669b51467dcf7b2f1a796ce0f955f05f01cafda6c19d6e95f730df29238"
 
 [[package]]
 name = "vec_map"

@@ -30,7 +30,7 @@ win-util = { path = "../win-util" }
 xml-rs = "0.8"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-pdb = "0.7"
+pdb = "0.8"
 winapi = "0.3"
 
 [target.'cfg(target_os = "linux")'.dependencies]
