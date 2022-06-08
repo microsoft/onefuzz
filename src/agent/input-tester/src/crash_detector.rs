@@ -403,7 +403,7 @@ mod tests {
         ($timeout: expr, $script: expr) => {{
             test_process(
                 r"C:\windows\system32\WindowsPowerShell\v1.0\powershell.exe",
-                &vec!["/nop".to_string(), "/c".to_string(), $script.to_string()],
+                &["/nop".to_string(), "/c".to_string(), $script.to_string()],
                 &HashMap::default(),
                 $timeout,
                 /*ignore first chance exceptions*/ true,
@@ -429,6 +429,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::identity-op)]
     fn nonblocking_stdout() {
         let result = runps!(
             Duration::from_secs(10),
