@@ -167,7 +167,7 @@ class EventNodeHeartbeat(BaseEvent):
     machine_id: UUID
     scaleset_id: Optional[UUID]
     pool_name: PoolName
-    machine_state: Optional[str]
+    machine_state: str
 
 
 class EventNodeDeleted(BaseEvent):
