@@ -457,7 +457,7 @@ mod tests {
         assert!(total.execs_sec == 2.0);
 
         // existing worker, now new data.  totals should stay the same.
-        total.update(a.clone());
+        total.update(a);
         assert!(total.count == 20);
         assert!(total.execs_sec == 2.0);
 
@@ -476,7 +476,7 @@ mod tests {
         // count should go up by 1, execs_sec down by 1.
         b.count += 1;
         b.execs_sec -= 1.0;
-        total.update(b.clone());
+        total.update(b);
         assert!(total.count == 31);
         assert!(total.execs_sec == 3.0);
 

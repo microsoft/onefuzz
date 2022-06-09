@@ -96,7 +96,7 @@ impl ModOff {
     }
 
     fn is_hex_digit(c: char) -> bool {
-        c.is_digit(16)
+        c.is_ascii_hexdigit()
     }
 
     fn parse_offset(input: &str) -> IResult<&str, usize> {

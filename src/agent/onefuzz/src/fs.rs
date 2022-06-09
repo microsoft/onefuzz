@@ -330,7 +330,7 @@ mod tests {
 
         // We've checked that this is true.
         assert!(fs::metadata(&file_to_be_deleted).await.is_ok());
-        assert_eq!(1, dir_len(&dir).await);
+        assert_eq!(1, dir_len(dir).await);
 
         file_to_be_deleted
     }
