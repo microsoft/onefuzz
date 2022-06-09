@@ -58,13 +58,13 @@ cargo build --release --locked
 cargo clippy --release --locked --all-targets -- -D warnings
 # export RUST_LOG=trace
 export RUST_BACKTRACE=full
-cargo test --release --workspace
+cargo test --release --locked --workspace
 
 # TODO: re-enable integration tests.
 # cargo test --release --manifest-path ./onefuzz-task/Cargo.toml --features integration_test -- --nocapture
 
 # TODO: once Salvo is integrated, this can get deleted
-cargo build --release --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
+cargo build --release --locked --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
 
 if [ ! -z "$SCCACHE" ]; then
     sccache --show-stats
