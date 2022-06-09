@@ -2,24 +2,24 @@ name: Sync issue to Azure DevOps work item
 
 on:
   issues:
-    types:
-      [opened, edited, deleted, closed, reopened, labeled, unlabeled]
+    types: [opened, edited, deleted, closed, reopened, labeled, unlabeled]
 
 jobs:
   alert:
     runs-on: ubuntu-latest
+    name: New Issue Workflow
     steps:
-      - uses: danhellem/github-actions-issue-to-work-item@master
-        env:
-          ado_token: "${{ secrets.ADO_PERSONAL_ACCESS_TOKEN }}"
-          github_token: "${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}"
-          ado_organization: "${{ secrets.ADO_ORGANIZATION_NAME }}"
-          ado_project: "${{ secrets.ADO_PROJECT_NAME }}"
-          ado_area_path: "${{ secrets.ADO_AREA_PATH }}"
-          ado_iteration_path: "${{ secrets.ADO_ITERATION_PATH }}"
-          ado_wit: "Deliverable"
-          ado_new_state: "Proposed"
-          ado_active_state: "Started"
-          ado_close_state: "Completed"
-          ado_bypassrules: false
-          log_level: 100
+    - uses: danhellem/github-actions-issue-to-work-item@master
+      env:
+        ado_token: "${{ secrets.ADO_PERSONAL_ACCESS_TOKEN }}"
+        github_token: "${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}"
+        ado_organization: "${{ secrets.ADO_ORGANIZATION_NAME }}"
+        ado_project: "${{ secrets.ADO_PROJECT_NAME }}"
+        ado_area_path: "${{ secrets.ADO_AREA_PATH }}"
+        ado_iteration_path: "${{ secrets.ADO_ITERATION_PATH }}"
+        ado_wit: "Deliverable"
+        ado_new_state: "Proposed"
+        ado_active_state: "Started"
+        ado_close_state: "Completed"
+        ado_bypassrules: false
+        log_level: 100
