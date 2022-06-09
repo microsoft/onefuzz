@@ -49,7 +49,7 @@ impl PdbCache {
 
             while let Some(symbol) = symbols.next()? {
                 if let Ok(SymbolData::Procedure(proc)) = symbol.parse() {
-                    let mut lines = program.lines_at_offset(proc.offset);
+                    let mut lines = program.lines_for_symbol(proc.offset);
                     while let Some(line_info) = lines.next()? {
                         let rva = line_info
                             .offset
