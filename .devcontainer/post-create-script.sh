@@ -19,6 +19,7 @@ sudo cp ./azcopy_linux_amd64_*/azcopy /usr/bin/
 
 # Restore rust dependencies
 echo "Restoring rust dependencies"
+cargo install cargo-audit cargo-license # requirements if you want to run ci/agent.sh
 cd /workspaces/onefuzz/src/agent
 cargo fetch
 
