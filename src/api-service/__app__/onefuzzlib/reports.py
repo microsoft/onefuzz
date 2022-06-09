@@ -5,6 +5,7 @@
 
 import json
 import logging
+from sys import getsizeof
 from typing import Optional, Union
 
 from memoization import cached
@@ -14,6 +15,65 @@ from pydantic import ValidationError
 
 from .azure.containers import get_blob
 from .azure.storage import StorageType
+
+
+# This is fix for the following error:
+# Exception while executing function:
+# Functions.queue_file_changes Result: Failure
+# Exception: AzureHttpError: Bad Request
+# "The property value exceeds the maximum allowed size (64KB).
+# If the property value is a string, it is UTF-16 encoded and
+# the maximum number of characters should be 32K or less.
+def fix_report_size(
+    content: str,
+    report: Report,
+    acceptable_report_length_kb: int = 24,
+    keep_num_entries: int = 10,
+    keep_string_len: int = 256,
+) -> Report:
+    logging.info(f"report content length {getsizeof(content)}")
+    if getsizeof(content) > acceptable_report_length_kb * 1024:
+        msg = f"report data exceeds {acceptable_report_length_kb}K {getsizeof(content)}"
+        if len(report.call_stack) > keep_num_entries:
+            msg = msg + "; removing some of stack frames from the report"
+            report.call_stack = report.call_stack[0:keep_num_entries] + ["..."]
+
+        if report.asan_log and len(report.asan_log) > keep_string_len:
+            msg = msg + "; removing some of asan log entries from the report"
+            report.asan_log = report.asan_log[0:keep_string_len] + "..."
+
+        if report.minimized_stack and len(report.minimized_stack) > keep_num_entries:
+            msg = msg + "; removing some of minimized stack frames from the report"
+            report.minimized_stack = report.minimized_stack[0:keep_num_entries] + [
+                "..."
+            ]
+
+        if (
+            report.minimized_stack_function_names
+            and len(report.minimized_stack_function_names) > keep_num_entries
+        ):
+            msg = (
+                msg
+                + "; removing some of minimized stack function names from the report"
+            )
+            report.minimized_stack_function_names = (
+                report.minimized_stack_function_names[0:keep_num_entries] + ["..."]
+            )
+
+        if (
+            report.minimized_stack_function_lines
+            and len(report.minimized_stack_function_lines) > keep_num_entries
+        ):
+            msg = (
+                msg
+                + "; removing some of minimized stack function lines from the report"
+            )
+            report.minimized_stack_function_lines = (
+                report.minimized_stack_function_lines[0:keep_num_entries] + ["..."]
+            )
+
+        logging.info(msg)
+    return report
 
 
 def parse_report_or_regression(
@@ -43,12 +103,30 @@ def parse_report_or_regression(
 
     regression_err = None
     try:
-        return RegressionReport.parse_obj(data)
+        regression_report = RegressionReport.parse_obj(data)
+
+        if (
+            regression_report.crash_test_result is not None
+            and regression_report.crash_test_result.crash_report is not None
+        ):
+            regression_report.crash_test_result.crash_report = fix_report_size(
+                content, regression_report.crash_test_result.crash_report
+            )
+
+        if (
+            regression_report.original_crash_test_result is not None
+            and regression_report.original_crash_test_result.crash_report is not None
+        ):
+            regression_report.original_crash_test_result.crash_report = fix_report_size(
+                content, regression_report.original_crash_test_result.crash_report
+            )
+        return regression_report
     except ValidationError as err:
         regression_err = err
 
     try:
-        return Report.parse_obj(data)
+        report = Report.parse_obj(data)
+        return fix_report_size(content, report)
     except ValidationError as err:
         if expect_reports:
             logging.error(

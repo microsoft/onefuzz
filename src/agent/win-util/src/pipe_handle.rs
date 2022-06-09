@@ -3,6 +3,8 @@
 
 //! This module implements a wrapper around Win32 named pipes to support non-blocking reads.
 
+#![allow(clippy::uninit_vec)]
+
 use std::os::windows::io::{AsRawHandle, RawHandle};
 
 use anyhow::{Context, Result};
@@ -187,12 +189,12 @@ mod tests {
         let (reader, mut writer) = pipe().unwrap();
         let mut buf = vec![];
 
-        assert!(writer.write_all(&vec![42]).is_ok());
+        assert!(writer.write_all(&[42]).is_ok());
         let bytes_read = reader.read(&mut buf).unwrap();
         assert_eq!(bytes_read, 1);
         assert_eq!(buf, vec![42]);
 
-        assert!(writer.write_all(&vec![44, 48]).is_ok());
+        assert!(writer.write_all(&[44, 48]).is_ok());
         let bytes_read = reader.read(&mut buf).unwrap();
         assert_eq!(bytes_read, 2);
         assert_eq!(buf, vec![42, 44, 48]);
@@ -225,9 +227,9 @@ mod tests {
         spawn(move || {
             let delay = Duration::from_millis(200);
             sleep(delay);
-            assert!(writer.write_all(&vec![42]).is_ok());
+            assert!(writer.write_all(&[42]).is_ok());
             sleep(delay);
-            assert!(writer.write_all(&vec![44, 48]).is_ok());
+            assert!(writer.write_all(&[44, 48]).is_ok());
         });
 
         let bytes_read = reader.read_to_end(&mut buf).unwrap();
@@ -251,13 +253,10 @@ mod tests {
         let (reader, mut writer) = pipe().unwrap();
 
         let (tx_writer, rx_writer) = mpsc::channel();
-        spawn(move || loop {
-            match rx_writer.recv() {
-                Ok((val, count)) => {
-                    let data = repeated_bytes(val, count);
-                    assert!(writer.write_all(&data).is_ok());
-                }
-                Err(mpsc::RecvError) => break,
+        spawn(move || {
+            while let Ok((val, count)) = rx_writer.recv() {
+                let data = repeated_bytes(val, count);
+                assert!(writer.write_all(&data).is_ok());
             }
         });
 

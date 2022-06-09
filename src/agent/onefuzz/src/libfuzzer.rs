@@ -56,15 +56,35 @@ impl<'a> LibFuzzer<'a> {
         }
     }
 
+    // Build an async `Command`.
     async fn build_command(
         &self,
         fault_dir: Option<&Path>,
         corpus_dir: Option<&Path>,
         extra_corpus_dirs: Option<&[&Path]>,
     ) -> Result<Command> {
-        let mut cmd = Command::new(&self.exe);
-        cmd.kill_on_drop(true)
-            .env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
+        let std_cmd = self
+            .build_std_command(fault_dir, corpus_dir, extra_corpus_dirs)
+            .await?;
+
+        // Make async.
+        let mut cmd = Command::from(std_cmd);
+
+        // Terminate the process if the `Child` handle is dropped.
+        cmd.kill_on_drop(true);
+
+        Ok(cmd)
+    }
+
+    // Build a non-async `Command`.
+    async fn build_std_command(
+        &self,
+        fault_dir: Option<&Path>,
+        corpus_dir: Option<&Path>,
+        extra_corpus_dirs: Option<&[&Path]>,
+    ) -> Result<std::process::Command> {
+        let mut cmd = std::process::Command::new(&self.exe);
+        cmd.env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
             .env_remove("RUST_LOG")
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
@@ -171,6 +191,15 @@ impl<'a> LibFuzzer<'a> {
         // good input, which libfuzzer works as we expect.
 
         let mut cmd = self.build_command(None, None, None).await?;
+
+        // Override any arg of the form `-runs=<N>` (last occurrence wins).
+        // In this command invocation, we only ever want to test inputs once.
+        //
+        // Assumes that the presence of an `-args` option was an iteration limit meant
+        // for fuzzing mode. We are only mutating the args of a local `Command`, so the
+        // command used by the `fuzz()` method will still receive the iteration limit.
+        cmd.arg("-runs=1");
+
         cmd.arg(&input);
 
         let result = cmd
@@ -190,6 +219,9 @@ impl<'a> LibFuzzer<'a> {
         Ok(())
     }
 
+    /// Invoke `{target_exe} -help=1`. If this succeeds, then the dynamic linker is at
+    /// least able to satisfy the fuzzer's shared library dependencies. User-authored
+    /// dynamic loading may still fail later on, e.g. in `LLVMFuzzerInitialize()`.
     async fn check_help(&self) -> Result<()> {
         let mut cmd = self.build_command(None, None, None).await?;
         cmd.arg("-help=1");
@@ -200,10 +232,47 @@ impl<'a> LibFuzzer<'a> {
             .wait_with_output()
             .await
             .with_context(|| format_err!("libfuzzer failed to run: {}", self.exe.display()))?;
+
         if !result.status.success() {
-            bail!("fuzzer does not respond to '-help=1'. output:{:?}", result);
+            // To provide user-actionable errors, try to identify any missing shared libraries.
+            match self.find_missing_libraries().await {
+                Ok(missing) => {
+                    if missing.is_empty() {
+                        bail!("fuzzer does not respond to '-help=1'. no missing shared libraries detected. output: {:?}", result);
+                    } else {
+                        let missing = missing.join(", ");
+
+                        bail!("fuzzer does not respond to '-help=1'. missing shared libraries: {}. output: {:?}", missing, result);
+                    }
+                }
+                Err(err) => {
+                    bail!("fuzzer does not respond to '-help=1'. additional error while checking for missing shared libraries: {}. output: {:?}", err, result);
+                }
+            }
         }
+
         Ok(())
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    async fn find_missing_libraries(&self) -> Result<Vec<String>> {
+        let cmd = self.build_std_command(None, None, None).await?;
+
+        #[cfg(target_os = "linux")]
+        let blocking = move || dynamic_library::linux::find_missing(cmd);
+
+        #[cfg(target_os = "windows")]
+        let blocking = move || dynamic_library::windows::find_missing(cmd);
+
+        let missing = tokio::task::spawn_blocking(blocking).await??;
+        let missing = missing.into_iter().map(|m| m.name).collect();
+
+        Ok(missing)
+    }
+
+    #[cfg(target_os = "macos")]
+    async fn find_missing_libraries(&self) -> Result<Vec<String>> {
+        todo!()
     }
 
     pub async fn fuzz(

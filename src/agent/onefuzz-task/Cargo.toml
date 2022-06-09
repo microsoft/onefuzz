@@ -1,0 +1,52 @@
+[package]
+name = "onefuzz-task"
+version = "0.2.0"
+authors = ["fuzzing@microsoft.com"]
+edition = "2018"
+publish = false
+license = "MIT"
+
+[features]
+integration_test=[]
+
+[dependencies]
+anyhow = "1.0"
+arraydeque = "0.4"
+async-trait = "0.1"
+atexit = { path = "../atexit" }
+backoff = { version = "0.4", features = ["tokio"] }
+clap = "2.34"
+coverage = { path = "../coverage" }
+crossterm = "0.22"
+env_logger = "0.9"
+flume = "0.10"
+futures = "0.3"
+hex = "0.4"
+lazy_static = "1.4"
+log = "0.4"
+num_cpus = "1.13"
+reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"], default-features=false }
+serde = "1.0"
+serde_json = "1.0"
+serde-xml-rs = "0.5.1"
+onefuzz = { path = "../onefuzz" }
+onefuzz-telemetry = { path = "../onefuzz-telemetry" }
+path-absolutize = "3.0"
+reqwest-retry = { path = "../reqwest-retry" }
+strum = "0.24"
+strum_macros = "0.24"
+stacktrace-parser = { path = "../stacktrace-parser" }
+storage-queue = { path = "../storage-queue" }
+tempfile = "3.2"
+thiserror = "1.0"
+tokio = { version = "1.16", features = ["full"] }
+tokio-util = { version = "0.7", features = ["full"] }
+tokio-stream = "0.1"
+tui = { version = "0.18", default-features = false, features = ['crossterm'] }
+url = { version = "2.2", features = ["serde"] }
+uuid = { version = "0.8", features = ["serde", "v4"] }
+chrono = "0.4"
+
+azure_core = { version = "0.1.1", default-features = false, features = ["enable_reqwest_rustls"] }
+azure_storage = { version = "0.1.0", default-features = false, features = ["enable_reqwest_rustls"] }
+azure_storage_blobs = { version = "0.1.0", default-features = false, features = ["enable_reqwest_rustls"] }

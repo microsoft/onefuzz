@@ -1,0 +1,32 @@
+{
+  "input_url": null,
+  "input_blob": {
+    "account": "fakestorageaccount",
+    "container": "fake-storage-container",
+    "name": "fake-crash-sample"
+  },
+  "executable": "dds.exe",
+  "crash_type": "fake crash report",
+  "crash_site": "fake crash site",
+  "call_stack": [
+    "#0 fake",
+    "#1 call",
+    "#2 stack"
+  ],
+  "call_stack_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "asan_log": "fake asan log",
+  "task_id": "2061fc8d-9f02-4d06-838a-87f59880e4e8",
+  "job_id": "510f8e4e-3c4d-4b54-968c-4da459d09f04",
+  "scariness_score": null,
+  "scariness_description": null,
+  "minimized_stack": [],
+  "minimized_stack_sha256": null,
+  "minimized_stack_function_names": [],
+  "minimized_stack_function_names_sha256": null,
+  "minimized_stack_function_lines": null,
+  "minimized_stack_function_lines_sha256": null,
+  "tool_name": "libfuzzer",
+  "tool_version": "1.2.3",
+	"onefuzz_version": "1.2.3"
+}

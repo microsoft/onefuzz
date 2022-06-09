@@ -7,13 +7,17 @@ import logging
 import os
 import pathlib
 from typing import Dict, List, Optional
-from uuid import UUID
 
 from onefuzztypes.enums import Compare, ContainerPermission, ContainerType, TaskFeature
-from onefuzztypes.models import TaskConfig, TaskDefinition, TaskUnitConfig
+from onefuzztypes.models import Job, Task, TaskConfig, TaskDefinition, TaskUnitConfig
 from onefuzztypes.primitives import Container
 
-from ..azure.containers import blob_exists, container_exists, get_container_sas_url
+from ..azure.containers import (
+    add_container_sas_url,
+    blob_exists,
+    container_exists,
+    get_container_sas_url,
+)
 from ..azure.creds import get_instance_id
 from ..azure.queue import get_queue_sas
 from ..azure.storage import StorageType
@@ -255,9 +259,10 @@ def check_config(config: TaskConfig) -> None:
             raise TaskConfigError(err)
 
 
-def build_task_config(
-    job_id: UUID, task_id: UUID, task_config: TaskConfig
-) -> TaskUnitConfig:
+def build_task_config(job: Job, task: Task) -> TaskUnitConfig:
+    job_id = job.job_id
+    task_id = task.task_id
+    task_config = task.config
 
     if task_config.task.type not in TASK_DEFINITIONS:
         raise TaskConfigError("unsupported task type: %s" % task_config.task.type.name)
@@ -277,6 +282,11 @@ def build_task_config(
         ),
         instance_id=get_instance_id(),
     )
+
+    if job.config.logs:
+        config.logs = add_container_sas_url(job.config.logs)
+    else:
+        LOGGER.warning("Missing log container:  job_id %s, task_id %s", job_id, task_id)
 
     if definition.monitor_queue:
         config.input_queue = get_queue_sas(

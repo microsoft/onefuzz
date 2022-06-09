@@ -1,0 +1,42 @@
+<?xml version=\"1.0\" encoding=\"utf-8\"?>
+<coverage line-rate=\"0.40\" branch-rate=\"0\" lines-covered=\"2\" lines-valid=\"5\" branches-covered=\"0\" branches-valid=\"0\" complexity=\"0\" version=\"0.1\" timestamp=\"1648844445\">
+<packages>
+  <package name=\"C:/Users\" line-rate=\"0.50\" branch-rate=\"0\" complexity=\"0\">
+    <classes>
+      <class name=\"C:/Users/file1.txt\" filename=\"C:/Users/file1.txt\" line-rate=\"0.50\" branch-rate=\"0\" complexity=\"0\">
+        <lines>
+          <line number=\"5\" hits=\"3\" branch=\"false\" />
+          <line number=\"10\" hits=\"0\" branch=\"false\" />
+        </lines>
+      </class>
+    </classes>  
+  </package>
+  <package name=\"C:/Users\" line-rate=\"0.00\" branch-rate=\"0\" complexity=\"0\">
+    <classes>
+      <class name=\"C:/Users/file2.txt\" filename=\"C:/Users/file2.txt\" line-rate=\"0.00\" branch-rate=\"0\" complexity=\"0\">
+        <lines>
+          <line number=\"1\" hits=\"0\" branch=\"false\" />
+        </lines>
+      </class>
+    </classes>
+  </package>
+  <package name=\"Invalid file format: C:/Users/file/..\" line-rate=\"1.00\" branch-rate=\"0\" complexity=\"0\">
+    <classes>    
+      <class name=\"C:/Users/file/..\" filename=\"C:/Users/file/..\" line-rate=\"1.00\" branch-rate=\"0\" complexity=\"0\"> 
+        <lines>
+          <line number=\"1\" hits=\"1\" branch=\"false\" />
+        </lines>
+      </class>
+    </classes>
+  </package>
+  <package name=\"Invalid file format: C:/Users/file/..\" line-rate=\"0.00\" branch-rate=\"0\" complexity=\"0\">
+    <classes>
+      <class name=\"C:/Users/file/..\" filename=\"C:/Users/file/..\" line-rate=\"0.00\" branch-rate=\"0\" complexity=\"0\">
+        <lines>
+          <line number=\"1\" hits=\"0\" branch=\"false\" />
+        </lines>
+      </class>
+    </classes>
+  </package>
+</packages>
+</coverage>

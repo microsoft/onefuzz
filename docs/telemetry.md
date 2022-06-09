@@ -80,7 +80,7 @@ The following are common data types used in multiple locations:
   `generic_crash_report` or `libfuzzer_coverage`. For a full list, see the enum
   [TaskType](../src/pytypes/onefuzztypes/enums.py).
 * OS - An enum value describing the OS used (Currently, only Windows or Linux).
-* Version - A compile-time generated string that specifies the OneFuzz version number based on [CURRENT\_RELEASE](../CURRENT_RELEASE) and the sha-1 git revision (See [example](../src/agent/onefuzz-agent/build.rs)).
+* Version - A compile-time generated string that specifies the OneFuzz version number based on [CURRENT\_RELEASE](../CURRENT_RELEASE) and the sha-1 git revision (See [example](../src/agent/onefuzz-task/build.rs)).
 * Role - An enum value describing the role of the OneFuzz software in use.  Examples include `Agent` or `Proxy`.  For a full list, see the enum [Role](../src/agent/onefuzz-telemetry/src/lib.rs).
 
 ### Data recorded by Agents

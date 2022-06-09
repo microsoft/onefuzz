@@ -1,46 +1,35 @@
 [package]
 name = "onefuzz-agent"
-version = "0.2.0"
+version = "0.1.0"
 authors = ["fuzzing@microsoft.com"]
 edition = "2018"
 publish = false
-license = "MIT"
 
-[features]
-integration_test=[]
 
 [dependencies]
-anyhow = "1.0"
-arraydeque = "0.4"
+anyhow = "1.0.51"
 async-trait = "0.1"
-atexit = { path = "../atexit" }
-backoff = { version = "0.3", features = ["tokio"] }
-clap = "2.34"
-coverage = { path = "../coverage" }
-crossterm = "0.22"
+downcast-rs = "1.2"
 env_logger = "0.9"
-flume = "0.10"
 futures = "0.3"
-hex = "0.4"
-lazy_static = "1.4"
 log = "0.4"
-num_cpus = "1.13"
-reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"], default-features=false }
-serde = "1.0"
-serde_json = "1.0"
 onefuzz = { path = "../onefuzz" }
-onefuzz-telemetry = { path = "../onefuzz-telemetry" }
-path-absolutize = "3.0"
-reqwest-retry = { path = "../reqwest-retry" }
-strum = "0.23"
-strum_macros = "0.23"
-stacktrace-parser = { path = "../stacktrace-parser" }
+reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"], default-features = false}
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 storage-queue = { path = "../storage-queue" }
-tempfile = "3.2"
-thiserror = "1.0"
-tokio = { version = "1.14", features = ["full"] }
-tokio-util = { version = "0.6", features = ["full"] }
-tokio-stream = "0.1"
-tui = { version = "0.16", default-features = false, features = ['crossterm'] }
+structopt = "0.3"
+tokio = { version = "1.16", features = ["full"] }
 url = { version = "2.2", features = ["serde"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
+clap = "2.34"
+reqwest-retry = { path = "../reqwest-retry" }
+onefuzz-telemetry = { path = "../onefuzz-telemetry" }
+backtrace = "0.3"
+
+[target.'cfg(target_family = "unix")'.dependencies]
+users = "0.11"
+nix = "0.23"
+
+[target.'cfg(target_family = "windows")'.dependencies]
+winapi = "0.3"

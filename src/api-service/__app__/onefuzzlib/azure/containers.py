@@ -109,11 +109,31 @@ def get_container_metadata(
     return cast(Dict[str, str], result)
 
 
-def create_container(
+def add_container_sas_url(container_url: str) -> str:
+    parsed = urllib.parse.urlparse(container_url)
+    query = urllib.parse.parse_qs(parsed.query)
+    if "sig" in query:
+        return container_url
+    else:
+        account_name = parsed.netloc.split(".")[0]
+        account_key = get_storage_account_name_key_by_name(account_name)
+        sas_token = generate_container_sas(
+            account_name=account_name,
+            container_name=parsed.path.split("/")[1],
+            account_key=account_key,
+            permission=ContainerSasPermissions(
+                read=True, write=True, delete=True, list=True
+            ),
+            expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=1),
+        )
+        return f"{container_url}?{sas_token}"
+
+
+def get_or_create_container_client(
     container: Container,
     storage_type: StorageType,
     metadata: Optional[Dict[str, str]],
-) -> Optional[str]:
+) -> Optional[ContainerClient]:
     client = find_container(container, storage_type)
     if client is None:
         account = choose_account(storage_type)
@@ -134,7 +154,17 @@ def create_container(
                 err,
             )
             return None
+    return client
 
+
+def create_container(
+    container: Container,
+    storage_type: StorageType,
+    metadata: Optional[Dict[str, str]],
+) -> Optional[str]:
+    client = get_or_create_container_client(container, storage_type, metadata)
+    if client is None:
+        return None
     return get_container_sas_url_service(
         client,
         read=True,

@@ -1,6 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+$env:RUST_BACKTRACE = "full"
+
 Start-Transcript -Append -Path c:\onefuzz-run.log
 
 $basedir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
@@ -25,7 +27,7 @@ while ($true) {
             log "onefuzz: fuzzing"
             $arglist = "run --config config.json --redirect-output c:\onefuzz\logs\"
 
-            Start-Process "c:\onefuzz\tools\win64\onefuzz-supervisor.exe" -ArgumentList $arglist -WindowStyle Hidden -Wait
+            Start-Process "c:\onefuzz\tools\win64\onefuzz-agent.exe" -ArgumentList $arglist -WindowStyle Hidden -Wait
         }
         "repro" {
             log "onefuzz: starting repro"

@@ -1,11 +1,19 @@
 name: Build
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
   ACTIONS_CACHE_KEY_DATE: 2021-08-26-01
+  CI: true
 
 jobs:
   agent:
@@ -88,6 +96,8 @@ jobs:
       run: |
         set -ex
         ls artifacts
+        python -mvenv cli_venv
+        . cli_venv/Scripts/activate
         cd src/cli
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
@@ -110,6 +120,7 @@ jobs:
       shell: bash
       run: |
         set -ex
+        . cli_venv/Scripts/activate
         cd src/cli
         pip install -r requirements-lint.txt
         flake8 .
@@ -134,7 +145,7 @@ jobs:
       run: |
         set -ex
         cd contrib/webhook-teams-service
-        python -m pip install --upgrade pip isort black mypy flake8
+        python -m pip install --upgrade pip isort click==8.0.4 black mypy==0.910 flake8
         pip install -r requirements.txt
         mypy webhook
         black webhook --check
@@ -245,6 +256,48 @@ jobs:
 
         ../ci/disable-py-cache.sh
         mypy __app__ ./tests
+  service-net:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '6.0.300'
+    - name: Install dependencies
+      run: |
+        cd src/ApiService/
+        dotnet restore --locked-mode
+        dotnet tool restore
+    - name: Check Formatting
+      run: |
+        cd src/ApiService/
+        dotnet format --verify-no-changes --no-restore
+    - name: Build Service
+      run: |
+        cd src/ApiService/
+        dotnet build -warnaserror --configuration Release
+    - name: Test & Collect coverage info
+      run: |
+        cd src/ApiService/
+        dotnet test --no-restore --collect:"XPlat Code Coverage"
+        dotnet tool run reportgenerator -reports:Tests/TestResults/*/coverage.cobertura.xml -targetdir:coverage -reporttypes:MarkdownSummary
+        cat coverage/*.md > $GITHUB_STEP_SUMMARY
+    - name: copy artifacts
+      run: |
+        ./src/ci/get-version.sh > src/deployment/VERSION
+        cd src/ApiService/ApiService/
+        echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
+        echo ${GITHUB_SHA} | tee onefuzzlib/git.version
+        mv az-local.settings.json bin/Release/net6.0/local.settings.json
+        cd bin/Release/net6.0/
+        zip -r api-service-net.zip .
+        mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
+        cp api-service-net.zip ${GITHUB_WORKSPACE}/artifacts/service-net
+    - uses: actions/upload-artifact@v2.2.2
+      with:
+        name: build-artifacts
+        path: artifacts
   afl:
     runs-on: ubuntu-18.04
     steps:
@@ -254,6 +307,7 @@ jobs:
       with:
         name: build-artifacts
         path: artifacts
+
   aflpp:
     runs-on: ubuntu-18.04
     steps:
@@ -309,7 +363,7 @@ jobs:
         set -ex
         cd src/deployment
         python -m pip install --upgrade pip
-        pip install mypy isort black types-requests flake8
+        pip install mypy==0.910 isort click==8.0.4 black types-requests flake8
         mypy .
         isort --profile black . --check
         black . --check
@@ -327,14 +381,15 @@ jobs:
               cp artifacts/azcopy/azcopy artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/linux
               cp artifacts/azcopy/azcopy.exe artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/win64
           fi
-          cp artifacts/agent-MINGW*/onefuzz-supervisor.exe src/deployment/tools/win64/
           cp artifacts/agent-MINGW*/onefuzz-agent.exe src/deployment/tools/win64/
-          cp artifacts/agent-MINGW*/onefuzz_supervisor.pdb src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz-task.exe src/deployment/tools/win64/
           cp artifacts/agent-MINGW*/onefuzz_agent.pdb src/deployment/tools/win64/
-          cp artifacts/agent-Linux/onefuzz-supervisor src/deployment/tools/linux/
+          cp artifacts/agent-MINGW*/onefuzz_task.pdb src/deployment/tools/win64/
           cp artifacts/agent-Linux/onefuzz-agent src/deployment/tools/linux/
+          cp artifacts/agent-Linux/onefuzz-task src/deployment/tools/linux/
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment
+          cp artifacts/service-net/api-service-net.zip src/deployment
           cp -r artifacts/third-party src/deployment
           cp -r src/agent/script/linux/libfuzzer-coverage src/deployment/tools/linux/libfuzzer-coverage
           cp -r src/agent/script/win64/libfuzzer-coverage src/deployment/tools/win64/libfuzzer-coverage
@@ -411,7 +466,7 @@ jobs:
         name: integration-test-artifacts
         path: src/integration-tests/artifacts
   build-integration-tests-windows:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
     - uses: actions/checkout@v2
     - run: |

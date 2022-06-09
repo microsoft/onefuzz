@@ -9,7 +9,7 @@ use sha2::{Digest, Sha256};
 
 mod asan;
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StackEntry {
     pub line: String,
     #[serde(default)]
@@ -68,7 +68,7 @@ impl StackEntry {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CrashLog {
     pub text: Option<String>,
     pub sanitizer: String,
@@ -259,11 +259,7 @@ fn stack_names(stack: &[StackEntry]) -> Vec<String> {
 }
 
 fn stack_function_lines(stack: &[StackEntry]) -> Vec<String> {
-    stack
-        .iter()
-        .map(|x| x.function_line_entry())
-        .flatten()
-        .collect()
+    stack.iter().flat_map(|x| x.function_line_entry()).collect()
 }
 
 fn parse_summary(text: &str) -> Result<(String, String, String)> {
@@ -306,7 +302,6 @@ mod tests {
     use super::CrashLog;
     use anyhow::{Context, Result};
     use pretty_assertions::assert_eq;
-    use serde_json;
     use std::fs;
     use std::path::Path;
 
@@ -342,14 +337,15 @@ mod tests {
                 )
             })?;
 
-            if !skip_minimized_check.contains(&file_name) {
-                if !parsed.call_stack.is_empty() && !parsed.full_stack_names.is_empty() {
-                    assert!(
-                        !parsed.minimized_stack.is_empty(),
-                        "minimized call stack got reduced to nothing {}",
-                        path.display()
-                    );
-                }
+            if !skip_minimized_check.contains(&file_name)
+                && !parsed.call_stack.is_empty()
+                && !parsed.full_stack_names.is_empty()
+            {
+                assert!(
+                    !parsed.minimized_stack.is_empty(),
+                    "minimized call stack got reduced to nothing {}",
+                    path.display()
+                );
             }
 
             let mut expected_path = expected_dir.join(&file_name);

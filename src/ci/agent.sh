@@ -29,6 +29,12 @@ mkdir -p artifacts/agent-$(uname)
 
 cd src/agent
 
+rustc --version
+cargo --version
+cargo audit --version
+cargo clippy --version
+cargo fmt --version
+
 # unless we're doing incremental builds, start clean during CI
 if [ X${CARGO_INCREMENTAL} == X ]; then
     cargo clean
@@ -45,19 +51,19 @@ cargo fmt -- --check
 cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2020-0016 --ignore RUSTSEC-2020-0036 --ignore RUSTSEC-2019-0036 --ignore RUSTSEC-2021-0065 --ignore RUSTSEC-2020-0159 --ignore RUSTSEC-2020-0071 --ignore RUSTSEC-2020-0077
 cargo-license -j > data/licenses.json
 cargo build --release --locked
-cargo clippy --release -- -D warnings
+cargo clippy --release --all-targets -- -D warnings
 # export RUST_LOG=trace
 export RUST_BACKTRACE=full
 cargo test --release --workspace
 
 # TODO: re-enable integration tests.
-# cargo test --release --manifest-path ./onefuzz-agent/Cargo.toml --features integration_test -- --nocapture
+# cargo test --release --manifest-path ./onefuzz-task/Cargo.toml --features integration_test -- --nocapture
 
 # TODO: once Salvo is integrated, this can get deleted
 cargo build --release --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
 
+cp target/release/onefuzz-task* ../../artifacts/agent-$(uname)
 cp target/release/onefuzz-agent* ../../artifacts/agent-$(uname)
-cp target/release/onefuzz-supervisor* ../../artifacts/agent-$(uname)
 cp target/release/srcview* ../../artifacts/agent-$(uname)
 
 if exists target/release/*.pdb; then

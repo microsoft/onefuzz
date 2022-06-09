@@ -4,7 +4,7 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [packages]
-black = "==21.4b2"
+black = "==22.3.0"
 pylint = "*"
 requests = "*"
 pip = ">=21.1"

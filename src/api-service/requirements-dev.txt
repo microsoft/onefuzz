@@ -1,8 +1,9 @@
 pytest
 flake8
-mypy
+mypy==0.910
 isort
 vulture
+click==8.0.4
 black
 bandit
 types-jwt

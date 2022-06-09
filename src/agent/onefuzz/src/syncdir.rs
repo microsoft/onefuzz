@@ -27,7 +27,7 @@ pub enum SyncOperation {
 const DELAY: Duration = Duration::from_secs(10);
 const DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS: u64 = 60;
 
-#[derive(Debug, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
 pub struct SyncedDir {
     #[serde(alias = "local_path", alias = "path")]
     pub local_path: PathBuf,
@@ -225,13 +225,12 @@ impl SyncedDir {
     ) -> Result<()> {
         debug!("monitoring {}", path.display());
 
-        let mut monitor = DirectoryMonitor::new(path.clone());
-        monitor.start()?;
+        let mut monitor = DirectoryMonitor::new(path.clone()).await?;
 
         if let Some(path) = url.as_file_path() {
             fs::create_dir_all(&path).await?;
 
-            while let Some(item) = monitor.next_file().await {
+            while let Some(item) = monitor.next_file().await? {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
@@ -267,7 +266,7 @@ impl SyncedDir {
         } else {
             let mut uploader = BlobUploader::new(url.url()?);
 
-            while let Some(item) = monitor.next_file().await {
+            while let Some(item) = monitor.next_file().await? {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
@@ -376,7 +375,7 @@ mod tests {
         let path = PathBuf::from("Cargo.toml");
         let expected = canonicalize(current_dir()?.join(&path))?;
         let dir = SyncedDir {
-            local_path: path.clone(),
+            local_path: path,
             remote_path: None,
         };
         let blob_path = dir

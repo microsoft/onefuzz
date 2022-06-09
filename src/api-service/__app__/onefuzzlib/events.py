@@ -76,6 +76,6 @@ def send_event(event: Event) -> None:
     if event_message.event != event:
         event_message.event = event.copy(deep=True)
 
+    log_event(event, event_type)
     queue_signalr_event(event_message)
     Webhook.send_event(event_message)
-    log_event(event, event_type)

@@ -26,6 +26,7 @@ from onefuzztypes import (
     responses,
     webhooks,
 )
+from onefuzztypes.enums import TaskType
 from pydantic import BaseModel
 from six.moves import input  # workaround for static analysis
 
@@ -52,6 +53,9 @@ DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest"
 REPRO_SSH_FORWARD = "1337:127.0.0.1:1337"
 
 UUID_RE = r"^[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}\Z"
+
+# Environment variable optionally used for setting an application client secret.
+CLIENT_SECRET_ENV_VAR = "ONEFUZZ_CLIENT_SECRET"  # nosec
 
 
 class PreviewFeature(Enum):
@@ -326,6 +330,7 @@ class Webhooks(Endpoint):
         event_types: List[events.EventType],
         *,
         secret_token: Optional[str] = None,
+        message_format: Optional[webhooks.WebhookMessageFormat] = None,
     ) -> webhooks.Webhook:
         """Create a webhook"""
         self.logger.debug("creating webhook.  name: %s", name)
@@ -333,7 +338,11 @@ class Webhooks(Endpoint):
             "POST",
             webhooks.Webhook,
             data=requests.WebhookCreate(
-                name=name, url=url, event_types=event_types, secret_token=secret_token
+                name=name,
+                url=url,
+                event_types=event_types,
+                secret_token=secret_token,
+                message_format=message_format,
             ),
         )
 
@@ -345,6 +354,7 @@ class Webhooks(Endpoint):
         url: Optional[str] = None,
         event_types: Optional[List[events.EventType]] = None,
         secret_token: Optional[str] = None,
+        message_format: Optional[webhooks.WebhookMessageFormat] = None,
     ) -> webhooks.Webhook:
         """Update a webhook"""
 
@@ -362,6 +372,7 @@ class Webhooks(Endpoint):
                 url=url,
                 event_types=event_types,
                 secret_token=secret_token,
+                message_format=message_format,
             ),
         )
 
@@ -792,7 +803,7 @@ class Tasks(Endpoint):
     def create(
         self,
         job_id: UUID_EXPANSION,
-        task_type: enums.TaskType,
+        task_type: TaskType,
         target_exe: str,
         containers: List[Tuple[enums.ContainerType, primitives.Container]],
         *,
@@ -841,6 +852,13 @@ class Tasks(Endpoint):
         """
 
         self.logger.debug("creating task: %s", task_type)
+
+        if task_type == TaskType.libfuzzer_coverage:
+            self.logger.warning(
+                "DEPRECATED: the `libfuzzer_coverage` task type is deprecated. "
+                "It will be removed in an upcoming release. "
+                "Please migrate to the `coverage` task type."
+            )
 
         job_id_expanded = self._disambiguate_uuid(
             "job_id",
@@ -1350,6 +1368,11 @@ class Scaleset(Endpoint):
         spot_instances: bool = False,
         ephemeral_os_disks: bool = False,
         tags: Optional[Dict[str, str]] = None,
+        min_instances: Optional[int] = 1,
+        scale_out_amount: Optional[int] = 1,
+        scale_out_cooldown: Optional[int] = 10,
+        scale_in_amount: Optional[int] = 1,
+        scale_in_cooldown: Optional[int] = 15,
     ) -> models.Scaleset:
         self.logger.debug("create scaleset")
 
@@ -1365,6 +1388,16 @@ class Scaleset(Endpoint):
             else:
                 raise NotImplementedError
 
+        auto_scale = requests.AutoScaleOptions(
+            min=min_instances,
+            max=size,
+            default=size,
+            scale_out_amount=scale_out_amount,
+            scale_out_cooldown=scale_out_cooldown,
+            scale_in_amount=scale_in_amount,
+            scale_in_cooldown=scale_in_cooldown,
+        )
+
         return self._req_model(
             "POST",
             models.Scaleset,
@@ -1377,6 +1410,7 @@ class Scaleset(Endpoint):
                 spot_instances=spot_instances,
                 ephemeral_os_disks=ephemeral_os_disks,
                 tags=tags,
+                auto_scale=auto_scale,
             ),
         )
 
@@ -1616,11 +1650,22 @@ class Utils(Command):
 
 class Onefuzz:
     def __init__(
-        self, config_path: Optional[str] = None, token_path: Optional[str] = None
+        self,
+        config_path: Optional[str] = None,
+        token_path: Optional[str] = None,
+        client_secret: Optional[str] = None,
     ) -> None:
         self.logger = logging.getLogger("onefuzz")
+
+        if client_secret is None:
+            # If not explicitly provided, check the environment for a user-provided client secret.
+            client_secret = self._client_secret_from_env()
+
         self._backend = Backend(
-            config=DEFAULT, config_path=config_path, token_path=token_path
+            config=DEFAULT,
+            config_path=config_path,
+            token_path=token_path,
+            client_secret=client_secret,
         )
         self.containers = Containers(self)
         self.repro = Repro(self)
@@ -1647,10 +1692,17 @@ class Onefuzz:
 
         self.__setup__()
 
+    # Try to obtain a confidential client secret from the environment.
+    #
+    # If not set, return `None`.
+    def _client_secret_from_env(self) -> Optional[str]:
+        return os.environ.get(CLIENT_SECRET_ENV_VAR)
+
     def __setup__(
         self,
         endpoint: Optional[str] = None,
         client_id: Optional[str] = None,
+        client_secret: Optional[str] = None,
         authority: Optional[str] = None,
         tenant_domain: Optional[str] = None,
     ) -> None:
@@ -1661,6 +1713,8 @@ class Onefuzz:
             self._backend.config.authority = authority
         if client_id is not None:
             self._backend.config.client_id = client_id
+        if client_secret is not None:
+            self._backend.client_secret = client_secret
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
 
@@ -1704,7 +1758,6 @@ class Onefuzz:
         endpoint: Optional[str] = None,
         authority: Optional[str] = None,
         client_id: Optional[str] = None,
-        client_secret: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
         tenant_domain: Optional[str] = None,
         reset: Optional[bool] = None,
@@ -1733,8 +1786,6 @@ class Onefuzz:
             self._backend.config.authority = authority
         if client_id is not None:
             self._backend.config.client_id = client_id
-        if client_secret is not None:
-            self._backend.config.client_secret = client_secret
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
         if tenant_domain is not None:
@@ -1743,9 +1794,6 @@ class Onefuzz:
         self._backend.save_config()
 
         data = self._backend.config.copy(deep=True)
-        if data.client_secret is not None:
-            # replace existing secrets with "*** for user display
-            data.client_secret = "***"  # nosec
 
         if not data.endpoint:
             self.logger.warning("endpoint not configured yet")

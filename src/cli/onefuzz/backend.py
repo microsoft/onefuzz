@@ -46,7 +46,7 @@ DEFAULT_TOKEN_PATH = os.path.join(ONEFUZZ_BASE_PATH, "access_token.json")
 REQUEST_CONNECT_TIMEOUT = 30.0
 REQUEST_READ_TIMEOUT = 120.0
 
-LOGGER = logging.getLogger("nsv-backend")
+LOGGER = logging.getLogger("backend")
 
 
 @contextlib.contextmanager
@@ -88,7 +88,6 @@ def check_application_error(response: requests.Response) -> None:
 class BackendConfig(BaseModel):
     authority: str
     client_id: str
-    client_secret: Optional[str]
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
     tenant_domain: Optional[str]
@@ -100,9 +99,11 @@ class Backend:
         config: BackendConfig,
         config_path: Optional[str] = None,
         token_path: Optional[str] = None,
+        client_secret: Optional[str] = None,
     ):
         self.config_path = os.path.expanduser(config_path or DEFAULT_CONFIG_PATH)
         self.token_path = os.path.expanduser(token_path or DEFAULT_TOKEN_PATH)
+        self.client_secret = client_secret
         self.config = config
         self.token_cache: Optional[msal.SerializableTokenCache] = None
         self.init_cache()
@@ -187,16 +188,17 @@ class Backend:
                 f"https://{netloc}/.default",  # before 3.0.0 release
             ]
 
-        if self.config.client_secret:
-            return self.client_secret(scopes)
+        if self.client_secret:
+            return self.access_token_from_client_secret(scopes)
+
         return self.device_login(scopes)
 
-    def client_secret(self, scopes: List[str]) -> Any:
+    def access_token_from_client_secret(self, scopes: List[str]) -> Any:
         if not self.app:
             self.app = msal.ConfidentialClientApplication(
                 self.config.client_id,
                 authority=self.config.authority,
-                client_credential=self.config.client_secret,
+                client_credential=self.client_secret,
                 token_cache=self.token_cache,
             )
 
@@ -319,7 +321,7 @@ class Backend:
             except requests.exceptions.ReadTimeout as err:
                 LOGGER.info("request timed out: %s", err)
 
-            time.sleep(1.5 ** backoff)
+            time.sleep(1.5**backoff)
 
         if response is None:
             raise Exception("request failed: %s %s" % (method, url))
@@ -348,6 +350,8 @@ def before_sleep(retry_state: RetryCallState) -> None:
 
 
 class ContainerWrapper:
+    client: ContainerClient
+
     def __init__(self, container_url: str) -> None:
         self.client = ContainerClient.from_container_url(container_url)
         self.container_url = container_url

@@ -9,8 +9,8 @@ use std::{env, process::Stdio};
 
 fn run_cmd(args: &[&str]) -> Result<String, Box<dyn Error>> {
     let cmd = Command::new(args[0])
-        .args(&args[1..])
         .stdin(Stdio::null())
+        .args(&args[1..])
         .output()?;
     if cmd.status.success() {
         Ok(String::from_utf8_lossy(&cmd.stdout).trim().to_string())
