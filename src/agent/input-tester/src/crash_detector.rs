@@ -429,7 +429,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::identity-op)]
+    #[allow(clippy::identity_op)]
     fn nonblocking_stdout() {
         let result = runps!(
             Duration::from_secs(10),
