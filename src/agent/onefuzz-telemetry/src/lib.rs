@@ -66,7 +66,7 @@ impl fmt::Display for InstanceTelemetryKey {
     }
 }
 
-pub type TelemetryClient = appinsights::TelemetryClient<appinsights::InMemoryChannel>;
+pub type TelemetryClient = appinsights::TelemetryClient;
 pub enum ClientType {
     Instance,
     Microsoft,
@@ -475,17 +475,17 @@ pub fn set_appinsights_clients(
     global::set_clients(instance_client, microsoft_client);
 }
 
-/// Try to submit any pending telemetry with a blocking call.
+/// Try to submit any pending telemetry.
 ///
 /// Meant for a final attempt at flushing pending items before an abnormal exit.
 /// After calling this function, any existing telemetry client will be dropped,
 /// and subsequent telemetry submission will be a silent no-op.
-pub fn try_flush_and_close() {
+pub async fn try_flush_and_close() {
     let clients = global::take_clients();
 
     for client in clients {
-        client.flush_channel();
-        client.close_channel();
+        // close_channel performs an implicit flush
+        client.close_channel().await;
     }
 }
 
