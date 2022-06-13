@@ -40,6 +40,9 @@ jobs:
           sccache
           src/agent/target
         key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+        restore-keys: |
+          agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-
+          agent-${{ runner.os }}-
     - name: Linux Prereqs
       run: |
         sudo apt-get -y update
@@ -203,6 +206,9 @@ jobs:
           sccache
           src/proxy-manager/target
         key: proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+        restore-keys: |
+          proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-
+          proxy-${{ runner.os }}-
     - run: src/ci/proxy.sh
     - uses: actions/upload-artifact@v2.2.2
       with:
