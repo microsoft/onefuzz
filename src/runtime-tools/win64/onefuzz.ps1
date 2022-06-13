@@ -7,7 +7,7 @@ $env:ONEFUZZ_TOOLS = "C:\onefuzz\tools"
 $env:LLVM_SYMBOLIZER_PATH = "llvm-symbolizer"
 $env:RUST_LOG = "info"
 $env:DOTNET_ROOT = "c:\onefuzz\tools\dotnet"
-[Environment]::SetEnvironmentVariable("DOTNET_ROOT", "c:\onefuzz\tools\otnet", "Machine")
+[Environment]::SetEnvironmentVariable("DOTNET_ROOT", "c:\onefuzz\tools\dotnet", "Machine")
 
 $logFile = "C:\onefuzz.log"
 function log ($message) {
