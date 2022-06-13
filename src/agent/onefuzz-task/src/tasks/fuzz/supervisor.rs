@@ -266,12 +266,16 @@ async fn start_supervisor(
 }
 
 #[cfg(test)]
+#[cfg(target_os = "linux")]
 mod tests {
     use super::*;
     use crate::tasks::stats::afl::read_stats;
+    use onefuzz::blob::BlobContainerUrl;
     use onefuzz::process::monitor_process;
     use onefuzz_telemetry::EventData;
+    use reqwest::Url;
     use std::collections::HashMap;
+    use std::env;
     use std::time::Instant;
 
     const MAX_FUZZ_TIME_SECONDS: u64 = 120;
@@ -290,13 +294,8 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(target_os = "linux")]
     #[cfg_attr(not(feature = "integration_test"), ignore)]
     async fn test_fuzzer_linux() {
-        use onefuzz::blob::BlobContainerUrl;
-        use reqwest::Url;
-        use std::env;
-
         let runtime_dir = tempfile::tempdir().unwrap();
 
         let supervisor_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_FUZZER") {

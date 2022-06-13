@@ -1,0 +1,24 @@
+<Project>
+    <PropertyGroup>
+
+        <!-- set overall target framework -->
+        <TargetFramework>net6.0</TargetFramework>
+
+        <!-- enable code analysis -->
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <AnalysisLevel>6.0-Default</AnalysisLevel>
+        <!-- Goal: raise to 6.0-Minimum and then eventually 6.0-Recommended -->
+
+        <!-- check nullable types -->
+        <Nullable>enable</Nullable>
+        
+        <!-- enable a few more obscure checks -->
+        <Features>strict</Features>
+
+        <!-- use lock files for repeatable builds -->
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+        <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
+        <!-- always use locked restore mode in CI -->
+
+    </PropertyGroup>
+</Project>

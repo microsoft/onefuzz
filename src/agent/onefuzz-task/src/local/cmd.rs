@@ -17,7 +17,7 @@ use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, EnumString, IntoStaticStr};
 use tokio::{select, time::timeout};
 
-#[derive(Debug, PartialEq, EnumString, IntoStaticStr, EnumIter)]
+#[derive(Debug, PartialEq, Eq, EnumString, IntoStaticStr, EnumIter)]
 #[strum(serialize_all = "kebab-case")]
 enum Commands {
     Radamsa,

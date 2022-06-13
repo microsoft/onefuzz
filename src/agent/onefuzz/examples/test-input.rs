@@ -7,7 +7,7 @@ use anyhow::Result;
 use onefuzz::input_tester::Tester;
 use structopt::StructOpt;
 
-#[derive(Debug, PartialEq, StructOpt)]
+#[derive(Debug, PartialEq, Eq, StructOpt)]
 #[structopt(name = "test-input")]
 struct Opt {
     #[structopt(short, long)]
@@ -67,7 +67,7 @@ async fn main() -> Result<()> {
     if let Some(crash) = test_result.crash_log.as_ref() {
         println!("[+] crash detected!");
         println!();
-        let text: &str = crash.text.as_ref().map(|s| s.as_str()).unwrap_or_default();
+        let text: &str = crash.text.as_deref().unwrap_or_default();
         println!("    sanitizer = {}", crash.sanitizer);
         println!("    summary = {}", crash.summary);
         println!("    text = {}", text);
