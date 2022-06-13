@@ -1353,11 +1353,31 @@ If webhook is set to have Event Grid message format then the payload will look a
 
 ```json
 {
+    "definitions": {
+        "NodeState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "free",
+                "setting_up",
+                "rebooting",
+                "ready",
+                "busy",
+                "done",
+                "shutdown",
+                "halt"
+            ],
+            "title": "NodeState"
+        }
+    },
     "properties": {
         "machine_id": {
             "format": "uuid",
             "title": "Machine Id",
             "type": "string"
+        },
+        "machine_state": {
+            "$ref": "#/definitions/NodeState"
         },
         "pool_name": {
             "title": "Pool Name",
@@ -5474,6 +5494,9 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "format": "uuid",
                     "title": "Machine Id",
                     "type": "string"
+                },
+                "machine_state": {
+                    "$ref": "#/definitions/NodeState"
                 },
                 "pool_name": {
                     "title": "Pool Name",
