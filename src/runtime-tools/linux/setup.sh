@@ -26,6 +26,10 @@ mkdir -p /onefuzz/setup
 mkdir -p /onefuzz/tools
 mkdir -p /onefuzz/etc
 mkdir -p /onefuzz/instance-specific-setup
+mkdir -p /onefuzz/tools/dotnet
+sudo mkdir -p /etc/dotnet
+sudo touch /etc/dotnet/install_location
+sudo echo "/onefuzz/tools/dotnet" >> /etc/dotnet/install_location
 
 echo $1 > /onefuzz/etc/mode
 export PATH=$PATH:/onefuzz/bin:/onefuzz/tools/linux:/onefuzz/tools/linux/afl:/onefuzz/tools/linux/radamsa
@@ -122,6 +126,25 @@ if type apt > /dev/null 2> /dev/null; then
         # Using `llvm-symbolizer` works for clang 8 .. 10.
         sudo ln -f -s $(which llvm-symbolizer-10) $LLVM_SYMBOLIZER_PATH
     fi
+
+    # Install dotnet
+    until sudo apt install -y curl libicu-dev; do
+        echo "apt failed, sleeping 10s then retrying"
+        sleep 10
+    done
+
+    echo "downloading dotnet install"
+    curl -sSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh > /dev/null
+    chmod +x dotnet-install.sh
+
+    echo "running dotnet install"
+    . ./dotnet-install.sh --version 6.0.300 --install-dir /onefuzz/tools/dotnet 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
+    # rm dotnet-install.sh
+
+    echo "install dotnet tools"
+    dotnet tool install dotnet-dump --tool-path /onefuzz/tools
+    dotnet tool install dotnet-coverage --tool-path /onefuzz/tools
+    dotnet tool install dotnet-sos --tool-path /onefuzz/tools
 fi
 
 if [ -d /etc/systemd/system ]; then
