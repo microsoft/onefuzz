@@ -1074,7 +1074,7 @@ If webhook is set to have Event Grid message format then the payload will look a
         },
         {
             "task_id": "00000000-0000-0000-0000-000000000001",
-            "task_type": "libfuzzer_coverage"
+            "task_type": "coverage"
         }
     ]
 }

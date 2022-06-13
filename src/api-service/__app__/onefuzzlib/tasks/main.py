@@ -106,7 +106,7 @@ class Task(BASE_TASK, ORMMixin):
     #     'task_id': '835f7b3f-43ad-4718-b7e4-d506d9667b09',
     #     'state': 'stopped',
     #     'config': {
-    #         'task': {'type': 'libfuzzer_coverage'},
+    #         'task': {'type': 'coverage'},
     #         'vm': {'count': 1}
     #     }
     # }
