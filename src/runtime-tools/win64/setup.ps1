@@ -69,6 +69,7 @@ function Install-OnefuzzSetup {
   Enable-SSH
   Install-OnBoot
   Install-VCRedist
+  Install-Dotnet
   Setup-Silent-Notification
   log "onefuzz: setup done"
 }

@@ -6,6 +6,8 @@ $env:ONEFUZZ_ROOT = "C:\onefuzz"
 $env:ONEFUZZ_TOOLS = "C:\onefuzz\tools"
 $env:LLVM_SYMBOLIZER_PATH = "llvm-symbolizer"
 $env:RUST_LOG = "info"
+$env:DOTNET_ROOT = "c:\onefuzz\tools/dotnet"
+[Environment]::SetEnvironmentVariable("DOTNET_ROOT", "c:\onefuzz\tools/dotnet", "Machine")
 
 $logFile = "C:\onefuzz.log"
 function log ($message) {
@@ -167,4 +169,17 @@ function Install-VCRedist {
   Start-Process -FilePath C:\onefuzz\vcredist_x64.exe -ArgumentList "/install /q /norestart" -Wait -WindowStyle Hidden
   Start-Process -FilePath C:\onefuzz\vcredist_x86.exe -ArgumentList "/install /q /norestart" -Wait -WindowStyle Hidden
   log "installing VC Redist: done"
+}
+
+function Install-Dotnet {
+  log "Installing dotnet"
+  &powershell -NoProfile -ExecutionPolicy unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://dot.net/v1/dotnet-install.ps1'))) -Version 6.0.300 -InstallDir c:\onefuzz\tools\dotnet"
+  log "Installing dotnet: done"
+  log "Installing dotnet tools"
+  Push-Location c:\onefuzz\tools\dotnet
+  ./dotnet.exe tool install dotnet-dump --tool-path c:\onefuzz\tools
+  ./dotnet.exe tool install dotnet-coverage --tool-path c:\onefuzz\tools
+  ./dotnet.exe tool install dotnet-sos --tool-path c:\onefuzz\tools
+  Pop-Location
+  log "Installing dotnet tools: done"
 }

@@ -12,6 +12,7 @@ USER_SETUP="/onefuzz/setup/setup.sh"
 TASK_SETUP="/onefuzz/bin/task-setup.sh"
 MANAGED_SETUP="/onefuzz/bin/managed.sh"
 SCALESET_SETUP="/onefuzz/bin/scaleset-setup.sh"
+export DOTNET_ROOT=/onefuzz/tools/dotnet
 export ONEFUZZ_ROOT=/onefuzz
 export LLVM_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 
@@ -27,9 +28,6 @@ mkdir -p /onefuzz/tools
 mkdir -p /onefuzz/etc
 mkdir -p /onefuzz/instance-specific-setup
 mkdir -p /onefuzz/tools/dotnet
-sudo mkdir -p /etc/dotnet
-sudo touch /etc/dotnet/install_location
-sudo echo "/onefuzz/tools/dotnet" >> /etc/dotnet/install_location
 
 echo $1 > /onefuzz/etc/mode
 export PATH=$PATH:/onefuzz/bin:/onefuzz/tools/linux:/onefuzz/tools/linux/afl:/onefuzz/tools/linux/radamsa
@@ -139,12 +137,14 @@ if type apt > /dev/null 2> /dev/null; then
 
     echo "running dotnet install"
     . ./dotnet-install.sh --version 6.0.300 --install-dir /onefuzz/tools/dotnet 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
-    # rm dotnet-install.sh
+    rm dotnet-install.sh
 
     echo "install dotnet tools"
-    dotnet tool install dotnet-dump --tool-path /onefuzz/tools
-    dotnet tool install dotnet-coverage --tool-path /onefuzz/tools
-    dotnet tool install dotnet-sos --tool-path /onefuzz/tools
+    pushd /onefuzz/tools/dotnet
+    ./dotnet tool install dotnet-dump --tool-path /onefuzz/tools
+    ./dotnet tool install dotnet-coverage --tool-path /onefuzz/tools
+    ./dotnet tool install dotnet-sos --tool-path /onefuzz/tools
+    popd
 fi
 
 if [ -d /etc/systemd/system ]; then
