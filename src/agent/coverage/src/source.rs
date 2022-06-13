@@ -4,13 +4,13 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(transparent)]
 pub struct SourceCoverage {
     pub files: Vec<SourceFileCoverage>,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
 pub struct SourceFileCoverage {
     /// UTF-8 encoding of the path to the source file.
     pub file: String,
@@ -18,7 +18,7 @@ pub struct SourceFileCoverage {
     pub locations: Vec<SourceCoverageLocation>,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
 pub struct SourceCoverageLocation {
     /// Line number of entry in `file` (1-indexed).
     pub line: u32,

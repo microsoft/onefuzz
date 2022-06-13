@@ -13,6 +13,7 @@ env:
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
   ACTIONS_CACHE_KEY_DATE: 2021-08-26-01
+  CI: true
 
 jobs:
   agent:
@@ -267,6 +268,7 @@ jobs:
       run: |
         cd src/ApiService/
         dotnet restore --locked-mode
+        dotnet tool restore
     - name: Check Formatting
       run: |
         cd src/ApiService/
@@ -275,10 +277,12 @@ jobs:
       run: |
         cd src/ApiService/
         dotnet build -warnaserror --configuration Release
-    - name: Test
+    - name: Test & Collect coverage info
       run: |
         cd src/ApiService/
-        dotnet test --no-restore
+        dotnet test --no-restore --collect:"XPlat Code Coverage"
+        dotnet tool run reportgenerator -reports:Tests/TestResults/*/coverage.cobertura.xml -targetdir:coverage -reporttypes:MarkdownSummary
+        cat coverage/*.md > $GITHUB_STEP_SUMMARY
     - name: copy artifacts
       run: |
         ./src/ci/get-version.sh > src/deployment/VERSION

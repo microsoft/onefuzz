@@ -27,7 +27,7 @@ struct RequestError {
     message: String,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 enum WriteLogResponse {
     Success,
     /// The message needs to be split into multiple parts.
@@ -404,7 +404,7 @@ mod tests {
 
         let response = client
             .list_blobs()
-            .prefix(format!("job1/tak1/1"))
+            .prefix("job1/tak1/1")
             .execute()
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
@@ -641,15 +641,12 @@ mod tests {
             .map_err(|e| anyhow!(e.to_string()))?;
 
         assert_eq!(blobs.blobs.blobs.len(), 2, "expected exactly 2 blob");
-        let blob_names = blobs
-            .blobs
-            .blobs
-            .iter()
-            .map(|b| b.name.clone())
-            .collect::<Vec<_>>();
+        let blobs = blobs.blobs.blobs;
 
         assert!(
-            blob_names.contains(&format!("{}/2.log", &blob_prefix)),
+            blobs
+                .into_iter()
+                .any(|x| x.name == format!("{}/2.log", &blob_prefix)),
             "expected 2.log"
         );
 

@@ -231,7 +231,7 @@ impl<'c> Recorder<'c> {
 }
 
 /// Executable memory-mapped files for a process.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Images {
     mapped: BTreeMap<u64, ModuleImage>,
     pid: i32,
@@ -282,7 +282,7 @@ impl Images {
 }
 
 /// A `MemoryMap` that is known to be file-backed and executable.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ModuleImage {
     map: MemoryMap,
     path: ModulePath,

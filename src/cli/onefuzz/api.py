@@ -604,7 +604,7 @@ class Repro(Endpoint):
         self.logger.info("connecting to reproduction VM: %s", vm_id)
 
         if which("ssh") is None:
-            raise Exception("unable to find ssh")
+            raise Exception("unable to find ssh on local machine")
 
         def missing_os() -> Tuple[bool, str, models.Repro]:
             repro = self.get(vm_id)
@@ -618,10 +618,10 @@ class Repro(Endpoint):
 
         if repro.os == enums.OS.windows:
             if which("cdb.exe") is None:
-                raise Exception("unable to find cdb.exe")
+                raise Exception("unable to find cdb.exe on local machine")
         if repro.os == enums.OS.linux:
             if which("gdb") is None:
-                raise Exception("unable to find gdb")
+                raise Exception("unable to find gdb on local machine")
 
         def func() -> Tuple[bool, str, models.Repro]:
             repro = self.get(vm_id)

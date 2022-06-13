@@ -424,7 +424,7 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState>, INodeT
     }
 
     public IAsyncEnumerable<NodeTasks> GetByMachineId(Guid machineId) {
-        return QueryAsync($"macine_id eq '{machineId}'");
+        return QueryAsync($"machine_id eq '{machineId}'");
     }
 
     public IAsyncEnumerable<NodeTasks> GetByTaskId(Guid taskId) {

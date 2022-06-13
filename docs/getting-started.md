@@ -33,6 +33,7 @@ do the following:
 ```
 unzip onefuzz-deployment-$VERSION.zip
 pip install -r requirements.txt
+chmod +x deploy.py
 ./deploy.py $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS $NSG_CONFIG_FILE
 ```
 
