@@ -22,7 +22,7 @@ structopt = "0.3"
 tokio = { version = "1.16", features = ["full"] }
 url = { version = "2.2", features = ["serde"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
-clap = "2.34"
+clap = "3.2"
 reqwest-retry = { path = "../reqwest-retry" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 backtrace = "0.3"
