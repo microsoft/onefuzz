@@ -143,7 +143,7 @@ mod tests {
         for (mangled, demangled) in test_cases {
             let name = demangler
                 .demangle(mangled)
-                .expect(&format!("demangling error: {}", mangled));
+                .unwrap_or_else(|| panic!("demangling error: {}", mangled));
             assert_eq!(&name, demangled);
         }
 
@@ -185,7 +185,7 @@ mod tests {
         for (mangled, demangled) in test_cases {
             let name = demangler
                 .demangle(mangled)
-                .expect(&format!("demangling error: {}", mangled));
+                .unwrap_or_else(|| panic!("demangling error: {}", mangled));
             assert_eq!(&name, demangled);
         }
 
@@ -211,7 +211,7 @@ mod tests {
         for (mangled, demangled) in test_cases {
             let name = demangler
                 .demangle(mangled)
-                .expect(&format!("demangling error: {}", mangled));
+                .unwrap_or_else(|| panic!("demangling error: {}", mangled));
             assert_eq!(&name, demangled);
         }
 
