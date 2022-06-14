@@ -6,8 +6,10 @@ $env:ONEFUZZ_ROOT = "C:\onefuzz"
 $env:ONEFUZZ_TOOLS = "C:\onefuzz\tools"
 $env:LLVM_SYMBOLIZER_PATH = "llvm-symbolizer"
 $env:RUST_LOG = "info"
+$env:DOTNET_VERSION = "6.0.300"
+# Set a session and machine scoped env var
 $env:DOTNET_ROOT = "c:\onefuzz\tools\dotnet"
-[Environment]::SetEnvironmentVariable("DOTNET_ROOT", "c:\onefuzz\tools\dotnet", "Machine")
+[Environment]::SetEnvironmentVariable("DOTNET_ROOT", $env:DOTNET_ROOT, "Machine")
 
 $logFile = "C:\onefuzz.log"
 function log ($message) {
@@ -171,15 +173,17 @@ function Install-VCRedist {
   log "installing VC Redist: done"
 }
 
-function Install-Dotnet {
-  log "Installing dotnet"
-  &powershell -NoProfile -ExecutionPolicy unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://dot.net/v1/dotnet-install.ps1'))) -Version 6.0.300 -InstallDir c:\onefuzz\tools\dotnet"
+function Install-Dotnet([string]$Version, [string]$InstallDir, [string]$ToolsDir) {
+  log "Installing dotnet to ${InstallDir}"
+  Invoke-WebRequest 'https://dot.net/v1/dotnet-install.ps1' -OutFile 'dotnet-install.ps1'
+  ./dotnet-install.ps1 -Version $Version -InstallDir $InstallDir
+  Remove-Item ./dotnet-install.ps1
   log "Installing dotnet: done"
-  log "Installing dotnet tools"
-  Push-Location c:\onefuzz\tools\dotnet
-  ./dotnet.exe tool install dotnet-dump --tool-path c:\onefuzz\tools
-  ./dotnet.exe tool install dotnet-coverage --tool-path c:\onefuzz\tools
-  ./dotnet.exe tool install dotnet-sos --tool-path c:\onefuzz\tools
+  log "Installing dotnet tools to ${ToolsDir}"
+  Push-Location $InstallDir
+  ./dotnet.exe tool install dotnet-dump --tool-path $ToolsDir
+  ./dotnet.exe tool install dotnet-coverage --tool-path $ToolsDir
+  ./dotnet.exe tool install dotnet-sos --tool-path $ToolsDir
   Pop-Location
   log "Installing dotnet tools: done"
 }
