@@ -604,7 +604,7 @@ class Repro(Endpoint):
         self.logger.info("connecting to reproduction VM: %s", vm_id)
 
         if which("ssh") is None:
-            raise Exception("unable to find ssh")
+            raise Exception("unable to find ssh on local machine")
 
         def missing_os() -> Tuple[bool, str, models.Repro]:
             repro = self.get(vm_id)
@@ -618,10 +618,10 @@ class Repro(Endpoint):
 
         if repro.os == enums.OS.windows:
             if which("cdb.exe") is None:
-                raise Exception("unable to find cdb.exe")
+                raise Exception("unable to find cdb.exe on local machine")
         if repro.os == enums.OS.linux:
             if which("gdb") is None:
-                raise Exception("unable to find gdb")
+                raise Exception("unable to find gdb on local machine")
 
         def func() -> Tuple[bool, str, models.Repro]:
             repro = self.get(vm_id)
@@ -854,11 +854,11 @@ class Tasks(Endpoint):
         self.logger.debug("creating task: %s", task_type)
 
         if task_type == TaskType.libfuzzer_coverage:
-            self.logger.warning(
-                "DEPRECATED: the `libfuzzer_coverage` task type is deprecated. "
-                "It will be removed in an upcoming release. "
+            self.logger.error(
+                "The `libfuzzer_coverage` task type is deprecated. "
                 "Please migrate to the `coverage` task type."
             )
+            raise RuntimeError("`libfuzzer_coverage` task type not supported")
 
         job_id_expanded = self._disambiguate_uuid(
             "job_id",

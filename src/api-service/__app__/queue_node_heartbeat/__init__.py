@@ -33,6 +33,7 @@ def main(msg: func.QueueMessage) -> None:
                 machine_id=node.machine_id,
                 scaleset_id=node.scaleset_id,
                 pool_name=node.pool_name,
+                machine_state=node.state,
             )
         )
     except ValidationError:
