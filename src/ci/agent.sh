@@ -9,21 +9,25 @@ exists() {
     [ -e "$1" ]
 }
 
-# only set RUSTC_WRAPPER if sccache exists
-if sccache --help; then
-    export RUSTC_WRAPPER=$(which sccache)
-fi
-
-# only set CARGO_INCREMENTAL on non-release builds
-#
-# This speeds up build time, but makes the resulting binaries slightly slower.
-# https://doc.rust-lang.org/cargo/reference/profiles.html?highlight=incremental#incremental
-if [ "${GITHUB_REF}" != "" ]; then
-    TAG_VERSION=${GITHUB_REF#refs/tags/}
-    if [ ${TAG_VERSION} == ${GITHUB_REF} ]; then
-        export CARGO_INCREMENTAL=1
+SCCACHE=$(which sccache || echo '')
+if [ ! -z "$SCCACHE" ]; then
+    # only set RUSTC_WRAPPER if sccache exists
+    export RUSTC_WRAPPER=$SCCACHE
+    # incremental interferes with (disables) sccache
+    export CARGO_INCREMENTAL=0
+else
+    # only set CARGO_INCREMENTAL on non-release builds
+    #
+    # This speeds up build time, but makes the resulting binaries slightly slower.
+    # https://doc.rust-lang.org/cargo/reference/profiles.html?highlight=incremental#incremental
+    if [ "${GITHUB_REF}" != "" ]; then
+        TAG_VERSION=${GITHUB_REF#refs/tags/}
+        if [ ${TAG_VERSION} == ${GITHUB_REF} ]; then
+            export CARGO_INCREMENTAL=1
+        fi
     fi
 fi
+
 
 mkdir -p artifacts/agent-$(uname)
 
@@ -51,16 +55,20 @@ cargo fmt -- --check
 cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2020-0016 --ignore RUSTSEC-2020-0036 --ignore RUSTSEC-2019-0036 --ignore RUSTSEC-2021-0065 --ignore RUSTSEC-2020-0159 --ignore RUSTSEC-2020-0071 --ignore RUSTSEC-2020-0077
 cargo-license -j > data/licenses.json
 cargo build --release --locked
-cargo clippy --release --all-targets -- -D warnings
+cargo clippy --release --locked --all-targets -- -D warnings
 # export RUST_LOG=trace
 export RUST_BACKTRACE=full
-cargo test --release --workspace
+cargo test --release --locked --workspace
 
 # TODO: re-enable integration tests.
 # cargo test --release --manifest-path ./onefuzz-task/Cargo.toml --features integration_test -- --nocapture
 
 # TODO: once Salvo is integrated, this can get deleted
-cargo build --release --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
+cargo build --release --locked --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
+
+if [ ! -z "$SCCACHE" ]; then
+    sccache --show-stats
+fi
 
 cp target/release/onefuzz-task* ../../artifacts/agent-$(uname)
 cp target/release/onefuzz-agent* ../../artifacts/agent-$(uname)
