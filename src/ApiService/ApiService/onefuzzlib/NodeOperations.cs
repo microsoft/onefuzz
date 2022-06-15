@@ -380,7 +380,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         await _context.NodeMessageOperations.ClearMessages(node.MachineId);
         await base.Delete(node);
 
-        await _context.Events.SendEvent(new EventNodeDeleted(node.MachineId, node.ScalesetId, node.PoolName));
+        await _context.Events.SendEvent(new EventNodeDeleted(node.MachineId, node.ScalesetId, node.PoolName, node.State));
     }
 
 }
