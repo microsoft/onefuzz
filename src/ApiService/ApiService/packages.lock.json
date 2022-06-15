@@ -302,6 +302,12 @@
           "Microsoft.Bcl.AsyncInterfaces": "6.0.0"
         }
       },
+      "TaskTupleAwaiter": {
+        "type": "Direct",
+        "requested": "[2.0.0, )",
+        "resolved": "2.0.0",
+        "contentHash": "rXkSI9t4vP2EaPhuchsWiD3elcLNth3UOZAlGohGmuckpkiOr57oMHuzM5WDzz7MJd+ZewE27/WfrZhhhFDHzA=="
+      },
       "Azure.Storage.Common": {
         "type": "Transitive",
         "resolved": "12.10.0",
