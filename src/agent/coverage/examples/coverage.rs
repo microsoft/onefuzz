@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use std::path::{Path, PathBuf};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use std::{process::Command, process::Stdio};
 
 use anyhow::Result;
@@ -11,7 +11,7 @@ use coverage::cache::ModuleCache;
 use coverage::code::{CmdFilter, CmdFilterDef};
 use structopt::StructOpt;
 
-#[derive(Debug, PartialEq, StructOpt)]
+#[derive(Debug, PartialEq, Eq, StructOpt)]
 struct Opt {
     #[structopt(short, long)]
     filter: Option<PathBuf>,
@@ -113,9 +113,9 @@ fn record(
 ) -> Result<Coverage> {
     use coverage::block::linux::Recorder;
 
-    let now = Instant::now();
+    let now = std::time::Instant::now();
 
-    let coverage = Recorder::record(cmd, timeout, cache, filter.clone())?;
+    let coverage = Recorder::record(cmd, timeout, cache, filter)?;
 
     let elapsed = now.elapsed();
     log::info!("recorded in {:?}", elapsed);
@@ -135,7 +135,7 @@ fn record(
     let mut recorder = Recorder::new(cache, filter);
     let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
 
-    let now = Instant::now();
+    let now = std::time::Instant::now();
 
     handler.run(cmd)?;
 
@@ -162,7 +162,7 @@ fn print_stats(coverage: &Coverage) {
 
 fn print_modoff(coverage: &Coverage) {
     for (m, c) in coverage.iter() {
-        for (_, b) in &c.blocks {
+        for b in c.blocks.values() {
             if b.count > 0 {
                 println!("{}+{:x}", m.name_lossy(), b.offset);
             }

@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+use crate::local::coverage;
 use crate::local::{
     common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
     libfuzzer, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge, libfuzzer_regression,
     libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
 };
-#[cfg(any(target_os = "linux", target_os = "windows"))]
-use crate::local::{coverage, libfuzzer_coverage};
 use anyhow::{Context, Result};
 use clap::{App, Arg, SubCommand};
 use crossterm::tty::IsTty;
@@ -17,7 +17,7 @@ use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, EnumString, IntoStaticStr};
 use tokio::{select, time::timeout};
 
-#[derive(Debug, PartialEq, EnumString, IntoStaticStr, EnumIter)]
+#[derive(Debug, PartialEq, Eq, EnumString, IntoStaticStr, EnumIter)]
 #[strum(serialize_all = "kebab-case")]
 enum Commands {
     Radamsa,
@@ -28,8 +28,6 @@ enum Commands {
     LibfuzzerCrashReport,
     LibfuzzerTestInput,
     LibfuzzerRegression,
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
-    LibfuzzerCoverage,
     Libfuzzer,
     CrashReport,
     Generator,
@@ -66,8 +64,6 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
                 libfuzzer_crash_report::run(&sub_args, event_sender).await
             }
             Commands::LibfuzzerFuzz => libfuzzer_fuzz::run(&sub_args, event_sender).await,
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
-            Commands::LibfuzzerCoverage => libfuzzer_coverage::run(&sub_args, event_sender).await,
             Commands::LibfuzzerMerge => libfuzzer_merge::run(&sub_args, event_sender).await,
             Commands::LibfuzzerTestInput => {
                 libfuzzer_test_input::run(&sub_args, event_sender).await
@@ -124,8 +120,6 @@ pub fn args(name: &str) -> App<'static, 'static> {
             Commands::Radamsa => radamsa::args(subcommand.into()),
             Commands::LibfuzzerCrashReport => libfuzzer_crash_report::args(subcommand.into()),
             Commands::LibfuzzerFuzz => libfuzzer_fuzz::args(subcommand.into()),
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
-            Commands::LibfuzzerCoverage => libfuzzer_coverage::args(subcommand.into()),
             Commands::LibfuzzerMerge => libfuzzer_merge::args(subcommand.into()),
             Commands::LibfuzzerTestInput => libfuzzer_test_input::args(subcommand.into()),
             Commands::LibfuzzerRegression => libfuzzer_regression::args(subcommand.into()),

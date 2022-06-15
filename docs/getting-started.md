@@ -33,14 +33,15 @@ do the following:
 ```
 unzip onefuzz-deployment-$VERSION.zip
 pip install -r requirements.txt
+chmod +x deploy.py
 ./deploy.py $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS $NSG_CONFIG_FILE
 ```
 
 When running `deploy.py` the first time for an instance, you will be prompted
 to follow a manual step to initialize your CLI config.
 
-The $NSG_CONFIG_FILE is a required parameter that specifies the 'allow rules' for the OneFuzz Network Security Group. A default `config.json` is provided in the deployment zip. 
-This 'allow' config resembles the following: 
+The $NSG_CONFIG_FILE is a required parameter that specifies the 'allow rules' for the OneFuzz Network Security Group. A default `config.json` is provided in the deployment zip.
+This 'allow' config resembles the following:
 ```
 {
     "proxy_nsg_config": {
@@ -49,7 +50,7 @@ This 'allow' config resembles the following:
     }
 }
 ```
-Future updates can be made to this configuration via the OneFuzz CLI. 
+Future updates can be made to this configuration via the OneFuzz CLI.
 
 ## Install the CLI
 
@@ -145,7 +146,7 @@ INFO:onefuzz:using container: oft-no-repro-14b8ea05ca635426bd9ccf3ee71b2e45
 INFO:onefuzz:using container: oft-coverage-14b8ea05ca635426bd9ccf3ee71b2e45
 INFO:onefuzz:uploading target exe `fuzz.exe`
 INFO:onefuzz:creating libfuzzer task
-INFO:onefuzz:creating libfuzzer_coverage task
+INFO:onefuzz:creating coverage task
 INFO:onefuzz:creating libfuzzer_crash_report task
 INFO:onefuzz:done creating tasks
 $

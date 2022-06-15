@@ -25,6 +25,10 @@ class TestTaskDefinition(unittest.TestCase):
 
     def test_all_defined(self) -> None:
         for entry in [TaskType[x] for x in TaskType.__members__]:
+            if entry == TaskType.libfuzzer_coverage:
+                # Deprecated, kept in enum for deserialization back-compat.
+                continue
+
             self.assertIn(entry, TASK_DEFINITIONS)
 
     def test_basic(self) -> None:
