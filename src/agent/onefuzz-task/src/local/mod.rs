@@ -5,6 +5,7 @@ pub mod cmd;
 pub mod common;
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 pub mod coverage;
+pub mod dotnet_coverage;
 pub mod generic_analysis;
 pub mod generic_crash_report;
 pub mod generic_generator;

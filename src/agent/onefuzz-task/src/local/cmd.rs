@@ -6,7 +6,7 @@ use crate::local::coverage;
 use crate::local::{
     common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
     libfuzzer, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge, libfuzzer_regression,
-    libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
+    libfuzzer_test_input, radamsa, test_input, tui::TerminalUi, dotnet_coverage,
 };
 use anyhow::{Context, Result};
 use clap::{App, Arg, SubCommand};
@@ -23,6 +23,7 @@ enum Commands {
     Radamsa,
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     Coverage,
+    DotnetCoverage,
     LibfuzzerFuzz,
     LibfuzzerMerge,
     LibfuzzerCrashReport,
@@ -59,6 +60,7 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
         match command {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Commands::Coverage => coverage::run(&sub_args, event_sender).await,
+            Commands::DotnetCoverage => dotnet_coverage::run(&sub_args, event_sender).await,
             Commands::Radamsa => radamsa::run(&sub_args, event_sender).await,
             Commands::LibfuzzerCrashReport => {
                 libfuzzer_crash_report::run(&sub_args, event_sender).await
@@ -117,6 +119,7 @@ pub fn args(name: &str) -> App<'static, 'static> {
         let app = match subcommand {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Commands::Coverage => coverage::args(subcommand.into()),
+            Commands::DotnetCoverage => dotnet_coverage::args(subcommand.into()),
             Commands::Radamsa => radamsa::args(subcommand.into()),
             Commands::LibfuzzerCrashReport => libfuzzer_crash_report::args(subcommand.into()),
             Commands::LibfuzzerFuzz => libfuzzer_fuzz::args(subcommand.into()),

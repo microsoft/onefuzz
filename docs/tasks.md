@@ -33,6 +33,7 @@ The current task types available are:
 * generic_crash_report: use a built-in debugging tool (debugapi or ptrace based)
   to rerun the crashing input, attempting to generate an informational report
   for each discovered crash
+* dotnet_coverage: same as `coverage` but for dotnet
 
 Each type of task has a unique set of configuration options available, these
 include:
