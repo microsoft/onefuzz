@@ -106,7 +106,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
     }
 
     private async Async.Task MarkDependantsFailed(Task task, List<Task>? taskInJob = null) {
-        taskInJob ??= await QueryAsync(filter: $"job_id eq '{task.JobId}'").ToListAsync();
+        taskInJob ??= await ListPartition(task.JobId.ToString()).ToListAsync();
 
         foreach (var t in taskInJob) {
             if (t.Config.PrereqTasks != null) {
