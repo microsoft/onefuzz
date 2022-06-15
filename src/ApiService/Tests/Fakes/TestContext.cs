@@ -20,6 +20,7 @@ public sealed class TestContext : IOnefuzzContext {
         NodeOperations = new NodeOperations(logTracer, this);
         JobOperations = new JobOperations(logTracer, this);
         NodeTasksOperations = new NodeTasksOperations(logTracer, this);
+        TaskEventOperations = new TaskEventOperations(logTracer, this);
     }
 
     public TestEvents Events { get; set; } = new();
@@ -49,6 +50,7 @@ public sealed class TestContext : IOnefuzzContext {
     public IJobOperations JobOperations { get; }
     public INodeOperations NodeOperations { get; }
     public INodeTasksOperations NodeTasksOperations { get; }
+    public ITaskEventOperations TaskEventOperations { get; }
 
     // -- Remainder not implemented --
 
