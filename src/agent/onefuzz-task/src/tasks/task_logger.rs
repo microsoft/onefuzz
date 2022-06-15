@@ -280,7 +280,11 @@ impl TaskLogger {
                     WriteLogResponse::Success => {
                         if start + count >= context.pending_logs.len() {
                             if flush {
-                                bail!("done");
+                                Result::<_, anyhow::Error>::Ok(LoopContext {
+                                    pending_logs: vec![],
+                                    state: LoopState::Done,
+                                    ..context
+                                })
                             } else {
                                 Result::<_, anyhow::Error>::Ok(LoopContext {
                                     pending_logs: vec![],
