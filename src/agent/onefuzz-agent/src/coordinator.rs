@@ -52,7 +52,7 @@ pub struct ClaimNodeCommandRequest {
     message_id: String,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, clap::ValueEnum)]
 #[serde(rename_all = "snake_case")]
 pub enum NodeState {
     Init,
