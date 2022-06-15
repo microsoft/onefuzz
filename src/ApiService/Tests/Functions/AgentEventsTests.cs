@@ -11,8 +11,8 @@ using Async = System.Threading.Tasks;
 namespace Tests.Functions;
 
 [Trait("Category", "Integration")]
-public class LiveStorageAgentEventsTest : AgentEventsTestsBase {
-    public LiveStorageAgentEventsTest(ITestOutputHelper output)
+public class AzureStorageAgentEventsTest : AgentEventsTestsBase {
+    public AzureStorageAgentEventsTest(ITestOutputHelper output)
         : base(output, Integration.AzureStorage.FromEnvironment(), "UNUSED") { }
 }
 
