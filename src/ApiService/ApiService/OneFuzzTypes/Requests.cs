@@ -19,8 +19,8 @@ public record NodeCommandDelete(
 ) : BaseRequest;
 
 public record NodeStateEnvelope(
-    Guid MachineId,
-    NodeEventBase Event
+    NodeEventBase Event,
+    Guid MachineId
 ) : BaseRequest;
 
 // either NodeEvent or WorkerEvent
@@ -28,12 +28,16 @@ public record NodeStateEnvelope(
 public abstract record NodeEventBase;
 
 public record NodeEvent(
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     NodeStateUpdate? StateUpdate,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     WorkerEvent? WorkerEvent
 ) : NodeEventBase;
 
 public record WorkerEvent(
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     WorkerDoneEvent? Done = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     WorkerRunningEvent? Running = null
 ) : NodeEventBase;
 
@@ -48,7 +52,8 @@ public record WorkerDoneEvent(
 
 public record NodeStateUpdate(
     NodeState State,
-    NodeStateData? Data
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    NodeStateData? Data = null
 ) : NodeEventBase;
 
 // NodeSettingUpEventData, NodeDoneEventData, or ProcessOutput
