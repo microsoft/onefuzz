@@ -258,7 +258,8 @@ public record EventNodeHeartbeat(
 public record EventNodeDeleted(
     Guid MachineId,
     Guid? ScalesetId,
-    PoolName PoolName
+    PoolName PoolName,
+    NodeState? MachineState
 ) : BaseEvent();
 
 
