@@ -17,6 +17,9 @@ wget https://aka.ms/downloadazcopy-v10-linux
 tar -xvf downloadazcopy-v10-linux
 sudo cp ./azcopy_linux_amd64_*/azcopy /usr/bin/
 
+# Install Azurite
+sudo npm install -g azurite
+
 # Restore rust dependencies
 echo "Restoring rust dependencies"
 cargo install cargo-audit cargo-license # requirements if you want to run ci/agent.sh

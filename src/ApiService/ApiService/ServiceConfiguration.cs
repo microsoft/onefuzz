@@ -38,6 +38,11 @@ public interface IServiceConfig {
     public string? OneFuzzTelemetry { get; }
 
     public string OneFuzzVersion { get; }
+
+    // Prefix to add to the name of any tables created. This allows
+    // multiple instances to run against the same storage account, which
+    // is useful for things like integration testing.
+    public string OneFuzzTablePrefix { get; }
 }
 
 public class ServiceConfiguration : IServiceConfig {
@@ -82,4 +87,5 @@ public class ServiceConfiguration : IServiceConfig {
     public string OneFuzzVersion { get => Environment.GetEnvironmentVariable("ONEFUZZ_VERSION") ?? "0.0.0"; }
 
     public string OneFuzzNodeDisposalStrategy { get => Environment.GetEnvironmentVariable("ONEFUZZ_NODE_DISPOSAL_STRATEGY") ?? "scale_in"; }
+    public string OneFuzzTablePrefix => ""; // in production we never prefix the tables
 }
