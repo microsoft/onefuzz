@@ -15,7 +15,9 @@
 		"rust-analyzer.linkedProjects": [
 			"/workspaces/onefuzz/src/agent/Cargo.toml"
 		],
-		"python.defaultInterpreterPath": "/workspaces/onefuzz/src/venv/bin/python"
+		"python.defaultInterpreterPath": "/workspaces/onefuzz/src/venv/bin/python",
+		"omnisharp.enableRoslynAnalyzers": true,
+		"omnisharp.enableEditorConfigSupport": true
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
