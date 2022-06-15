@@ -7,7 +7,7 @@ use crate::tasks::coverage;
 use crate::tasks::{
     analysis, fuzz,
     heartbeat::{init_task_heartbeat, TaskHeartbeatClient},
-    merge, regression, report, task_logger,
+    merge, regression, report,
 };
 use anyhow::Result;
 use onefuzz::machine_id::{get_machine_id, get_scaleset_name};
@@ -204,20 +204,6 @@ impl Config {
 
         info!("agent ready, dispatching task");
         self.report_event();
-
-        let common = self.common().clone();
-        if let Some(logs) = common.logs.clone() {
-            let rx = onefuzz_telemetry::subscribe_to_events();
-
-            let _logging = tokio::spawn(async move {
-                let logger = task_logger::TaskLogger::new(
-                    common.job_id,
-                    common.task_id,
-                    get_machine_id().await?,
-                );
-                logger.start(rx, logs).await
-            });
-        }
 
         match self {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
