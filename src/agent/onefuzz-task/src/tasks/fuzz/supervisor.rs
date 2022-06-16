@@ -34,6 +34,8 @@ use tokio::{
     sync::Notify,
 };
 
+use futures::TryFutureExt;
+
 #[derive(Debug, Deserialize)]
 pub struct SupervisorConfig {
     pub inputs: SyncedDir,
@@ -156,14 +158,14 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     let monitor_stats = monitor_stats(monitor_path, config.stats_format);
 
     futures::try_join!(
-        heartbeat_process,
-        monitor_supervisor,
-        monitor_stats,
-        monitor_crashes,
-        monitor_inputs,
-        continuous_sync_task,
-        monitor_reports_future,
-        monitor_coverage_future,
+        heartbeat_process.map_err(|e| e.context("Failure in heartbeat")),
+        monitor_supervisor.map_err(|e| e.context("Failure in monitor_supervisor")),
+        monitor_stats.map_err(|e| e.context("Failure in monitor_stats")),
+        monitor_crashes.map_err(|e| e.context("Failure in monitor_crashes")),
+        monitor_inputs.map_err(|e| e.context("Failure in monitor_inputs")),
+        continuous_sync_task.map_err(|e| e.context("Failure in continuous_sync_task")),
+        monitor_reports_future.map_err(|e| e.context("Failure in monitor_reports_future")),
+        monitor_coverage_future.map_err(|e| e.context("Failure in monitor_coverage_future")),
     )?;
 
     Ok(())

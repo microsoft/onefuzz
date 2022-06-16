@@ -93,8 +93,16 @@ impl SyncedDir {
             let url = url.as_ref();
             debug!("syncing {:?} {}", operation, dir.display());
             match operation {
-                SyncOperation::Push => az_copy::sync(dir, url, delete_dst).await,
-                SyncOperation::Pull => az_copy::sync(url, dir, delete_dst).await,
+                SyncOperation::Push => az_copy::sync(dir, url, delete_dst).await.context(format!(
+                    "Failed sync push from {} to {}",
+                    dir.display(),
+                    url
+                )),
+                SyncOperation::Pull => az_copy::sync(url, dir, delete_dst).await.context(format!(
+                    "Failed sync pull from {} to {}",
+                    url,
+                    dir.display()
+                )),
             }
         } else {
             Ok(())
