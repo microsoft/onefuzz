@@ -1944,7 +1944,7 @@ dependencies = [
  "azure_storage_blobs",
  "backoff",
  "chrono",
- "clap 2.34.0",
+ "clap 3.2.4",
  "coverage",
  "crossterm 0.22.1",
  "env_logger 0.9.0",
