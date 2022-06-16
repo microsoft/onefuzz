@@ -56,7 +56,7 @@ public class AgentEvents {
             }
         }
 
-        return null; // neither set
+        return null;
     }
 
     private async Async.Task<Error?> OnStateUpdate(Guid machineId, NodeStateUpdate ev) {
