@@ -69,7 +69,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        var task = await ctx.TaskOperations.ListAll().SingleAsync();
+        var task = await ctx.TaskOperations.SearchAll().SingleAsync();
 
         // should have transitioned into stopping
         Assert.Equal(TaskState.Stopping, task.State);
@@ -99,7 +99,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        var task = await ctx.TaskOperations.ListAll().SingleAsync();
+        var task = await ctx.TaskOperations.SearchAll().SingleAsync();
         Assert.Equal(TaskState.Stopping, task.State); // should have transitioned into stopping
         Assert.Equal(ErrorCode.TASK_FAILED, task.Error?.Code); // should be an error
     }
@@ -127,7 +127,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        var task = await ctx.TaskOperations.ListAll().SingleAsync();
+        var task = await ctx.TaskOperations.SearchAll().SingleAsync();
 
         // should be failed - it never started running
         Assert.Equal(TaskState.Stopping, task.State);
