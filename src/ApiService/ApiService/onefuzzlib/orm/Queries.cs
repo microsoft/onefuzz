@@ -47,7 +47,7 @@ namespace ApiService.OneFuzzLib.Orm {
 
         public static string TimeRange(DateTimeOffset min, DateTimeOffset max) {
             // NB: this uses the auto-populated Timestamp property, and will result in scanning
-            // TODO: should this be inclusive at the endpoints? - see also FakeOrm.SearchByTimeRange, if you update this
+            // TODO: should this be inclusive at the endpoints?
             return $"Timestamp lt datetime'{max:o}' and Timestamp gt datetime'{min:o}'";
         }
 

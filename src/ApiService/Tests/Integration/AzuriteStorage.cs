@@ -16,7 +16,7 @@ sealed class AzuriteStorage : IStorage {
 
     public Uri GetTableEndpoint(string accountId)
         => new($"http://127.0.0.1:10002/{accountId}");
-    
+
     // This is the fixed account key used by Azurite (derived from devstorage emulator);
     // https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string#configure-a-connection-string-for-azurite
     const string AccountKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
