@@ -16,7 +16,7 @@ namespace ApiService.OneFuzzLib.Orm {
         Task<ResultVoid<(int, string)>> Delete(T entity);
 
         IAsyncEnumerable<T> SearchAll();
-        IAsyncEnumerable<T> SearchPartition(string partitionKey);
+        IAsyncEnumerable<T> SearchByPartitionKey(string partitionKey);
         IAsyncEnumerable<T> SearchByRowKey(string rowKey);
         IAsyncEnumerable<T> SearchByTimeRange(DateTimeOffset min, DateTimeOffset max);
 
