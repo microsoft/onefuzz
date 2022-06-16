@@ -7,7 +7,7 @@ use crate::tasks::coverage;
 use crate::tasks::{
     analysis, fuzz,
     heartbeat::{init_task_heartbeat, TaskHeartbeatClient},
-    merge, regression, report, task_logger,
+    merge, regression, report,
 };
 use anyhow::Result;
 use onefuzz::machine_id::{get_machine_id, get_scaleset_name};
@@ -92,10 +92,6 @@ pub enum Config {
     #[serde(alias = "libfuzzer_merge")]
     LibFuzzerMerge(merge::libfuzzer_merge::Config),
 
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
-    #[serde(alias = "libfuzzer_coverage")]
-    LibFuzzerCoverage(coverage::libfuzzer_coverage::Config),
-
     #[serde(alias = "libfuzzer_regression")]
     LibFuzzerRegression(regression::libfuzzer::Config),
 
@@ -137,8 +133,6 @@ impl Config {
             Config::LibFuzzerFuzz(c) => &mut c.common,
             Config::LibFuzzerMerge(c) => &mut c.common,
             Config::LibFuzzerReport(c) => &mut c.common,
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
-            Config::LibFuzzerCoverage(c) => &mut c.common,
             Config::LibFuzzerRegression(c) => &mut c.common,
             Config::GenericAnalysis(c) => &mut c.common,
             Config::GenericMerge(c) => &mut c.common,
@@ -156,8 +150,6 @@ impl Config {
             Config::LibFuzzerFuzz(c) => &c.common,
             Config::LibFuzzerMerge(c) => &c.common,
             Config::LibFuzzerReport(c) => &c.common,
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
-            Config::LibFuzzerCoverage(c) => &c.common,
             Config::LibFuzzerRegression(c) => &c.common,
             Config::GenericAnalysis(c) => &c.common,
             Config::GenericMerge(c) => &c.common,
@@ -175,8 +167,6 @@ impl Config {
             Config::LibFuzzerFuzz(_) => "libfuzzer_fuzz",
             Config::LibFuzzerMerge(_) => "libfuzzer_merge",
             Config::LibFuzzerReport(_) => "libfuzzer_crash_report",
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
-            Config::LibFuzzerCoverage(_) => "libfuzzer_coverage",
             Config::LibFuzzerRegression(_) => "libfuzzer_regression",
             Config::GenericAnalysis(_) => "generic_analysis",
             Config::GenericMerge(_) => "generic_merge",
@@ -215,20 +205,6 @@ impl Config {
         info!("agent ready, dispatching task");
         self.report_event();
 
-        let common = self.common().clone();
-        if let Some(logs) = common.logs.clone() {
-            let rx = onefuzz_telemetry::subscribe_to_events();
-
-            let _logging = tokio::spawn(async move {
-                let logger = task_logger::TaskLogger::new(
-                    common.job_id,
-                    common.task_id,
-                    get_machine_id().await?,
-                );
-                logger.start(rx, logs).await
-            });
-        }
-
         match self {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::Coverage(config) => coverage::generic::CoverageTask::new(config).run().await,
@@ -239,12 +215,6 @@ impl Config {
             }
             Config::LibFuzzerReport(config) => {
                 report::libfuzzer_report::ReportTask::new(config)
-                    .managed_run()
-                    .await
-            }
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
-            Config::LibFuzzerCoverage(config) => {
-                coverage::libfuzzer_coverage::CoverageTask::new(config)
                     .managed_run()
                     .await
             }

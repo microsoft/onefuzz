@@ -15,7 +15,9 @@
 		"rust-analyzer.linkedProjects": [
 			"/workspaces/onefuzz/src/agent/Cargo.toml"
 		],
-		"python.defaultInterpreterPath": "/workspaces/onefuzz/src/venv/bin/python"
+		"python.defaultInterpreterPath": "/workspaces/onefuzz/src/venv/bin/python",
+		"omnisharp.enableRoslynAnalyzers": true,
+		"omnisharp.enableEditorConfigSupport": true
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
@@ -25,7 +27,10 @@
 		"tamasfe.even-better-toml",
 		"serayuzgur.crates",
 		"ms-dotnettools.csharp",
-		"ms-python.python"
+		"ms-python.python",
+		"ms-azuretools.vscode-bicep",
+		"formulahendry.dotnet-test-explorer",
+		"ms-azuretools.vscode-azurefunctions"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],

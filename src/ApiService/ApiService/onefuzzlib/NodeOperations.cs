@@ -380,7 +380,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         await _context.NodeMessageOperations.ClearMessages(node.MachineId);
         await base.Delete(node);
 
-        await _context.Events.SendEvent(new EventNodeDeleted(node.MachineId, node.ScalesetId, node.PoolName));
+        await _context.Events.SendEvent(new EventNodeDeleted(node.MachineId, node.ScalesetId, node.PoolName, node.State));
     }
 
 }
@@ -424,7 +424,7 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState>, INodeT
     }
 
     public IAsyncEnumerable<NodeTasks> GetByMachineId(Guid machineId) {
-        return QueryAsync($"macine_id eq '{machineId}'");
+        return QueryAsync($"machine_id eq '{machineId}'");
     }
 
     public IAsyncEnumerable<NodeTasks> GetByTaskId(Guid taskId) {

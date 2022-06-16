@@ -1074,7 +1074,7 @@ If webhook is set to have Event Grid message format then the payload will look a
         },
         {
             "task_id": "00000000-0000-0000-0000-000000000001",
-            "task_type": "libfuzzer_coverage"
+            "task_type": "coverage"
         }
     ]
 }
@@ -1353,11 +1353,31 @@ If webhook is set to have Event Grid message format then the payload will look a
 
 ```json
 {
+    "definitions": {
+        "NodeState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "free",
+                "setting_up",
+                "rebooting",
+                "ready",
+                "busy",
+                "done",
+                "shutdown",
+                "halt"
+            ],
+            "title": "NodeState"
+        }
+    },
     "properties": {
         "machine_id": {
             "format": "uuid",
             "title": "Machine Id",
             "type": "string"
+        },
+        "machine_state": {
+            "$ref": "#/definitions/NodeState"
         },
         "pool_name": {
             "title": "Pool Name",
@@ -5474,6 +5494,9 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "format": "uuid",
                     "title": "Machine Id",
                     "type": "string"
+                },
+                "machine_state": {
+                    "$ref": "#/definitions/NodeState"
                 },
                 "pool_name": {
                     "title": "Pool Name",
