@@ -44,7 +44,7 @@ public class TimerTasks {
             await _jobOperations.ProcessStateUpdates(job);
         }
 
-        var tasks = _taskOperations.SearchStates(states: TaskStateHelper.NeedsWork);
+        var tasks = _taskOperations.SearchStates(states: TaskStateHelper.NeedsWorkStates);
         await foreach (var task in tasks) {
             _logger.Info($"update task: {task.TaskId}");
             await _taskOperations.ProcessStateUpdate(task);
@@ -55,5 +55,3 @@ public class TimerTasks {
         await _jobOperations.StopNeverStartedJobs();
     }
 }
-
-

@@ -78,6 +78,7 @@ public class Program {
             .AddScoped<IWebhookOperations, WebhookOperations>()
             .AddScoped<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
             .AddScoped<ITaskOperations, TaskOperations>()
+            .AddScoped<ITaskEventOperations, TaskEventOperations>()
             .AddScoped<IQueue, Queue>()
             .AddScoped<IStorage, Storage>()
             .AddScoped<IProxyOperations, ProxyOperations>()

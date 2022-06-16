@@ -15,11 +15,11 @@ sealed class AzureStorage : IStorage {
         var accountKey = Environment.GetEnvironmentVariable("AZURE_ACCOUNT_KEY");
 
         if (accountName is null) {
-            throw new Exception("AZURE_ACCOUNT_NAME must be set in environment to run integration tests");
+            throw new Exception("AZURE_ACCOUNT_NAME must be set in environment to run integration tests (use --filter 'Category!=Integration' to skip them)");
         }
 
         if (accountKey is null) {
-            throw new Exception("AZURE_ACCOUNT_KEY must be set in environment to run integration tests");
+            throw new Exception("AZURE_ACCOUNT_KEY must be set in environment to run integration tests (use --filter 'Category!=Integration' to skip them)");
         }
 
         return new AzureStorage(accountName, accountKey);

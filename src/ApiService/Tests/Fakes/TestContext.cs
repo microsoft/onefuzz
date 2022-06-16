@@ -20,6 +20,8 @@ public sealed class TestContext : IOnefuzzContext {
         NodeOperations = new NodeOperations(logTracer, this);
         JobOperations = new JobOperations(logTracer, this);
         NodeTasksOperations = new NodeTasksOperations(logTracer, this);
+        TaskEventOperations = new TaskEventOperations(logTracer, this);
+        NodeMessageOperations = new NodeMessageOperations(logTracer, this);
     }
 
     public TestEvents Events { get; set; } = new();
@@ -49,6 +51,8 @@ public sealed class TestContext : IOnefuzzContext {
     public IJobOperations JobOperations { get; }
     public INodeOperations NodeOperations { get; }
     public INodeTasksOperations NodeTasksOperations { get; }
+    public ITaskEventOperations TaskEventOperations { get; }
+    public INodeMessageOperations NodeMessageOperations { get; }
 
     // -- Remainder not implemented --
 
@@ -66,10 +70,7 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IIpOperations IpOperations => throw new System.NotImplementedException();
 
-
     public ILogAnalytics LogAnalytics => throw new System.NotImplementedException();
-
-    public INodeMessageOperations NodeMessageOperations => throw new System.NotImplementedException();
 
     public INotificationOperations NotificationOperations => throw new System.NotImplementedException();
 

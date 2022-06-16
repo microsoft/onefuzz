@@ -34,6 +34,7 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.17.0" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.SignalRService" Version="1.7.0" />
+    <PackageReference Include="TaskTupleAwaiter" Version="2.0.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">

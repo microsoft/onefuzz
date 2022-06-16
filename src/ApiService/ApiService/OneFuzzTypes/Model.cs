@@ -67,8 +67,8 @@ public enum NodeTaskState {
 
 public record NodeTasks
 (
-    Guid MachineId,
-    Guid TaskId,
+    [PartitionKey] Guid MachineId,
+    [RowKey] Guid TaskId,
     NodeTaskState State = NodeTaskState.Init
 ) : StatefulEntityBase<NodeTaskState>(State);
 
@@ -153,44 +153,40 @@ public record Error(ErrorCode Code, string[]? Errors = null);
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
 
 
-
-
 public record TaskDetails(
-
     TaskType Type,
     int Duration,
-    string? TargetExe,
-    Dictionary<string, string>? TargetEnv,
-    List<string>? TargetOptions,
-    int? TargetWorkers,
-    bool? TargetOptionsMerge,
-    bool? CheckAsanLog,
-    bool? CheckDebugger,
-    int? CheckRetryCount,
-    bool? CheckFuzzerHelp,
-    bool? ExpectCrashOnFailure,
-    bool? RenameOutput,
-    string? SupervisorExe,
-    Dictionary<string, string>? SupervisorEnv,
-    List<string>? SupervisorOptions,
-    string? SupervisorInputMarker,
-    string? GeneratorExe,
-    Dictionary<string, string>? GeneratorEnv,
-    List<string>? GeneratorOptions,
-    string? AnalyzerExe,
-    Dictionary<string, string>? AnalyzerEnv,
-    List<string> AnalyzerOptions,
-    ContainerType? WaitForFiles,
-    string? StatsFile,
-    StatsFormat? StatsFormat,
-    bool? RebootAfterSetup,
-    int? TargetTimeout,
-    int? EnsembleSyncDelay,
-    bool? PreserveExistingOutputs,
-    List<string>? ReportList,
-    int? MinimizedStackDepth,
-    string? CoverageFilter
-);
+    string? TargetExe = null,
+    Dictionary<string, string>? TargetEnv = null,
+    List<string>? TargetOptions = null,
+    int? TargetWorkers = null,
+    bool? TargetOptionsMerge = null,
+    bool? CheckAsanLog = null,
+    bool? CheckDebugger = null,
+    int? CheckRetryCount = null,
+    bool? CheckFuzzerHelp = null,
+    bool? ExpectCrashOnFailure = null,
+    bool? RenameOutput = null,
+    string? SupervisorExe = null,
+    Dictionary<string, string>? SupervisorEnv = null,
+    List<string>? SupervisorOptions = null,
+    string? SupervisorInputMarker = null,
+    string? GeneratorExe = null,
+    Dictionary<string, string>? GeneratorEnv = null,
+    List<string>? GeneratorOptions = null,
+    string? AnalyzerExe = null,
+    Dictionary<string, string>? AnalyzerEnv = null,
+    List<string>? AnalyzerOptions = null,
+    ContainerType? WaitForFiles = null,
+    string? StatsFile = null,
+    StatsFormat? StatsFormat = null,
+    bool? RebootAfterSetup = null,
+    int? TargetTimeout = null,
+    int? EnsembleSyncDelay = null,
+    bool? PreserveExistingOutputs = null,
+    List<string>? ReportList = null,
+    int? MinimizedStackDepth = null,
+    string? CoverageFilter = null);
 
 public record TaskVm(
     Region Region,
@@ -210,18 +206,17 @@ public record TaskContainers(
     ContainerType Type,
     Container Name
 );
+
 public record TaskConfig(
    Guid JobId,
    List<Guid>? PrereqTasks,
    TaskDetails Task,
-   TaskVm? Vm,
-   TaskPool? Pool,
-   List<TaskContainers>? Containers,
-   Dictionary<string, string>? Tags,
-   List<TaskDebugFlag>? Debug,
-   bool? Colocate
-   );
-
+   TaskVm? Vm = null,
+   TaskPool? Pool = null,
+   List<TaskContainers>? Containers = null,
+   Dictionary<string, string>? Tags = null,
+   List<TaskDebugFlag>? Debug = null,
+   bool? Colocate = null);
 
 public record TaskEventSummary(
     DateTimeOffset? Timestamp,
@@ -243,14 +238,21 @@ public record Task(
     TaskState State,
     Os Os,
     TaskConfig Config,
-    Error? Error,
-    Authentication? Auth,
-    DateTimeOffset? Heartbeat,
-    DateTimeOffset? EndTime,
-    UserInfo? UserInfo) : StatefulEntityBase<TaskState>(State) {
+    Error? Error = null,
+    Authentication? Auth = null,
+    DateTimeOffset? Heartbeat = null,
+    DateTimeOffset? EndTime = null,
+    UserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
     List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
     List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
 }
+
+public record TaskEvent(
+    [PartitionKey, RowKey] Guid TaskId,
+    Guid MachineId,
+    WorkerEvent EventData
+) : EntityBase;
+
 public record AzureSecurityExtensionConfig();
 public record GenevaExtensionConfig();
 

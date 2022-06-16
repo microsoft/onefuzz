@@ -13,6 +13,8 @@ sealed class TestServiceConfiguration : IServiceConfig {
 
     public string? OneFuzzFuncStorage { get; }
 
+    public string OneFuzzVersion => "9999.0.0"; // very big version to pass any >= checks
+
     // -- Remainder not implemented --
 
     public LogDestination[] LogDestinations { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
@@ -39,7 +41,6 @@ sealed class TestServiceConfiguration : IServiceConfig {
 
     public string? OneFuzzDataStorage => throw new System.NotImplementedException();
 
-
     public string? OneFuzzInstance => throw new System.NotImplementedException();
 
     public string? OneFuzzInstanceName => throw new System.NotImplementedException();
@@ -55,6 +56,4 @@ sealed class TestServiceConfiguration : IServiceConfig {
     public string? OneFuzzResourceGroup => throw new System.NotImplementedException();
 
     public string? OneFuzzTelemetry => throw new System.NotImplementedException();
-
-    public string OneFuzzVersion => throw new System.NotImplementedException();
 }

@@ -29,6 +29,7 @@ public interface IOnefuzzContext {
     IServiceConfig ServiceConfiguration { get; }
     IStorage Storage { get; }
     ITaskOperations TaskOperations { get; }
+    ITaskEventOperations TaskEventOperations { get; }
     IUserCredentials UserCredentials { get; }
     IVmOperations VmOperations { get; }
     IVmssOperations VmssOperations { get; }
@@ -46,6 +47,7 @@ public class OnefuzzContext : IOnefuzzContext {
     public IWebhookOperations WebhookOperations { get => _serviceProvider.GetService<IWebhookOperations>() ?? throw new Exception("No IWebhookOperations service"); }
     public IWebhookMessageLogOperations WebhookMessageLogOperations { get => _serviceProvider.GetService<IWebhookMessageLogOperations>() ?? throw new Exception("No IWebhookMessageLogOperations service"); }
     public ITaskOperations TaskOperations { get => _serviceProvider.GetService<ITaskOperations>() ?? throw new Exception("No ITaskOperations service"); }
+    public ITaskEventOperations TaskEventOperations => _serviceProvider.GetRequiredService<ITaskEventOperations>();
     public IQueue Queue { get => _serviceProvider.GetService<IQueue>() ?? throw new Exception("No IQueue service"); }
     public IStorage Storage { get => _serviceProvider.GetService<IStorage>() ?? throw new Exception("No IStorage service"); }
     public IProxyOperations ProxyOperations { get => _serviceProvider.GetService<IProxyOperations>() ?? throw new Exception("No IProxyOperations service"); }
@@ -79,4 +81,3 @@ public class OnefuzzContext : IOnefuzzContext {
         _serviceProvider = serviceProvider;
     }
 }
-

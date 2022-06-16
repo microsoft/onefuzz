@@ -98,12 +98,12 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
             return false;
         }
 
-        if (!NodeStateHelper.CanProcessNewWork.Contains(node.State)) {
+        if (!node.State.CanProcessNewWork()) {
             _logTracer.Info($"can_process_new_work node not in appropriate state for new work machine_id:{node.MachineId} state:{node.State}");
             return false;
         }
 
-        if (NodeStateHelper.ReadyForReset.Contains(node.State)) {
+        if (node.State.ReadyForReset()) {
             _logTracer.Info($"can_process_new_work node is set for reset. machine_id:{node.MachineId}");
             return false;
         }
@@ -175,7 +175,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
 
         var nodeState = node.State;
         if (done) {
-            if (!NodeStateHelper.ReadyForReset.Contains(node.State)) {
+            if (!node.State.ReadyForReset()) {
                 nodeState = NodeState.Done;
             }
         }

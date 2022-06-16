@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Data.Tables;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service;
 using Tests.Fakes;
 using Xunit.Abstractions;
@@ -24,16 +26,21 @@ public abstract class FunctionTestBase : IDisposable {
     // with each other - generate a prefix like t12345678 (table names must start with letter)
     private readonly string _tablePrefix = "t" + Guid.NewGuid().ToString()[..8];
 
-    private readonly string _accountId;
-
     protected ILogTracer Logger { get; }
 
-    protected TestContext CreateTestContext() => new(Logger, _storage, _tablePrefix, _accountId);
+    protected TestContext Context { get; }
 
     public FunctionTestBase(ITestOutputHelper output, IStorage storage, string accountId) {
         Logger = new TestLogTracer(output);
         _storage = storage;
-        _accountId = accountId;
+
+        Context = new TestContext(Logger, _storage, _tablePrefix, accountId);
+    }
+
+    protected static string BodyAsString(HttpResponseData data) {
+        data.Body.Seek(0, SeekOrigin.Begin);
+        using var sr = new StreamReader(data.Body);
+        return sr.ReadToEnd();
     }
 
     public void Dispose() {

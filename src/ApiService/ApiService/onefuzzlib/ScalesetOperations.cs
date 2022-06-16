@@ -191,7 +191,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
 
         var nodesToReset =
                 from x in existingNodes
-                where NodeStateHelper.ReadyForReset.Contains(x.State)
+                where x.State.ReadyForReset()
                 select x;
 
 
