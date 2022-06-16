@@ -15,8 +15,8 @@ namespace ApiService.OneFuzzLib.Orm {
         Task<ResultVoid<(int, string)>> Insert(T entity);
         Task<ResultVoid<(int, string)>> Delete(T entity);
 
-        IAsyncEnumerable<T> ListAll();
-        IAsyncEnumerable<T> ListPartition(string partitionKey);
+        IAsyncEnumerable<T> SearchAll();
+        IAsyncEnumerable<T> SearchPartition(string partitionKey);
         IAsyncEnumerable<T> SearchByRowKey(string rowKey);
         IAsyncEnumerable<T> SearchByTimeRange(DateTimeOffset min, DateTimeOffset max);
 
@@ -114,10 +114,10 @@ namespace ApiService.OneFuzzLib.Orm {
             }
         }
 
-        public IAsyncEnumerable<T> ListAll()
+        public IAsyncEnumerable<T> SearchAll()
             => QueryAsync(null);
 
-        public IAsyncEnumerable<T> ListPartition(string partitionKey)
+        public IAsyncEnumerable<T> SearchPartition(string partitionKey)
             => QueryAsync(Query.PartitionKey(partitionKey));
 
         public IAsyncEnumerable<T> SearchByRowKey(string rowKey)
