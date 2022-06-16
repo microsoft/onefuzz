@@ -201,4 +201,91 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
                 Assert.Equal(new WorkerEvent(Running: new WorkerRunningEvent(taskId)), taskEvent.EventData);
             }));
     }
+
+    [Fact]
+    public async Async.Task NodeStateUpdate_ForMissingNode_IgnoresEvent() {
+        // nothing present in storage
+
+        var func = new AgentEvents(Logger, Context);
+        var data = new NodeStateEnvelope(
+            MachineId: machineId,
+            Event: new NodeStateUpdate(NodeState.Init));
+
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+    }
+
+
+    [Fact]
+    public async Async.Task NodeStateUpdate_CanTransitionFromInitToReady() {
+        await Context.InsertAll(
+            new Node(poolName, machineId, poolId, poolVersion, State: NodeState.Init));
+
+        var func = new AgentEvents(Logger, Context);
+        var data = new NodeStateEnvelope(
+            MachineId: machineId,
+            Event: new NodeStateUpdate(NodeState.Ready));
+
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var node = await Context.NodeOperations.SearchAll().SingleAsync();
+        Assert.Equal(NodeState.Ready, node.State);
+    }
+
+    [Fact]
+    public async Async.Task NodeStateUpdate_BecomingFree_StopsNode_IfMarkedForReimage() {
+        await Context.InsertAll(
+            new Node(poolName, machineId, poolId, poolVersion, ReimageRequested: true));
+
+        var func = new AgentEvents(Logger, Context);
+        var data = new NodeStateEnvelope(
+            MachineId: machineId,
+            Event: new NodeStateUpdate(NodeState.Free));
+
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        await Async.Task.WhenAll(
+            Async.Task.Run(async () => {
+                // should still be in init state:
+                var node = await Context.NodeOperations.SearchAll().SingleAsync();
+                Assert.Equal(NodeState.Init, node.State);
+            }),
+            Async.Task.Run(async () => {
+                // the node should be told to stop:
+                var messages = await Context.NodeMessageOperations.SearchAll().ToListAsync();
+                Assert.Contains(messages, msg =>
+                    msg.MachineId == machineId &&
+                    msg.Message.Stop == new StopNodeCommand());
+            }));
+    }
+
+    [Fact]
+    public async Async.Task NodeStateUpdate_BecomingFree_StopsNode_IfMarkedForDeletion() {
+        await Context.InsertAll(
+            new Node(poolName, machineId, poolId, poolVersion, DeleteRequested: true));
+
+        var func = new AgentEvents(Logger, Context);
+        var data = new NodeStateEnvelope(
+            MachineId: machineId,
+            Event: new NodeStateUpdate(NodeState.Free));
+
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        await Async.Task.WhenAll(
+            Async.Task.Run(async () => {
+                // the node should still be in init state:
+                var node = await Context.NodeOperations.SearchAll().SingleAsync();
+                Assert.Equal(NodeState.Init, node.State);
+            }),
+            Async.Task.Run(async () => {
+                // the node should be told to stop:
+                var messages = await Context.NodeMessageOperations.SearchAll().ToListAsync();
+                Assert.Contains(messages, msg =>
+                    msg.MachineId == machineId &&
+                    msg.Message.Stop == new StopNodeCommand());
+            }));
+    }
 }
