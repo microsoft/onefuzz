@@ -275,6 +275,7 @@ jobs:
         cd src/ApiService/
         dotnet restore --locked-mode
         dotnet tool restore
+        sudo npm install -g azurite
     - name: Check Formatting
       run: |
         cd src/ApiService/
@@ -286,8 +287,10 @@ jobs:
     - name: Test & Collect coverage info
       run: |
         cd src/ApiService/
-        dotnet test --no-restore --collect:"XPlat Code Coverage"
+        azurite --silent &
+        dotnet test --no-restore --collect:"XPlat Code Coverage" --filter 'Category!=Integration'
         dotnet tool run reportgenerator -reports:Tests/TestResults/*/coverage.cobertura.xml -targetdir:coverage -reporttypes:MarkdownSummary
+        kill %1
         cat coverage/*.md > $GITHUB_STEP_SUMMARY
     - name: copy artifacts
       run: |

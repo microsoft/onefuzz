@@ -45,7 +45,7 @@ public class Containers : IContainers {
         if (client is null)
             return null;
 
-        return new Uri($"{GetUrl(client.AccountName)}{container}/{name}");
+        return new Uri($"{_storage.GetBlobEndpoint(client.AccountName)}{container}/{name}");
     }
 
     public async Async.Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType) {
@@ -93,12 +93,8 @@ public class Containers : IContainers {
             return null;
         }
         var storageKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
-        var accountUrl = GetUrl(accountName);
+        var accountUrl = _storage.GetBlobEndpoint(accountName);
         return new BlobServiceClient(accountUrl, storageKeyCredential);
-    }
-
-    private static Uri GetUrl(string accountName) {
-        return new Uri($"https://{accountName}.blob.core.windows.net/");
     }
 
     public async Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null) {
@@ -194,4 +190,3 @@ public class Containers : IContainers {
         return await client.GetBlobClient(name).ExistsAsync();
     }
 }
-

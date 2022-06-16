@@ -1,4 +1,5 @@
 ﻿using System;
+using ApiService.OneFuzzLib.Orm;
 using Microsoft.OneFuzz.Service;
 using Xunit;
 
@@ -33,6 +34,12 @@ namespace Tests {
                             states: new[] { NodeState.Free, NodeState.Done, NodeState.Ready },
                             excludeUpdateScheduled: true);
             Assert.Equal("((pool_id eq '3b0426d3-9bde-4ae8-89ac-4edf0d3b3618')) and ((scaleset_id eq '4c96dd6b-9bdb-4758-9720-1010c244fa4b')) and (((state eq 'free') or (state eq 'done') or (state eq 'ready'))) and (reimage_requested eq false) and (delete_requested eq false) and (not (version eq '1.2.3'))", query7);
+        }
+
+        [Fact]
+        public void StartsWithTests() {
+            var query = Query.StartsWith("prop", "prefix");
+            Assert.Equal("prop ge 'prefix' and prop lt 'prefiy'", query);
         }
     }
 }

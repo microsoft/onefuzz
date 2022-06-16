@@ -3,6 +3,20 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace ApiService.OneFuzzLib.Orm {
     public static class Query {
+        public static string PartitionKey(string partitionKey) {
+            // TODO: need to escape
+            return $"PartitionKey eq '{partitionKey}'";
+        }
+
+        public static string RowKey(string rowKey) {
+            // TODO: need to escape
+            return $"RowKey eq '{rowKey}'";
+        }
+
+        public static string SingleEntity(string partitionKey, string rowKey) {
+            // TODO: need to escape
+            return $"(PartitionKey eq '{partitionKey}') and (RowKey eq '{rowKey}')";
+        }
 
         public static string Or(IEnumerable<string> queries) {
             return string.Join(" or ", queries.Select(x => $"({x})"));
@@ -28,7 +42,19 @@ namespace ApiService.OneFuzzLib.Orm {
 
         public static string EqualAnyEnum<T>(string property, IEnumerable<T> enums) where T : Enum {
             IEnumerable<string> convertedEnums = enums.Select(x => JsonSerializer.Serialize(x, EntityConverter.GetJsonSerializerOptions()).Trim('"'));
-            return Query.EqualAny(property, convertedEnums);
+            return EqualAny(property, convertedEnums);
+        }
+
+        public static string TimeRange(DateTimeOffset min, DateTimeOffset max) {
+            // NB: this uses the auto-populated Timestamp property, and will result in scanning
+            // TODO: should this be inclusive at the endpoints?
+            return $"Timestamp lt datetime'{max:o}' and Timestamp gt datetime'{min:o}'";
+        }
+
+        public static string StartsWith(string property, string prefix) {
+            var upperBound = prefix[..(prefix.Length - 1)] + (char)(prefix.Last() + 1);
+            // TODO: escaping
+            return $"{property} ge '{prefix}' and {property} lt '{upperBound}'";
         }
     }
 }
