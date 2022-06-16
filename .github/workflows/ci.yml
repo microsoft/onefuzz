@@ -20,15 +20,13 @@ jobs:
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v2
-    - name: Rust Prereq Cache
-      uses: actions/cache@v2
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v1.4.0
       id: cache-rust-prereqs
       with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          ~/.cargo/bin
-        key: rust-${{ runner.os }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+        working-directory: src/agent
+        # additional key for cache-busting:
+        key: ${{ env.ACTIONS_CACHE_KEY_DATE }}
     - name: Install Rust Prereqs
       if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
       shell: bash
