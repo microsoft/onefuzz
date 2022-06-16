@@ -12,7 +12,7 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
-  ACTIONS_CACHE_KEY_DATE: 2022-06-02-01
+  ACTIONS_CACHE_KEY_DATE: 2022-06-17-01
   CI: true
 
 jobs:
@@ -36,9 +36,7 @@ jobs:
     - name: Rust Compile Cache
       uses: actions/cache@v2
       with:
-        path: |
-          sccache
-          src/agent/target
+        path: sccache
         key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
         restore-keys: |
           agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-
