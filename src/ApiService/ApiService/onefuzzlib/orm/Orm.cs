@@ -117,7 +117,7 @@ namespace ApiService.OneFuzzLib.Orm {
         public IAsyncEnumerable<T> SearchAll()
             => QueryAsync(null);
 
-        public IAsyncEnumerable<T> SearchPartition(string partitionKey)
+        public IAsyncEnumerable<T> SearchByPartitionKey(string partitionKey)
             => QueryAsync(Query.PartitionKey(partitionKey));
 
         public IAsyncEnumerable<T> SearchByRowKey(string rowKey)
