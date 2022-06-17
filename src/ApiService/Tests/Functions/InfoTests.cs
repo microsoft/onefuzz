@@ -46,6 +46,7 @@ public abstract class InfoTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task TestInfo_WithUserCredentials_Succeeds() {
         // store the instance ID in the expected location:
+        // for production this is done by the deploy script
         var instanceId = Guid.NewGuid().ToString();
         var containerClient = GetContainerClient("base-config");
         await containerClient.CreateAsync();
