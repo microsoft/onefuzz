@@ -1,14 +1,16 @@
 use std::{path::{PathBuf, Path}, collections::HashMap, process::{Command, Stdio}, time::Duration};
 use std::env;
+use async_trait::async_trait;
 use onefuzz::{syncdir::SyncedDir, expand::{Expand, PlaceHolder}};
 use anyhow::{Context, Result};
+use reqwest::Url;
 use storage_queue::{Message, QueueClient};
 use timer::Timer;
 use tokio::{task::spawn_blocking, fs};
 use tokio_stream::wrappers::ReadDirStream;
 use uuid::Uuid;
 
-use crate::tasks::{generic::input_poller::InputPoller, config::CommonConfig, heartbeat::HeartbeatSender};
+use crate::tasks::{generic::input_poller::{InputPoller, CallbackImpl, Processor}, config::CommonConfig, heartbeat::{HeartbeatSender, TaskHeartbeatClient}};
 
 use super::COBERTURA_COVERAGE_FILE;
 
@@ -55,12 +57,13 @@ impl CoverageTask {
         self.config.coverage.init_pull().await?;
 
         let heartbeat = self.config.common.init_heartbeat(None).await?;
+        let mut context = TaskContext::new(&self.config, heartbeat);
 
-        if !self.uses_input() {
+        if !context.uses_input() {
             bail!("input is not specified on the command line or arguments for the target");
         }
 
-        heartbeat.alive();
+        context.heartbeat.alive();
 
         let mut seen_inputs = false;
 
@@ -68,7 +71,7 @@ impl CoverageTask {
             debug!("recording coverage for {}", dir.local_path.display());
 
             dir.init_pull().await?;
-            let dir_count = self.record_corpus(&dir.local_path).await?;
+            let dir_count = context.record_corpus(&dir.local_path).await?;
 
             if dir_count > 0 {
                 seen_inputs = true;
@@ -80,15 +83,14 @@ impl CoverageTask {
                 dir.local_path.display()
             );
 
-            heartbeat.alive();
+            context.heartbeat.alive();
         }
 
         if seen_inputs {
-            context.report_coverage_stats().await?;
-            self.save_and_sync_coverage().await?;
+            context.save_and_sync_coverage().await?;
         }
 
-        heartbeat.alive();
+        context.heartbeat.alive();
 
         if let Some(queue) = &self.config.input_queue {
             info!("polling queue for new coverage inputs");
@@ -99,7 +101,23 @@ impl CoverageTask {
 
         Ok(())
     }
+}
 
+struct TaskContext<'a> {
+    config: &'a Config,
+    heartbeat: Option<TaskHeartbeatClient>,
+}
+
+impl<'a> TaskContext<'a> {
+    pub fn new(
+        config: &'a Config,
+        heartbeat: Option<TaskHeartbeatClient>,
+    ) -> Self {
+        Self {
+            config,
+            heartbeat,
+        }
+    }
     async fn record_corpus(&mut self, dir: &Path) -> Result<usize> {
         use futures::stream::StreamExt;
 
@@ -214,7 +232,7 @@ impl CoverageTask {
         cmd.arg("collect")
             .args(["--output-format", "cobertura"])
             .args(["-o", &output_file_path.to_string_lossy()])
-            .arg(format!("{} {}", self.config.target_exe.to_string_lossy(), input.to_string_lossy()));
+            .arg(format!("{} {} {}", dotnet_path.to_string_lossy(), self.config.target_exe.to_string_lossy(), input.to_string_lossy()));
 
         let target_options = expand.evaluate(&self.config.target_options)?;
         cmd.args(target_options);
@@ -311,4 +329,17 @@ fn dotnet_path() -> Result<PathBuf> {
         .join(dotnet_exectuable); // The dotnet executable
 
     Ok(dotnet)
+}
+
+
+#[async_trait]
+impl<'a> Processor for TaskContext<'a> {
+    async fn process(&mut self, _url: Option<Url>, input: &Path) -> Result<()> {
+        self.heartbeat.alive();
+
+        self.record_input(input).await?;
+        self.save_and_sync_coverage().await?;
+
+        Ok(())
+    }
 }

@@ -1,7 +1,7 @@
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
-        get_synced_dirs, CmdType, CHECK_FUZZER_HELP, COVERAGE_DIR, COVERAGE_FILTER, INPUTS_DIR,
+        get_synced_dirs, CmdType, COVERAGE_DIR, INPUTS_DIR,
         READONLY_INPUTS, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
     },
     tasks::{
@@ -18,7 +18,46 @@ use storage_queue::QueueClient;
 use super::common::{SyncCountDirMonitor, UiEvent};
 
 pub fn build_shared_args(local_job: bool) -> Vec<Arg<'static, 'static>> {
-    unimplemented!();
+    let mut args = vec![
+        Arg::with_name(TARGET_EXE)
+            .long(TARGET_EXE)
+            .takes_value(true)
+            .required(true),
+        Arg::with_name(TARGET_ENV)
+            .long(TARGET_ENV)
+            .takes_value(true)
+            .multiple(true),
+        Arg::with_name(TARGET_OPTIONS)
+            .long(TARGET_OPTIONS)
+            .default_value("{input}")
+            .takes_value(true)
+            .value_delimiter(" ")
+            .help("Use a quoted string with space separation to denote multiple arguments"),
+        Arg::with_name(TARGET_TIMEOUT)
+            .takes_value(true)
+            .long(TARGET_TIMEOUT),
+        Arg::with_name(COVERAGE_DIR)
+            .takes_value(true)
+            .required(!local_job)
+            .long(COVERAGE_DIR),
+    ];
+    if local_job {
+        args.push(
+            Arg::with_name(INPUTS_DIR)
+                .long(INPUTS_DIR)
+                .takes_value(true)
+                .required(true),
+        )
+    } else {
+        args.push(
+            Arg::with_name(READONLY_INPUTS)
+                .takes_value(true)
+                .required(true)
+                .long(READONLY_INPUTS)
+                .multiple(true),
+        )
+    }
+    args
 }
 
 pub fn build_coverage_config(

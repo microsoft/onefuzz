@@ -75,6 +75,8 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
         task_handles.push(crash_report_input_monitor.handle);
     }
 
+    // TODO: Maybe branch off here and check for dotnet coverage?
+
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     if args.is_present(COVERAGE_DIR) {
         let coverage_input_monitor =
