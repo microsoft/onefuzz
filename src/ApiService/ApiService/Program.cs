@@ -106,6 +106,7 @@ public class Program {
             .AddScoped<INodeMessageOperations, NodeMessageOperations>()
             .AddScoped<IRequestHandling, RequestHandling>()
             .AddScoped<IOnefuzzContext, OnefuzzContext>()
+            .AddScoped<IEndpointAuthorization, EndpointAuthorization>()
 
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()

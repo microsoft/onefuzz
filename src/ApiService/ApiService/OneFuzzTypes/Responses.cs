@@ -19,6 +19,20 @@ public record BoolResult(
     bool Result
 ) : BaseResponse();
 
+public record InfoResponse(
+    string ResourceGroup,
+    string Region,
+    string Subscription,
+    IReadOnlyDictionary<string, InfoVersion> Versions,
+    Guid? InstanceId,
+    string? InsightsAppid,
+    string? InsightsInstrumentationKey
+) : BaseResponse();
+
+public record InfoVersion(
+    string Git,
+    string Build,
+    string Version);
 
 public class BaseResponseConverter : JsonConverter<BaseResponse> {
     public override BaseResponse? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {

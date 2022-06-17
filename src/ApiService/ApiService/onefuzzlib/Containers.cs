@@ -1,9 +1,9 @@
-﻿using Azure;
+﻿using System.Threading;
+using Azure;
 using Azure.ResourceManager;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
-
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -32,12 +32,23 @@ public class Containers : IContainers {
     private IStorage _storage;
     private ICreds _creds;
     private ArmClient _armClient;
+    private readonly IServiceConfig _config;
 
-    public Containers(ILogTracer log, IStorage storage, ICreds creds) {
+    public Containers(ILogTracer log, IStorage storage, ICreds creds, IServiceConfig config) {
         _log = log;
         _storage = storage;
         _creds = creds;
         _armClient = creds.ArmClient;
+        _config = config;
+
+        _getInstanceId = new Lazy<Async.Task<Guid>>(async () => {
+            var blob = await GetBlob(new Container("base-config"), "instance_id", StorageType.Config);
+            if (blob == null) {
+                throw new Exception("Blob Not Found");
+            }
+
+            return Guid.Parse(blob.ToString());
+        }, LazyThreadSafetyMode.PublicationOnly);
     }
 
     public async Async.Task<Uri?> GetFileUrl(Container container, string name, StorageType storageType) {
@@ -72,9 +83,11 @@ public class Containers : IContainers {
         // # Secondary accounts, if they exist, are preferred for containers and have
         // # increased IOP rates, this should be a slight optimization
 
+        var containerName = _config.OneFuzzStoragePrefix + container.ContainerName;
+
         var containers = _storage.GetAccounts(storageType)
             .Reverse()
-            .Select(async account => (await GetBlobService(account))?.GetBlobContainerClient(container.ContainerName));
+            .Select(async account => (await GetBlobService(account))?.GetBlobContainerClient(containerName));
 
         foreach (var c in containers) {
             var client = await c;
@@ -86,7 +99,7 @@ public class Containers : IContainers {
     }
 
     private async Async.Task<BlobServiceClient?> GetBlobService(string accountId) {
-        _log.Info($"getting blob container (account_id: {accountId}");
+        _log.Info($"getting blob container (account_id: {accountId})");
         var (accountName, accountKey) = await _storage.GetStorageAccountNameAndKey(accountId);
         if (accountName == null) {
             _log.Error("Failed to get storage account name");
@@ -133,14 +146,8 @@ public class Containers : IContainers {
         await client.UploadBlobAsync(name, new BinaryData(data));
     }
 
-    //TODO: get this ones on startup and cache (and make this method un-accessible to everyone else)
-    public async Async.Task<Guid> GetInstanceId() {
-        var blob = await GetBlob(new Container("base-config"), "instance_id", StorageType.Config);
-        if (blob == null) {
-            throw new System.Exception("Blob Not Found");
-        }
-        return System.Guid.Parse(blob.ToString());
-    }
+    public Async.Task<Guid> GetInstanceId() => _getInstanceId.Value;
+    private readonly Lazy<Async.Task<Guid>> _getInstanceId;
 
     public Uri? GetContainerSasUrlService(
         BlobContainerClient client,

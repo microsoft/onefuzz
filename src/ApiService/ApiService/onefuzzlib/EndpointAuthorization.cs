@@ -3,16 +3,31 @@ using Microsoft.Azure.Functions.Worker.Http;
 
 namespace Microsoft.OneFuzz.Service;
 
-public class EndpointAuthorization {
+public interface IEndpointAuthorization {
+    Async.Task<HttpResponseData> CallIfAgent(
+        HttpRequestData req,
+        Func<HttpRequestData, Async.Task<HttpResponseData>> method)
+        => CallIf(req, method, allowAgent: true);
+
+    Async.Task<HttpResponseData> CallIfUser(
+        HttpRequestData req,
+        Func<HttpRequestData, Async.Task<HttpResponseData>> method)
+        => CallIf(req, method, allowUser: true);
+
+    Async.Task<HttpResponseData> CallIf(
+        HttpRequestData req,
+        Func<HttpRequestData, Async.Task<HttpResponseData>> method,
+        bool allowUser = false,
+        bool allowAgent = false);
+}
+
+public class EndpointAuthorization : IEndpointAuthorization {
     private readonly IOnefuzzContext _context;
     private readonly ILogTracer _log;
 
     public EndpointAuthorization(IOnefuzzContext context, ILogTracer log) {
         _context = context;
         _log = log;
-    }
-    public async Async.Task<HttpResponseData> CallIfAgent(HttpRequestData req, Func<HttpRequestData, Async.Task<HttpResponseData>> method) {
-        return await CallIf(req, method, allowAgent: true);
     }
 
     public async Async.Task<HttpResponseData> CallIf(HttpRequestData req, Func<HttpRequestData, Async.Task<HttpResponseData>> method, bool allowUser = false, bool allowAgent = false) {
