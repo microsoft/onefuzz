@@ -228,7 +228,9 @@ impl Config {
         match self {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::Coverage(config) => coverage::generic::CoverageTask::new(config).run().await,
-            Config::DotnetCoverage(config) => coverage::dotnet::CoverageTask::new(config).run().await,
+            Config::DotnetCoverage(config) => {
+                coverage::dotnet::CoverageTask::new(config).run().await
+            }
             Config::LibFuzzerFuzz(config) => {
                 fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
                     .run()

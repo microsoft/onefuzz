@@ -48,7 +48,7 @@ async fn run(args: ArgMatches<'static>) -> Result<()> {
     // pulls in user-provided task vars that set the environment, e.g. `target_env`.
     // For now, just ensure that sanitizer environment vars will be inherited by child
     // processes of the task worker (still allowing user overrides).
-    set_sanitizer_env_vars()?;
+    // set_sanitizer_env_vars()?;
 
     match args.subcommand() {
         (LICENSE_CMD, Some(_)) => licenses(),

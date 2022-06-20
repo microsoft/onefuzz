@@ -1,4 +1,8 @@
-use std::{sync::mpsc, thread, time::{Duration, Instant}};
+use std::{
+    sync::mpsc,
+    thread,
+    time::{Duration, Instant},
+};
 
 const MAX_POLL_PERIOD: Duration = Duration::from_millis(500);
 

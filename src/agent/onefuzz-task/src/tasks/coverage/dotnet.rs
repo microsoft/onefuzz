@@ -1,22 +1,33 @@
-use std::{path::{PathBuf, Path}, collections::HashMap, process::{Command, Stdio}, time::Duration};
-use std::env;
-use async_trait::async_trait;
-use onefuzz::{syncdir::SyncedDir, expand::{Expand, PlaceHolder}};
 use anyhow::{Context, Result};
+use async_trait::async_trait;
+use onefuzz::{
+    expand::{Expand, PlaceHolder},
+    syncdir::SyncedDir,
+};
 use reqwest::Url;
+use std::env;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    process::{Command, Stdio},
+    time::Duration,
+};
 use storage_queue::{Message, QueueClient};
 use timer::Timer;
-use tokio::{task::spawn_blocking, fs};
+use tokio::{fs, task::spawn_blocking};
 use tokio_stream::wrappers::ReadDirStream;
 use uuid::Uuid;
 
-use crate::tasks::{generic::input_poller::{InputPoller, CallbackImpl, Processor}, config::CommonConfig, heartbeat::{HeartbeatSender, TaskHeartbeatClient}};
+use crate::tasks::{
+    config::CommonConfig,
+    generic::input_poller::{CallbackImpl, InputPoller, Processor},
+    heartbeat::{HeartbeatSender, TaskHeartbeatClient},
+};
 
 use super::COBERTURA_COVERAGE_FILE;
 
 const MAX_COVERAGE_RECORDING_ATTEMPTS: usize = 2;
 const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(5);
-
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -55,34 +66,38 @@ impl CoverageTask {
     pub async fn run(&mut self) -> Result<()> {
         info!("starting dotnet_coverage task");
         self.config.coverage.init_pull().await?;
-
+        
         let heartbeat = self.config.common.init_heartbeat(None).await?;
         let mut context = TaskContext::new(&self.config, heartbeat);
-
+        
         if !context.uses_input() {
+            
             bail!("input is not specified on the command line or arguments for the target");
         }
-
+        
+        
         context.heartbeat.alive();
-
+        
+        
+        
         let mut seen_inputs = false;
-
+        
         for dir in &self.config.readonly_inputs {
             debug!("recording coverage for {}", dir.local_path.display());
-
+            
             dir.init_pull().await?;
             let dir_count = context.record_corpus(&dir.local_path).await?;
-
+            
             if dir_count > 0 {
                 seen_inputs = true;
             }
-
+            
             info!(
                 "recorded coverage for {} inputs from {}",
                 dir_count,
                 dir.local_path.display()
             );
-
+            
             context.heartbeat.alive();
         }
 
@@ -109,14 +124,8 @@ struct TaskContext<'a> {
 }
 
 impl<'a> TaskContext<'a> {
-    pub fn new(
-        config: &'a Config,
-        heartbeat: Option<TaskHeartbeatClient>,
-    ) -> Self {
-        Self {
-            config,
-            heartbeat,
-        }
+    pub fn new(config: &'a Config, heartbeat: Option<TaskHeartbeatClient>) -> Self {
+        Self { config, heartbeat }
     }
     async fn record_corpus(&mut self, dir: &Path) -> Result<usize> {
         use futures::stream::StreamExt;
@@ -190,10 +199,7 @@ impl<'a> TaskContext<'a> {
     async fn save_and_sync_coverage(&self) -> Result<()> {
         let mut cmd = self.command_for_merge().await?;
         let timeout = self.config.timeout();
-        let merge = spawn_blocking(move || {
-            spawn_with_timeout(&mut cmd, timeout)
-        })
-        .await??;
+        let merge = spawn_blocking(move || spawn_with_timeout(&mut cmd, timeout)).await??;
         self.config.coverage.sync_push().await?;
 
         Ok(merge)
@@ -202,10 +208,7 @@ impl<'a> TaskContext<'a> {
     async fn try_record_input(&self, input: &Path) -> Result<()> {
         let mut cmd = self.command_for_input(input).await?;
         let timeout = self.config.timeout();
-        let coverage = spawn_blocking(move || {
-            spawn_with_timeout(&mut cmd, timeout)
-        })
-        .await??;
+        let coverage = spawn_blocking(move || spawn_with_timeout(&mut cmd, timeout)).await??;
 
         Ok(coverage)
     }
@@ -225,17 +228,25 @@ impl<'a> TaskContext<'a> {
         let dotnet_coverage_path = dotnet_coverage_path()?;
         let dotnet_path = dotnet_path()?;
         let id = Uuid::new_v4();
-        let output_file_path = self.intermediate_coverage_files_path()
+        let output_file_path = self
+            .intermediate_coverage_files_path()
             .join(format!("{}.cobertura.xml", id));
 
         let mut cmd = Command::new(dotnet_coverage_path);
         cmd.arg("collect")
             .args(["--output-format", "cobertura"])
             .args(["-o", &output_file_path.to_string_lossy()])
-            .arg(format!("{} {} {}", dotnet_path.to_string_lossy(), self.config.target_exe.to_string_lossy(), input.to_string_lossy()));
+            .arg(format!(
+                "{} {}",
+                dotnet_path.to_string_lossy(),
+                self.config.target_exe.to_string_lossy()
+                // input.to_string_lossy()
+            ));
 
         let target_options = expand.evaluate(&self.config.target_options)?;
         cmd.args(target_options);
+
+        dbg!(&cmd);
 
         for (k, v) in &self.config.target_env {
             cmd.env(k, expand.evaluate_value(v)?);
@@ -250,24 +261,19 @@ impl<'a> TaskContext<'a> {
     }
 
     fn working_dir(&self) -> &PathBuf {
-        &self
-            .config
-            .coverage
-            .local_path
+        &self.config.coverage.local_path
     }
 
     fn intermediate_coverage_files_path(&self) -> PathBuf {
-        self.working_dir()
-            .join("intermediate-coverage-files")
+        self.working_dir().join("intermediate-coverage-files")
     }
 
     async fn command_for_merge(&self) -> Result<Command> {
         //TODO: dotnet coverage merge output.cobertura.xml output2.cobertura.xml --output-format cobertura -o "final.cobertura.xml"
         let dotnet_coverage_path = dotnet_coverage_path()?;
 
-        let output_file = self.working_dir()
-            .join(COBERTURA_COVERAGE_FILE);
-        
+        let output_file = self.working_dir().join(COBERTURA_COVERAGE_FILE);
+
         let mut cmd = Command::new(dotnet_coverage_path);
         cmd.arg("merge")
             .args(["--output-format", "cobertura"])
@@ -297,7 +303,6 @@ impl<'a> TaskContext<'a> {
 
         false
     }
-    
 }
 
 fn spawn_with_timeout(cmd: &mut Command, timeout: Duration) -> Result<()> {
@@ -312,25 +317,23 @@ fn dotnet_coverage_path() -> Result<PathBuf> {
     let dotnet_coverage_exectuable = "dotnet-coverage.exe";
     #[cfg(not(target_os = "windows"))]
     let dotnet_coverage_exectuable = "dotnet-coverage";
-    let dotnet_coverage = Path::new(&tools_dir)
-        .join(dotnet_coverage_exectuable);
+    let dotnet_coverage = Path::new(&tools_dir).join(dotnet_coverage_exectuable);
 
     Ok(dotnet_coverage)
 }
 
 fn dotnet_path() -> Result<PathBuf> {
-    let tools_dir = env::var("ONEFUZZ_TOOLS")?;
+    let dotnet_root_dir = env::var("DOTNET_ROOT")?;
     #[cfg(target_os = "windows")]
     let dotnet_exectuable = "dotnet.exe";
     #[cfg(not(target_os = "windows"))]
     let dotnet_exectuable = "dotnet";
-    let dotnet = Path::new(&tools_dir)
-        .join("dotnet") // The folder containing the dotnet executable
+    let dotnet = Path::new(&dotnet_root_dir)
+        // .join("dotnet") // The folder containing the dotnet executable
         .join(dotnet_exectuable); // The dotnet executable
 
     Ok(dotnet)
 }
-
 
 #[async_trait]
 impl<'a> Processor for TaskContext<'a> {

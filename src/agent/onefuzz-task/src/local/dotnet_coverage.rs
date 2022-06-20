@@ -1,13 +1,13 @@
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
-        get_synced_dirs, CmdType, COVERAGE_DIR, INPUTS_DIR,
-        READONLY_INPUTS, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
+        get_synced_dirs, CmdType, COVERAGE_DIR, INPUTS_DIR, READONLY_INPUTS, TARGET_ENV,
+        TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
     },
     tasks::{
         config::CommonConfig,
-        coverage::dotnet::{Config, CoverageTask}
-    }
+        coverage::dotnet::{Config, CoverageTask},
+    },
 };
 
 use anyhow::Result;
@@ -67,12 +67,14 @@ pub fn build_coverage_config(
     common: CommonConfig,
     event_sender: Option<Sender<UiEvent>>,
 ) -> Result<Config> {
+    // TODO: Rename this to target dll?
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
     let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
 
     let readonly_inputs = if local_job {
+        println!("Took inputs_dir");
         vec![
             get_synced_dir(INPUTS_DIR, common.job_id, common.task_id, args)?
                 .monitor_count(&event_sender)?,
