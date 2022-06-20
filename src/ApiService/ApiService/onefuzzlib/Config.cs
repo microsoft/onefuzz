@@ -5,7 +5,6 @@ namespace Microsoft.OneFuzz.Service;
 
 
 public interface IConfig {
-    string GetSetupContainer(TaskConfig config);
     Async.Task<TaskUnitConfig> BuildTaskConfig(Job job, Task task);
 }
 
@@ -248,17 +247,5 @@ public class Config : IConfig {
         }
 
         return config;
-    }
-
-
-    public string GetSetupContainer(TaskConfig config) {
-
-        foreach (var container in config.Containers ?? throw new Exception("Missing containers")) {
-            if (container.Type == ContainerType.Setup) {
-                return container.Name.ContainerName;
-            }
-        }
-
-        throw new Exception($"task missing setup container: task_type = {config.Task.Type}");
     }
 }

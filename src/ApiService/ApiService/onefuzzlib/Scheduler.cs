@@ -182,9 +182,9 @@ public class Scheduler : IScheduler {
         return (bucketConfig, workUnit);
     }
 
-    record struct BucketId(Os os, Guid jobId, (string, string)? vm, string? pool, string setupContainer, bool? reboot, Guid? unique);
+    public record struct BucketId(Os os, Guid jobId, (string, string)? vm, string? pool, string setupContainer, bool? reboot, Guid? unique);
 
-    private ILookup<BucketId, Task> BucketTasks(IEnumerable<Task> tasks) {
+    public static ILookup<BucketId, Task> BucketTasks(IEnumerable<Task> tasks) {
 
         // buckets are hashed by:
         // OS, JOB ID, vm sku & image (if available), pool name (if available),
@@ -214,9 +214,20 @@ public class Scheduler : IScheduler {
                 unique = Guid.NewGuid();
             }
 
-            return new BucketId(task.Os, task.JobId, vm, pool, _config.GetSetupContainer(task.Config), task.Config.Task.RebootAfterSetup, unique);
+            return new BucketId(task.Os, task.JobId, vm, pool, GetSetupContainer(task.Config), task.Config.Task.RebootAfterSetup, unique);
 
         });
+    }
+    
+    static string GetSetupContainer(TaskConfig config) {
+
+        foreach (var container in config.Containers ?? throw new Exception("Missing containers")) {
+            if (container.Type == ContainerType.Setup) {
+                return container.Name.ContainerName;
+            }
+        }
+
+        throw new Exception($"task missing setup container: task_type = {config.Task.Type}");
     }
 }
 
