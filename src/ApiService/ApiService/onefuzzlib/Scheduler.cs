@@ -218,7 +218,7 @@ public class Scheduler : IScheduler {
 
         });
     }
-    
+
     static string GetSetupContainer(TaskConfig config) {
 
         foreach (var container in config.Containers ?? throw new Exception("Missing containers")) {
