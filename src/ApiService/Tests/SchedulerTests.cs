@@ -124,8 +124,7 @@ public class SchedulerTests {
         CheckBuckets(buckets, tasks, 12);
     }
 
-    [Theory]
-    public void CheckBuckets(ILookup<Scheduler.BucketId, Task> buckets, List<Task> tasks, int bucketCount) {
+    void CheckBuckets(ILookup<Scheduler.BucketId, Task> buckets, List<Task> tasks, int bucketCount) {
         Assert.Equal(buckets.Count, bucketCount);
 
         foreach (var task in tasks) {
