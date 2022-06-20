@@ -15,6 +15,14 @@ namespace ApiService.OneFuzzLib.Orm {
         Task<ResultVoid<(int, string)>> Insert(T entity);
         Task<ResultVoid<(int, string)>> Delete(T entity);
 
+        IAsyncEnumerable<T> SearchAll();
+        IAsyncEnumerable<T> SearchByPartitionKey(string partitionKey);
+        IAsyncEnumerable<T> SearchByRowKey(string rowKey);
+        IAsyncEnumerable<T> SearchByTimeRange(DateTimeOffset min, DateTimeOffset max);
+
+        // Allow using tuple to search.
+        IAsyncEnumerable<T> SearchByTimeRange((DateTimeOffset min, DateTimeOffset max) range)
+            => SearchByTimeRange(range.min, range.max);
     }
 
 
@@ -84,11 +92,15 @@ namespace ApiService.OneFuzzLib.Orm {
         }
 
         public async Task<TableClient> GetTableClient(string table, string? accountId = null) {
+            // TODO: do this less often, instead of once per request:
+            var tableName = _context.ServiceConfiguration.OneFuzzTablePrefix + table;
+
             var account = accountId ?? _context.ServiceConfiguration.OneFuzzFuncStorage ?? throw new ArgumentNullException(nameof(accountId));
             var (name, key) = await _context.Storage.GetStorageAccountNameAndKey(account);
-            var tableClient = new TableServiceClient(new Uri($"https://{name}.table.core.windows.net"), new TableSharedKeyCredential(name, key));
-            await tableClient.CreateTableIfNotExistsAsync(table);
-            return tableClient.GetTableClient(table);
+            var endpoint = _context.Storage.GetTableEndpoint(account);
+            var tableClient = new TableServiceClient(endpoint, new TableSharedKeyCredential(name, key));
+            await tableClient.CreateTableIfNotExistsAsync(tableName);
+            return tableClient.GetTableClient(tableName);
         }
 
         public async Task<ResultVoid<(int, string)>> Delete(T entity) {
@@ -100,6 +112,19 @@ namespace ApiService.OneFuzzLib.Orm {
             } else {
                 return ResultVoid<(int, string)>.Ok();
             }
+        }
+
+        public IAsyncEnumerable<T> SearchAll()
+            => QueryAsync(null);
+
+        public IAsyncEnumerable<T> SearchByPartitionKey(string partitionKey)
+            => QueryAsync(Query.PartitionKey(partitionKey));
+
+        public IAsyncEnumerable<T> SearchByRowKey(string rowKey)
+            => QueryAsync(Query.RowKey(rowKey));
+
+        public IAsyncEnumerable<T> SearchByTimeRange(DateTimeOffset min, DateTimeOffset max) {
+            return QueryAsync(Query.TimeRange(min, max));
         }
     }
 

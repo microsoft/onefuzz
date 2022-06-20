@@ -71,19 +71,20 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
     }
 
     public async Async.Task MarkStopping(Task task) {
-        if (TaskStateHelper.ShuttingDown.Contains(task.State)) {
+        if (task.State.ShuttingDown()) {
             _logTracer.Verbose($"ignoring post - task stop calls to stop {task.JobId}:{task.TaskId}");
             return;
         }
 
-        if (TaskStateHelper.HasStarted.Contains(task.State)) {
+        if (!task.State.HasStarted()) {
             await MarkFailed(task, new Error(Code: ErrorCode.TASK_FAILED, Errors: new[] { "task never started" }));
-
+        } else {
+            await SetState(task, TaskState.Stopping);
         }
     }
 
     public async Async.Task MarkFailed(Task task, Error error, List<Task>? taskInJob = null) {
-        if (TaskStateHelper.ShuttingDown.Contains(task.State)) {
+        if (task.State.ShuttingDown()) {
             _logTracer.Verbose(
                 $"ignoring post-task stop failures for {task.JobId}:{task.TaskId}"
             );
@@ -105,7 +106,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
     }
 
     private async Async.Task MarkDependantsFailed(Task task, List<Task>? taskInJob = null) {
-        taskInJob = taskInJob ?? await QueryAsync(filter: $"job_id eq ''{task.JobId}").ToListAsync();
+        taskInJob ??= await SearchByPartitionKey(task.JobId.ToString()).ToListAsync();
 
         foreach (var t in taskInJob) {
             if (t.Config.PrereqTasks != null) {
@@ -123,6 +124,8 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
 
         if (task.State == TaskState.Running || task.State == TaskState.SettingUp) {
             task = await OnStart(task with { State = state });
+        } else {
+            task = task with { State = state };
         }
 
         await this.Replace(task);
@@ -210,7 +213,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
                     return false;
                 }
 
-                if (!TaskStateHelper.HasStarted.Contains(t.State)) {
+                if (!t.State.HasStarted()) {
                     return false;
                 }
             }

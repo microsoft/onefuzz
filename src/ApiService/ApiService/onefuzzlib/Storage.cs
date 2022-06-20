@@ -13,6 +13,13 @@ public enum StorageType {
 public interface IStorage {
     public IEnumerable<string> CorpusAccounts();
     string GetPrimaryAccount(StorageType storageType);
+
+    public Uri GetTableEndpoint(string accountId);
+
+    public Uri GetQueueEndpoint(string accountId);
+
+    public Uri GetBlobEndpoint(string accountId);
+
     public Async.Task<(string?, string?)> GetStorageAccountNameAndKey(string accountId);
 
     public Async.Task<string?> GetStorageAccountNameAndKeyByName(string accountName);
@@ -142,4 +149,13 @@ public class Storage : IStorage {
                 throw new NotImplementedException();
         }
     }
+
+    public Uri GetTableEndpoint(string accountId)
+        => new($"https://{accountId}.table.core.windows.net/");
+
+    public Uri GetQueueEndpoint(string accountId)
+        => new($"https://{accountId}.queue.core.windows.net/");
+
+    public Uri GetBlobEndpoint(string accountId)
+        => new($"https://{accountId}.blob.core.windows.net/");
 }

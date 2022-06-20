@@ -67,8 +67,8 @@ public enum NodeTaskState {
 
 public record NodeTasks
 (
-    Guid MachineId,
-    Guid TaskId,
+    [PartitionKey] Guid MachineId,
+    [RowKey] Guid TaskId,
     NodeTaskState State = NodeTaskState.Init
 ) : StatefulEntityBase<NodeTaskState>(State);
 
@@ -153,10 +153,7 @@ public record Error(ErrorCode Code, string[]? Errors = null);
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
 
 
-
-
 public record TaskDetails(
-
     TaskType Type,
     int Duration,
     string? TargetExe = null,
@@ -210,18 +207,18 @@ public record TaskContainers(
     ContainerType Type,
     Container Name
 );
+
 public record TaskConfig(
    Guid JobId,
    List<Guid>? PrereqTasks,
    TaskDetails Task,
-   TaskVm? Vm = null ,
+   TaskVm? Vm = null,
    TaskPool? Pool = null,
    List<TaskContainers>? Containers = null,
    Dictionary<string, string>? Tags = null,
    List<TaskDebugFlag>? Debug = null,
    bool? Colocate = null
    );
-
 
 public record TaskEventSummary(
     DateTimeOffset? Timestamp,
@@ -243,14 +240,21 @@ public record Task(
     TaskState State,
     Os Os,
     TaskConfig Config,
-    Error? Error,
-    Authentication? Auth,
-    DateTimeOffset? Heartbeat,
-    DateTimeOffset? EndTime,
-    UserInfo? UserInfo) : StatefulEntityBase<TaskState>(State) {
+    Error? Error = null,
+    Authentication? Auth = null,
+    DateTimeOffset? Heartbeat = null,
+    DateTimeOffset? EndTime = null,
+    UserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
     List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
     List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
 }
+
+public record TaskEvent(
+    [PartitionKey, RowKey] Guid TaskId,
+    Guid MachineId,
+    WorkerEvent EventData
+) : EntityBase;
+
 public record AzureSecurityExtensionConfig();
 public record GenevaExtensionConfig();
 

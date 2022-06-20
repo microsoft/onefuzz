@@ -4,9 +4,9 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
+use clap::Parser;
 use onefuzz::blob::BlobContainerUrl;
 use onefuzz::process::ExitStatus;
-use structopt::StructOpt;
 use url::Url;
 use uuid::Uuid;
 
@@ -14,10 +14,12 @@ use crate::coordinator::*;
 use crate::work::*;
 use crate::worker::*;
 
-#[derive(StructOpt, Debug)]
-#[structopt(rename_all = "snake_case")]
+#[derive(Parser, Debug)]
+#[clap(rename_all = "snake_case")]
 pub enum DebugOpt {
+    #[clap(subcommand)]
     NodeEvent(NodeEventOpt),
+
     RunWorker(RunWorkerOpt),
 }
 
@@ -30,13 +32,15 @@ pub fn debug(opt: DebugOpt) -> Result<()> {
     Ok(())
 }
 
-#[derive(StructOpt, Debug)]
-#[structopt(rename_all = "snake_case")]
+#[derive(Parser, Debug)]
+#[clap(rename_all = "snake_case")]
 pub enum NodeEventOpt {
     StateUpdate {
-        #[structopt(parse(try_from_str = serde_json::from_str))]
+        #[clap(value_enum)]
         state: NodeState,
     },
+
+    #[clap(subcommand)]
     WorkerEvent(WorkerEventOpt),
 }
 
@@ -69,14 +73,14 @@ fn debug_node_event_state_update(state: NodeState) -> Result<()> {
     print_json(into_envelope(event))
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 pub enum WorkerEventOpt {
     Running,
     Done {
-        #[structopt(short, long)]
+        #[clap(short, long)]
         code: Option<i32>,
 
-        #[structopt(short, long)]
+        #[clap(short, long)]
         signal: Option<i32>,
     },
 }
@@ -127,16 +131,16 @@ fn print_json(data: impl serde::Serialize) -> Result<()> {
     Ok(())
 }
 
-#[derive(StructOpt, Debug)]
-#[structopt(rename_all = "snake_case")]
+#[derive(Parser, Debug)]
+#[clap(rename_all = "snake_case")]
 pub struct RunWorkerOpt {
-    #[structopt(long)]
+    #[clap(long)]
     config: PathBuf,
 
-    #[structopt(long)]
+    #[clap(long)]
     setup_url: Url,
 
-    #[structopt(long)]
+    #[clap(long)]
     script: bool,
 }
 

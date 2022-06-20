@@ -15,7 +15,7 @@ public class QueueNodeHearbeat {
         _context = context;
     }
 
-    [Function("QueueNodeHearbeat")]
+    [Function("QueueNodeHeartbeat")]
     public async Async.Task Run([QueueTrigger("node-heartbeat", Connection = "AzureWebJobsStorage")] string msg) {
         _log.Info($"heartbeat: {msg}");
         var nodes = _context.NodeOperations;
