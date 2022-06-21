@@ -35,6 +35,7 @@ from ..azure.auto_scale import (
     add_auto_scale_to_vmss,
     create_auto_scale_profile,
     default_auto_scale_profile,
+    get_auto_scale_profile,
 )
 from ..azure.image import get_os
 from ..azure.network import Network
@@ -875,6 +876,52 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 )
             )
 
+    def sync_auto_scale_settings(self) -> Optional[Error]:
+        logging.info("Trying to sync auto scale settings for scaleset %s" % self.scaleset_id)
+        
+        auto_scale_profile = get_auto_scale_profile(self.scaleset_id)
+        if auto_scale_profile is None:
+            auto_scale_profile_failed = Error(
+                code=ErrorCode.UNABLE_TO_FIND,
+                errors=["Failed to get auto scale profile for scaleset %s" % self.scaleset_id],
+            )
+            logging.error(auto_scale_profile_failed)
+            return auto_scale_profile_failed
+
+        minimum = auto_scale_profile.capacity.minimum
+        maximum = auto_scale_profile.capacity.maximum
+        default = auto_scale_profile.capacity.default
+        
+        scale_out_amount = 0
+        scale_out_cooldown = 0
+        scale_in_amount = 0
+        scale_in_cooldown = 0
+        
+        for rule in auto_scale_profile.rules:
+            scale_action = rule.scale_action
+            if scale_action.direction == "Increase":
+                scale_out_amount = scale_action.value
+                scale_out_cooldown = scale_action.cooldown
+            else if scale_action.direction == "Decrease":
+                scale_in_amount = scale_action.value
+                scale_in_cooldown = scale_action.cooldown
+            else:
+                pass
+        
+        logging.info("Updating auto scale entry: %s" % self.scaleset_id)
+        Autoscale.Update(
+            self.scaleset_id
+            min=minimum,
+            max=maximum,
+            default=default,
+            scale_out_amount=scale_out_amount,
+            scale_out_cooldown=scale_out_cooldown,
+            scale_in_amount=scale_in_amount,
+            scale_in_cooldown=scale_in_cooldown,
+        )
+
+        return
+
     def try_to_enable_auto_scaling(self) -> Optional[Error]:
         from .pools import Pool
 
@@ -943,6 +990,37 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
         )
         entry.save()
         return entry
+
+    def update(
+        cls,
+        *,
+        scaleset_id: UUID,
+        min: int,
+        max: int,
+        default: int,
+        scale_out_amount: int,
+        scale_out_cooldown: int,
+        scale_in_amount: int,
+        scale_in_cooldown: int,
+    ) -> "AutoScale":
+        
+        entry = cls.get_settings_for_scaleset(scaleset_id)
+
+        entry.scaleset_id=scaleset_id,
+        entry.min=min,
+        entry.max=max,
+        entry.default=default,
+        entry.scale_out_amount=scale_out_amount,
+        entry.scale_out_cooldown=scale_out_cooldown,
+        entry.scale_in_amount=scale_in_amount,
+        entry.scale_in_cooldown=scale_in_cooldown,
+
+        entry.save()
+        
+        return entry
+
+    def delete(cls, scaleset_id: UUID)
+        pass
 
     @classmethod
     def get_settings_for_scaleset(cls, scaleset_id: UUID) -> Union["AutoScale", None]:

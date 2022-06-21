@@ -86,6 +86,32 @@ def add_auto_scale_to_vmss(
 
     return None
 
+def get_auto_scale_profile(scaleset_id: UUID) -> AutoscaleProfile:
+    logging.info("Getting scaleset %s for existing auto scale resources" % vmss)
+    client = get_monitor_client()
+    resource_group = get_base_resource_group()
+    
+    auto_scale_resource = None
+
+    try:
+        auto_scale_collections = client.autoscale_settings.list_by_resource_group(
+            resource_group
+        )
+        for auto_scale in auto_scale_collections:
+            if str(auto_scale.target_resource_uri).endswith(str(vmss)):
+                auto_scale_resource = auto_scale
+                break
+    except (ResourceNotFoundError, CloudError):
+        return Error(
+            code=ErrorCode.INVALID_CONFIGURATION,
+            errors=[
+                "Failed to query scaleset %s autoscale resource"
+                % vmss
+            ],
+        )
+          
+    return auto_scale_resource.AutoscaleProfile
+
 
 def create_auto_scale_resource_for(
     resource_id: UUID, location: Region, profile: AutoscaleProfile
