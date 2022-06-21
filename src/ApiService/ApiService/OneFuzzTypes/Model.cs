@@ -615,7 +615,11 @@ public class TaskUnitConfigConverter : JsonConverter<TaskUnitConfig> {
     }
 
     public override void Write(Utf8JsonWriter writer, TaskUnitConfig value, JsonSerializerOptions options) {
-        writer.WriteStringValue(JsonSerializer.Serialize(value, options));
+        var v = JsonSerializer.Serialize(value, new JsonSerializerOptions(options) {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        });
+
+        writer.WriteStringValue(v);
     }
 }
 
@@ -651,12 +655,33 @@ public record ContainerDefinition(
 
 // TODO: service shouldn't pass SyncedDir, but just the url and let the agent
 // come up with paths
-public record SyncedDir(string Path, Uri url);
+public record SyncedDir(string Path, Uri Url);
 
 
+[JsonConverter(typeof(ContainerDefConverter))]
 public interface IContainerDef { }
 public record SingleContainer(SyncedDir SyncedDir) : IContainerDef;
 public record MultipleContainer(List<SyncedDir> SyncedDirs) : IContainerDef;
+
+
+public class ContainerDefConverter : JsonConverter<IContainerDef> {
+    public override IContainerDef? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        throw new NotImplementedException();
+    }
+
+    public override void Write(Utf8JsonWriter writer, IContainerDef value, JsonSerializerOptions options) {
+        switch (value) {
+            case SingleContainer container:
+                JsonSerializer.Serialize(writer, container.SyncedDir, options);
+                break;
+            case MultipleContainer { SyncedDirs: var syncedDirs }:
+                JsonSerializer.Serialize(writer, syncedDirs, options);
+                break;
+            default:
+                throw new NotImplementedException();
+        }
+    }
+}
 
 
 
@@ -713,7 +738,7 @@ public record TaskUnitConfig(
     public IContainerDef? Tools { get; set; }
     public IContainerDef? UniqueInputs { get; set; }
     public IContainerDef? UniqueReports { get; set; }
-    public IContainerDef? RegressionReport { get; set; }
+    public IContainerDef? RegressionReports { get; set; }
 
 }
 

@@ -129,6 +129,9 @@ public class Config : IConfig {
                 case ContainerType.UniqueReports:
                     config.UniqueReports = def;
                     break;
+                case ContainerType.RegressionReports:
+                    config.RegressionReports = def;
+                    break;
             }
         }
 

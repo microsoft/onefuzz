@@ -39,7 +39,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
     }
 
     public IAsyncEnumerable<Task> GetByTaskIds(IEnumerable<Guid> taskId) {
-        return QueryAsync(filter: $"RowKey eq '{taskId}'");
+        return QueryAsync(filter: Query.RowKeys(taskId.Select(t => t.ToString())));
     }
 
     public IAsyncEnumerable<Task> GetByJobId(Guid jobId) {
@@ -211,7 +211,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
 
                 // if a prereq task fails, then mark this task as failed
                 if (t == null) {
-                    await MarkFailed(task, new Error(ErrorCode.INVALID_REQUEST, Errors: new[] { "unable to find task" }));
+                    await MarkFailed(task, new Error(ErrorCode.INVALID_REQUEST, Errors: new[] { "unable to find prereq task" }));
                     return false;
                 }
 
