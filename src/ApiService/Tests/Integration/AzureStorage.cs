@@ -25,10 +25,10 @@ sealed class AzureStorage : IStorage {
         return new AzureStorage(accountName, accountKey);
     }
 
-    public string? AccountName { get; }
-    public string? AccountKey { get; }
+    public string AccountName { get; }
+    public string AccountKey { get; }
 
-    public AzureStorage(string? accountName, string? accountKey) {
+    public AzureStorage(string accountName, string accountKey) {
         AccountName = accountName;
         AccountKey = accountKey;
     }
@@ -45,7 +45,7 @@ sealed class AzureStorage : IStorage {
         throw new System.NotImplementedException();
     }
 
-    public Task<(string?, string?)> GetStorageAccountNameAndKey(string accountId)
+    public Task<(string, string)> GetStorageAccountNameAndKey(string accountId)
         => Async.Task.FromResult((AccountName, AccountKey));
 
     public Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {

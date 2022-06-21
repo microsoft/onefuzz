@@ -97,7 +97,7 @@ namespace ApiService.OneFuzzLib.Orm {
 
             var account = accountId ?? _context.ServiceConfiguration.OneFuzzFuncStorage ?? throw new ArgumentNullException(nameof(accountId));
             var (name, key) = await _context.Storage.GetStorageAccountNameAndKey(account);
-            var endpoint = _context.Storage.GetTableEndpoint(account);
+            var endpoint = _context.Storage.GetTableEndpoint(name);
             var tableClient = new TableServiceClient(endpoint, new TableSharedKeyCredential(name, key));
             await tableClient.CreateTableIfNotExistsAsync(tableName);
             return tableClient.GetTableClient(tableName);

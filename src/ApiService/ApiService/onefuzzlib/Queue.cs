@@ -51,7 +51,7 @@ public class Queue : IQueue {
         var accountId = _storage.GetPrimaryAccount(storageType);
         _log.Verbose($"getting blob container (account_id: {accountId})");
         var (name, key) = await _storage.GetStorageAccountNameAndKey(accountId);
-        var endpoint = _storage.GetQueueEndpoint(accountId);
+        var endpoint = _storage.GetQueueEndpoint(name);
         var options = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
         return new QueueServiceClient(endpoint, new StorageSharedKeyCredential(name, key), options);
     }

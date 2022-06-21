@@ -21,8 +21,8 @@ sealed class AzuriteStorage : IStorage {
     // https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string#configure-a-connection-string-for-azurite
     const string AccountKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
 
-    public Task<(string?, string?)> GetStorageAccountNameAndKey(string accountId)
-        => Async.Task.FromResult<(string?, string?)>((accountId, AccountKey));
+    public Task<(string, string)> GetStorageAccountNameAndKey(string accountId)
+        => Async.Task.FromResult((accountId, AccountKey));
 
     public Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {
         throw new System.NotImplementedException();
