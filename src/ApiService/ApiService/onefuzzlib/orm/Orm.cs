@@ -168,7 +168,7 @@ namespace ApiService.OneFuzzLib.Orm {
         public async Async.Task<T?> ProcessStateUpdate(T entity) {
             TState state = entity.State;
             var func = _stateFuncs.GetOrAdd(state.ToString(), (string k) =>
-                typeof(T).GetMethod(k) switch {
+                GetType().GetMethod(k) switch {
                     null => null,
                     MethodInfo info => (Func<T, Async.Task<T>>)Delegate.CreateDelegate(typeof(Func<T, Async.Task<T>>), info)
                 });

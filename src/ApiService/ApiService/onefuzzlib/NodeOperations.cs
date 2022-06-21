@@ -43,6 +43,8 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Async.Task MarkTasksStoppedEarly(Node node, Error? error = null);
     static TimeSpan NODE_EXPIRATION_TIME = TimeSpan.FromHours(1.0);
     static TimeSpan NODE_REIMAGE_TIME = TimeSpan.FromDays(6.0);
+
+    Async.Task StopTask(Guid task_id);
 }
 
 
@@ -383,11 +385,42 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         await _context.Events.SendEvent(new EventNodeDeleted(node.MachineId, node.ScalesetId, node.PoolName, node.State));
     }
 
+    public async Async.Task StopTask(Guid task_id) {
+        // For now, this just re-images the node.  Eventually, this
+        // should send a message to the node to let the agent shut down
+        // gracefully
+
+        var nodes = _context.NodeTasksOperations.GetNodesByTaskId(task_id);
+
+        await foreach (var node in nodes) {
+            await _context.NodeMessageOperations.SendMessage(node.MachineId, new NodeCommand(StopTask: new StopTaskNodeCommand(task_id)));
+
+            if (!(await StopIfComplete(node))) {
+                _logTracer.Info($"nodes: stopped task on node, but not reimaging due to other tasks: task_id:{task_id} machine_id:{node.MachineId}");
+            }
+        }
+
+    }
+
+    /// returns True on stopping the node and False if this doesn't stop the node
+    private async Task<bool> StopIfComplete(Node node, bool done = false) {
+        var nodeTaskIds = await _context.NodeTasksOperations.GetByMachineId(node.MachineId).Select(nt => nt.TaskId).ToArrayAsync();
+        var tasks = _context.TaskOperations.GetByTaskIds(nodeTaskIds);
+        await foreach (var task in tasks) {
+            if (!TaskStateHelper.ShuttingDown(task.State)) {
+                return false;
+            }
+        }
+        _logTracer.Info($"node: stopping busy node with all tasks complete: {node.MachineId}");
+
+        await Stop(node, done: done);
+        return true;
+    }
 }
 
 
 public interface INodeTasksOperations : IStatefulOrm<NodeTasks, NodeTaskState> {
-    IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId, INodeOperations nodeOps);
+    IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId);
     IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId, INodeOperations nodeOps);
     IAsyncEnumerable<NodeTasks> GetByMachineId(Guid machineId);
     IAsyncEnumerable<NodeTasks> GetByTaskId(Guid taskId);
@@ -404,9 +437,9 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState>, INodeT
     }
 
     //TODO: suggest by Cheick: this can probably be optimize by query all NodesTasks then query the all machine in single request
-    public async IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId, INodeOperations nodeOps) {
+    public async IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId) {
         await foreach (var entry in QueryAsync($"task_id eq '{taskId}'")) {
-            var node = await nodeOps.GetByMachineId(entry.MachineId);
+            var node = await _context.NodeOperations.GetByMachineId(entry.MachineId);
             if (node is not null) {
                 yield return node;
             }

@@ -5,6 +5,10 @@ namespace Microsoft.OneFuzz.Service;
 public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
     Async.Task<Task?> GetByTaskId(Guid taskId);
 
+    IAsyncEnumerable<Task> GetByTaskIds(IEnumerable<Guid> taskId);
+
+    IAsyncEnumerable<Task> GetByJobId(Guid jobId);
+
     Async.Task<Task?> GetByJobIdAndTaskId(Guid jobId, Guid taskId);
 
 
@@ -31,9 +35,15 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
     }
 
     public async Async.Task<Task?> GetByTaskId(Guid taskId) {
-        var data = QueryAsync(filter: $"RowKey eq '{taskId}'");
+        return await GetByTaskIds(new[] { taskId }).FirstOrDefaultAsync();
+    }
 
-        return await data.FirstOrDefaultAsync();
+    public IAsyncEnumerable<Task> GetByTaskIds(IEnumerable<Guid> taskId) {
+        return QueryAsync(filter: $"RowKey eq '{taskId}'");
+    }
+
+    public IAsyncEnumerable<Task> GetByJobId(Guid jobId) {
+        return QueryAsync(filter: $"PartitionKey eq '{jobId}'");
     }
 
     public async Async.Task<Task?> GetByJobIdAndTaskId(Guid jobId, Guid taskId) {
@@ -252,5 +262,34 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
         _logTracer.Warning($"unable to find a scaleset that matches the task prereqs: {task.TaskId}");
         return null;
 
+    }
+
+    public async Async.Task<Task> Init(Task task) {
+        await _context.Queue.CreateQueue($"{task.TaskId}", StorageType.Corpus);
+        return await SetState(task, TaskState.Waiting);
+    }
+
+
+    public async Async.Task<Task> Stopping(Task task) {
+        _logTracer.Info($"stopping task : {task.JobId}, {task.TaskId}");
+        await _context.NodeOperations.StopTask(task.TaskId);
+        var anyRemainingNodes = await _context.NodeTasksOperations.GetNodesByTaskId(task.TaskId).AnyAsync();
+        if (!anyRemainingNodes) {
+            return await Stopped(task);
+        }
+        return task;
+    }
+
+    private async Async.Task<Task> Stopped(Task inputTask) {
+        var task = await SetState(inputTask, TaskState.Stopped);
+        await _context.Queue.DeleteQueue($"{task.TaskId}", StorageType.Corpus);
+
+        //     # TODO: we need to 'unschedule' this task from the existing pools
+        var job = await _context.JobOperations.Get(task.JobId);
+        if (job != null) {
+            await _context.JobOperations.StopIfAllDone(job);
+        }
+
+        return task;
     }
 }
