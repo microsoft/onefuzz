@@ -74,7 +74,7 @@ public class Scheduler : IScheduler {
 
     private async Async.Task<(BucketConfig, WorkSet)?> BuildWorkSet(Task[] tasks) {
         var taskIds = tasks.Select(x => x.TaskId).ToHashSet();
-        var work_units = new List<WorkUnit>();
+        var workUnits = new List<WorkUnit>();
 
         BucketConfig? bucketConfig = null;
         foreach (var task in tasks) {
@@ -99,7 +99,7 @@ public class Scheduler : IScheduler {
                 throw new Exception($"bucket configs differ: {bucketConfig} VS {result.Value.Item1}");
             }
 
-            work_units.Add(result.Value.Item2);
+            workUnits.Add(result.Value.Item2);
         }
 
         if (bucketConfig != null) {
@@ -108,7 +108,7 @@ public class Scheduler : IScheduler {
                 Reboot: bucketConfig.reboot,
                 Script: bucketConfig.setupScript != null,
                 SetupUrl: setupUrl,
-                WorkUnits: work_units
+                WorkUnits: workUnits
             );
 
             return (bucketConfig, workSet);

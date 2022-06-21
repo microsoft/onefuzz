@@ -22,7 +22,7 @@ public interface IStorage {
 
     public Async.Task<(string, string)> GetStorageAccountNameAndKey(string accountId);
 
-    public Async.Task<string?> GetStorageAccountNameAndKeyByName(string accountName);
+    public Async.Task<string?> GetStorageAccountNameKeyByName(string accountName);
 
     public IEnumerable<string> GetAccounts(StorageType storageType);
 }
@@ -108,7 +108,7 @@ public class Storage : IStorage {
         return (resourceId.Name, key.Value);
     }
 
-    public async Async.Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {
+    public async Async.Task<string?> GetStorageAccountNameKeyByName(string accountName) {
         var armClient = GetMgmtClient();
         var resourceGroup = _creds.GetResourceGroupResourceIdentifier();
         var storageAccount = await armClient.GetResourceGroupResource(resourceGroup).GetStorageAccountAsync(accountName);

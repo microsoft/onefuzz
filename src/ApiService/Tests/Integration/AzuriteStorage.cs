@@ -24,7 +24,7 @@ sealed class AzuriteStorage : IStorage {
     public Task<(string, string)> GetStorageAccountNameAndKey(string accountId)
         => Async.Task.FromResult((accountId, AccountKey));
 
-    public Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {
+    public Task<string?> GetStorageAccountNameKeyByName(string accountName) {
         throw new System.NotImplementedException();
     }
 

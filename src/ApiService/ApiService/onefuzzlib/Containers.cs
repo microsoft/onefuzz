@@ -159,7 +159,7 @@ public class Containers : IContainers {
         }
 
         var accountName = uri.Host.Split('.')[0];
-        var (_, accountKey) = await _storage.GetStorageAccountNameAndKey(accountName);
+        var accountKey = await _storage.GetStorageAccountNameKeyByName(accountName);
         var sasBuilder = new BlobSasBuilder(
                 BlobContainerSasPermissions.Read | BlobContainerSasPermissions.Write | BlobContainerSasPermissions.Delete | BlobContainerSasPermissions.List,
                 DateTimeOffset.UtcNow + TimeSpan.FromHours(1));
@@ -172,10 +172,7 @@ public class Containers : IContainers {
 
     public async Async.Task<Uri> GetContainerSasUrl(Container container, StorageType storageType, BlobContainerSasPermissions permissions, TimeSpan? duration = null) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
-        var (accountName, accountKey) = await _storage.GetStorageAccountNameAndKey(client.AccountName);
-
         var (startTime, endTime) = SasTimeWindow(duration ?? TimeSpan.FromDays(30));
-
         var sasBuilder = new BlobSasBuilder(permissions, endTime) {
             StartsOn = startTime,
             BlobContainerName = container.ContainerName,

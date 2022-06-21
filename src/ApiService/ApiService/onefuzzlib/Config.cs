@@ -88,9 +88,13 @@ public class Config : IConfig {
 
         await foreach (var data in containersByType) {
 
+            if (!data.containers.Any()) {
+                continue;
+            }
+
             IContainerDef def = data.countainerDef switch {
                 ContainerDefinition { Compare: Compare.Equal, Value: 1 } or
-                ContainerDefinition { Compare: Compare.AtMost, Value: 1 } => new SingleContainer(data.containers[0]),
+                ContainerDefinition { Compare: Compare.AtMost, Value: 1 } when data.containers.Count == 1 => new SingleContainer(data.containers[0]),
                 _ => new MultipleContainer(data.containers)
             };
 

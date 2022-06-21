@@ -52,21 +52,13 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
         return await data.FirstOrDefaultAsync();
     }
     public IAsyncEnumerable<Task> SearchStates(Guid? jobId = null, IEnumerable<TaskState>? states = null) {
-        var queryString = String.Empty;
-        if (jobId != null) {
-            queryString += $"PartitionKey eq '{jobId}'";
-        }
-
-        if (states != null) {
-            if (jobId != null) {
-                queryString += " and ";
-            }
-
-            queryString += "(" + string.Join(
-                " or ",
-                states.Select(s => $"state eq '{s}'")
-            ) + ")";
-        }
+        var queryString =
+            (jobId, states) switch {
+                (null, null) => "",
+                (Guid id, null) => Query.PartitionKey($"{id}"),
+                (null, IEnumerable<TaskState> s) => Query.EqualAnyEnum("state", s),
+                (Guid id, IEnumerable<TaskState> s) => Query.And(Query.PartitionKey($"{id}"), Query.EqualAnyEnum("state", s)),
+            };
 
         return QueryAsync(filter: queryString);
     }

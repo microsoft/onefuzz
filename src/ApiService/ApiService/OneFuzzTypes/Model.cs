@@ -600,8 +600,24 @@ public record WorkUnit(
     Guid JobId,
     Guid TaskId,
     TaskType TaskType,
-    TaskUnitConfig Config
+
+    // JSON-serialized `TaskUnitConfig`.
+    [property: JsonConverter(typeof(TaskUnitConfigConverter))] TaskUnitConfig Config
 );
+
+public class TaskUnitConfigConverter : JsonConverter<TaskUnitConfig> {
+    public override TaskUnitConfig? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        var taskUnitString = reader.GetString();
+        if (taskUnitString == null) {
+            return null;
+        }
+        return JsonSerializer.Deserialize<TaskUnitConfig>(taskUnitString, options);
+    }
+
+    public override void Write(Utf8JsonWriter writer, TaskUnitConfig value, JsonSerializerOptions options) {
+        writer.WriteStringValue(JsonSerializer.Serialize(value, options));
+    }
+}
 
 public record VmDefinition(
     Compare Compare,
@@ -641,6 +657,7 @@ public record SyncedDir(string Path, Uri url);
 public interface IContainerDef { }
 public record SingleContainer(SyncedDir SyncedDir) : IContainerDef;
 public record MultipleContainer(List<SyncedDir> SyncedDirs) : IContainerDef;
+
 
 
 public record TaskUnitConfig(

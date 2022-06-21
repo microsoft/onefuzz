@@ -167,11 +167,10 @@ namespace ApiService.OneFuzzLib.Orm {
         /// <returns></returns>
         public async Async.Task<T?> ProcessStateUpdate(T entity) {
             TState state = entity.State;
-            var func = _stateFuncs.GetOrAdd(state.ToString(), (string k) =>
-                GetType().GetMethod(k) switch {
-                    null => null,
-                    MethodInfo info => (Func<T, Async.Task<T>>)Delegate.CreateDelegate(typeof(Func<T, Async.Task<T>>), info)
-                });
+            var func = GetType().GetMethod(state.ToString()) switch {
+                null => null,
+                MethodInfo info => (Func<T, Async.Task<T>>)Delegate.CreateDelegate(typeof(Func<T, Async.Task<T>>), firstArgument: this, method: info)
+            };
 
             if (func != null) {
                 _logTracer.Info($"processing state update: {typeof(T)} - PartitionKey {_partitionKeyGetter?.Value()} {_rowKeyGetter?.Value()} - %s");

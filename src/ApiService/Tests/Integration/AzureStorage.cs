@@ -48,7 +48,7 @@ sealed class AzureStorage : IStorage {
     public Task<(string, string)> GetStorageAccountNameAndKey(string accountId)
         => Async.Task.FromResult((AccountName, AccountKey));
 
-    public Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {
+    public Task<string?> GetStorageAccountNameKeyByName(string accountName) {
         throw new System.NotImplementedException();
     }
 
