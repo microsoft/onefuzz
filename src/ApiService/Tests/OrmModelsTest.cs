@@ -332,7 +332,9 @@ namespace Tests {
 
     public class OrmArb {
 
-        public static Arbitrary<Version> Vresion() {
+        public static Arbitrary<PoolName> PoolName { get; } = OrmGenerators.PoolNameGen.ToArbitrary();
+
+        public static Arbitrary<Version> Version() {
             return Arb.From(OrmGenerators.Version());
         }
 
