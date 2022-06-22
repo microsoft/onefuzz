@@ -46,9 +46,8 @@ public class SchedulerTests {
         ).ToList();
 
         var buckets = Scheduler.BucketTasks(tasks);
-        foreach (var bucket in buckets) {
-            Assert.True(10 >= bucket.Count());
-        }
+        var bucket = Assert.Single(buckets);
+        Assert.True(10 >= bucket.Count());
         CheckBuckets(buckets, tasks, 1);
     }
 
