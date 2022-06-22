@@ -7,6 +7,7 @@ using Azure.Storage;
 using Azure.Storage.Blobs;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Tests.Fakes;
 using Xunit.Abstractions;
 
@@ -60,6 +61,9 @@ public abstract class FunctionTestBase : IDisposable {
         return sr.ReadToEnd();
     }
 
+    protected static T BodyAs<T>(HttpResponseData data)
+        => new EntityConverter().FromJsonString<T>(BodyAsString(data)) ?? throw new Exception($"unable to deserialize body as {typeof(T)}");
+
     public void Dispose() {
         var (accountName, accountKey) = _storage.GetStorageAccountNameAndKey("").Result; // sync for test impls
         if (accountName is not null && accountKey is not null) {
@@ -72,6 +76,7 @@ public abstract class FunctionTestBase : IDisposable {
                 new StorageSharedKeyCredential(accountName, accountKey));
         }
     }
+
     private void CleanupBlobs(Uri endpoint, StorageSharedKeyCredential creds) {
         var blobClient = new BlobServiceClient(endpoint, creds);
 

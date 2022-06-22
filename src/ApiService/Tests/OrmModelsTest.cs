@@ -74,21 +74,26 @@ namespace Tests {
             );
         }
 
-        public static Gen<Node> Node() {
-            return Arb.Generate<Tuple<Tuple<DateTimeOffset?, string, Guid?, Guid, NodeState>, Tuple<Guid?, DateTimeOffset, string, bool, bool, bool>>>().Select(
-                arg => new Node(
+        public static Gen<PoolName> PoolNameGen { get; }
+            = from name in Arb.Generate<NonEmptyString>()
+              where PoolName.TryParse(name.Get, out _)
+              select PoolName.Parse(name.Get);
+
+        public static Gen<Node> Node { get; }
+            = from arg in Arb.Generate<Tuple<Tuple<DateTimeOffset?, Guid?, Guid, NodeState>, Tuple<Guid?, DateTimeOffset, string, bool, bool, bool>>>()
+              from poolName in PoolNameGen
+              select new Node(
                         InitializedAt: arg.Item1.Item1,
-                        PoolName: arg.Item1.Item2,
+                        PoolName: poolName,
                         PoolId: arg.Item1.Item3,
-                        MachineId: arg.Item1.Item4,
-                        State: arg.Item1.Item5,
+                        MachineId: arg.Item1.Item3,
+                        State: arg.Item1.Item4,
                         ScalesetId: arg.Item2.Item1,
                         Heartbeat: arg.Item2.Item2,
                         Version: arg.Item2.Item3,
                         ReimageRequested: arg.Item2.Item4,
                         DeleteRequested: arg.Item2.Item5,
-                        DebugKeepNode: arg.Item2.Item6));
-        }
+                        DebugKeepNode: arg.Item2.Item6);
 
         public static Gen<ProxyForward> ProxyForward() {
             return Arb.Generate<Tuple<Tuple<string, long, Guid, Guid, Guid?, long>, Tuple<IPv4Address, DateTimeOffset>>>().Select(
@@ -200,35 +205,31 @@ namespace Tests {
                         )
                 );
         }
-        public static Gen<Scaleset> Scaleset() {
-            return Arb.Generate<Tuple<
-                Tuple<string, Guid, ScalesetState, Authentication?, string, string, string>,
-                Tuple<int, bool, bool, bool, Error?, List<ScalesetNodeState>, Guid?>,
-                Tuple<Guid?, Dictionary<string, string>>>>().Select(
-                    arg =>
-                        new Scaleset(
-                            PoolName: arg.Item1.Item1,
-                            ScalesetId: arg.Item1.Item2,
-                            State: arg.Item1.Item3,
-                            Auth: arg.Item1.Item4,
-                            VmSku: arg.Item1.Item5,
-                            Image: arg.Item1.Item6,
-                            Region: arg.Item1.Item7,
+        public static Gen<Scaleset> Scaleset { get; }
+            = from arg in Arb.Generate<Tuple<
+                    Tuple<Guid, ScalesetState, Authentication?, string, string, string>,
+                    Tuple<int, bool, bool, bool, Error?, List<ScalesetNodeState>, Guid?>,
+                    Tuple<Guid?, Dictionary<string, string>>>>()
+              from poolName in PoolNameGen
+              select new Scaleset(
+                          PoolName: poolName,
+                          ScalesetId: arg.Item1.Item1,
+                          State: arg.Item1.Item2,
+                          Auth: arg.Item1.Item3,
+                          VmSku: arg.Item1.Item4,
+                          Image: arg.Item1.Item5,
+                          Region: arg.Item1.Item6,
 
-                            Size: arg.Item2.Item1,
-                            SpotInstance: arg.Item2.Item2,
-                            EphemeralOsDisks: arg.Item2.Item3,
-                            NeedsConfigUpdate: arg.Item2.Item4,
-                            Error: arg.Item2.Item5,
-                            Nodes: arg.Item2.Item6,
-                            ClientId: arg.Item2.Item7,
+                          Size: arg.Item2.Item1,
+                          SpotInstance: arg.Item2.Item2,
+                          EphemeralOsDisks: arg.Item2.Item3,
+                          NeedsConfigUpdate: arg.Item2.Item4,
+                          Error: arg.Item2.Item5,
+                          Nodes: arg.Item2.Item6,
+                          ClientId: arg.Item2.Item7,
 
-                            ClientObjectId: arg.Item3.Item1,
-                            Tags: arg.Item3.Item2
-                        )
-                );
-        }
-
+                          ClientObjectId: arg.Item3.Item1,
+                          Tags: arg.Item3.Item2);
 
         public static Gen<Webhook> Webhook() {
             return Arb.Generate<Tuple<Guid, string, Uri?, List<EventType>, string, WebhookMessageFormat>>().Select(
@@ -348,7 +349,7 @@ namespace Tests {
         }
 
         public static Arbitrary<Node> Node() {
-            return Arb.From(OrmGenerators.Node());
+            return Arb.From(OrmGenerators.Node);
         }
 
         public static Arbitrary<ProxyForward> ProxyForward() {
@@ -383,9 +384,8 @@ namespace Tests {
             return Arb.From(OrmGenerators.Task());
         }
 
-        public static Arbitrary<Scaleset> Scaleset() {
-            return Arb.From(OrmGenerators.Scaleset());
-        }
+        public static Arbitrary<Scaleset> Scaleset()
+            => Arb.From(OrmGenerators.Scaleset);
 
         public static Arbitrary<Webhook> Webhook() {
             return Arb.From(OrmGenerators.Webhook());

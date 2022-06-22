@@ -19,6 +19,8 @@ public sealed class TestServiceConfiguration : IServiceConfig {
 
     public string? ApplicationInsightsInstrumentationKey { get; set; } = "TestAppInsightsInstrumentationKey";
 
+    public string? OneFuzzInstanceName => "UnitTestInstance";
+
     // -- Remainder not implemented --
 
     public LogDestination[] LogDestinations { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
@@ -41,8 +43,6 @@ public sealed class TestServiceConfiguration : IServiceConfig {
     public string? MultiTenantDomain => throw new System.NotImplementedException();
 
     public string? OneFuzzInstance => throw new System.NotImplementedException();
-
-    public string? OneFuzzInstanceName => throw new System.NotImplementedException();
 
     public string? OneFuzzKeyvault => throw new System.NotImplementedException();
 

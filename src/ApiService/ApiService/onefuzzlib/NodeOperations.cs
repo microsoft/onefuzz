@@ -22,7 +22,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     IAsyncEnumerable<Node> SearchStates(Guid? poolId = default,
         Guid? scaleSetId = default,
         IEnumerable<NodeState>? states = default,
-        string? poolName = default,
+        PoolName? poolName = default,
         bool excludeUpdateScheduled = false,
         int? numResults = default);
 
@@ -32,7 +32,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
 
     Async.Task<Node> Create(
         Guid poolId,
-        string poolName,
+        PoolName poolName,
         Guid machineId,
         Guid? scaleSetId,
         string version,
@@ -67,7 +67,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
             _logTracer.Info($"Setting scale-in protection on node {node.MachineId}");
             return await _context.VmssOperations.UpdateScaleInProtection((Guid)node.ScalesetId, node.MachineId, protectFromScaleIn: true);
         }
-        return OneFuzzResultVoid.Ok();
+        return OneFuzzResultVoid.Ok;
     }
 
     public async Async.Task<bool> ScalesetNodeExists(Node node) {
@@ -207,7 +207,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
 
     public async Async.Task<Node> Create(
         Guid poolId,
-        string poolName,
+        PoolName poolName,
         Guid machineId,
         Guid? scaleSetId,
         string version,
@@ -308,7 +308,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         Guid? poolId = default,
         Guid? scaleSetId = default,
         IEnumerable<NodeState>? states = default,
-        string? poolName = default,
+        PoolName? poolName = default,
         bool excludeUpdateScheduled = false,
         int? numResults = default) {
 
@@ -346,7 +346,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         Guid? poolId = default,
         Guid? scaleSetId = default,
         IEnumerable<NodeState>? states = default,
-        string? poolName = default,
+        PoolName? poolName = default,
         bool excludeUpdateScheduled = false,
         int? numResults = default) {
         var query = NodeOperations.SearchStatesQuery(_context.ServiceConfiguration.OneFuzzVersion, poolId, scaleSetId, states, poolName, excludeUpdateScheduled, numResults);
@@ -467,9 +467,8 @@ public class NodeMessageOperations : Orm<NodeMessage>, INodeMessageOperations {
         _log = log;
     }
 
-    public IAsyncEnumerable<NodeMessage> GetMessage(Guid machineId) {
-        return QueryAsync($"PartitionKey eq '{machineId}'");
-    }
+    public IAsyncEnumerable<NodeMessage> GetMessage(Guid machineId)
+        => QueryAsync(Query.PartitionKey(machineId));
 
     public async Async.Task ClearMessages(Guid machineId) {
         _logTracer.Info($"clearing messages for node {machineId}");
