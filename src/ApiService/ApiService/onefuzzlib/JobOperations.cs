@@ -38,9 +38,9 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
     }
 
     public async Async.Task StopIfAllDone(Job job) {
-        var anyNotStoppedJobs = await _context.TaskOperations.GetByJobId(job.JobId).AnyAsync(job => job.State != TaskState.Stopped);
+        var anyNotStoppedJobs = await _context.TaskOperations.GetByJobId(job.JobId).AnyAsync(task => task.State != TaskState.Stopped);
 
-        if (!anyNotStoppedJobs) {
+        if (anyNotStoppedJobs) {
             return;
         }
 
