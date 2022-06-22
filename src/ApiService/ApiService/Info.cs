@@ -15,6 +15,12 @@ public class Info {
         _context = context;
         _auth = auth;
 
+        // TODO: this isn’t actually shared between calls at the moment,
+        // this needs to be placed into a class that can be registered into the
+        // DI container and shared amongst instances.
+        //
+        // However, we need to be careful about auth and caching between different
+        // credentials.
         _response = new Lazy<Async.Task<InfoResponse>>(async () => {
             var config = _context.ServiceConfiguration;
 
