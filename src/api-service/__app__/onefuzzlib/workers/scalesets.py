@@ -1019,7 +1019,7 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
 
         return entry
 
-    def delete(cls, scaleset_id: UUID)
+    def delete(cls, scaleset_id: UUID):
         pass
 
     @classmethod
