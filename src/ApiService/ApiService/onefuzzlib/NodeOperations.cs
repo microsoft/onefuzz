@@ -318,6 +318,10 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
             queryParts.Add($"(pool_id eq '{poolId}')");
         }
 
+        if (poolName is not null) {
+            queryParts.Add($"(PartitionKey eq '{poolName}')");
+        }
+
         if (scaleSetId is not null) {
             queryParts.Add($"(scaleset_id eq '{scaleSetId}')");
         }

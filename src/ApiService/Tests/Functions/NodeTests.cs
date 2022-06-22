@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using Microsoft.OneFuzz.Service;
@@ -27,6 +28,7 @@ public abstract class NodeTestBase : FunctionTestBase {
         : base(output, storage) { }
 
     private readonly Guid _machineId = Guid.NewGuid();
+    private readonly Guid _scalesetId = Guid.NewGuid();
     private readonly PoolName _poolName = PoolName.Parse($"pool-{Guid.NewGuid()}");
     private readonly string _version = Guid.NewGuid().ToString();
 
@@ -55,6 +57,95 @@ public abstract class NodeTestBase : FunctionTestBase {
         // make sure we got the data from the table
         var deserialized = BodyAs<NodeSearchResult>(result);
         Assert.Equal(_version, deserialized.Version);
+    }
+
+    [Fact]
+    public async Async.Task Search_MultipleNodes_CanFindNone() {
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+
+        var req = new NodeSearch();
+        var func = new NodeFunction(Logger, auth, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+        Assert.Equal(0, result.Body.Length);
+    }
+
+    [Fact]
+    public async Async.Task Search_MultipleNodes_ByPoolName() {
+        await Context.InsertAll(
+            new Node(PoolName.Parse("otherPool"), Guid.NewGuid(), null, _version),
+            new Node(_poolName, Guid.NewGuid(), null, _version),
+            new Node(_poolName, Guid.NewGuid(), null, _version));
+
+        var req = new NodeSearch(PoolName: _poolName);
+
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new NodeFunction(Logger, auth, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        // make sure we got the data from the table
+        var deserialized = BodyAs<NodeSearchResult[]>(result);
+        Assert.Equal(2, deserialized.Length);
+    }
+
+    [Fact]
+    public async Async.Task Search_MultipleNodes_ByScalesetId() {
+        await Context.InsertAll(
+            new Node(_poolName, Guid.NewGuid(), null, _version, ScalesetId: _scalesetId),
+            new Node(_poolName, Guid.NewGuid(), null, _version, ScalesetId: _scalesetId),
+            new Node(_poolName, Guid.NewGuid(), null, _version));
+
+        var req = new NodeSearch(ScalesetId: _scalesetId);
+
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new NodeFunction(Logger, auth, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        // make sure we got the data from the table
+        var deserialized = BodyAs<NodeSearchResult[]>(result);
+        Assert.Equal(2, deserialized.Length);
+    }
+
+
+    [Fact]
+    public async Async.Task Search_MultipleNodes_ByState() {
+        await Context.InsertAll(
+            new Node(_poolName, Guid.NewGuid(), null, _version, State: NodeState.Busy),
+            new Node(_poolName, Guid.NewGuid(), null, _version, State: NodeState.Busy),
+            new Node(_poolName, Guid.NewGuid(), null, _version));
+
+        var req = new NodeSearch(State: new List<NodeState> { NodeState.Busy });
+
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new NodeFunction(Logger, auth, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        // make sure we got the data from the table
+        var deserialized = BodyAs<NodeSearchResult[]>(result);
+        Assert.Equal(2, deserialized.Length);
+    }
+
+    [Fact]
+    public async Async.Task Search_MultipleNodes_ByMultipleStates() {
+        await Context.InsertAll(
+            new Node(_poolName, Guid.NewGuid(), null, _version, State: NodeState.Free),
+            new Node(_poolName, Guid.NewGuid(), null, _version, State: NodeState.Busy),
+            new Node(_poolName, Guid.NewGuid(), null, _version, State: NodeState.Busy),
+            new Node(_poolName, Guid.NewGuid(), null, _version));
+
+        var req = new NodeSearch(State: new List<NodeState> { NodeState.Free, NodeState.Busy });
+
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new NodeFunction(Logger, auth, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        // make sure we got the data from the table
+        var deserialized = BodyAs<NodeSearchResult[]>(result);
+        Assert.Equal(3, deserialized.Length);
     }
 
     [Theory]
