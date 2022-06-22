@@ -911,13 +911,13 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         logging.info("Updating auto scale entry: %s" % self.scaleset_id)
         Autoscale.Update(
             self.scaleset_id
-            min=minimum,
-            max=maximum,
-            default=default,
-            scale_out_amount=scale_out_amount,
-            scale_out_cooldown=scale_out_cooldown,
-            scale_in_amount=scale_in_amount,
-            scale_in_cooldown=scale_in_cooldown,
+            minimum,
+            maximum,
+            default,
+            scale_out_amount,
+            scale_out_cooldown,
+            scale_in_amount,
+            scale_in_cooldown,
         )
 
         return
