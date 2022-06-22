@@ -280,6 +280,20 @@ jobs:
       run: |
         cd src/ApiService/
         dotnet format --verify-no-changes --no-restore
+
+    # note that Test comes before Build:
+    # Test will build things in Debug mode, Build will build them in Release
+    # Build comes second in case Test would do something (unspecified) that 
+    # would somehow alter the binaries that we want to package.
+    - name: Test & Collect coverage info
+      run: |
+        cd src/ApiService/
+        azurite --silent &
+        dotnet test --no-restore --collect:"XPlat Code Coverage" --filter 'Category!=Integration'
+        dotnet tool run reportgenerator -reports:Tests/TestResults/*/coverage.cobertura.xml -targetdir:coverage -reporttypes:MarkdownSummary
+        kill %1
+        cat coverage/*.md > $GITHUB_STEP_SUMMARY
+
     - name: Build Service
       run: |
         version=$(./src/ci/get-version.sh)
@@ -299,14 +313,6 @@ jobs:
           dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version}
         fi
 
-    - name: Test & Collect coverage info
-      run: |
-        cd src/ApiService/
-        azurite --silent &
-        dotnet test --no-build --collect:"XPlat Code Coverage" --filter 'Category!=Integration'
-        dotnet tool run reportgenerator -reports:Tests/TestResults/*/coverage.cobertura.xml -targetdir:coverage -reporttypes:MarkdownSummary
-        kill %1
-        cat coverage/*.md > $GITHUB_STEP_SUMMARY
     - name: copy artifacts
       run: |
         ./src/ci/get-version.sh > src/deployment/VERSION
