@@ -909,7 +909,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 pass
         
         logging.info("Updating auto scale entry: %s" % self.scaleset_id)
-        Autoscale.Update(
+        AutoScale.Update(
             self.scaleset_id,
             min=minimum,
             max=maximum,
