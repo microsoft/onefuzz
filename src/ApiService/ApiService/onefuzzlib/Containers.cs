@@ -157,14 +157,15 @@ public class Containers : IContainers {
         if (uri.Query.Contains("sig")) {
             return uri;
         }
-
-        var accountName = uri.Host.Split('.')[0];
-        var accountKey = await _storage.GetStorageAccountNameKeyByName(accountName);
+        var blobUriBuilder = new BlobUriBuilder(uri);
+        var accountKey = await _storage.GetStorageAccountNameKeyByName(blobUriBuilder.AccountName);
         var sasBuilder = new BlobSasBuilder(
                 BlobContainerSasPermissions.Read | BlobContainerSasPermissions.Write | BlobContainerSasPermissions.Delete | BlobContainerSasPermissions.List,
-                DateTimeOffset.UtcNow + TimeSpan.FromHours(1));
+                DateTimeOffset.UtcNow + TimeSpan.FromHours(1)) {
+            BlobContainerName = blobUriBuilder.BlobContainerName,
+        };
 
-        var sas = sasBuilder.ToSasQueryParameters(new StorageSharedKeyCredential(accountName, accountKey)).ToString();
+        var sas = sasBuilder.ToSasQueryParameters(new StorageSharedKeyCredential(blobUriBuilder.AccountName, accountKey)).ToString();
         return new UriBuilder(uri) {
             Query = sas
         }.Uri;
@@ -175,7 +176,7 @@ public class Containers : IContainers {
         var (startTime, endTime) = SasTimeWindow(duration ?? TimeSpan.FromDays(30));
         var sasBuilder = new BlobSasBuilder(permissions, endTime) {
             StartsOn = startTime,
-            BlobContainerName = container.ContainerName,
+            BlobContainerName = container.ContainerName
         };
 
         var sasUrl = client.GenerateSasUri(sasBuilder);
