@@ -1,4 +1,4 @@
-using System.Web;
+﻿using System.Web;
 using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -42,7 +42,7 @@ public class Download {
         }
 
         var sasUri = await _context.Containers.GetFileSasUrl(
-            new Container(container), 
+            new Container(container),
             filename,
             StorageType.Corpus,
             BlobSasPermissions.Read,

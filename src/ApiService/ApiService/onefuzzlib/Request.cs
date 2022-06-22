@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Net.Http.Headers;
 using Microsoft.Azure.Functions.Worker.Http;
 
 namespace Microsoft.OneFuzz.Service;

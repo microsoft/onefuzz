@@ -66,7 +66,7 @@ sealed class TestHttpRequestData : HttpRequestData {
     public override IEnumerable<ClaimsIdentity> Identities => throw new NotImplementedException();
 
     public override string Method { get; }
-    
+
     public override Uri Url => _url;
 
     public void SetUrl(Uri url) => _url = url;

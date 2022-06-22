@@ -1,8 +1,7 @@
-
+﻿
 using System;
 using System.Net;
 using System.Net.Http;
-using System.Web;
 using Microsoft.OneFuzz.Service;
 using Tests.Fakes;
 using Xunit;
@@ -49,7 +48,7 @@ public abstract class DownloadTestBase : FunctionTestBase {
         var func = new Download(auth, Context);
         var result = await func.Run(req);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
-        
+
         var err = BodyAs<Error>(result);
         Assert.Equal(ErrorCode.INVALID_REQUEST, err.Code);
     }
