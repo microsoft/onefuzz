@@ -285,8 +285,8 @@ jobs:
         cd src/ApiService/
 
         # Store GitHub RunID and SHA to be read by the 'info' function
-        echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
-        echo ${GITHUB_SHA} | tee onefuzzlib/git.version
+        echo ${GITHUB_RUN_ID} | tee ApiService/onefuzzlib/build.id
+        echo ${GITHUB_SHA} | tee ApiService/onefuzzlib/git.version
 
         version=$(./src/ci/get-version.sh)
 
