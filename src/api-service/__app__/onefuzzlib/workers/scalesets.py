@@ -902,7 +902,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             if scale_action.direction == "Increase":
                 scale_out_amount = scale_action.value
                 scale_out_cooldown = scale_action.cooldown
-            else if scale_action.direction == "Decrease":
+            elif scale_action.direction == "Decrease":
                 scale_in_amount = scale_action.value
                 scale_in_cooldown = scale_action.cooldown
             else:
@@ -1016,7 +1016,7 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
         entry.scale_in_cooldown=scale_in_cooldown,
 
         entry.save()
-        
+
         return entry
 
     def delete(cls, scaleset_id: UUID)
