@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System.IO;
+using System.Reflection;
+using System.Threading;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
@@ -20,15 +22,29 @@ public class Info {
             var subscription = _context.Creds.GetSubscription();
             var region = await _context.Creds.GetBaseRegion();
 
+            var asm = Assembly.GetExecutingAssembly();
+            var gitVersion = ReadResource(asm, "ApiService.onefuzzlib.git.version");
+            var buildId = ReadResource(asm, "ApiService.onefuzzlib.build.id");
+
             return new InfoResponse(
                 ResourceGroup: resourceGroup,
                 Subscription: subscription,
                 Region: region,
-                Versions: new Dictionary<string, InfoVersion> { { "onefuzz", new("TODO", "TODO", config.OneFuzzVersion) } },
+                Versions: new Dictionary<string, InfoVersion> { { "onefuzz", new(gitVersion, buildId, config.OneFuzzVersion) } },
                 InstanceId: await _context.Containers.GetInstanceId(),
                 InsightsAppid: config.ApplicationInsightsAppId,
                 InsightsInstrumentationKey: config.ApplicationInsightsInstrumentationKey);
         }, LazyThreadSafetyMode.PublicationOnly);
+    }
+
+    private static string ReadResource(Assembly asm, string resourceName) {
+        using var r = asm.GetManifestResourceStream(resourceName);
+        if (r is null) {
+            return "unknown";
+        }
+
+        using var sr = new StreamReader(r);
+        return sr.ReadToEnd();
     }
 
     private async Async.Task<HttpResponseData> GetResponse(HttpRequestData req)
