@@ -282,13 +282,13 @@ jobs:
         dotnet format --verify-no-changes --no-restore
     - name: Build Service
       run: |
+        version=$(./src/ci/get-version.sh)
+
         cd src/ApiService/
 
         # Store GitHub RunID and SHA to be read by the 'info' function
         echo ${GITHUB_RUN_ID} | tee ApiService/onefuzzlib/build.id
         echo ${GITHUB_SHA} | tee ApiService/onefuzzlib/git.version
-
-        version=$(./src/ci/get-version.sh)
 
         # stamp the build with version
         # note that version might have a suffix of '-{sha}' from get-version.sh
