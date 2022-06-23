@@ -12,7 +12,7 @@ public enum StorageType {
 }
 
 public interface IStorage {
-    public IEnumerable<string> CorpusAccounts();
+    public IReadOnlyList<string> CorpusAccounts();
     string GetPrimaryAccount(StorageType storageType);
 
     public Uri GetTableEndpoint(string accountId);
@@ -25,7 +25,7 @@ public interface IStorage {
 
     public Async.Task<string?> GetStorageAccountNameKeyByName(string accountName);
 
-    public IEnumerable<string> GetAccounts(StorageType storageType);
+    public IReadOnlyList<string> GetAccounts(StorageType storageType);
 }
 
 public sealed class Storage : IStorage, IDisposable {
@@ -59,8 +59,8 @@ public sealed class Storage : IStorage, IDisposable {
         return _armClient;
     }
 
-    public IEnumerable<string> CorpusAccounts() {
-        return _cache.GetOrCreate<List<string>>("CorpusAccounts", cacheEntry => {
+    public IReadOnlyList<string> CorpusAccounts() {
+        return _cache.GetOrCreate<IReadOnlyList<string>>("CorpusAccounts", cacheEntry => {
             var skip = GetFuncStorage();
             var results = new List<string> { GetFuzzStorage() };
 
@@ -149,7 +149,7 @@ public sealed class Storage : IStorage, IDisposable {
         return account_list[index];  // nosec
     }
 
-    public IEnumerable<string> GetAccounts(StorageType storageType) {
+    public IReadOnlyList<string> GetAccounts(StorageType storageType) {
         switch (storageType) {
             case StorageType.Corpus:
                 return CorpusAccounts();

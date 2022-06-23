@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager;
 using Azure.Storage;
@@ -10,6 +11,10 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface IContainers {
     public Async.Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType);
+
+    public Async.Task<Uri?> CreateContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata);
+
+    public Async.Task<BlobContainerClient?> GetOrCreateContainerClient(Container container, StorageType storageType, IDictionary<string, string>? metadata);
 
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
@@ -25,7 +30,8 @@ public interface IContainers {
 
     public Async.Task<Uri> AddContainerSasUrl(Uri uri, TimeSpan? duration = null);
 }
-
+    public Async.Task<Dictionary<string, IDictionary<string, string>>> GetContainers(StorageType corpus);
+}
 
 public class Containers : IContainers {
     private ILogTracer _log;
@@ -75,6 +81,68 @@ public class Containers : IContainers {
             return null;
         }
     }
+
+    public async Task<Uri?> CreateContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata) {
+        var client = await GetOrCreateContainerClient(container, storageType, metadata);
+        if (client is null) {
+            return null;
+        }
+
+        return GetContainerSasUrlService(client, _containerCreatePermissions);
+    }
+
+    private static readonly BlobContainerSasPermissions _containerCreatePermissions
+        = BlobContainerSasPermissions.Read
+        | BlobContainerSasPermissions.Write
+        | BlobContainerSasPermissions.Delete
+        | BlobContainerSasPermissions.List;
+
+    public async Task<BlobContainerClient?> GetOrCreateContainerClient(Container container, StorageType storageType, IDictionary<string, string>? metadata) {
+        var containerClient = await FindContainer(container, StorageType.Corpus);
+        if (containerClient is not null) {
+            return containerClient;
+        }
+
+        var account = ChooseAccount(storageType);
+        var client = await GetBlobService(account);
+        if (client is null) {
+            // TODO: after Cheick's changes this won't be able to return null any more
+            throw new InvalidOperationException($"Unable to get blob service for {account}");
+        }
+
+        var cc = client.GetBlobContainerClient(container.ContainerName);
+        try {
+            await cc.CreateAsync(metadata: metadata);
+        } catch (RequestFailedException ex) when (ex.ErrorCode == "ContainerAlreadyExists") {
+            // note: resource exists error happens during creation if the container
+            // is being deleted
+            _log.Error($"unable to create container.  account: {account} container: {container.ContainerName} metadata: {metadata} - {ex.Message}");
+            return null;
+        }
+
+        return cc;
+    }
+
+    private string ChooseAccount(StorageType storageType) {
+        var accounts = _storage.GetAccounts(storageType);
+        if (!accounts.Any()) {
+            throw new InvalidOperationException($"no storage accounts for {storageType}");
+        }
+
+        if (accounts.Count == 1) {
+            return accounts[0];
+        }
+
+        // Use a random secondary storage account if any are available.  This
+        // reduces IOP contention for the Storage Queues, which are only available
+        // on primary accounts
+        //
+        // security note: this is not used as a security feature
+        return RandomChoice(accounts.Skip(1).ToList());
+    }
+
+    private static T RandomChoice<T>(IReadOnlyList<T> input)
+        => input[Random.Shared.Next(input.Count)];
 
     public async Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType) {
         // # check secondary accounts first by searching in reverse.
@@ -153,13 +221,12 @@ public class Containers : IContainers {
 
     public static Uri? GetContainerSasUrlService(
         BlobContainerClient client,
-        BlobSasPermissions permissions,
+        BlobContainerSasPermissions permissions,
         bool tag = false,
         TimeSpan? timeSpan = null) {
         var (start, expiry) = SasTimeWindow(timeSpan ?? TimeSpan.FromDays(30.0));
         var sasBuilder = new BlobSasBuilder(permissions, expiry) { StartsOn = start };
-        var sas = client.GenerateSasUri(sasBuilder);
-        return sas;
+        return client.GenerateSasUri(sasBuilder);
     }
 
     public async Async.Task<Uri> AddContainerSasUrl(Uri uri, TimeSpan? duration = null) {
@@ -198,5 +265,21 @@ public class Containers : IContainers {
     public async Async.Task<bool> BlobExists(Container container, string name, StorageType storageType) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
         return await client.GetBlobClient(name).ExistsAsync();
+    }
+
+    public async Task<Dictionary<string, IDictionary<string, string>>> GetContainers(StorageType corpus) {
+        var accounts = _storage.GetAccounts(corpus);
+        IEnumerable<IEnumerable<KeyValuePair<string, IDictionary<string, string>>>> data =
+         await Async.Task.WhenAll(accounts.Select(async acc => {
+             var service = await GetBlobService(acc);
+             if (service is null) {
+                 throw new InvalidOperationException($"unable to get blob service for account {acc}");
+             }
+
+             return await service.GetBlobContainersAsync().Select(container =>
+                KeyValuePair.Create(container.Name, container.Properties.Metadata)).ToListAsync();
+         }));
+
+        return new(data.SelectMany(x => x));
     }
 }
