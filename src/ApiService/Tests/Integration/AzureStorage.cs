@@ -61,7 +61,4 @@ sealed class AzureStorage : IStorage {
     public Uri GetBlobEndpoint(string accountId)
         => new($"https://{AccountName}.blob.core.windows.net/");
 
-    public Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {
-        throw new System.NotImplementedException();
-    }
 }
