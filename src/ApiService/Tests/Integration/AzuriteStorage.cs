@@ -23,7 +23,7 @@ sealed class AzuriteStorage : IStorage {
     const string AccountKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
 
     public Task<(string, string)> GetStorageAccountNameAndKey(string accountId)
-        => Async.Task.FromResult((accountId, AccountKey));
+        => Async.Task.FromResult((AccountName, AccountKey));
 
     public Task<string?> GetStorageAccountNameKeyByName(string accountName) {
         return Async.Task.FromResult(AccountName)!;
