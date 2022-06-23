@@ -29,7 +29,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
     readonly Guid jobId = Guid.NewGuid();
     readonly Guid taskId = Guid.NewGuid();
     readonly Guid machineId = Guid.NewGuid();
-    readonly string poolName = $"pool-{Guid.NewGuid()}";
+    readonly PoolName poolName = PoolName.Parse($"pool-{Guid.NewGuid()}");
     readonly Guid poolId = Guid.NewGuid();
     readonly string poolVersion = $"version-{Guid.NewGuid()}";
 

@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
 using GroupId = System.Guid;
-using PoolName = System.String;
 using PrincipalId = System.Guid;
 using Region = System.String;
 
@@ -151,7 +150,6 @@ public record Proxy
 public record Error(ErrorCode Code, string[]? Errors = null);
 
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
-
 
 public record TaskDetails(
     TaskType Type,
@@ -318,11 +316,11 @@ public record InstanceConfig
     NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
     string ProxyVmSku,
-    IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules,
-    IDictionary<PrincipalId, GroupId[]>? GroupMembership,
-
-    IDictionary<string, string>? VmTags,
-    IDictionary<string, string>? VmssTags
+    IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
+    IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,
+    IDictionary<string, string>? VmTags = null,
+    IDictionary<string, string>? VmssTags = null,
+    bool? RequireAdminPrivileges = null
 ) : EntityBase() {
     public InstanceConfig(string instanceName) : this(
         instanceName,
@@ -332,12 +330,7 @@ public record InstanceConfig
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
         null,
-        "Standard_B2s",
-        null,
-        null,
-        null,
-        null) { }
-
+        "Standard_B2s") { }
     public InstanceConfig() : this(String.Empty) { }
 
     public List<Guid>? CheckAdmins(List<Guid>? value) {
@@ -347,7 +340,6 @@ public record InstanceConfig
             return value;
         }
     }
-
 
     //# At the moment, this only checks allowed_aad_tenants, however adding
     //# support for 3rd party JWT validation is anticipated in a future release.

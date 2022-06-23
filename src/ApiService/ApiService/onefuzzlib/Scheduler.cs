@@ -182,7 +182,7 @@ public class Scheduler : IScheduler {
         return (bucketConfig, workUnit);
     }
 
-    public record struct BucketId(Os os, Guid jobId, (string, string)? vm, string? pool, string setupContainer, bool? reboot, Guid? unique);
+    public record struct BucketId(Os os, Guid jobId, (string, string)? vm, PoolName? pool, string setupContainer, bool? reboot, Guid? unique);
 
     public static ILookup<BucketId, Task> BucketTasks(IEnumerable<Task> tasks) {
 
@@ -205,7 +205,7 @@ public class Scheduler : IScheduler {
             }
 
             // check for multiple VMs for 1.0.0 and later tasks
-            string? pool = task.Config.Pool?.PoolName;
+            var pool = task.Config.Pool?.PoolName;
             if ((task.Config.Pool?.Count ?? 0) > 1) {
                 unique = Guid.NewGuid();
             }
@@ -230,5 +230,3 @@ public class Scheduler : IScheduler {
         throw new Exception($"task missing setup container: task_type = {config.Task.Type}");
     }
 }
-
-

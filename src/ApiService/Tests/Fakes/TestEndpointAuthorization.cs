@@ -11,16 +11,16 @@ enum RequestType {
     Agent,
 }
 
-sealed class TestEndpointAuthorization : IEndpointAuthorization {
+sealed class TestEndpointAuthorization : EndpointAuthorization {
     private readonly RequestType _type;
     private readonly IOnefuzzContext _context;
 
-    public TestEndpointAuthorization(RequestType type, IOnefuzzContext context) {
+    public TestEndpointAuthorization(RequestType type, ILogTracer log, IOnefuzzContext context) : base(context, log) {
         _type = type;
         _context = context;
     }
 
-    public Task<HttpResponseData> CallIf(
+    public override Task<HttpResponseData> CallIf(
         HttpRequestData req,
         Func<HttpRequestData, Task<HttpResponseData>> method,
         bool allowUser = false,

@@ -19,6 +19,8 @@ public interface IEndpointAuthorization {
         Func<HttpRequestData, Async.Task<HttpResponseData>> method,
         bool allowUser = false,
         bool allowAgent = false);
+
+    Async.Task<OneFuzzResultVoid> CheckRequireAdmins(HttpRequestData req);
 }
 
 public class EndpointAuthorization : IEndpointAuthorization {
@@ -30,7 +32,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
         _log = log;
     }
 
-    public async Async.Task<HttpResponseData> CallIf(HttpRequestData req, Func<HttpRequestData, Async.Task<HttpResponseData>> method, bool allowUser = false, bool allowAgent = false) {
+    public virtual async Async.Task<HttpResponseData> CallIf(HttpRequestData req, Func<HttpRequestData, Async.Task<HttpResponseData>> method, bool allowUser = false, bool allowAgent = false) {
         var tokenResult = await _context.UserCredentials.ParseJwtToken(req);
 
         if (!tokenResult.IsOk) {
@@ -75,6 +77,59 @@ public class EndpointAuthorization : IEndpointAuthorization {
             "token verification",
             HttpStatusCode.Unauthorized
         );
+    }
+
+    public async Async.Task<OneFuzzResultVoid> CheckRequireAdmins(HttpRequestData req) {
+        var tokenResult = await _context.UserCredentials.ParseJwtToken(req);
+        if (!tokenResult.IsOk) {
+            return tokenResult.ErrorV;
+        }
+
+        var config = await _context.ConfigOperations.Fetch();
+        if (config is null) {
+            return new Error(
+                Code: ErrorCode.INVALID_CONFIGURATION,
+                Errors: new string[] { "no instance configuration found " });
+        }
+
+        return CheckRequireAdminsImpl(config, tokenResult.OkV);
+    }
+
+    private static OneFuzzResultVoid CheckRequireAdminsImpl(InstanceConfig config, UserInfo userInfo) {
+        // When there are no admins in the `admins` list, all users are considered
+        // admins.  However, `require_admin_privileges` is still useful to protect from
+        // mistakes.
+        //
+        // To make changes while still protecting against accidental changes to
+        // pools, do the following:
+        //
+        // 1. set `require_admin_privileges` to `False`
+        // 2. make the change
+        // 3. set `require_admin_privileges` to `True`
+
+        if (config.RequireAdminPrivileges == false) {
+            return OneFuzzResultVoid.Ok;
+        }
+
+        if (config.Admins is null) {
+            return new Error(
+                Code: ErrorCode.UNAUTHORIZED,
+                Errors: new string[] { "pool modification disabled " });
+        }
+
+        if (userInfo.ObjectId is Guid objectId) {
+            if (config.Admins.Contains(objectId)) {
+                return OneFuzzResultVoid.Ok;
+            }
+
+            return new Error(
+                Code: ErrorCode.UNAUTHORIZED,
+                Errors: new string[] { "not authorized to manage pools" });
+        } else {
+            return new Error(
+                Code: ErrorCode.UNAUTHORIZED,
+                Errors: new string[] { "user had no Object ID" });
+        }
     }
 
     public OneFuzzResultVoid CheckAccess(HttpRequestData req) {

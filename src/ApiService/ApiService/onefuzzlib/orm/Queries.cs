@@ -11,6 +11,9 @@ namespace ApiService.OneFuzzLib.Orm {
         public static string PartitionKey(string partitionKey)
             => TableClient.CreateQueryFilter($"PartitionKey eq {partitionKey}");
 
+        public static string PartitionKey(Guid partitionKey)
+            => TableClient.CreateQueryFilter($"PartitionKey eq {partitionKey}");
+
         public static string RowKey(string rowKey)
             => TableClient.CreateQueryFilter($"RowKey eq {rowKey}");
 

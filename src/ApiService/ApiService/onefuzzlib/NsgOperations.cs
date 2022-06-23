@@ -48,7 +48,7 @@ namespace Microsoft.OneFuzz.Service {
 
         public async Async.Task<OneFuzzResultVoid> DissociateNic(Nsg nsg, NetworkInterfaceResource nic) {
             if (nic.Data.NetworkSecurityGroup == null) {
-                return OneFuzzResultVoid.Ok();
+                return OneFuzzResultVoid.Ok;
             }
 
             var azureNsg = await GetNsg(nsg.Name);
@@ -83,7 +83,7 @@ namespace Microsoft.OneFuzz.Service {
                         err,
                     )
                     */
-                    return OneFuzzResultVoid.Ok();
+                    return OneFuzzResultVoid.Ok;
                 }
                 return OneFuzzResultVoid.Error(
                     ErrorCode.UNABLE_TO_UPDATE,
@@ -93,7 +93,7 @@ namespace Microsoft.OneFuzz.Service {
                 );
             }
 
-            return OneFuzzResultVoid.Ok();
+            return OneFuzzResultVoid.Ok;
         }
 
         public async Async.Task<NetworkSecurityGroupResource?> GetNsg(string name) {

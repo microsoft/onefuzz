@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using PoolName = System.String;
 using Region = System.String;
 
 namespace Microsoft.OneFuzz.Service;

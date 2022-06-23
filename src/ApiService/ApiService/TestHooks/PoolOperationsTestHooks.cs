@@ -25,7 +25,7 @@ namespace ApiService.TestHooks {
             _log.Info("get pool");
 
             var query = UriExtension.GetQueryComponents(req.Url);
-            var poolRes = await _poolOps.GetByName(query["name"]);
+            var poolRes = await _poolOps.GetByName(PoolName.Parse(query["name"]));
 
             if (poolRes.IsOk) {
                 var resp = req.CreateResponse(HttpStatusCode.OK);

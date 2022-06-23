@@ -6,7 +6,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IScalesetOperations : IOrm<Scaleset> {
     IAsyncEnumerable<Scaleset> Search();
 
-    public IAsyncEnumerable<Scaleset?> SearchByPool(string poolName);
+    public IAsyncEnumerable<Scaleset?> SearchByPool(PoolName poolName);
 
     public Async.Task UpdateConfigs(Scaleset scaleSet);
 
@@ -29,8 +29,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
         return QueryAsync();
     }
 
-    public IAsyncEnumerable<Scaleset> SearchByPool(string poolName) {
-        return QueryAsync(filter: $"pool_name eq '{poolName}'");
+    public IAsyncEnumerable<Scaleset> SearchByPool(PoolName poolName) {
+        return QueryAsync(filter: $"PartitionKey eq '{poolName}'");
     }
 
 
