@@ -102,10 +102,10 @@ public record ContainerGet(
 
 public record ContainerCreate(
     Container Name,
-    IDictionary<string, string>? Metadata
+    IDictionary<string, string>? Metadata = null
 ) : BaseRequest;
 
 public record ContainerDelete(
     Container Name,
-    IDictionary<string, string>? Metadata
+    IDictionary<string, string>? Metadata = null
 ) : BaseRequest;
