@@ -1,6 +1,4 @@
-﻿
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -51,7 +49,7 @@ public abstract class ValidatedStringConverter<T> : JsonConverter<T> where T : V
 [JsonConverter(typeof(Converter))]
 public record PoolName : ValidatedString {
     private PoolName(string value) : base(value) {
-        Debug.Assert(Check.IsAlnumDash(value));
+        // Debug.Assert(Check.IsAlnumDash(value));
     }
 
     public static PoolName Parse(string input) {
@@ -63,10 +61,14 @@ public record PoolName : ValidatedString {
     }
 
     public static bool TryParse(string input, [NotNullWhen(returnValue: true)] out PoolName? result) {
-        if (!Check.IsAlnumDash(input)) {
-            result = default;
-            return false;
-        }
+
+        // bypassing the validation because this code has a stricter validation than the python equivalent
+        // see (issue #2080)
+
+        // if (!Check.IsAlnumDash(input)) {
+        //     result = default;
+        //     return false;
+        // }
 
         result = new PoolName(input);
         return true;

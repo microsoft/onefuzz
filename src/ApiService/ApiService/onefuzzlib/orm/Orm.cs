@@ -61,7 +61,7 @@ namespace ApiService.OneFuzzLib.Orm {
         public async Task<ResultVoid<(int, string)>> Replace(T entity) {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
-            var response = await tableClient.UpsertEntityAsync(tableEntity);
+            var response = await tableClient.UpsertEntityAsync(tableEntity, TableUpdateMode.Replace);
             if (response.IsError) {
                 return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
             } else {
@@ -136,13 +136,42 @@ namespace ApiService.OneFuzzLib.Orm {
     }
 
 
-    public class StatefulOrm<T, TState> : Orm<T>, IStatefulOrm<T, TState> where T : StatefulEntityBase<TState> where TState : Enum {
+    public class StatefulOrm<T, TState, Self> : Orm<T>, IStatefulOrm<T, TState> where T : StatefulEntityBase<TState> where TState : Enum {
         static Lazy<Func<object>>? _partitionKeyGetter;
         static Lazy<Func<object>>? _rowKeyGetter;
         static ConcurrentDictionary<string, Func<T, Async.Task<T>>?> _stateFuncs = new ConcurrentDictionary<string, Func<T, Async.Task<T>>?>();
 
+        delegate Async.Task<T> StateTransition(T entity);
+
 
         static StatefulOrm() {
+
+            /// verify that all state transition function have the correct signature:
+            var thisType = typeof(Self);
+            var states = Enum.GetNames(typeof(TState));
+            var delegateType = typeof(StateTransition);
+            MethodInfo delegateSignature = delegateType.GetMethod("Invoke")!;
+
+            foreach (var state in states) {
+                var methodInfo = thisType?.GetMethod(state.ToString());
+                if (methodInfo == null) {
+                    continue;
+                }
+
+                bool parametersEqual = delegateSignature
+                    .GetParameters()
+                    .Select(x => x.ParameterType)
+                    .SequenceEqual(methodInfo.GetParameters()
+                        .Select(x => x.ParameterType));
+
+                if (delegateSignature.ReturnType == methodInfo.ReturnType && parametersEqual) {
+                    continue;
+                }
+
+                throw new Exception($"State transition method '{state}' in '{thisType?.Name}' does not have the correct signature. Expected '{delegateSignature}'  actual '{methodInfo}' ");
+            };
+
+
             _partitionKeyGetter =
                 typeof(T).GetProperties().FirstOrDefault(p => p.GetCustomAttributes(true).OfType<PartitionKeyAttribute>().Any())?.GetMethod switch {
                     null => null,
@@ -169,7 +198,7 @@ namespace ApiService.OneFuzzLib.Orm {
             TState state = entity.State;
             var func = GetType().GetMethod(state.ToString()) switch {
                 null => null,
-                MethodInfo info => (Func<T, Async.Task<T>>)Delegate.CreateDelegate(typeof(Func<T, Async.Task<T>>), firstArgument: this, method: info)
+                MethodInfo info => info.CreateDelegate<StateTransition>(this)
             };
 
             if (func != null) {

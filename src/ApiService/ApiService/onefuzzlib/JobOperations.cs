@@ -12,7 +12,7 @@ public interface IJobOperations : IStatefulOrm<Job, JobState> {
     Async.Task StopIfAllDone(Job job);
 }
 
-public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
+public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOperations {
     private static TimeSpan JOB_NEVER_STARTED_DURATION = TimeSpan.FromDays(30);
 
     public JobOperations(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
@@ -93,7 +93,7 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
         if (result.IsOk) {
             return job;
         } else {
-            throw new Exception($"Failed to save job {job.JobId}");
+            throw new Exception($"Failed to save job {job.JobId} : {result.ErrorV}");
         }
     }
 }

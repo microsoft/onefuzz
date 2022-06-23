@@ -26,7 +26,7 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
     Async.Task<Task> SetState(Task task, TaskState state);
 }
 
-public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
+public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITaskOperations {
 
 
     public TaskOperations(ILogTracer log, IOnefuzzContext context)

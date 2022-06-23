@@ -9,12 +9,6 @@ public class ValidatedStringTests {
     record ThingContainingPoolName(PoolName PoolName);
 
     [Fact]
-    public void PoolNameValidatesOnDeserialization() {
-        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ThingContainingPoolName>("{ \"PoolName\": \"is-not!-a-pool\" }"));
-        Assert.Equal("unable to parse input as a PoolName", ex.Message);
-    }
-
-    [Fact]
     public void PoolNameDeserializesFromString() {
         var result = JsonSerializer.Deserialize<ThingContainingPoolName>("{  \"PoolName\": \"is-a-pool\" }");
         Assert.Equal("is-a-pool", result?.PoolName.String);
