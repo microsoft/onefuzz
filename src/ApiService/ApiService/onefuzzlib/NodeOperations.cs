@@ -269,7 +269,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
 
 
     public async Async.Task<Node?> GetByMachineId(Guid machineId) {
-        var data = QueryAsync(filter: $"RowKey eq '{machineId}'");
+        var data = QueryAsync(filter: Query.RowKey(machineId));
 
         return await data.FirstOrDefaultAsync();
     }
