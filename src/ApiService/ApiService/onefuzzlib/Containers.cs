@@ -13,7 +13,7 @@ public interface IContainers {
 
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
-    public Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
+    public Async.Task<Uri> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
     public Async.Task SaveBlob(Container container, string v1, string v2, StorageType config);
     public Async.Task<Guid> GetInstanceId();
 
@@ -110,14 +110,14 @@ public class Containers : IContainers {
         return new BlobServiceClient(accountUrl, storageKeyCredential);
     }
 
-    public async Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null) {
+    public async Async.Task<Uri> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
 
         var (startTime, endTime) = SasTimeWindow(duration ?? TimeSpan.FromDays(30));
 
         var sasBuilder = new BlobSasBuilder(permissions, endTime) {
             StartsOn = startTime,
-            BlobContainerName = container.ContainerName,
+            BlobContainerName = _config.OneFuzzStoragePrefix + container.ContainerName,
             BlobName = name
         };
 
