@@ -409,7 +409,7 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState>, INodeT
 
     //TODO: suggest by Cheick: this can probably be optimize by query all NodesTasks then query the all machine in single request
     public async IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId, INodeOperations nodeOps) {
-        await foreach (var entry in QueryAsync($"task_id eq '{taskId}'")) {
+        await foreach (var entry in QueryAsync(Query.RowKey(taskId))) {
             var node = await nodeOps.GetByMachineId(entry.MachineId);
             if (node is not null) {
                 yield return node;
@@ -418,7 +418,7 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState>, INodeT
     }
     public async IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId, INodeOperations nodeOps) {
 
-        await foreach (var entry in QueryAsync($"task_id eq '{taskId}'")) {
+        await foreach (var entry in QueryAsync(Query.RowKey(taskId))) {
             var node = await nodeOps.GetByMachineId(entry.MachineId);
             if (node is not null) {
                 var nodeAssignment = new NodeAssignment(node.MachineId, node.ScalesetId, entry.State);
@@ -428,11 +428,11 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState>, INodeT
     }
 
     public IAsyncEnumerable<NodeTasks> GetByMachineId(Guid machineId) {
-        return QueryAsync($"machine_id eq '{machineId}'");
+        return QueryAsync(Query.PartitionKey(machineId));
     }
 
     public IAsyncEnumerable<NodeTasks> GetByTaskId(Guid taskId) {
-        return QueryAsync($"task_id eq '{taskId}'");
+        return QueryAsync(Query.RowKey(taskId));
     }
 
     public async Async.Task ClearByMachineId(Guid machineId) {
