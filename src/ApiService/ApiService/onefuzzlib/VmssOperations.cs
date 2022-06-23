@@ -80,7 +80,7 @@ public class VmssOperations : IVmssOperations {
             }
             var _ = await res.UpdateAsync(WaitUntil.Started, patch);
             _log.Info($"VM extensions updated: {name}");
-            return OneFuzzResultVoid.Ok();
+            return OneFuzzResultVoid.Ok;
 
         } else {
             return OneFuzzResultVoid.Error(canUpdate.ErrorV);
@@ -169,13 +169,13 @@ public class VmssOperations : IVmssOperations {
                     _log.WithHttpStatus((r.GetRawResponse().Status, r.GetRawResponse().ReasonPhrase)).Error(msg);
                     return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, msg);
                 } else {
-                    return OneFuzzResultVoid.Ok();
+                    return OneFuzzResultVoid.Ok;
                 }
             } catch (Exception ex) when (ex is RequestFailedException || ex is CloudException) {
 
                 if (ex.Message.Contains(INSTANCE_NOT_FOUND) && protectFromScaleIn == false) {
                     _log.Info($"Tried to remove scale in protection on node {name} {vmId} but instance no longer exists");
-                    return OneFuzzResultVoid.Ok();
+                    return OneFuzzResultVoid.Ok;
                 } else {
                     var msg = $"failed to update scale in protection on vm {vmId} for scaleset {name}";
                     _log.Exception(ex, msg);

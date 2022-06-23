@@ -24,6 +24,9 @@ public sealed class TestContext : IOnefuzzContext {
         NodeTasksOperations = new NodeTasksOperations(logTracer, this);
         TaskEventOperations = new TaskEventOperations(logTracer, this);
         NodeMessageOperations = new NodeMessageOperations(logTracer, this);
+        ConfigOperations = new ConfigOperations(logTracer, this);
+
+        UserCredentials = new UserCredentials(logTracer, ConfigOperations);
     }
 
     public TestEvents Events { get; set; } = new();
@@ -36,6 +39,7 @@ public sealed class TestContext : IOnefuzzContext {
                 Node n => NodeOperations.Insert(n),
                 Job j => JobOperations.Insert(j),
                 NodeTasks nt => NodeTasksOperations.Insert(nt),
+                InstanceConfig ic => ConfigOperations.Insert(ic),
                 _ => throw new NotImplementedException($"Need to add an TestContext.InsertAll case for {x.GetType()} entities"),
             }));
 
@@ -48,6 +52,7 @@ public sealed class TestContext : IOnefuzzContext {
     public IStorage Storage { get; }
     public ICreds Creds { get; }
     public IContainers Containers { get; }
+    public IUserCredentials UserCredentials { get; set; }
 
     public IRequestHandling RequestHandling { get; }
 
@@ -57,12 +62,12 @@ public sealed class TestContext : IOnefuzzContext {
     public INodeTasksOperations NodeTasksOperations { get; }
     public ITaskEventOperations TaskEventOperations { get; }
     public INodeMessageOperations NodeMessageOperations { get; }
+    public IConfigOperations ConfigOperations { get; }
 
     // -- Remainder not implemented --
 
     public IConfig Config => throw new System.NotImplementedException();
 
-    public IConfigOperations ConfigOperations => throw new System.NotImplementedException();
 
     public IDiskOperations DiskOperations => throw new System.NotImplementedException();
 
@@ -91,8 +96,6 @@ public sealed class TestContext : IOnefuzzContext {
     public IScheduler Scheduler => throw new System.NotImplementedException();
 
     public ISecretsOperations SecretsOperations => throw new System.NotImplementedException();
-
-    public IUserCredentials UserCredentials => throw new System.NotImplementedException();
 
     public IVmOperations VmOperations => throw new System.NotImplementedException();
 

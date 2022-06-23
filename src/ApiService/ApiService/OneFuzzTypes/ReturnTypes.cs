@@ -54,6 +54,9 @@ namespace Microsoft.OneFuzz.Service {
         public static OneFuzzResult<T_Ok> Error(ErrorCode errorCode, string error) => new(errorCode, new[] { error });
 
         public static OneFuzzResult<T_Ok> Error(Error err) => new(err);
+
+        // Allow simple conversion of Errors to Results.
+        public static implicit operator OneFuzzResult<T_Ok>(Error err) => new(err);
     }
 
     public struct OneFuzzResultVoid {
@@ -69,9 +72,12 @@ namespace Microsoft.OneFuzz.Service {
 
         private OneFuzzResultVoid(Error err) => (ErrorV, IsOk) = (err, false);
 
-        public static OneFuzzResultVoid Ok() => new();
+        public static OneFuzzResultVoid Ok => new();
         public static OneFuzzResultVoid Error(ErrorCode errorCode, string[] errors) => new(errorCode, errors);
         public static OneFuzzResultVoid Error(ErrorCode errorCode, string error) => new(errorCode, new[] { error });
         public static OneFuzzResultVoid Error(Error err) => new(err);
+
+        // Allow simple conversion of Errors to Results.
+        public static implicit operator OneFuzzResultVoid(Error err) => new(err);
     }
 }
