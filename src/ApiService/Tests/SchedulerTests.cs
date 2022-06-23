@@ -24,7 +24,7 @@ public class SchedulerTests {
                         TargetExe: "fuzz.exe",
                         TargetEnv: new Dictionary<string, string>(),
                         TargetOptions: new List<string>()),
-                    Pool: new TaskPool(1, "pool"),
+                    Pool: new TaskPool(1, PoolName.Parse("pool")),
                     Containers: new List<TaskContainers> { new TaskContainers(ContainerType.Setup, new Container("setup")) },
                     Colocate: true
 
@@ -113,7 +113,7 @@ public class SchedulerTests {
                 Config = task.Config with {
                     JobId = i % 2 == 0 ? jobId : task.Config.JobId,
                     Containers = containers,
-                    Pool = i % 5 == 0 ? task.Config.Pool! with { PoolName = "alternate-pool" } : task.Config.Pool
+                    Pool = i % 5 == 0 ? task.Config.Pool! with { PoolName = PoolName.Parse("alternate-pool") } : task.Config.Pool
                 }
             };
         }).ToList();
