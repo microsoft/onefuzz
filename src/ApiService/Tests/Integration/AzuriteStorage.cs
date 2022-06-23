@@ -26,7 +26,7 @@ sealed class AzuriteStorage : IStorage {
         => Async.Task.FromResult((accountId, AccountKey));
 
     public Task<string?> GetStorageAccountNameKeyByName(string accountName) {
-        yield return AccountName;
+        return Async.Task.FromResult(AccountName)!;
     }
 
     public Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {
@@ -39,5 +39,9 @@ sealed class AzuriteStorage : IStorage {
 
     public string GetPrimaryAccount(StorageType storageType) {
         throw new System.NotImplementedException();
+    }
+
+    public IEnumerable<string> GetAccounts(StorageType storageType) {
+        yield return AccountName;
     }
 }
