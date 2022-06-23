@@ -127,16 +127,7 @@ public class SchedulerTests {
         Assert.Equal(buckets.Count, bucketCount);
 
         foreach (var task in tasks) {
-            var seen = false;
-            foreach (var bucket in buckets) {
-                if (bucket.Contains(task)) {
-                    Assert.False(seen);
-                    seen = true;
-                }
-            }
-            Assert.True(seen);
+            Assert.Single(buckets, b => b.Contains(task));
         }
-
     }
-
 }
