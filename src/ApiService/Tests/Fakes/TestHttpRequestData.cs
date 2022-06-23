@@ -44,6 +44,9 @@ sealed class TestHttpRequestData : HttpRequestData {
     public static TestHttpRequestData FromJson<T>(string method, T obj)
         => new(method, Serializer.Serialize(obj));
 
+    public static TestHttpRequestData Empty(string method)
+        => new(method, new BinaryData(Array.Empty<byte>()));
+
     public TestHttpRequestData(string method, BinaryData body)
         : base(NewFunctionContext()) {
         Method = method;

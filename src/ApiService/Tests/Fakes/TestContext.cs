@@ -10,10 +10,12 @@ namespace Tests.Fakes;
 // TestContext provides a minimal IOnefuzzContext implementation to allow running
 // of functions as unit or integration tests.
 public sealed class TestContext : IOnefuzzContext {
-    public TestContext(ILogTracer logTracer, IStorage storage, string tablePrefix, string accountId) {
-        ServiceConfiguration = new TestServiceConfiguration(tablePrefix, accountId);
+    public TestContext(ILogTracer logTracer, IStorage storage, ICreds creds, string storagePrefix) {
+        ServiceConfiguration = new TestServiceConfiguration(storagePrefix);
 
         Storage = storage;
+        Creds = creds;
+        Containers = new Containers(logTracer, Storage, Creds, ServiceConfiguration);
 
         RequestHandling = new RequestHandling(logTracer);
         TaskOperations = new TaskOperations(logTracer, this);
@@ -44,6 +46,8 @@ public sealed class TestContext : IOnefuzzContext {
     public IServiceConfig ServiceConfiguration { get; }
 
     public IStorage Storage { get; }
+    public ICreds Creds { get; }
+    public IContainers Containers { get; }
 
     public IRequestHandling RequestHandling { get; }
 
@@ -59,10 +63,6 @@ public sealed class TestContext : IOnefuzzContext {
     public IConfig Config => throw new System.NotImplementedException();
 
     public IConfigOperations ConfigOperations => throw new System.NotImplementedException();
-
-    public IContainers Containers => throw new System.NotImplementedException();
-
-    public ICreds Creds => throw new System.NotImplementedException();
 
     public IDiskOperations DiskOperations => throw new System.NotImplementedException();
 

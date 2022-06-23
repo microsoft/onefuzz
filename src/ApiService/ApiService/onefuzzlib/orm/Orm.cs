@@ -93,7 +93,7 @@ namespace ApiService.OneFuzzLib.Orm {
 
         public async Task<TableClient> GetTableClient(string table, string? accountId = null) {
             // TODO: do this less often, instead of once per request:
-            var tableName = _context.ServiceConfiguration.OneFuzzTablePrefix + table;
+            var tableName = _context.ServiceConfiguration.OneFuzzStoragePrefix + table;
 
             var account = accountId ?? _context.ServiceConfiguration.OneFuzzFuncStorage ?? throw new ArgumentNullException(nameof(accountId));
             var (name, key) = await _context.Storage.GetStorageAccountNameAndKey(account);
