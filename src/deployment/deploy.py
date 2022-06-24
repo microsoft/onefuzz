@@ -152,7 +152,7 @@ class Client:
         subscription_id: Optional[str],
         admins: List[UUID],
         allowed_aad_tenants: List[UUID],
-        enable_dotnet: List[str] = ["timer_tasks"],
+        enable_dotnet: List[str],
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
