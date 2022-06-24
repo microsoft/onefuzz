@@ -14,7 +14,7 @@ public interface IScalesetOperations : IOrm<Scaleset> {
     IAsyncEnumerable<Scaleset> GetByObjectId(Guid objectId);
 }
 
-public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalesetOperations {
+public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetOperations>, IScalesetOperations {
     const string SCALESET_LOG_PREFIX = "scalesets: ";
 
     ILogTracer _log;

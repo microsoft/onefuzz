@@ -43,6 +43,8 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Async.Task MarkTasksStoppedEarly(Node node, Error? error = null);
     static TimeSpan NODE_EXPIRATION_TIME = TimeSpan.FromHours(1.0);
     static TimeSpan NODE_REIMAGE_TIME = TimeSpan.FromDays(6.0);
+
+    Async.Task StopTask(Guid task_id);
 }
 
 
@@ -51,7 +53,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
 /// Enabling autoscaling for the scalesets based on the pool work queues.
 /// https://docs.microsoft.com/en-us/azure/azure-monitor/platform/autoscale-common-metrics#commonly-used-storage-metrics
 
-public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
+public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INodeOperations {
 
 
     public NodeOperations(
@@ -269,7 +271,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
 
 
     public async Async.Task<Node?> GetByMachineId(Guid machineId) {
-        var data = QueryAsync(filter: $"RowKey eq '{machineId}'");
+        var data = QueryAsync(filter: Query.RowKey(machineId.ToString()));
 
         return await data.FirstOrDefaultAsync();
     }
@@ -387,18 +389,49 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
         await _context.Events.SendEvent(new EventNodeDeleted(node.MachineId, node.ScalesetId, node.PoolName, node.State));
     }
 
+    public async Async.Task StopTask(Guid task_id) {
+        // For now, this just re-images the node.  Eventually, this
+        // should send a message to the node to let the agent shut down
+        // gracefully
+
+        var nodes = _context.NodeTasksOperations.GetNodesByTaskId(task_id);
+
+        await foreach (var node in nodes) {
+            await _context.NodeMessageOperations.SendMessage(node.MachineId, new NodeCommand(StopTask: new StopTaskNodeCommand(task_id)));
+
+            if (!(await StopIfComplete(node))) {
+                _logTracer.Info($"nodes: stopped task on node, but not reimaging due to other tasks: task_id:{task_id} machine_id:{node.MachineId}");
+            }
+        }
+
+    }
+
+    /// returns True on stopping the node and False if this doesn't stop the node
+    private async Task<bool> StopIfComplete(Node node, bool done = false) {
+        var nodeTaskIds = await _context.NodeTasksOperations.GetByMachineId(node.MachineId).Select(nt => nt.TaskId).ToArrayAsync();
+        var tasks = _context.TaskOperations.GetByTaskIds(nodeTaskIds);
+        await foreach (var task in tasks) {
+            if (!TaskStateHelper.ShuttingDown(task.State)) {
+                return false;
+            }
+        }
+        _logTracer.Info($"node: stopping busy node with all tasks complete: {node.MachineId}");
+
+        await Stop(node, done: done);
+        return true;
+    }
 }
 
 
 public interface INodeTasksOperations : IStatefulOrm<NodeTasks, NodeTaskState> {
-    IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId, INodeOperations nodeOps);
+    IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId);
     IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId, INodeOperations nodeOps);
     IAsyncEnumerable<NodeTasks> GetByMachineId(Guid machineId);
     IAsyncEnumerable<NodeTasks> GetByTaskId(Guid taskId);
     Async.Task ClearByMachineId(Guid machineId);
 }
 
-public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState>, INodeTasksOperations {
+public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState, NodeTasksOperations>, INodeTasksOperations {
 
     ILogTracer _log;
 
@@ -408,18 +441,20 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState>, INodeT
     }
 
     //TODO: suggest by Cheick: this can probably be optimize by query all NodesTasks then query the all machine in single request
-    public async IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId, INodeOperations nodeOps) {
-        await foreach (var entry in QueryAsync($"task_id eq '{taskId}'")) {
-            var node = await nodeOps.GetByMachineId(entry.MachineId);
+
+    public async IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId) {
+        await foreach (var entry in QueryAsync(Query.RowKey(taskId.ToString()))) {
+            var node = await _context.NodeOperations.GetByMachineId(entry.MachineId);
             if (node is not null) {
                 yield return node;
             }
         }
     }
+
     public async IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId, INodeOperations nodeOps) {
 
-        await foreach (var entry in QueryAsync($"task_id eq '{taskId}'")) {
-            var node = await nodeOps.GetByMachineId(entry.MachineId);
+        await foreach (var entry in QueryAsync(Query.RowKey(taskId.ToString()))) {
+            var node = await _context.NodeOperations.GetByMachineId(entry.MachineId);
             if (node is not null) {
                 var nodeAssignment = new NodeAssignment(node.MachineId, node.ScalesetId, entry.State);
                 yield return nodeAssignment;
@@ -428,11 +463,11 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState>, INodeT
     }
 
     public IAsyncEnumerable<NodeTasks> GetByMachineId(Guid machineId) {
-        return QueryAsync($"machine_id eq '{machineId}'");
+        return QueryAsync(Query.PartitionKey(machineId.ToString()));
     }
 
     public IAsyncEnumerable<NodeTasks> GetByTaskId(Guid taskId) {
-        return QueryAsync($"task_id eq '{taskId}'");
+        return QueryAsync(Query.RowKey(taskId.ToString()));
     }
 
     public async Async.Task ClearByMachineId(Guid machineId) {
@@ -472,7 +507,7 @@ public class NodeMessageOperations : Orm<NodeMessage>, INodeMessageOperations {
     }
 
     public IAsyncEnumerable<NodeMessage> GetMessage(Guid machineId)
-        => QueryAsync(Query.PartitionKey(machineId));
+        => QueryAsync(Query.PartitionKey(machineId.ToString()));
 
     public async Async.Task ClearMessages(Guid machineId) {
         _logTracer.Info($"clearing messages for node {machineId}");

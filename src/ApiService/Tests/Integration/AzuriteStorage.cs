@@ -22,15 +22,11 @@ sealed class AzuriteStorage : IStorage {
     const string AccountName = "devstoreaccount1";
     const string AccountKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
 
-    public Task<(string?, string?)> GetStorageAccountNameAndKey(string _accountId)
-        => Async.Task.FromResult<(string?, string?)>((AccountName, AccountKey));
+    public Task<(string, string)> GetStorageAccountNameAndKey(string accountId)
+        => Async.Task.FromResult((AccountName, AccountKey));
 
-    public IEnumerable<string> GetAccounts(StorageType storageType) {
-        yield return AccountName;
-    }
-
-    public Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {
-        throw new System.NotImplementedException();
+    public Task<string?> GetStorageAccountNameKeyByName(string accountName) {
+        return Async.Task.FromResult(AccountName)!;
     }
 
     public IEnumerable<string> CorpusAccounts() {
@@ -39,5 +35,9 @@ sealed class AzuriteStorage : IStorage {
 
     public string GetPrimaryAccount(StorageType storageType) {
         throw new System.NotImplementedException();
+    }
+
+    public IEnumerable<string> GetAccounts(StorageType storageType) {
+        yield return AccountName;
     }
 }

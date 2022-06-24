@@ -10,7 +10,7 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
     public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? States);
 }
 
-public class ReproOperations : StatefulOrm<Repro, VmState>, IReproOperations {
+public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
     private static readonly Dictionary<Os, string> DEFAULT_OS = new Dictionary<Os, string>
     {
         {Os.Linux, "Canonical:UbuntuServer:18.04-LTS:latest"},

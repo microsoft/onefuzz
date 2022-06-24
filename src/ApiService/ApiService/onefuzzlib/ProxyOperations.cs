@@ -13,7 +13,7 @@ public interface IProxyOperations : IStatefulOrm<Proxy, VmState> {
     bool IsOutdated(Proxy proxy);
     Async.Task<Proxy?> GetOrCreate(string region);
 }
-public class ProxyOperations : StatefulOrm<Proxy, VmState>, IProxyOperations {
+public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IProxyOperations {
 
 
     static TimeSpan PROXY_LIFESPAN = TimeSpan.FromDays(7);

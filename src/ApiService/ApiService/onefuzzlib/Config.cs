@@ -5,7 +5,6 @@ namespace Microsoft.OneFuzz.Service;
 
 
 public interface IConfig {
-    string GetSetupContainer(TaskConfig config);
     Async.Task<TaskUnitConfig> BuildTaskConfig(Job job, Task task);
 }
 
@@ -89,9 +88,13 @@ public class Config : IConfig {
 
         await foreach (var data in containersByType) {
 
+            if (!data.containers.Any()) {
+                continue;
+            }
+
             IContainerDef def = data.countainerDef switch {
                 ContainerDefinition { Compare: Compare.Equal, Value: 1 } or
-                ContainerDefinition { Compare: Compare.AtMost, Value: 1 } => new SingleContainer(data.containers[0]),
+                ContainerDefinition { Compare: Compare.AtMost, Value: 1 } when data.containers.Count == 1 => new SingleContainer(data.containers[0]),
                 _ => new MultipleContainer(data.containers)
             };
 
@@ -125,6 +128,9 @@ public class Config : IConfig {
                     break;
                 case ContainerType.UniqueReports:
                     config.UniqueReports = def;
+                    break;
+                case ContainerType.RegressionReports:
+                    config.RegressionReports = def;
                     break;
             }
         }
@@ -248,17 +254,5 @@ public class Config : IConfig {
         }
 
         return config;
-    }
-
-
-    public string GetSetupContainer(TaskConfig config) {
-
-        foreach (var container in config.Containers ?? throw new Exception("Missing containers")) {
-            if (container.Type == ContainerType.Setup) {
-                return container.Name.ContainerName;
-            }
-        }
-
-        throw new Exception($"task missing setup container: task_type = {config.Task.Type}");
     }
 }

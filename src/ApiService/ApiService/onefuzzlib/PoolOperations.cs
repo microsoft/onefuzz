@@ -9,7 +9,7 @@ public interface IPoolOperations {
     IAsyncEnumerable<Pool> GetByClientId(Guid clientId);
 }
 
-public class PoolOperations : StatefulOrm<Pool, PoolState>, IPoolOperations {
+public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoolOperations {
 
     public PoolOperations(ILogTracer log, IOnefuzzContext context)
         : base(log, context) {

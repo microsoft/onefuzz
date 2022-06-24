@@ -20,9 +20,9 @@ public interface IStorage {
 
     public Uri GetBlobEndpoint(string accountId);
 
-    public Async.Task<(string?, string?)> GetStorageAccountNameAndKey(string accountId);
+    public Async.Task<(string, string)> GetStorageAccountNameAndKey(string accountId);
 
-    public Async.Task<string?> GetStorageAccountNameAndKeyByName(string accountName);
+    public Async.Task<string?> GetStorageAccountNameKeyByName(string accountName);
 
     public IEnumerable<string> GetAccounts(StorageType storageType);
 }
@@ -99,16 +99,16 @@ public class Storage : IStorage {
             };
     }
 
-    public async Async.Task<(string?, string?)> GetStorageAccountNameAndKey(string accountId) {
+    public async Async.Task<(string, string)> GetStorageAccountNameAndKey(string accountId) {
         var resourceId = new ResourceIdentifier(accountId);
         var armClient = GetMgmtClient();
         var storageAccount = armClient.GetStorageAccountResource(resourceId);
         var keys = await storageAccount.GetKeysAsync();
-        var key = keys.Value.Keys.FirstOrDefault();
-        return (resourceId.Name, key?.Value);
+        var key = keys.Value.Keys.FirstOrDefault() ?? throw new Exception("no keys found");
+        return (resourceId.Name, key.Value);
     }
 
-    public async Async.Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {
+    public async Async.Task<string?> GetStorageAccountNameKeyByName(string accountName) {
         var armClient = GetMgmtClient();
         var resourceGroup = _creds.GetResourceGroupResourceIdentifier();
         var storageAccount = await armClient.GetResourceGroupResource(resourceGroup).GetStorageAccountAsync(accountName);

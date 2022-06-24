@@ -11,11 +11,14 @@ namespace ApiService.OneFuzzLib.Orm {
         public static string PartitionKey(string partitionKey)
             => TableClient.CreateQueryFilter($"PartitionKey eq {partitionKey}");
 
-        public static string PartitionKey(Guid partitionKey)
-            => TableClient.CreateQueryFilter($"PartitionKey eq {partitionKey}");
-
         public static string RowKey(string rowKey)
             => TableClient.CreateQueryFilter($"RowKey eq {rowKey}");
+
+        public static string PartitionKeys(IEnumerable<string> partitionKeys)
+            => Or(partitionKeys.Select(PartitionKey));
+
+        public static string RowKeys(IEnumerable<string> rowKeys)
+            => Or(rowKeys.Select(RowKey));
 
         public static string SingleEntity(string partitionKey, string rowKey)
             => TableClient.CreateQueryFilter($"(PartitionKey eq {partitionKey}) and (RowKey eq {rowKey})");
