@@ -61,7 +61,7 @@ namespace ApiService.OneFuzzLib.Orm {
         public async Task<ResultVoid<(int, string)>> Replace(T entity) {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
-            var response = await tableClient.UpsertEntityAsync(tableEntity);
+            var response = await tableClient.UpsertEntityAsync(tableEntity, TableUpdateMode.Replace);
             if (response.IsError) {
                 return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
             } else {

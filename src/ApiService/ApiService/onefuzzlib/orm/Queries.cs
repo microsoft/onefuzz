@@ -16,6 +16,7 @@ namespace ApiService.OneFuzzLib.Orm {
 
         public static string RowKey(string rowKey)
             => TableClient.CreateQueryFilter($"RowKey eq {rowKey}");
+
         public static string RowKey(Guid rowKey)
             => TableClient.CreateQueryFilter($"RowKey eq {rowKey.ToString()}");
 

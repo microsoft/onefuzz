@@ -391,8 +391,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState>, INodeOperations {
 
 
 public interface INodeTasksOperations : IStatefulOrm<NodeTasks, NodeTaskState> {
-    IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId, INodeOperations nodeOps);
-    IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId, INodeOperations nodeOps);
+    IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId);
+    IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId);
     IAsyncEnumerable<NodeTasks> GetByMachineId(Guid machineId);
     IAsyncEnumerable<NodeTasks> GetByTaskId(Guid taskId);
     Async.Task ClearByMachineId(Guid machineId);
@@ -408,18 +408,19 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState>, INodeT
     }
 
     //TODO: suggest by Cheick: this can probably be optimize by query all NodesTasks then query the all machine in single request
-    public async IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId, INodeOperations nodeOps) {
+    public async IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId) {
         await foreach (var entry in QueryAsync(Query.RowKey(taskId))) {
-            var node = await nodeOps.GetByMachineId(entry.MachineId);
+            var node = await _context.NodeOperations.GetByMachineId(entry.MachineId);
             if (node is not null) {
                 yield return node;
             }
         }
     }
-    public async IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId, INodeOperations nodeOps) {
+
+    public async IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId) {
 
         await foreach (var entry in QueryAsync(Query.RowKey(taskId))) {
-            var node = await nodeOps.GetByMachineId(entry.MachineId);
+            var node = await _context.NodeOperations.GetByMachineId(entry.MachineId);
             if (node is not null) {
                 var nodeAssignment = new NodeAssignment(node.MachineId, node.ScalesetId, entry.State);
                 yield return nodeAssignment;
@@ -472,7 +473,7 @@ public class NodeMessageOperations : Orm<NodeMessage>, INodeMessageOperations {
     }
 
     public IAsyncEnumerable<NodeMessage> GetMessage(Guid machineId)
-        => QueryAsync(Query.PartitionKey(machineId));
+        => QueryAsync(Query.PartitionKey(machineId.ToString()));
 
     public async Async.Task ClearMessages(Guid machineId) {
         _logTracer.Info($"clearing messages for node {machineId}");
