@@ -36,6 +36,7 @@ public class RequestsTests {
         var reserialized = _serializer.Serialize(deserialized);
         var result = Encoding.UTF8.GetString(reserialized);
         result = result.Replace(System.Environment.NewLine, "\n");
+        json = json.Replace(System.Environment.NewLine, "\n");
         Assert.Equal(json, result);
     }
 
