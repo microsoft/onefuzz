@@ -289,7 +289,7 @@ jobs:
       run: |
         cd src/ApiService/
         azurite --silent &
-        dotnet test --no-restore --collect:"XPlat Code Coverage" --filter 'Category!=Integration'
+        dotnet test --no-restore --collect:"XPlat Code Coverage" --filter 'Category!=Live'
         dotnet tool run reportgenerator -reports:Tests/TestResults/*/coverage.cobertura.xml -targetdir:coverage -reporttypes:MarkdownSummary
         kill %1
         cat coverage/*.md > $GITHUB_STEP_SUMMARY

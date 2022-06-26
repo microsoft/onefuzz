@@ -20,7 +20,7 @@ namespace IntegrationTests;
 // with all the tests defined in it. Then, from that class
 // derive two non-abstract classes for XUnit to find:
 // - one for Azurite
-// - one for Azure Storage (marked with [Trait("Category", "Integration")])
+// - one for Azure Storage (marked with [Trait("Category", "Live")])
 //
 // See AgentEventsTests for an example.
 public abstract class FunctionTestBase : IDisposable {

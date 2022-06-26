@@ -11,7 +11,7 @@ using Async = System.Threading.Tasks;
 
 namespace IntegrationTests.Functions;
 
-[Trait("Category", "Integration")]
+[Trait("Category", "Live")]
 public class AzureStorageNodeTest : NodeTestBase {
     public AzureStorageNodeTest(ITestOutputHelper output)
         : base(output, Integration.AzureStorage.FromEnvironment()) { }

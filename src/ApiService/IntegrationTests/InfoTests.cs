@@ -9,7 +9,7 @@ using Async = System.Threading.Tasks;
 
 namespace IntegrationTests;
 
-[Trait("Category", "Integration")]
+[Trait("Category", "Live")]
 public class AzureStorageInfoTest : InfoTestBase {
     public AzureStorageInfoTest(ITestOutputHelper output)
         : base(output, Integration.AzureStorage.FromEnvironment()) { }

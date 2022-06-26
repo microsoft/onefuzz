@@ -10,7 +10,7 @@ using Async = System.Threading.Tasks;
 
 namespace IntegrationTests;
 
-[Trait("Category", "Integration")]
+[Trait("Category", "Live")]
 public class AzureStorageDownloadTest : DownloadTestBase {
     public AzureStorageDownloadTest(ITestOutputHelper output)
         : base(output, Integration.AzureStorage.FromEnvironment()) { }
