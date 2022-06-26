@@ -49,7 +49,7 @@ sealed class AzureStorage : IStorage {
         => Async.Task.FromResult((AccountName, AccountKey));
 
     public Task<string?> GetStorageAccountNameKeyByName(string accountName) {
-        return Async.Task.FromResult(AccountName);
+        return Async.Task.FromResult<string?>(AccountName);
     }
 
     public Uri GetTableEndpoint(string accountId)
