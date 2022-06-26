@@ -3,14 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
-using Tests.Fakes;
 using Xunit;
 using Xunit.Abstractions;
-
 using Async = System.Threading.Tasks;
 
-namespace Tests.Functions;
+namespace IntegrationTests.Functions;
 
 [Trait("Category", "Integration")]
 public class AzureStorageNodeTest : NodeTestBase {

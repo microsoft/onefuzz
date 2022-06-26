@@ -4,7 +4,7 @@ using Microsoft.OneFuzz.Service;
 
 using Async = System.Threading.Tasks;
 
-namespace Tests.Fakes;
+namespace IntegrationTests.Fakes;
 
 sealed class TestUserCredentials : UserCredentials {
 

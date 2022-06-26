@@ -2,7 +2,7 @@
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.OneFuzz.Service;
 
-namespace Tests.Fakes;
+namespace IntegrationTests.Fakes;
 
 public sealed class TestServiceConfiguration : IServiceConfig {
     public TestServiceConfiguration(string tablePrefix) {

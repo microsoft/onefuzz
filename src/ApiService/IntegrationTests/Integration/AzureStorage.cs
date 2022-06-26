@@ -5,7 +5,7 @@ using Microsoft.OneFuzz.Service;
 
 using Async = System.Threading.Tasks;
 
-namespace Tests.Integration;
+namespace IntegrationTests.Integration;
 
 // This exists solely to allow use of a fixed storage account in integration tests
 // against live Azure Storage.
