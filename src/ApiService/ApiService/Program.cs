@@ -71,8 +71,13 @@ public class Program {
             });
 
             services
-            .AddScoped<ILogTracer>(s =>
-                new LogTracerFactory(GetLoggers(s.GetService<IServiceConfig>()!)).CreateLogTracer(Guid.Empty, severityLevel: s.GetService<IServiceConfig>()!.LogSeverityLevel))
+            .AddScoped<ILogTracer>(s => {
+                var cfg = s.GetRequiredService<IServiceConfig>();
+                return new LogTracerFactory(GetLoggers(cfg))
+                    .CreateLogTracer(
+                        Guid.Empty,
+                        severityLevel: cfg.LogSeverityLevel);
+            })
             .AddScoped<INodeOperations, NodeOperations>()
             .AddScoped<IEvents, Events>()
             .AddScoped<IWebhookOperations, WebhookOperations>()

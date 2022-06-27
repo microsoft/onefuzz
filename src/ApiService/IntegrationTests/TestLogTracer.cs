@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.OneFuzz.Service;
 using Xunit.Abstractions;
 
-namespace Tests;
+namespace IntegrationTests;
 
 sealed class TestLogTracer : ILogTracer {
     private readonly ITestOutputHelper _output;

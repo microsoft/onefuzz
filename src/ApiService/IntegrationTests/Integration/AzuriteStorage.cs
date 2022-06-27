@@ -1,13 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service;
 
 using Async = System.Threading.Tasks;
 
-namespace Tests.Integration;
+namespace IntegrationTests.Integration;
 
+// An implementation of IStorage for communicating with the Azurite Storage emulator.
 sealed class AzuriteStorage : IStorage {
+    static AzuriteStorage() {
+        try {
+            using var client = new HttpClient();
+            client.GetAsync(new Uri("http://127.0.0.1:10000")).Wait();
+        } catch {
+            Console.Error.WriteLine("'azurite' must be running to run integration tests.");
+            Environment.Exit(1);
+        }
+    }
+
     public Uri GetBlobEndpoint(string _accountId)
         => new($"http://127.0.0.1:10000/devstoreaccount1");
 

@@ -4,7 +4,7 @@ using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Async = System.Threading.Tasks;
 
-namespace Tests.Fakes;
+namespace IntegrationTests.Fakes;
 
 
 // TestContext provides a minimal IOnefuzzContext implementation to allow running

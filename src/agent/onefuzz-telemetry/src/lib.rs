@@ -66,7 +66,7 @@ impl fmt::Display for InstanceTelemetryKey {
     }
 }
 
-pub type TelemetryClient = appinsights::blocking::TelemetryClient;
+pub type TelemetryClient = appinsights::TelemetryClient<appinsights::InMemoryChannel>;
 pub enum ClientType {
     Instance,
     Microsoft,
@@ -484,7 +484,7 @@ pub fn try_flush_and_close() {
     let clients = global::take_clients();
 
     for client in clients {
-        // close_channel performs an implicit flush
+        client.flush_channel();
         client.close_channel();
     }
 }
