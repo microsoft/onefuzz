@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Deployment: Added Devcontainer improvements. [#2058](https://github.com/microsoft/onefuzz/pull/2058), [#2048](https://github.com/microsoft/onefuzz/pull/2048), [#2029](https://github.com/microsoft/onefuzz/pull/2029)
 * Deployment: Add support test infrastructure for C# Azure Function testing. [#2055](https://github.com/microsoft/onefuzz/pull/2055), [#2032](https://github.com/microsoft/onefuzz/pull/2032)
 * Deployment: Make Clippy run on all targets in CI. [#2027](https://github.com/microsoft/onefuzz/pull/2027)
-* Service: Ported funcitons to C# [#2061](https://github.com/microsoft/onefuzz/pull/2061), [#2072](https://github.com/microsoft/onefuzz/pull/2072), [#2076](https://github.com/microsoft/onefuzz/pull/2076)
+* Service: Ported functions to C# [#2061](https://github.com/microsoft/onefuzz/pull/2061), [#2072](https://github.com/microsoft/onefuzz/pull/2072), [#2076](https://github.com/microsoft/onefuzz/pull/2076)
 * Service: Add null analysis attributes to result types [#2069](https://github.com/microsoft/onefuzz/pull/2069)
 * Service: Add editorconfig underscores rule [#2070](https://github.com/microsoft/onefuzz/pull/2070)
 
