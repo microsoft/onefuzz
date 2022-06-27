@@ -31,7 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Deployment: Link build status shield to Github Actions page. [#2040](https://github.com/microsoft/onefuzz/pull/2040), [#2037](https://github.com/microsoft/onefuzz/pull/2037)
 * Service: Handle messages that are too big to fit in a queue message. [#2020](https://github.com/microsoft/onefuzz/pull/2020)
 * Service: Update appinsights to released version. [#2033](https://github.com/microsoft/onefuzz/pull/2033)
-* Service: Fixed typos. [#2034](https://github.com/microsoft/onefuzz/pull/2034), [#2054](https://github.com/microsoft/onefuzz/pull/2054)
 * Service: Removing unecessary `/obj/` Directory. [#2063](https://github.com/microsoft/onefuzz/pull/2063)
 
 ## 5.6.0
