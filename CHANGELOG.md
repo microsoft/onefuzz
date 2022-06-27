@@ -6,21 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 5.7.0
 ### Added
-* Agent: Add Node State to Node Heartbeat [#2024](https://github.com/microsoft/onefuzz/pull/2024), [#2053](https://github.com/microsoft/onefuzz/pull/2053)
-* Service: Ported existing Python functions to C# [#2061](https://github.com/microsoft/onefuzz/pull/2061), [#2072](https://github.com/microsoft/onefuzz/pull/2072), [#2076](https://github.com/microsoft/onefuzz/pull/2076), [#2046](https://github.com/microsoft/onefuzz/pull/2046), [#2047](https://github.com/microsoft/onefuzz/pull/2047), [#2066](https://github.com/microsoft/onefuzz/pull/2066)
-* Service: Add null analysis attributes to service result types [#2069](https://github.com/microsoft/onefuzz/pull/2069)
-* Service: Add editorconfig underscores rule [#2070](https://github.com/microsoft/onefuzz/pull/2070)
+* Agent: Add `NodeState` to Node Heartbeat to better track the current state of nodes in the system [#2024](https://github.com/microsoft/onefuzz/pull/2024), [#2053](https://github.com/microsoft/onefuzz/pull/2053)
+* Service: Ported existing Python functions to C# [#2061](https://github.com/microsoft/onefuzz/pull/2061), [#2072](https://github.com/microsoft/onefuzz/pull/2072), [#2076](https://github.com/microsoft/onefuzz/pull/2076), [#2066](https://github.com/microsoft/onefuzz/pull/2066)
+* Service: Enabling ported C# functions for `QueueNodeHeartbeat`, `QueueTaskHeartbeat`, and `QueueSignalREvents`  [#2046](https://github.com/microsoft/onefuzz/pull/2046), [#2047](https://github.com/microsoft/onefuzz/pull/2047)
+* Service: Add null analysis attributes to service result types to make it easier to check and use the various existing result types [#2069](https://github.com/microsoft/onefuzz/pull/2069)
+* Service: Add dotnet editorconfig underscores naming rule for private fields to start with an underscore, ensuring OmniSharp will generate conformant names by default [#2070](https://github.com/microsoft/onefuzz/pull/2070)
 
 ### Changed
-* Agent: Update onefuzz-agent to clap 3 [#2049](https://github.com/microsoft/onefuzz/pull/2049)
-* Agent: Add scripts to install dotnet on windows and ubuntu [#2038](https://github.com/microsoft/onefuzz/pull/2038)
-* Deployment: Update Getting Started instructions. [#2030](https://github.com/microsoft/onefuzz/pull/2030)
+* Agent: Update onefuzz-agent clap to version `3.2.4` [#2049](https://github.com/microsoft/onefuzz/pull/2049)
+* Agent: Added scripts to install dotnet on windows and ubuntu fuzzing VMs [#2038](https://github.com/microsoft/onefuzz/pull/2038)
+* Deployment: Update Getting Started instructions for `deploy.py`'s file permissions. [#2030](https://github.com/microsoft/onefuzz/pull/2030)
 
 ### Fixed
-* CLI: Specify that the tools are missing locally, not on the repro VM [#2036](https://github.com/microsoft/onefuzz/pull/2036)
-* Service: Handle messages that are too big to fit in a queue message. [#2020](https://github.com/microsoft/onefuzz/pull/2020)
-* Service: Update appinsights to released version. [#2033](https://github.com/microsoft/onefuzz/pull/2033)
-* Service: Removing unecessary `/obj/` Directory. [#2063](https://github.com/microsoft/onefuzz/pull/2063)
+* CLI: Error output to specify that the tools are missing locally, not on the repro VM [#2036](https://github.com/microsoft/onefuzz/pull/2036)
+* Service: Handle service event messages that are too big to fit in a queue message. [#2020](https://github.com/microsoft/onefuzz/pull/2020)
+* Service: Update appinsights to released version `0.2.1`. [#2033](https://github.com/microsoft/onefuzz/pull/2033)
+* Service: Removing unecessary `/obj/` directory. [#2063](https://github.com/microsoft/onefuzz/pull/2063)
 
 ## 5.6.0
 ### Added
