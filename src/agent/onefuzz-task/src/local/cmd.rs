@@ -60,6 +60,7 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
         match command {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Commands::Coverage => coverage::run(&sub_args, event_sender).await,
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Commands::DotnetCoverage => dotnet_coverage::run(&sub_args, event_sender).await,
             Commands::Radamsa => radamsa::run(&sub_args, event_sender).await,
             Commands::LibfuzzerCrashReport => {
