@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Add Node State to Node Heartbeat [#2024](https://github.com/microsoft/onefuzz/pull/2024), [#2053](https://github.com/microsoft/onefuzz/pull/2053)
 * Delpoyment: Collect .NET coverage info during build and display it in GitHub Summary. [#2023](https://github.com/microsoft/onefuzz/pull/2023)
 * Deployment: Use shared Directory.Build.props for C# projects. [#2026](https://github.com/microsoft/onefuzz/pull/2026)
-* Deployment: Added Devcontainer improvements. [#2058](https://github.com/microsoft/onefuzz/pull/2058),[#2048](https://github.com/microsoft/onefuzz/pull/2048), [#2029](https://github.com/microsoft/onefuzz/pull/2029)
+* Deployment: Added Devcontainer improvements. [#2058](https://github.com/microsoft/onefuzz/pull/2058), [#2048](https://github.com/microsoft/onefuzz/pull/2048), [#2029](https://github.com/microsoft/onefuzz/pull/2029)
 * Deployment: Add support test infrastructure for C# Azure Function testing. [#2055](https://github.com/microsoft/onefuzz/pull/2055), [#2032](https://github.com/microsoft/onefuzz/pull/2032)
 * Deployment: Make Clippy run on all targets in CI. [#2027](https://github.com/microsoft/onefuzz/pull/2027)
 * Service: Ported funcitons to C# [#2061](https://github.com/microsoft/onefuzz/pull/2061), [#2072](https://github.com/microsoft/onefuzz/pull/2072), [#2076](https://github.com/microsoft/onefuzz/pull/2076)
@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Handle messages that are too big to fit in a queue message. [#2020](https://github.com/microsoft/onefuzz/pull/2020)
 * Service: Update appinsights to released version. [#2033](https://github.com/microsoft/onefuzz/pull/2033)
 * Service: Fixed typos. [#2034](https://github.com/microsoft/onefuzz/pull/2034), [#2054](https://github.com/microsoft/onefuzz/pull/2054)
-* Service: Removing unecessary `obj` Directory. [#2063](https://github.com/microsoft/onefuzz/pull/2063)
+* Service: Removing unecessary `/obj/` Directory. [#2063](https://github.com/microsoft/onefuzz/pull/2063)
 
 ## 5.6.0
 ### Added
