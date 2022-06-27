@@ -224,7 +224,6 @@ impl<'a> TaskContext<'a> {
             .target_options(&self.config.target_options)
             .task_id(&self.config.common.task_id);
 
-        //TODO: ./dotnet-coverage collect --output-format cobertura -o "fullcommand.cobertura.xml" "/usr/bin/dotnet bin/Debug/net6.0/testcoverage.dll input2"
         let dotnet_coverage_path = dotnet_coverage_path()?;
         let dotnet_path = dotnet_path()?;
         let id = Uuid::new_v4();
@@ -269,7 +268,6 @@ impl<'a> TaskContext<'a> {
     }
 
     async fn command_for_merge(&self) -> Result<Command> {
-        //TODO: dotnet coverage merge output.cobertura.xml output2.cobertura.xml --output-format cobertura -o "final.cobertura.xml"
         let dotnet_coverage_path = dotnet_coverage_path()?;
 
         let output_file = self.working_dir().join(COBERTURA_COVERAGE_FILE);
