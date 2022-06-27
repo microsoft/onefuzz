@@ -13,7 +13,7 @@ fuzz jobs from a few virtual machines to thousands of cores.
 ## Features
 
 * **Composable fuzzing workflows**: Open source allows users to onboard their own 
-   fuzzers, [swap instrumentation](docs/custom-analysis.md), and manage seed inputs.
+   fuzzers, [swap instrumentation](docs/custom-analysis.md), and manage seed inputs. 
 * **Built-in ensemble fuzzing**: By default, fuzzers work as a team to share strengths, 
    swapping inputs of interest between fuzzing technologies.
 * **Programmatic triage and result de-duplication**: It provides unique flaw cases that 
