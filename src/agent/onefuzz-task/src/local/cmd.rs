@@ -119,6 +119,7 @@ pub fn args(name: &str) -> App<'static, 'static> {
         let app = match subcommand {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Commands::Coverage => coverage::args(subcommand.into()),
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Commands::DotnetCoverage => dotnet_coverage::args(subcommand.into()),
             Commands::Radamsa => radamsa::args(subcommand.into()),
             Commands::LibfuzzerCrashReport => libfuzzer_crash_report::args(subcommand.into()),

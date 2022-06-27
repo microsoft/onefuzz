@@ -83,6 +83,7 @@ pub enum Config {
     #[serde(alias = "coverage")]
     Coverage(coverage::generic::Config),
 
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     #[serde(alias = "dotnet_coverage")]
     DotnetCoverage(coverage::dotnet::Config),
 
