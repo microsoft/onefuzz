@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 5.7.0
 ### Added
 * Agent: Add Node State to Node Heartbeat [#2024](https://github.com/microsoft/onefuzz/pull/2024), [#2053](https://github.com/microsoft/onefuzz/pull/2053)
-* Service: Ported existing python functions to C# [#2061](https://github.com/microsoft/onefuzz/pull/2061), [#2072](https://github.com/microsoft/onefuzz/pull/2072), [#2076](https://github.com/microsoft/onefuzz/pull/2076), [#2046](https://github.com/microsoft/onefuzz/pull/2046), [#2047](https://github.com/microsoft/onefuzz/pull/2047), [#2066](https://github.com/microsoft/onefuzz/pull/2066)
+* Service: Ported existing Python functions to C# [#2061](https://github.com/microsoft/onefuzz/pull/2061), [#2072](https://github.com/microsoft/onefuzz/pull/2072), [#2076](https://github.com/microsoft/onefuzz/pull/2076), [#2046](https://github.com/microsoft/onefuzz/pull/2046), [#2047](https://github.com/microsoft/onefuzz/pull/2047), [#2066](https://github.com/microsoft/onefuzz/pull/2066)
 * Service: Add null analysis attributes to service result types [#2069](https://github.com/microsoft/onefuzz/pull/2069)
 * Service: Add editorconfig underscores rule [#2070](https://github.com/microsoft/onefuzz/pull/2070)
 
