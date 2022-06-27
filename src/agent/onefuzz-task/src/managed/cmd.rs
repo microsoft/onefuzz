@@ -55,7 +55,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         error!("error running task: {:?}", err);
     }
 
-    onefuzz_telemetry::try_flush_and_close().await;
+    onefuzz_telemetry::try_flush_and_close();
 
     // wait for the task logger to finish
     if let Some(task_logger) = task_logger {
