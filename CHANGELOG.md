@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.7.0
+### Added
+* Agent: Add Node State to Node Heartbeat [#2024](https://github.com/microsoft/onefuzz/pull/2024), [#2053](https://github.com/microsoft/onefuzz/pull/2053)
+* Delpoyment: Collect .NET coverage info during build and display it in GitHub Summary. [#2023](https://github.com/microsoft/onefuzz/pull/2023)
+* Deployment: Use shared Directory.Build.props for C# projects. [#2026](https://github.com/microsoft/onefuzz/pull/2026)
+* Deployment: Added Devcontainer improvements. [#2058](https://github.com/microsoft/onefuzz/pull/2058),[#2048](https://github.com/microsoft/onefuzz/pull/2048), [#2029](https://github.com/microsoft/onefuzz/pull/2029)
+* Deployment: Add support test infrastructure for C# Azure Function testing. [#2055](https://github.com/microsoft/onefuzz/pull/2055), [#2032](https://github.com/microsoft/onefuzz/pull/2032)
+* Deployment: Make Clippy run on all targets in CI. [#2027](https://github.com/microsoft/onefuzz/pull/2027)
+* Service: Ported funcitons to C# [#2061](https://github.com/microsoft/onefuzz/pull/2061), [#2072](https://github.com/microsoft/onefuzz/pull/2072), [#2076](https://github.com/microsoft/onefuzz/pull/2076)
+* Service: Add null analysis attributes to result types [#2069](https://github.com/microsoft/onefuzz/pull/2069)
+* Service: Add editorconfig underscores rule [#2070](https://github.com/microsoft/onefuzz/pull/2070)
+
+### Changed
+* Agent: Update onefuzz-agent to clap 3 [#2049](https://github.com/microsoft/onefuzz/pull/2049)
+* Agent: Add scripts to install dotnet on windows and ubuntu [#2038](https://github.com/microsoft/onefuzz/pull/2038)
+* Deployment: Update Getting Started instructions. [#2030](https://github.com/microsoft/onefuzz/pull/2030)
+* Deployment: Add nsg config to check-pr [#2067](https://github.com/microsoft/onefuzz/pull/2067)
+* Deployment: Add workflow to sync github issues with Azure DevOps work items [#2035](https://github.com/microsoft/onefuzz/pull/2035)
+* Service: Enabling C# functions [#2046](https://github.com/microsoft/onefuzz/pull/2046), [#2047](https://github.com/microsoft/onefuzz/pull/2047)
+* Service: Finish migrating timer_task to C# [#2066](https://github.com/microsoft/onefuzz/pull/2066)
+
+### Fixed
+* CLI: Specify that the tools are missing locally, not on the repro vm [#2036](https://github.com/microsoft/onefuzz/pull/2036)
+* Deployment: Remove deprecated `libfuzzer_coverage` task. [#2021](https://github.com/microsoft/onefuzz/pull/2021)
+* Deployment: Link build status shield to Github Actions page. [#2040](https://github.com/microsoft/onefuzz/pull/2040), [#2037](https://github.com/microsoft/onefuzz/pull/2037)
+* Service: Handle messages that are too big to fit in a queue message. [#2020](https://github.com/microsoft/onefuzz/pull/2020)
+* Service: Update appinsights to released version. [#2033](https://github.com/microsoft/onefuzz/pull/2033)
+* Service: Fixed typos. [#2034](https://github.com/microsoft/onefuzz/pull/2034), [#2054](https://github.com/microsoft/onefuzz/pull/2054)
+* Service: Removing unecessary `obj` Directory. [#2063](https://github.com/microsoft/onefuzz/pull/2063)
+
 ## 5.6.0
 ### Added
 * Service: Add Function App settings to Bicep template and `deploy.py`. [#1973](https://github.com/microsoft/onefuzz/pull/1973)
