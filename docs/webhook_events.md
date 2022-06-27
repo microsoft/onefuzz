@@ -565,7 +565,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "dotnet_coverage"
             ],
             "title": "TaskType"
         },
@@ -1204,7 +1205,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "dotnet_coverage"
             ],
             "title": "TaskType"
         },
@@ -2444,7 +2446,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "dotnet_coverage"
             ],
             "title": "TaskType"
         },
@@ -3159,7 +3162,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "dotnet_coverage"
             ],
             "title": "TaskType"
         },
@@ -3665,7 +3669,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "dotnet_coverage"
             ],
             "title": "TaskType"
         },
@@ -4114,7 +4119,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "dotnet_coverage"
             ],
             "title": "TaskType"
         },
@@ -4551,7 +4557,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "dotnet_coverage"
             ],
             "title": "TaskType"
         },
@@ -4987,7 +4994,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "dotnet_coverage"
             ],
             "title": "TaskType"
         },
@@ -6725,7 +6733,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "dotnet_coverage"
             ],
             "title": "TaskType"
         },
