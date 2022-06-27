@@ -134,6 +134,7 @@ impl Config {
         match self {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::Coverage(c) => &mut c.common,
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(c) => &mut c.common,
             Config::LibFuzzerFuzz(c) => &mut c.common,
             Config::LibFuzzerMerge(c) => &mut c.common,
@@ -152,6 +153,7 @@ impl Config {
         match self {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::Coverage(c) => &c.common,
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(c) => &c.common,
             Config::LibFuzzerFuzz(c) => &c.common,
             Config::LibFuzzerMerge(c) => &c.common,
@@ -170,6 +172,7 @@ impl Config {
         let event_type = match self {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::Coverage(_) => "coverage",
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(_) => "dotnet_coverage",
             Config::LibFuzzerFuzz(_) => "libfuzzer_fuzz",
             Config::LibFuzzerMerge(_) => "libfuzzer_merge",
@@ -215,6 +218,7 @@ impl Config {
         match self {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::Coverage(config) => coverage::generic::CoverageTask::new(config).run().await,
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(config) => {
                 coverage::dotnet::CoverageTask::new(config).run().await
             }
