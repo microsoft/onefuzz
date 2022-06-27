@@ -66,38 +66,34 @@ impl CoverageTask {
     pub async fn run(&mut self) -> Result<()> {
         info!("starting dotnet_coverage task");
         self.config.coverage.init_pull().await?;
-        
+
         let heartbeat = self.config.common.init_heartbeat(None).await?;
         let mut context = TaskContext::new(&self.config, heartbeat);
-        
+
         if !context.uses_input() {
-            
             bail!("input is not specified on the command line or arguments for the target");
         }
-        
-        
+
         context.heartbeat.alive();
-        
-        
-        
+
         let mut seen_inputs = false;
-        
+
         for dir in &self.config.readonly_inputs {
             debug!("recording coverage for {}", dir.local_path.display());
-            
+
             dir.init_pull().await?;
             let dir_count = context.record_corpus(&dir.local_path).await?;
-            
+
             if dir_count > 0 {
                 seen_inputs = true;
             }
-            
+
             info!(
                 "recorded coverage for {} inputs from {}",
                 dir_count,
                 dir.local_path.display()
             );
-            
+
             context.heartbeat.alive();
         }
 
@@ -238,8 +234,7 @@ impl<'a> TaskContext<'a> {
             .arg(format!(
                 "{} {}",
                 dotnet_path.to_string_lossy(),
-                self.config.target_exe.to_string_lossy()
-                // input.to_string_lossy()
+                self.config.target_exe.to_string_lossy() // input.to_string_lossy()
             ));
 
         let target_options = expand.evaluate(&self.config.target_options)?;
