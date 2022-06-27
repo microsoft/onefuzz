@@ -5,9 +5,7 @@ use std::collections::BTreeMap;
 use std::convert::TryInto;
 use std::ffi::OsStr;
 use std::process::Command;
-use std::sync::mpsc;
-use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use anyhow::{format_err, Context, Result};
 use pete::{Ptracer, Restart, Signal, Stop, Tracee};
