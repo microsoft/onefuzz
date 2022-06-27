@@ -1,19 +1,25 @@
-﻿using Microsoft.ApplicationInsights.DataContracts;
+﻿using System;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.OneFuzz.Service;
 
 namespace Tests.Fakes;
 
-sealed class TestServiceConfiguration : IServiceConfig {
-    public TestServiceConfiguration(string tablePrefix, string accountId) {
-        OneFuzzTablePrefix = tablePrefix;
-        OneFuzzFuncStorage = accountId;
+public sealed class TestServiceConfiguration : IServiceConfig {
+    public TestServiceConfiguration(string tablePrefix) {
+        OneFuzzStoragePrefix = tablePrefix;
     }
 
-    public string OneFuzzTablePrefix { get; }
+    public string OneFuzzStoragePrefix { get; }
 
-    public string? OneFuzzFuncStorage { get; }
+    public string? OneFuzzFuncStorage { get; } = "UNUSED_ACCOUNT_ID"; // test implementations do not use this
 
     public string OneFuzzVersion => "9999.0.0"; // very big version to pass any >= checks
+
+    public string? ApplicationInsightsAppId { get; set; } = "TestAppInsightsAppId";
+
+    public string? ApplicationInsightsInstrumentationKey { get; set; } = "TestAppInsightsInstrumentationKey";
+
+    public string? OneFuzzInstanceName => "UnitTestInstance";
 
     // -- Remainder not implemented --
 
@@ -21,9 +27,6 @@ sealed class TestServiceConfiguration : IServiceConfig {
 
     public SeverityLevel LogSeverityLevel => throw new System.NotImplementedException();
 
-    public string? ApplicationInsightsAppId => throw new System.NotImplementedException();
-
-    public string? ApplicationInsightsInstrumentationKey => throw new System.NotImplementedException();
 
     public string? AzureSignalRConnectionString => throw new System.NotImplementedException();
 
@@ -39,11 +42,7 @@ sealed class TestServiceConfiguration : IServiceConfig {
 
     public string? MultiTenantDomain => throw new System.NotImplementedException();
 
-    public string? OneFuzzDataStorage => throw new System.NotImplementedException();
-
     public string? OneFuzzInstance => throw new System.NotImplementedException();
-
-    public string? OneFuzzInstanceName => throw new System.NotImplementedException();
 
     public string? OneFuzzKeyvault => throw new System.NotImplementedException();
 
@@ -53,7 +52,9 @@ sealed class TestServiceConfiguration : IServiceConfig {
 
     public string OneFuzzNodeDisposalStrategy => throw new System.NotImplementedException();
 
-    public string? OneFuzzResourceGroup => throw new System.NotImplementedException();
-
     public string? OneFuzzTelemetry => throw new System.NotImplementedException();
+
+    public string? OneFuzzDataStorage => throw new NotImplementedException();
+
+    public string? OneFuzzResourceGroup => throw new NotImplementedException();
 }

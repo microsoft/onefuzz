@@ -4,20 +4,20 @@ using ApiService.OneFuzzLib.Orm;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IPoolOperations {
-    public Async.Task<OneFuzzResult<Pool>> GetByName(string poolName);
+    public Async.Task<OneFuzzResult<Pool>> GetByName(PoolName poolName);
     Task<bool> ScheduleWorkset(Pool pool, WorkSet workSet);
     IAsyncEnumerable<Pool> GetByClientId(Guid clientId);
 }
 
-public class PoolOperations : StatefulOrm<Pool, PoolState>, IPoolOperations {
+public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoolOperations {
 
     public PoolOperations(ILogTracer log, IOnefuzzContext context)
         : base(log, context) {
 
     }
 
-    public async Async.Task<OneFuzzResult<Pool>> GetByName(string poolName) {
-        var pools = QueryAsync(filter: $"PartitionKey eq '{poolName}'");
+    public async Async.Task<OneFuzzResult<Pool>> GetByName(PoolName poolName) {
+        var pools = QueryAsync(filter: $"PartitionKey eq '{poolName.String}'");
 
         if (pools == null || await pools.CountAsync() == 0) {
             return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, "unable to find pool");

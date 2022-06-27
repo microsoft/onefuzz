@@ -18,6 +18,22 @@ public record NodeCommandDelete(
     string MessageId
 ) : BaseRequest;
 
+public record NodeGet(
+    Guid MachineId
+) : BaseRequest;
+
+public record NodeUpdate(
+    Guid MachineId,
+    bool? DebugKeepNode
+) : BaseRequest;
+
+public record NodeSearch(
+    Guid? MachineId = null,
+    List<NodeState>? State = null,
+    Guid? ScalesetId = null,
+    PoolName? PoolName = null
+) : BaseRequest;
+
 public record NodeStateEnvelope(
     NodeEventBase Event,
     Guid MachineId

@@ -13,23 +13,23 @@ namespace Tests.Functions;
 [Trait("Category", "Integration")]
 public class AzureStorageAgentEventsTest : AgentEventsTestsBase {
     public AzureStorageAgentEventsTest(ITestOutputHelper output)
-        : base(output, Integration.AzureStorage.FromEnvironment(), "UNUSED") { }
+        : base(output, Integration.AzureStorage.FromEnvironment()) { }
 }
 
 public class AzuriteAgentEventsTest : AgentEventsTestsBase {
     public AzuriteAgentEventsTest(ITestOutputHelper output)
-        : base(output, new Integration.AzuriteStorage(), "devstoreaccount1") { }
+        : base(output, new Integration.AzuriteStorage()) { }
 }
 
 public abstract class AgentEventsTestsBase : FunctionTestBase {
-    public AgentEventsTestsBase(ITestOutputHelper output, IStorage storage, string accountId)
-        : base(output, storage, accountId) { }
+    public AgentEventsTestsBase(ITestOutputHelper output, IStorage storage)
+        : base(output, storage) { }
 
     // shared helper variables (per-test)
     readonly Guid jobId = Guid.NewGuid();
     readonly Guid taskId = Guid.NewGuid();
     readonly Guid machineId = Guid.NewGuid();
-    readonly string poolName = $"pool-{Guid.NewGuid()}";
+    readonly PoolName poolName = PoolName.Parse($"pool-{Guid.NewGuid()}");
     readonly Guid poolId = Guid.NewGuid();
     readonly string poolVersion = $"version-{Guid.NewGuid()}";
 

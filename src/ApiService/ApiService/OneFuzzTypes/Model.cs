@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
 using GroupId = System.Guid;
-using PoolName = System.String;
 using PrincipalId = System.Guid;
 using Region = System.String;
 
@@ -152,7 +151,6 @@ public record Error(ErrorCode Code, string[]? Errors = null);
 
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
 
-
 public record TaskDetails(
     TaskType Type,
     int Duration,
@@ -186,7 +184,8 @@ public record TaskDetails(
     bool? PreserveExistingOutputs = null,
     List<string>? ReportList = null,
     int? MinimizedStackDepth = null,
-    string? CoverageFilter = null);
+    string? CoverageFilter = null
+);
 
 public record TaskVm(
     Region Region,
@@ -216,7 +215,8 @@ public record TaskConfig(
    List<TaskContainers>? Containers = null,
    Dictionary<string, string>? Tags = null,
    List<TaskDebugFlag>? Debug = null,
-   bool? Colocate = null);
+   bool? Colocate = null
+   );
 
 public record TaskEventSummary(
     DateTimeOffset? Timestamp,
@@ -316,11 +316,11 @@ public record InstanceConfig
     NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
     string ProxyVmSku,
-    IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules,
-    IDictionary<PrincipalId, GroupId[]>? GroupMembership,
-
-    IDictionary<string, string>? VmTags,
-    IDictionary<string, string>? VmssTags
+    IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
+    IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,
+    IDictionary<string, string>? VmTags = null,
+    IDictionary<string, string>? VmssTags = null,
+    bool? RequireAdminPrivileges = null
 ) : EntityBase() {
     public InstanceConfig(string instanceName) : this(
         instanceName,
@@ -330,12 +330,7 @@ public record InstanceConfig
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
         null,
-        "Standard_B2s",
-        null,
-        null,
-        null,
-        null) { }
-
+        "Standard_B2s") { }
     public InstanceConfig() : this(String.Empty) { }
 
     public List<Guid>? CheckAdmins(List<Guid>? value) {
@@ -345,7 +340,6 @@ public record InstanceConfig
             return value;
         }
     }
-
 
     //# At the moment, this only checks allowed_aad_tenants, however adding
     //# support for 3rd party JWT validation is anticipated in a future release.
@@ -598,8 +592,28 @@ public record WorkUnit(
     Guid JobId,
     Guid TaskId,
     TaskType TaskType,
-    TaskUnitConfig Config
+
+    // JSON-serialized `TaskUnitConfig`.
+    [property: JsonConverter(typeof(TaskUnitConfigConverter))] TaskUnitConfig Config
 );
+
+public class TaskUnitConfigConverter : JsonConverter<TaskUnitConfig> {
+    public override TaskUnitConfig? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        var taskUnitString = reader.GetString();
+        if (taskUnitString == null) {
+            return null;
+        }
+        return JsonSerializer.Deserialize<TaskUnitConfig>(taskUnitString, options);
+    }
+
+    public override void Write(Utf8JsonWriter writer, TaskUnitConfig value, JsonSerializerOptions options) {
+        var v = JsonSerializer.Serialize(value, new JsonSerializerOptions(options) {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        });
+
+        writer.WriteStringValue(v);
+    }
+}
 
 public record VmDefinition(
     Compare Compare,
@@ -633,12 +647,34 @@ public record ContainerDefinition(
 
 // TODO: service shouldn't pass SyncedDir, but just the url and let the agent
 // come up with paths
-public record SyncedDir(string Path, Uri url);
+public record SyncedDir(string Path, Uri Url);
 
 
+[JsonConverter(typeof(ContainerDefConverter))]
 public interface IContainerDef { }
 public record SingleContainer(SyncedDir SyncedDir) : IContainerDef;
 public record MultipleContainer(List<SyncedDir> SyncedDirs) : IContainerDef;
+
+
+public class ContainerDefConverter : JsonConverter<IContainerDef> {
+    public override IContainerDef? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        throw new NotImplementedException();
+    }
+
+    public override void Write(Utf8JsonWriter writer, IContainerDef value, JsonSerializerOptions options) {
+        switch (value) {
+            case SingleContainer container:
+                JsonSerializer.Serialize(writer, container.SyncedDir, options);
+                break;
+            case MultipleContainer { SyncedDirs: var syncedDirs }:
+                JsonSerializer.Serialize(writer, syncedDirs, options);
+                break;
+            default:
+                throw new NotImplementedException();
+        }
+    }
+}
+
 
 
 public record TaskUnitConfig(
@@ -694,7 +730,7 @@ public record TaskUnitConfig(
     public IContainerDef? Tools { get; set; }
     public IContainerDef? UniqueInputs { get; set; }
     public IContainerDef? UniqueReports { get; set; }
-    public IContainerDef? RegressionReport { get; set; }
+    public IContainerDef? RegressionReports { get; set; }
 
 }
 

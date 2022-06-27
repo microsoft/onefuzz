@@ -143,10 +143,9 @@ public class EntityConverter {
         });
     }
 
-    public string ToJsonString<T>(T typedEntity) {
-        var serialized = JsonSerializer.Serialize(typedEntity, _options);
-        return serialized;
-    }
+    public string ToJsonString<T>(T typedEntity) => JsonSerializer.Serialize(typedEntity, _options);
+
+    public T? FromJsonString<T>(string value) => JsonSerializer.Deserialize<T>(value, _options);
 
     public TableEntity ToTableEntity<T>(T typedEntity) where T : EntityBase {
         if (typedEntity == null) {
@@ -211,8 +210,11 @@ public class EntityConverter {
                 return Guid.Parse(entity.GetString(ef.kind.ToString()));
             else if (ef.type == typeof(int))
                 return int.Parse(entity.GetString(ef.kind.ToString()));
+            else if (ef.type == typeof(PoolName))
+                // TODO: this should be able to be generic over any ValidatedString
+                return PoolName.Parse(entity.GetString(ef.kind.ToString()));
             else {
-                throw new Exception("invalid ");
+                throw new Exception($"invalid partition or row key type of {info.type} property {name}: {ef.type}");
             }
         }
 
@@ -246,7 +248,6 @@ public class EntityConverter {
                 var v = GetFieldValue(info, attr.FieldName, entity) ?? throw new Exception($"No value for {attr.FieldName}");
                 outputType = typeProvider.GetTypeInfo(v);
             }
-
 
             if (objType == typeof(string)) {
                 var value = entity.GetString(fieldName);
@@ -283,6 +284,3 @@ public class EntityConverter {
     }
 
 }
-
-
-
