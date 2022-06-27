@@ -27,11 +27,11 @@ namespace ApiService.OneFuzzLib.Orm {
 
 
     public class Orm<T> : IOrm<T> where T : EntityBase {
-        #pragma warning disable CA1051 // permit visible instance fields
+#pragma warning disable CA1051 // permit visible instance fields
         protected readonly EntityConverter _entityConverter;
         protected readonly IOnefuzzContext _context;
         protected readonly ILogTracer _logTracer;
-        #pragma warning restore CA1051
+#pragma warning restore CA1051
 
 
         public Orm(ILogTracer logTracer, IOnefuzzContext context) {

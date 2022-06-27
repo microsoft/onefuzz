@@ -42,6 +42,6 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         return QueryAsync(filter: $"client_id eq '{clientId.ToString()}'");
     }
 
-    private static string GetPoolQueue(Pool pool) 
+    private static string GetPoolQueue(Pool pool)
         => $"pool-{pool.PoolId.ToString("N")}";
 }
