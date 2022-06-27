@@ -4,10 +4,19 @@
         <!-- set overall target framework -->
         <TargetFramework>net6.0</TargetFramework>
 
+        <!-- build in Invariant mode: https://github.com/dotnet/runtime/blob/main/docs/design/features/globalization-invariant-mode.md -->
+        <!--
+        we never need locale-specific comparisons in the service, 
+        so turning this on has two effects:
+        - reduces bundle size of .NET service
+        - disables a lot of .NET code analyzers that check for 
+          correct use of locale-specific comparisons
+        -->
+        <InvariantGlobalization>true</InvariantGlobalization>
+
         <!-- enable code analysis -->
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
-        <AnalysisLevel>6.0-Minimum</AnalysisLevel>
-        <!-- Goal: raise to 6.0-Recommended -->
+        <AnalysisLevel>6.0-Recommended</AnalysisLevel>
 
         <!-- check nullable types -->
         <Nullable>enable</Nullable>

@@ -27,9 +27,11 @@ namespace ApiService.OneFuzzLib.Orm {
 
 
     public class Orm<T> : IOrm<T> where T : EntityBase {
+        #pragma warning disable CA1051 // permit visible instance fields
         protected readonly EntityConverter _entityConverter;
         protected readonly IOnefuzzContext _context;
         protected readonly ILogTracer _logTracer;
+        #pragma warning restore CA1051
 
 
         public Orm(ILogTracer logTracer, IOnefuzzContext context) {
@@ -136,7 +138,7 @@ namespace ApiService.OneFuzzLib.Orm {
     }
 
 
-    public class StatefulOrm<T, TState, Self> : Orm<T>, IStatefulOrm<T, TState> where T : StatefulEntityBase<TState> where TState : Enum {
+    public class StatefulOrm<T, TState, TSelf> : Orm<T>, IStatefulOrm<T, TState> where T : StatefulEntityBase<TState> where TState : Enum {
         static Lazy<Func<object>>? _partitionKeyGetter;
         static Lazy<Func<object>>? _rowKeyGetter;
         static ConcurrentDictionary<string, Func<T, Async.Task<T>>?> _stateFuncs = new ConcurrentDictionary<string, Func<T, Async.Task<T>>?>();
@@ -147,7 +149,7 @@ namespace ApiService.OneFuzzLib.Orm {
         static StatefulOrm() {
 
             /// verify that all state transition function have the correct signature:
-            var thisType = typeof(Self);
+            var thisType = typeof(TSelf);
             var states = Enum.GetNames(typeof(TState));
             var delegateType = typeof(StateTransition);
             MethodInfo delegateSignature = delegateType.GetMethod("Invoke")!;

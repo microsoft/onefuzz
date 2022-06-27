@@ -142,3 +142,23 @@ dotnet_diagnostic.IDE0005.severity = warning
 
 # allow use of FirstOrDefault/LastOrDefault: https://github.com/dotnet/roslyn-analyzers/issues/1817 & https://github.com/dotnet/roslyn-analyzers/pull/4211#issuecomment-1003578755
 dotnet_code_quality.CA1826.exclude_ordefault_methods = true
+
+# permit underscores in identifier names (e.g. tests, constants)
+dotnet_diagnostic.CA1707.severity = none
+
+# don't care about names that conflict with keywords in other languages
+dotnet_diagnostic.CA1716.severity = none
+
+# don't care about names that contain built-in identifiers
+dotnet_diagnostic.CA1711.severity = none
+dotnet_diagnostic.CA1720.severity = none
+
+# allow static fields on generic types
+dotnet_diagnostic.CA1000.severity = none
+
+# don't worry about performance of ILogger invocations (yet?)
+dotnet_diagnostic.CA1848.severity = none
+
+# allow throwing base "Exception" class, since it's done a lot
+# TODO: improve this
+dotnet_diagnostic.CA2201.severity = suggestion

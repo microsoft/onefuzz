@@ -53,7 +53,7 @@ public class VmOperations : IVmOperations {
 
         var disks = await _diskOperations.ListDisks(resourceGroup)
             .ToAsyncEnumerable()
-            .Where(disk => disk.Data.Name.StartsWith(name))
+            .Where(disk => disk.Data.Name.StartsWith(name, StringComparison.Ordinal))
             .AnyAsync();
 
         if (disks) {
@@ -99,7 +99,7 @@ public class VmOperations : IVmOperations {
 
         var disks = _diskOperations.ListDisks(resourceGroup)
             .ToAsyncEnumerable()
-            .Where(disk => disk.Data.Name.StartsWith(name));
+            .Where(disk => disk.Data.Name.StartsWith(name, StringComparison.Ordinal));
 
         if (await disks.AnyAsync()) {
             await foreach (var disk in disks) {

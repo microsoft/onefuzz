@@ -35,9 +35,9 @@ namespace Microsoft.OneFuzz.Service {
             _creds = creds;
         }
 
-        public async Async.Task QueueSignalrEvent(EventMessage eventMessage) {
-            var message = new SignalREvent("events", new List<EventMessage>() { eventMessage });
-            await _queue.SendMessage("signalr-events", JsonSerializer.Serialize(message), StorageType.Config);
+        public async Async.Task QueueSignalrEvent(EventMessage message) {
+            var ev = new SignalREvent("events", new List<EventMessage>() { message });
+            await _queue.SendMessage("signalr-events", JsonSerializer.Serialize(ev), StorageType.Config);
         }
 
         public async Async.Task SendEvent(BaseEvent anEvent) {

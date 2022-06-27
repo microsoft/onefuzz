@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
@@ -26,7 +27,7 @@ public class SerializeValueAttribute : Attribute { }
 
 /// Indicates that the enum cases should no be renamed
 [AttributeUsage(AttributeTargets.Enum)]
-public class SkipRename : Attribute { }
+public class SkipRenameAttribute : Attribute { }
 [AttributeUsage(AttributeTargets.Parameter)]
 public class RowKeyAttribute : Attribute { }
 [AttributeUsage(AttributeTargets.Parameter)]
@@ -69,14 +70,10 @@ public class EntityConverter {
 
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
 
-    private readonly ETag _emptyETag = new ETag();
-
     public EntityConverter() {
         _options = GetJsonSerializerOptions();
         _cache = new ConcurrentDictionary<Type, EntityInfo>();
-
     }
-
 
     public static JsonSerializerOptions GetJsonSerializerOptions() {
         var options = new JsonSerializerOptions() {
@@ -152,12 +149,10 @@ public class EntityConverter {
 
     public TableEntity ToTableEntity<T>(T typedEntity) where T : EntityBase {
         if (typedEntity == null) {
-            throw new NullReferenceException();
+            throw new ArgumentNullException(nameof(typedEntity));
         }
-        var type = typeof(T)!;
-        if (type is null) {
-            throw new NullReferenceException();
-        }
+
+        var type = typeof(T);
 
         var entityInfo = GetEntityInfo<T>();
         Dictionary<string, object?> columnValues = entityInfo.properties.SelectMany(x => x).Select(prop => {
@@ -273,7 +268,7 @@ public class EntityConverter {
             entityInfo.properties.Select(grouping => GetFieldValue(entityInfo, grouping.Key, entity)).ToArray();
         try {
             var entityRecord = (T)entityInfo.constructor.Invoke(parameters);
-            if (entity.ETag != _emptyETag) {
+            if (entity.ETag != default) {
                 entityRecord.ETag = entity.ETag;
             }
             entityRecord.TimeStamp = entity.Timestamp;

@@ -51,7 +51,7 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum {
         }
 
         var type = typeof(T);
-        _skipFormat = type.GetCustomAttribute<SkipRename>() != null;
+        _skipFormat = type.GetCustomAttribute<SkipRenameAttribute>() != null;
         if (continueProcessing) {
             Array values = Enum.GetValues(type);
 

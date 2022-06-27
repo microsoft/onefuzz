@@ -14,7 +14,7 @@ public interface IContainers {
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
     public Async.Task<Uri> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
-    public Async.Task SaveBlob(Container container, string v1, string v2, StorageType config);
+    public Async.Task SaveBlob(Container container, string name, string data, StorageType storageType);
     public Async.Task<Guid> GetInstanceId();
 
     public Async.Task<Uri?> GetFileUrl(Container container, string name, StorageType storageType);
