@@ -78,6 +78,7 @@ public class Program {
             .AddScoped<IWebhookOperations, WebhookOperations>()
             .AddScoped<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
             .AddScoped<ITaskOperations, TaskOperations>()
+            .AddScoped<ITaskEventOperations, TaskEventOperations>()
             .AddScoped<IQueue, Queue>()
             .AddScoped<IStorage, Storage>()
             .AddScoped<IProxyOperations, ProxyOperations>()
@@ -105,6 +106,7 @@ public class Program {
             .AddScoped<INodeMessageOperations, NodeMessageOperations>()
             .AddScoped<IRequestHandling, RequestHandling>()
             .AddScoped<IOnefuzzContext, OnefuzzContext>()
+            .AddScoped<IEndpointAuthorization, EndpointAuthorization>()
 
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()

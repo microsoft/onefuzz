@@ -57,6 +57,13 @@ public class RequestHandling : IRequestHandling {
         );
     }
 
+    public static HttpResponseData Redirect(HttpRequestData req, Uri uri) {
+        var resp = req.CreateResponse();
+        resp.StatusCode = HttpStatusCode.Found;
+        resp.Headers.Add("Location", uri.ToString());
+        return resp;
+    }
+
     public async static Async.Task<HttpResponseData> Ok(HttpRequestData req, IEnumerable<BaseResponse> response) {
         var resp = req.CreateResponse();
         resp.StatusCode = HttpStatusCode.OK;
@@ -75,4 +82,3 @@ public class RequestHandling : IRequestHandling {
         return await Ok(req, new BaseResponse[] { response });
     }
 }
-

@@ -275,26 +275,48 @@ jobs:
         cd src/ApiService/
         dotnet restore --locked-mode
         dotnet tool restore
+        sudo npm install -g azurite
     - name: Check Formatting
       run: |
         cd src/ApiService/
         dotnet format --verify-no-changes --no-restore
-    - name: Build Service
-      run: |
-        cd src/ApiService/
-        dotnet build -warnaserror --configuration Release
+
+    # note that Test comes before Build:
+    # Test will build things in Debug mode, Build will build them in Release
+    # Build comes second in case Test would do something (unspecified) that 
+    # would somehow alter the binaries that we want to package.
     - name: Test & Collect coverage info
       run: |
         cd src/ApiService/
-        dotnet test --no-restore --collect:"XPlat Code Coverage"
+        azurite --silent &
+        dotnet test --no-restore --collect:"XPlat Code Coverage" --filter 'Category!=Integration'
         dotnet tool run reportgenerator -reports:Tests/TestResults/*/coverage.cobertura.xml -targetdir:coverage -reporttypes:MarkdownSummary
+        kill %1
         cat coverage/*.md > $GITHUB_STEP_SUMMARY
+
+    - name: Build Service
+      run: |
+        version=$(./src/ci/get-version.sh)
+
+        cd src/ApiService/
+
+        # Store GitHub RunID and SHA to be read by the 'info' function
+        echo ${GITHUB_RUN_ID} | tee ApiService/onefuzzlib/build.id
+        echo ${GITHUB_SHA} | tee ApiService/onefuzzlib/git.version
+
+        # stamp the build with version
+        # note that version might have a suffix of '-{sha}' from get-version.sh
+        if [[ "$version" =~ '-' ]]; then
+          # if it has a suffix, split it into two parts
+          dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version%-*} /p:VersionSuffix=${version#*-}
+        else 
+          dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version}
+        fi
+
     - name: copy artifacts
       run: |
         ./src/ci/get-version.sh > src/deployment/VERSION
         cd src/ApiService/ApiService/
-        echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
-        echo ${GITHUB_SHA} | tee onefuzzlib/git.version
         mv az-local.settings.json bin/Release/net6.0/local.settings.json
         cd bin/Release/net6.0/
         zip -r api-service-net.zip .

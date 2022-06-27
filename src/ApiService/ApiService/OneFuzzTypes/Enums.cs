@@ -174,18 +174,25 @@ public static class VmStateHelper {
 
 public static class TaskStateHelper {
 
-    private static readonly IReadOnlySet<TaskState> _available = new HashSet<TaskState> { TaskState.Waiting, TaskState.Scheduled, TaskState.SettingUp, TaskState.Running, TaskState.WaitJob };
-    private static readonly IReadOnlySet<TaskState> _needsWork = new HashSet<TaskState> { TaskState.Init, TaskState.Stopping };
-    private static readonly IReadOnlySet<TaskState> _shuttingDown = new HashSet<TaskState> { TaskState.Stopping, TaskState.Stopped };
-    private static readonly IReadOnlySet<TaskState> _hasStarted = new HashSet<TaskState> { TaskState.Running, TaskState.Stopping, TaskState.Stopped };
+    public static readonly IReadOnlySet<TaskState> AvailableStates =
+        new HashSet<TaskState> { TaskState.Waiting, TaskState.Scheduled, TaskState.SettingUp, TaskState.Running, TaskState.WaitJob };
 
-    public static IReadOnlySet<TaskState> Available => _available;
+    public static readonly IReadOnlySet<TaskState> NeedsWorkStates =
+        new HashSet<TaskState> { TaskState.Init, TaskState.Stopping };
 
-    public static IReadOnlySet<TaskState> NeedsWork => _needsWork;
+    public static readonly IReadOnlySet<TaskState> ShuttingDownStates =
+        new HashSet<TaskState> { TaskState.Stopping, TaskState.Stopped };
 
-    public static IReadOnlySet<TaskState> ShuttingDown => _shuttingDown;
+    public static readonly IReadOnlySet<TaskState> HasStartedStates =
+        new HashSet<TaskState> { TaskState.Running, TaskState.Stopping, TaskState.Stopped };
 
-    public static IReadOnlySet<TaskState> HasStarted => _hasStarted;
+    public static bool Available(this TaskState state) => AvailableStates.Contains(state);
+
+    public static bool NeedsWork(this TaskState state) => NeedsWorkStates.Contains(state);
+
+    public static bool ShuttingDown(this TaskState state) => ShuttingDownStates.Contains(state);
+
+    public static bool HasStarted(this TaskState state) => HasStartedStates.Contains(state);
 
 }
 public enum PoolState {
@@ -278,18 +285,21 @@ public enum NodeState {
 }
 
 public static class NodeStateHelper {
+    private static readonly IReadOnlySet<NodeState> _needsWork =
+        new HashSet<NodeState>(new[] { NodeState.Done, NodeState.Shutdown, NodeState.Halt });
 
-    private static readonly IReadOnlySet<NodeState> _needsWork = new HashSet<NodeState>(new[] { NodeState.Done, NodeState.Shutdown, NodeState.Halt });
-    private static readonly IReadOnlySet<NodeState> _readyForReset = new HashSet<NodeState>(new[] { NodeState.Done, NodeState.Shutdown, NodeState.Halt });
-    private static readonly IReadOnlySet<NodeState> _canProcessNewWork = new HashSet<NodeState>(new[] { NodeState.Free });
+    private static readonly IReadOnlySet<NodeState> _readyForReset
+        = new HashSet<NodeState>(new[] { NodeState.Done, NodeState.Shutdown, NodeState.Halt });
 
+    private static readonly IReadOnlySet<NodeState> _canProcessNewWork =
+        new HashSet<NodeState>(new[] { NodeState.Free });
 
-    public static IReadOnlySet<NodeState> NeedsWork => _needsWork;
+    public static bool NeedsWork(this NodeState state) => _needsWork.Contains(state);
 
     ///If Node is in one of these states, ignore updates from the agent.
-    public static IReadOnlySet<NodeState> ReadyForReset => _readyForReset;
+    public static bool ReadyForReset(this NodeState state) => _readyForReset.Contains(state);
 
-    public static IReadOnlySet<NodeState> CanProcessNewWork => _canProcessNewWork;
+    public static bool CanProcessNewWork(this NodeState state) => _canProcessNewWork.Contains(state);
 }
 
 
