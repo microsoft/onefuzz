@@ -18,7 +18,7 @@ public class AgentEvents {
     private static readonly EntityConverter _entityConverter = new();
 
     [Function("AgentEvents")]
-    public async Async.Task<HttpResponseData> Run([HttpTrigger("post")] HttpRequestData req) {
+    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "POST")] HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeStateEnvelope>(req);
         if (!request.IsOk || request.OkV == null) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, context: "node event");
