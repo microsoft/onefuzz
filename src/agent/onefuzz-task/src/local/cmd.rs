@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
-use crate::local::coverage;
+use crate::local::{coverage, dotnet_coverage};
 use crate::local::{
-    common::add_common_config, dotnet_coverage, generic_analysis, generic_crash_report,
+    common::add_common_config, generic_analysis, generic_crash_report,
     generic_generator, libfuzzer, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge,
     libfuzzer_regression, libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
 };
@@ -23,6 +23,7 @@ enum Commands {
     Radamsa,
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     Coverage,
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     DotnetCoverage,
     LibfuzzerFuzz,
     LibfuzzerMerge,
