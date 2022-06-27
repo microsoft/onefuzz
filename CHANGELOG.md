@@ -21,7 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Add scripts to install dotnet on windows and ubuntu [#2038](https://github.com/microsoft/onefuzz/pull/2038)
 * Deployment: Update Getting Started instructions. [#2030](https://github.com/microsoft/onefuzz/pull/2030)
 * Deployment: Add nsg config to check-pr [#2067](https://github.com/microsoft/onefuzz/pull/2067)
-* Deployment: Add workflow to sync github issues with Azure DevOps work items [#2035](https://github.com/microsoft/onefuzz/pull/2035)
 * Service: Enabling C# functions [#2046](https://github.com/microsoft/onefuzz/pull/2046), [#2047](https://github.com/microsoft/onefuzz/pull/2047)
 * Service: Finish migrating timer_task to C# [#2066](https://github.com/microsoft/onefuzz/pull/2066)
 
