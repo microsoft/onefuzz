@@ -6,7 +6,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IScalesetOperations : IOrm<Scaleset> {
     IAsyncEnumerable<Scaleset> Search();
 
-    public IAsyncEnumerable<Scaleset?> SearchByPool(string poolName);
+    public IAsyncEnumerable<Scaleset?> SearchByPool(PoolName poolName);
 
     public Async.Task UpdateConfigs(Scaleset scaleSet);
 
@@ -14,7 +14,7 @@ public interface IScalesetOperations : IOrm<Scaleset> {
     IAsyncEnumerable<Scaleset> GetByObjectId(Guid objectId);
 }
 
-public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalesetOperations {
+public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetOperations>, IScalesetOperations {
     const string SCALESET_LOG_PREFIX = "scalesets: ";
 
     ILogTracer _log;
@@ -29,8 +29,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
         return QueryAsync();
     }
 
-    public IAsyncEnumerable<Scaleset> SearchByPool(string poolName) {
-        return QueryAsync(filter: $"pool_name eq '{poolName}'");
+    public IAsyncEnumerable<Scaleset> SearchByPool(PoolName poolName) {
+        return QueryAsync(filter: $"PartitionKey eq '{poolName}'");
     }
 
 
@@ -191,7 +191,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState>, IScalese
 
         var nodesToReset =
                 from x in existingNodes
-                where NodeStateHelper.ReadyForReset.Contains(x.State)
+                where x.State.ReadyForReset()
                 select x;
 
 

@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using PoolName = System.String;
 using Region = System.String;
 
 namespace Microsoft.OneFuzz.Service;
@@ -258,7 +257,8 @@ public record EventNodeHeartbeat(
 public record EventNodeDeleted(
     Guid MachineId,
     Guid? ScalesetId,
-    PoolName PoolName
+    PoolName PoolName,
+    NodeState? MachineState
 ) : BaseEvent();
 
 

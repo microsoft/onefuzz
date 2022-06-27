@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
 using GroupId = System.Guid;
-using PoolName = System.String;
 using PrincipalId = System.Guid;
 using Region = System.String;
 
@@ -67,8 +66,8 @@ public enum NodeTaskState {
 
 public record NodeTasks
 (
-    Guid MachineId,
-    Guid TaskId,
+    [PartitionKey] Guid MachineId,
+    [RowKey] Guid TaskId,
     NodeTaskState State = NodeTaskState.Init
 ) : StatefulEntityBase<NodeTaskState>(State);
 
@@ -152,44 +151,40 @@ public record Error(ErrorCode Code, string[]? Errors = null);
 
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
 
-
-
-
 public record TaskDetails(
-
     TaskType Type,
     int Duration,
-    string? TargetExe,
-    Dictionary<string, string>? TargetEnv,
-    List<string>? TargetOptions,
-    int? TargetWorkers,
-    bool? TargetOptionsMerge,
-    bool? CheckAsanLog,
-    bool? CheckDebugger,
-    int? CheckRetryCount,
-    bool? CheckFuzzerHelp,
-    bool? ExpectCrashOnFailure,
-    bool? RenameOutput,
-    string? SupervisorExe,
-    Dictionary<string, string>? SupervisorEnv,
-    List<string>? SupervisorOptions,
-    string? SupervisorInputMarker,
-    string? GeneratorExe,
-    Dictionary<string, string>? GeneratorEnv,
-    List<string>? GeneratorOptions,
-    string? AnalyzerExe,
-    Dictionary<string, string>? AnalyzerEnv,
-    List<string> AnalyzerOptions,
-    ContainerType? WaitForFiles,
-    string? StatsFile,
-    StatsFormat? StatsFormat,
-    bool? RebootAfterSetup,
-    int? TargetTimeout,
-    int? EnsembleSyncDelay,
-    bool? PreserveExistingOutputs,
-    List<string>? ReportList,
-    int? MinimizedStackDepth,
-    string? CoverageFilter
+    string? TargetExe = null,
+    Dictionary<string, string>? TargetEnv = null,
+    List<string>? TargetOptions = null,
+    int? TargetWorkers = null,
+    bool? TargetOptionsMerge = null,
+    bool? CheckAsanLog = null,
+    bool? CheckDebugger = null,
+    int? CheckRetryCount = null,
+    bool? CheckFuzzerHelp = null,
+    bool? ExpectCrashOnFailure = null,
+    bool? RenameOutput = null,
+    string? SupervisorExe = null,
+    Dictionary<string, string>? SupervisorEnv = null,
+    List<string>? SupervisorOptions = null,
+    string? SupervisorInputMarker = null,
+    string? GeneratorExe = null,
+    Dictionary<string, string>? GeneratorEnv = null,
+    List<string>? GeneratorOptions = null,
+    string? AnalyzerExe = null,
+    Dictionary<string, string>? AnalyzerEnv = null,
+    List<string>? AnalyzerOptions = null,
+    ContainerType? WaitForFiles = null,
+    string? StatsFile = null,
+    StatsFormat? StatsFormat = null,
+    bool? RebootAfterSetup = null,
+    int? TargetTimeout = null,
+    int? EnsembleSyncDelay = null,
+    bool? PreserveExistingOutputs = null,
+    List<string>? ReportList = null,
+    int? MinimizedStackDepth = null,
+    string? CoverageFilter = null
 );
 
 public record TaskVm(
@@ -210,18 +205,18 @@ public record TaskContainers(
     ContainerType Type,
     Container Name
 );
+
 public record TaskConfig(
    Guid JobId,
    List<Guid>? PrereqTasks,
    TaskDetails Task,
-   TaskVm? Vm,
-   TaskPool? Pool,
-   List<TaskContainers>? Containers,
-   Dictionary<string, string>? Tags,
-   List<TaskDebugFlag>? Debug,
-   bool? Colocate
+   TaskVm? Vm = null,
+   TaskPool? Pool = null,
+   List<TaskContainers>? Containers = null,
+   Dictionary<string, string>? Tags = null,
+   List<TaskDebugFlag>? Debug = null,
+   bool? Colocate = null
    );
-
 
 public record TaskEventSummary(
     DateTimeOffset? Timestamp,
@@ -243,14 +238,21 @@ public record Task(
     TaskState State,
     Os Os,
     TaskConfig Config,
-    Error? Error,
-    Authentication? Auth,
-    DateTimeOffset? Heartbeat,
-    DateTimeOffset? EndTime,
-    UserInfo? UserInfo) : StatefulEntityBase<TaskState>(State) {
+    Error? Error = null,
+    Authentication? Auth = null,
+    DateTimeOffset? Heartbeat = null,
+    DateTimeOffset? EndTime = null,
+    UserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
     List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
     List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
 }
+
+public record TaskEvent(
+    [PartitionKey, RowKey] Guid TaskId,
+    Guid MachineId,
+    WorkerEvent EventData
+) : EntityBase;
+
 public record AzureSecurityExtensionConfig();
 public record GenevaExtensionConfig();
 
@@ -314,11 +316,11 @@ public record InstanceConfig
     NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
     string ProxyVmSku,
-    IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules,
-    IDictionary<PrincipalId, GroupId[]>? GroupMembership,
-
-    IDictionary<string, string>? VmTags,
-    IDictionary<string, string>? VmssTags
+    IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
+    IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,
+    IDictionary<string, string>? VmTags = null,
+    IDictionary<string, string>? VmssTags = null,
+    bool? RequireAdminPrivileges = null
 ) : EntityBase() {
     public InstanceConfig(string instanceName) : this(
         instanceName,
@@ -328,12 +330,7 @@ public record InstanceConfig
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
         null,
-        "Standard_B2s",
-        null,
-        null,
-        null,
-        null) { }
-
+        "Standard_B2s") { }
     public InstanceConfig() : this(String.Empty) { }
 
     public List<Guid>? CheckAdmins(List<Guid>? value) {
@@ -343,7 +340,6 @@ public record InstanceConfig
             return value;
         }
     }
-
 
     //# At the moment, this only checks allowed_aad_tenants, however adding
     //# support for 3rd party JWT validation is anticipated in a future release.
@@ -596,8 +592,28 @@ public record WorkUnit(
     Guid JobId,
     Guid TaskId,
     TaskType TaskType,
-    TaskUnitConfig Config
+
+    // JSON-serialized `TaskUnitConfig`.
+    [property: JsonConverter(typeof(TaskUnitConfigConverter))] TaskUnitConfig Config
 );
+
+public class TaskUnitConfigConverter : JsonConverter<TaskUnitConfig> {
+    public override TaskUnitConfig? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        var taskUnitString = reader.GetString();
+        if (taskUnitString == null) {
+            return null;
+        }
+        return JsonSerializer.Deserialize<TaskUnitConfig>(taskUnitString, options);
+    }
+
+    public override void Write(Utf8JsonWriter writer, TaskUnitConfig value, JsonSerializerOptions options) {
+        var v = JsonSerializer.Serialize(value, new JsonSerializerOptions(options) {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        });
+
+        writer.WriteStringValue(v);
+    }
+}
 
 public record VmDefinition(
     Compare Compare,
@@ -631,12 +647,34 @@ public record ContainerDefinition(
 
 // TODO: service shouldn't pass SyncedDir, but just the url and let the agent
 // come up with paths
-public record SyncedDir(string Path, Uri url);
+public record SyncedDir(string Path, Uri Url);
 
 
+[JsonConverter(typeof(ContainerDefConverter))]
 public interface IContainerDef { }
 public record SingleContainer(SyncedDir SyncedDir) : IContainerDef;
 public record MultipleContainer(List<SyncedDir> SyncedDirs) : IContainerDef;
+
+
+public class ContainerDefConverter : JsonConverter<IContainerDef> {
+    public override IContainerDef? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        throw new NotImplementedException();
+    }
+
+    public override void Write(Utf8JsonWriter writer, IContainerDef value, JsonSerializerOptions options) {
+        switch (value) {
+            case SingleContainer container:
+                JsonSerializer.Serialize(writer, container.SyncedDir, options);
+                break;
+            case MultipleContainer { SyncedDirs: var syncedDirs }:
+                JsonSerializer.Serialize(writer, syncedDirs, options);
+                break;
+            default:
+                throw new NotImplementedException();
+        }
+    }
+}
+
 
 
 public record TaskUnitConfig(
@@ -692,7 +730,7 @@ public record TaskUnitConfig(
     public IContainerDef? Tools { get; set; }
     public IContainerDef? UniqueInputs { get; set; }
     public IContainerDef? UniqueReports { get; set; }
-    public IContainerDef? RegressionReport { get; set; }
+    public IContainerDef? RegressionReports { get; set; }
 
 }
 
