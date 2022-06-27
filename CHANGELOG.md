@@ -20,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * CLI: Error output to specify that the tools are missing locally, not on the repro VM [#2036](https://github.com/microsoft/onefuzz/pull/2036)
 * Service: Handle service event messages that are too big to fit in a queue message. [#2020](https://github.com/microsoft/onefuzz/pull/2020)
-* Service: Update appinsights to released version `0.2.1`. [#2033](https://github.com/microsoft/onefuzz/pull/2033)
 * Service: Removing unecessary `/obj/` directory. [#2063](https://github.com/microsoft/onefuzz/pull/2063)
 
 ## 5.6.0
