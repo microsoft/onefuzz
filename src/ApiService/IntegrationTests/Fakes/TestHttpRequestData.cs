@@ -9,7 +9,7 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace Tests.Fakes;
+namespace IntegrationTests.Fakes;
 
 sealed class TestHttpRequestData : HttpRequestData {
     private static readonly ObjectSerializer _serializer =
