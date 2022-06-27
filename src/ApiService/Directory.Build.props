@@ -6,8 +6,8 @@
 
         <!-- enable code analysis -->
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
-        <AnalysisLevel>6.0-Default</AnalysisLevel>
-        <!-- Goal: raise to 6.0-Minimum and then eventually 6.0-Recommended -->
+        <AnalysisLevel>6.0-Minimum</AnalysisLevel>
+        <!-- Goal: raise to 6.0-Recommended -->
 
         <!-- check nullable types -->
         <Nullable>enable</Nullable>

@@ -333,7 +333,7 @@ public record InstanceConfig
         "Standard_B2s") { }
     public InstanceConfig() : this(String.Empty) { }
 
-    public List<Guid>? CheckAdmins(List<Guid>? value) {
+    public static List<Guid>? CheckAdmins(List<Guid>? value) {
         if (value is not null && value.Count == 0) {
             throw new ArgumentException("admins must be null or contain at least one UUID");
         } else {

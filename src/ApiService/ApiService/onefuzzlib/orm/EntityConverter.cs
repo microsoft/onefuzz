@@ -27,8 +27,11 @@ public class SerializeValueAttribute : Attribute { }
 /// Indicates that the enum cases should no be renamed
 [AttributeUsage(AttributeTargets.Enum)]
 public class SkipRename : Attribute { }
+[AttributeUsage(AttributeTargets.Parameter)]
 public class RowKeyAttribute : Attribute { }
+[AttributeUsage(AttributeTargets.Parameter)]
 public class PartitionKeyAttribute : Attribute { }
+[AttributeUsage(AttributeTargets.Property)]
 public class TypeDiscrimnatorAttribute : Attribute {
     public string FieldName { get; }
     // the type of a function that takes the value of fieldName as an input and return the type
@@ -102,7 +105,7 @@ public class EntityConverter {
         return ctor;
     }
 
-    private IEnumerable<EntityProperty> GetEntityProperties<T>(ParameterInfo parameterInfo) {
+    private static IEnumerable<EntityProperty> GetEntityProperties<T>(ParameterInfo parameterInfo) {
         var name = parameterInfo.Name.EnsureNotNull($"Invalid paramter {parameterInfo}");
         var parameterType = parameterInfo.ParameterType.EnsureNotNull($"Invalid paramter {parameterInfo}");
         var isRowkey = parameterInfo.GetCustomAttribute(typeof(RowKeyAttribute)) != null;
@@ -112,7 +115,7 @@ public class EntityConverter {
 
         (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator = null;
         if (discriminatorAttribute != null) {
-            var t = (ITypeProvider)(discriminatorAttribute.ConverterType.GetConstructor(new Type[] { })?.Invoke(null) ?? throw new Exception("unable to retrive the type provider"));
+            var t = (ITypeProvider)(Activator.CreateInstance(discriminatorAttribute.ConverterType) ?? throw new Exception("unable to retrive the type provider"));
             discriminator = (discriminatorAttribute, t);
         }
 

@@ -139,3 +139,6 @@ csharp_preserve_single_line_blocks = true
 
 [*.{cs}]
 dotnet_diagnostic.IDE0005.severity = warning
+
+# allow use of FirstOrDefault/LastOrDefault: https://github.com/dotnet/roslyn-analyzers/issues/1817 & https://github.com/dotnet/roslyn-analyzers/pull/4211#issuecomment-1003578755
+dotnet_code_quality.CA1826.exclude_ordefault_methods = true

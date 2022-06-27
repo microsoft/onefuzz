@@ -125,7 +125,7 @@ public class Containers : IContainers {
         return sasUrl;
     }
 
-    public (DateTimeOffset, DateTimeOffset) SasTimeWindow(TimeSpan timeSpan) {
+    public static (DateTimeOffset, DateTimeOffset) SasTimeWindow(TimeSpan timeSpan) {
         // SAS URLs are valid 6 hours earlier, primarily to work around dev
         // workstations having out-of-sync time.  Additionally, SAS URLs are stopped
         // 15 minutes later than requested based on "Be careful with SAS start time"
@@ -149,7 +149,7 @@ public class Containers : IContainers {
     public Async.Task<Guid> GetInstanceId() => _getInstanceId.Value;
     private readonly Lazy<Async.Task<Guid>> _getInstanceId;
 
-    public Uri? GetContainerSasUrlService(
+    public static Uri? GetContainerSasUrlService(
         BlobContainerClient client,
         BlobSasPermissions permissions,
         bool tag = false,
