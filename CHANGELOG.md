@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Finish migrating timer_task to C# [#2066](https://github.com/microsoft/onefuzz/pull/2066)
 
 ### Fixed
-* CLI: Specify that the tools are missing locally, not on the repro vm [#2036](https://github.com/microsoft/onefuzz/pull/2036)
+* CLI: Specify that the tools are missing locally, not on the repro VM [#2036](https://github.com/microsoft/onefuzz/pull/2036)
 * Deployment: Remove deprecated `libfuzzer_coverage` task. [#2021](https://github.com/microsoft/onefuzz/pull/2021)
 * Deployment: Link build status shield to Github Actions page. [#2040](https://github.com/microsoft/onefuzz/pull/2040), [#2037](https://github.com/microsoft/onefuzz/pull/2037)
 * Service: Handle messages that are too big to fit in a queue message. [#2020](https://github.com/microsoft/onefuzz/pull/2020)
