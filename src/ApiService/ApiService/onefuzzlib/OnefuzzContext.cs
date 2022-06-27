@@ -36,6 +36,8 @@ public interface IOnefuzzContext {
     IWebhookMessageLogOperations WebhookMessageLogOperations { get; }
     IWebhookOperations WebhookOperations { get; }
     IRequestHandling RequestHandling { get; }
+    INsgOperations NsgOperations { get; }
+    ISubnet Subnet { get; }
 }
 
 public class OnefuzzContext : IOnefuzzContext {
@@ -77,4 +79,6 @@ public class OnefuzzContext : IOnefuzzContext {
     public ICreds Creds => _serviceProvider.GetRequiredService<ICreds>();
     public IServiceConfig ServiceConfiguration => _serviceProvider.GetRequiredService<IServiceConfig>();
     public IRequestHandling RequestHandling => _serviceProvider.GetRequiredService<IRequestHandling>();
+    public INsgOperations NsgOperations => _serviceProvider.GetRequiredService<INsgOperations>();
+    public ISubnet Subnet => _serviceProvider.GetRequiredService<ISubnet>();
 }
