@@ -5,7 +5,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IReproOperations : IStatefulOrm<Repro, VmState> {
     public IAsyncEnumerable<Repro> SearchExpired();
 
-    public System.Threading.Tasks.Task Stopping(Repro repro);
+    public Async.Task<Repro> Stopping(Repro repro);
 
     public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? States);
 }
@@ -67,22 +67,26 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         );
     }
 
-    public async Async.Task Stopping(Repro repro) {
+    public async Async.Task<Repro> Stopping(Repro repro) {
         var config = await _context.ConfigOperations.Fetch();
         var vm = await GetVm(repro, config);
         var vmOperations = _context.VmOperations;
         if (!await vmOperations.IsDeleted(vm)) {
             _logTracer.Info($"vm stopping: {repro.VmId}");
             await vmOperations.Delete(vm);
+            repro = repro with { State = VmState.Stopping };
             await Replace(repro);
+            return repro;
         } else {
-            await Stopped(repro);
+            return await Stopped(repro);
         }
     }
 
-    public async Async.Task Stopped(Repro repro) {
+    public async Async.Task<Repro> Stopped(Repro repro) {
         _logTracer.Info($"vm stopped: {repro.VmId}");
+        repro = repro with { State = VmState.Stopped };
         await Delete(repro);
+        return repro;
     }
 
     public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? states) {
