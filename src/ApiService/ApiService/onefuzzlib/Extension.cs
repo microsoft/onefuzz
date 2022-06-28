@@ -71,7 +71,7 @@ public class Extensions : IExtensions {
         return extensions;
     }
 
-    public VirtualMachineScaleSetExtensionData KeyVaultExtension(string region, KeyvaultExtensionConfig keyVault, Os vmOs) {
+    public static VirtualMachineScaleSetExtensionData KeyVaultExtension(string region, KeyvaultExtensionConfig keyVault, Os vmOs) {
         var keyVaultName = keyVault.KeyVaultName;
         var certName = keyVault.CertName;
         var uri = keyVaultName + certName;
@@ -119,7 +119,7 @@ public class Extensions : IExtensions {
         }
     }
 
-    public VirtualMachineScaleSetExtensionData AzSecExtension(string region) {
+    public static VirtualMachineScaleSetExtensionData AzSecExtension(string region) {
         return new VirtualMachineScaleSetExtensionData {
             Name = "AzureSecurityLinuxAgent",
             Publisher = "Microsoft.Azure.Security.Monitoring",
@@ -131,7 +131,7 @@ public class Extensions : IExtensions {
 
     }
 
-    public VirtualMachineScaleSetExtensionData AzMonExtension(string region, AzureMonitorExtensionConfig azureMonitor) {
+    public static VirtualMachineScaleSetExtensionData AzMonExtension(string region, AzureMonitorExtensionConfig azureMonitor) {
         var authId = azureMonitor.MonitoringGCSAuthId;
         var configVersion = azureMonitor.ConfigVersion;
         var moniker = azureMonitor.Moniker;
@@ -164,7 +164,7 @@ public class Extensions : IExtensions {
 
 
 
-    public VirtualMachineScaleSetExtensionData GenevaExtension(string region) {
+    public static VirtualMachineScaleSetExtensionData GenevaExtension(string region) {
         return new VirtualMachineScaleSetExtensionData {
             Name = "Microsoft.Azure.Geneva.GenevaMonitoring",
             Publisher = "Microsoft.Azure.Geneva",
@@ -175,7 +175,7 @@ public class Extensions : IExtensions {
         };
     }
 
-    public VirtualMachineScaleSetExtensionData? DependencyExtension(string region, Os vmOs) {
+    public static VirtualMachineScaleSetExtensionData? DependencyExtension(string region, Os vmOs) {
 
         if (vmOs == Os.Windows) {
             return new VirtualMachineScaleSetExtensionData {
