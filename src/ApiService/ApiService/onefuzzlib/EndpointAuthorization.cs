@@ -143,7 +143,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
                 return true;
             }
 
-            var principalId = _context.Creds.GetScalesetPrincipalId();
+            var principalId = await _context.Creds.GetScalesetPrincipalId();
             return principalId == tokenData.ObjectId;
         }
 

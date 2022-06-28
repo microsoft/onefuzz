@@ -50,7 +50,7 @@ class TestCreds : ICreds {
         throw new NotImplementedException();
     }
 
-    public Guid GetScalesetPrincipalId() {
+    public Task<Guid> GetScalesetPrincipalId() {
         throw new NotImplementedException();
     }
 }

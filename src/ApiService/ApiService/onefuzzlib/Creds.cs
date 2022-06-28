@@ -24,7 +24,7 @@ public interface ICreds {
     public Async.Task<string> GetBaseRegion();
 
     public Uri GetInstanceUrl();
-    Guid GetScalesetPrincipalId();
+    public Async.Task<Guid> GetScalesetPrincipalId();
 }
 
 public class Creds : ICreds {
@@ -88,11 +88,17 @@ public class Creds : ICreds {
         return new Uri($"https://{GetInstanceName()}.azurewebsites.net");
     }
 
-    public Guid GetScalesetPrincipalId() {
-        var uid = ArmClient.GetGenericResource(
-            new ResourceIdentifier(GetScalesetIdentityResourcePath())
-        );
-        var principalId = JsonSerializer.Deserialize<JsonDocument>(uid.Data.Properties.ToString())?.RootElement.GetProperty("principalId").GetString()!;
+    public async Async.Task<Guid> GetScalesetPrincipalId() {
+        var path = GetScalesetIdentityResourcePath();
+        var uid = ArmClient.GetGenericResource(new ResourceIdentifier(path));
+
+        var resource = await uid.GetAsync();
+        var json = JsonDocument.Parse(resource.Value.Data.Properties);
+        var principalId = json.RootElement.GetProperty("principalId").GetString();
+        if (principalId is null) {
+            throw new InvalidOperationException($"unable to locate 'principalId' property in JSON data for {path}");
+        }
+
         return new Guid(principalId);
     }
 
