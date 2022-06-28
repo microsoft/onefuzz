@@ -7,7 +7,7 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 
     public Async.Task<Repro> Stopping(Repro repro);
 
-    public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? States);
+    public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? states);
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
