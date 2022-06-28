@@ -7,7 +7,7 @@ using Azure.ResourceManager.Resources;
 using Microsoft.OneFuzz.Service;
 using Task = System.Threading.Tasks.Task;
 
-namespace Tests.Fakes;
+namespace IntegrationTests.Fakes;
 
 class TestCreds : ICreds {
 

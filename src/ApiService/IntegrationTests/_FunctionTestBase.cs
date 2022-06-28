@@ -5,13 +5,13 @@ using ApiService.OneFuzzLib.Orm;
 using Azure.Data.Tables;
 using Azure.Storage;
 using Azure.Storage.Blobs;
+using IntegrationTests.Fakes;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using Tests.Fakes;
 using Xunit.Abstractions;
 
-namespace Tests.Functions;
+namespace IntegrationTests;
 
 // FunctionTestBase contains shared implementations for running
 // functions against live Azure Storage or the Azurite emulator.
@@ -20,7 +20,7 @@ namespace Tests.Functions;
 // with all the tests defined in it. Then, from that class
 // derive two non-abstract classes for XUnit to find:
 // - one for Azurite
-// - one for Azure Storage (marked with [Trait("Category", "Integration")])
+// - one for Azure Storage (marked with [Trait("Category", "Live")])
 //
 // See AgentEventsTests for an example.
 public abstract class FunctionTestBase : IDisposable {

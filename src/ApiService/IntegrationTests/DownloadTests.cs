@@ -2,16 +2,15 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
-using Tests.Fakes;
 using Xunit;
 using Xunit.Abstractions;
-
 using Async = System.Threading.Tasks;
 
-namespace Tests.Functions;
+namespace IntegrationTests;
 
-[Trait("Category", "Integration")]
+[Trait("Category", "Live")]
 public class AzureStorageDownloadTest : DownloadTestBase {
     public AzureStorageDownloadTest(ITestOutputHelper output)
         : base(output, Integration.AzureStorage.FromEnvironment()) { }

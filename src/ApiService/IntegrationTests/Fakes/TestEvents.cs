@@ -3,7 +3,7 @@ using Microsoft.OneFuzz.Service;
 
 using Async = System.Threading.Tasks;
 
-namespace Tests.Fakes;
+namespace IntegrationTests.Fakes;
 
 public sealed class TestEvents : IEvents {
 

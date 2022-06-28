@@ -5,7 +5,7 @@ using Microsoft.OneFuzz.Service;
 
 using Async = System.Threading.Tasks;
 
-namespace Tests.Integration;
+namespace IntegrationTests.Integration;
 
 // This exists solely to allow use of a fixed storage account in integration tests
 // against live Azure Storage.
@@ -15,11 +15,11 @@ sealed class AzureStorage : IStorage {
         var accountKey = Environment.GetEnvironmentVariable("AZURE_ACCOUNT_KEY");
 
         if (accountName is null) {
-            throw new Exception("AZURE_ACCOUNT_NAME must be set in environment to run integration tests (use --filter 'Category!=Integration' to skip them)");
+            throw new Exception("AZURE_ACCOUNT_NAME must be set in environment to run integration tests (use --filter 'Category!=Live' to skip them)");
         }
 
         if (accountKey is null) {
-            throw new Exception("AZURE_ACCOUNT_KEY must be set in environment to run integration tests (use --filter 'Category!=Integration' to skip them)");
+            throw new Exception("AZURE_ACCOUNT_KEY must be set in environment to run integration tests (use --filter 'Category!=Live' to skip them)");
         }
 
         return new AzureStorage(accountName, accountKey);
@@ -49,7 +49,7 @@ sealed class AzureStorage : IStorage {
         => Async.Task.FromResult((AccountName, AccountKey));
 
     public Task<string?> GetStorageAccountNameKeyByName(string accountName) {
-        return Async.Task.FromResult(AccountName)!;
+        return Async.Task.FromResult<string?>(AccountName);
     }
 
     public Uri GetTableEndpoint(string accountId)
