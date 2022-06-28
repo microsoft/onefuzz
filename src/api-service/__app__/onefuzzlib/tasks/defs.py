@@ -179,40 +179,6 @@ TASK_DEFINITIONS = {
         ],
         monitor_queue=ContainerType.crashes,
     ),
-    TaskType.libfuzzer_coverage: TaskDefinition(
-        features=[
-            TaskFeature.target_exe,
-            TaskFeature.target_env,
-            TaskFeature.target_options,
-            TaskFeature.check_fuzzer_help,
-        ],
-        vm=VmDefinition(compare=Compare.Equal, value=1),
-        containers=[
-            ContainerDefinition(
-                type=ContainerType.setup,
-                compare=Compare.Equal,
-                value=1,
-                permissions=[ContainerPermission.Read, ContainerPermission.List],
-            ),
-            ContainerDefinition(
-                type=ContainerType.readonly_inputs,
-                compare=Compare.AtLeast,
-                value=1,
-                permissions=[ContainerPermission.Read, ContainerPermission.List],
-            ),
-            ContainerDefinition(
-                type=ContainerType.coverage,
-                compare=Compare.Equal,
-                value=1,
-                permissions=[
-                    ContainerPermission.List,
-                    ContainerPermission.Read,
-                    ContainerPermission.Write,
-                ],
-            ),
-        ],
-        monitor_queue=ContainerType.readonly_inputs,
-    ),
     TaskType.libfuzzer_merge: TaskDefinition(
         features=[
             TaskFeature.target_exe,

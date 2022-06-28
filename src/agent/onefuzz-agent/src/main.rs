@@ -6,8 +6,6 @@ extern crate async_trait;
 #[macro_use]
 extern crate downcast_rs;
 #[macro_use]
-extern crate clap;
-#[macro_use]
 extern crate anyhow;
 #[macro_use]
 extern crate onefuzz_telemetry;
@@ -22,13 +20,13 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 use anyhow::{Context, Result};
+use clap::Parser;
 use onefuzz::{
     machine_id::{get_machine_id, get_scaleset_name},
     process::ExitStatus,
 };
 use onefuzz_telemetry::{self as telemetry, EventData, Role};
 use std::io::{self, Write};
-use structopt::StructOpt;
 use uuid::Uuid;
 
 pub mod agent;
@@ -47,28 +45,29 @@ pub mod setup;
 pub mod work;
 pub mod worker;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 enum Opt {
     Run(RunOpt),
+    #[clap(subcommand)]
     Debug(debug::DebugOpt),
     Licenses,
     Version,
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 struct RunOpt {
-    #[structopt(short, long = "--config", parse(from_os_str))]
+    #[clap(short, long = "--config", parse(from_os_str))]
     config_path: Option<PathBuf>,
     /// re-executes as a child process, recording stdout/stderr to files in
     /// the specified directory
-    #[structopt(short, long = "--redirect-output", parse(from_os_str))]
+    #[clap(short, long = "--redirect-output", parse(from_os_str))]
     redirect_output: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
     env_logger::init();
 
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
 
     set_panic_handler();
 
@@ -85,7 +84,7 @@ fn main() -> Result<()> {
 fn version() {
     println!(
         "{} onefuzz:{} git:{}",
-        crate_version!(),
+        clap::crate_version!(),
         env!("ONEFUZZ_VERSION"),
         env!("GIT_VERSION")
     );

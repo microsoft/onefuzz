@@ -176,12 +176,11 @@ mod tests {
 
     #[test]
     fn test_cobertura_conversion_windows_to_posix_path() {
-        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec1.push(SourceCoverageLocation {
+        let coverage_locations_vec1 = vec![SourceCoverageLocation {
             line: 5,
             column: None,
             count: 3,
-        });
+        }];
 
         let file = SourceFileCoverage {
             locations: coverage_locations_vec1,
@@ -194,12 +193,11 @@ mod tests {
 
     #[test]
     fn test_cobertura_conversion_windows_to_posix_parent_path() {
-        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec1.push(SourceCoverageLocation {
+        let coverage_locations_vec1 = vec![SourceCoverageLocation {
             line: 5,
             column: None,
             count: 3,
-        });
+        }];
 
         let file = SourceFileCoverage {
             locations: coverage_locations_vec1,
@@ -213,12 +211,11 @@ mod tests {
 
     #[test]
     fn test_cobertura_conversion_posix_to_posix_path() {
-        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec1.push(SourceCoverageLocation {
+        let coverage_locations_vec1 = vec![SourceCoverageLocation {
             line: 5,
             column: None,
             count: 3,
-        });
+        }];
 
         let file = SourceFileCoverage {
             locations: coverage_locations_vec1,
@@ -232,12 +229,11 @@ mod tests {
 
     #[test]
     fn test_cobertura_conversion_posix_to_posix_parent_path() {
-        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec1.push(SourceCoverageLocation {
+        let coverage_locations_vec1 = vec![SourceCoverageLocation {
             line: 5,
             column: None,
             count: 3,
-        });
+        }];
 
         let file = SourceFileCoverage {
             locations: coverage_locations_vec1,
@@ -252,12 +248,11 @@ mod tests {
 
     #[test]
     fn test_cobertura_invalid_windows_path() {
-        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec1.push(SourceCoverageLocation {
+        let coverage_locations_vec1 = vec![SourceCoverageLocation {
             line: 5,
             column: None,
             count: 3,
-        });
+        }];
 
         let file = SourceFileCoverage {
             locations: coverage_locations_vec1,
@@ -271,12 +266,11 @@ mod tests {
 
     #[test]
     fn test_cobertura_invalid_windows_parent_path() {
-        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec1.push(SourceCoverageLocation {
+        let coverage_locations_vec1 = vec![SourceCoverageLocation {
             line: 5,
             column: None,
             count: 3,
-        });
+        }];
 
         let file = SourceFileCoverage {
             locations: coverage_locations_vec1,
@@ -294,12 +288,11 @@ mod tests {
 
     #[test]
     fn test_cobertura_invalid_posix_path() {
-        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec1.push(SourceCoverageLocation {
+        let coverage_locations_vec1 = vec![SourceCoverageLocation {
             line: 5,
             column: None,
             count: 3,
-        });
+        }];
 
         let file = SourceFileCoverage {
             locations: coverage_locations_vec1,
@@ -312,12 +305,11 @@ mod tests {
 
     #[test]
     fn test_cobertura_invalid_posix_parent_path() {
-        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec1.push(SourceCoverageLocation {
+        let coverage_locations_vec1 = vec![SourceCoverageLocation {
             line: 5,
             column: None,
             count: 3,
-        });
+        }];
 
         let file = SourceFileCoverage {
             locations: coverage_locations_vec1,
@@ -335,56 +327,55 @@ mod tests {
 
     #[test]
     fn test_cobertura_source_to_cobertura_mixed() -> Result<()> {
-        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec1.push(SourceCoverageLocation {
-            line: 5,
-            column: None,
-            count: 3,
-        });
-        coverage_locations_vec1.push(SourceCoverageLocation {
-            line: 10,
-            column: None,
-            count: 0,
-        });
+        let coverage_locations_vec1 = vec![
+            SourceCoverageLocation {
+                line: 5,
+                column: None,
+                count: 3,
+            },
+            SourceCoverageLocation {
+                line: 10,
+                column: None,
+                count: 0,
+            },
+        ];
 
-        let mut coverage_locations_vec2: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec2.push(SourceCoverageLocation {
+        let coverage_locations_vec2 = vec![SourceCoverageLocation {
             line: 1,
             column: None,
             count: 0,
-        });
+        }];
 
-        let mut coverage_locations_vec3: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec3.push(SourceCoverageLocation {
+        let coverage_locations_vec3 = vec![SourceCoverageLocation {
             line: 1,
             column: None,
             count: 1,
-        });
+        }];
 
-        let mut coverage_locations_vec4: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec4.push(SourceCoverageLocation {
+        let coverage_locations_vec4 = vec![SourceCoverageLocation {
             line: 1,
             column: None,
             count: 0,
-        });
+        }];
 
-        let mut file_coverage_vec1: Vec<SourceFileCoverage> = Vec::new();
-        file_coverage_vec1.push(SourceFileCoverage {
-            locations: coverage_locations_vec1,
-            file: "C:\\Users\\file1.txt".to_string(),
-        });
-        file_coverage_vec1.push(SourceFileCoverage {
-            locations: coverage_locations_vec2,
-            file: "C:/Users/file2.txt".to_string(),
-        });
-        file_coverage_vec1.push(SourceFileCoverage {
-            locations: coverage_locations_vec3,
-            file: "C:\\Users\\file\\..".to_string(),
-        });
-        file_coverage_vec1.push(SourceFileCoverage {
-            locations: coverage_locations_vec4,
-            file: "C:/Users/file/..".to_string(),
-        });
+        let file_coverage_vec1 = vec![
+            SourceFileCoverage {
+                locations: coverage_locations_vec1,
+                file: "C:\\Users\\file1.txt".to_string(),
+            },
+            SourceFileCoverage {
+                locations: coverage_locations_vec2,
+                file: "C:/Users/file2.txt".to_string(),
+            },
+            SourceFileCoverage {
+                locations: coverage_locations_vec3,
+                file: "C:\\Users\\file\\..".to_string(),
+            },
+            SourceFileCoverage {
+                locations: coverage_locations_vec4,
+                file: "C:/Users/file/..".to_string(),
+            },
+        ];
 
         let source_coverage_result = cobertura(SourceCoverage {
             files: file_coverage_vec1,
@@ -566,56 +557,55 @@ mod tests {
 
     #[test]
     fn test_cobertura_source_to_cobertura_posix_paths() -> Result<()> {
-        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec1.push(SourceCoverageLocation {
-            line: 5,
-            column: None,
-            count: 3,
-        });
-        coverage_locations_vec1.push(SourceCoverageLocation {
-            line: 10,
-            column: None,
-            count: 0,
-        });
+        let coverage_locations_vec1 = vec![
+            SourceCoverageLocation {
+                line: 5,
+                column: None,
+                count: 3,
+            },
+            SourceCoverageLocation {
+                line: 10,
+                column: None,
+                count: 0,
+            },
+        ];
 
-        let mut coverage_locations_vec2: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec2.push(SourceCoverageLocation {
+        let coverage_locations_vec2 = vec![SourceCoverageLocation {
             line: 1,
             column: None,
             count: 0,
-        });
+        }];
 
-        let mut coverage_locations_vec3: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec3.push(SourceCoverageLocation {
+        let coverage_locations_vec3 = vec![SourceCoverageLocation {
             line: 1,
             column: None,
             count: 1,
-        });
+        }];
 
-        let mut coverage_locations_vec4: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec4.push(SourceCoverageLocation {
+        let coverage_locations_vec4 = vec![SourceCoverageLocation {
             line: 1,
             column: None,
             count: 0,
-        });
+        }];
 
-        let mut file_coverage_vec1: Vec<SourceFileCoverage> = Vec::new();
-        file_coverage_vec1.push(SourceFileCoverage {
-            locations: coverage_locations_vec1,
-            file: "C:/Users/file1.txt".to_string(),
-        });
-        file_coverage_vec1.push(SourceFileCoverage {
-            locations: coverage_locations_vec2,
-            file: "C:/Users/file2.txt".to_string(),
-        });
-        file_coverage_vec1.push(SourceFileCoverage {
-            locations: coverage_locations_vec3,
-            file: "C:/Users/file/..".to_string(),
-        });
-        file_coverage_vec1.push(SourceFileCoverage {
-            locations: coverage_locations_vec4,
-            file: "C:/Users/file/..".to_string(),
-        });
+        let file_coverage_vec1 = vec![
+            SourceFileCoverage {
+                locations: coverage_locations_vec1,
+                file: "C:/Users/file1.txt".to_string(),
+            },
+            SourceFileCoverage {
+                locations: coverage_locations_vec2,
+                file: "C:/Users/file2.txt".to_string(),
+            },
+            SourceFileCoverage {
+                locations: coverage_locations_vec3,
+                file: "C:/Users/file/..".to_string(),
+            },
+            SourceFileCoverage {
+                locations: coverage_locations_vec4,
+                file: "C:/Users/file/..".to_string(),
+            },
+        ];
 
         let source_coverage_result = cobertura(SourceCoverage {
             files: file_coverage_vec1,
@@ -797,56 +787,55 @@ mod tests {
 
     #[test]
     fn test_cobertura_source_to_cobertura_windows_paths() -> Result<()> {
-        let mut coverage_locations_vec1: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec1.push(SourceCoverageLocation {
-            line: 5,
-            column: None,
-            count: 3,
-        });
-        coverage_locations_vec1.push(SourceCoverageLocation {
-            line: 10,
-            column: None,
-            count: 0,
-        });
+        let coverage_locations_vec1 = vec![
+            SourceCoverageLocation {
+                line: 5,
+                column: None,
+                count: 3,
+            },
+            SourceCoverageLocation {
+                line: 10,
+                column: None,
+                count: 0,
+            },
+        ];
 
-        let mut coverage_locations_vec2: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec2.push(SourceCoverageLocation {
+        let coverage_locations_vec2 = vec![SourceCoverageLocation {
             line: 1,
             column: None,
             count: 0,
-        });
+        }];
 
-        let mut coverage_locations_vec3: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec3.push(SourceCoverageLocation {
+        let coverage_locations_vec3 = vec![SourceCoverageLocation {
             line: 1,
             column: None,
             count: 1,
-        });
+        }];
 
-        let mut coverage_locations_vec4: Vec<SourceCoverageLocation> = Vec::new();
-        coverage_locations_vec4.push(SourceCoverageLocation {
+        let coverage_locations_vec4 = vec![SourceCoverageLocation {
             line: 1,
             column: None,
             count: 0,
-        });
+        }];
 
-        let mut file_coverage_vec1: Vec<SourceFileCoverage> = Vec::new();
-        file_coverage_vec1.push(SourceFileCoverage {
-            locations: coverage_locations_vec1,
-            file: "C:\\Users\\file1.txt".to_string(),
-        });
-        file_coverage_vec1.push(SourceFileCoverage {
-            locations: coverage_locations_vec2,
-            file: "C:\\Users\\file2.txt".to_string(),
-        });
-        file_coverage_vec1.push(SourceFileCoverage {
-            locations: coverage_locations_vec3,
-            file: "C:\\Users\\file\\..".to_string(),
-        });
-        file_coverage_vec1.push(SourceFileCoverage {
-            locations: coverage_locations_vec4,
-            file: "C:\\Users\\file\\..".to_string(),
-        });
+        let file_coverage_vec1 = vec![
+            SourceFileCoverage {
+                locations: coverage_locations_vec1,
+                file: "C:\\Users\\file1.txt".to_string(),
+            },
+            SourceFileCoverage {
+                locations: coverage_locations_vec2,
+                file: "C:\\Users\\file2.txt".to_string(),
+            },
+            SourceFileCoverage {
+                locations: coverage_locations_vec3,
+                file: "C:\\Users\\file\\..".to_string(),
+            },
+            SourceFileCoverage {
+                locations: coverage_locations_vec4,
+                file: "C:\\Users\\file\\..".to_string(),
+            },
+        ];
 
         let source_coverage_result = cobertura(SourceCoverage {
             files: file_coverage_vec1,

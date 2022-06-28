@@ -1,4 +1,6 @@
-# OneFuzz
+# OneFuzz 
+
+[![Onefuzz build status](https://github.com/microsoft/onefuzz/workflows/Build/badge.svg?branch=main)](https://github.com/microsoft/onefuzz/actions/workflows/ci.yml?query=branch%3Amain)
 
 ## A self-hosted Fuzzing-As-A-Service platform
 
@@ -7,10 +9,6 @@ harden software prior to release.  With a [single
 command](docs/getting-started.md#launching-a-job), which can be [baked into
 CICD](contrib/onefuzz-job-github-actions/README.md), developers can launch
 fuzz jobs from a few virtual machines to thousands of cores.
-
-## Build Status
-
-![Build Onefuzz](https://github.com/microsoft/onefuzz/workflows/Build/badge.svg?branch=main)
 
 ## Features
 

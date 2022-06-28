@@ -344,7 +344,7 @@ mod tests {
             assert!(report.tool_name == None);
             assert!(report.tool_version == None);
         } else {
-            assert!(false, "expected CrashReport");
+            panic!("expected CrashReport");
         }
 
         Ok(())

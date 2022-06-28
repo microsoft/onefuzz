@@ -34,6 +34,8 @@ use tokio::{
     sync::Notify,
 };
 
+use futures::TryFutureExt;
+
 #[derive(Debug, Deserialize)]
 pub struct SupervisorConfig {
     pub inputs: SyncedDir,
@@ -156,14 +158,14 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     let monitor_stats = monitor_stats(monitor_path, config.stats_format);
 
     futures::try_join!(
-        heartbeat_process,
-        monitor_supervisor,
-        monitor_stats,
-        monitor_crashes,
-        monitor_inputs,
-        continuous_sync_task,
-        monitor_reports_future,
-        monitor_coverage_future,
+        heartbeat_process.map_err(|e| e.context("Failure in heartbeat")),
+        monitor_supervisor.map_err(|e| e.context("Failure in monitor_supervisor")),
+        monitor_stats.map_err(|e| e.context("Failure in monitor_stats")),
+        monitor_crashes.map_err(|e| e.context("Failure in monitor_crashes")),
+        monitor_inputs.map_err(|e| e.context("Failure in monitor_inputs")),
+        continuous_sync_task.map_err(|e| e.context("Failure in continuous_sync_task")),
+        monitor_reports_future.map_err(|e| e.context("Failure in monitor_reports_future")),
+        monitor_coverage_future.map_err(|e| e.context("Failure in monitor_coverage_future")),
     )?;
 
     Ok(())
@@ -266,12 +268,16 @@ async fn start_supervisor(
 }
 
 #[cfg(test)]
+#[cfg(target_os = "linux")]
 mod tests {
     use super::*;
     use crate::tasks::stats::afl::read_stats;
+    use onefuzz::blob::BlobContainerUrl;
     use onefuzz::process::monitor_process;
     use onefuzz_telemetry::EventData;
+    use reqwest::Url;
     use std::collections::HashMap;
+    use std::env;
     use std::time::Instant;
 
     const MAX_FUZZ_TIME_SECONDS: u64 = 120;
@@ -290,13 +296,8 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(target_os = "linux")]
     #[cfg_attr(not(feature = "integration_test"), ignore)]
     async fn test_fuzzer_linux() {
-        use onefuzz::blob::BlobContainerUrl;
-        use reqwest::Url;
-        use std::env;
-
         let runtime_dir = tempfile::tempdir().unwrap();
 
         let supervisor_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_FUZZER") {

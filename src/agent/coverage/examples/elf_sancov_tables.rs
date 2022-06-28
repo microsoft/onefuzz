@@ -4,7 +4,7 @@
 use anyhow::Result;
 use structopt::StructOpt;
 
-#[derive(Debug, PartialEq, StructOpt)]
+#[derive(Debug, PartialEq, Eq, StructOpt)]
 struct Opt {
     #[structopt(short, long)]
     elf: std::path::PathBuf,

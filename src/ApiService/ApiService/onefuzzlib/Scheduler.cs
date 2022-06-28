@@ -74,7 +74,7 @@ public class Scheduler : IScheduler {
 
     private async Async.Task<(BucketConfig, WorkSet)?> BuildWorkSet(Task[] tasks) {
         var taskIds = tasks.Select(x => x.TaskId).ToHashSet();
-        var work_units = new List<WorkUnit>();
+        var workUnits = new List<WorkUnit>();
 
         BucketConfig? bucketConfig = null;
         foreach (var task in tasks) {
@@ -99,7 +99,7 @@ public class Scheduler : IScheduler {
                 throw new Exception($"bucket configs differ: {bucketConfig} VS {result.Value.Item1}");
             }
 
-            work_units.Add(result.Value.Item2);
+            workUnits.Add(result.Value.Item2);
         }
 
         if (bucketConfig != null) {
@@ -108,7 +108,7 @@ public class Scheduler : IScheduler {
                 Reboot: bucketConfig.reboot,
                 Script: bucketConfig.setupScript != null,
                 SetupUrl: setupUrl,
-                WorkUnits: work_units
+                WorkUnits: workUnits
             );
 
             return (bucketConfig, workSet);
@@ -182,9 +182,9 @@ public class Scheduler : IScheduler {
         return (bucketConfig, workUnit);
     }
 
-    record struct BucketId(Os os, Guid jobId, (string, string)? vm, string? pool, string setupContainer, bool? reboot, Guid? unique);
+    public record struct BucketId(Os os, Guid jobId, (string, string)? vm, PoolName? pool, string setupContainer, bool? reboot, Guid? unique);
 
-    private ILookup<BucketId, Task> BucketTasks(IEnumerable<Task> tasks) {
+    public static ILookup<BucketId, Task> BucketTasks(IEnumerable<Task> tasks) {
 
         // buckets are hashed by:
         // OS, JOB ID, vm sku & image (if available), pool name (if available),
@@ -205,7 +205,7 @@ public class Scheduler : IScheduler {
             }
 
             // check for multiple VMs for 1.0.0 and later tasks
-            string? pool = task.Config.Pool?.PoolName;
+            var pool = task.Config.Pool?.PoolName;
             if ((task.Config.Pool?.Count ?? 0) > 1) {
                 unique = Guid.NewGuid();
             }
@@ -214,10 +214,19 @@ public class Scheduler : IScheduler {
                 unique = Guid.NewGuid();
             }
 
-            return new BucketId(task.Os, task.JobId, vm, pool, _config.GetSetupContainer(task.Config), task.Config.Task.RebootAfterSetup, unique);
+            return new BucketId(task.Os, task.JobId, vm, pool, GetSetupContainer(task.Config), task.Config.Task.RebootAfterSetup, unique);
 
         });
     }
+
+    static string GetSetupContainer(TaskConfig config) {
+
+        foreach (var container in config.Containers ?? throw new Exception("Missing containers")) {
+            if (container.Type == ContainerType.Setup) {
+                return container.Name.ContainerName;
+            }
+        }
+
+        throw new Exception($"task missing setup container: task_type = {config.Task.Type}");
+    }
 }
-
-

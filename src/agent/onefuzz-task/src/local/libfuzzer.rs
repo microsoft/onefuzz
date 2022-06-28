@@ -5,9 +5,9 @@
 use crate::{
     local::{
         common::COVERAGE_DIR,
-        libfuzzer_coverage::{build_coverage_config, build_shared_args as build_coverage_args},
+        coverage::{build_coverage_config, build_shared_args as build_coverage_args},
     },
-    tasks::coverage::libfuzzer_coverage::CoverageTask,
+    tasks::coverage::generic::CoverageTask,
 };
 use crate::{
     local::{
@@ -91,7 +91,7 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
         )?;
 
         let mut coverage = CoverageTask::new(coverage_config);
-        let coverage_task = spawn(async move { coverage.managed_run().await });
+        let coverage_task = spawn(async move { coverage.run().await });
 
         task_handles.push(coverage_task);
         task_handles.push(coverage_input_monitor.handle);

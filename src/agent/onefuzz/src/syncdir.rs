@@ -27,7 +27,7 @@ pub enum SyncOperation {
 const DELAY: Duration = Duration::from_secs(10);
 const DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS: u64 = 60;
 
-#[derive(Debug, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
 pub struct SyncedDir {
     #[serde(alias = "local_path", alias = "path")]
     pub local_path: PathBuf,
@@ -93,8 +93,16 @@ impl SyncedDir {
             let url = url.as_ref();
             debug!("syncing {:?} {}", operation, dir.display());
             match operation {
-                SyncOperation::Push => az_copy::sync(dir, url, delete_dst).await,
-                SyncOperation::Pull => az_copy::sync(url, dir, delete_dst).await,
+                SyncOperation::Push => az_copy::sync(dir, url, delete_dst).await.context(format!(
+                    "Failed sync push from {} to {}",
+                    dir.display(),
+                    url
+                )),
+                SyncOperation::Pull => az_copy::sync(url, dir, delete_dst).await.context(format!(
+                    "Failed sync pull from {} to {}",
+                    url,
+                    dir.display()
+                )),
             }
         } else {
             Ok(())
@@ -375,7 +383,7 @@ mod tests {
         let path = PathBuf::from("Cargo.toml");
         let expected = canonicalize(current_dir()?.join(&path))?;
         let dir = SyncedDir {
-            local_path: path.clone(),
+            local_path: path,
             remote_path: None,
         };
         let blob_path = dir

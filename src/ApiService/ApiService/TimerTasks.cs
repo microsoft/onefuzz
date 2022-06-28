@@ -21,8 +21,8 @@ public class TimerTasks {
         _scheduler = scheduler;
     }
 
-    //[Function("TimerTasks")]
-    public async Async.Task Run([TimerTrigger("1.00:00:00")] TimerInfo myTimer) {
+    [Function("TimerTasks")]
+    public async Async.Task Run([TimerTrigger("00:00:15")] TimerInfo myTimer) {
         var expriredTasks = _taskOperations.SearchExpired();
         await foreach (var task in expriredTasks) {
             _logger.Info($"stopping expired task. job_id:{task.JobId} task_id:{task.TaskId}");
@@ -44,7 +44,7 @@ public class TimerTasks {
             await _jobOperations.ProcessStateUpdates(job);
         }
 
-        var tasks = _taskOperations.SearchStates(states: TaskStateHelper.NeedsWork);
+        var tasks = _taskOperations.SearchStates(states: TaskStateHelper.NeedsWorkStates);
         await foreach (var task in tasks) {
             _logger.Info($"update task: {task.TaskId}");
             await _taskOperations.ProcessStateUpdate(task);
@@ -55,5 +55,3 @@ public class TimerTasks {
         await _jobOperations.StopNeverStartedJobs();
     }
 }
-
-

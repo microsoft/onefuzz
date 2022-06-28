@@ -77,7 +77,7 @@ The following are common data types used in multiple locations:
 * Scaleset ID - A randomly generated GUID used to uniquely identify a VM
   scaleset.
 * Task Type - The type of task being executed. Examples include
-  `generic_crash_report` or `libfuzzer_coverage`. For a full list, see the enum
+  `generic_crash_report` or `coverage`. For a full list, see the enum
   [TaskType](../src/pytypes/onefuzztypes/enums.py).
 * OS - An enum value describing the OS used (Currently, only Windows or Linux).
 * Version - A compile-time generated string that specifies the OneFuzz version number based on [CURRENT\_RELEASE](../CURRENT_RELEASE) and the sha-1 git revision (See [example](../src/agent/onefuzz-task/build.rs)).

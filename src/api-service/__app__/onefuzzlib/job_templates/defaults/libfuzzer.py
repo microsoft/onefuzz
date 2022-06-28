@@ -78,7 +78,7 @@ libfuzzer_linux = JobTemplate(
             job_id=UUID(int=0),
             prereq_tasks=[UUID(int=0)],
             task=TaskDetails(
-                type=TaskType.libfuzzer_coverage,
+                type=TaskType.coverage,
                 duration=1,
                 target_exe="fuzz.exe",
                 target_env={},
