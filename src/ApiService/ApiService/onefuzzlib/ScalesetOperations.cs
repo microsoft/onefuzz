@@ -100,7 +100,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
     }
 
 
-    public async Async.Task Halt(Scaleset scaleset) {
+    public async Async.Task<Scaleset> Halt(Scaleset scaleset) {
         var shrinkQueue = new ShrinkQueue(scaleset.ScalesetId, _context.Queue, _log);
         await shrinkQueue.Delete();
 
@@ -122,6 +122,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 _log.WithHttpStatus(r.ErrorV).Error($"Failed to save scaleset record {scaleset.ScalesetId}");
             }
         }
+
+        return scaleset with  { State = ScalesetState.Halt }; 
     }
 
     /// <summary>
