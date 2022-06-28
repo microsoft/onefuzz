@@ -4,6 +4,7 @@ echo "Formatting..."
 dotnetFormatted=0
 rustFormatted=0
 pythonFormatted=0
+docsGenerated=0
 
 for f in $(git diff --name-only --diff-filter=ACM)
 do
@@ -28,7 +29,14 @@ do
         pythonFormatted=1
     fi
 
-    if [[ $dotnetFormatted == 1 ]] && [[ $rustFormatted == 1 ]] && [[ $pythonFormatted == 1 ]]; then
+    if [[ $docsGenerated == 0 ]] && [[ $f == src/pytypes/* ]]; then
+        echo "Generating docs"
+        cd /workspaces/onefuzz/src/pytypes
+        python extra/generate-docs.py ../../docs/webhook_events.md
+        docsGenerated=1
+    fi
+
+    if [[ $dotnetFormatted == 1 ]] && [[ $rustFormatted == 1 ]] && [[ $pythonFormatted == 1 ]] && [[ $docsGenerated == 1 ]]; then
         break
     fi
 done
