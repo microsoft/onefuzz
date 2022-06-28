@@ -123,7 +123,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             }
         }
 
-        return scaleset with  { State = ScalesetState.Halt }; 
+        return scaleset;
     }
 
     /// <summary>
