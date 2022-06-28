@@ -18,7 +18,7 @@ do
     if [[ $rustFormatted == 0 ]] && [[ $f == src/agent/* ]]; then
         echo "Formatting rust"
         cd /workspaces/onefuzz/src/agent
-        cargo fmt
+        cargo fmt --all
         rustFormatted=1
     fi
 
