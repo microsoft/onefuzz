@@ -41,8 +41,8 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     IAsyncEnumerable<Node> GetDeadNodes(Guid scaleSetId, TimeSpan expirationPeriod);
 
     Async.Task MarkTasksStoppedEarly(Node node, Error? error = null);
-    static TimeSpan NODE_EXPIRATION_TIME = TimeSpan.FromHours(1.0);
-    static TimeSpan NODE_REIMAGE_TIME = TimeSpan.FromDays(6.0);
+    static readonly TimeSpan NODE_EXPIRATION_TIME = TimeSpan.FromHours(1.0);
+    static readonly TimeSpan NODE_REIMAGE_TIME = TimeSpan.FromDays(6.0);
 
     Async.Task StopTask(Guid task_id);
 }

@@ -21,7 +21,7 @@ public class Config : IConfig {
         _queue = queue;
     }
 
-    private BlobContainerSasPermissions ConvertPermissions(ContainerPermission permission) {
+    private static BlobContainerSasPermissions ConvertPermissions(ContainerPermission permission) {
         BlobContainerSasPermissions blobPermissions = 0;
         if (permission.HasFlag(ContainerPermission.Read)) {
             blobPermissions |= BlobContainerSasPermissions.Read;
