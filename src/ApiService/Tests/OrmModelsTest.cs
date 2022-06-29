@@ -439,19 +439,20 @@ namespace Tests {
             typeof(SecureString)
         });
         static bool IEnumerableEqual<T>(IEnumerable<T>? a, IEnumerable<T>? b) {
-            if (a is null && b is null) {
-                return true;
+            if (a is null) {
+                return b is null;
             }
-            if (a!.Count() != b!.Count()) {
+
+            if (b is null) {
                 return false;
             }
 
-            if (a!.Count() == 0 && b!.Count() == 0) {
-                return true;
+            if (a.Count() != b.Count()) {
+                return false;
             }
 
-            foreach (var v in a!.Zip(b!)) {
-                if (!AreEqual(v.First, v.Second)) {
+            foreach (var (first, second) in a.Zip(b)) {
+                if (!AreEqual(first, second)) {
                     return false;
                 }
             }

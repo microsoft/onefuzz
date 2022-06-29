@@ -65,6 +65,8 @@ public abstract class FunctionTestBase : IDisposable {
         => new EntityConverter().FromJsonString<T>(BodyAsString(data)) ?? throw new Exception($"unable to deserialize body as {typeof(T)}");
 
     public void Dispose() {
+        GC.SuppressFinalize(this);
+
         var (accountName, accountKey) = _storage.GetStorageAccountNameAndKey("").Result; // sync for test impls
         if (accountName is not null && accountKey is not null) {
             // clean up any tables & blobs that this test created

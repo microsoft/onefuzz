@@ -28,7 +28,7 @@ public interface IStorage {
     public IEnumerable<string> GetAccounts(StorageType storageType);
 }
 
-public class Storage : IStorage, IDisposable {
+public sealed class Storage : IStorage, IDisposable {
     private readonly ICreds _creds;
     private readonly ArmClient _armClient;
     private readonly ILogTracer _log;
