@@ -8,7 +8,7 @@ namespace Tests;
 
 public class SchedulerTests {
 
-    IEnumerable<Task> BuildTasks(int size) {
+    static IEnumerable<Task> BuildTasks(int size) {
         return Enumerable.Range(0, size).Select(i =>
             new Task(
                 Guid.Empty,
@@ -123,7 +123,7 @@ public class SchedulerTests {
         CheckBuckets(buckets, tasks, 12);
     }
 
-    void CheckBuckets(ILookup<Scheduler.BucketId, Task> buckets, List<Task> tasks, int bucketCount) {
+    static void CheckBuckets(ILookup<Scheduler.BucketId, Task> buckets, List<Task> tasks, int bucketCount) {
         Assert.Equal(buckets.Count, bucketCount);
 
         foreach (var task in tasks) {
