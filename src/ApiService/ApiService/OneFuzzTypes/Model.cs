@@ -299,8 +299,8 @@ public record NetworkSecurityGroupConfig(
 }
 
 public record ApiAccessRule(
-    string[] Methods,
-    Guid[] AllowedGroups
+    IReadOnlyList<string> Methods,
+    IReadOnlyList<Guid> AllowedGroups
 );
 
 //# initial set of admins can only be set during deployment.

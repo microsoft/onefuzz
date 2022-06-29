@@ -87,7 +87,7 @@ public class RequestAccess {
     }
 }
 
-class RuleConflictException : Exception {
+public sealed class RuleConflictException : Exception {
     public RuleConflictException(string? message) : base(message) {
     }
 }
