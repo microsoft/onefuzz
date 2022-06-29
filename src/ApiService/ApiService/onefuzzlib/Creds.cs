@@ -34,13 +34,13 @@ public class Creds : ICreds {
     private readonly ArmClient _armClient;
     private readonly DefaultAzureCredential _azureCredential;
     private readonly IServiceConfig _config;
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public ArmClient ArmClient => _armClient;
 
-    public Creds(IServiceConfig config, HttpClient httpClient) {
+    public Creds(IServiceConfig config, IHttpClientFactory httpClientFactory) {
         _config = config;
-        _httpClient = httpClient;
+        _httpClientFactory = httpClientFactory;
         _azureCredential = new DefaultAzureCredential();
         _armClient = new ArmClient(this.GetIdentity(), this.GetSubscription());
     }
@@ -123,7 +123,8 @@ public class Creds : ICreds {
         var accessToken = await cred.GetTokenAsync(new TokenRequestContext(scopes));
 
         var uri = new Uri($"{_graphResourceEndpoint}/{resource}");
-        var response = await _httpClient.SendAsync(new HttpRequestMessage {
+        using var httpClient = _httpClientFactory.CreateClient();
+        using var response = await httpClient.SendAsync(new HttpRequestMessage {
             Headers = {
                 {"Authorization", $"Bearer {accessToken.Token}"},
                 {"Content-Type", "application/json"},
