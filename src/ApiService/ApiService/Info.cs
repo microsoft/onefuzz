@@ -31,12 +31,13 @@ public class Info {
             var asm = Assembly.GetExecutingAssembly();
             var gitVersion = ReadResource(asm, "ApiService.onefuzzlib.git.version");
             var buildId = ReadResource(asm, "ApiService.onefuzzlib.build.id");
+            var versionString = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
 
             return new InfoResponse(
                 ResourceGroup: resourceGroup,
                 Subscription: subscription,
                 Region: region,
-                Versions: new Dictionary<string, InfoVersion> { { "onefuzz", new(gitVersion, buildId, config.OneFuzzVersion) } },
+                Versions: new Dictionary<string, InfoVersion> { { "onefuzz", new(gitVersion, buildId, versionString ?? "") } },
                 InstanceId: await _context.Containers.GetInstanceId(),
                 InsightsAppid: config.ApplicationInsightsAppId,
                 InsightsInstrumentationKey: config.ApplicationInsightsInstrumentationKey);
