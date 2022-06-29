@@ -43,8 +43,14 @@ function Get-Version {
 function Restore-ApiService {
     # install dependencies
     Invoke-Checked sudo npm install -g azurite
-    Invoke-Checked dotnet restore --locked-mode $apiServiceDir
-    Invoke-Checked dotnet tool restore $apiServiceDir
+    Push-Location $apiServiceDir
+    try {
+        Invoke-Checked dotnet restore --locked-mode
+        Invoke-Checked dotnet tool restore
+    }
+    finally {
+        Pop-Location
+    }
 }
 
 function Format-ApiService {
@@ -53,9 +59,8 @@ function Format-ApiService {
 
 function Test-ApiService {
     $azurite = & azurite --silent &
+    Push-Location $apiServiceDir
     try {
-        Push-Location
-        Set-Location $apiServiceDir
         Invoke-Checked dotnet test --no-restore --collect:"XPlat Code Coverage" --filter:"Category!=Live"
         if ($null -ne $env:GITHUB_STEP_SUMMARY) {
             Invoke-Checked dotnet tool run reportgenerator -reports:*/TestResults/*/coverage.cobertura.xml -targetdir:coverage -reporttypes:MarkdownSummary
@@ -71,9 +76,8 @@ function Test-ApiService {
 function Build-ApiService {
     $version = Get-Version
     Write-Output "Building service with version $version"
+    Push-Location $apiServiceDir
     try {
-        Push-Location $apiServiceDir
-
         if ($null -ne $env:GITHUB_RUN_ID) {
             # Store GitHub RunID and SHA to be read by the 'info' function
             Tee-Object -InputObject $env:GITHUB_RUN_ID -FilePath 'ApiService/onefuzzlib/build.id'
@@ -91,8 +95,8 @@ function Build-ApiService {
 }
 
 function Publish-ApiService {
+    Push-Location "$PSScriptRoot/.."
     try {
-        Push-Location "$PSScriptRoot/.."
         Get-Version | Out-File "deployment/VERSION"
         Set-Location "ApiService/ApiService"
         Copy-Item 'az-local.settings.json' 'bin/Release/net6.0/local.settings.json'
