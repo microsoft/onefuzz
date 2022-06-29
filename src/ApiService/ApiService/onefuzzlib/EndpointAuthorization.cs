@@ -137,13 +137,13 @@ public class EndpointAuthorization : IEndpointAuthorization {
 
         var rules = GetRules(instanceConfig);
         if (rules is null) {
-            return default;
+            return OneFuzzResultVoid.Ok;
         }
 
         var path = req.Url.AbsolutePath;
         var rule = rules.GetMatchingRules(new HttpMethod(req.Method), path);
         if (rule is null) {
-            return default;
+            return OneFuzzResultVoid.Ok;
         }
 
         var memberId = Guid.Parse(req.Headers.GetValues("x-ms-client-principal-id").Single());
@@ -156,7 +156,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
                     Code: ErrorCode.UNAUTHORIZED,
                     Errors: new string[] { "not approved to use this endpoint" });
             } else {
-                return default;
+                return OneFuzzResultVoid.Ok;
             }
         } catch (Exception ex) {
             return new Error(
