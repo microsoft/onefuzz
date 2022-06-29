@@ -28,7 +28,7 @@ public interface IStorage {
     public IEnumerable<string> GetAccounts(StorageType storageType);
 }
 
-public class Storage : IStorage {
+public class Storage : IStorage, IDisposable {
     private readonly ICreds _creds;
     private readonly ArmClient _armClient;
     private readonly ILogTracer _log;
@@ -168,4 +168,9 @@ public class Storage : IStorage {
 
     public Uri GetBlobEndpoint(string accountId)
         => new($"https://{accountId}.blob.core.windows.net/");
+
+    public void Dispose()
+    {
+        _cache.Dispose();
+    }
 }
