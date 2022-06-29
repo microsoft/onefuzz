@@ -88,17 +88,14 @@ public class Creds : ICreds {
         return new Uri($"https://{GetInstanceName()}.azurewebsites.net");
     }
 
+    public record ScaleSetIdentity(string principalId);
+
     public async Async.Task<Guid> GetScalesetPrincipalId() {
         var path = GetScalesetIdentityResourcePath();
         var uid = ArmClient.GetGenericResource(new ResourceIdentifier(path));
 
         var resource = await uid.GetAsync();
-        var json = JsonDocument.Parse(resource.Value.Data.Properties);
-        var principalId = json.RootElement.GetProperty("principalId").GetString();
-        if (principalId is null) {
-            throw new InvalidOperationException($"unable to locate 'principalId' property in JSON data for {path}");
-        }
-
+        var principalId = resource.Value.Data.Properties.ToObjectFromJson<ScaleSetIdentity>().principalId;
         return new Guid(principalId);
     }
 
