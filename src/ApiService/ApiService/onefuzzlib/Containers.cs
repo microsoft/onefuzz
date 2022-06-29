@@ -85,7 +85,7 @@ public class Containers : IContainers {
 
         var containerName = _config.OneFuzzStoragePrefix + container.ContainerName;
 
-        var containers = _storage.GetAccounts(storageType)
+        var containers = _storage.GetAccounts(storageType).AsEnumerable()
             .Reverse()
             .Select(async account => (await GetBlobService(account))?.GetBlobContainerClient(containerName));
 
