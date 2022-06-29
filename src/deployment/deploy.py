@@ -204,8 +204,7 @@ class Client:
             if not azcopy:
                 raise Exception(AZCOPY_MISSING_ERROR)
             else:
-                logger.warning(
-                    "unable to use built-in azcopy, using system install")
+                logger.warning("unable to use built-in azcopy, using system install")
                 self.azcopy = azcopy
 
         with open(workbook_data) as f:
@@ -279,8 +278,7 @@ class Client:
                     and len(resource_type.locations) > 0
                 ):
                     unsupported.append(
-                        "%s/%s is unsupported in %s" % (namespace,
-                                                        name, self.location)
+                        "%s/%s is unsupported in %s" % (namespace, name, self.location)
                     )
 
         if unsupported:
@@ -298,9 +296,21 @@ class Client:
         # This also represents the legacy identifier_uris of the application
         # registration
         if self.multi_tenant_domain:
-            return ["https://%s/%s" % (self.multi_tenant_domain, name) for name in [self.application_name, self.application_name + DOTNET_APPLICATION_SUFFIX]]
+            return [
+                "https://%s/%s" % (self.multi_tenant_domain, name)
+                for name in [
+                    self.application_name,
+                    self.application_name + DOTNET_APPLICATION_SUFFIX,
+                ]
+            ]
         else:
-            return ["https://%s.azurewebsites.net" % name for name in [self.application_name, self.application_name + DOTNET_APPLICATION_SUFFIX]]
+            return [
+                "https://%s.azurewebsites.net" % name
+                for name in [
+                    self.application_name,
+                    self.application_name + DOTNET_APPLICATION_SUFFIX,
+                ]
+            ]
 
     def get_identifier_urls(self) -> List[str]:
         # This is used to identify the application registration via the
@@ -309,9 +319,21 @@ class Client:
         # from the default value proposed by azure when creating an application
         # registration api://{guid}/...
         if self.multi_tenant_domain:
-            return ["api://%s/%s" % (self.multi_tenant_domain, name) for name in [self.application_name, self.application_name + DOTNET_APPLICATION_SUFFIX]]
+            return [
+                "api://%s/%s" % (self.multi_tenant_domain, name)
+                for name in [
+                    self.application_name,
+                    self.application_name + DOTNET_APPLICATION_SUFFIX,
+                ]
+            ]
         else:
-            return ["api://%s.azurewebsites.net" % name for name in [self.application_name, self.application_name + DOTNET_APPLICATION_SUFFIX]]
+            return [
+                "api://%s.azurewebsites.net" % name
+                for name in [
+                    self.application_name,
+                    self.application_name + DOTNET_APPLICATION_SUFFIX,
+                ]
+            ]
 
     def get_signin_audience(self) -> str:
         # https://docs.microsoft.com/en-us/azure/active-directory/develop/supported-accounts-validation
@@ -388,7 +410,10 @@ class Client:
                         "enableAccessTokenIssuance": False,
                         "enableIdTokenIssuance": True,
                     },
-                    "redirectUris": [f"{url}/.auth/login/aad/callback" for url in self.get_instance_urls()],
+                    "redirectUris": [
+                        f"{url}/.auth/login/aad/callback"
+                        for url in self.get_instance_urls()
+                    ],
                 },
                 "requiredResourceAccess": [
                     {
@@ -450,8 +475,9 @@ class Client:
         else:
 
             identifier_uris: List[str] = app["identifierUris"]
-            api_ids = [id for id in self.get_identifier_urls()
-                       if id not in identifier_uris]
+            api_ids = [
+                id for id in self.get_identifier_urls() if id not in identifier_uris
+            ]
 
             if len(api_ids) > 0:
                 identifier_uris.extend(api_ids)
@@ -462,8 +488,7 @@ class Client:
                     subscription=self.get_subscription_id(),
                 )
 
-            existing_role_values = [app_role["value"]
-                                    for app_role in app["appRoles"]]
+            existing_role_values = [app_role["value"] for app_role in app["appRoles"]]
 
             has_missing_roles = any(
                 [role["value"] not in existing_role_values for role in app_roles]
@@ -536,8 +561,7 @@ class Client:
 
         else:
             onefuzz_cli_app = cli_app
-            authorize_application(
-                uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
+            authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
             if self.multi_tenant_domain:
                 authority = COMMON_AUTHORITY
             else:
@@ -628,8 +652,7 @@ class Client:
                     "PrincipalNotFound" in as_repr
                     and "does not exist in the directory" in as_repr
                 ):
-                    logger.info(
-                        "application principal not available in AAD yet")
+                    logger.info("application principal not available in AAD yet")
         if error:
             raise error
         else:
@@ -637,8 +660,7 @@ class Client:
 
     def assign_scaleset_identity_role(self) -> None:
         if self.upgrade:
-            logger.info(
-                "Upgrading: skipping assignment of the managed identity role")
+            logger.info("Upgrading: skipping assignment of the managed identity role")
             return
         logger.info("assigning the user managed identity role")
         assign_instance_app_role(
@@ -650,8 +672,7 @@ class Client:
 
     def assign_user_access(self) -> None:
         if self.upgrade:
-            logger.info(
-                "Upgrading: Skipping assignment of current user to app role")
+            logger.info("Upgrading: Skipping assignment of current user to app role")
             return
         logger.info("assigning user access to service principal")
         app = get_application(
@@ -697,8 +718,7 @@ class Client:
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
         table_service = TableService(account_name=name, account_key=key)
 
-        config_client = InstanceConfigClient(
-            table_service, self.application_name)
+        config_client = InstanceConfigClient(table_service, self.application_name)
 
         if self.nsg_config:
             logger.info("deploying arm template: %s", self.nsg_config)
@@ -797,8 +817,7 @@ class Client:
         blob_client = client.get_blob_client(container_name, blob_name)
         if blob_client.exists():
             logger.debug("instance_id already exists")
-            instance_id = uuid.UUID(
-                blob_client.download_blob().readall().decode())
+            instance_id = uuid.UUID(blob_client.download_blob().readall().decode())
         else:
             logger.debug("creating new instance_id")
             instance_id = uuid.uuid4()
@@ -910,8 +929,7 @@ class Client:
         )
 
     def upload_instance_setup(self) -> None:
-        logger.info("uploading instance-specific-setup from %s",
-                    self.instance_specific)
+        logger.info("uploading instance-specific-setup from %s", self.instance_specific)
         account_name = self.results["deploy"]["func_name"]["value"]
         key = self.results["deploy"]["func_key"]["value"]
         account_url = "https://%s.blob.core.windows.net" % account_name
@@ -1086,8 +1104,7 @@ class Client:
                 for i in range(max_tries):
                     try:
                         # disable python function
-                        logger.info(
-                            f"disabling PYTHON function: {function_name}")
+                        logger.info(f"disabling PYTHON function: {function_name}")
                         subprocess.check_output(
                             [
                                 func,
@@ -1139,8 +1156,7 @@ class Client:
     def update_registration(self) -> None:
         if not self.create_registration:
             return
-        update_pool_registration(self.application_name,
-                                 self.get_subscription_id())
+        update_pool_registration(self.application_name, self.get_subscription_id())
 
     def done(self) -> None:
         logger.info(TELEMETRY_NOTICE)
