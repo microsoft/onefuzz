@@ -58,12 +58,12 @@ function Format-ApiService {
 }
 
 function Test-ApiService {
-    $azurite = & azurite --silent &
+    $azurite = & azurite --silent --location /tmp/azurite &
     Push-Location $apiServiceDir
     try {
         Invoke-Checked dotnet test --no-restore --collect:"XPlat Code Coverage" --filter:"Category!=Live"
         if ($null -ne $env:GITHUB_STEP_SUMMARY) {
-            Invoke-Checked dotnet tool run reportgenerator -reports:*/TestResults/*/coverage.cobertura.xml -targetdir:coverage -reporttypes:MarkdownSummary
+            Invoke-Checked dotnet tool run reportgenerator "-reports:*/TestResults/*/coverage.cobertura.xml" "-targetdir:coverage" "-reporttypes:MarkdownSummary"
             Get-Content coverage/*.md > $env:GITHUB_STEP_SUMMARY
         }
     }
