@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
@@ -25,17 +27,20 @@ public interface ICreds {
 
     public Uri GetInstanceUrl();
     public Async.Task<Guid> GetScalesetPrincipalId();
+    public Async.Task<T> QueryMicrosoftGraph<T>(HttpMethod method, string resource);
 }
 
 public class Creds : ICreds {
     private readonly ArmClient _armClient;
     private readonly DefaultAzureCredential _azureCredential;
     private readonly IServiceConfig _config;
+    private readonly HttpClient _httpClient;
 
     public ArmClient ArmClient => _armClient;
 
-    public Creds(IServiceConfig config) {
+    public Creds(IServiceConfig config, HttpClient httpClient) {
         _config = config;
+        _httpClient = httpClient;
         _azureCredential = new DefaultAzureCredential();
         _armClient = new ArmClient(this.GetIdentity(), this.GetSubscription());
     }
@@ -104,5 +109,44 @@ public class Creds : ICreds {
         var resourceGroupPath = $"/subscriptions/{GetSubscription()}/resourceGroups/{GetBaseResourceGroup()}/providers";
 
         return $"{resourceGroupPath}/Microsoft.ManagedIdentity/userAssignedIdentities/{scalesetIdName}";
+    }
+
+
+    // https://docs.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0
+    private static readonly Uri _graphResource = new("https://graph.microsoft.com");
+    private static readonly Uri _graphResourceEndpoint = new("https://graph.microsoft.com/v1.0");
+
+    public async Task<T> QueryMicrosoftGraph<T>(HttpMethod method, string resource) {
+        var cred = GetIdentity();
+
+        var scopes = new string[] { $"{_graphResource}/.default" };
+        var accessToken = await cred.GetTokenAsync(new TokenRequestContext(scopes));
+
+        var uri = new Uri($"{_graphResourceEndpoint}/{resource}");
+        var response = await _httpClient.SendAsync(new HttpRequestMessage {
+            Headers = {
+                {"Authorization", $"Bearer {accessToken.Token}"},
+                {"Content-Type", "application/json"},
+            },
+            Method = method,
+            RequestUri = uri,
+        });
+
+        if (response.IsSuccessStatusCode) {
+            var result = await response.Content.ReadFromJsonAsync<T>();
+            if (result is null) {
+                throw new GraphQueryException($"invalid data expected a json object: HTTP {response.StatusCode}");
+            }
+
+            return result;
+        } else {
+            var errorText = await response.Content.ReadAsStringAsync();
+            throw new GraphQueryException($"request did not succeed: HTTP {response.StatusCode} - {errorText}");
+        }
+    }
+}
+
+class GraphQueryException : Exception {
+    public GraphQueryException(string? message) : base(message) {
     }
 }

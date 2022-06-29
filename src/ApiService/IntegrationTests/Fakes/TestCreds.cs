@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
@@ -51,6 +52,10 @@ class TestCreds : ICreds {
     }
 
     public Task<Guid> GetScalesetPrincipalId() {
+        throw new NotImplementedException();
+    }
+
+    public Task<T> QueryMicrosoftGraph<T>(HttpMethod method, string resource) {
         throw new NotImplementedException();
     }
 }

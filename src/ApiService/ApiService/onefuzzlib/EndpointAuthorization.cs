@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Net.Http;
 using Microsoft.Azure.Functions.Worker.Http;
 
 namespace Microsoft.OneFuzz.Service;
@@ -45,12 +46,11 @@ public class EndpointAuthorization : IEndpointAuthorization {
                 return await Reject(req, token);
             }
 
-            var access = CheckAccess(req);
+            var access = await CheckAccess(req);
             if (!access.IsOk) {
                 return await _context.RequestHandling.NotOk(req, access.ErrorV, "access control", HttpStatusCode.Unauthorized);
             }
         }
-
 
         if (await IsAgent(token) && !allowAgent) {
             return await Reject(req, token);
@@ -132,8 +132,54 @@ public class EndpointAuthorization : IEndpointAuthorization {
         }
     }
 
-    public OneFuzzResultVoid CheckAccess(HttpRequestData req) {
-        throw new NotImplementedException();
+    public async Async.Task<OneFuzzResultVoid> CheckAccess(HttpRequestData req) {
+        var instanceConfig = await _context.ConfigOperations.Fetch();
+
+        var rules = GetRules(instanceConfig);
+        if (rules is null) {
+            return default;
+        }
+
+        var path = req.Url.AbsolutePath;
+        var rule = rules.GetMatchingRules(new HttpMethod(req.Method), path);
+        if (rule is null) {
+            return default;
+        }
+
+        var memberId = Guid.Parse(req.Headers.GetValues("x-ms-client-principal-id").Single());
+        try {
+            var membershipChecker = CreateGroupMembershipChecker(instanceConfig);
+            var allowed = await membershipChecker.IsMember(rule.AllowedGroupsIds, memberId);
+            if (!allowed) {
+                _log.Error($"unauthorized access: {memberId} is not authorized to access {path}");
+                return new Error(
+                    Code: ErrorCode.UNAUTHORIZED,
+                    Errors: new string[] { "not approved to use this endpoint" });
+            } else {
+                return default;
+            }
+        } catch (Exception ex) {
+            return new Error(
+                Code: ErrorCode.UNAUTHORIZED,
+                Errors: new string[] { "unable to interact with graph", ex.Message });
+        }
+    }
+
+    private GroupMembershipChecker CreateGroupMembershipChecker(InstanceConfig config) {
+        if (config.GroupMembership is not null) {
+            return new StaticGroupMembership(config.GroupMembership);
+        }
+
+        return new AzureADGroupMembership(_context.Creds);
+    }
+
+    private static RequestAccess? GetRules(InstanceConfig config) {
+        var accessRules = config?.ApiAccessRules;
+        if (accessRules is not null) {
+            return RequestAccess.Build(accessRules);
+        }
+
+        return null;
     }
 
     public async Async.Task<bool> IsAgent(UserInfo tokenData) {
