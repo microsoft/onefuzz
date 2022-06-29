@@ -30,7 +30,8 @@
 		"ms-python.python",
 		"ms-azuretools.vscode-bicep",
 		"formulahendry.dotnet-test-explorer",
-		"ms-azuretools.vscode-azurefunctions"
+		"ms-azuretools.vscode-azurefunctions",
+		"ms-vscode.powershell"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
