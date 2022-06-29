@@ -50,7 +50,7 @@ public class Info {
         }
 
         using var sr = new StreamReader(r);
-        return sr.ReadToEnd();
+        return sr.ReadToEnd().Trim();
     }
 
     private async Async.Task<HttpResponseData> GetResponse(HttpRequestData req)
