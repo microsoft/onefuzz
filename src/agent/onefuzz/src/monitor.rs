@@ -94,9 +94,17 @@ impl DirectoryMonitor {
                         .ok_or_else(|| format_err!("missing path for file create event"))?
                         .clone();
 
-                    if !self.report_directories && fs::metadata(&path).await?.is_dir() {
-                        // Ignore
-                    } else {
+                    if self.report_directories {
+                        return Ok(Some(path));
+                    }
+
+                    let is_dir = fs::metadata(&path)
+                        .await
+                        .ok()
+                        .map(|f| f.is_dir())
+                        .unwrap_or_default();
+
+                    if !is_dir {
                         return Ok(Some(path));
                     }
                 }
