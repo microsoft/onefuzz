@@ -94,6 +94,8 @@ FUNC_TOOLS_ERROR = (
     "https://github.com/Azure/azure-functions-core-tools#installing"
 )
 
+DOTNET_APPLICATION_SUFFIX = "-net"
+
 logger = logging.getLogger("deploy")
 
 
@@ -289,31 +291,49 @@ class Client:
             "cli_password", object_id, self.get_subscription_id()
         )
 
-    def get_instance_url(self) -> str:
+    def get_instance_urls(self) -> List[str]:
         # The url to access the instance
         # This also represents the legacy identifier_uris of the application
         # registration
         if self.multi_tenant_domain:
-            return "https://%s/%s" % (
-                self.multi_tenant_domain,
-                self.application_name,
-            )
+            return [
+                "https://%s/%s" % (self.multi_tenant_domain, name)
+                for name in [
+                    self.application_name,
+                    self.application_name + DOTNET_APPLICATION_SUFFIX,
+                ]
+            ]
         else:
-            return "https://%s.azurewebsites.net" % self.application_name
+            return [
+                "https://%s.azurewebsites.net" % name
+                for name in [
+                    self.application_name,
+                    self.application_name + DOTNET_APPLICATION_SUFFIX,
+                ]
+            ]
 
-    def get_identifier_url(self) -> str:
+    def get_identifier_urls(self) -> List[str]:
         # This is used to identify the application registration via the
         # identifier_uris field.  Depending on the environment this value needs
         # to be from an approved domain The format of this value is derived
         # from the default value proposed by azure when creating an application
         # registration api://{guid}/...
         if self.multi_tenant_domain:
-            return "api://%s/%s" % (
-                self.multi_tenant_domain,
-                self.application_name,
-            )
+            return [
+                "api://%s/%s" % (self.multi_tenant_domain, name)
+                for name in [
+                    self.application_name,
+                    self.application_name + DOTNET_APPLICATION_SUFFIX,
+                ]
+            ]
         else:
-            return "api://%s.azurewebsites.net" % self.application_name
+            return [
+                "api://%s.azurewebsites.net" % name
+                for name in [
+                    self.application_name,
+                    self.application_name + DOTNET_APPLICATION_SUFFIX,
+                ]
+            ]
 
     def get_signin_audience(self) -> str:
         # https://docs.microsoft.com/en-us/azure/active-directory/develop/supported-accounts-validation
@@ -368,7 +388,7 @@ class Client:
 
             params = {
                 "displayName": self.application_name,
-                "identifierUris": [self.get_identifier_url()],
+                "identifierUris": self.get_identifier_urls(),
                 "signInAudience": self.get_signin_audience(),
                 "appRoles": app_roles,
                 "api": {
@@ -391,7 +411,8 @@ class Client:
                         "enableIdTokenIssuance": True,
                     },
                     "redirectUris": [
-                        f"{self.get_instance_url()}/.auth/login/aad/callback"
+                        f"{url}/.auth/login/aad/callback"
+                        for url in self.get_instance_urls()
                     ],
                 },
                 "requiredResourceAccess": [
@@ -452,18 +473,22 @@ class Client:
             try_sp_create()
 
         else:
-            existing_role_values = [app_role["value"] for app_role in app["appRoles"]]
-            api_id = self.get_identifier_url()
 
-            if api_id not in app["identifierUris"]:
-                identifier_uris = app["identifierUris"]
-                identifier_uris.append(api_id)
+            identifier_uris: List[str] = app["identifierUris"]
+            api_ids = [
+                id for id in self.get_identifier_urls() if id not in identifier_uris
+            ]
+
+            if len(api_ids) > 0:
+                identifier_uris.extend(api_ids)
                 query_microsoft_graph(
                     method="PATCH",
                     resource=f"applications/{app['id']}",
                     body={"identifierUris": identifier_uris},
                     subscription=self.get_subscription_id(),
                 )
+
+            existing_role_values = [app_role["value"] for app_role in app["appRoles"]]
 
             has_missing_roles = any(
                 [role["value"] not in existing_role_values for role in app_roles]
@@ -569,10 +594,9 @@ class Client:
             "%Y-%m-%dT%H:%M:%SZ"
         )
 
-        app_func_audiences = [
-            self.get_identifier_url(),
-            self.get_instance_url(),
-        ]
+        app_func_audiences = self.get_identifier_urls().copy()
+        app_func_audiences.extend(self.get_instance_urls())
+
         if self.multi_tenant_domain:
             # clear the value in the Issuer Url field:
             # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
@@ -650,7 +674,7 @@ class Client:
         if self.upgrade:
             logger.info("Upgrading: Skipping assignment of current user to app role")
             return
-        logger.info("assinging user access to service principal")
+        logger.info("assigning user access to service principal")
         app = get_application(
             display_name=self.application_name,
             subscription_id=self.get_subscription_id(),
@@ -1049,7 +1073,7 @@ class Client:
                                 "azure",
                                 "functionapp",
                                 "publish",
-                                self.application_name + "-net",
+                                self.application_name + DOTNET_APPLICATION_SUFFIX,
                                 "--no-build",
                             ],
                             env=dict(os.environ, CLI_DEBUG="1"),
@@ -1107,7 +1131,7 @@ class Client:
                                 "appsettings",
                                 "set",
                                 "--name",
-                                self.application_name + "-net",
+                                self.application_name + DOTNET_APPLICATION_SUFFIX,
                                 "--resource-group",
                                 self.application_name,
                                 "--settings",

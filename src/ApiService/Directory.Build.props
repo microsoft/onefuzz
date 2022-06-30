@@ -14,6 +14,9 @@
         -->
         <InvariantGlobalization>true</InvariantGlobalization>
 
+        <!-- warnings as errors, for compatibility with CI -->
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
         <!-- enable code analysis -->
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <AnalysisLevel>6.0-Recommended</AnalysisLevel>
