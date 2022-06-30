@@ -18,6 +18,7 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
     }
 
     public async Task<InstanceConfig> Fetch() {
+        // TODO: cache this for some period
         var key = _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set");
         var config = await GetEntityAsync(key, key);
         return config;

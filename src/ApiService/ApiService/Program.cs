@@ -85,7 +85,6 @@ public class Program {
             .AddScoped<ITaskOperations, TaskOperations>()
             .AddScoped<ITaskEventOperations, TaskEventOperations>()
             .AddScoped<IQueue, Queue>()
-            .AddScoped<IStorage, Storage>()
             .AddScoped<IProxyOperations, ProxyOperations>()
             .AddScoped<IProxyForwardOperations, ProxyForwardOperations>()
             .AddScoped<IConfigOperations, ConfigOperations>()
@@ -112,10 +111,11 @@ public class Program {
             .AddScoped<IRequestHandling, RequestHandling>()
             .AddScoped<IOnefuzzContext, OnefuzzContext>()
             .AddScoped<IEndpointAuthorization, EndpointAuthorization>()
+            .AddScoped<INodeMessageOperations, NodeMessageOperations>()
 
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
-            .AddSingleton<INodeMessageOperations, NodeMessageOperations>()
+            .AddSingleton<IStorage, Storage>()
             .AddHttpClient();
         }
         )
