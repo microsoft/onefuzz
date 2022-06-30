@@ -31,12 +31,13 @@ public class Info {
             var asm = Assembly.GetExecutingAssembly();
             var gitVersion = ReadResource(asm, "ApiService.onefuzzlib.git.version");
             var buildId = ReadResource(asm, "ApiService.onefuzzlib.build.id");
+            var versionString = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
 
             return new InfoResponse(
                 ResourceGroup: resourceGroup,
                 Subscription: subscription,
                 Region: region,
-                Versions: new Dictionary<string, InfoVersion> { { "onefuzz", new(gitVersion, buildId, config.OneFuzzVersion) } },
+                Versions: new Dictionary<string, InfoVersion> { { "onefuzz", new(gitVersion, buildId, versionString ?? "") } },
                 InstanceId: await _context.Containers.GetInstanceId(),
                 InsightsAppid: config.ApplicationInsightsAppId,
                 InsightsInstrumentationKey: config.ApplicationInsightsInstrumentationKey);
@@ -50,13 +51,13 @@ public class Info {
         }
 
         using var sr = new StreamReader(r);
-        return sr.ReadToEnd();
+        return sr.ReadToEnd().Trim();
     }
 
     private async Async.Task<HttpResponseData> GetResponse(HttpRequestData req)
         => await RequestHandling.Ok(req, await _response.Value);
 
-    // [Function("Info")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger("GET")] HttpRequestData req)
+    [Function("Info")]
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req)
         => _auth.CallIfUser(req, GetResponse);
 }

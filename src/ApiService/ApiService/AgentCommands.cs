@@ -5,26 +5,28 @@ namespace Microsoft.OneFuzz.Service;
 
 public class AgentCommands {
     private readonly ILogTracer _log;
-
+    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public AgentCommands(ILogTracer log, IOnefuzzContext context) {
+    public AgentCommands(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
+        _auth = auth;
         _context = context;
     }
 
     // [Function("AgentCommands")]
-    public async Async.Task<HttpResponseData> Run([HttpTrigger("get", "delete")] HttpRequestData req) {
-        return req.Method switch {
-            "GET" => await Get(req),
-            "DELETE" => await Delete(req),
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "DELETE", Route="agents/commands")]
+        HttpRequestData req)
+        => _auth.CallIfAgent(req, r => r.Method switch {
+            "GET" => Get(req),
+            "DELETE" => Delete(req),
             _ => throw new NotImplementedException($"HTTP Method {req.Method} is not supported for this method")
-        };
-    }
+        });
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeCommandGet>(req);
-        if (!request.IsOk || request.OkV == null) {
+        if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, typeof(NodeCommandGet).ToString());
         }
         var nodeCommand = request.OkV;
