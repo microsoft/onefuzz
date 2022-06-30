@@ -104,7 +104,7 @@ public class Containers : IContainers {
             return containerClient;
         }
 
-        var account = ChooseAccount(storageType);
+        var account = _storage.ChooseAccount(storageType);
         var client = await _storage.GetBlobServiceClientForAccount(account);
         var containerName = _config.OneFuzzStoragePrefix + container.ContainerName;
         var cc = client.GetBlobContainerClient(containerName);
@@ -120,26 +120,6 @@ public class Containers : IContainers {
         return cc;
     }
 
-    private string ChooseAccount(StorageType storageType) {
-        var accounts = _storage.GetAccounts(storageType);
-        if (!accounts.Any()) {
-            throw new InvalidOperationException($"no storage accounts for {storageType}");
-        }
-
-        if (accounts.Count == 1) {
-            return accounts[0];
-        }
-
-        // Use a random secondary storage account if any are available.  This
-        // reduces IOP contention for the Storage Queues, which are only available
-        // on primary accounts
-        //
-        // security note: this is not used as a security feature
-        return RandomChoice(accounts.Skip(1).ToList());
-    }
-
-    private static T RandomChoice<T>(IReadOnlyList<T> input)
-        => input[Random.Shared.Next(input.Count)];
 
     public async Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType) {
         // # check secondary accounts first by searching in reverse.

@@ -16,7 +16,8 @@ public enum StorageType {
 
 public interface IStorage {
     public IReadOnlyList<string> CorpusAccounts();
-    string GetPrimaryAccount(StorageType storageType);
+    public string GetPrimaryAccount(StorageType storageType);
+    public IReadOnlyList<string> GetAccounts(StorageType storageType);
 
     public Uri GetTableEndpoint(string accountId);
 
@@ -28,7 +29,25 @@ public interface IStorage {
 
     public Async.Task<string?> GetStorageAccountNameKeyByName(string accountName);
 
-    public IReadOnlyList<string> GetAccounts(StorageType storageType);
+    /// Picks either the single primary account or a random secondary account.
+    public string ChooseAccount(StorageType storageType) {
+        var accounts = GetAccounts(storageType);
+        if (!accounts.Any()) {
+            throw new InvalidOperationException($"no storage accounts for {storageType}");
+        }
+
+        if (accounts.Count == 1) {
+            return accounts[0];
+        }
+
+        // Use a random secondary storage account if any are available.  This
+        // reduces IOP contention for the Storage Queues, which are only available
+        // on primary accounts
+        //
+        // security note: this is not used as a security feature
+        var secondaryAccounts = accounts.Skip(1).ToList();
+        return secondaryAccounts[Random.Shared.Next(secondaryAccounts.Count)];
+    }
 
     public async Async.Task<BlobServiceClient> GetBlobServiceClientForAccount(string accountId) {
         var (accountName, accountKey) = await GetStorageAccountNameAndKey(accountId);
@@ -144,27 +163,6 @@ public sealed class Storage : IStorage, IDisposable {
         });
     }
 
-    public string ChooseAccounts(StorageType storageType) {
-        var accounts = GetAccounts(storageType);
-        if (!accounts.Any()) {
-            throw new Exception($"No Storage Accounts for {storageType}");
-        }
-
-        var account_list = accounts.ToList();
-        if (account_list.Count == 1) {
-            return account_list[0];
-        }
-
-        // Use a random secondary storage account if any are available.  This
-        // reduces IOP contention for the Storage Queues, which are only available
-        // on primary accounts
-        //
-        // security note: this is not used as a security feature
-        var random = new Random();
-        var index = random.Next(account_list.Count);
-
-        return account_list[index];  // nosec
-    }
 
     public IReadOnlyList<string> GetAccounts(StorageType storageType) {
         switch (storageType) {
