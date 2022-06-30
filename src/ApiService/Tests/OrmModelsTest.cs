@@ -334,6 +334,9 @@ namespace Tests {
 
         public static Arbitrary<PoolName> PoolName { get; } = OrmGenerators.PoolNameGen.ToArbitrary();
 
+        public static Arbitrary<IReadOnlyList<T>> ReadOnlyList<T>()
+            => Arb.Default.List<T>().Convert(x => (IReadOnlyList<T>)x, x => (List<T>)x);
+
         public static Arbitrary<Version> Version() {
             return Arb.From(OrmGenerators.Version());
         }
