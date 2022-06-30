@@ -30,7 +30,6 @@ public interface IContainers {
     public Async.Task<bool> BlobExists(Container container, string name, StorageType storageType);
 
     public Async.Task<Uri> AddContainerSasUrl(Uri uri, TimeSpan? duration = null);
-}
     public Async.Task<Dictionary<string, IDictionary<string, string>>> GetContainers(StorageType corpus);
 }
 
@@ -132,13 +131,14 @@ public class Containers : IContainers {
 
         var containerName = _config.OneFuzzStoragePrefix + container.ContainerName;
 
-        var containers = _storage.GetAccounts(storageType).AsEnumerable()
+        var containers =
+            _storage.GetAccounts(storageType)
             .Reverse()
-            .Select(async account => (await _storage.GetBlobServiceClientForAccount(account))?.GetBlobContainerClient(containerName));
+            .Select(async account => (await _storage.GetBlobServiceClientForAccount(account)).GetBlobContainerClient(containerName));
 
         foreach (var c in containers) {
             var client = await c;
-            if (client != null && (await client.ExistsAsync()).Value) {
+            if ((await client.ExistsAsync()).Value) {
                 return client;
             }
         }
