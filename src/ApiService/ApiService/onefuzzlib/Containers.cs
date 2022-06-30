@@ -106,11 +106,6 @@ public class Containers : IContainers {
 
         var account = ChooseAccount(storageType);
         var client = await GetBlobService(account);
-        if (client is null) {
-            // TODO: after Cheick's changes this won't be able to return null any more
-            throw new InvalidOperationException($"Unable to get blob service for {account}");
-        }
-
         var containerName = _config.OneFuzzStoragePrefix + container.ContainerName;
         var cc = client.GetBlobContainerClient(containerName);
         try {
@@ -170,13 +165,9 @@ public class Containers : IContainers {
         return null;
     }
 
-    private async Async.Task<BlobServiceClient?> GetBlobService(string accountId) {
+    private async Async.Task<BlobServiceClient> GetBlobService(string accountId) {
         _log.Info($"getting blob container (account_id: {accountId})");
         var (accountName, accountKey) = await _storage.GetStorageAccountNameAndKey(accountId);
-        if (accountName == null) {
-            _log.Error("Failed to get storage account name");
-            return null;
-        }
         var storageKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
         var accountUrl = _storage.GetBlobEndpoint(accountName);
         return new BlobServiceClient(accountUrl, storageKeyCredential);
