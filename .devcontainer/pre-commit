@@ -1,0 +1,36 @@
+#!/bin/bash
+
+echo "Formatting..."
+dotnetFormatted=0
+rustFormatted=0
+pythonFormatted=0
+
+for f in $(git diff --name-only --diff-filter=ACM)
+do
+    if [[ $dotnetFormatted == 0 ]] && [[ $f == src/ApiService/* ]]; then
+        echo "Formatting dotnet"
+        cd /workspaces/onefuzz/src/ApiService
+        dotnet format
+        dotnetFormatted=1
+    fi
+
+    if [[ $rustFormatted == 0 ]] && [[ $f == src/agent/* ]]; then
+        echo "Formatting rust"
+        cd /workspaces/onefuzz/src/agent
+        cargo fmt
+        rustFormatted=1
+    fi
+
+    if [[ $pythonFormatted == 0 ]] && [[ $(grep -Eq 'src/(cli|api-service|pytypes)/*' <<< $f) ]]; then
+        echo "Formatting python"
+        cd /workspaces/onefuzz/src/utils
+        ./lint.sh
+        pythonFormatted=1
+    fi
+
+    if [[ $dotnetFormatted == 1 ]] && [[ $rustFormatted == 1 ]] && [[ $pythonFormatted == 1 ]]; then
+        break
+    fi
+done
+
+echo "Done formatting"

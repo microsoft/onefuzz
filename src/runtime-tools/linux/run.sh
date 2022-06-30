@@ -5,6 +5,7 @@
 set -ex
 
 export PATH=$PATH:/onefuzz/bin:/onefuzz/tools/linux:/onefuzz/tools/linux/afl:/onefuzz/tools/linux/radamsa
+export DOTNET_ROOT=/onefuzz/tools/dotnet
 export ONEFUZZ_TOOLS=/onefuzz/tools
 export ONEFUZZ_ROOT=/onefuzz
 export RUST_BACKTRACE=full
@@ -31,7 +32,7 @@ case ${MODE} in
     "fuzz")
         logger "onefuzz: starting fuzzing"
         echo fuzzing
-        onefuzz-supervisor run --config /onefuzz/config.json --redirect-output /onefuzz/logs/
+        onefuzz-agent run --config /onefuzz/config.json --redirect-output /onefuzz/logs/
     ;;
     "repro")
         logger "onefuzz: starting repro"

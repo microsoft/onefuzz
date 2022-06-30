@@ -24,7 +24,7 @@ use crate::source::SourceCoverage;
 /// Block coverage for a command invocation.
 ///
 /// Organized by module.
-#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(into = "BlockCoverageReport", try_from = "BlockCoverageReport")]
 pub struct CommandBlockCov {
     modules: BTreeMap<ModulePath, ModuleCov>,

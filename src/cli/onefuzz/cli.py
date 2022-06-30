@@ -558,11 +558,11 @@ def execute_api(api: Any, api_types: List[Any], version: str) -> int:
     elif args.verbose == 1:
         logging.basicConfig(level=logging.WARNING)
         api.logger.setLevel(logging.INFO)
-        logging.getLogger("nsv-backend").setLevel(logging.DEBUG)
+        logging.getLogger("backend").setLevel(logging.DEBUG)
     elif args.verbose == 2:
         logging.basicConfig(level=logging.INFO)
         api.logger.setLevel(logging.DEBUG)
-        logging.getLogger("nsv-backend").setLevel(logging.DEBUG)
+        logging.getLogger("backend").setLevel(logging.DEBUG)
     elif args.verbose >= 3:
         logging.basicConfig(level=logging.DEBUG)
         api.logger.setLevel(logging.DEBUG)

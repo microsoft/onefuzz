@@ -6,12 +6,14 @@ public interface IJobOperations : IStatefulOrm<Job, JobState> {
     Async.Task<Job?> Get(Guid jobId);
     Async.Task OnStart(Job job);
     IAsyncEnumerable<Job> SearchExpired();
-    Async.Task Stopping(Job job, ITaskOperations taskOperations);
+    Async.Task<Job> Stopping(Job job);
     IAsyncEnumerable<Job> SearchState(IEnumerable<JobState> states);
     Async.Task StopNeverStartedJobs();
+    Async.Task StopIfAllDone(Job job);
 }
 
-public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
+public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOperations {
+    private static TimeSpan JOB_NEVER_STARTED_DURATION = TimeSpan.FromDays(30);
 
     public JobOperations(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
@@ -35,13 +37,42 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
         return QueryAsync(filter: query);
     }
 
-    public Async.Task StopNeverStartedJobs() {
-        throw new NotImplementedException();
+    public async Async.Task StopIfAllDone(Job job) {
+        var anyNotStoppedJobs = await _context.TaskOperations.GetByJobId(job.JobId).AnyAsync(task => task.State != TaskState.Stopped);
+
+        if (anyNotStoppedJobs) {
+            return;
+        }
+
+        _logTracer.Info($"stopping job as all tasks are stopped: {job.JobId}");
+        await Stopping(job);
     }
 
-    public async Async.Task Stopping(Job job, ITaskOperations taskOperations) {
+    public async Async.Task StopNeverStartedJobs() {
+        // # Note, the "not(end_time...)" with end_time set long before the use of
+        // # OneFuzz enables identifying those without end_time being set.
+
+        var lastTimeStamp = (DateTimeOffset.UtcNow - JOB_NEVER_STARTED_DURATION).ToString("o");
+
+        var filter = Query.And(new[] {
+            $"Timestamp lt datetime'{lastTimeStamp}' and not(end_time ge datetime'2000-01-11T00:00:00.0Z')",
+            Query.EqualAnyEnum("state", new[] {JobState.Enabled})
+        });
+
+        var jobs = this.QueryAsync(filter);
+
+        await foreach (var job in jobs) {
+            await foreach (var task in _context.TaskOperations.QueryAsync($"PartitionKey eq '{job.JobId}'")) {
+                await _context.TaskOperations.MarkFailed(task, new Error(ErrorCode.TASK_FAILED, new[] { "job never not start" }));
+            }
+            _logTracer.Info($"stopping job that never started: {job.JobId}");
+            await _context.JobOperations.Stopping(job);
+        }
+    }
+
+    public async Async.Task<Job> Stopping(Job job) {
         job = job with { State = JobState.Stopping };
-        var tasks = await taskOperations.QueryAsync(filter: $"job_id eq '{job.JobId}'").ToListAsync();
+        var tasks = await _context.TaskOperations.QueryAsync(filter: $"job_id eq '{job.JobId}'").ToListAsync();
         var taskNotStopped = tasks.ToLookup(task => task.State != TaskState.Stopped);
 
         var notStopped = taskNotStopped[true];
@@ -49,7 +80,7 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
 
         if (notStopped.Any()) {
             foreach (var task in notStopped) {
-                await taskOperations.MarkStopping(task);
+                await _context.TaskOperations.MarkStopping(task);
             }
         } else {
             job = job with { State = JobState.Stopped };
@@ -57,7 +88,12 @@ public class JobOperations : StatefulOrm<Job, JobState>, IJobOperations {
             await _context.Events.SendEvent(new EventJobStopped(job.JobId, job.Config, job.UserInfo, taskInfo));
         }
 
-        await Replace(job);
+        var result = await Replace(job);
 
+        if (result.IsOk) {
+            return job;
+        } else {
+            throw new Exception($"Failed to save job {job.JobId} : {result.ErrorV}");
+        }
     }
 }

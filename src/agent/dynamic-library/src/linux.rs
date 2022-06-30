@@ -11,13 +11,16 @@ use std::process::Command;
 use lazy_static::lazy_static;
 use regex::Regex;
 
+const LD_LIBRARY_PATH: &str = "LD_LIBRARY_PATH";
+
 pub fn find_missing(mut cmd: Command) -> Result<HashSet<MissingDynamicLibrary>, io::Error> {
     // Check for missing _linked_ dynamic libraries.
     //
     // We must do this first to avoid false positives or negatives when parsing `LD_DEBUG`
     // output. The debug output gets truncated when a linked shared library is not found,
     // since any in-progress searches are aborted.
-    let linked = LinkedDynamicLibraries::search(cmd.get_program())?;
+    let library_path = explicit_library_path(&cmd);
+    let linked = LinkedDynamicLibraries::search(cmd.get_program(), library_path)?;
     let missing_linked = linked.not_found();
 
     if !missing_linked.is_empty() {
@@ -32,6 +35,23 @@ pub fn find_missing(mut cmd: Command) -> Result<HashSet<MissingDynamicLibrary>, 
     let logs = LdDebugLogs::parse(&*output.stderr);
 
     Ok(logs.missing())
+}
+
+// Compute the `LD_LIBRARY_PATH` value that a `Command` sets, if any.
+//
+// If the command either inherits or unsets the variable, returns `None`.
+fn explicit_library_path(cmd: &Command) -> Option<&OsStr> {
+    let key_value = cmd
+        .get_envs()
+        .find(|(k, _)| *k == OsStr::new(LD_LIBRARY_PATH));
+
+    // Inherits, return `None`.
+    let key_value = key_value?;
+
+    // Unsets, return `None`.
+    let value = key_value.1?;
+
+    Some(value)
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -229,9 +249,18 @@ pub struct LinkedDynamicLibraries {
 }
 
 impl LinkedDynamicLibraries {
-    pub fn search(module: impl AsRef<OsStr>) -> Result<Self, io::Error> {
+    pub fn search(
+        module: impl AsRef<OsStr>,
+        library_path: Option<&OsStr>,
+    ) -> Result<Self, io::Error> {
         let mut cmd = Command::new("ldd");
         cmd.arg(module);
+
+        if let Some(library_path) = library_path {
+            cmd.env(LD_LIBRARY_PATH, library_path);
+        } else {
+            cmd.env_remove(LD_LIBRARY_PATH);
+        }
 
         let output = cmd.output()?;
         let linked = Self::parse(&*output.stdout);

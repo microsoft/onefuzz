@@ -1,10 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
-    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <OutputType>Exe</OutputType>
-    <Nullable>enable</Nullable>
     <WarningLevel>5</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
@@ -37,6 +34,7 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.17.0" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.SignalRService" Version="1.7.0" />
+    <PackageReference Include="TaskTupleAwaiter" Version="2.0.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
@@ -46,5 +44,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </None>
+    <EmbeddedResource Include="onefuzzlib/build.id" Condition="Exists('onefuzzlib/build.id')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="onefuzzlib/git.version" Condition="Exists('onefuzzlib/git.version')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

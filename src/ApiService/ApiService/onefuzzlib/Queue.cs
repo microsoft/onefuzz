@@ -51,9 +51,9 @@ public class Queue : IQueue {
         var accountId = _storage.GetPrimaryAccount(storageType);
         _log.Verbose($"getting blob container (account_id: {accountId})");
         var (name, key) = await _storage.GetStorageAccountNameAndKey(accountId);
-        var accountUrl = new Uri($"https://{name}.queue.core.windows.net");
+        var endpoint = _storage.GetQueueEndpoint(name);
         var options = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
-        return new QueueServiceClient(accountUrl, new StorageSharedKeyCredential(name, key), options);
+        return new QueueServiceClient(endpoint, new StorageSharedKeyCredential(name, key), options);
     }
 
     public async Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {

@@ -21,6 +21,18 @@ macro_rules! timed_test {
     };
 }
 
+macro_rules! expected_timeout_test {
+    ($test_name: ident, $future: expr) => {
+        #[tokio::test]
+        async fn $test_name() -> Result<()> {
+            let result = tokio::time::timeout(TEST_TIMEOUT, $future).await;
+
+            result.expect_err("Expected test to time out");
+            Ok(())
+        }
+    };
+}
+
 timed_test!(test_monitor_empty_path, async move {
     let monitor = DirectoryMonitor::new("").await;
 
@@ -112,6 +124,34 @@ timed_test!(test_monitor_dir_create_files, async move {
     }
 
     let _ = monitor.stop();
+
+    Ok(())
+});
+
+expected_timeout_test!(test_monitor_default_ignores_dir, async move {
+    let dir = tempdir().unwrap();
+    let mut monitor = DirectoryMonitor::new(dir.path()).await?;
+
+    let sub_dir = dir.path().join("test");
+    dbg!(&sub_dir);
+    fs::create_dir(&sub_dir).await?;
+
+    monitor.next_file().await?;
+    anyhow::Ok(())
+});
+
+timed_test!(test_monitor_set_report_directories, async move {
+    use std::fs::canonicalize;
+
+    let dir = tempdir().unwrap();
+    let mut monitor = DirectoryMonitor::new(dir.path()).await?;
+    monitor.set_report_directories(true);
+
+    let sub_dir = dir.path().join("test");
+    dbg!(&sub_dir);
+    fs::create_dir(&sub_dir).await?;
+
+    assert_eq!(monitor.next_file().await?, Some(canonicalize(&sub_dir)?));
 
     Ok(())
 });

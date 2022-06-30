@@ -11,7 +11,7 @@ When using libFuzzer in C, developers provide a function
 and the length of said buffer.  ([Tutorial using libFuzzer in
 C](https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md))
 
-With libfuzzer-dotnet, developers provide an application that within `Main` calls the method `Fuzzer.LibFuzzer.Run`, with a callback that passes a read only byte-stream their function of interest. 
+With libfuzzer-dotnet, developers provide an application that within `Main` calls the method `Fuzzer.LibFuzzer.Run`, with a callback that passes a read only byte-stream their function of interest.
 
 > NOTE: libfuzzer-dotnet only works on Linux at this time.
 
@@ -24,7 +24,7 @@ Standard](https://dotnet.microsoft.com/platform/dotnet-standard) check if your
 framework version is supported.
 
 ## Issues using libfuzzer-dotnet in OneFuzz
-* The `libfuzzer_coverage` task does not support the coverage features used by libfuzzer-dotnet.  (Work item: [#536](https://github.com/microsoft/onefuzz/issues/536))
+* The `coverage` task does not support the coverage features used by libfuzzer-dotnet.
 * The `libfuzzer_crash_report` does not support extracting unique output during analysis, making the crash de-duplication and reporting ineffective. (Work item: [#538]https://github.com/microsoft/onefuzz/issues/538))
 
 As such, a libfuzzer-dotnet template is available, which only uses the `libfuzzer_fuzz` tasks.  As these issues are resolve, the template will be updated to include the additional tasks.
@@ -40,7 +40,7 @@ Let's fuzz the `Func` function of our example library named [problems](../../src
   sudo apt-get install -y clang
   ```
 
-2. We need to build an application that uses `Fuzzer.LibFuzzer.Run` that calls our function `Func`.  For this example, let's call this [wrapper](../../src/integration-tests/libfuzzer-dotnet/wrapper/) 
+2. We need to build an application that uses `Fuzzer.LibFuzzer.Run` that calls our function `Func`.  For this example, let's call this [wrapper](../../src/integration-tests/libfuzzer-dotnet/wrapper/)
 
   The [wrapper/wrapper.csproj](../../src/integration-tests/libfuzzer-dotnet/wrapper/wrapper.csproj) project file uses SharpFuzz 1.6.1 and refers to our [problems](../../src/integration-tests/libfuzzer-dotnet/problems/) library locally.
   ```xml
@@ -57,7 +57,7 @@ Let's fuzz the `Func` function of our example library named [problems](../../src
     </PropertyGroup>
   </Project>
   ```
-  
+
   For our example [problems](../../src/integration-tests/libfuzzer-dotnet/problems/) library, our callback for `Fuzzer.LibFuzzer.Run` is straight forwards.  `Func` already takes a `ReadOnlySpan<byte>`.  If your functions takes strings, this would be the place to convert the span of bytes to strings.
   [wrapper/program.cs](../../src/integration-tests/libfuzzer-dotnet/wrapper/program.cs)
   ```C#
@@ -88,7 +88,7 @@ Let's fuzz the `Func` function of our example library named [problems](../../src
   clang -fsanitize=fuzzer libfuzzer-dotnet.cc -o my-fuzzer/libfuzzer-dotnet
   ```
 
-6. We should provide some sample inputs for our fuzzing. For this example, a basic file will do. However, this should include reasonable known-good inputs for your function. If you're fuzzing PNGs, use a selection of valid PNGs. 
+6. We should provide some sample inputs for our fuzzing. For this example, a basic file will do. However, this should include reasonable known-good inputs for your function. If you're fuzzing PNGs, use a selection of valid PNGs.
   ```
   mkdir -p inputs
   echo hi > inputs/hi.txt
@@ -131,7 +131,7 @@ Let's fuzz the `Func` function of our example library named [problems](../../src
       #10 0x45a942 in main (/home/bcaswell/projects/onefuzz/onefuzz/src/integration-tests/libfuzzer-dotnet/my-fuzzer/libfuzzer-dotnet+0x45a942)
       #11 0x7fd6c2ee20b2 in __libc_start_main /build/glibc-eX1tMB/glibc-2.31/csu/../csu/libc-start.c:308:16
       #12 0x40689d in _start (/home/bcaswell/projects/onefuzz/onefuzz/src/integration-tests/libfuzzer-dotnet/my-fuzzer/libfuzzer-dotnet+0x40689d)
-  
+
   NOTE: libFuzzer has rudimentary signal handlers.
         Combine libFuzzer with AddressSanitizer or similar for better crash reports.
   SUMMARY: libFuzzer: deadly signal
@@ -141,7 +141,7 @@ Let's fuzz the `Func` function of our example library named [problems](../../src
   artifact_prefix='./'; Test unit written to ./crash-ad81c382bc24cb4edb13f5ab12ce1ee454600a69
   Base64: AAEAAA4A
   ```
-  
+
   As shown in the output, our fuzzing run generated the file `crash-ad81c382bc24cb4edb13f5ab12ce1ee454600a69`.  If we provide this file on the command line, we can reproduce the identified crash:
   ```
   $ ./my-fuzzer/libfuzzer-dotnet --target_path=./my-fuzzer/wrapper ./crash-ad81c382bc24cb4edb13f5ab12ce1ee454600a69
@@ -168,7 +168,7 @@ Let's fuzz the `Func` function of our example library named [problems](../../src
       #8 0x45a942 in main (/home/bcaswell/projects/onefuzz/onefuzz/src/integration-tests/libfuzzer-dotnet/my-fuzzer/libfuzzer-dotnet+0x45a942)
       #9 0x7f16819c50b2 in __libc_start_main /build/glibc-eX1tMB/glibc-2.31/csu/../csu/libc-start.c:308:16
       #10 0x40689d in _start (/home/bcaswell/projects/onefuzz/onefuzz/src/integration-tests/libfuzzer-dotnet/my-fuzzer/libfuzzer-dotnet+0x40689d)
-  
+
   NOTE: libFuzzer has rudimentary signal handlers.
         Combine libFuzzer with AddressSanitizer or similar for better crash reports.
   SUMMARY: libFuzzer: deadly signal

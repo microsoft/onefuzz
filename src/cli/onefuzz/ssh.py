@@ -78,7 +78,7 @@ def build_ssh_command(
         if port:
             cmd += ["-p", str(port)]
 
-        log_level = logging.getLogger("nsv-backend").getEffectiveLevel()
+        log_level = logging.getLogger("backend").getEffectiveLevel()
         if log_level <= logging.DEBUG:
             cmd += ["-v"]
 

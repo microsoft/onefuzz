@@ -71,7 +71,7 @@ class TestAdmin(unittest.TestCase):
         self.assertIsNone(
             check_require_admins_impl(
                 InstanceConfig(
-                    allowed_aad_tenants=[UUID(int=0)], require_admin_privileges=True
+                    allowed_aad_tenants=[UUID(int=0)], require_admin_privileges=False
                 ),
                 UserInfo(),
             )
@@ -81,7 +81,7 @@ class TestAdmin(unittest.TestCase):
         self.assertIsNone(
             check_require_admins_impl(
                 InstanceConfig(
-                    allowed_aad_tenants=[UUID(int=0)], require_admin_privileges=True
+                    allowed_aad_tenants=[UUID(int=0)], require_admin_privileges=False
                 ),
                 UserInfo(object_id=user1),
             )
@@ -92,7 +92,7 @@ class TestAdmin(unittest.TestCase):
             check_require_admins_impl(
                 InstanceConfig(
                     allowed_aad_tenants=[UUID(int=0)],
-                    require_admin_privileges=False,
+                    require_admin_privileges=True,
                     admins=[user1],
                 ),
                 UserInfo(object_id=user1),
@@ -104,7 +104,7 @@ class TestAdmin(unittest.TestCase):
             check_require_admins_impl(
                 InstanceConfig(
                     allowed_aad_tenants=[UUID(int=0)],
-                    require_admin_privileges=False,
+                    require_admin_privileges=True,
                     admins=[user1],
                 ),
                 UserInfo(),
@@ -116,7 +116,7 @@ class TestAdmin(unittest.TestCase):
             check_require_admins_impl(
                 InstanceConfig(
                     allowed_aad_tenants=[UUID(int=0)],
-                    require_admin_privileges=False,
+                    require_admin_privileges=True,
                     admins=[user1],
                 ),
                 UserInfo(object_id=user2),

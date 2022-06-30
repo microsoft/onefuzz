@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using PoolName = System.String;
 using Region = System.String;
 
 namespace Microsoft.OneFuzz.Service;
@@ -63,6 +62,7 @@ public abstract record BaseEvent() {
                 EventNodeStateUpdated _ => EventType.NodeStateUpdated,
                 EventNodeDeleted _ => EventType.NodeDeleted,
                 EventNodeCreated _ => EventType.NodeCreated,
+                EventJobStopped _ => EventType.JobStopped,
                 _ => throw new NotImplementedException(),
             };
 
@@ -90,6 +90,7 @@ public abstract record BaseEvent() {
             EventType.ScalesetStateUpdated => typeof(EventScalesetStateUpdated),
             EventType.NodeDeleted => typeof(EventNodeDeleted),
             EventType.NodeCreated => typeof(EventNodeCreated),
+            EventType.JobStopped => typeof(EventJobStopped),
             _ => throw new ArgumentException($"invalid input {eventType}"),
 
         };
@@ -256,7 +257,8 @@ public record EventNodeHeartbeat(
 public record EventNodeDeleted(
     Guid MachineId,
     Guid? ScalesetId,
-    PoolName PoolName
+    PoolName PoolName,
+    NodeState? MachineState
 ) : BaseEvent();
 
 

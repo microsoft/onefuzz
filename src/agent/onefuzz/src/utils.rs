@@ -116,7 +116,7 @@ mod test {
         if let Some(result) = try_wait_handle.now_or_never() {
             assert!(result.is_ok(), "expected Ok")
         } else {
-            assert!(false, "expected result")
+            panic!("expected result")
         }
     }
 
@@ -150,7 +150,7 @@ mod test {
         if let Some(result) = try_wait_handle.now_or_never() {
             assert!(result.is_err(), "expected error")
         } else {
-            assert!(false, "expected result")
+            panic!("expected result")
         }
     }
 }
