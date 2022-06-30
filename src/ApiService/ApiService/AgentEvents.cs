@@ -7,18 +7,24 @@ namespace Microsoft.OneFuzz.Service;
 
 public class AgentEvents {
     private readonly ILogTracer _log;
-
+    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public AgentEvents(ILogTracer log, IOnefuzzContext context) {
+    public AgentEvents(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
+        _auth = auth;
         _context = context;
     }
 
     private static readonly EntityConverter _entityConverter = new();
 
     [Function("AgentEvents")]
-    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "POST")] HttpRequestData req) {
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route="agents/events")]
+        HttpRequestData req)
+        => _auth.CallIfAgent(req, Post);
+
+    private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeStateEnvelope>(req);
         if (!request.IsOk || request.OkV == null) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, context: "node event");
