@@ -193,9 +193,11 @@ impl<'a> TaskContext<'a> {
     }
 
     async fn save_and_sync_coverage(&self) -> Result<()> {
+        info!("Saving and syncing coverage");
         let mut cmd = self.command_for_merge().await?;
         let timeout = self.config.timeout();
         let merge = spawn_blocking(move || spawn_with_timeout(&mut cmd, timeout)).await??;
+        info!("Pushing coverage");
         self.config.coverage.sync_push().await?;
 
         Ok(merge)
@@ -224,23 +226,23 @@ impl<'a> TaskContext<'a> {
         let dotnet_path = dotnet_path()?;
         let id = Uuid::new_v4();
         let output_file_path = self
-            .intermediate_coverage_files_path()
+            .intermediate_coverage_files_path()?
             .join(format!("{}.cobertura.xml", id));
+
+        let target_options = expand.evaluate(&self.config.target_options)?;
 
         let mut cmd = Command::new(dotnet_coverage_path);
         cmd.arg("collect")
             .args(["--output-format", "cobertura"])
             .args(["-o", &output_file_path.to_string_lossy()])
             .arg(format!(
-                "{} {}",
+                "{} {} {}",
                 dotnet_path.to_string_lossy(),
-                self.config.target_exe.to_string_lossy() // input.to_string_lossy()
+                self.config.target_exe.canonicalize()?.to_string_lossy(),
+                target_options.join(" ")
             ));
 
-        let target_options = expand.evaluate(&self.config.target_options)?;
-        cmd.args(target_options);
-
-        dbg!(&cmd);
+        info!("{:?}", &cmd);
 
         for (k, v) in &self.config.target_env {
             cmd.env(k, expand.evaluate_value(v)?);
@@ -254,18 +256,19 @@ impl<'a> TaskContext<'a> {
         Ok(cmd)
     }
 
-    fn working_dir(&self) -> &PathBuf {
-        &self.config.coverage.local_path
+    fn working_dir(&self) -> Result<PathBuf> {
+        Ok(self.config.coverage.local_path.canonicalize()?)
     }
 
-    fn intermediate_coverage_files_path(&self) -> PathBuf {
-        self.working_dir().join("intermediate-coverage-files")
+    fn intermediate_coverage_files_path(&self) -> Result<PathBuf> {
+        Ok(self.working_dir()?
+            .join("intermediate-coverage-files"))
     }
 
     async fn command_for_merge(&self) -> Result<Command> {
         let dotnet_coverage_path = dotnet_coverage_path()?;
 
-        let output_file = self.working_dir().join(COBERTURA_COVERAGE_FILE);
+        let output_file = self.working_dir()?.join(COBERTURA_COVERAGE_FILE);
 
         let mut cmd = Command::new(dotnet_coverage_path);
         cmd.arg("merge")
@@ -275,7 +278,9 @@ impl<'a> TaskContext<'a> {
             .arg("--remove-input-files")
             .arg("*.cobertura.xml");
 
-        cmd.current_dir(self.working_dir());
+        cmd.current_dir(self.working_dir()?);
+
+        info!("{:?}", &cmd);
 
         Ok(cmd)
     }
