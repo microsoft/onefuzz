@@ -5,18 +5,24 @@ namespace Microsoft.OneFuzz.Service;
 
 public class AgentCanSchedule {
     private readonly ILogTracer _log;
-
+    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public AgentCanSchedule(ILogTracer log, IOnefuzzContext context) {
+    public AgentCanSchedule(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
+        _auth = auth;
         _context = context;
     }
 
     [Function("AgentCanSchedule")]
-    public async Async.Task<HttpResponseData> Run([HttpTrigger] HttpRequestData req) {
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route="agents/can_schedule")]
+        HttpRequestData req)
+        => _auth.CallIfAgent(req, Post);
+
+    private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<CanScheduleRequest>(req);
-        if (!request.IsOk || request.OkV == null) {
+        if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, typeof(CanScheduleRequest).ToString());
         }
 
