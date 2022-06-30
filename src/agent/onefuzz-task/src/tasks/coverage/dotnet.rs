@@ -207,7 +207,6 @@ impl<'a> TaskContext<'a> {
         let mut cmd = self.command_for_input(input).await?;
         let timeout = self.config.timeout();
         let coverage = spawn_blocking(move || spawn_with_timeout(&mut cmd, timeout)).await??;
-
         Ok(coverage)
     }
 
@@ -276,12 +275,19 @@ impl<'a> TaskContext<'a> {
             .args(["-o", &output_file.to_string_lossy()])
             .arg("-r")
             .arg("--remove-input-files")
-            .arg("*.cobertura.xml");
+            .arg("*.cobertura.xml")
+            .arg(COBERTURA_COVERAGE_FILE); // This lets us 'fold' any new coverage into the existing coverage file.
 
         cmd.current_dir(self.working_dir()?);
 
         info!("{:?}", &cmd);
+        info!("From: {:?}", self.working_dir()?);
 
+        cmd.env_remove("RUST_LOG");
+        cmd.stdin(Stdio::null());
+        cmd.stdout(Stdio::piped());
+        cmd.stderr(Stdio::piped());
+        
         Ok(cmd)
     }
 
@@ -327,7 +333,6 @@ fn dotnet_path() -> Result<PathBuf> {
     #[cfg(not(target_os = "windows"))]
     let dotnet_exectuable = "dotnet";
     let dotnet = Path::new(&dotnet_root_dir)
-        // .join("dotnet") // The folder containing the dotnet executable
         .join(dotnet_exectuable); // The dotnet executable
 
     Ok(dotnet)
