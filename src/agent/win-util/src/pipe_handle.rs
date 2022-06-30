@@ -3,6 +3,8 @@
 
 //! This module implements a wrapper around Win32 named pipes to support non-blocking reads.
 
+#![allow(clippy::uninit_vec)]
+
 use std::os::windows::io::{AsRawHandle, RawHandle};
 
 use anyhow::{Context, Result};

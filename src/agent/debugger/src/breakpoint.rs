@@ -267,10 +267,16 @@ impl BreakpointCollection {
 
     fn bulk_read_process_memory(&self, process_handle: HANDLE) -> Result<Vec<u8>> {
         let mut buffer: Vec<u8> = Vec::with_capacity(self.bulk_region_size());
+        process::read_memory_array(
+            process_handle,
+            self.min_breakpoint_addr as _,
+            buffer.spare_capacity_mut(),
+        )?;
+
         unsafe {
             buffer.set_len(self.bulk_region_size());
         }
-        process::read_memory_array(process_handle, self.min_breakpoint_addr as _, &mut buffer)?;
+
         Ok(buffer)
     }
 
