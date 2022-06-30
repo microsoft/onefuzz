@@ -105,4 +105,7 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IWebhookOperations WebhookOperations => throw new System.NotImplementedException();
 
+    public INsgOperations NsgOperations => throw new NotImplementedException();
+
+    public ISubnet Subnet => throw new NotImplementedException();
 }
