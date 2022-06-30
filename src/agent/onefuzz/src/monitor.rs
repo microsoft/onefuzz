@@ -114,11 +114,12 @@ impl DirectoryMonitor {
                             continue;
                         }
                         Err(err) => {
-                            bail!(
+                            warn!(
                                 "error checking metadata for file. path = {}, error = {}",
                                 path.display(),
                                 err
                             );
+                            continue;
                         }
                     }
                 }
