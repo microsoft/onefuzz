@@ -26,7 +26,7 @@ public class AgentEvents {
 
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeStateEnvelope>(req);
-        if (!request.IsOk || request.OkV == null) {
+        if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, context: "node event");
         }
 
