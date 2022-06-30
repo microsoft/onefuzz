@@ -98,13 +98,13 @@ impl DirectoryMonitor {
                         return Ok(Some(path));
                     }
 
-                    let is_dir = fs::metadata(&path)
+                    let is_file = fs::metadata(&path)
                         .await
                         .ok()
-                        .map(|f| f.is_dir())
+                        .map(|f| f.is_file())
                         .unwrap_or_default();
 
-                    if !is_dir {
+                    if is_file {
                         return Ok(Some(path));
                     }
                 }
