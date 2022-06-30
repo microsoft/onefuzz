@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#![allow(clippy::uninit_vec)]
-
 use std::{
     collections::{btree_map::Range, BTreeMap},
     ops::RangeBounds,
