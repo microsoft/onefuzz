@@ -50,9 +50,7 @@ public abstract class FunctionTestBase : IDisposable {
         Context = new TestContext(Logger, _storage, creds, _storagePrefix);
 
         // set up blob client for test purposes:
-        var (accountName, accountKey) = _storage.GetStorageAccountNameAndKey("").Result; // for test impls this is always sync
-        var endpoint = _storage.GetBlobEndpoint("");
-        _blobClient = new BlobServiceClient(endpoint, new StorageSharedKeyCredential(accountName, accountKey));
+        _blobClient = _storage.GetBlobServiceClientForAccount("").Result; // for test implementations this is always sync
     }
 
     protected static string BodyAsString(HttpResponseData data) {
@@ -67,21 +65,13 @@ public abstract class FunctionTestBase : IDisposable {
     public void Dispose() {
         GC.SuppressFinalize(this);
 
-        var (accountName, accountKey) = _storage.GetStorageAccountNameAndKey("").Result; // sync for test impls
-        if (accountName is not null && accountKey is not null) {
-            // clean up any tables & blobs that this test created
-
-            CleanupTables(_storage.GetTableEndpoint(accountName),
-                new TableSharedKeyCredential(accountName, accountKey));
-
-            CleanupBlobs(_storage.GetBlobEndpoint(accountName),
-                new StorageSharedKeyCredential(accountName, accountKey));
-        }
+        // clean up any tables & blobs that this test created
+        // these Get methods are always sync for test impls
+        CleanupTables(_storage.GetTableServiceClientForAccount("").Result); 
+        CleanupBlobs(_storage.GetBlobServiceClientForAccount("").Result);
     }
 
-    private void CleanupBlobs(Uri endpoint, StorageSharedKeyCredential creds) {
-        var blobClient = new BlobServiceClient(endpoint, creds);
-
+    private void CleanupBlobs(BlobServiceClient blobClient) {
         var containersToDelete = blobClient.GetBlobContainers(prefix: _storagePrefix);
         foreach (var container in containersToDelete.Where(c => c.IsDeleted != true)) {
             try {
@@ -94,9 +84,7 @@ public abstract class FunctionTestBase : IDisposable {
         }
     }
 
-    private void CleanupTables(Uri endpoint, TableSharedKeyCredential creds) {
-        var tableClient = new TableServiceClient(endpoint, creds);
-
+    private void CleanupTables(TableServiceClient tableClient) {
         var tablesToDelete = tableClient.Query(filter: Query.StartsWith("TableName", _storagePrefix));
         foreach (var table in tablesToDelete) {
             try {

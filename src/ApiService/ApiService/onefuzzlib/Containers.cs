@@ -105,7 +105,7 @@ public class Containers : IContainers {
         }
 
         var account = ChooseAccount(storageType);
-        var client = await GetBlobService(account);
+        var client = await _storage.GetBlobServiceClientForAccount(account);
         var containerName = _config.OneFuzzStoragePrefix + container.ContainerName;
         var cc = client.GetBlobContainerClient(containerName);
         try {
@@ -154,7 +154,7 @@ public class Containers : IContainers {
 
         var containers = _storage.GetAccounts(storageType).AsEnumerable()
             .Reverse()
-            .Select(async account => (await GetBlobService(account))?.GetBlobContainerClient(containerName));
+            .Select(async account => (await _storage.GetBlobServiceClientForAccount(account))?.GetBlobContainerClient(containerName));
 
         foreach (var c in containers) {
             var client = await c;
@@ -163,14 +163,6 @@ public class Containers : IContainers {
             }
         }
         return null;
-    }
-
-    private async Async.Task<BlobServiceClient> GetBlobService(string accountId) {
-        _log.Info($"getting blob container (account_id: {accountId})");
-        var (accountName, accountKey) = await _storage.GetStorageAccountNameAndKey(accountId);
-        var storageKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
-        var accountUrl = _storage.GetBlobEndpoint(accountName);
-        return new BlobServiceClient(accountUrl, storageKeyCredential);
     }
 
     public async Async.Task<Uri> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null) {
@@ -264,7 +256,7 @@ public class Containers : IContainers {
         var accounts = _storage.GetAccounts(corpus);
         IEnumerable<IEnumerable<KeyValuePair<string, IDictionary<string, string>>>> data =
          await Async.Task.WhenAll(accounts.Select(async acc => {
-             var service = await GetBlobService(acc);
+             var service = await _storage.GetBlobServiceClientForAccount(acc);
              if (service is null) {
                  throw new InvalidOperationException($"unable to get blob service for account {acc}");
              }

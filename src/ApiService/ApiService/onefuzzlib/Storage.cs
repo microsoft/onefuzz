@@ -1,7 +1,10 @@
 ﻿using System.Text.Json;
 using Azure.Core;
+using Azure.Data.Tables;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
+using Azure.Storage;
+using Azure.Storage.Blobs;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.OneFuzz.Service;
@@ -26,6 +29,20 @@ public interface IStorage {
     public Async.Task<string?> GetStorageAccountNameKeyByName(string accountName);
 
     public IReadOnlyList<string> GetAccounts(StorageType storageType);
+
+    public async Async.Task<BlobServiceClient> GetBlobServiceClientForAccount(string accountId) {
+        var (accountName, accountKey) = await GetStorageAccountNameAndKey(accountId);
+        var storageKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
+        var accountUrl = GetBlobEndpoint(accountName);
+        return new BlobServiceClient(accountUrl, storageKeyCredential);
+    }
+
+    public async Async.Task<TableServiceClient> GetTableServiceClientForAccount(string accountId) {
+        var (accountName, accountKey) = await GetStorageAccountNameAndKey(accountId);
+        var storageKeyCredential = new TableSharedKeyCredential(accountName, accountKey);
+        var accountUrl = GetTableEndpoint(accountName);
+        return new TableServiceClient(accountUrl, storageKeyCredential);
+    }
 }
 
 public sealed class Storage : IStorage, IDisposable {
