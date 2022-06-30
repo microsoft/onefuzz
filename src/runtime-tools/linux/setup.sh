@@ -14,6 +14,7 @@ MANAGED_SETUP="/onefuzz/bin/managed.sh"
 SCALESET_SETUP="/onefuzz/bin/scaleset-setup.sh"
 DOTNET_VERSION="6.0.300"
 export DOTNET_ROOT=/onefuzz/tools/dotnet
+export DOTNET_CLI_HOME="$DOTNET_ROOT"
 export ONEFUZZ_ROOT=/onefuzz
 export LLVM_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 
@@ -128,23 +129,24 @@ if type apt > /dev/null 2> /dev/null; then
 
     # Install dotnet
     until sudo apt install -y curl libicu-dev; do
-        echo "apt failed, sleeping 10s then retrying"
+        logger "apt failed, sleeping 10s then retrying"
         sleep 10
     done
 
-    echo "downloading dotnet install"
-    curl --retry 10 -sSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh > /dev/null
+    logger "downloading dotnet install"
+    curl --retry 10 -sSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh 2>&1 | logger -s -i -t 'onefuzz-curl-dotnet-install'
     chmod +x dotnet-install.sh
 
-    echo "running dotnet install"
-    . ./dotnet-install.sh --version "$DOTNET_VERSION" --install-dir "$DOTNET_ROOT" 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
+    logger "running dotnet install"
+    /bin/bash ./dotnet-install.sh --version "$DOTNET_VERSION" --install-dir "$DOTNET_ROOT" 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
     rm dotnet-install.sh
 
-    echo "install dotnet tools"
+    logger "install dotnet tools"
     pushd "$DOTNET_ROOT"
-    ./dotnet tool install dotnet-dump --tool-path /onefuzz/tools
-    ./dotnet tool install dotnet-coverage --tool-path /onefuzz/tools
-    ./dotnet tool install dotnet-sos --tool-path /onefuzz/tools
+    ls -lah 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+    "$DOTNET_ROOT"/dotnet tool install dotnet-dump --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+    "$DOTNET_ROOT"/dotnet tool install dotnet-coverage --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+    "$DOTNET_ROOT"/dotnet tool install dotnet-sos --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
     popd
 fi
 
