@@ -170,7 +170,7 @@ class ScalesetUpdate(BaseRequest):
 
 
 class AutoScaleOptions(BaseModel):
-    min: int = Field(ge=1)
+    min: int = Field(ge=0)
     max: int = Field(ge=1)
     default: int = Field(ge=1)
     scale_out_amount: int = Field(ge=1)
