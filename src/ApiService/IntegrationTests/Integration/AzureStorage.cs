@@ -34,7 +34,7 @@ sealed class AzureStorage : IStorage {
     }
 
     public IReadOnlyList<string> GetAccounts(StorageType storageType) {
-        return new[]{ AccountName };
+        return new[] { AccountName };
     }
 
     public Task<(string, string)> GetStorageAccountNameAndKey(string accountId)

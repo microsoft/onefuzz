@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Data.Tables;
-using Azure.Storage;
 using Azure.Storage.Blobs;
 using IntegrationTests.Fakes;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -67,7 +66,7 @@ public abstract class FunctionTestBase : IDisposable {
 
         // clean up any tables & blobs that this test created
         // these Get methods are always sync for test impls
-        CleanupTables(_storage.GetTableServiceClientForAccount("").Result); 
+        CleanupTables(_storage.GetTableServiceClientForAccount("").Result);
         CleanupBlobs(_storage.GetBlobServiceClientForAccount("").Result);
     }
 
