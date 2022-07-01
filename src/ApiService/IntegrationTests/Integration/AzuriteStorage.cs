@@ -45,9 +45,7 @@ sealed class AzuriteStorage : IStorage {
         throw new System.NotImplementedException();
     }
 
-    public string GetPrimaryAccount(StorageType storageType) {
-        throw new System.NotImplementedException();
-    }
+    public string GetPrimaryAccount(StorageType storageType) => AccountName;
 
     public IEnumerable<string> GetAccounts(StorageType storageType) {
         yield return AccountName;

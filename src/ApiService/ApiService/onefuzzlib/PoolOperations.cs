@@ -3,7 +3,7 @@ using ApiService.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IPoolOperations {
+public interface IPoolOperations : IOrm<Pool> {
     public Async.Task<OneFuzzResult<Pool>> GetByName(PoolName poolName);
     Task<bool> ScheduleWorkset(Pool pool, WorkSet workSet);
     IAsyncEnumerable<Pool> GetByClientId(Guid clientId);
