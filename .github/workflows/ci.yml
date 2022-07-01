@@ -52,7 +52,16 @@ jobs:
         sudo apt-get -y update
         sudo apt-get -y install libssl1.0-dev libunwind-dev
       if: "${{ runner.os == 'Linux' }}"
+    - name: Rust artifact cache
+      id: cache-agent-artifacts
+      uses: actions/cache@v3
+      with:
+        # if nothing has changed inside src/agent, we can reuse the artifacts directory
+        path: artifacts
+        key: agent-artifacts-${{ runner.os }}-${{ hashFiles('src/agent/**/*') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+        # note: also including the ACTIONS_CACHE_KEY_DATE to rebuild if the Prereq Cache is invalidated
     - run: src/ci/agent.sh
+      if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       shell: bash
     - uses: actions/upload-artifact@v2.2.2
       with:
