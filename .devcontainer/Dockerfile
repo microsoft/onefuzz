@@ -16,4 +16,4 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
     libunwind-dev clang build-essential libssl-dev pkg-config lldb \
-    bash-completion
+    bash-completion npm
