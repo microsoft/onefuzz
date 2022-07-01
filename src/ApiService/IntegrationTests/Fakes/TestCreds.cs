@@ -31,15 +31,13 @@ class TestCreds : ICreds {
 
     public string GetSubscription() => _subscriptionId.ToString();
 
+    public Uri GetInstanceUrl() => new("https://example.com/api/");
+
     public DefaultAzureCredential GetIdentity() {
         throw new NotImplementedException();
     }
 
     public string GetInstanceName() {
-        throw new NotImplementedException();
-    }
-
-    public Uri GetInstanceUrl() {
         throw new NotImplementedException();
     }
 

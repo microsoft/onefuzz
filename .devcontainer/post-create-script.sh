@@ -3,12 +3,8 @@
 # Install Azure Functions Core Tools 4
 # Source: https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=v4%2Clinux%2Ccsharp%2Cportal%2Cbash
 echo "Installing Azure Functions Core Tools 4 ..."
-cd /tmp
-curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
-sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
-sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
-sudo apt-get update
-sudo apt-get install azure-functions-core-tools-4
+# note that 'dotnet' feature in devcontainer.json already sets up the PPA for this
+sudo apt install azure-functions-core-tools-4
 
 # Install azcopy
 echo "Installing azcopy ..."

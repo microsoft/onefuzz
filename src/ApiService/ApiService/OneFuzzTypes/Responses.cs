@@ -54,6 +54,13 @@ public record InfoVersion(
     string Build,
     string Version);
 
+
+public record AgentRegistrationResponse(
+    Uri EventsUrl,
+    Uri WorkQueue,
+    Uri CommandsUrl
+) : BaseResponse();
+
 public class BaseResponseConverter : JsonConverter<BaseResponse> {
     public override BaseResponse? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         return null;
