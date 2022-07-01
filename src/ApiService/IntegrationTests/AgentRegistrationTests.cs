@@ -142,7 +142,7 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         var result = await func.Run(req);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        // there should only be one node, the old one with the same machineID was deleted
+        // should be one node with correct version
         var nodes = await Context.NodeOperations.SearchAll().ToListAsync();
         var node = Assert.Single(nodes);
         Assert.Equal("1.0.0", node.Version);
@@ -165,7 +165,7 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         var result = await func.Run(req);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        // there should only be one node, the old one with the same machineID was deleted
+        // should be one node with provided version
         var nodes = await Context.NodeOperations.SearchAll().ToListAsync();
         var node = Assert.Single(nodes);
         Assert.Equal("1.2.3", node.Version);
