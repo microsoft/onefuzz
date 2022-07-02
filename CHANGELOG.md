@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.7.1
+This a hotpatch to the 5.7.0 release fixing SAS URL generation which had the potential to cause tasks to fail. [#2116](https://github.com/microsoft/onefuzz/pull/2116)
+
 ## 5.7.0
 ### Added
 * Agent: Add `NodeState` to Node Heartbeat to better track the current state of nodes in the system [#2024](https://github.com/microsoft/onefuzz/pull/2024), [#2053](https://github.com/microsoft/onefuzz/pull/2053)
