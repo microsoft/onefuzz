@@ -10,7 +10,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IQueue {
     Async.Task SendMessage(string name, string message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
     Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
-    Async.Task<Uri?> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
+    Async.Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
     ResourceIdentifier GeResourceId(string queueName, StorageType storageType);
     Task<IList<T>> PeekQueue<T>(string name, StorageType storageType);
     Async.Task<bool> RemoveFirstMessage(string name, StorageType storageType);
@@ -51,9 +51,9 @@ public class Queue : IQueue {
         var accountId = _storage.GetPrimaryAccount(storageType);
         _log.Verbose($"getting blob container (account_id: {accountId})");
         var (name, key) = await _storage.GetStorageAccountNameAndKey(accountId);
-        var accountUrl = new Uri($"https://{name}.queue.core.windows.net");
+        var endpoint = _storage.GetQueueEndpoint(name);
         var options = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
-        return new QueueServiceClient(accountUrl, new StorageSharedKeyCredential(name, key), options);
+        return new QueueServiceClient(endpoint, new StorageSharedKeyCredential(name, key), options);
     }
 
     public async Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
@@ -73,11 +73,10 @@ public class Queue : IQueue {
         }
     }
 
-    public async Task<Uri?> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
+    public async Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
         var queue = await GetQueueClient(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
         var sasaBuilder = new QueueSasBuilder(permissions, DateTimeOffset.UtcNow + (duration ?? DEFAULT_DURATION));
-        var url = queue.GenerateSasUri(sasaBuilder);
-        return url;
+        return queue.GenerateSasUri(sasaBuilder);
     }
 
 

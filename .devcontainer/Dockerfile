@@ -1,7 +1,6 @@
 # See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.224.3/containers/ubuntu/.devcontainer/base.Dockerfile
 
-# focal = 20.04
-ARG VARIANT="focal"
+ARG VARIANT="ubuntu-22.04"
 FROM mcr.microsoft.com/vscode/devcontainers/base:0-${VARIANT}
 
 # Setup MS package signing key:
@@ -16,10 +15,5 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -
 # Install packages required for build:
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
-    libunwind-dev clang build-essential libssl-dev pkg-config lldb
-
-### Setup Rust for 'vscode' user:
-USER vscode
-
-USER root
-### Done setting up Rust.
+    libunwind-dev clang build-essential libssl-dev pkg-config lldb \
+    bash-completion npm

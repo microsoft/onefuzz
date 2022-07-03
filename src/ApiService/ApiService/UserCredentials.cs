@@ -58,7 +58,7 @@ public class UserCredentials : IUserCredentials {
         return OneFuzzResult<string[]>.Ok(allowedAddTenantsQuery.ToArray());
     }
 
-    public async Task<OneFuzzResult<UserInfo>> ParseJwtToken(HttpRequestData req) {
+    public virtual async Task<OneFuzzResult<UserInfo>> ParseJwtToken(HttpRequestData req) {
         var authToken = GetAuthToken(req);
         if (authToken is null) {
             return OneFuzzResult<UserInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find authorization token" });

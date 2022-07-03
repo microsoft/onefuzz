@@ -18,11 +18,11 @@ are made up of a handful of components, primarily including:
 The current task types available are:
 
 * libfuzzer_fuzz: fuzz with a libFuzzer target
-* libfuzzer_coverage: extract coverage from a libFuzzer target with the seeds
 * libfuzzer_crash_report: Execute the target with crashing inputs, attempting to
   generate an informational report for each discovered crash
 * libfuzzer_merge: merge newly discovered inputs with an input corpus using
   corpus minimization
+* coverage: record binary block and source line coverage
 * generic_analysis: perform [custom analysis](custom-analysis.md) on every
   crashing input
 * generic_supervisor: fuzz using user-provided supervisors (such as AFL)

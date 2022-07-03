@@ -6,6 +6,10 @@ $env:ONEFUZZ_ROOT = "C:\onefuzz"
 $env:ONEFUZZ_TOOLS = "C:\onefuzz\tools"
 $env:LLVM_SYMBOLIZER_PATH = "llvm-symbolizer"
 $env:RUST_LOG = "info"
+$env:DOTNET_VERSION = "6.0.300"
+# Set a session and machine scoped env var
+$env:DOTNET_ROOT = "c:\onefuzz\tools\dotnet"
+[Environment]::SetEnvironmentVariable("DOTNET_ROOT", $env:DOTNET_ROOT, "Machine")
 
 $logFile = "C:\onefuzz.log"
 function log ($message) {
@@ -16,7 +20,7 @@ function log ($message) {
 
 function Setup-Silent-Notification {
    # https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/registry-entries-for-silent-process-exit
-   log "installing registry key for silent termination notification of onefuzz-supervisor"
+   log "installing registry key for silent termination notification of onefuzz-agent"
    reg import c:\onefuzz\tools\win64\onefuzz-silent-exit.reg
    log "done importing registry key"
 }
@@ -167,4 +171,19 @@ function Install-VCRedist {
   Start-Process -FilePath C:\onefuzz\vcredist_x64.exe -ArgumentList "/install /q /norestart" -Wait -WindowStyle Hidden
   Start-Process -FilePath C:\onefuzz\vcredist_x86.exe -ArgumentList "/install /q /norestart" -Wait -WindowStyle Hidden
   log "installing VC Redist: done"
+}
+
+function Install-Dotnet([string]$Version, [string]$InstallDir, [string]$ToolsDir) {
+  log "Installing dotnet to ${InstallDir}"
+  Invoke-WebRequest 'https://dot.net/v1/dotnet-install.ps1' -OutFile 'dotnet-install.ps1'
+  ./dotnet-install.ps1 -Version $Version -InstallDir $InstallDir
+  Remove-Item ./dotnet-install.ps1
+  log "Installing dotnet: done"
+  log "Installing dotnet tools to ${ToolsDir}"
+  Push-Location $InstallDir
+  ./dotnet.exe tool install dotnet-dump --tool-path $ToolsDir
+  ./dotnet.exe tool install dotnet-coverage --tool-path $ToolsDir
+  ./dotnet.exe tool install dotnet-sos --tool-path $ToolsDir
+  Pop-Location
+  log "Installing dotnet tools: done"
 }

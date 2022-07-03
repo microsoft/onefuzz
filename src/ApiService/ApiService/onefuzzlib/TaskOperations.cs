@@ -5,6 +5,10 @@ namespace Microsoft.OneFuzz.Service;
 public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
     Async.Task<Task?> GetByTaskId(Guid taskId);
 
+    IAsyncEnumerable<Task> GetByTaskIds(IEnumerable<Guid> taskId);
+
+    IAsyncEnumerable<Task> GetByJobId(Guid jobId);
+
     Async.Task<Task?> GetByJobIdAndTaskId(Guid jobId, Guid taskId);
 
 
@@ -22,7 +26,7 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
     Async.Task<Task> SetState(Task task, TaskState state);
 }
 
-public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
+public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITaskOperations {
 
 
     public TaskOperations(ILogTracer log, IOnefuzzContext context)
@@ -31,9 +35,15 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
     }
 
     public async Async.Task<Task?> GetByTaskId(Guid taskId) {
-        var data = QueryAsync(filter: $"RowKey eq '{taskId}'");
+        return await GetByTaskIds(new[] { taskId }).FirstOrDefaultAsync();
+    }
 
-        return await data.FirstOrDefaultAsync();
+    public IAsyncEnumerable<Task> GetByTaskIds(IEnumerable<Guid> taskId) {
+        return QueryAsync(filter: Query.RowKeys(taskId.Select(t => t.ToString())));
+    }
+
+    public IAsyncEnumerable<Task> GetByJobId(Guid jobId) {
+        return QueryAsync(filter: $"PartitionKey eq '{jobId}'");
     }
 
     public async Async.Task<Task?> GetByJobIdAndTaskId(Guid jobId, Guid taskId) {
@@ -42,21 +52,13 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
         return await data.FirstOrDefaultAsync();
     }
     public IAsyncEnumerable<Task> SearchStates(Guid? jobId = null, IEnumerable<TaskState>? states = null) {
-        var queryString = String.Empty;
-        if (jobId != null) {
-            queryString += $"PartitionKey eq '{jobId}'";
-        }
-
-        if (states != null) {
-            if (jobId != null) {
-                queryString += " and ";
-            }
-
-            queryString += "(" + string.Join(
-                " or ",
-                states.Select(s => $"state eq '{s}'")
-            ) + ")";
-        }
+        var queryString =
+            (jobId, states) switch {
+                (null, null) => "",
+                (Guid id, null) => Query.PartitionKey($"{id}"),
+                (null, IEnumerable<TaskState> s) => Query.EqualAnyEnum("state", s),
+                (Guid id, IEnumerable<TaskState> s) => Query.And(Query.PartitionKey($"{id}"), Query.EqualAnyEnum("state", s)),
+            };
 
         return QueryAsync(filter: queryString);
     }
@@ -71,19 +73,20 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
     }
 
     public async Async.Task MarkStopping(Task task) {
-        if (TaskStateHelper.ShuttingDown.Contains(task.State)) {
+        if (task.State.ShuttingDown()) {
             _logTracer.Verbose($"ignoring post - task stop calls to stop {task.JobId}:{task.TaskId}");
             return;
         }
 
-        if (TaskStateHelper.HasStarted.Contains(task.State)) {
+        if (!task.State.HasStarted()) {
             await MarkFailed(task, new Error(Code: ErrorCode.TASK_FAILED, Errors: new[] { "task never started" }));
-
+        } else {
+            await SetState(task, TaskState.Stopping);
         }
     }
 
     public async Async.Task MarkFailed(Task task, Error error, List<Task>? taskInJob = null) {
-        if (TaskStateHelper.ShuttingDown.Contains(task.State)) {
+        if (task.State.ShuttingDown()) {
             _logTracer.Verbose(
                 $"ignoring post-task stop failures for {task.JobId}:{task.TaskId}"
             );
@@ -105,7 +108,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
     }
 
     private async Async.Task MarkDependantsFailed(Task task, List<Task>? taskInJob = null) {
-        taskInJob = taskInJob ?? await QueryAsync(filter: $"job_id eq ''{task.JobId}").ToListAsync();
+        taskInJob ??= await SearchByPartitionKey(task.JobId.ToString()).ToListAsync();
 
         foreach (var t in taskInJob) {
             if (t.Config.PrereqTasks != null) {
@@ -123,6 +126,8 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
 
         if (task.State == TaskState.Running || task.State == TaskState.SettingUp) {
             task = await OnStart(task with { State = state });
+        } else {
+            task = task with { State = state };
         }
 
         await this.Replace(task);
@@ -206,11 +211,11 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
 
                 // if a prereq task fails, then mark this task as failed
                 if (t == null) {
-                    await MarkFailed(task, new Error(ErrorCode.INVALID_REQUEST, Errors: new[] { "unable to find task" }));
+                    await MarkFailed(task, new Error(ErrorCode.INVALID_REQUEST, Errors: new[] { "unable to find prereq task" }));
                     return false;
                 }
 
-                if (!TaskStateHelper.HasStarted.Contains(t.State)) {
+                if (!t.State.HasStarted()) {
                     return false;
                 }
             }
@@ -249,5 +254,34 @@ public class TaskOperations : StatefulOrm<Task, TaskState>, ITaskOperations {
         _logTracer.Warning($"unable to find a scaleset that matches the task prereqs: {task.TaskId}");
         return null;
 
+    }
+
+    public async Async.Task<Task> Init(Task task) {
+        await _context.Queue.CreateQueue($"{task.TaskId}", StorageType.Corpus);
+        return await SetState(task, TaskState.Waiting);
+    }
+
+
+    public async Async.Task<Task> Stopping(Task task) {
+        _logTracer.Info($"stopping task : {task.JobId}, {task.TaskId}");
+        await _context.NodeOperations.StopTask(task.TaskId);
+        var anyRemainingNodes = await _context.NodeTasksOperations.GetNodesByTaskId(task.TaskId).AnyAsync();
+        if (!anyRemainingNodes) {
+            return await Stopped(task);
+        }
+        return task;
+    }
+
+    private async Async.Task<Task> Stopped(Task inputTask) {
+        var task = await SetState(inputTask, TaskState.Stopped);
+        await _context.Queue.DeleteQueue($"{task.TaskId}", StorageType.Corpus);
+
+        //     # TODO: we need to 'unschedule' this task from the existing pools
+        var job = await _context.JobOperations.Get(task.JobId);
+        if (job != null) {
+            await _context.JobOperations.StopIfAllDone(job);
+        }
+
+        return task;
     }
 }

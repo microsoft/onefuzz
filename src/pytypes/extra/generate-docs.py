@@ -236,7 +236,7 @@ def main() -> None:
                 ),
                 JobTaskStopped(
                     task_id=UUID(int=1),
-                    task_type=TaskType.libfuzzer_coverage,
+                    task_type=TaskType.coverage,
                 ),
             ],
         ),

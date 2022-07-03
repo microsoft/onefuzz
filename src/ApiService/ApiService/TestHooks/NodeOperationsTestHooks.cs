@@ -165,7 +165,9 @@ namespace ApiService.TestHooks {
             if (query.ContainsKey("states")) {
                 states = query["states"].Split('-').Select(s => Enum.Parse<NodeState>(s)).ToList();
             }
-            string? poolName = UriExtension.GetString("poolName", query);
+            string? poolNameString = UriExtension.GetString("poolName", query);
+
+            PoolName? poolName = poolNameString is null ? null : PoolName.Parse(poolNameString);
 
             var excludeUpdateScheduled = UriExtension.GetBool("excludeUpdateScheduled", query, false);
             int? numResults = UriExtension.GetInt("numResults", query);
@@ -209,7 +211,7 @@ namespace ApiService.TestHooks {
             var query = UriExtension.GetQueryComponents(req.Url);
 
             Guid poolId = Guid.Parse(query["poolId"]);
-            string poolName = query["poolName"];
+            var poolName = PoolName.Parse(query["poolName"]);
             Guid machineId = Guid.Parse(query["machineId"]);
 
             Guid? scaleSetId = default;

@@ -151,7 +151,10 @@ class TaskState(Enum):
 class TaskType(Enum):
     coverage = "coverage"
     libfuzzer_fuzz = "libfuzzer_fuzz"
+
+    # Deprecated, kept for deserialization of old task data.
     libfuzzer_coverage = "libfuzzer_coverage"
+
     libfuzzer_crash_report = "libfuzzer_crash_report"
     libfuzzer_merge = "libfuzzer_merge"
     libfuzzer_regression = "libfuzzer_regression"

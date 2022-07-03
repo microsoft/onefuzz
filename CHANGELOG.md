@@ -4,15 +4,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.7.0
+### Added
+* Agent: Add `NodeState` to Node Heartbeat to better track the current state of nodes in the system [#2024](https://github.com/microsoft/onefuzz/pull/2024), [#2053](https://github.com/microsoft/onefuzz/pull/2053)
+* Service: Ported existing Python functions to C# [#2061](https://github.com/microsoft/onefuzz/pull/2061), [#2072](https://github.com/microsoft/onefuzz/pull/2072), [#2076](https://github.com/microsoft/onefuzz/pull/2076), [#2066](https://github.com/microsoft/onefuzz/pull/2066)
+* Service: Enabling ported C# functions for `QueueNodeHeartbeat`, `QueueTaskHeartbeat`, and `QueueSignalREvents`  [#2046](https://github.com/microsoft/onefuzz/pull/2046), [#2047](https://github.com/microsoft/onefuzz/pull/2047)
+* Service: Add null analysis attributes to service result types to make it easier to check and use the various existing result types [#2069](https://github.com/microsoft/onefuzz/pull/2069)
+* Service: Add dotnet editorconfig underscores naming rule for private fields to start with an underscore, ensuring OmniSharp will generate conformant names by default [#2070](https://github.com/microsoft/onefuzz/pull/2070)
+
+### Changed
+* Agent: Update onefuzz-agent clap to version `3.2.4` [#2049](https://github.com/microsoft/onefuzz/pull/2049)
+* Agent: Added scripts to install dotnet on windows and ubuntu fuzzing VMs [#2038](https://github.com/microsoft/onefuzz/pull/2038)
+* Deployment: Update Getting Started instructions for `deploy.py`'s file permissions. [#2030](https://github.com/microsoft/onefuzz/pull/2030)
+
+### Fixed
+* CLI: Error output to specify that the tools are missing locally, not on the repro VM [#2036](https://github.com/microsoft/onefuzz/pull/2036)
+* Service: Handle service event messages that are too big to fit in a queue message. [#2020](https://github.com/microsoft/onefuzz/pull/2020)
+* Service: Removing unnecessary `/obj/` directory. [#2063](https://github.com/microsoft/onefuzz/pull/2063)
+
+## 5.6.0
+### Added
+* Service: Add Function App settings to Bicep template and `deploy.py`. [#1973](https://github.com/microsoft/onefuzz/pull/1973)
+* Agent: Add a timestamp to agent log to make it easier to correlate events. [#1972](https://github.com/microsoft/onefuzz/pull/1972)
+
+### Changed
+* Agent/Supervisor/Proxy: Rename the supervisor process from `onefuzz-supervisor` to `onefuzz-agent`. [#1989](https://github.com/microsoft/onefuzz/pull/1989)
+* Agent/Supervisor/Proxy: Rename the task executor that runs on the VM from `onefuzz-agent` to `onefuzz-task`. [#1980](https://github.com/microsoft/onefuzz/pull/1980)
+* Agent/Supervisor/Proxy: Ensure `GlobalFlag` registry value is initialized for targets. [#1960](https://github.com/microsoft/onefuzz/pull/1960)
+* Agent/Supervisor/Proxy: Enable full backtraces on Rust panics. [#1959](https://github.com/microsoft/onefuzz/pull/1959)
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#2003](https://github.com/microsoft/onefuzz/pull/2003), [#2002](https://github.com/microsoft/onefuzz/pull/2002), [#1999](https://github.com/microsoft/onefuzz/pull/1999), [#1992](https://github.com/microsoft/onefuzz/pull/1992), [#1986](https://github.com/microsoft/onefuzz/pull/1986), [#1983](https://github.com/microsoft/onefuzz/pull/1983), [#1982](https://github.com/microsoft/onefuzz/pull/1982), [#1981](https://github.com/microsoft/onefuzz/pull/1981), [#1985](https://github.com/microsoft/onefuzz/pull/1985), [#1974](https://github.com/microsoft/onefuzz/pull/1974), [#1969](https://github.com/microsoft/onefuzz/pull/1969), [#1965](https://github.com/microsoft/onefuzz/pull/1965)
+* CLI/Service: Updated multiple first-party and third-party Python dependencies. [#2009](https://github.com/microsoft/onefuzz/pull/2009), [#1996](https://github.com/microsoft/onefuzz/pull/1996)
+
+### Fixed 
+* Agent: Remove stray print statement from the task_logger. [#1975](https://github.com/microsoft/onefuzz/pull/1975)
+* Agent: Fix local coverage definition by removing a duplicated command line parameter. [#1962](https://github.com/microsoft/onefuzz/pull/1962)
+* Service: Fix Instance Config and Management Logic. [#2016](https://github.com/microsoft/onefuzz/pull/2016)
+
 ## 5.5.0
 ### Added
 * Service: Added new functionality to the service port from Python to C#. [#1924](https://github.com/microsoft/onefuzz/pull/1924), [#1938](https://github.com/microsoft/onefuzz/pull/1938), [#1946](https://github.com/microsoft/onefuzz/pull/1946), [#1934](https://github.com/microsoft/onefuzz/pull/1934)
 
 ### Changed
-* Documentation: Update coverage filtering docs. [#1950](https://github.com/microsoft/onefuzz/pull/1950/files)
+* Documentation: Update coverage filtering docs. [#1950](https://github.com/microsoft/onefuzz/pull/1950)
 * Agent: Allow the agent to skip reporting directories. [#1931](https://github.com/microsoft/onefuzz/pull/1931)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1935](https://github.com/microsoft/onefuzz/pull/1935)
-* CLI: Deprecate `libfuzzer_coverage` task. [#1944](https://github.com/microsoft/onefuzz/pull/1944/files)
+* CLI: Deprecate `libfuzzer_coverage` task. [#1944](https://github.com/microsoft/onefuzz/pull/1944)
 * CLI: Use consistent logger names. [#1945](https://github.com/microsoft/onefuzz/pull/1945)
 * Service: Updated functionality to the service port from Python to C#. [#1922](https://github.com/microsoft/onefuzz/pull/1922), [#1925](https://github.com/microsoft/onefuzz/pull/1925), [#1947](https://github.com/microsoft/onefuzz/pull/1947)
 

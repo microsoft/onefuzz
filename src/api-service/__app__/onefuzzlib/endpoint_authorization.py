@@ -113,7 +113,7 @@ def can_modify_config(req: func.HttpRequest, config: InstanceConfig) -> bool:
 def check_require_admins_impl(
     config: InstanceConfig, user_info: UserInfo
 ) -> Optional[Error]:
-    if config.require_admin_privileges:
+    if not config.require_admin_privileges:
         return None
 
     if config.admins is None:
@@ -137,9 +137,9 @@ def check_require_admins(req: func.HttpRequest) -> Optional[Error]:
     # To make changes while still protecting against accidental changes to
     # pools, do the following:
     #
-    # 1. set `require_admin_privileges` to `True`
+    # 1. set `require_admin_privileges` to `False`
     # 2. make the change
-    # 3. set `require_admin_privileges` to `False`
+    # 3. set `require_admin_privileges` to `True`
 
     config = InstanceConfig.fetch()
 

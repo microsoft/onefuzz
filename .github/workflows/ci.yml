@@ -12,7 +12,8 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
-  ACTIONS_CACHE_KEY_DATE: 2021-08-26-01
+  ACTIONS_CACHE_KEY_DATE: 2022-06-02-01
+  CI: true
 
 jobs:
   agent:
@@ -39,6 +40,9 @@ jobs:
           sccache
           src/agent/target
         key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+        restore-keys: |
+          agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-
+          agent-${{ runner.os }}-
     - name: Linux Prereqs
       run: |
         sudo apt-get -y update
@@ -202,6 +206,9 @@ jobs:
           sccache
           src/proxy-manager/target
         key: proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+        restore-keys: |
+          proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-
+          proxy-${{ runner.os }}-
     - run: src/ci/proxy.sh
     - uses: actions/upload-artifact@v2.2.2
       with:
@@ -267,24 +274,49 @@ jobs:
       run: |
         cd src/ApiService/
         dotnet restore --locked-mode
+        dotnet tool restore
+        sudo npm install -g azurite
     - name: Check Formatting
       run: |
         cd src/ApiService/
         dotnet format --verify-no-changes --no-restore
+
+    # note that Test comes before Build:
+    # Test will build things in Debug mode, Build will build them in Release
+    # Build comes second in case Test would do something (unspecified) that 
+    # would somehow alter the binaries that we want to package.
+    - name: Test & Collect coverage info
+      run: |
+        cd src/ApiService/
+        azurite --silent &
+        dotnet test --no-restore --collect:"XPlat Code Coverage" --filter 'Category!=Live'
+        dotnet tool run reportgenerator -reports:*/TestResults/*/coverage.cobertura.xml -targetdir:coverage -reporttypes:MarkdownSummary
+        kill %1
+        cat coverage/*.md > $GITHUB_STEP_SUMMARY
+
     - name: Build Service
       run: |
+        version=$(./src/ci/get-version.sh)
+
         cd src/ApiService/
-        dotnet build -warnaserror --configuration Release
-    - name: Test
-      run: |
-        cd src/ApiService/
-        dotnet test --no-restore
+
+        # Store GitHub RunID and SHA to be read by the 'info' function
+        echo ${GITHUB_RUN_ID} | tee ApiService/onefuzzlib/build.id
+        echo ${GITHUB_SHA} | tee ApiService/onefuzzlib/git.version
+
+        # stamp the build with version
+        # note that version might have a suffix of '-{sha}' from get-version.sh
+        if [[ "$version" =~ '-' ]]; then
+          # if it has a suffix, split it into two parts
+          dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version%-*} /p:VersionSuffix=${version#*-}
+        else 
+          dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version}
+        fi
+
     - name: copy artifacts
       run: |
         ./src/ci/get-version.sh > src/deployment/VERSION
         cd src/ApiService/ApiService/
-        echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
-        echo ${GITHUB_SHA} | tee onefuzzlib/git.version
         mv az-local.settings.json bin/Release/net6.0/local.settings.json
         cd bin/Release/net6.0/
         zip -r api-service-net.zip .
@@ -377,12 +409,12 @@ jobs:
               cp artifacts/azcopy/azcopy artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/linux
               cp artifacts/azcopy/azcopy.exe artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/win64
           fi
-          cp artifacts/agent-MINGW*/onefuzz-supervisor.exe src/deployment/tools/win64/
           cp artifacts/agent-MINGW*/onefuzz-agent.exe src/deployment/tools/win64/
-          cp artifacts/agent-MINGW*/onefuzz_supervisor.pdb src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz-task.exe src/deployment/tools/win64/
           cp artifacts/agent-MINGW*/onefuzz_agent.pdb src/deployment/tools/win64/
-          cp artifacts/agent-Linux/onefuzz-supervisor src/deployment/tools/linux/
+          cp artifacts/agent-MINGW*/onefuzz_task.pdb src/deployment/tools/win64/
           cp artifacts/agent-Linux/onefuzz-agent src/deployment/tools/linux/
+          cp artifacts/agent-Linux/onefuzz-task src/deployment/tools/linux/
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment
           cp artifacts/service-net/api-service-net.zip src/deployment

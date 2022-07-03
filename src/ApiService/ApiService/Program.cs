@@ -71,15 +71,20 @@ public class Program {
             });
 
             services
-            .AddScoped<ILogTracer>(s =>
-                new LogTracerFactory(GetLoggers(s.GetService<IServiceConfig>()!)).CreateLogTracer(Guid.Empty, severityLevel: s.GetService<IServiceConfig>()!.LogSeverityLevel))
+            .AddScoped<ILogTracer>(s => {
+                var cfg = s.GetRequiredService<IServiceConfig>();
+                return new LogTracerFactory(GetLoggers(cfg))
+                    .CreateLogTracer(
+                        Guid.Empty,
+                        severityLevel: cfg.LogSeverityLevel);
+            })
             .AddScoped<INodeOperations, NodeOperations>()
             .AddScoped<IEvents, Events>()
             .AddScoped<IWebhookOperations, WebhookOperations>()
             .AddScoped<IWebhookMessageLogOperations, WebhookMessageLogOperations>()
             .AddScoped<ITaskOperations, TaskOperations>()
+            .AddScoped<ITaskEventOperations, TaskEventOperations>()
             .AddScoped<IQueue, Queue>()
-            .AddScoped<IStorage, Storage>()
             .AddScoped<IProxyOperations, ProxyOperations>()
             .AddScoped<IProxyForwardOperations, ProxyForwardOperations>()
             .AddScoped<IConfigOperations, ConfigOperations>()
@@ -105,10 +110,12 @@ public class Program {
             .AddScoped<INodeMessageOperations, NodeMessageOperations>()
             .AddScoped<IRequestHandling, RequestHandling>()
             .AddScoped<IOnefuzzContext, OnefuzzContext>()
+            .AddScoped<IEndpointAuthorization, EndpointAuthorization>()
+            .AddScoped<INodeMessageOperations, NodeMessageOperations>()
 
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
-            .AddSingleton<INodeMessageOperations, NodeMessageOperations>()
+            .AddSingleton<IStorage, Storage>()
             .AddHttpClient();
         }
         )
