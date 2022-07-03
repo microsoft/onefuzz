@@ -82,6 +82,11 @@ def get_instance_url() -> str:
 
 
 @cached
+def get_agent_instance_url() -> str:
+    return "https://%s-net.azurewebsites.net" % get_instance_name()
+
+
+@cached
 def get_instance_id() -> UUID:
     from .containers import get_blob
     from .storage import StorageType
