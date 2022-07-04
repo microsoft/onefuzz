@@ -2,19 +2,19 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use onefuzz::{
     expand::{Expand, PlaceHolder},
-    syncdir::SyncedDir, monitor::DirectoryMonitor,
+    monitor::DirectoryMonitor,
+    syncdir::SyncedDir,
 };
 use reqwest::Url;
-use std::env;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
-    process::{Command, Stdio},
+    process::Stdio,
     time::Duration,
 };
+use std::{env, process::ExitStatus};
 use storage_queue::{Message, QueueClient};
-use timer::Timer;
-use tokio::{fs, task::spawn_blocking};
+use tokio::{fs, process::Command, time::timeout};
 use tokio_stream::wrappers::ReadDirStream;
 use uuid::Uuid;
 
@@ -77,21 +77,30 @@ impl CoverageTask {
         context.heartbeat.alive();
 
         let coverage_local_path = self.config.coverage.local_path.canonicalize()?;
-        let intermediate_files_path = coverage_local_path.clone().join("intermediate-coverage-files");
+        let intermediate_files_path = coverage_local_path
+            .clone()
+            .join("intermediate-coverage-files");
         fs::create_dir_all(&intermediate_files_path).await?;
         let timeout = self.config.timeout();
         let coverage_dir = self.config.coverage.clone();
         tokio::spawn(async move {
             info!("Starting directory monitor");
-            let mut monitor = DirectoryMonitor::new(intermediate_files_path).await.unwrap();
+            let mut monitor = DirectoryMonitor::new(intermediate_files_path)
+                .await
+                .unwrap();
             info!("Started directory monitor, waiting for files");
             while (monitor.next_file().await.unwrap()).is_some() {
                 info!("Found intermediate coverage file");
-                save_and_sync_coverage(coverage_local_path.as_path(), timeout, coverage_dir.clone()).await.unwrap();
+                save_and_sync_coverage(
+                    coverage_local_path.as_path(),
+                    timeout,
+                    coverage_dir.clone(),
+                )
+                .await
+                .unwrap();
                 info!("Merged and synced coverage");
             }
         });
-
 
         for dir in &self.config.readonly_inputs {
             debug!("recording coverage for {}", dir.local_path.display());
@@ -139,7 +148,7 @@ impl<'a> TaskContext<'a> {
             .with_context(|| format!("unable to read corpus directory: {}", dir.display()))?;
 
         let mut count = 0;
-        
+
         while let Some(entry) = corpus.next().await {
             match entry {
                 Ok(entry) => {
@@ -197,8 +206,8 @@ impl<'a> TaskContext<'a> {
     async fn try_record_input(&self, input: &Path) -> Result<()> {
         let mut cmd = self.command_for_input(input).await?;
         let timeout = self.config.timeout();
-        let coverage = spawn_blocking(move || spawn_with_timeout(&mut cmd, timeout)).await??;
-        Ok(coverage)
+        spawn_with_timeout(&mut cmd, timeout).await?;
+        Ok(())
     }
 
     async fn command_for_input(&self, input: &Path) -> Result<Command> {
@@ -251,8 +260,7 @@ impl<'a> TaskContext<'a> {
     }
 
     fn intermediate_coverage_files_path(&self) -> Result<PathBuf> {
-        Ok(self.working_dir()?
-            .join("intermediate-coverage-files"))
+        Ok(self.working_dir()?.join("intermediate-coverage-files"))
     }
 
     fn uses_input(&self) -> bool {
@@ -273,28 +281,18 @@ impl<'a> TaskContext<'a> {
     }
 }
 
-
-// async fn start_output_processing_thread(dir: impl AsRef<Path>, mut cmd: Command, timeout: Duration) -> Result<()> {
-//     let mut monitor = DirectoryMonitor::new(dir).await?;
-
-    
-//     tokio::spawn(async move {
-//         while (monitor.next_file().await.unwrap()).is_some() {
-//             spawn_blocking(move || spawn_with_timeout(&mut (cmd.clone()), timeout)).await.unwrap();
-//         }
-//     });
-
-//     Ok(())
-// }
-
-pub async fn save_and_sync_coverage(coverage_local_path: &Path, timeout: Duration, coverage_dir: SyncedDir) -> Result<()> {
+pub async fn save_and_sync_coverage(
+    coverage_local_path: &Path,
+    timeout: Duration,
+    coverage_dir: SyncedDir,
+) -> Result<()> {
     info!("Saving and syncing coverage");
     let mut cmd = command_for_merge(coverage_local_path).await?;
-    let merge = spawn_blocking(move || spawn_with_timeout(&mut cmd, timeout)).await??;
+    spawn_with_timeout(&mut cmd, timeout).await?;
     info!("Pushing coverage");
     coverage_dir.sync_push().await?;
 
-    Ok(merge)
+    Ok(())
 }
 
 async fn command_for_merge(coverage_local_path: &Path) -> Result<Command> {
@@ -320,7 +318,7 @@ async fn command_for_merge(coverage_local_path: &Path) -> Result<Command> {
     cmd.stdin(Stdio::null());
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::piped());
-    
+
     Ok(cmd)
 }
 
@@ -328,10 +326,12 @@ fn working_dir(coverage_local_path: &Path) -> Result<PathBuf> {
     Ok(coverage_local_path.canonicalize()?)
 }
 
-fn spawn_with_timeout(cmd: &mut Command, timeout: Duration) -> Result<()> {
-    let mut child = cmd.spawn()?;
-    let _timer = Timer::new(timeout, move || child.kill());
-    Ok(())
+async fn spawn_with_timeout(
+    cmd: &mut Command,
+    timeout_after: Duration,
+) -> Result<ExitStatus, std::io::Error> {
+    cmd.kill_on_drop(true);
+    timeout(timeout_after, cmd.spawn()?.wait()).await?
 }
 
 fn dotnet_coverage_path() -> Result<PathBuf> {
@@ -351,8 +351,7 @@ fn dotnet_path() -> Result<PathBuf> {
     let dotnet_exectuable = "dotnet.exe";
     #[cfg(not(target_os = "windows"))]
     let dotnet_exectuable = "dotnet";
-    let dotnet = Path::new(&dotnet_root_dir)
-        .join(dotnet_exectuable); // The dotnet executable
+    let dotnet = Path::new(&dotnet_root_dir).join(dotnet_exectuable); // The dotnet executable
 
     Ok(dotnet)
 }
