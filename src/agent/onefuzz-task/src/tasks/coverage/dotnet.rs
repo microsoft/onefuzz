@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use onefuzz::{
     expand::{Expand, PlaceHolder},
-    syncdir::SyncedDir,
+    syncdir::SyncedDir, monitor::DirectoryMonitor,
 };
 use reqwest::Url;
 use std::env;
@@ -76,17 +76,28 @@ impl CoverageTask {
 
         context.heartbeat.alive();
 
-        let mut seen_inputs = false;
+        let coverage_local_path = self.config.coverage.local_path.canonicalize()?;
+        let intermediate_files_path = coverage_local_path.clone().join("intermediate-coverage-files");
+        fs::create_dir_all(&intermediate_files_path).await?;
+        let timeout = self.config.timeout();
+        let coverage_dir = self.config.coverage.clone();
+        tokio::spawn(async move {
+            info!("Starting directory monitor");
+            let mut monitor = DirectoryMonitor::new(intermediate_files_path).await.unwrap();
+            info!("Started directory monitor, waiting for files");
+            while (monitor.next_file().await.unwrap()).is_some() {
+                info!("Found intermediate coverage file");
+                save_and_sync_coverage(coverage_local_path.as_path(), timeout, coverage_dir.clone()).await.unwrap();
+                info!("Merged and synced coverage");
+            }
+        });
+
 
         for dir in &self.config.readonly_inputs {
             debug!("recording coverage for {}", dir.local_path.display());
 
             dir.init_pull().await?;
             let dir_count = context.record_corpus(&dir.local_path).await?;
-
-            if dir_count > 0 {
-                seen_inputs = true;
-            }
 
             info!(
                 "recorded coverage for {} inputs from {}",
@@ -95,10 +106,6 @@ impl CoverageTask {
             );
 
             context.heartbeat.alive();
-        }
-
-        if seen_inputs {
-            context.save_and_sync_coverage().await?;
         }
 
         context.heartbeat.alive();
@@ -132,18 +139,13 @@ impl<'a> TaskContext<'a> {
             .with_context(|| format!("unable to read corpus directory: {}", dir.display()))?;
 
         let mut count = 0;
-
+        
         while let Some(entry) = corpus.next().await {
             match entry {
                 Ok(entry) => {
                     if entry.file_type().await?.is_file() {
                         self.record_input(&entry.path()).await?;
                         count += 1;
-
-                        // make sure we save & sync coverage every 10 inputs
-                        if count % 10 == 0 {
-                            self.save_and_sync_coverage().await?;
-                        }
                     } else {
                         warn!("skipping non-file dir entry: {}", entry.path().display());
                     }
@@ -190,17 +192,6 @@ impl<'a> TaskContext<'a> {
         }
 
         Ok(())
-    }
-
-    async fn save_and_sync_coverage(&self) -> Result<()> {
-        info!("Saving and syncing coverage");
-        let mut cmd = self.command_for_merge().await?;
-        let timeout = self.config.timeout();
-        let merge = spawn_blocking(move || spawn_with_timeout(&mut cmd, timeout)).await??;
-        info!("Pushing coverage");
-        self.config.coverage.sync_push().await?;
-
-        Ok(merge)
     }
 
     async fn try_record_input(&self, input: &Path) -> Result<()> {
@@ -264,33 +255,6 @@ impl<'a> TaskContext<'a> {
             .join("intermediate-coverage-files"))
     }
 
-    async fn command_for_merge(&self) -> Result<Command> {
-        let dotnet_coverage_path = dotnet_coverage_path()?;
-
-        let output_file = self.working_dir()?.join(COBERTURA_COVERAGE_FILE);
-
-        let mut cmd = Command::new(dotnet_coverage_path);
-        cmd.arg("merge")
-            .args(["--output-format", "cobertura"])
-            .args(["-o", &output_file.to_string_lossy()])
-            .arg("-r")
-            .arg("--remove-input-files")
-            .arg("*.cobertura.xml")
-            .arg(COBERTURA_COVERAGE_FILE); // This lets us 'fold' any new coverage into the existing coverage file.
-
-        cmd.current_dir(self.working_dir()?);
-
-        info!("{:?}", &cmd);
-        info!("From: {:?}", self.working_dir()?);
-
-        cmd.env_remove("RUST_LOG");
-        cmd.stdin(Stdio::null());
-        cmd.stdout(Stdio::piped());
-        cmd.stderr(Stdio::piped());
-        
-        Ok(cmd)
-    }
-
     fn uses_input(&self) -> bool {
         let input = PlaceHolder::Input.get_string();
 
@@ -307,6 +271,61 @@ impl<'a> TaskContext<'a> {
 
         false
     }
+}
+
+
+// async fn start_output_processing_thread(dir: impl AsRef<Path>, mut cmd: Command, timeout: Duration) -> Result<()> {
+//     let mut monitor = DirectoryMonitor::new(dir).await?;
+
+    
+//     tokio::spawn(async move {
+//         while (monitor.next_file().await.unwrap()).is_some() {
+//             spawn_blocking(move || spawn_with_timeout(&mut (cmd.clone()), timeout)).await.unwrap();
+//         }
+//     });
+
+//     Ok(())
+// }
+
+pub async fn save_and_sync_coverage(coverage_local_path: &Path, timeout: Duration, coverage_dir: SyncedDir) -> Result<()> {
+    info!("Saving and syncing coverage");
+    let mut cmd = command_for_merge(coverage_local_path).await?;
+    let merge = spawn_blocking(move || spawn_with_timeout(&mut cmd, timeout)).await??;
+    info!("Pushing coverage");
+    coverage_dir.sync_push().await?;
+
+    Ok(merge)
+}
+
+async fn command_for_merge(coverage_local_path: &Path) -> Result<Command> {
+    let dotnet_coverage_path = dotnet_coverage_path()?;
+
+    let output_file = working_dir(coverage_local_path)?.join(COBERTURA_COVERAGE_FILE);
+
+    let mut cmd = Command::new(dotnet_coverage_path);
+    cmd.arg("merge")
+        .args(["--output-format", "cobertura"])
+        .args(["-o", &output_file.to_string_lossy()])
+        .arg("-r")
+        .arg("--remove-input-files")
+        .arg("*.cobertura.xml")
+        .arg(COBERTURA_COVERAGE_FILE); // This lets us 'fold' any new coverage into the existing coverage file.
+
+    cmd.current_dir(working_dir(coverage_local_path)?);
+
+    info!("{:?}", &cmd);
+    info!("From: {:?}", working_dir(coverage_local_path)?);
+
+    cmd.env_remove("RUST_LOG");
+    cmd.stdin(Stdio::null());
+    cmd.stdout(Stdio::piped());
+    cmd.stderr(Stdio::piped());
+    
+    Ok(cmd)
+}
+
+fn working_dir(coverage_local_path: &Path) -> Result<PathBuf> {
+    Ok(coverage_local_path.canonicalize()?)
 }
 
 fn spawn_with_timeout(cmd: &mut Command, timeout: Duration) -> Result<()> {
@@ -344,7 +363,7 @@ impl<'a> Processor for TaskContext<'a> {
         self.heartbeat.alive();
 
         self.record_input(input).await?;
-        self.save_and_sync_coverage().await?;
+        // self.save_and_sync_coverage().await?;
 
         Ok(())
     }
