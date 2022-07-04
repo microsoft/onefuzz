@@ -363,6 +363,14 @@ impl<'a> Processor for TaskContext<'a> {
 
         self.record_input(input).await?;
         // self.save_and_sync_coverage().await?;
+        let coverage_local_path = self.config.coverage.local_path.canonicalize()?;
+
+        save_and_sync_coverage(
+            coverage_local_path.as_path(),
+            self.config.timeout(),
+            self.config.coverage.clone(),
+        )
+        .await?;
 
         Ok(())
     }
