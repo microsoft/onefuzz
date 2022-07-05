@@ -6,7 +6,7 @@ use crate::{
     },
     tasks::{
         config::CommonConfig,
-        coverage::dotnet::{Config, CoverageTask},
+        coverage::dotnet::{Config, DotnetCoverageTask},
     },
 };
 
@@ -113,7 +113,7 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
         event_sender,
     )?;
 
-    let mut task = CoverageTask::new(config);
+    let mut task = DotnetCoverageTask::new(config);
     task.run().await
 }
 

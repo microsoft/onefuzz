@@ -52,12 +52,12 @@ impl Config {
     }
 }
 
-pub struct CoverageTask {
+pub struct DotnetCoverageTask {
     config: Config,
     poller: InputPoller<Message>,
 }
 
-impl CoverageTask {
+impl DotnetCoverageTask {
     pub fn new(config: Config) -> Self {
         let poller = InputPoller::new("dotnet_coverage");
         Self { config, poller }
