@@ -16,8 +16,8 @@ use crate::{
     },
     tasks::{
         analysis::generic::run as run_analysis, config::CommonConfig,
-        coverage::dotnet::DotnetCoverageTask, fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask,
-        regression::libfuzzer::LibFuzzerRegressionTask, report::libfuzzer_report::ReportTask,
+        fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask, regression::libfuzzer::LibFuzzerRegressionTask,
+        report::libfuzzer_report::ReportTask,
     },
 };
 #[cfg(any(target_os = "linux", target_os = "windows"))]
@@ -28,6 +28,7 @@ use crate::{
         coverage::build_shared_args as build_coverage_args,
         dotnet_coverage,
     },
+    tasks::coverage::dotnet::DotnetCoverageTask,
     tasks::coverage::generic::CoverageTask,
 };
 use anyhow::Result;
