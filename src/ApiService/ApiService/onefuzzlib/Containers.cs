@@ -23,7 +23,7 @@ public interface IContainers {
 
     public Async.Task<bool> BlobExists(Container container, string name, StorageType storageType);
 
-    public Async.Task<Uri> AddContainerSasUrl(Uri uri);
+    public Async.Task<Uri> AddContainerSasUrl(Uri uri, TimeSpan? duration = null);
 }
 
 
@@ -33,6 +33,8 @@ public class Containers : IContainers {
     private ICreds _creds;
     private ArmClient _armClient;
     private readonly IServiceConfig _config;
+
+    static TimeSpan CONTAINER_SAS_DEFAULT_DURATION = TimeSpan.FromDays(30);
 
     public Containers(ILogTracer log, IStorage storage, ICreds creds, IServiceConfig config) {
         _log = log;
@@ -160,16 +162,19 @@ public class Containers : IContainers {
         return sas;
     }
 
-    public async Async.Task<Uri> AddContainerSasUrl(Uri uri) {
+    public async Async.Task<Uri> AddContainerSasUrl(Uri uri, TimeSpan? duration = null) {
         if (uri.Query.Contains("sig")) {
             return uri;
         }
+
+        var (startTime, endTime) = SasTimeWindow(duration ?? CONTAINER_SAS_DEFAULT_DURATION);
         var blobUriBuilder = new BlobUriBuilder(uri);
         var accountKey = await _storage.GetStorageAccountNameKeyByName(blobUriBuilder.AccountName);
         var sasBuilder = new BlobSasBuilder(
                 BlobContainerSasPermissions.Read | BlobContainerSasPermissions.Write | BlobContainerSasPermissions.Delete | BlobContainerSasPermissions.List,
-                DateTimeOffset.UtcNow + TimeSpan.FromHours(1)) {
+                endTime) {
             BlobContainerName = blobUriBuilder.BlobContainerName,
+            StartsOn = startTime
         };
 
         var sas = sasBuilder.ToSasQueryParameters(new StorageSharedKeyCredential(blobUriBuilder.AccountName, accountKey)).ToString();
@@ -180,7 +185,7 @@ public class Containers : IContainers {
 
     public async Async.Task<Uri> GetContainerSasUrl(Container container, StorageType storageType, BlobContainerSasPermissions permissions, TimeSpan? duration = null) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
-        var (startTime, endTime) = SasTimeWindow(duration ?? TimeSpan.FromDays(30));
+        var (startTime, endTime) = SasTimeWindow(duration ?? CONTAINER_SAS_DEFAULT_DURATION);
         var sasBuilder = new BlobSasBuilder(permissions, endTime) {
             StartsOn = startTime,
             BlobContainerName = container.ContainerName

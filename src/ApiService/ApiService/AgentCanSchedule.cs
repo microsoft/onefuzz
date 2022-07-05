@@ -14,7 +14,7 @@ public class AgentCanSchedule {
         _context = context;
     }
 
-    // [Function("AgentCanSchedule")]
+    [Function("AgentCanSchedule")]
     public Async.Task<HttpResponseData> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route="agents/can_schedule")]
         HttpRequestData req)
