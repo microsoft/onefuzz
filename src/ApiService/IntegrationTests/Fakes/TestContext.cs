@@ -16,6 +16,7 @@ public sealed class TestContext : IOnefuzzContext {
         Storage = storage;
         Creds = creds;
         Containers = new Containers(logTracer, Storage, Creds, ServiceConfiguration);
+        Queue = new Queue(Storage, logTracer);
 
         RequestHandling = new RequestHandling(logTracer);
         TaskOperations = new TaskOperations(logTracer, this);
@@ -25,6 +26,7 @@ public sealed class TestContext : IOnefuzzContext {
         TaskEventOperations = new TaskEventOperations(logTracer, this);
         NodeMessageOperations = new NodeMessageOperations(logTracer, this);
         ConfigOperations = new ConfigOperations(logTracer, this);
+        PoolOperations = new PoolOperations(logTracer, this);
 
         UserCredentials = new UserCredentials(logTracer, ConfigOperations);
     }
@@ -37,6 +39,7 @@ public sealed class TestContext : IOnefuzzContext {
             objs.Select(x => x switch {
                 Task t => TaskOperations.Insert(t),
                 Node n => NodeOperations.Insert(n),
+                Pool p => PoolOperations.Insert(p),
                 Job j => JobOperations.Insert(j),
                 NodeTasks nt => NodeTasksOperations.Insert(nt),
                 InstanceConfig ic => ConfigOperations.Insert(ic),
@@ -52,6 +55,7 @@ public sealed class TestContext : IOnefuzzContext {
     public IStorage Storage { get; }
     public ICreds Creds { get; }
     public IContainers Containers { get; }
+    public IQueue Queue { get; }
     public IUserCredentials UserCredentials { get; set; }
 
     public IRequestHandling RequestHandling { get; }
@@ -63,6 +67,7 @@ public sealed class TestContext : IOnefuzzContext {
     public ITaskEventOperations TaskEventOperations { get; }
     public INodeMessageOperations NodeMessageOperations { get; }
     public IConfigOperations ConfigOperations { get; }
+    public IPoolOperations PoolOperations { get; }
 
     // -- Remainder not implemented --
 
@@ -79,13 +84,9 @@ public sealed class TestContext : IOnefuzzContext {
 
     public INotificationOperations NotificationOperations => throw new System.NotImplementedException();
 
-    public IPoolOperations PoolOperations => throw new System.NotImplementedException();
-
     public IProxyForwardOperations ProxyForwardOperations => throw new System.NotImplementedException();
 
     public IProxyOperations ProxyOperations => throw new System.NotImplementedException();
-
-    public IQueue Queue => throw new System.NotImplementedException();
 
     public IReports Reports => throw new System.NotImplementedException();
 
@@ -105,4 +106,7 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IWebhookOperations WebhookOperations => throw new System.NotImplementedException();
 
+    public INsgOperations NsgOperations => throw new NotImplementedException();
+
+    public ISubnet Subnet => throw new NotImplementedException();
 }

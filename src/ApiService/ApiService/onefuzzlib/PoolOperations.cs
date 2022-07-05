@@ -3,10 +3,11 @@ using ApiService.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IPoolOperations {
+public interface IPoolOperations : IOrm<Pool> {
     public Async.Task<OneFuzzResult<Pool>> GetByName(PoolName poolName);
     Task<bool> ScheduleWorkset(Pool pool, WorkSet workSet);
     IAsyncEnumerable<Pool> GetByClientId(Guid clientId);
+    string GetPoolQueue(Pool pool);
 }
 
 public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoolOperations {
@@ -42,7 +43,6 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         return QueryAsync(filter: $"client_id eq '{clientId.ToString()}'");
     }
 
-    private string GetPoolQueue(Pool pool) {
-        return $"pool-{pool.PoolId.ToString("N")}";
-    }
+    public string GetPoolQueue(Pool pool)
+        => $"pool-{pool.PoolId:N}";
 }
