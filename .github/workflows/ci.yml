@@ -24,13 +24,16 @@ jobs:
       run: |
         rustup default 1.62 
         rustup component add clippy rustfmt
+    - name: Get Rust version
+      run: 'echo "::set-output name=RUST_VERSION::$(rustc --version)"'
+      id: rust-version
     - name: Rust artifact cache
       id: cache-agent-artifacts
       uses: actions/cache@v3
       with:
         # if nothing has changed inside src/agent, we can reuse the artifacts directory
         path: artifacts
-        key: agent-artifacts-${{ runner.os }}-${{ hashFiles('src/agent/**/*') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+        key: agent-artifacts-${{ runner.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-${{ hashFiles('src/agent/**/*') }}
         # note: also including the ACTIONS_CACHE_KEY_DATE to rebuild if the Prereq Cache is invalidated
     - name: Rust Prereq Cache
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
@@ -41,7 +44,7 @@ jobs:
           ~/.cargo/registry
           ~/.cargo/git
           ~/.cargo/bin
-        key: rust-${{ runner.os }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+        key: rust-${{ runner.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}
     - name: Install Rust Prereqs
       if: steps.cache-rust-prereqs.outputs.cache-hit != 'true' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       shell: bash
@@ -53,10 +56,9 @@ jobs:
         path: |
           sccache
           src/agent/target
-        key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+        key: agent-${{ runner.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-${{ hashFiles('src/agent/Cargo.lock') }}
         restore-keys: |
-          agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-
-          agent-${{ runner.os }}-
+          agent-${{ runner.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-
     - name: Linux Prereqs
       run: |
         sudo apt-get -y update
