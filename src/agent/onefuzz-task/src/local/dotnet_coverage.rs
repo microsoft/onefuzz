@@ -1,8 +1,8 @@
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
-        get_synced_dirs, CmdType, COVERAGE_DIR, INPUTS_DIR, READONLY_INPUTS, TARGET_ENV,
-        TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
+        get_synced_dirs, CmdType, SyncCountDirMonitor, UiEvent, COVERAGE_DIR, INPUTS_DIR,
+        READONLY_INPUTS, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
     },
     tasks::{
         config::CommonConfig,
@@ -14,8 +14,6 @@ use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use flume::Sender;
 use storage_queue::QueueClient;
-
-use super::common::{SyncCountDirMonitor, UiEvent};
 
 pub fn build_shared_args(local_job: bool) -> Vec<Arg<'static, 'static>> {
     let mut args = vec![
@@ -67,7 +65,6 @@ pub fn build_coverage_config(
     common: CommonConfig,
     event_sender: Option<Sender<UiEvent>>,
 ) -> Result<Config> {
-    // TODO: Rename this to target dll?
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);

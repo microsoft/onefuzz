@@ -20,11 +20,10 @@ use uuid::Uuid;
 
 use crate::tasks::{
     config::CommonConfig,
+    coverage::COBERTURA_COVERAGE_FILE,
     generic::input_poller::{CallbackImpl, InputPoller, Processor},
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
 };
-
-use super::COBERTURA_COVERAGE_FILE;
 
 const MAX_COVERAGE_RECORDING_ATTEMPTS: usize = 2;
 const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(5);
@@ -77,12 +76,11 @@ impl DotnetCoverageTask {
         context.heartbeat.alive();
 
         let coverage_local_path = self.config.coverage.local_path.canonicalize()?;
-        let intermediate_files_path = coverage_local_path
-            .clone()
-            .join("intermediate-coverage-files");
+        let intermediate_files_path = intermediate_coverage_files_path(&coverage_local_path)?;
         fs::create_dir_all(&intermediate_files_path).await?;
         let timeout = self.config.timeout();
         let coverage_dir = self.config.coverage.clone();
+
         tokio::spawn(async move {
             info!("Starting directory monitor");
             let mut monitor = DirectoryMonitor::new(intermediate_files_path)
@@ -100,6 +98,7 @@ impl DotnetCoverageTask {
                 .unwrap();
                 info!("Merged and synced coverage");
             }
+            info!("Shut down directory monitor");
         });
 
         for dir in &self.config.readonly_inputs {
@@ -224,9 +223,9 @@ impl<'a> TaskContext<'a> {
         let dotnet_coverage_path = dotnet_coverage_path()?;
         let dotnet_path = dotnet_path()?;
         let id = Uuid::new_v4();
-        let output_file_path = self
-            .intermediate_coverage_files_path()?
-            .join(format!("{}.cobertura.xml", id));
+        let output_file_path =
+            intermediate_coverage_files_path(self.config.coverage.local_path.as_path())?
+                .join(format!("{}.cobertura.xml", id));
 
         let target_options = expand.evaluate(&self.config.target_options)?;
 
@@ -253,14 +252,6 @@ impl<'a> TaskContext<'a> {
         cmd.stderr(Stdio::piped());
 
         Ok(cmd)
-    }
-
-    fn working_dir(&self) -> Result<PathBuf> {
-        Ok(self.config.coverage.local_path.canonicalize()?)
-    }
-
-    fn intermediate_coverage_files_path(&self) -> Result<PathBuf> {
-        Ok(self.working_dir()?.join("intermediate-coverage-files"))
     }
 
     fn uses_input(&self) -> bool {
@@ -324,6 +315,10 @@ async fn command_for_merge(coverage_local_path: &Path) -> Result<Command> {
 
 fn working_dir(coverage_local_path: &Path) -> Result<PathBuf> {
     Ok(coverage_local_path.canonicalize()?)
+}
+
+fn intermediate_coverage_files_path(coverage_local_path: &Path) -> Result<PathBuf> {
+    Ok(working_dir(coverage_local_path)?.join("intermediate-coverage-files"))
 }
 
 async fn spawn_with_timeout(
