@@ -11,7 +11,7 @@ use reqwest::{StatusCode, Url};
 use std::{path::PathBuf, sync::Arc, time::Duration};
 use uuid::Uuid;
 
-use tokio::{sync::broadcast::Receiver, time::Instant};
+use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
 const LOGS_BUFFER_SIZE: usize = 100;
 const MAX_LOG_SIZE: u64 = 100000000; // 100 MB
@@ -261,11 +261,7 @@ impl TaskLogger {
         Ok(storage_account_client.as_container_client(container))
     }
 
-    async fn event_loop<T: Send + Sized>(
-        self,
-        context: LoopContext<T>,
-        flush_and_close: Option<(Instant, Duration)>,
-    ) -> Result<LoopContext<T>> {
+    async fn event_loop<T: Send + Sized>(self, context: LoopContext<T>) -> Result<LoopContext<T>> {
         match context.state {
             LoopState::Send {
                 start,
@@ -358,16 +354,16 @@ impl TaskLogger {
 
                     let now = tokio::time::Instant::now();
 
-                    flush = flush_and_close
-                        .map(|(instant, duration)| now - instant > duration)
-                        .unwrap_or_default();
-
                     if now - start_time > self.logging_interval {
                         break;
                     }
                     match event.try_recv() {
                         Ok(v) => {
                             data.push(v);
+                        }
+                        Err(TryRecvError::Closed) => {
+                            flush = true;
+                            break;
                         }
                         Err(_) => {
                             tokio::time::sleep(self.polling_interval).await;
@@ -411,11 +407,7 @@ impl TaskLogger {
         event: Receiver<LoggingEvent>,
         log_writer: Box<dyn LogWriter<T>>,
     ) -> Result<SpawnedLogger> {
-        let (flush_and_close_sender, mut flush_and_close_receiver) =
-            tokio::sync::oneshot::channel::<Duration>();
-
         let this = *self;
-
         let logger_handle = tokio::spawn(async move {
             let initial_state = LoopContext {
                 log_writer,
@@ -427,12 +419,7 @@ impl TaskLogger {
             let mut context = initial_state;
 
             loop {
-                let flush_and_close = flush_and_close_receiver
-                    .try_recv()
-                    .ok()
-                    .map(|d| (tokio::time::Instant::now(), d));
-
-                context = match this.event_loop(context, flush_and_close).await {
+                context = match this.event_loop(context).await {
                     Ok(LoopContext {
                         log_writer: _,
                         pending_logs: _,
@@ -449,21 +436,16 @@ impl TaskLogger {
             Ok(())
         });
 
-        Ok(SpawnedLogger {
-            logger_handle,
-            flush_and_close_sender,
-        })
+        Ok(SpawnedLogger { logger_handle })
     }
 }
 
 pub struct SpawnedLogger {
     logger_handle: tokio::task::JoinHandle<Result<()>>,
-    flush_and_close_sender: tokio::sync::oneshot::Sender<Duration>,
 }
 
 impl SpawnedLogger {
     pub async fn flush_and_stop(self, timeout: Duration) -> Result<()> {
-        let _ = self.flush_and_close_sender.send(timeout);
         let _ = tokio::time::timeout(timeout, self.logger_handle).await;
         Ok(())
     }
