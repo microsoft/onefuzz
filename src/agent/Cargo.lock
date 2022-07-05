@@ -517,7 +517,6 @@ dependencies = [
  "serde_json",
  "structopt",
  "symbolic",
- "timer",
  "uuid",
  "win-util",
  "winapi",
@@ -1969,7 +1968,6 @@ dependencies = [
  "strum_macros",
  "tempfile",
  "thiserror",
- "timer",
  "tokio",
  "tokio-stream",
  "tokio-util 0.7.2",
@@ -3212,10 +3210,6 @@ dependencies = [
  "libc",
  "winapi",
 ]
-
-[[package]]
-name = "timer"
-version = "0.1.0"
 
 [[package]]
 name = "tinyvec"
