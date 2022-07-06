@@ -310,12 +310,13 @@ public record InstanceConfig
 (
     [PartitionKey, RowKey] string InstanceName,
     Guid[]? Admins,
-    bool? AllowPoolManagement,
+
     string[] AllowedAadTenants,
-    NetworkConfig NetworkConfig,
-    NetworkSecurityGroupConfig ProxyNsgConfig,
+    [DefaultValue(InitMethod.DefaultContructor)] NetworkConfig NetworkConfig,
+    [DefaultValue(InitMethod.DefaultContructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
-    string ProxyVmSku,
+    bool AllowPoolManagement = true,
+    string ProxyVmSku = "Standard_B2s",
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
     IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,
     IDictionary<string, string>? VmTags = null,
@@ -325,13 +326,12 @@ public record InstanceConfig
     public InstanceConfig(string instanceName) : this(
         instanceName,
         null,
-        true,
         Array.Empty<string>(),
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
         null,
+        true,
         "Standard_B2s") { }
-    public InstanceConfig() : this(String.Empty) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {
         if (value is not null && value.Count == 0) {
@@ -373,12 +373,12 @@ public record Scaleset(
     string VmSku,
     string Image,
     Region Region,
-    int Size,
-    bool SpotInstance,
+    long Size,
+    bool? SpotInstances,
     bool EphemeralOsDisks,
     bool NeedsConfigUpdate,
     Error? Error,
-    List<ScalesetNodeState> Nodes,
+    List<ScalesetNodeState>? Nodes,
     Guid? ClientId,
     Guid? ClientObjectId,
     Dictionary<string, string> Tags

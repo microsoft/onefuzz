@@ -20,6 +20,23 @@ public abstract record EntityBase {
 public abstract record StatefulEntityBase<T>([property: JsonIgnore] T State) : EntityBase() where T : Enum;
 
 
+
+/// How the value is populated
+public enum InitMethod {
+    //T() will be used
+    DefaultContructor,
+}
+[AttributeUsage(AttributeTargets.Parameter)]
+public class DefaultValueAttribute : Attribute {
+
+    public InitMethod InitMethod { get; }
+    public object? Value { get; }
+    public DefaultValueAttribute(InitMethod initMethod, object? value = null) {
+        InitMethod = initMethod;
+        Value = value;
+    }
+}
+
 /// Indicates that the enum cases should no be renamed
 [AttributeUsage(AttributeTargets.Enum)]
 public class SerializeValueAttribute : Attribute { }
@@ -56,7 +73,15 @@ public enum EntityPropertyKind {
     RowKey,
     Column
 }
-public record EntityProperty(string name, string columnName, Type type, EntityPropertyKind kind, (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator);
+public record EntityProperty(
+        string name,
+        string columnName,
+        Type type,
+        EntityPropertyKind kind,
+        (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator,
+        DefaultValueAttribute? defaultValue,
+        ParameterInfo parameterInfo
+    );
 public record EntityInfo(Type type, ILookup<string, EntityProperty> properties, Func<object?[], object> constructor);
 
 class OnefuzzNamingPolicy : JsonNamingPolicy {
@@ -108,6 +133,8 @@ public class EntityConverter {
         var isPartitionkey = parameterInfo.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
 
         var discriminatorAttribute = typeof(T).GetProperty(name)?.GetCustomAttribute<TypeDiscrimnatorAttribute>();
+        var defaultValueAttribute = parameterInfo.GetCustomAttribute<DefaultValueAttribute>();
+
 
         (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator = null;
         if (discriminatorAttribute != null) {
@@ -117,16 +144,16 @@ public class EntityConverter {
 
 
         if (isPartitionkey) {
-            yield return new EntityProperty(name, "PartitionKey", parameterType, EntityPropertyKind.PartitionKey, discriminator);
+            yield return new EntityProperty(name, "PartitionKey", parameterType, EntityPropertyKind.PartitionKey, discriminator, defaultValueAttribute, parameterInfo);
         }
 
         if (isRowkey) {
-            yield return new EntityProperty(name, "RowKey", parameterType, EntityPropertyKind.RowKey, discriminator);
+            yield return new EntityProperty(name, "RowKey", parameterType, EntityPropertyKind.RowKey, discriminator, defaultValueAttribute, parameterInfo);
         }
 
         if (!isPartitionkey && !isRowkey) {
             var columnName = typeof(T).GetProperty(name)?.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name ?? CaseConverter.PascalToSnake(name);
-            yield return new EntityProperty(name, columnName, parameterType, EntityPropertyKind.Column, discriminator);
+            yield return new EntityProperty(name, columnName, parameterType, EntityPropertyKind.Column, discriminator, defaultValueAttribute, parameterInfo);
         }
     }
 
@@ -218,7 +245,15 @@ public class EntityConverter {
         var fieldName = ef.columnName;
         var obj = entity[fieldName];
         if (obj == null) {
-            return null;
+
+            if (ef.parameterInfo.HasDefaultValue) {
+                return ef.parameterInfo.DefaultValue;
+            }
+
+            return ef.defaultValue switch {
+                DefaultValueAttribute { InitMethod: InitMethod.DefaultContructor } => Activator.CreateInstance(ef.type),
+                _ => null,
+            };
         }
         var objType = obj.GetType();
 
