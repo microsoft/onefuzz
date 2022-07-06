@@ -57,13 +57,13 @@ public class Scheduler : IScheduler {
         }
     }
 
-    private async Async.Task<bool> ScheduleWorkset(WorkSet workSet, Pool pool, int count) {
+    private async Async.Task<bool> ScheduleWorkset(WorkSet workSet, Pool pool, long count) {
         if (!PoolStateHelper.Available.Contains(pool.State)) {
             _logTracer.Info($"pool not available for work: {pool.Name} state: {pool.State}");
             return false;
         }
 
-        for (var i = 0; i < count; i++) {
+        for (var i = 0L; i < count; i++) {
             if (!await _poolOperations.ScheduleWorkset(pool, workSet)) {
                 _logTracer.Error($"unable to schedule workset. pool:{pool.Name} workset: {workSet}");
                 return false;
@@ -118,7 +118,7 @@ public class Scheduler : IScheduler {
     }
 
 
-    record BucketConfig(int count, bool reboot, Container setupContainer, string? setupScript, Pool pool);
+    record BucketConfig(long count, bool reboot, Container setupContainer, string? setupScript, Pool pool);
 
     private async Async.Task<(BucketConfig, WorkUnit)?> BuildWorkunit(Task task) {
         Pool? pool = await _taskOperations.GetPool(task);
@@ -151,7 +151,7 @@ public class Scheduler : IScheduler {
         }
 
         var reboot = false;
-        var count = 1;
+        var count = 1L;
         if (task.Config.Pool != null) {
             count = task.Config.Pool.Count;
             reboot = task.Config.Task.RebootAfterSetup ?? false;
