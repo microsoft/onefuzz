@@ -2,7 +2,7 @@
 
 public static class Defs {
 
-    public static Dictionary<TaskType, TaskDefinition> TASK_DEFINITIONS = new Dictionary<TaskType, TaskDefinition>() {
+    public static readonly IReadOnlyDictionary<TaskType, TaskDefinition> TASK_DEFINITIONS = new Dictionary<TaskType, TaskDefinition>() {
         { TaskType.Coverage ,
             new TaskDefinition(
                 Features: new[] {

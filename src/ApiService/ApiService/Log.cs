@@ -59,7 +59,7 @@ class AppInsights : ILog {
 //TODO: Should we write errors and Exception to std err ? 
 class Console : ILog {
 
-    private string DictToString<T>(IReadOnlyDictionary<string, T>? d) {
+    private static string DictToString<T>(IReadOnlyDictionary<string, T>? d) {
         if (d is null) {
             return string.Empty;
         } else {
@@ -67,14 +67,14 @@ class Console : ILog {
         }
     }
 
-    private void LogTags(Guid correlationId, IReadOnlyDictionary<string, string> tags) {
+    private static void LogTags(Guid correlationId, IReadOnlyDictionary<string, string> tags) {
         var ts = DictToString(tags);
         if (!string.IsNullOrEmpty(ts)) {
             System.Console.WriteLine($"[{correlationId}] Tags:{ts}");
         }
     }
 
-    private void LogMetrics(Guid correlationId, IReadOnlyDictionary<string, double>? metrics) {
+    private static void LogMetrics(Guid correlationId, IReadOnlyDictionary<string, double>? metrics) {
         var ms = DictToString(metrics);
         if (!string.IsNullOrEmpty(ms)) {
             System.Console.Out.WriteLine($"[{correlationId}] Metrics:{DictToString(metrics)}");
@@ -126,7 +126,7 @@ internal interface ILogTracerInternal : ILogTracer {
 
 
 public class LogTracer : ILogTracerInternal {
-    private string? GetCaller() {
+    private static string? GetCaller() {
         return new StackTrace()?.GetFrame(2)?.GetMethod()?.DeclaringType?.FullName;
     }
 

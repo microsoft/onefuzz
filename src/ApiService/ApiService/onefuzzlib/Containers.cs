@@ -14,7 +14,7 @@ public interface IContainers {
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
     public Async.Task<Uri> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
-    public Async.Task SaveBlob(Container container, string v1, string v2, StorageType config);
+    public Async.Task SaveBlob(Container container, string name, string data, StorageType storageType);
     public Async.Task<Guid> GetInstanceId();
 
     public Async.Task<Uri?> GetFileUrl(Container container, string name, StorageType storageType);
@@ -85,7 +85,7 @@ public class Containers : IContainers {
 
         var containerName = _config.OneFuzzStoragePrefix + container.ContainerName;
 
-        var containers = _storage.GetAccounts(storageType)
+        var containers = _storage.GetAccounts(storageType).AsEnumerable()
             .Reverse()
             .Select(async account => (await GetBlobService(account))?.GetBlobContainerClient(containerName));
 
@@ -125,7 +125,7 @@ public class Containers : IContainers {
         return sasUrl;
     }
 
-    public (DateTimeOffset, DateTimeOffset) SasTimeWindow(TimeSpan timeSpan) {
+    public static (DateTimeOffset, DateTimeOffset) SasTimeWindow(TimeSpan timeSpan) {
         // SAS URLs are valid 6 hours earlier, primarily to work around dev
         // workstations having out-of-sync time.  Additionally, SAS URLs are stopped
         // 15 minutes later than requested based on "Be careful with SAS start time"
@@ -149,7 +149,7 @@ public class Containers : IContainers {
     public Async.Task<Guid> GetInstanceId() => _getInstanceId.Value;
     private readonly Lazy<Async.Task<Guid>> _getInstanceId;
 
-    public Uri? GetContainerSasUrlService(
+    public static Uri? GetContainerSasUrlService(
         BlobContainerClient client,
         BlobSasPermissions permissions,
         bool tag = false,

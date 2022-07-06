@@ -18,8 +18,8 @@ public class NodeFunction {
 
     private static readonly EntityConverter _entityConverter = new();
 
-    // [Function("Node")
-    public Async.Task<HttpResponseData> Run([HttpTrigger("GET", "PATCH", "POST", "DELETE")] HttpRequestData req) {
+    [Function("Node")]
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req) {
         return _auth.CallIfUser(req, r => r.Method switch {
             "GET" => Get(r),
             "PATCH" => Patch(r),

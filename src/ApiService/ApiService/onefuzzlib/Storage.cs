@@ -2,6 +2,7 @@
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -27,17 +28,21 @@ public interface IStorage {
     public IEnumerable<string> GetAccounts(StorageType storageType);
 }
 
-public class Storage : IStorage {
-    private ICreds _creds;
-    private ArmClient _armClient;
-    private ILogTracer _log;
-    private IServiceConfig _config;
+public sealed class Storage : IStorage, IDisposable {
+    private readonly ICreds _creds;
+    private readonly ArmClient _armClient;
+    private readonly ILogTracer _log;
+    private readonly IServiceConfig _config;
+    private readonly MemoryCache _cache;
 
     public Storage(ICreds creds, ILogTracer log, IServiceConfig config) {
         _creds = creds;
         _armClient = creds.ArmClient;
         _log = log;
         _config = config;
+        _cache = new MemoryCache(new MemoryCacheOptions() {
+
+        });
     }
 
     public string GetFuncStorage() {
@@ -54,40 +59,41 @@ public class Storage : IStorage {
         return _armClient;
     }
 
-    // TODO: @cached
     public IEnumerable<string> CorpusAccounts() {
-        var skip = GetFuncStorage();
-        var results = new List<string> { GetFuzzStorage() };
+        return _cache.GetOrCreate<List<string>>("CorpusAccounts", cacheEntry => {
+            var skip = GetFuncStorage();
+            var results = new List<string> { GetFuzzStorage() };
 
-        var client = GetMgmtClient();
-        var group = _creds.GetResourceGroupResourceIdentifier();
+            var client = GetMgmtClient();
+            var group = _creds.GetResourceGroupResourceIdentifier();
 
-        const string storageTypeTagKey = "storage_type";
+            const string storageTypeTagKey = "storage_type";
 
-        var resourceGroup = client.GetResourceGroupResource(group);
-        foreach (var account in resourceGroup.GetStorageAccounts()) {
-            if (account.Id == skip) {
-                continue;
+            var resourceGroup = client.GetResourceGroupResource(group);
+            foreach (var account in resourceGroup.GetStorageAccounts()) {
+                if (account.Id == skip) {
+                    continue;
+                }
+
+                if (results.Contains(account.Id!)) {
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(account.Data.PrimaryEndpoints.Blob)) {
+                    continue;
+                }
+
+                if (!account.Data.Tags.ContainsKey(storageTypeTagKey)
+                    || account.Data.Tags[storageTypeTagKey] != "corpus") {
+                    continue;
+                }
+
+                results.Add(account.Id!);
             }
 
-            if (results.Contains(account.Id!)) {
-                continue;
-            }
-
-            if (string.IsNullOrEmpty(account.Data.PrimaryEndpoints.Blob)) {
-                continue;
-            }
-
-            if (!account.Data.Tags.ContainsKey(storageTypeTagKey)
-                || account.Data.Tags[storageTypeTagKey] != "corpus") {
-                continue;
-            }
-
-            results.Add(account.Id!);
-        }
-
-        _log.Info($"corpus accounts: {JsonSerializer.Serialize(results)}");
-        return results;
+            _log.Info($"corpus accounts: {JsonSerializer.Serialize(results)}");
+            return results;
+        });
     }
 
     public string GetPrimaryAccount(StorageType storageType) {
@@ -99,22 +105,26 @@ public class Storage : IStorage {
             };
     }
 
-    public async Async.Task<(string, string)> GetStorageAccountNameAndKey(string accountId) {
-        var resourceId = new ResourceIdentifier(accountId);
-        var armClient = GetMgmtClient();
-        var storageAccount = armClient.GetStorageAccountResource(resourceId);
-        var keys = await storageAccount.GetKeysAsync();
-        var key = keys.Value.Keys.FirstOrDefault() ?? throw new Exception("no keys found");
-        return (resourceId.Name, key.Value);
+    public Async.Task<(string, string)> GetStorageAccountNameAndKey(string accountId) {
+        return _cache.GetOrCreateAsync<(string, string)>($"GetStorageAccountNameAndKey-{accountId}", async cacheEntry => {
+            var resourceId = new ResourceIdentifier(accountId);
+            var armClient = GetMgmtClient();
+            var storageAccount = armClient.GetStorageAccountResource(resourceId);
+            var keys = await storageAccount.GetKeysAsync();
+            var key = keys.Value.Keys.FirstOrDefault() ?? throw new Exception("no keys found");
+            return (resourceId.Name, key.Value);
+        });
     }
 
-    public async Async.Task<string?> GetStorageAccountNameKeyByName(string accountName) {
-        var armClient = GetMgmtClient();
-        var resourceGroup = _creds.GetResourceGroupResourceIdentifier();
-        var storageAccount = await armClient.GetResourceGroupResource(resourceGroup).GetStorageAccountAsync(accountName);
-        var keys = await storageAccount.Value.GetKeysAsync();
-        var key = keys.Value.Keys.FirstOrDefault();
-        return key?.Value;
+    public Async.Task<string?> GetStorageAccountNameKeyByName(string accountName) {
+        return _cache.GetOrCreateAsync<string?>($"GetStorageAccountNameKeyByName-{accountName}", async cacheEntry => {
+            var armClient = GetMgmtClient();
+            var resourceGroup = _creds.GetResourceGroupResourceIdentifier();
+            var storageAccount = await armClient.GetResourceGroupResource(resourceGroup).GetStorageAccountAsync(accountName);
+            var keys = await storageAccount.Value.GetKeysAsync();
+            var key = keys.Value.Keys.FirstOrDefault();
+            return key?.Value;
+        });
     }
 
     public string ChooseAccounts(StorageType storageType) {
@@ -158,4 +168,8 @@ public class Storage : IStorage {
 
     public Uri GetBlobEndpoint(string accountId)
         => new($"https://{accountId}.blob.core.windows.net/");
+
+    public void Dispose() {
+        _cache.Dispose();
+    }
 }

@@ -14,8 +14,8 @@ public class Download {
         _context = context;
     }
 
-    // [Function("Download")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger("GET")] HttpRequestData req)
+    [Function("Download")]
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req)
         => _auth.CallIfUser(req, Get);
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {

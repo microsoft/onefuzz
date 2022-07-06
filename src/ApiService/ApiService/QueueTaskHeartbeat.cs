@@ -20,14 +20,14 @@ public class QueueTaskHearbeat {
 
     [Function("QueueTaskHeartbeat")]
     public async Async.Task Run([QueueTrigger("task-heartbeat", Connection = "AzureWebJobsStorage")] string msg) {
-        _logger.LogInformation($"heartbeat: {msg}");
+        _logger.LogInformation("heartbeat: {Message}", msg);
 
         var hb = JsonSerializer.Deserialize<TaskHeartbeatEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 
         var task = await _tasks.GetByTaskId(hb.TaskId);
 
         if (task == null) {
-            _logger.LogWarning($"invalid task id: {hb.TaskId}");
+            _logger.LogWarning("invalid task id: {TaskId}", hb.TaskId);
             return;
         }
 
