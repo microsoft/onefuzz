@@ -341,6 +341,8 @@ public record InstanceConfig
         }
     }
 
+    public InstanceConfig() : this(String.Empty) { }
+
     //# At the moment, this only checks allowed_aad_tenants, however adding
     //# support for 3rd party JWT validation is anticipated in a future release.
     public ResultVoid<List<string>> CheckInstanceConfig() {
