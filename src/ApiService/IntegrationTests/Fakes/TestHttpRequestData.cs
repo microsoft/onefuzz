@@ -71,6 +71,18 @@ sealed class TestHttpRequestData : HttpRequestData {
 
     public void SetUrl(Uri url) => _url = url;
 
+    public void SetUrlParameter(string key, object value) {
+        var builder = new UriBuilder(_url);
+        var param = $"{Uri.EscapeDataString(key)}={Uri.EscapeDataString(value.ToString() ?? "")}";
+        if (builder.Query != "") {
+            builder.Query += "&" + param;
+        } else {
+            builder.Query = "?" + param;
+        }
+
+        _url = builder.Uri;
+    }
+
     public override HttpResponseData CreateResponse()
         => new TestHttpResponseData(FunctionContext);
 }
