@@ -78,9 +78,9 @@ namespace LibFuzzerDotnetLoader {
 
     class LibFuzzerDotnetTarget
     {
-        public string AssemblyPath { get; private set; }
-        public string ClassName { get; private set; }
-        public string MethodName { get; private set; }
+        public string AssemblyPath { get; }
+        public string ClassName { get; }
+        public string MethodName { get; }
 
         public LibFuzzerDotnetTarget(string assemblyPath, string className, string methodName)
         {
