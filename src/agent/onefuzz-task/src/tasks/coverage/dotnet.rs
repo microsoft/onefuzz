@@ -9,13 +9,13 @@ use onefuzz::{
     syncdir::SyncedDir,
 };
 use reqwest::Url;
+use std::process::ExitStatus;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
     process::Stdio,
     time::Duration,
 };
-use std::{process::ExitStatus};
 use storage_queue::{Message, QueueClient};
 use tokio::{fs, process::Command, time::timeout};
 use tokio_stream::wrappers::ReadDirStream;
