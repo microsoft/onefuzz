@@ -142,7 +142,10 @@ async fn start_directory_monitor(
     coverage_dir: SyncedDir,
     dotnet_coverage_path: &Path,
 ) -> Result<()> {
-    info!("Starting directory monitor");
+    info!(
+        "Starting dotnet coverage intermediate file directory monitor on {}",
+        intermediate_files_path.to_string_lossy()
+    );
     let mut monitor = DirectoryMonitor::new(intermediate_files_path).await?;
     debug!("Started directory monitor, waiting for files");
     while (monitor.next_file().await?).is_some() {
@@ -154,7 +157,7 @@ async fn start_directory_monitor(
             dotnet_coverage_path,
         )
         .await?;
-        info!("Merged and synced coverage");
+        info!("Updated and synced coverage");
     }
     info!("Shut down directory monitor");
 
