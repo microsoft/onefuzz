@@ -15,7 +15,7 @@ use std::{
     process::Stdio,
     time::Duration,
 };
-use std::{env, process::ExitStatus};
+use std::{process::ExitStatus};
 use storage_queue::{Message, QueueClient};
 use tokio::{fs, process::Command, time::timeout};
 use tokio_stream::wrappers::ReadDirStream;
