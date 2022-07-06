@@ -25,6 +25,7 @@ jobs:
         rustup default 1.62 
         rustup component add clippy rustfmt
     - name: Get Rust version & build version
+      shell: bash
       run: |
         echo "::set-output name=RUST_VERSION::$(rustc --version)"
         VERSION=$(src/ci/get-version.sh)
