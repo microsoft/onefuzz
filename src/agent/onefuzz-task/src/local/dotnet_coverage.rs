@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-
-
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,

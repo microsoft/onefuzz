@@ -9,13 +9,13 @@ use onefuzz::{
     syncdir::SyncedDir,
 };
 use reqwest::Url;
-use std::{process::ExitStatus, env};
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
     process::Stdio,
     time::Duration,
 };
+use std::{env, process::ExitStatus};
 use storage_queue::{Message, QueueClient};
 use tokio::{fs, process::Command, time::timeout};
 use tokio_stream::wrappers::ReadDirStream;
@@ -73,7 +73,12 @@ impl DotnetCoverageTask {
         let dotnet_coverage_path = dotnet_coverage_path()?;
 
         let heartbeat = self.config.common.init_heartbeat(None).await?;
-        let mut context = TaskContext::new(&self.config, heartbeat, dotnet_path, dotnet_coverage_path.clone());
+        let mut context = TaskContext::new(
+            &self.config,
+            heartbeat,
+            dotnet_path,
+            dotnet_coverage_path.clone(),
+        );
 
         if !context.uses_input() {
             bail!("input is not specified on the command line or arguments for the target");
@@ -164,8 +169,18 @@ struct TaskContext<'a> {
 }
 
 impl<'a> TaskContext<'a> {
-    pub fn new(config: &'a Config, heartbeat: Option<TaskHeartbeatClient>, dotnet_path: PathBuf, dotnet_coverage_path: PathBuf) -> Self {
-        Self { config, heartbeat, dotnet_path, dotnet_coverage_path }
+    pub fn new(
+        config: &'a Config,
+        heartbeat: Option<TaskHeartbeatClient>,
+        dotnet_path: PathBuf,
+        dotnet_coverage_path: PathBuf,
+    ) -> Self {
+        Self {
+            config,
+            heartbeat,
+            dotnet_path,
+            dotnet_coverage_path,
+        }
     }
     async fn record_corpus(&mut self, dir: &Path) -> Result<usize> {
         use futures::stream::StreamExt;
@@ -381,7 +396,6 @@ fn dotnet_path() -> Result<PathBuf> {
 
     Ok(dotnet)
 }
-
 
 #[async_trait]
 impl<'a> Processor for TaskContext<'a> {
