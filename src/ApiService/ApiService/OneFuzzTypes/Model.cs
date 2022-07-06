@@ -315,8 +315,8 @@ public record InstanceConfig
     [DefaultValue(InitMethod.DefaultContructor)] NetworkConfig NetworkConfig,
     [DefaultValue(InitMethod.DefaultContructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
+    string? ProxyVmSku,
     bool AllowPoolManagement = true,
-    string ProxyVmSku = "Standard_B2s",
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
     IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,
     IDictionary<string, string>? VmTags = null,
@@ -330,8 +330,9 @@ public record InstanceConfig
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
         null,
-        true,
-        "Standard_B2s") { }
+        "Standard_B2s",
+        true
+        ) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {
         if (value is not null && value.Count == 0) {
