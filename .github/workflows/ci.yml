@@ -24,11 +24,18 @@ jobs:
       run: |
         rustup default 1.62 
         rustup component add clippy rustfmt
-    - name: Get Rust version
-      run: 'echo "::set-output name=RUST_VERSION::$(rustc --version)"'
+    - name: Get Rust version & build version
+      run: |
+        echo "::set-output name=RUST_VERSION::$(rustc --version)"
+        VERSION=$(src/ci/get-version.sh)
+        # it's a release build if version doesn't have a hyphen in it
+        IS_RELEASE_BUILD=$(if [[ "$VERSION" =~ '-' ]]; then echo 'false'; else echo 'true'; fi)
+        echo "::set-output name=RELEASE_BUILD::$IS_RELEASE_BUILD"
       id: rust-version
     - name: Rust artifact cache
       id: cache-agent-artifacts
+      # don't cache the rust agent for relase builds as the version number will be incorrect
+      if: steps.rust-version.outputs.RELEASE_BUILD == 'false'
       uses: actions/cache@v3
       with:
         # if nothing has changed inside src/agent, we can reuse the artifacts directory
