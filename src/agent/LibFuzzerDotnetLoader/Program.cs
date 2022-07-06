@@ -10,6 +10,17 @@ using TestOneSpan = SharpFuzz.ReadOnlySpanAction;
 delegate void TestOneArray(byte[] data);
 
 namespace LibFuzzerDotnetLoader {
+    class EnvVar
+    {
+        // Fuzz targets can be specified by setting this environment variable as `<assembly>:<class>:<method>`.
+        public const string TARGET = "LIBFUZZER_DOTNET_TARGET";
+
+        // Fuzz targets can also be specified by setting each of these environment variables.
+        public const string ASSEMBLY = "LIBFUZZER_DOTNET_TARGET_ASSEMBLY";
+        public const string CLASS = "LIBFUZZER_DOTNET_TARGET_CLASS";
+        public const string METHOD = "LIBFUZZER_DOTNET_TARGET_METHOD";
+    }
+
     public class Program {
         public static void Main(string[] args) {
             var target = LibFuzzerDotnetTarget.FromEnvironment();
@@ -103,25 +114,25 @@ namespace LibFuzzerDotnetLoader {
 
         static LibFuzzerDotnetTarget FromEnvironmentVars()
         {
-            var assemblyPath = Environment.GetEnvironmentVariable("LIBFUZZER_DOTNET_TARGET_ASSEMBLY");
+            var assemblyPath = Environment.GetEnvironmentVariable(EnvVar.ASSEMBLY);
 
             if (assemblyPath is null)
             {
-                throw new Exception("`LIBFUZZER_DOTNET_TARGET_ASSEMBLY` not set");
+                throw new Exception($"`{EnvVar.ASSEMBLY}` not set");
             }
 
-            var className = Environment.GetEnvironmentVariable("LIBFUZZER_DOTNET_TARGET_CLASS");
+            var className = Environment.GetEnvironmentVariable(EnvVar.CLASS);
 
             if (className is null)
             {
-                throw new Exception("`LIBFUZZER_DOTNET_TARGET_CLASS` not set");
+                throw new Exception($"`{EnvVar.CLASS}` not set");
             }
 
-            var methodName = Environment.GetEnvironmentVariable("LIBFUZZER_DOTNET_TARGET_METHOD");
+            var methodName = Environment.GetEnvironmentVariable(EnvVar.METHOD);
 
             if (methodName is null)
             {
-                throw new Exception("`LIBFUZZER_DOTNET_TARGET_METHOD` not set");
+                throw new Exception($"`{EnvVar.METHOD}` not set");
             }
 
             return new LibFuzzerDotnetTarget(assemblyPath, className, methodName);
@@ -134,11 +145,11 @@ namespace LibFuzzerDotnetLoader {
             string? className = null;
             string? methodName = null;
 
-            var target = Environment.GetEnvironmentVariable("LIBFUZZER_DOTNET_TARGET");
+            var target = Environment.GetEnvironmentVariable(EnvVar.TARGET);
 
             if (target is null)
             {
-                throw new Exception("`LIBFUZZER_DOTNET_TARGET` not set. " +
+                throw new Exception($"`{EnvVar.TARGET}` not set. " +
                                     "Expected format: \"<assembly-path>:<class>:<static-method>\"");
             }
 
@@ -149,7 +160,7 @@ namespace LibFuzzerDotnetLoader {
                 assemblyPath = parts[0];
             }
             catch {
-                throw new Exception("Invalid `LIBFUZZER_DOTNET_TARGET` (missing assembly path)");
+                throw new Exception($"Invalid `{EnvVar.TARGET}` (missing assembly path)");
             }
 
             try
@@ -158,7 +169,7 @@ namespace LibFuzzerDotnetLoader {
             }
             catch
             {
-                throw new Exception("Invalid `LIBFUZZER_DOTNET_TARGET` (missing class name)");
+                throw new Exception($"Invalid `{EnvVar.TARGET}` (missing class name)");
             }
 
             try
@@ -167,7 +178,7 @@ namespace LibFuzzerDotnetLoader {
             }
             catch
             {
-                throw new Exception("Invalid `LIBFUZZER_DOTNET_TARGET` (missing method name)");
+                throw new Exception($"Invalid `{EnvVar.TARGET}` (missing method name)");
             }
 
             return new LibFuzzerDotnetTarget(assemblyPath, className, methodName);
