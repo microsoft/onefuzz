@@ -144,9 +144,9 @@ if type apt > /dev/null 2> /dev/null; then
     logger "install dotnet tools"
     pushd "$DOTNET_ROOT"
     ls -lah 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    "$DOTNET_ROOT"/dotnet tool install dotnet-dump --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    "$DOTNET_ROOT"/dotnet tool install dotnet-coverage --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    "$DOTNET_ROOT"/dotnet tool install dotnet-sos --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+    "$DOTNET_ROOT"/dotnet tool install dotnet-dump --version 6.0.328102 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+    "$DOTNET_ROOT"/dotnet tool install dotnet-coverage --version 17.3.6 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+    "$DOTNET_ROOT"/dotnet tool install dotnet-sos --version 6.0.328102 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
     popd
 fi
 

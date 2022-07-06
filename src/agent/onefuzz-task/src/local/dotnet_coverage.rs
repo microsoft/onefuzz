@@ -1,3 +1,11 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
+
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
@@ -71,7 +79,7 @@ pub fn build_coverage_config(
     let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
 
     let readonly_inputs = if local_job {
-        println!("Took inputs_dir");
+        info!("Took inputs_dir");
         vec![
             get_synced_dir(INPUTS_DIR, common.job_id, common.task_id, args)?
                 .monitor_count(&event_sender)?,
@@ -86,6 +94,9 @@ pub fn build_coverage_config(
     let coverage = get_synced_dir(COVERAGE_DIR, common.job_id, common.task_id, args)?
         .monitor_count(&event_sender)?;
 
+    let dotnet_path = dotnet_path()?;
+    let dotnet_coverage_path = dotnet_coverage_path()?;
+
     let config = Config {
         target_exe,
         target_env,
@@ -95,6 +106,8 @@ pub fn build_coverage_config(
         readonly_inputs,
         coverage,
         common,
+        dotnet_path,
+        dotnet_coverage_path,
     };
 
     Ok(config)
@@ -118,4 +131,26 @@ pub fn args(name: &'static str) -> App<'static, 'static> {
     SubCommand::with_name(name)
         .about("execute a local-only coverage task")
         .args(&build_shared_args(false))
+}
+
+fn dotnet_coverage_path() -> Result<PathBuf> {
+    let tools_dir = env::var("ONEFUZZ_TOOLS")?;
+    #[cfg(target_os = "windows")]
+    let dotnet_coverage_executable = "dotnet-coverage.exe";
+    #[cfg(not(target_os = "windows"))]
+    let dotnet_coverage_executable = "dotnet-coverage";
+    let dotnet_coverage = Path::new(&tools_dir).join(dotnet_coverage_executable);
+
+    Ok(dotnet_coverage)
+}
+
+fn dotnet_path() -> Result<PathBuf> {
+    let dotnet_root_dir = env::var("DOTNET_ROOT")?;
+    #[cfg(target_os = "windows")]
+    let dotnet_executable = "dotnet.exe";
+    #[cfg(not(target_os = "windows"))]
+    let dotnet_executable = "dotnet";
+    let dotnet = Path::new(&dotnet_root_dir).join(dotnet_executable); // The dotnet executable
+
+    Ok(dotnet)
 }

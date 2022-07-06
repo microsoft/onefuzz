@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use onefuzz::{
@@ -38,6 +41,9 @@ pub struct Config {
     pub input_queue: Option<QueueClient>,
     pub readonly_inputs: Vec<SyncedDir>,
     pub coverage: SyncedDir,
+
+    pub dotnet_path: PathBuf,
+    pub dotnet_coverage_path: PathBuf,
 
     #[serde(flatten)]
     pub common: CommonConfig,
@@ -80,25 +86,20 @@ impl DotnetCoverageTask {
         fs::create_dir_all(&intermediate_files_path).await?;
         let timeout = self.config.timeout();
         let coverage_dir = self.config.coverage.clone();
+        let dotnet_coverage_path = self.config.dotnet_coverage_path.clone();
 
         tokio::spawn(async move {
-            info!("Starting directory monitor");
-            let mut monitor = DirectoryMonitor::new(intermediate_files_path)
-                .await
-                .unwrap();
-            info!("Started directory monitor, waiting for files");
-            while (monitor.next_file().await.unwrap()).is_some() {
-                info!("Found intermediate coverage file");
-                save_and_sync_coverage(
-                    coverage_local_path.as_path(),
-                    timeout,
-                    coverage_dir.clone(),
-                )
-                .await
-                .unwrap();
-                info!("Merged and synced coverage");
+            if let Err(e) = start_directory_monitor(
+                &intermediate_files_path,
+                &coverage_local_path,
+                timeout,
+                coverage_dir,
+                &dotnet_coverage_path,
+            )
+            .await
+            {
+                error!("Directory monitor failed: {}", e);
             }
-            info!("Shut down directory monitor");
         });
 
         for dir in &self.config.readonly_inputs {
@@ -127,6 +128,32 @@ impl DotnetCoverageTask {
 
         Ok(())
     }
+}
+
+async fn start_directory_monitor(
+    intermediate_files_path: &PathBuf,
+    coverage_local_path: &Path,
+    timeout: Duration,
+    coverage_dir: SyncedDir,
+    dotnet_coverage_path: &Path,
+) -> Result<()> {
+    info!("Starting directory monitor");
+    let mut monitor = DirectoryMonitor::new(intermediate_files_path).await?;
+    debug!("Started directory monitor, waiting for files");
+    while (monitor.next_file().await?).is_some() {
+        debug!("Found intermediate coverage file");
+        save_and_sync_coverage(
+            coverage_local_path,
+            timeout,
+            coverage_dir.clone(),
+            dotnet_coverage_path,
+        )
+        .await?;
+        info!("Merged and synced coverage");
+    }
+    info!("Shut down directory monitor");
+
+    Ok(())
 }
 
 struct TaskContext<'a> {
@@ -220,8 +247,8 @@ impl<'a> TaskContext<'a> {
             .target_options(&self.config.target_options)
             .task_id(&self.config.common.task_id);
 
-        let dotnet_coverage_path = dotnet_coverage_path()?;
-        let dotnet_path = dotnet_path()?;
+        let dotnet_coverage_path = &self.config.dotnet_coverage_path;
+        let dotnet_path = &self.config.dotnet_path;
         let id = Uuid::new_v4();
         let output_file_path =
             intermediate_coverage_files_path(self.config.coverage.local_path.as_path())?
@@ -234,7 +261,7 @@ impl<'a> TaskContext<'a> {
             .args(["--output-format", "cobertura"])
             .args(["-o", &output_file_path.to_string_lossy()])
             .arg(format!(
-                "{} {} {}",
+                "{} {} -- {}",
                 dotnet_path.to_string_lossy(),
                 self.config.target_exe.canonicalize()?.to_string_lossy(),
                 target_options.join(" ")
@@ -276,9 +303,10 @@ pub async fn save_and_sync_coverage(
     coverage_local_path: &Path,
     timeout: Duration,
     coverage_dir: SyncedDir,
+    dotnet_coverage_path: &Path,
 ) -> Result<()> {
     info!("Saving and syncing coverage");
-    let mut cmd = command_for_merge(coverage_local_path).await?;
+    let mut cmd = command_for_merge(coverage_local_path, dotnet_coverage_path).await?;
     spawn_with_timeout(&mut cmd, timeout).await?;
     info!("Pushing coverage");
     coverage_dir.sync_push().await?;
@@ -286,9 +314,10 @@ pub async fn save_and_sync_coverage(
     Ok(())
 }
 
-async fn command_for_merge(coverage_local_path: &Path) -> Result<Command> {
-    let dotnet_coverage_path = dotnet_coverage_path()?;
-
+async fn command_for_merge(
+    coverage_local_path: &Path,
+    dotnet_coverage_path: &Path,
+) -> Result<Command> {
     let output_file = working_dir(coverage_local_path)?.join(COBERTURA_COVERAGE_FILE);
 
     let mut cmd = Command::new(dotnet_coverage_path);
@@ -329,41 +358,19 @@ async fn spawn_with_timeout(
     timeout(timeout_after, cmd.spawn()?.wait()).await?
 }
 
-fn dotnet_coverage_path() -> Result<PathBuf> {
-    let tools_dir = env::var("ONEFUZZ_TOOLS")?;
-    #[cfg(target_os = "windows")]
-    let dotnet_coverage_exectuable = "dotnet-coverage.exe";
-    #[cfg(not(target_os = "windows"))]
-    let dotnet_coverage_exectuable = "dotnet-coverage";
-    let dotnet_coverage = Path::new(&tools_dir).join(dotnet_coverage_exectuable);
-
-    Ok(dotnet_coverage)
-}
-
-fn dotnet_path() -> Result<PathBuf> {
-    let dotnet_root_dir = env::var("DOTNET_ROOT")?;
-    #[cfg(target_os = "windows")]
-    let dotnet_exectuable = "dotnet.exe";
-    #[cfg(not(target_os = "windows"))]
-    let dotnet_exectuable = "dotnet";
-    let dotnet = Path::new(&dotnet_root_dir).join(dotnet_exectuable); // The dotnet executable
-
-    Ok(dotnet)
-}
-
 #[async_trait]
 impl<'a> Processor for TaskContext<'a> {
     async fn process(&mut self, _url: Option<Url>, input: &Path) -> Result<()> {
         self.heartbeat.alive();
 
         self.record_input(input).await?;
-        // self.save_and_sync_coverage().await?;
         let coverage_local_path = self.config.coverage.local_path.canonicalize()?;
 
         save_and_sync_coverage(
             coverage_local_path.as_path(),
             self.config.timeout(),
             self.config.coverage.clone(),
+            &self.config.dotnet_coverage_path,
         )
         .await?;
 
