@@ -12,31 +12,20 @@ delegate void TestOneArray(byte[] data);
 namespace LibFuzzerDotnetLoader {
     public class Program {
         public static void Main(string[] args) {
-            var target = Environment.GetEnvironmentVariable("LIBFUZZER_DOTNET_TARGET");
+            var target = LibFuzzerDotnetTarget.FromEnvironment();
 
-            if (target == null) {
-                throw new Exception("`LIBFUZZER_DOTNET_TARGET` not set. " +
-                                    "Expected format: \"<assembly-path>:<class>:<static-method>\"");
-            }
+            var assem = Assembly.LoadFrom(target.AssemblyPath);
 
-            var parts = target.Split(':');
-
-            var assemPath = parts[0];
-            var typeName = parts[1];
-            var methodName = parts[2];
-
-            var assem = Assembly.LoadFrom(assemPath);
-
-            var ty = assem.GetType(typeName);
+            var ty = assem.GetType(target.ClassName);
 
             if (ty == null) {
-                throw new Exception($"unable to resolve type: {typeName}");
+                throw new Exception($"unable to resolve type: {target.ClassName}");
             }
 
-            var method = ty.GetMethod(methodName);
+            var method = ty.GetMethod(target.MethodName);
 
             if (method == null) {
-                throw new Exception($"unable to resolve method: {methodName}");
+                throw new Exception($"unable to resolve method: {target.MethodName}");
             }
 
             if (TryTestOneSpan(method)) {
@@ -47,7 +36,7 @@ namespace LibFuzzerDotnetLoader {
                 return;
             }
 
-            throw new Exception($"unable to bind method to a known delegate type: {methodName}");
+            throw new Exception($"unable to bind method to a known delegate type: {target.MethodName}");
         }
 
         // Returns `true` if delegate binding succeeded.
@@ -79,6 +68,109 @@ namespace LibFuzzerDotnetLoader {
             // Copy span data into a `byte[]` to support assemblies that target pre-`Span`
             // frameworks.
             return TryTestOne<TestOneArray>(method, t => span => t(span.ToArray()));
+        }
+    }
+
+    class LibFuzzerDotnetTarget
+    {
+        public string AssemblyPath { get; set; }
+        public string ClassName { get; set; }
+        public string MethodName { get; set; }
+
+        public LibFuzzerDotnetTarget(string assemblyPath, string className, string methodName)
+        {
+            AssemblyPath = assemblyPath;
+            ClassName = className;
+            MethodName = methodName;
+        }
+
+        public static LibFuzzerDotnetTarget FromEnvironment()
+        {
+            try {
+                return FromEnvironmentVarDelimited();
+            }
+            catch
+            {}
+
+            try {
+                return FromEnvironmentVars();
+            }
+            catch
+            {}
+
+            throw new Exception("No fuzzing target specified by environment variables");
+        }
+
+        static LibFuzzerDotnetTarget FromEnvironmentVars()
+        {
+            var assemblyPath = Environment.GetEnvironmentVariable("LIBFUZZER_DOTNET_TARGET_ASSEMBLY");
+
+            if (assemblyPath is null)
+            {
+                throw new Exception("`LIBFUZZER_DOTNET_TARGET_ASSEMBLY` not set");
+            }
+
+            var className = Environment.GetEnvironmentVariable("LIBFUZZER_DOTNET_TARGET_CLASS");
+
+            if (className is null)
+            {
+                throw new Exception("`LIBFUZZER_DOTNET_TARGET_CLASS` not set");
+            }
+
+            var methodName = Environment.GetEnvironmentVariable("LIBFUZZER_DOTNET_TARGET_METHOD");
+
+            if (methodName is null)
+            {
+                throw new Exception("`LIBFUZZER_DOTNET_TARGET_METHOD` not set");
+            }
+
+            return new LibFuzzerDotnetTarget(assemblyPath, className, methodName);
+        }
+
+
+        static LibFuzzerDotnetTarget FromEnvironmentVarDelimited()
+        {
+            string? assemblyPath = null;
+            string? className = null;
+            string? methodName = null;
+
+            var target = Environment.GetEnvironmentVariable("LIBFUZZER_DOTNET_TARGET");
+
+            if (target is null)
+            {
+                throw new Exception("`LIBFUZZER_DOTNET_TARGET` not set. " +
+                                    "Expected format: \"<assembly-path>:<class>:<static-method>\"");
+            }
+
+            var parts = target.Split(':');
+
+            try
+            {
+                assemblyPath = parts[0];
+            }
+            catch {
+                throw new Exception("Invalid `LIBFUZZER_DOTNET_TARGET` (missing assembly path)");
+            }
+
+            try
+            {
+                className = parts[1];
+            }
+            catch
+            {
+                throw new Exception("Invalid `LIBFUZZER_DOTNET_TARGET` (missing class name)");
+            }
+
+            try
+            {
+                methodName = parts[2];
+            }
+            catch
+            {
+                throw new Exception("Invalid `LIBFUZZER_DOTNET_TARGET` (missing method name)");
+            }
+
+            return new LibFuzzerDotnetTarget(assemblyPath, className, methodName);
         }
     }
 }
