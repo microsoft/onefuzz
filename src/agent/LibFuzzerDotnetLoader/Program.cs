@@ -114,26 +114,12 @@ namespace LibFuzzerDotnetLoader {
 
         static LibFuzzerDotnetTarget FromEnvironmentVars()
         {
-            var assemblyPath = Environment.GetEnvironmentVariable(EnvVar.ASSEMBLY);
-
-            if (assemblyPath is null)
-            {
+            var assemblyPath = Environment.GetEnvironmentVariable(EnvVar.ASSEMBLY)??
                 throw new Exception($"`{EnvVar.ASSEMBLY}` not set");
-            }
-
-            var className = Environment.GetEnvironmentVariable(EnvVar.CLASS);
-
-            if (className is null)
-            {
+            var className = Environment.GetEnvironmentVariable(EnvVar.CLASS)??
                 throw new Exception($"`{EnvVar.CLASS}` not set");
-            }
-
-            var methodName = Environment.GetEnvironmentVariable(EnvVar.METHOD);
-
-            if (methodName is null)
-            {
+            var methodName = Environment.GetEnvironmentVariable(EnvVar.METHOD)??
                 throw new Exception($"`{EnvVar.METHOD}` not set");
-            }
 
             return new LibFuzzerDotnetTarget(assemblyPath, className, methodName);
         }
@@ -141,47 +127,17 @@ namespace LibFuzzerDotnetLoader {
 
         static LibFuzzerDotnetTarget FromEnvironmentVarDelimited()
         {
-            string? assemblyPath = null;
-            string? className = null;
-            string? methodName = null;
+            var target = Environment.GetEnvironmentVariable(EnvVar.TARGET)??
+                throw new Exception($"`{EnvVar.TARGET}` not set.");
 
-            var target = Environment.GetEnvironmentVariable(EnvVar.TARGET);
+            var parts = target.Split(':', StringSplitOptions.RemoveEmptyEntries);
 
-            if (target is null)
+            if (parts.Length < 3)
             {
-                throw new Exception($"`{EnvVar.TARGET}` not set. " +
-                                    "Expected format: \"<assembly-path>:<class>:<static-method>\"");
+                throw new Exception($"Value of `{EnvVar.TARGET}` is invalid");
             }
 
-            var parts = target.Split(':');
-
-            try
-            {
-                assemblyPath = parts[0];
-            }
-            catch {
-                throw new Exception($"Invalid `{EnvVar.TARGET}` (missing assembly path)");
-            }
-
-            try
-            {
-                className = parts[1];
-            }
-            catch
-            {
-                throw new Exception($"Invalid `{EnvVar.TARGET}` (missing class name)");
-            }
-
-            try
-            {
-                methodName = parts[2];
-            }
-            catch
-            {
-                throw new Exception($"Invalid `{EnvVar.TARGET}` (missing method name)");
-            }
-
-            return new LibFuzzerDotnetTarget(assemblyPath, className, methodName);
+            return new LibFuzzerDotnetTarget(parts[0], parts[1], parts[2]);
         }
     }
 }
