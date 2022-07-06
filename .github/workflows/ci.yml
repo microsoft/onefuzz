@@ -59,9 +59,6 @@ jobs:
         os:
         - ubuntu-18.04
         - windows-2019
-        # we have no use for this yet: at the moment,
-        # the agent does not support macos
-        #- macos-10.15
   azcopy:
     runs-on: ubuntu-18.04
     steps:
