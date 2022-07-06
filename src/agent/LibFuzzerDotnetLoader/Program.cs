@@ -27,17 +27,11 @@ namespace LibFuzzerDotnetLoader {
 
             var assem = Assembly.LoadFrom(target.AssemblyPath);
 
-            var ty = assem.GetType(target.ClassName);
-
-            if (ty == null) {
+            var ty = assem.GetType(target.ClassName)??
                 throw new Exception($"unable to resolve type: {target.ClassName}");
-            }
 
-            var method = ty.GetMethod(target.MethodName);
-
-            if (method == null) {
+            var method = ty.GetMethod(target.MethodName)??
                 throw new Exception($"unable to resolve method: {target.MethodName}");
-            }
 
             if (TryTestOneSpan(method)) {
                 return;
