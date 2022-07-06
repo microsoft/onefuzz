@@ -9,7 +9,7 @@ use onefuzz::{
     syncdir::SyncedDir,
 };
 use reqwest::Url;
-use std::process::ExitStatus;
+use std::{process::ExitStatus, env};
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -42,9 +42,6 @@ pub struct Config {
     pub readonly_inputs: Vec<SyncedDir>,
     pub coverage: SyncedDir,
 
-    pub dotnet_path: PathBuf,
-    pub dotnet_coverage_path: PathBuf,
-
     #[serde(flatten)]
     pub common: CommonConfig,
 }
@@ -72,8 +69,11 @@ impl DotnetCoverageTask {
         info!("starting dotnet_coverage task");
         self.config.coverage.init_pull().await?;
 
+        let dotnet_path = dotnet_path()?;
+        let dotnet_coverage_path = dotnet_coverage_path()?;
+
         let heartbeat = self.config.common.init_heartbeat(None).await?;
-        let mut context = TaskContext::new(&self.config, heartbeat);
+        let mut context = TaskContext::new(&self.config, heartbeat, dotnet_path, dotnet_coverage_path.clone());
 
         if !context.uses_input() {
             bail!("input is not specified on the command line or arguments for the target");
@@ -86,7 +86,7 @@ impl DotnetCoverageTask {
         fs::create_dir_all(&intermediate_files_path).await?;
         let timeout = self.config.timeout();
         let coverage_dir = self.config.coverage.clone();
-        let dotnet_coverage_path = self.config.dotnet_coverage_path.clone();
+        let dotnet_coverage_path = dotnet_coverage_path;
 
         tokio::spawn(async move {
             if let Err(e) = start_directory_monitor(
@@ -159,11 +159,13 @@ async fn start_directory_monitor(
 struct TaskContext<'a> {
     config: &'a Config,
     heartbeat: Option<TaskHeartbeatClient>,
+    dotnet_path: PathBuf,
+    dotnet_coverage_path: PathBuf,
 }
 
 impl<'a> TaskContext<'a> {
-    pub fn new(config: &'a Config, heartbeat: Option<TaskHeartbeatClient>) -> Self {
-        Self { config, heartbeat }
+    pub fn new(config: &'a Config, heartbeat: Option<TaskHeartbeatClient>, dotnet_path: PathBuf, dotnet_coverage_path: PathBuf) -> Self {
+        Self { config, heartbeat, dotnet_path, dotnet_coverage_path }
     }
     async fn record_corpus(&mut self, dir: &Path) -> Result<usize> {
         use futures::stream::StreamExt;
@@ -247,8 +249,8 @@ impl<'a> TaskContext<'a> {
             .target_options(&self.config.target_options)
             .task_id(&self.config.common.task_id);
 
-        let dotnet_coverage_path = &self.config.dotnet_coverage_path;
-        let dotnet_path = &self.config.dotnet_path;
+        let dotnet_coverage_path = &self.dotnet_coverage_path;
+        let dotnet_path = &self.dotnet_path;
         let id = Uuid::new_v4();
         let output_file_path =
             intermediate_coverage_files_path(self.config.coverage.local_path.as_path())?
@@ -358,6 +360,29 @@ async fn spawn_with_timeout(
     timeout(timeout_after, cmd.spawn()?.wait()).await?
 }
 
+fn dotnet_coverage_path() -> Result<PathBuf> {
+    let tools_dir = env::var("ONEFUZZ_TOOLS")?;
+    #[cfg(target_os = "windows")]
+    let dotnet_coverage_executable = "dotnet-coverage.exe";
+    #[cfg(not(target_os = "windows"))]
+    let dotnet_coverage_executable = "dotnet-coverage";
+    let dotnet_coverage = Path::new(&tools_dir).join(dotnet_coverage_executable);
+
+    Ok(dotnet_coverage)
+}
+
+fn dotnet_path() -> Result<PathBuf> {
+    let dotnet_root_dir = env::var("DOTNET_ROOT")?;
+    #[cfg(target_os = "windows")]
+    let dotnet_executable = "dotnet.exe";
+    #[cfg(not(target_os = "windows"))]
+    let dotnet_executable = "dotnet";
+    let dotnet = Path::new(&dotnet_root_dir).join(dotnet_executable); // The dotnet executable
+
+    Ok(dotnet)
+}
+
+
 #[async_trait]
 impl<'a> Processor for TaskContext<'a> {
     async fn process(&mut self, _url: Option<Url>, input: &Path) -> Result<()> {
@@ -370,7 +395,7 @@ impl<'a> Processor for TaskContext<'a> {
             coverage_local_path.as_path(),
             self.config.timeout(),
             self.config.coverage.clone(),
-            &self.config.dotnet_coverage_path,
+            &self.dotnet_coverage_path,
         )
         .await?;
 
