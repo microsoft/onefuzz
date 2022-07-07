@@ -165,7 +165,7 @@ public static class ScalesetStateHelper {
 
 public static class VmStateHelper {
 
-    private static readonly IReadOnlySet<VmState> _needsWork = new HashSet<VmState> { VmState.Init, VmState.Init, VmState.ExtensionsLaunch, VmState.Stopping };
+    private static readonly IReadOnlySet<VmState> _needsWork = new HashSet<VmState> { VmState.Init, VmState.ExtensionsLaunch, VmState.Stopping };
     private static readonly IReadOnlySet<VmState> _available = new HashSet<VmState> { VmState.Init, VmState.ExtensionsLaunch, VmState.ExtensionsFailed, VmState.VmAllocationFailed, VmState.Running, };
 
     public static IReadOnlySet<VmState> NeedsWork => _needsWork;
