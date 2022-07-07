@@ -2,8 +2,7 @@
 
 namespace Microsoft.OneFuzz.Service;
 
-
-public partial class TimerProxy {
+public class TimerProxy {
     private readonly ILogTracer _logger;
     private readonly IOnefuzzContext _context;
 

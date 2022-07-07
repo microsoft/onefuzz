@@ -145,7 +145,7 @@ public class Containers : IContainers {
 
     public async Async.Task SaveBlob(Container container, string name, string data, StorageType storageType) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
-        await client.UploadBlobAsync(name, new BinaryData(data));
+        await client.GetBlobClient(name).UploadAsync(new BinaryData(data), overwrite: true);
     }
 
     public Async.Task<Guid> GetInstanceId() => _getInstanceId.Value;
