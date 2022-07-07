@@ -33,7 +33,7 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
               threshold: 50
               timeAggregation: 'Average'
               timeGrain: 'PT1M'
-              timeWindow: 'PT1M'
+              timeWindow: 'PT10M'
             }
             scaleAction: {
               cooldown: 'PT10M'
@@ -51,7 +51,7 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
               threshold: 25
               timeAggregation:'Average' 
               timeGrain: 'PT1M'
-              timeWindow: 'PT1M'
+              timeWindow: 'PT10M'
             }
             scaleAction: {
               cooldown: 'PT5M'
