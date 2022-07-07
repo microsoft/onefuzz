@@ -165,6 +165,8 @@ class TaskType(Enum):
     generic_crash_report = "generic_crash_report"
     generic_regression = "generic_regression"
 
+    dotnet_coverage = "dotnet_coverage"
+
 
 class VmState(Enum):
     init = "init"

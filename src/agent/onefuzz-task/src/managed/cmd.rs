@@ -12,7 +12,6 @@ use crate::tasks::{
     task_logger,
 };
 
-#[cfg(not(target_os = "macos"))]
 const OOM_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
@@ -65,7 +64,6 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     result
 }
 
-#[cfg(not(target_os = "macos"))]
 const MAX_OOM_QUERY_ERRORS: usize = 5;
 
 // Periodically check available system memory.
@@ -73,7 +71,6 @@ const MAX_OOM_QUERY_ERRORS: usize = 5;
 // If available memory drops below the minimum, exit informatively.
 //
 // Parameterized to enable future configuration by VMSS.
-#[cfg(not(target_os = "macos"))]
 async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
     if min_bytes == 0 {
         bail!("available memory minimum is unreachable");
@@ -107,12 +104,6 @@ async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
 
         tokio::time::sleep(OOM_CHECK_INTERVAL).await;
     }
-}
-
-#[cfg(target_os = "macos")]
-async fn out_of_memory(_min_bytes: u64) -> Result<OutOfMemory> {
-    // Resolve immediately.
-    bail!("out-of-memory check not implemented on macOS")
 }
 
 struct OutOfMemory {

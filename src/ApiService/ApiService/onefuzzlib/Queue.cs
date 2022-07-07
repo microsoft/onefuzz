@@ -10,7 +10,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IQueue {
     Async.Task SendMessage(string name, string message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
     Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
-    Async.Task<Uri?> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
+    Async.Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
     ResourceIdentifier GeResourceId(string queueName, StorageType storageType);
     Task<IList<T>> PeekQueue<T>(string name, StorageType storageType);
     Async.Task<bool> RemoveFirstMessage(string name, StorageType storageType);
@@ -73,11 +73,10 @@ public class Queue : IQueue {
         }
     }
 
-    public async Task<Uri?> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
+    public async Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
         var queue = await GetQueueClient(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
         var sasaBuilder = new QueueSasBuilder(permissions, DateTimeOffset.UtcNow + (duration ?? DEFAULT_DURATION));
-        var url = queue.GenerateSasUri(sasaBuilder);
-        return url;
+        return queue.GenerateSasUri(sasaBuilder);
     }
 
 

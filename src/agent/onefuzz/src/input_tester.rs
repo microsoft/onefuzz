@@ -196,15 +196,6 @@ impl<'a> Tester<'a> {
         Ok(crash)
     }
 
-    #[cfg(target_os = "macos")]
-    async fn test_input_debugger(
-        &self,
-        _args: Vec<String>,
-        _env: HashMap<String, String>,
-    ) -> Result<Option<CrashLog>> {
-        bail!("running application under a debugger is not supported on macOS");
-    }
-
     #[cfg(target_os = "linux")]
     async fn test_input_debugger(
         &self,

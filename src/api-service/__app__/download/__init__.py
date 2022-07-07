@@ -3,6 +3,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+from datetime import timedelta
+
 import azure.functions as func
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error, FileEntry
@@ -40,8 +42,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
             request.filename,
             StorageType.corpus,
             read=True,
-            days=0,
-            minutes=5,
+            duration=timedelta(minutes=5),
         )
     )
 

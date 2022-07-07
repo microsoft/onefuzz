@@ -256,7 +256,7 @@ impl SuspendableChild for Child {
     }
 }
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[cfg(target_os = "linux")]
 impl SuspendableChild for Child {
     fn suspend(&mut self) -> Result<()> {
         use nix::sys::signal;

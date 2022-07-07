@@ -28,10 +28,11 @@ use crate::tasks::config::CommonConfig;
 use crate::tasks::generic::input_poller::{CallbackImpl, InputPoller, Processor};
 use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
 
+use super::COBERTURA_COVERAGE_FILE;
+
 const MAX_COVERAGE_RECORDING_ATTEMPTS: usize = 2;
 const COVERAGE_FILE: &str = "coverage.json";
 const SOURCE_COVERAGE_FILE: &str = "source-coverage.json";
-const COBERTURA_COVERAGE_FILE: &str = "cobertura-coverage.xml";
 const MODULE_CACHE_FILE: &str = "module-cache.json";
 
 const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(5);

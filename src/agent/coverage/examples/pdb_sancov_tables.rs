@@ -43,8 +43,3 @@ fn main() -> Result<()> {
 fn main() -> Result<()> {
     Ok(())
 }
-
-#[cfg(target_os = "macos")]
-fn main() -> Result<()> {
-    Ok(())
-}
