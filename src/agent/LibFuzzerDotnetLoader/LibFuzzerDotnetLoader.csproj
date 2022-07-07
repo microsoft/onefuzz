@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <LangVersion>10.0</LangVersion>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Requires commit ec28c46 or greater. -->
+    <ProjectReference Include="../sharpfuzz/src/SharpFuzz/SharpFuzz.csproj" />
+  </ItemGroup>
+
+</Project>

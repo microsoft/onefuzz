@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-#![cfg_attr(target_os = "macos", allow(unused, warnings))]
 
 use std::process::{Command, Stdio};
 
@@ -66,9 +65,4 @@ fn find_missing(cmd: Command) -> Result<Vec<String>> {
         .into_iter()
         .map(|m| m.name)
         .collect())
-}
-
-#[cfg(target_os = "macos")]
-fn find_missing(cmd: Command) -> Result<Vec<String>> {
-    todo!()
 }
