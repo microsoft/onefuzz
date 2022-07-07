@@ -1,6 +1,8 @@
 param location string
 param server_farm_id string
 param owner string
+param workspaceId string
+param logRetention int
 
 var autoscale_name = 'onefuzz-autoscale-${uniqueString(resourceGroup().id)}' 
 
@@ -65,5 +67,23 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
   }
   tags: {
     OWNER: owner
+  }
+}
+
+resource functionDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'functionDiagnosticSettings'
+  scope: autoscaleSettings
+  properties: {
+    logs: [
+      {
+        categoryGroup: 'allLogs'
+        enabled: true
+        retentionPolicy: {
+          days: logRetention
+          enabled: true
+        }
+      }
+    ]
+    workspaceId: workspaceId
   }
 }

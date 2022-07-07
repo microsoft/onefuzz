@@ -165,3 +165,4 @@ resource insightsWorkbooks 'Microsoft.Insights/workbooks@2021-08-01' = {
 output monitorAccountName string = monitorAccountName
 output appInsightsAppId string = insightsComponents.properties.AppId
 output appInsightsInstrumentationKey string = insightsComponents.properties.InstrumentationKey
+output workspaceId string = resourceId('Microsoft.OperationalInsights/workspaces', monitorAccountName)
