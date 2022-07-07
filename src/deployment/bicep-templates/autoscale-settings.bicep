@@ -30,7 +30,7 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
               metricResourceUri: server_farm_id
               operator: 'GreaterThanOrEqual'
               statistic: 'Average'
-              threshold: 20
+              threshold: 50
               timeAggregation: 'Average'
               timeGrain: 'PT1M'
               timeWindow: 'PT1M'
@@ -39,7 +39,7 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
               cooldown: 'PT1M'
               direction: 'Increase'
               type: 'ChangeCount'
-              value: '5'
+              value: '1'
             }
           }
           {
@@ -48,7 +48,7 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
               metricResourceUri: server_farm_id
               operator: 'LessThan'
               statistic: 'Average'
-              threshold: 20
+              threshold: 25
               timeAggregation:'Average' 
               timeGrain: 'PT1M'
               timeWindow: 'PT1M'
