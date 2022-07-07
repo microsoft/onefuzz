@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Microsoft.Extensions.Logging;
 using System.Reflection;
 using System.Runtime;
 using System.Runtime.InteropServices;
@@ -21,9 +22,54 @@ namespace LibFuzzerDotnetLoader {
         public const string METHOD = "LIBFUZZER_DOTNET_TARGET_METHOD";
     }
 
+    class Logging
+    {
+        public static ILogger CreateLogger<T>()
+        {
+            using var loggerFactory = LoggerFactory.Create(builder =>
+                builder
+                    .AddFilter("Microsoft", LogLevel.Warning)
+                    .AddFilter("System", LogLevel.Warning)
+                    .AddFilter("LibFuzzerDotnetLoader.Program", LogLevel.Debug)
+                    .AddSimpleConsole(o =>
+                        {
+                            o.SingleLine = true;
+                            o.TimestampFormat = "HH:mm:ss ";
+                        }
+                    )
+            );
+
+            return loggerFactory.CreateLogger<T>();
+        }
+    }
+
     public class Program {
+        static ILogger logger;
+
+        static Program()
+        {
+            logger = Logging.CreateLogger<Program>();
+        }
+
         public static void Main(string[] args) {
+            try
+            {
+                TryMain();
+            }
+            catch (Exception e)
+            {
+                logger.LogError($"{e.Message}");
+                throw;
+            }
+        }
+
+        static void TryMain()
+        {
+            logger.LogDebug("Checking environment for target specification");
+
             var target = LibFuzzerDotnetTarget.FromEnvironment();
+
+            logger.LogDebug($"Attempting to load assembly from `{target.AssemblyPath}`");
 
             var assem = Assembly.LoadFrom(target.AssemblyPath);
 
@@ -36,6 +82,11 @@ namespace LibFuzzerDotnetLoader {
             if (TryTestOneSpan(method)) {
                 return;
             }
+
+            logger.LogWarning($"Unable to bind method `{target.ClassName}.{target.MethodName}` to signature `void (ReadOnlySpan<byte>)`.");
+            logger.LogWarning("Attempting to bind to signature `void (byte[])`.");
+            logger.LogWarning("This will require an extra copy of the test input on each iteration.");
+            logger.LogWarning("Modify your target method to accept `ReadOnlySpan<byte>` if your project supports it.");
 
             if (TryTestOneArray(method)) {
                 return;
@@ -52,6 +103,7 @@ namespace LibFuzzerDotnetLoader {
 
             try {
                 testOneInput = (T) Delegate.CreateDelegate(typeof(T), method);
+                logger.LogDebug($"Bound method `{method}` to delegate `{typeof(T)}`");
             } catch {
                 // We failed to bind to the target method.
                 //
@@ -60,6 +112,8 @@ namespace LibFuzzerDotnetLoader {
             }
 
             var action = createAction(testOneInput);
+
+            logger.LogInformation($"Running method `{method}`...");
             SharpFuzz.Fuzzer.LibFuzzer.Run(action);
 
             return true;
@@ -82,6 +136,13 @@ namespace LibFuzzerDotnetLoader {
         public string ClassName { get; }
         public string MethodName { get; }
 
+        static ILogger logger;
+
+        static LibFuzzerDotnetTarget()
+        {
+            logger = Logging.CreateLogger<LibFuzzerDotnetTarget>();
+        }
+
         public LibFuzzerDotnetTarget(string assemblyPath, string className, string methodName)
         {
             AssemblyPath = assemblyPath;
@@ -92,18 +153,23 @@ namespace LibFuzzerDotnetLoader {
         public static LibFuzzerDotnetTarget FromEnvironment()
         {
             try {
+                logger.LogDebug($"Checking {EnvVar.TARGET} for `:`-delimited target specification.");
                 return FromEnvironmentVarDelimited();
             }
-            catch
-            {}
+            catch (Exception e)
+            {
+                logger.LogDebug($"Couldn't find target specification in `{EnvVar.TARGET}`: {e.Message}");
+            }
 
             try {
+                logger.LogDebug($"Checking {EnvVar.ASSEMBLY}, {EnvVar.CLASS}, and {EnvVar.METHOD} for target specification.");
                 return FromEnvironmentVars();
             }
-            catch
-            {}
-
-            throw new Exception("No fuzzing target specified by environment variables");
+            catch (Exception e)
+            {
+                logger.LogDebug($"Couldn't find target specification in individual environment variables : {e.Message}");
+                throw new Exception("No fuzzing target specified", e);
+            }
         }
 
         static LibFuzzerDotnetTarget FromEnvironmentVars()
