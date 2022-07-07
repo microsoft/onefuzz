@@ -310,12 +310,13 @@ public record InstanceConfig
 (
     [PartitionKey, RowKey] string InstanceName,
     Guid[]? Admins,
-    bool? AllowPoolManagement,
+
     string[] AllowedAadTenants,
-    NetworkConfig NetworkConfig,
-    NetworkSecurityGroupConfig ProxyNsgConfig,
+    [DefaultValue(InitMethod.DefaultConstructor)] NetworkConfig NetworkConfig,
+    [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
-    string ProxyVmSku,
+    string? ProxyVmSku,
+    bool AllowPoolManagement = true,
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
     IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,
     IDictionary<string, string>? VmTags = null,
@@ -325,13 +326,13 @@ public record InstanceConfig
     public InstanceConfig(string instanceName) : this(
         instanceName,
         null,
-        true,
         Array.Empty<string>(),
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
         null,
-        "Standard_B2s") { }
-    public InstanceConfig() : this(String.Empty) { }
+        "Standard_B2s",
+        true
+        ) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {
         if (value is not null && value.Count == 0) {
@@ -340,6 +341,8 @@ public record InstanceConfig
             return value;
         }
     }
+
+    public InstanceConfig() : this(String.Empty) { }
 
     //# At the moment, this only checks allowed_aad_tenants, however adding
     //# support for 3rd party JWT validation is anticipated in a future release.
@@ -373,12 +376,12 @@ public record Scaleset(
     string VmSku,
     string Image,
     Region Region,
-    int Size,
-    bool SpotInstance,
+    long Size,
+    bool? SpotInstances,
     bool EphemeralOsDisks,
     bool NeedsConfigUpdate,
     Error? Error,
-    List<ScalesetNodeState> Nodes,
+    List<ScalesetNodeState>? Nodes,
     Guid? ClientId,
     Guid? ClientObjectId,
     Dictionary<string, string> Tags

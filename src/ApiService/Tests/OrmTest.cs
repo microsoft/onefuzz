@@ -380,6 +380,24 @@ namespace Tests {
         }
 
 
+        class TestClass {
+            public string Name { get; }
+            public TestClass() {
+                Name = "testName";
+            }
+        }
+        record TestIinit([DefaultValue(InitMethod.DefaultConstructor)] TestClass testClass, string test = "default_test") : EntityBase();
+
+        [Fact]
+        public void TestInitValue() {
+            var entityConverter = new EntityConverter();
+            var tableEntity = new TableEntity();
+            var actual = entityConverter.ToRecord<TestIinit>(tableEntity);
+
+            Assert.Equal("testName", actual.testClass.Name);
+            Assert.Equal("default_test", actual.test);
+        }
+
 
     }
 }
