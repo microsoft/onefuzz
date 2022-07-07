@@ -54,7 +54,7 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
               timeWindow: 'PT10M'
             }
             scaleAction: {
-              cooldown: 'PT5M'
+              cooldown: 'PT10M'
               direction: 'Decrease'
               type: 'ChangeCount'
               value: '1'
