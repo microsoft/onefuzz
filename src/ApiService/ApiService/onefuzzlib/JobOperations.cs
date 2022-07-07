@@ -29,7 +29,10 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
     }
 
     public IAsyncEnumerable<Job> SearchExpired() {
-        return QueryAsync(filter: $"end_time lt datetime'{DateTimeOffset.UtcNow.ToString("o")}'");
+        var timeFilter = $"end_time lt datetime'{DateTimeOffset.UtcNow.ToString("o")}'";
+        var stateFilter = Query.EqualAnyEnum("state", JobStateHelper.Available);
+        var filter = Query.And(stateFilter, timeFilter);
+        return QueryAsync(filter: filter);
     }
 
     public IAsyncEnumerable<Job> SearchState(IEnumerable<JobState> states) {
