@@ -126,7 +126,7 @@ namespace LibFuzzerDotnetLoader {
 
             var parts = target.Split(':', StringSplitOptions.RemoveEmptyEntries);
 
-            if (parts.Length < 3)
+            if (parts.Length != 3)
             {
                 throw new Exception($"Value of `{EnvVar.TARGET}` is invalid");
             }
