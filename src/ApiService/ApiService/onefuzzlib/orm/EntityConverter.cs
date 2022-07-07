@@ -318,8 +318,7 @@ public class EntityConverter {
 
         } catch (Exception ex) {
             var stringParam = string.Join(", ", parameters);
-            throw new Exception($"Could not initialize object of type {typeof(T)} with the following parameters: {stringParam} constructor {entityInfo.constructor} : {ex}");
+            throw new InvalidOperationException($"Could not initialize object of type {typeof(T)} with the following parameters: {stringParam} constructor {entityInfo.constructor}", ex);
         }
     }
-
 }
