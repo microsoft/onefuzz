@@ -122,7 +122,8 @@ namespace LibFuzzerDotnetLoader {
         static LibFuzzerDotnetTarget FromEnvironmentVarDelimited()
         {
             var target = Environment.GetEnvironmentVariable(EnvVar.TARGET)??
-                throw new Exception($"`{EnvVar.TARGET}` not set.");
+                throw new Exception($"`{EnvVar.TARGET}` not set." +
+                                    "Expected format: \"<assembly-path>:<class>:<static-method>\"");
 
             var parts = target.Split(':', StringSplitOptions.RemoveEmptyEntries);
 
