@@ -108,12 +108,21 @@ namespace LibFuzzerDotnetLoader {
 
         static LibFuzzerDotnetTarget FromEnvironmentVars()
         {
-            var assemblyPath = Environment.GetEnvironmentVariable(EnvVar.ASSEMBLY)??
-                throw new Exception($"`{EnvVar.ASSEMBLY}` not set");
-            var className = Environment.GetEnvironmentVariable(EnvVar.CLASS)??
-                throw new Exception($"`{EnvVar.CLASS}` not set");
-            var methodName = Environment.GetEnvironmentVariable(EnvVar.METHOD)??
-                throw new Exception($"`{EnvVar.METHOD}` not set");
+            var assemblyPath = Environment.GetEnvironmentVariable(EnvVar.ASSEMBLY);
+            var className = Environment.GetEnvironmentVariable(EnvVar.CLASS);
+            var methodName = Environment.GetEnvironmentVariable(EnvVar.METHOD);
+
+            var missing = new List<string>();
+
+            if (assemblyPath is null) { missing.Add(EnvVar.ASSEMBLY); }
+            if (className is null) { missing.Add(EnvVar.CLASS); }
+            if (methodName is null) { missing.Add(EnvVar.METHOD); }
+
+            if (assemblyPath is null || className is null || methodName is null)
+            {
+                var vars = String.Join(", ", missing);
+                throw new Exception($"Missing `LIBFUZZER_DOTNET_TARGET` environment variables: {vars}");
+            }
 
             return new LibFuzzerDotnetTarget(assemblyPath, className, methodName);
         }
