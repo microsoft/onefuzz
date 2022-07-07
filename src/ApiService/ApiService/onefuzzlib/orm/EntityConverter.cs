@@ -30,10 +30,8 @@ public enum InitMethod {
 public class DefaultValueAttribute : Attribute {
 
     public InitMethod InitMethod { get; }
-    public object? Value { get; }
-    public DefaultValueAttribute(InitMethod initMethod, object? value = null) {
+    public DefaultValueAttribute(InitMethod initMethod) {
         InitMethod = initMethod;
-        Value = value;
     }
 }
 
