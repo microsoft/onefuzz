@@ -92,10 +92,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? states) {
         string? queryString = null;
         if (states != null) {
-            queryString = string.Join(
-                " or ",
-                states.Select(s => $"state eq '{s}'")
-            );
+            queryString = Query.EqualAnyEnum("state", states);
         }
         return QueryAsync(queryString);
     }
