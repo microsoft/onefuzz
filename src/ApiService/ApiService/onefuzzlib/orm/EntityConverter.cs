@@ -24,7 +24,7 @@ public abstract record StatefulEntityBase<T>([property: JsonIgnore] T State) : E
 /// How the value is populated
 public enum InitMethod {
     //T() will be used
-    DefaultContructor,
+    DefaultConstructor,
 }
 [AttributeUsage(AttributeTargets.Parameter)]
 public class DefaultValueAttribute : Attribute {
@@ -249,7 +249,7 @@ public class EntityConverter {
             }
 
             return ef.defaultValue switch {
-                DefaultValueAttribute { InitMethod: InitMethod.DefaultContructor } => Activator.CreateInstance(ef.type),
+                DefaultValueAttribute { InitMethod: InitMethod.DefaultConstructor } => Activator.CreateInstance(ef.type),
                 _ => null,
             };
         }

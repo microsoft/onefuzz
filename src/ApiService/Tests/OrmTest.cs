@@ -386,7 +386,7 @@ namespace Tests {
                 Name = "testName";
             }
         }
-        record TestIinit([DefaultValue(InitMethod.DefaultContructor)] TestClass testClass, string test = "default_test") : EntityBase();
+        record TestIinit([DefaultValue(InitMethod.DefaultConstructor)] TestClass testClass, string test = "default_test") : EntityBase();
 
         [Fact]
         public void TestInitValue() {

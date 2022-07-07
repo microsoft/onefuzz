@@ -312,8 +312,8 @@ public record InstanceConfig
     Guid[]? Admins,
 
     string[] AllowedAadTenants,
-    [DefaultValue(InitMethod.DefaultContructor)] NetworkConfig NetworkConfig,
-    [DefaultValue(InitMethod.DefaultContructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
+    [DefaultValue(InitMethod.DefaultConstructor)] NetworkConfig NetworkConfig,
+    [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
     string? ProxyVmSku,
     bool AllowPoolManagement = true,
