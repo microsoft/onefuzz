@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#![allow(clippy::uninit_vec)]
-
 use std::{
     ffi::OsString,
     mem::{size_of, MaybeUninit},
@@ -112,10 +110,10 @@ pub fn read_narrow_string(
     len: usize,
 ) -> Result<String> {
     let mut buf: Vec<u8> = Vec::with_capacity(len);
+    read_memory_array(process_handle, remote_address, buf.spare_capacity_mut())?;
     unsafe {
         buf.set_len(len);
     }
-    read_memory_array::<u8>(process_handle, remote_address, &mut buf[..])?;
     Ok(String::from_utf8_lossy(&buf).into())
 }
 
@@ -125,10 +123,10 @@ pub fn read_wide_string(
     len: usize,
 ) -> Result<OsString> {
     let mut buf: Vec<u16> = Vec::with_capacity(len);
+    read_memory_array(process_handle, remote_address, buf.spare_capacity_mut())?;
     unsafe {
         buf.set_len(len);
     }
-    read_memory_array::<u16>(process_handle, remote_address, &mut buf[..])?;
     Ok(OsString::from_wide(&buf))
 }
 
