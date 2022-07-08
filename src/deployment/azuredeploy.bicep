@@ -62,6 +62,17 @@ resource scalesetIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018
   location: location
 }
 
+module operationalInsights 'bicep-templates/operational-insights.bicep' = {
+  name: 'operational-insights'
+  params: {
+    name: name
+    location: location
+    log_retention: log_retention
+    owner: owner
+    workbookData: workbookData
+  }
+}
+
 module serverFarms 'bicep-templates/server-farms.bicep' = {
   name: 'server-farms' 
   params: {
@@ -138,17 +149,8 @@ module autoscaleSettings 'bicep-templates/autoscale-settings.bicep' = {
     location: location
     server_farm_id: serverFarms.outputs.id
     owner: owner
-  }
-}
-
-module operationalInsights 'bicep-templates/operational-insights.bicep' = {
-  name: 'operational-insights'
-  params: {
-    name: name
-    location: location
-    log_retention: log_retention
-    owner: owner
-    workbookData: workbookData
+    workspaceId: operationalInsights.outputs.workspaceId
+    logRetention: log_retention
   }
 }
 
@@ -372,7 +374,6 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     netFunction
   ]
 }
-
 
 output fuzz_storage string = storage.outputs.FuzzId
 output fuzz_name string = storage.outputs.FuzzName
