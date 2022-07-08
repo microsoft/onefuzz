@@ -25,7 +25,7 @@ namespace Fabrikam {
 }
 ```
 
-We need export a static _test method_ with the signature `static void (ReadOnlySpan<byte>)`.
+We need to export a static _test method_ with the signature `static void (ReadOnlySpan<byte>)`.
 If your project does not support `Span` types,
 you may instead export a method with the signature `static void (byte[])`,
 with a performance cost of one extra copy of the input for each fuzzing iteration.
@@ -90,7 +90,7 @@ inputs (i.e. which led to new program coverage) as it goes.
 Alternately, you can specify the fuzz target using the following `:`-delimited shorthand:
 
 ```pwsh
-$env:LIBFUZZER_DOTNET_TARGET = "./Fabrikam.dll:Fabrikam.AppModelFuzzer.TestOneInput"
+$env:LIBFUZZER_DOTNET_TARGET = "./Fabrikam.dll:Fabrikam.AppModelFuzzer:TestOneInput"
 
 ./libfuzzer-dotnet.exe --target_path="./LibFuzzerDotnetLoader.exe" corpus
 ```
