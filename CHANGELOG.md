@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Port `agent_registration` to C#. [#2107](https://github.com/microsoft/onefuzz/pull/2107)
 * Agent: Add the dotnet coverage task. [#2062](https://github.com/microsoft/onefuzz/pull/2062)
 * Agent: Added multiple ways to specify the dotnet Libfuzzer target. [#2136](https://github.com/microsoft/onefuzz/pull/2136)
-* Agent: Add logging to the LibFuzzer Dotnet loader. [#2141](https://github.com/microsoft/onefuzz/pull/2141)
+* Agent: Add logging to LibFuzzerDotnetLoader. [#2141](https://github.com/microsoft/onefuzz/pull/2141)
 * Documentation: Added documentation for LibFuzzerDotnetLoader. [#2142](https://github.com/microsoft/onefuzz/pull/2142)
 
 ### Changed
