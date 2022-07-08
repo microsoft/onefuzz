@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Include State filter when searching for expired tasks and jobs. [#2138](https://github.com/microsoft/onefuzz/pull/2138)
 * Service: Updated the scaling policy for the App Functions. [#2140](https://github.com/microsoft/onefuzz/pull/2140)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#2022](https://github.com/microsoft/onefuzz/pull/2022)
-* Agent: Remove MacOS support. [#2134](https://github.com/microsoft/onefuzz/pull/2134), [#2135](https://github.com/microsoft/onefuzz/pull/2135)
+* Agent: Remove incomplete macOS support. [#2134](https://github.com/microsoft/onefuzz/pull/2134), [#2135](https://github.com/microsoft/onefuzz/pull/2135)
 
 ### Fixed
 * Service: Fix reported TLS errors. [#2087](https://github.com/microsoft/onefuzz/pull/2087)
