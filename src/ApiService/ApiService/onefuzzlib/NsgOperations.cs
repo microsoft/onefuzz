@@ -16,6 +16,8 @@ namespace Microsoft.OneFuzz.Service {
         Async.Task<OneFuzzResultVoid> Create(Nsg nsg);
 
         Async.Task<OneFuzzResultVoid> SetAllowedSources(NetworkSecurityGroupConfig nsgConfig);
+
+        Async.Task<OneFuzzResultVoid> AssociateNic(Nsg nsg, NetworkInterfaceResource nic);
     }
 
 
@@ -153,6 +155,10 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         public Task<OneFuzzResultVoid> SetAllowedSources(NetworkSecurityGroupConfig nsgConfig) {
+            throw new NotImplementedException();
+        }
+
+        public Task<OneFuzzResultVoid> AssociateNic(Nsg nsg, NetworkInterfaceResource nic) {
             throw new NotImplementedException();
         }
     }

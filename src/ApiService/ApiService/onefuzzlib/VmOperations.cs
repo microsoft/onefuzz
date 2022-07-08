@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager.Compute;
-
+using Newtonsoft.Json;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -16,45 +16,42 @@ public interface IVmOperations {
 
     Async.Task<OneFuzzResultVoid> Create(Vm vm);
 
+    Async.Task<VirtualMachineExtensionData?> GetExtension(string vmName, string extensionName);
+
+    Async.Task<OneFuzzResult<bool>> AddExtensions(Vm vm, IList<Dictionary<string, string>> extensions);
+
+    Async.Task<VirtualMachineExtensionResource> CreateExtension(string vmName, Dictionary<string, string> extension);
+
 }
 
 public class VmOperations : IVmOperations {
     private ILogTracer _logTracer;
+    private IOnefuzzContext _context;
 
-    private ICreds _creds;
-
-    private IIpOperations _ipOperations;
-
-    private IDiskOperations _diskOperations;
-
-    private INsgOperations _nsgOperations;
-
-    public VmOperations(ILogTracer log, ICreds creds, IIpOperations ipOperations, IDiskOperations diskOperations, INsgOperations nsgOperations) {
+    public VmOperations(ILogTracer log, IOnefuzzContext context) {
         _logTracer = log;
-        _creds = creds;
-        _ipOperations = ipOperations;
-        _diskOperations = diskOperations;
-        _nsgOperations = nsgOperations;
+        _context = context;
     }
+
     public async Async.Task<bool> IsDeleted(Vm vm) {
         return !(await HasComponents(vm.Name));
     }
 
     public async Async.Task<bool> HasComponents(string name) {
-        var resourceGroup = _creds.GetBaseResourceGroup();
+        var resourceGroup = _context.Creds.GetBaseResourceGroup();
         if (await GetVm(name) != null) {
             return true;
         }
 
-        if (await _ipOperations.GetPublicNic(resourceGroup, name) != null) {
+        if (await _context.IpOperations.GetPublicNic(resourceGroup, name) != null) {
             return true;
         }
 
-        if (await _ipOperations.GetIp(resourceGroup, name) != null) {
+        if (await _context.IpOperations.GetIp(resourceGroup, name) != null) {
             return true;
         }
 
-        var disks = await _diskOperations.ListDisks(resourceGroup)
+        var disks = await _context.DiskOperations.ListDisks(resourceGroup)
             .ToAsyncEnumerable()
             .Where(disk => disk.Data.Name.StartsWith(name, StringComparison.Ordinal))
             .AnyAsync();
@@ -67,7 +64,7 @@ public class VmOperations : IVmOperations {
     }
 
     public async Async.Task<VirtualMachineResource?> GetVm(string name) {
-        return await _creds.GetResourceGroupResource().GetVirtualMachineAsync(name);
+        return await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(name);
     }
 
     public async Async.Task<bool> Delete(Vm vm) {
@@ -75,7 +72,7 @@ public class VmOperations : IVmOperations {
     }
 
     public async Async.Task<bool> DeleteVmComponents(string name, Nsg? nsg) {
-        var resourceGroup = _creds.GetBaseResourceGroup();
+        var resourceGroup = _context.Creds.GetBaseResourceGroup();
         _logTracer.Info($"deleting vm components {resourceGroup}:{name}");
         if (GetVm(name) != null) {
             _logTracer.Info($"deleting vm {resourceGroup}:{name}");
@@ -83,31 +80,31 @@ public class VmOperations : IVmOperations {
             return false;
         }
 
-        var nic = await _ipOperations.GetPublicNic(resourceGroup, name);
+        var nic = await _context.IpOperations.GetPublicNic(resourceGroup, name);
         if (nic != null) {
             _logTracer.Info($"deleting nic {resourceGroup}:{name}");
             if (nic.Data.NetworkSecurityGroup != null && nsg != null) {
-                await _nsgOperations.DissociateNic((Nsg)nsg, nic);
+                await _context.NsgOperations.DissociateNic((Nsg)nsg, nic);
                 return false;
             }
-            await _ipOperations.DeleteNic(resourceGroup, name);
+            await _context.IpOperations.DeleteNic(resourceGroup, name);
             return false;
         }
 
-        if (await _ipOperations.GetIp(resourceGroup, name) != null) {
+        if (await _context.IpOperations.GetIp(resourceGroup, name) != null) {
             _logTracer.Info($"deleting ip {resourceGroup}:{name}");
-            await _ipOperations.DeleteIp(resourceGroup, name);
+            await _context.IpOperations.DeleteIp(resourceGroup, name);
             return false;
         }
 
-        var disks = _diskOperations.ListDisks(resourceGroup)
+        var disks = _context.DiskOperations.ListDisks(resourceGroup)
             .ToAsyncEnumerable()
             .Where(disk => disk.Data.Name.StartsWith(name, StringComparison.Ordinal));
 
         if (await disks.AnyAsync()) {
             await foreach (var disk in disks) {
                 _logTracer.Info($"deleting disk {resourceGroup}:{disk?.Data.Name}");
-                await _diskOperations.DeleteDisk(resourceGroup, disk?.Data.Name!);
+                await _context.DiskOperations.DeleteDisk(resourceGroup, disk?.Data.Name!);
             }
             return false;
         }
@@ -116,13 +113,129 @@ public class VmOperations : IVmOperations {
     }
 
     public async System.Threading.Tasks.Task DeleteVm(string name) {
-        _logTracer.Info($"deleting vm: {_creds.GetBaseResourceGroup()} {name}");
-        await _creds.GetResourceGroupResource()
+        _logTracer.Info($"deleting vm: {_context.Creds.GetBaseResourceGroup()} {name}");
+        await _context.Creds.GetResourceGroupResource()
             .GetVirtualMachineAsync(name).Result.Value
             .DeleteAsync(WaitUntil.Started);
     }
 
-    public Task<OneFuzzResultVoid> Create(Vm vm) {
+    
+    public async Task<OneFuzzResult<bool>> AddExtensions(Vm vm, IList<Dictionary<string, string>> extensions) {
+        var status = new List<string>();
+        var toCreate = new List<Dictionary<string, string>>();
+        foreach (var config in extensions) {
+            if (!config.ContainsKey("name")) {
+                _logTracer.Error($"vm agent - incompatible name: {JsonConvert.SerializeObject(config)}");
+                continue;
+            }
+
+            var extensionName = config.GetValueOrDefault("name")!;
+            var extension = await GetExtension(vm.Name, extensionName);
+            if (extension != null) {
+                _logTracer.Info(
+                    $"vm extension state: {vm.Name} - {extensionName} - {extension.ProvisioningState}"
+                );
+                status.Add(extension.ProvisioningState);
+            }
+            else {
+                toCreate.Add(config);
+            }
+        }
+
+        if (toCreate.Any()) {
+            toCreate.ForEach(async config => await CreateExtension(vm.Name, config));
+        }
+        else {
+            if (status.All(s => string.Equals(s, "Succeeded", StringComparison.Ordinal))) {
+                return OneFuzzResult<bool>.Ok(true);
+            }
+            else if (status.Any(s => string.Equals(s, "Failed", StringComparison.Ordinal))) {
+                return OneFuzzResult<bool>.Error(
+                    ErrorCode.VM_CREATE_FAILED,
+                    "failed to launch extension"
+                );
+            }
+            else if (!(status.Contains("Creating") || status.Contains("Updating"))) {
+                _logTracer.Error($"vm agent - unknown state {vm.Name}: {JsonConvert.SerializeObject(status)}");
+            }
+        }
+
+        return OneFuzzResult<bool>.Ok(false);
+    }
+
+    public async Task<OneFuzzResultVoid> Create(Vm vm) {
+        if (await GetVm(vm.Name) != null) {
+            return OneFuzzResultVoid.Ok;
+        }
+        
+        _logTracer.Info($"vm creating: {vm.Name}");
+
+        return await CreateVm(
+            vm.Name,
+            vm.Region,
+            vm.Sku,
+            vm.Image,
+            vm.Auth.Password,
+            vm.Auth.PublicKey,
+            vm.Nsg,
+            vm.Tags
+        );
+    }
+
+    public Task<VirtualMachineExtensionData?> GetExtension(string vmName, string extensionName) {
         throw new NotImplementedException();
+    }
+
+    public Task<VirtualMachineExtensionResource> CreateExtension(string vmName, Dictionary<string, string> extension) {
+        throw new NotImplementedException();
+    }
+
+    async Task<OneFuzzResultVoid> CreateVm(
+        string name,
+        string location,
+        string vmSky,
+        string image,
+        string password,
+        string sshPublicKey,
+        Nsg? nsg,
+        IDictionary<string, string>? tags
+    ) {
+        var resourceGroup = _context.Creds.GetBaseResourceGroup();
+        _logTracer.Info($"creating vm {resourceGroup}:{location}:{name}");
+
+        var nic = await _context.IpOperations.GetPublicNic(resourceGroup, name);
+        if (nic == null) {
+            var result = await _context.IpOperations.CreatePublicNic(resourceGroup, name, location, nsg);
+            if (!result.IsOk) {
+                return result;
+            }
+
+            _logTracer.Info("waiting on nic creation");
+            return OneFuzzResultVoid.Ok;
+        }
+
+        // when public nic is created, VNET must exist at that point
+        // this is logic of get_public_nic function
+
+        if (nsg != null) {
+            var result = await _context.NsgOperations.AssociateNic(nsg, nic);
+            if (!result.IsOk) {
+                return result;
+            }
+        }
+
+        var imageRef = new Dictionary<string, string>();
+        if (image.StartsWith("/", StringComparison.Ordinal)) {
+            imageRef.Add("id", image);
+        }
+        else {
+            var imageVal = image.Split(":", 4);
+            imageRef = new Dictionary<string, string>()
+            {
+
+            };
+        }
+
+        return OneFuzzResultVoid.Ok;
     }
 }

@@ -7,6 +7,8 @@ namespace Microsoft.OneFuzz.Service;
 public interface IIpOperations {
     public Async.Task<NetworkInterfaceResource> GetPublicNic(string resourceGroup, string name);
 
+    public Async.Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, string region, Nsg? nsg);
+
     public Async.Task<string?> GetPublicIp(string resourceId);
 
     public Async.Task<PublicIPAddressResource> GetIp(string resourceGroup, string name);

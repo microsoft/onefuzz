@@ -31,9 +31,6 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
     public Async.Task<OneFuzzResultVoid> BuildReproScript(Repro repro);
 
     public Async.Task<Container?> GetSetupContainer(Repro repro);
-
-    public Async.Task<OneFuzzResult<bool>> AddExtensions(Repro repro, IList<Dictionary<string, string>> extensions);
-
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
@@ -130,16 +127,14 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         if (vmData != null) {
             if (vmData.Data.ProvisioningState == "Failed") {
                 await _context.ReproOperations.SetFailed(repro, vmData);
-            }
-            else {
+            } else {
                 var scriptResult = await BuildReproScript(repro);
                 if (!scriptResult.IsOk) {
                     await _context.ReproOperations.SetError(repro, scriptResult.ErrorV);
                     return;
                 }
             }
-        }
-        else {
+        } else {
             var nsg = new Nsg(vm.Region, vm.Region);
             var result = await _context.NsgOperations.Create(nsg);
             if (!result.IsOk) {
@@ -154,7 +149,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
                 return;
             }
 
-            vm = vm with { Nsg = nsg};
+            vm = vm with { Nsg = nsg };
             result = await _context.VmOperations.Create(vm);
             if (!result.IsOk) {
                 await _context.ReproOperations.SetError(repro, result.ErrorV);
@@ -199,12 +194,11 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             await _context.ReproOperations.GetSetupContainer(repro)
         );
 
-        var result = await _context.ReproOperations.AddExtensions(repro, extensions);
+        var result = await _context.VmOperations.AddExtensions(vm, extensions);
         if (!result.IsOk) {
             await SetError(repro, result.ErrorV);
-        }
-        else {
-            repro = repro with {State = VmState.Running};
+        } else {
+            repro = repro with { State = VmState.Running };
         }
 
         await Replace(repro);
@@ -215,7 +209,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             .Where(status => status.Level.HasValue && string.Equals(status.Level?.ToString(), "error", StringComparison.OrdinalIgnoreCase))
             .Select(status => $"{status.Code} {status.DisplayStatus} {status.Message}")
             .ToArray();
-        
+
         await SetError(repro, OneFuzzResultVoid.Error(
             ErrorCode.VM_CREATE_FAILED,
             errors
@@ -303,10 +297,6 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             .Where(container => container.Type == ContainerType.Setup)
             .FirstOrDefault()?
             .Name;
-    }
-
-    public Task<OneFuzzResult<bool>> AddExtensions(Repro repro, IList<Dictionary<string, string>> extensions) {
-        throw new NotImplementedException();
     }
 
     // These ones are intentionally empty
