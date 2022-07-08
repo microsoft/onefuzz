@@ -36,7 +36,8 @@ jobs:
     - name: Rust artifact cache
       id: cache-agent-artifacts
       # don't cache the rust agent for relase builds as the version number will be incorrect
-      if: steps.rust-version.outputs.RELEASE_BUILD == 'false'
+      # don't cache on builds on the main branch for deployment to canary/nightly
+      if: steps.rust-version.outputs.RELEASE_BUILD == 'false' && github.ref_name != 'main'
       uses: actions/cache@v3
       with:
         # if nothing has changed inside src/agent, we can reuse the artifacts directory
