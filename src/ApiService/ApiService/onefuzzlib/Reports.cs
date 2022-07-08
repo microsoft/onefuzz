@@ -1,10 +1,12 @@
 ﻿using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
 public interface IReports {
     public Async.Task<RegressionReportOrReport?> GetReportOrRegression(Container container, string fileName, bool expectReports = false, params string[] args);
+    public Async.Task<Report?> GetReport(Container container, string fileName);
 }
 
 public class Reports : IReports {
@@ -13,6 +15,10 @@ public class Reports : IReports {
     public Reports(ILogTracer log, IContainers containers) {
         _log = log;
         _containers = containers;
+    }
+
+    public Task<Report?> GetReport(Container container, string fileName) {
+        throw new NotImplementedException();
     }
 
     public async Async.Task<RegressionReportOrReport?> GetReportOrRegression(Container container, string fileName, bool expectReports = false, params string[] args) {

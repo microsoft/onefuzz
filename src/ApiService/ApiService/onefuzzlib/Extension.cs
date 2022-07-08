@@ -7,6 +7,8 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface IExtensions {
     public Async.Task<IList<VirtualMachineScaleSetExtensionData>> FuzzExtensions(Pool pool, Scaleset scaleset);
+
+    public Async.Task<IList<Dictionary<string, string>>> ReproExtensions(string region, string os, Guid uuid, ReproConfig reproConfig, Container? setupContainer);
 }
 
 

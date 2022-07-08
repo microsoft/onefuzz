@@ -410,7 +410,7 @@ public record Notification(
 public record BlobRef(
     string Account,
     Container container,
-    string name
+    string Name
 );
 
 public record Report(

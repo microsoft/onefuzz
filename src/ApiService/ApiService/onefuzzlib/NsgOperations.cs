@@ -1,4 +1,5 @@
-﻿using Azure;
+﻿using System.Threading.Tasks;
+using Azure;
 using Azure.ResourceManager.Network;
 
 
@@ -11,6 +12,10 @@ namespace Microsoft.OneFuzz.Service {
         Async.Task<bool> StartDeleteNsg(string name);
 
         Async.Task<OneFuzzResultVoid> DissociateNic(Nsg nsg, NetworkInterfaceResource nic);
+
+        Async.Task<OneFuzzResultVoid> Create(Nsg nsg);
+
+        Async.Task<OneFuzzResultVoid> SetAllowedSources(NetworkSecurityGroupConfig nsgConfig);
     }
 
 
@@ -141,6 +146,14 @@ namespace Microsoft.OneFuzz.Service {
 
         private static bool IsConcurrentRequestError(string err) {
             return err.Contains("The request failed due to conflict with a concurrent request");
+        }
+
+        public Task<OneFuzzResultVoid> Create(Nsg nsg) {
+            throw new NotImplementedException();
+        }
+
+        public Task<OneFuzzResultVoid> SetAllowedSources(NetworkSecurityGroupConfig nsgConfig) {
+            throw new NotImplementedException();
         }
     }
 }

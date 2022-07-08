@@ -1,4 +1,5 @@
-﻿using Azure;
+﻿using System.Threading.Tasks;
+using Azure;
 using Azure.ResourceManager.Compute;
 
 
@@ -12,6 +13,8 @@ public interface IVmOperations {
     Async.Task<VirtualMachineResource?> GetVm(string name);
 
     Async.Task<bool> Delete(Vm vm);
+
+    Async.Task<OneFuzzResultVoid> Create(Vm vm);
 
 }
 
@@ -117,5 +120,9 @@ public class VmOperations : IVmOperations {
         await _creds.GetResourceGroupResource()
             .GetVirtualMachineAsync(name).Result.Value
             .DeleteAsync(WaitUntil.Started);
+    }
+
+    public Task<OneFuzzResultVoid> Create(Vm vm) {
+        throw new NotImplementedException();
     }
 }

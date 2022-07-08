@@ -1,10 +1,13 @@
-﻿using Azure;
+﻿using System.Threading.Tasks;
+using Azure;
 using Azure.ResourceManager.Network;
 
 namespace Microsoft.OneFuzz.Service;
 
 public interface IIpOperations {
     public Async.Task<NetworkInterfaceResource> GetPublicNic(string resourceGroup, string name);
+
+    public Async.Task<string?> GetPublicIp(string resourceId);
 
     public Async.Task<PublicIPAddressResource> GetIp(string resourceGroup, string name);
 
@@ -41,5 +44,9 @@ public class IpOperations : IIpOperations {
     public async System.Threading.Tasks.Task DeleteIp(string resourceGroup, string name) {
         _logTracer.Info($"deleting ip {resourceGroup}:{name}");
         await _creds.GetResourceGroupResource().GetPublicIPAddressAsync(name).Result.Value.DeleteAsync(WaitUntil.Started);
+    }
+
+    public Task<string?> GetPublicIp(string resourceId) {
+        throw new NotImplementedException();
     }
 }

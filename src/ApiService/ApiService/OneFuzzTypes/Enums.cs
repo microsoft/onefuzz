@@ -33,8 +33,8 @@ public enum ErrorCode {
 public enum VmState {
     Init,
     ExtensionsLaunch,
-    ExtensionsFailed,
-    VmAllocationFailed,
+    ExtensionsFailed, // This is a dead state, not used anywhere
+    VmAllocationFailed, // This is a dead state, not used anywhere
     Running,
     Stopping,
     Stopped
