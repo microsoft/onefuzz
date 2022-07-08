@@ -17,12 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Add caching to C# storage implementation so repeated queries do not get throttled. [#2102](https://github.com/microsoft/onefuzz/pull/2102)
 * Service: Remove unused poolname validation. [#2094](https://github.com/microsoft/onefuzz/pull/2094)
 * Service: Make the hostbuilder async in C#. [#2122](https://github.com/microsoft/onefuzz/pull/2122)
-* Service: Include State filter when searching for expired tasks and jobs. [#2138](https://github.com/microsoft/onefuzz/pull/2138)
 * Service: Updated the scaling policy for the App Functions. [#2140](https://github.com/microsoft/onefuzz/pull/2140)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#2022](https://github.com/microsoft/onefuzz/pull/2022)
 * Agent: Remove incomplete macOS support. [#2134](https://github.com/microsoft/onefuzz/pull/2134), [#2135](https://github.com/microsoft/onefuzz/pull/2135)
 
 ### Fixed
+* Service: Include State filter when searching for expired tasks and jobs. [#2138](https://github.com/microsoft/onefuzz/pull/2138)
 * Service: Fix reported TLS errors. [#2087](https://github.com/microsoft/onefuzz/pull/2087)
 * Service: Change the `upload_file` method to use the Azcopy command by default for robustness and fall back to the Azure Python SDK implementation if needed. This also addresses issues where low bandwidth connections timeout due to not being able to handle multiple concurrent upload streams.  [#1556](https://github.com/microsoft/onefuzz/pull/1556)
 * Service: Update the log SAS URL to last as long as the job duration. [#2116](https://github.com/microsoft/onefuzz/pull/2116), [#2121](https://github.com/microsoft/onefuzz/pull/2121)
