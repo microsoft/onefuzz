@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Service: Fix reported TLS errors. [#2087](https://github.com/microsoft/onefuzz/pull/2087)
 * Service: Change the `upload_file` method to use the Azcopy command by default for robustness and fall back to the Azure Python SDK implementation if needed. This also addresses issues where low bandwidth connections timeout due to not being able to handle multiple concurrent upload streams.  [#1556](https://github.com/microsoft/onefuzz/pull/1556)
-* Service: Update the log Sas URL to last as long as the job duration. [#2116](https://github.com/microsoft/onefuzz/pull/2116), [#2121](https://github.com/microsoft/onefuzz/pull/2121)
+* Service: Update the log SAS URL to last as long as the job duration. [#2116](https://github.com/microsoft/onefuzz/pull/2116), [#2121](https://github.com/microsoft/onefuzz/pull/2121)
 * Service: Fixed a number of issues in the C# implementation of `TimerProxy`. [#2133](https://github.com/microsoft/onefuzz/pull/2133)
 * Agent: Fix a race condition when monitoring files on the VM. [#2105](https://github.com/microsoft/onefuzz/pull/2105)
 
