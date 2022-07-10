@@ -4,9 +4,11 @@
 # Licensed under the MIT License.
 set -ex -o pipefail
 
+export SHARPFUZZ_REPO='https://github.com/Metalnem/sharpfuzz'
+export SHARPFUZZ_COMMIT='v2.0.0'
+
 export LIBFUZZER_DOTNET_REPO='https://github.com/Metalnem/libfuzzer-dotnet'
 export LIBFUZZER_DOTNET_COMMIT='55d84f84b3540c864371e855c2a5ecb728865d97'
-export SHARPFUZZ_REPO='https://github.com/Metalnem/sharpfuzz'
 
 # Script below assumes an absolute path.
 export ARTIFACTS="${GITHUB_WORKSPACE}/artifacts/third-party/dotnet-fuzzing-linux"
@@ -26,6 +28,7 @@ sudo apt-get install -y dotnet-sdk-6.0
 # Build SharpFuzz instrumentor.
 git clone $SHARPFUZZ_REPO sharpfuzz
 pushd sharpfuzz
+git checkout $SHARPFUZZ_COMMIT
 dotnet publish src/SharpFuzz.CommandLine -f net6.0 -c Release -o $ARTIFACTS/sharpfuzz --sc -r linux-x64
 popd
 

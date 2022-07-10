@@ -1,9 +1,11 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+$SHARPFUZZ_REPO = 'https://github.com/Metalnem/sharpfuzz'
+$SHARPFUZZ_COMMIT = 'v2.0.0'
+
 $LIBFUZZER_DOTNET_REPO = 'https://github.com/Metalnem/libfuzzer-dotnet'
 $LIBFUZZER_DOTNET_COMMIT = '55d84f84b3540c864371e855c2a5ecb728865d97'
-$SHARPFUZZ_REPO = 'https://github.com/Metalnem/sharpfuzz'
 
 # Script below assumes an absolute path.
 $ARTIFACTS = "${env:GITHUB_WORKSPACE}/artifacts/third-party/dotnet-fuzzing-windows"
@@ -17,6 +19,7 @@ mkdir $ARTIFACTS/sharpfuzz
 # Build SharpFuzz instrumentor.
 git clone $SHARPFUZZ_REPO sharpfuzz
 pushd sharpfuzz
+git checkout $SHARPFUZZ_COMMIT
 dotnet publish src/SharpFuzz.CommandLine -f net6.0 -c Release -o $ARTIFACTS/sharpfuzz --sc -r win10-x64
 popd
 
