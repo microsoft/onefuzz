@@ -628,7 +628,6 @@ jobs:
         run: |
           set -ex -o pipefail
 
-          ls integration-test-artifacts
 
           # Must be absolute paths.
           export GOODBAD_DOTNET="${GITHUB_WORKSPACE}/integration-test-artifacts/GoodBadDotnet"
