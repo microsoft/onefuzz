@@ -628,7 +628,6 @@ jobs:
         run: |
           set -ex -o pipefail
 
-          ls build-artifacts
           ls integration-test-artifacts
 
           # Must be absolute paths.
