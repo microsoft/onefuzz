@@ -631,6 +631,7 @@ jobs:
           ls build-artifacts
           ls integration-test-artifacts
 
+          # Must be absolute paths.
           export GOODBAD_DOTNET="${GITHUB_WORKSPACE}/integration-test-artifacts/GoodBadDotnet"
 
           export LIBFUZZER_DOTNET="${GITHUB_WORKSPACE}/build-artifacts/third-party/dotnet-fuzzing-linux/libfuzzer-dotnet/libfuzzer-dotnet"
