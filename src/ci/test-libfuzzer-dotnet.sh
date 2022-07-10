@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -ex -o pipefail
 
-# Required envronment variables:
+# Required environment variables:
 # - GOODBAD_DOTNET
 # - LIBFUZZER_DOTNET
 # - LIBFUZZER_DOTNET_LOADER
