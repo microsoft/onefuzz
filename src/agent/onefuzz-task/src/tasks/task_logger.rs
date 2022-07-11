@@ -124,7 +124,6 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
         let data_stream = logs
             .iter()
             .flat_map(|log_event| match log_event {
-                // LoggingEvent::Flush => format!("End of log").into_bytes(),
                 LoggingEvent::Event(log_event) => format!(
                     "[{}] {}: {}\n",
                     log_event.timestamp,
@@ -211,12 +210,12 @@ enum LoopState {
     InitLog {
         start: usize,
         count: usize,
-        flush: bool,
+        done: bool,
     },
     Send {
         start: usize,
         count: usize,
-        flush: bool,
+        done: bool,
     },
     Done,
 }
@@ -266,7 +265,7 @@ impl TaskLogger {
             LoopState::Send {
                 start,
                 count,
-                flush,
+                done,
             } => {
                 match context
                     .log_writer
@@ -275,7 +274,7 @@ impl TaskLogger {
                 {
                     WriteLogResponse::Success => {
                         if start + count >= context.pending_logs.len() {
-                            if flush {
+                            if done {
                                 Result::<_, anyhow::Error>::Ok(LoopContext {
                                     pending_logs: vec![],
                                     state: LoopState::Done,
@@ -295,7 +294,7 @@ impl TaskLogger {
                                 state: LoopState::Send {
                                     start: new_start,
                                     count: new_count,
-                                    flush,
+                                    done,
                                 },
                                 ..context
                             })
@@ -307,7 +306,7 @@ impl TaskLogger {
                             state: LoopState::InitLog {
                                 start,
                                 count,
-                                flush,
+                                done,
                             },
                             ..context
                         })
@@ -318,7 +317,7 @@ impl TaskLogger {
                             state: LoopState::Send {
                                 start,
                                 count: count / 2,
-                                flush,
+                                done,
                             },
                             ..context
                         })
@@ -328,7 +327,7 @@ impl TaskLogger {
             LoopState::InitLog {
                 start,
                 count,
-                flush,
+                done,
             } => {
                 let new_writer = context.log_writer.get_next_writer().await?;
                 Result::<_, anyhow::Error>::Ok(LoopContext {
@@ -336,7 +335,7 @@ impl TaskLogger {
                     state: LoopState::Send {
                         start,
                         count,
-                        flush,
+                        done,
                     },
                     ..context
                 })
@@ -345,7 +344,7 @@ impl TaskLogger {
                 let mut event = context.event;
                 let mut data = Vec::with_capacity(self.log_buffer_size);
                 let start_time = tokio::time::Instant::now();
-                let mut flush = false;
+                let mut done = false;
 
                 loop {
                     if data.len() >= self.log_buffer_size {
@@ -362,7 +361,7 @@ impl TaskLogger {
                             data.push(v);
                         }
                         Err(TryRecvError::Closed) => {
-                            flush = true;
+                            done = true;
                             break;
                         }
                         Err(_) => {
@@ -376,7 +375,7 @@ impl TaskLogger {
                         state: LoopState::Send {
                             start: 0,
                             count: data.len(),
-                            flush,
+                            done,
                         },
                         pending_logs: data,
                         event,
