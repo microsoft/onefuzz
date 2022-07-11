@@ -18,7 +18,7 @@ public class SarifTests {
     }
 
     [Fact]
-    public async System.Threading.Tasks.Task TestParseRport() {
+    public void TestParseRport() {
         var test2 =
             @"
             {
@@ -97,11 +97,6 @@ public class SarifTests {
         var result = run.Results[0];
 
         Assert.Equal(1, run.Results.Count);
-
-
-
-
-
 
     }
 
