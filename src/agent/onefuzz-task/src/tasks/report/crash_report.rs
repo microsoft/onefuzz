@@ -151,6 +151,19 @@ impl CrashTestResult {
     ) -> Result<()> {
         match self {
             Self::CrashReport(report) => {
+                // try to save the report first — if it already exists, that
+                // means this is an already-tested input, so we shouldn’t save
+                // a unique report for it:
+                if let Some(reports) = reports {
+                    let name = report.blob_name();
+                    if upload_or_save_local(&report, &name, reports).await? {
+                        event!(new_report; EventData::Path = name);
+                    } else {
+                        // report already exists; don’t save a unique report
+                        return Ok(());
+                    }
+                }
+
                 // Use SHA-256 of call stack as dedupe key.
                 if let Some(unique_reports) = unique_reports {
                     let name = report.unique_blob_name();
@@ -159,12 +172,7 @@ impl CrashTestResult {
                     }
                 }
 
-                if let Some(reports) = reports {
-                    let name = report.blob_name();
-                    if upload_or_save_local(&report, &name, reports).await? {
-                        event!(new_report; EventData::Path = name);
-                    }
-                }
+                Ok(())
             }
 
             Self::NoRepro(report) => {
@@ -174,9 +182,10 @@ impl CrashTestResult {
                         event!(new_unable_to_reproduce; EventData::Path = name);
                     }
                 }
+
+                Ok(())
             }
         }
-        Ok(())
     }
 }
 
