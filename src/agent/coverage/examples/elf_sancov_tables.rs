@@ -16,11 +16,6 @@ struct Opt {
     inline: bool,
 }
 
-#[cfg(target_os = "macos")]
-fn main() -> Result<()> {
-    Ok(())
-}
-
 #[cfg(target_os = "windows")]
 fn main() -> Result<()> {
     Ok(())

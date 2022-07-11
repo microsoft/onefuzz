@@ -555,5 +555,42 @@ public static class Defs {
                 ContainerPermission.Read | ContainerPermission.List
          ),
     })
-    } };
+    },
+    { TaskType.DotnetCoverage ,
+            new TaskDefinition(
+                Features: new[] {
+                    TaskFeature.TargetExe,
+                    TaskFeature.TargetEnv,
+                    TaskFeature.TargetOptions,
+                    TaskFeature.TargetTimeout,
+                    TaskFeature.CoverageFilter,
+                    TaskFeature.TargetMustUseInput,
+                },
+            Vm: new VmDefinition(Compare: Compare.Equal, Value:1),
+            Containers: new [] {
+                new ContainerDefinition(
+                    Type:ContainerType.Setup,
+                    Compare: Compare.Equal,
+                    Value:1,
+                    Permissions: ContainerPermission.Read | ContainerPermission.List
+                ),
+                new ContainerDefinition(
+                    Type:ContainerType.ReadonlyInputs,
+                    Compare: Compare.AtLeast,
+                    Value:1,
+                    Permissions: ContainerPermission.Read | ContainerPermission.List
+                ),
+                new ContainerDefinition(
+                    Type:ContainerType.Coverage,
+                    Compare: Compare.Equal,
+                    Value:1,
+                    Permissions:
+                        ContainerPermission.List |
+                        ContainerPermission.Read |
+                        ContainerPermission.Write
+
+                )},
+            MonitorQueue: ContainerType.ReadonlyInputs)
+    },
+    };
 }

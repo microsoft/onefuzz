@@ -20,5 +20,4 @@ resource serverFarms 'Microsoft.Web/serverfarms@2021-03-01' = {
   }
 }
 
-
 output id string = serverFarms.id
