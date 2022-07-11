@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Threading.Tasks;
 using Azure.ResourceManager.Compute;
 using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
@@ -10,7 +11,6 @@ public interface IExtensions {
 
     public Async.Task<IList<Dictionary<string, string>>> ReproExtensions(string region, string os, Guid uuid, ReproConfig reproConfig, Container? setupContainer);
 }
-
 
 public class Extensions : IExtensions {
     IServiceConfig _serviceConfig;
@@ -349,5 +349,9 @@ public class Extensions : IExtensions {
 
         extensions.Add(fuzzExtension);
         return extensions;
+    }
+
+    public Task<IList<Dictionary<string, string>>> ReproExtensions(string region, string os, Guid uuid, ReproConfig reproConfig, Container? setupContainer) {
+        throw new NotImplementedException();
     }
 }

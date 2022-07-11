@@ -109,6 +109,7 @@ public class Program {
             .AddScoped<INodeTasksOperations, NodeTasksOperations>()
             .AddScoped<INodeMessageOperations, NodeMessageOperations>()
             .AddScoped<IRequestHandling, RequestHandling>()
+            .AddScoped<IImageOperations, ImageOperations>()
             .AddScoped<IOnefuzzContext, OnefuzzContext>()
             .AddScoped<IEndpointAuthorization, EndpointAuthorization>()
             .AddScoped<INodeMessageOperations, NodeMessageOperations>()

@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager.Compute;
+using Azure.ResourceManager.Compute.Models;
 using Newtonsoft.Json;
 
 namespace Microsoft.OneFuzz.Service;
@@ -119,7 +120,7 @@ public class VmOperations : IVmOperations {
             .DeleteAsync(WaitUntil.Started);
     }
 
-    
+
     public async Task<OneFuzzResult<bool>> AddExtensions(Vm vm, IList<Dictionary<string, string>> extensions) {
         var status = new List<string>();
         var toCreate = new List<Dictionary<string, string>>();
@@ -136,26 +137,22 @@ public class VmOperations : IVmOperations {
                     $"vm extension state: {vm.Name} - {extensionName} - {extension.ProvisioningState}"
                 );
                 status.Add(extension.ProvisioningState);
-            }
-            else {
+            } else {
                 toCreate.Add(config);
             }
         }
 
         if (toCreate.Any()) {
             toCreate.ForEach(async config => await CreateExtension(vm.Name, config));
-        }
-        else {
+        } else {
             if (status.All(s => string.Equals(s, "Succeeded", StringComparison.Ordinal))) {
                 return OneFuzzResult<bool>.Ok(true);
-            }
-            else if (status.Any(s => string.Equals(s, "Failed", StringComparison.Ordinal))) {
+            } else if (status.Any(s => string.Equals(s, "Failed", StringComparison.Ordinal))) {
                 return OneFuzzResult<bool>.Error(
                     ErrorCode.VM_CREATE_FAILED,
                     "failed to launch extension"
                 );
-            }
-            else if (!(status.Contains("Creating") || status.Contains("Updating"))) {
+            } else if (!(status.Contains("Creating") || status.Contains("Updating"))) {
                 _logTracer.Error($"vm agent - unknown state {vm.Name}: {JsonConvert.SerializeObject(status)}");
             }
         }
@@ -167,7 +164,7 @@ public class VmOperations : IVmOperations {
         if (await GetVm(vm.Name) != null) {
             return OneFuzzResultVoid.Ok;
         }
-        
+
         _logTracer.Info($"vm creating: {vm.Name}");
 
         return await CreateVm(
@@ -193,7 +190,7 @@ public class VmOperations : IVmOperations {
     async Task<OneFuzzResultVoid> CreateVm(
         string name,
         string location,
-        string vmSky,
+        string vmSku,
         string image,
         string password,
         string sshPublicKey,
@@ -224,18 +221,87 @@ public class VmOperations : IVmOperations {
             }
         }
 
-        var imageRef = new Dictionary<string, string>();
-        if (image.StartsWith("/", StringComparison.Ordinal)) {
-            imageRef.Add("id", image);
+        var vmParams = new VirtualMachineData(location);
+        vmParams.OSProfile.ComputerName = "node";
+        vmParams.OSProfile.AdminUsername = "onefuzz";
+        vmParams.HardwareProfile.VmSize = vmSku;
+        vmParams.StorageProfile.ImageReference = GenerateImageReference(image);
+        vmParams.NetworkProfile.NetworkInterfaces.Add(new NetworkInterfaceReference { Id = nic.Id});
+
+        var imageOs = await _context.ImageOperations.GetOs(location, image);
+        if (!imageOs.IsOk) {
+            return OneFuzzResultVoid.Error(imageOs.ErrorV);
+        }
+
+        switch (imageOs.OkV) {
+            case Os.Windows:
+            {
+                vmParams.OSProfile.AdminPassword = password;
+                break;
+            }
+            case Os.Linux:
+            {
+                vmParams.OSProfile.LinuxConfiguration.DisablePasswordAuthentication = true;
+                vmParams.OSProfile.LinuxConfiguration.SshPublicKeys.Add(
+                    new SshPublicKeyInfo
+                    {
+                        Path = "/home/onefuzz/.ssh/authorized_keys",
+                        KeyData = sshPublicKey
+                    }
+                );
+                break;
+            }
+            default: throw new NotImplementedException($"No support for OS type: {imageOs.OkV}");
+        }
+        
+        var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
+        if (!string.IsNullOrEmpty(onefuzzOwner)) {
+            vmParams.Tags.Add("OWNER", onefuzzOwner);
         }
         else {
-            var imageVal = image.Split(":", 4);
-            imageRef = new Dictionary<string, string>()
-            {
+            tags?.ToList()
+                .ForEach(kvp => {
+                    if (!vmParams.Tags.TryAdd(kvp.Key, kvp.Value)) {
+                        _logTracer.Warning($"Failed to add tag {kvp.Key}:{kvp.Value} to vm {name}");
+                    }
+            });
+        }
 
-            };
+        try {
+            await _context.Creds.GetResourceGroupResource().GetVirtualMachines().CreateOrUpdateAsync(
+                WaitUntil.Started,
+                name,
+                vmParams
+            );
+        }
+        catch (RequestFailedException ex) {
+            if (ex.ErrorCode == "ResourceNotFound" && ex.Message.Contains("The request failed due to conflict with a concurrent request")) {
+                // _logTracer.Debug($""create VM had conflicts with concurrent request, ignoring {ex.ToString()}");
+                return OneFuzzResultVoid.Ok;
+            }
+
+            return OneFuzzResultVoid.Error(
+                ErrorCode.VM_CREATE_FAILED,
+                ex.ToString()
+            );
         }
 
         return OneFuzzResultVoid.Ok;
+    }
+
+    private static ImageReference GenerateImageReference(string image) {
+        var imageRef = new ImageReference();
+
+        if (image.StartsWith("/", StringComparison.Ordinal)) {
+            imageRef.Id = image;
+        } else {
+            var imageVal = image.Split(":", 4);
+            imageRef.Publisher = imageVal[0];
+            imageRef.Offer = imageVal[1];
+            imageRef.Sku = imageVal[2];
+            imageRef.Version = imageVal[3];
+        }
+
+        return imageRef;
     }
 }

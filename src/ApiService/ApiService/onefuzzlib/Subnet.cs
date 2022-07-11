@@ -1,4 +1,5 @@
-﻿using Azure.ResourceManager.Network;
+﻿using System.Threading.Tasks;
+using Azure.ResourceManager.Network;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -7,13 +8,23 @@ public interface ISubnet {
     Async.Task<VirtualNetworkResource?> GetVnet(string vnetName);
 
     Async.Task<SubnetResource?> GetSubnet(string vnetName, string subnetName);
+
+    Async.Task<OneFuzzResultVoid> CreateVirtualNetwork(string resourceGroup, string name, string region, NetworkConfig networkConfig);
 }
 
 public class Subnet : ISubnet {
     private readonly ICreds _creds;
 
-    public Subnet(ICreds creds) {
+    private readonly ILogTracer _logTracer;
+
+    public Subnet(ICreds creds, ILogTracer logTracer) {
         _creds = creds;
+        _logTracer = logTracer;
+    }
+
+    public Task<OneFuzzResultVoid> CreateVirtualNetwork(string resourceGroup, string name, string region, NetworkConfig networkConfig) {
+        _logTracer.Error($"network creation failed: {name}:{region} {{error}}");
+        throw new NotImplementedException();
     }
 
     public async Async.Task<SubnetResource?> GetSubnet(string vnetName, string subnetName) {
