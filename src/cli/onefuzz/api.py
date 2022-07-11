@@ -886,7 +886,9 @@ class Tasks(Endpoint):
             task=models.TaskDetails(
                 analyzer_env=analyzer_env,
                 analyzer_exe=analyzer_exe,
-                analyzer_options=[o.strip() for o in analyzer_options],
+                analyzer_options=[o.strip() for o in analyzer_options]
+                if analyzer_options
+                else None,
                 check_asan_log=check_asan_log,
                 check_debugger=check_debugger,
                 check_retry_count=check_retry_count,
@@ -895,7 +897,9 @@ class Tasks(Endpoint):
                 duration=duration,
                 ensemble_sync_delay=ensemble_sync_delay,
                 generator_exe=generator_exe,
-                generator_options=[o.strip() for o in generator_options],
+                generator_options=[o.strip() for o in generator_options]
+                if generator_options
+                else None,
                 reboot_after_setup=reboot_after_setup,
                 rename_output=rename_output,
                 stats_file=stats_file,
@@ -903,10 +907,14 @@ class Tasks(Endpoint):
                 supervisor_env=supervisor_env,
                 supervisor_exe=supervisor_exe,
                 supervisor_input_marker=supervisor_input_marker,
-                supervisor_options=[o.strip() for o in supervisor_options],
+                supervisor_options=[o.strip() for o in supervisor_options]
+                if supervisor_options
+                else None,
                 target_env=target_env,
                 target_exe=target_exe,
-                target_options=[o.strip() for o in target_options],
+                target_options=[o.strip() for o in target_options]
+                if target_options
+                else None,
                 target_options_merge=target_options_merge,
                 target_timeout=target_timeout,
                 target_workers=target_workers,
