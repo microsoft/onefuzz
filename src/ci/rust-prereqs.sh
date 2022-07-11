@@ -16,5 +16,3 @@ cargo install cargo-audit
 if ! cargo-license --help; then
     cargo install cargo-license
 fi
-
-rustup component add clippy

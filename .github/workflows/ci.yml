@@ -20,6 +20,10 @@ jobs:
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v2
+    - name: Install specific Rust version
+      run: |
+        rustup default 1.62 
+        rustup component add clippy rustfmt
     - name: Rust Prereq Cache
       uses: actions/cache@v2
       id: cache-rust-prereqs
