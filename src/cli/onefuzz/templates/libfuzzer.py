@@ -130,7 +130,13 @@ class Libfuzzer(Command):
         libfuzzer_fuzz_target_options = target_options.copy()
 
         if fuzzing_target_options:
-            libfuzzer_fuzz_target_options += fuzzing_target_options
+            # Add each _fuzzing-only_ target option to the `target_options` for the fuzzing task.
+            #
+            # Trim any surrounding whitespace to allow users to quote multiple options with extra
+            # whitespace as a workaround for CLI argument parsing limitations. Trimming is needed
+            # to ensure that the fuzzer binary eventually parses the arguments as options.
+            for option in fuzzing_target_options:
+                libfuzzer_fuzz_target_options.append(option.strip())
 
         fuzzer_task = self.onefuzz.tasks.create(
             job.job_id,
