@@ -800,6 +800,12 @@ class Tasks(Endpoint):
 
         return self._req_model("POST", models.Task, data=config)
 
+    def trim_options(self, options: Optional[List[str]]) -> Optional[List[str]]:
+        # Trim any surrounding whitespace to allow users to quote multiple options with extra
+        # whitespace as a workaround for CLI argument parsing limitations. Trimming is needed
+        # to ensure that the binary eventually parses the arguments as options.
+        return [o.strip() for o in options] if options else None
+
     def create(
         self,
         job_id: UUID_EXPANSION,
@@ -886,9 +892,7 @@ class Tasks(Endpoint):
             task=models.TaskDetails(
                 analyzer_env=analyzer_env,
                 analyzer_exe=analyzer_exe,
-                analyzer_options=[o.strip() for o in analyzer_options]
-                if analyzer_options
-                else None,
+                analyzer_options=self.trim_options(analyzer_options),
                 check_asan_log=check_asan_log,
                 check_debugger=check_debugger,
                 check_retry_count=check_retry_count,
@@ -897,9 +901,7 @@ class Tasks(Endpoint):
                 duration=duration,
                 ensemble_sync_delay=ensemble_sync_delay,
                 generator_exe=generator_exe,
-                generator_options=[o.strip() for o in generator_options]
-                if generator_options
-                else None,
+                generator_options=self.trim_options(generator_options),
                 reboot_after_setup=reboot_after_setup,
                 rename_output=rename_output,
                 stats_file=stats_file,
@@ -907,14 +909,10 @@ class Tasks(Endpoint):
                 supervisor_env=supervisor_env,
                 supervisor_exe=supervisor_exe,
                 supervisor_input_marker=supervisor_input_marker,
-                supervisor_options=[o.strip() for o in supervisor_options]
-                if supervisor_options
-                else None,
+                supervisor_options=self.trim_options(supervisor_options),
                 target_env=target_env,
                 target_exe=target_exe,
-                target_options=[o.strip() for o in target_options]
-                if target_options
-                else None,
+                target_options=self.trim_options(target_options),
                 target_options_merge=target_options_merge,
                 target_timeout=target_timeout,
                 target_workers=target_workers,
