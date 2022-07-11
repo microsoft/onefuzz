@@ -1,6 +1,8 @@
 param location string
 param server_farm_id string
 param owner string
+param workspaceId string
+param logRetention int
 
 var autoscale_name = 'onefuzz-autoscale-${uniqueString(resourceGroup().id)}' 
 
@@ -28,16 +30,16 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
               metricResourceUri: server_farm_id
               operator: 'GreaterThanOrEqual'
               statistic: 'Average'
-              threshold: 20
+              threshold: 50
               timeAggregation: 'Average'
               timeGrain: 'PT1M'
-              timeWindow: 'PT1M'
+              timeWindow: 'PT10M'
             }
             scaleAction: {
-              cooldown: 'PT1M'
+              cooldown: 'PT10M'
               direction: 'Increase'
               type: 'ChangeCount'
-              value: '5'
+              value: '1'
             }
           }
           {
@@ -46,13 +48,13 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
               metricResourceUri: server_farm_id
               operator: 'LessThan'
               statistic: 'Average'
-              threshold: 20
+              threshold: 25
               timeAggregation:'Average' 
               timeGrain: 'PT1M'
-              timeWindow: 'PT1M'
+              timeWindow: 'PT10M'
             }
             scaleAction: {
-              cooldown: 'PT5M'
+              cooldown: 'PT10M'
               direction: 'Decrease'
               type: 'ChangeCount'
               value: '1'
@@ -65,5 +67,23 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
   }
   tags: {
     OWNER: owner
+  }
+}
+
+resource functionDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'functionDiagnosticSettings'
+  scope: autoscaleSettings
+  properties: {
+    logs: [
+      {
+        categoryGroup: 'allLogs'
+        enabled: true
+        retentionPolicy: {
+          days: logRetention
+          enabled: true
+        }
+      }
+    ]
+    workspaceId: workspaceId
   }
 }

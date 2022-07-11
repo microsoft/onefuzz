@@ -59,7 +59,6 @@ jobs:
         os:
         - ubuntu-18.04
         - windows-2019
-        - macos-10.15
   azcopy:
     runs-on: ubuntu-18.04
     steps:
@@ -283,7 +282,7 @@ jobs:
 
     # note that Test comes before Build:
     # Test will build things in Debug mode, Build will build them in Release
-    # Build comes second in case Test would do something (unspecified) that 
+    # Build comes second in case Test would do something (unspecified) that
     # would somehow alter the binaries that we want to package.
     - name: Test & Collect coverage info
       run: |
@@ -309,7 +308,7 @@ jobs:
         if [[ "$version" =~ '-' ]]; then
           # if it has a suffix, split it into two parts
           dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version%-*} /p:VersionSuffix=${version#*-}
-        else 
+        else
           dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version}
         fi
 
@@ -341,6 +340,26 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: src/ci/aflpp.sh
+    - uses: actions/upload-artifact@v2.2.2
+      with:
+        name: build-artifacts
+        path: artifacts
+  dotnet-fuzzing-tools-linux:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - run: src/ci/dotnet-fuzzing-tools.sh
+      shell: bash
+    - uses: actions/upload-artifact@v2.2.2
+      with:
+        name: build-artifacts
+        path: artifacts
+  dotnet-fuzzing-tools-windows:
+    runs-on: windows-2022
+    steps:
+    - uses: actions/checkout@v2
+    - run: src/ci/dotnet-fuzzing-tools.ps1
+      shell: pwsh
     - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts

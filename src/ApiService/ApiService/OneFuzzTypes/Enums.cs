@@ -70,7 +70,8 @@ public enum TaskType {
     GenericMerge,
     GenericGenerator,
     GenericCrashReport,
-    GenericRegression
+    GenericRegression,
+    DotnetCoverage,
 }
 
 public enum Os {

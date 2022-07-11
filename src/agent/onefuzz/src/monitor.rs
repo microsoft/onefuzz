@@ -145,6 +145,5 @@ impl DirectoryMonitor {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
 #[cfg(test)]
 mod tests;

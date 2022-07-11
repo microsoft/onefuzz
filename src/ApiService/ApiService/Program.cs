@@ -54,7 +54,7 @@ public class Program {
 
     //Move out expensive resources into separate class, and add those as Singleton
     // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
-    public static void Main() {
+    public async static Async.Task Main() {
         var host = new HostBuilder()
         .ConfigureFunctionsWorkerDefaults(
             builder => {
@@ -112,6 +112,7 @@ public class Program {
             .AddScoped<IOnefuzzContext, OnefuzzContext>()
             .AddScoped<IEndpointAuthorization, EndpointAuthorization>()
             .AddScoped<INodeMessageOperations, NodeMessageOperations>()
+            .AddScoped<ISubnet, Subnet>()
 
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
@@ -121,7 +122,7 @@ public class Program {
         )
         .Build();
 
-        host.Run();
+        await host.RunAsync();
     }
 
 

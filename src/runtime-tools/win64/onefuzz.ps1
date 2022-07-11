@@ -181,9 +181,9 @@ function Install-Dotnet([string]$Version, [string]$InstallDir, [string]$ToolsDir
   log "Installing dotnet: done"
   log "Installing dotnet tools to ${ToolsDir}"
   Push-Location $InstallDir
-  ./dotnet.exe tool install dotnet-dump --tool-path $ToolsDir
-  ./dotnet.exe tool install dotnet-coverage --tool-path $ToolsDir
-  ./dotnet.exe tool install dotnet-sos --tool-path $ToolsDir
+  ./dotnet.exe tool install dotnet-dump --version 6.0.328102 --tool-path $ToolsDir
+  ./dotnet.exe tool install dotnet-coverage --version 17.3.6 --tool-path $ToolsDir
+  ./dotnet.exe tool install dotnet-sos --version 6.0.328102 --tool-path $ToolsDir
   Pop-Location
   log "Installing dotnet tools: done"
 }

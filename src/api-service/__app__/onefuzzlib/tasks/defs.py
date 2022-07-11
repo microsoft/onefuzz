@@ -558,4 +558,40 @@ TASK_DEFINITIONS = {
             ),
         ],
     ),
+    TaskType.dotnet_coverage: TaskDefinition(
+        features=[
+            TaskFeature.target_exe,
+            TaskFeature.target_env,
+            TaskFeature.target_options,
+            TaskFeature.target_timeout,
+            TaskFeature.coverage_filter,
+            TaskFeature.target_must_use_input,
+        ],
+        vm=VmDefinition(compare=Compare.Equal, value=1),
+        containers=[
+            ContainerDefinition(
+                type=ContainerType.setup,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.readonly_inputs,
+                compare=Compare.AtLeast,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.coverage,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[
+                    ContainerPermission.List,
+                    ContainerPermission.Read,
+                    ContainerPermission.Write,
+                ],
+            ),
+        ],
+        monitor_queue=ContainerType.readonly_inputs,
+    ),
 }
