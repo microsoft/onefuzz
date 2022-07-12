@@ -42,8 +42,26 @@ public class Jobs {
 
         await _context.JobOperations.Insert(job);
 
-        // create the job logs container
-        throw new NotImplementedException("Land the containers PR first…");
+        // create the job logs container 
+        var metadata = new Dictionary<string, string>{
+            { "container_type", "logs" }, // TODO: use ContainerType.Logs enum somehow; needs snake case name
+        };
+        var containerName = new Container($"logs-{job.JobId}");
+        var containerSas = await _context.Containers.CreateContainer(containerName, StorageType.Corpus, metadata);
+        if (containerSas is null) {
+            return await _context.RequestHandling.NotOk(
+                req, 
+                new Error(
+                    Code: ErrorCode.UNABLE_TO_CREATE_CONTAINER,
+                    Errors: new string[] { "unable to create logs container "}),
+                "logs");
+        }
+
+        // log container must not have the SAS included
+        var logContainerUri = new UriBuilder(containerSas) { Query = "" }.Uri;
+        job = job with { Config = job.Config with { Logs = logContainerUri.ToString() }};
+        await _context.JobOperations.Update(job);
+        return await RequestHandling.Ok(req, JobResponse.ForJob(job));
     }
 
     private async Task<HttpResponseData> Delete(HttpRequestData req) {

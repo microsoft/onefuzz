@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
@@ -147,5 +148,28 @@ public abstract class JobsTestBase : FunctionTestBase {
         Assert.Equal(2, response.Length);
         Assert.Contains(response, j => j.State == JobState.Stopping);
         Assert.Contains(response, j => j.State == JobState.Enabled);
+    }
+
+    [Fact]
+    public async Async.Task Post_CreatesJob_AndContainer() {
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new Jobs(auth, Context);
+
+        // need user credentials to put into the job object
+        var userInfo = new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn");
+        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult.Ok(userInfo));
+
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", _config));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var job = Assert.Single(await Context.JobOperations.SearchAll().ToListAsync());
+        var response = BodyAs<JobResponse>(result);
+        Assert.Equal(job.JobId, response.JobId);
+        Assert.NotNull(job.Config.Logs);
+        Assert.Empty(new Uri(job.Config.Logs!).Query);
+
+        var container = Assert.Single(await Context.Containers.GetContainers(StorageType.Corpus), c => c.Key.Contains(job.JobId.ToString()));
+        var metadata = Assert.Single(container.Value);
+        Assert.Equal(new KeyValuePair<string, string>("container_type", "logs"), metadata);
     }
 }
