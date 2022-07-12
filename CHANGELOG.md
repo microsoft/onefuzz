@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### 5.8.0
+### Added
+* Service: Add correct routes and auth to agent C# functions. [#2109](https://github.com/microsoft/onefuzz/pull/2109)
+* Service: Port `agent_registration` to C#. [#2107](https://github.com/microsoft/onefuzz/pull/2107)
+* Agent: Add the `dotnet_coverage` task. [#2062](https://github.com/microsoft/onefuzz/pull/2062)
+* Agent: Add multiple ways to specify LibFuzzerDotnetLoader targets. [#2136](https://github.com/microsoft/onefuzz/pull/2136)
+* Agent: Add logging to LibFuzzerDotnetLoader. [#2141](https://github.com/microsoft/onefuzz/pull/2141)
+* Documentation: Added documentation for LibFuzzerDotnetLoader. [#2142](https://github.com/microsoft/onefuzz/pull/2142)
+
+### Changed
+* Service: Add caching to C# storage implementation so repeated queries do not get throttled. [#2102](https://github.com/microsoft/onefuzz/pull/2102)
+* Service: Remove unused poolname validation. [#2094](https://github.com/microsoft/onefuzz/pull/2094)
+* Service: Make the hostbuilder async in C#. [#2122](https://github.com/microsoft/onefuzz/pull/2122)
+* Service: Updated the scaling policy for the App Functions. [#2140](https://github.com/microsoft/onefuzz/pull/2140)
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#2022](https://github.com/microsoft/onefuzz/pull/2022)
+* Agent: Remove incomplete macOS support. [#2134](https://github.com/microsoft/onefuzz/pull/2134), [#2135](https://github.com/microsoft/onefuzz/pull/2135)
+
+### Fixed
+* Service: Include State filter when searching for expired tasks and jobs. [#2138](https://github.com/microsoft/onefuzz/pull/2138)
+* Service: Fix reported TLS errors. [#2087](https://github.com/microsoft/onefuzz/pull/2087)
+* Service: Change the `upload_file` method to use the Azcopy command by default for robustness and fall back to the Azure Python SDK implementation if needed. This also addresses issues where low bandwidth connections timeout due to not being able to handle multiple concurrent upload streams.  [#1556](https://github.com/microsoft/onefuzz/pull/1556)
+* Service: Update the log SAS URL to last as long as the job duration. [#2116](https://github.com/microsoft/onefuzz/pull/2116), [#2121](https://github.com/microsoft/onefuzz/pull/2121)
+* Service: Fixed a number of issues in the C# implementation of `TimerProxy`. [#2133](https://github.com/microsoft/onefuzz/pull/2133)
+* Agent: Fix a race condition when monitoring files on the VM. [#2105](https://github.com/microsoft/onefuzz/pull/2105)
+
+## 5.7.1
+This a hotpatch to the 5.7.0 release fixing SAS URL generation which had the potential to cause tasks to fail. [#2116](https://github.com/microsoft/onefuzz/pull/2116)
+
 ## 5.7.0
 ### Added
 * Agent: Add `NodeState` to Node Heartbeat to better track the current state of nodes in the system [#2024](https://github.com/microsoft/onefuzz/pull/2024), [#2053](https://github.com/microsoft/onefuzz/pull/2053)
@@ -80,6 +108,7 @@ This a hotpatch to the 5.4.0 release fixing the parsing failures from old crash 
 * Agent: Set the TSan options based on the external symbolizer. [#1787](https://github.com/microsoft/onefuzz/pull/1787)
 * CLI: Added the `ONEFUZZ_CLIENT_SECRET` environment variable and removed the `client_secret` field from the configuration file. This prevents accidental misuse via persisting the secret to disk outside of [confidential client](https://docs.microsoft.com/en-us/azure/active-directory/develop/developer-glossary#client-application) environments. If you have set a client secret in your configuration file in a public client, we recommending removing and revoking it. CI scripts that currently set the client secret in the config must instead pass it via the `ONEFUZZ_CLIENT_SECRET` environment variable or on each CLI invocation via the `--client_secret` argument. [#1918](https://github.com/microsoft/onefuzz/pull/1918)
 * CLI: Use a SAS URL to download log files. [#1920](https://github.com/microsoft/onefuzz/pull/1920)
+
 ### Fixed
 * Agent: Only watch directories for change events. [#1859](https://github.com/microsoft/onefuzz/pull/1859)
 * Agent: Switch to a smart constructor to minimize misuse. [#1865](https://github.com/microsoft/onefuzz/pull/1865)
