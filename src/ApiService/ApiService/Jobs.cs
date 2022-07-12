@@ -13,7 +13,7 @@ public class Jobs {
         _auth = auth;
     }
 
-    [Function("Info")]
+    [Function("Jobs")]
     public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req)
         => _auth.CallIfUser(req, r => r.Method switch {
             "GET" => Get(r),
