@@ -117,8 +117,7 @@ clang -g -O2 -fsanitize=fuzzer libfuzzer-dotnet-windows.cc -o libfuzzer-dotnet.e
 Next, using .NET 6, you need to [publish](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish) a self-contained
 build of the loader.
 
-Note: this depends on SharpFuzz changes which are not yet published to NuGet.
-Your build's local copy of SharpFuzz must include commit `ec28c46` or later.
+Note: this depends on SharpFuzz 2.0.0 or greater.
 
 #### Linux
 ```
