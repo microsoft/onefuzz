@@ -262,11 +262,7 @@ impl TaskLogger {
 
     async fn event_loop<T: Send + Sized>(self, context: LoopContext<T>) -> Result<LoopContext<T>> {
         match context.state {
-            LoopState::Send {
-                start,
-                count,
-                done,
-            } => {
+            LoopState::Send { start, count, done } => {
                 match context
                     .log_writer
                     .write_logs(&context.pending_logs[start..start + count])
@@ -303,11 +299,7 @@ impl TaskLogger {
 
                     WriteLogResponse::MaxSizeReached => {
                         Result::<_, anyhow::Error>::Ok(LoopContext {
-                            state: LoopState::InitLog {
-                                start,
-                                count,
-                                done,
-                            },
+                            state: LoopState::InitLog { start, count, done },
                             ..context
                         })
                     }
@@ -324,19 +316,11 @@ impl TaskLogger {
                     }
                 }
             }
-            LoopState::InitLog {
-                start,
-                count,
-                done,
-            } => {
+            LoopState::InitLog { start, count, done } => {
                 let new_writer = context.log_writer.get_next_writer().await?;
                 Result::<_, anyhow::Error>::Ok(LoopContext {
                     log_writer: new_writer,
-                    state: LoopState::Send {
-                        start,
-                        count,
-                        done,
-                    },
+                    state: LoopState::Send { start, count, done },
                     ..context
                 })
             }
