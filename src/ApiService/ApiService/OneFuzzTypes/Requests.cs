@@ -95,3 +95,17 @@ public record ExitStatus(
     int? Code,
     int? Signal,
     bool Success);
+
+public record ContainerGet(
+    Container Name
+) : BaseRequest;
+
+public record ContainerCreate(
+    Container Name,
+    IDictionary<string, string>? Metadata = null
+) : BaseRequest;
+
+public record ContainerDelete(
+    Container Name,
+    IDictionary<string, string>? Metadata = null
+) : BaseRequest;

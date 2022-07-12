@@ -1,8 +1,10 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager;
 using Azure.Storage;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 
 namespace Microsoft.OneFuzz.Service;
@@ -10,6 +12,10 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface IContainers {
     public Async.Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType);
+
+    public Async.Task<Uri?> CreateContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata);
+
+    public Async.Task<BlobContainerClient?> GetOrCreateContainerClient(Container container, StorageType storageType, IDictionary<string, string>? metadata);
 
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
@@ -24,8 +30,8 @@ public interface IContainers {
     public Async.Task<bool> BlobExists(Container container, string name, StorageType storageType);
 
     public Async.Task<Uri> AddContainerSasUrl(Uri uri, TimeSpan? duration = null);
+    public Async.Task<Dictionary<string, IDictionary<string, string>>> GetContainers(StorageType corpus);
 }
-
 
 public class Containers : IContainers {
     private ILogTracer _log;
@@ -76,6 +82,44 @@ public class Containers : IContainers {
         }
     }
 
+    public async Task<Uri?> CreateContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata) {
+        var client = await GetOrCreateContainerClient(container, storageType, metadata);
+        if (client is null) {
+            return null;
+        }
+
+        return GetContainerSasUrlService(client, _containerCreatePermissions);
+    }
+
+    private static readonly BlobContainerSasPermissions _containerCreatePermissions
+        = BlobContainerSasPermissions.Read
+        | BlobContainerSasPermissions.Write
+        | BlobContainerSasPermissions.Delete
+        | BlobContainerSasPermissions.List;
+
+    public async Task<BlobContainerClient?> GetOrCreateContainerClient(Container container, StorageType storageType, IDictionary<string, string>? metadata) {
+        var containerClient = await FindContainer(container, StorageType.Corpus);
+        if (containerClient is not null) {
+            return containerClient;
+        }
+
+        var account = _storage.ChooseAccount(storageType);
+        var client = await _storage.GetBlobServiceClientForAccount(account);
+        var containerName = _config.OneFuzzStoragePrefix + container.ContainerName;
+        var cc = client.GetBlobContainerClient(containerName);
+        try {
+            await cc.CreateAsync(metadata: metadata);
+        } catch (RequestFailedException ex) when (ex.ErrorCode == "ContainerAlreadyExists") {
+            // note: resource exists error happens during creation if the container
+            // is being deleted
+            _log.Error($"unable to create container.  account: {account} container: {container.ContainerName} metadata: {metadata} - {ex.Message}");
+            return null;
+        }
+
+        return cc;
+    }
+
+
     public async Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType) {
         // # check secondary accounts first by searching in reverse.
         // #
@@ -87,29 +131,18 @@ public class Containers : IContainers {
 
         var containerName = _config.OneFuzzStoragePrefix + container.ContainerName;
 
-        var containers = _storage.GetAccounts(storageType).AsEnumerable()
+        var containers =
+            _storage.GetAccounts(storageType)
             .Reverse()
-            .Select(async account => (await GetBlobService(account))?.GetBlobContainerClient(containerName));
+            .Select(async account => (await _storage.GetBlobServiceClientForAccount(account)).GetBlobContainerClient(containerName));
 
         foreach (var c in containers) {
             var client = await c;
-            if (client != null && (await client.ExistsAsync()).Value) {
+            if ((await client.ExistsAsync()).Value) {
                 return client;
             }
         }
         return null;
-    }
-
-    private async Async.Task<BlobServiceClient?> GetBlobService(string accountId) {
-        _log.Info($"getting blob container (account_id: {accountId})");
-        var (accountName, accountKey) = await _storage.GetStorageAccountNameAndKey(accountId);
-        if (accountName == null) {
-            _log.Error("Failed to get storage account name");
-            return null;
-        }
-        var storageKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
-        var accountUrl = _storage.GetBlobEndpoint(accountName);
-        return new BlobServiceClient(accountUrl, storageKeyCredential);
     }
 
     public async Async.Task<Uri> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null) {
@@ -153,13 +186,12 @@ public class Containers : IContainers {
 
     public static Uri? GetContainerSasUrlService(
         BlobContainerClient client,
-        BlobSasPermissions permissions,
+        BlobContainerSasPermissions permissions,
         bool tag = false,
         TimeSpan? timeSpan = null) {
         var (start, expiry) = SasTimeWindow(timeSpan ?? TimeSpan.FromDays(30.0));
         var sasBuilder = new BlobSasBuilder(permissions, expiry) { StartsOn = start };
-        var sas = client.GenerateSasUri(sasBuilder);
-        return sas;
+        return client.GenerateSasUri(sasBuilder);
     }
 
     public async Async.Task<Uri> AddContainerSasUrl(Uri uri, TimeSpan? duration = null) {
@@ -188,7 +220,7 @@ public class Containers : IContainers {
         var (startTime, endTime) = SasTimeWindow(duration ?? CONTAINER_SAS_DEFAULT_DURATION);
         var sasBuilder = new BlobSasBuilder(permissions, endTime) {
             StartsOn = startTime,
-            BlobContainerName = container.ContainerName
+            BlobContainerName = _config.OneFuzzStoragePrefix + container.ContainerName,
         };
 
         var sasUrl = client.GenerateSasUri(sasBuilder);
@@ -198,5 +230,21 @@ public class Containers : IContainers {
     public async Async.Task<bool> BlobExists(Container container, string name, StorageType storageType) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
         return await client.GetBlobClient(name).ExistsAsync();
+    }
+
+    public async Task<Dictionary<string, IDictionary<string, string>>> GetContainers(StorageType corpus) {
+        var accounts = _storage.GetAccounts(corpus);
+        IEnumerable<IEnumerable<KeyValuePair<string, IDictionary<string, string>>>> data =
+         await Async.Task.WhenAll(accounts.Select(async acc => {
+             var service = await _storage.GetBlobServiceClientForAccount(acc);
+             if (service is null) {
+                 throw new InvalidOperationException($"unable to get blob service for account {acc}");
+             }
+
+             return await service.GetBlobContainersAsync(BlobContainerTraits.Metadata).Select(container =>
+                KeyValuePair.Create(container.Name, container.Properties.Metadata)).ToListAsync();
+         }));
+
+        return new(data.SelectMany(x => x));
     }
 }

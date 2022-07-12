@@ -37,17 +37,17 @@ sealed class AzuriteStorage : IStorage {
     public Task<(string, string)> GetStorageAccountNameAndKey(string accountId)
         => Async.Task.FromResult((AccountName, AccountKey));
 
-    public Task<string?> GetStorageAccountNameKeyByName(string accountName) {
-        return Async.Task.FromResult(AccountName)!;
+    public IReadOnlyList<string> GetAccounts(StorageType storageType) {
+        return new[] { AccountName };
     }
 
-    public IEnumerable<string> CorpusAccounts() {
+    public IReadOnlyList<string> CorpusAccounts() {
         throw new System.NotImplementedException();
     }
 
     public string GetPrimaryAccount(StorageType storageType) => AccountName;
 
-    public IEnumerable<string> GetAccounts(StorageType storageType) {
-        yield return AccountName;
+    public Task<string?> GetStorageAccountNameKeyByName(string accountName) {
+        throw new NotImplementedException();
     }
 }
