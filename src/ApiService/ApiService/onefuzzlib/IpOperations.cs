@@ -41,10 +41,9 @@ public class IpOperations : IIpOperations {
     public async Async.Task<PublicIPAddressResource?> GetIp(string resourceGroup, string name) {
         _logTracer.Info($"getting ip {resourceGroup}:{name}");
 
-        try{
+        try {
             return await _creds.GetResourceGroupResource().GetPublicIPAddressAsync(name);
-        }
-        catch (RequestFailedException) {
+        } catch (RequestFailedException) {
             return null;
         }
     }
@@ -76,8 +75,7 @@ public class IpOperations : IIpOperations {
 
         if (publicIpResource == null) {
             return null;
-        }
-        else {
+        } else {
             return publicIpResource.Value.Data.IPAddress;
         }
     }
@@ -111,20 +109,17 @@ public class IpOperations : IIpOperations {
             return OneFuzzResultVoid.Ok;
         }
 
-        var networkInterface = new NetworkInterfaceData
-        {
+        var networkInterface = new NetworkInterfaceData {
             Location = region,
         };
 
-        networkInterface.IPConfigurations.Add(new NetworkInterfaceIPConfigurationData
-            {
-                Name = "myIPConfig",
-                PublicIPAddress = ip?.Data,
-                Subnet = new SubnetData
-                {
-                    Id = subnetId
-                }
+        networkInterface.IPConfigurations.Add(new NetworkInterfaceIPConfigurationData {
+            Name = "myIPConfig",
+            PublicIPAddress = ip?.Data,
+            Subnet = new SubnetData {
+                Id = subnetId
             }
+        }
         );
 
         var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
@@ -140,8 +135,7 @@ public class IpOperations : IIpOperations {
                 name,
                 networkInterface
             );
-        }
-        catch (RequestFailedException ex) {
+        } catch (RequestFailedException ex) {
             if (!ex.ToString().Contains("RetryableError")) {
                 return OneFuzzResultVoid.Error(
                     ErrorCode.VM_CREATE_FAILED,

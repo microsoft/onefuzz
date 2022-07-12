@@ -1,6 +1,4 @@
-using System.Threading.Tasks;
-using Azure;
-using Azure.ResourceManager.Compute;
+﻿using System.Threading.Tasks;
 
 namespace Microsoft.OneFuzz.Service;
 

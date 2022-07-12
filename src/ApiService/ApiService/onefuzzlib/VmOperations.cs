@@ -226,7 +226,7 @@ public class VmOperations : IVmOperations {
         vmParams.OSProfile.AdminUsername = "onefuzz";
         vmParams.HardwareProfile.VmSize = vmSku;
         vmParams.StorageProfile.ImageReference = GenerateImageReference(image);
-        vmParams.NetworkProfile.NetworkInterfaces.Add(new NetworkInterfaceReference { Id = nic.Id});
+        vmParams.NetworkProfile.NetworkInterfaces.Add(new NetworkInterfaceReference { Id = nic.Id });
 
         var imageOs = await _context.ImageOperations.GetOs(location, image);
         if (!imageOs.IsOk) {
@@ -234,37 +234,33 @@ public class VmOperations : IVmOperations {
         }
 
         switch (imageOs.OkV) {
-            case Os.Windows:
-            {
-                vmParams.OSProfile.AdminPassword = password;
-                break;
-            }
-            case Os.Linux:
-            {
-                vmParams.OSProfile.LinuxConfiguration.DisablePasswordAuthentication = true;
-                vmParams.OSProfile.LinuxConfiguration.SshPublicKeys.Add(
-                    new SshPublicKeyInfo
-                    {
-                        Path = "/home/onefuzz/.ssh/authorized_keys",
-                        KeyData = sshPublicKey
-                    }
-                );
-                break;
-            }
+            case Os.Windows: {
+                    vmParams.OSProfile.AdminPassword = password;
+                    break;
+                }
+            case Os.Linux: {
+                    vmParams.OSProfile.LinuxConfiguration.DisablePasswordAuthentication = true;
+                    vmParams.OSProfile.LinuxConfiguration.SshPublicKeys.Add(
+                        new SshPublicKeyInfo {
+                            Path = "/home/onefuzz/.ssh/authorized_keys",
+                            KeyData = sshPublicKey
+                        }
+                    );
+                    break;
+                }
             default: throw new NotImplementedException($"No support for OS type: {imageOs.OkV}");
         }
-        
+
         var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
         if (!string.IsNullOrEmpty(onefuzzOwner)) {
             vmParams.Tags.Add("OWNER", onefuzzOwner);
-        }
-        else {
+        } else {
             tags?.ToList()
                 .ForEach(kvp => {
                     if (!vmParams.Tags.TryAdd(kvp.Key, kvp.Value)) {
                         _logTracer.Warning($"Failed to add tag {kvp.Key}:{kvp.Value} to vm {name}");
                     }
-            });
+                });
         }
 
         try {
@@ -273,8 +269,7 @@ public class VmOperations : IVmOperations {
                 name,
                 vmParams
             );
-        }
-        catch (RequestFailedException ex) {
+        } catch (RequestFailedException ex) {
             if (ex.ErrorCode == "ResourceNotFound" && ex.Message.Contains("The request failed due to conflict with a concurrent request")) {
                 // _logTracer.Debug($""create VM had conflicts with concurrent request, ignoring {ex.ToString()}");
                 return OneFuzzResultVoid.Ok;

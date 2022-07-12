@@ -9,7 +9,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IExtensions {
     public Async.Task<IList<VirtualMachineScaleSetExtensionData>> FuzzExtensions(Pool pool, Scaleset scaleset);
 
-    public Async.Task<IList<Dictionary<string, string>>> ReproExtensions(string region, string os, Guid uuid, ReproConfig reproConfig, Container? setupContainer);
+    public Async.Task<IList<VirtualMachineScaleSetExtensionData>> ReproExtensions(string region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer);
 }
 
 public class Extensions : IExtensions {
@@ -20,13 +20,16 @@ public class Extensions : IExtensions {
     IConfigOperations _instanceConfigOps;
     ILogAnalytics _logAnalytics;
 
-    public Extensions(IServiceConfig config, ICreds creds, IQueue queue, IContainers containers, IConfigOperations instanceConfigOps, ILogAnalytics logAnalytics) {
+    IOnefuzzContext _context;
+
+    public Extensions(IServiceConfig config, ICreds creds, IQueue queue, IContainers containers, IConfigOperations instanceConfigOps, ILogAnalytics logAnalytics, IOnefuzzContext context) {
         _serviceConfig = config;
         _creds = creds;
         _queue = queue;
         _containers = containers;
         _instanceConfigOps = instanceConfigOps;
         _logAnalytics = logAnalytics;
+        _context = context;
     }
 
     public async Async.Task<Uri?> ConfigUrl(Container container, string fileName, bool withSas) {
@@ -351,7 +354,92 @@ public class Extensions : IExtensions {
         return extensions;
     }
 
-    public Task<IList<Dictionary<string, string>>> ReproExtensions(string region, string os, Guid uuid, ReproConfig reproConfig, Container? setupContainer) {
-        throw new NotImplementedException();
+    public async Task<IList<VirtualMachineScaleSetExtensionData>> ReproExtensions(string region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer) {
+        // TODO: what about contents of repro.ps1 / repro.sh?
+        var report = await _context.Reports.GetReport(reproConfig.Container, reproConfig.Path);
+        report.EnsureNotNull($"invalid report: {reproConfig}");
+        report?.InputBlob.EnsureNotNull("unable to perform reproduction without an input blob");
+
+        var commands = new List<string>();
+        if (setupContainer != null) {
+            var containerSasUrl = await _context.Containers.GetContainerSasUrl(
+                setupContainer,
+                StorageType.Corpus,
+                BlobContainerSasPermissions.Read | BlobContainerSasPermissions.List
+            );
+            commands.Add(
+                $"azcopy sync '{containerSasUrl}' ./setup"
+            );
+        }
+
+        var urls = new List<Uri>()
+        {
+            (await _context.Containers.GetFileSasUrl(
+                reproConfig.Container,
+                reproConfig.Path,
+                StorageType.Corpus,
+                BlobSasPermissions.Read
+            )),
+            (await _context.Containers.GetFileSasUrl(
+                report?.InputBlob?.container!,
+                report?.InputBlob?.Name!,
+                StorageType.Corpus,
+                BlobSasPermissions.Read
+            ))
+        };
+
+        List<string> reproFiles;
+        string taskScript;
+        string scriptName;
+        if (reproOs == Os.Windows) {
+            reproFiles = new List<string>()
+            {
+                $"{reproId}/repro.ps1"
+            };
+            taskScript = string.Join("\r\n", commands);
+            scriptName = "task-setup.ps1";
+        }
+        else {
+            reproFiles = new List<string>()
+            {
+                $"{reproId}/repro.sh",
+                $"{reproId}/repro-stdout.sh"
+            };
+            commands.Add("chmod -R +x setup");
+            taskScript = string.Join("\n", commands);
+            scriptName = "task-setup.sh";
+        }
+
+        await _context.Containers.SaveBlob(
+            new Container("task-configs"),
+            $"{reproId}/{scriptName}",
+            taskScript,
+            StorageType.Config
+        );
+
+        foreach(var reproFile in reproFiles)
+        {
+            urls.AddRange(new List<Uri>()
+            {
+                (await _context.Containers.GetFileSasUrl(
+                    new Container("repro-scripts"),
+                    reproFile,
+                    StorageType.Config,
+                    BlobSasPermissions.Read
+                )),
+                (await _context.Containers.GetFileSasUrl(
+                    new Container("task-configs"),
+                    $"{reproId}/{scriptName}",
+                    StorageType.Config,
+                    BlobSasPermissions.Read
+                ))
+            });
+        }
+
+        var baseExtension = await AgentConfig(region, reproOs, AgentMode.Repro, urls: urls, withSas: true);
+        var extensions = await GenericExtensions(region, reproOs);
+        extensions.Add(baseExtension);
+        return extensions;
     }
+
 }
