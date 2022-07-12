@@ -1,0 +1,104 @@
+﻿using System.Threading.Tasks;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+
+namespace Microsoft.OneFuzz.Service;
+
+public class Jobs {
+    private readonly IOnefuzzContext _context;
+    private readonly IEndpointAuthorization _auth;
+
+    public Jobs(IEndpointAuthorization auth, IOnefuzzContext context) {
+        _context = context;
+        _auth = auth;
+    }
+
+    [Function("Info")]
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req)
+        => _auth.CallIfUser(req, r => r.Method switch {
+            "GET" => Get(r),
+            "DELETE" => Delete(r),
+            "POST" => Post(r),
+            var m => throw new NotSupportedException($"Unsupported HTTP method {m}"),
+        });
+
+    private async Task<HttpResponseData> Post(HttpRequestData req) {
+        var request = await RequestHandling.ParseRequest<JobConfig>(req);
+        if (!request.IsOk) {
+            return await _context.RequestHandling.NotOk(req, request.ErrorV, "jobs create");
+        }
+
+        var userInfo = await _context.UserCredentials.ParseJwtToken(req);
+        if (!userInfo.IsOk) {
+            return await _context.RequestHandling.NotOk(req, userInfo.ErrorV, "jobs create");
+        }
+
+        var job = new Job(
+            JobId: Guid.NewGuid(),
+            State: JobState.Init,
+            Config: request.OkV) {
+            UserInfo = userInfo.OkV,
+        };
+
+        await _context.JobOperations.Insert(job);
+
+        // create the job logs container
+        throw new NotImplementedException("Land the containers PR first…");
+    }
+
+    private async Task<HttpResponseData> Delete(HttpRequestData req) {
+        var request = await RequestHandling.ParseRequest<JobGet>(req);
+        if (!request.IsOk) {
+            return await _context.RequestHandling.NotOk(req, request.ErrorV, "jobs delete");
+        }
+
+        var jobId = request.OkV.JobId;
+        var job = await _context.JobOperations.Get(jobId);
+        if (job is null) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                new Error(
+                    Code: ErrorCode.INVALID_JOB,
+                    Errors: new string[] { "no such job" }),
+                context: jobId.ToString());
+        }
+
+        if (job.State != JobState.Stopped && job.State != JobState.Stopping) {
+            job = job with { State = JobState.Stopping };
+            await _context.JobOperations.Replace(job);
+        }
+
+        return await RequestHandling.Ok(req, JobResponse.ForJob(job));
+    }
+
+    private async Task<HttpResponseData> Get(HttpRequestData req) {
+        var request = await RequestHandling.ParseRequest<JobSearch>(req);
+        if (!request.IsOk) {
+            return await _context.RequestHandling.NotOk(req, request.ErrorV, "jobs");
+        }
+
+        var search = request.OkV;
+        if (search.JobId is Guid jobId) {
+            var job = await _context.JobOperations.Get(jobId);
+            if (job is null) {
+                return await _context.RequestHandling.NotOk(
+                    req,
+                    new Error(
+                        Code: ErrorCode.INVALID_JOB,
+                        Errors: new string[] { "no such job" }),
+                    context: jobId.ToString());
+            }
+
+            static JobTaskInfo TaskToJobTaskInfo(Task t) => new(t.TaskId, t.Config.Task.Type, t.State);
+
+            // TODO: search.WithTasks is not checked in Python code?
+
+            var taskInfo = await _context.TaskOperations.SearchStates(jobId).Select(TaskToJobTaskInfo).ToListAsync();
+            job = job with { TaskInfo = taskInfo };
+            return await RequestHandling.Ok(req, JobResponse.ForJob(job));
+        }
+
+        var jobs = await _context.JobOperations.SearchState(states: search.State ?? Enumerable.Empty<JobState>()).ToListAsync();
+        return await RequestHandling.Ok(req, jobs.Select(j => JobResponse.ForJob(j)));
+    }
+}
