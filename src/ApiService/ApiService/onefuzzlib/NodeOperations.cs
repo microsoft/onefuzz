@@ -65,10 +65,11 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public async Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node) {
-        if (await ScalesetNodeExists(node) && node.ScalesetId != null) {
+        if (await ScalesetNodeExists(node) && node.ScalesetId is Guid scalesetId) {
             _logTracer.Info($"Setting scale-in protection on node {node.MachineId}");
-            return await _context.VmssOperations.UpdateScaleInProtection((Guid)node.ScalesetId, node.MachineId, protectFromScaleIn: true);
+            return await _context.VmssOperations.UpdateScaleInProtection(scalesetId, node.MachineId, protectFromScaleIn: true);
         }
+
         return OneFuzzResultVoid.Ok;
     }
 
@@ -88,7 +89,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public async Task<bool> CanProcessNewWork(Node node) {
-        if (IsOutdated(node)) {
+        if (IsOutdated(node) && _context.ServiceConfiguration.OneFuzzAllowOutdatedAgent != "true") {
             _logTracer.Info($"can_process_new_work agent and service versions differ, stopping node. machine_id:{node.MachineId} agent_version:{node.Version} service_version:{_context.ServiceConfiguration.OneFuzzVersion}");
             await Stop(node, done: true);
             return false;
