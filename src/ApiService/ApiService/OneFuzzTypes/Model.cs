@@ -453,7 +453,7 @@ public record CrashTestResult(
 public record RegressionReport(
     CrashTestResult CrashTestResult,
     CrashTestResult? OriginalCrashTestResult
-) : IReport ;
+) : IReport;
 
 public record NotificationTemplate(
     AdoTemplate? AdoTemplate,

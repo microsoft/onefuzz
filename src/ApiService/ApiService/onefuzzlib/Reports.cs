@@ -76,4 +76,4 @@ public class Reports : IReports {
     }
 }
 
-public interface IReport {}
+public interface IReport { }

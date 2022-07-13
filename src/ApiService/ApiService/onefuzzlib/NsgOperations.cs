@@ -167,8 +167,7 @@ namespace Microsoft.OneFuzz.Service {
             var resourceGroup = _creds.GetBaseResourceGroup();
             _logTracer.Info($"creating nsg {resourceGroup}:{location}:{name}");
 
-            var nsgParams = new NetworkSecurityGroupData
-            {
+            var nsgParams = new NetworkSecurityGroupData {
                 Location = location
             };
 
@@ -185,9 +184,7 @@ namespace Microsoft.OneFuzz.Service {
                     name,
                     nsgParams
                 );
-            }
-            catch (RequestFailedException ex)
-            {
+            } catch (RequestFailedException ex) {
                 if (IsConcurrentRequestError(ex.Message)) {
                     // _logTracer.Debug($"create NSG had conflicts with concurrent request, ignoring {ex}");
                     return OneFuzzResultVoid.Ok;
@@ -205,8 +202,7 @@ namespace Microsoft.OneFuzz.Service {
             return await SetAllowed(nsg.Name, nsgConfig);
         }
 
-        private async Task<OneFuzzResultVoid> SetAllowed(string name, NetworkSecurityGroupConfig sources)
-        {
+        private async Task<OneFuzzResultVoid> SetAllowed(string name, NetworkSecurityGroupConfig sources) {
             var nsg = await GetNsg(name);
             if (nsg == null) {
                 return OneFuzzResultVoid.Error(
@@ -238,20 +234,19 @@ namespace Microsoft.OneFuzz.Service {
             }
 
             var priority = minPriority;
-            foreach(var src in allSources) {
+            foreach (var src in allSources) {
                 // Will not exceed maxRuleCount or max NSG priority (4096)
                 // due to earlier check of `allSources.Count`
-                nsg.Data.SecurityRules.Add(new SecurityRuleData
-                {
-                    Name=$"Allow{priority}",
-                    Protocol=new SecurityRuleProtocol("*"),
-                    SourcePortRange="*",
-                    DestinationPortRange="*",
-                    SourceAddressPrefix=src,
-                    DestinationAddressPrefix="*",
-                    Access=SecurityRuleAccess.Allow,
-                    Priority=priority, // between 100 and 4096
-                    Direction=SecurityRuleDirection.Inbound
+                nsg.Data.SecurityRules.Add(new SecurityRuleData {
+                    Name = $"Allow{priority}",
+                    Protocol = new SecurityRuleProtocol("*"),
+                    SourcePortRange = "*",
+                    DestinationPortRange = "*",
+                    SourceAddressPrefix = src,
+                    DestinationAddressPrefix = "*",
+                    Access = SecurityRuleAccess.Allow,
+                    Priority = priority, // between 100 and 4096
+                    Direction = SecurityRuleDirection.Inbound
                 });
                 priority++;
             }
@@ -294,8 +289,7 @@ namespace Microsoft.OneFuzz.Service {
                 await _context.Creds.GetResourceGroupResource().GetNetworkInterfaces().CreateOrUpdateAsync(
                     WaitUntil.Started, nic.Data.Name, nic.Data
                 );
-            }
-            catch (RequestFailedException ex) {
+            } catch (RequestFailedException ex) {
                 if (IsConcurrentRequestError(ex.Message)) {
                     // _logTracer.Debug($"associate NSG with NIC had conflicts with concurrent request, ignoring {ex}");
                     return OneFuzzResultVoid.Ok;
@@ -318,8 +312,7 @@ namespace Microsoft.OneFuzz.Service {
                     nsg.Name,
                     nsg
                 );
-            }
-            catch (RequestFailedException ex) {
+            } catch (RequestFailedException ex) {
                 if (IsConcurrentRequestError(ex.Message)) {
                     //_logTracer.Debug($"create NSG had conflicts with concurrent request, ignoring {ex}");
                     return OneFuzzResultVoid.Ok;

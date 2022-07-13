@@ -31,17 +31,15 @@ public class Subnet : ISubnet {
     public async Task<OneFuzzResultVoid> CreateVirtualNetwork(string resourceGroup, string name, string region, NetworkConfig networkConfig) {
         _logTracer.Info($"creating subnet - resource group:{resourceGroup} name:{name} region: {region}");
 
-        var virtualNetParam = new VirtualNetworkData
-        {
+        var virtualNetParam = new VirtualNetworkData {
             Location = region,
         };
 
         virtualNetParam.AddressPrefixes.Add(networkConfig.AddressSpace);
-        virtualNetParam.Subnets.Add(new SubnetData
-            {
-                Name = name,
-                AddressPrefix = networkConfig.Subnet
-            }
+        virtualNetParam.Subnets.Add(new SubnetData {
+            Name = name,
+            AddressPrefix = networkConfig.Subnet
+        }
         );
 
         var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
@@ -57,15 +55,14 @@ public class Subnet : ISubnet {
                 name,
                 virtualNetParam
             );
-        }
-        catch (RequestFailedException ex) {
+        } catch (RequestFailedException ex) {
             _logTracer.Error($"network creation failed: {name}:{region} {{error}}");
             return OneFuzzResultVoid.Error(
                 ErrorCode.UNABLE_TO_CREATE_NETWORK,
                 ex.ToString()
             );
         }
-        
+
         throw new NotImplementedException();
     }
 
