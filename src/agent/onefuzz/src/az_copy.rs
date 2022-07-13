@@ -28,6 +28,10 @@ const ALWAYS_RETRY_ERROR_STRINGS: &[&str] = &[
     "source modified during transfer",
 ];
 
+// These a re the error strings we expect to see if azcopy fails with a rertyable error.
+// source https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-configure#log-and-plan-files
+const AZCOPY_ERROR_STRINGS: &[&str] = &["UPLOADFAILED", "DOWNLOADFAILED", "COPYFAILED"];
+
 #[derive(Clone, Copy)]
 enum Mode {
     Copy,
@@ -130,6 +134,16 @@ fn should_always_retry(err: &anyhow::Error) -> bool {
     false
 }
 
+fn should_ignore_error(err: &anyhow::Error) -> bool {
+    let as_string = format!("{:?}", err);
+    for value in AZCOPY_ERROR_STRINGS {
+        if as_string.contains(value) {
+            return false;
+        }
+    }
+    true
+}
+
 async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
     let attempt_counter = AtomicUsize::new(0);
     let failure_counter = AtomicUsize::new(0);
@@ -148,6 +162,10 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
         match result {
             Ok(()) => Ok(()),
             Err(err) => {
+                if should_ignore_error(&err) {
+                    return Ok(());
+                }
+
                 if !should_always_retry(&err) {
                     failure_count = failure_counter.fetch_add(1, Ordering::SeqCst);
                 }
