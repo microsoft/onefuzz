@@ -10,6 +10,8 @@ public interface ISubnet {
     Async.Task<SubnetResource?> GetSubnet(string vnetName, string subnetName);
 
     Async.Task<OneFuzzResultVoid> CreateVirtualNetwork(string resourceGroup, string name, string region, NetworkConfig networkConfig);
+
+    Async.Task<string?> GetSubnetId(string name, string subnetName);
 }
 
 public class Subnet : ISubnet {
@@ -33,6 +35,15 @@ public class Subnet : ISubnet {
         if (vnet != null) {
             return await vnet.GetSubnetAsync(subnetName);
         }
+        return null;
+    }
+
+    public async Task<string?> GetSubnetId(string name, string subnetName) {
+        var subnet = await this.GetSubnet(name, subnetName);
+        if (subnet != null) {
+            return subnet.Id;
+        }
+
         return null;
     }
 

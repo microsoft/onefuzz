@@ -49,8 +49,8 @@ public class Network {
         return _context.Subnet.GetSubnet(_name, _name);
     }
 
-    public Async.Task<string?> GetId() {
-        throw new NotImplementedException();
+    public async Async.Task<string?> GetId() {
+        return await _context.Subnet.GetSubnetId(this._name, this._name);
     }
 
     public async Async.Task<OneFuzzResultVoid> Create() {

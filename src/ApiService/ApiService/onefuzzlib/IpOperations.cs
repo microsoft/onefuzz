@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager.Network;
+using Azure.ResourceManager.Network.Models;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -147,7 +148,22 @@ public class IpOperations : IIpOperations {
         return OneFuzzResultVoid.Ok;
     }
 
-    public Task<PublicIPAddressResource> CreateIp(string resourceGroup, string name, string region) {
-        throw new NotImplementedException();
+    public async Task<PublicIPAddressResource> CreateIp(string resourceGroup, string name, string region) {
+        var ipParams = new PublicIPAddressData()
+        {
+            Location = region,
+            PublicIPAllocationMethod = IPAllocationMethod.Dynamic
+        };
+
+        var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
+        if (!string.IsNullOrEmpty(onefuzzOwner)) {
+            if (!ipParams.Tags.TryAdd("OWNER", onefuzzOwner)) {
+                _logTracer.Warning($"Failed to add tag 'OWNER':{onefuzzOwner} to ip {resourceGroup}:{name}");
+            }
+        }
+
+        return (await _context.Creds.GetResourceGroupResource().GetPublicIPAddresses().CreateOrUpdateAsync(
+            WaitUntil.Started, name, ipParams
+        )).Value;
     }
 }

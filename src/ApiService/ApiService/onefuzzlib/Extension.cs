@@ -398,8 +398,7 @@ public class Extensions : IExtensions {
             };
             taskScript = string.Join("\r\n", commands);
             scriptName = "task-setup.ps1";
-        }
-        else {
+        } else {
             reproFiles = new List<string>()
             {
                 $"{reproId}/repro.sh",
@@ -417,8 +416,7 @@ public class Extensions : IExtensions {
             StorageType.Config
         );
 
-        foreach(var reproFile in reproFiles)
-        {
+        foreach (var reproFile in reproFiles) {
             urls.AddRange(new List<Uri>()
             {
                 (await _context.Containers.GetFileSasUrl(
