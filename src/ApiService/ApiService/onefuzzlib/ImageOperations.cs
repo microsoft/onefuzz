@@ -38,30 +38,25 @@ public class ImageOperations : IImageOperations {
 
                     name = galleryImage.Data?.OSType?.ToString().ToLowerInvariant()!;
 
-                }
-                catch (Exception ex) when (
-                    ex is RequestFailedException ||
-                    ex is NullReferenceException
-                )
-                {
+                } catch (Exception ex) when (
+                      ex is RequestFailedException ||
+                      ex is NullReferenceException
+                  ) {
                     return OneFuzzResult<Os>.Error(
                         ErrorCode.INVALID_IMAGE,
                         ex.ToString()
                     );
                 }
             }
-        }
-        else {
+        } else {
             try {
                 name = (await _context.Creds.GetResourceGroupResource().GetImages().GetAsync(
                     parsed.Data.Name
                 )).Value.Data.StorageProfile.OSDisk.OSType.ToString().ToLowerInvariant();
-            }
-            catch (Exception ex) when (
-                ex is RequestFailedException ||
-                ex is NullReferenceException
-            )
-            {
+            } catch (Exception ex) when (
+                  ex is RequestFailedException ||
+                  ex is NullReferenceException
+              ) {
                 return OneFuzzResult<Os>.Error(
                     ErrorCode.INVALID_IMAGE,
                     ex.ToString()

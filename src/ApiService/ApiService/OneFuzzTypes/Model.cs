@@ -433,7 +433,7 @@ public record Report(
     string? MinimizedStackFunctionNamesSha256,
     List<string>? MinimizedStackFunctionLines,
     string? MinimizedStackFunctionLinesSha256
-);
+) : IReport;
 
 public record NoReproReport(
     string InputSha,
@@ -453,7 +453,7 @@ public record CrashTestResult(
 public record RegressionReport(
     CrashTestResult CrashTestResult,
     CrashTestResult? OriginalCrashTestResult
-);
+) : IReport ;
 
 public record NotificationTemplate(
     AdoTemplate? AdoTemplate,

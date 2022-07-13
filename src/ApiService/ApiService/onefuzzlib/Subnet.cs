@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Azure;
 using Azure.ResourceManager.Network;
 
 namespace Microsoft.OneFuzz.Service;
@@ -19,13 +20,52 @@ public class Subnet : ISubnet {
 
     private readonly ILogTracer _logTracer;
 
-    public Subnet(ICreds creds, ILogTracer logTracer) {
+    private readonly IOnefuzzContext _context;
+
+    public Subnet(ICreds creds, ILogTracer logTracer, IOnefuzzContext context) {
         _creds = creds;
         _logTracer = logTracer;
+        _context = context;
     }
 
-    public Task<OneFuzzResultVoid> CreateVirtualNetwork(string resourceGroup, string name, string region, NetworkConfig networkConfig) {
-        _logTracer.Error($"network creation failed: {name}:{region} {{error}}");
+    public async Task<OneFuzzResultVoid> CreateVirtualNetwork(string resourceGroup, string name, string region, NetworkConfig networkConfig) {
+        _logTracer.Info($"creating subnet - resource group:{resourceGroup} name:{name} region: {region}");
+
+        var virtualNetParam = new VirtualNetworkData
+        {
+            Location = region,
+        };
+
+        virtualNetParam.AddressPrefixes.Add(networkConfig.AddressSpace);
+        virtualNetParam.Subnets.Add(new SubnetData
+            {
+                Name = name,
+                AddressPrefix = networkConfig.Subnet
+            }
+        );
+
+        var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
+        if (!string.IsNullOrEmpty(onefuzzOwner)) {
+            if (!virtualNetParam.Tags.TryAdd("OWNER", onefuzzOwner)) {
+                _logTracer.Warning($"Failed to add tag 'OWNER':{onefuzzOwner} to virtual network {resourceGroup}:{name}");
+            }
+        }
+
+        try {
+            await _creds.GetResourceGroupResource().GetVirtualNetworks().CreateOrUpdateAsync(
+                WaitUntil.Started,
+                name,
+                virtualNetParam
+            );
+        }
+        catch (RequestFailedException ex) {
+            _logTracer.Error($"network creation failed: {name}:{region} {{error}}");
+            return OneFuzzResultVoid.Error(
+                ErrorCode.UNABLE_TO_CREATE_NETWORK,
+                ex.ToString()
+            );
+        }
+        
         throw new NotImplementedException();
     }
 

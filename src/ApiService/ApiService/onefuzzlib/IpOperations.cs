@@ -149,8 +149,7 @@ public class IpOperations : IIpOperations {
     }
 
     public async Task<PublicIPAddressResource> CreateIp(string resourceGroup, string name, string region) {
-        var ipParams = new PublicIPAddressData()
-        {
+        var ipParams = new PublicIPAddressData() {
             Location = region,
             PublicIPAllocationMethod = IPAllocationMethod.Dynamic
         };
