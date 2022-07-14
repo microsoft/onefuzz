@@ -6,12 +6,12 @@ use async_trait::async_trait;
 use azure_core::HttpError;
 use azure_storage::core::prelude::*;
 use azure_storage_blobs::prelude::*;
-use onefuzz_telemetry::LoggingEvent;
+use onefuzz_telemetry::{LogTrace, LoggingEvent};
 use reqwest::{StatusCode, Url};
 use std::{path::PathBuf, sync::Arc, time::Duration};
 use uuid::Uuid;
 
-use tokio::{sync::broadcast::Receiver, time::Instant};
+use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
 const LOGS_BUFFER_SIZE: usize = 100;
 const MAX_LOG_SIZE: u64 = 100000000; // 100 MB
@@ -124,7 +124,6 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
         let data_stream = logs
             .iter()
             .flat_map(|log_event| match log_event {
-                // LoggingEvent::Flush => format!("End of log").into_bytes(),
                 LoggingEvent::Event(log_event) => format!(
                     "[{}] {}: {}\n",
                     log_event.timestamp,
@@ -211,12 +210,12 @@ enum LoopState {
     InitLog {
         start: usize,
         count: usize,
-        flush: bool,
+        done: bool,
     },
     Send {
         start: usize,
         count: usize,
-        flush: bool,
+        done: bool,
     },
     Done,
 }
@@ -261,17 +260,9 @@ impl TaskLogger {
         Ok(storage_account_client.as_container_client(container))
     }
 
-    async fn event_loop<T: Send + Sized>(
-        self,
-        context: LoopContext<T>,
-        flush_and_close: Option<(Instant, Duration)>,
-    ) -> Result<LoopContext<T>> {
+    async fn event_loop<T: Send + Sized>(self, context: LoopContext<T>) -> Result<LoopContext<T>> {
         match context.state {
-            LoopState::Send {
-                start,
-                count,
-                flush,
-            } => {
+            LoopState::Send { start, count, done } => {
                 match context
                     .log_writer
                     .write_logs(&context.pending_logs[start..start + count])
@@ -279,7 +270,7 @@ impl TaskLogger {
                 {
                     WriteLogResponse::Success => {
                         if start + count >= context.pending_logs.len() {
-                            if flush {
+                            if done {
                                 Result::<_, anyhow::Error>::Ok(LoopContext {
                                     pending_logs: vec![],
                                     state: LoopState::Done,
@@ -299,7 +290,7 @@ impl TaskLogger {
                                 state: LoopState::Send {
                                     start: new_start,
                                     count: new_count,
-                                    flush,
+                                    done,
                                 },
                                 ..context
                             })
@@ -308,11 +299,7 @@ impl TaskLogger {
 
                     WriteLogResponse::MaxSizeReached => {
                         Result::<_, anyhow::Error>::Ok(LoopContext {
-                            state: LoopState::InitLog {
-                                start,
-                                count,
-                                flush,
-                            },
+                            state: LoopState::InitLog { start, count, done },
                             ..context
                         })
                     }
@@ -322,26 +309,18 @@ impl TaskLogger {
                             state: LoopState::Send {
                                 start,
                                 count: count / 2,
-                                flush,
+                                done,
                             },
                             ..context
                         })
                     }
                 }
             }
-            LoopState::InitLog {
-                start,
-                count,
-                flush,
-            } => {
+            LoopState::InitLog { start, count, done } => {
                 let new_writer = context.log_writer.get_next_writer().await?;
                 Result::<_, anyhow::Error>::Ok(LoopContext {
                     log_writer: new_writer,
-                    state: LoopState::Send {
-                        start,
-                        count,
-                        flush,
-                    },
+                    state: LoopState::Send { start, count, done },
                     ..context
                 })
             }
@@ -349,7 +328,7 @@ impl TaskLogger {
                 let mut event = context.event;
                 let mut data = Vec::with_capacity(self.log_buffer_size);
                 let start_time = tokio::time::Instant::now();
-                let mut flush = false;
+                let mut done = false;
 
                 loop {
                     if data.len() >= self.log_buffer_size {
@@ -358,10 +337,6 @@ impl TaskLogger {
 
                     let now = tokio::time::Instant::now();
 
-                    flush = flush_and_close
-                        .map(|(instant, duration)| now - instant > duration)
-                        .unwrap_or_default();
-
                     if now - start_time > self.logging_interval {
                         break;
                     }
@@ -369,7 +344,23 @@ impl TaskLogger {
                         Ok(v) => {
                             data.push(v);
                         }
-                        Err(_) => {
+                        Err(TryRecvError::Closed) => {
+                            done = true;
+                            break;
+                        }
+                        Err(TryRecvError::Lagged(skipped_messages_count)) => {
+                            let skipped_message_trace = LogTrace {
+                                timestamp: chrono::Utc::now(),
+                                level: log::Level::Info,
+                                message: format!(
+                                    "onefuzz task logger: Skipped {} traces/events",
+                                    skipped_messages_count
+                                ),
+                            };
+
+                            data.push(LoggingEvent::Trace(skipped_message_trace));
+                        }
+                        Err(TryRecvError::Empty) => {
                             tokio::time::sleep(self.polling_interval).await;
                         }
                     }
@@ -380,7 +371,7 @@ impl TaskLogger {
                         state: LoopState::Send {
                             start: 0,
                             count: data.len(),
-                            flush,
+                            done,
                         },
                         pending_logs: data,
                         event,
@@ -411,11 +402,7 @@ impl TaskLogger {
         event: Receiver<LoggingEvent>,
         log_writer: Box<dyn LogWriter<T>>,
     ) -> Result<SpawnedLogger> {
-        let (flush_and_close_sender, mut flush_and_close_receiver) =
-            tokio::sync::oneshot::channel::<Duration>();
-
         let this = *self;
-
         let logger_handle = tokio::spawn(async move {
             let initial_state = LoopContext {
                 log_writer,
@@ -427,12 +414,7 @@ impl TaskLogger {
             let mut context = initial_state;
 
             loop {
-                let flush_and_close = flush_and_close_receiver
-                    .try_recv()
-                    .ok()
-                    .map(|d| (tokio::time::Instant::now(), d));
-
-                context = match this.event_loop(context, flush_and_close).await {
+                context = match this.event_loop(context).await {
                     Ok(LoopContext {
                         log_writer: _,
                         pending_logs: _,
@@ -449,21 +431,16 @@ impl TaskLogger {
             Ok(())
         });
 
-        Ok(SpawnedLogger {
-            logger_handle,
-            flush_and_close_sender,
-        })
+        Ok(SpawnedLogger { logger_handle })
     }
 }
 
 pub struct SpawnedLogger {
     logger_handle: tokio::task::JoinHandle<Result<()>>,
-    flush_and_close_sender: tokio::sync::oneshot::Sender<Duration>,
 }
 
 impl SpawnedLogger {
     pub async fn flush_and_stop(self, timeout: Duration) -> Result<()> {
-        let _ = self.flush_and_close_sender.send(timeout);
         let _ = tokio::time::timeout(timeout, self.logger_handle).await;
         Ok(())
     }

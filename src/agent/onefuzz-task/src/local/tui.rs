@@ -229,7 +229,7 @@ impl TerminalUi {
         ui_event_tx: Sender<TerminalEvent>,
         mut cancellation_rx: broadcast::Receiver<()>,
     ) -> Result<()> {
-        let mut rx = onefuzz_telemetry::subscribe_to_events();
+        let mut rx = onefuzz_telemetry::subscribe_to_events()?;
 
         while cancellation_rx.try_recv() == Err(broadcast::error::TryRecvError::Empty) {
             match rx.try_recv() {
