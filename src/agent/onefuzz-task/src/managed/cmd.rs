@@ -30,7 +30,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let common = config.common().clone();
     let machine_id = get_machine_id().await?;
     let task_logger = if let Some(logs) = common.logs.clone() {
-        let rx = onefuzz_telemetry::subscribe_to_events();
+        let rx = onefuzz_telemetry::subscribe_to_events()?;
 
         let logger = task_logger::TaskLogger::new(common.job_id, common.task_id, machine_id);
 
@@ -58,7 +58,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 
     // wait for the task logger to finish
     if let Some(task_logger) = task_logger {
-        let _ = task_logger.flush_and_stop(Duration::from_secs(5)).await;
+        let _ = task_logger.flush_and_stop(Duration::from_secs(60)).await;
     }
 
     result
