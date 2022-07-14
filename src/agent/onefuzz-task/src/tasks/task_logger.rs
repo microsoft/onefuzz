@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use azure_core::HttpError;
 use azure_storage::core::prelude::*;
 use azure_storage_blobs::prelude::*;
-use onefuzz_telemetry::LoggingEvent;
+use onefuzz_telemetry::{LogTrace, LoggingEvent};
 use reqwest::{StatusCode, Url};
 use std::{path::PathBuf, sync::Arc, time::Duration};
 use uuid::Uuid;
@@ -348,7 +348,19 @@ impl TaskLogger {
                             done = true;
                             break;
                         }
-                        Err(_) => {
+                        Err(TryRecvError::Lagged(skipped_messages_count)) => {
+                            let skipped_message_trace = LogTrace {
+                                timestamp: chrono::Utc::now(),
+                                level: log::Level::Info,
+                                message: format!(
+                                    "onefuzz task logger: Skipped {} traces/events",
+                                    skipped_messages_count
+                                ),
+                            };
+
+                            data.push(LoggingEvent::Trace(skipped_message_trace));
+                        }
+                        Err(TryRecvError::Empty) => {
                             tokio::time::sleep(self.polling_interval).await;
                         }
                     }
