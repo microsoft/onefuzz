@@ -12,7 +12,6 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
     time::Duration,
 };
-use tempfile::tempdir;
 use tokio::fs;
 use tokio::process::Command;
 use url::Url;
@@ -68,9 +67,9 @@ fn redact_azcopy_sas_arg(value: &OsStr) -> OsString {
 
 async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
     let az_copy_logs = std::env::temp_dir().join("azcopy_logs");
-    std::fs::create_dir_all(az_copy_logs).with_context(|| "can't create az_copy log folder")?;
+    std::fs::create_dir_all(&az_copy_logs).with_context(|| "can't create az_copy log folder")?;
     let temp_dir = az_copy_logs.join(uuid::Uuid::new_v4().to_string());
-    std::fs::create_dir_all(temp_dir).with_context(|| "can't create temp dir")?;
+    std::fs::create_dir_all(&temp_dir).with_context(|| "can't create temp dir")?;
     // https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-configure#change-the-location-of-log-files
     let mut cmd = Command::new("azcopy");
     cmd.kill_on_drop(true)
@@ -95,7 +94,7 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
     if !output.status.success() {
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
-        let logfile = read_azcopy_log_file(temp_dir.path())
+        let logfile = read_azcopy_log_file(temp_dir.as_path())
             .await
             .unwrap_or_else(|e| format!("unable to read azcopy log file from: {:?}", e));
 
