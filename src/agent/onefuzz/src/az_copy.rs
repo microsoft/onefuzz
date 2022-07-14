@@ -67,15 +67,17 @@ fn redact_azcopy_sas_arg(value: &OsStr) -> OsString {
 }
 
 async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
-    let temp_dir = tempdir()?;
-
+    let az_copy_logs =  std::env::temp_dir().join("azcopy_logs");
+    std::fs::create_dir_all(az_copy_logs).with_context(|| "can't create az_copy log folder")?;
+    let temp_dir = az_copy_logs.join(uuid::Uuid::new_v4().to_string());
+    std::fs::create_dir_all(temp_dir).with_context(|| "can't create temp dir")?;
     // https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-configure#change-the-location-of-log-files
     let mut cmd = Command::new("azcopy");
     cmd.kill_on_drop(true)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .env("AZCOPY_LOG_LOCATION", temp_dir.path())
+        .env("AZCOPY_LOG_LOCATION", temp_dir.as_path())
         .env("AZCOPY_CONCURRENCY_VALUE", "32")
         .arg(mode.to_string())
         .arg(&src)
