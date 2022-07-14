@@ -133,7 +133,7 @@ class Node(BASE_NODE, ORMMixin):
     @classmethod
     def mark_outdated_nodes(cls) -> None:
         # if outdated agents are allowed, do not attempt to update
-        if os.environ["ONEFUZZ_ALLOW_OUTDATED_AGENT"] == "true":
+        if os.environ.get("ONEFUZZ_ALLOW_OUTDATED_AGENT") == "true":
             return
 
         # ony update 500 nodes at a time to mitigate timeout issues
@@ -268,7 +268,7 @@ class Node(BASE_NODE, ORMMixin):
         from .pools import Pool
         from .scalesets import Scaleset
 
-        if self.is_outdated() and os.environ["ONEFUZZ_ALLOW_OUTDATED_AGENT"] != "true":
+        if self.is_outdated() and os.environ.get("ONEFUZZ_ALLOW_OUTDATED_AGENT") != "true":
             logging.info(
                 "can_process_new_work agent and service versions differ, "
                 "stopping node. "
