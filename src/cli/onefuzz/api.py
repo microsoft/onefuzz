@@ -1374,7 +1374,7 @@ class Scaleset(Endpoint):
         spot_instances: bool = False,
         ephemeral_os_disks: bool = False,
         tags: Optional[Dict[str, str]] = None,
-        min_instances: Optional[int] = 1,
+        min_instances: Optional[int] = 0,
         scale_out_amount: Optional[int] = 1,
         scale_out_cooldown: Optional[int] = 10,
         scale_in_amount: Optional[int] = 1,

@@ -20,7 +20,32 @@ jobs:
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v2
+    - name: Install specific Rust version
+      run: |
+        rustup default 1.62 
+        rustup component add clippy rustfmt
+    - name: Get Rust version & build version
+      shell: bash
+      run: |
+        echo "::set-output name=RUST_VERSION::$(rustc --version)"
+        VERSION=$(src/ci/get-version.sh)
+        # it's a release build if version doesn't have a hyphen in it
+        IS_RELEASE_BUILD=$(if [[ "$VERSION" =~ '-' ]]; then echo 'false'; else echo 'true'; fi)
+        echo "::set-output name=RELEASE_BUILD::$IS_RELEASE_BUILD"
+      id: rust-version
+    - name: Rust artifact cache
+      id: cache-agent-artifacts
+      # don't cache the rust agent for relase builds as the version number will be incorrect
+      # don't cache on builds on the main branch for deployment to canary/nightly
+      if: steps.rust-version.outputs.RELEASE_BUILD == 'false' && github.ref_name != 'main'
+      uses: actions/cache@v3
+      with:
+        # if nothing has changed inside src/agent, we can reuse the artifacts directory
+        path: artifacts
+        key: agent-artifacts-${{ runner.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-${{ hashFiles('src/agent/**/*') }}
+        # note: also including the ACTIONS_CACHE_KEY_DATE to rebuild if the Prereq Cache is invalidated
     - name: Rust Prereq Cache
+      if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       uses: actions/cache@v2
       id: cache-rust-prereqs
       with:
@@ -28,27 +53,28 @@ jobs:
           ~/.cargo/registry
           ~/.cargo/git
           ~/.cargo/bin
-        key: rust-${{ runner.os }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+        key: rust-${{ runner.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}
     - name: Install Rust Prereqs
-      if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
+      if: steps.cache-rust-prereqs.outputs.cache-hit != 'true' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       shell: bash
       run: src/ci/rust-prereqs.sh
     - name: Rust Compile Cache
+      if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       uses: actions/cache@v2
       with:
         path: |
           sccache
           src/agent/target
-        key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+        key: agent-${{ runner.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-${{ hashFiles('src/agent/Cargo.lock') }}
         restore-keys: |
-          agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-
-          agent-${{ runner.os }}-
+          agent-${{ runner.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-
     - name: Linux Prereqs
       run: |
         sudo apt-get -y update
         sudo apt-get -y install libssl1.0-dev libunwind-dev
-      if: "${{ runner.os == 'Linux' }}"
+      if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
     - run: src/ci/agent.sh
+      if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       shell: bash
     - uses: actions/upload-artifact@v2.2.2
       with:
@@ -371,7 +397,7 @@ jobs:
     - uses: actions/cache@v3
       id: cache-radamsa-build-linux
       with:
-        # key on the shell script only: this script fixes the 
+        # key on the shell script only: this script fixes the
         # version to a particular commit, so if it changes we need to rebuild
         key: radamsa-linux-${{ hashFiles('src/ci/radamsa-linux.sh') }}
         path: artifacts
@@ -388,7 +414,7 @@ jobs:
     - uses: actions/cache@v3
       id: cache-radamsa-build-windows
       with:
-        # key on the shell script only: this script fixes the 
+        # key on the shell script only: this script fixes the
         # version to a particular commit, so if it changes we need to rebuild
         key: radamsa-windows-${{ hashFiles('src/ci/radamsa-windows.sh') }}
         path: artifacts
@@ -524,6 +550,11 @@ jobs:
           (cd libfuzzer-aarch64-crosscompile; make)
           cp -r libfuzzer-aarch64-crosscompile/fuzz.exe libfuzzer-aarch64-crosscompile/inputs artifacts/linux-libfuzzer-aarch64-crosscompile
 
+          # C# target.
+          sudo apt-get install -y dotnet-sdk-6.0
+          (cd GoodBad; dotnet publish -c Release -o out)
+          mv GoodBad/out artifacts/GoodBadDotnet
+
     - uses: actions/upload-artifact@v2.2.2
       with:
         name: integration-test-artifacts
@@ -603,3 +634,36 @@ jobs:
       with:
         name: integration-test-artifacts
         path: src/integration-tests/artifacts
+  integration-tests-linux:
+    runs-on: ubuntu-18.04
+    needs:
+      - build-integration-tests-linux
+      - dotnet-fuzzing-tools-linux
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2.0.8
+        with:
+          name: build-artifacts
+          path: build-artifacts
+      - uses: actions/download-artifact@v2.0.8
+        with:
+          name: integration-test-artifacts
+          path: integration-test-artifacts
+      - name: test
+        shell: bash
+        run: |
+          set -ex -o pipefail
+
+          # Must be absolute paths.
+          export GOODBAD_DOTNET="${GITHUB_WORKSPACE}/integration-test-artifacts/GoodBadDotnet"
+
+          export LIBFUZZER_DOTNET="${GITHUB_WORKSPACE}/build-artifacts/third-party/dotnet-fuzzing-linux/libfuzzer-dotnet/libfuzzer-dotnet"
+          chmod +x $LIBFUZZER_DOTNET
+
+          export LIBFUZZER_DOTNET_LOADER="${GITHUB_WORKSPACE}/build-artifacts/third-party/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader"
+          chmod +x $LIBFUZZER_DOTNET_LOADER
+
+          export SHARPFUZZ="${GITHUB_WORKSPACE}/build-artifacts/third-party/dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine"
+          chmod +x $SHARPFUZZ
+
+          ./src/ci/test-libfuzzer-dotnet.sh

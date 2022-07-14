@@ -54,11 +54,21 @@ public record InfoVersion(
     string Build,
     string Version);
 
-
 public record AgentRegistrationResponse(
     Uri EventsUrl,
     Uri WorkQueue,
     Uri CommandsUrl
+) : BaseResponse();
+
+public record ContainerInfoBase(
+    Container Name,
+    IDictionary<string, string>? Metadata
+) : BaseResponse();
+
+public record ContainerInfo(
+    Container Name,
+    IDictionary<string, string>? Metadata,
+    Uri SasUrl
 ) : BaseResponse();
 
 public class BaseResponseConverter : JsonConverter<BaseResponse> {

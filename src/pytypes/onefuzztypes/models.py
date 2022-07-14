@@ -668,9 +668,9 @@ class Scaleset(BaseModel):
 
 class AutoScale(BaseModel):
     scaleset_id: UUID
-    min: int = Field(ge=1)
+    min: int = Field(ge=0)
     max: int = Field(ge=1)
-    default: int = Field(ge=1)
+    default: int = Field(ge=0)
     scale_out_amount: int = Field(ge=1)
     scale_out_cooldown: int = Field(ge=1)
     scale_in_amount: int = Field(ge=1)
