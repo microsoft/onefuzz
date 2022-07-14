@@ -17,10 +17,10 @@ public class ImageOperations : IImageOperations {
         _context = context;
     }
     public async Task<OneFuzzResult<Os>> GetOs(string region, string image) {
-        var parsed = _context.Creds.ParseResourceId(image);
-        var _ = !parsed.HasData ? await parsed.GetAsync() : null;
         string? name = null;
-        if (parsed.Id.ResourceGroupName != null) {
+        try {
+            var parsed = _context.Creds.ParseResourceId(image);
+            var _ = !parsed.HasData ? await parsed.GetAsync() : null;
             if (string.Equals(parsed.Id.ResourceType, "galleries", StringComparison.OrdinalIgnoreCase)) {
                 try {
                     // This is not _exactly_ the same as the python code  
@@ -47,16 +47,52 @@ public class ImageOperations : IImageOperations {
                         ex.ToString()
                     );
                 }
+            } else {
+                try {
+                    name = (await _context.Creds.GetResourceGroupResource().GetImages().GetAsync(
+                        parsed.Data.Name
+                    )).Value.Data.StorageProfile.OSDisk.OSType.ToString().ToLowerInvariant();
+                } catch (Exception ex) when (
+                    ex is RequestFailedException ||
+                    ex is NullReferenceException
+                ) {
+                    return OneFuzzResult<Os>.Error(
+                        ErrorCode.INVALID_IMAGE,
+                        ex.ToString()
+                    );
+                }
             }
-        } else {
+        } catch (FormatException) {
+            var imageParts = image.Split(":");
+
+            // The python code would throw if more than 4 parts are found in the split
+            System.Diagnostics.Trace.Assert(imageParts.Length == 4, $"Expected 4 ':' separated parts in {image}");
+
+            var publisher = imageParts[0];
+            var offer = imageParts[1];
+            var sku = imageParts[2];
+            var version = imageParts[3];
+
             try {
-                name = (await _context.Creds.GetResourceGroupResource().GetImages().GetAsync(
-                    parsed.Data.Name
-                )).Value.Data.StorageProfile.OSDisk.OSType.ToString().ToLowerInvariant();
-            } catch (Exception ex) when (
-                  ex is RequestFailedException ||
-                  ex is NullReferenceException
-              ) {
+                var subscription = await _context.Creds.ArmClient.GetDefaultSubscriptionAsync();
+                if (string.Equals(version, "latest", StringComparison.Ordinal)) {
+                    version = (await subscription.GetVirtualMachineImagesAsync(
+                        region,
+                        publisher,
+                        offer,
+                        sku,
+                        top: 1
+                    ).FirstAsync()).Name;
+                }
+
+                name = (await subscription.GetVirtualMachineImageAsync(
+                    region,
+                    publisher,
+                    offer,
+                    sku
+                    , version
+                )).Value.OSDiskImageOperatingSystem.ToString().ToLower();
+            } catch (RequestFailedException ex) {
                 return OneFuzzResult<Os>.Error(
                     ErrorCode.INVALID_IMAGE,
                     ex.ToString()
@@ -64,8 +100,11 @@ public class ImageOperations : IImageOperations {
             }
         }
 
-        if (name != null && Enum.TryParse(name, out Os os)) {
-            return OneFuzzResult<Os>.Ok(os);
+        if (name != null) {
+            name = string.Concat(name[0].ToString().ToUpper(), name.AsSpan(1));
+            if (Enum.TryParse(name, out Os os)) {
+                return OneFuzzResult<Os>.Ok(os);
+            }
         }
 
         return OneFuzzResult<Os>.Error(

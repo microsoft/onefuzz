@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+// using Newtonsoft.Json;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -19,6 +20,7 @@ public class Reports : IReports {
 
     public async Task<Report?> GetReport(Container container, string fileName) {
         var result = await GetReportOrRegression(container, fileName);
+        _log.Info($"~~~~~~~~{JsonSerializer.Serialize(result)}~~~~~~~~~~~~");
         if (result != null && result is Report) {
             return result as Report;
         }
@@ -48,18 +50,16 @@ public class Reports : IReports {
     }
 
     private IReport? ParseReportOrRegression(string content, string? filePath, bool expectReports = false) {
-        try {
-            return JsonSerializer.Deserialize<RegressionReport>(content, EntityConverter.GetJsonSerializerOptions());
-        } catch (JsonException e) {
-            try {
-                return JsonSerializer.Deserialize<Report>(content, EntityConverter.GetJsonSerializerOptions());
-            } catch (JsonException e2) {
-                if (expectReports) {
-                    _log.Error($"unable to parse report ({filePath}) as a report or regression. regression error: {e.Message} report error: {e2.Message}");
-                }
+        var regressionReport = JsonSerializer.Deserialize<RegressionReport>(content, EntityConverter.GetJsonSerializerOptions());
+        if (regressionReport == null || regressionReport.CrashTestResult == null) {
+            var report = JsonSerializer.Deserialize<Report>(content, EntityConverter.GetJsonSerializerOptions());
+            if (expectReports && report == null) {
+                _log.Error($"unable to parse report ({filePath}) as a report or regression");
                 return null;
             }
+            return report;
         }
+        return regressionReport;
     }
 
 

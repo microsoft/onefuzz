@@ -65,7 +65,13 @@ public class VmOperations : IVmOperations {
     }
 
     public async Async.Task<VirtualMachineResource?> GetVm(string name) {
-        return await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(name);
+        // _logTracer.Debug($"getting vm: {name}");
+        try {
+            return await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(name);
+        } catch (RequestFailedException) {
+            // _logTracer.Debug($"vm does not exist {ex});
+            return null;
+        }
     }
 
     public async Async.Task<bool> Delete(Vm vm) {
@@ -232,11 +238,20 @@ public class VmOperations : IVmOperations {
             }
         }
 
-        var vmParams = new VirtualMachineData(location);
-        vmParams.OSProfile.ComputerName = "node";
-        vmParams.OSProfile.AdminUsername = "onefuzz";
-        vmParams.HardwareProfile.VmSize = vmSku;
-        vmParams.StorageProfile.ImageReference = GenerateImageReference(image);
+        var vmParams = new VirtualMachineData(location) {
+            OSProfile = new OSProfile {
+                ComputerName = "node",
+                AdminUsername = "onefuzz",
+            },
+            HardwareProfile = new HardwareProfile {
+                VmSize = vmSku,
+            },
+            StorageProfile = new StorageProfile {
+                ImageReference = GenerateImageReference(image),
+            },
+            NetworkProfile = new NetworkProfile(),
+        };
+
         vmParams.NetworkProfile.NetworkInterfaces.Add(new NetworkInterfaceReference { Id = nic.Id });
 
         var imageOs = await _context.ImageOperations.GetOs(location, image);
@@ -250,7 +265,9 @@ public class VmOperations : IVmOperations {
                     break;
                 }
             case Os.Linux: {
-                    vmParams.OSProfile.LinuxConfiguration.DisablePasswordAuthentication = true;
+                    vmParams.OSProfile.LinuxConfiguration = new LinuxConfiguration {
+                        DisablePasswordAuthentication = true,
+                    };
                     vmParams.OSProfile.LinuxConfiguration.SshPublicKeys.Add(
                         new SshPublicKeyInfo {
                             Path = "/home/onefuzz/.ssh/authorized_keys",

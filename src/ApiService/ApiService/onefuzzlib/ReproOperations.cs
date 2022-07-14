@@ -229,6 +229,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             );
         }
 
+        // TODO: Right now we're not finding the report so we hit the error case on line 235
         var report = await _context.Reports.GetReport(repro.Config.Container, repro.Config.Path);
         if (report == null) {
             return OneFuzzResultVoid.Error(

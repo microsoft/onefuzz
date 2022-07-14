@@ -6,7 +6,7 @@ using Azure.ResourceManager.Network.Models;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IIpOperations {
-    public Async.Task<NetworkInterfaceResource> GetPublicNic(string resourceGroup, string name);
+    public Async.Task<NetworkInterfaceResource?> GetPublicNic(string resourceGroup, string name);
 
     public Async.Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, string region, Nsg? nsg);
 
@@ -34,9 +34,13 @@ public class IpOperations : IIpOperations {
         _context = context;
     }
 
-    public async Async.Task<NetworkInterfaceResource> GetPublicNic(string resourceGroup, string name) {
+    public async Async.Task<NetworkInterfaceResource?> GetPublicNic(string resourceGroup, string name) {
         _logTracer.Info($"getting nic: {resourceGroup} {name}");
-        return await _creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name);
+        try {
+            return await _creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name);
+        } catch (RequestFailedException) {
+            return null;
+        }
     }
 
     public async Async.Task<PublicIPAddressResource?> GetIp(string resourceGroup, string name) {
@@ -63,7 +67,7 @@ public class IpOperations : IIpOperations {
         // TODO: Parts of this function seem redundant, but I'm mirroring
         // the python code exactly. We should revisit this.
         _logTracer.Info($"getting ip for {resourceId}");
-        var resource = _creds.ParseResourceId(resourceId);
+        var resource = await (_creds.GetData(_creds.ParseResourceId(resourceId)));
         var networkInterfaces = await _creds.GetResourceGroupResource().GetNetworkInterfaceAsync(
             resource.Data.Name
         );
