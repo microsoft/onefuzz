@@ -84,7 +84,7 @@ public class IpOperations : IIpOperations {
     public async Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, string region, Nsg? nsg) {
         _logTracer.Info($"creating nic for {resourceGroup}:{name} in {region}");
 
-        var network = await Network.Init(region, _context);
+        var network = await Network.Create(region, _context);
         var subnetId = await network.GetId();
 
         if (string.IsNullOrEmpty(subnetId)) {

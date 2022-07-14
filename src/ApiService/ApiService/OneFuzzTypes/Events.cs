@@ -195,7 +195,7 @@ public record EventScalesetFailed(
 public record EventScalesetResizeScheduled(
     Guid ScalesetId,
     PoolName PoolName,
-    int size
+    long size
     ) : BaseEvent();
 
 

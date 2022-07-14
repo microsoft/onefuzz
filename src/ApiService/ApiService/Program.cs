@@ -113,6 +113,7 @@ public class Program {
             .AddScoped<IOnefuzzContext, OnefuzzContext>()
             .AddScoped<IEndpointAuthorization, EndpointAuthorization>()
             .AddScoped<INodeMessageOperations, NodeMessageOperations>()
+            .AddScoped<ISubnet, Subnet>()
 
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()

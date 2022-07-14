@@ -2,7 +2,6 @@
 
 namespace Microsoft.OneFuzz.Service;
 
-
 public class TimerProxy {
     private readonly ILogTracer _logger;
     private readonly IOnefuzzContext _context;
@@ -64,7 +63,7 @@ public class TimerProxy {
             // since we do not support bring your own NSG
 
             if (await nsgOpertions.GetNsg(region) != null) {
-                var network = await Network.Init(region, _context);
+                var network = await Network.Create(region, _context);
 
                 var subnet = await network.GetSubnet();
                 var vnet = await network.GetVnet();

@@ -164,7 +164,7 @@ namespace Tests {
 
         public static Gen<InstanceConfig> InstanceConfig() {
             return Arb.Generate<Tuple<
-                Tuple<string, Guid[]?, bool?, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?>,
+                Tuple<string, Guid[]?, bool, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?>,
                 Tuple<string, IDictionary<string, ApiAccessRule>?, IDictionary<Guid, Guid[]>?, IDictionary<string, string>?, IDictionary<string, string>?>>>().Select(
                 arg =>
                     new InstanceConfig(
@@ -221,7 +221,7 @@ namespace Tests {
                           Region: arg.Item1.Item6,
 
                           Size: arg.Item2.Item1,
-                          SpotInstance: arg.Item2.Item2,
+                          SpotInstances: arg.Item2.Item2,
                           EphemeralOsDisks: arg.Item2.Item3,
                           NeedsConfigUpdate: arg.Item2.Item4,
                           Error: arg.Item2.Item5,

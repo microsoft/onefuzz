@@ -2,7 +2,6 @@
 
 namespace Microsoft.OneFuzz.Service;
 
-
 public class Network {
     private readonly string _name;
     private readonly string _group;
@@ -22,7 +21,7 @@ public class Network {
         _networkConfig = networkConfig;
     }
 
-    public static async Async.Task<Network> Init(string region, IOnefuzzContext context) {
+    public static async Async.Task<Network> Create(string region, IOnefuzzContext context) {
         var group = context.Creds.GetBaseResourceGroup();
         var instanceConfig = await context.ConfigOperations.Fetch();
         var networkConfig = instanceConfig.NetworkConfig;
