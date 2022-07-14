@@ -268,7 +268,10 @@ class Node(BASE_NODE, ORMMixin):
         from .pools import Pool
         from .scalesets import Scaleset
 
-        if self.is_outdated() and os.environ.get("ONEFUZZ_ALLOW_OUTDATED_AGENT") != "true":
+        if (
+            self.is_outdated()
+            and os.environ.get("ONEFUZZ_ALLOW_OUTDATED_AGENT") != "true"
+        ):
             logging.info(
                 "can_process_new_work agent and service versions differ, "
                 "stopping node. "
