@@ -19,9 +19,9 @@ public interface IVmOperations {
 
     Async.Task<VirtualMachineExtensionData?> GetExtension(string vmName, string extensionName);
 
-    Async.Task<OneFuzzResult<bool>> AddExtensions(Vm vm, IList<Dictionary<string, string>> extensions);
+    Async.Task<OneFuzzResult<bool>> AddExtensions(Vm vm, IList<VirtualMachineExtensionData> extensions);
 
-    Async.Task<VirtualMachineExtensionResource> CreateExtension(string vmName, Dictionary<string, string> extension);
+    Async.Task<VirtualMachineExtensionResource> CreateExtension(string vmName, VirtualMachineExtensionData extension);
 
 }
 
@@ -121,24 +121,18 @@ public class VmOperations : IVmOperations {
     }
 
 
-    public async Task<OneFuzzResult<bool>> AddExtensions(Vm vm, IList<Dictionary<string, string>> extensions) {
+    public async Task<OneFuzzResult<bool>> AddExtensions(Vm vm, IList<VirtualMachineExtensionData> extensions) {
         var status = new List<string>();
-        var toCreate = new List<Dictionary<string, string>>();
-        foreach (var config in extensions) {
-            if (!config.ContainsKey("name")) {
-                _logTracer.Error($"vm agent - incompatible name: {JsonConvert.SerializeObject(config)}");
-                continue;
-            }
-
-            var extensionName = config.GetValueOrDefault("name")!;
-            var extension = await GetExtension(vm.Name, extensionName);
+        var toCreate = new List<VirtualMachineExtensionData>();
+        foreach (var extensionConfig in extensions) {
+            var extension = await GetExtension(vm.Name, extensionConfig.Name);
             if (extension != null) {
                 _logTracer.Info(
-                    $"vm extension state: {vm.Name} - {extensionName} - {extension.ProvisioningState}"
+                    $"vm extension state: {vm.Name} - {extensionConfig.Name} - {extension.ProvisioningState}"
                 );
                 status.Add(extension.ProvisioningState);
             } else {
-                toCreate.Add(config);
+                toCreate.Add(extensionConfig);
             }
         }
 
@@ -179,12 +173,29 @@ public class VmOperations : IVmOperations {
         );
     }
 
-    public Task<VirtualMachineExtensionData?> GetExtension(string vmName, string extensionName) {
-        throw new NotImplementedException();
+    public async Task<VirtualMachineExtensionData?> GetExtension(string vmName, string extensionName) {
+        // _logTracer.Debug($"getting extension: {resourceGroup}:{vmName}:{extensionName}");
+        try {
+            var vm = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(
+                vmName
+            );
+
+            return (await vm.Value.GetVirtualMachineExtensionAsync(extensionName)).Value.Data;
+        } catch (RequestFailedException ex) {
+            _logTracer.Info($"extension does not exist {ex}");
+            return null;
+        }
     }
 
-    public Task<VirtualMachineExtensionResource> CreateExtension(string vmName, Dictionary<string, string> extension) {
-        throw new NotImplementedException();
+    public async Task<VirtualMachineExtensionResource> CreateExtension(string vmName, VirtualMachineExtensionData extension) {
+        _logTracer.Info($"creating extension: {_context.Creds.GetBaseResourceGroup()}:{vmName}:{extension.Name}");
+        var vm = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(vmName);
+
+        return (await vm.Value.GetVirtualMachineExtensions().CreateOrUpdateAsync(
+            WaitUntil.Started,
+            extension.Name,
+            extension
+        )).Value;
     }
 
     async Task<OneFuzzResultVoid> CreateVm(

@@ -56,4 +56,8 @@ class TestCreds : ICreds {
     public Task<T> QueryMicrosoftGraph<T>(HttpMethod method, string resource) {
         throw new NotImplementedException();
     }
+
+    public GenericResource ParseResourceId(string resourceId) {
+        throw new NotImplementedException();
+    }
 }

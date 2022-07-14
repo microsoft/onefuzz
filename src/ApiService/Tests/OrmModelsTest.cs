@@ -300,6 +300,41 @@ namespace Tests {
             );
         }
 
+        public static Gen<NoReproReport> NoReproReport() {
+            return Arb.Generate<Tuple<string, BlobRef?, string?, Guid, int>>().Select(
+                arg =>
+                    new NoReproReport(
+                        arg.Item1,
+                        arg.Item2,
+                        arg.Item3,
+                        arg.Item4,
+                        arg.Item4,
+                        arg.Item5,
+                        arg.Item3
+                    )
+            );
+        }
+
+        public static Gen<CrashTestResult> CrashTestResult() {
+            return Arb.Generate<Tuple<Report, NoReproReport>>().Select(
+                arg =>
+                    new CrashTestResult(
+                        arg.Item1,
+                        arg.Item2
+                    )
+            );
+        }
+
+        public static Gen<RegressionReport> RegressionReport() {
+            return Arb.Generate<Tuple<CrashTestResult, CrashTestResult?>>().Select(
+                arg =>
+                    new RegressionReport(
+                        arg.Item1,
+                        arg.Item2
+                    )
+            );
+        }
+
         public static Gen<Container> Container() {
             return Arb.Generate<Tuple<NonNull<string>>>().Select(
                 arg => new Container(string.Join("", arg.Item1.Get.Where(c => char.IsLetterOrDigit(c) || c == '-'))!)
@@ -801,7 +836,7 @@ namespace Tests {
 
 
         [Property]
-        public bool RegressionReportOrReport(RegressionReportOrReport e) {
+        public bool RegressionReport(RegressionReport e) {
             return Test(e);
         }
 

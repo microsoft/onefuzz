@@ -143,7 +143,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             }
 
             var nsgConfig = config.ProxyNsgConfig;
-            result = await _context.NsgOperations.SetAllowedSources(nsgConfig);
+            result = await _context.NsgOperations.SetAllowedSources(nsg, nsgConfig);
             if (!result.IsOk) {
                 await _context.ReproOperations.SetError(repro, result.ErrorV);
                 return;
@@ -188,7 +188,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
 
         var extensions = await _context.Extensions.ReproExtensions(
             vm.Region,
-            repro.Os.ToString(),
+            repro.Os,
             repro.VmId,
             repro.Config,
             await _context.ReproOperations.GetSetupContainer(repro)

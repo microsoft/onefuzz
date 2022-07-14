@@ -45,9 +45,13 @@ namespace ApiService.TestHooks {
 
             var ip = await _ipOps.GetIp(rg, name);
 
-            var resp = req.CreateResponse(HttpStatusCode.OK);
-            await resp.WriteStringAsync(ip.Get().Value.Data.Name);
-            return resp;
+            if (ip != null) {
+                var resp = req.CreateResponse(HttpStatusCode.OK);
+                await resp.WriteStringAsync(ip.Get().Value.Data.Name);
+                return resp;
+            } else {
+                return req.CreateResponse(HttpStatusCode.NotFound);
+            }
         }
 
 
