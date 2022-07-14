@@ -13,8 +13,8 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
     public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? states);
 
 
-    public Async.Task Init(Repro repro);
-    public Async.Task ExtensionsLaunch(Repro repro);
+    public Async.Task<Repro> Init(Repro repro);
+    public Async.Task<Repro> ExtensionsLaunch(Repro repro);
 
     public Async.Task<Repro> ExtensionsFailed(Repro repro);
 
@@ -24,9 +24,9 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 
     public Async.Task<Repro> Stopped(Repro repro);
 
-    public Async.Task SetFailed(Repro repro, VirtualMachineResource vmData);
+    public Async.Task<Repro> SetFailed(Repro repro, VirtualMachineResource vmData);
 
-    public Async.Task SetError(Repro repro, Error result);
+    public Async.Task<Repro> SetError(Repro repro, Error result);
 
     public Async.Task<OneFuzzResultVoid> BuildReproScript(Repro repro);
 
@@ -120,64 +120,60 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         return QueryAsync(queryString);
     }
 
-    public async Async.Task Init(Repro repro) {
+    public async Async.Task<Repro> Init(Repro repro) {
         var config = await _context.ConfigOperations.Fetch();
         var vm = await GetVm(repro, config);
         var vmData = await _context.VmOperations.GetVm(vm.Name);
         if (vmData != null) {
             if (vmData.Data.ProvisioningState == "Failed") {
-                await _context.ReproOperations.SetFailed(repro, vmData);
+                return await _context.ReproOperations.SetFailed(repro, vmData);
             } else {
                 var scriptResult = await BuildReproScript(repro);
                 if (!scriptResult.IsOk) {
-                    await _context.ReproOperations.SetError(repro, scriptResult.ErrorV);
-                    return;
+                    return await _context.ReproOperations.SetError(repro, scriptResult.ErrorV);
                 }
+                repro = repro with { State = VmState.ExtensionsLaunch };
             }
         } else {
             var nsg = new Nsg(vm.Region, vm.Region);
             var result = await _context.NsgOperations.Create(nsg);
             if (!result.IsOk) {
-                await _context.ReproOperations.SetError(repro, result.ErrorV);
-                return;
+                return await _context.ReproOperations.SetError(repro, result.ErrorV);
             }
 
             var nsgConfig = config.ProxyNsgConfig;
             result = await _context.NsgOperations.SetAllowedSources(nsg, nsgConfig);
             if (!result.IsOk) {
-                await _context.ReproOperations.SetError(repro, result.ErrorV);
-                return;
+                return await _context.ReproOperations.SetError(repro, result.ErrorV);
             }
 
             vm = vm with { Nsg = nsg };
             result = await _context.VmOperations.Create(vm);
             if (!result.IsOk) {
-                await _context.ReproOperations.SetError(repro, result.ErrorV);
-                return;
+                return await _context.ReproOperations.SetError(repro, result.ErrorV);
             }
         }
 
         await Replace(repro);
+        return repro;
     }
 
-    public async Async.Task ExtensionsLaunch(Repro repro) {
+    public async Async.Task<Repro> ExtensionsLaunch(Repro repro) {
         var config = await _context.ConfigOperations.Fetch();
         var vm = await GetVm(repro, config);
         var vmData = await _context.VmOperations.GetVm(vm.Name);
         if (vmData == null) {
-            await _context.ReproOperations.SetError(
+            return await _context.ReproOperations.SetError(
                 repro,
                 OneFuzzResultVoid.Error(
                     ErrorCode.VM_CREATE_FAILED,
                     "failed before launching extensions"
                 ).ErrorV
             );
-            return;
         }
 
         if (vmData.Data.ProvisioningState == "Failed") {
-            await _context.ReproOperations.SetFailed(repro, vmData);
-            return;
+            return await _context.ReproOperations.SetFailed(repro, vmData);
         }
 
         if (string.IsNullOrEmpty(repro.Ip)) {
@@ -196,21 +192,22 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
 
         var result = await _context.VmOperations.AddExtensions(vm, extensions);
         if (!result.IsOk) {
-            await SetError(repro, result.ErrorV);
+            return await SetError(repro, result.ErrorV);
         } else {
             repro = repro with { State = VmState.Running };
         }
 
         await Replace(repro);
+        return repro;
     }
 
-    public async Async.Task SetFailed(Repro repro, VirtualMachineResource vmData) {
+    public async Async.Task<Repro> SetFailed(Repro repro, VirtualMachineResource vmData) {
         var errors = (await vmData.InstanceViewAsync()).Value.Statuses
             .Where(status => status.Level.HasValue && string.Equals(status.Level?.ToString(), "error", StringComparison.OrdinalIgnoreCase))
             .Select(status => $"{status.Code} {status.DisplayStatus} {status.Message}")
             .ToArray();
 
-        await SetError(repro, OneFuzzResultVoid.Error(
+        return await SetError(repro, OneFuzzResultVoid.Error(
             ErrorCode.VM_CREATE_FAILED,
             errors
         ).ErrorV);
@@ -278,7 +275,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         return OneFuzzResultVoid.Ok;
     }
 
-    public async Async.Task SetError(Repro repro, Error result) {
+    public async Async.Task<Repro> SetError(Repro repro, Error result) {
         _logTracer.Error(
             $"repro failed: vm_id: {repro.VmId} task_id: {repro.TaskId} error: {result}"
         );
@@ -289,6 +286,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         };
 
         await Replace(repro);
+        return repro;
     }
 
     public async Task<Container?> GetSetupContainer(Repro repro) {

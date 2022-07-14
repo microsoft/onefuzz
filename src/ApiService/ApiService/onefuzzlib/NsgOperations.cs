@@ -254,8 +254,8 @@ namespace Microsoft.OneFuzz.Service {
             return await UpdateNsg(nsg.Data);
         }
 
-        public Task<OneFuzzResultVoid> AssociateNic(Nsg nsg, NetworkInterfaceResource nic) {
-            throw new NotImplementedException();
+        public async Task<OneFuzzResultVoid> AssociateNic(Nsg nsg, NetworkInterfaceResource nic) {
+            return await AssociateNic(nsg.Name, nic);
         }
 
         private async Task<OneFuzzResultVoid> AssociateNic(string name, NetworkInterfaceResource nic) {

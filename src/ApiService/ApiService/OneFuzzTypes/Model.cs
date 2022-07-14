@@ -441,7 +441,7 @@ public record NoReproReport(
     string? Executable,
     Guid TaskId,
     Guid JobId,
-    int Tries,
+    long Tries,
     string? Error
 );
 
@@ -468,8 +468,7 @@ public record TeamsTemplate();
 public record GithubIssuesTemplate();
 
 public record Repro(
-    [PartitionKey] Guid VmId,
-    [RowKey] Guid _,
+    [PartitionKey][RowKey] Guid VmId,
     Guid TaskId,
     ReproConfig Config,
     VmState State,

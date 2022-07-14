@@ -63,7 +63,7 @@ public class Subnet : ISubnet {
             );
         }
 
-        throw new NotImplementedException();
+        return OneFuzzResultVoid.Ok;
     }
 
     public async Async.Task<SubnetResource?> GetSubnet(string vnetName, string subnetName) {
