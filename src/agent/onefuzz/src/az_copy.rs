@@ -67,7 +67,7 @@ fn redact_azcopy_sas_arg(value: &OsStr) -> OsString {
 }
 
 async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
-    let az_copy_logs =  std::env::temp_dir().join("azcopy_logs");
+    let az_copy_logs = std::env::temp_dir().join("azcopy_logs");
     std::fs::create_dir_all(az_copy_logs).with_context(|| "can't create az_copy log folder")?;
     let temp_dir = az_copy_logs.join(uuid::Uuid::new_v4().to_string());
     std::fs::create_dir_all(temp_dir).with_context(|| "can't create temp dir")?;
