@@ -295,7 +295,10 @@ namespace Tests {
                         MinimizedStackFunctionNames: arg.Item3,
                         MinimizedStackFunctionNamesSha256: arg.Item1,
                         MinimizedStackFunctionLines: arg.Item3,
-                        MinimizedStackFunctionLinesSha256: arg.Item1
+                        MinimizedStackFunctionLinesSha256: arg.Item1,
+                        ToolName: "",
+                        ToolVersion: "",
+                        OnefuzzVersion: ""
                     )
             );
         }

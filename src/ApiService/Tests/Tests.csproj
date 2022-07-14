@@ -24,4 +24,34 @@
     <ProjectReference Include="..\ApiService\ApiService.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="sample_reports\5035fca35ff5596cf3e32393b8508bfe043e24602630aa120ca09e29711c0d5d.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="sample_reports\5e4a72e7f040c9f585da7128d87c97bced03c2f6d5a6ad8d581296ef5a2591e9.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="sample_reports\6002b97c33b1f5971bd41ffdb749dd8821cdc833affebd89f0ca39c3dbe68bae.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="sample_reports\6185de1d0cbc830bf0194fdca4c1ffbeccf28d3e7e7a23757fdb9f96e2ab7b57.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="sample_reports\754645c7125fb6977cd38810314866968585400b165e0de0bbccd0e039993b3c.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="sample_reports\8e08dbaacf4409b08ef2c593d24b7981ef940de249fa6ad34ea944f380f39d57.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="sample_reports\9dfbef8935f398dca2f3f4f4f6027e9b735dfcf47ab8b036eec6eed5758f53a2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="sample_reports\d1ee80d87a181e5b46d8fd61f405bfa42ae04664f27f178b44ac9d6d2a6280d9.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="sample_reports\de426df9673ba82ffab1d95a92348eb0c6ca38b28795aca0107a02b65179e978.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
