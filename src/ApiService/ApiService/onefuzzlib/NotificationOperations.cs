@@ -19,7 +19,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     public async Async.Task NewFiles(Container container, string filename, bool failTaskOnTransientError) {
         var notifications = GetNotifications(container);
         var hasNotifications = await notifications.AnyAsync();
-        var report = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
+        var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
 
         if (!hasNotifications) {
             return;
@@ -34,19 +34,19 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             done.Add(notification.Config);
 
             if (notification.Config.TeamsTemplate != null) {
-                NotifyTeams(notification.Config.TeamsTemplate, container, filename, report);
+                NotifyTeams(notification.Config.TeamsTemplate, container, filename, reportOrRegression);
             }
 
-            if (report == null) {
+            if (reportOrRegression == null) {
                 continue;
             }
 
             if (notification.Config.AdoTemplate != null) {
-                NotifyAdo(notification.Config.AdoTemplate, container, filename, report, failTaskOnTransientError);
+                NotifyAdo(notification.Config.AdoTemplate, container, filename, reportOrRegression, failTaskOnTransientError);
             }
 
             if (notification.Config.GithubIssuesTemplate != null) {
-                GithubIssue(notification.Config.GithubIssuesTemplate, container, filename, report);
+                GithubIssue(notification.Config.GithubIssuesTemplate, container, filename, reportOrRegression);
             }
         }
 
@@ -58,15 +58,17 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             }
         }
 
-        if (report?.Report != null) {
-            var reportTask = await _context.TaskOperations.GetByJobIdAndTaskId(report.Report.JobId, report.Report.TaskId);
+        if (reportOrRegression is Report) {
+            var report = (reportOrRegression as Report)!;
+            var reportTask = await _context.TaskOperations.GetByJobIdAndTaskId(report.JobId, report.TaskId);
 
-            var crashReportedEvent = new EventCrashReported(report.Report, container, filename, reportTask?.Config);
+            var crashReportedEvent = new EventCrashReported(report, container, filename, reportTask?.Config);
             await _context.Events.SendEvent(crashReportedEvent);
-        } else if (report?.RegressionReport != null) {
-            var reportTask = await GetRegressionReportTask(report.RegressionReport);
+        } else if (reportOrRegression is RegressionReport) {
+            var regressionReport = (reportOrRegression as RegressionReport)!;
+            var reportTask = await GetRegressionReportTask(regressionReport);
 
-            var regressionEvent = new EventRegressionReported(report.RegressionReport, container, filename, reportTask?.Config);
+            var regressionEvent = new EventRegressionReported(regressionReport, container, filename, reportTask?.Config);
             await _context.Events.SendEvent(regressionEvent);
         } else {
             await _context.Events.SendEvent(new EventFileAdded(container, filename));
@@ -96,15 +98,15 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         return null;
     }
 
-    private void GithubIssue(GithubIssuesTemplate config, Container container, string filename, RegressionReportOrReport? report) {
+    private void GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? report) {
         throw new NotImplementedException();
     }
 
-    private void NotifyAdo(AdoTemplate config, Container container, string filename, RegressionReportOrReport report, bool failTaskOnTransientError) {
+    private void NotifyAdo(AdoTemplate config, Container container, string filename, IReport report, bool failTaskOnTransientError) {
         throw new NotImplementedException();
     }
 
-    private void NotifyTeams(TeamsTemplate config, Container container, string filename, RegressionReportOrReport? report) {
+    private void NotifyTeams(TeamsTemplate config, Container container, string filename, IReport? report) {
         throw new NotImplementedException();
     }
 }

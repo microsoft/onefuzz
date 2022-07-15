@@ -99,7 +99,6 @@ public class TimerReproTests {
         return new Repro(
             Guid.NewGuid(),
             Guid.Empty,
-            Guid.Empty,
             new ReproConfig(
                 new Container(String.Empty),
                 String.Empty,

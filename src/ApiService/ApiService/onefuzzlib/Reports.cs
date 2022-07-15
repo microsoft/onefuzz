@@ -4,7 +4,7 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IReports {
-    public Async.Task<RegressionReportOrReport?> GetReportOrRegression(Container container, string fileName, bool expectReports = false, params string[] args);
+    public Async.Task<IReport?> GetReportOrRegression(Container container, string fileName, bool expectReports = false, params string[] args);
 }
 
 public class Reports : IReports {
@@ -15,7 +15,7 @@ public class Reports : IReports {
         _containers = containers;
     }
 
-    public async Async.Task<RegressionReportOrReport?> GetReportOrRegression(Container container, string fileName, bool expectReports = false, params string[] args) {
+    public async Async.Task<IReport?> GetReportOrRegression(Container container, string fileName, bool expectReports = false, params string[] args) {
         var filePath = String.Join("/", new[] { container.ContainerName, fileName });
         if (!fileName.EndsWith(".json", StringComparison.Ordinal)) {
             if (expectReports) {
@@ -36,26 +36,20 @@ public class Reports : IReports {
         return ParseReportOrRegression(blob.ToString(), filePath, expectReports);
     }
 
-    private RegressionReportOrReport? ParseReportOrRegression(string content, string? filePath, bool expectReports = false) {
-        try {
-            return new RegressionReportOrReport {
-                RegressionReport = JsonSerializer.Deserialize<RegressionReport>(content, EntityConverter.GetJsonSerializerOptions())
-            };
-        } catch (JsonException e) {
-            try {
-                return new RegressionReportOrReport {
-                    Report = JsonSerializer.Deserialize<Report>(content, EntityConverter.GetJsonSerializerOptions())
-                };
-            } catch (JsonException e2) {
-                if (expectReports) {
-                    _log.Error($"unable to parse report ({filePath}) as a report or regression. regression error: {e.Message} report error: {e2.Message}");
-                }
+    private IReport? ParseReportOrRegression(string content, string? filePath, bool expectReports = false) {
+        var regressionReport = JsonSerializer.Deserialize<RegressionReport>(content, EntityConverter.GetJsonSerializerOptions());
+        if (regressionReport == null || regressionReport.CrashTestResult == null) {
+            var report = JsonSerializer.Deserialize<Report>(content, EntityConverter.GetJsonSerializerOptions());
+            if (expectReports && report == null) {
+                _log.Error($"unable to parse report ({filePath}) as a report or regression");
                 return null;
             }
+            return report;
         }
+        return regressionReport;
     }
 
-    private RegressionReportOrReport? ParseReportOrRegression(IEnumerable<byte> content, string? filePath, bool expectReports = false) {
+    private IReport? ParseReportOrRegression(IEnumerable<byte> content, string? filePath, bool expectReports = false) {
         try {
             var str = System.Text.Encoding.UTF8.GetString(content.ToArray());
             return ParseReportOrRegression(str, filePath, expectReports);
@@ -68,7 +62,4 @@ public class Reports : IReports {
     }
 }
 
-public class RegressionReportOrReport {
-    public RegressionReport? RegressionReport { get; set; }
-    public Report? Report { get; set; }
-}
+public interface IReport {};
