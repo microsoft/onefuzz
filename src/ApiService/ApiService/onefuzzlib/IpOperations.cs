@@ -83,8 +83,7 @@ public class IpOperations : IIpOperations {
                 resource.Data.Name
             );
             return publicIpResource.Value.Data.IPAddress;
-        }
-        catch (RequestFailedException) {
+        } catch (RequestFailedException) {
             return null;
         }
     }
