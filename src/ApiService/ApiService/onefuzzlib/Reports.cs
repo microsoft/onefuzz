@@ -62,7 +62,6 @@ public class Reports : IReports {
         return regressionReport;
     }
 
-
     private IReport? ParseReportOrRegression(IEnumerable<byte> content, string? filePath, bool expectReports = false) {
         try {
             var str = System.Text.Encoding.UTF8.GetString(content.ToArray());
@@ -76,4 +75,4 @@ public class Reports : IReports {
     }
 }
 
-public interface IReport { }
+public interface IReport { };

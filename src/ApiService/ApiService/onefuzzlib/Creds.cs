@@ -32,7 +32,6 @@ public interface ICreds {
     public GenericResource ParseResourceId(string resourceId);
 
     public Async.Task<GenericResource> GetData(GenericResource resource);
-
 }
 
 public class Creds : ICreds {
