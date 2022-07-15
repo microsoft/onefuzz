@@ -34,7 +34,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             done.Add(notification.Config);
 
             if (notification.Config.TeamsTemplate != null) {
-                NotifyTeams(notification.Config.TeamsTemplate, container, filename, reportOrRegression);
+                NotifyTeams(notification.Config.TeamsTemplate, container, filename, reportOrRegression!);
             }
 
             if (reportOrRegression == null) {
@@ -98,7 +98,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         return null;
     }
 
-    private void GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? report) {
+    private void GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport report) {
         throw new NotImplementedException();
     }
 
@@ -106,7 +106,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         throw new NotImplementedException();
     }
 
-    private void NotifyTeams(TeamsTemplate config, Container container, string filename, IReport? report) {
+    private void NotifyTeams(TeamsTemplate config, Container container, string filename, IReport report) {
         throw new NotImplementedException();
     }
 }
