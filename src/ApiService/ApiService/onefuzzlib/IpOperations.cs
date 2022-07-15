@@ -71,17 +71,21 @@ public class IpOperations : IIpOperations {
         var networkInterfaces = await _creds.GetResourceGroupResource().GetNetworkInterfaceAsync(
             resource.Data.Name
         );
-        var publicIp = (await networkInterfaces.Value.GetNetworkInterfaceIPConfigurations().FirstAsync())
-                    .Data.PublicIPAddress;
-        resource = _creds.ParseResourceId(publicIp.Id);
-        var publicIpResource = await _creds.GetResourceGroupResource().GetPublicIPAddressAsync(
-            resource.Data.Name
-        );
-
-        if (publicIpResource == null) {
+        var publicIpConfigResource = (await networkInterfaces.Value.GetNetworkInterfaceIPConfigurations().FirstAsync());
+        publicIpConfigResource = await publicIpConfigResource.GetAsync();
+        var publicIp = publicIpConfigResource.Data.PublicIPAddress;
+        if (publicIp == null) {
             return null;
-        } else {
+        }
+        resource = _creds.ParseResourceId(publicIp.Id);
+        try {
+            var publicIpResource = await _creds.GetResourceGroupResource().GetPublicIPAddressAsync(
+                resource.Data.Name
+            );
             return publicIpResource.Value.Data.IPAddress;
+        }
+        catch (RequestFailedException) {
+            return null;
         }
     }
 

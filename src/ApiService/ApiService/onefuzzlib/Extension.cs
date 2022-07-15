@@ -77,7 +77,7 @@ public class Extensions : IExtensions {
         return extensions;
     }
 
-    public async Async.Task<IList<VirtualMachineExtensionData>> GenericExtensions(AzureLocation region, Os vmOs) {
+    public async Async.Task<Dictionary<string, VirtualMachineExtensionData>> GenericExtensions(AzureLocation region, Os vmOs) {
         var extensions = new List<VirtualMachineExtensionData>();
 
         var instanceConfig = await _instanceConfigOps.Fetch();
@@ -483,11 +483,12 @@ public class Extensions : IExtensions {
         throw new NotImplementedException($"unsupported OS: {vmOs}");
     }
 
-    public async Async.Task<VirtualMachineExtensionData> AgentConfig(AzureLocation region, Os vmOs, AgentMode mode, List<Uri>? urls = null, bool withSas = false) {
+    public async Async.Task<VMExtenionWrapper> AgentConfig(AzureLocation region, Os vmOs, AgentMode mode, List<Uri>? urls = null, bool withSas = false) {
         await UpdateManagedScripts();
+        var extension = new Dictionary<string, VirtualMachineExtensionData>();
 
         if (vmOs == Os.Windows) {
-            var extension = new VirtualMachineExtensionData(region) {
+            var t = new VirtualMachineExtensionData(region) {
                 TypePropertiesType = "CustomScriptExtension",
                 Publisher = "Microsoft.Compute",
                 ForceUpdateTag = Guid.NewGuid().ToString(),
@@ -498,7 +499,7 @@ public class Extensions : IExtensions {
             };
             return extension;
         } else if (vmOs == Os.Linux) {
-            var extension = new VirtualMachineExtensionData(region) {
+            extension.Add("CustomScript", new VirtualMachineExtensionData(region) {
                 TypePropertiesType = "CustomScript",
                 Publisher = "Microsoft.Azure.Extension",
                 ForceUpdateTag = Guid.NewGuid().ToString(),
@@ -506,7 +507,7 @@ public class Extensions : IExtensions {
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(new { CommandToExecute = AgentConfigCommandToExecuteLinux(mode), FileUrls = await AgentConfigFileUrlsLinux(withSas) }),
                 ProtectedSettings = new BinaryData(new { ManagedIdentity = new Dictionary<string, string>() })
-            };
+            });
             return extension;
         }
 
@@ -580,7 +581,7 @@ public class Extensions : IExtensions {
         return extensions;
     }
 
-    public async Task<IList<VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer) {
+    public async Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer) {
         // TODO: what about contents of repro.ps1 / repro.sh?
         var report = await _context.Reports.GetReport(reproConfig.Container, reproConfig.Path);
         report.EnsureNotNull($"invalid report: {reproConfig}");
