@@ -147,7 +147,7 @@ public record Proxy
     bool Outdated
 ) : StatefulEntityBase<VmState>(State);
 
-public record Error(ErrorCode Code, string[]? Errors = null){
+public record Error(ErrorCode Code, string[]? Errors = null) {
     public sealed override string ToString() {
         var errorsString = Errors != null ? string.Join("", Errors) : string.Empty;
         return $"Error {{ Code = {Code}, Errors = {errorsString} }}";
@@ -438,7 +438,7 @@ public record Report(
     string? MinimizedStackFunctionNamesSha256,
     List<string>? MinimizedStackFunctionLines,
     string? MinimizedStackFunctionLinesSha256
-) :IReport;
+) : IReport;
 
 public record NoReproReport(
     string InputSha,
@@ -458,7 +458,7 @@ public record CrashTestResult(
 public record RegressionReport(
     CrashTestResult CrashTestResult,
     CrashTestResult? OriginalCrashTestResult
-) :IReport;
+) : IReport;
 
 public record NotificationTemplate(
     AdoTemplate? AdoTemplate,

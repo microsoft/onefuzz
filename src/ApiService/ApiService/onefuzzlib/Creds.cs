@@ -28,6 +28,10 @@ public interface ICreds {
     public Uri GetInstanceUrl();
     public Async.Task<Guid> GetScalesetPrincipalId();
     public Async.Task<T> QueryMicrosoftGraph<T>(HttpMethod method, string resource);
+
+    public GenericResource ParseResourceId(string resourceId);
+
+    public Async.Task<GenericResource> GetData(GenericResource resource);
 }
 
 public class Creds : ICreds {
@@ -144,6 +148,17 @@ public class Creds : ICreds {
             var errorText = await response.Content.ReadAsStringAsync();
             throw new GraphQueryException($"request did not succeed: HTTP {response.StatusCode} - {errorText}");
         }
+    }
+
+    public GenericResource ParseResourceId(string resourceId) {
+        return ArmClient.GetGenericResource(new ResourceIdentifier(resourceId));
+    }
+
+    public async Async.Task<GenericResource> GetData(GenericResource resource) {
+        if (!resource.HasData) {
+            return await resource.GetAsync();
+        }
+        return resource;
     }
 }
 

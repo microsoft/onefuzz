@@ -300,7 +300,7 @@ namespace Tests {
             );
         }
 
-             public static Gen<NoReproReport> NoReproReport() {
+        public static Gen<NoReproReport> NoReproReport() {
             return Arb.Generate<Tuple<string, BlobRef?, string?, Guid, int>>().Select(
                 arg =>
                     new NoReproReport(
