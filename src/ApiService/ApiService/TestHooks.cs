@@ -26,7 +26,7 @@ public class TestHooks {
         _logAnalytics = logAnalytics;
     }
 
-    [Function("Info")]
+    [Function("_Info")]
     public async Task<HttpResponseData> Info([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/info")] HttpRequestData req) {
         _log.Info("Creating function info response");
         var response = req.CreateResponse();

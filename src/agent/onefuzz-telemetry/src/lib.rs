@@ -13,6 +13,7 @@ use z3_sys::ErrorCode as Z3ErrorCode;
 
 pub use chrono::Utc;
 
+use anyhow::{bail, Result};
 pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
 use tokio::sync::broadcast::{self, Receiver};
 #[macro_use]
@@ -378,9 +379,9 @@ mod global {
     };
 
     lazy_static! {
-        pub static ref EVENT_SOURCE: Sender<LoggingEvent> = {
+        pub static ref EVENT_SOURCE: RwLock<Option<Sender<LoggingEvent>>> = {
             let (telemetry_event_source, _) = broadcast::channel::<_>(100);
-            telemetry_event_source
+            RwLock::new(Some(telemetry_event_source))
         };
     }
 
@@ -487,6 +488,9 @@ pub fn try_flush_and_close() {
         client.flush_channel();
         client.close_channel();
     }
+
+    // dropping the broadcast sender to make sure all pending events are sent
+    let _global_event_source = global::EVENT_SOURCE.write().unwrap().take();
 }
 
 pub fn client(client_type: ClientType) -> Option<RwLockReadGuard<'static, TelemetryClient>> {
@@ -554,31 +558,44 @@ pub fn format_events(events: &[EventData]) -> String {
 fn try_broadcast_event(timestamp: DateTime<Utc>, event: &Event, properties: &[EventData]) -> bool {
     // we ignore any send error here because they indicate that
     // there are no receivers on the other end
-    let (event, properties) = (event.clone(), properties.to_vec());
-    global::EVENT_SOURCE
-        .send(LoggingEvent::Event(LogEvent {
-            timestamp,
-            event,
-            data: properties,
-        }))
-        .is_ok()
+
+    if let Some(ev) = global::EVENT_SOURCE.read().ok().and_then(|f| f.clone()) {
+        let (event, properties) = (event.clone(), properties.to_vec());
+
+        return ev
+            .send(LoggingEvent::Event(LogEvent {
+                timestamp,
+                event,
+                data: properties,
+            }))
+            .is_ok();
+    }
+
+    false
 }
 
 pub fn try_broadcast_trace(timestamp: DateTime<Utc>, msg: String, level: log::Level) -> bool {
     // we ignore any send error here because they indicate that
     // there are no receivers on the other end
-
-    global::EVENT_SOURCE
-        .send(LoggingEvent::Trace(LogTrace {
-            timestamp,
-            level,
-            message: msg,
-        }))
-        .is_ok()
+    if let Some(ev) = global::EVENT_SOURCE.read().ok().and_then(|f| f.clone()) {
+        return ev
+            .send(LoggingEvent::Trace(LogTrace {
+                timestamp,
+                level,
+                message: msg,
+            }))
+            .is_ok();
+    }
+    false
 }
 
-pub fn subscribe_to_events() -> Receiver<LoggingEvent> {
-    global::EVENT_SOURCE.subscribe()
+pub fn subscribe_to_events() -> Result<Receiver<LoggingEvent>> {
+    let global_event_source = global::EVENT_SOURCE.read().unwrap();
+    if let Some(evs) = global_event_source.clone() {
+        Ok(evs.subscribe())
+    } else {
+        bail!("Event source not initialized");
+    }
 }
 
 pub fn track_event(event: &Event, properties: &[EventData]) {
