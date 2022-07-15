@@ -79,7 +79,7 @@ public class AgentEvents {
                 return null;
             }
 
-            if (_context.NodeOperations.CouldShrinkScaleset(node)) {
+            if (await _context.NodeOperations.CouldShrinkScaleset(node)) {
                 _log.Info($"stopping free node to resize scaleset: {machineId}");
                 await _context.NodeOperations.SetHalt(node);
                 return null;
