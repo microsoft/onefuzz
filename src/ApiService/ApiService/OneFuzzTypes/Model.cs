@@ -147,7 +147,12 @@ public record Proxy
     bool Outdated
 ) : StatefulEntityBase<VmState>(State);
 
-public record Error(ErrorCode Code, string[]? Errors = null);
+public record Error(ErrorCode Code, string[]? Errors = null) {
+    public sealed override string ToString() {
+        var errorsString = Errors != null ? string.Join("", Errors) : string.Empty;
+        return $"Error {{ Code = {Code}, Errors = {errorsString} }}";
+    }
+};
 
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
 
@@ -413,7 +418,7 @@ public record Notification(
 public record BlobRef(
     string Account,
     Container container,
-    string name
+    string Name
 );
 
 public record Report(
@@ -436,7 +441,7 @@ public record Report(
     string? MinimizedStackFunctionNamesSha256,
     List<string>? MinimizedStackFunctionLines,
     string? MinimizedStackFunctionLinesSha256
-);
+) : IReport;
 
 public record NoReproReport(
     string InputSha,
@@ -444,7 +449,7 @@ public record NoReproReport(
     string? Executable,
     Guid TaskId,
     Guid JobId,
-    int Tries,
+    long Tries,
     string? Error
 );
 
@@ -456,7 +461,7 @@ public record CrashTestResult(
 public record RegressionReport(
     CrashTestResult CrashTestResult,
     CrashTestResult? OriginalCrashTestResult
-);
+) : IReport;
 
 public record NotificationTemplate(
     AdoTemplate? AdoTemplate,
@@ -471,8 +476,7 @@ public record TeamsTemplate();
 public record GithubIssuesTemplate();
 
 public record Repro(
-    [PartitionKey] Guid VmId,
-    [RowKey] Guid _,
+    [PartitionKey][RowKey] Guid VmId,
     Guid TaskId,
     ReproConfig Config,
     VmState State,
