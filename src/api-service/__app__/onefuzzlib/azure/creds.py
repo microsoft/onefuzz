@@ -83,7 +83,10 @@ def get_instance_url() -> str:
 
 @cached
 def get_agent_instance_url() -> str:
-    return "https://%s-net.azurewebsites.net" % get_instance_name()
+    if os.environ.get("ONEFUZZ_USE_NET_AGENT_FUNCTIONS") == "true":
+        return "https://%s-net.azurewebsites.net" % get_instance_name()
+
+    return get_instance_url()
 
 
 @cached
