@@ -930,7 +930,7 @@ class Tasks(Endpoint):
     def list(
         self,
         job_id: Optional[UUID_EXPANSION] = None,
-        state: Optional[List[enums.TaskState]] = enums.TaskState.available(),
+        state: Optional[List[enums.TaskState]] = None,
     ) -> List[models.Task]:
         """Get information about all tasks"""
         self.logger.debug("list tasks")
@@ -942,6 +942,9 @@ class Tasks(Endpoint):
                 job_id,
                 lambda: [str(x.job_id) for x in self.onefuzz.jobs.list()],
             )
+
+        if job_id_expanded is None and state is None:
+            state = enums.TaskState.available()
 
         return self._req_model_list(
             "GET",
