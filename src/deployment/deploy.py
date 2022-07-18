@@ -1096,7 +1096,7 @@ class Client:
     def enable_dotnet_func(self) -> None:
         if self.enable_dotnet:
 
-            def expand_agent(f: str):
+            def expand_agent(f: str) -> List[str]:
                 # 'agent' is permitted as a shortcut for the agent functions
                 if f == "agent":
                     return [
