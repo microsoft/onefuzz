@@ -1095,14 +1095,22 @@ class Client:
 
     def enable_dotnet_func(self) -> None:
         if self.enable_dotnet:
+
             def expand_agent(f: str):
                 # 'agent' is permitted as a shortcut for the agent functions
                 if f == "agent":
-                    return ["agent_can_schedule", "agent_commands", "agent_events", "agent_registration"]
+                    return [
+                        "agent_can_schedule",
+                        "agent_commands",
+                        "agent_events",
+                        "agent_registration",
+                    ]
                 else:
                     return [f]
 
-            enable_dotnet = itertools.chain.from_iterable(map(expand_agent, self.enable_dotnet))
+            enable_dotnet = itertools.chain.from_iterable(
+                map(expand_agent, self.enable_dotnet)
+            )
 
             func = shutil.which("az")
             assert func is not None
