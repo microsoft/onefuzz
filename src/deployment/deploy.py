@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 import argparse
+import itertools
 import json
 import logging
 import os
@@ -1094,9 +1095,18 @@ class Client:
 
     def enable_dotnet_func(self) -> None:
         if self.enable_dotnet:
+            def expand_agent(f: str):
+                # 'agent' is permitted as a shortcut for the agent functions
+                if f == "agent":
+                    return ["agent_can_schedule", "agent_commands", "agent_events", "agent_registration"]
+                else:
+                    return [f]
+
+            enable_dotnet = itertools.chain.from_iterable(map(expand_agent, self.enable_dotnet))
+
             func = shutil.which("az")
             assert func is not None
-            for function_name in self.enable_dotnet:
+            for function_name in enable_dotnet:
                 format_name = function_name.split("_")
                 dotnet_name = "".join(x.title() for x in format_name)
                 error: Optional[subprocess.CalledProcessError] = None
