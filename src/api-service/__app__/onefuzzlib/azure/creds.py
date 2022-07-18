@@ -82,11 +82,18 @@ def get_instance_url() -> str:
 
 
 @cached
-def get_agent_instance_url() -> str:
-    if os.environ.get("ONEFUZZ_USE_NET_AGENT_FUNCTIONS") == "true":
-        return "https://%s-net.azurewebsites.net" % get_instance_name()
+def python_agent_functions_are_disabled() -> bool:
+    # note that we only check one function here;
+    # these should be enabled or disabled as a group
+    return os.environ["AzureWebJobs.agent_can_schedule.Disabled"] == "1"
 
-    return get_instance_url()
+
+@cached
+def get_agent_instance_url() -> str:
+    if python_agent_functions_are_disabled():
+        return "https://%s-net.azurewebsites.net" % get_instance_name()
+    else:
+        return get_instance_url()
 
 
 @cached
