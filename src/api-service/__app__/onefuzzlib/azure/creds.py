@@ -85,7 +85,13 @@ def get_instance_url() -> str:
 def python_agent_functions_are_disabled() -> bool:
     # note that we only check one function here;
     # these should be enabled or disabled as a group
-    return os.environ["AzureWebJobs.agent_can_schedule.Disabled"] == "1"
+    try:
+        return os.environ["AzureWebJobs.agent_can_schedule.Disabled"] == "1"
+    except KeyError:
+        raise Exception(
+            "AzureWebJobs.agent_can_schedule.Disabled is not set. Environment: %s"
+            % os.environ
+        )
 
 
 @cached
