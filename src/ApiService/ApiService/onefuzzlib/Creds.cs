@@ -93,9 +93,9 @@ public class Creds : ICreds {
         return rg.Value.Data.Location.Name;
     }
 
-    public Uri GetInstanceUrl() {
-        return new Uri($"https://{GetInstanceName()}.azurewebsites.net");
-    }
+    public Uri GetInstanceUrl()
+        // TODO: remove -net when promoted to main version
+        => new($"https://{GetInstanceName()}-net.azurewebsites.net");
 
     public record ScaleSetIdentity(string principalId);
 
