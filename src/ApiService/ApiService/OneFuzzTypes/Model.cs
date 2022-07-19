@@ -52,9 +52,16 @@ public record NodeCommandAddSshKey(string PublicKey);
 
 public record NodeCommand
 (
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     StopNodeCommand? Stop = default,
+
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     StopTaskNodeCommand? StopTask = default,
+
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     NodeCommandAddSshKey? AddSshKey = default,
+
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     NodeCommandStopIfFree? StopIfFree = default
 );
 
