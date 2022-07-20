@@ -13,9 +13,9 @@ from onefuzztypes.requests import PoolCreate, PoolSearch, PoolStop
 from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.azure.creds import (
+    get_agent_instance_url,
     get_base_region,
     get_instance_id,
-    get_instance_url,
     get_regions,
 )
 from ..onefuzzlib.azure.queue import get_queue_sas
@@ -29,7 +29,7 @@ from ..onefuzzlib.workers.pools import Pool
 def set_config(pool: Pool) -> Pool:
     pool.config = AgentConfig(
         pool_name=pool.name,
-        onefuzz_url=get_instance_url(),
+        onefuzz_url=get_agent_instance_url(),
         instance_telemetry_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
         microsoft_telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         heartbeat_queue=get_queue_sas(

@@ -24,7 +24,7 @@ from .azure.containers import (
     get_file_url,
     save_blob,
 )
-from .azure.creds import get_instance_id, get_instance_url
+from .azure.creds import get_agent_instance_url, get_instance_id
 from .azure.log_analytics import get_monitor_settings
 from .azure.queue import get_queue_sas
 from .azure.storage import StorageType
@@ -246,7 +246,7 @@ def build_scaleset_script(pool: Pool, scaleset: Scaleset) -> str:
 def build_pool_config(pool: Pool) -> str:
     config = AgentConfig(
         pool_name=pool.name,
-        onefuzz_url=get_instance_url(),
+        onefuzz_url=get_agent_instance_url(),
         heartbeat_queue=get_queue_sas(
             "node-heartbeat",
             StorageType.config,

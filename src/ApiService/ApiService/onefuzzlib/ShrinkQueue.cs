@@ -15,8 +15,9 @@ public class ShrinkQueue {
     }
 
     public override string ToString() {
-        return $"to-shrink-{_baseId.ToString("N")}";
+        return $"to-shrink-{_baseId:N}";
     }
+
     public string QueueName => this.ToString();
 
     public async Async.Task Clear() {

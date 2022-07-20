@@ -14,7 +14,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     bool IsOutdated(Node node);
     Async.Task Stop(Node node, bool done = false);
     bool IsTooOld(Node node);
-    bool CouldShrinkScaleset(Node node);
+    Task<bool> CouldShrinkScaleset(Node node);
     Async.Task SetHalt(Node node);
     Async.Task SetState(Node node, NodeState state);
     Async.Task ToReimage(Node node, bool done = false);
@@ -65,10 +65,11 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public async Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node) {
-        if (await ScalesetNodeExists(node) && node.ScalesetId != null) {
+        if (await ScalesetNodeExists(node) && node.ScalesetId is Guid scalesetId) {
             _logTracer.Info($"Setting scale-in protection on node {node.MachineId}");
-            return await _context.VmssOperations.UpdateScaleInProtection((Guid)node.ScalesetId, node.MachineId, protectFromScaleIn: true);
+            return await _context.VmssOperations.UpdateScaleInProtection(scalesetId, node.MachineId, protectFromScaleIn: true);
         }
+
         return OneFuzzResultVoid.Ok;
     }
 
@@ -88,7 +89,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public async Task<bool> CanProcessNewWork(Node node) {
-        if (IsOutdated(node)) {
+        if (IsOutdated(node) && _context.ServiceConfiguration.OneFuzzAllowOutdatedAgent != "true") {
             _logTracer.Info($"can_process_new_work agent and service versions differ, stopping node. machine_id:{node.MachineId} agent_version:{node.Version} service_version:{_context.ServiceConfiguration.OneFuzzVersion}");
             await Stop(node, done: true);
             return false;
@@ -122,7 +123,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             return false;
         }
 
-        if (CouldShrinkScaleset(node)) {
+        if (await CouldShrinkScaleset(node)) {
             _logTracer.Info($"can_process_new_work node scheduled to shrink. machine_id:{node.MachineId}");
             await SetHalt(node);
             return false;
@@ -286,8 +287,22 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             && node.InitializedAt < DateTime.UtcNow - INodeOperations.NODE_REIMAGE_TIME;
     }
 
-    public bool CouldShrinkScaleset(Node node) {
-        throw new NotImplementedException();
+    public async Task<bool> CouldShrinkScaleset(Node node) {
+        if (node.ScalesetId is Guid scalesetId) {
+            var queue = new ShrinkQueue(scalesetId, _context.Queue, _logTracer);
+            if (await queue.ShouldShrink()) {
+                return true;
+            }
+        }
+
+        if (node.PoolId is Guid poolId) {
+            var queue = new ShrinkQueue(poolId, _context.Queue, _logTracer);
+            if (await queue.ShouldShrink()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public async Async.Task SetState(Node node, NodeState state) {
