@@ -1,22 +1,19 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
-namespace Microsoft.OneFuzz.Service;
+namespace Microsoft.OneFuzz.Service.Functions;
 
-public class NodeFunction {
+public class Node {
     private readonly ILogTracer _log;
     private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public NodeFunction(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Node(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _auth = auth;
         _context = context;
     }
-
-    private static readonly EntityConverter _entityConverter = new();
 
     [Function("Node")]
     public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req) {
@@ -63,7 +60,7 @@ public class NodeFunction {
         return await RequestHandling.Ok(req, nodes.Select(NodeToNodeSearchResult));
     }
 
-    private static NodeSearchResult NodeToNodeSearchResult(Node node) {
+    private static NodeSearchResult NodeToNodeSearchResult(Service.Node node) {
         return new NodeSearchResult(
             PoolId: node.PoolId,
             PoolName: node.PoolName,
