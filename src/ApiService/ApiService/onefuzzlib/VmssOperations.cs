@@ -148,6 +148,7 @@ public class VmssOperations : IVmssOperations {
             return OneFuzzResultVoid.Error(res.ErrorV);
         } else {
             var instanceVm = res.OkV;
+            instanceVm.Data.ProtectionPolicy ??= new();
             if (instanceVm.Data.ProtectionPolicy.ProtectFromScaleIn != protectFromScaleIn) {
                 instanceVm.Data.ProtectionPolicy.ProtectFromScaleIn = protectFromScaleIn;
                 var vmCollection = GetVmssResource(name).GetVirtualMachineScaleSetVms();
