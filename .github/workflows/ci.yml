@@ -333,17 +333,15 @@ jobs:
         # note that version might have a suffix of '-{sha}' from get-version.sh
         if [[ "$version" =~ '-' ]]; then
           # if it has a suffix, split it into two parts
-          dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version%-*} /p:VersionSuffix=${version#*-}
+          dotnet publish --no-restore -warnaserror --configuration Release /p:VersionPrefix=${version%-*} /p:VersionSuffix=${version#*-} -o publish
         else
-          dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version}
+          dotnet publish --no-restore -warnaserror --configuration Release /p:VersionPrefix=${version} -o publish
         fi
 
     - name: copy artifacts
       run: |
         ./src/ci/get-version.sh > src/deployment/VERSION
-        cd src/ApiService/ApiService/
-        mv az-local.settings.json bin/Release/net6.0/local.settings.json
-        cd bin/Release/net6.0/
+        cd src/ApiService/publish
         zip -r api-service-net.zip .
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
         cp api-service-net.zip ${GITHUB_WORKSPACE}/artifacts/service-net
