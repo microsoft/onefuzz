@@ -2,7 +2,7 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
-namespace Microsoft.OneFuzz.Service;
+namespace Microsoft.OneFuzz.Service.Functions;
 
 public class QueueFileChanges {
     // The number of time the function will be retried if an error occurs
