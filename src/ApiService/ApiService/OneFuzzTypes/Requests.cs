@@ -81,7 +81,10 @@ public record NodeSettingUpEventData(
 ) : NodeStateData;
 
 public record NodeDoneEventData(
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     string? Error,
+
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     ProcessOutput? ScriptOutput
 ) : NodeStateData;
 
