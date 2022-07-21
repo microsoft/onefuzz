@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service;
 
-enum RequestType {
+namespace IntegrationTests.Fakes;
+
+public enum RequestType {
     NoAuthorization,
     User,
     Agent,

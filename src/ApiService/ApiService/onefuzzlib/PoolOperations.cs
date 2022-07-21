@@ -13,7 +13,7 @@ public interface IPoolOperations : IOrm<Pool> {
     string GetPoolQueue(Guid poolId);
     public Async.Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name);
     public Async.Task<List<WorkSetSummary>> GetWorkQueue(Guid poolId, PoolState state);
-    IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> state);
+    IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> states);
 }
 
 public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoolOperations {
@@ -104,7 +104,6 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
     private Async.Task<IList<WorkSet>> PeekWorkQueue(Guid poolId)
         => _context.Queue.PeekQueue<WorkSet>(GetPoolQueue(poolId), StorageType.Corpus);
 
-    public IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> state) {
-        throw new NotImplementedException();
-    }
+    public IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> states)
+        => QueryAsync(Query.EqualAnyEnum("state", states));
 }

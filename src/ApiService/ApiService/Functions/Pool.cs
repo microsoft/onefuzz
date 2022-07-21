@@ -51,10 +51,7 @@ public class Pool {
                 return await _context.RequestHandling.NotOk(req, poolResult.ErrorV, context: search.Name.ToString());
             }
 
-            var pool = poolResult.OkV;
-            await _context.PoolOperations.GetScalesetSummary(pool);
-            await _context.PoolOperations.GetWorkQueue(pool);
-            return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(pool)));
+            return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(poolResult.OkV)));
         }
 
         if (search.PoolId is Guid poolId) {
@@ -63,10 +60,7 @@ public class Pool {
                 return await _context.RequestHandling.NotOk(req, poolResult.ErrorV, context: poolId.ToString());
             }
 
-            var pool = poolResult.OkV;
-            await _context.PoolOperations.GetScalesetSummary(pool);
-            await _context.PoolOperations.GetWorkQueue(pool);
-            return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(pool));
+            return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(poolResult.OkV)));
         }
 
         if (search.State is not null) {
