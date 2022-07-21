@@ -13,7 +13,7 @@ from onefuzztypes.models import Error
 from onefuzztypes.requests import AgentRegistrationGet, AgentRegistrationPost
 from onefuzztypes.responses import AgentRegistration
 
-from ..onefuzzlib.azure.creds import get_instance_url
+from ..onefuzzlib.azure.creds import get_agent_instance_url
 from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.azure.storage import StorageType
 from ..onefuzzlib.endpoint_authorization import call_if_agent
@@ -23,7 +23,7 @@ from ..onefuzzlib.workers.pools import Pool
 
 
 def create_registration_response(machine_id: UUID, pool: Pool) -> func.HttpResponse:
-    base_address = get_instance_url()
+    base_address = get_agent_instance_url()
     events_url = "%s/api/agents/events" % base_address
     commands_url = "%s/api/agents/commands" % base_address
     work_queue = get_queue_sas(

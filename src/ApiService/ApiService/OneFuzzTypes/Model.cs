@@ -52,9 +52,16 @@ public record NodeCommandAddSshKey(string PublicKey);
 
 public record NodeCommand
 (
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     StopNodeCommand? Stop = default,
+
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     StopTaskNodeCommand? StopTask = default,
+
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     NodeCommandAddSshKey? AddSshKey = default,
+
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     NodeCommandStopIfFree? StopIfFree = default
 );
 
@@ -158,15 +165,15 @@ public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
 
 public record TaskDetails(
     TaskType Type,
-    int Duration,
+    long Duration,
     string? TargetExe = null,
     Dictionary<string, string>? TargetEnv = null,
     List<string>? TargetOptions = null,
-    int? TargetWorkers = null,
+    long? TargetWorkers = null,
     bool? TargetOptionsMerge = null,
     bool? CheckAsanLog = null,
     bool? CheckDebugger = null,
-    int? CheckRetryCount = null,
+    long? CheckRetryCount = null,
     bool? CheckFuzzerHelp = null,
     bool? ExpectCrashOnFailure = null,
     bool? RenameOutput = null,
@@ -184,11 +191,11 @@ public record TaskDetails(
     string? StatsFile = null,
     StatsFormat? StatsFormat = null,
     bool? RebootAfterSetup = null,
-    int? TargetTimeout = null,
-    int? EnsembleSyncDelay = null,
+    long? TargetTimeout = null,
+    long? EnsembleSyncDelay = null,
     bool? PreserveExistingOutputs = null,
     List<string>? ReportList = null,
-    int? MinimizedStackDepth = null,
+    long? MinimizedStackDepth = null,
     string? CoverageFilter = null
 );
 
@@ -197,12 +204,12 @@ public record TaskVm(
     string Sku,
     string Image,
     bool? RebootAfterSetup,
-    int Count = 1,
+    long Count = 1,
     bool SpotInstance = false
 );
 
 public record TaskPool(
-    int Count,
+    long Count,
     PoolName PoolName
 );
 
@@ -390,7 +397,6 @@ public record Scaleset(
     Guid? ClientId,
     Guid? ClientObjectId,
     Dictionary<string, string> Tags
-
 ) : StatefulEntityBase<ScalesetState>(State);
 
 [JsonConverter(typeof(ContainerConverter))]
@@ -433,7 +439,7 @@ public record Report(
     string? AsanLog,
     Guid TaskId,
     Guid JobId,
-    int? ScarinessScore,
+    long? ScarinessScore,
     string? ScarinessDescription,
     List<string>? MinimizedStack,
     string? MinimizedStackSha256,
@@ -492,7 +498,7 @@ public record Repro(
 public record ReproConfig(
     Container Container,
     string Path,
-    int Duration
+    long Duration
 );
 
 // Skipping AutoScaleConfig because it's not used anymore
@@ -572,7 +578,7 @@ public record JobConfig(
     string Project,
     string Name,
     string Build,
-    int Duration,
+    long Duration,
     string? Logs
 );
 
@@ -624,7 +630,7 @@ public class TaskUnitConfigConverter : JsonConverter<TaskUnitConfig> {
 
 public record VmDefinition(
     Compare Compare,
-    int Value
+    long Value
 );
 
 public record TaskDefinition(
@@ -648,7 +654,7 @@ public record WorkSet(
 public record ContainerDefinition(
     ContainerType Type,
     Compare Compare,
-    int Value,
+    long Value,
     ContainerPermission Permissions);
 
 
@@ -702,12 +708,12 @@ public record TaskUnitConfig(
     public string? TargetExe { get; set; }
     public Dictionary<string, string>? TargetEnv { get; set; }
     public List<string>? TargetOptions { get; set; }
-    public int? TargetTimeout { get; set; }
+    public long? TargetTimeout { get; set; }
     public bool? TargetOptionsMerge { get; set; }
-    public int? TargetWorkers { get; set; }
+    public long? TargetWorkers { get; set; }
     public bool? CheckAsanLog { get; set; }
     public bool? CheckDebugger { get; set; }
-    public int? CheckRetryCount { get; set; }
+    public long? CheckRetryCount { get; set; }
     public bool? CheckFuzzerHelp { get; set; }
     public bool? ExpectCrashOnFailure { get; set; }
     public bool? RenameOutput { get; set; }
@@ -720,9 +726,9 @@ public record TaskUnitConfig(
     public List<string>? AnalyzerOptions { get; set; }
     public string? StatsFile { get; set; }
     public StatsFormat? StatsFormat { get; set; }
-    public int? EnsembleSyncDelay { get; set; }
+    public long? EnsembleSyncDelay { get; set; }
     public List<string>? ReportList { get; set; }
-    public int? MinimizedStackDepth { get; set; }
+    public long? MinimizedStackDepth { get; set; }
     public string? CoverageFilter { get; set; }
 
     // from here forwards are Container definitions.  These need to be inline

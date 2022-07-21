@@ -39,6 +39,8 @@ public interface IServiceConfig {
 
     public string OneFuzzVersion { get; }
 
+    public string? OneFuzzAllowOutdatedAgent { get; }
+
     // Prefix to add to the name of any tables & containers created. This allows
     // multiple instances to run against the same storage account, which
     // is useful for things like integration testing.
@@ -85,6 +87,7 @@ public class ServiceConfiguration : IServiceConfig {
     public string? OneFuzzResourceGroup { get => Environment.GetEnvironmentVariable("ONEFUZZ_RESOURCE_GROUP"); }
     public string? OneFuzzTelemetry { get => Environment.GetEnvironmentVariable("ONEFUZZ_TELEMETRY"); }
     public string OneFuzzVersion { get => Environment.GetEnvironmentVariable("ONEFUZZ_VERSION") ?? "0.0.0"; }
+    public string? OneFuzzAllowOutdatedAgent => Environment.GetEnvironmentVariable("ONEFUZZ_ALLOW_OUTDATED_AGENT");
 
     public string OneFuzzNodeDisposalStrategy { get => Environment.GetEnvironmentVariable("ONEFUZZ_NODE_DISPOSAL_STRATEGY") ?? "scale_in"; }
     public string OneFuzzStoragePrefix => ""; // in production we never prefix the tables
