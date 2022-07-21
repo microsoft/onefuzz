@@ -28,6 +28,7 @@ public abstract class PoolTestBase : FunctionTestBase {
     public PoolTestBase(ITestOutputHelper output, IStorage storage)
         : base(output, storage) { }
 
+    private readonly Guid _userObjectId = Guid.NewGuid();
     private readonly Guid _poolId = Guid.NewGuid();
     private readonly PoolName _poolName = PoolName.Parse("pool-" + Guid.NewGuid());
 
@@ -62,7 +63,7 @@ public abstract class PoolTestBase : FunctionTestBase {
     public async Async.Task Search_SpecificPool_ById_CanFind() {
         await Context.InsertAll(
             new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Running, null));
-        
+
         // queue must exist
         await Context.Queue.CreateQueue(Context.PoolOperations.GetPoolQueue(_poolId), StorageType.Corpus);
 
@@ -134,5 +135,72 @@ public abstract class PoolTestBase : FunctionTestBase {
 
         var err = BodyAs<Error>(result);
         Assert.Contains(err.Errors, c => c.Contains("at least one search option"));
+    }
+
+
+    [Fact]
+    public async Async.Task Delete_NotNow_PoolEntersShutdownState() {
+        await Context.InsertAll(
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }, // needed for admin check
+            new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Running, null));
+
+        // override the found user credentials - need these to check for admin
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
+        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new PoolFunction(Logger, auth, Context);
+
+        var req = new PoolStop(Name: _poolName, Now: false);
+        var result = await func.Run(TestHttpRequestData.FromJson("DELETE", req));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var pool = await Context.PoolOperations.GetByName(_poolName);
+        Assert.True(pool.IsOk);
+        Assert.Equal(PoolState.Shutdown, pool.OkV!.State);
+    }
+
+    [Fact]
+    public async Async.Task Delete_NotNow_PoolStaysInHaltedState_IfAlreadyHalted() {
+        await Context.InsertAll(
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }, // needed for admin check
+            new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Halt, null));
+
+        // override the found user credentials - need these to check for admin
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
+        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new PoolFunction(Logger, auth, Context);
+
+        var req = new PoolStop(Name: _poolName, Now: false);
+        var result = await func.Run(TestHttpRequestData.FromJson("DELETE", req));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var pool = await Context.PoolOperations.GetByName(_poolName);
+        Assert.True(pool.IsOk);
+        Assert.Equal(PoolState.Halt, pool.OkV!.State);
+    }
+
+    [Fact]
+    public async Async.Task Delete_Now_PoolEntersHaltState() {
+        await Context.InsertAll(
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }, // needed for admin check
+            new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Running, null));
+
+        // override the found user credentials - need these to check for admin
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
+        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new PoolFunction(Logger, auth, Context);
+
+        var req = new PoolStop(Name: _poolName, Now: true);
+        var result = await func.Run(TestHttpRequestData.FromJson("DELETE", req));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var pool = await Context.PoolOperations.GetByName(_poolName);
+        Assert.True(pool.IsOk);
+        Assert.Equal(PoolState.Halt, pool.OkV!.State);
     }
 }
