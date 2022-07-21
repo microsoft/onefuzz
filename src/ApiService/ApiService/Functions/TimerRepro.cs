@@ -1,6 +1,6 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 
-namespace Microsoft.OneFuzz.Service;
+namespace Microsoft.OneFuzz.Service.Functions;
 
 public class TimerRepro {
     private readonly ILogTracer _log;

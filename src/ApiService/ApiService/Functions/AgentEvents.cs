@@ -3,7 +3,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
-namespace Microsoft.OneFuzz.Service;
+namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentEvents {
     private readonly ILogTracer _log;
