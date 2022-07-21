@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Data.Tables;
-using Azure.ResourceManager.Compute.Models;
 
 namespace Microsoft.OneFuzz.Service;
 

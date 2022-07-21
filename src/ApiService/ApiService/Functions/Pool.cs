@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -52,7 +52,7 @@ public class Pool {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "PoolCreate");
         }
 
-        var answer = await _auth.CheckRequireAdmins(req); 
+        var answer = await _auth.CheckRequireAdmins(req);
         if (!answer.IsOk) {
             return await _context.RequestHandling.NotOk(req, answer.ErrorV, "PoolCreate");
         }

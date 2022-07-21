@@ -1,8 +1,7 @@
-
+﻿
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;

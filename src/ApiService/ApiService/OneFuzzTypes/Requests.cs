@@ -1,5 +1,4 @@
 ﻿using System.Text.Json.Serialization;
-using Azure.ResourceManager.Network.Models;
 
 namespace Microsoft.OneFuzz.Service;
 
