@@ -37,8 +37,6 @@ public abstract class PoolTestBase : FunctionTestBase {
     [InlineData("POST", RequestType.NoAuthorization)]
     [InlineData("GET", RequestType.Agent)]
     [InlineData("GET", RequestType.NoAuthorization)]
-    [InlineData("PATCH", RequestType.Agent)]
-    [InlineData("PATCH", RequestType.NoAuthorization)]
     [InlineData("DELETE", RequestType.Agent)]
     [InlineData("DELETE", RequestType.NoAuthorization)]
     public async Async.Task UserAuthorization_IsRequired(string method, RequestType authType) {

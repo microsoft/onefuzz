@@ -17,10 +17,9 @@ public class Pool {
     }
 
     [Function("Pool")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req)
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req)
         => _auth.CallIfUser(req, r => r.Method switch {
             "GET" => Get(r),
-            "PATCH" => Patch(r),
             "POST" => Post(r),
             "DELETE" => Delete(r),
             var m => throw new InvalidOperationException("Unsupported HTTP method {m}"),
@@ -80,10 +79,6 @@ public class Pool {
 
         await _context.PoolOperations.Insert(newPool);
         return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(newPool), true));
-    }
-
-    private Task<HttpResponseData> Patch(HttpRequestData r) {
-        throw new NotImplementedException();
     }
 
     private async Task<HttpResponseData> Get(HttpRequestData req) {
