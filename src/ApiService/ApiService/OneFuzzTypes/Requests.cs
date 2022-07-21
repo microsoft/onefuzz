@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using Azure.ResourceManager.Network.Models;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -173,4 +174,12 @@ public record PoolSearch(
 public record PoolStop(
     PoolName Name,
     bool Now
+);
+
+public record PoolCreate(
+    PoolName Name,
+    Os Os,
+    Architecture Arch,
+    bool Managed,
+    Guid? ClientId = null
 );

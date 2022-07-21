@@ -203,4 +203,56 @@ public abstract class PoolTestBase : FunctionTestBase {
         Assert.True(pool.IsOk);
         Assert.Equal(PoolState.Halt, pool.OkV!.State);
     }
+
+    [Fact]
+    public async Async.Task Post_CreatesNewPool() {
+        await Context.InsertAll(
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }); // needed for admin check
+
+        // override the found user credentials - need these to check for admin
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
+        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+
+        // need to override instance id
+        Context.Containers = new TestContainers(Logger, Context.Storage, Context.Creds, Context.ServiceConfiguration);
+
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new PoolFunction(Logger, auth, Context);
+
+        var req = new PoolCreate(Name: _poolName, Os.Linux, Architecture.x86_64, true);
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        // should get a pool back
+        var returnedPool = BodyAs<PoolGetResult>(result);
+        Assert.Equal(_poolName, returnedPool.Name);
+        var poolId = returnedPool.PoolId;
+
+        // should exist in storage
+        var pool = await Context.PoolOperations.GetByName(_poolName);
+        Assert.True(pool.IsOk);
+        Assert.Equal(poolId, pool.OkV!.PoolId);
+    }
+
+    [Fact]
+    public async Async.Task Post_DoesNotCreatePool_IfOneWithTheSameNameAlreadyExists() {
+        await Context.InsertAll(
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }, // needed for admin check
+            new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Running, null));
+
+        // override the found user credentials - need these to check for admin
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
+        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new PoolFunction(Logger, auth, Context);
+
+        var req = new PoolCreate(Name: _poolName, Os.Linux, Architecture.x86_64, true);
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        // should get an error back
+        var returnedPool = BodyAs<Error>(result);
+        Assert.Contains(returnedPool.Errors, c => c == "pool with that name already exists");
+    }
 }

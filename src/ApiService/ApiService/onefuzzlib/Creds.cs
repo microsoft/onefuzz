@@ -5,6 +5,7 @@ using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -32,6 +33,7 @@ public interface ICreds {
     public GenericResource ParseResourceId(string resourceId);
 
     public Async.Task<GenericResource> GetData(GenericResource resource);
+    Async.Task<IReadOnlyList<string>> GetRegions();
 }
 
 public class Creds : ICreds {
@@ -39,12 +41,14 @@ public class Creds : ICreds {
     private readonly DefaultAzureCredential _azureCredential;
     private readonly IServiceConfig _config;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IMemoryCache _cache;
 
     public ArmClient ArmClient => _armClient;
 
-    public Creds(IServiceConfig config, IHttpClientFactory httpClientFactory) {
+    public Creds(IServiceConfig config, IHttpClientFactory httpClientFactory, IMemoryCache cache) {
         _config = config;
         _httpClientFactory = httpClientFactory;
+        _cache = cache;
         _azureCredential = new DefaultAzureCredential();
         _armClient = new ArmClient(this.GetIdentity(), this.GetSubscription());
     }
@@ -161,7 +165,21 @@ public class Creds : ICreds {
         }
         return resource;
     }
+
+    public Task<IReadOnlyList<string>> GetRegions()
+        => _cache.GetOrCreateAsync<IReadOnlyList<string>>(
+            nameof(Creds)+"."+nameof(GetRegions),
+            async entry => {
+                // cache for one day
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+                var subscriptionId = SubscriptionResource.CreateResourceIdentifier(GetSubscription());
+                return await ArmClient.GetSubscriptionResource(subscriptionId)
+                    .GetLocationsAsync()
+                    .Select(x => x.Name)
+                    .ToListAsync();
+            });
 }
+   
 
 class GraphQueryException : Exception {
     public GraphQueryException(string? message) : base(message) {

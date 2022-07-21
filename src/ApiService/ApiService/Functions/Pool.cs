@@ -46,8 +46,40 @@ public class Pool {
         return await RequestHandling.Ok(r, true);
     }
 
-    private Task<HttpResponseData> Post(HttpRequestData r) {
-        throw new NotImplementedException();
+    private async Task<HttpResponseData> Post(HttpRequestData req) {
+        var request = await RequestHandling.ParseRequest<PoolCreate>(req);
+        if (!request.IsOk) {
+            return await _context.RequestHandling.NotOk(req, request.ErrorV, "PoolCreate");
+        }
+
+        var answer = await _auth.CheckRequireAdmins(req); 
+        if (!answer.IsOk) {
+            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "PoolCreate");
+        }
+
+        var create = request.OkV;
+        var pool = await _context.PoolOperations.GetByName(create.Name);
+        if (pool.IsOk) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                new Error(
+                    Code: ErrorCode.INVALID_REQUEST,
+                    Errors: new string[] { "pool with that name already exists" }),
+                "PoolCreate");
+        }
+
+        // logging.Info(request)
+
+        var newPool = new Service.Pool(
+            PoolId: Guid.NewGuid(),
+            State: PoolState.Init,
+            Name: create.Name,
+            Os: create.Os,
+            Managed: create.Managed,
+            Arch: create.Arch);
+
+        await _context.PoolOperations.Insert(newPool);
+        return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(newPool), true));
     }
 
     private Task<HttpResponseData> Patch(HttpRequestData r) {
@@ -106,12 +138,12 @@ public class Pool {
             WorkQueue: null,
             ScalesetSummary: null);
 
-    private async Task<PoolGetResult> Populate(PoolGetResult p) {
+    private async Task<PoolGetResult> Populate(PoolGetResult p, bool skipSummaries = false) {
         var (queueSas, instanceId, workQueue, scalesetSummary) = await (
             _context.Queue.GetQueueSas("node-heartbeat", StorageType.Config, QueueSasPermissions.Add),
             _context.Containers.GetInstanceId(),
-            _context.PoolOperations.GetWorkQueue(p.PoolId, p.State),
-            _context.PoolOperations.GetScalesetSummary(p.Name));
+            skipSummaries ? Async.Task.FromResult(new List<WorkSetSummary>()) : _context.PoolOperations.GetWorkQueue(p.PoolId, p.State),
+            skipSummaries ? Async.Task.FromResult(new List<ScalesetSummary>()) : _context.PoolOperations.GetScalesetSummary(p.Name));
 
         return p with {
             WorkQueue = workQueue,
