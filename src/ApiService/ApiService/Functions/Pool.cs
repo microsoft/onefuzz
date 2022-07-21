@@ -26,8 +26,24 @@ public class Pool {
             var m => throw new InvalidOperationException("Unsupported HTTP method {m}"),
         });
 
-    private Task<HttpResponseData> Delete(HttpRequestData r) {
-        throw new NotImplementedException();
+    private async Task<HttpResponseData> Delete(HttpRequestData r) {
+        var request = await RequestHandling.ParseRequest<PoolStop>(r);
+        if (!request.IsOk) {
+            return await _context.RequestHandling.NotOk(r, request.ErrorV, "PoolDelete");
+        }
+
+        var answer = await _auth.CheckRequireAdmins(r);
+        if (!answer.IsOk) {
+            return await _context.RequestHandling.NotOk(r, answer.ErrorV, "PoolDelete");
+        }
+
+        var poolResult = await _context.PoolOperations.GetByName(request.OkV.Name);
+        if (!poolResult.IsOk) {
+            return await _context.RequestHandling.NotOk(r, poolResult.ErrorV, "pool stop");
+        }
+
+        await _context.PoolOperations.SetShutdown(poolResult.OkV, Now: request.OkV.Now);
+        return await RequestHandling.Ok(r, true);
     }
 
     private Task<HttpResponseData> Post(HttpRequestData r) {

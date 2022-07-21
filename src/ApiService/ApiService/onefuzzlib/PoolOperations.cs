@@ -14,6 +14,7 @@ public interface IPoolOperations : IOrm<Pool> {
     public Async.Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name);
     public Async.Task<List<WorkSetSummary>> GetWorkQueue(Guid poolId, PoolState state);
     IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> states);
+    Async.Task<Pool> SetShutdown(Pool pool, bool Now);
 }
 
 public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoolOperations {
@@ -106,4 +107,23 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
     public IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> states)
         => QueryAsync(Query.EqualAnyEnum("state", states));
+
+    public Async.Task<Pool> SetShutdown(Pool pool, bool Now)
+        => SetState(pool, Now ? PoolState.Halt : PoolState.Shutdown);
+
+    public async Async.Task<Pool> SetState(Pool pool, PoolState state) {
+        if (pool.State == state) {
+            return pool;
+        }
+
+        // scalesets should never leave the `halt` state
+        // it is terminal
+        if (pool.State == PoolState.Halt) {
+            return pool;
+        }
+
+        pool = pool with { State = state };
+        await Update(pool);
+        return pool;
+    }
 }
