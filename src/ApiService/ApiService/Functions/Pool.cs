@@ -52,9 +52,9 @@ public class Pool {
             }
 
             var pool = poolResult.OkV;
-            await _context.PoolOperations.PopulateScalesetSummary(pool);
-            await _context.PoolOperations.PopulateWorkQueue(pool);
-            return await RequestHandling.Ok(req, PoolToPoolResponse(await SetConfig(pool)));
+            await _context.PoolOperations.GetScalesetSummary(pool);
+            await _context.PoolOperations.GetWorkQueue(pool);
+            return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(pool)));
         }
 
         if (search.PoolId is Guid poolId) {
@@ -64,9 +64,9 @@ public class Pool {
             }
 
             var pool = poolResult.OkV;
-            await _context.PoolOperations.PopulateScalesetSummary(pool);
-            await _context.PoolOperations.PopulateWorkQueue(pool);
-            return await RequestHandling.Ok(req, PoolToPoolResponse(await SetConfig(pool)));
+            await _context.PoolOperations.GetScalesetSummary(pool);
+            await _context.PoolOperations.GetWorkQueue(pool);
+            return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(pool));
         }
 
         if (search.State is not null) {
@@ -93,15 +93,19 @@ public class Pool {
             Arch: p.Arch,
             Nodes: p.Nodes,
             Config: p.Config,
-            ScalesetSummary: p.ScalesetSummary,
-            WorkQueue: p.WorkQueue);
+            WorkQueue: null,
+            ScalesetSummary: null);
 
-    private async Task<Service.Pool> SetConfig(Service.Pool p) {
-        var (queueSas, instanceId) = await (
+    private async Task<PoolGetResult> Populate(PoolGetResult p) {
+        var (queueSas, instanceId, workQueue, scalesetSummary) = await (
             _context.Queue.GetQueueSas("node-heartbeat", StorageType.Config, QueueSasPermissions.Add),
-            _context.Containers.GetInstanceId());
+            _context.Containers.GetInstanceId(),
+            _context.PoolOperations.GetWorkQueue(p.PoolId, p.State),
+            _context.PoolOperations.GetScalesetSummary(p.Name));
 
         return p with {
+            WorkQueue = workQueue,
+            ScalesetSummary = scalesetSummary,
             Config =
                 new AgentConfig(
                     PoolName: p.Name,

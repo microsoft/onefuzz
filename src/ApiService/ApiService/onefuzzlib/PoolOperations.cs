@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Data.Tables;
+using Azure.ResourceManager.Compute.Models;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -9,9 +10,9 @@ public interface IPoolOperations : IOrm<Pool> {
     public Async.Task<OneFuzzResult<Pool>> GetById(Guid poolId);
     Task<bool> ScheduleWorkset(Pool pool, WorkSet workSet);
     IAsyncEnumerable<Pool> GetByClientId(Guid clientId);
-    string GetPoolQueue(Pool pool);
-    Async.Task PopulateScalesetSummary(Pool pool);
-    Async.Task PopulateWorkQueue(Pool pool);
+    string GetPoolQueue(Guid poolId);
+    public Async.Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name);
+    public Async.Task<List<WorkSetSummary>> GetWorkQueue(Guid poolId, PoolState state);
     IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> state);
 }
 
@@ -39,7 +40,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
     public async Async.Task<OneFuzzResult<Pool>> GetById(Guid poolId) {
         var pools = QueryAsync(Query.RowKey(poolId.ToString()));
-        
+
         var result = await pools.ToListAsync();
         if (result.Count == 0) {
             return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, "unable to find pool");
@@ -57,23 +58,51 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
             return false;
         }
 
-        return await _context.Queue.QueueObject(GetPoolQueue(pool), workSet, StorageType.Corpus);
+        return await _context.Queue.QueueObject(GetPoolQueue(pool.PoolId), workSet, StorageType.Corpus);
     }
 
     public IAsyncEnumerable<Pool> GetByClientId(Guid clientId) {
         return QueryAsync(filter: TableClient.CreateQueryFilter($"client_id eq {clientId}"));
     }
 
-    public string GetPoolQueue(Pool pool)
-        => $"pool-{pool.PoolId:N}";
+    public string GetPoolQueue(Guid poolId)
+        => $"pool-{poolId:N}";
 
-    public Async.Task PopulateScalesetSummary(Pool pool) {
-        throw new NotImplementedException();
+    public async Async.Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name)
+        => await _context.ScalesetOperations.SearchByPool(name)
+            .Select(x => new ScalesetSummary(ScalesetId: x.ScalesetId, State: x.State))
+            .ToListAsync();
+
+    public async Async.Task<List<WorkSetSummary>> GetWorkQueue(Guid poolId, PoolState state) {
+        var result = new List<WorkSetSummary>();
+
+        // Only populate the work queue summaries if the pool is initialized. We
+        // can then be sure that the queue is available in the operations below.
+        if (state == PoolState.Init) {
+            return result;
+        }
+
+        var workSets = await PeekWorkQueue(poolId);
+        foreach (var workSet in workSets) {
+            if (!workSet.WorkUnits.Any()) {
+                continue;
+            }
+
+            var workUnits = workSet.WorkUnits
+                .Select(x => new WorkUnitSummary(
+                    JobId: x.JobId,
+                    TaskId: x.TaskId,
+                    TaskType: x.TaskType))
+                .ToList();
+
+            result.Add(new WorkSetSummary(workUnits));
+        }
+
+        return result;
     }
 
-    public Async.Task PopulateWorkQueue(Pool pool) {
-        throw new NotImplementedException();
-    }
+    private Async.Task<IList<WorkSet>> PeekWorkQueue(Guid poolId)
+        => _context.Queue.PeekQueue<WorkSet>(GetPoolQueue(poolId), StorageType.Corpus);
 
     public IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> state) {
         throw new NotImplementedException();

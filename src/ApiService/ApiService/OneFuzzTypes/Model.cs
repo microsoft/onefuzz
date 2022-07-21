@@ -598,10 +598,22 @@ public record Pool(
 ) : StatefulEntityBase<PoolState>(State) {
     public List<Node>? Nodes { get; set; }
     public AgentConfig? Config { get; set; }
-    public List<WorkSetSummary>? WorkQueue { get; set; }
-    public List<ScalesetSummary>? ScalesetSummary { get; set; }
 }
 
+public record WorkUnitSummary(
+    Guid JobId,
+    Guid TaskId,
+    TaskType TaskType
+);
+
+public record WorkSetSummary(
+    List<WorkUnitSummary> WorkUnits
+);
+
+public record ScalesetSummary(
+    Guid ScalesetId,
+    ScalesetState State
+);
 
 public record ClientCredentials
 (
@@ -623,8 +635,6 @@ public record AgentConfig(
 
 
 
-public record WorkSetSummary();
-public record ScalesetSummary();
 
 public record Vm(
     string Name,
