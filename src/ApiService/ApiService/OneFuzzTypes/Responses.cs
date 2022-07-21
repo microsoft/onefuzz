@@ -91,6 +91,20 @@ public record JobResponse(
         );
 }
 
+public record PoolGetResult(
+    PoolName Name,
+    Guid PoolId,
+    Os Os,
+    bool Managed,
+    Architecture Arch,
+    PoolState State,
+    Guid? ClientId,
+    List<Node>? Nodes,
+    AgentConfig? Config,
+    List<WorkSetSummary>? WorkQueue,
+    List<ScalesetSummary>? ScalesetSummary
+) : BaseResponse();
+
 public class BaseResponseConverter : JsonConverter<BaseResponse> {
     public override BaseResponse? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         return null;
