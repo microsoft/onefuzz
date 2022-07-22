@@ -10,7 +10,7 @@ license = "MIT"
 anyhow = "1.0"
 async-trait = "0.1"
 base64 = "0.13"
-bytes = "1.1"
+bytes = "1.2"
 dunce = "1.0"
 dynamic-library = { path = "../dynamic-library" }
 futures = "0.3"
