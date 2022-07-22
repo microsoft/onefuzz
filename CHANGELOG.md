@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Service: Implemented the `containers` function in C#. [#2078](https://github.com/microsoft/onefuzz/pull/2078)
 * Service/Build: Reuse agent build artifacts if nothing in the agent source tree has changed. This is to speed up dev builds and will not impact official releases. [#2115](https://github.com/microsoft/onefuzz/pull/2115)
-* CLI: Default autoscale minimum value to 0. This allows a scaleset to scale-in until there are zero nodes running when no work is pending is the queue. This is important to ensure VM's have the latest patches when running. [#2112](https://github.com/microsoft/onefuzz/pull/2112), [#2162](https://github.com/microsoft/onefuzz/pull/2162)
+* CLI: Default autoscale minimum value to 0. This allows a scaleset to scale-in until there are zero nodes running when no work is pending in the queue. This is important to ensure VM's have the latest patches when running. [#2112](https://github.com/microsoft/onefuzz/pull/2112), [#2162](https://github.com/microsoft/onefuzz/pull/2162)
 * Service: Initial work to migrate `TimerRepro` function to C#. [#2168](https://github.com/microsoft/onefuzz/pull/2168)
 * Service/CLI: Remove support for pre 3.0.0 style authentication. [#2173](https://github.com/microsoft/onefuzz/pull/2173)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#2164](https://github.com/microsoft/onefuzz/pull/2164), [#2056](https://github.com/microsoft/onefuzz/pull/2056), [#2175](https://github.com/microsoft/onefuzz/pull/2175), [#2127](https://github.com/microsoft/onefuzz/pull/2127)
