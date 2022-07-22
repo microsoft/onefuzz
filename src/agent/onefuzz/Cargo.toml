@@ -19,7 +19,7 @@ hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 notify = "5.0.0-pre.14"
-regex = "1.5.5"
+regex = "1.6.0"
 reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"], default-features=false }
 sha2 = "0.10.2"
 url = { version = "2.2", features = ["serde"] }
