@@ -8,6 +8,7 @@ public interface INotificationOperations : IOrm<Notification> {
     Async.Task NewFiles(Container container, string filename, bool failTaskOnTransientError);
     IAsyncEnumerable<Notification> GetNotifications(Container container);
     IAsyncEnumerable<(Task, IEnumerable<string>)> GetQueueTasks();
+    Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting);
 }
 
 public class NotificationOperations : Orm<Notification>, INotificationOperations {
@@ -84,6 +85,26 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         return _context.TaskOperations.SearchStates(states: TaskStateHelper.AvailableStates)
             .Select(task => (task, _context.TaskOperations.GetInputContainerQueues(task.Config)))
             .Where(taskTuple => taskTuple.Item2 != null)!;
+    }
+
+    public async Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting) {
+        if (await _context.Containers.FindContainer(container, StorageType.Corpus) == null) {
+            return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, errors: new[] { "invalid container" });
+        }
+
+        if (replaceExisting) {
+            var existing = this.SearchByRowKeys(new[] { container.ContainerName });
+            await foreach (var existingEntry in existing) {
+                _logTracer.Info($"replacing existing notification: {existingEntry.NotificationId} - {container}");
+                await this.Delete(existingEntry);
+            }
+        }
+
+        var entry = new Notification(Guid.NewGuid(), container, config);
+        await this.Insert(entry);
+        _logTracer.Info($"created notification.  notification_id:{entry.NotificationId} container:{entry.Container}");
+
+        return OneFuzzResult<Notification>.Ok(entry);
     }
 
     public async Async.Task<Task?> GetRegressionReportTask(RegressionReport report) {

@@ -416,8 +416,8 @@ public class ContainerConverter : JsonConverter<Container> {
 }
 
 public record Notification(
-    Container Container,
-    Guid NotificationId,
+    [PartitionKey] Guid NotificationId,
+    [RowKey] Container Container,
     NotificationTemplate Config
 ) : EntityBase();
 
