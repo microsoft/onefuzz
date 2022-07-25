@@ -232,9 +232,8 @@ public class EntityConverter {
                 return Guid.Parse(entity.GetString(ef.kind.ToString()));
             else if (ef.type == typeof(int))
                 return int.Parse(entity.GetString(ef.kind.ToString()));
-            else if (ef.type == typeof(PoolName))
-                // TODO: this should be able to be generic over any ValidatedString
-                return PoolName.Parse(entity.GetString(ef.kind.ToString()));
+            else if (ef.type.IsClass)
+                return ef.type.GetConstructor(new[] { typeof(string) })!.Invoke(new[] { entity.GetString(ef.kind.ToString()) });
             else {
                 throw new Exception($"invalid partition or row key type of {info.type} property {name}: {ef.type}");
             }
