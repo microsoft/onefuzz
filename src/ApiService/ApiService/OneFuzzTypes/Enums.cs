@@ -28,6 +28,7 @@ public enum ErrorCode {
     UNABLE_TO_UPDATE = 471,
     PROXY_FAILED = 472,
     INVALID_CONFIGURATION = 473,
+    UNABLE_TO_CREATE_CONTAINER = 474,
 }
 
 public enum VmState {

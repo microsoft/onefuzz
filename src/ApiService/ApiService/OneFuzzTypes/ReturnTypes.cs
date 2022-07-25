@@ -33,6 +33,10 @@ namespace Microsoft.OneFuzz.Service {
         public T_Ok? OkV { get; }
     }
 
+    public static class OneFuzzResult {
+        public static OneFuzzResult<T> Ok<T>(T val) => OneFuzzResult<T>.Ok(val);
+    }
+
     public struct OneFuzzResult<T_Ok> {
         static Error NoError = new(0);
 
