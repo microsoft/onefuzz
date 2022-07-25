@@ -95,10 +95,8 @@ class BackendConfig(BaseModel):
     _dotnet_endpoint: Optional[str]
     _dotnet_functions: Optional[List[str]]
 
+
 class Backend:
-
-
-
     def __init__(
         self,
         config: BackendConfig,
