@@ -58,7 +58,7 @@ sealed class TestHttpRequestData : HttpRequestData {
 
     public override Stream Body => _body.ToStream();
 
-    public override HttpHeadersCollection Headers => throw new NotImplementedException();
+    public override HttpHeadersCollection Headers { get; } = new HttpHeadersCollection();
 
     public override IReadOnlyCollection<IHttpCookie> Cookies => throw new NotImplementedException();
 

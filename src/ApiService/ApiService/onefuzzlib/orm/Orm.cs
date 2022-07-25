@@ -9,10 +9,11 @@ namespace ApiService.OneFuzzLib.Orm {
     public interface IOrm<T> where T : EntityBase {
         Task<TableClient> GetTableClient(string table, string? accountId = null);
         IAsyncEnumerable<T> QueryAsync(string? filter = null);
-        Task<ResultVoid<(int, string)>> Replace(T entity);
 
         Task<T> GetEntityAsync(string partitionKey, string rowKey);
         Task<ResultVoid<(int, string)>> Insert(T entity);
+        Task<ResultVoid<(int, string)>> Replace(T entity);
+        Task<ResultVoid<(int, string)>> Update(T entity);
         Task<ResultVoid<(int, string)>> Delete(T entity);
 
         IAsyncEnumerable<T> SearchAll();
@@ -48,6 +49,8 @@ namespace ApiService.OneFuzzLib.Orm {
             }
         }
 
+        /// Inserts the entity into table storage.
+        /// If successful, updates the ETag of the passed-in entity.
         public async Task<ResultVoid<(int, string)>> Insert(T entity) {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
@@ -56,6 +59,9 @@ namespace ApiService.OneFuzzLib.Orm {
             if (response.IsError) {
                 return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
             } else {
+                // update ETag
+                entity.ETag = response.Headers.ETag;
+
                 return ResultVoid<(int, string)>.Ok();
             }
         }
@@ -72,18 +78,18 @@ namespace ApiService.OneFuzzLib.Orm {
         }
 
         public async Task<ResultVoid<(int, string)>> Update(T entity) {
+            if (entity.ETag is null) {
+                throw new ArgumentException("ETag must be set when updating an entity", nameof(entity));
+            }
+
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
 
-            if (entity.ETag is null) {
-                return ResultVoid<(int, string)>.Error((0, "ETag must be set when updating an entity"));
+            var response = await tableClient.UpdateEntityAsync(tableEntity, entity.ETag.Value);
+            if (response.IsError) {
+                return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
             } else {
-                var response = await tableClient.UpdateEntityAsync(tableEntity, entity.ETag.Value);
-                if (response.IsError) {
-                    return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
-                } else {
-                    return ResultVoid<(int, string)>.Ok();
-                }
+                return ResultVoid<(int, string)>.Ok();
             }
         }
 
