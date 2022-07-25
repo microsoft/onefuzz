@@ -64,7 +64,7 @@ public class Notifications {
         }
 
         if (entries.Count > 1) {
-            return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "error identifying Notificatio" }), context: "notification delete");
+            return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "error identifying Notification" }), context: "notification delete");
         }
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(entries[0]);
@@ -72,8 +72,8 @@ public class Notifications {
     }
 
 
-    [Function("Node")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req) {
+    [Function("Notifications")]
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req) {
         return _auth.CallIfUser(req, r => r.Method switch {
             "GET" => Get(r),
             "POST" => Post(r),
