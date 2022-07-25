@@ -1729,9 +1729,9 @@ class Onefuzz:
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
         if _dotnet_endpoint is not None:
-            self._backend.config._dotnet_endpoint = _dotnet_endpoint
+            self._backend.config.dotnet_endpoint = _dotnet_endpoint
         if _dotnet_functions is not None:
-            self._backend.config._dotnet_functions = _dotnet_functions
+            self._backend.config.dotnet_functions = _dotnet_functions
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates._load_cache()
@@ -1808,9 +1808,9 @@ class Onefuzz:
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
         if _dotnet_endpoint is not None:
-            self._backend.config._dotnet_endpoint = _dotnet_endpoint
+            self._backend.config.dotnet_endpoint = _dotnet_endpoint
         if _dotnet_functions is not None:
-            self._backend.config._dotnet_functions = _dotnet_functions
+            self._backend.config.dotnet_functions = _dotnet_functions
         self._backend.app = None
         self._backend.save_config()
 

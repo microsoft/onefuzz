@@ -92,8 +92,8 @@ class BackendConfig(BaseModel):
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
     tenant_domain: Optional[str]
-    _dotnet_endpoint: Optional[str]
-    _dotnet_functions: Optional[List[str]]
+    dotnet_endpoint: Optional[str]
+    dotnet_functions: Optional[List[str]]
 
 
 class Backend:
@@ -282,8 +282,8 @@ class Backend:
         params: Optional[Any] = None,
         _retry_on_auth_failure: bool = True,
     ) -> Any:
-        if path in self.config._dotnet_functions:
-            endpoint = self.config._dotnet_endpoint
+        if self.config.dotnet_functions and path in self.config.dotnet_functions:
+            endpoint = self.config.dotnet_endpoint
         else:
             endpoint = self.config.endpoint
 
