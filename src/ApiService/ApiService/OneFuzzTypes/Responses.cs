@@ -105,6 +105,44 @@ public record PoolGetResult(
     List<ScalesetSummary>? ScalesetSummary
 ) : BaseResponse();
 
+public record ScalesetSearchResponse(
+    PoolName PoolName,
+    Guid ScalesetId,
+    ScalesetState State,
+    Authentication? Auth,
+    string VmSku,
+    string Image,
+    string Region,
+    long Size,
+    bool? SpotInstances,
+    bool EmphemeralOsDisks,
+    bool NeedsConfigUpdate,
+    Error? Error,
+    Guid? ClientId,
+    Guid? ClientObjectId,
+    Dictionary<string, string> Tags,
+    List<ScalesetNodeState>? Nodes
+) : BaseResponse() {
+    public static ScalesetSearchResponse ForScaleset(Scaleset s)
+        => new(
+            PoolName: s.PoolName,
+            ScalesetId: s.ScalesetId,
+            State: s.State,
+            Auth: s.Auth,
+            VmSku: s.VmSku,
+            Image: s.Image,
+            Region: s.Region,
+            Size: s.Size,
+            SpotInstances: s.SpotInstances,
+            EmphemeralOsDisks: s.EphemeralOsDisks,
+            NeedsConfigUpdate: s.NeedsConfigUpdate,
+            Error: s.Error,
+            ClientId: s.ClientId,
+            ClientObjectId: s.ClientObjectId,
+            Tags: s.Tags,
+            Nodes: null);
+}
+
 public class BaseResponseConverter : JsonConverter<BaseResponse> {
     public override BaseResponse? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         return null;
@@ -130,4 +168,3 @@ public record ProxyInfo(
 public record ProxyList(
     List<ProxyInfo> Proxies
 );
-

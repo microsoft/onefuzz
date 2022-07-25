@@ -1,5 +1,6 @@
-﻿using Azure;
+using Azure;
 using Azure.Core;
+using System.Net;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
 using Azure.ResourceManager.Models;
@@ -135,36 +136,14 @@ public class VmssOperations : IVmssOperations {
 
     public async Async.Task<IDictionary<Guid, string>> ListInstanceIds(Guid name) {
         _log.Verbose($"get instance IDs for scaleset {name}");
-        var results = new Dictionary<Guid, string>();
-        VirtualMachineScaleSetResource res;
         try {
-            var r = await GetVmssResource(name).GetAsync();
-            res = r.Value;
-        } catch (Exception ex) when (ex is RequestFailedException) {
-            _log.Verbose($"vm does not exist {name}");
-            return results;
+            return await GetVmssResource(name)
+                .GetVirtualMachineScaleSetVms()
+                .ToDictionaryAsync(vm => Guid.Parse(vm.Data.VmId), vm => vm.Data.InstanceId);
+        } catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.NotFound || ex.ErrorCode == "NotFound") {
+            _log.Exception(ex, $"scaleset does not exist: {name}");
+            return new Dictionary<Guid, string>();
         }
-
-        if (res is null) {
-            _log.Verbose($"vm does not exist {name}");
-            return results;
-        } else {
-            try {
-                await foreach (var instance in res!.GetVirtualMachineScaleSetVms().AsAsyncEnumerable()) {
-                    if (instance is not null) {
-                        Guid key;
-                        if (Guid.TryParse(instance.Data.VmId, out key)) {
-                            results[key] = instance.Data.InstanceId;
-                        } else {
-                            _log.Error($"failed to convert vmId {instance.Data.VmId} to Guid");
-                        }
-                    }
-                }
-            } catch (Exception ex) when (ex is RequestFailedException || ex is CloudException) {
-                _log.Exception(ex, $"vm does not exist {name}");
-            }
-        }
-        return results;
     }
 
     public async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(Guid name, Guid vmId) {

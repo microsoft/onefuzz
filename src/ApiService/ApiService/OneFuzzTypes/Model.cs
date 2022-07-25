@@ -384,14 +384,11 @@ public record AutoScale(
     ) : EntityBase();
 
 
-
 public record ScalesetNodeState(
     Guid MachineId,
     string InstanceId,
     NodeState? State
-
 );
-
 
 public record Scaleset(
     [PartitionKey] PoolName PoolName,
@@ -406,10 +403,10 @@ public record Scaleset(
     bool EphemeralOsDisks,
     bool NeedsConfigUpdate,
     Error? Error,
-    List<ScalesetNodeState>? Nodes,
     Guid? ClientId,
     Guid? ClientObjectId,
     Dictionary<string, string> Tags
+// 'Nodes' removed when porting from Python: only used in search response
 ) : StatefulEntityBase<ScalesetState>(State);
 
 [JsonConverter(typeof(ContainerConverter))]
