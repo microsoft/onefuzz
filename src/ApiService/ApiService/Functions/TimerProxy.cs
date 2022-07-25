@@ -38,7 +38,7 @@ public class TimerProxy {
             }
 
             if (VmStateHelper.NeedsWork.Contains(proxy.State)) {
-                _logger.Error($"scaleset-proxy: update state. proxy:{proxy.Region} state:{proxy.State}");
+                _logger.Info($"scaleset-proxy: update state. proxy:{proxy.Region} state:{proxy.State}");
                 await proxyOperations.ProcessStateUpdate(proxy);
             }
 
