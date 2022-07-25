@@ -71,6 +71,26 @@ public record ContainerInfo(
     Uri SasUrl
 ) : BaseResponse();
 
+public record JobResponse(
+    Guid JobId,
+    JobState State,
+    JobConfig Config,
+    string? Error,
+    DateTimeOffset? EndTime,
+    List<JobTaskInfo>? TaskInfo
+// not including UserInfo from Job model
+) : BaseResponse() {
+    public static JobResponse ForJob(Job j)
+        => new(
+            JobId: j.JobId,
+            State: j.State,
+            Config: j.Config,
+            Error: j.Error,
+            EndTime: j.EndTime,
+            TaskInfo: j.TaskInfo
+        );
+}
+
 public class BaseResponseConverter : JsonConverter<BaseResponse> {
     public override BaseResponse? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         return null;
