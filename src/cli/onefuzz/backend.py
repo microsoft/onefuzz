@@ -92,6 +92,8 @@ class BackendConfig(BaseModel):
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
     tenant_domain: Optional[str]
+    dotnet_endpoint: Optional[str]
+    dotnet_functions: Optional[List[str]]
 
 
 class Backend:
@@ -280,9 +282,15 @@ class Backend:
         params: Optional[Any] = None,
         _retry_on_auth_failure: bool = True,
     ) -> Any:
-        if not self.config.endpoint:
+        if self.config.dotnet_functions and path in self.config.dotnet_functions:
+            endpoint = self.config.dotnet_endpoint
+        else:
+            endpoint = self.config.endpoint
+
+        if not endpoint:
             raise Exception("endpoint not configured")
-        url = self.config.endpoint + "/api/" + path
+
+        url = endpoint + "/api/" + path
         headers = self.headers()
         json_data = serialize(json_data)
 
