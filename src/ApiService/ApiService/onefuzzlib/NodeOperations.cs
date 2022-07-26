@@ -45,6 +45,8 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     static readonly TimeSpan NODE_REIMAGE_TIME = TimeSpan.FromDays(6.0);
 
     Async.Task StopTask(Guid task_id);
+
+    Async.Task<OneFuzzResult<bool>> AddSshPublicKey(Node node, string publicKey);
 }
 
 
@@ -419,6 +421,43 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             }
         }
 
+    }
+
+    public async Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting) {
+        if (await _context.Containers.FindContainer(container, StorageType.Corpus) == null) {
+            return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, errors: new[] { "invalid container" });
+        }
+
+        if (replaceExisting) {
+            var existing = this.SearchByRowKeys(new[] { container.ContainerName });
+            await foreach (var existingEntry in existing) {
+                _logTracer.Info($"replacing existing notification: {existingEntry.NotificationId} - {container}");
+                await this.Delete(existingEntry);
+            }
+        }
+
+        var entry = new Notification(Guid.NewGuid(), container, config);
+        await this.Insert(entry);
+        _logTracer.Info($"created notification.  notification_id:{entry.NotificationId} container:{entry.Container}");
+
+        return OneFuzzResult<Notification>.Ok(entry);
+    }
+
+    public async Task<OneFuzzResult<bool>> AddSshPublicKey(Node node, string publicKey) {
+        if (publicKey == null) {
+            throw new ArgumentNullException(nameof(publicKey));
+        }
+
+        if (node.ScalesetId == null) {
+            return OneFuzzResult<bool>.Error(new Error(ErrorCode.INVALID_REQUEST,
+                new[] { "only able to add ssh keys to scaleset nodes" }));
+        }
+
+        var key = publicKey.EndsWith('\n') ? publicKey : $"{publicKey}\n";
+
+        await SendMessage(node, new NodeCommand { AddSshKey = new NodeCommandAddSshKey(key) });
+
+        return OneFuzzResult.Ok<bool>(true);
     }
 
     /// returns True on stopping the node and False if this doesn't stop the node

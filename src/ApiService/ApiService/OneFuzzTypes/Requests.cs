@@ -123,3 +123,5 @@ public record JobSearch(
     List<TaskState>? TaskState = null,
     bool? WithTasks = null
 );
+
+public record NodeAddSshKeyPost(Guid MachineId, string PublicKey);
