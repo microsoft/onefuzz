@@ -27,7 +27,7 @@ public abstract class JobsTestBase : FunctionTestBase {
         : base(output, storage) { }
 
     private readonly Guid _jobId = Guid.NewGuid();
-    private readonly JobConfig _config = new("project", "name", "build", 1000, null);
+    private readonly JobConfig _config = new("project", "name", "build", 1, null);
 
     [Theory]
     [InlineData("POST")]
@@ -172,5 +172,24 @@ public abstract class JobsTestBase : FunctionTestBase {
         var container = Assert.Single(await Context.Containers.GetContainers(StorageType.Corpus), c => c.Key.Contains(job.JobId.ToString()));
         var metadata = Assert.Single(container.Value);
         Assert.Equal(new KeyValuePair<string, string>("container_type", "logs"), metadata);
+    }
+
+    [Fact]
+    public async Async.Task Post_InvalidDuration_IsDetected() {
+        // this checks that our validation code is working
+
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new Jobs(auth, Context);
+
+        // need user credentials to put into the job object
+        var userInfo = new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn");
+        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult.Ok(userInfo));
+
+        var cfg = _config with { Duration = 7 * 24 + 1 }; // Duration too long
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", cfg));
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        var err = BodyAs<Error>(result);
+        Assert.Equal("The field Duration must be between 1 and 168.", err.Errors?.Single());
     }
 }

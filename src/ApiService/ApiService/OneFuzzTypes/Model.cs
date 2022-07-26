@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
@@ -578,6 +579,7 @@ public record JobConfig(
     string Project,
     string Name,
     string Build,
+    [property: Range(1, 7*24)] // in hours
     long Duration,
     string? Logs
 );

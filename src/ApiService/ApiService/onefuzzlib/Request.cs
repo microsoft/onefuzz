@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Net;
 using Microsoft.Azure.Functions.Worker.Http;
 
 namespace Microsoft.OneFuzz.Service;
@@ -31,7 +32,15 @@ public class RequestHandling : IRequestHandling {
         try {
             var t = await req.ReadFromJsonAsync<T>();
             if (t != null) {
-                return OneFuzzResult<T>.Ok(t);
+                var validationContext = new ValidationContext(t);
+                var validationResults = new List<ValidationResult>();
+                if (Validator.TryValidateObject(t, validationContext, validationResults, true)) {
+                    return OneFuzzResult.Ok(t);
+                } else {
+                    return new Error(
+                        Code: ErrorCode.INVALID_REQUEST,
+                        Errors: validationResults.Select(vr => vr.ToString()).ToArray());
+                }
             }
         } catch (Exception e) {
             exception = e;
