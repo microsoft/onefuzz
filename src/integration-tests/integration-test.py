@@ -230,13 +230,13 @@ OperationResult = TypeVar("OperationResult")
 
 
 def retry(
+    logger: logging.Logger,
     operation: Callable[[Any], OperationResult],
     description: str,
     tries: int = 10,
     wait_duration: int = 10,
     data: Any = None,
 ) -> OperationResult:
-    logger = logging.Logger
     count = 0
     while True:
         try:
@@ -280,7 +280,7 @@ class TestOnefuzz:
         def try_info_get(data: Any) -> None:
             self.of.info.get()
 
-        retry(try_info_get, "testing endpoint")
+        retry(self.logger, try_info_get, "testing endpoint")
 
         self.inject_log(self.start_log_marker)
         for entry in os_list:
@@ -989,7 +989,7 @@ class Run(Command):
                 _dotnet_functions=dotnet_functions,
             )
 
-        retry(try_setup, "trying to configure")
+        retry(self.logger, try_setup, "trying to configure")
 
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
         tester.setup(region=region, pool_size=pool_size, os_list=os_list)
@@ -1023,7 +1023,7 @@ class Run(Command):
                 _dotnet_functions=dotnet_functions,
             )
 
-        retry(try_setup, "trying to configure")
+        retry(self.logger, try_setup, "trying to configure")
 
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
 
@@ -1152,7 +1152,7 @@ class Run(Command):
                     _dotnet_functions=dotnet_functions,
                 )
 
-            retry(try_setup, "trying to configure")
+            retry(self.logger, try_setup, "trying to configure")
             tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
             tester.setup(region=region, pool_size=pool_size, os_list=os_list)
             tester.launch(samples, os_list=os_list, targets=targets, duration=duration)
