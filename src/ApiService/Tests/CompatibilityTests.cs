@@ -18,11 +18,13 @@ public sealed class CompatibilityTests {
     public CompatibilityTests(ITestOutputHelper output) {
         // reuse the ORM arbitrary instances
         Arb.Register<OrmArb>();
+        _output = output;
     }
 
     private static readonly JsonObjectSerializer _serializer = new(EntityConverter.GetJsonSerializerOptions());
+    private readonly ITestOutputHelper _output;
 
-    private static void Test<T>(T value, string pythonType) where T : notnull {
+    private void Test<T>(T value, string pythonType) where T : notnull {
         var json = _serializer.Serialize(value);
 
         var escapedJson = json.ToString().Replace("\\", "\\\\").Replace("\"", "\\\"");
@@ -44,6 +46,10 @@ public sealed class CompatibilityTests {
             proc.StandardError.ReadToEndAsync()).GetAwaiter().GetResult();
 
         proc.WaitForExit();
+        if (stderr != "") {
+            _output.WriteLine($"Python stderr: {stderr}");
+        }
+
         Assert.Equal("", stderr);
         Assert.Equal(0, proc.ExitCode);
 
