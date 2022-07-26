@@ -365,11 +365,10 @@ namespace Tests {
         }
 
         public static Gen<JobConfig> JobConfig { get; } =
-            from duration in Arb.Generate<int>()
-            where duration >= 1 && duration <= 7 * 24
             from project in Arb.Generate<NonNull<string>>()
             from name in Arb.Generate<NonNull<string>>()
             from build in Arb.Generate<NonNull<string>>()
+            from duration in Gen.Choose(1, 7*24)
             from logs in Arb.Generate<string>()
             select new JobConfig(project.Get, name.Get, build.Get, duration, logs);
     }
