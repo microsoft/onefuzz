@@ -71,7 +71,7 @@ public record ContainerInfo(
     Uri SasUrl
 ) : BaseResponse();
 
-public record JobResponse(
+public sealed record JobResponse(
     Guid JobId,
     JobState State,
     JobConfig Config,
@@ -87,8 +87,7 @@ public record JobResponse(
             Config: j.Config,
             Error: j.Error,
             EndTime: j.EndTime,
-            TaskInfo: j.TaskInfo
-        );
+            TaskInfo: null);
 }
 
 public class BaseResponseConverter : JsonConverter<BaseResponse> {

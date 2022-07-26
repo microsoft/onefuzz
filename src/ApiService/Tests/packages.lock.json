@@ -47,6 +47,12 @@
           "System.Threading.Tasks.Extensions": "4.5.4"
         }
       },
+      "TaskTupleAwaiter": {
+        "type": "Direct",
+        "requested": "[2.0.0, )",
+        "resolved": "2.0.0",
+        "contentHash": "rXkSI9t4vP2EaPhuchsWiD3elcLNth3UOZAlGohGmuckpkiOr57oMHuzM5WDzz7MJd+ZewE27/WfrZhhhFDHzA=="
+      },
       "xunit": {
         "type": "Direct",
         "requested": "[2.4.1, )",
@@ -2196,11 +2202,6 @@
           "System.Threading": "4.3.0",
           "System.Xml.ReaderWriter": "4.3.0"
         }
-      },
-      "TaskTupleAwaiter": {
-        "type": "Transitive",
-        "resolved": "2.0.0",
-        "contentHash": "rXkSI9t4vP2EaPhuchsWiD3elcLNth3UOZAlGohGmuckpkiOr57oMHuzM5WDzz7MJd+ZewE27/WfrZhhhFDHzA=="
       },
       "xunit.abstractions": {
         "type": "Transitive",

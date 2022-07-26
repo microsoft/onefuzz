@@ -595,7 +595,8 @@ public record Job(
     string? Error = null,
     DateTimeOffset? EndTime = null
 ) : StatefulEntityBase<JobState>(State) {
-    public List<JobTaskInfo>? TaskInfo { get; set; }
+    // TaskInfo removed from Job object when converted from Python:
+    // it is only used in JobResponse
     public UserInfo? UserInfo { get; set; }
 }
 

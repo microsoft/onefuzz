@@ -5,6 +5,7 @@
 
 import atexit
 import contextlib
+from datetime import datetime
 import json
 import logging
 import os
@@ -474,6 +475,8 @@ def serialize(data: Any) -> Any:
         return data.name
     if isinstance(data, UUID):
         return str(data)
+    if isinstance(data, datetime):
+        return data.isoformat()
     if isinstance(data, (int, str)):
         return data
     if is_dataclass(data):

@@ -363,6 +363,15 @@ namespace Tests {
                 )
             );
         }
+
+        public static Gen<JobConfig> JobConfig { get; } =
+            from duration in Arb.Generate<int>()
+            where duration >= 1 && duration <= 7 * 24
+            from project in Arb.Generate<NonNull<string>>()
+            from name in Arb.Generate<NonNull<string>>()
+            from build in Arb.Generate<NonNull<string>>()
+            from logs in Arb.Generate<string>()
+            select new JobConfig(project.Get, name.Get, build.Get, duration, logs);
     }
 
     public class OrmArb {
@@ -454,6 +463,8 @@ namespace Tests {
         public static Arbitrary<Job> Job() {
             return Arb.From(OrmGenerators.Job());
         }
+
+        public static Arbitrary<JobConfig> JobConfig { get; } = Arb.From(OrmGenerators.JobConfig);
     }
 
 
