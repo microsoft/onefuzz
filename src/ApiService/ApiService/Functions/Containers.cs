@@ -15,7 +15,7 @@ public class ContainersFunction {
         _context = context;
     }
 
-    // [Function("Download")]
+    [Function("Containers")]
     public Async.Task<HttpResponseData> Run([HttpTrigger("GET", "POST", "DELETE")] HttpRequestData req)
         => _auth.CallIfUser(req, r => r.Method switch {
             "GET" => Get(r),
