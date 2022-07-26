@@ -978,6 +978,7 @@ class Run(Command):
         if test_id is None:
             test_id = uuid4()
         self.logger.info("launching test_id: %s", test_id)
+        self.logger.info("dotnet configuration: %s, %s", dotnet_endpoint, dotnet_functions)
 
         def try_setup(data: Any) -> None:
             self.onefuzz.__setup__(
