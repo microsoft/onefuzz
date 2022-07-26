@@ -106,17 +106,8 @@ public class Pool {
             return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(poolResult.OkV)));
         }
 
-        if (search.State is not null) {
-            var pools = await _context.PoolOperations.SearchStates(search.State).ToListAsync();
-            return await RequestHandling.Ok(req, pools.Select(PoolToPoolResponse));
-        }
-
-        return await _context.RequestHandling.NotOk(
-            req,
-            new Error(
-                ErrorCode.INVALID_REQUEST,
-                new string[] { "at least one search option must be set" }),
-            "pool get");
+        var pools = await _context.PoolOperations.SearchStates(search.State ?? Enumerable.Empty<PoolState>()).ToListAsync();
+        return await RequestHandling.Ok(req, pools.Select(PoolToPoolResponse));
     }
 
     private static PoolGetResult PoolToPoolResponse(Service.Pool p)

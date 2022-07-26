@@ -123,15 +123,19 @@ public abstract class PoolTestBase : FunctionTestBase {
     }
 
     [Fact]
-    public async Async.Task Search_SpecificPool_NoQuery_ReturnsBadRequest() {
+    public async Async.Task Search_SpecificPool_NoQuery_ReturnsAllPools() {
+        await Context.InsertAll(
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }, // needed for admin check
+            new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Running, null));
+
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
 
         var func = new PoolFunction(Logger, auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", new PoolSearch()));
-        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        var err = BodyAs<Error>(result);
-        Assert.Contains(err.Errors, c => c.Contains("at least one search option"));
+        var pool = BodyAs<PoolGetResult>(result);
+        Assert.Equal(_poolName, pool.Name);
     }
 
 
