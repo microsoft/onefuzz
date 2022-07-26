@@ -141,25 +141,25 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
         if (node.ScalesetId != null) {
             var scalesetResult = await _context.ScalesetOperations.GetById(node.ScalesetId.Value);
-            if (!scalesetResult.IsOk || scalesetResult.OkV == null) {
+            if (!scalesetResult.IsOk) {
                 _logTracer.Info($"can_process_new_work invalid scaleset. scaleset_id:{node.ScalesetId} machine_id:{node.MachineId}");
                 return false;
             }
-            var scaleset = scalesetResult.OkV!;
 
-            if (!ScalesetStateHelper.Available.Contains(scaleset.State)) {
+            var scaleset = scalesetResult.OkV;
+            if (!scaleset.State.IsAvailable()) {
                 _logTracer.Info($"can_process_new_work scaleset not available for work. scaleset_id:{node.ScalesetId} machine_id:{node.MachineId}");
                 return false;
             }
         }
 
         var poolResult = await _context.PoolOperations.GetByName(node.PoolName);
-        if (!poolResult.IsOk || poolResult.OkV == null) {
+        if (!poolResult.IsOk) {
             _logTracer.Info($"can_schedule - invalid pool. pool_name:{node.PoolName} machine_id:{node.MachineId}");
             return false;
         }
 
-        var pool = poolResult.OkV!;
+        var pool = poolResult.OkV;
         if (!PoolStateHelper.Available.Contains(pool.State)) {
             _logTracer.Info($"can_schedule - pool is not available for work. pool_name:{node.PoolName} machine_id:{node.MachineId}");
             return false;

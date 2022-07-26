@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.ResourceManager.Compute;
+using Microsoft.Azure.Management.Monitor.Models;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -108,7 +109,6 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         } else {
             await ResizeShrink(scaleset, vmssSize - scaleset.Size);
         }
-
     }
 
     async Async.Task<OneFuzzResult<Scaleset>> SetState(Scaleset scaleSet, ScalesetState state) {
@@ -343,7 +343,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         AutoscaleProfile autoScaleProfile;
         if (autoScaleConfig is null) {
-            autoScaleProfile = _context.AutoScaleOperations.DefaultAutoScaleProfile(poolQueueUri!, capacity.Value);
+            autoScaleProfile = _context.AutoScaleOperations.DeafaultAutoScaleProfile(poolQueueUri!, capacity.Value);
         } else {
             _logTracer.Info("Using existing auto scale settings from database");
             autoScaleProfile = _context.AutoScaleOperations.CreateAutoScaleProfile(
@@ -364,7 +364,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
     }
 
 
-    public async Async.Task<Scaleset> Init(Scaleset scaleset) {
+    public async Async.Task<OneFuzzResult<Scaleset>> Init(Scaleset scaleset) {
         _logTracer.Info($"{SCALESET_LOG_PREFIX} init. scaleset_id:{scaleset.ScalesetId}");
         var shrinkQueue = new ShrinkQueue(scaleset.ScalesetId, _context.Queue, _logTracer);
         await shrinkQueue.Create();
@@ -395,7 +395,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         } else {
             return await SetState(scaleset, ScalesetState.Setup);
         }
-        return scaleset;
+
+        return OneFuzzResult.Ok(scaleset);
     }
 
     public async Async.Task<Scaleset> Halt(Scaleset scaleset) {

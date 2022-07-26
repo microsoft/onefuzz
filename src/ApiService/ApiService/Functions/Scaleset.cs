@@ -61,7 +61,41 @@ public class Scaleset {
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "ScalesetUpdate");
         }
-        throw new NotImplementedException();
+
+        var answer = await _auth.CheckRequireAdmins(req);
+        if (!answer.IsOk) {
+            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "ScalesetUpdate");
+        }
+
+        var scalesetResult = await _context.ScalesetOperations.GetById(request.OkV.ScalesetId);
+        if (!scalesetResult.IsOk) {
+            return await _context.RequestHandling.NotOk(req, scalesetResult.ErrorV, "ScalesetUpdate");
+        }
+
+        var scaleset = scalesetResult.OkV;
+        if (!scaleset.State.CanUpdate()) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                new Error(
+                    Code: ErrorCode.INVALID_REQUEST,
+                    Errors: new[] { $"scaleset must be in one of the following states to update: {string.Join(", ", ScalesetStateHelper.CanUpdateStates)}" }),
+                "ScalesetUpdate");
+        }
+
+        if (request.OkV.Size is long size) {
+            var resizedScaleset = await _context.ScalesetOperations.SetSize(scaleset, size);
+            if (resizedScaleset.IsOk) {
+                scaleset = resizedScaleset.OkV;
+            } else {
+                return await _context.RequestHandling.NotOk(
+                    req,
+                    resizedScaleset.ErrorV,
+                    "ScalesetUpdate");
+            }
+        }
+
+        scaleset = scaleset with { Auth = null };
+        return await RequestHandling.Ok(req, ScalesetResponse.ForScaleset(scaleset));
     }
 
     private async Task<HttpResponseData> Get(HttpRequestData req) {
@@ -79,7 +113,7 @@ public class Scaleset {
 
             var scaleset = scalesetResult.OkV;
 
-            var response = ScalesetSearchResponse.ForScaleset(scaleset);
+            var response = ScalesetResponse.ForScaleset(scaleset);
             response = response with { Nodes = await _context.ScalesetOperations.GetNodes(scaleset) };
             if (!search.IncludeAuth) {
                 response = response with { Auth = null };
@@ -91,7 +125,7 @@ public class Scaleset {
         var states = search.State ?? Enumerable.Empty<ScalesetState>();
         var scalesets = await _context.ScalesetOperations.SearchStates(states).ToListAsync();
         // don't return auths during list actions, only 'get'
-        var result = scalesets.Select(ss => ScalesetSearchResponse.ForScaleset(ss with { Auth = null }));
+        var result = scalesets.Select(ss => ScalesetResponse.ForScaleset(ss with { Auth = null }));
         return await RequestHandling.Ok(req, result);
     }
 }

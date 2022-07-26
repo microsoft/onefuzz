@@ -105,7 +105,7 @@ public record PoolGetResult(
     List<ScalesetSummary>? ScalesetSummary
 ) : BaseResponse();
 
-public record ScalesetSearchResponse(
+public record ScalesetResponse(
     PoolName PoolName,
     Guid ScalesetId,
     ScalesetState State,
@@ -123,7 +123,7 @@ public record ScalesetSearchResponse(
     Dictionary<string, string> Tags,
     List<ScalesetNodeState>? Nodes
 ) : BaseResponse() {
-    public static ScalesetSearchResponse ForScaleset(Scaleset s)
+    public static ScalesetResponse ForScaleset(Scaleset s)
         => new(
             PoolName: s.PoolName,
             ScalesetId: s.ScalesetId,
