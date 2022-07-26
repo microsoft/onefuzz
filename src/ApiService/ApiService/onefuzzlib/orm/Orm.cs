@@ -17,8 +17,8 @@ namespace ApiService.OneFuzzLib.Orm {
         Task<ResultVoid<(int, string)>> Delete(T entity);
 
         IAsyncEnumerable<T> SearchAll();
-        IAsyncEnumerable<T> SearchByPartitionKey(string partitionKey);
-        IAsyncEnumerable<T> SearchByRowKey(string rowKey);
+        IAsyncEnumerable<T> SearchByPartitionKeys(IEnumerable<string> partitionKeys);
+        IAsyncEnumerable<T> SearchByRowKeys(IEnumerable<string> rowKeys);
         IAsyncEnumerable<T> SearchByTimeRange(DateTimeOffset min, DateTimeOffset max);
 
         // Allow using tuple to search.
@@ -123,11 +123,11 @@ namespace ApiService.OneFuzzLib.Orm {
         public IAsyncEnumerable<T> SearchAll()
             => QueryAsync(null);
 
-        public IAsyncEnumerable<T> SearchByPartitionKey(string partitionKey)
-            => QueryAsync(Query.PartitionKey(partitionKey));
+        public IAsyncEnumerable<T> SearchByPartitionKeys(IEnumerable<string> partitionKeys)
+            => QueryAsync(Query.PartitionKeys(partitionKeys));
 
-        public IAsyncEnumerable<T> SearchByRowKey(string rowKey)
-            => QueryAsync(Query.RowKey(rowKey));
+        public IAsyncEnumerable<T> SearchByRowKeys(IEnumerable<string> rowKeys)
+            => QueryAsync(Query.RowKeys(rowKeys));
 
         public IAsyncEnumerable<T> SearchByTimeRange(DateTimeOffset min, DateTimeOffset max) {
             return QueryAsync(Query.TimeRange(min, max));

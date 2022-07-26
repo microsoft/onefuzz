@@ -423,26 +423,6 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
     }
 
-    public async Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting) {
-        if (await _context.Containers.FindContainer(container, StorageType.Corpus) == null) {
-            return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, errors: new[] { "invalid container" });
-        }
-
-        if (replaceExisting) {
-            var existing = this.SearchByRowKeys(new[] { container.ContainerName });
-            await foreach (var existingEntry in existing) {
-                _logTracer.Info($"replacing existing notification: {existingEntry.NotificationId} - {container}");
-                await this.Delete(existingEntry);
-            }
-        }
-
-        var entry = new Notification(Guid.NewGuid(), container, config);
-        await this.Insert(entry);
-        _logTracer.Info($"created notification.  notification_id:{entry.NotificationId} container:{entry.Container}");
-
-        return OneFuzzResult<Notification>.Ok(entry);
-    }
-
     public async Task<OneFuzzResult<bool>> AddSshPublicKey(Node node, string publicKey) {
         if (publicKey == null) {
             throw new ArgumentNullException(nameof(publicKey));

@@ -110,7 +110,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
     }
 
     private async Async.Task MarkDependantsFailed(Task task, List<Task>? taskInJob = null) {
-        taskInJob ??= await SearchByPartitionKey(task.JobId.ToString()).ToListAsync();
+        taskInJob ??= await SearchByPartitionKeys(new[] { $"{task.JobId}" }).ToListAsync();
 
         foreach (var t in taskInJob) {
             if (t.Config.PrereqTasks != null) {
