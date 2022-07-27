@@ -308,3 +308,14 @@ public enum NodeDisposalStrategy {
     ScaleIn,
     Decomission
 }
+
+
+public enum GithubIssueState {
+    Open,
+    Closed
+}
+
+public enum GithubIssueSearchMatch {
+    Title,
+    Body
+}

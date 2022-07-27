@@ -33,7 +33,7 @@ public class RequestHandling : IRequestHandling {
     public static async Async.Task<OneFuzzResult<T>> ParseRequest<T>(HttpRequestData req) {
         Exception? exception = null;
         try {
-            var t = await req.ReadFromJsonAsync<T>();
+            var t = await JsonSerializer.DeserializeAsync<T>(req.Body, EntityConverter.GetJsonSerializerOptions());
             if (t != null) {
                 return OneFuzzResult<T>.Ok(t);
             }

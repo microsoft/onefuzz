@@ -34,20 +34,20 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
             done.Add(notification.Config);
 
-            if (notification.Config.TeamsTemplate != null) {
-                NotifyTeams(notification.Config.TeamsTemplate, container, filename, reportOrRegression!);
+            if (notification.Config is TeamsTemplate teamsTemplate) {
+                NotifyTeams(teamsTemplate, container, filename, reportOrRegression!);
             }
 
             if (reportOrRegression == null) {
                 continue;
             }
 
-            if (notification.Config.AdoTemplate != null) {
-                NotifyAdo(notification.Config.AdoTemplate, container, filename, reportOrRegression, failTaskOnTransientError);
+            if (notification.Config is AdoTemplate adoTemplate) {
+                NotifyAdo(adoTemplate, container, filename, reportOrRegression, failTaskOnTransientError);
             }
 
-            if (notification.Config.GithubIssuesTemplate != null) {
-                GithubIssue(notification.Config.GithubIssuesTemplate, container, filename, reportOrRegression);
+            if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {
+                GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression);
             }
         }
 
