@@ -40,7 +40,7 @@ namespace Tests {
                 arg => new Uri($"https://{arg.Item.ToString()}:8080")
             );
         }
-        
+
         public static Gen<ISecret<T>> ISecret<T>() {
             if (typeof(T) == typeof(string)) {
                 return Arb.Generate<string>().Select(s => (ISecret<T>)new SecretValue<string>(s));
@@ -352,7 +352,7 @@ namespace Tests {
                 arg => new Container(string.Join("", arg.Item1.Get.Where(c => char.IsLetterOrDigit(c) || c == '-'))!)
             );
         }
-        
+
         public static Gen<NotificationTemplate> NotificationTemplate() {
             return Gen.OneOf(new[] {
                 Arb.Generate<AdoTemplate>().Select(e => e as NotificationTemplate),
@@ -461,8 +461,8 @@ namespace Tests {
         public static Arbitrary<Container> Container() {
             return Arb.From(OrmGenerators.Container());
         }
-        
-        
+
+
         public static Arbitrary<NotificationTemplate> NotificationTemplate() {
             return Arb.From(OrmGenerators.NotificationTemplate());
         }
@@ -478,12 +478,12 @@ namespace Tests {
         public static Arbitrary<Job> Job() {
             return Arb.From(OrmGenerators.Job());
         }
-        
+
         public static Arbitrary<ISecret<T>> ISecret<T>() {
             return Arb.From(OrmGenerators.ISecret<T>());
         }
-        
-        
+
+
     }
 
 
