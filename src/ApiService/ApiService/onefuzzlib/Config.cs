@@ -66,7 +66,7 @@ public class Config : IConfig {
         );
 
         if (definition.MonitorQueue != null) {
-            config.inputQueue = await _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Config, QueueSasPermissions.Add | QueueSasPermissions.Read | QueueSasPermissions.Update | QueueSasPermissions.Process);
+            config.inputQueue = await _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Corpus, QueueSasPermissions.Add | QueueSasPermissions.Read | QueueSasPermissions.Update | QueueSasPermissions.Process);
         }
 
         var containersByType = definition.Containers.Where(c => c.Type != ContainerType.Setup && task.Config.Containers != null)
