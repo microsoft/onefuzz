@@ -79,7 +79,7 @@ public class TestHooks {
             select new KeyValuePair<string, string>(Uri.UnescapeDataString(cs.Substring(0, i)), Uri.UnescapeDataString(cs.Substring(i + 1)));
 
         var qs = new Dictionary<string, string>(q);
-        var d = await _secretOps.GetSecretStringValue(new SecretData<string>(qs["SecretName"]));
+        var d = await _secretOps.GetSecretStringValue(new SecretData<string>(new SecretValue<string>(qs["SecretName"])));
 
         var resp = req.CreateResponse(HttpStatusCode.OK);
         await resp.WriteAsJsonAsync(d);

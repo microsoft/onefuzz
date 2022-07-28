@@ -41,6 +41,18 @@ namespace Tests {
             );
         }
 
+        public static Gen<ISecret<T>> ISecret<T>() {
+            if (typeof(T) == typeof(string)) {
+                return Arb.Generate<string>().Select(s => (ISecret<T>)new SecretValue<string>(s));
+            }
+
+            if (typeof(T) == typeof(GithubAuth)) {
+                return Arb.Generate<GithubAuth>().Select(s => (ISecret<T>)new SecretValue<GithubAuth>(s));
+            } else {
+                throw new Exception($"Unsupported secret type {typeof(T)}");
+            }
+        }
+
         public static Gen<Version> Version() {
             //OneFuzz version uses 3 number version
             return Arb.Generate<Tuple<UInt16, UInt16, UInt16>>().Select(
@@ -270,7 +282,7 @@ namespace Tests {
                         Id: arg.Item4,
                         EventTime: arg.Item5
                     )
-            ); ;
+            );
         }
 
         public static Gen<Report> Report() {
@@ -341,6 +353,13 @@ namespace Tests {
             );
         }
 
+        public static Gen<NotificationTemplate> NotificationTemplate() {
+            return Gen.OneOf(new[] {
+                Arb.Generate<AdoTemplate>().Select(e => e as NotificationTemplate),
+                Arb.Generate<TeamsTemplate>().Select(e => e as NotificationTemplate),
+                Arb.Generate<GithubIssuesTemplate>().Select(e => e as NotificationTemplate)
+            });
+        }
 
         public static Gen<Notification> Notification() {
             return Arb.Generate<Tuple<Container, Guid, NotificationTemplate>>().Select(
@@ -443,6 +462,11 @@ namespace Tests {
             return Arb.From(OrmGenerators.Container());
         }
 
+
+        public static Arbitrary<NotificationTemplate> NotificationTemplate() {
+            return Arb.From(OrmGenerators.NotificationTemplate());
+        }
+
         public static Arbitrary<Notification> Notification() {
             return Arb.From(OrmGenerators.Notification());
         }
@@ -454,6 +478,12 @@ namespace Tests {
         public static Arbitrary<Job> Job() {
             return Arb.From(OrmGenerators.Job());
         }
+
+        public static Arbitrary<ISecret<T>> ISecret<T>() {
+            return Arb.From(OrmGenerators.ISecret<T>());
+        }
+
+
     }
 
 

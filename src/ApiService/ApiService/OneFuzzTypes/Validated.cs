@@ -48,7 +48,7 @@ public abstract class ValidatedStringConverter<T> : JsonConverter<T> where T : V
 
 [JsonConverter(typeof(Converter))]
 public record PoolName : ValidatedString {
-    private PoolName(string value) : base(value) {
+    public PoolName(string value) : base(value) {
         // Debug.Assert(Check.IsAlnumDash(value));
     }
 
