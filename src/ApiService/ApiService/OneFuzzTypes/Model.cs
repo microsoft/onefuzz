@@ -677,7 +677,7 @@ public class ISecretConverter<T> : JsonConverter<ISecret<T>> {
         if (value is SecretAddress<T> secretAddress) {
             JsonSerializer.Serialize(writer, secretAddress, options);
         } else if (value is SecretValue<T> secretValue) {
-            JsonSerializer.Serialize(writer, secretValue.Value, options);
+            throw new JsonException("SecretValue should not be serialized");
         }
     }
 }
