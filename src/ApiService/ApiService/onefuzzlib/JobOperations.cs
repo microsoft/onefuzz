@@ -7,6 +7,7 @@ public interface IJobOperations : IStatefulOrm<Job, JobState> {
     Async.Task OnStart(Job job);
     IAsyncEnumerable<Job> SearchExpired();
     Async.Task<Job> Stopping(Job job);
+    Async.Task<Job> Init(Job job);
     IAsyncEnumerable<Job> SearchState(IEnumerable<JobState> states);
     Async.Task StopNeverStartedJobs();
     Async.Task StopIfAllDone(Job job);
@@ -71,6 +72,13 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
             _logTracer.Info($"stopping job that never started: {job.JobId}");
             await _context.JobOperations.Stopping(job);
         }
+    }
+
+    public async Async.Task<Job> Init(Job job) {
+        _logTracer.Info($"init job: {job.JobId}");
+        var enabled = job with { State = JobState.Enabled };
+        var result = await Replace(enabled);
+        return enabled;
     }
 
     public async Async.Task<Job> Stopping(Job job) {
