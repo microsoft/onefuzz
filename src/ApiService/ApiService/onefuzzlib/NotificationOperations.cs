@@ -99,16 +99,36 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
                 await this.Delete(existingEntry);
             }
         }
-
-        var entry = new Notification(Guid.NewGuid(), container, config);
+        var configWithHiddenSecret = await HideSecrets(config);
+        var entry = new Notification(Guid.NewGuid(), container, configWithHiddenSecret);
         await this.Insert(entry);
         _logTracer.Info($"created notification.  notification_id:{entry.NotificationId} container:{entry.Container}");
 
         return OneFuzzResult<Notification>.Ok(entry);
     }
 
+
+    private async Async.Task<NotificationTemplate> HideSecrets(NotificationTemplate notificationTemplate) {
+
+        switch (notificationTemplate) {
+            case AdoTemplate adoTemplate:
+                var hiddenAuthToken = await _context.SecretsOperations.SaveToKeyvault(adoTemplate.AuthToken);
+                return adoTemplate with { AuthToken = hiddenAuthToken };
+            case GithubIssuesTemplate githubIssuesTemplate:
+                var hiddenAuth = await _context.SecretsOperations.SaveToKeyvault(githubIssuesTemplate.Auth);
+                return githubIssuesTemplate with { Auth = hiddenAuth };
+            case TeamsTemplate teamsTemplate:
+                var hiddenUrl = await _context.SecretsOperations.SaveToKeyvault(teamsTemplate.Url);
+                return teamsTemplate with { Url = hiddenUrl };
+            default:
+                throw new ArgumentOutOfRangeException(nameof(notificationTemplate));
+        }
+
+    }
+
     public async Async.Task<Task?> GetRegressionReportTask(RegressionReport report) {
         if (report.CrashTestResult.CrashReport != null) {
+
             return await _context.TaskOperations.GetByJobIdAndTaskId(report.CrashTestResult.CrashReport.JobId, report.CrashTestResult.CrashReport.TaskId);
         }
         if (report.CrashTestResult.NoReproReport != null) {
