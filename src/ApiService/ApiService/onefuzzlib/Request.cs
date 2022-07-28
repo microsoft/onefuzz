@@ -1,5 +1,9 @@
 ﻿using System.Net;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using Faithlife.Utility;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -29,7 +33,7 @@ public class RequestHandling : IRequestHandling {
     public static async Async.Task<OneFuzzResult<T>> ParseRequest<T>(HttpRequestData req) {
         Exception? exception = null;
         try {
-            var t = await req.ReadFromJsonAsync<T>();
+            var t = await JsonSerializer.DeserializeAsync<T>(req.Body, EntityConverter.GetJsonSerializerOptions());
             if (t != null) {
                 return OneFuzzResult<T>.Ok(t);
             }
@@ -44,6 +48,28 @@ public class RequestHandling : IRequestHandling {
             ErrorCode.INVALID_REQUEST,
             $"Failed to deserialize message into type: {typeof(T)} - {await req.ReadAsStringAsync()}"
         );
+    }
+
+    public static async Async.Task<OneFuzzResult<T>> ParseUri<T>(HttpRequestData req) {
+        var query = System.Web.HttpUtility.ParseQueryString(req.Url.Query);
+        var doc = new JsonObject();
+        foreach (var key in query.AllKeys.WhereNotNull()) {
+            doc[key] = JsonValue.Create(query[key]);
+        }
+
+        try {
+            var result = doc.Deserialize<T>(EntityConverter.GetJsonSerializerOptions());
+            return result switch {
+                null => OneFuzzResult<T>.Error(
+                    ErrorCode.INVALID_REQUEST,
+                    $"Failed to deserialize message into type: {typeof(T)} - {await req.ReadAsStringAsync()}"
+                ),
+                var r => OneFuzzResult<T>.Ok(r),
+            };
+
+        } catch (JsonException exception) {
+            return OneFuzzResult<T>.Error(ConvertError(exception));
+        }
     }
 
     public static Error ConvertError(Exception exception) {

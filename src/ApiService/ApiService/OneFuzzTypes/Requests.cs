@@ -113,6 +113,20 @@ public record ContainerDelete(
     IDictionary<string, string>? Metadata = null
 ) : BaseRequest;
 
+public record NotificationCreate(
+    Container Container,
+    bool ReplaceExisting,
+    NotificationTemplate Config
+) : BaseRequest;
+
+public record NotificationSearch(
+    List<Container>? Container
+) : BaseRequest;
+
+public record NotificationGet(
+    Guid NotificationId
+) : BaseRequest;
+
 public record JobGet(
     Guid JobId
 );

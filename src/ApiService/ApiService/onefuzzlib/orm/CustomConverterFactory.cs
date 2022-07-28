@@ -165,10 +165,10 @@ public sealed class PolymorphicConverterFactory : JsonConverterFactory {
     }
 
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
-        var (field, attribute) = typeToConvert.GetProperties()
-                .Select(p => (p.Name, p.GetCustomAttribute<TypeDiscrimnatorAttribute>()))
-                .Where(p => p.Item2 != null)
-                .First();
+        var (field, attribute) = typeToConvert
+            .GetProperties()
+            .Select(p => (p.Name, p.GetCustomAttribute<TypeDiscrimnatorAttribute>()))
+            .First(p => p.Item2 != null);
 
 
         return (JsonConverter)Activator.CreateInstance(

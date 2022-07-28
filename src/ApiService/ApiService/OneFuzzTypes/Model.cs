@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
@@ -402,6 +403,9 @@ public record Scaleset(
 [JsonConverter(typeof(ContainerConverter))]
 public record Container(string ContainerName) {
     public string ContainerName { get; } = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
+    public override string ToString() {
+        return ContainerName;
+    }
 }
 
 public class ContainerConverter : JsonConverter<Container> {
@@ -416,8 +420,8 @@ public class ContainerConverter : JsonConverter<Container> {
 }
 
 public record Notification(
-    Container Container,
-    Guid NotificationId,
+    [PartitionKey] Guid NotificationId,
+    [RowKey] Container Container,
     NotificationTemplate Config
 ) : EntityBase();
 
@@ -469,17 +473,98 @@ public record RegressionReport(
     CrashTestResult? OriginalCrashTestResult
 ) : IReport;
 
-public record NotificationTemplate(
-    AdoTemplate? AdoTemplate,
-    TeamsTemplate? TeamsTemplate,
-    GithubIssuesTemplate? GithubIssuesTemplate
+
+[JsonConverter(typeof(NotificationTemplateConverter))]
+#pragma warning disable CA1715
+public interface NotificationTemplate {
+#pragma warning restore CA1715
+}
+
+
+public class NotificationTemplateConverter : JsonConverter<NotificationTemplate> {
+    public override NotificationTemplate? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        using var templateJson = JsonDocument.ParseValue(ref reader);
+        try {
+            return templateJson.Deserialize<AdoTemplate>(options);
+        } catch (JsonException) {
+
+        }
+
+        try {
+            return templateJson.Deserialize<TeamsTemplate>(options);
+        } catch (JsonException) {
+        }
+
+        try {
+            return templateJson.Deserialize<GithubIssuesTemplate>(options);
+        } catch (JsonException) {
+        }
+        throw new JsonException("Unsupported notification template");
+    }
+
+    public override void Write(Utf8JsonWriter writer, NotificationTemplate value, JsonSerializerOptions options) {
+        if (value is AdoTemplate adoTemplate) {
+            JsonSerializer.Serialize(writer, adoTemplate, options);
+        } else if (value is TeamsTemplate teamsTemplate) {
+            JsonSerializer.Serialize(writer, teamsTemplate, options);
+        } else if (value is GithubIssuesTemplate githubIssuesTemplate) {
+            JsonSerializer.Serialize(writer, githubIssuesTemplate, options);
+        } else {
+            throw new JsonException("Unsupported notification template");
+        }
+
+    }
+}
+
+
+public record ADODuplicateTemplate(
+    List<string> Increment,
+    string? Comment,
+    Dictionary<string, string> SetState,
+    Dictionary<string, string> AdoFields
 );
 
-public record AdoTemplate();
+public record AdoTemplate(
+    Uri BaseUrl,
+    SecretData<string> AuthToken,
+    string Project,
+    string Type,
+    List<string> UniqueFields,
+    string? Comment,
+    Dictionary<string, string> AdoFields,
+    ADODuplicateTemplate OnDuplicate
+    ) : NotificationTemplate;
 
-public record TeamsTemplate();
+public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate;
 
-public record GithubIssuesTemplate();
+
+public record GithubAuth(string User, string PersonalAccessToken);
+
+public record GithubIssueSearch(
+    string? Author,
+    GithubIssueState? State,
+    List<GithubIssueSearchMatch> FieldMatch,
+    [property: JsonPropertyName("string")] String str
+);
+
+public record GithubIssueDuplicate(
+    string? Comment,
+    List<string> Labels,
+    bool Reopen
+);
+
+
+public record GithubIssuesTemplate(
+    SecretData<GithubAuth> Auth,
+    string Organization,
+    string Repository,
+    string Title,
+    string Body,
+    GithubIssueSearch UniqueSearch,
+    List<string> Assignees,
+    List<string> Labels,
+    GithubIssueDuplicate OnDuplicate
+    ) : NotificationTemplate;
 
 public record Repro(
     [PartitionKey][RowKey] Guid VmId,
@@ -553,25 +638,57 @@ public record Vm(
     public string Name { get; } = Name.Length > 40 ? throw new ArgumentOutOfRangeException("VM name too long") : Name;
 };
 
+[JsonConverter(typeof(ISecretConverterFactory))]
+public interface ISecret<T> { }
 
-public record SecretAddress(Uri Url);
-
-
-/// This class allows us to store some data that are intended to be secret
-/// The secret field stores either the raw data or the address of that data
-/// This class allows us to maintain backward compatibility with existing
-/// NotificationTemplate classes
-public record SecretData<T>(T Secret) {
-    public override string ToString() {
-        if (Secret is SecretAddress) {
-            if (Secret is null) {
-                return string.Empty;
-            } else {
-                return Secret.ToString()!;
-            }
-        } else
-            return "[REDACTED]";
+public class ISecretConverterFactory : JsonConverterFactory {
+    public override bool CanConvert(Type typeToConvert) {
+        return typeToConvert.IsGenericType && typeToConvert.Name == typeof(ISecret<string>).Name;
     }
+
+    public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
+        var innerType = typeToConvert.GetGenericArguments().First();
+        return (JsonConverter)Activator.CreateInstance(
+            typeof(ISecretConverter<>).MakeGenericType(innerType),
+            BindingFlags.Instance | BindingFlags.Public,
+            binder: null,
+            args: Array.Empty<object?>(),
+            culture: null)!;
+    }
+}
+
+public class ISecretConverter<T> : JsonConverter<ISecret<T>> {
+    public override ISecret<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+
+        using var secretJson = JsonDocument.ParseValue(ref reader);
+
+        if (secretJson.RootElement.ValueKind == JsonValueKind.String) {
+            return (ISecret<T>)new SecretValue<string>(secretJson.RootElement.GetString()!);
+        }
+
+        if (secretJson.RootElement.TryGetProperty("url", out var secretUrl)) {
+            return new SecretAddress<T>(new Uri(secretUrl.GetString()!));
+        }
+
+        return new SecretValue<T>(secretJson.Deserialize<T>(options)!);
+    }
+
+    public override void Write(Utf8JsonWriter writer, ISecret<T> value, JsonSerializerOptions options) {
+        if (value is SecretAddress<T> secretAddress) {
+            JsonSerializer.Serialize(writer, secretAddress, options);
+        } else if (value is SecretValue<T> secretValue) {
+            JsonSerializer.Serialize(writer, secretValue.Value, options);
+        }
+    }
+}
+
+
+
+public record SecretValue<T>(T Value) : ISecret<T>;
+
+public record SecretAddress<T>(Uri Url) : ISecret<T>;
+
+public record SecretData<T>(ISecret<T> Secret) {
 }
 
 public record JobConfig(
