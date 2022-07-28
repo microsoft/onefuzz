@@ -78,7 +78,11 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
         _logTracer.Info($"init job: {job.JobId}");
         var enabled = job with { State = JobState.Enabled };
         var result = await Replace(enabled);
-        return enabled;
+        if (result.IsOk) {
+            return enabled;
+        } else {
+            throw new Exception($"Failed to save job {job.JobId} : {result.ErrorV}");
+        }
     }
 
     public async Async.Task<Job> Stopping(Job job) {
