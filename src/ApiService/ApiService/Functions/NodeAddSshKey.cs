@@ -49,7 +49,7 @@ public class NodeAddSshKey {
     [Function("node")]
     public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "node/add_ssh_key")] HttpRequestData req) {
         return _auth.CallIfUser(req, r => r.Method switch {
-            // "POST" => Post(r),
+             "POST" => Post(r),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
         });
     }
