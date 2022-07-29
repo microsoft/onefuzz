@@ -40,13 +40,13 @@ public class NodeAddSshKey {
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(result);
+        await response.WriteAsJsonAsync(new BoolResult(true));
         return response;
 
 
     }
 
-    [Function("node")]
+    [Function("node_add_ssh_key")]
     public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "node/add_ssh_key")] HttpRequestData req) {
         return _auth.CallIfUser(req, r => r.Method switch {
             "POST" => Post(r),
