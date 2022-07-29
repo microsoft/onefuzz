@@ -43,11 +43,11 @@ namespace Tests {
 
         public static Gen<ISecret<T>> ISecret<T>() {
             if (typeof(T) == typeof(string)) {
-                return Arb.Generate<string>().Select(s => (ISecret<T>)new SecretValue<string>(s));
+                return Arb.Generate<string>().Select(s => (ISecret<T>)new SecretAddress<string>(new Uri("http://test")));
             }
 
             if (typeof(T) == typeof(GithubAuth)) {
-                return Arb.Generate<GithubAuth>().Select(s => (ISecret<T>)new SecretValue<GithubAuth>(s));
+                return Arb.Generate<GithubAuth>().Select(s => (ISecret<T>)new SecretAddress<T>(new Uri("http://test")));
             } else {
                 throw new Exception($"Unsupported secret type {typeof(T)}");
             }

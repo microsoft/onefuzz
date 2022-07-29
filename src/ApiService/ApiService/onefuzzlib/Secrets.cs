@@ -7,7 +7,7 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface ISecretsOperations {
     public (Uri, string) ParseSecretUrl(Uri secretsUrl);
-    public Task<SecretAddress<T>> SaveToKeyvault<T>(SecretData<T> secretData);
+    public Task<SecretData<T>> SaveToKeyvault<T>(SecretData<T> secretData);
 
     public Task<string?> GetSecretStringValue<T>(SecretData<T> data);
 
@@ -31,14 +31,14 @@ public class SecretsOperations : ISecretsOperations {
     public (Uri, string) ParseSecretUrl(Uri secretsUrl) {
         // format: https://{vault-name}.vault.azure.net/secrets/{secret-name}/{version}
         var vaultUrl = $"{secretsUrl.Scheme}://{secretsUrl.Host}";
-        var secretName = secretsUrl.Segments[secretsUrl.Segments.Length - 2].Trim('/');
+        var secretName = secretsUrl.Segments[^2].Trim('/');
         return (new Uri(vaultUrl), secretName);
     }
 
-    public async Task<SecretAddress<T>> SaveToKeyvault<T>(SecretData<T> secretData) {
+    public async Task<SecretData<T>> SaveToKeyvault<T>(SecretData<T> secretData) {
 
         if (secretData.Secret is SecretAddress<T> secretAddress) {
-            return secretAddress;
+            return secretData;
         } else if (secretData.Secret is SecretValue<T> sValue) {
             var secretName = Guid.NewGuid();
             string secretValue;
@@ -49,7 +49,7 @@ public class SecretsOperations : ISecretsOperations {
             }
 
             var kv = await StoreInKeyvault(GetKeyvaultAddress(), secretName.ToString(), secretValue);
-            return new SecretAddress<T>(kv.Id);
+            return new SecretData<T>(new SecretAddress<T>(kv.Id));
         }
 
         throw new Exception("Invalid secret value");
