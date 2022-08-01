@@ -101,3 +101,19 @@ public class BaseResponseConverter : JsonConverter<BaseResponse> {
         JsonSerializer.Serialize(writer, value, eventType, options);
     }
 }
+
+public record ProxyGetResult(
+    string? Ip,
+    Forward Forward
+);
+
+public record ProxyInfo(
+    string Region,
+    Guid ProxyId,
+    VmState State
+);
+
+public record ProxyList(
+    List<ProxyInfo> Proxies
+);
+

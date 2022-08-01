@@ -103,6 +103,7 @@ public class Creds : ICreds {
         var path = GetScalesetIdentityResourcePath();
         var uid = ArmClient.GetGenericResource(new ResourceIdentifier(path));
 
+
         var resource = await uid.GetAsync();
         var principalId = resource.Value.Data.Properties.ToObjectFromJson<ScaleSetIdentity>().principalId;
         return new Guid(principalId);

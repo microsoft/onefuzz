@@ -137,3 +137,39 @@ public record JobSearch(
     List<TaskState>? TaskState = null,
     bool? WithTasks = null
 );
+
+public record NodeAddSshKeyPost(Guid MachineId, string PublicKey);
+
+public record ProxyGet(
+    Guid? ScalesetId,
+    Guid? MachineId,
+    int? DstPort);
+
+// @root_validator()
+// def check_proxy_get(cls, value: Any) -> Any:
+// check_keys = ["scaleset_id", "machine_id", "dst_port"]
+// included = [x in value for x in check_keys]
+// if any(included) and not all(included):
+// raise ValueError(
+// "ProxyGet must provide all or none of the following: %s"
+// % ", ".join(check_keys)
+// )
+// return value
+
+
+public record ProxyCreate(
+    Guid ScalesetId,
+    Guid MachineId,
+    int DstPort,
+    int Duration
+);
+
+public record ProxyDelete(
+    Guid ScalesetId,
+    Guid MachineId,
+    int? DstPort
+);
+
+public record ProxyReset(
+    string Region
+);
