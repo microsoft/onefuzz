@@ -20,6 +20,21 @@ public abstract record EntityBase {
 public abstract record StatefulEntityBase<T>([property: JsonIgnore] T State) : EntityBase() where T : Enum;
 
 
+
+/// How the value is populated
+public enum InitMethod {
+    //T() will be used
+    DefaultConstructor,
+}
+[AttributeUsage(AttributeTargets.Parameter)]
+public class DefaultValueAttribute : Attribute {
+
+    public InitMethod InitMethod { get; }
+    public DefaultValueAttribute(InitMethod initMethod) {
+        InitMethod = initMethod;
+    }
+}
+
 /// Indicates that the enum cases should no be renamed
 [AttributeUsage(AttributeTargets.Enum)]
 public class SerializeValueAttribute : Attribute { }
@@ -56,7 +71,15 @@ public enum EntityPropertyKind {
     RowKey,
     Column
 }
-public record EntityProperty(string name, string columnName, Type type, EntityPropertyKind kind, (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator);
+public record EntityProperty(
+        string name,
+        string columnName,
+        Type type,
+        EntityPropertyKind kind,
+        (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator,
+        DefaultValueAttribute? defaultValue,
+        ParameterInfo parameterInfo
+    );
 public record EntityInfo(Type type, ILookup<string, EntityProperty> properties, Func<object?[], object> constructor);
 
 class OnefuzzNamingPolicy : JsonNamingPolicy {
@@ -108,6 +131,8 @@ public class EntityConverter {
         var isPartitionkey = parameterInfo.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
 
         var discriminatorAttribute = typeof(T).GetProperty(name)?.GetCustomAttribute<TypeDiscrimnatorAttribute>();
+        var defaultValueAttribute = parameterInfo.GetCustomAttribute<DefaultValueAttribute>();
+
 
         (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator = null;
         if (discriminatorAttribute != null) {
@@ -117,16 +142,16 @@ public class EntityConverter {
 
 
         if (isPartitionkey) {
-            yield return new EntityProperty(name, "PartitionKey", parameterType, EntityPropertyKind.PartitionKey, discriminator);
+            yield return new EntityProperty(name, "PartitionKey", parameterType, EntityPropertyKind.PartitionKey, discriminator, defaultValueAttribute, parameterInfo);
         }
 
         if (isRowkey) {
-            yield return new EntityProperty(name, "RowKey", parameterType, EntityPropertyKind.RowKey, discriminator);
+            yield return new EntityProperty(name, "RowKey", parameterType, EntityPropertyKind.RowKey, discriminator, defaultValueAttribute, parameterInfo);
         }
 
         if (!isPartitionkey && !isRowkey) {
             var columnName = typeof(T).GetProperty(name)?.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name ?? CaseConverter.PascalToSnake(name);
-            yield return new EntityProperty(name, columnName, parameterType, EntityPropertyKind.Column, discriminator);
+            yield return new EntityProperty(name, columnName, parameterType, EntityPropertyKind.Column, discriminator, defaultValueAttribute, parameterInfo);
         }
     }
 
@@ -174,8 +199,8 @@ public class EntityConverter {
                  || prop.type == typeof(DateTimeOffset?)
                  || prop.type == typeof(int)
                  || prop.type == typeof(int?)
-                 || prop.type == typeof(Int64)
-                 || prop.type == typeof(Int64?)
+                 || prop.type == typeof(long)
+                 || prop.type == typeof(long?)
                  || prop.type == typeof(double)
                  || prop.type == typeof(double?)
 
@@ -207,9 +232,8 @@ public class EntityConverter {
                 return Guid.Parse(entity.GetString(ef.kind.ToString()));
             else if (ef.type == typeof(int))
                 return int.Parse(entity.GetString(ef.kind.ToString()));
-            else if (ef.type == typeof(PoolName))
-                // TODO: this should be able to be generic over any ValidatedString
-                return PoolName.Parse(entity.GetString(ef.kind.ToString()));
+            else if (ef.type.IsClass)
+                return ef.type.GetConstructor(new[] { typeof(string) })!.Invoke(new[] { entity.GetString(ef.kind.ToString()) });
             else {
                 throw new Exception($"invalid partition or row key type of {info.type} property {name}: {ef.type}");
             }
@@ -218,53 +242,71 @@ public class EntityConverter {
         var fieldName = ef.columnName;
         var obj = entity[fieldName];
         if (obj == null) {
-            return null;
+
+            if (ef.parameterInfo.HasDefaultValue) {
+                return ef.parameterInfo.DefaultValue;
+            }
+
+            return ef.defaultValue switch {
+                DefaultValueAttribute { InitMethod: InitMethod.DefaultConstructor } => Activator.CreateInstance(ef.type),
+                _ => null,
+            };
         }
-        var objType = obj.GetType();
 
-        if (ef.type == typeof(string)) {
-            return entity.GetString(fieldName);
-        } else if (ef.type == typeof(bool) || ef.type == typeof(bool?)) {
-            return entity.GetBoolean(fieldName);
-        } else if (ef.type == typeof(DateTimeOffset) || ef.type == typeof(DateTimeOffset?)) {
-            return entity.GetDateTimeOffset(fieldName);
-        } else if (ef.type == typeof(DateTime) || ef.type == typeof(DateTime?)) {
-            return entity.GetDateTime(fieldName);
-        } else if (ef.type == typeof(double) || ef.type == typeof(double?)) {
-            return entity.GetDouble(fieldName);
-        } else if (ef.type == typeof(Guid) || ef.type == typeof(Guid?)) {
-            return (object?)Guid.Parse(entity.GetString(fieldName));
-        } else if (ef.type == typeof(int) || ef.type == typeof(short) || ef.type == typeof(int?) || ef.type == typeof(short?)) {
-            return entity.GetInt32(fieldName);
-        } else if (ef.type == typeof(long) || ef.type == typeof(long?)) {
-            return entity.GetInt64(fieldName);
-        } else {
-            var outputType = ef.type;
-            if (ef.discriminator != null) {
-                var (attr, typeProvider) = ef.discriminator.Value;
-                var v = GetFieldValue(info, attr.FieldName, entity) ?? throw new Exception($"No value for {attr.FieldName}");
-                outputType = typeProvider.GetTypeInfo(v);
-            }
-
-            if (objType == typeof(string)) {
-                var value = entity.GetString(fieldName);
-                if (value.StartsWith('[') || value.StartsWith('{') || value == "null") {
-                    return JsonSerializer.Deserialize(value, outputType, options: _options);
-                } else {
-                    return JsonSerializer.Deserialize($"\"{value}\"", outputType, options: _options);
-                }
+        try {
+            if (ef.type == typeof(string)) {
+                return entity.GetString(fieldName);
+            } else if (ef.type == typeof(bool) || ef.type == typeof(bool?)) {
+                return entity.GetBoolean(fieldName);
+            } else if (ef.type == typeof(DateTimeOffset) || ef.type == typeof(DateTimeOffset?)) {
+                return entity.GetDateTimeOffset(fieldName);
+            } else if (ef.type == typeof(DateTime) || ef.type == typeof(DateTime?)) {
+                return entity.GetDateTime(fieldName);
+            } else if (ef.type == typeof(double) || ef.type == typeof(double?)) {
+                return entity.GetDouble(fieldName);
+            } else if (ef.type == typeof(Guid) || ef.type == typeof(Guid?)) {
+                return (object?)Guid.Parse(entity.GetString(fieldName));
+            } else if (ef.type == typeof(int) || ef.type == typeof(short) || ef.type == typeof(int?) || ef.type == typeof(short?)) {
+                return entity.GetInt32(fieldName);
+            } else if (ef.type == typeof(long) || ef.type == typeof(long?)) {
+                return entity.GetInt64(fieldName);
             } else {
-                var value = entity.GetString(fieldName);
-                return JsonSerializer.Deserialize(value, outputType, options: _options);
+                var outputType = ef.type;
+                if (ef.discriminator != null) {
+                    var (attr, typeProvider) = ef.discriminator.Value;
+                    var v = GetFieldValue(info, attr.FieldName, entity) ?? throw new Exception($"No value for {attr.FieldName}");
+                    outputType = typeProvider.GetTypeInfo(v);
+                }
+
+                var objType = obj.GetType();
+                if (objType == typeof(string)) {
+                    var value = entity.GetString(fieldName);
+                    if (value.StartsWith('[') || value.StartsWith('{') || value == "null") {
+                        return JsonSerializer.Deserialize(value, outputType, options: _options);
+                    } else {
+                        return JsonSerializer.Deserialize($"\"{value}\"", outputType, options: _options);
+                    }
+                } else {
+                    var value = entity.GetString(fieldName);
+                    return JsonSerializer.Deserialize(value, outputType, options: _options);
+                }
             }
+        } catch (Exception ex) {
+            throw new InvalidOperationException($"Unable to get value for property '{name}' (entity field '{fieldName}')", ex);
         }
     }
 
 
     public T ToRecord<T>(TableEntity entity) where T : EntityBase {
         var entityInfo = GetEntityInfo<T>();
-        var parameters =
-            entityInfo.properties.Select(grouping => GetFieldValue(entityInfo, grouping.Key, entity)).ToArray();
+
+        object?[] parameters;
+        try {
+            parameters = entityInfo.properties.Select(grouping => GetFieldValue(entityInfo, grouping.Key, entity)).ToArray();
+        } catch (Exception ex) {
+            throw new InvalidOperationException($"Unable to extract properties from TableEntity for {typeof(T)}", ex);
+        }
+
         try {
             var entityRecord = (T)entityInfo.constructor.Invoke(parameters);
             if (entity.ETag != default) {
@@ -275,9 +317,7 @@ public class EntityConverter {
 
         } catch (Exception ex) {
             var stringParam = string.Join(", ", parameters);
-            throw new Exception($"Could not initialize object of type {typeof(T)} with the following parameters: {stringParam} constructor {entityInfo.constructor} : {ex}");
+            throw new InvalidOperationException($"Could not initialize object of type {typeof(T)} with the following parameters: {stringParam} constructor {entityInfo.constructor}", ex);
         }
-
     }
-
 }

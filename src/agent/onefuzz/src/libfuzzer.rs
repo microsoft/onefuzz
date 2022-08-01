@@ -254,7 +254,6 @@ impl<'a> LibFuzzer<'a> {
         Ok(())
     }
 
-    #[cfg(not(target_os = "macos"))]
     async fn find_missing_libraries(&self) -> Result<Vec<String>> {
         let cmd = self.build_std_command(None, None, None).await?;
 
@@ -268,11 +267,6 @@ impl<'a> LibFuzzer<'a> {
         let missing = missing.into_iter().map(|m| m.name).collect();
 
         Ok(missing)
-    }
-
-    #[cfg(target_os = "macos")]
-    async fn find_missing_libraries(&self) -> Result<Vec<String>> {
-        todo!()
     }
 
     pub async fn fuzz(

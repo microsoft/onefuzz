@@ -28,6 +28,7 @@ public enum ErrorCode {
     UNABLE_TO_UPDATE = 471,
     PROXY_FAILED = 472,
     INVALID_CONFIGURATION = 473,
+    UNABLE_TO_CREATE_CONTAINER = 474,
 }
 
 public enum VmState {
@@ -70,7 +71,8 @@ public enum TaskType {
     GenericMerge,
     GenericGenerator,
     GenericCrashReport,
-    GenericRegression
+    GenericRegression,
+    DotnetCoverage,
 }
 
 public enum Os {
@@ -164,7 +166,7 @@ public static class ScalesetStateHelper {
 
 public static class VmStateHelper {
 
-    private static readonly IReadOnlySet<VmState> _needsWork = new HashSet<VmState> { VmState.Init, VmState.Init, VmState.ExtensionsLaunch, VmState.Stopping };
+    private static readonly IReadOnlySet<VmState> _needsWork = new HashSet<VmState> { VmState.Init, VmState.ExtensionsLaunch, VmState.Stopping };
     private static readonly IReadOnlySet<VmState> _available = new HashSet<VmState> { VmState.Init, VmState.ExtensionsLaunch, VmState.ExtensionsFailed, VmState.VmAllocationFailed, VmState.Running, };
 
     public static IReadOnlySet<VmState> NeedsWork => _needsWork;
@@ -305,4 +307,15 @@ public static class NodeStateHelper {
 public enum NodeDisposalStrategy {
     ScaleIn,
     Decomission
+}
+
+
+public enum GithubIssueState {
+    Open,
+    Closed
+}
+
+public enum GithubIssueSearchMatch {
+    Title,
+    Body
 }

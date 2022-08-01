@@ -81,7 +81,10 @@ public record NodeSettingUpEventData(
 ) : NodeStateData;
 
 public record NodeDoneEventData(
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     string? Error,
+
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     ProcessOutput? ScriptOutput
 ) : NodeStateData;
 
@@ -95,3 +98,42 @@ public record ExitStatus(
     int? Code,
     int? Signal,
     bool Success);
+
+public record ContainerGet(
+    Container Name
+) : BaseRequest;
+
+public record ContainerCreate(
+    Container Name,
+    IDictionary<string, string>? Metadata = null
+) : BaseRequest;
+
+public record ContainerDelete(
+    Container Name,
+    IDictionary<string, string>? Metadata = null
+) : BaseRequest;
+
+public record NotificationCreate(
+    Container Container,
+    bool ReplaceExisting,
+    NotificationTemplate Config
+) : BaseRequest;
+
+public record NotificationSearch(
+    List<Container>? Container
+) : BaseRequest;
+
+public record NotificationGet(
+    Guid NotificationId
+) : BaseRequest;
+
+public record JobGet(
+    Guid JobId
+);
+
+public record JobSearch(
+    Guid? JobId = null,
+    List<JobState>? State = null,
+    List<TaskState>? TaskState = null,
+    bool? WithTasks = null
+);

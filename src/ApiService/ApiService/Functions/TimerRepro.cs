@@ -1,6 +1,6 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 
-namespace Microsoft.OneFuzz.Service;
+namespace Microsoft.OneFuzz.Service.Functions;
 
 public class TimerRepro {
     private readonly ILogTracer _log;
@@ -12,7 +12,7 @@ public class TimerRepro {
         _onefuzzContext = onefuzzContext;
     }
 
-    // [Function("TimerRepro")]
+    [Function("TimerRepro")]
     public async Async.Task Run([TimerTrigger("00:00:30")] TimerInfo myTimer) {
         var expired = _onefuzzContext.ReproOperations.SearchExpired();
         await foreach (var repro in expired) {

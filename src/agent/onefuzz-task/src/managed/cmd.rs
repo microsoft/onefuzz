@@ -12,7 +12,6 @@ use crate::tasks::{
     task_logger,
 };
 
-#[cfg(not(target_os = "macos"))]
 const OOM_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
@@ -31,7 +30,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let common = config.common().clone();
     let machine_id = get_machine_id().await?;
     let task_logger = if let Some(logs) = common.logs.clone() {
-        let rx = onefuzz_telemetry::subscribe_to_events();
+        let rx = onefuzz_telemetry::subscribe_to_events()?;
 
         let logger = task_logger::TaskLogger::new(common.job_id, common.task_id, machine_id);
 
@@ -59,13 +58,12 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 
     // wait for the task logger to finish
     if let Some(task_logger) = task_logger {
-        let _ = task_logger.flush_and_stop(Duration::from_secs(5)).await;
+        let _ = task_logger.flush_and_stop(Duration::from_secs(60)).await;
     }
 
     result
 }
 
-#[cfg(not(target_os = "macos"))]
 const MAX_OOM_QUERY_ERRORS: usize = 5;
 
 // Periodically check available system memory.
@@ -73,7 +71,6 @@ const MAX_OOM_QUERY_ERRORS: usize = 5;
 // If available memory drops below the minimum, exit informatively.
 //
 // Parameterized to enable future configuration by VMSS.
-#[cfg(not(target_os = "macos"))]
 async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
     if min_bytes == 0 {
         bail!("available memory minimum is unreachable");
@@ -107,12 +104,6 @@ async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
 
         tokio::time::sleep(OOM_CHECK_INTERVAL).await;
     }
-}
-
-#[cfg(target_os = "macos")]
-async fn out_of_memory(_min_bytes: u64) -> Result<OutOfMemory> {
-    // Resolve immediately.
-    bail!("out-of-memory check not implemented on macOS")
 }
 
 struct OutOfMemory {

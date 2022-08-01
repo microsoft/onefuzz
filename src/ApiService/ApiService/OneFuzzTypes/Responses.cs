@@ -54,12 +54,42 @@ public record InfoVersion(
     string Build,
     string Version);
 
-
 public record AgentRegistrationResponse(
     Uri EventsUrl,
     Uri WorkQueue,
     Uri CommandsUrl
 ) : BaseResponse();
+
+public record ContainerInfoBase(
+    Container Name,
+    IDictionary<string, string>? Metadata
+) : BaseResponse();
+
+public record ContainerInfo(
+    Container Name,
+    IDictionary<string, string>? Metadata,
+    Uri SasUrl
+) : BaseResponse();
+
+public record JobResponse(
+    Guid JobId,
+    JobState State,
+    JobConfig Config,
+    string? Error,
+    DateTimeOffset? EndTime,
+    List<JobTaskInfo>? TaskInfo
+// not including UserInfo from Job model
+) : BaseResponse() {
+    public static JobResponse ForJob(Job j)
+        => new(
+            JobId: j.JobId,
+            State: j.State,
+            Config: j.Config,
+            Error: j.Error,
+            EndTime: j.EndTime,
+            TaskInfo: j.TaskInfo
+        );
+}
 
 public class BaseResponseConverter : JsonConverter<BaseResponse> {
     public override BaseResponse? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {

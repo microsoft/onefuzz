@@ -41,6 +41,18 @@ namespace Tests {
             );
         }
 
+        public static Gen<ISecret<T>> ISecret<T>() {
+            if (typeof(T) == typeof(string)) {
+                return Arb.Generate<string>().Select(s => (ISecret<T>)new SecretAddress<string>(new Uri("http://test")));
+            }
+
+            if (typeof(T) == typeof(GithubAuth)) {
+                return Arb.Generate<GithubAuth>().Select(s => (ISecret<T>)new SecretAddress<T>(new Uri("http://test")));
+            } else {
+                throw new Exception($"Unsupported secret type {typeof(T)}");
+            }
+        }
+
         public static Gen<Version> Version() {
             //OneFuzz version uses 3 number version
             return Arb.Generate<Tuple<UInt16, UInt16, UInt16>>().Select(
@@ -164,7 +176,7 @@ namespace Tests {
 
         public static Gen<InstanceConfig> InstanceConfig() {
             return Arb.Generate<Tuple<
-                Tuple<string, Guid[]?, bool?, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?>,
+                Tuple<string, Guid[]?, bool, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?>,
                 Tuple<string, IDictionary<string, ApiAccessRule>?, IDictionary<Guid, Guid[]>?, IDictionary<string, string>?, IDictionary<string, string>?>>>().Select(
                 arg =>
                     new InstanceConfig(
@@ -221,7 +233,7 @@ namespace Tests {
                           Region: arg.Item1.Item6,
 
                           Size: arg.Item2.Item1,
-                          SpotInstance: arg.Item2.Item2,
+                          SpotInstances: arg.Item2.Item2,
                           EphemeralOsDisks: arg.Item2.Item3,
                           NeedsConfigUpdate: arg.Item2.Item4,
                           Error: arg.Item2.Item5,
@@ -270,7 +282,7 @@ namespace Tests {
                         Id: arg.Item4,
                         EventTime: arg.Item5
                     )
-            ); ;
+            );
         }
 
         public static Gen<Report> Report() {
@@ -300,12 +312,54 @@ namespace Tests {
             );
         }
 
+        public static Gen<NoReproReport> NoReproReport() {
+            return Arb.Generate<Tuple<string, BlobRef?, string?, Guid, int>>().Select(
+                arg =>
+                    new NoReproReport(
+                        arg.Item1,
+                        arg.Item2,
+                        arg.Item3,
+                        arg.Item4,
+                        arg.Item4,
+                        arg.Item5,
+                        arg.Item3
+                    )
+            );
+        }
+
+        public static Gen<CrashTestResult> CrashTestResult() {
+            return Arb.Generate<Tuple<Report, NoReproReport>>().Select(
+                arg =>
+                    new CrashTestResult(
+                        arg.Item1,
+                        arg.Item2
+                    )
+            );
+        }
+
+        public static Gen<RegressionReport> RegressionReport() {
+            return Arb.Generate<Tuple<CrashTestResult, CrashTestResult?>>().Select(
+                arg =>
+                    new RegressionReport(
+                        arg.Item1,
+                        arg.Item2
+                    )
+            );
+        }
+
         public static Gen<Container> Container() {
             return Arb.Generate<Tuple<NonNull<string>>>().Select(
                 arg => new Container(string.Join("", arg.Item1.Get.Where(c => char.IsLetterOrDigit(c) || c == '-'))!)
             );
         }
 
+        public static Gen<NotificationTemplate> NotificationTemplate() {
+            return Gen.OneOf(new[] {
+                Arb.Generate<AdoTemplate>().Select(e => e as NotificationTemplate),
+                Arb.Generate<TeamsTemplate>().Select(e => e as NotificationTemplate),
+                Arb.Generate<GithubIssuesTemplate>().Select(e => e as NotificationTemplate)
+            });
+        }
 
         public static Gen<Notification> Notification() {
             return Arb.Generate<Tuple<Container, Guid, NotificationTemplate>>().Select(
@@ -408,6 +462,11 @@ namespace Tests {
             return Arb.From(OrmGenerators.Container());
         }
 
+
+        public static Arbitrary<NotificationTemplate> NotificationTemplate() {
+            return Arb.From(OrmGenerators.NotificationTemplate());
+        }
+
         public static Arbitrary<Notification> Notification() {
             return Arb.From(OrmGenerators.Notification());
         }
@@ -419,6 +478,12 @@ namespace Tests {
         public static Arbitrary<Job> Job() {
             return Arb.From(OrmGenerators.Job());
         }
+
+        public static Arbitrary<ISecret<T>> ISecret<T>() {
+            return Arb.From(OrmGenerators.ISecret<T>());
+        }
+
+
     }
 
 
@@ -801,7 +866,7 @@ namespace Tests {
 
 
         [Property]
-        public bool RegressionReportOrReport(RegressionReportOrReport e) {
+        public bool RegressionReport(RegressionReport e) {
             return Test(e);
         }
 

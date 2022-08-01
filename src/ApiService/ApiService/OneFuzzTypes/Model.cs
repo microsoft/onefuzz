@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
@@ -52,9 +53,16 @@ public record NodeCommandAddSshKey(string PublicKey);
 
 public record NodeCommand
 (
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     StopNodeCommand? Stop = default,
+
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     StopTaskNodeCommand? StopTask = default,
+
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     NodeCommandAddSshKey? AddSshKey = default,
+
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     NodeCommandStopIfFree? StopIfFree = default
 );
 
@@ -147,21 +155,26 @@ public record Proxy
     bool Outdated
 ) : StatefulEntityBase<VmState>(State);
 
-public record Error(ErrorCode Code, string[]? Errors = null);
+public record Error(ErrorCode Code, string[]? Errors = null) {
+    public sealed override string ToString() {
+        var errorsString = Errors != null ? string.Join("", Errors) : string.Empty;
+        return $"Error {{ Code = {Code}, Errors = {errorsString} }}";
+    }
+};
 
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
 
 public record TaskDetails(
     TaskType Type,
-    int Duration,
+    long Duration,
     string? TargetExe = null,
     Dictionary<string, string>? TargetEnv = null,
     List<string>? TargetOptions = null,
-    int? TargetWorkers = null,
+    long? TargetWorkers = null,
     bool? TargetOptionsMerge = null,
     bool? CheckAsanLog = null,
     bool? CheckDebugger = null,
-    int? CheckRetryCount = null,
+    long? CheckRetryCount = null,
     bool? CheckFuzzerHelp = null,
     bool? ExpectCrashOnFailure = null,
     bool? RenameOutput = null,
@@ -179,11 +192,11 @@ public record TaskDetails(
     string? StatsFile = null,
     StatsFormat? StatsFormat = null,
     bool? RebootAfterSetup = null,
-    int? TargetTimeout = null,
-    int? EnsembleSyncDelay = null,
+    long? TargetTimeout = null,
+    long? EnsembleSyncDelay = null,
     bool? PreserveExistingOutputs = null,
     List<string>? ReportList = null,
-    int? MinimizedStackDepth = null,
+    long? MinimizedStackDepth = null,
     string? CoverageFilter = null
 );
 
@@ -192,12 +205,12 @@ public record TaskVm(
     string Sku,
     string Image,
     bool? RebootAfterSetup,
-    int Count = 1,
+    long Count = 1,
     bool SpotInstance = false
 );
 
 public record TaskPool(
-    int Count,
+    long Count,
     PoolName PoolName
 );
 
@@ -310,12 +323,13 @@ public record InstanceConfig
 (
     [PartitionKey, RowKey] string InstanceName,
     Guid[]? Admins,
-    bool? AllowPoolManagement,
+
     string[] AllowedAadTenants,
-    NetworkConfig NetworkConfig,
-    NetworkSecurityGroupConfig ProxyNsgConfig,
+    [DefaultValue(InitMethod.DefaultConstructor)] NetworkConfig NetworkConfig,
+    [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
-    string ProxyVmSku,
+    string? ProxyVmSku,
+    bool AllowPoolManagement = true,
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
     IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,
     IDictionary<string, string>? VmTags = null,
@@ -325,13 +339,13 @@ public record InstanceConfig
     public InstanceConfig(string instanceName) : this(
         instanceName,
         null,
-        true,
         Array.Empty<string>(),
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
         null,
-        "Standard_B2s") { }
-    public InstanceConfig() : this(String.Empty) { }
+        "Standard_B2s",
+        true
+        ) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {
         if (value is not null && value.Count == 0) {
@@ -340,6 +354,8 @@ public record InstanceConfig
             return value;
         }
     }
+
+    public InstanceConfig() : this(String.Empty) { }
 
     //# At the moment, this only checks allowed_aad_tenants, however adding
     //# support for 3rd party JWT validation is anticipated in a future release.
@@ -373,21 +389,23 @@ public record Scaleset(
     string VmSku,
     string Image,
     Region Region,
-    int Size,
-    bool SpotInstance,
+    long Size,
+    bool? SpotInstances,
     bool EphemeralOsDisks,
     bool NeedsConfigUpdate,
     Error? Error,
-    List<ScalesetNodeState> Nodes,
+    List<ScalesetNodeState>? Nodes,
     Guid? ClientId,
     Guid? ClientObjectId,
     Dictionary<string, string> Tags
-
 ) : StatefulEntityBase<ScalesetState>(State);
 
 [JsonConverter(typeof(ContainerConverter))]
 public record Container(string ContainerName) {
     public string ContainerName { get; } = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
+    public override string ToString() {
+        return ContainerName;
+    }
 }
 
 public class ContainerConverter : JsonConverter<Container> {
@@ -402,15 +420,15 @@ public class ContainerConverter : JsonConverter<Container> {
 }
 
 public record Notification(
-    Container Container,
-    Guid NotificationId,
+    [PartitionKey] Guid NotificationId,
+    [RowKey] Container Container,
     NotificationTemplate Config
 ) : EntityBase();
 
 public record BlobRef(
     string Account,
     Container container,
-    string name
+    string Name
 );
 
 public record Report(
@@ -425,7 +443,7 @@ public record Report(
     string? AsanLog,
     Guid TaskId,
     Guid JobId,
-    int? ScarinessScore,
+    long? ScarinessScore,
     string? ScarinessDescription,
     List<string>? MinimizedStack,
     string? MinimizedStackSha256,
@@ -433,7 +451,7 @@ public record Report(
     string? MinimizedStackFunctionNamesSha256,
     List<string>? MinimizedStackFunctionLines,
     string? MinimizedStackFunctionLinesSha256
-);
+) : IReport;
 
 public record NoReproReport(
     string InputSha,
@@ -441,7 +459,7 @@ public record NoReproReport(
     string? Executable,
     Guid TaskId,
     Guid JobId,
-    int Tries,
+    long Tries,
     string? Error
 );
 
@@ -453,23 +471,103 @@ public record CrashTestResult(
 public record RegressionReport(
     CrashTestResult CrashTestResult,
     CrashTestResult? OriginalCrashTestResult
+) : IReport;
+
+
+[JsonConverter(typeof(NotificationTemplateConverter))]
+#pragma warning disable CA1715
+public interface NotificationTemplate {
+#pragma warning restore CA1715
+}
+
+
+public class NotificationTemplateConverter : JsonConverter<NotificationTemplate> {
+    public override NotificationTemplate? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        using var templateJson = JsonDocument.ParseValue(ref reader);
+        try {
+            return templateJson.Deserialize<AdoTemplate>(options);
+        } catch (JsonException) {
+
+        }
+
+        try {
+            return templateJson.Deserialize<TeamsTemplate>(options);
+        } catch (JsonException) {
+        }
+
+        try {
+            return templateJson.Deserialize<GithubIssuesTemplate>(options);
+        } catch (JsonException) {
+        }
+        throw new JsonException("Unsupported notification template");
+    }
+
+    public override void Write(Utf8JsonWriter writer, NotificationTemplate value, JsonSerializerOptions options) {
+        if (value is AdoTemplate adoTemplate) {
+            JsonSerializer.Serialize(writer, adoTemplate, options);
+        } else if (value is TeamsTemplate teamsTemplate) {
+            JsonSerializer.Serialize(writer, teamsTemplate, options);
+        } else if (value is GithubIssuesTemplate githubIssuesTemplate) {
+            JsonSerializer.Serialize(writer, githubIssuesTemplate, options);
+        } else {
+            throw new JsonException("Unsupported notification template");
+        }
+
+    }
+}
+
+
+public record ADODuplicateTemplate(
+    List<string> Increment,
+    string? Comment,
+    Dictionary<string, string> SetState,
+    Dictionary<string, string> AdoFields
 );
 
-public record NotificationTemplate(
-    AdoTemplate? AdoTemplate,
-    TeamsTemplate? TeamsTemplate,
-    GithubIssuesTemplate? GithubIssuesTemplate
+public record AdoTemplate(
+    Uri BaseUrl,
+    SecretData<string> AuthToken,
+    string Project,
+    string Type,
+    List<string> UniqueFields,
+    string? Comment,
+    Dictionary<string, string> AdoFields,
+    ADODuplicateTemplate OnDuplicate
+    ) : NotificationTemplate;
+
+public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate;
+
+
+public record GithubAuth(string User, string PersonalAccessToken);
+
+public record GithubIssueSearch(
+    string? Author,
+    GithubIssueState? State,
+    List<GithubIssueSearchMatch> FieldMatch,
+    [property: JsonPropertyName("string")] String str
 );
 
-public record AdoTemplate();
+public record GithubIssueDuplicate(
+    string? Comment,
+    List<string> Labels,
+    bool Reopen
+);
 
-public record TeamsTemplate();
 
-public record GithubIssuesTemplate();
+public record GithubIssuesTemplate(
+    SecretData<GithubAuth> Auth,
+    string Organization,
+    string Repository,
+    string Title,
+    string Body,
+    GithubIssueSearch UniqueSearch,
+    List<string> Assignees,
+    List<string> Labels,
+    GithubIssueDuplicate OnDuplicate
+    ) : NotificationTemplate;
 
 public record Repro(
-    [PartitionKey] Guid VmId,
-    [RowKey] Guid _,
+    [PartitionKey][RowKey] Guid VmId,
     Guid TaskId,
     ReproConfig Config,
     VmState State,
@@ -485,7 +583,7 @@ public record Repro(
 public record ReproConfig(
     Container Container,
     string Path,
-    int Duration
+    long Duration
 );
 
 // Skipping AutoScaleConfig because it's not used anymore
@@ -540,32 +638,64 @@ public record Vm(
     public string Name { get; } = Name.Length > 40 ? throw new ArgumentOutOfRangeException("VM name too long") : Name;
 };
 
+[JsonConverter(typeof(ISecretConverterFactory))]
+public interface ISecret<T> { }
 
-public record SecretAddress(Uri Url);
-
-
-/// This class allows us to store some data that are intended to be secret
-/// The secret field stores either the raw data or the address of that data
-/// This class allows us to maintain backward compatibility with existing
-/// NotificationTemplate classes
-public record SecretData<T>(T Secret) {
-    public override string ToString() {
-        if (Secret is SecretAddress) {
-            if (Secret is null) {
-                return string.Empty;
-            } else {
-                return Secret.ToString()!;
-            }
-        } else
-            return "[REDACTED]";
+public class ISecretConverterFactory : JsonConverterFactory {
+    public override bool CanConvert(Type typeToConvert) {
+        return typeToConvert.IsGenericType && typeToConvert.Name == typeof(ISecret<string>).Name;
     }
+
+    public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
+        var innerType = typeToConvert.GetGenericArguments().First();
+        return (JsonConverter)Activator.CreateInstance(
+            typeof(ISecretConverter<>).MakeGenericType(innerType),
+            BindingFlags.Instance | BindingFlags.Public,
+            binder: null,
+            args: Array.Empty<object?>(),
+            culture: null)!;
+    }
+}
+
+public class ISecretConverter<T> : JsonConverter<ISecret<T>> {
+    public override ISecret<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+
+        using var secretJson = JsonDocument.ParseValue(ref reader);
+
+        if (secretJson.RootElement.ValueKind == JsonValueKind.String) {
+            return (ISecret<T>)new SecretValue<string>(secretJson.RootElement.GetString()!);
+        }
+
+        if (secretJson.RootElement.TryGetProperty("url", out var secretUrl)) {
+            return new SecretAddress<T>(new Uri(secretUrl.GetString()!));
+        }
+
+        return new SecretValue<T>(secretJson.Deserialize<T>(options)!);
+    }
+
+    public override void Write(Utf8JsonWriter writer, ISecret<T> value, JsonSerializerOptions options) {
+        if (value is SecretAddress<T> secretAddress) {
+            JsonSerializer.Serialize(writer, secretAddress, options);
+        } else if (value is SecretValue<T> secretValue) {
+            throw new JsonException("SecretValue should not be serialized");
+        }
+    }
+}
+
+
+
+public record SecretValue<T>(T Value) : ISecret<T>;
+
+public record SecretAddress<T>(Uri Url) : ISecret<T>;
+
+public record SecretData<T>(ISecret<T> Secret) {
 }
 
 public record JobConfig(
     string Project,
     string Name,
     string Build,
-    int Duration,
+    long Duration,
     string? Logs
 );
 
@@ -579,8 +709,8 @@ public record Job(
     [PartitionKey][RowKey] Guid JobId,
     JobState State,
     JobConfig Config,
-    string? Error,
-    DateTimeOffset? EndTime
+    string? Error = null,
+    DateTimeOffset? EndTime = null
 ) : StatefulEntityBase<JobState>(State) {
     public List<JobTaskInfo>? TaskInfo { get; set; }
     public UserInfo? UserInfo { get; set; }
@@ -617,7 +747,7 @@ public class TaskUnitConfigConverter : JsonConverter<TaskUnitConfig> {
 
 public record VmDefinition(
     Compare Compare,
-    int Value
+    long Value
 );
 
 public record TaskDefinition(
@@ -641,7 +771,7 @@ public record WorkSet(
 public record ContainerDefinition(
     ContainerType Type,
     Compare Compare,
-    int Value,
+    long Value,
     ContainerPermission Permissions);
 
 
@@ -695,12 +825,12 @@ public record TaskUnitConfig(
     public string? TargetExe { get; set; }
     public Dictionary<string, string>? TargetEnv { get; set; }
     public List<string>? TargetOptions { get; set; }
-    public int? TargetTimeout { get; set; }
+    public long? TargetTimeout { get; set; }
     public bool? TargetOptionsMerge { get; set; }
-    public int? TargetWorkers { get; set; }
+    public long? TargetWorkers { get; set; }
     public bool? CheckAsanLog { get; set; }
     public bool? CheckDebugger { get; set; }
-    public int? CheckRetryCount { get; set; }
+    public long? CheckRetryCount { get; set; }
     public bool? CheckFuzzerHelp { get; set; }
     public bool? ExpectCrashOnFailure { get; set; }
     public bool? RenameOutput { get; set; }
@@ -713,9 +843,9 @@ public record TaskUnitConfig(
     public List<string>? AnalyzerOptions { get; set; }
     public string? StatsFile { get; set; }
     public StatsFormat? StatsFormat { get; set; }
-    public int? EnsembleSyncDelay { get; set; }
+    public long? EnsembleSyncDelay { get; set; }
     public List<string>? ReportList { get; set; }
-    public int? MinimizedStackDepth { get; set; }
+    public long? MinimizedStackDepth { get; set; }
     public string? CoverageFilter { get; set; }
 
     // from here forwards are Container definitions.  These need to be inline

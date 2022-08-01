@@ -3,7 +3,7 @@ using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
-namespace Microsoft.OneFuzz.Service;
+namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentRegistration {
     private readonly ILogTracer _log;
@@ -127,7 +127,7 @@ public class AgentRegistration {
             await _context.NodeOperations.Delete(existingNode);
         }
 
-        var node = new Node(
+        var node = new Service.Node(
             PoolName: poolName,
             PoolId: pool.PoolId,
             MachineId: machineId,

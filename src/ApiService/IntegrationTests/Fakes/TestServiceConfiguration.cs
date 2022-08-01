@@ -57,4 +57,6 @@ public sealed class TestServiceConfiguration : IServiceConfig {
     public string? OneFuzzDataStorage => throw new NotImplementedException();
 
     public string? OneFuzzResourceGroup => throw new NotImplementedException();
+
+    public string? OneFuzzAllowOutdatedAgent => throw new NotImplementedException();
 }

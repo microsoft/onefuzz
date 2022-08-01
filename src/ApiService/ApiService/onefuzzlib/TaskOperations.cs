@@ -68,8 +68,10 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
     }
 
     public IAsyncEnumerable<Task> SearchExpired() {
-        var timeFilter = $"end_time lt Datetime'{DateTimeOffset.UtcNow.ToString("o")}'";
-        return QueryAsync(filter: timeFilter);
+        var timeFilter = $"end_time lt datetime'{DateTimeOffset.UtcNow.ToString("o")}'";
+        var stateFilter = Query.EqualAnyEnum("state", TaskStateHelper.AvailableStates);
+        var filter = Query.And(stateFilter, timeFilter);
+        return QueryAsync(filter: filter);
     }
 
     public async Async.Task MarkStopping(Task task) {
@@ -108,7 +110,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
     }
 
     private async Async.Task MarkDependantsFailed(Task task, List<Task>? taskInJob = null) {
-        taskInJob ??= await SearchByPartitionKey(task.JobId.ToString()).ToListAsync();
+        taskInJob ??= await SearchByPartitionKeys(new[] { task.JobId.ToString() }).ToListAsync();
 
         foreach (var t in taskInJob) {
             if (t.Config.PrereqTasks != null) {
