@@ -255,67 +255,59 @@ public class Extensions : IExtensions {
         await _containers.SaveBlob(new Container("vm-scripts"), "managed.sh", string.Join("\n", commands) + "\n", StorageType.Config);
     }
 
-    private static string AgentConfigCommandToExecuteWindows(AgentMode mode) {
-        return $"powershell -ExecutionPolicy Unrestricted -File win64/setup.ps1 -mode {mode}";
-    }
-
-    private static string AgentConfigCommandToExecuteLinux(AgentMode mode) {
-        return $"sh setup.sh {mode}";
-    }
-
-    private async Task<List<Uri>> AgentConfigFileUrlsWindows(bool withSas = false) {
-        var urlsUpdated = new List<Uri>();
-        var vmScripts = await ConfigUrl(new Container("vm-scripts"), "managed.ps1", withSas) ?? throw new Exception("failed to get VmScripts config url");
-        var toolsAzCopy = await ConfigUrl(new Container("tools"), "win64/azcopy.exe", withSas) ?? throw new Exception("failed to get toolsAzCopy config url");
-        var toolsSetup = await ConfigUrl(new Container("tools"), "win64/setup.ps1", withSas) ?? throw new Exception("failed to get toolsSetup config url");
-        var toolsOneFuzz = await ConfigUrl(new Container("tools"), "win64/onefuzz.ps1", withSas) ?? throw new Exception("failed to get toolsOneFuzz config url");
-
-        urlsUpdated.Add(vmScripts);
-        urlsUpdated.Add(toolsAzCopy);
-        urlsUpdated.Add(toolsSetup);
-        urlsUpdated.Add(toolsOneFuzz);
-
-        return urlsUpdated;
-    }
-
-    private async Task<List<Uri>> AgentConfigFileUrlsLinux(bool withSas = false) {
-        var urlsUpdated = new List<Uri>();
-        var vmScripts = await ConfigUrl(new Container("vm-scripts"), "managed.sh", withSas) ?? throw new Exception("failed to get VmScripts config url");
-        var toolsAzCopy = await ConfigUrl(new Container("tools"), "linux/azcopy", withSas) ?? throw new Exception("failed to get toolsAzCopy config url");
-        var toolsSetup = await ConfigUrl(new Container("tools"), "linux/setup.sh", withSas) ?? throw new Exception("failed to get toolsSetup config url");
-
-        urlsUpdated.Add(vmScripts);
-        urlsUpdated.Add(toolsAzCopy);
-        urlsUpdated.Add(toolsSetup);
-
-        return urlsUpdated;
-    }
-
     public async Async.Task<VMExtenionWrapper> AgentConfig(AzureLocation region, Os vmOs, AgentMode mode, List<Uri>? urls = null, bool withSas = false) {
         await UpdateManagedScripts();
+        var urlsUpdated = urls ?? new();
 
         if (vmOs == Os.Windows) {
-            return new VMExtenionWrapper {
+            var vmScripts = await ConfigUrl(new Container("vm-scripts"), "managed.ps1", withSas) ?? throw new Exception("failed to get VmScripts config url");
+            var toolsAzCopy = await ConfigUrl(new Container("tools"), "win64/azcopy.exe", withSas) ?? throw new Exception("failed to get toolsAzCopy config url");
+            var toolsSetup = await ConfigUrl(new Container("tools"), "win64/setup.ps1", withSas) ?? throw new Exception("failed to get toolsSetup config url");
+            var toolsOneFuzz = await ConfigUrl(new Container("tools"), "win64/onefuzz.ps1", withSas) ?? throw new Exception("failed to get toolsOneFuzz config url");
+
+            urlsUpdated.Add(vmScripts);
+            urlsUpdated.Add(toolsAzCopy);
+            urlsUpdated.Add(toolsSetup);
+            urlsUpdated.Add(toolsOneFuzz);
+
+            var toExecuteCmd = $"powershell -ExecutionPolicy Unrestricted -File win64/setup.ps1 -mode {mode}";
+
+            var extension = new VMExtenionWrapper {
                 Location = region,
+                Name = "CustomScriptExtension",
                 TypePropertiesType = "CustomScriptExtension",
                 Publisher = "Microsoft.Compute",
                 ForceUpdateTag = Guid.NewGuid().ToString(),
                 TypeHandlerVersion = "1.9",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { commandToExecute = AgentConfigCommandToExecuteWindows(mode), fileUrls = await AgentConfigFileUrlsWindows(withSas) }),
+                Settings = new BinaryData(new { commandToExecute = toExecuteCmd, fileUrls = urlsUpdated }),
                 ProtectedSettings = new BinaryData(new { managedIdentity = new Dictionary<string, string>() })
             };
+            return extension;
         } else if (vmOs == Os.Linux) {
-            return new VMExtenionWrapper {
+
+            var vmScripts = await ConfigUrl(new Container("vm-scripts"), "managed.sh", withSas) ?? throw new Exception("failed to get VmScripts config url");
+            var toolsAzCopy = await ConfigUrl(new Container("tools"), "linux/azcopy", withSas) ?? throw new Exception("failed to get toolsAzCopy config url");
+            var toolsSetup = await ConfigUrl(new Container("tools"), "linux/setup.sh", withSas) ?? throw new Exception("failed to get toolsSetup config url");
+
+            urlsUpdated.Add(vmScripts);
+            urlsUpdated.Add(toolsAzCopy);
+            urlsUpdated.Add(toolsSetup);
+
+            var toExecuteCmd = $"sh setup.sh {mode}";
+
+            var extension = new VMExtenionWrapper {
                 Location = region,
+                Name = "CustomScript",
                 TypePropertiesType = "CustomScript",
                 Publisher = "Microsoft.Azure.Extension",
                 ForceUpdateTag = Guid.NewGuid().ToString(),
                 TypeHandlerVersion = "2.1",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { CommandToExecute = AgentConfigCommandToExecuteLinux(mode), FileUrls = await AgentConfigFileUrlsLinux(withSas) }),
+                Settings = new BinaryData(new { CommandToExecute = toExecuteCmd, FileUrls = urlsUpdated }),
                 ProtectedSettings = new BinaryData(new { ManagedIdentity = new Dictionary<string, string>() })
             };
+            return extension;
         }
 
         throw new NotImplementedException($"unsupported OS: {vmOs}");

@@ -8,9 +8,9 @@ namespace Microsoft.OneFuzz.Service {
         public string? TypePropertiesType { get; init; }
         public string? Publisher { get; init; }
         public string? TypeHandlerVersion { get; init; }
-        public string? ForceUpdateTag {get;init;}
+        public string? ForceUpdateTag { get; init; }
         public bool? AutoUpgradeMinorVersion { get; init; }
-        public bool? EnableAutomaticUpgrade {get; init; }
+        public bool? EnableAutomaticUpgrade { get; init; }
         public BinaryData? Settings { get; init; }
         public BinaryData? ProtectedSettings { get; init; }
 
