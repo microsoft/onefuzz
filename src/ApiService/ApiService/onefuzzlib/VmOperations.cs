@@ -21,7 +21,7 @@ public interface IVmOperations {
 
     Async.Task<OneFuzzResult<bool>> AddExtensions(Vm vm, Dictionary<string, VirtualMachineExtensionData> extensions);
 
-    Async.Task<VirtualMachineExtensionResource> CreateExtension(string vmName, string extensionName, VirtualMachineExtensionData extension);
+    Async.Task CreateExtension(string vmName, string extensionName, VirtualMachineExtensionData extension);
 
 }
 
@@ -146,7 +146,9 @@ public class VmOperations : IVmOperations {
         }
 
         if (toCreate.Any()) {
-            toCreate.ForEach(async config => await CreateExtension(vm.Name, config.Key, config.Value));
+            foreach (var config in toCreate) {
+                await CreateExtension(vm.Name, config.Key, config.Value);
+            }
         } else {
             if (status.All(s => string.Equals(s, "Succeeded", StringComparison.Ordinal))) {
                 return OneFuzzResult<bool>.Ok(true);
@@ -196,15 +198,16 @@ public class VmOperations : IVmOperations {
         }
     }
 
-    public async Task<VirtualMachineExtensionResource> CreateExtension(string vmName, string extensionName, VirtualMachineExtensionData extension) {
+    public async Async.Task CreateExtension(string vmName, string extensionName, VirtualMachineExtensionData extension) {
         _logTracer.Info($"creating extension: {_context.Creds.GetBaseResourceGroup()}:{vmName}:{extensionName}");
         var vm = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(vmName);
 
-        return (await vm.Value.GetVirtualMachineExtensions().CreateOrUpdateAsync(
+        await vm.Value.GetVirtualMachineExtensions().CreateOrUpdateAsync(
             WaitUntil.Started,
             extensionName,
             extension
-        )).Value;
+        );
+        return;
     }
 
     async Task<OneFuzzResultVoid> CreateVm(
@@ -302,7 +305,7 @@ public class VmOperations : IVmOperations {
             );
         } catch (RequestFailedException ex) {
             if (ex.ErrorCode == "ResourceNotFound" && ex.Message.Contains("The request failed due to conflict with a concurrent request")) {
-                // _logTracer.Debug($""create VM had conflicts with concurrent request, ignoring {ex.ToString()}");
+                // _logTracer.Debug($"create VM had conflicts with concurrent request, ignoring {ex.ToString()}");
                 return OneFuzzResultVoid.Ok;
             }
 

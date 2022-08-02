@@ -18,7 +18,7 @@ public interface IIpOperations {
 
     public Async.Task DeleteIp(string resourceGroup, string name);
 
-    public Async.Task<PublicIPAddressResource> CreateIp(string resourceGroup, string name, string region);
+    public Async.Task CreateIp(string resourceGroup, string name, string region);
 }
 
 public class IpOperations : IIpOperations {
@@ -79,6 +79,7 @@ public class IpOperations : IIpOperations {
         }
         resource = _creds.ParseResourceId(publicIp.Id);
         try {
+            resource = await _creds.GetData(resource);
             var publicIpResource = await _creds.GetResourceGroupResource().GetPublicIPAddressAsync(
                 resource.Data.Name
             );
@@ -112,7 +113,7 @@ public class IpOperations : IIpOperations {
         }
 
         var ip = await GetIp(resourceGroup, name);
-        if (ip != null) {
+        if (ip == null) {
             await CreateIp(resourceGroup, name, region);
             return OneFuzzResultVoid.Ok;
         }
@@ -155,7 +156,7 @@ public class IpOperations : IIpOperations {
         return OneFuzzResultVoid.Ok;
     }
 
-    public async Task<PublicIPAddressResource> CreateIp(string resourceGroup, string name, string region) {
+    public async Async.Task CreateIp(string resourceGroup, string name, string region) {
         var ipParams = new PublicIPAddressData() {
             Location = region,
             PublicIPAllocationMethod = IPAllocationMethod.Dynamic
@@ -168,8 +169,9 @@ public class IpOperations : IIpOperations {
             }
         }
 
-        return (await _context.Creds.GetResourceGroupResource().GetPublicIPAddresses().CreateOrUpdateAsync(
+        await _context.Creds.GetResourceGroupResource().GetPublicIPAddresses().CreateOrUpdateAsync(
             WaitUntil.Started, name, ipParams
-        )).Value;
+        );
+        return;
     }
 }

@@ -24,10 +24,9 @@ namespace Microsoft.OneFuzz.Service {
             AutoUpgradeMinorVersion.EnsureNotNull("AutoUpgradeMinorVersion required for VirtualMachineExtension");
             Settings.EnsureNotNull("Settings required for VirtualMachineExtension");
             ProtectedSettings.EnsureNotNull("ProtectedSettings required for VirtualMachineExtension");
-            ForceUpdateTag.EnsureNotNull("ForceUpdateTag required for VirtualMachineExtension");
 
             return (Name!, new VirtualMachineExtensionData(Location.Value) {
-                TypePropertiesType = TypeHandlerVersion,
+                TypePropertiesType = TypePropertiesType,
                 Publisher = Publisher,
                 TypeHandlerVersion = TypeHandlerVersion,
                 AutoUpgradeMinorVersion = AutoUpgradeMinorVersion,
@@ -48,11 +47,12 @@ namespace Microsoft.OneFuzz.Service {
             ProtectedSettings.EnsureNotNull("ProtectedSettings required for VirtualMachineScaleSetExtension");
             return new VirtualMachineScaleSetExtensionData() {
                 Name = Name,
-                TypePropertiesType = TypeHandlerVersion,
+                TypePropertiesType = TypePropertiesType,
                 Publisher = Publisher,
                 TypeHandlerVersion = TypeHandlerVersion,
                 AutoUpgradeMinorVersion = AutoUpgradeMinorVersion,
                 EnableAutomaticUpgrade = EnableAutomaticUpgrade,
+                ForceUpdateTag = ForceUpdateTag,
                 Settings = Settings,
                 ProtectedSettings = ProtectedSettings
             };

@@ -23,6 +23,10 @@ public class Extensions : IExtensions {
 
     IOnefuzzContext _context;
 
+    private static readonly JsonSerializerOptions _extensionSerializerOptions = new JsonSerializerOptions {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     public Extensions(IServiceConfig config, ICreds creds, IQueue queue, IContainers containers, IConfigOperations instanceConfigOps, ILogAnalytics logAnalytics, IOnefuzzContext context) {
         _serviceConfig = config;
         _creds = creds;
@@ -89,7 +93,7 @@ public class Extensions : IExtensions {
                 TypePropertiesType = "KeyVaultForWindows",
                 TypeHandlerVersion = "1.0",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new {
+                Settings = new BinaryData(JsonSerializer.Serialize(new {
                     SecretsManagementSettings = new {
                         PollingIntervalInS = "3600",
                         CertificateStoreName = "MY",
@@ -98,7 +102,7 @@ public class Extensions : IExtensions {
                         RequireInitialSync = true,
                         ObservedCertificates = new string[] { uri },
                     }
-                })
+                }, _extensionSerializerOptions))
             };
         } else if (vmOs == Os.Linux) {
             var certPath = keyVault.CertPath;
@@ -111,14 +115,14 @@ public class Extensions : IExtensions {
                 TypePropertiesType = "KeyVaultForLinux",
                 TypeHandlerVersion = "2.0",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new {
+                Settings = new BinaryData(JsonSerializer.Serialize(new {
                     SecretsManagementSettings = new {
                         PollingIntervalInS = "3600",
                         CertificateStoreLocation = certLocation,
                         RequireInitialSync = true,
                         ObservedCertificates = new string[] { uri },
                     }
-                })
+                }, _extensionSerializerOptions))
             };
         } else {
             throw new NotImplementedException($"unsupported os {vmOs}");
@@ -132,7 +136,7 @@ public class Extensions : IExtensions {
             TypePropertiesType = "AzureSecurityLinuxAgent",
             TypeHandlerVersion = "2.0",
             AutoUpgradeMinorVersion = true,
-            Settings = new BinaryData(new { EnableGenevaUpload = true, EnableAutoConfig = true })
+            Settings = new BinaryData(JsonSerializer.Serialize(new { EnableGenevaUpload = true, EnableAutoConfig = true }, _extensionSerializerOptions))
         };
 
     }
@@ -152,9 +156,9 @@ public class Extensions : IExtensions {
             TypePropertiesType = "AzureMonitorLinuxAgent",
             AutoUpgradeMinorVersion = true,
             TypeHandlerVersion = "1.0",
-            Settings = new BinaryData(new { GCS_AUTO_CONFIG = true }),
+            Settings = new BinaryData(JsonSerializer.Serialize(new { GCS_AUTO_CONFIG = true }, _extensionSerializerOptions)),
             ProtectedSettings =
-                new BinaryData(
+                new BinaryData(JsonSerializer.Serialize(
                     new {
                         ConfigVersion = configVersion,
                         Moniker = moniker,
@@ -164,7 +168,7 @@ public class Extensions : IExtensions {
                         MonitoringGCSRegion = region,
                         MonitoringGCSAuthId = authId,
                         MonitoringGCSAuthIdType = authIdType,
-                    })
+                    }, _extensionSerializerOptions))
         };
     }
 
@@ -280,8 +284,8 @@ public class Extensions : IExtensions {
                 ForceUpdateTag = Guid.NewGuid().ToString(),
                 TypeHandlerVersion = "1.9",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { commandToExecute = toExecuteCmd, fileUrls = urlsUpdated }),
-                ProtectedSettings = new BinaryData(new { managedIdentity = new Dictionary<string, string>() })
+                Settings = new BinaryData(JsonSerializer.Serialize(new { commandToExecute = toExecuteCmd, fileUrls = urlsUpdated }, _extensionSerializerOptions)),
+                ProtectedSettings = new BinaryData(JsonSerializer.Serialize(new { managedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions))
             };
             return extension;
         } else if (vmOs == Os.Linux) {
@@ -300,12 +304,12 @@ public class Extensions : IExtensions {
                 Location = region,
                 Name = "CustomScript",
                 TypePropertiesType = "CustomScript",
-                Publisher = "Microsoft.Azure.Extension",
+                Publisher = "Microsoft.Azure.Extensions",
                 ForceUpdateTag = Guid.NewGuid().ToString(),
                 TypeHandlerVersion = "2.1",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { CommandToExecute = toExecuteCmd, FileUrls = urlsUpdated }),
-                ProtectedSettings = new BinaryData(new { ManagedIdentity = new Dictionary<string, string>() })
+                Settings = new BinaryData(JsonSerializer.Serialize(new { CommandToExecute = toExecuteCmd, FileUrls = urlsUpdated }, _extensionSerializerOptions)),
+                ProtectedSettings = new BinaryData(JsonSerializer.Serialize(new { ManagedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions))
             };
             return extension;
         }
@@ -324,8 +328,8 @@ public class Extensions : IExtensions {
                 Publisher = "Microsoft.EnterpriseCloud.Monitoring",
                 TypeHandlerVersion = "1.0",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { WorkSpaceId = settings.Id }),
-                ProtectedSettings = new BinaryData(new { WorkspaceKey = settings.Key })
+                Settings = new BinaryData(JsonSerializer.Serialize(new { WorkSpaceId = settings.Id }, _extensionSerializerOptions)),
+                ProtectedSettings = new BinaryData(JsonSerializer.Serialize(new { WorkspaceKey = settings.Key }, _extensionSerializerOptions))
             };
         } else if (vmOs == Os.Linux) {
             return new VMExtenionWrapper {
@@ -335,8 +339,8 @@ public class Extensions : IExtensions {
                 Publisher = "Microsoft.EnterpriseCloud.Monitoring",
                 TypeHandlerVersion = "1.12",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { WorkSpaceId = settings.Id }),
-                ProtectedSettings = new BinaryData(new { WorkspaceKey = settings.Key })
+                Settings = new BinaryData(JsonSerializer.Serialize(new { WorkSpaceId = settings.Id }, _extensionSerializerOptions)),
+                ProtectedSettings = new BinaryData(JsonSerializer.Serialize(new { WorkspaceKey = settings.Key }, _extensionSerializerOptions))
             };
         } else {
             throw new NotImplementedException($"unsupported os: {vmOs}");
