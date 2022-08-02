@@ -19,9 +19,9 @@ public interface IVmOperations {
 
     Async.Task<VirtualMachineExtensionData?> GetExtension(string vmName, string extensionName);
 
-    Async.Task<OneFuzzResult<bool>> AddExtensions(Vm vm, IList<VirtualMachineExtensionData> extensions);
+    Async.Task<OneFuzzResult<bool>> AddExtensions(Vm vm, Dictionary<string, VirtualMachineExtensionData> extensions);
 
-    Async.Task<VirtualMachineExtensionResource> CreateExtension(string vmName, VirtualMachineExtensionData extension);
+    Async.Task<VirtualMachineExtensionResource> CreateExtension(string vmName, string extensionName, VirtualMachineExtensionData extension);
 
 }
 
@@ -127,14 +127,17 @@ public class VmOperations : IVmOperations {
     }
 
 
-    public async Task<OneFuzzResult<bool>> AddExtensions(Vm vm, IList<VirtualMachineExtensionData> extensions) {
+    public async Task<OneFuzzResult<bool>> AddExtensions(Vm vm, Dictionary<string, VirtualMachineExtensionData> extensions) {
         var status = new List<string>();
-        var toCreate = new List<VirtualMachineExtensionData>();
+        var toCreate = new List<KeyValuePair<string, VirtualMachineExtensionData>>();
         foreach (var extensionConfig in extensions) {
-            var extension = await GetExtension(vm.Name, extensionConfig.Name);
+            var extensionName = extensionConfig.Key;
+            var extensionData = extensionConfig.Value;
+
+            var extension = await GetExtension(vm.Name, extensionName);
             if (extension != null) {
                 _logTracer.Info(
-                    $"vm extension state: {vm.Name} - {extensionConfig.Name} - {extension.ProvisioningState}"
+                    $"vm extension state: {vm.Name} - {extensionName} - {extension.ProvisioningState}"
                 );
                 status.Add(extension.ProvisioningState);
             } else {
@@ -143,7 +146,7 @@ public class VmOperations : IVmOperations {
         }
 
         if (toCreate.Any()) {
-            toCreate.ForEach(async config => await CreateExtension(vm.Name, config));
+            toCreate.ForEach(async config => await CreateExtension(vm.Name, config.Key, config.Value));
         } else {
             if (status.All(s => string.Equals(s, "Succeeded", StringComparison.Ordinal))) {
                 return OneFuzzResult<bool>.Ok(true);
@@ -193,13 +196,13 @@ public class VmOperations : IVmOperations {
         }
     }
 
-    public async Task<VirtualMachineExtensionResource> CreateExtension(string vmName, VirtualMachineExtensionData extension) {
-        _logTracer.Info($"creating extension: {_context.Creds.GetBaseResourceGroup()}:{vmName}:{extension.Name}");
+    public async Task<VirtualMachineExtensionResource> CreateExtension(string vmName, string extensionName, VirtualMachineExtensionData extension) {
+        _logTracer.Info($"creating extension: {_context.Creds.GetBaseResourceGroup()}:{vmName}:{extensionName}");
         var vm = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(vmName);
 
         return (await vm.Value.GetVirtualMachineExtensions().CreateOrUpdateAsync(
             WaitUntil.Started,
-            extension.Name,
+            extensionName,
             extension
         )).Value;
     }

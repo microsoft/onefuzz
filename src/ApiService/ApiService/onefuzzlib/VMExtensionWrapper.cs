@@ -8,28 +8,34 @@ namespace Microsoft.OneFuzz.Service {
         public string? TypePropertiesType { get; init; }
         public string? Publisher { get; init; }
         public string? TypeHandlerVersion { get; init; }
+        public string? ForceUpdateTag {get;init;}
         public bool? AutoUpgradeMinorVersion { get; init; }
+        public bool? EnableAutomaticUpgrade {get; init; }
         public BinaryData? Settings { get; init; }
         public BinaryData? ProtectedSettings { get; init; }
 
         public (string, VirtualMachineExtensionData) GetAsVirtualMachineExtension() {
-            Location.EnsureNotNull("Location required for VirtualMachineExtension");
+            if (Location == null) { // EnsureNotNull does not satisfy the nullability checker
+                throw new ArgumentNullException("Location required for VirtualMachineExtension");
+            }
             TypePropertiesType.EnsureNotNull("TypePropertiesType required for VirtualMachineExtension");
             Publisher.EnsureNotNull("Publisher required for VirtualMachineExtension");
             TypeHandlerVersion.EnsureNotNull("TypeHandlerVersion required for VirtualMachineExtension");
             AutoUpgradeMinorVersion.EnsureNotNull("AutoUpgradeMinorVersion required for VirtualMachineExtension");
             Settings.EnsureNotNull("Settings required for VirtualMachineExtension");
             ProtectedSettings.EnsureNotNull("ProtectedSettings required for VirtualMachineExtension");
-#pragma warning disable CS1503
-            return (Name!, new VirtualMachineExtensionData(Location) {
+            ForceUpdateTag.EnsureNotNull("ForceUpdateTag required for VirtualMachineExtension");
+
+            return (Name!, new VirtualMachineExtensionData(Location.Value) {
                 TypePropertiesType = TypeHandlerVersion,
                 Publisher = Publisher,
                 TypeHandlerVersion = TypeHandlerVersion,
                 AutoUpgradeMinorVersion = AutoUpgradeMinorVersion,
+                EnableAutomaticUpgrade = EnableAutomaticUpgrade,
+                ForceUpdateTag = ForceUpdateTag,
                 Settings = Settings,
                 ProtectedSettings = ProtectedSettings
             });
-#pragma warning restore CS1503
         }
 
         public VirtualMachineScaleSetExtensionData GetAsVirtualMachineScaleSetExtension() {
@@ -40,19 +46,17 @@ namespace Microsoft.OneFuzz.Service {
             AutoUpgradeMinorVersion.EnsureNotNull("AutoUpgradeMinorVersion required for VirtualMachineScaleSetExtension");
             Settings.EnsureNotNull("Settings required for VirtualMachineScaleSetExtension");
             ProtectedSettings.EnsureNotNull("ProtectedSettings required for VirtualMachineScaleSetExtension");
-#pragma warning disable CS1503
             return new VirtualMachineScaleSetExtensionData() {
                 Name = Name,
                 TypePropertiesType = TypeHandlerVersion,
                 Publisher = Publisher,
                 TypeHandlerVersion = TypeHandlerVersion,
                 AutoUpgradeMinorVersion = AutoUpgradeMinorVersion,
+                EnableAutomaticUpgrade = EnableAutomaticUpgrade,
                 Settings = Settings,
                 ProtectedSettings = ProtectedSettings
             };
-#pragma warning restore CS1503
         }
-
     }
 
 }

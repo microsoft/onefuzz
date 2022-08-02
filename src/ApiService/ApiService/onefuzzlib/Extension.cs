@@ -10,7 +10,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IExtensions {
     public Async.Task<IList<VirtualMachineScaleSetExtensionData>> FuzzExtensions(Pool pool, Scaleset scaleset);
 
-    public Async.Task<IList<VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer);
+    public Async.Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer);
 }
 
 public class Extensions : IExtensions {
@@ -40,8 +40,8 @@ public class Extensions : IExtensions {
             return await _containers.GetFileUrl(container, fileName, StorageType.Config);
     }
 
-    public async Async.Task<IList<VirtualMachineScaleSetExtensionData>> GenericExtensions(string region, Os vmOs) {
-        var extensions = new List<VirtualMachineScaleSetExtensionData>();
+    public async Async.Task<IList<VMExtenionWrapper>> GenericExtensions(AzureLocation region, Os vmOs) {
+        var extensions = new List<VMExtenionWrapper>();
 
         var instanceConfig = await _instanceConfigOps.Fetch();
         extensions.Add(await MonitorExtension(region, vmOs));
@@ -77,51 +77,14 @@ public class Extensions : IExtensions {
         return extensions;
     }
 
-    public async Async.Task<Dictionary<string, VirtualMachineExtensionData>> GenericExtensions(AzureLocation region, Os vmOs) {
-        var extensions = new List<VirtualMachineExtensionData>();
-
-        var instanceConfig = await _instanceConfigOps.Fetch();
-        extensions.Add(await MonitorExtension(region, vmOs));
-
-        var depenency = DependencyExtension(region, vmOs);
-        if (depenency is not null) {
-            extensions.Add(depenency);
-        }
-
-        if (instanceConfig.Extensions is not null) {
-
-            if (instanceConfig.Extensions.Keyvault is not null) {
-                var keyvault = KeyVaultExtension(region, instanceConfig.Extensions.Keyvault, vmOs);
-                extensions.Add(keyvault);
-            }
-
-            if (instanceConfig.Extensions.Geneva is not null && vmOs == Os.Windows) {
-                var geneva = GenevaExtension(region);
-                extensions.Add(geneva);
-            }
-
-            if (instanceConfig.Extensions.AzureMonitor is not null && vmOs == Os.Linux) {
-                var azMon = AzMonExtension(region, instanceConfig.Extensions.AzureMonitor);
-                extensions.Add(azMon);
-            }
-
-            if (instanceConfig.Extensions.AzureSecurity is not null && vmOs == Os.Linux) {
-                var azSec = AzSecExtension(region);
-                extensions.Add(azSec);
-            }
-        }
-
-        return extensions;
-    }
-
-    public static VirtualMachineScaleSetExtensionData KeyVaultExtension(string region, KeyvaultExtensionConfig keyVault, Os vmOs) {
+    public static VMExtenionWrapper KeyVaultExtension(AzureLocation region, KeyvaultExtensionConfig keyVault, Os vmOs) {
         var keyVaultName = keyVault.KeyVaultName;
         var certName = keyVault.CertName;
         var uri = keyVaultName + certName;
 
         if (vmOs == Os.Windows) {
-            return new VirtualMachineScaleSetExtensionData {
-                Name = "KVVMExtensionForWindows",
+            return new VMExtenionWrapper {
+                Location = region,
                 Publisher = "Microsoft.Azure.KeyVault",
                 TypePropertiesType = "KeyVaultForWindows",
                 TypeHandlerVersion = "1.0",
@@ -142,8 +105,8 @@ public class Extensions : IExtensions {
             var extensionStore = keyVault.ExtensionStore;
             var certLocation = certPath + extensionStore;
 
-            return new VirtualMachineScaleSetExtensionData {
-                Name = "KVVMExtensionForLinux",
+            return new VMExtenionWrapper {
+                Location = region,
                 Publisher = "Microsoft.Azure.KeyVault",
                 TypePropertiesType = "KeyVaultForLinux",
                 TypeHandlerVersion = "2.0",
@@ -162,55 +125,9 @@ public class Extensions : IExtensions {
         }
     }
 
-    public static VirtualMachineExtensionData KeyVaultExtension(AzureLocation region, KeyvaultExtensionConfig keyVault, Os vmOs) {
-        var keyVaultName = keyVault.KeyVaultName;
-        var certName = keyVault.CertName;
-        var uri = keyVaultName + certName;
-
-        if (vmOs == Os.Windows) {
-            return new VirtualMachineExtensionData(region) {
-                Publisher = "Microsoft.Azure.KeyVault",
-                TypePropertiesType = "KeyVaultForWindows",
-                TypeHandlerVersion = "1.0",
-                AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new {
-                    SecretsManagementSettings = new {
-                        PollingIntervalInS = "3600",
-                        CertificateStoreName = "MY",
-                        LinkOnRenewal = false,
-                        CertificateStoreLocation = "LocalMachine",
-                        RequireInitialSync = true,
-                        ObservedCertificates = new string[] { uri },
-                    }
-                })
-            };
-        } else if (vmOs == Os.Linux) {
-            var certPath = keyVault.CertPath;
-            var extensionStore = keyVault.ExtensionStore;
-            var certLocation = certPath + extensionStore;
-
-            return new VirtualMachineExtensionData(region) {
-                Publisher = "Microsoft.Azure.KeyVault",
-                TypePropertiesType = "KeyVaultForLinux",
-                TypeHandlerVersion = "2.0",
-                AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new {
-                    SecretsManagementSettings = new {
-                        PollingIntervalInS = "3600",
-                        CertificateStoreLocation = certLocation,
-                        RequireInitialSync = true,
-                        ObservedCertificates = new string[] { uri },
-                    }
-                })
-            };
-        } else {
-            throw new NotImplementedException($"unsupported os {vmOs}");
-        }
-    }
-
-    public static VirtualMachineScaleSetExtensionData AzSecExtension(string region) {
-        return new VirtualMachineScaleSetExtensionData {
-            Name = "AzureSecurityLinuxAgent",
+    public static VMExtenionWrapper AzSecExtension(AzureLocation region) {
+        return new VMExtenionWrapper {
+            Location = region,
             Publisher = "Microsoft.Azure.Security.Monitoring",
             TypePropertiesType = "AzureSecurityLinuxAgent",
             TypeHandlerVersion = "2.0",
@@ -220,18 +137,7 @@ public class Extensions : IExtensions {
 
     }
 
-    public static VirtualMachineExtensionData AzSecExtension(AzureLocation region) {
-        return new VirtualMachineExtensionData(region) {
-            Publisher = "Microsoft.Azure.Security.Monitoring",
-            TypePropertiesType = "AzureSecurityLinuxAgent",
-            TypeHandlerVersion = "2.0",
-            AutoUpgradeMinorVersion = true,
-            Settings = new BinaryData(new { EnableGenevaUpload = true, EnableAutoConfig = true })
-        };
-
-    }
-
-    public static VirtualMachineScaleSetExtensionData AzMonExtension(string region, AzureMonitorExtensionConfig azureMonitor) {
+    public static VMExtenionWrapper AzMonExtension(AzureLocation region, AzureMonitorExtensionConfig azureMonitor) {
         var authId = azureMonitor.MonitoringGCSAuthId;
         var configVersion = azureMonitor.ConfigVersion;
         var moniker = azureMonitor.Moniker;
@@ -240,8 +146,8 @@ public class Extensions : IExtensions {
         var account = azureMonitor.MonitoringGCSAccount;
         var authIdType = azureMonitor.MonitoringGCSAuthIdType;
 
-        return new VirtualMachineScaleSetExtensionData {
-            Name = "AzureMonitorLinuxAgent",
+        return new VMExtenionWrapper {
+            Location = region,
             Publisher = "Microsoft.Azure.Monitor",
             TypePropertiesType = "AzureMonitorLinuxAgent",
             AutoUpgradeMinorVersion = true,
@@ -262,41 +168,9 @@ public class Extensions : IExtensions {
         };
     }
 
-    public static VirtualMachineExtensionData AzMonExtension(AzureLocation region, AzureMonitorExtensionConfig azureMonitor) {
-        var authId = azureMonitor.MonitoringGCSAuthId;
-        var configVersion = azureMonitor.ConfigVersion;
-        var moniker = azureMonitor.Moniker;
-        var namespaceName = azureMonitor.Namespace;
-        var environment = azureMonitor.MonitoringGSEnvironment;
-        var account = azureMonitor.MonitoringGCSAccount;
-        var authIdType = azureMonitor.MonitoringGCSAuthIdType;
-
-        return new VirtualMachineExtensionData(region) {
-            Publisher = "Microsoft.Azure.Monitor",
-            TypePropertiesType = "AzureMonitorLinuxAgent",
-            AutoUpgradeMinorVersion = true,
-            TypeHandlerVersion = "1.0",
-            Settings = new BinaryData(new { GCS_AUTO_CONFIG = true }),
-            ProtectedSettings =
-                new BinaryData(
-                    new {
-                        ConfigVersion = configVersion,
-                        Moniker = moniker,
-                        Namespace = namespaceName,
-                        MonitoringGCSEnvironment = environment,
-                        MonitoringGCSAccount = account,
-                        MonitoringGCSRegion = region,
-                        MonitoringGCSAuthId = authId,
-                        MonitoringGCSAuthIdType = authIdType,
-                    })
-        };
-    }
-
-
-
-    public static VirtualMachineScaleSetExtensionData GenevaExtension(string region) {
-        return new VirtualMachineScaleSetExtensionData {
-            Name = "Microsoft.Azure.Geneva.GenevaMonitoring",
+    public static VMExtenionWrapper GenevaExtension(AzureLocation region) {
+        return new VMExtenionWrapper {
+            Location = region,
             Publisher = "Microsoft.Azure.Geneva",
             TypePropertiesType = "GenevaMonitoring",
             TypeHandlerVersion = "2.0",
@@ -305,45 +179,11 @@ public class Extensions : IExtensions {
         };
     }
 
-    public static VirtualMachineExtensionData GenevaExtension(AzureLocation region) {
-        return new VirtualMachineExtensionData(region) {
-            Publisher = "Microsoft.Azure.Geneva",
-            TypePropertiesType = "GenevaMonitoring",
-            TypeHandlerVersion = "2.0",
-            AutoUpgradeMinorVersion = true,
-            EnableAutomaticUpgrade = true,
-        };
-    }
-
-    public static VirtualMachineScaleSetExtensionData? DependencyExtension(string region, Os vmOs) {
+    public static VMExtenionWrapper? DependencyExtension(AzureLocation region, Os vmOs) {
 
         if (vmOs == Os.Windows) {
-            return new VirtualMachineScaleSetExtensionData {
-                AutoUpgradeMinorVersion = true,
-                Name = "DependencyAgentWindows",
-                Publisher = "Microsoft.Azure.Monitoring.DependencyAgent",
-                TypePropertiesType = "DependencyAgentWindows",
-                TypeHandlerVersion = "9.5"
-            };
-        } else {
-            // THIS TODO IS FROM PYTHON CODE
-            //# TODO: dependency agent for linux is not reliable
-            //# extension = {
-            //#     "name": "DependencyAgentLinux",
-            //#     "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
-            //#     "type": "DependencyAgentLinux",
-            //#     "typeHandlerVersion": "9.5",
-            //#     "location": vm.region,
-            //#     "autoUpgradeMinorVersion": True,
-            //# }
-            return null;
-        }
-    }
-
-    public static VirtualMachineExtensionData? DependencyExtension(AzureLocation region, Os vmOs) {
-
-        if (vmOs == Os.Windows) {
-            return new VirtualMachineExtensionData(region) {
+            return new VMExtenionWrapper {
+                Location = region,
                 AutoUpgradeMinorVersion = true,
                 Publisher = "Microsoft.Azure.Monitoring.DependencyAgent",
                 TypePropertiesType = "DependencyAgentWindows",
@@ -451,44 +291,12 @@ public class Extensions : IExtensions {
         return urlsUpdated;
     }
 
-    public async Async.Task<VirtualMachineScaleSetExtensionData> AgentConfig(string region, Os vmOs, AgentMode mode, List<Uri>? urls = null, bool withSas = false) {
-        await UpdateManagedScripts();
-
-        if (vmOs == Os.Windows) {
-            var extension = new VirtualMachineScaleSetExtensionData {
-                Name = "CustomScriptExtension",
-                TypePropertiesType = "CustomScriptExtension",
-                Publisher = "Microsoft.Compute",
-                ForceUpdateTag = Guid.NewGuid().ToString(),
-                TypeHandlerVersion = "1.9",
-                AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { commandToExecute = AgentConfigCommandToExecuteWindows(mode), fileUrls = await AgentConfigFileUrlsWindows(withSas) }),
-                ProtectedSettings = new BinaryData(new { managedIdentity = new Dictionary<string, string>() })
-            };
-            return extension;
-        } else if (vmOs == Os.Linux) {
-            var extension = new VirtualMachineScaleSetExtensionData {
-                Name = "CustomScript",
-                TypePropertiesType = "CustomScript",
-                Publisher = "Microsoft.Azure.Extension",
-                ForceUpdateTag = Guid.NewGuid().ToString(),
-                TypeHandlerVersion = "2.1",
-                AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { CommandToExecute = AgentConfigCommandToExecuteLinux(mode), FileUrls = await AgentConfigFileUrlsLinux(withSas) }),
-                ProtectedSettings = new BinaryData(new { ManagedIdentity = new Dictionary<string, string>() })
-            };
-            return extension;
-        }
-
-        throw new NotImplementedException($"unsupported OS: {vmOs}");
-    }
-
     public async Async.Task<VMExtenionWrapper> AgentConfig(AzureLocation region, Os vmOs, AgentMode mode, List<Uri>? urls = null, bool withSas = false) {
         await UpdateManagedScripts();
-        var extension = new Dictionary<string, VirtualMachineExtensionData>();
 
         if (vmOs == Os.Windows) {
-            var t = new VirtualMachineExtensionData(region) {
+            return new VMExtenionWrapper {
+                Location = region,
                 TypePropertiesType = "CustomScriptExtension",
                 Publisher = "Microsoft.Compute",
                 ForceUpdateTag = Guid.NewGuid().ToString(),
@@ -497,9 +305,9 @@ public class Extensions : IExtensions {
                 Settings = new BinaryData(new { commandToExecute = AgentConfigCommandToExecuteWindows(mode), fileUrls = await AgentConfigFileUrlsWindows(withSas) }),
                 ProtectedSettings = new BinaryData(new { managedIdentity = new Dictionary<string, string>() })
             };
-            return extension;
         } else if (vmOs == Os.Linux) {
-            extension.Add("CustomScript", new VirtualMachineExtensionData(region) {
+            return new VMExtenionWrapper {
+                Location = region,
                 TypePropertiesType = "CustomScript",
                 Publisher = "Microsoft.Azure.Extension",
                 ForceUpdateTag = Guid.NewGuid().ToString(),
@@ -507,18 +315,18 @@ public class Extensions : IExtensions {
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(new { CommandToExecute = AgentConfigCommandToExecuteLinux(mode), FileUrls = await AgentConfigFileUrlsLinux(withSas) }),
                 ProtectedSettings = new BinaryData(new { ManagedIdentity = new Dictionary<string, string>() })
-            });
-            return extension;
+            };
         }
 
         throw new NotImplementedException($"unsupported OS: {vmOs}");
     }
 
-    public async Async.Task<VirtualMachineScaleSetExtensionData> MonitorExtension(string region, Os vmOs) {
+    public async Async.Task<VMExtenionWrapper> MonitorExtension(AzureLocation region, Os vmOs) {
         var settings = await _logAnalytics.GetMonitorSettings();
 
         if (vmOs == Os.Windows) {
-            return new VirtualMachineScaleSetExtensionData {
+            return new VMExtenionWrapper {
+                Location = region,
                 Name = "OMSExtension",
                 TypePropertiesType = "MicrosoftMonitoringAgent",
                 Publisher = "Microsoft.EnterpriseCloud.Monitoring",
@@ -528,34 +336,9 @@ public class Extensions : IExtensions {
                 ProtectedSettings = new BinaryData(new { WorkspaceKey = settings.Key })
             };
         } else if (vmOs == Os.Linux) {
-            return new VirtualMachineScaleSetExtensionData {
+            return new VMExtenionWrapper {
+                Location = region,
                 Name = "OMSExtension",
-                TypePropertiesType = "OmsAgentForLinux",
-                Publisher = "Microsoft.EnterpriseCloud.Monitoring",
-                TypeHandlerVersion = "1.12",
-                AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { WorkSpaceId = settings.Id }),
-                ProtectedSettings = new BinaryData(new { WorkspaceKey = settings.Key })
-            };
-        } else {
-            throw new NotImplementedException($"unsupported os: {vmOs}");
-        }
-    }
-
-    public async Async.Task<VirtualMachineExtensionData> MonitorExtension(AzureLocation region, Os vmOs) {
-        var settings = await _logAnalytics.GetMonitorSettings();
-
-        if (vmOs == Os.Windows) {
-            return new VirtualMachineExtensionData(region) {
-                TypePropertiesType = "MicrosoftMonitoringAgent",
-                Publisher = "Microsoft.EnterpriseCloud.Monitoring",
-                TypeHandlerVersion = "1.0",
-                AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { WorkSpaceId = settings.Id }),
-                ProtectedSettings = new BinaryData(new { WorkspaceKey = settings.Key })
-            };
-        } else if (vmOs == Os.Linux) {
-            return new VirtualMachineExtensionData(region) {
                 TypePropertiesType = "OmsAgentForLinux",
                 Publisher = "Microsoft.EnterpriseCloud.Monitoring",
                 TypeHandlerVersion = "1.12",
@@ -578,7 +361,7 @@ public class Extensions : IExtensions {
         var extensions = await GenericExtensions(scaleset.Region, pool.Os);
 
         extensions.Add(fuzzExtension);
-        return extensions;
+        return extensions.Select(extension => extension.GetAsVirtualMachineScaleSetExtension()).ToList();
     }
 
     public async Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer) {
@@ -664,7 +447,14 @@ public class Extensions : IExtensions {
         var baseExtension = await AgentConfig(region, reproOs, AgentMode.Repro, urls: urls, withSas: true);
         var extensions = await GenericExtensions(region, reproOs);
         extensions.Add(baseExtension);
-        return extensions;
+
+        var extensionsDict = new Dictionary<string, VirtualMachineExtensionData>();
+        foreach (var extension in extensions) {
+            var (name, data) = extension.GetAsVirtualMachineExtension();
+            extensionsDict.Add(name, data);
+        }
+
+        return extensionsDict;
     }
 
 }

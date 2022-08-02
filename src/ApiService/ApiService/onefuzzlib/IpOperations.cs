@@ -104,8 +104,8 @@ public class IpOperations : IIpOperations {
             if (subnet != null && subnet.Data.NetworkSecurityGroup == null) {
                 var vnet = await network.GetVnet();
                 var result = await _context.NsgOperations.AssociateSubnet(nsg.Name, vnet!, subnet);
-                if (result != null) {
-                    return OneFuzzResultVoid.Error(result);
+                if (!result.IsOk) {
+                    return OneFuzzResultVoid.Error(result.ErrorV);
                 }
                 return OneFuzzResultVoid.Ok;
             }
