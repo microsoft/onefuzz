@@ -1,6 +1,6 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 
-namespace Microsoft.OneFuzz.Service;
+namespace Microsoft.OneFuzz.Service.Functions;
 
 public class TimerProxy {
     private readonly ILogTracer _logger;
@@ -38,7 +38,7 @@ public class TimerProxy {
             }
 
             if (VmStateHelper.NeedsWork.Contains(proxy.State)) {
-                _logger.Error($"scaleset-proxy: update state. proxy:{proxy.Region} state:{proxy.State}");
+                _logger.Info($"scaleset-proxy: update state. proxy:{proxy.Region} state:{proxy.State}");
                 await proxyOperations.ProcessStateUpdate(proxy);
             }
 
@@ -68,9 +68,9 @@ public class TimerProxy {
                 var subnet = await network.GetSubnet();
                 var vnet = await network.GetVnet();
                 if (subnet != null && vnet != null) {
-                    var error = nsgOpertions.AssociateSubnet(region, vnet, subnet);
-                    if (error != null) {
-                        _logger.Error($"Failed to associate NSG and subnet due to {error} in region {region}");
+                    var result = await nsgOpertions.AssociateSubnet(region, vnet, subnet);
+                    if (!result.OkV) {
+                        _logger.Error($"Failed to associate NSG and subnet due to {result.ErrorV} in region {region}");
                     }
                 }
             }

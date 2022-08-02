@@ -930,7 +930,7 @@ class Tasks(Endpoint):
     def list(
         self,
         job_id: Optional[UUID_EXPANSION] = None,
-        state: Optional[List[enums.TaskState]] = enums.TaskState.available(),
+        state: Optional[List[enums.TaskState]] = None,
     ) -> List[models.Task]:
         """Get information about all tasks"""
         self.logger.debug("list tasks")
@@ -942,6 +942,9 @@ class Tasks(Endpoint):
                 job_id,
                 lambda: [str(x.job_id) for x in self.onefuzz.jobs.list()],
             )
+
+        if job_id_expanded is None and state is None:
+            state = enums.TaskState.available()
 
         return self._req_model_list(
             "GET",
@@ -1711,6 +1714,8 @@ class Onefuzz:
         client_secret: Optional[str] = None,
         authority: Optional[str] = None,
         tenant_domain: Optional[str] = None,
+        _dotnet_endpoint: Optional[str] = None,
+        _dotnet_functions: Optional[List[str]] = None,
     ) -> None:
 
         if endpoint:
@@ -1723,6 +1728,10 @@ class Onefuzz:
             self._backend.client_secret = client_secret
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
+        if _dotnet_endpoint is not None:
+            self._backend.config.dotnet_endpoint = _dotnet_endpoint
+        if _dotnet_functions is not None:
+            self._backend.config.dotnet_functions = _dotnet_functions
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates._load_cache()
@@ -1766,6 +1775,8 @@ class Onefuzz:
         client_id: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
         tenant_domain: Optional[str] = None,
+        _dotnet_endpoint: Optional[str] = None,
+        _dotnet_functions: Optional[List[str]] = None,
         reset: Optional[bool] = None,
     ) -> BackendConfig:
         """Configure onefuzz CLI"""
@@ -1796,6 +1807,10 @@ class Onefuzz:
             self._backend.enable_feature(enable_feature.name)
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
+        if _dotnet_endpoint is not None:
+            self._backend.config.dotnet_endpoint = _dotnet_endpoint
+        if _dotnet_functions is not None:
+            self._backend.config.dotnet_functions = _dotnet_functions
         self._backend.app = None
         self._backend.save_config()
 

@@ -6,7 +6,7 @@ using Azure.ResourceManager.Network.Models;
 namespace Microsoft.OneFuzz.Service {
     public interface INsgOperations {
         Async.Task<NetworkSecurityGroupResource?> GetNsg(string name);
-        public Async.Task<Error?> AssociateSubnet(string name, VirtualNetworkResource vnet, SubnetResource subnet);
+        public Async.Task<OneFuzzResult<bool>> AssociateSubnet(string name, VirtualNetworkResource vnet, SubnetResource subnet);
         IAsyncEnumerable<NetworkSecurityGroupResource> ListNsgs();
         bool OkToDelete(HashSet<string> active_regions, string nsg_region, string nsg_name);
         Async.Task<bool> StartDeleteNsg(string name);
@@ -37,25 +37,29 @@ namespace Microsoft.OneFuzz.Service {
             _context = context;
         }
 
-        public async Async.Task<Error?> AssociateSubnet(string name, VirtualNetworkResource vnet, SubnetResource subnet) {
+        public async Async.Task<OneFuzzResult<bool>> AssociateSubnet(string name, VirtualNetworkResource vnet, SubnetResource subnet) {
             var nsg = await GetNsg(name);
             if (nsg == null) {
-                return new Error(ErrorCode.UNABLE_TO_FIND, new[] { $"cannot associate subnet. nsg {name} not found" });
+                return OneFuzzResult<bool>.Error(new Error(ErrorCode.UNABLE_TO_FIND,
+                    new[] { $"cannot associate subnet. nsg {name} not found" }));
             }
 
             if (nsg.Data.Location != vnet.Data.Location) {
-                return new Error(ErrorCode.UNABLE_TO_UPDATE, new[] { $"subnet and nsg have to be in the same region. nsg {nsg.Data.Name} {nsg.Data.Location}, subnet: {subnet.Data.Name} {subnet.Data}" });
+                return OneFuzzResult<bool>.Error(new Error(ErrorCode.UNABLE_TO_UPDATE,
+                    new[] {
+                        $"subnet and nsg have to be in the same region. nsg {nsg.Data.Name} {nsg.Data.Location}, subnet: {subnet.Data.Name} {subnet.Data}"
+                    }));
             }
 
             if (subnet.Data.NetworkSecurityGroup != null && subnet.Data.NetworkSecurityGroup.Id == nsg.Id) {
                 _logTracer.Info($"Subnet {subnet.Data.Name} and NSG {name} already associated, not updating");
-                return null;
+                return OneFuzzResult<bool>.Ok(true);
             }
 
 
             subnet.Data.NetworkSecurityGroup = nsg.Data;
             var result = await vnet.GetSubnets().CreateOrUpdateAsync(WaitUntil.Started, subnet.Data.Name, subnet.Data);
-            return null;
+            return OneFuzzResult<bool>.Ok(true);
         }
 
         public async Async.Task<OneFuzzResultVoid> DissociateNic(Nsg nsg, NetworkInterfaceResource nic) {

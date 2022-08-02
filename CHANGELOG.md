@@ -4,7 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### 5.8.0
+## 5.9.0
+### Added
+* Agent: Depend on SharpFuzz 2.0.0 package in the `LibFuzzerDotnetLoader` project. [#2149](https://github.com/microsoft/onefuzz/pull/2149)
+* Test: Added `GoodBad` C# example project to use with the `LibFuzzerDotnetLoader` integration tests. [#2148](https://github.com/microsoft/onefuzz/pull/2148)
+
+### Changed
+* Service: Implemented the `containers` function in C#. [#2078](https://github.com/microsoft/onefuzz/pull/2078)
+* Service/Build: Reuse agent build artifacts if nothing in the agent source tree has changed. This is to speed up dev builds and will not impact official releases. [#2115](https://github.com/microsoft/onefuzz/pull/2115)
+* CLI: Default autoscale minimum value to 0. This allows a scaleset to scale-in until there are zero nodes running when no work is pending in the queue. This is important to ensure VM's have the latest patches when running. [#2112](https://github.com/microsoft/onefuzz/pull/2112), [#2162](https://github.com/microsoft/onefuzz/pull/2162)
+* Service: Initial work to migrate `TimerRepro` function to C#. [#2168](https://github.com/microsoft/onefuzz/pull/2168)
+* Service/CLI: Remove support for pre 3.0.0 style authentication. [#2173](https://github.com/microsoft/onefuzz/pull/2173)
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#2164](https://github.com/microsoft/onefuzz/pull/2164), [#2056](https://github.com/microsoft/onefuzz/pull/2056), [#2175](https://github.com/microsoft/onefuzz/pull/2175), [#2127](https://github.com/microsoft/onefuzz/pull/2127)
+* Service: Updated C# dependencies. [#2181](https://github.com/microsoft/onefuzz/pull/2181)
+* Service: When getting information about a task, ignore the task's state if the `job_id` is specified. [#2171](https://github.com/microsoft/onefuzz/pull/2171)
+
+### Fixed
+* Agent: Drop the global event sender when closing the telemetry channel to ensure all events are flushed. [#2125](https://github.com/microsoft/onefuzz/pull/2125)
+
+## 5.8.0
 ### Added
 * Service: Add correct routes and auth to agent C# functions. [#2109](https://github.com/microsoft/onefuzz/pull/2109)
 * Service: Port `agent_registration` to C#. [#2107](https://github.com/microsoft/onefuzz/pull/2107)

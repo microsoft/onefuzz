@@ -3,9 +3,12 @@ using System.Linq;
 using System.Net;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
+using Microsoft.OneFuzz.Service.Functions;
 using Xunit;
 using Xunit.Abstractions;
 using Async = System.Threading.Tasks;
+
+using Node = Microsoft.OneFuzz.Service.Node;
 
 namespace IntegrationTests;
 
@@ -25,12 +28,12 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         : base(output, storage) { }
 
     // shared helper variables (per-test)
-    readonly Guid jobId = Guid.NewGuid();
-    readonly Guid taskId = Guid.NewGuid();
-    readonly Guid machineId = Guid.NewGuid();
-    readonly PoolName poolName = PoolName.Parse($"pool-{Guid.NewGuid()}");
-    readonly Guid poolId = Guid.NewGuid();
-    readonly string poolVersion = $"version-{Guid.NewGuid()}";
+    readonly Guid _jobId = Guid.NewGuid();
+    readonly Guid _taskId = Guid.NewGuid();
+    readonly Guid _machineId = Guid.NewGuid();
+    readonly PoolName _poolName = PoolName.Parse($"pool-{Guid.NewGuid()}");
+    readonly Guid _poolId = Guid.NewGuid();
+    readonly string _poolVersion = $"version-{Guid.NewGuid()}";
 
     [Fact]
     public async Async.Task Authorization_IsRequired() {
@@ -67,18 +70,18 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
     [Fact]
     public async Async.Task WorkerDone_WithSuccessfulResult_ForRunningTask_MarksTaskAsStopping() {
         await Context.InsertAll(
-                new Node(poolName, machineId, poolId, poolVersion),
+                new Node(_poolName, _machineId, _poolId, _poolVersion),
                 // task state is running
-                new Task(jobId, taskId, TaskState.Running, Os.Linux,
-                    new TaskConfig(jobId, null, new TaskDetails(TaskType.Coverage, 100))));
+                new Task(_jobId, _taskId, TaskState.Running, Os.Linux,
+                    new TaskConfig(_jobId, null, new TaskDetails(TaskType.Coverage, 100))));
 
         var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
         var func = new AgentEvents(Logger, auth, Context);
 
         var data = new NodeStateEnvelope(
-            MachineId: machineId,
+            MachineId: _machineId,
             Event: new WorkerEvent(Done: new WorkerDoneEvent(
-                TaskId: taskId,
+                TaskId: _taskId,
                 ExitStatus: new ExitStatus(Code: 0, Signal: 0, Success: true),
                 "stderr",
                 "stdout")));
@@ -95,18 +98,18 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
     [Fact]
     public async Async.Task WorkerDone_WithFailedResult_ForRunningTask_MarksTaskAsStoppingAndErrored() {
         await Context.InsertAll(
-                new Node(poolName, machineId, poolId, poolVersion),
+                new Node(_poolName, _machineId, _poolId, _poolVersion),
                 // task state is running
-                new Task(jobId, taskId, TaskState.Running, Os.Linux,
-                    new TaskConfig(jobId, null, new TaskDetails(TaskType.Coverage, 100))));
+                new Task(_jobId, _taskId, TaskState.Running, Os.Linux,
+                    new TaskConfig(_jobId, null, new TaskDetails(TaskType.Coverage, 100))));
 
         var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
         var func = new AgentEvents(Logger, auth, Context);
 
         var data = new NodeStateEnvelope(
-            MachineId: machineId,
+            MachineId: _machineId,
             Event: new WorkerEvent(Done: new WorkerDoneEvent(
-                TaskId: taskId,
+                TaskId: _taskId,
                 ExitStatus: new ExitStatus(Code: 0, Signal: 0, Success: false), // unsuccessful result
                 "stderr",
                 "stdout")));
@@ -122,18 +125,18 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
     [Fact]
     public async Async.Task WorkerDone_ForNonStartedTask_MarksTaskAsFailed() {
         await Context.InsertAll(
-            new Node(poolName, machineId, poolId, poolVersion),
+            new Node(_poolName, _machineId, _poolId, _poolVersion),
             // task state is scheduled, not running
-            new Task(jobId, taskId, TaskState.Scheduled, Os.Linux,
-                new TaskConfig(jobId, null, new TaskDetails(TaskType.Coverage, 100))));
+            new Task(_jobId, _taskId, TaskState.Scheduled, Os.Linux,
+                new TaskConfig(_jobId, null, new TaskDetails(TaskType.Coverage, 100))));
 
         var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
         var func = new AgentEvents(Logger, auth, Context);
 
         var data = new NodeStateEnvelope(
-            MachineId: machineId,
+            MachineId: _machineId,
             Event: new WorkerEvent(Done: new WorkerDoneEvent(
-                TaskId: taskId,
+                TaskId: _taskId,
                 ExitStatus: new ExitStatus(0, 0, true),
                 "stderr",
                 "stdout")));
@@ -151,13 +154,13 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
     [Fact]
     public async Async.Task WorkerRunning_ForMissingTask_ReturnsError() {
         await Context.InsertAll(
-            new Node(poolName, machineId, poolId, poolVersion));
+            new Node(_poolName, _machineId, _poolId, _poolVersion));
 
         var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
         var func = new AgentEvents(Logger, auth, Context);
         var data = new NodeStateEnvelope(
-            MachineId: machineId,
-            Event: new WorkerEvent(Running: new WorkerRunningEvent(taskId)));
+            MachineId: _machineId,
+            Event: new WorkerEvent(Running: new WorkerRunningEvent(_taskId)));
 
         var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -167,14 +170,14 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
     [Fact]
     public async Async.Task WorkerRunning_ForMissingNode_ReturnsError() {
         await Context.InsertAll(
-            new Task(jobId, taskId, TaskState.Running, Os.Linux,
-                new TaskConfig(jobId, null, new TaskDetails(TaskType.Coverage, 0))));
+            new Task(_jobId, _taskId, TaskState.Running, Os.Linux,
+                new TaskConfig(_jobId, null, new TaskDetails(TaskType.Coverage, 0))));
 
         var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
         var func = new AgentEvents(Logger, auth, Context);
         var data = new NodeStateEnvelope(
-            MachineId: machineId,
-            Event: new WorkerEvent(Running: new WorkerRunningEvent(taskId)));
+            MachineId: _machineId,
+            Event: new WorkerEvent(Running: new WorkerRunningEvent(_taskId)));
 
         var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -184,15 +187,15 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
     [Fact]
     public async Async.Task WorkerRunning_HappyPath() {
         await Context.InsertAll(
-            new Node(poolName, machineId, poolId, poolVersion),
-            new Task(jobId, taskId, TaskState.Running, Os.Linux,
-                new TaskConfig(jobId, null, new TaskDetails(TaskType.Coverage, 0))));
+            new Node(_poolName, _machineId, _poolId, _poolVersion),
+            new Task(_jobId, _taskId, TaskState.Running, Os.Linux,
+                new TaskConfig(_jobId, null, new TaskDetails(TaskType.Coverage, 0))));
 
         var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
         var func = new AgentEvents(Logger, auth, Context);
         var data = new NodeStateEnvelope(
-            MachineId: machineId,
-            Event: new WorkerEvent(Running: new WorkerRunningEvent(taskId)));
+            MachineId: _machineId,
+            Event: new WorkerEvent(Running: new WorkerRunningEvent(_taskId)));
 
         var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -212,16 +215,16 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
             Async.Task.Run(async () => {
                 // there should be a node-task with correct values
                 var nodeTask = await Context.NodeTasksOperations.SearchAll().SingleAsync();
-                Assert.Equal(machineId, nodeTask.MachineId);
-                Assert.Equal(taskId, nodeTask.TaskId);
+                Assert.Equal(_machineId, nodeTask.MachineId);
+                Assert.Equal(_taskId, nodeTask.TaskId);
                 Assert.Equal(NodeTaskState.Running, nodeTask.State);
             }),
             Async.Task.Run(async () => {
                 // there should be a task-event with correct values
                 var taskEvent = await Context.TaskEventOperations.SearchAll().SingleAsync();
-                Assert.Equal(taskId, taskEvent.TaskId);
-                Assert.Equal(machineId, taskEvent.MachineId);
-                Assert.Equal(new WorkerEvent(Running: new WorkerRunningEvent(taskId)), taskEvent.EventData);
+                Assert.Equal(_taskId, taskEvent.TaskId);
+                Assert.Equal(_machineId, taskEvent.MachineId);
+                Assert.Equal(new WorkerEvent(Running: new WorkerRunningEvent(_taskId)), taskEvent.EventData);
             }));
     }
 
@@ -232,7 +235,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
         var func = new AgentEvents(Logger, auth, Context);
         var data = new NodeStateEnvelope(
-            MachineId: machineId,
+            MachineId: _machineId,
             Event: new NodeStateUpdate(NodeState.Init));
 
         var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
@@ -243,12 +246,12 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
     [Fact]
     public async Async.Task NodeStateUpdate_CanTransitionFromInitToReady() {
         await Context.InsertAll(
-            new Node(poolName, machineId, poolId, poolVersion, State: NodeState.Init));
+            new Node(_poolName, _machineId, _poolId, _poolVersion, State: NodeState.Init));
 
         var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
         var func = new AgentEvents(Logger, auth, Context);
         var data = new NodeStateEnvelope(
-            MachineId: machineId,
+            MachineId: _machineId,
             Event: new NodeStateUpdate(NodeState.Ready));
 
         var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
@@ -261,12 +264,12 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
     [Fact]
     public async Async.Task NodeStateUpdate_BecomingFree_StopsNode_IfMarkedForReimage() {
         await Context.InsertAll(
-            new Node(poolName, machineId, poolId, poolVersion, ReimageRequested: true));
+            new Node(_poolName, _machineId, _poolId, _poolVersion, ReimageRequested: true));
 
         var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
         var func = new AgentEvents(Logger, auth, Context);
         var data = new NodeStateEnvelope(
-            MachineId: machineId,
+            MachineId: _machineId,
             Event: new NodeStateUpdate(NodeState.Free));
 
         var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
@@ -282,7 +285,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
                 // the node should be told to stop:
                 var messages = await Context.NodeMessageOperations.SearchAll().ToListAsync();
                 Assert.Contains(messages, msg =>
-                    msg.MachineId == machineId &&
+                    msg.MachineId == _machineId &&
                     msg.Message.Stop == new StopNodeCommand());
             }));
     }
@@ -290,12 +293,12 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
     [Fact]
     public async Async.Task NodeStateUpdate_BecomingFree_StopsNode_IfMarkedForDeletion() {
         await Context.InsertAll(
-            new Node(poolName, machineId, poolId, poolVersion, DeleteRequested: true));
+            new Node(_poolName, _machineId, _poolId, _poolVersion, DeleteRequested: true));
 
         var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
         var func = new AgentEvents(Logger, auth, Context);
         var data = new NodeStateEnvelope(
-            MachineId: machineId,
+            MachineId: _machineId,
             Event: new NodeStateUpdate(NodeState.Free));
 
         var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
@@ -311,7 +314,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
                 // the node should be told to stop:
                 var messages = await Context.NodeMessageOperations.SearchAll().ToListAsync();
                 Assert.Contains(messages, msg =>
-                    msg.MachineId == machineId &&
+                    msg.MachineId == _machineId &&
                     msg.Message.Stop == new StopNodeCommand());
             }));
     }

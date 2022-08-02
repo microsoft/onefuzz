@@ -66,7 +66,7 @@ public class Config : IConfig {
         );
 
         if (definition.MonitorQueue != null) {
-            config.inputQueue = await _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Config, QueueSasPermissions.Add | QueueSasPermissions.Read | QueueSasPermissions.Update | QueueSasPermissions.Process);
+            config.inputQueue = await _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Corpus, QueueSasPermissions.Add | QueueSasPermissions.Read | QueueSasPermissions.Update | QueueSasPermissions.Process);
         }
 
         var containersByType = definition.Containers.Where(c => c.Type != ContainerType.Setup && task.Config.Containers != null)
@@ -183,6 +183,10 @@ public class Config : IConfig {
             config.GeneratorExe = task.Config.Task.GeneratorExe;
         }
 
+        if (definition.Features.Contains(TaskFeature.GeneratorEnv)) {
+            config.GeneratorEnv = task.Config.Task.GeneratorEnv ?? new Dictionary<string, string>();
+        }
+
         if (definition.Features.Contains(TaskFeature.GeneratorOptions)) {
             config.GeneratorOptions = task.Config.Task.GeneratorOptions ?? new List<string>();
         }
@@ -190,8 +194,6 @@ public class Config : IConfig {
         if (definition.Features.Contains(TaskFeature.WaitForFiles) && task.Config.Task.WaitForFiles != null) {
             config.WaitForFiles = task.Config.Task.WaitForFiles;
         }
-
-
 
         if (definition.Features.Contains(TaskFeature.AnalyzerExe)) {
             config.AnalyzerExe = task.Config.Task.AnalyzerExe;

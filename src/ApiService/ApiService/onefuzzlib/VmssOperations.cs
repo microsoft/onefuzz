@@ -19,10 +19,8 @@ public interface IVmssOperations {
 
 public class VmssOperations : IVmssOperations {
 
-    string INSTANCE_NOT_FOUND = " is not an active Virtual Machine Scale Set VM instanceId.";
-
-    ILogTracer _log;
-    ICreds _creds;
+    readonly ILogTracer _log;
+    readonly ICreds _creds;
 
     public VmssOperations(ILogTracer log, ICreds creds) {
         _log = log;
@@ -144,46 +142,27 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-
     public async Async.Task<OneFuzzResultVoid> UpdateScaleInProtection(Guid name, Guid vmId, bool protectFromScaleIn) {
         var res = await GetInstanceVm(name, vmId);
         if (!res.IsOk) {
             return OneFuzzResultVoid.Error(res.ErrorV);
         } else {
-            VirtualMachineScaleSetVmProtectionPolicy newProtectionPolicy;
-            var instanceVm = res.OkV!;
-            if (instanceVm.Data.ProtectionPolicy is not null) {
-                newProtectionPolicy = instanceVm.Data.ProtectionPolicy;
-                newProtectionPolicy.ProtectFromScaleIn = protectFromScaleIn;
-            } else {
-                newProtectionPolicy = new VirtualMachineScaleSetVmProtectionPolicy() { ProtectFromScaleIn = protectFromScaleIn };
-            }
-            instanceVm.Data.ProtectionPolicy = newProtectionPolicy;
-
-            var scaleSet = GetVmssResource(name);
-            var vmCollection = scaleSet.GetVirtualMachineScaleSetVms();
-            try {
-                var r = await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceVm.Data.InstanceId, instanceVm.Data);
-                if (r.GetRawResponse().IsError) {
-                    var msg = $"failed to update scale in protection on vm {vmId} for scaleset {name}";
-                    _log.WithHttpStatus((r.GetRawResponse().Status, r.GetRawResponse().ReasonPhrase)).Error(msg);
+            var instanceVm = res.OkV;
+            instanceVm.Data.ProtectionPolicy ??= new();
+            if (instanceVm.Data.ProtectionPolicy.ProtectFromScaleIn != protectFromScaleIn) {
+                instanceVm.Data.ProtectionPolicy.ProtectFromScaleIn = protectFromScaleIn;
+                var vmCollection = GetVmssResource(name).GetVirtualMachineScaleSetVms();
+                try {
+                    await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceVm.Data.InstanceId, instanceVm.Data);
+                    return OneFuzzResultVoid.Ok;
+                } catch {
+                    var msg = $"unable to set protection policy on: {vmId}:{instanceVm.Id}";
                     return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, msg);
-                } else {
-                    return OneFuzzResultVoid.Ok;
                 }
-            } catch (Exception ex) when (ex is RequestFailedException || ex is CloudException) {
-
-                if (ex.Message.Contains(INSTANCE_NOT_FOUND) && protectFromScaleIn == false) {
-                    _log.Info($"Tried to remove scale in protection on node {name} {vmId} but instance no longer exists");
-                    return OneFuzzResultVoid.Ok;
-                } else {
-                    var msg = $"failed to update scale in protection on vm {vmId} for scaleset {name}";
-                    _log.Exception(ex, msg);
-                    return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, ex.Message);
-                }
+            } else {
+                _log.Info($"scale in protection was already set to {protectFromScaleIn} on vm {vmId} for scaleset {name}");
+                return OneFuzzResultVoid.Ok;
             }
         }
     }
-
-
 }

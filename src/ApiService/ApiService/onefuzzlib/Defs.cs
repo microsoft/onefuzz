@@ -150,8 +150,6 @@ public static class Defs {
             Compare: Compare.AtMost,
             Value:1,
             Permissions: ContainerPermission.Write
-
-
          ),
         new ContainerDefinition(
             Type: ContainerType.UniqueReports,
@@ -435,7 +433,8 @@ public static class Defs {
             Value:1,
             Permissions: ContainerPermission.Write
         ),
-     }
+     },
+     MonitorQueue: ContainerType.Crashes
  )
  },
  {
