@@ -145,18 +145,6 @@ public record ProxyGet(
     Guid? MachineId,
     int? DstPort);
 
-// @root_validator()
-// def check_proxy_get(cls, value: Any) -> Any:
-// check_keys = ["scaleset_id", "machine_id", "dst_port"]
-// included = [x in value for x in check_keys]
-// if any(included) and not all(included):
-// raise ValueError(
-// "ProxyGet must provide all or none of the following: %s"
-// % ", ".join(check_keys)
-// )
-// return value
-
-
 public record ProxyCreate(
     Guid ScalesetId,
     Guid MachineId,
