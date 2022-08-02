@@ -53,7 +53,7 @@ public class IpOperations : IIpOperations {
         await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(name).Result.Value.DeleteAsync(WaitUntil.Started);
     }
 
-    
+
 
     public async Task<string?> GetScalesetInstanceIp(Guid scalesetId, Guid machineId) {
         var instance = await _context.VmssOperations.GetInstanceId(scalesetId, machineId);
@@ -64,15 +64,14 @@ public class IpOperations : IIpOperations {
         var ips = await _networkInterfaceQuery.ListInstancePrivateIps(scalesetId, instance.OkV);
         return ips.FirstOrDefault();
     }
-    
-    
+
+
     /// <summary>
     /// Query the Scaleset network interface using the rest api directly because
     /// the api does not seems to support this :
     /// https://github.com/Azure/azure-sdk-for-net/issues/30253#issuecomment-1202447362
     /// </summary>
-    class NetworkInterfaceQuery
-    {
+    class NetworkInterfaceQuery {
         record IpConfigurationsProperties(string privateIPAddress);
 
         record IpConfigurations(IpConfigurationsProperties properties);
@@ -89,7 +88,7 @@ public class IpOperations : IIpOperations {
             _context = context;
         }
 
-        
+
         public async Task<List<string>> ListInstancePrivateIps(Guid scalesetId, string instanceId) {
 
             var token = _context.Creds.GetIdentity().GetToken(
