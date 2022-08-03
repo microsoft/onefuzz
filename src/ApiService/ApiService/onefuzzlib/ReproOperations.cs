@@ -229,7 +229,6 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             );
         }
 
-        // TODO: Right now we're not finding the report so we hit the error case on line 235
         var report = await _context.Reports.GetReport(repro.Config.Container, repro.Config.Path);
         if (report == null) {
             return OneFuzzResultVoid.Error(
@@ -255,10 +254,12 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             case Os.Linux:
                 var gdbFmt = "ASAN_OPTIONS='abort_on_error=1' gdbserver {0} /onefuzz/setup/{1} /onefuzz/downloaded/{2}";
                 var linuxCmd = $"while :; do {string.Format(CultureInfo.InvariantCulture, gdbFmt, "localhost:1337", task.Config.Task.TargetExe, report?.InputBlob?.Name)}; done";
+                _logTracer.Warning($"linuxCmd: {linuxCmd}");
                 files.Add("repro.sh", linuxCmd);
 
                 var linuxCmdStdOut = $"#!/bin/bash\n{string.Format(CultureInfo.InvariantCulture, gdbFmt, "-", task.Config.Task.TargetExe, report?.InputBlob?.Name)}";
                 files.Add("repro-stdout.sh", linuxCmdStdOut);
+                _logTracer.Warning($"linuxCmd: {linuxCmdStdOut}");
                 break;
             default: throw new NotImplementedException($"invalid task os: {task.Os}");
         }

@@ -75,7 +75,9 @@ public class VmOperations : IVmOperations {
     }
 
     public async Async.Task<bool> Delete(Vm vm) {
-        return await DeleteVmComponents(vm.Name, vm.Nsg);
+        // return await DeleteVmComponents(vm.Name, vm.Nsg);
+        await Async.Task.Run(() => true);
+        return true;
     }
 
     public async Async.Task<bool> DeleteVmComponents(string name, Nsg? nsg) {
