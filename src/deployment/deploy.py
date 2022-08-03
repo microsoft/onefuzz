@@ -129,6 +129,29 @@ def bicep_to_arm(bicep_template: str) -> str:
     return "azuredeploy-bicep.json"
 
 
+http_functions = [
+    "containers",
+    "download",
+    "info",
+    "instance_config",
+    "jobs",
+    "job_templates",
+    "job_templates_manage",
+    "negotiate",
+    "node",
+    "node_add_ssh_key",
+    "notifications",
+    "pool",
+    "proxy",
+    "repro_vms",
+    "scaleset",
+    "tasks",
+    "webhooks",
+    "webhooks_logs",
+    "webhooks_ping",
+]
+
+
 class Client:
     def __init__(
         self,
@@ -1118,27 +1141,32 @@ class Client:
                 format_name = function_name.split("_")
                 dotnet_name = "".join(x.title() for x in format_name)
                 error: Optional[subprocess.CalledProcessError] = None
+
                 max_tries = 5
                 for i in range(max_tries):
+
                     try:
-                        # disable python function
-                        logger.info(f"disabling PYTHON function: {function_name}")
-                        subprocess.check_output(
-                            [
-                                func,
-                                "functionapp",
-                                "config",
-                                "appsettings",
-                                "set",
-                                "--name",
-                                self.application_name,
-                                "--resource-group",
-                                self.application_name,
-                                "--settings",
-                                f"AzureWebJobs.{function_name}.Disabled=1",
-                            ],
-                            env=dict(os.environ, CLI_DEBUG="1"),
-                        )
+                        # keep the python versions of http function to allow the service to be backward compatible
+                        # with older version of the CLI and the agents
+                        if function_name not in http_functions:
+                            # disable python function
+                            logger.info(f"disabling PYTHON function: {function_name}")
+                            subprocess.check_output(
+                                [
+                                    func,
+                                    "functionapp",
+                                    "config",
+                                    "appsettings",
+                                    "set",
+                                    "--name",
+                                    self.application_name,
+                                    "--resource-group",
+                                    self.application_name,
+                                    "--settings",
+                                    f"AzureWebJobs.{function_name}.Disabled=1",
+                                ],
+                                env=dict(os.environ, CLI_DEBUG="1"),
+                            )
                         # enable dotnet function
                         logger.info(f"enabling DOTNET function: {dotnet_name}")
                         subprocess.check_output(
