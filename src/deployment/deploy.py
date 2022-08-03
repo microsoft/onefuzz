@@ -1146,12 +1146,12 @@ class Client:
                     try:
                         # keep the python versions of http function to allow the service to be backward compatible
                         # with older version of the CLI and the agents
-                        disable_python = (
-                            "1" if function_name not in http_functions else "0"
-                        )
-
-                        # disable python function
-                        logger.info(f"disabling PYTHON function: {function_name}")
+                        if function_name not in http_functions:
+                            logger.info(f"disabling PYTHON function: {function_name}")
+                            disable_python = "1"
+                        else:
+                            logger.info(f"enabling PYTHON function: {function_name}")
+                            disable_python = "0"
                         subprocess.check_output(
                             [
                                 func,
