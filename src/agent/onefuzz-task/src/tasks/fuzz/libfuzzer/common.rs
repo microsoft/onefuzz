@@ -40,9 +40,15 @@ pub fn default_workers() -> usize {
     usize::max(1, cpus - 1)
 }
 
+/// LibFuzzer subtypes that share custom configuration or process initialization.
 pub trait LibFuzzerType {
+    /// Extra configuration values expected by the `Config` for this type.
     type Config;
 
+    /// Method that constructs a `LibFuzzer` configured as appropriate for the subtype.
+    ///
+    /// This may include things like setting special environment variables, or overriding
+    /// the defaults or values of some command arguments.
     fn from_config(config: &Config<Self>) -> LibFuzzer;
 }
 

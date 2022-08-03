@@ -5,6 +5,10 @@ use onefuzz::libfuzzer::LibFuzzer;
 
 use crate::tasks::fuzz::libfuzzer::common;
 
+/// Generic LibFuzzer with no special extra configuration.
+///
+/// Its configuration is fully controlled by the user, up to the constraints of the
+/// `LibFuzzer` wrapper itself.
 #[derive(Debug)]
 pub struct GenericLibFuzzer;
 
