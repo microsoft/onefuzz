@@ -105,9 +105,9 @@ public class TimerReproTests {
                 String.Empty,
                 0
             ),
-            VmState.Init,
             null,
             Os.Linux,
+            VmState.Init,
             null,
             null,
             null,
