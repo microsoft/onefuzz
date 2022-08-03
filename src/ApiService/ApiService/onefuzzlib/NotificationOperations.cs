@@ -8,6 +8,7 @@ public interface INotificationOperations : IOrm<Notification> {
     Async.Task NewFiles(Container container, string filename, bool failTaskOnTransientError);
     IAsyncEnumerable<Notification> GetNotifications(Container container);
     IAsyncEnumerable<(Task, IEnumerable<string>)> GetQueueTasks();
+    Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting);
 }
 
 public class NotificationOperations : Orm<Notification>, INotificationOperations {
@@ -33,20 +34,20 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
             done.Add(notification.Config);
 
-            if (notification.Config.TeamsTemplate != null) {
-                NotifyTeams(notification.Config.TeamsTemplate, container, filename, reportOrRegression!);
+            if (notification.Config is TeamsTemplate teamsTemplate) {
+                NotifyTeams(teamsTemplate, container, filename, reportOrRegression!);
             }
 
             if (reportOrRegression == null) {
                 continue;
             }
 
-            if (notification.Config.AdoTemplate != null) {
-                NotifyAdo(notification.Config.AdoTemplate, container, filename, reportOrRegression, failTaskOnTransientError);
+            if (notification.Config is AdoTemplate adoTemplate) {
+                NotifyAdo(adoTemplate, container, filename, reportOrRegression, failTaskOnTransientError);
             }
 
-            if (notification.Config.GithubIssuesTemplate != null) {
-                GithubIssue(notification.Config.GithubIssuesTemplate, container, filename, reportOrRegression);
+            if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {
+                GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression);
             }
         }
 
@@ -86,8 +87,48 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             .Where(taskTuple => taskTuple.Item2 != null)!;
     }
 
+    public async Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting) {
+        if (await _context.Containers.FindContainer(container, StorageType.Corpus) == null) {
+            return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, errors: new[] { "invalid container" });
+        }
+
+        if (replaceExisting) {
+            var existing = this.SearchByRowKeys(new[] { container.ContainerName });
+            await foreach (var existingEntry in existing) {
+                _logTracer.Info($"replacing existing notification: {existingEntry.NotificationId} - {container}");
+                await this.Delete(existingEntry);
+            }
+        }
+        var configWithHiddenSecret = await HideSecrets(config);
+        var entry = new Notification(Guid.NewGuid(), container, configWithHiddenSecret);
+        await this.Insert(entry);
+        _logTracer.Info($"created notification.  notification_id:{entry.NotificationId} container:{entry.Container}");
+
+        return OneFuzzResult<Notification>.Ok(entry);
+    }
+
+
+    private async Async.Task<NotificationTemplate> HideSecrets(NotificationTemplate notificationTemplate) {
+
+        switch (notificationTemplate) {
+            case AdoTemplate adoTemplate:
+                var hiddenAuthToken = await _context.SecretsOperations.SaveToKeyvault(adoTemplate.AuthToken);
+                return adoTemplate with { AuthToken = hiddenAuthToken };
+            case GithubIssuesTemplate githubIssuesTemplate:
+                var hiddenAuth = await _context.SecretsOperations.SaveToKeyvault(githubIssuesTemplate.Auth);
+                return githubIssuesTemplate with { Auth = hiddenAuth };
+            case TeamsTemplate teamsTemplate:
+                var hiddenUrl = await _context.SecretsOperations.SaveToKeyvault(teamsTemplate.Url);
+                return teamsTemplate with { Url = hiddenUrl };
+            default:
+                throw new ArgumentOutOfRangeException(nameof(notificationTemplate));
+        }
+
+    }
+
     public async Async.Task<Task?> GetRegressionReportTask(RegressionReport report) {
         if (report.CrashTestResult.CrashReport != null) {
+
             return await _context.TaskOperations.GetByJobIdAndTaskId(report.CrashTestResult.CrashReport.JobId, report.CrashTestResult.CrashReport.TaskId);
         }
         if (report.CrashTestResult.NoReproReport != null) {
