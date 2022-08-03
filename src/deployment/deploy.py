@@ -129,29 +129,6 @@ def bicep_to_arm(bicep_template: str) -> str:
     return "azuredeploy-bicep.json"
 
 
-http_functions = [
-    "containers",
-    "download",
-    "info",
-    "instance_config",
-    "jobs",
-    "job_templates",
-    "job_templates_manage",
-    "negotiate",
-    "node",
-    "node_add_ssh_key",
-    "notifications",
-    "pool",
-    "proxy",
-    "repro_vms",
-    "scaleset",
-    "tasks",
-    "webhooks",
-    "webhooks_logs",
-    "webhooks_ping",
-]
-
-
 class Client:
     def __init__(
         self,
@@ -1146,7 +1123,9 @@ class Client:
                     try:
                         # keep the python versions of http function to allow the service to be backward compatible
                         # with older version of the CLI and the agents
-                        if function_name not in http_functions:
+                        if function_name.startswith(
+                            "queue_"
+                        ) or function_name.startswith("timer_"):
                             logger.info(f"disabling PYTHON function: {function_name}")
                             disable_python = "1"
                         else:
