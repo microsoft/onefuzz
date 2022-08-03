@@ -131,7 +131,7 @@ public class Proxy {
                 "ProxyReset");
         }
 
-        var proxyList = await _context.ProxyOperations.SearchByPartitionKeys(new[] { $"request.OkV.Region" }).ToListAsync();
+        var proxyList = await _context.ProxyOperations.SearchByPartitionKeys(new[] { $"{request.OkV.Region}" }).ToListAsync();
 
         foreach (var proxy in proxyList) {
             await _context.ProxyOperations.SetState(proxy, VmState.Stopping);
