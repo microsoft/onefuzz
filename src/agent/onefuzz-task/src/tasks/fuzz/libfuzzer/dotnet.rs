@@ -1,7 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use anyhow::Result;
+use async_trait::async_trait;
 use onefuzz::libfuzzer::LibFuzzer;
+use tokio::process::Command;
 
 use crate::tasks::fuzz::libfuzzer::common;
 
@@ -21,6 +24,14 @@ const LOADER_PATH: &str =
 const LOADER_PATH: &str =
     "/onefuzz/third-party/dotnet-fuzzing-windows/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.exe";
 
+#[cfg(target_os = "linux")]
+const SHARPFUZZ_PATH: &str =
+    "/onefuzz/third-party/dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine";
+
+#[cfg(target_os = "windows")]
+const SHARPFUZZ_PATH: &str =
+    "/onefuzz/third-party/dotnet-fuzzing-windows/sharpfuzz/SharpFuzz.CommandLine.exe";
+
 #[derive(Debug)]
 pub struct LibFuzzerDotnet;
 
@@ -31,6 +42,7 @@ pub struct LibFuzzerDotnetConfig {
     pub target_method: String,
 }
 
+#[async_trait]
 impl common::LibFuzzerType for LibFuzzerDotnet {
     type Config = LibFuzzerDotnetConfig;
 
@@ -59,6 +71,25 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
             env,
             &config.common.setup_dir,
         )
+    }
+
+    async fn extra_setup(config: &common::Config<Self>) -> Result<()> {
+        // Use SharpFuzz to statically instrument the target assembly.
+        let mut cmd = Command::new(SHARPFUZZ_PATH);
+        cmd.arg(&config.extra.target_assembly);
+
+        let mut child = cmd.spawn()?;
+        let status = child.wait().await?;
+
+        if !status.success() {
+            anyhow::bail!(
+                "error instrumenting assembly `{}`: {}",
+                config.extra.target_assembly,
+                status,
+            );
+        }
+
+        Ok(())
     }
 }
 
