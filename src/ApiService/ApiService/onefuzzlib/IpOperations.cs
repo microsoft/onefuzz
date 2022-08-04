@@ -24,20 +24,18 @@ public interface IIpOperations {
 public class IpOperations : IIpOperations {
     private ILogTracer _logTracer;
 
-    private ICreds _creds;
 
     private IOnefuzzContext _context;
 
-    public IpOperations(ILogTracer log, ICreds creds, IOnefuzzContext context) {
+    public IpOperations(ILogTracer log, IOnefuzzContext context) {
         _logTracer = log;
-        _creds = creds;
         _context = context;
     }
 
     public async Async.Task<NetworkInterfaceResource?> GetPublicNic(string resourceGroup, string name) {
         _logTracer.Info($"getting nic: {resourceGroup} {name}");
         try {
-            return await _creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name);
+            return await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name);
         } catch (RequestFailedException) {
             return null;
         }
@@ -47,7 +45,7 @@ public class IpOperations : IIpOperations {
         _logTracer.Info($"getting ip {resourceGroup}:{name}");
 
         try {
-            return await _creds.GetResourceGroupResource().GetPublicIPAddressAsync(name);
+            return await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(name);
         } catch (RequestFailedException) {
             return null;
         }
@@ -55,20 +53,20 @@ public class IpOperations : IIpOperations {
 
     public async System.Threading.Tasks.Task DeleteNic(string resourceGroup, string name) {
         _logTracer.Info($"deleting nic {resourceGroup}:{name}");
-        await _creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name).Result.Value.DeleteAsync(WaitUntil.Started);
+        await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name).Result.Value.DeleteAsync(WaitUntil.Started);
     }
 
     public async System.Threading.Tasks.Task DeleteIp(string resourceGroup, string name) {
         _logTracer.Info($"deleting ip {resourceGroup}:{name}");
-        await _creds.GetResourceGroupResource().GetPublicIPAddressAsync(name).Result.Value.DeleteAsync(WaitUntil.Started);
+        await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(name).Result.Value.DeleteAsync(WaitUntil.Started);
     }
 
     public async Task<string?> GetPublicIp(string resourceId) {
         // TODO: Parts of this function seem redundant, but I'm mirroring
         // the python code exactly. We should revisit this.
         _logTracer.Info($"getting ip for {resourceId}");
-        var resource = await (_creds.GetData(_creds.ParseResourceId(resourceId)));
-        var networkInterfaces = await _creds.GetResourceGroupResource().GetNetworkInterfaceAsync(
+        var resource = await (_context.Creds.GetData(_context.Creds.ParseResourceId(resourceId)));
+        var networkInterfaces = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(
             resource.Data.Name
         );
         var publicIpConfigResource = (await networkInterfaces.Value.GetNetworkInterfaceIPConfigurations().FirstAsync());
@@ -77,10 +75,10 @@ public class IpOperations : IIpOperations {
         if (publicIp == null) {
             return null;
         }
-        resource = _creds.ParseResourceId(publicIp.Id);
+        resource = _context.Creds.ParseResourceId(publicIp.Id);
         try {
-            resource = await _creds.GetData(resource);
-            var publicIpResource = await _creds.GetResourceGroupResource().GetPublicIPAddressAsync(
+            resource = await _context.Creds.GetData(resource);
+            var publicIpResource = await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(
                 resource.Data.Name
             );
             return publicIpResource.Value.Data.IPAddress;
@@ -139,7 +137,7 @@ public class IpOperations : IIpOperations {
         }
 
         try {
-            await _creds.GetResourceGroupResource().GetNetworkInterfaces().CreateOrUpdateAsync(
+            await _context.Creds.GetResourceGroupResource().GetNetworkInterfaces().CreateOrUpdateAsync(
                 WaitUntil.Started,
                 name,
                 networkInterface
