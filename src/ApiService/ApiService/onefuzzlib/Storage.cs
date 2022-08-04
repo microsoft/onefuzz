@@ -115,10 +115,6 @@ public sealed class Storage : IStorage, IDisposable {
                     continue;
                 }
 
-                if (string.IsNullOrEmpty(account.Data.PrimaryEndpoints.Blob)) {
-                    continue;
-                }
-
                 if (!account.Data.Tags.ContainsKey(storageTypeTagKey)
                     || account.Data.Tags[storageTypeTagKey] != "corpus") {
                     continue;

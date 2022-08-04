@@ -1,4 +1,5 @@
-﻿using Azure.ResourceManager.Network;
+﻿using Azure.Core;
+using Azure.ResourceManager.Network;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -48,7 +49,7 @@ public class Network {
         return _context.Subnet.GetSubnet(_name, _name);
     }
 
-    public async Async.Task<string?> GetId() {
+    public async Async.Task<ResourceIdentifier?> GetId() {
         return await _context.Subnet.GetSubnetId(this._name, this._name);
     }
 
@@ -61,7 +62,8 @@ public class Network {
     }
 
     public async Async.Task<bool> Exists() {
-        return !string.IsNullOrEmpty(await GetId());
+        var id = await GetId();
+        return id is not null;
     }
 
     internal Async.Task<VirtualNetworkResource?> GetVnet() {

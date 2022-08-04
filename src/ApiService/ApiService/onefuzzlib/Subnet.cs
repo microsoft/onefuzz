@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Azure;
+using Azure.Core;
 using Azure.ResourceManager.Network;
 
 namespace Microsoft.OneFuzz.Service;
@@ -12,7 +13,7 @@ public interface ISubnet {
 
     Async.Task<OneFuzzResultVoid> CreateVirtualNetwork(string resourceGroup, string name, string region, NetworkConfig networkConfig);
 
-    Async.Task<string?> GetSubnetId(string name, string subnetName);
+    Async.Task<ResourceIdentifier?> GetSubnetId(string name, string subnetName);
 }
 
 public class Subnet : ISubnet {
@@ -75,7 +76,7 @@ public class Subnet : ISubnet {
         return null;
     }
 
-    public async Task<string?> GetSubnetId(string name, string subnetName) {
+    public async Task<ResourceIdentifier?> GetSubnetId(string name, string subnetName) {
         var subnet = await this.GetSubnet(name, subnetName);
         if (subnet != null) {
             return subnet.Id;
