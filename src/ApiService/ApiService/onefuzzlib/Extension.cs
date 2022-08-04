@@ -1,4 +1,6 @@
 ﻿using System.Text.Json;
+using System.Threading.Tasks;
+using Azure.Core;
 using Azure.ResourceManager.Compute;
 using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
@@ -7,8 +9,9 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface IExtensions {
     public Async.Task<IList<VirtualMachineScaleSetExtensionData>> FuzzExtensions(Pool pool, Scaleset scaleset);
-}
 
+    public Async.Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer);
+}
 
 public class Extensions : IExtensions {
     IServiceConfig _serviceConfig;
@@ -18,13 +21,20 @@ public class Extensions : IExtensions {
     IConfigOperations _instanceConfigOps;
     ILogAnalytics _logAnalytics;
 
-    public Extensions(IServiceConfig config, ICreds creds, IQueue queue, IContainers containers, IConfigOperations instanceConfigOps, ILogAnalytics logAnalytics) {
+    IOnefuzzContext _context;
+
+    private static readonly JsonSerializerOptions _extensionSerializerOptions = new JsonSerializerOptions {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    public Extensions(IServiceConfig config, ICreds creds, IQueue queue, IContainers containers, IConfigOperations instanceConfigOps, ILogAnalytics logAnalytics, IOnefuzzContext context) {
         _serviceConfig = config;
         _creds = creds;
         _queue = queue;
         _containers = containers;
         _instanceConfigOps = instanceConfigOps;
         _logAnalytics = logAnalytics;
+        _context = context;
     }
 
     public async Async.Task<Uri?> ConfigUrl(Container container, string fileName, bool withSas) {
@@ -34,8 +44,8 @@ public class Extensions : IExtensions {
             return await _containers.GetFileUrl(container, fileName, StorageType.Config);
     }
 
-    public async Async.Task<IList<VirtualMachineScaleSetExtensionData>> GenericExtensions(string region, Os vmOs) {
-        var extensions = new List<VirtualMachineScaleSetExtensionData>();
+    public async Async.Task<IList<VMExtenionWrapper>> GenericExtensions(AzureLocation region, Os vmOs) {
+        var extensions = new List<VMExtenionWrapper>();
 
         var instanceConfig = await _instanceConfigOps.Fetch();
         extensions.Add(await MonitorExtension(region, vmOs));
@@ -71,19 +81,19 @@ public class Extensions : IExtensions {
         return extensions;
     }
 
-    public static VirtualMachineScaleSetExtensionData KeyVaultExtension(string region, KeyvaultExtensionConfig keyVault, Os vmOs) {
+    public static VMExtenionWrapper KeyVaultExtension(AzureLocation region, KeyvaultExtensionConfig keyVault, Os vmOs) {
         var keyVaultName = keyVault.KeyVaultName;
         var certName = keyVault.CertName;
         var uri = keyVaultName + certName;
 
         if (vmOs == Os.Windows) {
-            return new VirtualMachineScaleSetExtensionData {
-                Name = "KVVMExtensionForWindows",
+            return new VMExtenionWrapper {
+                Location = region,
                 Publisher = "Microsoft.Azure.KeyVault",
                 TypePropertiesType = "KeyVaultForWindows",
                 TypeHandlerVersion = "1.0",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new {
+                Settings = new BinaryData(JsonSerializer.Serialize(new {
                     SecretsManagementSettings = new {
                         PollingIntervalInS = "3600",
                         CertificateStoreName = "MY",
@@ -92,46 +102,46 @@ public class Extensions : IExtensions {
                         RequireInitialSync = true,
                         ObservedCertificates = new string[] { uri },
                     }
-                })
+                }, _extensionSerializerOptions))
             };
         } else if (vmOs == Os.Linux) {
             var certPath = keyVault.CertPath;
             var extensionStore = keyVault.ExtensionStore;
             var certLocation = certPath + extensionStore;
 
-            return new VirtualMachineScaleSetExtensionData {
-                Name = "KVVMExtensionForLinux",
+            return new VMExtenionWrapper {
+                Location = region,
                 Publisher = "Microsoft.Azure.KeyVault",
                 TypePropertiesType = "KeyVaultForLinux",
                 TypeHandlerVersion = "2.0",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new {
+                Settings = new BinaryData(JsonSerializer.Serialize(new {
                     SecretsManagementSettings = new {
                         PollingIntervalInS = "3600",
                         CertificateStoreLocation = certLocation,
                         RequireInitialSync = true,
                         ObservedCertificates = new string[] { uri },
                     }
-                })
+                }, _extensionSerializerOptions))
             };
         } else {
             throw new NotImplementedException($"unsupported os {vmOs}");
         }
     }
 
-    public static VirtualMachineScaleSetExtensionData AzSecExtension(string region) {
-        return new VirtualMachineScaleSetExtensionData {
-            Name = "AzureSecurityLinuxAgent",
+    public static VMExtenionWrapper AzSecExtension(AzureLocation region) {
+        return new VMExtenionWrapper {
+            Location = region,
             Publisher = "Microsoft.Azure.Security.Monitoring",
             TypePropertiesType = "AzureSecurityLinuxAgent",
             TypeHandlerVersion = "2.0",
             AutoUpgradeMinorVersion = true,
-            Settings = new BinaryData(new { EnableGenevaUpload = true, EnableAutoConfig = true })
+            Settings = new BinaryData(JsonSerializer.Serialize(new { EnableGenevaUpload = true, EnableAutoConfig = true }, _extensionSerializerOptions))
         };
 
     }
 
-    public static VirtualMachineScaleSetExtensionData AzMonExtension(string region, AzureMonitorExtensionConfig azureMonitor) {
+    public static VMExtenionWrapper AzMonExtension(AzureLocation region, AzureMonitorExtensionConfig azureMonitor) {
         var authId = azureMonitor.MonitoringGCSAuthId;
         var configVersion = azureMonitor.ConfigVersion;
         var moniker = azureMonitor.Moniker;
@@ -140,15 +150,15 @@ public class Extensions : IExtensions {
         var account = azureMonitor.MonitoringGCSAccount;
         var authIdType = azureMonitor.MonitoringGCSAuthIdType;
 
-        return new VirtualMachineScaleSetExtensionData {
-            Name = "AzureMonitorLinuxAgent",
+        return new VMExtenionWrapper {
+            Location = region,
             Publisher = "Microsoft.Azure.Monitor",
             TypePropertiesType = "AzureMonitorLinuxAgent",
             AutoUpgradeMinorVersion = true,
             TypeHandlerVersion = "1.0",
-            Settings = new BinaryData(new { GCS_AUTO_CONFIG = true }),
+            Settings = new BinaryData(JsonSerializer.Serialize(new { GCS_AUTO_CONFIG = true }, _extensionSerializerOptions)),
             ProtectedSettings =
-                new BinaryData(
+                new BinaryData(JsonSerializer.Serialize(
                     new {
                         ConfigVersion = configVersion,
                         Moniker = moniker,
@@ -158,15 +168,13 @@ public class Extensions : IExtensions {
                         MonitoringGCSRegion = region,
                         MonitoringGCSAuthId = authId,
                         MonitoringGCSAuthIdType = authIdType,
-                    })
+                    }, _extensionSerializerOptions))
         };
     }
 
-
-
-    public static VirtualMachineScaleSetExtensionData GenevaExtension(string region) {
-        return new VirtualMachineScaleSetExtensionData {
-            Name = "Microsoft.Azure.Geneva.GenevaMonitoring",
+    public static VMExtenionWrapper GenevaExtension(AzureLocation region) {
+        return new VMExtenionWrapper {
+            Location = region,
             Publisher = "Microsoft.Azure.Geneva",
             TypePropertiesType = "GenevaMonitoring",
             TypeHandlerVersion = "2.0",
@@ -175,12 +183,12 @@ public class Extensions : IExtensions {
         };
     }
 
-    public static VirtualMachineScaleSetExtensionData? DependencyExtension(string region, Os vmOs) {
+    public static VMExtenionWrapper? DependencyExtension(AzureLocation region, Os vmOs) {
 
         if (vmOs == Os.Windows) {
-            return new VirtualMachineScaleSetExtensionData {
+            return new VMExtenionWrapper {
+                Location = region,
                 AutoUpgradeMinorVersion = true,
-                Name = "DependencyAgentWindows",
                 Publisher = "Microsoft.Azure.Monitoring.DependencyAgent",
                 TypePropertiesType = "DependencyAgentWindows",
                 TypeHandlerVersion = "9.5"
@@ -239,8 +247,8 @@ public class Extensions : IExtensions {
     }
 
     public async Async.Task UpdateManagedScripts() {
-        var instanceSpecificSetupSas = _containers.GetContainerSasUrl(new Container("instance-specific-setup"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
-        var toolsSas = _containers.GetContainerSasUrl(new Container("tools"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
+        var instanceSpecificSetupSas = await _containers.GetContainerSasUrl(new Container("instance-specific-setup"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
+        var toolsSas = await _containers.GetContainerSasUrl(new Container("tools"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
 
         string[] commands = {
             $"azcopy sync '{instanceSpecificSetupSas}' instance-specific-setup",
@@ -251,8 +259,7 @@ public class Extensions : IExtensions {
         await _containers.SaveBlob(new Container("vm-scripts"), "managed.sh", string.Join("\n", commands) + "\n", StorageType.Config);
     }
 
-
-    public async Async.Task<VirtualMachineScaleSetExtensionData> AgentConfig(string region, Os vmOs, AgentMode mode, List<Uri>? urls = null, bool withSas = false) {
+    public async Async.Task<VMExtenionWrapper> AgentConfig(AzureLocation region, Os vmOs, AgentMode mode, List<Uri>? urls = null, bool withSas = false) {
         await UpdateManagedScripts();
         var urlsUpdated = urls ?? new();
 
@@ -267,17 +274,18 @@ public class Extensions : IExtensions {
             urlsUpdated.Add(toolsSetup);
             urlsUpdated.Add(toolsOneFuzz);
 
-            var toExecuteCmd = $"powershell -ExecutionPolicy Unrestricted -File win64/setup.ps1 -mode {mode}";
+            var toExecuteCmd = $"powershell -ExecutionPolicy Unrestricted -File win64/setup.ps1 -mode {mode.ToString().ToLowerInvariant()}";
 
-            var extension = new VirtualMachineScaleSetExtensionData {
+            var extension = new VMExtenionWrapper {
                 Name = "CustomScriptExtension",
                 TypePropertiesType = "CustomScriptExtension",
                 Publisher = "Microsoft.Compute",
+                Location = region,
                 ForceUpdateTag = Guid.NewGuid().ToString(),
                 TypeHandlerVersion = "1.9",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { commandToExecute = toExecuteCmd, fileUrls = urlsUpdated }),
-                ProtectedSettings = new BinaryData(new { managedIdentity = new Dictionary<string, string>() })
+                Settings = new BinaryData(JsonSerializer.Serialize(new { commandToExecute = toExecuteCmd, fileUris = urlsUpdated }, _extensionSerializerOptions)),
+                ProtectedSettings = new BinaryData(JsonSerializer.Serialize(new { managedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions))
             };
             return extension;
         } else if (vmOs == Os.Linux) {
@@ -290,17 +298,20 @@ public class Extensions : IExtensions {
             urlsUpdated.Add(toolsAzCopy);
             urlsUpdated.Add(toolsSetup);
 
-            var toExecuteCmd = $"sh setup.sh {mode}";
+            var toExecuteCmd = $"sh setup.sh {mode.ToString().ToLowerInvariant()}";
+            var extensionSettings = JsonSerializer.Serialize(new { CommandToExecute = toExecuteCmd, FileUris = urlsUpdated }, _extensionSerializerOptions);
+            var protectedExtensionSettings = JsonSerializer.Serialize(new { ManagedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions);
 
-            var extension = new VirtualMachineScaleSetExtensionData {
+            var extension = new VMExtenionWrapper {
                 Name = "CustomScript",
+                Publisher = "Microsoft.Azure.Extensions",
                 TypePropertiesType = "CustomScript",
-                Publisher = "Microsoft.Azure.Extension",
-                ForceUpdateTag = Guid.NewGuid().ToString(),
                 TypeHandlerVersion = "2.1",
+                Location = region,
+                ForceUpdateTag = Guid.NewGuid().ToString(),
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { CommandToExecute = toExecuteCmd, FileUrls = urlsUpdated }),
-                ProtectedSettings = new BinaryData(new { ManagedIdentity = new Dictionary<string, string>() })
+                Settings = new BinaryData(extensionSettings),
+                ProtectedSettings = new BinaryData(protectedExtensionSettings)
             };
             return extension;
         }
@@ -308,28 +319,31 @@ public class Extensions : IExtensions {
         throw new NotImplementedException($"unsupported OS: {vmOs}");
     }
 
-    public async Async.Task<VirtualMachineScaleSetExtensionData> MonitorExtension(string region, Os vmOs) {
+    public async Async.Task<VMExtenionWrapper> MonitorExtension(AzureLocation region, Os vmOs) {
         var settings = await _logAnalytics.GetMonitorSettings();
-
+        var extensionSettings = JsonSerializer.Serialize(new { WorkspaceId = settings.Id }, _extensionSerializerOptions);
+        var protectedExtensionSettings = JsonSerializer.Serialize(new { WorkspaceKey = settings.Key }, _extensionSerializerOptions);
         if (vmOs == Os.Windows) {
-            return new VirtualMachineScaleSetExtensionData {
+            return new VMExtenionWrapper {
+                Location = region,
                 Name = "OMSExtension",
                 TypePropertiesType = "MicrosoftMonitoringAgent",
                 Publisher = "Microsoft.EnterpriseCloud.Monitoring",
                 TypeHandlerVersion = "1.0",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { WorkSpaceId = settings.Id }),
-                ProtectedSettings = new BinaryData(new { WorkspaceKey = settings.Key })
+                Settings = new BinaryData(extensionSettings),
+                ProtectedSettings = new BinaryData(protectedExtensionSettings)
             };
         } else if (vmOs == Os.Linux) {
-            return new VirtualMachineScaleSetExtensionData {
+            return new VMExtenionWrapper {
+                Location = region,
                 Name = "OMSExtension",
                 TypePropertiesType = "OmsAgentForLinux",
                 Publisher = "Microsoft.EnterpriseCloud.Monitoring",
                 TypeHandlerVersion = "1.12",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(new { WorkSpaceId = settings.Id }),
-                ProtectedSettings = new BinaryData(new { WorkspaceKey = settings.Key })
+                Settings = new BinaryData(extensionSettings),
+                ProtectedSettings = new BinaryData(protectedExtensionSettings)
             };
         } else {
             throw new NotImplementedException($"unsupported os: {vmOs}");
@@ -346,6 +360,100 @@ public class Extensions : IExtensions {
         var extensions = await GenericExtensions(scaleset.Region, pool.Os);
 
         extensions.Add(fuzzExtension);
-        return extensions;
+        return extensions.Select(extension => extension.GetAsVirtualMachineScaleSetExtension()).ToList();
     }
+
+    public async Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer) {
+        // TODO: what about contents of repro.ps1 / repro.sh?
+        var report = await _context.Reports.GetReport(reproConfig.Container, reproConfig.Path);
+        report.EnsureNotNull($"invalid report: {reproConfig}");
+        report?.InputBlob.EnsureNotNull("unable to perform reproduction without an input blob");
+
+        var commands = new List<string>();
+        if (setupContainer != null) {
+            var containerSasUrl = await _context.Containers.GetContainerSasUrl(
+                setupContainer,
+                StorageType.Corpus,
+                BlobContainerSasPermissions.Read | BlobContainerSasPermissions.List
+            );
+            commands.Add(
+                $"azcopy sync '{containerSasUrl}' ./setup"
+            );
+        }
+
+        var urls = new List<Uri>()
+        {
+            (await _context.Containers.GetFileSasUrl(
+                reproConfig.Container,
+                reproConfig.Path,
+                StorageType.Corpus,
+                BlobSasPermissions.Read
+            )),
+            (await _context.Containers.GetFileSasUrl(
+                report?.InputBlob?.container!,
+                report?.InputBlob?.Name!,
+                StorageType.Corpus,
+                BlobSasPermissions.Read
+            ))
+        };
+
+        List<string> reproFiles;
+        string taskScript;
+        string scriptName;
+        if (reproOs == Os.Windows) {
+            reproFiles = new List<string>()
+            {
+                $"{reproId}/repro.ps1"
+            };
+            taskScript = string.Join("\r\n", commands);
+            scriptName = "task-setup.ps1";
+        } else {
+            reproFiles = new List<string>()
+            {
+                $"{reproId}/repro.sh",
+                $"{reproId}/repro-stdout.sh"
+            };
+            commands.Add("chmod -R +x setup");
+            taskScript = string.Join("\n", commands);
+            scriptName = "task-setup.sh";
+        }
+
+        await _context.Containers.SaveBlob(
+            new Container("task-configs"),
+            $"{reproId}/{scriptName}",
+            taskScript,
+            StorageType.Config
+        );
+
+        foreach (var reproFile in reproFiles) {
+            urls.AddRange(new List<Uri>()
+            {
+                (await _context.Containers.GetFileSasUrl(
+                    new Container("repro-scripts"),
+                    reproFile,
+                    StorageType.Config,
+                    BlobSasPermissions.Read
+                )),
+                (await _context.Containers.GetFileSasUrl(
+                    new Container("task-configs"),
+                    $"{reproId}/{scriptName}",
+                    StorageType.Config,
+                    BlobSasPermissions.Read
+                ))
+            });
+        }
+
+        var baseExtension = await AgentConfig(region, reproOs, AgentMode.Repro, urls: urls, withSas: true);
+        var extensions = await GenericExtensions(region, reproOs);
+        extensions.Add(baseExtension);
+
+        var extensionsDict = new Dictionary<string, VirtualMachineExtensionData>();
+        foreach (var extension in extensions) {
+            var (name, data) = extension.GetAsVirtualMachineExtension();
+            extensionsDict.Add(name, data);
+        }
+
+        return extensionsDict;
+    }
+
 }
