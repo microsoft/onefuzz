@@ -430,7 +430,7 @@ mod tests {
         let input_file = temp_setup_dir.path().join("input.txt");
         write_file(&input_file, "input").await?;
 
-        let fuzzer = LibFuzzer::new(bad_bin, &options, &env, &temp_setup_dir.path());
+        let fuzzer = LibFuzzer::new(bad_bin, options.clone(), env.clone(), &temp_setup_dir.path());
 
         // verify catching bad exits with -help=1
         assert!(
@@ -453,7 +453,7 @@ mod tests {
             "checking false without inputs"
         );
 
-        let fuzzer = LibFuzzer::new(good_bin, &options, &env, &temp_setup_dir.path());
+        let fuzzer = LibFuzzer::new(good_bin, options.clone(), env.clone(), &temp_setup_dir.path());
         // verify good exits with -help=1
         assert!(
             fuzzer.verify(true, None).await.is_ok(),
