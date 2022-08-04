@@ -226,8 +226,8 @@ where
 
         let fuzzer = LibFuzzer::new(
             &self.config.target_exe,
-            &self.config.target_options,
-            &self.config.target_env,
+            self.config.target_options.clone(),
+            self.config.target_env.clone(),
             &self.config.common.setup_dir,
         );
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs).await?;
