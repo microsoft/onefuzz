@@ -88,7 +88,7 @@ pub enum Config {
     DotnetCoverage(coverage::dotnet::Config),
 
     #[serde(alias = "libfuzzer_fuzz")]
-    LibFuzzerFuzz(fuzz::libfuzzer_fuzz::Config),
+    LibFuzzerFuzz(fuzz::libfuzzer::generic::Config),
 
     #[serde(alias = "libfuzzer_crash_report")]
     LibFuzzerReport(report::libfuzzer_report::Config),
@@ -225,7 +225,7 @@ impl Config {
                     .await
             }
             Config::LibFuzzerFuzz(config) => {
-                fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
+                fuzz::libfuzzer::generic::LibFuzzerFuzzTask::new(config)?
                     .run()
                     .await
             }

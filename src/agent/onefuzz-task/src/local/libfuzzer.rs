@@ -16,8 +16,8 @@ use crate::{
     },
     tasks::{
         analysis::generic::run as run_analysis, config::CommonConfig,
-        fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask, regression::libfuzzer::LibFuzzerRegressionTask,
-        report::libfuzzer_report::ReportTask,
+        fuzz::libfuzzer::generic::LibFuzzerFuzzTask,
+        regression::libfuzzer::LibFuzzerRegressionTask, report::libfuzzer_report::ReportTask,
     },
 };
 #[cfg(any(target_os = "linux", target_os = "windows"))]

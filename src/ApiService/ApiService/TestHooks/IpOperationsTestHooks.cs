@@ -30,7 +30,7 @@ namespace ApiService.TestHooks {
             var nic = await _ipOps.GetPublicNic(rg, name);
             if (nic != null) {
                 var resp = req.CreateResponse(HttpStatusCode.OK);
-                await resp.WriteStringAsync(nic.Get().Value.Data.Name);
+                await resp.WriteStringAsync((await nic.GetAsync()).Value.Data.Name);
                 return resp;
             } else {
                 return req.CreateResponse(HttpStatusCode.NotFound);
@@ -50,7 +50,7 @@ namespace ApiService.TestHooks {
 
             if (ip != null) {
                 var resp = req.CreateResponse(HttpStatusCode.OK);
-                await resp.WriteStringAsync(ip.Get().Value.Data.Name);
+                await resp.WriteStringAsync((await ip.GetAsync()).Value.Data.Name);
                 return resp;
             } else {
                 return req.CreateResponse(HttpStatusCode.NotFound);
