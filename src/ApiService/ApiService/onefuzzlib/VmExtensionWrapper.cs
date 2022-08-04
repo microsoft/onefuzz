@@ -2,7 +2,7 @@
 using Azure.ResourceManager.Compute;
 
 namespace Microsoft.OneFuzz.Service {
-    public class VMExtenionWrapper {
+    public class VMExtensionWrapper {
         public AzureLocation? Location { get; init; }
         public string? Name { get; init; }
         public string? TypePropertiesType { get; init; }
