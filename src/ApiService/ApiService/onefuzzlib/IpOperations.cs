@@ -1,4 +1,4 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure;
@@ -6,8 +6,6 @@ using Azure.Core;
 using Azure.ResourceManager.Network;
 using Azure.ResourceManager.Network.Models;
 using Faithlife.Utility;
-using Azure;
-using Azure.ResourceManager.Network;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -79,7 +77,7 @@ public class IpOperations : IIpOperations {
         var ips = await _networkInterfaceQuery.ListInstancePrivateIps(scalesetId, instance.OkV);
         return ips.FirstOrDefault();
     }
-        
+
     public async Task<string?> GetPublicIp(string resourceId) {
         // TODO: Parts of this function seem redundant, but I'm mirroring
         // the python code exactly. We should revisit this.
@@ -94,7 +92,8 @@ public class IpOperations : IIpOperations {
         if (publicIp == null) {
             return null;
         }
-        resource = _context.Creds.ParseResourceId(publicIp.Id);
+
+        resource = _context.Creds.ParseResourceId(publicIp.Id!);
         try {
             resource = await _context.Creds.GetData(resource);
             var publicIpResource = await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(
@@ -112,7 +111,7 @@ public class IpOperations : IIpOperations {
         var network = await Network.Create(region, _context);
         var subnetId = await network.GetId();
 
-        if (string.IsNullOrEmpty(subnetId)) {
+        if (subnetId is not null) {
             await network.Create();
             return OneFuzzResultVoid.Ok;
         }
@@ -176,7 +175,7 @@ public class IpOperations : IIpOperations {
     public async Async.Task CreateIp(string resourceGroup, string name, string region) {
         var ipParams = new PublicIPAddressData() {
             Location = region,
-            PublicIPAllocationMethod = IPAllocationMethod.Dynamic
+            PublicIPAllocationMethod = NetworkIPAllocationMethod.Dynamic
         };
 
         var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
@@ -191,8 +190,8 @@ public class IpOperations : IIpOperations {
         );
         return;
     }
-    
-    
+
+
     /// <summary>
     /// Query the Scaleset network interface using the rest api directly because
     /// the api does not seems to support this :
@@ -236,6 +235,7 @@ public class IpOperations : IIpOperations {
             }
             return new List<string>();
         }
+    }
 }
 
 
