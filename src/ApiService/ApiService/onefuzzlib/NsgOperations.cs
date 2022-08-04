@@ -24,15 +24,12 @@ namespace Microsoft.OneFuzz.Service {
 
 
     public class NsgOperations : INsgOperations {
-
-        private readonly ICreds _creds;
         private readonly ILogTracer _logTracer;
 
         private readonly IOnefuzzContext _context;
 
 
-        public NsgOperations(ICreds creds, ILogTracer logTracer, IOnefuzzContext context) {
-            _creds = creds;
+        public NsgOperations(ILogTracer logTracer, IOnefuzzContext context) {
             _logTracer = logTracer;
             _context = context;
         }
@@ -84,10 +81,10 @@ namespace Microsoft.OneFuzz.Service {
                 );
             }
 
-            _logTracer.Info($"dissociating nic {nic.Data.Name} with nsg: {_creds.GetBaseResourceGroup()} {nsg.Name}");
+            _logTracer.Info($"dissociating nic {nic.Data.Name} with nsg: {_context.Creds.GetBaseResourceGroup()} {nsg.Name}");
             nic.Data.NetworkSecurityGroup = null;
             try {
-                await _creds.GetResourceGroupResource()
+                await _context.Creds.GetResourceGroupResource()
                     .GetNetworkInterfaces()
                     .CreateOrUpdateAsync(WaitUntil.Started, nic.Data.Name, nic.Data);
             } catch (Exception e) {
@@ -114,7 +111,7 @@ namespace Microsoft.OneFuzz.Service {
 
         public async Async.Task<NetworkSecurityGroupResource?> GetNsg(string name) {
             try {
-                var response = await _creds.GetResourceGroupResource().GetNetworkSecurityGroupAsync(name);
+                var response = await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroupAsync(name);
                 return response?.Value;
             } catch (RequestFailedException ex) {
                 if (ex.ErrorCode == "ResourceNotFound") {
@@ -128,7 +125,7 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         public IAsyncEnumerable<NetworkSecurityGroupResource> ListNsgs() {
-            return _creds.GetResourceGroupResource().GetNetworkSecurityGroups().GetAllAsync();
+            return _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroups().GetAllAsync();
         }
 
         public bool OkToDelete(HashSet<string> active_regions, string nsg_region, string nsg_name) {
@@ -142,7 +139,7 @@ namespace Microsoft.OneFuzz.Service {
         public async Async.Task<bool> StartDeleteNsg(string name) {
             _logTracer.Info($"deleting nsg: {name}");
             try {
-                var nsg = await _creds.GetResourceGroupResource().GetNetworkSecurityGroupAsync(name);
+                var nsg = await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroupAsync(name);
                 await nsg.Value.DeleteAsync(WaitUntil.Completed);
                 return true;
             } catch (RequestFailedException ex) {
@@ -168,7 +165,7 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         private async Task<OneFuzzResultVoid> CreateNsg(string name, string location) {
-            var resourceGroup = _creds.GetBaseResourceGroup();
+            var resourceGroup = _context.Creds.GetBaseResourceGroup();
             _logTracer.Info($"creating nsg {resourceGroup}:{location}:{name}");
 
             var nsgParams = new NetworkSecurityGroupData {
@@ -183,7 +180,7 @@ namespace Microsoft.OneFuzz.Service {
             }
 
             try {
-                await _creds.GetResourceGroupResource().GetNetworkSecurityGroups().CreateOrUpdateAsync(
+                await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroups().CreateOrUpdateAsync(
                     WaitUntil.Started,
                     name,
                     nsgParams
@@ -216,7 +213,7 @@ namespace Microsoft.OneFuzz.Service {
             }
 
             _logTracer.Info(
-                $"setting allowed incoming connection sources for nsg: {_creds.GetBaseResourceGroup()} {name}"
+                $"setting allowed incoming connection sources for nsg: {_context.Creds.GetBaseResourceGroup()} {name}"
             );
 
             var allSources = new List<string>();
@@ -308,7 +305,7 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         public async Task<OneFuzzResultVoid> UpdateNsg(NetworkSecurityGroupData nsg) {
-            _logTracer.Info($"updating nsg {_creds.GetBaseResourceGroup()}:{nsg.Location}:{nsg.Name}");
+            _logTracer.Info($"updating nsg {_context.Creds.GetBaseResourceGroup()}:{nsg.Location}:{nsg.Name}");
 
             try {
                 await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroups().CreateOrUpdateAsync(
