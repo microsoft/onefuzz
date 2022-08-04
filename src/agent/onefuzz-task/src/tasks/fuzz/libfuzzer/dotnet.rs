@@ -21,6 +21,7 @@ const LOADER_PATH: &str =
 const LOADER_PATH: &str =
     "/onefuzz/third-party/dotnet-fuzzing-windows/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.exe";
 
+#[derive(Debug)]
 pub struct LibFuzzerDotnet;
 
 #[derive(Debug, Deserialize)]
