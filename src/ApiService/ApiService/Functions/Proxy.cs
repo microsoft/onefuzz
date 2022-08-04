@@ -16,7 +16,7 @@ public class Proxy {
         _context = context;
     }
 
-    [Function("Node")]
+    [Function("proxy")]
     public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req) {
         return _auth.CallIfUser(req, r => r.Method switch {
             "GET" => Get(r),
