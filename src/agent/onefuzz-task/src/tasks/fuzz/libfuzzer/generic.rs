@@ -18,8 +18,8 @@ impl common::LibFuzzerType for GenericLibFuzzer {
     fn from_config(config: &common::Config<Self>) -> LibFuzzer {
         LibFuzzer::new(
             &config.target_exe,
-            &config.target_options,
-            &config.target_env,
+            config.target_options.clone(),
+            config.target_env.clone(),
             &config.common.setup_dir,
         )
     }
