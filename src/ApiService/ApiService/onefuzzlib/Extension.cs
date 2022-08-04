@@ -247,8 +247,8 @@ public class Extensions : IExtensions {
     }
 
     public async Async.Task UpdateManagedScripts() {
-        var instanceSpecificSetupSas = _containers.GetContainerSasUrl(new Container("instance-specific-setup"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
-        var toolsSas = _containers.GetContainerSasUrl(new Container("tools"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
+        var instanceSpecificSetupSas = await _containers.GetContainerSasUrl(new Container("instance-specific-setup"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
+        var toolsSas = await _containers.GetContainerSasUrl(new Container("tools"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
 
         string[] commands = {
             $"azcopy sync '{instanceSpecificSetupSas}' instance-specific-setup",
@@ -274,13 +274,13 @@ public class Extensions : IExtensions {
             urlsUpdated.Add(toolsSetup);
             urlsUpdated.Add(toolsOneFuzz);
 
-            var toExecuteCmd = $"powershell -ExecutionPolicy Unrestricted -File win64/setup.ps1 -mode {mode}";
+            var toExecuteCmd = $"powershell -ExecutionPolicy Unrestricted -File win64/setup.ps1 -mode {mode.ToString().ToLowerInvariant()}";
 
             var extension = new VMExtenionWrapper {
-                Location = region,
                 Name = "CustomScriptExtension",
                 TypePropertiesType = "CustomScriptExtension",
                 Publisher = "Microsoft.Compute",
+                Location = region,
                 ForceUpdateTag = Guid.NewGuid().ToString(),
                 TypeHandlerVersion = "1.9",
                 AutoUpgradeMinorVersion = true,
@@ -298,18 +298,20 @@ public class Extensions : IExtensions {
             urlsUpdated.Add(toolsAzCopy);
             urlsUpdated.Add(toolsSetup);
 
-            var toExecuteCmd = $"sh setup.sh {mode}";
+            var toExecuteCmd = $"sh setup.sh {mode.ToString().ToLowerInvariant()}";
+            var extensionSettings = JsonSerializer.Serialize(new { CommandToExecute = toExecuteCmd, FileUris = urlsUpdated }, _extensionSerializerOptions);
+            var protectedExtensionSettings = JsonSerializer.Serialize(new { ManagedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions);
 
             var extension = new VMExtenionWrapper {
-                Location = region,
                 Name = "CustomScript",
-                TypePropertiesType = "CustomScript",
                 Publisher = "Microsoft.Azure.Extensions",
-                ForceUpdateTag = Guid.NewGuid().ToString(),
+                TypePropertiesType = "CustomScript",
                 TypeHandlerVersion = "2.1",
+                Location = region,
+                ForceUpdateTag = Guid.NewGuid().ToString(),
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(JsonSerializer.Serialize(new { CommandToExecute = toExecuteCmd, FileUris = urlsUpdated }, _extensionSerializerOptions)),
-                ProtectedSettings = new BinaryData(JsonSerializer.Serialize(new { ManagedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions))
+                Settings = new BinaryData(extensionSettings),
+                ProtectedSettings = new BinaryData(protectedExtensionSettings)
             };
             return extension;
         }
