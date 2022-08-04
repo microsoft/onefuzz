@@ -1,4 +1,4 @@
-using Azure.Core;
+﻿using Azure.Core;
 using Azure.ResourceManager.Compute;
 
 namespace Microsoft.OneFuzz.Service {

@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager.Compute;
 
@@ -20,7 +20,7 @@ public class ImageOperations : IImageOperations {
         string? name = null;
         try {
             var parsed = _context.Creds.ParseResourceId(image);
-            var _ = !parsed.HasData ? await parsed.GetAsync() : null;
+            parsed = await _context.Creds.GetData(parsed);
             if (string.Equals(parsed.Id.ResourceType, "galleries", StringComparison.OrdinalIgnoreCase)) {
                 try {
                     // This is not _exactly_ the same as the python code  

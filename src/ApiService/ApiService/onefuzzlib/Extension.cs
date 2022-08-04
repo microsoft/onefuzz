@@ -89,6 +89,7 @@ public class Extensions : IExtensions {
         if (vmOs == Os.Windows) {
             return new VMExtenionWrapper {
                 Location = region,
+                Name = "KVVMExtensionForWindows",
                 Publisher = "Microsoft.Azure.KeyVault",
                 TypePropertiesType = "KeyVaultForWindows",
                 TypeHandlerVersion = "1.0",
@@ -111,6 +112,7 @@ public class Extensions : IExtensions {
 
             return new VMExtenionWrapper {
                 Location = region,
+                Name = "KVVMExtensionForLinux",
                 Publisher = "Microsoft.Azure.KeyVault",
                 TypePropertiesType = "KeyVaultForLinux",
                 TypeHandlerVersion = "2.0",
@@ -132,6 +134,7 @@ public class Extensions : IExtensions {
     public static VMExtenionWrapper AzSecExtension(AzureLocation region) {
         return new VMExtenionWrapper {
             Location = region,
+            Name = "AzureSecurityLinuxAgent",
             Publisher = "Microsoft.Azure.Security.Monitoring",
             TypePropertiesType = "AzureSecurityLinuxAgent",
             TypeHandlerVersion = "2.0",
@@ -152,6 +155,7 @@ public class Extensions : IExtensions {
 
         return new VMExtenionWrapper {
             Location = region,
+            Name = "AzureMonitorLinuxAgent",
             Publisher = "Microsoft.Azure.Monitor",
             TypePropertiesType = "AzureMonitorLinuxAgent",
             AutoUpgradeMinorVersion = true,
@@ -175,6 +179,7 @@ public class Extensions : IExtensions {
     public static VMExtenionWrapper GenevaExtension(AzureLocation region) {
         return new VMExtenionWrapper {
             Location = region,
+            Name = "Microsoft.Azure.Geneva.GenevaMonitoring",
             Publisher = "Microsoft.Azure.Geneva",
             TypePropertiesType = "GenevaMonitoring",
             TypeHandlerVersion = "2.0",
@@ -188,6 +193,7 @@ public class Extensions : IExtensions {
         if (vmOs == Os.Windows) {
             return new VMExtenionWrapper {
                 Location = region,
+                Name = "DependencyAgentWindows",
                 AutoUpgradeMinorVersion = true,
                 Publisher = "Microsoft.Azure.Monitoring.DependencyAgent",
                 TypePropertiesType = "DependencyAgentWindows",
@@ -383,18 +389,18 @@ public class Extensions : IExtensions {
 
         var urls = new List<Uri>()
         {
-            (await _context.Containers.GetFileSasUrl(
+            await _context.Containers.GetFileSasUrl(
                 reproConfig.Container,
                 reproConfig.Path,
                 StorageType.Corpus,
                 BlobSasPermissions.Read
-            )),
-            (await _context.Containers.GetFileSasUrl(
+            ),
+            await _context.Containers.GetFileSasUrl(
                 report?.InputBlob?.container!,
                 report?.InputBlob?.Name!,
                 StorageType.Corpus,
                 BlobSasPermissions.Read
-            ))
+            )
         };
 
         List<string> reproFiles;
@@ -428,18 +434,18 @@ public class Extensions : IExtensions {
         foreach (var reproFile in reproFiles) {
             urls.AddRange(new List<Uri>()
             {
-                (await _context.Containers.GetFileSasUrl(
+                await _context.Containers.GetFileSasUrl(
                     new Container("repro-scripts"),
                     reproFile,
                     StorageType.Config,
                     BlobSasPermissions.Read
-                )),
-                (await _context.Containers.GetFileSasUrl(
+                ),
+                await _context.Containers.GetFileSasUrl(
                     new Container("task-configs"),
                     $"{reproId}/{scriptName}",
                     StorageType.Config,
                     BlobSasPermissions.Read
-                ))
+                )
             });
         }
 
