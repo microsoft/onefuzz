@@ -14,40 +14,27 @@ public interface IExtensions {
 }
 
 public class Extensions : IExtensions {
-    IServiceConfig _serviceConfig;
-    ICreds _creds;
-    IQueue _queue;
-    IContainers _containers;
-    IConfigOperations _instanceConfigOps;
-    ILogAnalytics _logAnalytics;
-
     IOnefuzzContext _context;
 
     private static readonly JsonSerializerOptions _extensionSerializerOptions = new JsonSerializerOptions {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public Extensions(IServiceConfig config, ICreds creds, IQueue queue, IContainers containers, IConfigOperations instanceConfigOps, ILogAnalytics logAnalytics, IOnefuzzContext context) {
-        _serviceConfig = config;
-        _creds = creds;
-        _queue = queue;
-        _containers = containers;
-        _instanceConfigOps = instanceConfigOps;
-        _logAnalytics = logAnalytics;
+    public Extensions(IOnefuzzContext context) {
         _context = context;
     }
 
     public async Async.Task<Uri?> ConfigUrl(Container container, string fileName, bool withSas) {
         if (withSas)
-            return await _containers.GetFileSasUrl(container, fileName, StorageType.Config, BlobSasPermissions.Read);
+            return await _context.Containers.GetFileSasUrl(container, fileName, StorageType.Config, BlobSasPermissions.Read);
         else
-            return await _containers.GetFileUrl(container, fileName, StorageType.Config);
+            return await _context.Containers.GetFileUrl(container, fileName, StorageType.Config);
     }
 
-    public async Async.Task<IList<VMExtenionWrapper>> GenericExtensions(AzureLocation region, Os vmOs) {
-        var extensions = new List<VMExtenionWrapper>();
+    public async Async.Task<IList<VMExtensionWrapper>> GenericExtensions(AzureLocation region, Os vmOs) {
+        var extensions = new List<VMExtensionWrapper>();
 
-        var instanceConfig = await _instanceConfigOps.Fetch();
+        var instanceConfig = await _context.ConfigOperations.Fetch();
         extensions.Add(await MonitorExtension(region, vmOs));
 
         var depenency = DependencyExtension(region, vmOs);
@@ -81,14 +68,15 @@ public class Extensions : IExtensions {
         return extensions;
     }
 
-    public static VMExtenionWrapper KeyVaultExtension(AzureLocation region, KeyvaultExtensionConfig keyVault, Os vmOs) {
+    public static VMExtensionWrapper KeyVaultExtension(AzureLocation region, KeyvaultExtensionConfig keyVault, Os vmOs) {
         var keyVaultName = keyVault.KeyVaultName;
         var certName = keyVault.CertName;
         var uri = keyVaultName + certName;
 
         if (vmOs == Os.Windows) {
-            return new VMExtenionWrapper {
+            return new VMExtensionWrapper {
                 Location = region,
+                Name = "KVVMExtensionForWindows",
                 Publisher = "Microsoft.Azure.KeyVault",
                 TypePropertiesType = "KeyVaultForWindows",
                 TypeHandlerVersion = "1.0",
@@ -109,8 +97,9 @@ public class Extensions : IExtensions {
             var extensionStore = keyVault.ExtensionStore;
             var certLocation = certPath + extensionStore;
 
-            return new VMExtenionWrapper {
+            return new VMExtensionWrapper {
                 Location = region,
+                Name = "KVVMExtensionForLinux",
                 Publisher = "Microsoft.Azure.KeyVault",
                 TypePropertiesType = "KeyVaultForLinux",
                 TypeHandlerVersion = "2.0",
@@ -129,9 +118,10 @@ public class Extensions : IExtensions {
         }
     }
 
-    public static VMExtenionWrapper AzSecExtension(AzureLocation region) {
-        return new VMExtenionWrapper {
+    public static VMExtensionWrapper AzSecExtension(AzureLocation region) {
+        return new VMExtensionWrapper {
             Location = region,
+            Name = "AzureSecurityLinuxAgent",
             Publisher = "Microsoft.Azure.Security.Monitoring",
             TypePropertiesType = "AzureSecurityLinuxAgent",
             TypeHandlerVersion = "2.0",
@@ -141,7 +131,7 @@ public class Extensions : IExtensions {
 
     }
 
-    public static VMExtenionWrapper AzMonExtension(AzureLocation region, AzureMonitorExtensionConfig azureMonitor) {
+    public static VMExtensionWrapper AzMonExtension(AzureLocation region, AzureMonitorExtensionConfig azureMonitor) {
         var authId = azureMonitor.MonitoringGCSAuthId;
         var configVersion = azureMonitor.ConfigVersion;
         var moniker = azureMonitor.Moniker;
@@ -150,8 +140,9 @@ public class Extensions : IExtensions {
         var account = azureMonitor.MonitoringGCSAccount;
         var authIdType = azureMonitor.MonitoringGCSAuthIdType;
 
-        return new VMExtenionWrapper {
+        return new VMExtensionWrapper {
             Location = region,
+            Name = "AzureMonitorLinuxAgent",
             Publisher = "Microsoft.Azure.Monitor",
             TypePropertiesType = "AzureMonitorLinuxAgent",
             AutoUpgradeMinorVersion = true,
@@ -172,9 +163,10 @@ public class Extensions : IExtensions {
         };
     }
 
-    public static VMExtenionWrapper GenevaExtension(AzureLocation region) {
-        return new VMExtenionWrapper {
+    public static VMExtensionWrapper GenevaExtension(AzureLocation region) {
+        return new VMExtensionWrapper {
             Location = region,
+            Name = "Microsoft.Azure.Geneva.GenevaMonitoring",
             Publisher = "Microsoft.Azure.Geneva",
             TypePropertiesType = "GenevaMonitoring",
             TypeHandlerVersion = "2.0",
@@ -183,11 +175,12 @@ public class Extensions : IExtensions {
         };
     }
 
-    public static VMExtenionWrapper? DependencyExtension(AzureLocation region, Os vmOs) {
+    public static VMExtensionWrapper? DependencyExtension(AzureLocation region, Os vmOs) {
 
         if (vmOs == Os.Windows) {
-            return new VMExtenionWrapper {
+            return new VMExtensionWrapper {
                 Location = region,
+                Name = "DependencyAgentWindows",
                 AutoUpgradeMinorVersion = true,
                 Publisher = "Microsoft.Azure.Monitoring.DependencyAgent",
                 TypePropertiesType = "DependencyAgentWindows",
@@ -210,22 +203,22 @@ public class Extensions : IExtensions {
 
 
     public async Async.Task<Uri?> BuildPoolConfig(Pool pool) {
-        var instanceId = await _containers.GetInstanceId();
+        var instanceId = await _context.Containers.GetInstanceId();
 
-        var queueSas = await _queue.GetQueueSas("node-heartbeat", StorageType.Config, QueueSasPermissions.Add);
+        var queueSas = await _context.Queue.GetQueueSas("node-heartbeat", StorageType.Config, QueueSasPermissions.Add);
         var config = new AgentConfig(
             ClientCredentials: null,
-            OneFuzzUrl: _creds.GetInstanceUrl(),
+            OneFuzzUrl: _context.Creds.GetInstanceUrl(),
             PoolName: pool.Name,
             HeartbeatQueue: queueSas,
-            InstanceTelemetryKey: _serviceConfig.ApplicationInsightsInstrumentationKey,
-            MicrosoftTelemetryKey: _serviceConfig.OneFuzzTelemetry,
-            MultiTenantDomain: _serviceConfig.MultiTenantDomain,
+            InstanceTelemetryKey: _context.ServiceConfiguration.ApplicationInsightsInstrumentationKey,
+            MicrosoftTelemetryKey: _context.ServiceConfiguration.OneFuzzTelemetry,
+            MultiTenantDomain: _context.ServiceConfiguration.MultiTenantDomain,
             InstanceId: instanceId
             );
 
         var fileName = $"{pool.Name}/config.json";
-        await _containers.SaveBlob(new Container("vm-scripts"), fileName, (JsonSerializer.Serialize(config, EntityConverter.GetJsonSerializerOptions())), StorageType.Config);
+        await _context.Containers.SaveBlob(new Container("vm-scripts"), fileName, (JsonSerializer.Serialize(config, EntityConverter.GetJsonSerializerOptions())), StorageType.Config);
         return await ConfigUrl(new Container("vm-scripts"), fileName, false);
     }
 
@@ -242,24 +235,24 @@ public class Extensions : IExtensions {
             commands.Add($"Set-Content -Path {sshPath} -Value \"{sshKey}\"");
         }
 
-        await _containers.SaveBlob(new Container("vm-scripts"), fileName, string.Join(sep, commands) + sep, StorageType.Config);
-        return await _containers.GetFileUrl(new Container("vm-scripts"), fileName, StorageType.Config);
+        await _context.Containers.SaveBlob(new Container("vm-scripts"), fileName, string.Join(sep, commands) + sep, StorageType.Config);
+        return await _context.Containers.GetFileUrl(new Container("vm-scripts"), fileName, StorageType.Config);
     }
 
     public async Async.Task UpdateManagedScripts() {
-        var instanceSpecificSetupSas = await _containers.GetContainerSasUrl(new Container("instance-specific-setup"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
-        var toolsSas = await _containers.GetContainerSasUrl(new Container("tools"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
+        var instanceSpecificSetupSas = await _context.Containers.GetContainerSasUrl(new Container("instance-specific-setup"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
+        var toolsSas = await _context.Containers.GetContainerSasUrl(new Container("tools"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
 
         string[] commands = {
             $"azcopy sync '{instanceSpecificSetupSas}' instance-specific-setup",
             $"azcopy sync '{toolsSas}' tools"
         };
 
-        await _containers.SaveBlob(new Container("vm-scripts"), "managed.ps1", string.Join("\r\n", commands) + "\r\n", StorageType.Config);
-        await _containers.SaveBlob(new Container("vm-scripts"), "managed.sh", string.Join("\n", commands) + "\n", StorageType.Config);
+        await _context.Containers.SaveBlob(new Container("vm-scripts"), "managed.ps1", string.Join("\r\n", commands) + "\r\n", StorageType.Config);
+        await _context.Containers.SaveBlob(new Container("vm-scripts"), "managed.sh", string.Join("\n", commands) + "\n", StorageType.Config);
     }
 
-    public async Async.Task<VMExtenionWrapper> AgentConfig(AzureLocation region, Os vmOs, AgentMode mode, List<Uri>? urls = null, bool withSas = false) {
+    public async Async.Task<VMExtensionWrapper> AgentConfig(AzureLocation region, Os vmOs, AgentMode mode, List<Uri>? urls = null, bool withSas = false) {
         await UpdateManagedScripts();
         var urlsUpdated = urls ?? new();
 
@@ -276,7 +269,7 @@ public class Extensions : IExtensions {
 
             var toExecuteCmd = $"powershell -ExecutionPolicy Unrestricted -File win64/setup.ps1 -mode {mode.ToString().ToLowerInvariant()}";
 
-            var extension = new VMExtenionWrapper {
+            var extension = new VMExtensionWrapper {
                 Name = "CustomScriptExtension",
                 TypePropertiesType = "CustomScriptExtension",
                 Publisher = "Microsoft.Compute",
@@ -302,7 +295,7 @@ public class Extensions : IExtensions {
             var extensionSettings = JsonSerializer.Serialize(new { CommandToExecute = toExecuteCmd, FileUris = urlsUpdated }, _extensionSerializerOptions);
             var protectedExtensionSettings = JsonSerializer.Serialize(new { ManagedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions);
 
-            var extension = new VMExtenionWrapper {
+            var extension = new VMExtensionWrapper {
                 Name = "CustomScript",
                 Publisher = "Microsoft.Azure.Extensions",
                 TypePropertiesType = "CustomScript",
@@ -319,12 +312,12 @@ public class Extensions : IExtensions {
         throw new NotImplementedException($"unsupported OS: {vmOs}");
     }
 
-    public async Async.Task<VMExtenionWrapper> MonitorExtension(AzureLocation region, Os vmOs) {
-        var settings = await _logAnalytics.GetMonitorSettings();
+    public async Async.Task<VMExtensionWrapper> MonitorExtension(AzureLocation region, Os vmOs) {
+        var settings = await _context.LogAnalytics.GetMonitorSettings();
         var extensionSettings = JsonSerializer.Serialize(new { WorkspaceId = settings.Id }, _extensionSerializerOptions);
         var protectedExtensionSettings = JsonSerializer.Serialize(new { WorkspaceKey = settings.Key }, _extensionSerializerOptions);
         if (vmOs == Os.Windows) {
-            return new VMExtenionWrapper {
+            return new VMExtensionWrapper {
                 Location = region,
                 Name = "OMSExtension",
                 TypePropertiesType = "MicrosoftMonitoringAgent",
@@ -335,7 +328,7 @@ public class Extensions : IExtensions {
                 ProtectedSettings = new BinaryData(protectedExtensionSettings)
             };
         } else if (vmOs == Os.Linux) {
-            return new VMExtenionWrapper {
+            return new VMExtensionWrapper {
                 Location = region,
                 Name = "OMSExtension",
                 TypePropertiesType = "OmsAgentForLinux",
@@ -383,18 +376,18 @@ public class Extensions : IExtensions {
 
         var urls = new List<Uri>()
         {
-            (await _context.Containers.GetFileSasUrl(
+            await _context.Containers.GetFileSasUrl(
                 reproConfig.Container,
                 reproConfig.Path,
                 StorageType.Corpus,
                 BlobSasPermissions.Read
-            )),
-            (await _context.Containers.GetFileSasUrl(
+            ),
+            await _context.Containers.GetFileSasUrl(
                 report?.InputBlob?.container!,
                 report?.InputBlob?.Name!,
                 StorageType.Corpus,
                 BlobSasPermissions.Read
-            ))
+            )
         };
 
         List<string> reproFiles;
@@ -428,18 +421,18 @@ public class Extensions : IExtensions {
         foreach (var reproFile in reproFiles) {
             urls.AddRange(new List<Uri>()
             {
-                (await _context.Containers.GetFileSasUrl(
+                await _context.Containers.GetFileSasUrl(
                     new Container("repro-scripts"),
                     reproFile,
                     StorageType.Config,
                     BlobSasPermissions.Read
-                )),
-                (await _context.Containers.GetFileSasUrl(
+                ),
+                await _context.Containers.GetFileSasUrl(
                     new Container("task-configs"),
                     $"{reproId}/{scriptName}",
                     StorageType.Config,
                     BlobSasPermissions.Read
-                ))
+                )
             });
         }
 

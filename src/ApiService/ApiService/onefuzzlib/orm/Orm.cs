@@ -211,7 +211,7 @@ namespace ApiService.OneFuzzLib.Orm {
                 _logTracer.Info($"processing state update: {typeof(T)} - PartitionKey {_partitionKeyGetter?.Value()} {_rowKeyGetter?.Value()} - %s");
                 return await func(entity);
             } else {
-                _logTracer.Warning($"State function for state: '{state}' not found");
+                _logTracer.Info($"State function for state: '{state}' not found on type {typeof(T)}");
             }
             return null;
         }

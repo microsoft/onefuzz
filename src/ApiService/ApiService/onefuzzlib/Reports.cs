@@ -20,7 +20,6 @@ public class Reports : IReports {
 
     public async Task<Report?> GetReport(Container container, string fileName) {
         var result = await GetReportOrRegression(container, fileName);
-        _log.Info($"~~~~~~~~{JsonSerializer.Serialize(result)}~~~~~~~~~~~~");
         if (result != null && result is Report) {
             return result as Report;
         }
