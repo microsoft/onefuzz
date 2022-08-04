@@ -45,6 +45,8 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     static readonly TimeSpan NODE_REIMAGE_TIME = TimeSpan.FromDays(6.0);
 
     Async.Task StopTask(Guid task_id);
+
+    Async.Task<OneFuzzResult<bool>> AddSshPublicKey(Node node, string publicKey);
 }
 
 
@@ -419,6 +421,23 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             }
         }
 
+    }
+
+    public async Task<OneFuzzResult<bool>> AddSshPublicKey(Node node, string publicKey) {
+        if (publicKey == null) {
+            throw new ArgumentNullException(nameof(publicKey));
+        }
+
+        if (node.ScalesetId == null) {
+            return OneFuzzResult<bool>.Error(new Error(ErrorCode.INVALID_REQUEST,
+                new[] { "only able to add ssh keys to scaleset nodes" }));
+        }
+
+        var key = publicKey.EndsWith('\n') ? publicKey : $"{publicKey}\n";
+
+        await SendMessage(node, new NodeCommand { AddSshKey = new NodeCommandAddSshKey(key) });
+
+        return OneFuzzResult.Ok<bool>(true);
     }
 
     /// returns True on stopping the node and False if this doesn't stop the node
