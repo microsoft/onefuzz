@@ -8,14 +8,17 @@ public class Network {
     private readonly string _region;
     private readonly IOnefuzzContext _context;
 
+    private readonly NetworkConfig _networkConfig;
+
     // This was generated randomly and should be preserved moving forwards
     static Guid NETWORK_GUID_NAMESPACE = Guid.Parse("372977ad-b533-416a-b1b4-f770898e0b11");
 
-    public Network(string region, string group, string name, IOnefuzzContext context) {
+    public Network(string region, string group, string name, IOnefuzzContext context, NetworkConfig networkConfig) {
         _region = region;
         _group = group;
         _name = name;
         _context = context;
+        _networkConfig = networkConfig;
     }
 
     public static async Async.Task<Network> Create(string region, IOnefuzzContext context) {
@@ -38,11 +41,27 @@ public class Network {
         }
 
 
-        return new Network(region, group, name, context);
+        return new Network(region, group, name, context, networkConfig);
     }
 
     public Async.Task<SubnetResource?> GetSubnet() {
         return _context.Subnet.GetSubnet(_name, _name);
+    }
+
+    public async Async.Task<string?> GetId() {
+        return await _context.Subnet.GetSubnetId(this._name, this._name);
+    }
+
+    public async Async.Task<OneFuzzResultVoid> Create() {
+        if (!await Exists()) {
+            return await _context.Subnet.CreateVirtualNetwork(_group, _name, _region, _networkConfig);
+        }
+
+        return OneFuzzResultVoid.Ok;
+    }
+
+    public async Async.Task<bool> Exists() {
+        return !string.IsNullOrEmpty(await GetId());
     }
 
     internal Async.Task<VirtualNetworkResource?> GetVnet() {
