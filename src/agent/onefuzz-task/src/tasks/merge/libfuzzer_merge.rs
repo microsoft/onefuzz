@@ -43,8 +43,8 @@ pub struct Config {
 pub async fn spawn(config: Arc<Config>) -> Result<()> {
     let fuzzer = LibFuzzer::new(
         &config.target_exe,
-        &config.target_options,
-        &config.target_env,
+        config.target_options.clone(),
+        config.target_env.clone(),
         &config.common.setup_dir,
     );
     fuzzer.verify(config.check_fuzzer_help, None).await?;
@@ -156,8 +156,8 @@ pub async fn merge_inputs(
     info!("Merging corpus");
     let merger = LibFuzzer::new(
         &config.target_exe,
-        &config.target_options,
-        &config.target_env,
+        config.target_options.clone(),
+        config.target_env.clone(),
         &config.common.setup_dir,
     );
     merger

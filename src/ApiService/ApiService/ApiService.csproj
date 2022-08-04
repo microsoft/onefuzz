@@ -23,10 +23,10 @@
     <PackageReference Include="Azure.Core" Version="1.25.0" />
     <PackageReference Include="Azure.Identity" Version="1.6.0" />
     <PackageReference Include="Azure.Messaging.EventGrid" Version="4.10.0" />
-    <PackageReference Include="Azure.ResourceManager" Version="1.0.0" />
-    <PackageReference Include="Azure.ResourceManager.Network" Version="1.0.0-beta.7" />
+    <PackageReference Include="Azure.ResourceManager" Version="1.2.1" />
+    <PackageReference Include="Azure.ResourceManager.Network" Version="1.0.0" />
     <PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0" />
-    <PackageReference Include="Azure.ResourceManager.Storage" Version="1.0.0-beta.8" />
+    <PackageReference Include="Azure.ResourceManager.Storage" Version="1.0.0-beta.11" />
     <PackageReference Include="Azure.Storage.Queues" Version="12.11.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
     <PackageReference Include="Microsoft.Graph" Version="4.24.0" />

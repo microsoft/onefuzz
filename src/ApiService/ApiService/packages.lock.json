@@ -55,11 +55,11 @@
       },
       "Azure.ResourceManager": {
         "type": "Direct",
-        "requested": "[1.0.0, )",
-        "resolved": "1.0.0",
-        "contentHash": "UGaoiPcJ8a9Et030+F3zc2KhTssPAgPm7uXm4E9kyNI4jYYenUe6zj2J1bTimaTfcOZnn5scSjSYxKtZCzftcA==",
+        "requested": "[1.2.1, )",
+        "resolved": "1.2.1",
+        "contentHash": "Ac7sSSLVbeJJGtw5JouMxZMHTKSokHu5NgCqlIpZM84SwpDpBK7j8sugUcDEryMPGO+BPeK42bTPJBEEs0DRQA==",
         "dependencies": {
-          "Azure.Core": "1.24.0",
+          "Azure.Core": "1.25.0",
           "System.Text.Json": "4.7.2"
         }
       },
@@ -87,12 +87,12 @@
       },
       "Azure.ResourceManager.Network": {
         "type": "Direct",
-        "requested": "[1.0.0-beta.7, )",
-        "resolved": "1.0.0-beta.7",
-        "contentHash": "Ih8tb6OwxEEEEXATVzgX6oHJzVr9p4X6GfOfBnNAI3aIt9+G8blyQLltaCcJAGJ+dO1sBT/Nalgj/HinO+cBlw==",
+        "requested": "[1.0.0, )",
+        "resolved": "1.0.0",
+        "contentHash": "BhN2ULPSgi7vPmllXycYbGUBF/r9fI4zklGbuCBWPCNm2hJrFRQOwUy1NYy2UmLBRHtcAK7zp376n+lylsyjAg==",
         "dependencies": {
-          "Azure.Core": "1.24.0",
-          "Azure.ResourceManager": "1.0.0",
+          "Azure.Core": "1.25.0",
+          "Azure.ResourceManager": "1.2.0",
           "System.Text.Json": "4.7.2"
         }
       },
@@ -109,12 +109,12 @@
       },
       "Azure.ResourceManager.Storage": {
         "type": "Direct",
-        "requested": "[1.0.0-beta.8, )",
-        "resolved": "1.0.0-beta.8",
-        "contentHash": "tlVqStqG53lyGxr0dRq2KSkFdeC/+NQImWgsRXD9o5R4qBia4cx7zAGYBlnDeUxh1WldSZF5ZsBi2n5SAwxbxQ==",
+        "requested": "[1.0.0-beta.11, )",
+        "resolved": "1.0.0-beta.11",
+        "contentHash": "w7hOgG4yUFTRrJ65FzHeIQH8wFPczSJG12SnFiA9HrcvoceD/8CflIk5aPHzqc6moB3A1od0lwGciluovsHMbg==",
         "dependencies": {
-          "Azure.Core": "1.24.0",
-          "Azure.ResourceManager": "1.0.0",
+          "Azure.Core": "1.25.0",
+          "Azure.ResourceManager": "1.2.0",
           "System.Text.Json": "4.7.2"
         }
       },

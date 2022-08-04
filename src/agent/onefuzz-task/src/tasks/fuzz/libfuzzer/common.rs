@@ -40,8 +40,20 @@ pub fn default_workers() -> usize {
     usize::max(1, cpus - 1)
 }
 
+/// LibFuzzer subtypes that share custom configuration or process initialization.
+pub trait LibFuzzerType {
+    /// Extra configuration values expected by the `Config` for this type.
+    type Config;
+
+    /// Method that constructs a `LibFuzzer` configured as appropriate for the subtype.
+    ///
+    /// This may include things like setting special environment variables, or overriding
+    /// the defaults or values of some command arguments.
+    fn from_config(config: &Config<Self>) -> LibFuzzer;
+}
+
 #[derive(Debug, Deserialize, Clone)]
-pub struct Config {
+pub struct Config<L: LibFuzzerType + ?Sized> {
     pub inputs: SyncedDir,
     pub readonly_inputs: Option<Vec<SyncedDir>>,
     pub crashes: SyncedDir,
@@ -61,14 +73,23 @@ pub struct Config {
 
     #[serde(flatten)]
     pub common: CommonConfig,
+
+    #[serde(flatten)]
+    pub extra: L::Config,
 }
 
-pub struct LibFuzzerFuzzTask {
-    config: Config,
+pub struct LibFuzzerFuzzTask<L>
+where
+    L: LibFuzzerType,
+{
+    config: Config<L>,
 }
 
-impl LibFuzzerFuzzTask {
-    pub fn new(config: Config) -> Result<Self> {
+impl<L> LibFuzzerFuzzTask<L>
+where
+    L: LibFuzzerType,
+{
+    pub fn new(config: Config<L>) -> Result<Self> {
         Ok(Self { config })
     }
 
@@ -108,12 +129,8 @@ impl LibFuzzerFuzzTask {
             directories.append(&mut dirs);
         }
 
-        let fuzzer = LibFuzzer::new(
-            &self.config.target_exe,
-            &self.config.target_options,
-            &self.config.target_env,
-            &self.config.common.setup_dir,
-        );
+        let fuzzer = L::from_config(&self.config);
+
         fuzzer
             .verify(self.config.check_fuzzer_help, Some(directories))
             .await
@@ -209,8 +226,8 @@ impl LibFuzzerFuzzTask {
 
         let fuzzer = LibFuzzer::new(
             &self.config.target_exe,
-            &self.config.target_options,
-            &self.config.target_env,
+            self.config.target_options.clone(),
+            self.config.target_env.clone(),
             &self.config.common.setup_dir,
         );
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs).await?;

@@ -83,7 +83,7 @@ public record ProxyHeartbeat
 (
     Region Region,
     Guid ProxyId,
-    List<ProxyForward> Forwards,
+    List<Forward> Forwards,
     DateTimeOffset TimeStamp
 );
 
@@ -119,7 +119,7 @@ public record Forward
 public record ProxyForward
 (
     [PartitionKey] Region Region,
-    [RowKey] string Port,
+    [RowKey] long Port,
     Guid ScalesetId,
     Guid MachineId,
     Guid? ProxyId,
