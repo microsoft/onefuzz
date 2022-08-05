@@ -25,6 +25,7 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
     public Async.Task<OneFuzzResultVoid> BuildReproScript(Repro repro);
 
     public Async.Task<Container?> GetSetupContainer(Repro repro);
+    Task<OneFuzzResult<Repro>> Create(ReproConfig config, UserInfo userInfo);
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
@@ -289,5 +290,30 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             .Where(container => container.Type == ContainerType.Setup)
             .FirstOrDefault()?
             .Name;
+    }
+    
+    public async Task<OneFuzzResult<Repro>> Create(ReproConfig config, UserInfo userInfo) {
+        var reportOrRegression = await _context.Reports.GetReportOrRegression(config.Container, config.Path);
+        if (reportOrRegression is Report report) {
+            var task = await _context.TaskOperations.GetByTaskId(report.TaskId);
+            if (task == null) {
+                return OneFuzzResult<Repro>.Error(ErrorCode.INVALID_REQUEST, "unable to find task");
+            }
+
+            var vm = new Repro(
+                VmId: Guid.NewGuid(),
+                Config: config,
+                TaskId: task.TaskId,
+                Os: task.Os,
+                Auth: Auth.BuildAuth(),
+                EndTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(config.Duration),
+                UserInfo: userInfo
+            );
+
+            await _context.ReproOperations.Insert(vm);
+            return OneFuzzResult<Repro>.Ok(vm);
+        } else {
+            return OneFuzzResult<Repro>.Error(ErrorCode.UNABLE_TO_FIND, "unable to find report");
+        }
     }
 }

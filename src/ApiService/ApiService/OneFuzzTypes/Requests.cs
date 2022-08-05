@@ -139,3 +139,27 @@ public record JobSearch(
 );
 
 public record NodeAddSshKeyPost(Guid MachineId, string PublicKey);
+
+public record ReproGet(Guid? VmId);
+
+public record ProxyGet(
+    Guid? ScalesetId,
+    Guid? MachineId,
+    int? DstPort);
+
+public record ProxyCreate(
+    Guid ScalesetId,
+    Guid MachineId,
+    int DstPort,
+    int Duration
+);
+
+public record ProxyDelete(
+    Guid ScalesetId,
+    Guid MachineId,
+    int? DstPort
+);
+
+public record ProxyReset(
+    string Region
+);
