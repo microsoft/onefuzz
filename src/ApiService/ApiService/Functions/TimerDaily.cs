@@ -15,6 +15,7 @@ public class TimerDaily {
         _logger = loggerFactory.CreateLogger<QueueTaskHearbeat>();
         _scalesets = scalesets;
         _webhookMessageLogs = webhookMessageLogs;
+
     }
 
     [Function("TimerDaily")]
