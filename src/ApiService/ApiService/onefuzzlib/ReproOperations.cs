@@ -14,7 +14,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     private static readonly Dictionary<Os, string> DEFAULT_OS = new Dictionary<Os, string>
     {
         {Os.Linux, "Canonical:UbuntuServer:18.04-LTS:latest"},
-        {Os.Windows, "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest"}
+        {Os.Windows, "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest"}
     };
 
     const string DEFAULT_SKU = "Standard_DS1_v2";
