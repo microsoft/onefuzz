@@ -570,13 +570,13 @@ public record Repro(
     [PartitionKey][RowKey] Guid VmId,
     Guid TaskId,
     ReproConfig Config,
-    VmState State,
     Authentication? Auth,
     Os Os,
-    Error? Error,
-    string? Ip,
-    DateTime? EndTime,
-    UserInfo? UserInfo
+    VmState State = VmState.Init,
+    Error? Error = null,
+    string? Ip = null,
+    DateTimeOffset? EndTime = null,
+    UserInfo? UserInfo = null
 ) : StatefulEntityBase<VmState>(State);
 
 // TODO: Make this >1 and < 7*24 (more than one hour, less than seven days)
