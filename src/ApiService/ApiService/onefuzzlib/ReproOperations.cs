@@ -16,12 +16,6 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
     public Async.Task<Repro> Init(Repro repro);
     public Async.Task<Repro> ExtensionsLaunch(Repro repro);
 
-    public Async.Task<Repro> ExtensionsFailed(Repro repro);
-
-    public Async.Task<Repro> VmAllocationFailed(Repro repro);
-
-    public Async.Task<Repro> Running(Repro repro);
-
     public Async.Task<Repro> Stopped(Repro repro);
 
     public Async.Task<Repro> SetFailed(Repro repro, VirtualMachineResource vmData);
@@ -34,7 +28,7 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
-    private static readonly Dictionary<Os, string> DEFAULT_OS = new Dictionary<Os, string>
+    private static readonly Dictionary<Os, string> DEFAULT_OS = new()
     {
         {Os.Linux, "Canonical:UbuntuServer:18.04-LTS:latest"},
         {Os.Windows, "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest"}
@@ -254,12 +248,10 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             case Os.Linux:
                 var gdbFmt = "ASAN_OPTIONS='abort_on_error=1' gdbserver {0} /onefuzz/setup/{1} /onefuzz/downloaded/{2}";
                 var linuxCmd = $"while :; do {string.Format(CultureInfo.InvariantCulture, gdbFmt, "localhost:1337", task.Config.Task.TargetExe, report?.InputBlob?.Name)}; done";
-                _logTracer.Warning($"linuxCmd: {linuxCmd}");
                 files.Add("repro.sh", linuxCmd);
 
                 var linuxCmdStdOut = $"#!/bin/bash\n{string.Format(CultureInfo.InvariantCulture, gdbFmt, "-", task.Config.Task.TargetExe, report?.InputBlob?.Name)}";
                 files.Add("repro-stdout.sh", linuxCmdStdOut);
-                _logTracer.Warning($"linuxCmd: {linuxCmdStdOut}");
                 break;
             default: throw new NotImplementedException($"invalid task os: {task.Os}");
         }
@@ -297,19 +289,5 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             .Where(container => container.Type == ContainerType.Setup)
             .FirstOrDefault()?
             .Name;
-    }
-
-    // These ones are intentionally empty
-
-    public Task<Repro> ExtensionsFailed(Repro repro) {
-        throw new NotImplementedException();
-    }
-
-    public Task<Repro> VmAllocationFailed(Repro repro) {
-        throw new NotImplementedException();
-    }
-
-    public Task<Repro> Running(Repro repro) {
-        throw new NotImplementedException();
     }
 }

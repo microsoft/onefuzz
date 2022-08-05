@@ -75,15 +75,13 @@ public class VmOperations : IVmOperations {
     }
 
     public async Async.Task<bool> Delete(Vm vm) {
-        // return await DeleteVmComponents(vm.Name, vm.Nsg);
-        await Async.Task.Run(() => true);
-        return true;
+        return await DeleteVmComponents(vm.Name, vm.Nsg);
     }
 
     public async Async.Task<bool> DeleteVmComponents(string name, Nsg? nsg) {
         var resourceGroup = _context.Creds.GetBaseResourceGroup();
         _logTracer.Info($"deleting vm components {resourceGroup}:{name}");
-        if (GetVm(name) != null) {
+        if (await GetVm(name) != null) {
             _logTracer.Info($"deleting vm {resourceGroup}:{name}");
             await DeleteVm(name);
             return false;
@@ -123,6 +121,7 @@ public class VmOperations : IVmOperations {
 
     public async System.Threading.Tasks.Task DeleteVm(string name) {
         _logTracer.Info($"deleting vm: {_context.Creds.GetBaseResourceGroup()} {name}");
+
         await _context.Creds.GetResourceGroupResource()
             .GetVirtualMachineAsync(name).Result.Value
             .DeleteAsync(WaitUntil.Started);
