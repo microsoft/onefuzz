@@ -14,7 +14,7 @@ bundles a Python interpreter.
 OneFuzz deploys targets into Azure Virtual Machine Scale Sets for fuzzing (and
 supporting tasks).  OneFuzz permits arbitrary choice of VM SKU and OS Image,
 including custom images.  We continuously test on Window 10 Pro x64 (using the 
-Azure OS image URN `MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest`)
+Azure OS image URN `MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest`)
 and Ubuntu 18.04 LTS x64 (using the Azure OS image URN 
 `Canonical:UbuntuServer:18.04-LTS:latest`).
 
