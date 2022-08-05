@@ -291,7 +291,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             .FirstOrDefault()?
             .Name;
     }
-    
+
     public async Task<OneFuzzResult<Repro>> Create(ReproConfig config, UserInfo userInfo) {
         var reportOrRegression = await _context.Reports.GetReportOrRegression(config.Container, config.Path);
         if (reportOrRegression is Report report) {
