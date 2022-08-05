@@ -140,6 +140,8 @@ public record JobSearch(
 
 public record NodeAddSshKeyPost(Guid MachineId, string PublicKey);
 
+public record ReproGet(Guid? VmId);
+
 public record ProxyGet(
     Guid? ScalesetId,
     Guid? MachineId,
