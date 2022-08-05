@@ -5,6 +5,7 @@
 
 import datetime
 import logging
+import os
 from typing import List, Optional, Tuple
 from uuid import UUID
 
@@ -131,6 +132,10 @@ class Node(BASE_NODE, ORMMixin):
 
     @classmethod
     def mark_outdated_nodes(cls) -> None:
+        # if outdated agents are allowed, do not attempt to update
+        if os.environ.get("ONEFUZZ_ALLOW_OUTDATED_AGENT") == "true":
+            return
+
         # ony update 500 nodes at a time to mitigate timeout issues
         outdated = cls.search_outdated(exclude_update_scheduled=True, num_results=500)
         for node in outdated:
@@ -263,7 +268,10 @@ class Node(BASE_NODE, ORMMixin):
         from .pools import Pool
         from .scalesets import Scaleset
 
-        if self.is_outdated():
+        if (
+            self.is_outdated()
+            and os.environ.get("ONEFUZZ_ALLOW_OUTDATED_AGENT") != "true"
+        ):
             logging.info(
                 "can_process_new_work agent and service versions differ, "
                 "stopping node. "

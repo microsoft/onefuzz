@@ -109,4 +109,6 @@ public sealed class TestContext : IOnefuzzContext {
     public INsgOperations NsgOperations => throw new NotImplementedException();
 
     public ISubnet Subnet => throw new NotImplementedException();
+
+    public IImageOperations ImageOperations => throw new NotImplementedException();
 }

@@ -1,7 +1,10 @@
 ﻿using System.Text.Json;
 using Azure.Core;
+using Azure.Data.Tables;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
+using Azure.Storage;
+using Azure.Storage.Blobs;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.OneFuzz.Service;
@@ -12,8 +15,9 @@ public enum StorageType {
 }
 
 public interface IStorage {
-    public IEnumerable<string> CorpusAccounts();
-    string GetPrimaryAccount(StorageType storageType);
+    public IReadOnlyList<string> CorpusAccounts();
+    public string GetPrimaryAccount(StorageType storageType);
+    public IReadOnlyList<string> GetAccounts(StorageType storageType);
 
     public Uri GetTableEndpoint(string accountId);
 
@@ -25,7 +29,39 @@ public interface IStorage {
 
     public Async.Task<string?> GetStorageAccountNameKeyByName(string accountName);
 
-    public IEnumerable<string> GetAccounts(StorageType storageType);
+    /// Picks either the single primary account or a random secondary account.
+    public string ChooseAccount(StorageType storageType) {
+        var accounts = GetAccounts(storageType);
+        if (!accounts.Any()) {
+            throw new InvalidOperationException($"no storage accounts for {storageType}");
+        }
+
+        if (accounts.Count == 1) {
+            return accounts[0];
+        }
+
+        // Use a random secondary storage account if any are available.  This
+        // reduces IOP contention for the Storage Queues, which are only available
+        // on primary accounts
+        //
+        // security note: this is not used as a security feature
+        var secondaryAccounts = accounts.Skip(1).ToList();
+        return secondaryAccounts[Random.Shared.Next(secondaryAccounts.Count)];
+    }
+
+    public async Async.Task<BlobServiceClient> GetBlobServiceClientForAccount(string accountId) {
+        var (accountName, accountKey) = await GetStorageAccountNameAndKey(accountId);
+        var storageKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
+        var accountUrl = GetBlobEndpoint(accountName);
+        return new BlobServiceClient(accountUrl, storageKeyCredential);
+    }
+
+    public async Async.Task<TableServiceClient> GetTableServiceClientForAccount(string accountId) {
+        var (accountName, accountKey) = await GetStorageAccountNameAndKey(accountId);
+        var storageKeyCredential = new TableSharedKeyCredential(accountName, accountKey);
+        var accountUrl = GetTableEndpoint(accountName);
+        return new TableServiceClient(accountUrl, storageKeyCredential);
+    }
 }
 
 public sealed class Storage : IStorage, IDisposable {
@@ -59,8 +95,8 @@ public sealed class Storage : IStorage, IDisposable {
         return _armClient;
     }
 
-    public IEnumerable<string> CorpusAccounts() {
-        return _cache.GetOrCreate<List<string>>("CorpusAccounts", cacheEntry => {
+    public IReadOnlyList<string> CorpusAccounts() {
+        return _cache.GetOrCreate<IReadOnlyList<string>>("CorpusAccounts", cacheEntry => {
             var skip = GetFuncStorage();
             var results = new List<string> { GetFuzzStorage() };
 
@@ -76,10 +112,6 @@ public sealed class Storage : IStorage, IDisposable {
                 }
 
                 if (results.Contains(account.Id!)) {
-                    continue;
-                }
-
-                if (string.IsNullOrEmpty(account.Data.PrimaryEndpoints.Blob)) {
                     continue;
                 }
 
@@ -127,29 +159,8 @@ public sealed class Storage : IStorage, IDisposable {
         });
     }
 
-    public string ChooseAccounts(StorageType storageType) {
-        var accounts = GetAccounts(storageType);
-        if (!accounts.Any()) {
-            throw new Exception($"No Storage Accounts for {storageType}");
-        }
 
-        var account_list = accounts.ToList();
-        if (account_list.Count == 1) {
-            return account_list[0];
-        }
-
-        // Use a random secondary storage account if any are available.  This
-        // reduces IOP contention for the Storage Queues, which are only available
-        // on primary accounts
-        //
-        // security note: this is not used as a security feature
-        var random = new Random();
-        var index = random.Next(account_list.Count);
-
-        return account_list[index];  // nosec
-    }
-
-    public IEnumerable<string> GetAccounts(StorageType storageType) {
+    public IReadOnlyList<string> GetAccounts(StorageType storageType) {
         switch (storageType) {
             case StorageType.Corpus:
                 return CorpusAccounts();

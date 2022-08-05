@@ -7,7 +7,8 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface ISecretsOperations {
     public (Uri, string) ParseSecretUrl(Uri secretsUrl);
-    public Task<SecretData<SecretAddress>?> SaveToKeyvault<T>(SecretData<T> secretData);
+    public Task<SecretData<T>> SaveToKeyvault<T>(SecretData<T> secretData);
+
     public Task<string?> GetSecretStringValue<T>(SecretData<T> data);
 
     public Task<KeyVaultSecret> StoreInKeyvault(Uri keyvaultUrl, string secretName, string secretValue);
@@ -30,37 +31,34 @@ public class SecretsOperations : ISecretsOperations {
     public (Uri, string) ParseSecretUrl(Uri secretsUrl) {
         // format: https://{vault-name}.vault.azure.net/secrets/{secret-name}/{version}
         var vaultUrl = $"{secretsUrl.Scheme}://{secretsUrl.Host}";
-        var secretName = secretsUrl.Segments[secretsUrl.Segments.Length - 2].Trim('/');
+        var secretName = secretsUrl.Segments[^2].Trim('/');
         return (new Uri(vaultUrl), secretName);
     }
 
-    public async Task<SecretData<SecretAddress>?> SaveToKeyvault<T>(SecretData<T> secretData) {
-        if (secretData == null || secretData.Secret is null)
-            return null;
+    public async Task<SecretData<T>> SaveToKeyvault<T>(SecretData<T> secretData) {
 
-        if (secretData.Secret is SecretAddress) {
-            return secretData as SecretData<SecretAddress>;
-        } else {
+        if (secretData.Secret is SecretAddress<T> secretAddress) {
+            return secretData;
+        } else if (secretData.Secret is SecretValue<T> sValue) {
             var secretName = Guid.NewGuid();
             string secretValue;
-            if (secretData.Secret is string) {
-                secretValue = (secretData.Secret as string)!.Trim();
+            if (sValue.Value is string secretString) {
+                secretValue = secretString.Trim();
             } else {
-                secretValue = JsonSerializer.Serialize(secretData.Secret, EntityConverter.GetJsonSerializerOptions());
+                secretValue = JsonSerializer.Serialize(sValue.Value, EntityConverter.GetJsonSerializerOptions());
             }
 
             var kv = await StoreInKeyvault(GetKeyvaultAddress(), secretName.ToString(), secretValue);
-            return new SecretData<SecretAddress>(new SecretAddress(kv.Id));
+            return new SecretData<T>(new SecretAddress<T>(kv.Id));
         }
+
+        throw new Exception("Invalid secret value");
     }
 
     public async Task<string?> GetSecretStringValue<T>(SecretData<T> data) {
-        if (data.Secret is null) {
-            return null;
-        }
 
-        if (data.Secret is SecretAddress) {
-            var secret = await GetSecret((data.Secret as SecretAddress)!.Url);
+        if (data.Secret is SecretAddress<T> secretAddress) {
+            var secret = await GetSecret(secretAddress.Url);
             return secret.Value;
         } else {
             return data.Secret.ToString();
@@ -101,11 +99,8 @@ public class SecretsOperations : ISecretsOperations {
     }
 
     public async Task<DeleteSecretOperation?> DeleteRemoteSecretData<T>(SecretData<T> data) {
-        if (data.Secret is SecretAddress) {
-            if (data.Secret is not null)
-                return await DeleteSecret((data.Secret as SecretAddress)!.Url);
-            else
-                return null;
+        if (data.Secret is SecretAddress<T> secretAddress) {
+            return await DeleteSecret(secretAddress.Url);
         } else {
             return null;
         }

@@ -38,6 +38,7 @@ public interface IOnefuzzContext {
     IRequestHandling RequestHandling { get; }
     INsgOperations NsgOperations { get; }
     ISubnet Subnet { get; }
+    IImageOperations ImageOperations { get; }
 }
 
 public class OnefuzzContext : IOnefuzzContext {
@@ -81,4 +82,5 @@ public class OnefuzzContext : IOnefuzzContext {
     public IRequestHandling RequestHandling => _serviceProvider.GetRequiredService<IRequestHandling>();
     public INsgOperations NsgOperations => _serviceProvider.GetRequiredService<INsgOperations>();
     public ISubnet Subnet => _serviceProvider.GetRequiredService<ISubnet>();
+    public IImageOperations ImageOperations => _serviceProvider.GetRequiredService<IImageOperations>();
 }

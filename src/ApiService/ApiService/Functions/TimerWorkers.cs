@@ -1,4 +1,4 @@
-﻿namespace Microsoft.OneFuzz.Service;
+﻿namespace Microsoft.OneFuzz.Service.Functions;
 
 public class TimerWorkers {
     ILogTracer _log;

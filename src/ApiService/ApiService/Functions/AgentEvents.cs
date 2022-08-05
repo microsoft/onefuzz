@@ -3,7 +3,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
-namespace Microsoft.OneFuzz.Service;
+namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentEvents {
     private readonly ILogTracer _log;
@@ -79,7 +79,7 @@ public class AgentEvents {
                 return null;
             }
 
-            if (_context.NodeOperations.CouldShrinkScaleset(node)) {
+            if (await _context.NodeOperations.CouldShrinkScaleset(node)) {
                 _log.Info($"stopping free node to resize scaleset: {machineId}");
                 await _context.NodeOperations.SetHalt(node);
                 return null;

@@ -81,7 +81,10 @@ public record NodeSettingUpEventData(
 ) : NodeStateData;
 
 public record NodeDoneEventData(
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     string? Error,
+
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     ProcessOutput? ScriptOutput
 ) : NodeStateData;
 
@@ -95,3 +98,68 @@ public record ExitStatus(
     int? Code,
     int? Signal,
     bool Success);
+
+public record ContainerGet(
+    Container Name
+) : BaseRequest;
+
+public record ContainerCreate(
+    Container Name,
+    IDictionary<string, string>? Metadata = null
+) : BaseRequest;
+
+public record ContainerDelete(
+    Container Name,
+    IDictionary<string, string>? Metadata = null
+) : BaseRequest;
+
+public record NotificationCreate(
+    Container Container,
+    bool ReplaceExisting,
+    NotificationTemplate Config
+) : BaseRequest;
+
+public record NotificationSearch(
+    List<Container>? Container
+) : BaseRequest;
+
+public record NotificationGet(
+    Guid NotificationId
+) : BaseRequest;
+
+public record JobGet(
+    Guid JobId
+);
+
+public record JobSearch(
+    Guid? JobId = null,
+    List<JobState>? State = null,
+    List<TaskState>? TaskState = null,
+    bool? WithTasks = null
+);
+
+public record NodeAddSshKeyPost(Guid MachineId, string PublicKey);
+
+public record ReproGet(Guid? VmId);
+
+public record ProxyGet(
+    Guid? ScalesetId,
+    Guid? MachineId,
+    int? DstPort);
+
+public record ProxyCreate(
+    Guid ScalesetId,
+    Guid MachineId,
+    int DstPort,
+    int Duration
+);
+
+public record ProxyDelete(
+    Guid ScalesetId,
+    Guid MachineId,
+    int? DstPort
+);
+
+public record ProxyReset(
+    string Region
+);

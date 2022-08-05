@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
-namespace Microsoft.OneFuzz.Service;
+namespace Microsoft.OneFuzz.Service.Functions;
 
 
 public class TimerDaily {
@@ -17,7 +17,7 @@ public class TimerDaily {
         _webhookMessageLogs = webhookMessageLogs;
     }
 
-    //[Function("TimerDaily")]
+    [Function("TimerDaily")]
     public async Async.Task Run([TimerTrigger("1.00:00:00")] TimerInfo myTimer) {
         var scalesets = _scalesets.Search();
         await foreach (var scaleset in scalesets) {

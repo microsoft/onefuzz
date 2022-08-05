@@ -67,8 +67,8 @@ impl ReportTask {
     pub async fn verify(&self) -> Result<()> {
         let fuzzer = LibFuzzer::new(
             &self.config.target_exe,
-            &self.config.target_options,
-            &self.config.target_env,
+            self.config.target_options.clone(),
+            self.config.target_env.clone(),
             &self.config.common.setup_dir,
         );
         fuzzer.verify(self.config.check_fuzzer_help, None).await
@@ -121,8 +121,8 @@ pub struct TestInputArgs<'a> {
 pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
     let fuzzer = LibFuzzer::new(
         args.target_exe,
-        args.target_options,
-        args.target_env,
+        args.target_options.to_vec(),
+        args.target_env.clone(),
         args.setup_dir,
     );
 

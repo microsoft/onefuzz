@@ -86,7 +86,7 @@ namespace ApiService.TestHooks {
             var s = await req.ReadAsStringAsync();
             var node = JsonSerializer.Deserialize<Node>(s!, EntityConverter.GetJsonSerializerOptions());
 
-            var r = _nodeOps.CouldShrinkScaleset(node!);
+            var r = await _nodeOps.CouldShrinkScaleset(node!);
             var resp = req.CreateResponse(HttpStatusCode.OK);
             await resp.WriteAsJsonAsync(r);
             return resp;

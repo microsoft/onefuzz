@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 import argparse
+import itertools
 import json
 import logging
 import os
@@ -1094,17 +1095,42 @@ class Client:
 
     def enable_dotnet_func(self) -> None:
         if self.enable_dotnet:
+
+            def expand_agent(f: str) -> List[str]:
+                # 'agent' is permitted as a shortcut for the agent functions
+                if f == "agent":
+                    return [
+                        "agent_can_schedule",
+                        "agent_commands",
+                        "agent_events",
+                        "agent_registration",
+                    ]
+                else:
+                    return [f]
+
+            enable_dotnet = itertools.chain.from_iterable(
+                map(expand_agent, self.enable_dotnet)
+            )
+
             func = shutil.which("az")
             assert func is not None
-            for function_name in self.enable_dotnet:
+            for function_name in enable_dotnet:
                 format_name = function_name.split("_")
                 dotnet_name = "".join(x.title() for x in format_name)
                 error: Optional[subprocess.CalledProcessError] = None
                 max_tries = 5
                 for i in range(max_tries):
                     try:
-                        # disable python function
-                        logger.info(f"disabling PYTHON function: {function_name}")
+                        # keep the python versions of http function to allow the service to be backward compatible
+                        # with older version of the CLI and the agents
+                        if function_name.startswith(
+                            "queue_"
+                        ) or function_name.startswith("timer_"):
+                            logger.info(f"disabling PYTHON function: {function_name}")
+                            disable_python = "1"
+                        else:
+                            logger.info(f"enabling PYTHON function: {function_name}")
+                            disable_python = "0"
                         subprocess.check_output(
                             [
                                 func,
@@ -1117,7 +1143,7 @@ class Client:
                                 "--resource-group",
                                 self.application_name,
                                 "--settings",
-                                f"AzureWebJobs.{function_name}.Disabled=1",
+                                f"AzureWebJobs.{function_name}.Disabled={disable_python}",
                             ],
                             env=dict(os.environ, CLI_DEBUG="1"),
                         )

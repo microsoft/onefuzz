@@ -183,8 +183,11 @@ public class RequestsTests {
     ""state_update"": {
       ""state"": ""done"",
       ""data"": {
-        ""error"": null,
-        ""script_output"": null
+        ""script_output"": {
+          ""exit_status"": null,
+          ""stderr"": ""err"",
+          ""stdout"": ""out""
+        }
       }
     }
   },
