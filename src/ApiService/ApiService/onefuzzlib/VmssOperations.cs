@@ -115,6 +115,7 @@ public class VmssOperations : IVmssOperations {
     public async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(Guid name, Guid vmId) {
         _log.Info($"get instance ID for scaleset node: {name}:{vmId}");
         var scaleSet = GetVmssResource(name);
+
         try {
             await foreach (var vm in scaleSet.GetVirtualMachineScaleSetVms().AsAsyncEnumerable()) {
                 var response = await vm.GetAsync();

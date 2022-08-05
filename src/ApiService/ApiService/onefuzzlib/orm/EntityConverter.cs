@@ -232,6 +232,8 @@ public class EntityConverter {
                 return Guid.Parse(entity.GetString(ef.kind.ToString()));
             else if (ef.type == typeof(int))
                 return int.Parse(entity.GetString(ef.kind.ToString()));
+            else if (ef.type == typeof(long))
+                return long.Parse(entity.GetString(ef.kind.ToString()));
             else if (ef.type.IsClass)
                 return ef.type.GetConstructor(new[] { typeof(string) })!.Invoke(new[] { entity.GetString(ef.kind.ToString()) });
             else {

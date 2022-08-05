@@ -113,10 +113,10 @@
       },
       "Azure.ResourceManager": {
         "type": "Transitive",
-        "resolved": "1.0.0",
-        "contentHash": "UGaoiPcJ8a9Et030+F3zc2KhTssPAgPm7uXm4E9kyNI4jYYenUe6zj2J1bTimaTfcOZnn5scSjSYxKtZCzftcA==",
+        "resolved": "1.2.1",
+        "contentHash": "Ac7sSSLVbeJJGtw5JouMxZMHTKSokHu5NgCqlIpZM84SwpDpBK7j8sugUcDEryMPGO+BPeK42bTPJBEEs0DRQA==",
         "dependencies": {
-          "Azure.Core": "1.24.0",
+          "Azure.Core": "1.25.0",
           "System.Text.Json": "4.7.2"
         }
       },
@@ -142,11 +142,11 @@
       },
       "Azure.ResourceManager.Network": {
         "type": "Transitive",
-        "resolved": "1.0.0-beta.7",
-        "contentHash": "Ih8tb6OwxEEEEXATVzgX6oHJzVr9p4X6GfOfBnNAI3aIt9+G8blyQLltaCcJAGJ+dO1sBT/Nalgj/HinO+cBlw==",
+        "resolved": "1.0.0",
+        "contentHash": "BhN2ULPSgi7vPmllXycYbGUBF/r9fI4zklGbuCBWPCNm2hJrFRQOwUy1NYy2UmLBRHtcAK7zp376n+lylsyjAg==",
         "dependencies": {
-          "Azure.Core": "1.24.0",
-          "Azure.ResourceManager": "1.0.0",
+          "Azure.Core": "1.25.0",
+          "Azure.ResourceManager": "1.2.0",
           "System.Text.Json": "4.7.2"
         }
       },
@@ -162,11 +162,11 @@
       },
       "Azure.ResourceManager.Storage": {
         "type": "Transitive",
-        "resolved": "1.0.0-beta.8",
-        "contentHash": "tlVqStqG53lyGxr0dRq2KSkFdeC/+NQImWgsRXD9o5R4qBia4cx7zAGYBlnDeUxh1WldSZF5ZsBi2n5SAwxbxQ==",
+        "resolved": "1.0.0-beta.11",
+        "contentHash": "w7hOgG4yUFTRrJ65FzHeIQH8wFPczSJG12SnFiA9HrcvoceD/8CflIk5aPHzqc6moB3A1od0lwGciluovsHMbg==",
         "dependencies": {
-          "Azure.Core": "1.24.0",
-          "Azure.ResourceManager": "1.0.0",
+          "Azure.Core": "1.25.0",
+          "Azure.ResourceManager": "1.2.0",
           "System.Text.Json": "4.7.2"
         }
       },
@@ -2254,12 +2254,12 @@
           "Azure.Data.Tables": "12.5.0",
           "Azure.Identity": "1.6.0",
           "Azure.Messaging.EventGrid": "4.10.0",
-          "Azure.ResourceManager": "1.0.0",
+          "Azure.ResourceManager": "1.2.1",
           "Azure.ResourceManager.Compute": "1.0.0-beta.8",
           "Azure.ResourceManager.Monitor": "1.0.0-beta.2",
-          "Azure.ResourceManager.Network": "1.0.0-beta.7",
+          "Azure.ResourceManager.Network": "1.0.0",
           "Azure.ResourceManager.Resources": "1.0.0",
-          "Azure.ResourceManager.Storage": "1.0.0-beta.8",
+          "Azure.ResourceManager.Storage": "1.0.0-beta.11",
           "Azure.Security.KeyVault.Secrets": "4.3.0",
           "Azure.Storage.Blobs": "12.13.0",
           "Azure.Storage.Queues": "12.11.0",
