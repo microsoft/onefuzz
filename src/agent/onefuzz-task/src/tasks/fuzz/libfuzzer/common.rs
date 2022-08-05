@@ -4,6 +4,7 @@
 use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
 use anyhow::{Context, Result};
 use arraydeque::{ArrayDeque, Wrapping};
+use async_trait::async_trait;
 use futures::future::try_join_all;
 use onefuzz::{
     fs::list_files,
@@ -41,19 +42,29 @@ pub fn default_workers() -> usize {
 }
 
 /// LibFuzzer subtypes that share custom configuration or process initialization.
-pub trait LibFuzzerType {
+#[async_trait]
+pub trait LibFuzzerType: Send + Sync {
     /// Extra configuration values expected by the `Config` for this type.
-    type Config;
+    type Config: Send + Sync;
 
     /// Method that constructs a `LibFuzzer` configured as appropriate for the subtype.
     ///
     /// This may include things like setting special environment variables, or overriding
     /// the defaults or values of some command arguments.
     fn from_config(config: &Config<Self>) -> LibFuzzer;
+
+    /// Perform any environmental setup common to all targets of this fuzzer type.
+    ///
+    /// Defaults to a no-op.
+    ///
+    /// Executed after initializating remote-backed corpora.
+    async fn extra_setup(_config: &Config<Self>) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct Config<L: LibFuzzerType + ?Sized> {
+pub struct Config<L: LibFuzzerType + Send + Sync + ?Sized> {
     pub inputs: SyncedDir,
     pub readonly_inputs: Option<Vec<SyncedDir>>,
     pub crashes: SyncedDir,
@@ -102,6 +113,7 @@ where
 
     pub async fn run(&self) -> Result<()> {
         self.init_directories().await?;
+        L::extra_setup(&self.config).await?;
         self.verify().await?;
 
         let hb_client = self.config.common.init_heartbeat(None).await?;
