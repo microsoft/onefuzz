@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
-namespace Microsoft.OneFuzz.Service;
+namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentCanSchedule {
     private readonly ILogTracer _log;
@@ -36,26 +36,27 @@ public class AgentCanSchedule {
                     ErrorCode.UNABLE_TO_FIND,
                     new string[] {
                         "unable to find node"
-                    }
-                ),
-                canScheduleRequest.MachineId.ToString()
-            );
+                    }),
+                canScheduleRequest.MachineId.ToString());
         }
 
         var allowed = true;
-        var workStopped = false;
 
         if (!await _context.NodeOperations.CanProcessNewWork(node)) {
             allowed = false;
         }
 
         var task = await _context.TaskOperations.GetByTaskId(canScheduleRequest.TaskId);
-        workStopped = task == null || task.State.ShuttingDown();
+        var workStopped = task == null || task.State.ShuttingDown();
+
+        if (workStopped) {
+            allowed = false;
+        }
 
         if (allowed) {
             allowed = (await _context.NodeOperations.AcquireScaleInProtection(node)).IsOk;
         }
 
-        return await RequestHandling.Ok(req, new CanSchedule(allowed, workStopped));
+        return await RequestHandling.Ok(req, new CanSchedule(Allowed: allowed, WorkStopped: workStopped));
     }
 }

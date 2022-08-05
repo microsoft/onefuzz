@@ -9,15 +9,16 @@ namespace ApiService.OneFuzzLib.Orm {
     public interface IOrm<T> where T : EntityBase {
         Task<TableClient> GetTableClient(string table, string? accountId = null);
         IAsyncEnumerable<T> QueryAsync(string? filter = null);
-        Task<ResultVoid<(int, string)>> Replace(T entity);
 
         Task<T> GetEntityAsync(string partitionKey, string rowKey);
         Task<ResultVoid<(int, string)>> Insert(T entity);
+        Task<ResultVoid<(int, string)>> Replace(T entity);
+        Task<ResultVoid<(int, string)>> Update(T entity);
         Task<ResultVoid<(int, string)>> Delete(T entity);
 
         IAsyncEnumerable<T> SearchAll();
-        IAsyncEnumerable<T> SearchByPartitionKey(string partitionKey);
-        IAsyncEnumerable<T> SearchByRowKey(string rowKey);
+        IAsyncEnumerable<T> SearchByPartitionKeys(IEnumerable<string> partitionKeys);
+        IAsyncEnumerable<T> SearchByRowKeys(IEnumerable<string> rowKeys);
         IAsyncEnumerable<T> SearchByTimeRange(DateTimeOffset min, DateTimeOffset max);
 
         // Allow using tuple to search.
@@ -48,6 +49,8 @@ namespace ApiService.OneFuzzLib.Orm {
             }
         }
 
+        /// Inserts the entity into table storage.
+        /// If successful, updates the ETag of the passed-in entity.
         public async Task<ResultVoid<(int, string)>> Insert(T entity) {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
@@ -56,6 +59,9 @@ namespace ApiService.OneFuzzLib.Orm {
             if (response.IsError) {
                 return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
             } else {
+                // update ETag
+                entity.ETag = response.Headers.ETag;
+
                 return ResultVoid<(int, string)>.Ok();
             }
         }
@@ -72,18 +78,18 @@ namespace ApiService.OneFuzzLib.Orm {
         }
 
         public async Task<ResultVoid<(int, string)>> Update(T entity) {
+            if (entity.ETag is null) {
+                throw new ArgumentException("ETag must be set when updating an entity", nameof(entity));
+            }
+
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
 
-            if (entity.ETag is null) {
-                return ResultVoid<(int, string)>.Error((0, "ETag must be set when updating an entity"));
+            var response = await tableClient.UpdateEntityAsync(tableEntity, entity.ETag.Value);
+            if (response.IsError) {
+                return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
             } else {
-                var response = await tableClient.UpdateEntityAsync(tableEntity, entity.ETag.Value);
-                if (response.IsError) {
-                    return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
-                } else {
-                    return ResultVoid<(int, string)>.Ok();
-                }
+                return ResultVoid<(int, string)>.Ok();
             }
         }
 
@@ -98,9 +104,7 @@ namespace ApiService.OneFuzzLib.Orm {
             var tableName = _context.ServiceConfiguration.OneFuzzStoragePrefix + table;
 
             var account = accountId ?? _context.ServiceConfiguration.OneFuzzFuncStorage ?? throw new ArgumentNullException(nameof(accountId));
-            var (name, key) = await _context.Storage.GetStorageAccountNameAndKey(account);
-            var endpoint = _context.Storage.GetTableEndpoint(name);
-            var tableClient = new TableServiceClient(endpoint, new TableSharedKeyCredential(name, key));
+            var tableClient = await _context.Storage.GetTableServiceClientForAccount(account);
             await tableClient.CreateTableIfNotExistsAsync(tableName);
             return tableClient.GetTableClient(tableName);
         }
@@ -119,11 +123,11 @@ namespace ApiService.OneFuzzLib.Orm {
         public IAsyncEnumerable<T> SearchAll()
             => QueryAsync(null);
 
-        public IAsyncEnumerable<T> SearchByPartitionKey(string partitionKey)
-            => QueryAsync(Query.PartitionKey(partitionKey));
+        public IAsyncEnumerable<T> SearchByPartitionKeys(IEnumerable<string> partitionKeys)
+            => QueryAsync(Query.PartitionKeys(partitionKeys));
 
-        public IAsyncEnumerable<T> SearchByRowKey(string rowKey)
-            => QueryAsync(Query.RowKey(rowKey));
+        public IAsyncEnumerable<T> SearchByRowKeys(IEnumerable<string> rowKeys)
+            => QueryAsync(Query.RowKeys(rowKeys));
 
         public IAsyncEnumerable<T> SearchByTimeRange(DateTimeOffset min, DateTimeOffset max) {
             return QueryAsync(Query.TimeRange(min, max));
@@ -206,6 +210,8 @@ namespace ApiService.OneFuzzLib.Orm {
             if (func != null) {
                 _logTracer.Info($"processing state update: {typeof(T)} - PartitionKey {_partitionKeyGetter?.Value()} {_rowKeyGetter?.Value()} - %s");
                 return await func(entity);
+            } else {
+                _logTracer.Info($"State function for state: '{state}' not found on type {typeof(T)}");
             }
             return null;
         }

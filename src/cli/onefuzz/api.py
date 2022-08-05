@@ -800,6 +800,12 @@ class Tasks(Endpoint):
 
         return self._req_model("POST", models.Task, data=config)
 
+    def trim_options(self, options: Optional[List[str]]) -> Optional[List[str]]:
+        # Trim any surrounding whitespace to allow users to quote multiple options with extra
+        # whitespace as a workaround for CLI argument parsing limitations. Trimming is needed
+        # to ensure that the binary eventually parses the arguments as options.
+        return [o.strip() for o in options] if options else None
+
     def create(
         self,
         job_id: UUID_EXPANSION,
@@ -886,7 +892,7 @@ class Tasks(Endpoint):
             task=models.TaskDetails(
                 analyzer_env=analyzer_env,
                 analyzer_exe=analyzer_exe,
-                analyzer_options=analyzer_options,
+                analyzer_options=self.trim_options(analyzer_options),
                 check_asan_log=check_asan_log,
                 check_debugger=check_debugger,
                 check_retry_count=check_retry_count,
@@ -895,7 +901,7 @@ class Tasks(Endpoint):
                 duration=duration,
                 ensemble_sync_delay=ensemble_sync_delay,
                 generator_exe=generator_exe,
-                generator_options=generator_options,
+                generator_options=self.trim_options(generator_options),
                 reboot_after_setup=reboot_after_setup,
                 rename_output=rename_output,
                 stats_file=stats_file,
@@ -903,10 +909,10 @@ class Tasks(Endpoint):
                 supervisor_env=supervisor_env,
                 supervisor_exe=supervisor_exe,
                 supervisor_input_marker=supervisor_input_marker,
-                supervisor_options=supervisor_options,
+                supervisor_options=self.trim_options(supervisor_options),
                 target_env=target_env,
                 target_exe=target_exe,
-                target_options=target_options,
+                target_options=self.trim_options(target_options),
                 target_options_merge=target_options_merge,
                 target_timeout=target_timeout,
                 target_workers=target_workers,
@@ -924,7 +930,7 @@ class Tasks(Endpoint):
     def list(
         self,
         job_id: Optional[UUID_EXPANSION] = None,
-        state: Optional[List[enums.TaskState]] = enums.TaskState.available(),
+        state: Optional[List[enums.TaskState]] = None,
     ) -> List[models.Task]:
         """Get information about all tasks"""
         self.logger.debug("list tasks")
@@ -936,6 +942,9 @@ class Tasks(Endpoint):
                 job_id,
                 lambda: [str(x.job_id) for x in self.onefuzz.jobs.list()],
             )
+
+        if job_id_expanded is None and state is None:
+            state = enums.TaskState.available()
 
         return self._req_model_list(
             "GET",
@@ -1368,7 +1377,7 @@ class Scaleset(Endpoint):
         spot_instances: bool = False,
         ephemeral_os_disks: bool = False,
         tags: Optional[Dict[str, str]] = None,
-        min_instances: Optional[int] = 1,
+        min_instances: Optional[int] = 0,
         scale_out_amount: Optional[int] = 1,
         scale_out_cooldown: Optional[int] = 10,
         scale_in_amount: Optional[int] = 1,
@@ -1705,6 +1714,8 @@ class Onefuzz:
         client_secret: Optional[str] = None,
         authority: Optional[str] = None,
         tenant_domain: Optional[str] = None,
+        _dotnet_endpoint: Optional[str] = None,
+        _dotnet_functions: Optional[List[str]] = None,
     ) -> None:
 
         if endpoint:
@@ -1717,6 +1728,10 @@ class Onefuzz:
             self._backend.client_secret = client_secret
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
+        if _dotnet_endpoint is not None:
+            self._backend.config.dotnet_endpoint = _dotnet_endpoint
+        if _dotnet_functions is not None:
+            self._backend.config.dotnet_functions = _dotnet_functions
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates._load_cache()
@@ -1760,6 +1775,8 @@ class Onefuzz:
         client_id: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
         tenant_domain: Optional[str] = None,
+        _dotnet_endpoint: Optional[str] = None,
+        _dotnet_functions: Optional[List[str]] = None,
         reset: Optional[bool] = None,
     ) -> BackendConfig:
         """Configure onefuzz CLI"""
@@ -1790,6 +1807,10 @@ class Onefuzz:
             self._backend.enable_feature(enable_feature.name)
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
+        if _dotnet_endpoint is not None:
+            self._backend.config.dotnet_endpoint = _dotnet_endpoint
+        if _dotnet_functions is not None:
+            self._backend.config.dotnet_functions = _dotnet_functions
         self._backend.app = None
         self._backend.save_config()
 

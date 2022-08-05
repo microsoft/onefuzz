@@ -3,7 +3,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
-namespace Microsoft.OneFuzz.Service;
+namespace Microsoft.OneFuzz.Service.Functions;
 
 
 public class QueueTaskHearbeat {

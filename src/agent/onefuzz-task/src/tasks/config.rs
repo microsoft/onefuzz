@@ -87,8 +87,12 @@ pub enum Config {
     #[serde(alias = "dotnet_coverage")]
     DotnetCoverage(coverage::dotnet::Config),
 
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    #[serde(alias = "libfuzzer_dotnet_fuzz")]
+    LibFuzzerDotnetFuzz(fuzz::libfuzzer::dotnet::Config),
+
     #[serde(alias = "libfuzzer_fuzz")]
-    LibFuzzerFuzz(fuzz::libfuzzer_fuzz::Config),
+    LibFuzzerFuzz(fuzz::libfuzzer::generic::Config),
 
     #[serde(alias = "libfuzzer_crash_report")]
     LibFuzzerReport(report::libfuzzer_report::Config),
@@ -136,6 +140,7 @@ impl Config {
             Config::Coverage(c) => &mut c.common,
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(c) => &mut c.common,
+            Config::LibFuzzerDotnetFuzz(c) => &mut c.common,
             Config::LibFuzzerFuzz(c) => &mut c.common,
             Config::LibFuzzerMerge(c) => &mut c.common,
             Config::LibFuzzerReport(c) => &mut c.common,
@@ -155,6 +160,7 @@ impl Config {
             Config::Coverage(c) => &c.common,
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(c) => &c.common,
+            Config::LibFuzzerDotnetFuzz(c) => &c.common,
             Config::LibFuzzerFuzz(c) => &c.common,
             Config::LibFuzzerMerge(c) => &c.common,
             Config::LibFuzzerReport(c) => &c.common,
@@ -174,6 +180,7 @@ impl Config {
             Config::Coverage(_) => "coverage",
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(_) => "dotnet_coverage",
+            Config::LibFuzzerDotnetFuzz(_) => "libfuzzer_fuzz",
             Config::LibFuzzerFuzz(_) => "libfuzzer_fuzz",
             Config::LibFuzzerMerge(_) => "libfuzzer_merge",
             Config::LibFuzzerReport(_) => "libfuzzer_crash_report",
@@ -224,8 +231,13 @@ impl Config {
                     .run()
                     .await
             }
+            Config::LibFuzzerDotnetFuzz(config) => {
+                fuzz::libfuzzer::dotnet::LibFuzzerDotnetFuzzTask::new(config)?
+                    .run()
+                    .await
+            }
             Config::LibFuzzerFuzz(config) => {
-                fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
+                fuzz::libfuzzer::generic::LibFuzzerFuzzTask::new(config)?
                     .run()
                     .await
             }

@@ -22,8 +22,7 @@ public class UserCredentials : IUserCredentials {
     }
 
     public string? GetBearerToken(HttpRequestData req) {
-        var authHeader = req.Headers.GetValues("Authorization");
-        if (authHeader.IsNullOrEmpty()) {
+        if (!req.Headers.TryGetValues("Authorization", out var authHeader) || authHeader.IsNullOrEmpty()) {
             return null;
         } else {
             var auth = AuthenticationHeaderValue.Parse(authHeader.First());
@@ -39,8 +38,7 @@ public class UserCredentials : IUserCredentials {
         if (token is not null) {
             return token;
         } else {
-            var tokenHeader = req.Headers.GetValues("x-ms-token-aad-id-token");
-            if (tokenHeader.IsNullOrEmpty()) {
+            if (!req.Headers.TryGetValues("x-ms-token-aad-id-token", out var tokenHeader) || tokenHeader.IsNullOrEmpty()) {
                 return null;
             } else {
                 return tokenHeader.First();

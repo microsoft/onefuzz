@@ -4,9 +4,9 @@
     "net6.0": {
       "Azure.Core": {
         "type": "Direct",
-        "requested": "[1.24.0, )",
-        "resolved": "1.24.0",
-        "contentHash": "+/qI1j2oU1S4/nvxb2k/wDsol00iGf1AyJX5g3epV7eOpQEP/2xcgh/cxgKMeFgn3U2fmgSiBnQZdkV+l5y0Uw==",
+        "requested": "[1.25.0, )",
+        "resolved": "1.25.0",
+        "contentHash": "X8Dd4sAggS84KScWIjEbFAdt2U1KDolQopTPoHVubG2y3CM54f9l6asVrP5Uy384NWXjsspPYaJgz5xHc+KvTA==",
         "dependencies": {
           "Microsoft.Bcl.AsyncInterfaces": "1.1.1",
           "System.Diagnostics.DiagnosticSource": "4.6.0",
@@ -55,11 +55,11 @@
       },
       "Azure.ResourceManager": {
         "type": "Direct",
-        "requested": "[1.0.0, )",
-        "resolved": "1.0.0",
-        "contentHash": "UGaoiPcJ8a9Et030+F3zc2KhTssPAgPm7uXm4E9kyNI4jYYenUe6zj2J1bTimaTfcOZnn5scSjSYxKtZCzftcA==",
+        "requested": "[1.2.1, )",
+        "resolved": "1.2.1",
+        "contentHash": "Ac7sSSLVbeJJGtw5JouMxZMHTKSokHu5NgCqlIpZM84SwpDpBK7j8sugUcDEryMPGO+BPeK42bTPJBEEs0DRQA==",
         "dependencies": {
-          "Azure.Core": "1.24.0",
+          "Azure.Core": "1.25.0",
           "System.Text.Json": "4.7.2"
         }
       },
@@ -87,12 +87,12 @@
       },
       "Azure.ResourceManager.Network": {
         "type": "Direct",
-        "requested": "[1.0.0-beta.7, )",
-        "resolved": "1.0.0-beta.7",
-        "contentHash": "Ih8tb6OwxEEEEXATVzgX6oHJzVr9p4X6GfOfBnNAI3aIt9+G8blyQLltaCcJAGJ+dO1sBT/Nalgj/HinO+cBlw==",
+        "requested": "[1.0.0, )",
+        "resolved": "1.0.0",
+        "contentHash": "BhN2ULPSgi7vPmllXycYbGUBF/r9fI4zklGbuCBWPCNm2hJrFRQOwUy1NYy2UmLBRHtcAK7zp376n+lylsyjAg==",
         "dependencies": {
-          "Azure.Core": "1.24.0",
-          "Azure.ResourceManager": "1.0.0",
+          "Azure.Core": "1.25.0",
+          "Azure.ResourceManager": "1.2.0",
           "System.Text.Json": "4.7.2"
         }
       },
@@ -109,12 +109,12 @@
       },
       "Azure.ResourceManager.Storage": {
         "type": "Direct",
-        "requested": "[1.0.0-beta.8, )",
-        "resolved": "1.0.0-beta.8",
-        "contentHash": "tlVqStqG53lyGxr0dRq2KSkFdeC/+NQImWgsRXD9o5R4qBia4cx7zAGYBlnDeUxh1WldSZF5ZsBi2n5SAwxbxQ==",
+        "requested": "[1.0.0-beta.11, )",
+        "resolved": "1.0.0-beta.11",
+        "contentHash": "w7hOgG4yUFTRrJ65FzHeIQH8wFPczSJG12SnFiA9HrcvoceD/8CflIk5aPHzqc6moB3A1od0lwGciluovsHMbg==",
         "dependencies": {
-          "Azure.Core": "1.24.0",
-          "Azure.ResourceManager": "1.0.0",
+          "Azure.Core": "1.25.0",
+          "Azure.ResourceManager": "1.2.0",
           "System.Text.Json": "4.7.2"
         }
       },
@@ -132,21 +132,21 @@
       },
       "Azure.Storage.Blobs": {
         "type": "Direct",
-        "requested": "[12.11.0, )",
-        "resolved": "12.11.0",
-        "contentHash": "50eRjIhY7Q1JN7kT2MSawDKCcwSb7uRZUkz00P/BLjSg47gm2hxUYsnJPyvzCHntYMbOWzrvaVQTwYwXabaR5Q==",
+        "requested": "[12.13.0, )",
+        "resolved": "12.13.0",
+        "contentHash": "h5ZxRwmS/U1NOFwd+MuHJe4To1hEPu/yeBIKS1cbAHTDc+7RBZEjPf1VFeUZsIIuHvU/AzXtcRaph9BHuPRNMQ==",
         "dependencies": {
-          "Azure.Storage.Common": "12.10.0",
+          "Azure.Storage.Common": "12.12.0",
           "System.Text.Json": "4.7.2"
         }
       },
       "Azure.Storage.Queues": {
         "type": "Direct",
-        "requested": "[12.9.0, )",
-        "resolved": "12.9.0",
-        "contentHash": "jDiyHtsCUCrWNvZW7SjJnJb46UhpdgQrWCbL8aWpapDHlq9LvbvxYpfLh4dfKAz09QiTznLMIU3i+md9+7GzqQ==",
+        "requested": "[12.11.0, )",
+        "resolved": "12.11.0",
+        "contentHash": "qpe1Gs1/2t18FoZORF3TgPTaF31RJhN5DQFgZ6ay6qKak9IztaqwKG8Lv2eZ/yhRKJNrOVnaZF4iqf7a4N57BA==",
         "dependencies": {
-          "Azure.Storage.Common": "12.10.0",
+          "Azure.Storage.Common": "12.12.0",
           "System.Memory.Data": "1.0.2",
           "System.Text.Json": "4.7.2"
         }
@@ -310,10 +310,10 @@
       },
       "Azure.Storage.Common": {
         "type": "Transitive",
-        "resolved": "12.10.0",
-        "contentHash": "vYkHGzUkdZTace/cDPZLG+Mh/EoPqQuGxDIBOau9D+XWoDPmuUFGk325aXplkFE4JFGpSwoytNYzk/qBCaiHqg==",
+        "resolved": "12.12.0",
+        "contentHash": "Ms0XsZ/D9Pcudfbqj+rWeCkhx/ITEq8isY0jkor9JFmDAEHsItFa2XrWkzP3vmJU6EsXQrk4snH63HkW/Jksvg==",
         "dependencies": {
-          "Azure.Core": "1.22.0",
+          "Azure.Core": "1.25.0",
           "System.IO.Hashing": "6.0.0"
         }
       },
