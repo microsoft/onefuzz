@@ -16,7 +16,7 @@ public class ContainersFunction {
     }
 
     [Function("Containers")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger("GET", "POST", "DELETE")] HttpRequestData req)
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req)
         => _auth.CallIfUser(req, r => r.Method switch {
             "GET" => Get(r),
             "POST" => Post(r),
