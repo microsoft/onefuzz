@@ -111,7 +111,7 @@ public class IpOperations : IIpOperations {
         var network = await Network.Create(region, _context);
         var subnetId = await network.GetId();
 
-        if (subnetId is not null) {
+        if (subnetId is null) {
             await network.Create();
             return OneFuzzResultVoid.Ok;
         }
