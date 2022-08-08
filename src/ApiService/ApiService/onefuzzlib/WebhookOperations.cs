@@ -47,7 +47,6 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
             var (status, reason) = r.ErrorV;
             _logTracer.Error($"Failed to replace webhook message log due to [{status}] {reason}");
         }
-        
         await _context.WebhookMessageLogOperations.QueueWebhook(message);
     }
 
