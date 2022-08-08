@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use async_trait::async_trait;
 use onefuzz::libfuzzer::LibFuzzer;
 
 use crate::tasks::fuzz::libfuzzer::common;
@@ -12,6 +13,7 @@ use crate::tasks::fuzz::libfuzzer::common;
 #[derive(Debug)]
 pub struct GenericLibFuzzer;
 
+#[async_trait]
 impl common::LibFuzzerType for GenericLibFuzzer {
     type Config = ();
 
