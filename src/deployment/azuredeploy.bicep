@@ -1,7 +1,10 @@
 param name string
 param owner string
 param clientId string
+
+@secure()
 param clientSecret string
+
 param signedExpiry string
 param app_func_issuer string
 param app_func_audiences array
