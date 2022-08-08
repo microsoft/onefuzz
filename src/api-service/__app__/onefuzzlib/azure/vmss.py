@@ -5,7 +5,7 @@
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Set, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Set, Union, cast
 from uuid import UUID
 
 from azure.core.exceptions import (
@@ -19,6 +19,7 @@ from azure.mgmt.compute.models import (
     VirtualMachineScaleSetVMInstanceIDs,
     VirtualMachineScaleSetVMInstanceRequiredIDs,
     VirtualMachineScaleSetVMProtectionPolicy,
+    VirtualMachineScaleSetVMListResult,
 )
 from memoization import cached
 from msrestazure.azure_exceptions import CloudError
@@ -36,7 +37,7 @@ from .image import get_os
 
 
 @retry_on_auth_failure()
-def list_vmss(name: UUID) -> Optional[List[str]]:
+def list_vmss(name: UUID, vm_filter: Optional[Callable[[VirtualMachineScaleSetVMListResult], bool]]) -> Optional[List[str]]:
     resource_group = get_base_resource_group()
     client = get_compute_client()
     try:
@@ -45,6 +46,7 @@ def list_vmss(name: UUID) -> Optional[List[str]]:
             for x in client.virtual_machine_scale_set_vms.list(
                 resource_group, str(name)
             )
+            if vm_filter is None or vm_filter(x)
         ]
         return instances
     except (ResourceNotFoundError, CloudError) as err:
@@ -147,7 +149,6 @@ def get_instance_id(name: UUID, vm_id: UUID) -> Union[str, Error]:
         code=ErrorCode.UNABLE_TO_FIND,
         errors=["unable to find scaleset machine: %s:%s" % (name, vm_id)],
     )
-
 
 @retry_on_auth_failure()
 def update_scale_in_protection(

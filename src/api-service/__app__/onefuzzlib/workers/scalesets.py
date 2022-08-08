@@ -35,6 +35,10 @@ from ..azure.auto_scale import (
     add_auto_scale_to_vmss,
     create_auto_scale_profile,
     default_auto_scale_profile,
+    default_scale_in_rule,
+    get_auto_scale_settings,
+    setup_auto_scale_diagnostics,
+    update_auto_scale,
 )
 from ..azure.image import get_os
 from ..azure.network import Network
@@ -45,13 +49,16 @@ from ..azure.vmss import (
     create_vmss,
     delete_vmss,
     delete_vmss_nodes,
+    get_vms_with_scale_in_protection,
     get_vmss,
     get_vmss_size,
     list_instance_ids,
+    list_vmss,
     reimage_vmss_nodes,
     resize_vmss,
     update_extensions,
 )
+from azure.mgmt.monitor.models import ScaleDirection
 from ..events import send_event
 from ..extension import fuzz_extensions
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
@@ -715,6 +722,25 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         nodes = Node.search_states(scaleset_id=self.scaleset_id)
         for node in nodes:
             node.set_shutdown()
+        
+        auto_scale_policy = get_auto_scale_settings(self.scaleset_id)
+        if auto_scale_policy is not None:
+            for profile in auto_scale_policy.profiles:
+                queue_uri = profile.rules[0].metric_trigger.metric_resource_uri
+                # Remove any scale out rules
+                profile.rules = list(filter(lambda rule: rule.scale_action.direction != ScaleDirection.INCREASE, profile.rules))
+                # Make sure there's at least 1 scale in rule
+                num_scale_in_rules = len(filter(lambda rule: rule.scale_action.direction == ScaleDirection.DECREASE, profile.rules))
+                if num_scale_in_rules == 0:
+                    profile.rules.append(default_scale_in_rule(queue_uri))
+
+                if profile.capacity.minimum != 0:
+                    vms_with_protection = len(list_vmss(self.scaleset_id, lambda vm: vm.protection_policy.scale_in_protection))
+                    if vms_with_protection == 0:
+                        profile.capacity.minimum = 0
+
+            update_auto_scale(self.scaleset_id, auto_scale_policy)
+        
         if size == 0:
             self.halt()
 
