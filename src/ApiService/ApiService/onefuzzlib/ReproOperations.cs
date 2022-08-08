@@ -1,5 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System.Globalization;
+using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
+using Azure.ResourceManager.Compute;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -9,11 +11,25 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
     public Async.Task<Repro> Stopping(Repro repro);
 
     public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? states);
+
+
+    public Async.Task<Repro> Init(Repro repro);
+    public Async.Task<Repro> ExtensionsLaunch(Repro repro);
+
+    public Async.Task<Repro> Stopped(Repro repro);
+
+    public Async.Task<Repro> SetFailed(Repro repro, VirtualMachineResource vmData);
+
+    public Async.Task<Repro> SetError(Repro repro, Error result);
+
+    public Async.Task<OneFuzzResultVoid> BuildReproScript(Repro repro);
+
+    public Async.Task<Container?> GetSetupContainer(Repro repro);
     Task<OneFuzzResult<Repro>> Create(ReproConfig config, UserInfo userInfo);
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
-    private static readonly Dictionary<Os, string> DEFAULT_OS = new Dictionary<Os, string>
+    private static readonly Dictionary<Os, string> DEFAULT_OS = new()
     {
         {Os.Linux, "Canonical:UbuntuServer:18.04-LTS:latest"},
         {Os.Windows, "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest"}
@@ -94,12 +110,186 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? states) {
         string? queryString = null;
         if (states != null) {
-            queryString = string.Join(
-                " or ",
-                states.Select(s => $"state eq '{s}'")
-            );
+            queryString = Query.EqualAnyEnum("state", states);
         }
         return QueryAsync(queryString);
+    }
+
+    public async Async.Task<Repro> Init(Repro repro) {
+        var config = await _context.ConfigOperations.Fetch();
+        var vm = await GetVm(repro, config);
+        var vmData = await _context.VmOperations.GetVm(vm.Name);
+        if (vmData != null) {
+            if (vmData.Data.ProvisioningState == "Failed") {
+                return await _context.ReproOperations.SetFailed(repro, vmData);
+            } else {
+                var scriptResult = await BuildReproScript(repro);
+                if (!scriptResult.IsOk) {
+                    return await _context.ReproOperations.SetError(repro, scriptResult.ErrorV);
+                }
+                repro = repro with { State = VmState.ExtensionsLaunch };
+            }
+        } else {
+            var nsg = new Nsg(vm.Region, vm.Region);
+            var result = await _context.NsgOperations.Create(nsg);
+            if (!result.IsOk) {
+                return await _context.ReproOperations.SetError(repro, result.ErrorV);
+            }
+
+            var nsgConfig = config.ProxyNsgConfig;
+            result = await _context.NsgOperations.SetAllowedSources(nsg, nsgConfig);
+            if (!result.IsOk) {
+                return await _context.ReproOperations.SetError(repro, result.ErrorV);
+            }
+
+            vm = vm with { Nsg = nsg };
+            result = await _context.VmOperations.Create(vm);
+            if (!result.IsOk) {
+                return await _context.ReproOperations.SetError(repro, result.ErrorV);
+            }
+        }
+
+        await Replace(repro);
+        return repro;
+    }
+
+    public async Async.Task<Repro> ExtensionsLaunch(Repro repro) {
+        var config = await _context.ConfigOperations.Fetch();
+        var vm = await GetVm(repro, config);
+        var vmData = await _context.VmOperations.GetVm(vm.Name);
+        if (vmData == null) {
+            return await _context.ReproOperations.SetError(
+                repro,
+                OneFuzzResultVoid.Error(
+                    ErrorCode.VM_CREATE_FAILED,
+                    "failed before launching extensions"
+                ).ErrorV
+            );
+        }
+
+        if (vmData.Data.ProvisioningState == "Failed") {
+            return await _context.ReproOperations.SetFailed(repro, vmData);
+        }
+
+        if (string.IsNullOrEmpty(repro.Ip)) {
+            repro = repro with {
+                Ip = await _context.IpOperations.GetPublicIp(vmData.Data.NetworkProfile.NetworkInterfaces.First().Id)
+            };
+        }
+
+        var extensions = await _context.Extensions.ReproExtensions(
+            vm.Region,
+            repro.Os,
+            repro.VmId,
+            repro.Config,
+            await _context.ReproOperations.GetSetupContainer(repro)
+        );
+
+        var result = await _context.VmOperations.AddExtensions(vm, extensions);
+        if (!result.IsOk) {
+            return await SetError(repro, result.ErrorV);
+        } else {
+            repro = repro with { State = VmState.Running };
+        }
+
+        await Replace(repro);
+        return repro;
+    }
+
+    public async Async.Task<Repro> SetFailed(Repro repro, VirtualMachineResource vmData) {
+        var errors = (await vmData.InstanceViewAsync()).Value.Statuses
+            .Where(status => status.Level.HasValue && string.Equals(status.Level?.ToString(), "error", StringComparison.OrdinalIgnoreCase))
+            .Select(status => $"{status.Code} {status.DisplayStatus} {status.Message}")
+            .ToArray();
+
+        return await SetError(repro, OneFuzzResultVoid.Error(
+            ErrorCode.VM_CREATE_FAILED,
+            errors
+        ).ErrorV);
+    }
+
+    public async Task<OneFuzzResultVoid> BuildReproScript(Repro repro) {
+        if (repro.Auth == null) {
+            return OneFuzzResultVoid.Error(
+                ErrorCode.VM_CREATE_FAILED,
+                "missing auth"
+            );
+        }
+
+        var task = await _context.TaskOperations.GetByTaskId(repro.TaskId);
+        if (task == null) {
+            return OneFuzzResultVoid.Error(
+                ErrorCode.VM_CREATE_FAILED,
+                $"unable to find task with id: {repro.TaskId}"
+            );
+        }
+
+        var report = await _context.Reports.GetReport(repro.Config.Container, repro.Config.Path);
+        if (report == null) {
+            return OneFuzzResultVoid.Error(
+                ErrorCode.VM_CREATE_FAILED,
+                "unable to perform repro for crash reports without inputs"
+            );
+        }
+
+        var files = new Dictionary<string, string>();
+        switch (task.Os) {
+            case Os.Windows:
+                var sshPath = "$env:ProgramData/ssh/administrators_authorized_keys";
+                var cmds = new List<string>()
+                {
+                    $"Set-Content -Path {sshPath} -Value \"{repro.Auth.PublicKey}\"",
+                    ". C:\\onefuzz\\tools\\win64\\onefuzz.ps1",
+                    "Set-SetSSHACL",
+                    $"while (1) {{ cdb -server tcp:port=1337 -c \"g\" setup\\{task.Config.Task.TargetExe} {report?.InputBlob?.Name} }}"
+                };
+                var winCmd = string.Join("\r\n", cmds);
+                files.Add("repro.ps1", winCmd);
+                break;
+            case Os.Linux:
+                var gdbFmt = "ASAN_OPTIONS='abort_on_error=1' gdbserver {0} /onefuzz/setup/{1} /onefuzz/downloaded/{2}";
+                var linuxCmd = $"while :; do {string.Format(CultureInfo.InvariantCulture, gdbFmt, "localhost:1337", task.Config.Task.TargetExe, report?.InputBlob?.Name)}; done";
+                files.Add("repro.sh", linuxCmd);
+
+                var linuxCmdStdOut = $"#!/bin/bash\n{string.Format(CultureInfo.InvariantCulture, gdbFmt, "-", task.Config.Task.TargetExe, report?.InputBlob?.Name)}";
+                files.Add("repro-stdout.sh", linuxCmdStdOut);
+                break;
+            default: throw new NotImplementedException($"invalid task os: {task.Os}");
+        }
+
+        foreach (var (fileName, fileContents) in files) {
+            await _context.Containers.SaveBlob(
+                new Container("repro-scripts"),
+                $"{repro.VmId}/{fileName}",
+                fileContents,
+                StorageType.Config
+            );
+        }
+
+        _logTracer.Info("saved repro script");
+        return OneFuzzResultVoid.Ok;
+    }
+
+    public async Async.Task<Repro> SetError(Repro repro, Error result) {
+        _logTracer.Error(
+            $"repro failed: vm_id: {repro.VmId} task_id: {repro.TaskId} error: {result}"
+        );
+
+        repro = repro with {
+            Error = result,
+            State = VmState.Stopping
+        };
+
+        await Replace(repro);
+        return repro;
+    }
+
+    public async Task<Container?> GetSetupContainer(Repro repro) {
+        var task = await _context.TaskOperations.GetByTaskId(repro.TaskId);
+        return task?.Config?.Containers?
+            .Where(container => container.Type == ContainerType.Setup)
+            .FirstOrDefault()?
+            .Name;
     }
 
     public async Task<OneFuzzResult<Repro>> Create(ReproConfig config, UserInfo userInfo) {
