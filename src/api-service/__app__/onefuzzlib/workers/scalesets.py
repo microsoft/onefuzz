@@ -781,7 +781,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             )
             if isinstance(updated_auto_scale, Error):
                 logging.error(
-                    "Failed to update auto scale for scale set %s - %s"
+                    "Failed to update auto scale for scale set %s error: %s"
                     % (self.scaleset_id, updated_auto_scale)
                 )
         elif isinstance(auto_scale_policy, Error):
