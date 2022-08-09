@@ -721,7 +721,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         for node in nodes:
             node.set_shutdown()
 
-        logging.info(SCALESET_LOG_PREFIX + "checking for existing auto scale settings")
+        logging.info(
+            SCALESET_LOG_PREFIX
+            + "checking for existing auto scale settings %s" % self.scaleset_id
+        )
         auto_scale_policy = get_auto_scale_settings(self.scaleset_id)
         if auto_scale_policy is not None and not isinstance(auto_scale_policy, Error):
             for profile in auto_scale_policy.profiles:
@@ -780,10 +783,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 str(self.scaleset_id), auto_scale_policy
             )
             if isinstance(updated_auto_scale, Error):
-                logging.error(
-                    "Failed to update auto scale for scale set %s error: %s"
-                    % (self.scaleset_id, updated_auto_scale)
-                )
+                logging.error("Failed to update auto scale %s" % updated_auto_scale)
         elif isinstance(auto_scale_policy, Error):
             logging.error(auto_scale_policy)
         else:
