@@ -283,7 +283,7 @@ public class VmOperations : IVmOperations {
                     );
                     break;
                 }
-            default: throw new NotImplementedException($"No support for OS type: {imageOs.OkV}");
+            default: throw new NotSupportedException($"No support for OS type: {imageOs.OkV}");
         }
 
         var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
