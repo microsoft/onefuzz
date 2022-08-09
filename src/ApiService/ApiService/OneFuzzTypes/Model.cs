@@ -788,7 +788,7 @@ public record MultipleContainer(List<SyncedDir> SyncedDirs) : IContainerDef;
 
 public class ContainerDefConverter : JsonConverter<IContainerDef> {
     public override IContainerDef? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-        throw new NotImplementedException();
+        throw new NotSupportedException("reading IContainerDef is not supported");
     }
 
     public override void Write(Utf8JsonWriter writer, IContainerDef value, JsonSerializerOptions options) {
@@ -800,7 +800,7 @@ public class ContainerDefConverter : JsonConverter<IContainerDef> {
                 JsonSerializer.Serialize(writer, syncedDirs, options);
                 break;
             default:
-                throw new NotImplementedException();
+                throw new NotSupportedException($"invalid IContainerDef type: {value.GetType()}");
         }
     }
 }

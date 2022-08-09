@@ -43,7 +43,7 @@ public sealed class TestContext : IOnefuzzContext {
                 Job j => JobOperations.Insert(j),
                 NodeTasks nt => NodeTasksOperations.Insert(nt),
                 InstanceConfig ic => ConfigOperations.Insert(ic),
-                _ => throw new NotImplementedException($"Need to add an TestContext.InsertAll case for {x.GetType()} entities"),
+                _ => throw new NotSupportedException($"You will need to add an TestContext.InsertAll case for {x.GetType()} entities"),
             }));
 
     // Implementations:

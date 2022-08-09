@@ -114,7 +114,7 @@ public class Extensions : IExtensions {
                 }, _extensionSerializerOptions))
             };
         } else {
-            throw new NotImplementedException($"unsupported os {vmOs}");
+            throw new NotSupportedException($"unsupported os {vmOs}");
         }
     }
 
@@ -309,7 +309,7 @@ public class Extensions : IExtensions {
             return extension;
         }
 
-        throw new NotImplementedException($"unsupported OS: {vmOs}");
+        throw new NotSupportedException($"unsupported OS: {vmOs}");
     }
 
     public async Async.Task<VMExtensionWrapper> MonitorExtension(AzureLocation region, Os vmOs) {
@@ -339,7 +339,7 @@ public class Extensions : IExtensions {
                 ProtectedSettings = new BinaryData(protectedExtensionSettings)
             };
         } else {
-            throw new NotImplementedException($"unsupported os: {vmOs}");
+            throw new NotSupportedException($"unsupported os: {vmOs}");
         }
     }
 
