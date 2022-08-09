@@ -40,8 +40,11 @@ from .creds import (
 from .log_analytics import get_workspace_id
 from .monitor import get_monitor_client
 
+
 @retry_on_auth_failure()
-def get_auto_scale_settings(vmss: UUID) -> Union[Optional[AutoscaleSettingResource], Error]:
+def get_auto_scale_settings(
+    vmss: UUID,
+) -> Union[Optional[AutoscaleSettingResource], Error]:
     logging.info("Getting auto scale settings for %s" % vmss)
     client = get_monitor_client()
     resource_group = get_base_resource_group()
@@ -64,6 +67,7 @@ def get_auto_scale_settings(vmss: UUID) -> Union[Optional[AutoscaleSettingResour
         )
 
     return None
+
 
 @retry_on_auth_failure()
 def add_auto_scale_to_vmss(
@@ -94,7 +98,10 @@ def add_auto_scale_to_vmss(
 
     return None
 
-def update_auto_scale(auto_scale_setting_name: str, auto_scale_resource: AutoscaleSettingResource) -> Optional[Error]:
+
+def update_auto_scale(
+    auto_scale_setting_name: str, auto_scale_resource: AutoscaleSettingResource
+) -> Optional[Error]:
     logging.info("Updating auto scale resource: %s" % auto_scale_setting_name)
     client = get_monitor_client()
     resource_group = get_base_resource_group()
@@ -103,15 +110,19 @@ def update_auto_scale(auto_scale_setting_name: str, auto_scale_resource: Autosca
         auto_scale_resource = client.autoscale_settings.create_or_update(
             resource_group, auto_scale_setting_name, auto_scale_resource
         )
-        logging.info("Successfully updated auto scale resource: %s" % auto_scale_resource.name)
+        logging.info(
+            "Successfully updated auto scale resource: %s" % auto_scale_resource.name
+        )
     except (ResourceNotFoundError, CloudError):
         return Error(
             code=ErrorCode.UNABLE_TO_UPDATE,
             errors=[
-                "unable to update auto scale resource with name: %s and profile: %s" % (auto_scale_setting_name, auto_scale_resource)
+                "unable to update auto scale resource with name: %s and profile: %s"
+                % (auto_scale_setting_name, auto_scale_resource)
             ],
         )
     return None
+
 
 def create_auto_scale_resource_for(
     resource_id: UUID, location: Region, profile: AutoscaleProfile
@@ -225,31 +236,33 @@ def default_auto_scale_profile(queue_uri: str, scaleset_size: int) -> AutoscaleP
         queue_uri, 1, scaleset_size, scaleset_size, 1, 10, 1, 5
     )
 
+
 def default_scale_in_rule(queue_uri: str) -> ScaleRule:
     return ScaleRule(
-                # Scale in if no work in the past 20 mins
-                metric_trigger=MetricTrigger(
-                    metric_name="ApproximateMessageCount",
-                    metric_resource_uri=queue_uri,
-                    # Check every 10 minutes
-                    time_grain=timedelta(minutes=10),
-                    # The average amount of messages there are in the pool queue
-                    time_aggregation=TimeAggregationType.AVERAGE,
-                    statistic=MetricStatisticType.SUM,
-                    # Over the past 10 minutes
-                    time_window=timedelta(minutes=10),
-                    # When there's no messages in the pool queue
-                    operator=ComparisonOperationType.EQUALS,
-                    threshold=0,
-                    divide_per_instance=False,
-                ),
-                scale_action=ScaleAction(
-                    direction=ScaleDirection.DECREASE,
-                    type=ScaleType.CHANGE_COUNT,
-                    value=1,
-                    cooldown=timedelta(minutes=5),
-                ),
-            )
+        # Scale in if no work in the past 20 mins
+        metric_trigger=MetricTrigger(
+            metric_name="ApproximateMessageCount",
+            metric_resource_uri=queue_uri,
+            # Check every 10 minutes
+            time_grain=timedelta(minutes=10),
+            # The average amount of messages there are in the pool queue
+            time_aggregation=TimeAggregationType.AVERAGE,
+            statistic=MetricStatisticType.SUM,
+            # Over the past 10 minutes
+            time_window=timedelta(minutes=10),
+            # When there's no messages in the pool queue
+            operator=ComparisonOperationType.EQUALS,
+            threshold=0,
+            divide_per_instance=False,
+        ),
+        scale_action=ScaleAction(
+            direction=ScaleDirection.DECREASE,
+            type=ScaleType.CHANGE_COUNT,
+            value=1,
+            cooldown=timedelta(minutes=5),
+        ),
+    )
+
 
 def setup_auto_scale_diagnostics(
     auto_scale_resource_uri: str,

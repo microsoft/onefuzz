@@ -37,7 +37,10 @@ from .image import get_os
 
 
 @retry_on_auth_failure()
-def list_vmss(name: UUID, vm_filter: Optional[Callable[[VirtualMachineScaleSetVMListResult], bool]] = None) -> Optional[List[str]]:
+def list_vmss(
+    name: UUID,
+    vm_filter: Optional[Callable[[VirtualMachineScaleSetVMListResult], bool]] = None,
+) -> Optional[List[str]]:
     resource_group = get_base_resource_group()
     client = get_compute_client()
     try:
@@ -149,6 +152,7 @@ def get_instance_id(name: UUID, vm_id: UUID) -> Union[str, Error]:
         code=ErrorCode.UNABLE_TO_FIND,
         errors=["unable to find scaleset machine: %s:%s" % (name, vm_id)],
     )
+
 
 @retry_on_auth_failure()
 def update_scale_in_protection(

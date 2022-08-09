@@ -721,18 +721,33 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         nodes = Node.search_states(scaleset_id=self.scaleset_id)
         for node in nodes:
             node.set_shutdown()
-        
+
         logging.info(SCALESET_LOG_PREFIX + "checking for existing auto scale settings")
         auto_scale_policy = get_auto_scale_settings(self.scaleset_id)
-        if auto_scale_policy is not None:
+        if auto_scale_policy is not None and not isinstance(auto_scale_policy, Error):
             for profile in auto_scale_policy.profiles:
                 queue_uri = profile.rules[0].metric_trigger.metric_resource_uri
-                
+
                 # Remove any scale out rules
-                profile.rules = list(filter(lambda rule: rule.scale_action.direction != ScaleDirection.INCREASE, profile.rules))
-                
+                profile.rules = list(
+                    filter(
+                        lambda rule: rule.scale_action.direction
+                        != ScaleDirection.INCREASE,
+                        profile.rules,
+                    )
+                )
+
                 # Make sure there's at least 1 scale in rule
-                num_scale_in_rules = len(filter(lambda rule: rule.scale_action.direction == ScaleDirection.DECREASE, profile.rules))
+                num_scale_in_rules = len(
+                    list(
+                        filter(
+                            lambda rule: bool(
+                                rule.scale_action.direction == ScaleDirection.DECREASE
+                            ),
+                            profile.rules,
+                        )
+                    )
+                )
                 if num_scale_in_rules == 0:
                     profile.rules.append(default_scale_in_rule(queue_uri))
 
@@ -741,7 +756,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 if profile.capacity.minimum != 0:
                     # Auto scale (the azure service) will not allow you to set the minimum number of instances
                     #   to a number smaller than the number of instances with scale in protection enabled.
-                    # 
+                    #
                     # Since:
                     #   * Nodes can no longer pick up work once the scale set is in `shutdown` state
                     #   * All scale out rules are removed
@@ -749,13 +764,27 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     #
                     #  This guarantees that _eventually_ the below check will pass, allowing us to set the minimum instances to 0,
                     #   auto scale will scale in the remaining nodes, and once the scale set is empty, we will delete it.
-                    vms_with_protection = len(list_vmss(self.scaleset_id, lambda vm: vm.protection_policy.scale_in_protection))
-                    if vms_with_protection == 0:
+                    vms_with_protection = list_vmss(
+                        self.scaleset_id,
+                        lambda vm: bool(vm.protection_policy.scale_in_protection),
+                    )
+                    if vms_with_protection is None or vms_with_protection == 0:
                         profile.capacity.minimum = 0
 
-            update_auto_scale(self.scaleset_id, auto_scale_policy)
+            updated_auto_scale = update_auto_scale(
+                str(self.scaleset_id), auto_scale_policy
+            )
+            if isinstance(updated_auto_scale, Error):
+                logging.error(
+                    "Failed to update auto scale for scale set %s - %s"
+                    % (self.scaleset_id, updated_auto_scale)
+                )
+        elif isinstance(auto_scale_policy, Error):
+            logging.error(auto_scale_policy)
         else:
-            logging.info("No existing auto scale settings found for %s" % self.scaleset_id)
+            logging.info(
+                "No existing auto scale settings found for %s" % self.scaleset_id
+            )
         if size == 0:
             self.halt()
 
