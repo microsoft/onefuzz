@@ -59,7 +59,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var vmConfig = await taskOperations.GetReproVmConfig(task);
         if (vmConfig == null) {
             if (!DEFAULT_OS.ContainsKey(task.Os)) {
-                throw new NotImplementedException($"unsupport OS for repro {task.Os}");
+                throw new NotSupportedException($"unsupport OS for repro {task.Os}");
             }
 
             vmConfig = new TaskVm(
@@ -254,7 +254,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
                 var linuxCmdStdOut = $"#!/bin/bash\n{string.Format(CultureInfo.InvariantCulture, gdbFmt, "-", task.Config.Task.TargetExe, report?.InputBlob?.Name)}";
                 files.Add("repro-stdout.sh", linuxCmdStdOut);
                 break;
-            default: throw new NotImplementedException($"invalid task os: {task.Os}");
+            default: throw new NotSupportedException($"invalid task os: {task.Os}");
         }
 
         foreach (var (fileName, fileContents) in files) {
