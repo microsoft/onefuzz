@@ -49,7 +49,6 @@ from ..azure.vmss import (
     create_vmss,
     delete_vmss,
     delete_vmss_nodes,
-    get_vms_with_scale_in_protection,
     get_vmss,
     get_vmss_size,
     list_instance_ids,
@@ -723,12 +722,15 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         for node in nodes:
             node.set_shutdown()
         
+        logging.info(SCALESET_LOG_PREFIX + "checking for existing auto scale settings")
         auto_scale_policy = get_auto_scale_settings(self.scaleset_id)
         if auto_scale_policy is not None:
             for profile in auto_scale_policy.profiles:
                 queue_uri = profile.rules[0].metric_trigger.metric_resource_uri
+                
                 # Remove any scale out rules
                 profile.rules = list(filter(lambda rule: rule.scale_action.direction != ScaleDirection.INCREASE, profile.rules))
+                
                 # Make sure there's at least 1 scale in rule
                 num_scale_in_rules = len(filter(lambda rule: rule.scale_action.direction == ScaleDirection.DECREASE, profile.rules))
                 if num_scale_in_rules == 0:
@@ -738,19 +740,22 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 # Therefore, the minimum nodes for the auto scale settings needs to be 0
                 if profile.capacity.minimum != 0:
                     # Auto scale (the azure service) will not allow you to set the minimum number of instances
-                    #   to a number smaller than the number of instances with scale in protection.
+                    #   to a number smaller than the number of instances with scale in protection enabled.
+                    # 
                     # Since:
                     #   * Nodes can no longer pick up work once the scale set is in `shutdown` state
                     #   * All scale out rules are removed
-                    # Then: the number of nodes in the scale set with scale in protection enabled _must_ only decrease over time
-                    # This guarantees that _eventually_ the below check will pass, allowing us to set the minimum instances to 0,
-                    #   auto scale will scale in the remaining nodes, and once the scale set is empty we will delete it
+                    # Then: The number of nodes in the scale set with scale in protection enabled _must_ strictly decrease over time.
+                    #
+                    #  This guarantees that _eventually_ the below check will pass, allowing us to set the minimum instances to 0,
+                    #   auto scale will scale in the remaining nodes, and once the scale set is empty, we will delete it.
                     vms_with_protection = len(list_vmss(self.scaleset_id, lambda vm: vm.protection_policy.scale_in_protection))
                     if vms_with_protection == 0:
                         profile.capacity.minimum = 0
 
             update_auto_scale(self.scaleset_id, auto_scale_policy)
-        
+        else:
+            logging.info("No existing auto scale settings found for %s" % self.scaleset_id)
         if size == 0:
             self.halt()
 
