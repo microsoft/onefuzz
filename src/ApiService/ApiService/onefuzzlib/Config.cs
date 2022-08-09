@@ -514,7 +514,7 @@ public class Config : IConfig {
             Compare.Equal => expected == actual,
             Compare.AtLeast => expected <= actual,
             Compare.AtMost => expected >= actual,
-            _ => throw new NotImplementedException()
+            _ => throw new NotSupportedException()
         };
     }
 }
