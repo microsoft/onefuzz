@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Functions.Worker;
+﻿using System.Threading.Tasks;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
 namespace Microsoft.OneFuzz.Service.Functions;
@@ -21,7 +22,7 @@ public class Jobs {
             var m => throw new NotSupportedException($"Unsupported HTTP method {m}"),
         });
 
-    private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
+    private async Task<HttpResponseData> Post(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<JobConfig>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "jobs create");
@@ -63,7 +64,7 @@ public class Jobs {
         return await RequestHandling.Ok(req, JobResponse.ForJob(job));
     }
 
-    private async Async.Task<HttpResponseData> Delete(HttpRequestData req) {
+    private async Task<HttpResponseData> Delete(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<JobGet>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "jobs delete");
@@ -88,7 +89,7 @@ public class Jobs {
         return await RequestHandling.Ok(req, JobResponse.ForJob(job));
     }
 
-    private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
+    private async Task<HttpResponseData> Get(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<JobSearch>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "jobs");
@@ -106,7 +107,7 @@ public class Jobs {
                     context: jobId.ToString());
             }
 
-            static JobTaskInfo TaskToJobTaskInfo(Microsoft.OneFuzz.Service.Task t) => new(t.TaskId, t.Config.Task.Type, t.State);
+            static JobTaskInfo TaskToJobTaskInfo(Task t) => new(t.TaskId, t.Config.Task.Type, t.State);
 
             // TODO: search.WithTasks is not checked in Python code?
 
