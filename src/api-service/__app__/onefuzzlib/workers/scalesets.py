@@ -9,6 +9,7 @@ import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
+from azure.mgmt.monitor.models import ScaleDirection
 from onefuzztypes.enums import (
     ErrorCode,
     NodeDisaposalStrategy,
@@ -56,7 +57,6 @@ from ..azure.vmss import (
     resize_vmss,
     update_extensions,
 )
-from azure.mgmt.monitor.models import ScaleDirection
 from ..events import send_event
 from ..extension import fuzz_extensions
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
@@ -753,16 +753,22 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 # We only delete the scale set when there are no more nodes
                 # Therefore, the minimum nodes for the auto scale settings needs to be 0
                 if profile.capacity.minimum != 0:
-                    # Auto scale (the azure service) will not allow you to set the minimum number of instances
-                    #   to a number smaller than the number of instances with scale in protection enabled.
+                    # Auto scale (the azure service) will not allow you to
+                    #   set the minimum number of instances to a number
+                    #   smaller than the number of instances
+                    #   with scale in protection enabled.
                     #
                     # Since:
-                    #   * Nodes can no longer pick up work once the scale set is in `shutdown` state
+                    #   * Nodes can no longer pick up work once the scale set is
+                    #       in `shutdown` state
                     #   * All scale out rules are removed
-                    # Then: The number of nodes in the scale set with scale in protection enabled _must_ strictly decrease over time.
+                    # Then: The number of nodes in the scale set with scale in
+                    #   protection enabled _must_ strictly decrease over time.
                     #
-                    #  This guarantees that _eventually_ the below check will pass, allowing us to set the minimum instances to 0,
-                    #   auto scale will scale in the remaining nodes, and once the scale set is empty, we will delete it.
+                    #  This guarantees that _eventually_ the below check will pass,
+                    #   allowing us to set the minimum instances to 0,
+                    #   auto scale will scale in the remaining nodes,
+                    #   and once the scale set is empty, we will delete it.
                     vms_with_protection = list_vmss(
                         self.scaleset_id,
                         lambda vm: bool(vm.protection_policy.scale_in_protection),

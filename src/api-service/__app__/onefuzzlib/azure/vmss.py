@@ -18,8 +18,8 @@ from azure.mgmt.compute.models import (
     ResourceSkuRestrictionsType,
     VirtualMachineScaleSetVMInstanceIDs,
     VirtualMachineScaleSetVMInstanceRequiredIDs,
-    VirtualMachineScaleSetVMProtectionPolicy,
     VirtualMachineScaleSetVMListResult,
+    VirtualMachineScaleSetVMProtectionPolicy,
 )
 from memoization import cached
 from msrestazure.azure_exceptions import CloudError
