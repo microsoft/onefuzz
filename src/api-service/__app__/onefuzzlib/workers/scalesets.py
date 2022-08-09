@@ -37,7 +37,6 @@ from ..azure.auto_scale import (
     default_auto_scale_profile,
     default_scale_in_rule,
     get_auto_scale_settings,
-    setup_auto_scale_diagnostics,
     update_auto_scale,
 )
 from ..azure.image import get_os
