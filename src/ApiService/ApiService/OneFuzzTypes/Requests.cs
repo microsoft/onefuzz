@@ -163,3 +163,10 @@ public record ProxyDelete(
 public record ProxyReset(
     string Region
 );
+
+public record TaskGet(Guid TaskId);
+
+public record TaskSearch(
+    Guid? JobId,
+    Guid? TaskId,
+    List<TaskState> State);

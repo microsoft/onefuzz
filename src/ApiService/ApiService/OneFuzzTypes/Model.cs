@@ -248,16 +248,16 @@ public record NodeAssignment(
 public record Task(
     [PartitionKey] Guid JobId,
     [RowKey] Guid TaskId,
-    TaskState State,
     Os Os,
     TaskConfig Config,
+    TaskState State = TaskState.Init,
     Error? Error = null,
     Authentication? Auth = null,
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? EndTime = null,
     UserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
-    List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
-    List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
+    public List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
+    public List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
 }
 
 public record TaskEvent(

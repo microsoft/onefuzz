@@ -13,7 +13,6 @@ public class SchedulerTests {
             new Task(
                 Guid.Empty,
                 Guid.NewGuid(),
-                TaskState.Init,
                 Os.Linux,
                 new TaskConfig(
                     Guid.Empty,
@@ -29,6 +28,7 @@ public class SchedulerTests {
                     Colocate: true
 
                 ),
+                TaskState.Init,
                 null,
                 null,
                 null,
