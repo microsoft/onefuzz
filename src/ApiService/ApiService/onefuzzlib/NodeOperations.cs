@@ -20,7 +20,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Async.Task ToReimage(Node node, bool done = false);
     Async.Task SendStopIfFree(Node node);
     IAsyncEnumerable<Node> SearchStates(Guid? poolId = default,
-        Guid? scaleSetId = default,
+        Guid? scalesetId = default,
         IEnumerable<NodeState>? states = default,
         PoolName? poolName = default,
         bool excludeUpdateScheduled = false,
@@ -47,6 +47,13 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Async.Task StopTask(Guid task_id);
 
     Async.Task<OneFuzzResult<bool>> AddSshPublicKey(Node node, string publicKey);
+
+    Async.Task MarkOutdatedNodes();
+    Async.Task CleanupBusyNodesWithoutWork();
+
+    IAsyncEnumerable<Node> SearchByPoolName(PoolName poolName);
+
+    Async.Task SetShutdown(Node node);
 }
 
 
@@ -168,11 +175,101 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     public async Async.Task ReimageLongLivedNodes(Guid scaleSetId) {
         var timeFilter = $"not (initialized_at ge datetime'{(DateTimeOffset.UtcNow - INodeOperations.NODE_REIMAGE_TIME).ToString("o")}')";
 
-        await foreach (var node in QueryAsync($"(scaleset_id eq {scaleSetId}) and {timeFilter}")) {
+        await foreach (var node in QueryAsync($"(scaleset_id eq '{scaleSetId}') and {timeFilter}")) {
             if (node.DebugKeepNode) {
                 _logTracer.Info($"removing debug_keep_node for expired node. scaleset_id:{node.ScalesetId} machine_id:{node.MachineId}");
             }
             await ToReimage(node with { DebugKeepNode = false });
+        }
+    }
+
+
+    public async Async.Task MarkOutdatedNodes() {
+        //#if outdated agents are allowed, do not attempt to update
+        bool allowOutdatedAgent;
+        var parsed = bool.TryParse(_context.ServiceConfiguration.OneFuzzAllowOutdatedAgent ?? "false", out allowOutdatedAgent);
+        if (parsed && allowOutdatedAgent) {
+            return;
+        }
+
+        var outdated = this.SearchOutdated(excludeUpdateScheduled: true);
+        await foreach (var node in outdated) {
+            _logTracer.Info($"node is outdated: {node.MachineId} - node_version:{node.Version} api_version:");
+
+            if (node.Version == "1.0.0") {
+                await ToReimage(node, done: true);
+            } else {
+                await ToReimage(node);
+            }
+        }
+    }
+
+
+    public static string SearchOutdatedQuery(
+    string oneFuzzVersion,
+    Guid? poolId = null,
+    Guid? scalesetId = null,
+    IEnumerable<NodeState>? states = null,
+    PoolName? poolName = null,
+    bool excludeUpdateScheduled = false,
+    int? numResults = null) {
+
+        List<string> queryParts = new();
+
+        if (poolId is not null) {
+            queryParts.Add($"(pool_id eq '{poolId}')");
+        }
+
+        if (poolName is not null) {
+            queryParts.Add($"(pool_name eq '{poolName}')");
+        }
+
+        if (scalesetId is not null) {
+            queryParts.Add($"(scaleset_id eq '{scalesetId}')");
+        }
+
+        if (states is not null) {
+            var q = Query.EqualAnyEnum("state", states);
+            queryParts.Add($"({q})");
+        }
+
+        if (excludeUpdateScheduled) {
+            queryParts.Add($"reimage_requested eq false");
+            queryParts.Add($"delete_requested eq false");
+        }
+
+        //# azure table query always return false when the column does not exist
+        //# We write the query this way to allow us to get the nodes where the
+        //# version is not defined as well as the nodes with a mismatched version
+        var versionQuery = $"not (version eq '{oneFuzzVersion}')";
+        queryParts.Add(versionQuery);
+        return Query.And(queryParts);
+    }
+
+    IAsyncEnumerable<Node> SearchOutdated(
+            Guid? poolId = null,
+            Guid? scalesetId = null,
+            IEnumerable<NodeState>? states = null,
+            PoolName? poolName = null,
+            bool excludeUpdateScheduled = false,
+            int? numResults = null) {
+
+        var query = SearchOutdatedQuery(_context.ServiceConfiguration.OneFuzzVersion, poolId, scalesetId, states, poolName, excludeUpdateScheduled, numResults);
+        if (numResults is null) {
+            return QueryAsync(query);
+        } else {
+            return QueryAsync(query).TakeWhile((_, i) => i < numResults);
+        }
+    }
+
+    public async Async.Task CleanupBusyNodesWithoutWork() {
+        //# There is a potential race condition if multiple `Node.stop_task` calls
+        //# are made concurrently.  By performing this check regularly, any nodes
+        //# that hit this race condition will get cleaned up.
+        var nodes = _context.NodeOperations.SearchStates(states: NodeStateHelper.BusyStates);
+
+        await foreach (var node in nodes) {
+            await StopIfComplete(node, true);
         }
     }
 
@@ -257,6 +354,19 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         await Stop(updatedNode, true);
         await SendStopIfFree(updatedNode);
     }
+
+    public async Async.Task SetShutdown(Node node) {
+        //don't give out more work to the node, but let it finish existing work
+        _logTracer.Info($"setting delte_requested: {node.MachineId}");
+        node = node with { DeleteRequested = true };
+        var r = await Replace(node);
+        if (!r.IsOk) {
+            _logTracer.Error($"failed to update node with delete requested. machine id: {node.MachineId}, pool name: {node.PoolName}, pool id: {node.PoolId}, scaleset id: {node.ScalesetId}");
+        }
+
+        await SendStopIfFree(node);
+    }
+
 
     public async Async.Task SendStopIfFree(Node node) {
         var ver = new Version(_context.ServiceConfiguration.OneFuzzVersion.Split('-')[0]);
@@ -367,12 +477,12 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
     public IAsyncEnumerable<Node> SearchStates(
         Guid? poolId = default,
-        Guid? scaleSetId = default,
+        Guid? scalesetId = default,
         IEnumerable<NodeState>? states = default,
         PoolName? poolName = default,
         bool excludeUpdateScheduled = false,
         int? numResults = default) {
-        var query = NodeOperations.SearchStatesQuery(_context.ServiceConfiguration.OneFuzzVersion, poolId, scaleSetId, states, poolName, excludeUpdateScheduled, numResults);
+        var query = NodeOperations.SearchStatesQuery(_context.ServiceConfiguration.OneFuzzVersion, poolId, scalesetId, states, poolName, excludeUpdateScheduled, numResults);
 
         if (numResults is null) {
             return QueryAsync(query);
@@ -380,6 +490,11 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             return QueryAsync(query).TakeWhile((_, i) => i < numResults);
         }
     }
+
+    public IAsyncEnumerable<Node> SearchByPoolName(PoolName poolName) {
+        return QueryAsync($"(pool_name eq '{poolName}')");
+    }
+
 
     public async Async.Task MarkTasksStoppedEarly(Node node, Error? error = null) {
         if (error is null) {
@@ -429,8 +544,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         }
 
         if (node.ScalesetId == null) {
-            return OneFuzzResult<bool>.Error(new Error(ErrorCode.INVALID_REQUEST,
-                new[] { "only able to add ssh keys to scaleset nodes" }));
+            return OneFuzzResult<bool>.Error(ErrorCode.INVALID_REQUEST, "only able to add ssh keys to scaleset nodes");
         }
 
         var key = publicKey.EndsWith('\n') ? publicKey : $"{publicKey}\n";

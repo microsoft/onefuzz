@@ -89,7 +89,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
     public async Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting) {
         if (await _context.Containers.FindContainer(container, StorageType.Corpus) == null) {
-            return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, errors: new[] { "invalid container" });
+            return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, "invalid container");
         }
 
         if (replaceExisting) {

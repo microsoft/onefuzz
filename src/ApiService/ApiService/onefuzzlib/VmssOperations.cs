@@ -1,6 +1,8 @@
 ﻿using Azure;
+using Azure.Core;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
+using Azure.ResourceManager.Models;
 using Microsoft.Rest.Azure;
 
 namespace Microsoft.OneFuzz.Service;
@@ -9,22 +11,43 @@ public interface IVmssOperations {
     Async.Task<OneFuzzResultVoid> UpdateScaleInProtection(Guid name, Guid vmId, bool protectFromScaleIn);
     Async.Task<OneFuzzResult<string>> GetInstanceId(Guid name, Guid vmId);
     Async.Task<OneFuzzResultVoid> UpdateExtensions(Guid name, IList<VirtualMachineScaleSetExtensionData> extensions);
-    Async.Task<VirtualMachineScaleSetData> GetVmss(Guid name);
+    Async.Task<VirtualMachineScaleSetData?> GetVmss(Guid name);
 
     Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null);
 
-
     Async.Task<IDictionary<Guid, string>> ListInstanceIds(Guid name);
+
+    Async.Task<long?> GetVmssSize(Guid name);
+
+    Async.Task<OneFuzzResultVoid> ResizeVmss(Guid name, long capacity);
+
+    Async.Task<OneFuzzResultVoid> CreateVmss(
+        string location,
+        Guid name,
+        string vmSku,
+        long vmCount,
+        string image,
+        string networkId,
+        bool? spotInstance,
+        bool ephemeralOsDisks,
+        IList<VirtualMachineScaleSetExtensionData>? extensions,
+        string password,
+        string sshPublicKey,
+        IDictionary<string, string> tags);
 }
 
 public class VmssOperations : IVmssOperations {
 
     readonly ILogTracer _log;
     readonly ICreds _creds;
+    readonly IImageOperations _imageOps;
+    readonly IServiceConfig _serviceConfig;
 
-    public VmssOperations(ILogTracer log, ICreds creds) {
+    public VmssOperations(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _creds = creds;
+        _creds = context.Creds;
+        _imageOps = context.ImageOperations;
+        _serviceConfig = context.ServiceConfiguration;
     }
 
     public async Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null) {
@@ -39,6 +62,28 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
+    public async Async.Task<long?> GetVmssSize(Guid name) {
+        var vmss = await GetVmss(name);
+        if (vmss == null) {
+            return null;
+        }
+        return vmss.Sku.Capacity;
+    }
+
+    public async Async.Task<OneFuzzResultVoid> ResizeVmss(Guid name, long capacity) {
+        var canUpdate = await CheckCanUpdate(name);
+        if (canUpdate.IsOk) {
+            _log.Info($"updating VM count - name: {name} vm_count: {capacity}");
+            var scalesetResource = GetVmssResource(name);
+            var patch = new VirtualMachineScaleSetPatch();
+            patch.Sku.Capacity = capacity;
+            await scalesetResource.UpdateAsync(WaitUntil.Started, patch);
+            return OneFuzzResultVoid.Ok;
+        } else {
+            return OneFuzzResultVoid.Error(canUpdate.ErrorV);
+        }
+    }
+
 
     private VirtualMachineScaleSetResource GetVmssResource(Guid name) {
         var resourceGroup = _creds.GetBaseResourceGroup();
@@ -47,11 +92,14 @@ public class VmssOperations : IVmssOperations {
     }
 
 
-    public async Async.Task<VirtualMachineScaleSetData> GetVmss(Guid name) {
-        var res = GetVmssResource(name);
-        _log.Verbose($"getting vmss: {name}");
-        var r = await res.GetAsync();
-        return r.Value.Data;
+    public async Async.Task<VirtualMachineScaleSetData?> GetVmss(Guid name) {
+        try {
+            var res = await GetVmssResource(name).GetAsync();
+            _log.Verbose($"getting vmss: {name}");
+            return res.Value.Data;
+        } catch (Exception ex) when (ex is RequestFailedException) {
+            return null;
+        }
     }
 
     public async Async.Task<OneFuzzResult<VirtualMachineScaleSetData>> CheckCanUpdate(Guid name) {
@@ -88,14 +136,21 @@ public class VmssOperations : IVmssOperations {
     public async Async.Task<IDictionary<Guid, string>> ListInstanceIds(Guid name) {
         _log.Verbose($"get instance IDs for scaleset {name}");
         var results = new Dictionary<Guid, string>();
+        VirtualMachineScaleSetResource res;
+        try {
+            var r = await GetVmssResource(name).GetAsync();
+            res = r.Value;
+        } catch (Exception ex) when (ex is RequestFailedException) {
+            _log.Verbose($"vm does not exist {name}");
+            return results;
+        }
 
-        var res = GetVmssResource(name);
         if (res is null) {
             _log.Verbose($"vm does not exist {name}");
             return results;
         } else {
             try {
-                await foreach (var instance in res.GetVirtualMachineScaleSetVms().AsAsyncEnumerable()) {
+                await foreach (var instance in res!.GetVirtualMachineScaleSetVms().AsAsyncEnumerable()) {
                     if (instance is not null) {
                         Guid key;
                         if (Guid.TryParse(instance.Data.VmId, out key)) {
@@ -164,6 +219,126 @@ public class VmssOperations : IVmssOperations {
                 _log.Info($"scale in protection was already set to {protectFromScaleIn} on vm {vmId} for scaleset {name}");
                 return OneFuzzResultVoid.Ok;
             }
+        }
+    }
+
+    public async Async.Task<OneFuzzResultVoid> CreateVmss(
+    string location,
+    Guid name,
+    string vmSku,
+    long vmCount,
+    string image,
+    string networkId,
+    bool? spotInstance,
+    bool ephemeralOsDisks,
+    IList<VirtualMachineScaleSetExtensionData>? extensions,
+    string password,
+    string sshPublicKey,
+    IDictionary<string, string> tags) {
+        var vmss = await GetVmss(name);
+        if (vmss is not null) {
+            return OneFuzzResultVoid.Ok;
+        }
+        _log.Info($"creating VM name: {name}, vm_sku: {vmSku}, vm_count: {vmCount}, image: {image}, subnet: {networkId}, spot_instance: {spotInstance}");
+        var getOsResult = await _imageOps.GetOs(location, image);
+
+        if (!getOsResult.IsOk) {
+            return getOsResult.ErrorV;
+        }
+
+        var vmssData = new VirtualMachineScaleSetData(location) {
+            DoNotRunExtensionsOnOverprovisionedVms = true,
+            Sku = new ComputeSku() { Name = vmSku },
+            Overprovision = false,
+            SinglePlacementGroup = false,
+            UpgradePolicy = new UpgradePolicy() { Mode = UpgradeMode.Manual },
+            Identity = new ManagedServiceIdentity(managedServiceIdentityType: ManagedServiceIdentityType.UserAssigned),
+        };
+
+        vmssData.Identity.UserAssignedIdentities.Add(_creds.GetScalesetIdentityResourcePath(), new UserAssignedIdentity());
+        vmssData.VirtualMachineProfile = new VirtualMachineScaleSetVmProfile() { Priority = VirtualMachinePriorityTypes.Regular };
+
+        var imageRef = new ImageReference();
+
+        if (image.StartsWith('/')) {
+            imageRef.Id = image;
+        } else {
+            var info = IImageOperations.GetImageInfo(image);
+            imageRef.Publisher = info.Publisher;
+            imageRef.Offer = info.Offer;
+            imageRef.Sku = info.Sku;
+            imageRef.Version = info.Version;
+        }
+        vmssData.VirtualMachineProfile.StorageProfile.ImageReference = imageRef;
+
+        vmssData.VirtualMachineProfile.OSProfile.ComputerNamePrefix = "node";
+        vmssData.VirtualMachineProfile.OSProfile.AdminUsername = "onefuzz";
+
+        var networkConfiguration = new VirtualMachineScaleSetNetworkConfiguration("onefuzz-nic") { Primary = true };
+        var ipConfig = new VirtualMachineScaleSetIPConfiguration("onefuzz-ip-config");
+        ipConfig.SubnetId = new ResourceIdentifier(networkId);
+        networkConfiguration.IPConfigurations.Add(ipConfig);
+
+        vmssData.VirtualMachineProfile.NetworkProfile.NetworkInterfaceConfigurations.Add(networkConfiguration);
+
+        if (extensions is not null) {
+            foreach (var e in extensions) {
+                vmssData.VirtualMachineProfile.ExtensionProfile.Extensions.Add(e);
+            }
+        }
+
+        switch (getOsResult.OkV) {
+            case Os.Windows:
+                vmssData.VirtualMachineProfile.OSProfile.AdminPassword = password;
+                break;
+            case Os.Linux:
+                vmssData.VirtualMachineProfile.OSProfile.LinuxConfiguration.DisablePasswordAuthentication = true;
+                var i = new SshPublicKeyInfo() { KeyData = sshPublicKey, Path = "/home/onefuzz/.ssh/authorized_keys" };
+                vmssData.VirtualMachineProfile.OSProfile.LinuxConfiguration.SshPublicKeys.Add(i);
+
+                break;
+            default:
+                return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"unhandled OS: {getOsResult.OkV} in image: {image}");
+        }
+
+        if (ephemeralOsDisks) {
+            vmssData.VirtualMachineProfile.StorageProfile.OSDisk.DiffDiskSettings.Option = DiffDiskOptions.Local;
+            vmssData.VirtualMachineProfile.StorageProfile.OSDisk.Caching = CachingTypes.ReadOnly;
+            vmssData.VirtualMachineProfile.StorageProfile.OSDisk.CreateOption = DiskCreateOptionTypes.FromImage;
+        }
+
+        if (spotInstance.HasValue && spotInstance.Value) {
+            // Setting max price to -1 means it won't be evicted because of
+            // price.
+            //
+            // https://docs.microsoft.com/en-us/azure/
+            //   virtual-machine-scale-sets/use-spot#resource-manager-templates
+            vmssData.VirtualMachineProfile.EvictionPolicy = VirtualMachineEvictionPolicyTypes.Deallocate;
+            vmssData.VirtualMachineProfile.Priority = VirtualMachinePriorityTypes.Spot;
+            vmssData.VirtualMachineProfile.BillingMaxPrice = 1.0;
+        }
+
+        foreach (var tag in tags) {
+            vmssData.Tags.Add(tag);
+        }
+
+        if (_serviceConfig.OneFuzzOwner is not null) {
+            vmssData.Tags.Add("OWNER", _serviceConfig.OneFuzzOwner);
+        }
+
+        try {
+            var rg = _creds.GetResourceGroupResource();
+            var createUpdate = await rg.GetVirtualMachineScaleSets().CreateOrUpdateAsync(WaitUntil.Started, name.ToString(), vmssData);
+            if (createUpdate.GetRawResponse().IsError) {
+                var msg = $"Failed to create new scaleset due to {createUpdate.GetRawResponse().ReasonPhrase}";
+                _log.Error(msg);
+                return OneFuzzResultVoid.Error(ErrorCode.VM_CREATE_FAILED, new[] { msg });
+            } else {
+                return OneFuzzResultVoid.Ok;
+            }
+        } catch (Exception ex) {
+            _log.Exception(ex);
+            return OneFuzzResultVoid.Error(ErrorCode.VM_CREATE_FAILED, new[] { ex.Message });
         }
     }
 }
