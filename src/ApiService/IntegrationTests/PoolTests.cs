@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
@@ -119,7 +120,7 @@ public abstract class PoolTestBase : FunctionTestBase {
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        Assert.Empty(BodyAsString(result));
+        Assert.Equal("[]", BodyAsString(result));
     }
 
     [Fact]
@@ -134,8 +135,8 @@ public abstract class PoolTestBase : FunctionTestBase {
         var result = await func.Run(TestHttpRequestData.FromJson("GET", new PoolSearch()));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        var pool = BodyAs<PoolGetResult>(result);
-        Assert.Equal(_poolName, pool.Name);
+        var pool = BodyAs<PoolGetResult[]>(result);
+        Assert.Equal(_poolName, pool.Single().Name);
     }
 
 
