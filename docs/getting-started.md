@@ -125,8 +125,6 @@ $ make
 clang -g3 -fsanitize=fuzzer -fsanitize=address fuzz.c -o fuzz.exe
 ```
 
-We recommend placing fuzz targets code files in a folder named .onefuzz, so that it is easy to separate fuzz test code from the actual codebase. This will also help in detecting the use of onefuzz in security metrics tools such as [Scorecard](https://github.com/ossf/scorecard). See the [following example](https://github.com/microsoft/onefuzz-samples/tree/main/examples/rust) from our samples repository.
-
 ### Launching a Job
 
 With a built fuzzing target, launching a libFuzzer-based job can be done in
@@ -218,3 +216,8 @@ Reading /lib64/.debug/ld-2.27.so from remote target...
 rip            0x7ffff7dd6090      0x7ffff7dd6090
 (gdb)
 ```
+
+### Detecting the use of OneFuzz
+
+If you are using OneFuzz to fuzz your code, create a .onefuzz file at the root of your repository.
+This will help in detecting the use of OneFuzz in security metrics tools such as [Scorecard](https://github.com/ossf/scorecard). See the [example](https://github.com/microsoft/onefuzz-samples) in our samples repository.
