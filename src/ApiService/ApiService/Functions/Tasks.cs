@@ -15,7 +15,7 @@ public class Tasks {
         _context = context;
     }
 
-    [Function("Task")]
+    [Function("Tasks")]
     public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req) {
         return _auth.CallIfUser(req, r => r.Method switch {
             "GET" => Get(r),
@@ -35,7 +35,7 @@ public class Tasks {
             var task = await _context.TaskOperations.GetByTaskId(request.OkV.TaskId.Value);
             if (task == null) {
                 return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find task"
-                }), "pool get");
+                }), "task get");
 
             }
             task.Nodes = await _context.NodeTasksOperations.GetNodeAssignments(request.OkV.TaskId.Value).ToListAsync();

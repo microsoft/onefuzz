@@ -294,7 +294,7 @@ public class Config : IConfig {
             return ResultVoid<TaskConfigError>.Error(new TaskConfigError("specifying task config vm is no longer supported"));
         }
 
-        if (config.Pool != null) {
+        if (config.Pool == null) {
             return ResultVoid<TaskConfigError>.Error(new TaskConfigError("pool must be specified"));
         }
 
