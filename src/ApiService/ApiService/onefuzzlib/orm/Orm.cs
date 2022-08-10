@@ -44,6 +44,10 @@ namespace ApiService.OneFuzzLib.Orm {
         public async IAsyncEnumerable<T> QueryAsync(string? filter = null) {
             var tableClient = await GetTableClient(typeof(T).Name);
 
+            if (filter == "") {
+                filter = null;
+            }
+
             await foreach (var x in tableClient.QueryAsync<TableEntity>(filter).Select(x => _entityConverter.ToRecord<T>(x))) {
                 yield return x;
             }

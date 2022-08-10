@@ -170,3 +170,22 @@ public record TaskSearch(
     Guid? JobId,
     Guid? TaskId,
     List<TaskState> State);
+
+public record PoolSearch(
+    Guid? PoolId = null,
+    PoolName? Name = null,
+    List<PoolState>? State = null
+);
+
+public record PoolStop(
+    PoolName Name,
+    bool Now
+);
+
+public record PoolCreate(
+    PoolName Name,
+    Os Os,
+    Architecture Arch,
+    bool Managed,
+    Guid? ClientId = null
+);

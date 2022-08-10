@@ -33,6 +33,7 @@ public interface ICreds {
     public GenericResource ParseResourceId(string resourceId);
 
     public Async.Task<GenericResource> GetData(GenericResource resource);
+    Async.Task<IReadOnlyList<string>> GetRegions();
 }
 
 public sealed class Creds : ICreds, IDisposable {
@@ -40,16 +41,16 @@ public sealed class Creds : ICreds, IDisposable {
     private readonly DefaultAzureCredential _azureCredential;
     private readonly IServiceConfig _config;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly MemoryCache _cache;
+    private readonly IMemoryCache _cache;
 
     public ArmClient ArmClient => _armClient;
 
-    public Creds(IServiceConfig config, IHttpClientFactory httpClientFactory) {
+    public Creds(IServiceConfig config, IHttpClientFactory httpClientFactory, IMemoryCache cache) {
         _config = config;
         _httpClientFactory = httpClientFactory;
+        _cache = cache;
         _azureCredential = new DefaultAzureCredential();
         _armClient = new ArmClient(this.GetIdentity(), this.GetSubscription());
-        _cache = new MemoryCache(new MemoryCacheOptions() {
         });
     }
 
@@ -173,7 +174,21 @@ public sealed class Creds : ICreds, IDisposable {
     public void Dispose() {
         throw new NotImplementedException();
     }
+  
+    public Task<IReadOnlyList<string>> GetRegions()
+        => _cache.GetOrCreateAsync<IReadOnlyList<string>>(
+            nameof(Creds) + "." + nameof(GetRegions),
+            async entry => {
+                // cache for one day
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+                var subscriptionId = SubscriptionResource.CreateResourceIdentifier(GetSubscription());
+                return await ArmClient.GetSubscriptionResource(subscriptionId)
+                    .GetLocationsAsync()
+                    .Select(x => x.Name)
+                    .ToListAsync();
+            });
 }
+
 
 class GraphQueryException : Exception {
     public GraphQueryException(string? message) : base(message) {

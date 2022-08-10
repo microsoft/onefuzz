@@ -90,21 +90,19 @@ public class RequestHandling : IRequestHandling {
         return resp;
     }
 
-    public async static Async.Task<HttpResponseData> Ok(HttpRequestData req, IEnumerable<BaseResponse> response) {
+    public static async Async.ValueTask<HttpResponseData> Ok(HttpRequestData req, IEnumerable<BaseResponse> response) {
+        // TODO: ModelMixin stuff
         var resp = req.CreateResponse();
         resp.StatusCode = HttpStatusCode.OK;
-        if (response.Count() > 1) {
-            await resp.WriteAsJsonAsync(response);
-            return resp;
-        } else if (response.Any()) {
-            await resp.WriteAsJsonAsync(response.Single());
-        }
-        // TODO: ModelMixin stuff
-
+        await resp.WriteAsJsonAsync(response);
         return resp;
     }
 
-    public async static Async.Task<HttpResponseData> Ok(HttpRequestData req, BaseResponse response) {
-        return await Ok(req, new BaseResponse[] { response });
+    public static async Async.ValueTask<HttpResponseData> Ok(HttpRequestData req, BaseResponse response) {
+        // TODO: ModelMixin stuff
+        var resp = req.CreateResponse();
+        resp.StatusCode = HttpStatusCode.OK;
+        await resp.WriteAsJsonAsync(response);
+        return resp;
     }
 }
