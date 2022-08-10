@@ -170,12 +170,22 @@ public record ScalesetCreate(
     string VmSku,
     string Image,
     string? Region,
-    [Range(1, long.MaxValue)]
     [property: Range(1, long.MaxValue)]
-    long? Size,
+    long Size,
     bool SpotInstances,
     Dictionary<string, string> Tags,
-    bool EphemeralOsDisks = false
+    bool EphemeralOsDisks = false,
+    AutoScaleOptions? AutoScale = null
+);
+
+public record AutoScaleOptions(
+    [property: Range(0, long.MaxValue)] long Min,
+    [property: Range(1, long.MaxValue)] long Max,
+    [property: Range(0, long.MaxValue)] long Default,
+    [property: Range(1, long.MaxValue)] long ScaleOutAmount,
+    [property: Range(1, long.MaxValue)] long ScaleOutCooldown,
+    [property: Range(1, long.MaxValue)] long ScaleInAmount,
+    [property: Range(1, long.MaxValue)] long ScaleInCooldown
 );
 
 public record ScalesetSearch(
@@ -191,7 +201,6 @@ public record ScalesetStop(
 
 public record ScalesetUpdate(
     Guid ScalesetId,
-    [Range(1, long.MaxValue)]
     [property: Range(1, long.MaxValue)]
     long? Size
 );

@@ -4,7 +4,9 @@ using System.Net;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
 using Azure.ResourceManager.Models;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Rest.Azure;
+using Azure.Data.Tables;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -13,6 +15,8 @@ public interface IVmssOperations {
     Async.Task<OneFuzzResult<string>> GetInstanceId(Guid name, Guid vmId);
     Async.Task<OneFuzzResultVoid> UpdateExtensions(Guid name, IList<VirtualMachineScaleSetExtensionData> extensions);
     Async.Task<VirtualMachineScaleSetData?> GetVmss(Guid name);
+
+    Async.Task<IReadOnlyList<string>> ListAvailableSkus(string region);
 
     Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null);
 
@@ -38,17 +42,18 @@ public interface IVmssOperations {
 }
 
 public class VmssOperations : IVmssOperations {
+    private readonly ILogTracer _log;
+    private readonly ICreds _creds;
+    private readonly IImageOperations _imageOps;
+    private readonly IServiceConfig _serviceConfig;
+    private readonly IMemoryCache _cache;
 
-    readonly ILogTracer _log;
-    readonly ICreds _creds;
-    readonly IImageOperations _imageOps;
-    readonly IServiceConfig _serviceConfig;
-
-    public VmssOperations(ILogTracer log, IOnefuzzContext context) {
+    public VmssOperations(ILogTracer log, IOnefuzzContext context, IMemoryCache cache) {
         _log = log;
         _creds = context.Creds;
         _imageOps = context.ImageOperations;
         _serviceConfig = context.ServiceConfiguration;
+        _cache = cache;
     }
 
     public async Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null) {
@@ -202,18 +207,18 @@ public class VmssOperations : IVmssOperations {
     }
 
     public async Async.Task<OneFuzzResultVoid> CreateVmss(
-    string location,
-    Guid name,
-    string vmSku,
-    long vmCount,
-    string image,
-    string networkId,
-    bool? spotInstance,
-    bool ephemeralOsDisks,
-    IList<VirtualMachineScaleSetExtensionData>? extensions,
-    string password,
-    string sshPublicKey,
-    IDictionary<string, string> tags) {
+        string location,
+        Guid name,
+        string vmSku,
+        long vmCount,
+        string image,
+        string networkId,
+        bool? spotInstance,
+        bool ephemeralOsDisks,
+        IList<VirtualMachineScaleSetExtensionData>? extensions,
+        string password,
+        string sshPublicKey,
+        IDictionary<string, string> tags) {
         var vmss = await GetVmss(name);
         if (vmss is not null) {
             return OneFuzzResultVoid.Ok;
@@ -319,4 +324,32 @@ public class VmssOperations : IVmssOperations {
             return OneFuzzResultVoid.Error(ErrorCode.VM_CREATE_FAILED, new[] { ex.Message });
         }
     }
+
+    public Async.Task<IReadOnlyList<string>> ListAvailableSkus(string region)
+        => _cache.GetOrCreateAsync<IReadOnlyList<string>>($"compute-skus-{region}", async entry => {
+            entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
+
+            var sub = _creds.GetSubscriptionResource();
+            var skus = sub.GetResourceSkusAsync(filter: TableClient.CreateQueryFilter($"location eq '{region}'"));
+
+            var skuNames = new List<string>();
+            await foreach (var sku in skus) {
+                var available = true;
+                if (sku.Restrictions is not null) {
+                    foreach (var restriction in sku.Restrictions) {
+                        if (restriction.RestrictionsType == ResourceSkuRestrictionsType.Location &&
+                            restriction.Values.Contains(region, StringComparer.OrdinalIgnoreCase)) {
+                            available = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (available) {
+                    skuNames.Add(sku.Name);
+                }
+            }
+
+            return skuNames;
+        });
 }

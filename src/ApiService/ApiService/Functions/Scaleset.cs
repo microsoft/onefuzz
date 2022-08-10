@@ -53,7 +53,88 @@ public class Scaleset {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "ScalesetCreate");
         }
 
-        throw new NotImplementedException();
+        var answer = await _auth.CheckRequireAdmins(req);
+        if (!answer.IsOk) {
+            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "ScalesetCreate");
+        }
+
+        var create = request.OkV;
+        // verify the pool exists
+        var poolResult = await _context.PoolOperations.GetByName(create.PoolName);
+        if (!poolResult.IsOk) {
+            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "ScalesetCreate");
+        }
+
+        var pool = poolResult.OkV;
+        if (!pool.Managed) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                new Error(
+                    Code: ErrorCode.UNABLE_TO_CREATE,
+                    Errors: new string[] { "scalesets can only be added to managed pools " }),
+                context: "ScalesetCreate");
+        }
+
+        string region;
+        if (create.Region is null) {
+            region = await _context.Creds.GetBaseRegion();
+        } else {
+            var validRegions = await _context.Creds.GetRegions();
+            if (!validRegions.Contains(create.Region)) {
+                return await _context.RequestHandling.NotOk(
+                    req,
+                    new Error(
+                        Code: ErrorCode.UNABLE_TO_CREATE,
+                        Errors: new string[] { "invalid region" }),
+                    context: "ScalesetCreate");
+            }
+
+            region = create.Region;
+        }
+
+        var availableSkus = await _context.VmssOperations.ListAvailableSkus(region);
+        if (!availableSkus.Contains(create.VmSku)) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                new Error(
+                    Code: ErrorCode.UNABLE_TO_CREATE,
+                    Errors: new string[] { $"The specified VM SKU '{create.VmSku}' is not available in the location ${region}" }),
+                context: "ScalesetCreate");
+        }
+
+        var tags = create.Tags;
+        var configTags = (await _context.ConfigOperations.Fetch()).VmssTags;
+        if (configTags is not null) {
+            foreach (var (key, value) in configTags) {
+                tags[key] = value;
+            }
+        }
+
+        var scaleset = new Service.Scaleset(
+            ScalesetId: Guid.NewGuid(),
+            State: ScalesetState.Init,
+            NeedsConfigUpdate: false,
+            PoolName: create.PoolName,
+            VmSku: create.VmSku,
+            Image: create.Image,
+            Region: region,
+            Size: create.Size,
+            SpotInstances: create.SpotInstances,
+            EphemeralOsDisks: create.EphemeralOsDisks,
+            Tags: tags);
+
+        var inserted = await _context.ScalesetOperations.Insert(scaleset);
+        if (!inserted.IsOk) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                new Error(
+                    Code: ErrorCode.UNABLE_TO_CREATE,
+                    new string[] { $"unable to insert scaleset: {inserted.ErrorV}" }
+                ),
+                context: "ScalesetCreate");
+        }
+
+        return await RequestHandling.Ok(req, ScalesetResponse.ForScaleset(scaleset));
     }
 
     private async Task<HttpResponseData> Patch(HttpRequestData req) {

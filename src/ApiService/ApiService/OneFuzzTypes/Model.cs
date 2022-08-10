@@ -394,7 +394,6 @@ public record Scaleset(
     [PartitionKey] PoolName PoolName,
     [RowKey] Guid ScalesetId,
     ScalesetState State,
-    Authentication? Auth,
     string VmSku,
     string Image,
     Region Region,
@@ -402,10 +401,11 @@ public record Scaleset(
     bool? SpotInstances,
     bool EphemeralOsDisks,
     bool NeedsConfigUpdate,
-    Error? Error,
-    Guid? ClientId,
-    Guid? ClientObjectId,
-    Dictionary<string, string> Tags
+    Dictionary<string, string> Tags,
+    Authentication? Auth = null,
+    Error? Error = null,
+    Guid? ClientId = null,
+    Guid? ClientObjectId = null
 // 'Nodes' removed when porting from Python: only used in search response
 ) : StatefulEntityBase<ScalesetState>(State);
 
