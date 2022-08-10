@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.Core;
@@ -26,6 +27,7 @@ class TestCreds : ICreds {
     // we have to return something in some test cases, even if it isn’t used
 
     public Task<string> GetBaseRegion() => Task.FromResult(_region);
+    public Task<IReadOnlyList<string>> GetRegions() => Task.FromResult<IReadOnlyList<string>>(new[] { _region });
 
     public string GetBaseResourceGroup() => _resourceGroup;
 

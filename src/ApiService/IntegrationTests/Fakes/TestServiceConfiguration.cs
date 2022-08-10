@@ -19,6 +19,10 @@ public sealed class TestServiceConfiguration : IServiceConfig {
 
     public string? ApplicationInsightsInstrumentationKey { get; set; } = "TestAppInsightsInstrumentationKey";
 
+    public string? OneFuzzTelemetry => "TestOneFuzzTelemetry";
+
+    public string? MultiTenantDomain => null;
+
     public string? OneFuzzInstanceName => "UnitTestInstance";
 
     // -- Remainder not implemented --
@@ -40,8 +44,6 @@ public sealed class TestServiceConfiguration : IServiceConfig {
 
     public string? DiagnosticsAzureBlobRetentionDays => throw new System.NotImplementedException();
 
-    public string? MultiTenantDomain => throw new System.NotImplementedException();
-
     public string? OneFuzzInstance => throw new System.NotImplementedException();
 
     public string? OneFuzzKeyvault => throw new System.NotImplementedException();
@@ -51,8 +53,6 @@ public sealed class TestServiceConfiguration : IServiceConfig {
     public string? OneFuzzOwner => throw new System.NotImplementedException();
 
     public string OneFuzzNodeDisposalStrategy => throw new System.NotImplementedException();
-
-    public string? OneFuzzTelemetry => throw new System.NotImplementedException();
 
     public string? OneFuzzDataStorage => throw new NotImplementedException();
 

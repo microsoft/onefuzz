@@ -163,3 +163,22 @@ public record ProxyDelete(
 public record ProxyReset(
     string Region
 );
+
+public record PoolSearch(
+    Guid? PoolId = null,
+    PoolName? Name = null,
+    List<PoolState>? State = null
+);
+
+public record PoolStop(
+    PoolName Name,
+    bool Now
+);
+
+public record PoolCreate(
+    PoolName Name,
+    Os Os,
+    Architecture Arch,
+    bool Managed,
+    Guid? ClientId = null
+);

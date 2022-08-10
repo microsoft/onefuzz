@@ -126,8 +126,8 @@ public abstract class JobsTestBase : FunctionTestBase {
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        var response = BodyAs<JobResponse>(result);
-        Assert.Equal(JobState.Enabled, response.State);
+        var response = BodyAs<JobResponse[]>(result);
+        Assert.Equal(JobState.Enabled, response.Single().State);
     }
 
     [Fact]
