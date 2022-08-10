@@ -5,6 +5,7 @@ using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -34,11 +35,12 @@ public interface ICreds {
     public Async.Task<GenericResource> GetData(GenericResource resource);
 }
 
-public class Creds : ICreds {
+public sealed class Creds : ICreds, IDisposable {
     private readonly ArmClient _armClient;
     private readonly DefaultAzureCredential _azureCredential;
     private readonly IServiceConfig _config;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly MemoryCache _cache;
 
     public ArmClient ArmClient => _armClient;
 
@@ -47,6 +49,8 @@ public class Creds : ICreds {
         _httpClientFactory = httpClientFactory;
         _azureCredential = new DefaultAzureCredential();
         _armClient = new ArmClient(this.GetIdentity(), this.GetSubscription());
+        _cache = new MemoryCache(new MemoryCacheOptions() {
+        });
     }
 
     public DefaultAzureCredential GetIdentity() {
@@ -85,12 +89,14 @@ public class Creds : ICreds {
         return ArmClient.GetResourceGroupResource(resourceId);
     }
 
-    public async Async.Task<string> GetBaseRegion() {
-        var rg = await ArmClient.GetResourceGroupResource(GetResourceGroupResourceIdentifier()).GetAsync();
-        if (rg.GetRawResponse().IsError) {
-            throw new Exception($"Failed to get base region due to [{rg.GetRawResponse().Status}] {rg.GetRawResponse().ReasonPhrase}");
-        }
-        return rg.Value.Data.Location.Name;
+    public Async.Task<string> GetBaseRegion() {
+        return _cache.GetOrCreateAsync(nameof(GetBaseRegion), async _ => {
+            var rg = await ArmClient.GetResourceGroupResource(GetResourceGroupResourceIdentifier()).GetAsync();
+            if (rg.GetRawResponse().IsError) {
+                throw new Exception($"Failed to get base region due to [{rg.GetRawResponse().Status}] {rg.GetRawResponse().ReasonPhrase}");
+            }
+            return rg.Value.Data.Location.Name;
+        });
     }
 
     public Uri GetInstanceUrl()
@@ -99,14 +105,15 @@ public class Creds : ICreds {
 
     public record ScaleSetIdentity(string principalId);
 
-    public async Async.Task<Guid> GetScalesetPrincipalId() {
-        var path = GetScalesetIdentityResourcePath();
-        var uid = ArmClient.GetGenericResource(new ResourceIdentifier(path));
+    public Async.Task<Guid> GetScalesetPrincipalId() {
+        return _cache.GetOrCreateAsync(nameof(GetScalesetPrincipalId), async entry => {
+            var path = GetScalesetIdentityResourcePath();
+            var uid = ArmClient.GetGenericResource(new ResourceIdentifier(path));
 
-
-        var resource = await uid.GetAsync();
-        var principalId = resource.Value.Data.Properties.ToObjectFromJson<ScaleSetIdentity>().principalId;
-        return new Guid(principalId);
+            var resource = await uid.GetAsync();
+            var principalId = resource.Value.Data.Properties.ToObjectFromJson<ScaleSetIdentity>().principalId;
+            return new Guid(principalId);
+        });
     }
 
     public string GetScalesetIdentityResourcePath() {
@@ -120,6 +127,7 @@ public class Creds : ICreds {
     // https://docs.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0
     private static readonly Uri _graphResource = new("https://graph.microsoft.com");
     private static readonly Uri _graphResourceEndpoint = new("https://graph.microsoft.com/v1.0");
+
 
     public async Task<T> QueryMicrosoftGraph<T>(HttpMethod method, string resource) {
         var cred = GetIdentity();
@@ -160,6 +168,10 @@ public class Creds : ICreds {
             return await resource.GetAsync();
         }
         return resource;
+    }
+
+    public void Dispose() {
+        throw new NotImplementedException();
     }
 }
 
