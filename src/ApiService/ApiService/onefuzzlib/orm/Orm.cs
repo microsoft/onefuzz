@@ -160,9 +160,11 @@ namespace ApiService.OneFuzzLib.Orm {
             var delegateType = typeof(StateTransition);
             MethodInfo delegateSignature = delegateType.GetMethod("Invoke")!;
 
+            var missing = new List<string>();
             foreach (var state in states) {
-                var methodInfo = thisType?.GetMethod(state.ToString());
+                var methodInfo = thisType.GetMethod(state.ToString());
                 if (methodInfo == null) {
+                    missing.Add(state);
                     continue;
                 }
 
@@ -176,9 +178,12 @@ namespace ApiService.OneFuzzLib.Orm {
                     continue;
                 }
 
-                throw new Exception($"State transition method '{state}' in '{thisType?.Name}' does not have the correct signature. Expected '{delegateSignature}'  actual '{methodInfo}' ");
+                throw new InvalidOperationException($"State transition method '{state}' in '{thisType.Name}' does not have the correct signature. Expected '{delegateSignature}'  actual '{methodInfo}' ");
             };
 
+            if (missing.Any()) {
+                throw new InvalidOperationException($"State transitions are missing for '{thisType.Name}': {string.Join(", ", missing)}");
+            }
 
             _partitionKeyGetter =
                 typeof(T).GetProperties().FirstOrDefault(p => p.GetCustomAttributes(true).OfType<PartitionKeyAttribute>().Any())?.GetMethod switch {
