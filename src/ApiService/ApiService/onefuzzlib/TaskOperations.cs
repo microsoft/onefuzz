@@ -186,7 +186,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             return OneFuzzResult<Task>.Error(new Error(ErrorCode.INVALID_CONFIGURATION, new[] { "task must have vm or pool" }));
         }
 
-        var task = new Task(jobId, Guid.NewGuid(), os, config, UserInfo: userInfo);
+        var task = new Task(jobId, Guid.NewGuid(), TaskState.Init, os, config, UserInfo: userInfo);
 
         await _context.TaskOperations.Insert(task);
         await _context.Events.SendEvent(new EventTaskCreated(jobId, task.TaskId, config, userInfo));

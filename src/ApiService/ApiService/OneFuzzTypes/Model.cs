@@ -248,9 +248,9 @@ public record NodeAssignment(
 public record Task(
     [PartitionKey] Guid JobId,
     [RowKey] Guid TaskId,
+    TaskState State,
     Os Os,
     TaskConfig Config,
-    TaskState State = TaskState.Init,
     Error? Error = null,
     Authentication? Auth = null,
     DateTimeOffset? Heartbeat = null,
