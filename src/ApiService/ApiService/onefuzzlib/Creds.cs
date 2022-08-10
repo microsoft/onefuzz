@@ -51,7 +51,7 @@ public sealed class Creds : ICreds, IDisposable {
         _cache = cache;
         _azureCredential = new DefaultAzureCredential();
         _armClient = new ArmClient(this.GetIdentity(), this.GetSubscription());
-        });
+
     }
 
     public DefaultAzureCredential GetIdentity() {
@@ -174,12 +174,12 @@ public sealed class Creds : ICreds, IDisposable {
     public void Dispose() {
         throw new NotImplementedException();
     }
-  
+
     public Task<IReadOnlyList<string>> GetRegions()
         => _cache.GetOrCreateAsync<IReadOnlyList<string>>(
             nameof(Creds) + "." + nameof(GetRegions),
             async entry => {
-                // cache for one day
+            // cache for one day
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
                 var subscriptionId = SubscriptionResource.CreateResourceIdentifier(GetSubscription());
                 return await ArmClient.GetSubscriptionResource(subscriptionId)
