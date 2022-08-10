@@ -798,7 +798,25 @@ public record MultipleContainer(List<SyncedDir> SyncedDirs) : IContainerDef;
 
 public class ContainerDefConverter : JsonConverter<IContainerDef> {
     public override IContainerDef? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-        throw new NotSupportedException("reading IContainerDef is not supported");
+        if (reader.TokenType == JsonTokenType.StartObject) {
+            var result = (SyncedDir?)JsonSerializer.Deserialize(ref reader, typeof(SyncedDir), options);
+            if (result is null) {
+                return null;
+            }
+
+            return new SingleContainer(result);
+        }
+
+        if (reader.TokenType == JsonTokenType.StartArray) {
+            var result = (List<SyncedDir>?)JsonSerializer.Deserialize(ref reader, typeof(List<SyncedDir>), options);
+            if (result is null) {
+                return null;
+            }
+
+            return new MultipleContainer(result);
+        }
+
+        throw new JsonException("expecting array or object");
     }
 
     public override void Write(Utf8JsonWriter writer, IContainerDef value, JsonSerializerOptions options) {
