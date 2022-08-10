@@ -16,7 +16,7 @@ public class Tasks {
     }
 
     [Function("Tasks")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req) {
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req) {
         return _auth.CallIfUser(req, r => r.Method switch {
             "GET" => Get(r),
             "POST" => Post(r),
@@ -144,7 +144,7 @@ public class Tasks {
         await _context.TaskOperations.MarkStopping(task);
 
         var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(new BoolResult(true));
+        await response.WriteAsJsonAsync(task);
         return response;
     }
 }
