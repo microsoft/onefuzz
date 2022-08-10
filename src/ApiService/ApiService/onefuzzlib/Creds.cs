@@ -179,7 +179,7 @@ public sealed class Creds : ICreds, IDisposable {
         => _cache.GetOrCreateAsync<IReadOnlyList<string>>(
             nameof(Creds) + "." + nameof(GetRegions),
             async entry => {
-            // cache for one day
+                // cache for one day
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
                 var subscriptionId = SubscriptionResource.CreateResourceIdentifier(GetSubscription());
                 return await ArmClient.GetSubscriptionResource(subscriptionId)
