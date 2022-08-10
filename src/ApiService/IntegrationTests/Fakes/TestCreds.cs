@@ -47,6 +47,10 @@ class TestCreds : ICreds {
         throw new NotImplementedException();
     }
 
+    public SubscriptionResource GetSubscriptionResource() {
+        throw new NotImplementedException();
+    }
+
     public ResourceIdentifier GetResourceGroupResourceIdentifier() {
         throw new NotImplementedException();
     }
