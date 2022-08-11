@@ -55,6 +55,7 @@ def get_auto_scale_settings(
         )
         for auto_scale in auto_scale_collections:
             if str(auto_scale.target_resource_uri).endswith(str(vmss)):
+                logging.info("Found auto scale settings for %s" % vmss)
                 return auto_scale
 
     except (ResourceNotFoundError, CloudError):
@@ -99,16 +100,14 @@ def add_auto_scale_to_vmss(
     return None
 
 
-def update_auto_scale(
-    auto_scale_setting_name: str, auto_scale_resource: AutoscaleSettingResource
-) -> Optional[Error]:
-    logging.info("Updating auto scale resource: %s" % auto_scale_setting_name)
+def update_auto_scale(auto_scale_resource: AutoscaleSettingResource) -> Optional[Error]:
+    logging.info("Updating auto scale resource: %s" % auto_scale_resource.name)
     client = get_monitor_client()
     resource_group = get_base_resource_group()
 
     try:
         auto_scale_resource = client.autoscale_settings.create_or_update(
-            resource_group, auto_scale_setting_name, auto_scale_resource
+            resource_group, auto_scale_resource.name, auto_scale_resource
         )
         logging.info(
             "Successfully updated auto scale resource: %s" % auto_scale_resource.name
@@ -118,7 +117,7 @@ def update_auto_scale(
             code=ErrorCode.UNABLE_TO_UPDATE,
             errors=[
                 "unable to update auto scale resource with name: %s and profile: %s"
-                % (auto_scale_setting_name, auto_scale_resource)
+                % (auto_scale_resource.name, auto_scale_resource)
             ],
         )
     return None
@@ -237,21 +236,20 @@ def default_auto_scale_profile(queue_uri: str, scaleset_size: int) -> AutoscaleP
     )
 
 
-def default_scale_in_rule(queue_uri: str) -> ScaleRule:
+def shutdown_scaleset_rule(queue_uri: str) -> ScaleRule:
     return ScaleRule(
-        # Scale in if no work in the past 20 mins
+        # Scale in if there are 0 or more messages in the queue (aka: every time)
         metric_trigger=MetricTrigger(
             metric_name="ApproximateMessageCount",
             metric_resource_uri=queue_uri,
             # Check every 10 minutes
-            time_grain=timedelta(minutes=10),
+            time_grain=timedelta(minutes=5),
             # The average amount of messages there are in the pool queue
             time_aggregation=TimeAggregationType.AVERAGE,
             statistic=MetricStatisticType.SUM,
             # Over the past 10 minutes
-            time_window=timedelta(minutes=10),
-            # When there's no messages in the pool queue
-            operator=ComparisonOperationType.EQUALS,
+            time_window=timedelta(minutes=5),
+            operator=ComparisonOperationType.GREATER_THAN_OR_EQUAL,
             threshold=0,
             divide_per_instance=False,
         ),
