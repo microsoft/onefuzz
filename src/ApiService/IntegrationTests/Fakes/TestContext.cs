@@ -27,6 +27,7 @@ public sealed class TestContext : IOnefuzzContext {
         NodeMessageOperations = new NodeMessageOperations(logTracer, this);
         ConfigOperations = new ConfigOperations(logTracer, this);
         PoolOperations = new PoolOperations(logTracer, this);
+        ScalesetOperations = new ScalesetOperations(logTracer, this);
 
         UserCredentials = new UserCredentials(logTracer, ConfigOperations);
     }
@@ -54,7 +55,7 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IStorage Storage { get; }
     public ICreds Creds { get; }
-    public IContainers Containers { get; }
+    public IContainers Containers { get; set; }
     public IQueue Queue { get; }
     public IUserCredentials UserCredentials { get; set; }
 
@@ -68,6 +69,7 @@ public sealed class TestContext : IOnefuzzContext {
     public INodeMessageOperations NodeMessageOperations { get; }
     public IConfigOperations ConfigOperations { get; }
     public IPoolOperations PoolOperations { get; }
+    public IScalesetOperations ScalesetOperations { get; }
 
     // -- Remainder not implemented --
 
@@ -91,8 +93,6 @@ public sealed class TestContext : IOnefuzzContext {
     public IReports Reports => throw new System.NotImplementedException();
 
     public IReproOperations ReproOperations => throw new System.NotImplementedException();
-
-    public IScalesetOperations ScalesetOperations => throw new System.NotImplementedException();
 
     public IScheduler Scheduler => throw new System.NotImplementedException();
 

@@ -65,13 +65,13 @@ public class AgentRegistration {
         return await RequestHandling.Ok(req, await CreateRegistrationResponse(pool.OkV));
     }
 
-    private async Async.Task<AgentRegistrationResponse> CreateRegistrationResponse(Pool pool) {
+    private async Async.Task<AgentRegistrationResponse> CreateRegistrationResponse(Service.Pool pool) {
         var baseAddress = _context.Creds.GetInstanceUrl();
         var eventsUrl = new Uri(baseAddress, "/api/agents/events");
         var commandsUrl = new Uri(baseAddress, "/api/agents/commands");
 
         var workQueue = await _context.Queue.GetQueueSas(
-            _context.PoolOperations.GetPoolQueue(pool),
+            _context.PoolOperations.GetPoolQueue(pool.PoolId),
             StorageType.Corpus,
             QueueSasPermissions.Read | QueueSasPermissions.Update | QueueSasPermissions.Process,
             TimeSpan.FromHours(24));

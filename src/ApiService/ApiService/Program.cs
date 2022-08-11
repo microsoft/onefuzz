@@ -118,7 +118,8 @@ public class Program {
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
             .AddSingleton<IStorage, Storage>()
-            .AddHttpClient();
+            .AddHttpClient()
+            .AddMemoryCache();
         }
         )
         .Build();

@@ -459,7 +459,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
 public interface INodeTasksOperations : IStatefulOrm<NodeTasks, NodeTaskState> {
     IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId);
-    IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId, INodeOperations nodeOps);
+    IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId);
     IAsyncEnumerable<NodeTasks> GetByMachineId(Guid machineId);
     IAsyncEnumerable<NodeTasks> GetByTaskId(Guid taskId);
     Async.Task ClearByMachineId(Guid machineId);
@@ -485,7 +485,7 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState, NodeTas
         }
     }
 
-    public async IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId, INodeOperations nodeOps) {
+    public async IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId) {
 
         await foreach (var entry in QueryAsync(Query.RowKey(taskId.ToString()))) {
             var node = await _context.NodeOperations.GetByMachineId(entry.MachineId);

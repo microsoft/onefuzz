@@ -268,7 +268,7 @@ namespace Tests {
                         InstanceName: arg.Item4,
                         WebhookId: arg.Item5
                     )
-            ); ;
+            );
         }
 
         public static Gen<WebhookMessageEventGrid> WebhookMessageEventGrid() {

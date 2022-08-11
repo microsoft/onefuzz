@@ -7,7 +7,6 @@ namespace Microsoft.OneFuzz.Service;
 
 
 
-
 public enum EventType {
     JobCreated,
     JobStopped,
@@ -63,6 +62,7 @@ public abstract record BaseEvent() {
                 EventNodeDeleted _ => EventType.NodeDeleted,
                 EventNodeCreated _ => EventType.NodeCreated,
                 EventJobStopped _ => EventType.JobStopped,
+                EventTaskCreated _ => EventType.TaskCreated,
                 var x => throw new NotSupportedException($"Unknown event type: {x.GetType()}"),
             };
 
@@ -91,6 +91,7 @@ public abstract record BaseEvent() {
             EventType.NodeDeleted => typeof(EventNodeDeleted),
             EventType.NodeCreated => typeof(EventNodeCreated),
             EventType.JobStopped => typeof(EventJobStopped),
+            EventType.TaskCreated => typeof(EventTaskCreated),
             _ => throw new ArgumentException($"Unknown event type: {eventType}"),
         };
     }
@@ -141,12 +142,12 @@ public record EventJobStopped(
 ) : BaseEvent();
 
 
-//record EventTaskCreated(
-//    Guid JobId,
-//    Guid TaskId,
-//    TaskConfig Config,
-//    UserInfo? UserInfo
-//    ) : BaseEvent();
+record EventTaskCreated(
+    Guid JobId,
+    Guid TaskId,
+    TaskConfig Config,
+    UserInfo? UserInfo
+    ) : BaseEvent();
 
 
 public record EventTaskStateUpdated(
