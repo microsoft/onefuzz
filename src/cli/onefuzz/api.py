@@ -48,7 +48,7 @@ ONEFUZZ_GUID_NAMESPACE = uuid.UUID("27f25e3f-6544-4b69-b309-9b096c5a9cbc")
 ONE_HOUR_IN_SECONDS = 3600
 
 DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
-DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest"
+DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest"
 
 REPRO_SSH_FORWARD = "1337:127.0.0.1:1337"
 

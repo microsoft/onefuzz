@@ -23,7 +23,6 @@ namespace Microsoft.OneFuzz.Service {
             TypeHandlerVersion.EnsureNotNull("TypeHandlerVersion required for VirtualMachineExtension");
             AutoUpgradeMinorVersion.EnsureNotNull("AutoUpgradeMinorVersion required for VirtualMachineExtension");
             Settings.EnsureNotNull("Settings required for VirtualMachineExtension");
-            ProtectedSettings.EnsureNotNull("ProtectedSettings required for VirtualMachineExtension");
 
             return (Name!, new VirtualMachineExtensionData(Location.Value) {
                 TypePropertiesType = TypePropertiesType,
@@ -44,7 +43,6 @@ namespace Microsoft.OneFuzz.Service {
             TypeHandlerVersion.EnsureNotNull("TypeHandlerVersion required for VirtualMachineScaleSetExtension");
             AutoUpgradeMinorVersion.EnsureNotNull("AutoUpgradeMinorVersion required for VirtualMachineScaleSetExtension");
             Settings.EnsureNotNull("Settings required for VirtualMachineScaleSetExtension");
-            ProtectedSettings.EnsureNotNull("ProtectedSettings required for VirtualMachineScaleSetExtension");
             return new VirtualMachineScaleSetExtensionData() {
                 Name = Name,
                 TypePropertiesType = TypePropertiesType,

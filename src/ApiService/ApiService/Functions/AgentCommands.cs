@@ -21,7 +21,7 @@ public class AgentCommands {
         => _auth.CallIfAgent(req, r => r.Method switch {
             "GET" => Get(req),
             "DELETE" => Delete(req),
-            _ => throw new NotImplementedException($"HTTP Method {req.Method} is not supported for this method")
+            _ => throw new NotSupportedException($"HTTP Method {req.Method} is not supported for this method")
         });
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {

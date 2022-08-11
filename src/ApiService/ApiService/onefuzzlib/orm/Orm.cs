@@ -221,8 +221,6 @@ namespace ApiService.OneFuzzLib.Orm {
         /// </summary>
         /// <param name="entity"></param>
         /// <param name="MaxUpdates"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
         public async Async.Task<T?> ProcessStateUpdates(T entity, int MaxUpdates = 5) {
             for (int i = 0; i < MaxUpdates; i++) {
                 var state = entity.State;

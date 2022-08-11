@@ -47,6 +47,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
             var (status, reason) = r.ErrorV;
             _logTracer.Error($"Failed to replace webhook message log due to [{status}] {reason}");
         }
+        await _context.WebhookMessageLogOperations.QueueWebhook(message);
     }
 
     public async Async.Task<bool> Send(WebhookMessageLog messageLog) {
@@ -113,6 +114,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 public interface IWebhookMessageLogOperations : IOrm<WebhookMessageLog> {
     IAsyncEnumerable<WebhookMessageLog> SearchExpired();
     public Async.Task ProcessFromQueue(WebhookMessageQueueObj obj);
+    public Async.Task QueueWebhook(WebhookMessageLog webhookLog);
 }
 
 
