@@ -745,9 +745,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 # Then: The number of nodes in the scale set with scale in
                 #   protection enabled _must_ strictly decrease over time.
                 #
-                #  This guarantees that _eventually_ the below check will pass,
-                #   allowing us to set the minimum instances to 0,
+                #  This guarantees that _eventually_
                 #   auto scale will scale in the remaining nodes,
+                #   the scale set will have 0 instances,
                 #   and once the scale set is empty, we will delete it.
                 logging.info(
                     SCALESET_LOG_PREFIX + "Getting nodes with scale in protection"
