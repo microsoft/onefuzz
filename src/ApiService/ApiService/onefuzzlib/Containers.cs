@@ -181,7 +181,7 @@ public class Containers : IContainers {
         await client.GetBlobClient(name).UploadAsync(new BinaryData(data), overwrite: true);
     }
 
-    public Async.Task<Guid> GetInstanceId() => _getInstanceId.Value;
+    public virtual Async.Task<Guid> GetInstanceId() => _getInstanceId.Value;
     private readonly Lazy<Async.Task<Guid>> _getInstanceId;
 
     public static Uri? GetContainerSasUrlService(

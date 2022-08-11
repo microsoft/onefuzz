@@ -17,7 +17,7 @@ public abstract record EntityBase {
     public static string NewSortedKey => $"{DateTimeOffset.MaxValue.Ticks - DateTimeOffset.UtcNow.Ticks}";
 }
 
-public abstract record StatefulEntityBase<T>([property: JsonIgnore] T State) : EntityBase() where T : Enum;
+public abstract record StatefulEntityBase<T>([property: JsonIgnore] T BaseState) : EntityBase() where T : Enum;
 
 
 

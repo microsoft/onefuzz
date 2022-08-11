@@ -1,24 +1,31 @@
-﻿using Azure.Storage.Sas;
+﻿using System.IO;
+using System.Threading.Tasks;
+using Azure.Storage.Sas;
 
 namespace Microsoft.OneFuzz.Service;
 
 
-
 public interface IConfig {
     Async.Task<TaskUnitConfig> BuildTaskConfig(Job job, Task task);
+    Task<ResultVoid<TaskConfigError>> CheckConfig(TaskConfig config);
 }
+
+public record TaskConfigError(string Error);
 
 public class Config : IConfig {
 
+    private readonly IOnefuzzContext _context;
     private readonly IContainers _containers;
     private readonly IServiceConfig _serviceConfig;
-
+    private readonly ILogTracer _logTracer;
     private readonly IQueue _queue;
 
-    public Config(IContainers containers, IServiceConfig serviceConfig, IQueue queue) {
-        _containers = containers;
-        _serviceConfig = serviceConfig;
-        _queue = queue;
+    public Config(ILogTracer logTracer, IOnefuzzContext context) {
+        _context = context;
+        _logTracer = logTracer;
+        _containers = _context.Containers;
+        _serviceConfig = _context.ServiceConfiguration;
+        _queue = _context.Queue;
     }
 
     private static BlobContainerSasPermissions ConvertPermissions(ContainerPermission permission) {
@@ -256,5 +263,258 @@ public class Config : IConfig {
         }
 
         return config;
+    }
+
+    public async Async.Task<ResultVoid<TaskConfigError>> CheckConfig(TaskConfig config) {
+        if (!Defs.TASK_DEFINITIONS.ContainsKey(config.Task.Type)) {
+            return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"unsupported task type: {config.Task.Type}"));
+        }
+
+        if (config.Vm != null && config.Pool != null) {
+            return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"either the vm or pool must be specified, but not both"));
+        }
+
+        var definition = Defs.TASK_DEFINITIONS[config.Task.Type];
+        var r = await CheckContainers(definition, config);
+        if (!r.IsOk) {
+            return r;
+        }
+
+        if (definition.Features.Contains(TaskFeature.SupervisorExe) && config.Task.SupervisorExe == null) {
+            var err = "missing supervisor_exe";
+            _logTracer.Error(err);
+            return ResultVoid<TaskConfigError>.Error(new TaskConfigError(err));
+        }
+
+        if (definition.Features.Contains(TaskFeature.TargetMustUseInput) && !TargetUsesInput(config)) {
+            return ResultVoid<TaskConfigError>.Error(new TaskConfigError("{input} must be used in target_env or target_options"));
+        }
+
+        if (config.Vm != null) {
+            return ResultVoid<TaskConfigError>.Error(new TaskConfigError("specifying task config vm is no longer supported"));
+        }
+
+        if (config.Pool == null) {
+            return ResultVoid<TaskConfigError>.Error(new TaskConfigError("pool must be specified"));
+        }
+
+        if (!CheckVal(definition.Vm.Compare, definition.Vm.Value, config.Pool!.Count)) {
+            var err =
+                $"invalid vm count: expected {definition.Vm.Compare} {definition.Vm.Value}, got {config.Pool.Count}";
+            _logTracer.Error(err);
+            return ResultVoid<TaskConfigError>.Error(new TaskConfigError(err));
+        }
+
+        var pool = await _context.PoolOperations.GetByName(config.Pool.PoolName);
+        if (!pool.IsOk) {
+            return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"invalid pool: {config.Pool.PoolName}"));
+        }
+
+        var checkTarget = await CheckTargetExe(config, definition);
+        if (!checkTarget.IsOk) {
+            return checkTarget;
+        }
+
+        if (definition.Features.Contains(TaskFeature.GeneratorExe)) {
+            var container = config.Containers!.First(x => x.Type == ContainerType.Tools);
+
+            if (config.Task.GeneratorExe == null) {
+                return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"generator_exe is not defined"));
+            }
+
+            var tool_paths = new[] { "{tools_dir}/", "{tools_dir}\\" };
+
+            foreach (var toolPath in tool_paths) {
+                if (config.Task.GeneratorExe.StartsWith(toolPath)) {
+                    var generator = config.Task.GeneratorExe.Replace(toolPath, "");
+                    if (!await _containers.BlobExists(container.Name, generator, StorageType.Corpus)) {
+                        var err =
+                            $"generator_exe `{config.Task.GeneratorExe}` does not exist in the tools container `{container.Name}`";
+                        _logTracer.Error(err);
+                        return ResultVoid<TaskConfigError>.Error(new TaskConfigError(err));
+                    }
+                }
+            }
+        }
+
+        if (definition.Features.Contains(TaskFeature.StatsFile)) {
+            if (config.Task.StatsFile != null && config.Task.StatsFormat == null) {
+                var err2 = "using a stats_file requires a stats_format";
+                _logTracer.Error(err2);
+                return ResultVoid<TaskConfigError>.Error(new TaskConfigError(err2));
+            }
+        }
+
+        return ResultVoid<TaskConfigError>.Ok();
+
+    }
+
+    private async Task<ResultVoid<TaskConfigError>> CheckTargetExe(TaskConfig config, TaskDefinition definition) {
+        if (config.Task.TargetExe == null) {
+            if (definition.Features.Contains(TaskFeature.TargetExe)) {
+                return ResultVoid<TaskConfigError>.Error(new TaskConfigError("missing target_exe"));
+            }
+
+            if (definition.Features.Contains(TaskFeature.TargetExeOptional)) {
+                return ResultVoid<TaskConfigError>.Ok();
+            }
+            return ResultVoid<TaskConfigError>.Ok();
+        }
+
+        // User-submitted paths must be relative to the setup directory that contains them.
+        // They also must be normalized, and exclude special filesystem path elements.
+        //
+        // For example, accessing the blob store path "./foo" generates an exception, but
+        // "foo" and "foo/bar" do not.
+
+        if (!IsValidBlobName(config.Task.TargetExe)) {
+            return ResultVoid<TaskConfigError>.Error(new TaskConfigError("target_exe must be a canonicalized relative path"));
+        }
+
+
+        var container = config.Containers!.FirstOrDefault(x => x.Type == ContainerType.Setup);
+        if (container != null) {
+            if (!await _containers.BlobExists(container.Name, config.Task.TargetExe, StorageType.Corpus)) {
+                var err =
+                    $"target_exe `{config.Task.TargetExe}` does not exist in the setup container `{container.Name}`";
+
+                _logTracer.Warning(err);
+            }
+        }
+
+        return ResultVoid<TaskConfigError>.Ok();
+    }
+
+
+
+    // Azure Blob Storage uses a flat scheme, and has no true directory hierarchy. Forward
+    // slashes are used to delimit a _virtual_ directory structure.
+    private static bool IsValidBlobName(string blobName) {
+        // https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-containers--blobs--and-metadata#blob-names
+        const int MIN_LENGTH = 1;
+        const int MAX_LENGTH = 1024; // inclusive
+        const int MAX_PATH_SEGMENTS = 254;
+
+        var length = blobName.Length;
+
+        // No leading/trailing whitespace.
+        if (blobName != blobName.Trim()) {
+            return false;
+        }
+
+        if (length < MIN_LENGTH) {
+            return false;
+        }
+
+        if (length > MAX_LENGTH) {
+            return false;
+        }
+
+        var segments = blobName.Split(new[] { Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar });
+
+        if (segments.Length > MAX_PATH_SEGMENTS) {
+            return false;
+        }
+
+        // No path segment should end with a dot (`.`).
+        if (segments.Any(s => s.EndsWith('.'))) {
+            return false;
+        }
+
+        // Reject absolute paths to avoid confusion.
+        if (Path.IsPathRooted(blobName)) {
+            return false;
+        }
+
+        // Reject paths with special relative filesystem entries.
+        if (segments.Contains(".")) {
+            return false;
+        }
+
+        if (segments.Contains("..")) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool TargetUsesInput(TaskConfig config) {
+        if (config.Task.TargetOptions != null) {
+            if (config.Task.TargetOptions.Any(x => x.Contains("{input}")))
+                return true;
+        }
+
+        if (config.Task.TargetEnv != null) {
+            if (config.Task.TargetEnv.Values.Any(x => x.Contains("{input}")))
+                return true;
+        }
+        return false;
+    }
+
+    private async Task<ResultVoid<TaskConfigError>> CheckContainers(TaskDefinition definition, TaskConfig config) {
+
+        if (config.Containers == null) {
+            return ResultVoid<TaskConfigError>.Ok();
+        }
+
+        var exist = new HashSet<string>();
+        var containers = new Dictionary<ContainerType, List<Container>>();
+
+        foreach (var container in config.Containers) {
+            if (exist.Contains(container.Name.ContainerName)) {
+                continue;
+            }
+            if (await _containers.FindContainer(container.Name, StorageType.Corpus) == null) {
+                return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"missing container: {container.Name}"));
+            }
+            exist.Add(container.Name.ContainerName);
+
+            if (!containers.ContainsKey(container.Type)) {
+                containers.Add(container.Type, new List<Container>());
+            }
+            containers[container.Type].Add(container.Name);
+        }
+
+        foreach (var containerDef in definition.Containers) {
+            var r = CheckContainer(containerDef.Compare, containerDef.Value, containerDef.Type, containers);
+            if (!r.IsOk) {
+                return r;
+            }
+        }
+
+        var containerTypes = definition.Containers.Select(x => x.Type).ToHashSet();
+        var missing = containers.Keys.Where(x => !containerTypes.Contains(x)).ToList();
+        if (missing.Any()) {
+            var types = string.Join(", ", missing);
+            return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"unsupported container types for this task: {types}"));
+        }
+
+        if (definition.MonitorQueue != null) {
+            if (!containerTypes.Contains(definition.MonitorQueue.Value)) {
+                return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"unable to monitor container type as it is not used by this task: {definition.MonitorQueue}"));
+            }
+        }
+
+        return ResultVoid<TaskConfigError>.Ok();
+    }
+
+    private static ResultVoid<TaskConfigError> CheckContainer(Compare compare, long expected, ContainerType containerType, Dictionary<ContainerType, List<Container>> containers) {
+        var actual = containers.ContainsKey(containerType) ? containers[containerType].Count : 0;
+
+        if (!CheckVal(compare, expected, actual)) {
+            return ResultVoid<TaskConfigError>.Error(
+                new TaskConfigError($"container type {containerType}: expected {compare} {expected}, got {actual}"));
+        }
+
+        return ResultVoid<TaskConfigError>.Ok();
+    }
+
+    private static bool CheckVal(Compare compare, long expected, long actual) {
+        return compare switch {
+            Compare.Equal => expected == actual,
+            Compare.AtLeast => expected <= actual,
+            Compare.AtMost => expected >= actual,
+            _ => throw new NotSupportedException()
+        };
     }
 }
