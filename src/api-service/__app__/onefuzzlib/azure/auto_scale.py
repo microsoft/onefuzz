@@ -42,14 +42,12 @@ from .monitor import get_monitor_client
 
 
 @retry_on_auth_failure()
-def add_auto_scale_to_vmss(
-    vmss: UUID, auto_scale_profile: AutoscaleProfile
-) -> Optional[Error]:
-    logging.info("Checking scaleset %s for existing auto scale resources" % vmss)
+def get_auto_scale_settings(
+    vmss: UUID,
+) -> Union[Optional[AutoscaleSettingResource], Error]:
+    logging.info("Getting auto scale settings for %s" % vmss)
     client = get_monitor_client()
     resource_group = get_base_resource_group()
-
-    auto_scale_resource_id = None
 
     try:
         auto_scale_collections = client.autoscale_settings.list_by_resource_group(
@@ -57,8 +55,9 @@ def add_auto_scale_to_vmss(
         )
         for auto_scale in auto_scale_collections:
             if str(auto_scale.target_resource_uri).endswith(str(vmss)):
-                auto_scale_resource_id = auto_scale.id
-                break
+                logging.info("Found auto scale settings for %s" % vmss)
+                return auto_scale
+
     except (ResourceNotFoundError, CloudError):
         return Error(
             code=ErrorCode.INVALID_CONFIGURATION,
@@ -68,7 +67,21 @@ def add_auto_scale_to_vmss(
             ],
         )
 
-    if auto_scale_resource_id is not None:
+    return None
+
+
+@retry_on_auth_failure()
+def add_auto_scale_to_vmss(
+    vmss: UUID, auto_scale_profile: AutoscaleProfile
+) -> Optional[Error]:
+    logging.info("Checking scaleset %s for existing auto scale resources" % vmss)
+
+    existing_auto_scale_resource = get_auto_scale_settings(vmss)
+
+    if isinstance(existing_auto_scale_resource, Error):
+        return existing_auto_scale_resource
+
+    if existing_auto_scale_resource is not None:
         logging.warning("Scaleset %s already has auto scale resource" % vmss)
         return None
 
@@ -84,6 +97,29 @@ def add_auto_scale_to_vmss(
     if isinstance(diagnostics_resource, Error):
         return diagnostics_resource
 
+    return None
+
+
+def update_auto_scale(auto_scale_resource: AutoscaleSettingResource) -> Optional[Error]:
+    logging.info("Updating auto scale resource: %s" % auto_scale_resource.name)
+    client = get_monitor_client()
+    resource_group = get_base_resource_group()
+
+    try:
+        auto_scale_resource = client.autoscale_settings.create_or_update(
+            resource_group, auto_scale_resource.name, auto_scale_resource
+        )
+        logging.info(
+            "Successfully updated auto scale resource: %s" % auto_scale_resource.name
+        )
+    except (ResourceNotFoundError, CloudError):
+        return Error(
+            code=ErrorCode.UNABLE_TO_UPDATE,
+            errors=[
+                "unable to update auto scale resource with name: %s and profile: %s"
+                % (auto_scale_resource.name, auto_scale_resource)
+            ],
+        )
     return None
 
 
@@ -197,6 +233,32 @@ def create_auto_scale_profile(
 def default_auto_scale_profile(queue_uri: str, scaleset_size: int) -> AutoscaleProfile:
     return create_auto_scale_profile(
         queue_uri, 1, scaleset_size, scaleset_size, 1, 10, 1, 5
+    )
+
+
+def shutdown_scaleset_rule(queue_uri: str) -> ScaleRule:
+    return ScaleRule(
+        # Scale in if there are 0 or more messages in the queue (aka: every time)
+        metric_trigger=MetricTrigger(
+            metric_name="ApproximateMessageCount",
+            metric_resource_uri=queue_uri,
+            # Check every 10 minutes
+            time_grain=timedelta(minutes=5),
+            # The average amount of messages there are in the pool queue
+            time_aggregation=TimeAggregationType.AVERAGE,
+            statistic=MetricStatisticType.SUM,
+            # Over the past 10 minutes
+            time_window=timedelta(minutes=5),
+            operator=ComparisonOperationType.GREATER_THAN_OR_EQUAL,
+            threshold=0,
+            divide_per_instance=False,
+        ),
+        scale_action=ScaleAction(
+            direction=ScaleDirection.DECREASE,
+            type=ScaleType.CHANGE_COUNT,
+            value=1,
+            cooldown=timedelta(minutes=5),
+        ),
     )
 
 
