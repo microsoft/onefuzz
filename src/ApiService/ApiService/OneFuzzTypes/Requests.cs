@@ -164,6 +164,13 @@ public record ProxyReset(
     string Region
 );
 
+public record TaskGet(Guid TaskId);
+
+public record TaskSearch(
+    Guid? JobId,
+    Guid? TaskId,
+    List<TaskState> State);
+
 public record PoolSearch(
     Guid? PoolId = null,
     PoolName? Name = null,

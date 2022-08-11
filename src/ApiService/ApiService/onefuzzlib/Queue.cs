@@ -118,7 +118,7 @@ public class Queue : IQueue {
                 return true;
             }
         }
-        return false; ;
+        return false;
     }
 
     public async Task<IList<T>> PeekQueue<T>(string name, StorageType storageType) {
