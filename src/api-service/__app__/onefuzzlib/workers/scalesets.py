@@ -9,7 +9,6 @@ import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
-from azure.mgmt.monitor.models import ScaleDirection
 from onefuzztypes.enums import (
     ErrorCode,
     NodeDisaposalStrategy,
@@ -36,8 +35,8 @@ from ..azure.auto_scale import (
     add_auto_scale_to_vmss,
     create_auto_scale_profile,
     default_auto_scale_profile,
-    shutdown_scaleset_rule,
     get_auto_scale_settings,
+    shutdown_scaleset_rule,
     update_auto_scale,
 )
 from ..azure.image import get_os
@@ -759,7 +758,12 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     and bool(vm.protection_policy.protect_from_scale_in),
                 )
                 logging.info(SCALESET_LOG_PREFIX + str(vms_with_protection))
-                profile.capacity.minimum = len(vms_with_protection)
+                if vms_with_protection is not None:
+                    profile.capacity.minimum = len(vms_with_protection)
+                else:
+                    logging.error(
+                        "Failed to list vmss for scaleset %s" % self.scaleset_id
+                    )
 
             updated_auto_scale = update_auto_scale(auto_scale_policy)
             if isinstance(updated_auto_scale, Error):
