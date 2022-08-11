@@ -14,8 +14,10 @@ pub enum ExpandedValue<'a> {
     Path(String),
     Scalar(String),
     List(&'a [String]),
-    Mapping(Box<dyn Fn(&Expand<'a>, &str) -> Result<Option<ExpandedValue<'a>>> + Send>),
+    Mapping(MappingFn<'a>),
 }
+
+type MappingFn<'a> = Box<dyn Fn(&Expand<'a>, &str) -> Result<Option<ExpandedValue<'a>>> + Send>;
 
 #[derive(PartialEq, Eq, Hash, EnumIter)]
 pub enum PlaceHolder {
