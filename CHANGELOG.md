@@ -15,7 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent/CLI: Updated default Windows VM image [#2226](https://github.com/microsoft/onefuzz/pull/2226)
 * Agent: Modified LibFuzzer struct to own its environment and option data [#2219](https://github.com/microsoft/onefuzz/pull/2219)
 * Agent: Factor out generic LibFuzzer task [#2214](https://github.com/microsoft/onefuzz/pull/2214)
-* Deployment: Keep both C# and python http functions active when deploying, this will allow the service to be backward compatible with older versions of the agent and the CLI when enabling new C# funcitons on a deployment [#2212](https://github.com/microsoft/onefuzz/pull/2212)
 * Service: Enable C# migrated `TimerRetention`, `TimerDaily`, and `containers` functions [#2228](https://github.com/microsoft/onefuzz/pull/2228), [#2220](https://github.com/microsoft/onefuzz/pull/2220), [#2197](https://github.com/microsoft/onefuzz/pull/2197)
 * Service: Finished migrating `TimerRepro` to C# [#2222](https://github.com/microsoft/onefuzz/pull/2222), [#2216](https://github.com/microsoft/onefuzz/pull/2216), [#2218](https://github.com/microsoft/onefuzz/pull/2218)
 * Service: Change instances of `NotImplementedException` to more accurately be `NotSupportedException` exceptions [#2234](https://github.com/microsoft/onefuzz/pull/2234)
