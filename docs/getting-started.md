@@ -216,3 +216,8 @@ Reading /lib64/.debug/ld-2.27.so from remote target...
 rip            0x7ffff7dd6090      0x7ffff7dd6090
 (gdb)
 ```
+
+### Detecting the use of OneFuzz
+
+If you are using OneFuzz to fuzz your code, create a .onefuzz file at the root of your repository.
+This will help in detecting the use of OneFuzz in security metrics tools such as [Scorecard](https://github.com/ossf/scorecard). See the [example](https://github.com/microsoft/onefuzz-samples) in our samples repository.
