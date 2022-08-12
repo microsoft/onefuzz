@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 5.10.0
 
 ### Added
-*  Recommendation in `getting-started.md` that OneFuzz users include a `.onefuzz` file in their project root directory for security tool detection [#2236](https://github.com/microsoft/onefuzz/pull/2236)
+* Recommendation in `getting-started.md` that OneFuzz users include a `.onefuzz` file in their project root directory for security tool detection [#2236](https://github.com/microsoft/onefuzz/pull/2236)
 * Agent:  New `libfuzzer_dotnet_fuzz` task [#2221](https://github.com/microsoft/onefuzz/pull/2221)
 
 ### Changed
