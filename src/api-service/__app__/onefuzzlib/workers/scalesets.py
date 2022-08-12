@@ -759,7 +759,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 )
                 logging.info(SCALESET_LOG_PREFIX + str(vms_with_protection))
                 if vms_with_protection is not None:
-                    profile.capacity.minimum = len(vms_with_protection)
+                    num_vms_with_protection = len(vms_with_protection)
+                    profile.capacity.minimum = num_vms_with_protection
+                    profile.capacity.default = num_vms_with_protection
                 else:
                     logging.error(
                         "Failed to list vmss for scaleset %s" % self.scaleset_id
