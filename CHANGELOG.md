@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Add a missing job state transition to the `Task` implementation. [#2202](https://github.com/microsoft/onefuzz/pull/2202)
 * Service: Fixed the return value in the C# implementation when associating a subnet with the NSG. [#2201](https://github.com/microsoft/onefuzz/pull/2201)
 * Service: Changed log level from `Error` to `Info` in `TimeProxy`. [#2185](https://github.com/microsoft/onefuzz/pull/2185)
-* Service: `TimerTasks` config bugs [#2196](https://github.com/microsoft/onefuzz/pull/2196)
+* Service: Fixed `TimerTasks` config bugs in the C# port. [#2196](https://github.com/microsoft/onefuzz/pull/2196)
 
 ## 5.9.0
 ### Added
