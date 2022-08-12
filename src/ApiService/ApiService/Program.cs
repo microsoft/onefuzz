@@ -36,22 +36,6 @@ public class Program {
         }
     }
 
-
-    public static List<ILog> GetLoggers(IServiceConfig config) {
-        List<ILog> loggers = new List<ILog>();
-        foreach (var dest in config.LogDestinations) {
-            loggers.Add(
-                dest switch {
-                    LogDestination.AppInsights => new AppInsights(config.ApplicationInsightsInstrumentationKey!),
-                    LogDestination.Console => new Console(),
-                    _ => throw new Exception($"Unhandled Log Destination type: {dest}"),
-                }
-            );
-        }
-        return loggers;
-    }
-
-
     //Move out expensive resources into separate class, and add those as Singleton
     // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
     public async static Async.Task Main() {
