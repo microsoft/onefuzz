@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Service: Autoscale settings to allow a VM scaleset to scale down and finish shutting down when in `shutdown` state and prevent new nodes spinning up while the scaleset is in `shutdown` state. [#2232](https://github.com/microsoft/onefuzz/pull/2232)
-* Service: Missing function call to properly queue webhook events in `WebhookOperations` [#2231](https://github.com/microsoft/onefuzz/pull/2231)
+* Service: Add a missing function call to properly queue webhook events in `WebhookOperations` [#2231](https://github.com/microsoft/onefuzz/pull/2231)
 * Service: Add a missing job state transition to the `Task` implementation. [#2202](https://github.com/microsoft/onefuzz/pull/2202)
 * Service: Fixed the return value in the C# implementation when associating a subnet with the NSG. [#2201](https://github.com/microsoft/onefuzz/pull/2201)
 * Service: Scaleset log level on transition state [#2185](https://github.com/microsoft/onefuzz/pull/2185)
