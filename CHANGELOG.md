@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Deployment: Keep both C# and python http functions active when deploying, this will allow the service to be backward compatible with older versions of the agent and the CLI when enabling new C# funcitons on a deployment [#2212](https://github.com/microsoft/onefuzz/pull/2212)
 * Service: Enable C# migrated `TimerRetention`, `TimerDaily`, and `containers` functions [#2228](https://github.com/microsoft/onefuzz/pull/2228), [#2220](https://github.com/microsoft/onefuzz/pull/2220), [#2197](https://github.com/microsoft/onefuzz/pull/2197)
 * Service: Finished migrating `TimerRepro` to C# [#2222](https://github.com/microsoft/onefuzz/pull/2222), [#2216](https://github.com/microsoft/onefuzz/pull/2216), [#2218](https://github.com/microsoft/onefuzz/pull/2218)
-* Service: Instances of `NotImplementedException` to more accurately be `NotSupportedException` exceptions [#2234](https://github.com/microsoft/onefuzz/pull/2234)
+* Service: Change instances of `NotImplementedException` to more accurately be `NotSupportedException` exceptions [#2234](https://github.com/microsoft/onefuzz/pull/2234)
 * Service: Migrated `Tasks`, `Notifications`, `add_node_ssh_key`,  and `Proxy` functions to C# [#2233](https://github.com/microsoft/onefuzz/pull/2233), [#2188](https://github.com/microsoft/onefuzz/pull/2188), [#2193](https://github.com/microsoft/onefuzz/pull/2193), [#2206](https://github.com/microsoft/onefuzz/pull/2206), [#2200](https://github.com/microsoft/onefuzz/pull/2200)
 
 ### Fixed
