@@ -276,3 +276,27 @@ public class LogTracerFactory : ILogTracerFactory {
     }
 
 }
+
+public interface ILogSinks {
+    List<ILog> GetLogSinks();
+}
+
+public class LogSinks : ILogSinks {
+    private readonly List<ILog> _loggers;
+
+    public LogSinks(IServiceConfig config) {
+        _loggers = new List<ILog>();
+        foreach (var dest in config.LogDestinations) {
+            _loggers.Add(
+                dest switch {
+                    LogDestination.AppInsights => new AppInsights(config.ApplicationInsightsInstrumentationKey!),
+                    LogDestination.Console => new Console(),
+                    _ => throw new Exception($"Unhandled Log Destination type: {dest}"),
+                }
+            );
+        }
+    }
+    public List<ILog> GetLogSinks() {
+        return _loggers;
+    }
+}

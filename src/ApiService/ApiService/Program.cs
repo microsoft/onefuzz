@@ -72,8 +72,9 @@ public class Program {
 
             services
             .AddScoped<ILogTracer>(s => {
+                var logSinks = s.GetRequiredService<ILogSinks>();
                 var cfg = s.GetRequiredService<IServiceConfig>();
-                return new LogTracerFactory(GetLoggers(cfg))
+                return new LogTracerFactory(logSinks.GetLogSinks())
                     .CreateLogTracer(
                         Guid.Empty,
                         severityLevel: cfg.LogSeverityLevel);
@@ -118,6 +119,7 @@ public class Program {
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
             .AddSingleton<IStorage, Storage>()
+            .AddSingleton<ILogSinks, LogSinks>()
             .AddHttpClient()
             .AddMemoryCache();
         }
