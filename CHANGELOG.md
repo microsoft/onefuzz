@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Migrated `Tasks`, `Notifications`, `add_node_ssh_key`,  and `Proxy` functions to C# [#2233](https://github.com/microsoft/onefuzz/pull/2233), [#2188](https://github.com/microsoft/onefuzz/pull/2188), [#2193](https://github.com/microsoft/onefuzz/pull/2193), [#2206](https://github.com/microsoft/onefuzz/pull/2206), [#2200](https://github.com/microsoft/onefuzz/pull/2200)
 
 ### Fixed
-* Service: Autoscale settings to allow a VM scaleset to scale down and finish shutting down when in `shutdown` state and prevent new nodes spinning up while the scaleset is in `shutdown` state. [#2232](https://github.com/microsoft/onefuzz/pull/2232)
+* Service: Update the autoscale settings to allow a VM scaleset to scale down to zero nodes and prevent new nodes from spinning up when in the `shutdown` state. [#2232]
 * Service: Add a missing function call to properly queue webhook events in `WebhookOperations` [#2231](https://github.com/microsoft/onefuzz/pull/2231)
 * Service: Add a missing job state transition to the `Task` implementation. [#2202](https://github.com/microsoft/onefuzz/pull/2202)
 * Service: Fixed the return value in the C# implementation when associating a subnet with the NSG. [#2201](https://github.com/microsoft/onefuzz/pull/2201)
