@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CLI: Allow dotnet endpoint and functions configuration in the CLI [#2190](https://github.com/microsoft/onefuzz/pull/2190)
 
 ### Changed
-* Agent/CLI: Updated default Windows VM image [#2226](https://github.com/microsoft/onefuzz/pull/2226)
+* CLI: Updated default Windows VM host image. [#2226](https://github.com/microsoft/onefuzz/pull/2226)
 * Agent: Modified LibFuzzer struct to own its environment and option data [#2219](https://github.com/microsoft/onefuzz/pull/2219)
 * Agent: Factor out generic LibFuzzer task [#2214](https://github.com/microsoft/onefuzz/pull/2214)
 * Service: Enable C# migrated `TimerRetention`, `TimerDaily`, and `containers` functions [#2228](https://github.com/microsoft/onefuzz/pull/2228), [#2220](https://github.com/microsoft/onefuzz/pull/2220), [#2197](https://github.com/microsoft/onefuzz/pull/2197)
