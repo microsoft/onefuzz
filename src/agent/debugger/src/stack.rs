@@ -18,7 +18,7 @@ use crate::dbghelp::{self, DebugHelpGuard, ModuleInfo, SymInfo, SymLineInfo};
 const UNKNOWN_MODULE: &str = "<UnknownModule>";
 
 /// The file and line number for frames in the call stack.
-#[derive(Clone, Debug, Hash, PartialEq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct FileInfo {
     pub file: String,
     pub line: u32,
