@@ -983,12 +983,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             )
             return pool
 
-        pool_queue_id = pool.get_pool_queue()
-        pool_queue_uri = get_resource_id(pool_queue_id, StorageType.corpus)
-
         logging.info("Updating auto scale entry: %s" % self.scaleset_id)
         AutoScale.update(
-            self.scaleset_id,
+            scaleset_id=self.scaleset_id,
             min=minimum,
             max=maximum,
             default=default,
@@ -997,8 +994,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             scale_in_amount=scale_in_amount,
             scale_in_cooldown=scale_in_cooldown,
         )
-
-        return
+        return None
 
     def try_to_enable_auto_scaling(self) -> Optional[Error]:
         from .pools import Pool
@@ -1071,7 +1067,7 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
 
     @classmethod
     def update(
-        self,
+        cls,
         *,
         scaleset_id: UUID,
         min: int,
@@ -1081,21 +1077,31 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
         scale_out_cooldown: int,
         scale_in_amount: int,
         scale_in_cooldown: int,
-    ) -> "AutoScale":
+    ) -> None:
 
-        self.scaleset_id = scaleset_id
-        self.min = min
-        self.max = max
-        self.default = default
-        self.scale_out_amount = scale_out_amount
-        self.scale_out_cooldown = scale_out_cooldown
-        self.scale_in_amount = scale_in_amount
-        self.scale_in_cooldown = scale_in_cooldown
+        autoscale = cls.search(query={"scaleset_id": [scaleset_id]})
+        if not autoscale:
+            logging.info(
+                "Could not find any auto scale settings for scaleset %s" % scaleset_id
+            )
+            return None
+        if len(autoscale) != 1:
+            logging.info(
+                "Found more than one autoscaling setting for scaleset %s" % scaleset_id
+            )
+        autoscale[0].scaleset_id = scaleset_id
+        autoscale[0].min = min
+        autoscale[0].max = max
+        autoscale[0].default = default
+        autoscale[0].scale_out_amount = scale_out_amount
+        autoscale[0].scale_out_cooldown = scale_out_cooldown
+        autoscale[0].scale_in_amount = scale_in_amount
+        autoscale[0].scale_in_cooldown = scale_in_cooldown
 
-        self.save()
+        autoscale[0].save()
 
     @classmethod
-    def delete(cls, scaleset_id: UUID):
+    def delete(self) -> None:
         pass
 
     @classmethod
