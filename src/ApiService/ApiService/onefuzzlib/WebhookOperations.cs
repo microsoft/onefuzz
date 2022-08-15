@@ -7,7 +7,7 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IWebhookOperations {
+public interface IWebhookOperations : IOrm<Webhook> {
     Async.Task SendEvent(EventMessage eventMessage);
     Async.Task<Webhook?> GetByWebhookId(Guid webhookId);
     Async.Task<bool> Send(WebhookMessageLog messageLog);
