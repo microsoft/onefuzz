@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Coverage is reported as a sequence of module coverage entries, which are
 /// generic in a coverage type `C` and a metadata type `M`.
-#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(transparent)]
 pub struct CoverageReport<C, M> {
     /// Coverage data for each module.
@@ -29,7 +29,7 @@ pub struct CoverageReport<C, M> {
 ///
 /// Warning: `serde` allows duplicate keys. If `M` and `C` share field names as
 /// structs, then the serialized entry will have duplicate keys.
-#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
 pub struct CoverageReportEntry<C, M> {
     /// Path or name of the module.
     pub module: String,

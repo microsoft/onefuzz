@@ -148,7 +148,7 @@ impl ThreadInfo {
     }
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 enum SymInitalizeState {
     NotInitialized,
     InitializeNeeded,
