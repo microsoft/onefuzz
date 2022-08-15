@@ -38,6 +38,7 @@ cargo --version
 cargo audit --version
 cargo clippy --version
 cargo fmt --version
+cargo-license --version
 
 # unless we're doing incremental builds, start clean during CI
 if [ X${CARGO_INCREMENTAL} == X ]; then
