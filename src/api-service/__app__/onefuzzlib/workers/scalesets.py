@@ -974,9 +974,19 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             else:
                 pass
 
+        pool = Pool.get_by_name(pool_name)
+        if isinstance(pool, Error):
+            logging.error(
+                "Failed to get pool by name: %s error: %s" % (pool_name, pool)
+            )
+            return pool
+
+        pool_queue_id = pool.get_pool_queue()
+        pool_queue_uri = get_resource_id(pool_queue_id, StorageType.corpus)
+
         logging.info("Updating auto scale entry: %s" % self.scaleset_id)
         AutoScale.Update(
-            self.pool_name,
+            pool_queue_uri,
             self.scaleset_id,
             min=minimum,
             max=maximum,
@@ -1062,7 +1072,7 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
     def update(
         cls,
         *,
-        pool_name: str,
+        pool_queue_uri: str,
         scaleset_id: UUID,
         min: int,
         max: int,
@@ -1073,15 +1083,6 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
         scale_in_cooldown: int,
     ) -> "AutoScale":
 
-        pool = Pool.get_by_name(pool_name)
-        if isinstance(pool, Error):
-            logging.error(
-                "Failed to get pool by name: %s error: %s" % (pool_name, pool)
-            )
-            return pool
-
-        pool_queue_id = pool.get_pool_queue()
-        pool_queue_uri = get_resource_id(pool_queue_id, StorageType.corpus)
         capacity = get_vmss_size(scaleset_id)
         if capacity is None:
             capacity_failed = Error(
@@ -1092,6 +1093,7 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
             return capacity_failed
 
         entry = cls.get_settings_for_scaleset(scaleset_id)
+        auto_scale_config = AutoScale.get_settings_for_scaleset(self.scaleset_id)
         if auto_scale_config is None:
             auto_scale_profile = default_auto_scale_profile(pool_queue_uri, capacity)
 
