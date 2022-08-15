@@ -1057,6 +1057,7 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
         entry.save()
         return entry
 
+    @classmethod
     def update(
         cls,
         *,
@@ -1084,7 +1085,8 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
         entry.save()
 
         return entry
-
+    
+    @classmethod
     def delete(cls, scaleset_id: UUID):
         pass
 

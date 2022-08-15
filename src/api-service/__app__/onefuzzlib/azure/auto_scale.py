@@ -236,6 +236,8 @@ def get_auto_scale_profile(scaleset_id: UUID) -> AutoscaleProfile:
     resource_group = get_base_resource_group()
 
     auto_scale_resource = None
+    if isinstance(auto_scale_resource, Error):
+        return auto_scale_resource
 
     try:
         auto_scale_collections = client.autoscale_settings.list_by_resource_group(
