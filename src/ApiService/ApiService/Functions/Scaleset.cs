@@ -138,6 +138,20 @@ public class Scaleset {
                 context: "ScalesetCreate");
         }
 
+        if (create.AutoScale is AutoScaleOptions options) {
+            var autoScale = new AutoScale(
+                scaleset.ScalesetId,
+                Min: options.Min,
+                Max: options.Max,
+                Default: options.Default,
+                ScaleOutAmount: options.ScaleOutAmount,
+                ScaleOutCooldown: options.ScaleOutCooldown,
+                ScaleInAmount: options.ScaleInAmount,
+                ScaleInCooldown: options.ScaleInCooldown);
+
+            await _context.AutoScaleOperations.Insert(autoScale);
+        }
+
         return await RequestHandling.Ok(req, ScalesetResponse.ForScaleset(scaleset));
     }
 

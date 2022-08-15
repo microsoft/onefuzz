@@ -100,6 +100,7 @@ public class Program {
             .AddScoped<IEndpointAuthorization, EndpointAuthorization>()
             .AddScoped<INodeMessageOperations, NodeMessageOperations>()
             .AddScoped<ISubnet, Subnet>()
+            .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
 
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()

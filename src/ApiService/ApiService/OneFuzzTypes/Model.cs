@@ -409,6 +409,17 @@ public record Scaleset(
 // 'Nodes' removed when porting from Python: only used in search response
 ) : StatefulEntityBase<ScalesetState>(State);
 
+public record AutoScale(
+    [PartitionKey] Guid ScalesetId,
+    long Min,
+    long Max,
+    long Default,
+    long ScaleOutAmount,
+    long ScaleOutCooldown,
+    long ScaleInAmount,
+    long ScaleInCooldown
+) : EntityBase;
+
 [JsonConverter(typeof(ContainerConverter))]
 public record Container(string ContainerName) {
     public string ContainerName { get; } = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
