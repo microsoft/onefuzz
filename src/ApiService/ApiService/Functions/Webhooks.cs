@@ -29,7 +29,6 @@ public class Webhooks {
     }
 
 
-
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<WebhookSearch>(req);
         if (!request.IsOk) {
@@ -58,7 +57,6 @@ public class Webhooks {
 
 
     }
-
 
 
     private async Async.Task<HttpResponseData> Patch(HttpRequestData req) {
@@ -93,6 +91,7 @@ public class Webhooks {
         return response;
     }
 
+
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<WebhookCreate>(req);
         if (!request.IsOk) {
@@ -101,7 +100,6 @@ public class Webhooks {
                 request.ErrorV,
                 "webhook create");
         }
-
 
         var webhook = new Webhook(Guid.NewGuid(), request.OkV.Name, request.OkV.Url, request.OkV.EventTypes,
             request.OkV.SecretToken, request.OkV.MessageFormat);
@@ -114,6 +112,7 @@ public class Webhooks {
         await response.WriteAsJsonAsync(webhook with { Url = null, SecretToken = null });
         return response;
     }
+
 
     private async Async.Task<HttpResponseData> Delete(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<WebhookGet>(req);
