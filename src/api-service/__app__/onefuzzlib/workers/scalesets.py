@@ -1100,7 +1100,6 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
 
         autoscale[0].save()
 
-    @classmethod
     def delete(self) -> None:
         super().delete()
         # send_event(
