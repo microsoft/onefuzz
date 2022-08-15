@@ -976,10 +976,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             else:
                 pass
 
-        pool = Pool.get_by_name(pool_name)
+        pool = Pool.get_by_name(self.pool_name)
         if isinstance(pool, Error):
             logging.error(
-                "Failed to get pool by name: %s error: %s" % (pool_name, pool)
+                "Failed to get pool by name: %s error: %s" % (self.pool_name, pool)
             )
             return pool
 
