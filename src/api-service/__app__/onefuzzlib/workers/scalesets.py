@@ -1072,7 +1072,7 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
 
     @classmethod
     def update(
-        cls,
+        self,
         *,
         pool_queue_uri: str,
         scaleset_id: UUID,
@@ -1094,21 +1094,21 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
         #     logging.error(capacity_failed)
         #     return capacity_failed
 
-        # entry = cls.get_settings_for_scaleset(scaleset_id)
+        # entry = self.get_settings_for_scaleset(scaleset_id)
         # auto_scale_config = AutoScale.get_settings_for_scaleset(self.scaleset_id)
         # if auto_scale_config is None:
         #     auto_scale_profile = default_auto_scale_profile(pool_queue_uri, capacity)
 
-        cls.scaleset_id = scaleset_id
-        cls.min = min
-        cls.max = max
-        cls.default = default
-        cls.scale_out_amount = scale_out_amount
-        cls.scale_out_cooldown = scale_out_cooldown
-        cls.scale_in_amount = scale_in_amount
-        cls.scale_in_cooldown = scale_in_cooldown
+        self.scaleset_id = scaleset_id
+        self.min = min
+        self.max = max
+        self.default = default
+        self.scale_out_amount = scale_out_amount
+        self.scale_out_cooldown = scale_out_cooldown
+        self.scale_in_amount = scale_in_amount
+        self.scale_in_cooldown = scale_in_cooldown
 
-        cls.save()
+        self.save()
 
     @classmethod
     def delete(cls, scaleset_id: UUID):
