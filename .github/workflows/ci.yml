@@ -22,7 +22,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install specific Rust version
       run: |
-        rustup default 1.62 
+        rustup default 1.63 
         rustup component add clippy rustfmt
     - name: Get Rust version & build version
       shell: bash

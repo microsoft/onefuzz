@@ -174,6 +174,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::read_zero_byte_vec)]
     fn read_empty_pipe() {
         let (reader, _writer) = pipe().unwrap();
         let mut buf = vec![];

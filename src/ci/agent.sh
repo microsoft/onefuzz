@@ -38,6 +38,7 @@ cargo --version
 cargo audit --version
 cargo clippy --version
 cargo fmt --version
+cargo-license --version
 
 # unless we're doing incremental builds, start clean during CI
 if [ X${CARGO_INCREMENTAL} == X ]; then
@@ -52,7 +53,8 @@ cargo fmt -- --check
 # RUSTSEC-2020-0077: `memmap` dependency unmaintained, via `symbolic` (see: `getsentry/symbolic#304`)
 # RUSTSEC-2020-0159: potential segfault in `time`, not yet patched (#1366)
 # RUSTSEC-2020-0071: potential segfault in `chrono`, not yet patched (#1366)
-cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2020-0016 --ignore RUSTSEC-2020-0036 --ignore RUSTSEC-2019-0036 --ignore RUSTSEC-2021-0065 --ignore RUSTSEC-2020-0159 --ignore RUSTSEC-2020-0071 --ignore RUSTSEC-2020-0077
+# RUSTSEC-2022-0048: xml-rs is unmaintained
+cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2020-0016 --ignore RUSTSEC-2020-0036 --ignore RUSTSEC-2019-0036 --ignore RUSTSEC-2021-0065 --ignore RUSTSEC-2020-0159 --ignore RUSTSEC-2020-0071 --ignore RUSTSEC-2020-0077 --ignore RUSTSEC-2022-0048
 cargo-license -j > data/licenses.json
 cargo build --release --locked
 cargo clippy --release --locked --all-targets -- -D warnings

@@ -418,7 +418,7 @@ impl ModuleInfo {
     }
 }
 
-#[derive(Clone, Debug, Hash, PartialEq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SymInfo {
     pub symbol: String,
     pub address: u64,
