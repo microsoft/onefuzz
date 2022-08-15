@@ -254,10 +254,8 @@ public class VmssOperations : IVmssOperations {
             UpgradePolicy = new UpgradePolicy() { Mode = UpgradeMode.Manual },
             Identity = new ManagedServiceIdentity(managedServiceIdentityType: ManagedServiceIdentityType.UserAssigned),
         };
-
         vmssData.Identity.UserAssignedIdentities.Add(_creds.GetScalesetIdentityResourcePath(), new UserAssignedIdentity());
         vmssData.VirtualMachineProfile = new VirtualMachineScaleSetVmProfile() { Priority = VirtualMachinePriorityTypes.Regular };
-
         var imageRef = new ImageReference();
 
         if (image.StartsWith('/')) {
@@ -269,19 +267,20 @@ public class VmssOperations : IVmssOperations {
             imageRef.Sku = info.Sku;
             imageRef.Version = info.Version;
         }
-        vmssData.VirtualMachineProfile.StorageProfile.ImageReference = imageRef;
-
-        vmssData.VirtualMachineProfile.OSProfile.ComputerNamePrefix = "node";
-        vmssData.VirtualMachineProfile.OSProfile.AdminUsername = "onefuzz";
+        vmssData.VirtualMachineProfile.StorageProfile = new VirtualMachineScaleSetStorageProfile() { ImageReference = imageRef };
+        vmssData.VirtualMachineProfile.OSProfile = new VirtualMachineScaleSetOSProfile() { ComputerNamePrefix = "node", AdminUsername = "onefuzz" };
 
         var networkConfiguration = new VirtualMachineScaleSetNetworkConfiguration("onefuzz-nic") { Primary = true };
         var ipConfig = new VirtualMachineScaleSetIPConfiguration("onefuzz-ip-config");
         ipConfig.SubnetId = new ResourceIdentifier(networkId);
         networkConfiguration.IPConfigurations.Add(ipConfig);
 
+        _log.Info("Network profile");
+        vmssData.VirtualMachineProfile.NetworkProfile = new VirtualMachineScaleSetNetworkProfile();
         vmssData.VirtualMachineProfile.NetworkProfile.NetworkInterfaceConfigurations.Add(networkConfiguration);
 
         if (extensions is not null) {
+            _log.Info("Extensions");
             foreach (var e in extensions) {
                 vmssData.VirtualMachineProfile.ExtensionProfile.Extensions.Add(e);
             }
@@ -301,6 +300,7 @@ public class VmssOperations : IVmssOperations {
                 return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"unhandled OS: {getOsResult.OkV} in image: {image}");
         }
 
+        _log.Info("Disks");
         if (ephemeralOsDisks) {
             vmssData.VirtualMachineProfile.StorageProfile.OSDisk.DiffDiskSettings.Option = DiffDiskOptions.Local;
             vmssData.VirtualMachineProfile.StorageProfile.OSDisk.Caching = CachingTypes.ReadOnly;
