@@ -275,12 +275,11 @@ public class VmssOperations : IVmssOperations {
         ipConfig.SubnetId = new ResourceIdentifier(networkId);
         networkConfiguration.IPConfigurations.Add(ipConfig);
 
-        _log.Info("Network profile");
         vmssData.VirtualMachineProfile.NetworkProfile = new VirtualMachineScaleSetNetworkProfile();
         vmssData.VirtualMachineProfile.NetworkProfile.NetworkInterfaceConfigurations.Add(networkConfiguration);
 
         if (extensions is not null) {
-            _log.Info("Extensions");
+            vmssData.VirtualMachineProfile.ExtensionProfile = new VirtualMachineScaleSetExtensionProfile();
             foreach (var e in extensions) {
                 vmssData.VirtualMachineProfile.ExtensionProfile.Extensions.Add(e);
             }
@@ -291,20 +290,20 @@ public class VmssOperations : IVmssOperations {
                 vmssData.VirtualMachineProfile.OSProfile.AdminPassword = password;
                 break;
             case Os.Linux:
+                vmssData.VirtualMachineProfile.OSProfile.LinuxConfiguration = new LinuxConfiguration();
                 vmssData.VirtualMachineProfile.OSProfile.LinuxConfiguration.DisablePasswordAuthentication = true;
                 var i = new SshPublicKeyInfo() { KeyData = sshPublicKey, Path = "/home/onefuzz/.ssh/authorized_keys" };
                 vmssData.VirtualMachineProfile.OSProfile.LinuxConfiguration.SshPublicKeys.Add(i);
-
                 break;
             default:
                 return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"unhandled OS: {getOsResult.OkV} in image: {image}");
         }
 
-        _log.Info("Disks");
         if (ephemeralOsDisks) {
+            vmssData.VirtualMachineProfile.StorageProfile.OSDisk = new VirtualMachineScaleSetOSDisk(DiskCreateOptionTypes.FromImage);
+            vmssData.VirtualMachineProfile.StorageProfile.OSDisk.DiffDiskSettings = new DiffDiskSettings();
             vmssData.VirtualMachineProfile.StorageProfile.OSDisk.DiffDiskSettings.Option = DiffDiskOptions.Local;
             vmssData.VirtualMachineProfile.StorageProfile.OSDisk.Caching = CachingTypes.ReadOnly;
-            vmssData.VirtualMachineProfile.StorageProfile.OSDisk.CreateOption = DiskCreateOptionTypes.FromImage;
         }
 
         if (spotInstance.HasValue && spotInstance.Value) {
