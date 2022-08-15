@@ -987,7 +987,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         pool_queue_uri = get_resource_id(pool_queue_id, StorageType.corpus)
 
         logging.info("Updating auto scale entry: %s" % self.scaleset_id)
-        AutoScale.Update(
+        AutoScale.update(
             pool_queue_uri,
             self.scaleset_id,
             min=minimum,
@@ -1084,20 +1084,6 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
         scale_in_amount: int,
         scale_in_cooldown: int,
     ) -> "AutoScale":
-
-        # capacity = get_vmss_size(scaleset_id)
-        # if capacity is None:
-        #     capacity_failed = Error(
-        #         code=ErrorCode.UNABLE_TO_FIND,
-        #         errors=["Failed to get capacity for scaleset %s" % scaleset_id],
-        #     )
-        #     logging.error(capacity_failed)
-        #     return capacity_failed
-
-        # entry = self.get_settings_for_scaleset(scaleset_id)
-        # auto_scale_config = AutoScale.get_settings_for_scaleset(self.scaleset_id)
-        # if auto_scale_config is None:
-        #     auto_scale_profile = default_auto_scale_profile(pool_queue_uri, capacity)
 
         self.scaleset_id = scaleset_id
         self.min = min
