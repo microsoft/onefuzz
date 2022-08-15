@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Security.Cryptography;
+using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
@@ -114,6 +115,7 @@ public class Scaleset {
             ScalesetId: Guid.NewGuid(),
             State: ScalesetState.Init,
             NeedsConfigUpdate: false,
+            Auth: GenerateAuthentication(),
             PoolName: create.PoolName,
             VmSku: create.VmSku,
             Image: create.Image,
@@ -135,6 +137,18 @@ public class Scaleset {
         }
 
         return await RequestHandling.Ok(req, ScalesetResponse.ForScaleset(scaleset));
+    }
+
+    private static Authentication GenerateAuthentication() {
+        using var rsa = RSA.Create(2048);
+        var privateKey = rsa.ExportRSAPrivateKey();
+        var publicKey = rsa.ExportRSAPublicKey();
+        var formattedPrivateKey = $"-----BEGIN RSA PRIVATE KEY-----\n{Convert.ToBase64String(privateKey)}\n-----END RSA PRIVATE KEY-----\n";
+        var formattedPublicKey = $"ssh-rsa {Convert.ToBase64String(publicKey)} onefuzz-generated-key";
+        return new Authentication(
+            Password: Guid.NewGuid().ToString(),
+            PublicKey: formattedPublicKey,
+            PrivateKey: formattedPrivateKey);
     }
 
     private async Task<HttpResponseData> Patch(HttpRequestData req) {
