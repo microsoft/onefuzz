@@ -1946,6 +1946,7 @@ dependencies = [
  "onefuzz",
  "onefuzz-telemetry",
  "path-absolutize",
+ "regex",
  "reqwest",
  "reqwest-retry",
  "serde",

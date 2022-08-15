@@ -87,6 +87,9 @@ pub enum Config {
     #[serde(alias = "dotnet_coverage")]
     DotnetCoverage(coverage::dotnet::Config),
 
+    #[serde(alias = "dotnet_crash_report")]
+    DotnetCrashReport(report::dotnet::generic::Config),
+
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     #[serde(alias = "libfuzzer_dotnet_fuzz")]
     LibFuzzerDotnetFuzz(fuzz::libfuzzer::dotnet::Config),
@@ -140,6 +143,7 @@ impl Config {
             Config::Coverage(c) => &mut c.common,
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(c) => &mut c.common,
+            Config::DotnetCrashReport(c) => &mut c.common,
             Config::LibFuzzerDotnetFuzz(c) => &mut c.common,
             Config::LibFuzzerFuzz(c) => &mut c.common,
             Config::LibFuzzerMerge(c) => &mut c.common,
@@ -160,6 +164,7 @@ impl Config {
             Config::Coverage(c) => &c.common,
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(c) => &c.common,
+            Config::DotnetCrashReport(c) => &c.common,
             Config::LibFuzzerDotnetFuzz(c) => &c.common,
             Config::LibFuzzerFuzz(c) => &c.common,
             Config::LibFuzzerMerge(c) => &c.common,
@@ -180,6 +185,7 @@ impl Config {
             Config::Coverage(_) => "coverage",
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(_) => "dotnet_coverage",
+            Config::DotnetCrashReport(_) => "dotnet_crash_report",
             Config::LibFuzzerDotnetFuzz(_) => "libfuzzer_fuzz",
             Config::LibFuzzerFuzz(_) => "libfuzzer_fuzz",
             Config::LibFuzzerMerge(_) => "libfuzzer_merge",
@@ -228,6 +234,11 @@ impl Config {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(config) => {
                 coverage::dotnet::DotnetCoverageTask::new(config)
+                    .run()
+                    .await
+            }
+            Config::DotnetCrashReport(config) => {
+                report::dotnet::generic::DotnetCrashReportTask::new(config)
                     .run()
                     .await
             }
