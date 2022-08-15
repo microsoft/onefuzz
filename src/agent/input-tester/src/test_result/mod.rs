@@ -234,7 +234,7 @@ impl fmt::Display for Exception {
 }
 
 /// How did the program exit - normally (so we have a proper exit code) or was it terminated?
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ExitStatus {
     /// The exit code returned from the process.
     Code(i32),
