@@ -88,6 +88,18 @@ pub enum CrashTestResult {
     NoRepro(Box<NoCrash>),
 }
 
+impl From<CrashReport> for CrashTestResult {
+    fn from(report: CrashReport) -> Self {
+        Self::CrashReport(Box::new(report))
+    }
+}
+
+impl From<NoCrash> for CrashTestResult {
+    fn from(no_crash: NoCrash) -> Self {
+        Self::NoRepro(Box::new(no_crash))
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RegressionReport {
     pub crash_test_result: CrashTestResult,
