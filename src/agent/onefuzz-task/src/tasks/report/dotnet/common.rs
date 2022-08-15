@@ -14,7 +14,7 @@ pub async fn collect_exception_info(
     args: &[impl AsRef<OsStr>],
     env: impl IntoIterator<Item = (impl AsRef<OsStr>, impl AsRef<OsStr>)>,
 ) -> Result<Option<DotnetExceptionInfo>> {
-    let tmp_dir = spawn_blocking(|| tempfile::tempdir()).await??;
+    let tmp_dir = spawn_blocking(tempfile::tempdir).await??;
 
     let dump_path = tmp_dir.path().join(DUMP_FILE_NAME);
 
