@@ -567,11 +567,13 @@ class Repro(Endpoint):
         ):
             raise Exception("vm setup failed: %s" % repro.state)
 
+        NUM_RETRIES = 10
         bind_all = which("wslpath") is not None and repro.os == enums.OS.windows
         proxy = "*:" + REPRO_SSH_FORWARD if bind_all else REPRO_SSH_FORWARD
         with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
             dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
-            while True:
+            while NUM_RETRIES > 0:
+                NUM_RETRIES = NUM_RETRIES - 1
                 if debug_command:
                     dbg_script = [debug_command, "qq"]
                     with temp_file(
