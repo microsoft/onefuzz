@@ -976,7 +976,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         logging.info("Updating auto scale entry: %s" % self.scaleset_id)
         AutoScale.Update(
-            self.pool_name
+            self.pool_name,
             self.scaleset_id,
             min=minimum,
             max=maximum,
@@ -1094,7 +1094,7 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
         entry = cls.get_settings_for_scaleset(scaleset_id)
         if auto_scale_config is None:
             auto_scale_profile = default_auto_scale_profile(pool_queue_uri, capacity)
-            
+
         entry.scaleset_id = (scaleset_id,)
         entry.min = (min,)
         entry.max = (max,)
