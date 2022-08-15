@@ -38,7 +38,7 @@ impl From<&SymLineInfo> for FileInfo {
     }
 }
 
-#[derive(Clone, Debug, Hash, PartialEq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum DebugStackFrame {
     Frame {
         module_name: String,
@@ -118,7 +118,7 @@ impl Serialize for DebugStackFrame {
     }
 }
 
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Serialize, Eq)]
 pub struct DebugStack {
     pub frames: Vec<DebugStackFrame>,
 }
