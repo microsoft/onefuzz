@@ -229,6 +229,28 @@ def create_auto_scale_profile(
         ],
     )
 
+def get_auto_scale_profile(scaleset_id: UUID) -> AutoscaleProfile:
+    logging.info("Getting scaleset %s for existing auto scale resources" % scaleset_id)
+    client = get_monitor_client()
+    resource_group = get_base_resource_group()
+
+    auto_scale_resource = None
+
+    try:
+        auto_scale_collections = client.autoscale_settings.list_by_resource_group(
+            resource_group
+        )
+        for auto_scale in auto_scale_collections:
+            if str(auto_scale.target_resource_uri).endswith(str(scaleset_id)):
+                auto_scale_resource = auto_scale
+                break
+    except (ResourceNotFoundError, CloudError):
+        return Error(
+            code=ErrorCode.INVALID_CONFIGURATION,
+            errors=["Failed to query scaleset %s autoscale resource" % scaleset_id],
+        )
+
+    return auto_scale_resource.AutoscaleProfile
 
 def default_auto_scale_profile(queue_uri: str, scaleset_size: int) -> AutoscaleProfile:
     return create_auto_scale_profile(
