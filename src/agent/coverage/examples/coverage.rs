@@ -81,7 +81,7 @@ fn input_command(argv: &[String], input: &Path) -> Command {
     let args: Vec<_> = argv[1..]
         .iter()
         .map(|a| {
-            if &*a == "@@" {
+            if a == "@@" {
                 input.display().to_string()
             } else {
                 a.to_string()

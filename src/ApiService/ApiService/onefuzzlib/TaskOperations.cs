@@ -1,4 +1,5 @@
-﻿using ApiService.OneFuzzLib.Orm;
+﻿using System.Threading.Tasks;
+using ApiService.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -24,6 +25,7 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
     Async.Task<bool> CheckPrereqTasks(Task task);
     Async.Task<Pool?> GetPool(Task task);
     Async.Task<Task> SetState(Task task, TaskState state);
+    Async.Task<OneFuzzResult<Task>> Create(TaskConfig config, Guid jobId, UserInfo userInfo);
 }
 
 public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITaskOperations {
@@ -162,6 +164,35 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         }
 
         return task;
+    }
+
+    public async Task<OneFuzzResult<Task>> Create(TaskConfig config, Guid jobId, UserInfo userInfo) {
+
+        Os os;
+        if (config.Vm != null) {
+            var osResult = await _context.ImageOperations.GetOs(config.Vm.Region, config.Vm.Image);
+            if (!osResult.IsOk) {
+                return OneFuzzResult<Task>.Error(osResult.ErrorV);
+            }
+            os = osResult.OkV;
+        } else if (config.Pool != null) {
+            var pool = await _context.PoolOperations.GetByName(config.Pool.PoolName);
+
+            if (!pool.IsOk) {
+                return OneFuzzResult<Task>.Error(pool.ErrorV);
+            }
+            os = pool.OkV.Os;
+        } else {
+            return OneFuzzResult<Task>.Error(new Error(ErrorCode.INVALID_CONFIGURATION, new[] { "task must have vm or pool" }));
+        }
+
+        var task = new Task(jobId, Guid.NewGuid(), TaskState.Init, os, config, UserInfo: userInfo);
+
+        await _context.TaskOperations.Insert(task);
+        await _context.Events.SendEvent(new EventTaskCreated(jobId, task.TaskId, config, userInfo));
+
+        _logTracer.Info($"created task. job_id:{jobId} task_id:{task.TaskId} type:{task.Config.Task.Type}");
+        return OneFuzzResult<Task>.Ok(task);
     }
 
     private async Async.Task<Task> OnStart(Task task) {

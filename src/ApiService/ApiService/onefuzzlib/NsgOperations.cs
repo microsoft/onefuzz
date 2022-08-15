@@ -235,6 +235,7 @@ namespace Microsoft.OneFuzz.Service {
             }
 
             var priority = minPriority;
+            nsg.Data.SecurityRules.Clear();
             foreach (var src in allSources) {
                 // Will not exceed maxRuleCount or max NSG priority (4096)
                 // due to earlier check of `allSources.Count`

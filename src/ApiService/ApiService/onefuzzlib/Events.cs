@@ -69,7 +69,7 @@ namespace Microsoft.OneFuzz.Service {
 
     public class RemoveUserInfo : JsonConverter<UserInfo> {
         public override UserInfo? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-            throw new NotImplementedException();
+            throw new NotSupportedException("reading UserInfo is not supported");
         }
 
         public override void Write(Utf8JsonWriter writer, UserInfo value, JsonSerializerOptions options) {

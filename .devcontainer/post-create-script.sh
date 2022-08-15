@@ -18,7 +18,7 @@ sudo npm install -g azurite
 
 # Restore rust dependencies
 echo "Restoring rust dependencies"
-cargo install cargo-audit cargo-license # requirements if you want to run ci/agent.sh
+cargo install cargo-audit cargo-license@0.4.2 # requirements if you want to run ci/agent.sh
 cd /workspaces/onefuzz/src/agent
 cargo fetch
 

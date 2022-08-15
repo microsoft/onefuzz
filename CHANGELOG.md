@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.10.0
+
+### Added
+* Recommendation in `getting-started.md` that OneFuzz users include a `.onefuzz` file in their project root directory for security tool detection [#2236](https://github.com/microsoft/onefuzz/pull/2236)
+* Agent:  New `libfuzzer_dotnet_fuzz` task [#2221](https://github.com/microsoft/onefuzz/pull/2221)
+
+### Changed
+* CLI: Updated default Windows VM host image. [#2226](https://github.com/microsoft/onefuzz/pull/2226)
+* Agent: Modified LibFuzzer struct to own its environment and option data [#2219](https://github.com/microsoft/onefuzz/pull/2219)
+* Agent: Factor out generic LibFuzzer task [#2214](https://github.com/microsoft/onefuzz/pull/2214)
+* Service: Enable C# migrated `TimerRetention`, `TimerDaily`, and `containers` functions [#2228](https://github.com/microsoft/onefuzz/pull/2228), [#2220](https://github.com/microsoft/onefuzz/pull/2220), [#2197](https://github.com/microsoft/onefuzz/pull/2197)
+* Service: Finished migrating `TimerRepro` to C# [#2222](https://github.com/microsoft/onefuzz/pull/2222), [#2216](https://github.com/microsoft/onefuzz/pull/2216), [#2218](https://github.com/microsoft/onefuzz/pull/2218)
+* Service: Change instances of `NotImplementedException` to more accurately be `NotSupportedException` exceptions [#2234](https://github.com/microsoft/onefuzz/pull/2234)
+* Service: Migrated `Tasks`, `Notifications`, `add_node_ssh_key`,  and `Proxy` functions to C# [#2233](https://github.com/microsoft/onefuzz/pull/2233), [#2188](https://github.com/microsoft/onefuzz/pull/2188), [#2193](https://github.com/microsoft/onefuzz/pull/2193), [#2206](https://github.com/microsoft/onefuzz/pull/2206), [#2200](https://github.com/microsoft/onefuzz/pull/2200)
+
+### Fixed
+* Service: Update the autoscale settings to allow a VM scaleset to scale down to zero nodes and prevent new nodes from spinning up when in the `shutdown` state. [#2232](https://github.com/microsoft/onefuzz/pull/2232), [#2248](https://github.com/microsoft/onefuzz/pull/2248)
+* Service: Add a missing function call to properly queue webhook events in `WebhookOperations` [#2231](https://github.com/microsoft/onefuzz/pull/2231)
+* Service: Add a missing job state transition to the `Task` implementation. [#2202](https://github.com/microsoft/onefuzz/pull/2202)
+* Service: Fixed the return value in the C# implementation when associating a subnet with the NSG. [#2201](https://github.com/microsoft/onefuzz/pull/2201)
+* Service: Changed log level from `Error` to `Info` in `TimerProxy`. [#2185](https://github.com/microsoft/onefuzz/pull/2185)
+* Service: Fixed `TimerTasks` config bugs in the C# port. [#2196](https://github.com/microsoft/onefuzz/pull/2196)
+
 ## 5.9.0
 ### Added
 * Agent: Depend on SharpFuzz 2.0.0 package in the `LibFuzzerDotnetLoader` project. [#2149](https://github.com/microsoft/onefuzz/pull/2149)
