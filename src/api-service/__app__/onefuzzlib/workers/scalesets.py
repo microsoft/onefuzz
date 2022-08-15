@@ -938,6 +938,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             )
 
     def sync_auto_scale_settings(self) -> Optional[Error]:
+        from .pools import Pool
+
         logging.info(
             "Trying to sync auto scale settings for scaleset %s" % self.scaleset_id
         )
