@@ -1085,32 +1085,30 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
         scale_in_cooldown: int,
     ) -> "AutoScale":
 
-        capacity = get_vmss_size(scaleset_id)
-        if capacity is None:
-            capacity_failed = Error(
-                code=ErrorCode.UNABLE_TO_FIND,
-                errors=["Failed to get capacity for scaleset %s" % scaleset_id],
-            )
-            logging.error(capacity_failed)
-            return capacity_failed
+        # capacity = get_vmss_size(scaleset_id)
+        # if capacity is None:
+        #     capacity_failed = Error(
+        #         code=ErrorCode.UNABLE_TO_FIND,
+        #         errors=["Failed to get capacity for scaleset %s" % scaleset_id],
+        #     )
+        #     logging.error(capacity_failed)
+        #     return capacity_failed
 
-        entry = cls.get_settings_for_scaleset(scaleset_id)
-        auto_scale_config = AutoScale.get_settings_for_scaleset(self.scaleset_id)
-        if auto_scale_config is None:
-            auto_scale_profile = default_auto_scale_profile(pool_queue_uri, capacity)
+        # entry = cls.get_settings_for_scaleset(scaleset_id)
+        # auto_scale_config = AutoScale.get_settings_for_scaleset(self.scaleset_id)
+        # if auto_scale_config is None:
+        #     auto_scale_profile = default_auto_scale_profile(pool_queue_uri, capacity)
 
-        entry.scaleset_id = (scaleset_id,)
-        entry.min = (min,)
-        entry.max = (max,)
-        entry.default = (default,)
-        entry.scale_out_amount = (scale_out_amount,)
-        entry.scale_out_cooldown = (scale_out_cooldown,)
-        entry.scale_in_amount = (scale_in_amount,)
-        entry.scale_in_cooldown = (scale_in_cooldown,)
+        cls.scaleset_id = scaleset_id
+        cls.min = min
+        cls.max = max
+        cls.default = default
+        cls.scale_out_amount = scale_out_amount
+        cls.scale_out_cooldown = scale_out_cooldown
+        cls.scale_in_amount = scale_in_amount
+        cls.scale_in_cooldown = scale_in_cooldown
 
-        entry.save()
-
-        return entry
+        cls.save()
 
     @classmethod
     def delete(cls, scaleset_id: UUID):
