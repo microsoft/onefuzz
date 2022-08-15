@@ -295,6 +295,13 @@ public static class NodeStateHelper {
     private static readonly IReadOnlySet<NodeState> _canProcessNewWork =
         new HashSet<NodeState>(new[] { NodeState.Free });
 
+    private static readonly IReadOnlySet<NodeState> _busy =
+        new HashSet<NodeState>(new[] { NodeState.Busy });
+
+    public static IReadOnlySet<NodeState> BusyStates => _busy;
+
+    public static IReadOnlySet<NodeState> NeedsWorkStates => _needsWork;
+
     public static bool NeedsWork(this NodeState state) => _needsWork.Contains(state);
 
     ///If Node is in one of these states, ignore updates from the agent.

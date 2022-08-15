@@ -36,9 +36,9 @@ public class ShrinkQueue {
         return await _queueOps.QueueObject<ShrinkEntry>(QueueName, new ShrinkEntry(Guid.NewGuid()), StorageType.Config);
     }
 
-    public async Async.Task SetSize(int size) {
+    public async Async.Task SetSize(long size) {
         await Clear();
-        var i = 0;
+        var i = 0L;
 
         while (i < size) {
             var r = await AddEntry();

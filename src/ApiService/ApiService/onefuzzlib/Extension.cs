@@ -8,9 +8,9 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IExtensions {
-    public Async.Task<IList<VirtualMachineScaleSetExtensionData>> FuzzExtensions(Pool pool, Scaleset scaleset);
+    Async.Task<IList<VirtualMachineScaleSetExtensionData>> FuzzExtensions(Pool pool, Scaleset scaleset);
 
-    public Async.Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer);
+    Async.Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer);
 }
 
 public class Extensions : IExtensions {

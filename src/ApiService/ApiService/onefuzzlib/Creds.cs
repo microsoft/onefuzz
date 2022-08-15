@@ -34,6 +34,7 @@ public interface ICreds {
 
     public Async.Task<GenericResource> GetData(GenericResource resource);
     Async.Task<IReadOnlyList<string>> GetRegions();
+    public ResourceIdentifier GetScalesetIdentityResourcePath();
 }
 
 public sealed class Creds : ICreds, IDisposable {
@@ -109,7 +110,7 @@ public sealed class Creds : ICreds, IDisposable {
     public Async.Task<Guid> GetScalesetPrincipalId() {
         return _cache.GetOrCreateAsync(nameof(GetScalesetPrincipalId), async entry => {
             var path = GetScalesetIdentityResourcePath();
-            var uid = ArmClient.GetGenericResource(new ResourceIdentifier(path));
+            var uid = ArmClient.GetGenericResource(path);
 
             var resource = await uid.GetAsync();
             var principalId = resource.Value.Data.Properties.ToObjectFromJson<ScaleSetIdentity>().principalId;
@@ -117,11 +118,11 @@ public sealed class Creds : ICreds, IDisposable {
         });
     }
 
-    public string GetScalesetIdentityResourcePath() {
+    public ResourceIdentifier GetScalesetIdentityResourcePath() {
         var scalesetIdName = $"{GetInstanceName()}-scalesetid";
         var resourceGroupPath = $"/subscriptions/{GetSubscription()}/resourceGroups/{GetBaseResourceGroup()}/providers";
 
-        return $"{resourceGroupPath}/Microsoft.ManagedIdentity/userAssignedIdentities/{scalesetIdName}";
+        return new ResourceIdentifier($"{resourceGroupPath}/Microsoft.ManagedIdentity/userAssignedIdentities/{scalesetIdName}");
     }
 
 

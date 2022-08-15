@@ -3,6 +3,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 public interface IOnefuzzContext {
+
     IConfig Config { get; }
     IConfigOperations ConfigOperations { get; }
     IContainers Containers { get; }
@@ -39,6 +40,8 @@ public interface IOnefuzzContext {
     INsgOperations NsgOperations { get; }
     ISubnet Subnet { get; }
     IImageOperations ImageOperations { get; }
+
+    IAutoScaleOperations AutoScaleOperations { get; }
 }
 
 public class OnefuzzContext : IOnefuzzContext {
@@ -47,6 +50,7 @@ public class OnefuzzContext : IOnefuzzContext {
         _serviceProvider = serviceProvider;
     }
 
+    public IAutoScaleOperations AutoScaleOperations => _serviceProvider.GetRequiredService<IAutoScaleOperations>();
     public INodeOperations NodeOperations => _serviceProvider.GetRequiredService<INodeOperations>();
     public IEvents Events => _serviceProvider.GetRequiredService<IEvents>();
     public IWebhookOperations WebhookOperations => _serviceProvider.GetRequiredService<IWebhookOperations>();

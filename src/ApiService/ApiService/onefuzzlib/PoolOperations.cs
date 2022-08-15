@@ -4,16 +4,18 @@ using Azure.Data.Tables;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IPoolOperations : IOrm<Pool> {
-    public Async.Task<OneFuzzResult<Pool>> GetByName(PoolName poolName);
-    public Async.Task<OneFuzzResult<Pool>> GetById(Guid poolId);
+public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {
+    Async.Task<OneFuzzResult<Pool>> GetByName(PoolName poolName);
+    Async.Task<OneFuzzResult<Pool>> GetById(Guid poolId);
     Task<bool> ScheduleWorkset(Pool pool, WorkSet workSet);
     IAsyncEnumerable<Pool> GetByClientId(Guid clientId);
     string GetPoolQueue(Guid poolId);
-    public Async.Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name);
-    public Async.Task<List<WorkSetSummary>> GetWorkQueue(Guid poolId, PoolState state);
+    Async.Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name);
+    Async.Task<List<WorkSetSummary>> GetWorkQueue(Guid poolId, PoolState state);
     IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> states);
     Async.Task<Pool> SetShutdown(Pool pool, bool Now);
+
+    Async.Task<Pool> Init(Pool pool);
 }
 
 public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoolOperations {
@@ -70,7 +72,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
     public async Async.Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name)
         => await _context.ScalesetOperations.SearchByPool(name)
-            .Select(x => new ScalesetSummary(ScalesetId: x.ScalesetId, State: x.State))
+            .Select(x => new ScalesetSummary(ScalesetId: x!.ScalesetId, State: x.State))
             .ToListAsync();
 
     public async Async.Task<List<WorkSetSummary>> GetWorkQueue(Guid poolId, PoolState state) {
@@ -123,6 +125,81 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         pool = pool with { State = state };
         await Update(pool);
+        return pool;
+    }
+
+    public async Async.Task<Pool> Init(Pool pool) {
+        await _context.Queue.CreateQueue(GetPoolQueue(pool.PoolId), StorageType.Corpus);
+        var shrinkQueue = new ShrinkQueue(pool.PoolId, _context.Queue, _logTracer);
+        await shrinkQueue.Create();
+        await SetState(pool, PoolState.Running);
+        return pool;
+    }
+
+    public async Async.Task<Pool> Shutdown(Pool pool) {
+        var scalesets = _context.ScalesetOperations.SearchByPool(pool.Name);
+        var nodes = _context.NodeOperations.SearchByPoolName(pool.Name);
+
+        if (scalesets is null && nodes is null) {
+            _logTracer.Info($"pool stopped, deleting {pool.Name}");
+            await Delete(pool);
+            return pool;
+        }
+
+        if (scalesets is not null) {
+            await foreach (var scaleset in scalesets) {
+                if (scaleset is not null) {
+                    await _context.ScalesetOperations.SetShutdown(scaleset, now: true);
+                }
+            }
+        }
+
+        if (nodes is not null) {
+            await foreach (var node in nodes) {
+                await _context.NodeOperations.SetShutdown(node);
+            }
+        }
+
+        //TODO: why do we save pool here ? there are no changes to pool record...
+        //if it was changed by the caller - caller should perform save operation
+        var r = await Update(pool);
+        if (!r.IsOk) {
+            _logTracer.Error($"Failed to update pool record. pool name: {pool.Name}, pool id: {pool.PoolId}");
+        }
+        return pool;
+    }
+
+    public async Async.Task<Pool> Halt(Pool pool) {
+        //halt the pool immediately
+        var scalesets = _context.ScalesetOperations.SearchByPool(pool.Name);
+        var nodes = _context.NodeOperations.SearchByPoolName(pool.Name);
+
+        if (scalesets is null && nodes is null) {
+            var poolQueue = GetPoolQueue(pool.PoolId);
+            await _context.Queue.DeleteQueue(poolQueue, StorageType.Corpus);
+            var shrinkQueue = new ShrinkQueue(pool.PoolId, _context.Queue, _logTracer);
+            await shrinkQueue.Delete();
+            _logTracer.Info($"pool stopped, deleting: {pool.Name}");
+            var r = await Delete(pool);
+            if (!r.IsOk) {
+                _logTracer.Error($"Failed to delete pool: {pool.Name} due to {r.ErrorV}");
+            }
+        }
+
+        if (scalesets is not null) {
+            await foreach (var scaleset in scalesets) {
+                if (scaleset is not null) {
+                    await _context.ScalesetOperations.SetState(scaleset, ScalesetState.Halt);
+                }
+            }
+        }
+
+        if (nodes is not null) {
+            await foreach (var node in nodes) {
+                await _context.NodeOperations.SetHalt(node);
+            }
+        }
+
         return pool;
     }
 }

@@ -44,7 +44,7 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
         var privateIp = await _context.IpOperations.GetScalesetInstanceIp(scalesetId, machineId);
 
         if (privateIp == null) {
-            return OneFuzzResult<ProxyForward>.Error(ErrorCode.UNABLE_TO_PORT_FORWARD, new[] { "no private ip for node" });
+            return OneFuzzResult<ProxyForward>.Error(ErrorCode.UNABLE_TO_PORT_FORWARD, "no private ip for node");
         }
 
         var entries =
@@ -84,7 +84,7 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
             return OneFuzzResult.Ok(entry);
         }
 
-        return OneFuzzResult<ProxyForward>.Error(ErrorCode.UNABLE_TO_PORT_FORWARD, new[] { "all forward ports used" });
+        return OneFuzzResult<ProxyForward>.Error(ErrorCode.UNABLE_TO_PORT_FORWARD, "all forward ports used");
 
     }
 

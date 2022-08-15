@@ -183,7 +183,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             }
             os = pool.OkV.Os;
         } else {
-            return OneFuzzResult<Task>.Error(new Error(ErrorCode.INVALID_CONFIGURATION, new[] { "task must have vm or pool" }));
+            return OneFuzzResult<Task>.Error(ErrorCode.INVALID_CONFIGURATION, "task must have vm or pool");
         }
 
         var task = new Task(jobId, Guid.NewGuid(), TaskState.Init, os, config, UserInfo: userInfo);

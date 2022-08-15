@@ -372,6 +372,18 @@ public record InstanceConfig
     }
 }
 
+public record AutoScale(
+    [PartitionKey, RowKey] Guid ScalesetId,
+    long Min,
+    long Max,
+    long Default,
+    int ScaleOutAmount,
+    int ScaleOutCoolDown,
+    int ScaleInAmount,
+    int ScaleInCoolDown
+    ) : EntityBase();
+
+
 
 public record ScalesetNodeState(
     Guid MachineId,

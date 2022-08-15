@@ -66,4 +66,8 @@ class TestCreds : ICreds {
     public Task<GenericResource> GetData(GenericResource resource) {
         throw new NotImplementedException();
     }
+
+    public ResourceIdentifier GetScalesetIdentityResourcePath() {
+        throw new NotImplementedException();
+    }
 }
