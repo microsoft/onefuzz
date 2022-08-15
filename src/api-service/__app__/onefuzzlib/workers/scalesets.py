@@ -988,7 +988,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         logging.info("Updating auto scale entry: %s" % self.scaleset_id)
         AutoScale.update(
-            pool_queue_uri,
             self.scaleset_id,
             min=minimum,
             max=maximum,
@@ -1074,7 +1073,6 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
     def update(
         self,
         *,
-        pool_queue_uri: str,
         scaleset_id: UUID,
         min: int,
         max: int,
