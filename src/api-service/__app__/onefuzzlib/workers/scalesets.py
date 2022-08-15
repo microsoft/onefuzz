@@ -35,9 +35,10 @@ from ..azure.auto_scale import (
     add_auto_scale_to_vmss,
     create_auto_scale_profile,
     default_auto_scale_profile,
+    get_auto_scale_profile,
     get_auto_scale_settings,
     shutdown_scaleset_rule,
-    get_auto_scale_profile,
+    update_auto_scale,
 )
 from ..azure.image import get_os
 from ..azure.network import Network

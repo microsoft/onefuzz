@@ -229,6 +229,7 @@ def create_auto_scale_profile(
         ],
     )
 
+
 def get_auto_scale_profile(scaleset_id: UUID) -> AutoscaleProfile:
     logging.info("Getting scaleset %s for existing auto scale resources" % scaleset_id)
     client = get_monitor_client()
@@ -251,6 +252,7 @@ def get_auto_scale_profile(scaleset_id: UUID) -> AutoscaleProfile:
         )
 
     return auto_scale_resource.AutoscaleProfile
+
 
 def default_auto_scale_profile(queue_uri: str, scaleset_size: int) -> AutoscaleProfile:
     return create_auto_scale_profile(
