@@ -175,7 +175,7 @@ public class Scheduler : IScheduler {
             reboot,
             setupContainer.Name,
             setupScript,
-            pool);
+            pool with {ETag = null});
 
 
 
