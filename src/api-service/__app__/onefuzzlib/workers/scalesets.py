@@ -969,10 +969,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             scale_action = rule.scale_action
             if scale_action.direction == "Increase":
                 scale_out_amount = scale_action.value
-                scale_out_cooldown = scale_action.cooldown
+                scale_out_cooldown = int(scale_action.cooldown * 60)
             elif scale_action.direction == "Decrease":
                 scale_in_amount = scale_action.value
-                scale_in_cooldown = scale_action.cooldown
+                scale_in_cooldown = int(scale_action.cooldown * 60)
             else:
                 pass
 
