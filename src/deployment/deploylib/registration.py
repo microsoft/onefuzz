@@ -367,10 +367,10 @@ def add_application_password_impl(
     password_request = {
         "passwordCredential": {
             "displayName": "%s" % password_name,
-            "startDateTime": "%s" % datetime.now(TZ_UTC).strftime("%Y-%m-%dT%H:%M.%fZ"),
+            "startDateTime": "%s" % datetime.now(TZ_UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "endDateTime": "%s"
             % (datetime.now(TZ_UTC) + timedelta(days=365)).strftime(
-                "%Y-%m-%dT%H:%M.%fZ"
+                "%Y-%m-%dT%H:%M:%SZ"
             ),
         }
     }
