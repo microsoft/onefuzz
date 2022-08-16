@@ -227,6 +227,18 @@
           "Microsoft.Azure.Functions.Worker.Sdk.Analyzers": "1.1.0"
         }
       },
+      "Microsoft.Azure.Management.Monitor": {
+        "type": "Direct",
+        "requested": "[0.28.0-preview, )",
+        "resolved": "0.28.0-preview",
+        "contentHash": "XgWDDtop/1/uvO76GJ5vyjwvhkvnsLPgouqf7i9EU2QavWP8AL+Vu/aEL2wgPkGml6an+JSrrCKtI8eFjPCyGA==",
+        "dependencies": {
+          "Microsoft.Rest.ClientRuntime": "[2.3.20, 3.0.0)",
+          "Microsoft.Rest.ClientRuntime.Azure": "[3.3.19, 4.0.0)",
+          "Newtonsoft.Json": "10.0.3",
+          "System.Net.Http": "4.3.0"
+        }
+      },
       "Microsoft.Azure.Management.OperationalInsights": {
         "type": "Direct",
         "requested": "[0.24.0-preview, )",

@@ -30,6 +30,7 @@ public sealed class TestContext : IOnefuzzContext {
         ScalesetOperations = new ScalesetOperations(logTracer, this);
 
         UserCredentials = new UserCredentials(logTracer, ConfigOperations);
+
     }
 
     public TestEvents Events { get; set; } = new();
@@ -111,4 +112,6 @@ public sealed class TestContext : IOnefuzzContext {
     public ISubnet Subnet => throw new NotImplementedException();
 
     public IImageOperations ImageOperations => throw new NotImplementedException();
+
+    public IAutoScaleOperations AutoScaleOperations => throw new NotImplementedException();
 }

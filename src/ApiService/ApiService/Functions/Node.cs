@@ -55,7 +55,7 @@ public class Node {
         var nodes = await _context.NodeOperations.SearchStates(
             states: search.State,
             poolName: search.PoolName,
-            scaleSetId: search.ScalesetId).ToListAsync();
+            scalesetId: search.ScalesetId).ToListAsync();
 
         return await RequestHandling.Ok(req, nodes.Select(NodeToNodeSearchResult));
     }

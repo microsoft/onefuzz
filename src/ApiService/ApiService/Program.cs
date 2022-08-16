@@ -63,6 +63,7 @@ public class Program {
                         Guid.Empty,
                         severityLevel: cfg.LogSeverityLevel);
             })
+            .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
             .AddScoped<INodeOperations, NodeOperations>()
             .AddScoped<IEvents, Events>()
             .AddScoped<IWebhookOperations, WebhookOperations>()

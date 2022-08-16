@@ -42,7 +42,6 @@ namespace Microsoft.OneFuzz.Service {
             Publisher.EnsureNotNull("Publisher required for VirtualMachineScaleSetExtension");
             TypeHandlerVersion.EnsureNotNull("TypeHandlerVersion required for VirtualMachineScaleSetExtension");
             AutoUpgradeMinorVersion.EnsureNotNull("AutoUpgradeMinorVersion required for VirtualMachineScaleSetExtension");
-            Settings.EnsureNotNull("Settings required for VirtualMachineScaleSetExtension");
             return new VirtualMachineScaleSetExtensionData() {
                 Name = Name,
                 TypePropertiesType = TypePropertiesType,
