@@ -1,4 +1,4 @@
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 

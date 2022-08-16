@@ -1,12 +1,12 @@
+﻿using System.Net;
 using Azure;
 using Azure.Core;
-using System.Net;
+using Azure.Data.Tables;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
 using Azure.ResourceManager.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Rest.Azure;
-using Azure.Data.Tables;
 
 namespace Microsoft.OneFuzz.Service;
 
