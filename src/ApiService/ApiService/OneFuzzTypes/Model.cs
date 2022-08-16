@@ -378,11 +378,10 @@ public record AutoScale(
     long Max,
     long Default,
     long ScaleOutAmount,
-    long ScaleOutCoolDown,
+    long ScaleOutCooldown,
     long ScaleInAmount,
-    long ScaleInCoolDown
-    ) : EntityBase();
-
+    long ScaleInCooldown
+) : EntityBase;
 
 public record ScalesetNodeState(
     Guid MachineId,
@@ -408,17 +407,6 @@ public record Scaleset(
     Guid? ClientObjectId = null
 // 'Nodes' removed when porting from Python: only used in search response
 ) : StatefulEntityBase<ScalesetState>(State);
-
-public record AutoScale(
-    [PartitionKey] Guid ScalesetId,
-    long Min,
-    long Max,
-    long Default,
-    long ScaleOutAmount,
-    long ScaleOutCooldown,
-    long ScaleInAmount,
-    long ScaleInCooldown
-) : EntityBase;
 
 [JsonConverter(typeof(ContainerConverter))]
 public record Container(string ContainerName) {

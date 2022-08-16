@@ -220,15 +220,7 @@ public class Scaleset {
         }
 
         if (request.OkV.Size is long size) {
-            var resizedScaleset = await _context.ScalesetOperations.SetSize(scaleset, size);
-            if (resizedScaleset.IsOk) {
-                scaleset = resizedScaleset.OkV;
-            } else {
-                return await _context.RequestHandling.NotOk(
-                    req,
-                    resizedScaleset.ErrorV,
-                    "ScalesetUpdate");
-            }
+            scaleset = await _context.ScalesetOperations.SetSize(scaleset, size);
         }
 
         scaleset = scaleset with { Auth = null };
