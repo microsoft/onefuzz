@@ -187,7 +187,7 @@ public class EntityConverter {
             if (prop.kind == EntityPropertyKind.PartitionKey || prop.kind == EntityPropertyKind.RowKey) {
                 return (prop.columnName, value?.ToString());
             }
-            if (prop.type == typeof(Guid) || prop.type == typeof(Guid?)) {
+            if (prop.type == typeof(Guid) || prop.type == typeof(Guid?) || prop.type == typeof(Uri)) {
                 return (prop.columnName, value?.ToString());
             }
             if (prop.type == typeof(bool)

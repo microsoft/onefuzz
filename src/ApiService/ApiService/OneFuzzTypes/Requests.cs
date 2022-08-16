@@ -189,3 +189,25 @@ public record PoolCreate(
     bool Managed,
     Guid? ClientId = null
 );
+
+public record WebhookCreate(
+    string Name,
+    Uri Url,
+    List<EventType> EventTypes,
+    string? SecretToken,
+    WebhookMessageFormat? MessageFormat
+);
+
+
+public record WebhookSearch(Guid? WebhookId);
+
+public record WebhookGet(Guid WebhookId);
+
+public record WebhookUpdate(
+    Guid WebhookId,
+    string? Name,
+    Uri? Url,
+    List<EventType>? EventTypes,
+    string? SecretToken,
+    WebhookMessageFormat? MessageFormat
+);
