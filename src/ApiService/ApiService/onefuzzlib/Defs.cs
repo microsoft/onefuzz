@@ -39,8 +39,131 @@ public static class Defs {
                 )},
             MonitorQueue: ContainerType.ReadonlyInputs)
     },
+    {
+        TaskType.DotnetCoverage, new TaskDefinition(
+            Features: new[] {
+                TaskFeature.TargetExe,
+                TaskFeature.TargetEnv,
+                TaskFeature.TargetOptions,
+                TaskFeature.TargetTimeout,
+                TaskFeature.CoverageFilter,
+                TaskFeature.TargetMustUseInput,
+            },
+            Vm: new VmDefinition(Compare: Compare.Equal, Value:1),
+            Containers: new [] {
+                new ContainerDefinition(
+                    Type:ContainerType.Setup,
+                    Compare: Compare.Equal,
+                    Value:1,
+                    Permissions: ContainerPermission.Read | ContainerPermission.List
+                ),
+                new ContainerDefinition(
+                    Type:ContainerType.ReadonlyInputs,
+                    Compare: Compare.AtLeast,
+                    Value:1,
+                    Permissions: ContainerPermission.Read | ContainerPermission.List
+                ),
+                new ContainerDefinition(
+                    Type:ContainerType.Coverage,
+                    Compare: Compare.Equal,
+                    Value:1,
+                    Permissions:
+                        ContainerPermission.List |
+                        ContainerPermission.Read |
+                        ContainerPermission.Write
 
-
+                )},
+            MonitorQueue: ContainerType.ReadonlyInputs)
+    },
+    {
+        TaskType.DotnetCrashReport, new TaskDefinition(
+            Features: new[] {
+               TaskFeature.TargetExe,
+               TaskFeature.TargetEnv,
+               TaskFeature.TargetOptions,
+               TaskFeature.TargetTimeout,
+               TaskFeature.CheckRetryCount,
+               TaskFeature.CheckFuzzerHelp,
+               TaskFeature.MinimizedStackDepth,
+            },
+            Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
+            Containers: new[] {
+               new ContainerDefinition(
+                   Type:ContainerType.Setup,
+                   Compare: Compare.Equal,
+                   Value:1,
+                   Permissions: ContainerPermission.Read | ContainerPermission.List
+               ),
+               new ContainerDefinition(
+                   Type:ContainerType.Crashes,
+                   Compare: Compare.Equal,
+                   Value:1,
+                   Permissions: ContainerPermission.Read | ContainerPermission.List
+               ),
+               new ContainerDefinition(
+                   Type:ContainerType.Reports,
+                   Compare: Compare.AtMost,
+                   Value:1,
+                   Permissions: ContainerPermission.Write
+                ),
+               new ContainerDefinition(
+                   Type: ContainerType.UniqueReports,
+                   Compare: Compare.AtMost,
+                   Value: 1,
+                   Permissions: ContainerPermission.Write
+               ),
+               new ContainerDefinition(
+                   Type: ContainerType.NoRepro,
+                   Compare: Compare.AtMost,
+                   Value: 1,
+                   Permissions: ContainerPermission.Write
+               ),
+           },
+           MonitorQueue: ContainerType.Crashes
+    )
+    },
+    {
+        TaskType.LibfuzzerDotnetFuzz, new TaskDefinition(
+            Features: new[] {
+               TaskFeature.TargetExe,
+               TaskFeature.TargetEnv,
+               TaskFeature.TargetOptions,
+               TaskFeature.TargetWorkers,
+               TaskFeature.EnsembleSyncDelay,
+               TaskFeature.CheckFuzzerHelp,
+               TaskFeature.ExpectCrashOnFailure,
+               TaskFeature.TargetAssembly,
+               TaskFeature.TargetClass,
+               TaskFeature.TargetMethod,
+            },
+            Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
+            Containers: new[] {
+               new ContainerDefinition(
+                   Type:ContainerType.Setup,
+                   Compare: Compare.Equal,
+                   Value:1,
+                   Permissions: ContainerPermission.Read | ContainerPermission.List
+               ),
+               new ContainerDefinition(
+                   Type:ContainerType.Crashes,
+                   Compare: Compare.Equal,
+                   Value:1,
+                   Permissions: ContainerPermission.Write
+                ),
+               new ContainerDefinition(
+                   Type: ContainerType.Inputs,
+                   Compare: Compare.Equal,
+                   Value: 1,
+                   Permissions: ContainerPermission.Write | ContainerPermission.Read | ContainerPermission.List
+               ),
+               new ContainerDefinition(
+                   Type: ContainerType.ReadonlyInputs,
+                   Compare: Compare.AtLeast,
+                   Value: 0,
+                   Permissions: ContainerPermission.Read | ContainerPermission.List
+               ),
+           }
+    )},
     { TaskType.GenericAnalysis ,
         new TaskDefinition(
             Features: new[] {

@@ -61,6 +61,9 @@ public enum TaskState {
 
 public enum TaskType {
     Coverage,
+    DotnetCoverage,
+    DotnetCrashReport,
+    LibfuzzerDotnetFuzz,
     LibfuzzerFuzz,
     LibfuzzerCoverage,
     LibfuzzerCrashReport,
@@ -72,7 +75,6 @@ public enum TaskType {
     GenericGenerator,
     GenericCrashReport,
     GenericRegression,
-    DotnetCoverage,
 }
 
 public enum Os {
@@ -269,7 +271,10 @@ public enum TaskFeature {
     ReportList,
     MinimizedStackDepth,
     CoverageFilter,
-    TargetMustUseInput
+    TargetMustUseInput,
+    TargetAssembly,
+    TargetClass,
+    TargetMethod,
 }
 
 
