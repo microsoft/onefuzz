@@ -218,15 +218,15 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         List<string> queryParts = new();
 
         if (poolId is not null) {
-            queryParts.Add(TableClient.CreateQueryFilter($"(pool_id eq {poolId})"));
+            queryParts.Add($"(pool_id eq '{poolId}')");
         }
 
         if (poolName is not null) {
-            queryParts.Add(TableClient.CreateQueryFilter($"(pool_name eq {poolName})"));
+            queryParts.Add($"(pool_name eq '{poolName}')");
         }
 
         if (scalesetId is not null) {
-            queryParts.Add(TableClient.CreateQueryFilter($"(scaleset_id eq {scalesetId})"));
+            queryParts.Add($"(scaleset_id eq '{scalesetId}')");
         }
 
         if (states is not null) {
@@ -293,7 +293,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         //if we're going to reimage, make sure the node doesn't pick up new work too.
         await SendStopIfFree(updatedNode);
 
-        var r = await Update(updatedNode);
+        var r = await Replace(updatedNode);
         if (!r.IsOk) {
             _logTracer.WithHttpStatus(r.ErrorV).Error("Failed to save Node record");
         }
@@ -302,8 +302,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     public IAsyncEnumerable<Node> GetDeadNodes(Guid scaleSetId, TimeSpan expirationPeriod) {
         var minDate = DateTimeOffset.UtcNow - expirationPeriod;
 
-        var filter = TableClient.CreateQueryFilter($"heartbeat lt datetime{minDate.ToString("o")} or Timestamp lt datetime {minDate.ToString("o")}");
-        var query = Query.And(filter, TableClient.CreateQueryFilter($"scaleset_id eq {scaleSetId}"));
+        var filter = $"heartbeat lt datetime'{minDate.ToString("o")}' or Timestamp lt datetime'{minDate.ToString("o")}'";
+        var query = Query.And(filter, $"scaleset_id eq '{scaleSetId}'");
         return QueryAsync(query);
     }
 
@@ -360,7 +360,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         //don't give out more work to the node, but let it finish existing work
         _logTracer.Info($"setting delete_requested: {node.MachineId}");
         node = node with { DeleteRequested = true };
-        var r = await Update(node);
+        var r = await Replace(node);
         if (!r.IsOk) {
             _logTracer.Error($"failed to update node with delete requested. machine id: {node.MachineId}, pool name: {node.PoolName}, pool id: {node.PoolId}, scaleset id: {node.ScalesetId}");
         }
@@ -377,7 +377,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public async Async.Task SendMessage(Node node, NodeCommand message) {
-        var r = await _context.NodeMessageOperations.Update(new NodeMessage(node.MachineId, message));
+        var r = await _context.NodeMessageOperations.Replace(new NodeMessage(node.MachineId, message));
         if (!r.IsOk) {
             _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace NodeMessge record for machine_id: {node.MachineId}");
         }
@@ -430,7 +430,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             ));
         }
 
-        var r = await Update(newNode);
+        var r = await Replace(newNode);
         if (!r.IsOk) {
             _logTracer.Error($"Failed to update node for machine: {newNode.MachineId} to state {state} due to {r.ErrorV}");
         }
@@ -448,15 +448,15 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         List<string> queryParts = new();
 
         if (poolId is not null) {
-            queryParts.Add(TableClient.CreateQueryFilter($"(pool_id eq {poolId})"));
+            queryParts.Add($"(pool_id eq '{poolId}')");
         }
 
         if (poolName is not null) {
-            queryParts.Add(TableClient.CreateQueryFilter($"(PartitionKey eq {poolName})"));
+            queryParts.Add($"(PartitionKey eq '{poolName}')");
         }
 
         if (scaleSetId is not null) {
-            queryParts.Add(TableClient.CreateQueryFilter($"(scaleset_id eq {scaleSetId})"));
+            queryParts.Add($"(scaleset_id eq '{scaleSetId}')");
         }
 
         if (states is not null) {
