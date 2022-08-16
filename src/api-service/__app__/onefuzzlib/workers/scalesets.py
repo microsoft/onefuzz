@@ -808,11 +808,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     % self.scaleset_id
                 )
                 return None
-            if len(autoscale_entry) != 1:
-                logging.info(
-                    "Found more than one autoscaling setting for scaleset %s"
-                    % self.scaleset_id
-                )
             autoscale_entry.delete()
         else:
             self.save()
@@ -1137,6 +1132,10 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
                 "Could not find any auto scale settings for scaleset %s" % scaleset_id
             )
             return None
+        if len(autoscale) != 1:
+            logging.info(
+                "Found more than one autoscaling setting for scaleset %s" % scaleset_id
+            )
 
         return autoscale[0]
 
