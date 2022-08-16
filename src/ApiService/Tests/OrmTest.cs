@@ -54,7 +54,7 @@ namespace Tests {
 
         [Fact]
         public void TestBothDirections() {
-            var uriString = "https://localhost:9090";
+            var uriString = new Uri("https://localhost:9090");
             var converter = new EntityConverter();
             var entity1 = new Entity1(
                             Guid.NewGuid(),
@@ -71,7 +71,7 @@ namespace Tests {
                                 TheEnumValue = TestEnumValue.Two
                             },
                             null,
-                            new Uri(uriString),
+                            uriString,
                             null
                             );
 
@@ -104,7 +104,7 @@ namespace Tests {
 
         [Fact]
         public void TestConvertToTableEntity() {
-            var uriString = "https://localhost:9090";
+            var uriString = new Uri("https://localhost:9090");
             var converter = new EntityConverter();
             var entity1 = new Entity1(
                             Guid.NewGuid(),
@@ -121,7 +121,7 @@ namespace Tests {
                                 TheEnumValue = TestEnumValue.One
                             },
                             null,
-                            new Uri(uriString),
+                            uriString,
                             null
                             );
             var tableEntity = converter.ToTableEntity(entity1);
@@ -136,7 +136,7 @@ namespace Tests {
             Assert.Equal("flag_one,flag_two", tableEntity.GetString("the_flag"));
             Assert.Equal("renamed", tableEntity.GetString("a__special__name"));
 
-            Assert.Equal(uriString, tableEntity.GetString("test_uri"));
+            Assert.Equal(uriString, new Uri(tableEntity.GetString("test_uri")));
 
 
             var json = JsonNode.Parse(tableEntity.GetString("the_object"))?.AsObject() ?? throw new InvalidOperationException("Could not parse objec");
