@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
+using Azure.Data.Tables;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
@@ -241,7 +242,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         //# azure table query always return false when the column does not exist
         //# We write the query this way to allow us to get the nodes where the
         //# version is not defined as well as the nodes with a mismatched version
-        var versionQuery = $"not (version eq '{oneFuzzVersion}')";
+        var versionQuery = TableClient.CreateQueryFilter($"not (version eq {oneFuzzVersion})");
         queryParts.Add(versionQuery);
         return Query.And(queryParts);
     }
@@ -258,7 +259,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         if (numResults is null) {
             return QueryAsync(query);
         } else {
-            return QueryAsync(query).TakeWhile((_, i) => i < numResults);
+            return QueryAsync(query).Take(numResults.Value!);
         }
     }
 
@@ -357,7 +358,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
     public async Async.Task SetShutdown(Node node) {
         //don't give out more work to the node, but let it finish existing work
-        _logTracer.Info($"setting delte_requested: {node.MachineId}");
+        _logTracer.Info($"setting delete_requested: {node.MachineId}");
         node = node with { DeleteRequested = true };
         var r = await Replace(node);
         if (!r.IsOk) {
@@ -429,7 +430,10 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             ));
         }
 
-        await Replace(newNode);
+        var r = await Replace(newNode);
+        if (!r.IsOk) {
+            _logTracer.Error($"Failed to update node for machine: {newNode.MachineId} to state {state} due to {r.ErrorV}");
+        }
     }
 
     public static string SearchStatesQuery(
@@ -468,7 +472,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         //# azure table query always return false when the column does not exist
         //# We write the query this way to allow us to get the nodes where the
         //# version is not defined as well as the nodes with a mismatched version
-        var versionQuery = $"not (version eq '{oneFuzzVersion}')";
+        var versionQuery = TableClient.CreateQueryFilter($"not (version eq {oneFuzzVersion})");
         queryParts.Add(versionQuery);
 
         return Query.And(queryParts);
@@ -492,7 +496,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public IAsyncEnumerable<Node> SearchByPoolName(PoolName poolName) {
-        return QueryAsync($"(pool_name eq '{poolName}')");
+        return QueryAsync(TableClient.CreateQueryFilter($"(pool_name eq {poolName})"));
     }
 
 

@@ -7,7 +7,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IScalesetOperations : IStatefulOrm<Scaleset, ScalesetState> {
     IAsyncEnumerable<Scaleset> Search();
 
-    IAsyncEnumerable<Scaleset?> SearchByPool(PoolName poolName);
+    IAsyncEnumerable<Scaleset> SearchByPool(PoolName poolName);
 
     Async.Task UpdateConfigs(Scaleset scaleSet);
 
