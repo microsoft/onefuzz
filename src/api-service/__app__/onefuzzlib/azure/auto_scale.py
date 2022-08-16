@@ -244,7 +244,14 @@ def get_auto_scale_profile(scaleset_id: UUID) -> AutoscaleProfile:
         for auto_scale in auto_scale_collections:
             if str(auto_scale.target_resource_uri).endswith(str(scaleset_id)):
                 auto_scale_resource = auto_scale
-                return auto_scale_resource.AutoscaleProfile
+                auto_scale_profiles = auto_scale_resource.profiles
+                if len(auto_scale_profiles) != 1:
+                    logging.info(
+                        "Found more than one autoscaling profile for scaleset %s"
+                        % scaleset_id
+                    )
+                return auto_scale_profiles[0]
+
     except (ResourceNotFoundError, CloudError):
         return Error(
             code=ErrorCode.INVALID_CONFIGURATION,
