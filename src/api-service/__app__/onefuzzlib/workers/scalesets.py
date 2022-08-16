@@ -808,6 +808,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     % self.scaleset_id
                 )
                 return None
+            logging.info("Deleting autoscale entry for scaleset %s" % self.scaleset_id)
             autoscale_entry.delete()
         else:
             self.save()
@@ -1120,9 +1121,6 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
 
     def delete(self) -> None:
         super().delete()
-        # send_event(
-        # EventScalesetDeleted(scaleset_id=self.scaleset_id, pool_name=self.pool_name)
-        # )
 
     @classmethod
     def get_settings_for_scaleset(cls, scaleset_id: UUID) -> Union["AutoScale", None]:
