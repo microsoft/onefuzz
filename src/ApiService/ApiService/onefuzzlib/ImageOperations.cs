@@ -4,8 +4,23 @@ using Azure.ResourceManager.Compute;
 
 namespace Microsoft.OneFuzz.Service;
 
+public record ImageInfo(string Publisher, string Offer, string Sku, string Version);
+
 public interface IImageOperations {
     public Async.Task<OneFuzzResult<Os>> GetOs(string region, string image);
+
+    public static ImageInfo GetImageInfo(string image) {
+        var imageParts = image.Split(":");
+        // The python code would throw if more than 4 parts are found in the split
+        System.Diagnostics.Trace.Assert(imageParts.Length == 4, $"Expected 4 ':' separated parts in {image}");
+
+        var publisher = imageParts[0];
+        var offer = imageParts[1];
+        var sku = imageParts[2];
+        var version = imageParts[3];
+
+        return new ImageInfo(Publisher: publisher, Offer: offer, Sku: sku, Version: version);
+    }
 }
 
 public class ImageOperations : IImageOperations {
@@ -16,6 +31,7 @@ public class ImageOperations : IImageOperations {
         _logTracer = logTracer;
         _context = context;
     }
+
     public async Task<OneFuzzResult<Os>> GetOs(string region, string image) {
         string? name = null;
         try {
@@ -63,33 +79,28 @@ public class ImageOperations : IImageOperations {
                 }
             }
         } catch (FormatException) {
-            var imageParts = image.Split(":");
-
-            // The python code would throw if more than 4 parts are found in the split
-            System.Diagnostics.Trace.Assert(imageParts.Length == 4, $"Expected 4 ':' separated parts in {image}");
-
-            var publisher = imageParts[0];
-            var offer = imageParts[1];
-            var sku = imageParts[2];
-            var version = imageParts[3];
-
+            var imageInfo = IImageOperations.GetImageInfo(image);
             try {
                 var subscription = await _context.Creds.ArmClient.GetDefaultSubscriptionAsync();
-                if (string.Equals(version, "latest", StringComparison.Ordinal)) {
-                    version = (await subscription.GetVirtualMachineImagesAsync(
-                        region,
-                        publisher,
-                        offer,
-                        sku,
-                        top: 1
-                    ).FirstAsync()).Name;
+                string version;
+                if (string.Equals(imageInfo.Version, "latest", StringComparison.Ordinal)) {
+                    version =
+                        (await subscription.GetVirtualMachineImagesAsync(
+                            region,
+                            imageInfo.Publisher,
+                            imageInfo.Offer,
+                            imageInfo.Sku,
+                            top: 1
+                        ).FirstAsync()).Name;
+                } else {
+                    version = imageInfo.Version;
                 }
 
                 name = (await subscription.GetVirtualMachineImageAsync(
                     region,
-                    publisher,
-                    offer,
-                    sku
+                    imageInfo.Publisher,
+                    imageInfo.Offer,
+                    imageInfo.Sku
                     , version
                 )).Value.OSDiskImageOperatingSystem.ToString().ToLower();
             } catch (RequestFailedException ex) {

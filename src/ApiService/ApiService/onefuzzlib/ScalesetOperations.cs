@@ -1,17 +1,27 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
+using Azure.ResourceManager.Compute;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IScalesetOperations : IOrm<Scaleset> {
+public interface IScalesetOperations : IStatefulOrm<Scaleset, ScalesetState> {
     IAsyncEnumerable<Scaleset> Search();
 
-    public IAsyncEnumerable<Scaleset> SearchByPool(PoolName poolName);
+    IAsyncEnumerable<Scaleset> SearchByPool(PoolName poolName);
 
-    public Async.Task UpdateConfigs(Scaleset scaleSet);
+    Async.Task UpdateConfigs(Scaleset scaleSet);
 
-    public Async.Task<OneFuzzResult<Scaleset>> GetById(Guid scalesetId);
+    Async.Task<OneFuzzResult<Scaleset>> GetById(Guid scalesetId);
     IAsyncEnumerable<Scaleset> GetByObjectId(Guid objectId);
+
+    Async.Task<bool> CleanupNodes(Scaleset scaleSet);
+
+    Async.Task SetSize(Scaleset scaleset, int size);
+
+    Async.Task SyncScalesetSize(Scaleset scaleset);
+    Async.Task<Scaleset> SetShutdown(Scaleset scaleset, bool now);
+
+    Async.Task<Scaleset> SetState(Scaleset scaleset, ScalesetState state);
 }
 
 public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetOperations>, IScalesetOperations {
@@ -29,20 +39,99 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         return QueryAsync();
     }
 
-    public IAsyncEnumerable<Scaleset> SearchByPool(PoolName poolName)
-        => QueryAsync(Query.PartitionKey(poolName.String));
+    public IAsyncEnumerable<Scaleset> SearchByPool(PoolName poolName) {
+        return QueryAsync(Query.PartitionKey(poolName.String));
+    }
 
-    async Async.Task SetState(Scaleset scaleSet, ScalesetState state) {
-        if (scaleSet.State == state)
+    public async Async.Task SyncScalesetSize(Scaleset scaleset) {
+        // # If our understanding of size is out of sync with Azure, resize the
+        // # scaleset to match our understanding.
+        if (scaleset.State != ScalesetState.Running) {
+            return;
+        }
+
+        var size = await _context.VmssOperations.GetVmssSize(scaleset.ScalesetId);
+        if (size is null) {
+            _log.Info($"{SCALESET_LOG_PREFIX} scaleset is unavailable. scaleset_id: {scaleset.ScalesetId}");
+            //#if the scaleset is missing, this is an indication the scaleset
+            //# was manually deleted, rather than having OneFuzz delete it.  As
+            //# such, we should go thruogh the process of deleting it.
+            await SetShutdown(scaleset, now: true);
+            return;
+        }
+        if (size != scaleset.Size) {
+            //# Azure auto-scaled us or nodes were manually added/removed
+            //# New node state will be synced in cleanup_nodes
+            _log.Info($"{SCALESET_LOG_PREFIX} unexpected scaleset size, resizing. scaleset_id: {scaleset.ScalesetId} expected:{scaleset.Size} actual:{size}");
+
+            scaleset = scaleset with { Size = size.Value };
+            var replaceResult = await Update(scaleset);
+            if (!replaceResult.IsOk) {
+                _log.Error($"Failed to update scaleset size for scaleset {scaleset.ScalesetId} due to {replaceResult.ErrorV}");
+            }
+        }
+    }
+
+    public async Async.Task SetSize(Scaleset scaleset, int size) {
+        // # no longer needing to resize
+        if (scaleset is null)
+            return;
+        if (scaleset.State != ScalesetState.Resize)
             return;
 
-        if (scaleSet.State == ScalesetState.Halt)
-            return;
+        _log.Info($"{SCALESET_LOG_PREFIX} scaleset resize: scaleset_id:{scaleset.ScalesetId} size:{size}");
 
-        var updatedScaleSet = scaleSet with { State = state };
-        var r = await this.Replace(updatedScaleSet);
+        var shrinkQueue = new ShrinkQueue(scaleset.ScalesetId, _context.Queue, _log);
+        // # reset the node delete queue
+        await shrinkQueue.Clear();
+
+        //# just in case, always ensure size is within max capacity
+        scaleset = scaleset with { Size = Math.Min(scaleset.Size, MaxSize(scaleset)) };
+
+        // # Treat Azure knowledge of the size of the scaleset as "ground truth"
+        var vmssSize = await _context.VmssOperations.GetVmssSize(scaleset.ScalesetId);
+        if (vmssSize is null) {
+            _log.Info($"{SCALESET_LOG_PREFIX} scaleset is unavailable. scaleset_id {scaleset.ScalesetId}");
+
+            //#if the scaleset is missing, this is an indication the scaleset
+            //# was manually deleted, rather than having OneFuzz delete it.  As
+            //# such, we should go thruogh the process of deleting it.
+            await SetShutdown(scaleset, now: true);
+            return;
+        } else if (scaleset.Size == vmssSize) {
+            await ResizeEqual(scaleset);
+        } else if (scaleset.Size > vmssSize) {
+            await ResizeGrow(scaleset);
+        } else {
+            await ResizeShrink(scaleset, vmssSize - scaleset.Size);
+        }
+
+    }
+
+    static int ScalesetMaxSize(string image) {
+        // https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/
+        // virtual-machine-scale-sets-placement-groups#checklist-for-using-large-scale-sets
+        if (image.StartsWith('/'))
+            return 600;
+        else
+            return 1000;
+    }
+
+    static int MaxSize(Scaleset scaleset) {
+        return ScalesetMaxSize(scaleset.Image);
+    }
+
+    public async Async.Task<Scaleset> SetState(Scaleset scaleset, ScalesetState state) {
+        if (scaleset.State == state)
+            return scaleset;
+
+        if (scaleset.State == ScalesetState.Halt)
+            return scaleset;
+
+        var updatedScaleSet = scaleset with { State = state };
+        var r = await Update(updatedScaleSet);
         if (!r.IsOk) {
-            _log.Error($"Failed to update scaleset {scaleSet.ScalesetId} when updating state from {scaleSet.State} to {state}");
+            _log.Error($"Failed to update scaleset {scaleset.ScalesetId} when updating state from {scaleset.State} to {state}");
         }
 
         if (state == ScalesetState.Resize) {
@@ -54,14 +143,17 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 new EventScalesetStateUpdated(updatedScaleSet.ScalesetId, updatedScaleSet.PoolName, updatedScaleSet.State)
             );
         }
+
+        return updatedScaleSet;
     }
 
-    async Async.Task SetFailed(Scaleset scaleSet, Error error) {
-        if (scaleSet.Error is not null)
-            return;
+    async Async.Task<Scaleset> SetFailed(Scaleset scaleset, Error error) {
+        if (scaleset.Error is not null)
+            return scaleset;
 
-        await SetState(scaleSet with { Error = error }, ScalesetState.CreationFailed);
-        await _context.Events.SendEvent(new EventScalesetFailed(scaleSet.ScalesetId, scaleSet.PoolName, error));
+        var updatedScaleset = await SetState(scaleset with { Error = error }, ScalesetState.CreationFailed);
+        await _context.Events.SendEvent(new EventScalesetFailed(scaleset.ScalesetId, scaleset.PoolName, error));
+        return updatedScaleset;
     }
 
     public async Async.Task UpdateConfigs(Scaleset scaleSet) {
@@ -97,12 +189,216 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
     }
 
+    public async Async.Task<Scaleset> SetShutdown(Scaleset scaleset, bool now) {
+        if (now) {
+            return await SetState(scaleset, ScalesetState.Halt);
+        } else {
+            return await SetState(scaleset, ScalesetState.Shutdown);
+        }
+    }
+
+    public async Async.Task<Scaleset> Setup(Scaleset scaleset) {
+        //# TODO: How do we pass in SSH configs for Windows?  Previously
+        //# This was done as part of the generated per-task setup script.
+        _logTracer.Info($"{SCALESET_LOG_PREFIX} setup. scalset_id: {scaleset.ScalesetId}");
+
+        var network = await Network.Create(scaleset.Region, _context);
+        var networkId = await network.GetId();
+        if (networkId is null) {
+            _logTracer.Info($"{SCALESET_LOG_PREFIX} creating network. region: {scaleset.Region} scaleset_id:{scaleset.ScalesetId}");
+            var result = await network.Create();
+            if (!result.IsOk) {
+                return await SetFailed(scaleset, result.ErrorV);
+            }
+            //TODO : why are we saving scaleset here ? 
+            var r = await Update(scaleset);
+            if (!r.IsOk) {
+                _logTracer.Error($"Failed to save scaleset {scaleset.ScalesetId} due to {r.ErrorV}");
+            }
+            return scaleset;
+        }
+
+        if (scaleset.Auth is null) {
+            _logTracer.Error($"Scaleset Auth is missing for scaleset {scaleset.ScalesetId}");
+            return await SetFailed(scaleset, new Error(ErrorCode.UNABLE_TO_CREATE, new[] { "missing required auth" }));
+        }
+
+        var vmss = await _context.VmssOperations.GetVmss(scaleset.ScalesetId);
+
+        if (vmss is null) {
+            var pool = await _context.PoolOperations.GetByName(scaleset.PoolName);
+            if (!pool.IsOk) {
+                _logTracer.Error($"Failed to get pool by name {scaleset.PoolName} for scaleset: {scaleset.ScalesetId}");
+                return await SetFailed(scaleset, pool.ErrorV);
+            }
+
+            _logTracer.Info($"{SCALESET_LOG_PREFIX} creating scaleset. scaleset_id {scaleset.ScalesetId}");
+            var extensions = await _context.Extensions.FuzzExtensions(pool.OkV, scaleset);
+            var result = await _context.VmssOperations.CreateVmss(
+                            scaleset.Region,
+                            scaleset.ScalesetId,
+                            scaleset.VmSku,
+                            scaleset.Size,
+                            scaleset.Image,
+                            networkId!,
+                            scaleset.SpotInstances,
+                            scaleset.EphemeralOsDisks,
+                            extensions,
+                            scaleset.Auth.Password,
+                            scaleset.Auth.PublicKey,
+                            scaleset.Tags);
+
+            if (!result.IsOk) {
+                _logTracer.Error($"Failed to create scaleset {scaleset.ScalesetId} due to {result.ErrorV}");
+                return await SetFailed(scaleset, result.ErrorV);
+            } else {
+                // TODO: Link up auto scale resource with diagnostics
+                _logTracer.Info($"{SCALESET_LOG_PREFIX} creating scaleset scaleset_id: {scaleset.ScalesetId}");
+            }
+        } else if (vmss.ProvisioningState == "Creating") {
+            var result = TrySetIdentity(scaleset, vmss);
+            if (!result.IsOk) {
+                _logTracer.Warning($"Could not set identity due to: {result.ErrorV}");
+            } else {
+                scaleset = result.OkV;
+            }
+        } else {
+            _logTracer.Info($"{SCALESET_LOG_PREFIX} scaleset running scaleset_id {scaleset.ScalesetId}");
+
+            var autoScaling = await TryEnableAutoScaling(scaleset);
+
+            if (!autoScaling.IsOk) {
+                _logTracer.Error($"Failed to set auto-scaling for {scaleset.ScalesetId} due to {autoScaling.ErrorV}");
+                return await SetFailed(scaleset, autoScaling.ErrorV);
+            }
+
+            var result = TrySetIdentity(scaleset, vmss);
+            if (!result.IsOk) {
+                _logTracer.Error($"Failed to set identity for scaleset {scaleset.ScalesetId} due to: {result.ErrorV}");
+                return await SetFailed(scaleset, result.ErrorV);
+            } else {
+                scaleset = await SetState(scaleset, ScalesetState.Running);
+            }
+        }
+
+        var rr = await Update(scaleset);
+        if (!rr.IsOk) {
+            _logTracer.Error($"Failed to save scale data for scale set: {scaleset.ScalesetId}");
+        }
+        return scaleset;
+    }
+
+
+    static OneFuzzResult<Scaleset> TrySetIdentity(Scaleset scaleset, VirtualMachineScaleSetData vmss) {
+        if (scaleset.ClientObjectId is null) {
+            return OneFuzzResult.Ok(scaleset);
+        }
+
+        if (vmss.Identity is not null && vmss.Identity.UserAssignedIdentities is not null) {
+            if (vmss.Identity.UserAssignedIdentities.Count != 1) {
+                return OneFuzzResult<Scaleset>.Error(ErrorCode.VM_CREATE_FAILED, "The scaleset is expected to have exactly 1 user assigned identity");
+            }
+            var principalId = vmss.Identity.UserAssignedIdentities.First().Value.PrincipalId;
+            if (principalId is null) {
+                return OneFuzzResult<Scaleset>.Error(ErrorCode.VM_CREATE_FAILED, "The scaleset principal ID is null");
+            }
+            return OneFuzzResult<Scaleset>.Ok(scaleset with { ClientObjectId = principalId });
+        } else {
+            return OneFuzzResult<Scaleset>.Error(ErrorCode.VM_CREATE_FAILED, "The scaleset identity is null");
+        }
+    }
+
+
+    async Async.Task<OneFuzzResultVoid> TryEnableAutoScaling(Scaleset scaleset) {
+        _logTracer.Info($"Trying to add auto scaling for scaleset {scaleset.ScalesetId}");
+
+        var r = await _context.PoolOperations.GetByName(scaleset.PoolName);
+        if (!r.IsOk) {
+            _logTracer.Error($"Failed to get pool by name: {scaleset.PoolName} error: {r.ErrorV}");
+            return r.ErrorV;
+        }
+        var pool = r.OkV;
+        var poolQueueId = _context.PoolOperations.GetPoolQueue(pool.PoolId);
+        var poolQueueUri = _context.Queue.GetResourceId(poolQueueId, StorageType.Corpus);
+
+        var capacity = await _context.VmssOperations.GetVmssSize(scaleset.ScalesetId);
+
+        if (!capacity.HasValue) {
+            var capacityFailed = OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_FIND, $"Failed to get capacity for scaleset {scaleset.ScalesetId}");
+            _logTracer.Error(capacityFailed.ErrorV.ToString());
+            return capacityFailed;
+        }
+
+        var autoScaleConfig = await _context.AutoScaleOperations.GetSettingsForScaleset(scaleset.ScalesetId);
+
+        Azure.Management.Monitor.Models.AutoscaleProfile autoScaleProfile;
+        if (poolQueueUri is null) {
+            var failedToFindQueueUri = OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_FIND, $"Failed to get pool queue uri for scaleset {scaleset.ScalesetId}");
+            _logTracer.Error(failedToFindQueueUri.ErrorV.ToString());
+            return failedToFindQueueUri;
+        } else {
+
+            if (autoScaleConfig is null) {
+                autoScaleProfile = _context.AutoScaleOperations.DeafaultAutoScaleProfile(poolQueueUri!, capacity.Value);
+            } else {
+                _logTracer.Info("Using existing auto scale settings from database");
+                autoScaleProfile = _context.AutoScaleOperations.CreateAutoScaleProfile(
+                        poolQueueUri!,
+                        autoScaleConfig.Min,
+                        autoScaleConfig.Max,
+                        autoScaleConfig.Default,
+                        autoScaleConfig.ScaleOutAmount,
+                        autoScaleConfig.ScaleOutCoolDown,
+                        autoScaleConfig.ScaleInAmount,
+                        autoScaleConfig.ScaleInCoolDown
+                    );
+
+            }
+        }
+        _logTracer.Info($"Added auto scale resource to scaleset: {scaleset.ScalesetId}");
+        return await _context.AutoScaleOperations.AddAutoScaleToVmss(scaleset.ScalesetId, autoScaleProfile);
+    }
+
+
+    public async Async.Task<Scaleset> Init(Scaleset scaleset) {
+        _logTracer.Info($"{SCALESET_LOG_PREFIX} init. scaleset_id:{scaleset.ScalesetId}");
+        var shrinkQueue = new ShrinkQueue(scaleset.ScalesetId, _context.Queue, _logTracer);
+        await shrinkQueue.Create();
+        // Handle the race condition between a pool being deleted and a
+        // scaleset being added to the pool.
+
+        var poolResult = await _context.PoolOperations.GetByName(scaleset.PoolName);
+        if (!poolResult.IsOk) {
+            _logTracer.Error($"Failed to get pool by name {scaleset.PoolName} for scaleset: {scaleset.ScalesetId} due to {poolResult.ErrorV}");
+            return await SetFailed(scaleset, poolResult.ErrorV);
+        }
+
+        var pool = poolResult.OkV;
+
+        if (pool.State == PoolState.Init) {
+            _logTracer.Info($"{SCALESET_LOG_PREFIX} waiting for pool. pool_name:{scaleset.PoolName} scaleset_id:{scaleset.ScalesetId}");
+        } else if (pool.State == PoolState.Running) {
+            var imageOsResult = await _context.ImageOperations.GetOs(scaleset.Region, scaleset.Image);
+            if (!imageOsResult.IsOk) {
+                _logTracer.Error($"Failed to get OS with region: {scaleset.Region} image:{scaleset.Image} for scaleset: {scaleset.ScalesetId} due to {imageOsResult.ErrorV}");
+                return await SetFailed(scaleset, imageOsResult.ErrorV);
+            } else if (imageOsResult.OkV != pool.Os) {
+                _logTracer.Error($"Got invalid OS: {imageOsResult.OkV} for scaleset: {scaleset.ScalesetId} expected OS {pool.Os}");
+                return await SetFailed(scaleset, new Error(ErrorCode.INVALID_REQUEST, new[] { $"invalid os (got: {imageOsResult.OkV} needed: {pool.Os})" }));
+            } else {
+                return await SetState(scaleset, ScalesetState.Setup);
+            }
+        } else {
+            return await SetState(scaleset, ScalesetState.Setup);
+        }
+        return scaleset;
+    }
 
     public async Async.Task<Scaleset> Halt(Scaleset scaleset) {
         var shrinkQueue = new ShrinkQueue(scaleset.ScalesetId, _context.Queue, _log);
         await shrinkQueue.Delete();
 
-        await foreach (var node in _context.NodeOperations.SearchStates(scaleSetId: scaleset.ScalesetId)) {
+        await foreach (var node in _context.NodeOperations.SearchStates(scalesetId: scaleset.ScalesetId)) {
             _log.Info($"{SCALESET_LOG_PREFIX} deleting node scaleset_id {scaleset.ScalesetId} machine_id {node.MachineId}");
             await _context.NodeOperations.Delete(node);
         }
@@ -115,7 +411,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 _log.WithHttpStatus(r.ErrorV).Error($"Failed to delete scaleset record {scaleset.ScalesetId}");
             }
         } else {
-            var r = await Replace(scaleset);
+            var r = await Update(scaleset);
             if (!r.IsOk) {
                 _log.WithHttpStatus(r.ErrorV).Error($"Failed to save scaleset record {scaleset.ScalesetId}");
             }
@@ -148,7 +444,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         //ground truth of existing nodes
         var azureNodes = await _context.VmssOperations.ListInstanceIds(scaleSet.ScalesetId);
-        var nodes = _context.NodeOperations.SearchStates(scaleSetId: scaleSet.ScalesetId);
+        var nodes = _context.NodeOperations.SearchStates(scalesetId: scaleSet.ScalesetId);
 
         //# Nodes do not exists in scalesets but in table due to unknown failure
         await foreach (var node in nodes) {
@@ -237,7 +533,10 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 _ => NodeDisposalStrategy.ScaleIn
             };
 
-        throw new NotImplementedException();
+        await ReimageNodes(scaleSet, toReimage.Values, strategy);
+        await DeleteNodes(scaleSet, toDelete.Values, strategy);
+
+        return toReimage.Count > 0 || toDelete.Count > 0;
     }
 
 
@@ -286,7 +585,6 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             return;
         }
 
-
         foreach (var node in nodes) {
             await _context.NodeOperations.SetHalt(node);
         }
@@ -331,5 +629,42 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
     public IAsyncEnumerable<Scaleset> GetByObjectId(Guid objectId) {
         return QueryAsync(filter: $"client_object_id eq '{objectId}'");
+    }
+
+
+    private async Async.Task ResizeEqual(Scaleset scaleset) {
+        //# NOTE: this is the only place we reset to the 'running' state.
+        //# This ensures that our idea of scaleset size agrees with Azure
+
+        var nodeCount = await _context.NodeOperations.SearchStates(scalesetId: scaleset.ScalesetId).CountAsync();
+        if (nodeCount == scaleset.Size) {
+            _log.Info($"{SCALESET_LOG_PREFIX} resize finished: {scaleset.ScalesetId}");
+            await SetState(scaleset, ScalesetState.Running);
+        } else {
+            _log.Info($"{SCALESET_LOG_PREFIX} resize finished, waiting for nodes to check in. scaleset_id: {scaleset.ScalesetId} ({nodeCount} of {scaleset.Size} checked in)");
+        }
+    }
+
+    private async Async.Task ResizeGrow(Scaleset scaleset) {
+
+        var resizeResult = await _context.VmssOperations.ResizeVmss(scaleset.ScalesetId, scaleset.Size);
+        if (resizeResult.IsOk == false) {
+            _log.Info($"{SCALESET_LOG_PREFIX} scaleset is mid-operation already scaleset_id: {scaleset.ScalesetId} message: {resizeResult.ErrorV}");
+        }
+    }
+
+    private async Async.Task ResizeShrink(Scaleset scaleset, long? toRemove) {
+        _log.Info($"{SCALESET_LOG_PREFIX} shrinking scaleset. scaleset_id: {scaleset.ScalesetId} to remove {toRemove}");
+
+        if (!toRemove.HasValue) {
+            return;
+        } else {
+            var queue = new ShrinkQueue(scaleset.ScalesetId, _context.Queue, _log);
+            await queue.SetSize(toRemove.Value);
+            var nodes = _context.NodeOperations.SearchStates(scalesetId: scaleset.ScalesetId);
+            await foreach (var node in nodes) {
+                await _context.NodeOperations.SendStopIfFree(node);
+            }
+        }
     }
 }

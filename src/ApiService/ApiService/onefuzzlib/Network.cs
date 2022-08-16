@@ -37,6 +37,7 @@ public class Network {
         if (networkConfig.AddressSpace == NetworkConfig.Default.AddressSpace && networkConfig.Subnet == NetworkConfig.Default.Subnet) {
             name = region;
         } else {
+            //TODO: Remove dependency on "Faithlife"
             var networkId = Faithlife.Utility.GuidUtility.Create(NETWORK_GUID_NAMESPACE, string.Join("|", networkConfig.AddressSpace, networkConfig.Subnet), 5);
             name = $"{region}-{networkId}";
         }
