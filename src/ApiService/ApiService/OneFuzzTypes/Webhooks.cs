@@ -50,6 +50,6 @@ public record Webhook(
     [RowKey] string Name,
     Uri? Url,
     List<EventType> EventTypes,
-    string SecretToken, // SecretString??
+    string? SecretToken, // SecretString??
     WebhookMessageFormat? MessageFormat
     ) : EntityBase();
