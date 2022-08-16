@@ -1,4 +1,5 @@
-﻿using Azure;
+﻿using System.Threading.Tasks;
+using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
@@ -34,6 +35,8 @@ public interface IVmssOperations {
         string password,
         string sshPublicKey,
         IDictionary<string, string> tags);
+
+    Async.Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter);
 }
 
 public class VmssOperations : IVmssOperations {
@@ -339,5 +342,18 @@ public class VmssOperations : IVmssOperations {
             _log.Exception(ex);
             return OneFuzzResultVoid.Error(ErrorCode.VM_CREATE_FAILED, new[] { ex.Message });
         }
+    }
+
+    public async Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter) {
+        try {
+            var vmss = await _creds.GetResourceGroupResource().GetVirtualMachineScaleSetAsync(name.ToString());
+            return vmss.Value.GetVirtualMachineScaleSetVms().ToEnumerable()
+                .Where(vm => filter == null || filter(vm))
+                .Select(vm => vm.Data.InstanceId)
+                .ToList();
+        } catch (RequestFailedException ex) {
+            _log.Error($"cloud error listing vmss: {name} ({ex})");
+        }
+        return null;
     }
 }

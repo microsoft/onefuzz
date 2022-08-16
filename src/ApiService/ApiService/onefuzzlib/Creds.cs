@@ -171,7 +171,6 @@ public sealed class Creds : ICreds, IDisposable {
         }
         return resource;
     }
-
     public void Dispose() {
         throw new NotImplementedException();
     }
