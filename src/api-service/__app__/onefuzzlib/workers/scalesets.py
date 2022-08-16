@@ -801,6 +801,19 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.scaleset_id,
             )
             self.delete()
+            autoscale_entry = get_auto_scale_settings(self.scaleset_id)
+            if not autoscale_entry:
+                logging.info(
+                    "Could not find any auto scale settings for scaleset %s"
+                    % self.scaleset_id
+                )
+                return None
+            if len(autoscale_entry) != 1:
+                logging.info(
+                    "Found more than one autoscaling setting for scaleset %s"
+                    % self.scaleset_id
+                )
+            autoscale_entry.delete()
         else:
             self.save()
 
@@ -969,9 +982,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             scale_action = rule.scale_action
             if scale_action.direction == "Increase":
                 scale_out_amount = scale_action.value
+                logging.info("Number of seconds: %d" % scale_out_cooldown)
                 scale_out_cooldown = (
                     int((scale_action.cooldown).total_seconds() / 60) % 60
                 )
+                logging.info("Number of seconds: %d" % scale_out_cooldown)
             elif scale_action.direction == "Decrease":
                 scale_in_amount = scale_action.value
                 scale_in_cooldown = (
