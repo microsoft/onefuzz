@@ -1,5 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
+using Azure.Data.Tables;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
@@ -217,15 +219,15 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         List<string> queryParts = new();
 
         if (poolId is not null) {
-            queryParts.Add($"(pool_id eq '{poolId}')");
+            queryParts.Add(TableClient.CreateQueryFilter($"(pool_id eq {poolId})"));
         }
 
         if (poolName is not null) {
-            queryParts.Add($"(pool_name eq '{poolName}')");
+            queryParts.Add(TableClient.CreateQueryFilter($"(pool_name eq {poolName})"));
         }
 
         if (scalesetId is not null) {
-            queryParts.Add($"(scaleset_id eq '{scalesetId}')");
+            queryParts.Add(TableClient.CreateQueryFilter($"(scaleset_id eq {scalesetId})"));
         }
 
         if (states is not null) {
@@ -241,7 +243,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         //# azure table query always return false when the column does not exist
         //# We write the query this way to allow us to get the nodes where the
         //# version is not defined as well as the nodes with a mismatched version
-        var versionQuery = $"not (version eq '{oneFuzzVersion}')";
+        var versionQuery = TableClient.CreateQueryFilter($"not (version eq {oneFuzzVersion})");
         queryParts.Add(versionQuery);
         return Query.And(queryParts);
     }
@@ -258,7 +260,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         if (numResults is null) {
             return QueryAsync(query);
         } else {
-            return QueryAsync(query).TakeWhile((_, i) => i < numResults);
+            return QueryAsync(query).Take(numResults.Value!);
         }
     }
 
@@ -292,7 +294,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         //if we're going to reimage, make sure the node doesn't pick up new work too.
         await SendStopIfFree(updatedNode);
 
-        var r = await Replace(updatedNode);
+        var r = await Update(updatedNode);
         if (!r.IsOk) {
             _logTracer.WithHttpStatus(r.ErrorV).Error("Failed to save Node record");
         }
@@ -301,8 +303,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     public IAsyncEnumerable<Node> GetDeadNodes(Guid scaleSetId, TimeSpan expirationPeriod) {
         var minDate = DateTimeOffset.UtcNow - expirationPeriod;
 
-        var filter = $"heartbeat lt datetime'{minDate.ToString("o")}' or Timestamp lt datetime'{minDate.ToString("o")}'";
-        var query = Query.And(filter, $"scaleset_id eq '{scaleSetId}'");
+        var filter = TableClient.CreateQueryFilter($"heartbeat lt datetime{minDate.ToString("o")} or Timestamp lt datetime {minDate.ToString("o")}");
+        var query = Query.And(filter, TableClient.CreateQueryFilter($"scaleset_id eq {scaleSetId}"));
         return QueryAsync(query);
     }
 
@@ -357,9 +359,9 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
     public async Async.Task SetShutdown(Node node) {
         //don't give out more work to the node, but let it finish existing work
-        _logTracer.Info($"setting delte_requested: {node.MachineId}");
+        _logTracer.Info($"setting delete_requested: {node.MachineId}");
         node = node with { DeleteRequested = true };
-        var r = await Replace(node);
+        var r = await Update(node);
         if (!r.IsOk) {
             _logTracer.Error($"failed to update node with delete requested. machine id: {node.MachineId}, pool name: {node.PoolName}, pool id: {node.PoolId}, scaleset id: {node.ScalesetId}");
         }
@@ -376,7 +378,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public async Async.Task SendMessage(Node node, NodeCommand message) {
-        var r = await _context.NodeMessageOperations.Replace(new NodeMessage(node.MachineId, message));
+        var r = await _context.NodeMessageOperations.Update(new NodeMessage(node.MachineId, message));
         if (!r.IsOk) {
             _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace NodeMessge record for machine_id: {node.MachineId}");
         }
@@ -429,7 +431,10 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             ));
         }
 
-        await Replace(newNode);
+        var r = await Update(newNode);
+        if (!r.IsOk) {
+            _logTracer.Error($"Failed to update node for machine: {newNode.MachineId} to state {state} due to {r.ErrorV}");
+        }
     }
 
     public static string SearchStatesQuery(
@@ -444,15 +449,15 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         List<string> queryParts = new();
 
         if (poolId is not null) {
-            queryParts.Add($"(pool_id eq '{poolId}')");
+            queryParts.Add(TableClient.CreateQueryFilter($"(pool_id eq {poolId})"));
         }
 
         if (poolName is not null) {
-            queryParts.Add($"(PartitionKey eq '{poolName}')");
+            queryParts.Add(TableClient.CreateQueryFilter($"(PartitionKey eq {poolName})"));
         }
 
         if (scaleSetId is not null) {
-            queryParts.Add($"(scaleset_id eq '{scaleSetId}')");
+            queryParts.Add(TableClient.CreateQueryFilter($"(scaleset_id eq {scaleSetId})"));
         }
 
         if (states is not null) {
@@ -468,7 +473,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         //# azure table query always return false when the column does not exist
         //# We write the query this way to allow us to get the nodes where the
         //# version is not defined as well as the nodes with a mismatched version
-        var versionQuery = $"not (version eq '{oneFuzzVersion}')";
+        var versionQuery = TableClient.CreateQueryFilter($"not (version eq {oneFuzzVersion})");
         queryParts.Add(versionQuery);
 
         return Query.And(queryParts);
@@ -492,7 +497,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public IAsyncEnumerable<Node> SearchByPoolName(PoolName poolName) {
-        return QueryAsync($"(pool_name eq '{poolName}')");
+        return QueryAsync(TableClient.CreateQueryFilter($"(pool_name eq {poolName})"));
     }
 
 
