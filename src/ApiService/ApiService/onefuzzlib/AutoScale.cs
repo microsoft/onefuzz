@@ -9,10 +9,10 @@ public interface IAutoScaleOperations {
         long minAmount,
         long maxAmount,
         long defaultAmount,
-        int scaleOutAmount,
-        int scaleOutCooldown,
-        int scaleInAmount,
-        int scaleInCooldown);
+        long scaleOutAmount,
+        long scaleOutCooldown,
+        long scaleInAmount,
+        long scaleInCooldown);
 
     Async.Task<AutoScale?> GetSettingsForScaleset(Guid scalesetId);
 
@@ -22,9 +22,9 @@ public interface IAutoScaleOperations {
         long minAmount,
         long maxAmount,
         long defaultAmount,
-        int scaleOutAmount,
+        long scaleOutAmount,
         double scaleOutCooldownMinutes,
-        int scaleInAmount,
+        long scaleInAmount,
         double scaleInCooldownMinutes);
 
     Azure.Management.Monitor.Models.AutoscaleProfile DeafaultAutoScaleProfile(string queueUri, long scaleSetSize);
@@ -44,10 +44,10 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
     long minAmount,
     long maxAmount,
     long defaultAmount,
-    int scaleOutAmount,
-    int scaleOutCooldown,
-    int scaleInAmount,
-    int scaleInCooldown) {
+    long scaleOutAmount,
+    long scaleOutCooldown,
+    long scaleInAmount,
+    long scaleInCooldown) {
 
         var entry = new AutoScale(
                 scalesetId,
@@ -140,9 +140,9 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
     long minAmount,
     long maxAmount,
     long defaultAmount,
-    int scaleOutAmount,
+    long scaleOutAmount,
     double scaleOutCooldownMinutes,
-    int scaleInAmount,
+    long scaleInAmount,
     double scaleInCooldownMinutes) {
 
         var rules = new[] {

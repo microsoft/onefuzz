@@ -377,10 +377,10 @@ public record AutoScale(
     long Min,
     long Max,
     long Default,
-    int ScaleOutAmount,
-    int ScaleOutCoolDown,
-    int ScaleInAmount,
-    int ScaleInCoolDown
+    long ScaleOutAmount,
+    long ScaleOutCoolDown,
+    long ScaleInAmount,
+    long ScaleInCoolDown
     ) : EntityBase();
 
 
