@@ -801,7 +801,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.scaleset_id,
             )
             self.delete()
-            autoscale_entry = get_auto_scale_settings(self.scaleset_id)
+            autoscale_entry = AutoScale.get_settings_for_scaleset(self.scaleset_id)
             if not autoscale_entry:
                 logging.info(
                     "Could not find any auto scale settings for scaleset %s"
@@ -953,6 +953,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
     def sync_auto_scale_settings(self) -> Optional[Error]:
         from .pools import Pool
 
+        # No need to update tables when in shutdown state
+        if self.state == ScalesetState.shutdown:
+            return
+
         logging.info(
             "Trying to sync auto scale settings for scaleset %s" % self.scaleset_id
         )
@@ -973,10 +977,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         maximum = auto_scale_profile.capacity.maximum
         default = auto_scale_profile.capacity.default
 
-        scale_out_amount = 0
-        scale_out_cooldown = 0
-        scale_in_amount = 0
-        scale_in_cooldown = 0
+        scale_out_amount = 1
+        scale_out_cooldown = 10
+        scale_in_amount = 1
+        scale_in_cooldown = 15
 
         for rule in auto_scale_profile.rules:
             scale_action = rule.scale_action
