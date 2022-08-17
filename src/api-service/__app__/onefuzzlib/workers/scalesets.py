@@ -949,8 +949,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
     def sync_auto_scale_settings(self) -> Optional[Error]:
         from .pools import Pool
 
-        # No need to update tables when in shutdown state
-        if self.state == ScalesetState.shutdown:
+        # Only update settings when scaleset is running
+        if self.state != ScalesetState.running:
             return None
 
         logging.info(
