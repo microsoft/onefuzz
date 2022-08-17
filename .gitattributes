@@ -1,1 +1,2 @@
 * text=auto
+*.ps1 text=crlf
