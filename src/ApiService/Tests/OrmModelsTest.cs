@@ -220,7 +220,7 @@ namespace Tests {
         public static Gen<Scaleset> Scaleset { get; }
             = from arg in Arb.Generate<Tuple<
                     Tuple<Guid, ScalesetState, Authentication?, string, string, string>,
-                    Tuple<int, bool, bool, bool, Error?, List<ScalesetNodeState>, Guid?>,
+                    Tuple<int, bool, bool, bool, Error?, Guid?>,
                     Tuple<Guid?, Dictionary<string, string>>>>()
               from poolName in PoolNameGen
               select new Scaleset(
@@ -237,8 +237,7 @@ namespace Tests {
                           EphemeralOsDisks: arg.Item2.Item3,
                           NeedsConfigUpdate: arg.Item2.Item4,
                           Error: arg.Item2.Item5,
-                          Nodes: arg.Item2.Item6,
-                          ClientId: arg.Item2.Item7,
+                          ClientId: arg.Item2.Item6,
 
                           ClientObjectId: arg.Item3.Item1,
                           Tags: arg.Item3.Item2);

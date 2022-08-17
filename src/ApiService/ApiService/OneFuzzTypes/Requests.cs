@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -162,6 +163,46 @@ public record ProxyDelete(
 
 public record ProxyReset(
     string Region
+);
+
+public record ScalesetCreate(
+    PoolName PoolName,
+    string VmSku,
+    string Image,
+    string? Region,
+    [property: Range(1, long.MaxValue)]
+    long Size,
+    bool SpotInstances,
+    Dictionary<string, string> Tags,
+    bool EphemeralOsDisks = false,
+    AutoScaleOptions? AutoScale = null
+);
+
+public record AutoScaleOptions(
+    [property: Range(0, long.MaxValue)] long Min,
+    [property: Range(1, long.MaxValue)] long Max,
+    [property: Range(0, long.MaxValue)] long Default,
+    [property: Range(1, long.MaxValue)] long ScaleOutAmount,
+    [property: Range(1, long.MaxValue)] long ScaleOutCooldown,
+    [property: Range(1, long.MaxValue)] long ScaleInAmount,
+    [property: Range(1, long.MaxValue)] long ScaleInCooldown
+);
+
+public record ScalesetSearch(
+    Guid? ScalesetId = null,
+    List<ScalesetState>? State = null,
+    bool IncludeAuth = false
+);
+
+public record ScalesetStop(
+    Guid ScalesetId,
+    bool Now
+);
+
+public record ScalesetUpdate(
+    Guid ScalesetId,
+    [property: Range(1, long.MaxValue)]
+    long? Size
 );
 
 public record TaskGet(Guid TaskId);

@@ -3,7 +3,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 public interface IOnefuzzContext {
-
+    IAutoScaleOperations AutoScaleOperations { get; }
     IConfig Config { get; }
     IConfigOperations ConfigOperations { get; }
     IContainers Containers { get; }
@@ -40,8 +40,6 @@ public interface IOnefuzzContext {
     INsgOperations NsgOperations { get; }
     ISubnet Subnet { get; }
     IImageOperations ImageOperations { get; }
-
-    IAutoScaleOperations AutoScaleOperations { get; }
 }
 
 public class OnefuzzContext : IOnefuzzContext {

@@ -24,6 +24,8 @@ public interface ICreds {
 
     public ResourceGroupResource GetResourceGroupResource();
 
+    public SubscriptionResource GetSubscriptionResource();
+
     public Async.Task<string> GetBaseRegion();
 
     public Uri GetInstanceUrl();
@@ -89,6 +91,11 @@ public sealed class Creds : ICreds, IDisposable {
     public ResourceGroupResource GetResourceGroupResource() {
         var resourceId = GetResourceGroupResourceIdentifier();
         return ArmClient.GetResourceGroupResource(resourceId);
+    }
+
+    public SubscriptionResource GetSubscriptionResource() {
+        var id = SubscriptionResource.CreateResourceIdentifier(GetSubscription());
+        return ArmClient.GetSubscriptionResource(id);
     }
 
     public Async.Task<string> GetBaseRegion() {
@@ -188,6 +195,7 @@ public sealed class Creds : ICreds, IDisposable {
                     .Select(x => x.Name)
                     .ToListAsync();
             });
+
 }
 
 
