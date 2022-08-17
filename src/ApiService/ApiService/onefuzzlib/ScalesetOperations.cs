@@ -1,7 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System.Text.Json;
+using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.ResourceManager.Compute;
-using Microsoft.Azure.Management.Monitor.Models;
+using Azure.ResourceManager.Monitor.Models;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -699,6 +700,81 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         scaleset = scaleset with { Size = permittedSize };
         return SetState(scaleset, ScalesetState.Resize);
+    }
+
+    public async Async.Task<Scaleset> Shutdown(Scaleset scaleset) {
+        var size = await _context.VmssOperations.GetVmssSize(scaleset.ScalesetId);
+        if (size == null) {
+            _logTracer.Info($"{SCALESET_LOG_PREFIX} scale set shutdown: scaleset already deleted - scaleset_id:{scaleset.ScalesetId}");
+            return await Halt(scaleset);
+        }
+
+        _logTracer.Info($"{SCALESET_LOG_PREFIX} scaleset shutdown: scaleset_id:{scaleset.ScalesetId} size:{size}");
+        var nodes = _context.NodeOperations.SearchStates(scalesetId: scaleset.ScalesetId);
+        // TODO: Parallelization opportunity
+        await foreach (var node in nodes) {
+            await _context.NodeOperations.SetShutdown(node);
+        }
+
+        _logTracer.Info($"{SCALESET_LOG_PREFIX} checking for existing auto scale settings {scaleset.ScalesetId}");
+
+        var autoScalePolicy = _context.AutoScaleOperations.GetAutoscaleSettings(scaleset.ScalesetId);
+        if (autoScalePolicy.IsOk && autoScalePolicy.OkV != null) {
+            foreach (var profile in autoScalePolicy.OkV.Data.Profiles) {
+                var queueUri = profile.Rules.First().MetricTrigger.MetricResourceId;
+
+                // Overwrite any existing scaling rules with one that will
+                //   try to scale in by 1 node at every opportunity
+                profile.Rules.Clear();
+                profile.Rules.Add(AutoScaleOperations.ShutdownScalesetRule(queueUri));
+
+                // Auto scale (the azure service) will not allow you to
+                //   set the minimum number of instances to a number
+                //   smaller than the number of instances
+                //   with scale in protection enabled.
+                //
+                // Since:
+                //   * Nodes can no longer pick up work once the scale set is
+                //       in `shutdown` state
+                //   * All scale out rules are removed
+                // Then: The number of nodes in the scale set with scale in
+                //   protection enabled _must_ strictly decrease over time.
+                //
+                //  This guarantees that _eventually_
+                //   auto scale will scale in the remaining nodes,
+                //   the scale set will have 0 instances,
+                //   and once the scale set is empty, we will delete it.
+                _logTracer.Info($"{SCALESET_LOG_PREFIX} Getting nodes with scale in protection");
+                var vmsWithProtection = await _context.VmssOperations.ListVmss(
+                    scaleset.ScalesetId,
+                    (vmResource) => vmResource.Data.ProtectionPolicy.ProtectFromScaleIn.HasValue && vmResource.Data.ProtectionPolicy.ProtectFromScaleIn.Value
+                );
+
+                _logTracer.Info($"{SCALESET_LOG_PREFIX} {JsonSerializer.Serialize(vmsWithProtection)}");
+                if (vmsWithProtection != null && vmsWithProtection.Any()) {
+                    var numVmsWithProtection = vmsWithProtection.Count;
+                    profile.Capacity.Minimum = numVmsWithProtection.ToString();
+                    profile.Capacity.Default = numVmsWithProtection.ToString();
+                } else {
+                    _logTracer.Error($"Failed to list vmss for scaleset {scaleset.ScalesetId}");
+                }
+            }
+
+            var updatedAutoScale = await _context.AutoScaleOperations.UpdateAutoscale(autoScalePolicy.OkV.Data);
+            if (!updatedAutoScale.IsOk) {
+                _logTracer.Error($"Failed to update auto scale {updatedAutoScale}");
+            }
+        } else if (!autoScalePolicy.IsOk) {
+            _logTracer.Error(autoScalePolicy.ErrorV);
+        } else {
+            _logTracer.Info($"No existing auto scale settings found for {scaleset.ScalesetId}");
+        }
+
+        if (size == 0) {
+            return await Halt(scaleset);
+        }
+
+        return scaleset;
     }
 
     private static long MaxSize(Scaleset scaleset) {
