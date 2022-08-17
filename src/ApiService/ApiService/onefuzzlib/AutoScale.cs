@@ -11,7 +11,7 @@ public interface IAutoScaleOperations {
 
     public Async.Task<ResultVoid<(int, string)>> Insert(AutoScale autoScale);
 
-    public Async.Task<AutoScale> GetSettingsForScaleset(Guid scalesetId);
+    public Async.Task<AutoScale?> GetSettingsForScaleset(Guid scalesetId);
 
     AutoscaleProfile CreateAutoScaleProfile(
         string queueUri,
@@ -23,7 +23,7 @@ public interface IAutoScaleOperations {
         long scaleInAmount,
         double scaleInCooldownMinutes);
 
-    AutoscaleProfile DeafaultAutoScaleProfile(string queueUri, long scaleSetSize);
+    AutoscaleProfile DefaultAutoScaleProfile(string queueUri, long scaleSetSize);
     Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(Guid vmss, AutoscaleProfile autoScaleProfile);
 
     OneFuzzResult<AutoscaleSettingResource?> GetAutoscaleSettings(Guid vmss);
@@ -55,9 +55,9 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
                 Max: maxAmount,
                 Default: defaultAmount,
                 ScaleOutAmount: scaleOutAmount,
-                ScaleOutCoolDown: scaleOutCooldown,
+                ScaleOutCooldown: scaleOutCooldown,
                 ScaleInAmount: scaleInAmount,
-                ScaleInCoolDown: scaleInCooldown
+                ScaleInCooldown: scaleInCooldown
                 );
 
         var r = await Insert(entry);
@@ -73,26 +73,17 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
     }
 
 
-    public async Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(Guid vmss, Azure.Management.Monitor.Models.AutoscaleProfile autoScaleProfile) {
+    public async Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(Guid vmss, AutoscaleProfile autoScaleProfile) {
         _logTracer.Info($"Checking scaleset {vmss} for existing auto scale resource");
-        var monitorManagementClient = _context.LogAnalytics.GetMonitorManagementClient();
-        var resourceGroup = _context.Creds.GetBaseResourceGroup();
 
-        try {
-            var autoScaleCollections = await monitorManagementClient.AutoscaleSettings.ListByResourceGroupAsync(resourceGroup);
-            do {
-                foreach (var autoScale in autoScaleCollections) {
-                    if (autoScale.TargetResourceUri.EndsWith(vmss.ToString())) {
-                        _logTracer.Warning($"scaleset {vmss} already has an autoscale resource");
-                        return OneFuzzResultVoid.Ok;
-                    }
-                }
-                autoScaleCollections = await monitorManagementClient.AutoscaleSettings.ListByResourceGroupNextAsync(autoScaleCollections.NextPageLink);
-            } while (autoScaleCollections is not null);
+        var existingAutoScaleResource = GetAutoscaleSettings(vmss);
 
-        } catch (Exception ex) {
-            _logTracer.Exception(ex);
-            return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"Failed to check if scaleset {vmss} already has an autoscale resource");
+        if (!existingAutoScaleResource.IsOk) {
+            return OneFuzzResultVoid.Error(existingAutoScaleResource.ErrorV);
+        }
+
+        if (existingAutoScaleResource.OkV != null) {
+            _logTracer.Warning($"Scaleset {vmss} already has auto scale resource");
         }
 
         var autoScaleResource = await CreateAutoScaleResourceFor(vmss, await _context.Creds.GetBaseRegion(), autoScaleProfile);
@@ -142,7 +133,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
 
     //TODO: Do this using bicep template
-    public Azure.Management.Monitor.Models.AutoscaleProfile CreateAutoScaleProfile(
+    public AutoscaleProfile CreateAutoScaleProfile(
         string queueUri,
         long minAmount,
         long maxAmount,
@@ -207,7 +198,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
     }
 
 
-    public AutoscaleProfile DeafaultAutoScaleProfile(string queueUri, long scaleSetSize) {
+    public AutoscaleProfile DefaultAutoScaleProfile(string queueUri, long scaleSetSize) {
         return CreateAutoScaleProfile(queueUri, 1L, scaleSetSize, scaleSetSize, 1, 10.0, 1, 5.0);
     }
 
