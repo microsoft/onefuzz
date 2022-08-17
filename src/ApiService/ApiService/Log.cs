@@ -106,6 +106,8 @@ public interface ILogTracer {
 
     void Critical(string message);
     void Error(string message);
+
+    void Error(Error error);
     void Event(string evt, IReadOnlyDictionary<string, double>? metrics);
     void Exception(Exception ex, string message = "", IReadOnlyDictionary<string, double>? metrics = null);
     void ForceFlush();
@@ -257,6 +259,10 @@ public class LogTracer : ILogTracerInternal {
         foreach (var logger in _loggers) {
             logger.Flush();
         }
+    }
+
+    public void Error(Error error) {
+        Error(error.ToString());
     }
 }
 
