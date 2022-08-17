@@ -1,8 +1,11 @@
-﻿using Azure;
+﻿using System.Net;
+using Azure;
 using Azure.Core;
+using Azure.Data.Tables;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
 using Azure.ResourceManager.Models;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Rest.Azure;
 
 namespace Microsoft.OneFuzz.Service;
@@ -12,6 +15,8 @@ public interface IVmssOperations {
     Async.Task<OneFuzzResult<string>> GetInstanceId(Guid name, Guid vmId);
     Async.Task<OneFuzzResultVoid> UpdateExtensions(Guid name, IList<VirtualMachineScaleSetExtensionData> extensions);
     Async.Task<VirtualMachineScaleSetData?> GetVmss(Guid name);
+
+    Async.Task<IReadOnlyList<string>> ListAvailableSkus(string region);
 
     Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null);
 
@@ -37,17 +42,18 @@ public interface IVmssOperations {
 }
 
 public class VmssOperations : IVmssOperations {
+    private readonly ILogTracer _log;
+    private readonly ICreds _creds;
+    private readonly IImageOperations _imageOps;
+    private readonly IServiceConfig _serviceConfig;
+    private readonly IMemoryCache _cache;
 
-    readonly ILogTracer _log;
-    readonly ICreds _creds;
-    readonly IImageOperations _imageOps;
-    readonly IServiceConfig _serviceConfig;
-
-    public VmssOperations(ILogTracer log, IOnefuzzContext context) {
+    public VmssOperations(ILogTracer log, IOnefuzzContext context, IMemoryCache cache) {
         _log = log;
         _creds = context.Creds;
         _imageOps = context.ImageOperations;
         _serviceConfig = context.ServiceConfiguration;
+        _cache = cache;
     }
 
     public async Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null) {
@@ -135,36 +141,14 @@ public class VmssOperations : IVmssOperations {
 
     public async Async.Task<IDictionary<Guid, string>> ListInstanceIds(Guid name) {
         _log.Verbose($"get instance IDs for scaleset {name}");
-        var results = new Dictionary<Guid, string>();
-        VirtualMachineScaleSetResource res;
         try {
-            var r = await GetVmssResource(name).GetAsync();
-            res = r.Value;
-        } catch (Exception ex) when (ex is RequestFailedException) {
-            _log.Verbose($"vm does not exist {name}");
-            return results;
+            return await GetVmssResource(name)
+                .GetVirtualMachineScaleSetVms()
+                .ToDictionaryAsync(vm => Guid.Parse(vm.Data.VmId), vm => vm.Data.InstanceId);
+        } catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.NotFound || ex.ErrorCode == "NotFound") {
+            _log.Exception(ex, $"scaleset does not exist: {name}");
+            return new Dictionary<Guid, string>();
         }
-
-        if (res is null) {
-            _log.Verbose($"vm does not exist {name}");
-            return results;
-        } else {
-            try {
-                await foreach (var instance in res!.GetVirtualMachineScaleSetVms().AsAsyncEnumerable()) {
-                    if (instance is not null) {
-                        Guid key;
-                        if (Guid.TryParse(instance.Data.VmId, out key)) {
-                            results[key] = instance.Data.InstanceId;
-                        } else {
-                            _log.Error($"failed to convert vmId {instance.Data.VmId} to Guid");
-                        }
-                    }
-                }
-            } catch (Exception ex) when (ex is RequestFailedException || ex is CloudException) {
-                _log.Exception(ex, $"vm does not exist {name}");
-            }
-        }
-        return results;
     }
 
     public async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(Guid name, Guid vmId) {
@@ -223,18 +207,18 @@ public class VmssOperations : IVmssOperations {
     }
 
     public async Async.Task<OneFuzzResultVoid> CreateVmss(
-    string location,
-    Guid name,
-    string vmSku,
-    long vmCount,
-    string image,
-    string networkId,
-    bool? spotInstance,
-    bool ephemeralOsDisks,
-    IList<VirtualMachineScaleSetExtensionData>? extensions,
-    string password,
-    string sshPublicKey,
-    IDictionary<string, string> tags) {
+        string location,
+        Guid name,
+        string vmSku,
+        long vmCount,
+        string image,
+        string networkId,
+        bool? spotInstance,
+        bool ephemeralOsDisks,
+        IList<VirtualMachineScaleSetExtensionData>? extensions,
+        string password,
+        string sshPublicKey,
+        IDictionary<string, string> tags) {
         var vmss = await GetVmss(name);
         if (vmss is not null) {
             return OneFuzzResultVoid.Ok;
@@ -340,4 +324,32 @@ public class VmssOperations : IVmssOperations {
             return OneFuzzResultVoid.Error(ErrorCode.VM_CREATE_FAILED, new[] { ex.Message });
         }
     }
+
+    public Async.Task<IReadOnlyList<string>> ListAvailableSkus(string region)
+        => _cache.GetOrCreateAsync<IReadOnlyList<string>>($"compute-skus-{region}", async entry => {
+            entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
+
+            var sub = _creds.GetSubscriptionResource();
+            var skus = sub.GetResourceSkusAsync(filter: TableClient.CreateQueryFilter($"location eq '{region}'"));
+
+            var skuNames = new List<string>();
+            await foreach (var sku in skus) {
+                var available = true;
+                if (sku.Restrictions is not null) {
+                    foreach (var restriction in sku.Restrictions) {
+                        if (restriction.RestrictionsType == ResourceSkuRestrictionsType.Location &&
+                            restriction.Values.Contains(region, StringComparer.OrdinalIgnoreCase)) {
+                            available = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (available) {
+                    skuNames.Add(sku.Name);
+                }
+            }
+
+            return skuNames;
+        });
 }

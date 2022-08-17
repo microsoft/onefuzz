@@ -378,26 +378,21 @@ public record AutoScale(
     long Max,
     long Default,
     long ScaleOutAmount,
-    long ScaleOutCoolDown,
+    long ScaleOutCooldown,
     long ScaleInAmount,
-    long ScaleInCoolDown
-    ) : EntityBase();
-
-
+    long ScaleInCooldown
+) : EntityBase;
 
 public record ScalesetNodeState(
     Guid MachineId,
     string InstanceId,
     NodeState? State
-
 );
-
 
 public record Scaleset(
     [PartitionKey] PoolName PoolName,
     [RowKey] Guid ScalesetId,
     ScalesetState State,
-    Authentication? Auth,
     string VmSku,
     string Image,
     Region Region,
@@ -405,11 +400,12 @@ public record Scaleset(
     bool? SpotInstances,
     bool EphemeralOsDisks,
     bool NeedsConfigUpdate,
-    Error? Error,
-    List<ScalesetNodeState>? Nodes,
-    Guid? ClientId,
-    Guid? ClientObjectId,
-    Dictionary<string, string> Tags
+    Dictionary<string, string> Tags,
+    Authentication? Auth = null,
+    Error? Error = null,
+    Guid? ClientId = null,
+    Guid? ClientObjectId = null
+// 'Nodes' removed when porting from Python: only used in search response
 ) : StatefulEntityBase<ScalesetState>(State);
 
 [JsonConverter(typeof(ContainerConverter))]

@@ -4,18 +4,10 @@ using Microsoft.Azure.Management.Monitor;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IAutoScaleOperations {
-    Async.Task<AutoScale> Create(
-        Guid scalesetId,
-        long minAmount,
-        long maxAmount,
-        long defaultAmount,
-        long scaleOutAmount,
-        long scaleOutCooldown,
-        long scaleInAmount,
-        long scaleInCooldown);
 
-    Async.Task<AutoScale?> GetSettingsForScaleset(Guid scalesetId);
+    public Async.Task<ResultVoid<(int, string)>> Insert(AutoScale autoScale);
 
+    public Async.Task<AutoScale> GetSettingsForScaleset(Guid scalesetId);
 
     Azure.Management.Monitor.Models.AutoscaleProfile CreateAutoScaleProfile(
         string queueUri,
@@ -27,7 +19,8 @@ public interface IAutoScaleOperations {
         long scaleInAmount,
         double scaleInCooldownMinutes);
 
-    Azure.Management.Monitor.Models.AutoscaleProfile DeafaultAutoScaleProfile(string queueUri, long scaleSetSize);
+    Azure.Management.Monitor.Models.AutoscaleProfile DefaultAutoScaleProfile(string queueUri, long scaleSetSize);
+
     Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(Guid vmss, Azure.Management.Monitor.Models.AutoscaleProfile autoScaleProfile);
 }
 
@@ -35,43 +28,10 @@ public interface IAutoScaleOperations {
 public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
     public AutoScaleOperations(ILogTracer log, IOnefuzzContext context)
-    : base(log, context) {
+        : base(log, context) { }
 
-    }
-
-    public async Async.Task<AutoScale> Create(
-    Guid scalesetId,
-    long minAmount,
-    long maxAmount,
-    long defaultAmount,
-    long scaleOutAmount,
-    long scaleOutCooldown,
-    long scaleInAmount,
-    long scaleInCooldown) {
-
-        var entry = new AutoScale(
-                scalesetId,
-                Min: minAmount,
-                Max: maxAmount,
-                Default: defaultAmount,
-                ScaleOutAmount: scaleOutAmount,
-                ScaleOutCoolDown: scaleOutCooldown,
-                ScaleInAmount: scaleInAmount,
-                ScaleInCoolDown: scaleInCooldown
-                );
-
-        var r = await Insert(entry);
-        if (!r.IsOk) {
-            _logTracer.Error($"Failed to save auto-scale record for scaleset ID: {scalesetId}, minAmount: {minAmount}, maxAmount: {maxAmount}, defaultAmount: {defaultAmount}, scaleOutAmount: {scaleOutAmount}, scaleOutCooldown: {scaleOutCooldown}, scaleInAmount: {scaleInAmount}, scaleInCooldown: {scaleInCooldown}");
-        }
-        return entry;
-    }
-
-    public async Async.Task<AutoScale?> GetSettingsForScaleset(Guid scalesetId) {
-        var autoscale = await GetEntityAsync(scalesetId.ToString(), scalesetId.ToString());
-        return autoscale;
-    }
-
+    public Async.Task<AutoScale> GetSettingsForScaleset(Guid scalesetId)
+        => GetEntityAsync(scalesetId.ToString(), scalesetId.ToString());
 
     public async Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(Guid vmss, Azure.Management.Monitor.Models.AutoscaleProfile autoScaleProfile) {
         _logTracer.Info($"Checking scaleset {vmss} for existing auto scale resource");
@@ -136,14 +96,14 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
     //TODO: Do this using bicep template
     public Azure.Management.Monitor.Models.AutoscaleProfile CreateAutoScaleProfile(
-    string queueUri,
-    long minAmount,
-    long maxAmount,
-    long defaultAmount,
-    long scaleOutAmount,
-    double scaleOutCooldownMinutes,
-    long scaleInAmount,
-    double scaleInCooldownMinutes) {
+        string queueUri,
+        long minAmount,
+        long maxAmount,
+        long defaultAmount,
+        long scaleOutAmount,
+        double scaleOutCooldownMinutes,
+        long scaleInAmount,
+        double scaleInCooldownMinutes) {
 
         var rules = new[] {
             //Scale out
@@ -200,7 +160,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
     }
 
 
-    public Azure.Management.Monitor.Models.AutoscaleProfile DeafaultAutoScaleProfile(string queueUri, long scaleSetSize) {
+    public Azure.Management.Monitor.Models.AutoscaleProfile DefaultAutoScaleProfile(string queueUri, long scaleSetSize) {
         return CreateAutoScaleProfile(queueUri, 1L, scaleSetSize, scaleSetSize, 1, 10.0, 1, 5.0);
     }
 

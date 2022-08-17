@@ -15,7 +15,7 @@ public class TimerWorkers {
         _nodeOps = context.NodeOperations;
     }
 
-    public async Async.Task ProcessScalesets(Scaleset scaleset) {
+    public async Async.Task ProcessScalesets(Service.Scaleset scaleset) {
         _log.Verbose($"checking scaleset for updates: {scaleset.ScalesetId}");
 
         await _scaleSetOps.UpdateConfigs(scaleset);
