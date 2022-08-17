@@ -354,7 +354,7 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
       'Proxy'                 //16
       'QueueFileChanges'      //17
       'QueueNodeHeartbeat'    //18
-      'QueueProxyHeartbeat'   //19
+      'QueueProxyUpdate'   //19
       'QueueSignalrEvents'    //20
       'QueueTaskHeartbeat'    //21
       'QueueUpdates'          //22
