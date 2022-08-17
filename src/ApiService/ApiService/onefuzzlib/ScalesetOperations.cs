@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.ResourceManager.Compute;
+using Microsoft.Azure.Management.Monitor.Models;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -19,15 +20,18 @@ public interface IScalesetOperations : IStatefulOrm<Scaleset, ScalesetState> {
     Async.Task SetSize(Scaleset scaleset, int size);
 
     Async.Task SyncScalesetSize(Scaleset scaleset);
-    Async.Task<Scaleset> SetShutdown(Scaleset scaleset, bool now);
 
     Async.Task<Scaleset> SetState(Scaleset scaleset, ScalesetState state);
+    public Async.Task<List<ScalesetNodeState>> GetNodes(Scaleset scaleset);
+    IAsyncEnumerable<Scaleset> SearchStates(IEnumerable<ScalesetState> states);
+    Async.Task<Scaleset> SetShutdown(Scaleset scaleset, bool now);
+    Async.Task<Scaleset> SetSize(Scaleset scaleset, long size);
 }
 
 public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetOperations>, IScalesetOperations {
     const string SCALESET_LOG_PREFIX = "scalesets: ";
 
-    ILogTracer _log;
+    private readonly ILogTracer _log;
 
     public ScalesetOperations(ILogTracer log, IOnefuzzContext context)
         : base(log, context) {
@@ -105,33 +109,26 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         } else {
             await ResizeShrink(scaleset, vmssSize - scaleset.Size);
         }
-
-    }
-
-    static int ScalesetMaxSize(string image) {
-        // https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/
-        // virtual-machine-scale-sets-placement-groups#checklist-for-using-large-scale-sets
-        if (image.StartsWith('/'))
-            return 600;
-        else
-            return 1000;
-    }
-
-    static int MaxSize(Scaleset scaleset) {
-        return ScalesetMaxSize(scaleset.Image);
     }
 
     public async Async.Task<Scaleset> SetState(Scaleset scaleset, ScalesetState state) {
-        if (scaleset.State == state)
+        if (scaleset.State == state) {
             return scaleset;
+        }
 
-        if (scaleset.State == ScalesetState.Halt)
+        if (scaleset.State == ScalesetState.Halt) {
+            // terminal state, unable to change
+            // TODO: should this throw an exception instead?
             return scaleset;
+        }
 
         var updatedScaleSet = scaleset with { State = state };
         var r = await Update(updatedScaleSet);
         if (!r.IsOk) {
-            _log.Error($"Failed to update scaleset {scaleset.ScalesetId} when updating state from {scaleset.State} to {state}");
+            var msg = "Failed to update scaleset {scaleSet.ScalesetId} when updating state from {scaleSet.State} to {state}";
+            _log.Error(msg);
+            // TODO: this should really return OneFuzzResult but then that propagates up the call stack
+            throw new Exception(msg);
         }
 
         if (state == ScalesetState.Resize) {
@@ -144,14 +141,17 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             );
         }
 
-        return updatedScaleSet;
+        return scaleset;
     }
 
     async Async.Task<Scaleset> SetFailed(Scaleset scaleset, Error error) {
-        if (scaleset.Error is not null)
+        if (scaleset.Error is not null) {
+            // already has an error, don't overwrite it
             return scaleset;
+        }
 
         var updatedScaleset = await SetState(scaleset with { Error = error }, ScalesetState.CreationFailed);
+
         await _context.Events.SendEvent(new EventScalesetFailed(scaleset.ScalesetId, scaleset.PoolName, error));
         return updatedScaleset;
     }
@@ -174,9 +174,9 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         var pool = await _context.PoolOperations.GetByName(scaleSet.PoolName);
 
-        if (!pool.IsOk || pool.OkV is null) {
+        if (!pool.IsOk) {
             _log.Error($"{SCALESET_LOG_PREFIX} unable to find pool during config update. pool:{scaleSet.PoolName}, scaleset_id:{scaleSet.ScalesetId}");
-            await SetFailed(scaleSet, pool.ErrorV!);
+            await SetFailed(scaleSet, pool.ErrorV);
             return;
         }
 
@@ -189,13 +189,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
     }
 
-    public async Async.Task<Scaleset> SetShutdown(Scaleset scaleset, bool now) {
-        if (now) {
-            return await SetState(scaleset, ScalesetState.Halt);
-        } else {
-            return await SetState(scaleset, ScalesetState.Shutdown);
-        }
-    }
+    public Async.Task<Scaleset> SetShutdown(Scaleset scaleset, bool now)
+        => SetState(scaleset, now ? ScalesetState.Halt : ScalesetState.Shutdown);
 
     public async Async.Task<Scaleset> Setup(Scaleset scaleset) {
         //# TODO: How do we pass in SSH configs for Windows?  Previously
@@ -210,11 +205,13 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             if (!result.IsOk) {
                 return await SetFailed(scaleset, result.ErrorV);
             }
+
             //TODO : why are we saving scaleset here ? 
             var r = await Update(scaleset);
             if (!r.IsOk) {
                 _logTracer.Error($"Failed to save scaleset {scaleset.ScalesetId} due to {r.ErrorV}");
             }
+
             return scaleset;
         }
 
@@ -285,6 +282,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         if (!rr.IsOk) {
             _logTracer.Error($"Failed to save scale data for scale set: {scaleset.ScalesetId}");
         }
+
         return scaleset;
     }
 
@@ -308,7 +306,6 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
     }
 
-
     async Async.Task<OneFuzzResultVoid> TryEnableAutoScaling(Scaleset scaleset) {
         _logTracer.Info($"Trying to add auto scaling for scaleset {scaleset.ScalesetId}");
 
@@ -331,30 +328,30 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         var autoScaleConfig = await _context.AutoScaleOperations.GetSettingsForScaleset(scaleset.ScalesetId);
 
-        Azure.Management.Monitor.Models.AutoscaleProfile autoScaleProfile;
         if (poolQueueUri is null) {
             var failedToFindQueueUri = OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_FIND, $"Failed to get pool queue uri for scaleset {scaleset.ScalesetId}");
             _logTracer.Error(failedToFindQueueUri.ErrorV.ToString());
             return failedToFindQueueUri;
-        } else {
-
-            if (autoScaleConfig is null) {
-                autoScaleProfile = _context.AutoScaleOperations.DeafaultAutoScaleProfile(poolQueueUri!, capacity.Value);
-            } else {
-                _logTracer.Info("Using existing auto scale settings from database");
-                autoScaleProfile = _context.AutoScaleOperations.CreateAutoScaleProfile(
-                        poolQueueUri!,
-                        autoScaleConfig.Min,
-                        autoScaleConfig.Max,
-                        autoScaleConfig.Default,
-                        autoScaleConfig.ScaleOutAmount,
-                        autoScaleConfig.ScaleOutCoolDown,
-                        autoScaleConfig.ScaleInAmount,
-                        autoScaleConfig.ScaleInCoolDown
-                    );
-
-            }
         }
+
+        AutoscaleProfile autoScaleProfile;
+        if (autoScaleConfig is null) {
+            autoScaleProfile = _context.AutoScaleOperations.DefaultAutoScaleProfile(poolQueueUri!, capacity.Value);
+        } else {
+            _logTracer.Info("Using existing auto scale settings from database");
+            autoScaleProfile = _context.AutoScaleOperations.CreateAutoScaleProfile(
+                    poolQueueUri!,
+                    autoScaleConfig.Min,
+                    autoScaleConfig.Max,
+                    autoScaleConfig.Default,
+                    autoScaleConfig.ScaleOutAmount,
+                    autoScaleConfig.ScaleOutCooldown,
+                    autoScaleConfig.ScaleInAmount,
+                    autoScaleConfig.ScaleInCooldown
+                );
+
+        }
+
         _logTracer.Info($"Added auto scale resource to scaleset: {scaleset.ScalesetId}");
         return await _context.AutoScaleOperations.AddAutoScaleToVmss(scaleset.ScalesetId, autoScaleProfile);
     }
@@ -391,6 +388,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         } else {
             return await SetState(scaleset, ScalesetState.Setup);
         }
+
         return scaleset;
     }
 
@@ -665,6 +663,50 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             await foreach (var node in nodes) {
                 await _context.NodeOperations.SendStopIfFree(node);
             }
+        }
+    }
+
+    public async Task<List<ScalesetNodeState>> GetNodes(Scaleset scaleset) {
+        // Be in at-least 'setup' before checking for the list of VMs
+        if (scaleset.State == ScalesetState.Init) {
+            return new List<ScalesetNodeState>();
+        }
+
+        var (nodes, azureNodes) = await (
+            _context.NodeOperations.SearchStates(scaleset.ScalesetId).ToListAsync().AsTask(),
+            _context.VmssOperations.ListInstanceIds(scaleset.ScalesetId));
+
+        var result = new List<ScalesetNodeState>();
+        foreach (var (machineId, instanceId) in azureNodes) {
+            var node = nodes.FirstOrDefault(n => n.MachineId == machineId);
+            result.Add(new ScalesetNodeState(
+                MachineId: machineId,
+                InstanceId: instanceId,
+                node?.State));
+        }
+
+        return result;
+    }
+
+    public IAsyncEnumerable<Scaleset> SearchStates(IEnumerable<ScalesetState> states)
+        => QueryAsync(Query.EqualAnyEnum("state", states));
+
+    public Async.Task<Scaleset> SetSize(Scaleset scaleset, long size) {
+        var permittedSize = Math.Min(size, MaxSize(scaleset));
+        if (permittedSize == scaleset.Size) {
+            return Async.Task.FromResult(scaleset); // nothing to do
+        }
+
+        scaleset = scaleset with { Size = permittedSize };
+        return SetState(scaleset, ScalesetState.Resize);
+    }
+
+    private static long MaxSize(Scaleset scaleset) {
+        // https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-placement-groups#checklist-for-using-large-scale-sets
+        if (scaleset.Image.StartsWith("/", StringComparison.Ordinal)) {
+            return 600;
+        } else {
+            return 1000;
         }
     }
 }

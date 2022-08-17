@@ -76,6 +76,7 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IConfig Config => throw new System.NotImplementedException();
 
+    public IAutoScaleOperations AutoScaleOperations => throw new NotImplementedException();
 
     public IDiskOperations DiskOperations => throw new System.NotImplementedException();
 
@@ -112,6 +113,4 @@ public sealed class TestContext : IOnefuzzContext {
     public ISubnet Subnet => throw new NotImplementedException();
 
     public IImageOperations ImageOperations => throw new NotImplementedException();
-
-    public IAutoScaleOperations AutoScaleOperations => throw new NotImplementedException();
 }
