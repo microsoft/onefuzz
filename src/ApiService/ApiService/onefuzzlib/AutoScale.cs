@@ -1,5 +1,9 @@
-﻿using ApiService.OneFuzzLib.Orm;
-using Microsoft.Azure.Management.Monitor;
+﻿using System.Text.Json;
+using System.Threading.Tasks;
+using ApiService.OneFuzzLib.Orm;
+using Azure;
+using Azure.ResourceManager.Monitor;
+using Azure.ResourceManager.Monitor.Models;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -7,9 +11,9 @@ public interface IAutoScaleOperations {
 
     public Async.Task<ResultVoid<(int, string)>> Insert(AutoScale autoScale);
 
-    public Async.Task<AutoScale> GetSettingsForScaleset(Guid scalesetId);
+    public Async.Task<AutoScale?> GetSettingsForScaleset(Guid scalesetId);
 
-    Azure.Management.Monitor.Models.AutoscaleProfile CreateAutoScaleProfile(
+    AutoscaleProfile CreateAutoScaleProfile(
         string queueUri,
         long minAmount,
         long maxAmount,
@@ -19,40 +23,67 @@ public interface IAutoScaleOperations {
         long scaleInAmount,
         double scaleInCooldownMinutes);
 
-    Azure.Management.Monitor.Models.AutoscaleProfile DefaultAutoScaleProfile(string queueUri, long scaleSetSize);
+    AutoscaleProfile DefaultAutoScaleProfile(string queueUri, long scaleSetSize);
+    Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(Guid vmss, AutoscaleProfile autoScaleProfile);
 
-    Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(Guid vmss, Azure.Management.Monitor.Models.AutoscaleProfile autoScaleProfile);
+    OneFuzzResult<AutoscaleSettingResource?> GetAutoscaleSettings(Guid vmss);
+
+    Async.Task<OneFuzzResultVoid> UpdateAutoscale(AutoscaleSettingData autoscale);
 }
 
 
 public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
     public AutoScaleOperations(ILogTracer log, IOnefuzzContext context)
-        : base(log, context) { }
+    : base(log, context) {
 
-    public Async.Task<AutoScale> GetSettingsForScaleset(Guid scalesetId)
-        => GetEntityAsync(scalesetId.ToString(), scalesetId.ToString());
+    }
 
-    public async Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(Guid vmss, Azure.Management.Monitor.Models.AutoscaleProfile autoScaleProfile) {
+    public async Async.Task<AutoScale> Create(
+    Guid scalesetId,
+    long minAmount,
+    long maxAmount,
+    long defaultAmount,
+    long scaleOutAmount,
+    long scaleOutCooldown,
+    long scaleInAmount,
+    long scaleInCooldown) {
+
+        var entry = new AutoScale(
+                scalesetId,
+                Min: minAmount,
+                Max: maxAmount,
+                Default: defaultAmount,
+                ScaleOutAmount: scaleOutAmount,
+                ScaleOutCooldown: scaleOutCooldown,
+                ScaleInAmount: scaleInAmount,
+                ScaleInCooldown: scaleInCooldown
+                );
+
+        var r = await Insert(entry);
+        if (!r.IsOk) {
+            _logTracer.Error($"Failed to save auto-scale record for scaleset ID: {scalesetId}, minAmount: {minAmount}, maxAmount: {maxAmount}, defaultAmount: {defaultAmount}, scaleOutAmount: {scaleOutAmount}, scaleOutCooldown: {scaleOutCooldown}, scaleInAmount: {scaleInAmount}, scaleInCooldown: {scaleInCooldown}");
+        }
+        return entry;
+    }
+
+    public async Async.Task<AutoScale?> GetSettingsForScaleset(Guid scalesetId) {
+        var autoscale = await GetEntityAsync(scalesetId.ToString(), scalesetId.ToString());
+        return autoscale;
+    }
+
+
+    public async Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(Guid vmss, AutoscaleProfile autoScaleProfile) {
         _logTracer.Info($"Checking scaleset {vmss} for existing auto scale resource");
-        var monitorManagementClient = _context.LogAnalytics.GetMonitorManagementClient();
-        var resourceGroup = _context.Creds.GetBaseResourceGroup();
 
-        try {
-            var autoScaleCollections = await monitorManagementClient.AutoscaleSettings.ListByResourceGroupAsync(resourceGroup);
-            do {
-                foreach (var autoScale in autoScaleCollections) {
-                    if (autoScale.TargetResourceUri.EndsWith(vmss.ToString())) {
-                        _logTracer.Warning($"scaleset {vmss} already has an autoscale resource");
-                        return OneFuzzResultVoid.Ok;
-                    }
-                }
-                autoScaleCollections = await monitorManagementClient.AutoscaleSettings.ListByResourceGroupNextAsync(autoScaleCollections.NextPageLink);
-            } while (autoScaleCollections is not null);
+        var existingAutoScaleResource = GetAutoscaleSettings(vmss);
 
-        } catch (Exception ex) {
-            _logTracer.Exception(ex);
-            return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"Failed to check if scaleset {vmss} already has an autoscale resource");
+        if (!existingAutoScaleResource.IsOk) {
+            return OneFuzzResultVoid.Error(existingAutoScaleResource.ErrorV);
+        }
+
+        if (existingAutoScaleResource.OkV != null) {
+            _logTracer.Warning($"Scaleset {vmss} already has auto scale resource");
         }
 
         var autoScaleResource = await CreateAutoScaleResourceFor(vmss, await _context.Creds.GetBaseRegion(), autoScaleProfile);
@@ -60,34 +91,41 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
             return OneFuzzResultVoid.Error(autoScaleResource.ErrorV);
         }
 
-        var diagnosticsResource = await SetupAutoScaleDiagnostics(autoScaleResource.OkV.Id, autoScaleResource.OkV.Name, _context.LogAnalytics.GetWorkspaceId().ToString());
+        var diagnosticsResource = await SetupAutoScaleDiagnostics(autoScaleResource.OkV.Id!, autoScaleResource.OkV.Data.Name, _context.LogAnalytics.GetWorkspaceId().ToString());
         if (!diagnosticsResource.IsOk) {
             return OneFuzzResultVoid.Error(diagnosticsResource.ErrorV);
         }
 
         return OneFuzzResultVoid.Ok;
     }
-    private async Async.Task<OneFuzzResult<Azure.Management.Monitor.Models.AutoscaleSettingResource>> CreateAutoScaleResourceFor(Guid resourceId, string location, Azure.Management.Monitor.Models.AutoscaleProfile profile) {
+    private async Async.Task<OneFuzzResult<AutoscaleSettingResource>> CreateAutoScaleResourceFor(Guid resourceId, string location, AutoscaleProfile profile) {
         _logTracer.Info($"Creating auto-scale resource for: {resourceId}");
-        var monitorManagementClient = _context.LogAnalytics.GetMonitorManagementClient();
 
         var resourceGroup = _context.Creds.GetBaseResourceGroup();
         var subscription = _context.Creds.GetSubscription();
 
         var scalesetUri = $"/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/virtualMachineScaleSets/{resourceId}";
-        var parameters = new Azure.Management.Monitor.Models.AutoscaleSettingResource();
-        parameters.Location = location;
-        parameters.Profiles.Add(profile);
-        parameters.TargetResourceUri = scalesetUri;
-        parameters.Enabled = true;
+        var parameters = new AutoscaleSettingData(location, new[] { profile }) {
+            TargetResourceId = scalesetUri,
+            Enabled = true
+        };
 
         try {
-            var autoScaleResource = await monitorManagementClient.AutoscaleSettings.CreateOrUpdateAsync(resourceGroup, Guid.NewGuid().ToString(), parameters);
-            _logTracer.Info($"Successfully created auto scale resource {autoScaleResource.Id} for {resourceId}");
-            return OneFuzzResult<Azure.Management.Monitor.Models.AutoscaleSettingResource>.Ok(autoScaleResource);
+            var autoScaleResource = await _context.Creds.GetResourceGroupResource().GetAutoscaleSettings()
+                .CreateOrUpdateAsync(WaitUntil.Completed, Guid.NewGuid().ToString(), parameters);
+
+            if (autoScaleResource != null && autoScaleResource.HasValue) {
+                _logTracer.Info($"Successfully created auto scale resource {autoScaleResource.Id} for {resourceId}");
+                return OneFuzzResult<AutoscaleSettingResource>.Ok(autoScaleResource.Value);
+            }
+
+            return OneFuzzResult<AutoscaleSettingResource>.Error(
+                ErrorCode.UNABLE_TO_CREATE,
+                $"Could not get auto scale resource value after creating for {resourceId}"
+            );
         } catch (Exception ex) {
             _logTracer.Exception(ex);
-            return OneFuzzResult<Azure.Management.Monitor.Models.AutoscaleSettingResource>.Error(
+            return OneFuzzResult<AutoscaleSettingResource>.Error(
                 ErrorCode.UNABLE_TO_CREATE,
                 $"unable to create auto scale resource for resource: {resourceId} with profile: {profile}");
         }
@@ -95,7 +133,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
 
     //TODO: Do this using bicep template
-    public Azure.Management.Monitor.Models.AutoscaleProfile CreateAutoScaleProfile(
+    public AutoscaleProfile CreateAutoScaleProfile(
         string queueUri,
         long minAmount,
         long maxAmount,
@@ -107,48 +145,48 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
         var rules = new[] {
             //Scale out
-            new Azure.Management.Monitor.Models.ScaleRule(
-                new Azure.Management.Monitor.Models.MetricTrigger(
+            new ScaleRule(
+                new MetricTrigger(
                     metricName: "ApproximateMessageCount",
-                    metricResourceUri: queueUri,
+                    metricResourceId: queueUri,
                     //check every 15 minutes
                     timeGrain: TimeSpan.FromMinutes(15.0),
-                    // the average amount of messages there are in the pool queue
-                    timeAggregation: Azure.Management.Monitor.Models.TimeAggregationType.Average,
-                    statistic: Azure.Management.Monitor.Models.MetricStatisticType.Count,
+                    statistic: MetricStatisticType.Count,
                     //over the past 15 minutes
                     timeWindow: TimeSpan.FromMinutes(15.0),
+                    // the average amount of messages there are in the pool queue
+                    timeAggregation: TimeAggregationType.Average,
                     //when there is more than 1 message in the pool queue
-                    operatorProperty: Azure.Management.Monitor.Models.ComparisonOperationType.GreaterThanOrEqual,
-                    threshold: 1,
-                    dividePerInstance: false
-                ),
-                new Azure.Management.Monitor.Models.ScaleAction(
-                    direction: Azure.Management.Monitor.Models.ScaleDirection.Increase,
-                    type: Azure.Management.Monitor.Models.ScaleType.ChangeCount,
+                    @operator: ComparisonOperationType.GreaterThanOrEqual,
+                    threshold: 1
+                ) {
+                    DividePerInstance = false
+                },
+                new ScaleAction(
+                    direction: ScaleDirection.Increase,
+                    scaleType: ScaleType.ChangeCount,
                     cooldown: TimeSpan.FromMinutes(scaleOutCooldownMinutes)
                 ) { Value = scaleOutAmount.ToString()}
             ),
             //Scale In
-            new Azure.Management.Monitor.Models.ScaleRule(
-                new Azure.Management.Monitor.Models.MetricTrigger(
+            new ScaleRule(
+                new MetricTrigger(
                     metricName: "ApproximateMessageCount",
-                    metricResourceUri: queueUri,
+                    metricResourceId: queueUri,
                     //check every 10 minutes
                     timeGrain: TimeSpan.FromMinutes(10.0),
-                    // the average amount of messages there are in the pool queue
-                    timeAggregation: Azure.Management.Monitor.Models.TimeAggregationType.Average,
-                    statistic: Azure.Management.Monitor.Models.MetricStatisticType.Count,
+                    statistic: MetricStatisticType.Count,
                     //over the past 10 minutes
                     timeWindow: TimeSpan.FromMinutes(10.0),
+                    // the average amount of messages there are in the pool queue
+                    timeAggregation: TimeAggregationType.Average,
                     //when there is more than 1 message in the pool queue
-                    operatorProperty: Azure.Management.Monitor.Models.ComparisonOperationType.Equals,
-                    threshold: 0,
-                    dividePerInstance: false
-                ),
-                new Azure.Management.Monitor.Models.ScaleAction(
-                    direction: Azure.Management.Monitor.Models.ScaleDirection.Decrease,
-                    type: Azure.Management.Monitor.Models.ScaleType.ChangeCount,
+                    @operator: ComparisonOperationType.EqualsValue,
+                    threshold: 0
+                ) { DividePerInstance = false},
+                new ScaleAction(
+                    direction: ScaleDirection.Decrease,
+                    scaleType: ScaleType.ChangeCount,
                     cooldown: TimeSpan.FromMinutes(scaleInCooldownMinutes)
                 ) { Value = scaleInAmount.ToString()}
             )
@@ -156,31 +194,106 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
         // Auto scale tuning guidance:
         //https://docs.microsoft.com/en-us/azure/architecture/best-practices/auto-scaling
-        return new Azure.Management.Monitor.Models.AutoscaleProfile(Guid.NewGuid().ToString(), new Azure.Management.Monitor.Models.ScaleCapacity(minAmount.ToString(), maxAmount.ToString(), defaultAmount.ToString()), rules);
+        return new AutoscaleProfile(Guid.NewGuid().ToString(), new ScaleCapacity(minAmount.ToString(), maxAmount.ToString(), defaultAmount.ToString()), rules);
     }
 
 
-    public Azure.Management.Monitor.Models.AutoscaleProfile DefaultAutoScaleProfile(string queueUri, long scaleSetSize) {
+    public AutoscaleProfile DefaultAutoScaleProfile(string queueUri, long scaleSetSize) {
         return CreateAutoScaleProfile(queueUri, 1L, scaleSetSize, scaleSetSize, 1, 10.0, 1, 5.0);
     }
 
 
-    private async Async.Task<OneFuzzResult<Azure.Management.Monitor.Models.DiagnosticSettingsResource>> SetupAutoScaleDiagnostics(string autoScaleResourceUri, string autoScaleResourceName, string logAnalyticsWorkspaceId) {
-        var logSettings = new Azure.Management.Monitor.Models.LogSettings(true) { Category = "alllogs", RetentionPolicy = new Azure.Management.Monitor.Models.RetentionPolicy(true, 30) };
-        var monitorManagementClient = _context.LogAnalytics.GetMonitorManagementClient();
+    private async Async.Task<OneFuzzResult<DiagnosticSettingsResource>> SetupAutoScaleDiagnostics(string autoScaleResourceUri, string autoScaleResourceName, string logAnalyticsWorkspaceId) {
+        var logSettings = new LogSettings(true) { Category = "allLogs", RetentionPolicy = new RetentionPolicy(true, 30) };
 
         try {
-            var parameters = new Azure.Management.Monitor.Models.DiagnosticSettingsResource();
+            var parameters = new DiagnosticSettingsData {
+                WorkspaceId = logAnalyticsWorkspaceId
+            };
             parameters.Logs.Add(logSettings);
-            parameters.WorkspaceId = logAnalyticsWorkspaceId;
-            var diagnostics = await monitorManagementClient.DiagnosticSettings.CreateOrUpdateAsync(resourceUri: autoScaleResourceUri, name: $"{autoScaleResourceName}-diagnostics", parameters: parameters);
-            return OneFuzzResult.Ok(diagnostics);
+            var diagnostics = await _context.Creds.GetResourceGroupResource().GetDiagnosticSettings().CreateOrUpdateAsync(WaitUntil.Completed, $"{autoScaleResourceName}-diagnostics", parameters);
+            if (diagnostics != null && diagnostics.HasValue) {
+                return OneFuzzResult.Ok(diagnostics.Value);
+            }
+            return OneFuzzResult<DiagnosticSettingsResource>.Error(
+                ErrorCode.UNABLE_TO_CREATE,
+                $"The resulting diagnostics settings resource was null when attempting to create for {autoScaleResourceUri}"
+            );
         } catch (Exception ex) {
             _logTracer.Exception(ex);
-            return OneFuzzResult<Azure.Management.Monitor.Models.DiagnosticSettingsResource>.Error(
+            return OneFuzzResult<DiagnosticSettingsResource>.Error(
                     ErrorCode.UNABLE_TO_CREATE,
                     $"unable to setup diagnostics for auto-scale resource: {autoScaleResourceUri}"
                 );
         }
+    }
+
+    public OneFuzzResult<AutoscaleSettingResource?> GetAutoscaleSettings(Guid vmss) {
+        _logTracer.Info($"Checking scaleset {vmss} for existing auto scale resource");
+        var monitorManagementClient = _context.LogAnalytics.GetMonitorManagementClient();
+        var resourceGroup = _context.Creds.GetBaseResourceGroup();
+
+        try {
+            var autoscale = _context.Creds.GetResourceGroupResource().GetAutoscaleSettings()
+                .ToEnumerable()
+                .Where(autoScale => autoScale.Data.TargetResourceId.EndsWith(vmss.ToString()))
+                .FirstOrDefault();
+
+            if (autoscale != null) {
+                _logTracer.Info($"Found autoscale settings for {vmss}");
+                return OneFuzzResult.Ok<AutoscaleSettingResource?>(autoscale);
+            }
+
+        } catch (Exception ex) {
+            _logTracer.Exception(ex);
+            return OneFuzzResult<AutoscaleSettingResource?>.Error(ErrorCode.INVALID_CONFIGURATION, $"Failed to check if scaleset {vmss} already has an autoscale resource");
+        }
+        return OneFuzzResult.Ok<AutoscaleSettingResource?>(null);
+    }
+
+    public async Task<OneFuzzResultVoid> UpdateAutoscale(AutoscaleSettingData autoscale) {
+        _logTracer.Info($"Updating auto scale resource: {autoscale.Name}");
+
+        try {
+            var newResource = await _context.Creds.GetResourceGroupResource().GetAutoscaleSettings().CreateOrUpdateAsync(
+                WaitUntil.Started,
+                autoscale.Name,
+                autoscale
+            );
+
+            _logTracer.Info($"Successfully updated auto scale resource: {autoscale.Name}");
+        } catch (RequestFailedException ex) {
+            _logTracer.Exception(ex);
+            return OneFuzzResultVoid.Error(
+                ErrorCode.UNABLE_TO_UPDATE,
+                $"unable to update auto scale resource with name: {autoscale.Name} and profile: {JsonSerializer.Serialize(autoscale)}"
+            );
+        }
+
+        return OneFuzzResultVoid.Ok;
+    }
+
+    public static ScaleRule ShutdownScalesetRule(string queueUri) {
+        return new ScaleRule(
+           // Scale in if there are 0 or more messages in the queue (aka: every time)
+           new MetricTrigger(
+               "ApproximateMessageCount",
+               queueUri,
+               // Check every 5 minutes
+               new TimeSpan(0, 5, 0),
+               MetricStatisticType.Sum,
+               // Over the past 10 minutes
+               new TimeSpan(0, 5, 0),
+               // The average amount of messages there are in the pool queue
+               TimeAggregationType.Average,
+               ComparisonOperationType.GreaterThanOrEqual,
+               0
+           ) { DividePerInstance = false },
+           new ScaleAction(
+               ScaleDirection.Decrease,
+               ScaleType.ChangeCount,
+               new TimeSpan(0, 5, 0)
+           ) { Value = "1" }
+       );
     }
 }

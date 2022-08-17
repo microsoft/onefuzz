@@ -1,4 +1,4 @@
-﻿using System.Net;
+﻿using System.Threading.Tasks;
 using Azure;
 using Azure.Core;
 using Azure.Data.Tables;
@@ -39,6 +39,8 @@ public interface IVmssOperations {
         string password,
         string sshPublicKey,
         IDictionary<string, string> tags);
+
+    Async.Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter);
 }
 
 public class VmssOperations : IVmssOperations {
@@ -141,14 +143,36 @@ public class VmssOperations : IVmssOperations {
 
     public async Async.Task<IDictionary<Guid, string>> ListInstanceIds(Guid name) {
         _log.Verbose($"get instance IDs for scaleset {name}");
+        var results = new Dictionary<Guid, string>();
+        VirtualMachineScaleSetResource res;
         try {
-            return await GetVmssResource(name)
-                .GetVirtualMachineScaleSetVms()
-                .ToDictionaryAsync(vm => Guid.Parse(vm.Data.VmId), vm => vm.Data.InstanceId);
-        } catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.NotFound || ex.ErrorCode == "NotFound") {
-            _log.Exception(ex, $"scaleset does not exist: {name}");
-            return new Dictionary<Guid, string>();
+            var r = await GetVmssResource(name).GetAsync();
+            res = r.Value;
+        } catch (Exception ex) when (ex is RequestFailedException) {
+            _log.Verbose($"vm does not exist {name}");
+            return results;
         }
+
+        if (res is null) {
+            _log.Verbose($"vm does not exist {name}");
+            return results;
+        } else {
+            try {
+                await foreach (var instance in res!.GetVirtualMachineScaleSetVms().AsAsyncEnumerable()) {
+                    if (instance is not null) {
+                        Guid key;
+                        if (Guid.TryParse(instance.Data.VmId, out key)) {
+                            results[key] = instance.Data.InstanceId;
+                        } else {
+                            _log.Error($"failed to convert vmId {instance.Data.VmId} to Guid");
+                        }
+                    }
+                }
+            } catch (Exception ex) when (ex is RequestFailedException || ex is CloudException) {
+                _log.Exception(ex, $"vm does not exist {name}");
+            }
+        }
+        return results;
     }
 
     public async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(Guid name, Guid vmId) {
@@ -323,6 +347,19 @@ public class VmssOperations : IVmssOperations {
             _log.Exception(ex);
             return OneFuzzResultVoid.Error(ErrorCode.VM_CREATE_FAILED, new[] { ex.Message });
         }
+    }
+
+    public async Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter) {
+        try {
+            var vmss = await _creds.GetResourceGroupResource().GetVirtualMachineScaleSetAsync(name.ToString());
+            return vmss.Value.GetVirtualMachineScaleSetVms().ToEnumerable()
+                .Where(vm => filter == null || filter(vm))
+                .Select(vm => vm.Data.InstanceId)
+                .ToList();
+        } catch (RequestFailedException ex) {
+            _log.Error($"cloud error listing vmss: {name} ({ex})");
+        }
+        return null;
     }
 
     public Async.Task<IReadOnlyList<string>> ListAvailableSkus(string region)

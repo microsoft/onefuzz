@@ -59,4 +59,8 @@ sealed class TestLogTracer : ILogTracer {
     public ILogTracer WithTags(IEnumerable<(string, string)>? tags) {
         return this; // TODO?
     }
+
+    public void Error(Error error) {
+        Error(error.ToString());
+    }
 }
