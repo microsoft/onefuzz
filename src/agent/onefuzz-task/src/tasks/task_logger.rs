@@ -3,12 +3,15 @@
 
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use azure_core::HttpError;
-use azure_storage::core::prelude::*;
+use azure_core::error::HttpError;
+use azure_core::StatusCode;
+use azure_storage::prelude::StorageClient;
 use azure_storage_blobs::prelude::*;
+use azure_storage_blobs::{container::operations::ListBlobsResponse, prelude::AsContainerClient};
+use futures::TryStreamExt;
 use onefuzz_telemetry::{LogTrace, LoggingEvent};
-use reqwest::{StatusCode, Url};
-use std::{path::PathBuf, sync::Arc, time::Duration};
+use reqwest::Url;
+use std::{path::PathBuf, time::Duration};
 use uuid::Uuid;
 
 use tokio::sync::broadcast::{error::TryRecvError, Receiver};
@@ -45,7 +48,7 @@ trait LogWriter<T>: Send + Sync {
 
 /// Writes logs on azure blobs
 pub struct BlobLogWriter {
-    container_client: Arc<ContainerClient>,
+    container_client: ContainerClient,
     task_id: Uuid,
     machine_id: Uuid,
     blob_id: usize,
@@ -65,17 +68,17 @@ impl BlobLogWriter {
     ) -> Result<Self> {
         let container_client = TaskLogger::create_container_client(&log_container)?;
         let prefix = format!("{}/{}", task_id, machine_id);
-        let blob_list = container_client
+        let blob_list: Vec<ListBlobsResponse> = container_client
             .list_blobs()
-            .prefix(prefix.as_str())
-            .execute()
-            .await
-            .map_err(|e| anyhow!(e.to_string()))?;
-        let mut blob_ids = blob_list
-            .blobs
-            .blobs
-            .iter()
-            .filter_map(|b| {
+            .prefix(prefix.clone())
+            .into_stream()
+            .try_collect()
+            .await?;
+
+        let mut blob_ids: Vec<usize> = blob_list
+            .into_iter()
+            .flat_map(|lbr: ListBlobsResponse| lbr.blobs.blobs)
+            .filter_map(|b: Blob| {
                 b.name
                     .strip_prefix(&prefix)
                     .map(PathBuf::from)
@@ -90,16 +93,17 @@ impl BlobLogWriter {
                             .and_then(|f| f.parse::<usize>().ok())
                     })
             })
-            .collect::<Vec<_>>();
+            .collect();
+
         blob_ids.sort_unstable();
 
         let blob_id = match blob_ids.into_iter().last() {
             Some(id) => id,
             None => {
-                let blob_client = container_client.as_blob_client(format!("{}/1.log", prefix));
+                let blob_client = container_client.blob_client(format!("{}/1.log", prefix));
                 blob_client
                     .put_append_blob()
-                    .execute()
+                    .into_future()
                     .await
                     .map_err(|e| anyhow!(e.to_string()))?;
                 1
@@ -120,7 +124,7 @@ impl BlobLogWriter {
 impl LogWriter<BlobLogWriter> for BlobLogWriter {
     async fn write_logs(&self, logs: &[LoggingEvent]) -> Result<WriteLogResponse> {
         let blob_name = self.get_blob_name();
-        let blob_client = self.container_client.as_blob_client(blob_name);
+        let blob_client = self.container_client.blob_client(blob_name);
         let data_stream = logs
             .iter()
             .flat_map(|log_event| match log_event {
@@ -150,25 +154,24 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
         let result = blob_client
             .append_block(data_stream)
             .condition_max_size(self.max_log_size)
-            .execute()
+            .into_future()
             .await;
 
         match result {
             Ok(_r) => Ok(WriteLogResponse::Success),
             Err(e) => match e.downcast_ref::<HttpError>() {
-                Some(HttpError::StatusCode { status: s, body: b }) => {
-                    if s == &StatusCode::PRECONDITION_FAILED
-                        && b.contains("MaxBlobSizeConditionNotMet")
+                Some(herr) => match herr.status() {
+                    StatusCode::PreconditionFailed
+                        if herr.error_code() == Some("MaxBlobSizeConditionNotMet") =>
                     {
                         Ok(WriteLogResponse::MaxSizeReached)
-                    } else if s == &StatusCode::CONFLICT && b.contains("BlockCountExceedsLimit") {
-                        Ok(WriteLogResponse::MaxSizeReached)
-                    } else if s == &StatusCode::PAYLOAD_TOO_LARGE {
-                        Ok(WriteLogResponse::MessageTooLarge)
-                    } else {
-                        Err(anyhow!(e.to_string()))
                     }
-                }
+                    StatusCode::Conflict if herr.error_code() == Some("BlockCountExceedsLimit") => {
+                        Ok(WriteLogResponse::MaxSizeReached)
+                    }
+                    StatusCode::PayloadTooLarge => Ok(WriteLogResponse::MessageTooLarge),
+                    _ => Err(anyhow!(e.to_string())),
+                },
                 _ => Err(anyhow!(e.to_string())),
             },
         }
@@ -184,10 +187,11 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
 
         let blob_client = self
             .container_client
-            .as_blob_client(new_writer.get_blob_name());
+            .blob_client(new_writer.get_blob_name());
+
         blob_client
             .put_append_blob()
-            .execute()
+            .into_future()
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 
@@ -239,7 +243,7 @@ impl TaskLogger {
         }
     }
 
-    fn create_container_client(log_container: &Url) -> Result<Arc<ContainerClient>> {
+    fn create_container_client(log_container: &Url) -> Result<ContainerClient> {
         let account = log_container
             .domain()
             .and_then(|d| d.split('.').next())
@@ -254,10 +258,8 @@ impl TaskLogger {
             .query()
             .ok_or(anyhow!("Invalid log container"))?;
 
-        let http_client = azure_core::new_http_client();
-        let storage_account_client =
-            StorageAccountClient::new_sas_token(http_client, account, sas_token)?;
-        Ok(storage_account_client.as_container_client(container))
+        let client = StorageClient::new_sas_token(account, sas_token)?;
+        Ok(client.container_client(container))
     }
 
     async fn event_loop<T: Send + Sized>(self, context: LoopContext<T>) -> Result<LoopContext<T>> {
@@ -448,7 +450,10 @@ impl SpawnedLogger {
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, sync::RwLock};
+    use std::{
+        collections::HashMap,
+        sync::{Arc, RwLock},
+    };
 
     use super::*;
     use onefuzz_telemetry::LogTrace;
@@ -469,17 +474,29 @@ mod tests {
         let log_container = Url::parse(&url)?;
         let client = TaskLogger::create_container_client(&log_container)?;
 
-        let response = client
+        let responses: Vec<_> = client
             .list_blobs()
             .prefix("job1/tak1/1")
-            .execute()
+            .into_stream()
+            .try_collect()
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 
-        println!("blob prefix {:?}", response.blobs.blob_prefix);
-        for blob in response.blobs.blobs {
-            println!("{}", blob.name);
+        println!(
+            "blob prefix {:?}",
+            responses
+                .first()
+                .expect("expected some blobs")
+                .blobs
+                .blob_prefix
+        );
+
+        for response in responses {
+            for blob in response.blobs.blobs {
+                println!("{}", blob.name);
+            }
         }
+
         Ok(())
     }
 
@@ -661,17 +678,20 @@ mod tests {
 
         let container_client = blob_writer.container_client.clone();
 
-        let blobs = container_client
+        let pages: Vec<_> = container_client
             .list_blobs()
             .prefix(blob_prefix.clone())
-            .execute()
+            .into_stream()
+            .try_collect()
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 
+        let blobs: Vec<_> = pages.into_iter().flat_map(|p| p.blobs.blobs).collect();
+
         // test initial blob creation
-        assert_eq!(blobs.blobs.blobs.len(), 1, "expected exactly one blob");
+        assert_eq!(blobs.len(), 1, "expected exactly one blob");
         assert_eq!(
-            blobs.blobs.blobs[0].name,
+            blobs[0].name,
             format!("{}/1.log", &blob_prefix),
             "Wrong file name"
         );
@@ -704,15 +724,17 @@ mod tests {
         // testing the creation of new blob when we call get_next_writer()
         let _blob_writer = blob_writer.get_next_writer().await?;
 
-        let blobs = container_client
+        let pages: Vec<_> = container_client
             .list_blobs()
             .prefix(blob_prefix.clone())
-            .execute()
+            .into_stream()
+            .try_collect()
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 
-        assert_eq!(blobs.blobs.blobs.len(), 2, "expected exactly 2 blob");
-        let blobs = blobs.blobs.blobs;
+        let blobs: Vec<_> = pages.into_iter().flat_map(|p| p.blobs.blobs).collect();
+
+        assert_eq!(blobs.len(), 2, "expected exactly 2 blob");
 
         assert!(
             blobs
