@@ -951,7 +951,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         # No need to update tables when in shutdown state
         if self.state == ScalesetState.shutdown:
-            return
+            return None
 
         logging.info(
             "Trying to sync auto scale settings for scaleset %s" % self.scaleset_id
