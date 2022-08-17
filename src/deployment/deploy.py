@@ -1147,6 +1147,7 @@ class Client:
                             ],
                             env=dict(os.environ, CLI_DEBUG="1"),
                         )
+
                         # enable dotnet function
                         logger.info(f"enabling DOTNET function: {dotnet_name}")
                         subprocess.check_output(
