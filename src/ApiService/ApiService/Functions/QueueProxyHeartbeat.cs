@@ -15,7 +15,7 @@ public class QueueProxyHearbeat {
     }
 
     [Function("QueueProxyHearbeat")]
-    public async Async.Task Run([QueueTrigger("proxy-heartbeat", Connection = "AzureWebJobsStorage")] string msg) {
+    public async Async.Task Run([QueueTrigger("proxy", Connection = "AzureWebJobsStorage")] string msg) {
         _log.Info($"heartbeat: {msg}");
 
         var hb = JsonSerializer.Deserialize<ProxyHeartbeat>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}"); ;
