@@ -19,6 +19,7 @@ def process_scaleset(scaleset: Scaleset) -> None:
     logging.debug("checking scaleset for updates: %s", scaleset.scaleset_id)
 
     scaleset.update_configs()
+    scaleset.sync_auto_scale_settings()
 
     # if the scaleset is touched during cleanup, don't continue to process it
     if scaleset.cleanup_nodes():
