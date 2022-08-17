@@ -1147,6 +1147,10 @@ class Client:
                             ],
                             env=dict(os.environ, CLI_DEBUG="1"),
                         )
+
+                        if function_name == "queue_proxy_update":
+                            dotnet_name = "QueueProxyHeartbeat"
+
                         # enable dotnet function
                         logger.info(f"enabling DOTNET function: {dotnet_name}")
                         subprocess.check_output(
