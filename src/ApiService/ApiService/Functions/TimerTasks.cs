@@ -23,6 +23,7 @@ public class TimerTasks {
 
     [Function("TimerTasks")]
     public async Async.Task Run([TimerTrigger("00:00:15")] TimerInfo myTimer) {
+        _logger.Info("Test");
         var expriredTasks = _taskOperations.SearchExpired();
         await foreach (var task in expriredTasks) {
             _logger.Info($"stopping expired task. job_id:{task.JobId} task_id:{task.TaskId}");
