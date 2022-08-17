@@ -12,8 +12,8 @@ public class QueueWebhooks {
         _webhookMessageLog = webhookMessageLog;
     }
 
-    //[Function("QueueWebhooks")]
-    public async Async.Task Run([QueueTrigger("myqueue-items", Connection = "AzureWebJobsStorage")] string msg) {
+    [Function("QueueWebhooks")]
+    public async Async.Task Run([QueueTrigger("webhook", Connection = "AzureWebJobsStorage")] string msg) {
 
         _log.Info($"Webhook Message Queued: {msg}");
 
