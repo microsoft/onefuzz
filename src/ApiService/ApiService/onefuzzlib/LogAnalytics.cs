@@ -1,5 +1,4 @@
 ﻿using Azure.Core;
-using Microsoft.Azure.Management.Monitor;
 using Microsoft.Azure.Management.OperationalInsights;
 
 namespace Microsoft.OneFuzz.Service;
