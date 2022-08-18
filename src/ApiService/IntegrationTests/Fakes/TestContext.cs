@@ -11,13 +11,12 @@ namespace IntegrationTests.Fakes;
 // of functions as unit or integration tests.
 public sealed class TestContext : IOnefuzzContext {
     public TestContext(ILogTracer logTracer, IStorage storage, ICreds creds, string storagePrefix) {
+        EntityConverter = new EntityConverter();
         ServiceConfiguration = new TestServiceConfiguration(storagePrefix);
-
         Storage = storage;
         Creds = creds;
         Containers = new Containers(logTracer, Storage, Creds, ServiceConfiguration);
         Queue = new Queue(Storage, logTracer);
-
         RequestHandling = new RequestHandling(logTracer);
         TaskOperations = new TaskOperations(logTracer, this);
         NodeOperations = new NodeOperations(logTracer, this);
@@ -29,9 +28,6 @@ public sealed class TestContext : IOnefuzzContext {
         PoolOperations = new PoolOperations(logTracer, this);
         ScalesetOperations = new ScalesetOperations(logTracer, this);
         UserCredentials = new UserCredentials(logTracer, ConfigOperations);
-        EntityConverter = new EntityConverter();
-
-
     }
 
     public TestEvents Events { get; set; } = new();
