@@ -28,8 +28,9 @@ public sealed class TestContext : IOnefuzzContext {
         ConfigOperations = new ConfigOperations(logTracer, this);
         PoolOperations = new PoolOperations(logTracer, this);
         ScalesetOperations = new ScalesetOperations(logTracer, this);
-
         UserCredentials = new UserCredentials(logTracer, ConfigOperations);
+        EntityConverter = new EntityConverter();
+
 
     }
 
@@ -71,6 +72,7 @@ public sealed class TestContext : IOnefuzzContext {
     public IConfigOperations ConfigOperations { get; }
     public IPoolOperations PoolOperations { get; }
     public IScalesetOperations ScalesetOperations { get; }
+    public EntityConverter EntityConverter { get; }
 
     // -- Remainder not implemented --
 
@@ -113,4 +115,6 @@ public sealed class TestContext : IOnefuzzContext {
     public ISubnet Subnet => throw new NotImplementedException();
 
     public IImageOperations ImageOperations => throw new NotImplementedException();
+
+
 }

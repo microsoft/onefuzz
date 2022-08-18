@@ -169,9 +169,9 @@ public class EntityConverter {
         });
     }
 
-    public string ToJsonString<T>(T typedEntity) => JsonSerializer.Serialize(typedEntity, _options);
+    public static string ToJsonString<T>(T typedEntity) => JsonSerializer.Serialize(typedEntity, _options);
 
-    public T? FromJsonString<T>(string value) => JsonSerializer.Deserialize<T>(value, _options);
+    public static T? FromJsonString<T>(string value) => JsonSerializer.Deserialize<T>(value, _options);
 
     public TableEntity ToTableEntity<T>(T typedEntity) where T : EntityBase {
         if (typedEntity == null) {

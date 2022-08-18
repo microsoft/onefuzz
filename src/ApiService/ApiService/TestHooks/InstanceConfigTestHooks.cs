@@ -31,7 +31,7 @@ namespace ApiService.TestHooks {
                 await resp.WriteAsJsonAsync(err);
                 return resp;
             } else {
-                var str = (new EntityConverter()).ToJsonString(config);
+                var str = EntityConverter.ToJsonString(config);
 
                 var resp = req.CreateResponse(HttpStatusCode.OK);
                 await resp.WriteStringAsync(str);

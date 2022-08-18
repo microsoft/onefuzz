@@ -29,7 +29,7 @@ public class AgentEvents {
         }
 
         var envelope = request.OkV;
-        _log.Info($"node event: machine_id: {envelope.MachineId} event: {_context.EntityConverter.ToJsonString(envelope)}");
+        _log.Info($"node event: machine_id: {envelope.MachineId} event: {EntityConverter.ToJsonString(envelope)}");
 
         var error = envelope.Event switch {
             NodeStateUpdate updateEvent => await OnStateUpdate(envelope.MachineId, updateEvent),
@@ -143,7 +143,7 @@ public class AgentEvents {
             Error? error = null;
             if (ev.Data is NodeDoneEventData doneData) {
                 if (doneData.Error is not null) {
-                    var errorText = _context.EntityConverter.ToJsonString(doneData);
+                    var errorText = EntityConverter.ToJsonString(doneData);
                     error = new Error(ErrorCode.TASK_FAILED, Errors: new string[] { errorText });
                     _log.Error($"node 'done' with error: machine_id:{machineId}, data:{errorText}");
                 }
