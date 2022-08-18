@@ -34,7 +34,7 @@ popd
 
 # Build SharpFuzz and our dynamic loader harness for `libfuzzer-dotnet`.
 pushd src/agent/LibFuzzerDotnetLoader
-dotnet publish . -c Release -o $ARTIFACTS/LibFuzzerDotnetLoader --sc -r linux-x64 -p:PublishSingleFile=true
+dotnet publish . -c Release -o $ARTIFACTS/LibFuzzerDotnetLoader --sc -r linux-x64
 popd
 
 # Build `libfuzzer-dotnet`.
