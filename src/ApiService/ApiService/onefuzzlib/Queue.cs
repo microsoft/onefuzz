@@ -11,7 +11,7 @@ public interface IQueue {
     Async.Task SendMessage(string name, string message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
     Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
     Async.Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
-    ResourceIdentifier GeResourceId(string queueName, StorageType storageType);
+    ResourceIdentifier GetResourceId(string queueName, StorageType storageType);
     Task<IList<T>> PeekQueue<T>(string name, StorageType storageType);
     Async.Task<bool> RemoveFirstMessage(string name, StorageType storageType);
     Async.Task ClearQueue(string name, StorageType storageType);
@@ -118,7 +118,7 @@ public class Queue : IQueue {
                 return true;
             }
         }
-        return false; ;
+        return false;
     }
 
     public async Task<IList<T>> PeekQueue<T>(string name, StorageType storageType) {
@@ -145,7 +145,7 @@ public class Queue : IQueue {
         return result;
     }
 
-    public ResourceIdentifier GeResourceId(string queueName, StorageType storageType) {
+    public ResourceIdentifier GetResourceId(string queueName, StorageType storageType) {
         var account = _storage.GetPrimaryAccount(storageType);
         return new ResourceIdentifier($"{account}/services/queue/queues/{queueName}");
     }

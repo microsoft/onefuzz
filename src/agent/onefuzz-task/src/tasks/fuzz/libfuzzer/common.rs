@@ -4,6 +4,7 @@
 use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
 use anyhow::{Context, Result};
 use arraydeque::{ArrayDeque, Wrapping};
+use async_trait::async_trait;
 use futures::future::try_join_all;
 use onefuzz::{
     fs::list_files,
@@ -40,8 +41,30 @@ pub fn default_workers() -> usize {
     usize::max(1, cpus - 1)
 }
 
+/// LibFuzzer subtypes that share custom configuration or process initialization.
+#[async_trait]
+pub trait LibFuzzerType: Send + Sync {
+    /// Extra configuration values expected by the `Config` for this type.
+    type Config: Send + Sync;
+
+    /// Method that constructs a `LibFuzzer` configured as appropriate for the subtype.
+    ///
+    /// This may include things like setting special environment variables, or overriding
+    /// the defaults or values of some command arguments.
+    fn from_config(config: &Config<Self>) -> LibFuzzer;
+
+    /// Perform any environmental setup common to all targets of this fuzzer type.
+    ///
+    /// Defaults to a no-op.
+    ///
+    /// Executed after initializating remote-backed corpora.
+    async fn extra_setup(_config: &Config<Self>) -> Result<()> {
+        Ok(())
+    }
+}
+
 #[derive(Debug, Deserialize, Clone)]
-pub struct Config {
+pub struct Config<L: LibFuzzerType + Send + Sync + ?Sized> {
     pub inputs: SyncedDir,
     pub readonly_inputs: Option<Vec<SyncedDir>>,
     pub crashes: SyncedDir,
@@ -61,14 +84,23 @@ pub struct Config {
 
     #[serde(flatten)]
     pub common: CommonConfig,
+
+    #[serde(flatten)]
+    pub extra: L::Config,
 }
 
-pub struct LibFuzzerFuzzTask {
-    config: Config,
+pub struct LibFuzzerFuzzTask<L>
+where
+    L: LibFuzzerType,
+{
+    config: Config<L>,
 }
 
-impl LibFuzzerFuzzTask {
-    pub fn new(config: Config) -> Result<Self> {
+impl<L> LibFuzzerFuzzTask<L>
+where
+    L: LibFuzzerType,
+{
+    pub fn new(config: Config<L>) -> Result<Self> {
         Ok(Self { config })
     }
 
@@ -81,6 +113,7 @@ impl LibFuzzerFuzzTask {
 
     pub async fn run(&self) -> Result<()> {
         self.init_directories().await?;
+        L::extra_setup(&self.config).await?;
         self.verify().await?;
 
         let hb_client = self.config.common.init_heartbeat(None).await?;
@@ -108,12 +141,8 @@ impl LibFuzzerFuzzTask {
             directories.append(&mut dirs);
         }
 
-        let fuzzer = LibFuzzer::new(
-            &self.config.target_exe,
-            &self.config.target_options,
-            &self.config.target_env,
-            &self.config.common.setup_dir,
-        );
+        let fuzzer = L::from_config(&self.config);
+
         fuzzer
             .verify(self.config.check_fuzzer_help, Some(directories))
             .await
@@ -209,8 +238,8 @@ impl LibFuzzerFuzzTask {
 
         let fuzzer = LibFuzzer::new(
             &self.config.target_exe,
-            &self.config.target_options,
-            &self.config.target_env,
+            self.config.target_options.clone(),
+            self.config.target_env.clone(),
             &self.config.common.setup_dir,
         );
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs).await?;

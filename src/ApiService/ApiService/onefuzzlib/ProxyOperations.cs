@@ -12,6 +12,7 @@ public interface IProxyOperations : IStatefulOrm<Proxy, VmState> {
     Async.Task SaveProxyConfig(Proxy proxy);
     bool IsOutdated(Proxy proxy);
     Async.Task<Proxy?> GetOrCreate(string region);
+
 }
 public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IProxyOperations {
 
@@ -126,7 +127,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             if (entry.EndTime < DateTimeOffset.UtcNow) {
                 await _context.ProxyForwardOperations.Delete(entry);
             } else {
-                forwards.Add(new Forward(long.Parse(entry.Port), entry.DstPort, entry.DstIp));
+                forwards.Add(new Forward(entry.Port, entry.DstPort, entry.DstIp));
             }
         }
         return forwards;

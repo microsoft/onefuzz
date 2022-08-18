@@ -1,7 +1,10 @@
 param name string
 param owner string
 param clientId string
+
+@secure()
 param clientSecret string
+
 param signedExpiry string
 param app_func_issuer string
 param app_func_audiences array
@@ -351,7 +354,7 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
       'Proxy'                 //16
       'QueueFileChanges'      //17
       'QueueNodeHeartbeat'    //18
-      'QueueProxyUpdate'      //19
+      'QueueProxyUpdate'   //19
       'QueueSignalrEvents'    //20
       'QueueTaskHeartbeat'    //21
       'QueueUpdates'          //22

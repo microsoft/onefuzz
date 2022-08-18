@@ -106,6 +106,8 @@ public interface ILogTracer {
 
     void Critical(string message);
     void Error(string message);
+
+    void Error(Error error);
     void Event(string evt, IReadOnlyDictionary<string, double>? metrics);
     void Exception(Exception ex, string message = "", IReadOnlyDictionary<string, double>? metrics = null);
     void ForceFlush();
@@ -258,6 +260,10 @@ public class LogTracer : ILogTracerInternal {
             logger.Flush();
         }
     }
+
+    public void Error(Error error) {
+        Error(error.ToString());
+    }
 }
 
 public interface ILogTracerFactory {
@@ -275,4 +281,28 @@ public class LogTracerFactory : ILogTracerFactory {
         return new(correlationId, tags, _loggers, severityLevel);
     }
 
+}
+
+public interface ILogSinks {
+    List<ILog> GetLogSinks();
+}
+
+public class LogSinks : ILogSinks {
+    private readonly List<ILog> _loggers;
+
+    public LogSinks(IServiceConfig config) {
+        _loggers = new List<ILog>();
+        foreach (var dest in config.LogDestinations) {
+            _loggers.Add(
+                dest switch {
+                    LogDestination.AppInsights => new AppInsights(config.ApplicationInsightsInstrumentationKey!),
+                    LogDestination.Console => new Console(),
+                    _ => throw new Exception($"Unhandled Log Destination type: {dest}"),
+                }
+            );
+        }
+    }
+    public List<ILog> GetLogSinks() {
+        return _loggers;
+    }
 }

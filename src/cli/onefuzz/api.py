@@ -9,6 +9,7 @@ import os
 import pkgutil
 import re
 import subprocess  # nosec
+import time
 import uuid
 from enum import Enum
 from shutil import which
@@ -48,7 +49,7 @@ ONEFUZZ_GUID_NAMESPACE = uuid.UUID("27f25e3f-6544-4b69-b309-9b096c5a9cbc")
 ONE_HOUR_IN_SECONDS = 3600
 
 DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
-DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest"
+DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest"
 
 REPRO_SSH_FORWARD = "1337:127.0.0.1:1337"
 
@@ -553,7 +554,9 @@ class Repro(Endpoint):
         return None
 
     def _dbg_windows(
-        self, repro: models.Repro, debug_command: Optional[str]
+        self,
+        repro: models.Repro,
+        debug_command: Optional[str],
     ) -> Optional[str]:
         """Setup an SSH tunnel, then connect via CDB over SSH tunnel"""
 
@@ -564,33 +567,54 @@ class Repro(Endpoint):
         ):
             raise Exception("vm setup failed: %s" % repro.state)
 
+        NUM_RETRIES = 10
         bind_all = which("wslpath") is not None and repro.os == enums.OS.windows
         proxy = "*:" + REPRO_SSH_FORWARD if bind_all else REPRO_SSH_FORWARD
         with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
             dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
-            if debug_command:
-                dbg_script = [debug_command, "qq"]
-                with temp_file("db.script", "\r\n".join(dbg_script)) as dbg_script_path:
-                    dbg += ["-cf", _wsl_path(dbg_script_path)]
+            while NUM_RETRIES > 0:
+                NUM_RETRIES = NUM_RETRIES - 1
+                if debug_command:
+                    dbg_script = [debug_command, "qq"]
+                    with temp_file(
+                        "db.script", "\r\n".join(dbg_script)
+                    ) as dbg_script_path:
+                        dbg += ["-cf", _wsl_path(dbg_script_path)]
 
+                        logging.debug("launching: %s", dbg)
+                        try:
+                            # security note: dbg is built from content coming from the server,
+                            # which is trusted in this context.
+                            return subprocess.run(  # nosec
+                                dbg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                            ).stdout.decode(errors="ignore")
+                        except subprocess.CalledProcessError as err:
+                            if err.returncode == 0x8007274D:
+                                self.logger.info(
+                                    "failed to connect to debug-server trying again in 10 seconds..."
+                                )
+                                time.sleep(10.0)
+                            else:
+                                self.logger.error(
+                                    "debug failed: %s",
+                                    err.output.decode(errors="ignore"),
+                                )
+                                raise err
+                else:
                     logging.debug("launching: %s", dbg)
+                    # security note:  dbg is built from content coming from the
+                    # server, which is trusted in this context.
                     try:
-                        # security note: dbg is built from content coming from the server,
-                        # which is trusted in this context.
-                        return subprocess.run(  # nosec
-                            dbg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-                        ).stdout.decode(errors="ignore")
+                        subprocess.check_call(dbg)  # nosec
+                        break
                     except subprocess.CalledProcessError as err:
-                        self.logger.error(
-                            "debug failed: %s", err.output.decode(errors="ignore")
-                        )
-                        raise err
-            else:
-                logging.debug("launching: %s", dbg)
-                # security note:  dbg is built from content coming from the
-                # server, which is trusted in this context.
-                subprocess.call(dbg)  # nosec
-
+                        if err.returncode == 0x8007274D:
+                            self.logger.info(
+                                "failed to connect to debug-server trying again in 10 seconds..."
+                            )
+                            time.sleep(10.0)
+                        else:
+                            break
         return None
 
     def connect(
@@ -635,9 +659,9 @@ class Repro(Endpoint):
             )
 
         repro = wait(func)
-
+        # give time for debug server to initialize
+        time.sleep(30.0)
         result: Optional[str] = None
-
         if repro.os == enums.OS.windows:
             result = self._dbg_windows(repro, debug_command)
         elif repro.os == enums.OS.linux:

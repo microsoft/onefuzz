@@ -281,7 +281,10 @@ pub fn parse_call_stack(text: &str) -> Result<Vec<StackEntry>> {
     asan::parse_asan_call_stack(text)
 }
 
-fn digest_iter(data: impl IntoIterator<Item = impl AsRef<[u8]>>, depth: Option<usize>) -> String {
+pub fn digest_iter(
+    data: impl IntoIterator<Item = impl AsRef<[u8]>>,
+    depth: Option<usize>,
+) -> String {
     let mut ctx = Sha256::new();
 
     if let Some(depth) = depth {

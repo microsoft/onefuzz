@@ -2,15 +2,17 @@
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IWebhookOperations {
+public interface IWebhookOperations : IOrm<Webhook> {
     Async.Task SendEvent(EventMessage eventMessage);
     Async.Task<Webhook?> GetByWebhookId(Guid webhookId);
     Async.Task<bool> Send(WebhookMessageLog messageLog);
+    Task<EventPing> Ping(Webhook webhook);
 }
 
 public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
@@ -47,6 +49,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
             var (status, reason) = r.ErrorV;
             _logTracer.Error($"Failed to replace webhook message log due to [{status}] {reason}");
         }
+        await _context.WebhookMessageLogOperations.QueueWebhook(message);
     }
 
     public async Async.Task<bool> Send(WebhookMessageLog messageLog) {
@@ -71,6 +74,14 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
             return true;
         }
         return false;
+    }
+
+    public async Task<EventPing> Ping(Webhook webhook) {
+        var ping = new EventPing(Guid.NewGuid());
+        var instanceId = await _context.Containers.GetInstanceId();
+        var instanceName = _context.Creds.GetInstanceName();
+        await AddEvent(webhook, new EventMessage(Guid.NewGuid(), EventType.Ping, ping, instanceId, instanceName));
+        return ping;
     }
 
     // Not converting to bytes, as it's not neccessary in C#. Just keeping as string.
@@ -113,6 +124,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 public interface IWebhookMessageLogOperations : IOrm<WebhookMessageLog> {
     IAsyncEnumerable<WebhookMessageLog> SearchExpired();
     public Async.Task ProcessFromQueue(WebhookMessageQueueObj obj);
+    public Async.Task QueueWebhook(WebhookMessageLog webhookLog);
 }
 
 

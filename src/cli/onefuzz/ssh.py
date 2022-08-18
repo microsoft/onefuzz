@@ -60,6 +60,7 @@ def build_ssh_command(
     proxy: Optional[str] = None,
     port: Optional[int] = None,
     command: Optional[str] = None,
+    num_auth_retries: Optional[int] = None,
 ) -> Generator:
     with temp_file("id_rsa", private_key, set_owner_only=True) as ssh_key:
         cmd = [
@@ -82,6 +83,9 @@ def build_ssh_command(
         if log_level <= logging.DEBUG:
             cmd += ["-v"]
 
+        if num_auth_retries:
+            cmd += ["authentication-retries", str(num_auth_retries)]
+
         if command:
             cmd += [command]
 
@@ -97,9 +101,15 @@ def ssh_connect(
     call: bool = False,
     port: Optional[int] = None,
     command: Optional[str] = None,
+    num_auth_retries: Optional[int] = None,
 ) -> Generator:
     with build_ssh_command(
-        ip, private_key, proxy=proxy, port=port, command=command
+        ip,
+        private_key,
+        proxy=proxy,
+        port=port,
+        command=command,
+        num_auth_retries=num_auth_retries,
     ) as cmd:
         logging.info("launching ssh: %s", " ".join(cmd))
 

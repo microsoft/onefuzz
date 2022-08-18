@@ -115,10 +115,6 @@ public sealed class Storage : IStorage, IDisposable {
                     continue;
                 }
 
-                if (string.IsNullOrEmpty(account.Data.PrimaryEndpoints.Blob)) {
-                    continue;
-                }
-
                 if (!account.Data.Tags.ContainsKey(storageTypeTagKey)
                     || account.Data.Tags[storageTypeTagKey] != "corpus") {
                     continue;
@@ -132,14 +128,12 @@ public sealed class Storage : IStorage, IDisposable {
         });
     }
 
-    public string GetPrimaryAccount(StorageType storageType) {
-        return
-            storageType switch {
-                StorageType.Corpus => GetFuzzStorage(),
-                StorageType.Config => GetFuncStorage(),
-                _ => throw new NotImplementedException(),
-            };
-    }
+    public string GetPrimaryAccount(StorageType storageType)
+        => storageType switch {
+            StorageType.Corpus => GetFuzzStorage(),
+            StorageType.Config => GetFuncStorage(),
+            var x => throw new NotSupportedException($"invalid StorageType: {x}"),
+        };
 
     public Async.Task<(string, string)> GetStorageAccountNameAndKey(string accountId) {
         return _cache.GetOrCreateAsync<(string, string)>($"GetStorageAccountNameAndKey-{accountId}", async cacheEntry => {
@@ -171,7 +165,7 @@ public sealed class Storage : IStorage, IDisposable {
             case StorageType.Config:
                 return new[] { GetFuncStorage() };
             default:
-                throw new NotImplementedException();
+                throw new NotSupportedException();
         }
     }
 

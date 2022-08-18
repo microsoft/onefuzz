@@ -27,8 +27,10 @@ public sealed class TestContext : IOnefuzzContext {
         NodeMessageOperations = new NodeMessageOperations(logTracer, this);
         ConfigOperations = new ConfigOperations(logTracer, this);
         PoolOperations = new PoolOperations(logTracer, this);
+        ScalesetOperations = new ScalesetOperations(logTracer, this);
 
         UserCredentials = new UserCredentials(logTracer, ConfigOperations);
+
     }
 
     public TestEvents Events { get; set; } = new();
@@ -43,7 +45,7 @@ public sealed class TestContext : IOnefuzzContext {
                 Job j => JobOperations.Insert(j),
                 NodeTasks nt => NodeTasksOperations.Insert(nt),
                 InstanceConfig ic => ConfigOperations.Insert(ic),
-                _ => throw new NotImplementedException($"Need to add an TestContext.InsertAll case for {x.GetType()} entities"),
+                _ => throw new NotSupportedException($"You will need to add an TestContext.InsertAll case for {x.GetType()} entities"),
             }));
 
     // Implementations:
@@ -54,7 +56,7 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IStorage Storage { get; }
     public ICreds Creds { get; }
-    public IContainers Containers { get; }
+    public IContainers Containers { get; set; }
     public IQueue Queue { get; }
     public IUserCredentials UserCredentials { get; set; }
 
@@ -68,11 +70,13 @@ public sealed class TestContext : IOnefuzzContext {
     public INodeMessageOperations NodeMessageOperations { get; }
     public IConfigOperations ConfigOperations { get; }
     public IPoolOperations PoolOperations { get; }
+    public IScalesetOperations ScalesetOperations { get; }
 
     // -- Remainder not implemented --
 
     public IConfig Config => throw new System.NotImplementedException();
 
+    public IAutoScaleOperations AutoScaleOperations => throw new NotImplementedException();
 
     public IDiskOperations DiskOperations => throw new System.NotImplementedException();
 
@@ -92,8 +96,6 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IReproOperations ReproOperations => throw new System.NotImplementedException();
 
-    public IScalesetOperations ScalesetOperations => throw new System.NotImplementedException();
-
     public IScheduler Scheduler => throw new System.NotImplementedException();
 
     public ISecretsOperations SecretsOperations => throw new System.NotImplementedException();
@@ -109,4 +111,6 @@ public sealed class TestContext : IOnefuzzContext {
     public INsgOperations NsgOperations => throw new NotImplementedException();
 
     public ISubnet Subnet => throw new NotImplementedException();
+
+    public IImageOperations ImageOperations => throw new NotImplementedException();
 }

@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -139,3 +140,115 @@ public record JobSearch(
 );
 
 public record NodeAddSshKeyPost(Guid MachineId, string PublicKey);
+
+public record ReproGet(Guid? VmId);
+
+public record ProxyGet(
+    Guid? ScalesetId,
+    Guid? MachineId,
+    int? DstPort);
+
+public record ProxyCreate(
+    Guid ScalesetId,
+    Guid MachineId,
+    int DstPort,
+    int Duration
+);
+
+public record ProxyDelete(
+    Guid ScalesetId,
+    Guid MachineId,
+    int? DstPort
+);
+
+public record ProxyReset(
+    string Region
+);
+
+public record ScalesetCreate(
+    PoolName PoolName,
+    string VmSku,
+    string Image,
+    string? Region,
+    [property: Range(1, long.MaxValue)]
+    long Size,
+    bool SpotInstances,
+    Dictionary<string, string> Tags,
+    bool EphemeralOsDisks = false,
+    AutoScaleOptions? AutoScale = null
+);
+
+public record AutoScaleOptions(
+    [property: Range(0, long.MaxValue)] long Min,
+    [property: Range(1, long.MaxValue)] long Max,
+    [property: Range(0, long.MaxValue)] long Default,
+    [property: Range(1, long.MaxValue)] long ScaleOutAmount,
+    [property: Range(1, long.MaxValue)] long ScaleOutCooldown,
+    [property: Range(1, long.MaxValue)] long ScaleInAmount,
+    [property: Range(1, long.MaxValue)] long ScaleInCooldown
+);
+
+public record ScalesetSearch(
+    Guid? ScalesetId = null,
+    List<ScalesetState>? State = null,
+    bool IncludeAuth = false
+);
+
+public record ScalesetStop(
+    Guid ScalesetId,
+    bool Now
+);
+
+public record ScalesetUpdate(
+    Guid ScalesetId,
+    [property: Range(1, long.MaxValue)]
+    long? Size
+);
+
+public record TaskGet(Guid TaskId);
+
+public record TaskSearch(
+    Guid? JobId,
+    Guid? TaskId,
+    List<TaskState> State);
+
+public record PoolSearch(
+    Guid? PoolId = null,
+    PoolName? Name = null,
+    List<PoolState>? State = null
+);
+
+public record PoolStop(
+    PoolName Name,
+    bool Now
+);
+
+public record PoolCreate(
+    PoolName Name,
+    Os Os,
+    Architecture Arch,
+    bool Managed,
+    Guid? ClientId = null
+);
+
+public record WebhookCreate(
+    string Name,
+    Uri Url,
+    List<EventType> EventTypes,
+    string? SecretToken,
+    WebhookMessageFormat? MessageFormat
+);
+
+
+public record WebhookSearch(Guid? WebhookId);
+
+public record WebhookGet(Guid WebhookId);
+
+public record WebhookUpdate(
+    Guid WebhookId,
+    string? Name,
+    Uri? Url,
+    List<EventType>? EventTypes,
+    string? SecretToken,
+    WebhookMessageFormat? MessageFormat
+);

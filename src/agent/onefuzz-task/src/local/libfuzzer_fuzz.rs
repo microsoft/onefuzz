@@ -9,7 +9,7 @@ use crate::{
     },
     tasks::{
         config::CommonConfig,
-        fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
+        fuzz::libfuzzer::generic::{Config, LibFuzzerFuzzTask},
     },
 };
 use anyhow::Result;
@@ -51,6 +51,7 @@ pub fn build_fuzz_config(
         check_fuzzer_help,
         expect_crash_on_failure,
         common,
+        extra: (),
     };
 
     Ok(config)

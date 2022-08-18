@@ -26,6 +26,7 @@ public class TimerRetention {
     }
 
 
+    [Function("TimerRetention")]
     public async Async.Task Run([TimerTrigger("20:00:00")] TimerInfo t) {
         var now = DateTimeOffset.UtcNow;
 

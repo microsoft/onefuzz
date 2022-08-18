@@ -91,6 +91,58 @@ public record JobResponse(
         );
 }
 
+public record PoolGetResult(
+    PoolName Name,
+    Guid PoolId,
+    Os Os,
+    bool Managed,
+    Architecture Arch,
+    PoolState State,
+    Guid? ClientId,
+    List<Node>? Nodes,
+    AgentConfig? Config,
+    List<WorkSetSummary>? WorkQueue,
+    List<ScalesetSummary>? ScalesetSummary
+) : BaseResponse();
+
+public record ScalesetResponse(
+    PoolName PoolName,
+    Guid ScalesetId,
+    ScalesetState State,
+    Authentication? Auth,
+    string VmSku,
+    string Image,
+    string Region,
+    long Size,
+    bool? SpotInstances,
+    bool EmphemeralOsDisks,
+    bool NeedsConfigUpdate,
+    Error? Error,
+    Guid? ClientId,
+    Guid? ClientObjectId,
+    Dictionary<string, string> Tags,
+    List<ScalesetNodeState>? Nodes
+) : BaseResponse() {
+    public static ScalesetResponse ForScaleset(Scaleset s)
+        => new(
+            PoolName: s.PoolName,
+            ScalesetId: s.ScalesetId,
+            State: s.State,
+            Auth: s.Auth,
+            VmSku: s.VmSku,
+            Image: s.Image,
+            Region: s.Region,
+            Size: s.Size,
+            SpotInstances: s.SpotInstances,
+            EmphemeralOsDisks: s.EphemeralOsDisks,
+            NeedsConfigUpdate: s.NeedsConfigUpdate,
+            Error: s.Error,
+            ClientId: s.ClientId,
+            ClientObjectId: s.ClientObjectId,
+            Tags: s.Tags,
+            Nodes: null);
+}
+
 public class BaseResponseConverter : JsonConverter<BaseResponse> {
     public override BaseResponse? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         return null;
@@ -101,3 +153,18 @@ public class BaseResponseConverter : JsonConverter<BaseResponse> {
         JsonSerializer.Serialize(writer, value, eventType, options);
     }
 }
+
+public record ProxyGetResult(
+    string? Ip,
+    Forward Forward
+);
+
+public record ProxyInfo(
+    string Region,
+    Guid ProxyId,
+    VmState State
+);
+
+public record ProxyList(
+    List<ProxyInfo> Proxies
+);

@@ -35,14 +35,14 @@ pub enum ProxyError {
     },
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct Forward {
     pub src_port: u16,
     pub dst_ip: String,
     pub dst_port: u16,
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct ConfigData {
     pub instance_id: Uuid,
     pub instance_telemetry_key: Option<InstanceTelemetryKey>,
@@ -54,7 +54,7 @@ pub struct ConfigData {
     pub forwards: Vec<Forward>,
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct NotifyResponse<'a> {
     pub region: &'a str,
     pub proxy_id: Uuid,

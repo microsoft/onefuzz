@@ -138,29 +138,49 @@ public static class JobStateHelper {
 
 
 public static class ScalesetStateHelper {
-    private static readonly IReadOnlySet<ScalesetState> _canUpdate = new HashSet<ScalesetState> { ScalesetState.Init, ScalesetState.Resize };
-    private static readonly IReadOnlySet<ScalesetState> _needsWork =
-        new HashSet<ScalesetState>{
+    private static readonly HashSet<ScalesetState> _canUpdate =
+        new() {
+            ScalesetState.Init,
+            ScalesetState.Resize,
+        };
+
+    private static readonly HashSet<ScalesetState> _needsWork =
+        new() {
             ScalesetState.Init,
             ScalesetState.Setup,
             ScalesetState.Resize,
             ScalesetState.Shutdown,
-            ScalesetState.Halt
+            ScalesetState.Halt,
         };
-    private static readonly IReadOnlySet<ScalesetState> _available = new HashSet<ScalesetState> { ScalesetState.Resize, ScalesetState.Running };
-    private static readonly IReadOnlySet<ScalesetState> _resizing = new HashSet<ScalesetState> { ScalesetState.Halt, ScalesetState.Init, ScalesetState.Setup };
+
+    private static readonly HashSet<ScalesetState> _available =
+        new() {
+            ScalesetState.Resize,
+            ScalesetState.Running,
+        };
+
+    private static readonly HashSet<ScalesetState> _resizing =
+        new() {
+            ScalesetState.Halt,
+            ScalesetState.Init,
+            ScalesetState.Setup,
+        };
 
     /// set of states that indicate the scaleset can be updated
-    public static IReadOnlySet<ScalesetState> CanUpdate => _canUpdate;
+    public static bool CanUpdate(this ScalesetState state) => _canUpdate.Contains(state);
+    public static IReadOnlySet<ScalesetState> CanUpdateStates => _canUpdate;
 
     /// set of states that indicate work is needed during eventing
-    public static IReadOnlySet<ScalesetState> NeedsWork => _needsWork;
+    public static bool NeedsWork(this ScalesetState state) => _needsWork.Contains(state);
+    public static IReadOnlySet<ScalesetState> NeedsWorkStates => _needsWork;
 
     /// set of states that indicate if it's available for work
-    public static IReadOnlySet<ScalesetState> Available => _available;
+    public static bool IsAvailable(this ScalesetState state) => _available.Contains(state);
+    public static IReadOnlySet<ScalesetState> AvailableStates => _available;
 
     /// set of states that indicate scaleset is resizing
-    public static IReadOnlySet<ScalesetState> Resizing => _resizing;
+    public static bool IsResizing(this ScalesetState state) => _resizing.Contains(state);
+    public static IReadOnlySet<ScalesetState> ResizingStates => _resizing;
 }
 
 
@@ -294,6 +314,13 @@ public static class NodeStateHelper {
 
     private static readonly IReadOnlySet<NodeState> _canProcessNewWork =
         new HashSet<NodeState>(new[] { NodeState.Free });
+
+    private static readonly IReadOnlySet<NodeState> _busy =
+        new HashSet<NodeState>(new[] { NodeState.Busy });
+
+    public static IReadOnlySet<NodeState> BusyStates => _busy;
+
+    public static IReadOnlySet<NodeState> NeedsWorkStates => _needsWork;
 
     public static bool NeedsWork(this NodeState state) => _needsWork.Contains(state);
 

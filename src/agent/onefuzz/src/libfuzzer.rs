@@ -34,18 +34,18 @@ pub struct LibFuzzerMergeOutput {
     pub added_feature_count: i32,
 }
 
-pub struct LibFuzzer<'a> {
+pub struct LibFuzzer {
     setup_dir: PathBuf,
     exe: PathBuf,
-    options: &'a [String],
-    env: &'a HashMap<String, String>,
+    options: Vec<String>,
+    env: HashMap<String, String>,
 }
 
-impl<'a> LibFuzzer<'a> {
+impl LibFuzzer {
     pub fn new(
         exe: impl Into<PathBuf>,
-        options: &'a [String],
-        env: &'a HashMap<String, String>,
+        options: Vec<String>,
+        env: HashMap<String, String>,
         setup_dir: impl Into<PathBuf>,
     ) -> Self {
         Self {
@@ -102,19 +102,19 @@ impl<'a> LibFuzzer<'a> {
             .machine_id()
             .await?
             .target_exe(&self.exe)
-            .target_options(self.options)
+            .target_options(&self.options)
             .setup_dir(&self.setup_dir)
             .set_optional(corpus_dir, |tester, corpus_dir| {
                 tester.input_corpus(&corpus_dir)
             })
             .set_optional(fault_dir, |tester, fault_dir| tester.crashes(&fault_dir));
 
-        for (k, v) in self.env {
+        for (k, v) in &self.env {
             cmd.env(k, expand.evaluate_value(v)?);
         }
 
         // Pass custom option arguments.
-        for o in expand.evaluate(self.options)? {
+        for o in expand.evaluate(&self.options)? {
             cmd.arg(o);
         }
 
@@ -307,10 +307,10 @@ impl<'a> LibFuzzer<'a> {
         timeout: Option<u64>,
         retry: u64,
     ) -> Result<TestResult> {
-        let mut options = self.options.to_owned();
+        let mut options = self.options.clone();
         options.push("{input}".to_string());
 
-        let mut tester = Tester::new(&self.setup_dir, &self.exe, &options, self.env)
+        let mut tester = Tester::new(&self.setup_dir, &self.exe, &options, &self.env)
             .check_asan_stderr(true)
             .check_retry_count(retry)
             .add_setup_to_path(true)
@@ -430,7 +430,12 @@ mod tests {
         let input_file = temp_setup_dir.path().join("input.txt");
         write_file(&input_file, "input").await?;
 
-        let fuzzer = LibFuzzer::new(bad_bin, &options, &env, &temp_setup_dir.path());
+        let fuzzer = LibFuzzer::new(
+            bad_bin,
+            options.clone(),
+            env.clone(),
+            &temp_setup_dir.path(),
+        );
 
         // verify catching bad exits with -help=1
         assert!(
@@ -453,7 +458,12 @@ mod tests {
             "checking false without inputs"
         );
 
-        let fuzzer = LibFuzzer::new(good_bin, &options, &env, &temp_setup_dir.path());
+        let fuzzer = LibFuzzer::new(
+            good_bin,
+            options.clone(),
+            env.clone(),
+            &temp_setup_dir.path(),
+        );
         // verify good exits with -help=1
         assert!(
             fuzzer.verify(true, None).await.is_ok(),

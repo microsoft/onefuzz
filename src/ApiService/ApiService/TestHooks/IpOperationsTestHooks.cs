@@ -28,10 +28,13 @@ namespace ApiService.TestHooks {
             var name = query["name"];
 
             var nic = await _ipOps.GetPublicNic(rg, name);
-
-            var resp = req.CreateResponse(HttpStatusCode.OK);
-            await resp.WriteStringAsync(nic.Get().Value.Data.Name);
-            return resp;
+            if (nic != null) {
+                var resp = req.CreateResponse(HttpStatusCode.OK);
+                await resp.WriteStringAsync((await nic.GetAsync()).Value.Data.Name);
+                return resp;
+            } else {
+                return req.CreateResponse(HttpStatusCode.NotFound);
+            }
         }
 
         [Function("GetIpTestHook")]
@@ -45,9 +48,13 @@ namespace ApiService.TestHooks {
 
             var ip = await _ipOps.GetIp(rg, name);
 
-            var resp = req.CreateResponse(HttpStatusCode.OK);
-            await resp.WriteStringAsync(ip.Get().Value.Data.Name);
-            return resp;
+            if (ip != null) {
+                var resp = req.CreateResponse(HttpStatusCode.OK);
+                await resp.WriteStringAsync((await ip.GetAsync()).Value.Data.Name);
+                return resp;
+            } else {
+                return req.CreateResponse(HttpStatusCode.NotFound);
+            }
         }
 
 

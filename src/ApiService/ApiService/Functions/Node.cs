@@ -29,7 +29,7 @@ public class Node {
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeSearch>(req);
         if (!request.IsOk) {
-            return await _context.RequestHandling.NotOk(req, request.ErrorV, "pool get");
+            return await _context.RequestHandling.NotOk(req, request.ErrorV, "node get");
         }
 
         var search = request.OkV;
@@ -55,7 +55,7 @@ public class Node {
         var nodes = await _context.NodeOperations.SearchStates(
             states: search.State,
             poolName: search.PoolName,
-            scaleSetId: search.ScalesetId).ToListAsync();
+            scalesetId: search.ScalesetId).ToListAsync();
 
         return await RequestHandling.Ok(req, nodes.Select(NodeToNodeSearchResult));
     }

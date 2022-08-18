@@ -67,7 +67,7 @@ public abstract class NodeTestBase : FunctionTestBase {
         var func = new NodeFunction(Logger, auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-        Assert.Equal(0, result.Body.Length);
+        Assert.Equal("[]", BodyAsString(result));
     }
 
     [Fact]

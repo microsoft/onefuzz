@@ -44,6 +44,10 @@ namespace ApiService.OneFuzzLib.Orm {
         public async IAsyncEnumerable<T> QueryAsync(string? filter = null) {
             var tableClient = await GetTableClient(typeof(T).Name);
 
+            if (filter == "") {
+                filter = null;
+            }
+
             await foreach (var x in tableClient.QueryAsync<TableEntity>(filter).Select(x => _entityConverter.ToRecord<T>(x))) {
                 yield return x;
             }
@@ -201,15 +205,17 @@ namespace ApiService.OneFuzzLib.Orm {
         /// <param name="entity"></param>
         /// <returns></returns>
         public async Async.Task<T?> ProcessStateUpdate(T entity) {
-            TState state = entity.State;
+            TState state = entity.BaseState;
             var func = GetType().GetMethod(state.ToString()) switch {
                 null => null,
                 MethodInfo info => info.CreateDelegate<StateTransition>(this)
             };
 
             if (func != null) {
-                _logTracer.Info($"processing state update: {typeof(T)} - PartitionKey {_partitionKeyGetter?.Value()} {_rowKeyGetter?.Value()} - %s");
+                _logTracer.Info($"processing state update: {typeof(T)} - PartitionKey {_partitionKeyGetter?.Value()} {_rowKeyGetter?.Value()} - {state}");
                 return await func(entity);
+            } else {
+                _logTracer.Info($"State function for state: '{state}' not found on type {typeof(T)}");
             }
             return null;
         }
@@ -219,17 +225,15 @@ namespace ApiService.OneFuzzLib.Orm {
         /// </summary>
         /// <param name="entity"></param>
         /// <param name="MaxUpdates"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
         public async Async.Task<T?> ProcessStateUpdates(T entity, int MaxUpdates = 5) {
             for (int i = 0; i < MaxUpdates; i++) {
-                var state = entity.State;
+                var state = entity.BaseState;
                 var newEntity = await ProcessStateUpdate(entity);
 
                 if (newEntity == null)
                     return null;
 
-                if (newEntity.State.Equals(state)) {
+                if (newEntity.BaseState.Equals(state)) {
                     return newEntity;
                 }
             }

@@ -83,7 +83,7 @@ public record ProxyHeartbeat
 (
     Region Region,
     Guid ProxyId,
-    List<ProxyForward> Forwards,
+    List<Forward> Forwards,
     DateTimeOffset TimeStamp
 );
 
@@ -119,7 +119,7 @@ public record Forward
 public record ProxyForward
 (
     [PartitionKey] Region Region,
-    [RowKey] string Port,
+    [RowKey] long Port,
     Guid ScalesetId,
     Guid MachineId,
     Guid? ProxyId,
@@ -256,8 +256,8 @@ public record Task(
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? EndTime = null,
     UserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
-    List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
-    List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
+    public List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
+    public List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
 }
 
 public record TaskEvent(
@@ -372,20 +372,27 @@ public record InstanceConfig
     }
 }
 
+public record AutoScale(
+    [PartitionKey, RowKey] Guid ScalesetId,
+    long Min,
+    long Max,
+    long Default,
+    long ScaleOutAmount,
+    long ScaleOutCooldown,
+    long ScaleInAmount,
+    long ScaleInCooldown
+) : EntityBase;
 
 public record ScalesetNodeState(
     Guid MachineId,
     string InstanceId,
     NodeState? State
-
 );
-
 
 public record Scaleset(
     [PartitionKey] PoolName PoolName,
     [RowKey] Guid ScalesetId,
     ScalesetState State,
-    Authentication? Auth,
     string VmSku,
     string Image,
     Region Region,
@@ -393,11 +400,12 @@ public record Scaleset(
     bool? SpotInstances,
     bool EphemeralOsDisks,
     bool NeedsConfigUpdate,
-    Error? Error,
-    List<ScalesetNodeState>? Nodes,
-    Guid? ClientId,
-    Guid? ClientObjectId,
-    Dictionary<string, string> Tags
+    Dictionary<string, string> Tags,
+    Authentication? Auth = null,
+    Error? Error = null,
+    Guid? ClientId = null,
+    Guid? ClientObjectId = null
+// 'Nodes' removed when porting from Python: only used in search response
 ) : StatefulEntityBase<ScalesetState>(State);
 
 [JsonConverter(typeof(ContainerConverter))]
@@ -570,13 +578,13 @@ public record Repro(
     [PartitionKey][RowKey] Guid VmId,
     Guid TaskId,
     ReproConfig Config,
-    VmState State,
     Authentication? Auth,
     Os Os,
-    Error? Error,
-    string? Ip,
-    DateTime? EndTime,
-    UserInfo? UserInfo
+    VmState State = VmState.Init,
+    Error? Error = null,
+    string? Ip = null,
+    DateTimeOffset? EndTime = null,
+    UserInfo? UserInfo = null
 ) : StatefulEntityBase<VmState>(State);
 
 // TODO: Make this >1 and < 7*24 (more than one hour, less than seven days)
@@ -594,14 +602,26 @@ public record Pool(
     bool Managed,
     Architecture Arch,
     PoolState State,
-    Guid? ClientId
+    Guid? ClientId = null
 ) : StatefulEntityBase<PoolState>(State) {
     public List<Node>? Nodes { get; set; }
     public AgentConfig? Config { get; set; }
-    public List<WorkSetSummary>? WorkQueue { get; set; }
-    public List<ScalesetSummary>? ScalesetSummary { get; set; }
 }
 
+public record WorkUnitSummary(
+    Guid JobId,
+    Guid TaskId,
+    TaskType TaskType
+);
+
+public record WorkSetSummary(
+    List<WorkUnitSummary> WorkUnits
+);
+
+public record ScalesetSummary(
+    Guid ScalesetId,
+    ScalesetState State
+);
 
 public record ClientCredentials
 (
@@ -623,8 +643,6 @@ public record AgentConfig(
 
 
 
-public record WorkSetSummary();
-public record ScalesetSummary();
 
 public record Vm(
     string Name,
@@ -788,7 +806,25 @@ public record MultipleContainer(List<SyncedDir> SyncedDirs) : IContainerDef;
 
 public class ContainerDefConverter : JsonConverter<IContainerDef> {
     public override IContainerDef? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-        throw new NotImplementedException();
+        if (reader.TokenType == JsonTokenType.StartObject) {
+            var result = (SyncedDir?)JsonSerializer.Deserialize(ref reader, typeof(SyncedDir), options);
+            if (result is null) {
+                return null;
+            }
+
+            return new SingleContainer(result);
+        }
+
+        if (reader.TokenType == JsonTokenType.StartArray) {
+            var result = (List<SyncedDir>?)JsonSerializer.Deserialize(ref reader, typeof(List<SyncedDir>), options);
+            if (result is null) {
+                return null;
+            }
+
+            return new MultipleContainer(result);
+        }
+
+        throw new JsonException("expecting array or object");
     }
 
     public override void Write(Utf8JsonWriter writer, IContainerDef value, JsonSerializerOptions options) {
@@ -800,7 +836,7 @@ public class ContainerDefConverter : JsonConverter<IContainerDef> {
                 JsonSerializer.Serialize(writer, syncedDirs, options);
                 break;
             default:
-                throw new NotImplementedException();
+                throw new NotSupportedException($"invalid IContainerDef type: {value.GetType()}");
         }
     }
 }

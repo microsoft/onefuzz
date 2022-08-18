@@ -35,6 +35,10 @@ from ..azure.auto_scale import (
     add_auto_scale_to_vmss,
     create_auto_scale_profile,
     default_auto_scale_profile,
+    get_auto_scale_profile,
+    get_auto_scale_settings,
+    shutdown_scaleset_rule,
+    update_auto_scale,
 )
 from ..azure.image import get_os
 from ..azure.network import Network
@@ -48,6 +52,7 @@ from ..azure.vmss import (
     get_vmss,
     get_vmss_size,
     list_instance_ids,
+    list_vmss,
     reimage_vmss_nodes,
     resize_vmss,
     update_extensions,
@@ -715,6 +720,63 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         nodes = Node.search_states(scaleset_id=self.scaleset_id)
         for node in nodes:
             node.set_shutdown()
+
+        logging.info(
+            SCALESET_LOG_PREFIX
+            + "checking for existing auto scale settings %s" % self.scaleset_id
+        )
+        auto_scale_policy = get_auto_scale_settings(self.scaleset_id)
+        if auto_scale_policy is not None and not isinstance(auto_scale_policy, Error):
+            for profile in auto_scale_policy.profiles:
+                queue_uri = profile.rules[0].metric_trigger.metric_resource_uri
+
+                # Overwrite any existing scaling rules with one that will
+                #   try to scale in by 1 node at every opportunity
+                profile.rules = [shutdown_scaleset_rule(queue_uri)]
+
+                # Auto scale (the azure service) will not allow you to
+                #   set the minimum number of instances to a number
+                #   smaller than the number of instances
+                #   with scale in protection enabled.
+                #
+                # Since:
+                #   * Nodes can no longer pick up work once the scale set is
+                #       in `shutdown` state
+                #   * All scale out rules are removed
+                # Then: The number of nodes in the scale set with scale in
+                #   protection enabled _must_ strictly decrease over time.
+                #
+                #  This guarantees that _eventually_
+                #   auto scale will scale in the remaining nodes,
+                #   the scale set will have 0 instances,
+                #   and once the scale set is empty, we will delete it.
+                logging.info(
+                    SCALESET_LOG_PREFIX + "Getting nodes with scale in protection"
+                )
+                vms_with_protection = list_vmss(
+                    self.scaleset_id,
+                    lambda vm: vm.protection_policy is not None
+                    and bool(vm.protection_policy.protect_from_scale_in),
+                )
+                logging.info(SCALESET_LOG_PREFIX + str(vms_with_protection))
+                if vms_with_protection is not None:
+                    num_vms_with_protection = len(vms_with_protection)
+                    profile.capacity.minimum = num_vms_with_protection
+                    profile.capacity.default = num_vms_with_protection
+                else:
+                    logging.error(
+                        "Failed to list vmss for scaleset %s" % self.scaleset_id
+                    )
+
+            updated_auto_scale = update_auto_scale(auto_scale_policy)
+            if isinstance(updated_auto_scale, Error):
+                logging.error("Failed to update auto scale %s" % updated_auto_scale)
+        elif isinstance(auto_scale_policy, Error):
+            logging.error(auto_scale_policy)
+        else:
+            logging.info(
+                "No existing auto scale settings found for %s" % self.scaleset_id
+            )
         if size == 0:
             self.halt()
 
@@ -739,6 +801,15 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.scaleset_id,
             )
             self.delete()
+            autoscale_entry = AutoScale.get_settings_for_scaleset(self.scaleset_id)
+            if not autoscale_entry:
+                logging.info(
+                    "Could not find any auto scale settings for scaleset %s"
+                    % self.scaleset_id
+                )
+                return None
+            logging.info("Deleting autoscale entry for scaleset %s" % self.scaleset_id)
+            autoscale_entry.delete()
         else:
             self.save()
 
@@ -875,6 +946,75 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 )
             )
 
+    def sync_auto_scale_settings(self) -> Optional[Error]:
+        from .pools import Pool
+
+        # Only update settings when scaleset is running
+        if self.state != ScalesetState.running:
+            return None
+
+        logging.info(
+            "Trying to sync auto scale settings for scaleset %s" % self.scaleset_id
+        )
+
+        auto_scale_profile = get_auto_scale_profile(self.scaleset_id)
+        if auto_scale_profile is None:
+            auto_scale_profile_failed = Error(
+                code=ErrorCode.UNABLE_TO_FIND,
+                errors=[
+                    "Failed to get auto scale profile for scaleset %s"
+                    % self.scaleset_id
+                ],
+            )
+            logging.error(auto_scale_profile_failed)
+            return auto_scale_profile_failed
+
+        minimum = auto_scale_profile.capacity.minimum
+        maximum = auto_scale_profile.capacity.maximum
+        default = auto_scale_profile.capacity.default
+
+        scale_out_amount = 1
+        scale_out_cooldown = 10
+        scale_in_amount = 1
+        scale_in_cooldown = 15
+
+        for rule in auto_scale_profile.rules:
+            scale_action = rule.scale_action
+            if scale_action.direction == "Increase":
+                scale_out_amount = scale_action.value
+                logging.info("Number of seconds: %d" % scale_out_cooldown)
+                scale_out_cooldown = (
+                    int((scale_action.cooldown).total_seconds() / 60) % 60
+                )
+                logging.info("Number of seconds: %d" % scale_out_cooldown)
+            elif scale_action.direction == "Decrease":
+                scale_in_amount = scale_action.value
+                scale_in_cooldown = (
+                    int((scale_action.cooldown).total_seconds() / 60) % 60
+                )
+            else:
+                pass
+
+        pool = Pool.get_by_name(self.pool_name)
+        if isinstance(pool, Error):
+            logging.error(
+                "Failed to get pool by name: %s error: %s" % (self.pool_name, pool)
+            )
+            return pool
+
+        logging.info("Updating auto scale entry: %s" % self.scaleset_id)
+        AutoScale.update(
+            scaleset_id=self.scaleset_id,
+            min=minimum,
+            max=maximum,
+            default=default,
+            scale_out_amount=scale_out_amount,
+            scale_out_cooldown=scale_out_cooldown,
+            scale_in_amount=scale_in_amount,
+            scale_in_cooldown=scale_in_cooldown,
+        )
+        return None
+
     def try_to_enable_auto_scaling(self) -> Optional[Error]:
         from .pools import Pool
 
@@ -943,6 +1083,44 @@ class AutoScale(BASE_AUTOSCALE, ORMMixin):
         )
         entry.save()
         return entry
+
+    @classmethod
+    def update(
+        cls,
+        *,
+        scaleset_id: UUID,
+        min: int,
+        max: int,
+        default: int,
+        scale_out_amount: int,
+        scale_out_cooldown: int,
+        scale_in_amount: int,
+        scale_in_cooldown: int,
+    ) -> None:
+
+        autoscale = cls.search(query={"scaleset_id": [scaleset_id]})
+        if not autoscale:
+            logging.info(
+                "Could not find any auto scale settings for scaleset %s" % scaleset_id
+            )
+            return None
+        if len(autoscale) != 1:
+            logging.info(
+                "Found more than one autoscaling setting for scaleset %s" % scaleset_id
+            )
+        autoscale[0].scaleset_id = scaleset_id
+        autoscale[0].min = min
+        autoscale[0].max = max
+        autoscale[0].default = default
+        autoscale[0].scale_out_amount = scale_out_amount
+        autoscale[0].scale_out_cooldown = scale_out_cooldown
+        autoscale[0].scale_in_amount = scale_in_amount
+        autoscale[0].scale_in_cooldown = scale_in_cooldown
+
+        autoscale[0].save()
+
+    def delete(self) -> None:
+        super().delete()
 
     @classmethod
     def get_settings_for_scaleset(cls, scaleset_id: UUID) -> Union["AutoScale", None]:

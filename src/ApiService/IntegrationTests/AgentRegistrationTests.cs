@@ -6,8 +6,10 @@ using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.Functions;
 using Xunit;
 using Xunit.Abstractions;
+
 using Async = System.Threading.Tasks;
 using Node = Microsoft.OneFuzz.Service.Node;
+using Pool = Microsoft.OneFuzz.Service.Pool;
 
 namespace IntegrationTests;
 

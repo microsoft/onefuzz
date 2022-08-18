@@ -1121,8 +1121,16 @@ class Client:
                 max_tries = 5
                 for i in range(max_tries):
                     try:
-                        # disable python function
-                        logger.info(f"disabling PYTHON function: {function_name}")
+                        # keep the python versions of http function to allow the service to be backward compatible
+                        # with older version of the CLI and the agents
+                        if function_name.startswith(
+                            "queue_"
+                        ) or function_name.startswith("timer_"):
+                            logger.info(f"disabling PYTHON function: {function_name}")
+                            disable_python = "1"
+                        else:
+                            logger.info(f"enabling PYTHON function: {function_name}")
+                            disable_python = "0"
                         subprocess.check_output(
                             [
                                 func,
@@ -1135,10 +1143,11 @@ class Client:
                                 "--resource-group",
                                 self.application_name,
                                 "--settings",
-                                f"AzureWebJobs.{function_name}.Disabled=1",
+                                f"AzureWebJobs.{function_name}.Disabled={disable_python}",
                             ],
                             env=dict(os.environ, CLI_DEBUG="1"),
                         )
+
                         # enable dotnet function
                         logger.info(f"enabling DOTNET function: {dotnet_name}")
                         subprocess.check_output(

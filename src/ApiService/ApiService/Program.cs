@@ -36,22 +36,6 @@ public class Program {
         }
     }
 
-
-    public static List<ILog> GetLoggers(IServiceConfig config) {
-        List<ILog> loggers = new List<ILog>();
-        foreach (var dest in config.LogDestinations) {
-            loggers.Add(
-                dest switch {
-                    LogDestination.AppInsights => new AppInsights(config.ApplicationInsightsInstrumentationKey!),
-                    LogDestination.Console => new Console(),
-                    _ => throw new Exception($"Unhandled Log Destination type: {dest}"),
-                }
-            );
-        }
-        return loggers;
-    }
-
-
     //Move out expensive resources into separate class, and add those as Singleton
     // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
     public async static Async.Task Main() {
@@ -72,12 +56,14 @@ public class Program {
 
             services
             .AddScoped<ILogTracer>(s => {
+                var logSinks = s.GetRequiredService<ILogSinks>();
                 var cfg = s.GetRequiredService<IServiceConfig>();
-                return new LogTracerFactory(GetLoggers(cfg))
+                return new LogTracerFactory(logSinks.GetLogSinks())
                     .CreateLogTracer(
                         Guid.Empty,
                         severityLevel: cfg.LogSeverityLevel);
             })
+            .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
             .AddScoped<INodeOperations, NodeOperations>()
             .AddScoped<IEvents, Events>()
             .AddScoped<IWebhookOperations, WebhookOperations>()
@@ -109,15 +95,19 @@ public class Program {
             .AddScoped<INodeTasksOperations, NodeTasksOperations>()
             .AddScoped<INodeMessageOperations, NodeMessageOperations>()
             .AddScoped<IRequestHandling, RequestHandling>()
+            .AddScoped<IImageOperations, ImageOperations>()
             .AddScoped<IOnefuzzContext, OnefuzzContext>()
             .AddScoped<IEndpointAuthorization, EndpointAuthorization>()
             .AddScoped<INodeMessageOperations, NodeMessageOperations>()
             .AddScoped<ISubnet, Subnet>()
+            .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
 
             .AddSingleton<ICreds, Creds>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
             .AddSingleton<IStorage, Storage>()
-            .AddHttpClient();
+            .AddSingleton<ILogSinks, LogSinks>()
+            .AddHttpClient()
+            .AddMemoryCache();
         }
         )
         .Build();
