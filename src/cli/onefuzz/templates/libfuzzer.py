@@ -17,8 +17,8 @@ from onefuzz.api import Command
 from . import JobHelper
 
 LIBFUZZER_MAGIC_STRING = b"ERROR: libFuzzer"
-LIBFUZZER_DOTNET_LOADER_PATH_LINUX = "/onefuzz/third-party/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader"
-LIBFUZZER_DOTNET_LOADER_PATH_WINDOWS = "/onefuzz/third-party/dotnet-fuzzing-windows/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.exe"
+LIBFUZZER_DOTNET_LOADER_PATH_LINUX = "/onefuzz/third-party/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.dll"
+LIBFUZZER_DOTNET_LOADER_PATH_WINDOWS = "/onefuzz/third-party/dotnet-fuzzing-windows/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.dll"
 
 
 class QemuArch(Enum):
