@@ -88,22 +88,24 @@ class OnefuzzNamingPolicy : JsonNamingPolicy {
     }
 }
 public class EntityConverter {
-    private readonly JsonSerializerOptions _options;
 
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
+    private static readonly JsonSerializerOptions _options;
+
+    static EntityConverter() {
+        _options = new JsonSerializerOptions() {
+            PropertyNamingPolicy = new OnefuzzNamingPolicy(),
+        };
+        _options.Converters.Add(new CustomEnumConverterFactory());
+        _options.Converters.Add(new PolymorphicConverterFactory());
+    }
 
     public EntityConverter() {
-        _options = GetJsonSerializerOptions();
         _cache = new ConcurrentDictionary<Type, EntityInfo>();
     }
 
     public static JsonSerializerOptions GetJsonSerializerOptions() {
-        var options = new JsonSerializerOptions() {
-            PropertyNamingPolicy = new OnefuzzNamingPolicy(),
-        };
-        options.Converters.Add(new CustomEnumConverterFactory());
-        options.Converters.Add(new PolymorphicConverterFactory());
-        return options;
+        return _options;
     }
 
     internal static Func<object?[], object> BuildConstructerFrom(ConstructorInfo constructorInfo) {

@@ -1,4 +1,6 @@
-﻿namespace Microsoft.OneFuzz.Service;
+﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+
+namespace Microsoft.OneFuzz.Service;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -40,6 +42,7 @@ public interface IOnefuzzContext {
     INsgOperations NsgOperations { get; }
     ISubnet Subnet { get; }
     IImageOperations ImageOperations { get; }
+    EntityConverter EntityConverter { get; }
 }
 
 public class OnefuzzContext : IOnefuzzContext {
@@ -85,4 +88,5 @@ public class OnefuzzContext : IOnefuzzContext {
     public INsgOperations NsgOperations => _serviceProvider.GetRequiredService<INsgOperations>();
     public ISubnet Subnet => _serviceProvider.GetRequiredService<ISubnet>();
     public IImageOperations ImageOperations => _serviceProvider.GetRequiredService<IImageOperations>();
+    public EntityConverter EntityConverter => _serviceProvider.GetRequiredService<EntityConverter>();
 }
