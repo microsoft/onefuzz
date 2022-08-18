@@ -16,8 +16,6 @@ public class AgentEvents {
         _context = context;
     }
 
-    private static readonly EntityConverter _entityConverter = new();
-
     [Function("AgentEvents")]
     public Async.Task<HttpResponseData> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route="agents/events")]
@@ -31,7 +29,7 @@ public class AgentEvents {
         }
 
         var envelope = request.OkV;
-        _log.Info($"node event: machine_id: {envelope.MachineId} event: {_entityConverter.ToJsonString(envelope)}");
+        _log.Info($"node event: machine_id: {envelope.MachineId} event: {_context.EntityConverter.ToJsonString(envelope)}");
 
         var error = envelope.Event switch {
             NodeStateUpdate updateEvent => await OnStateUpdate(envelope.MachineId, updateEvent),
@@ -145,7 +143,7 @@ public class AgentEvents {
             Error? error = null;
             if (ev.Data is NodeDoneEventData doneData) {
                 if (doneData.Error is not null) {
-                    var errorText = _entityConverter.ToJsonString(doneData);
+                    var errorText = _context.EntityConverter.ToJsonString(doneData);
                     error = new Error(ErrorCode.TASK_FAILED, Errors: new string[] { errorText });
                     _log.Error($"node 'done' with error: machine_id:{machineId}, data:{errorText}");
                 }

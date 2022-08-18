@@ -103,6 +103,7 @@ public class Program {
             .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
 
             .AddSingleton<ICreds, Creds>()
+            .AddSingleton<EntityConverter>()
             .AddSingleton<IServiceConfig, ServiceConfiguration>()
             .AddSingleton<IStorage, Storage>()
             .AddSingleton<ILogSinks, LogSinks>()
