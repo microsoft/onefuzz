@@ -103,6 +103,7 @@ public record PoolGetResult(
     AgentConfig? Config,
     List<WorkSetSummary>? WorkQueue,
     List<ScalesetSummary>? ScalesetSummary
+//List<Node>? UnmanagedNodes
 ) : BaseResponse();
 
 public record ScalesetResponse(

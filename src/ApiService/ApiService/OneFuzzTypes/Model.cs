@@ -96,6 +96,7 @@ public record Node
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? InitializedAt = null,
     NodeState State = NodeState.Init,
+    Os? Os = null,
 
     Guid? ScalesetId = null,
     bool ReimageRequested = false,
@@ -162,7 +163,11 @@ public record Error(ErrorCode Code, string[]? Errors = null) {
     }
 };
 
-public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
+public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn, List<string> Roles) {
+    public static UserInfo Create() {
+        return new UserInfo(null, null, null, new List<string>());
+    }
+}
 
 public record TaskDetails(
     TaskType Type,

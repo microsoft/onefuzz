@@ -161,7 +161,7 @@ public abstract class NodeTestBase : FunctionTestBase {
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
 
         // override the found user credentials
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn");
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn", new List<string>());
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         var req = new NodeGet(MachineId: _machineId);
@@ -189,7 +189,7 @@ public abstract class NodeTestBase : FunctionTestBase {
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
 
         // override the found user credentials
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn");
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn", new List<string>());
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         var req = new NodeGet(MachineId: _machineId);
@@ -219,7 +219,7 @@ public abstract class NodeTestBase : FunctionTestBase {
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
 
         // override the found user credentials
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn");
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn", new List<string>());
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         var req = new NodeGet(MachineId: _machineId);
@@ -250,7 +250,7 @@ public abstract class NodeTestBase : FunctionTestBase {
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
 
         // override the found user credentials
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn");
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn", new List<string>());
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         var req = new NodeGet(MachineId: _machineId);
@@ -279,7 +279,7 @@ public abstract class NodeTestBase : FunctionTestBase {
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
 
         // override the found user credentials
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn");
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn", new List<string>());
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         // all of these operations use NodeGet

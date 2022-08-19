@@ -1244,6 +1244,17 @@ class Pool(Endpoint):
         )
 
 
+    def get_unamaged_config(self, name: str) -> models.AgentConfig:
+        self.logger.debug("get details on a specific pool")
+        expanded_name = self._disambiguate(
+            "pool name", name, lambda x: False, lambda: [x.name for x in self.list()]
+        )
+
+        return self._req_model(
+            "GET", models.AgentConfig, data=requests.PoolSearch(name=expanded_name), alternate_endpoint="pool/getconfig"
+        )
+
+
 class Node(Endpoint):
     """Interact with nodes"""
 

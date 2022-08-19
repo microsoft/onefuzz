@@ -1,5 +1,4 @@
-﻿using System.Web;
-using Azure.Storage.Sas;
+﻿using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
@@ -31,16 +30,12 @@ public class AgentRegistration {
             });
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
-        var uri = HttpUtility.ParseQueryString(req.Url.Query);
-        var rawMachineId = uri["machine_id"];
-        if (rawMachineId is null || !Guid.TryParse(rawMachineId, out var machineId)) {
-            return await _context.RequestHandling.NotOk(
-                req,
-                new Error(
-                    ErrorCode.INVALID_REQUEST,
-                    new string[] { "'machine_id' query parameter must be provided" }),
-                "agent registration");
+        var request = await RequestHandling.ParseUri<AgentRegistrationGet>(req);
+        if (!request.IsOk) {
+            return await _context.RequestHandling.NotOk(req, request.ErrorV, "agent registration");
         }
+
+        var machineId = request.OkV.MachineId;
 
         var agentNode = await _context.NodeOperations.GetByMachineId(machineId);
         if (agentNode is null) {
@@ -82,32 +77,18 @@ public class AgentRegistration {
             WorkQueue: workQueue);
     }
 
+    // todo: add agent registration post
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
-        var uri = HttpUtility.ParseQueryString(req.Url.Query);
-        var rawMachineId = uri["machine_id"];
-        if (rawMachineId is null || !Guid.TryParse(rawMachineId, out var machineId)) {
-            return await _context.RequestHandling.NotOk(
-                req,
-                new Error(
-                    ErrorCode.INVALID_REQUEST,
-                    new string[] { "'machine_id' query parameter must be provided" }),
-                "agent registration");
+        var request = await RequestHandling.ParseUri<AgentRegistrationPost>(req);
+        if (!request.IsOk) {
+            return await _context.RequestHandling.NotOk(req, request.ErrorV, "agent registration");
         }
 
-        var rawPoolName = uri["pool_name"];
-        if (rawPoolName is null || !PoolName.TryParse(rawPoolName, out var poolName)) {
-            return await _context.RequestHandling.NotOk(
-                req,
-                new Error(
-                    ErrorCode.INVALID_REQUEST,
-                    new string[] { "'pool_name' query parameter must be provided" }),
-                "agent registration");
-        }
-
-        var rawScalesetId = uri["scaleset_id"];
-        var scalesetId = rawScalesetId is null ? (Guid?)null : Guid.Parse(rawScalesetId);
-
-        var version = uri["version"] ?? "1.0.0";
+        var machineId = request.OkV.MachineId;
+        var poolName = request.OkV.PoolName;
+        var scalesetId = request.OkV.ScalesetId;
+        var version = request.OkV.Version;
+        var os = request.OkV.Os;
 
         _log.Info($"registration request: machine_id: {machineId} pool_name: {poolName} scaleset_id: {scalesetId} version: {version}");
         var poolResult = await _context.PoolOperations.GetByName(poolName);
@@ -127,12 +108,23 @@ public class AgentRegistration {
             await _context.NodeOperations.Delete(existingNode);
         }
 
+        if (os != null && pool.Os != os) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                new Error(
+                    Code: ErrorCode.INVALID_REQUEST,
+                    Errors: new[] { $"OS mismatch: pool '{poolName}' is configured for '{pool.Os}', but agent is running '{os}'" }),
+                "agent registration");
+        }
+
         var node = new Service.Node(
             PoolName: poolName,
             PoolId: pool.PoolId,
             MachineId: machineId,
             ScalesetId: scalesetId,
-            Version: version);
+            Version: version,
+            Os: os ?? pool.Os
+            );
 
         await _context.NodeOperations.Replace(node);
 

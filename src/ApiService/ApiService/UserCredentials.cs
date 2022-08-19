@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.IdentityModel.Tokens;
@@ -15,10 +16,12 @@ public interface IUserCredentials {
 public class UserCredentials : IUserCredentials {
     ILogTracer _log;
     IConfigOperations _instanceConfig;
+    private JwtSecurityTokenHandler _tokenHandler;
 
     public UserCredentials(ILogTracer log, IConfigOperations instanceConfig) {
         _log = log;
         _instanceConfig = instanceConfig;
+        _tokenHandler = new JwtSecurityTokenHandler();
     }
 
     public string? GetBearerToken(HttpRequestData req) {
@@ -57,6 +60,8 @@ public class UserCredentials : IUserCredentials {
     }
 
     public virtual async Task<OneFuzzResult<UserInfo>> ParseJwtToken(HttpRequestData req) {
+
+
         var authToken = GetAuthToken(req);
         if (authToken is null) {
             return OneFuzzResult<UserInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find authorization token" });
@@ -65,22 +70,24 @@ public class UserCredentials : IUserCredentials {
             var allowedTenants = await GetAllowedTenants();
             if (allowedTenants.IsOk) {
                 if (allowedTenants.OkV is not null && allowedTenants.OkV.Contains(token.Issuer)) {
-                    Guid? applicationId = (
-                            from t in token.Claims
-                            where t.Type == "appId"
-                            select (Guid.Parse(t.Value))).FirstOrDefault();
+                    var userInfo =
+                        token.Payload.Claims.Aggregate(UserInfo.Create(), (acc, claim) => {
+                            switch (claim.Type) {
+                                case "oid":
+                                    return acc with { ObjectId = Guid.Parse(claim.Value) };
+                                case "appId":
+                                    return acc with { ApplicationId = Guid.Parse(claim.Value) };
+                                case "upn":
+                                    return acc with { Upn = claim.Value };
+                                case "roles":
+                                    acc.Roles.Add(claim.Value);
+                                    return acc;
+                                default:
+                                    return acc;
+                            }
+                        });
 
-                    Guid? objectId = (
-                            from t in token.Claims
-                            where t.Type == "oid"
-                            select (Guid.Parse(t.Value))).FirstOrDefault();
-
-                    string? upn = (
-                            from t in token.Claims
-                            where t.Type == "upn"
-                            select t.Value).FirstOrDefault();
-
-                    return OneFuzzResult<UserInfo>.Ok(new(applicationId, objectId, upn));
+                    return OneFuzzResult<UserInfo>.Ok(userInfo);
                 } else {
                     _log.Error($"issuer not from allowed tenant: {token.Issuer} - {allowedTenants}");
                     return OneFuzzResult<UserInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unauthorized AAD issuer" });

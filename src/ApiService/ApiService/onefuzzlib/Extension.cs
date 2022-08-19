@@ -12,6 +12,9 @@ public interface IExtensions {
     Async.Task<IList<VirtualMachineScaleSetExtensionData>> FuzzExtensions(Pool pool, Scaleset scaleset);
 
     Async.Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer);
+
+    Async.Task<Uri?> BuildPoolConfig(Pool pool);
+    Task<AgentConfig> CreatePoolConfig(Pool pool);
     Task<IList<VMExtensionWrapper>> ProxyManagerExtensions(string region, Guid proxyId);
 }
 
@@ -211,6 +214,14 @@ public class Extensions : IExtensions {
 
 
     public async Async.Task<Uri?> BuildPoolConfig(Pool pool) {
+        var config = await CreatePoolConfig(pool);
+
+        var fileName = $"{pool.Name}/config.json";
+        await _context.Containers.SaveBlob(new Container("vm-scripts"), fileName, (JsonSerializer.Serialize(config, EntityConverter.GetJsonSerializerOptions())), StorageType.Config);
+        return await ConfigUrl(new Container("vm-scripts"), fileName, false);
+    }
+
+    public async Task<AgentConfig> CreatePoolConfig(Pool pool) {
         var instanceId = await _context.Containers.GetInstanceId();
 
         var queueSas = await _context.Queue.GetQueueSas("node-heartbeat", StorageType.Config, QueueSasPermissions.Add);
@@ -223,11 +234,8 @@ public class Extensions : IExtensions {
             MicrosoftTelemetryKey: _context.ServiceConfiguration.OneFuzzTelemetry,
             MultiTenantDomain: _context.ServiceConfiguration.MultiTenantDomain,
             InstanceId: instanceId
-            );
-
-        var fileName = $"{pool.Name}/config.json";
-        await _context.Containers.SaveBlob(new Container("vm-scripts"), fileName, (JsonSerializer.Serialize(config, EntityConverter.GetJsonSerializerOptions())), StorageType.Config);
-        return await ConfigUrl(new Container("vm-scripts"), fileName, false);
+        );
+        return config;
     }
 
 

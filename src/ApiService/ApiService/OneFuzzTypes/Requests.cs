@@ -252,3 +252,17 @@ public record WebhookUpdate(
     string? SecretToken,
     WebhookMessageFormat? MessageFormat
 );
+
+
+public record AgentRegistrationGet(
+    Guid MachineId
+);
+
+
+public record AgentRegistrationPost(
+    PoolName PoolName,
+    Guid? ScalesetId,
+    Guid MachineId,
+    string Version,
+    Os? Os
+);

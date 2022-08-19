@@ -212,7 +212,10 @@ impl Registration {
         url.query_pairs_mut()
             .append_pair("machine_id", &machine_id.to_string())
             .append_pair("pool_name", &config.pool_name)
-            .append_pair("version", env!("ONEFUZZ_VERSION"));
+            .append_pair("version", env!("ONEFUZZ_VERSION"))
+            .append_pair("os", std::env::consts::OS);
+
+        //todo: add os version?
 
         if managed {
             let scaleset = onefuzz::machine_id::get_scaleset_name().await?;

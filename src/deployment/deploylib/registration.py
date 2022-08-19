@@ -160,6 +160,7 @@ class OnefuzzAppRole(Enum):
     ManagedNode = "ManagedNode"
     CliClient = "CliClient"
     UserAssignment = "UserAssignment"
+    UnmanagedNode = "UnmanagedNode"
 
 
 def register_application(
@@ -309,21 +310,25 @@ def create_application_registration(
     registered_app_id = registered_app["appId"]
     app_id = app["appId"]
 
+
+
+    return registered_app
+
+def authorize_and_assign_role(onfuzz_app_id: UUID, registered_app_id: UUID, role: OnefuzzAppRole) -> None:
     def try_authorize_application(data: Any) -> None:
         authorize_application(
             UUID(registered_app_id),
-            UUID(app_id),
+            UUID(onfuzz_app_id),
             subscription_id=subscription_id,
         )
 
     retry(try_authorize_application, "authorize application")
 
     def try_assign_instance_role(data: Any) -> None:
-        assign_instance_app_role(onefuzz_instance_name, name, subscription_id, approle)
+        assign_instance_app_role(onefuzz_instance_name, name, subscription_id, role)
 
     retry(try_assign_instance_role, "assingn role")
 
-    return registered_app
 
 
 def add_application_password(
@@ -575,7 +580,7 @@ def assign_app_role(
 
 
 def assign_instance_app_role(
-    onefuzz_instance_name: str,
+    onefuzz_instance_app_id: UUID,
     application_name: str,
     subscription_id: str,
     app_role: OnefuzzAppRole,
@@ -799,6 +804,15 @@ def main() -> None:
     cli_registration_parser.add_argument(
         "--registration_name", help="the name of the cli registration"
     )
+    register_app_parser = subparsers.add_parser(
+        "register_app", parents=[parent_parser]
+    )
+    register_app_parser.add_argument(
+        "--app_id", help="the application id to register"
+    )
+    register_app_parser.add_argument(
+        "--role", help="the role of the application to register"
+    )
 
     args = parser.parse_args()
     if args.verbose:
@@ -818,6 +832,15 @@ def main() -> None:
             onefuzz_instance_name,
             registration_name,
             OnefuzzAppRole.CliClient,
+            args.subscription_id,
+            display_secret=True,
+        )
+    elif args.command == "register_app":
+        registration_name = args.registration_name or ("%s_unmanaged" % onefuzz_instance_name)
+        create_and_display_registration(
+            onefuzz_instance_name,
+            registration_name,
+            OnefuzzAppRole.UnmanagedNode,
             args.subscription_id,
             display_secret=True,
         )

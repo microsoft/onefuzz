@@ -379,7 +379,7 @@ class Client:
             },
             {
                 "allowedMemberTypes": ["Application"],
-                "description": "Allow access from a lab machine.",
+                "description": "Allow access from a managed node.",
                 "displayName": OnefuzzAppRole.ManagedNode.value,
                 "id": str(uuid.uuid4()),
                 "isEnabled": True,
@@ -392,6 +392,14 @@ class Client:
                 "id": str(uuid.uuid4()),
                 "isEnabled": True,
                 "value": OnefuzzAppRole.UserAssignment.value,
+            },
+            {
+                "allowedMemberTypes": ["Application"],
+                "description": "Allow access from an unmanaged node.",
+                "displayName": OnefuzzAppRole.UnmanagedNode.value,
+                "id": str(uuid.uuid4()),
+                "isEnabled": True,
+                "value": OnefuzzAppRole.UnmanagedNode.value,
             },
         ]
 
