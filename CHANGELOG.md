@@ -4,8 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 5.10.0
+## 5.11.0
+### Added
+* Service: Converted remaining events to C#. [#2253](https://github.com/microsoft/onefuzz/pull/2253)
+* Agent: Add the dotnet crash report task. [#2250](https://github.com/microsoft/onefuzz/pull/2250)
+* Service: Additional C# migration work. [#2235](https://github.com/microsoft/onefuzz/pull/2235), [#2257](https://github.com/microsoft/onefuzz/pull/2257), [#2254](https://github.com/microsoft/onefuzz/pull/2254), [#2191](https://github.com/microsoft/onefuzz/pull/2191), [#2262](https://github.com/microsoft/onefuzz/pull/2262), [#2263](https://github.com/microsoft/onefuzz/pull/2263), [#2269](https://github.com/microsoft/onefuzz/pull/2269)
+### Changed
+* Agent: Increase the size of the output buffer when collecting logs from agent. [#2166](https://github.com/microsoft/onefuzz/pull/2166)
+### Fixed
+* Service: Use a singleton for logging to reduce memory use. [#2247](https://github.com/microsoft/onefuzz/pull/2247)
+* Service: Use a singleton for the EntityConverter. [#2267](https://github.com/microsoft/onefuzz/pull/2267)
+* Service: Add retries when creating a connection to a repro machine for debugging on windows. [#2252](https://github.com/microsoft/onefuzz/pull/2252)
+* Deployment: Fix deploy to use the correct date formats when querying MSGraph. [#2258](https://github.com/microsoft/onefuzz/pull/2258)
+* Service: Sync the Autoscale table to current scaleset settings. [#2255](https://github.com/microsoft/onefuzz/pull/2255)
+* Service: Fixed the pool comparison in the scheduler.[#2260](https://github.com/microsoft/onefuzz/pull/2260)
 
+## 5.10.0
 ### Added
 * Recommendation in `getting-started.md` that OneFuzz users include a `.onefuzz` file in their project root directory for security tool detection [#2236](https://github.com/microsoft/onefuzz/pull/2236)
 * Agent:  New `libfuzzer_dotnet_fuzz` task [#2221](https://github.com/microsoft/onefuzz/pull/2221)
