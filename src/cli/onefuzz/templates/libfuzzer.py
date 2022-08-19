@@ -18,7 +18,7 @@ from . import JobHelper
 
 LIBFUZZER_MAGIC_STRING = b"ERROR: libFuzzer"
 
-# These paths constants point to identically-named managed DLLs, so it may seem like one
+# These path constants point to identically-named managed DLLs, so it may seem like one
 # of them is redundant. This is false: the DLLs are _not_ identical, and each one links
 # platform-native code.
 #
