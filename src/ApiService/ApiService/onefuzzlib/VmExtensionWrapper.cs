@@ -22,7 +22,9 @@ namespace Microsoft.OneFuzz.Service {
             Publisher.EnsureNotNull("Publisher required for VirtualMachineExtension");
             TypeHandlerVersion.EnsureNotNull("TypeHandlerVersion required for VirtualMachineExtension");
             AutoUpgradeMinorVersion.EnsureNotNull("AutoUpgradeMinorVersion required for VirtualMachineExtension");
-            Settings.EnsureNotNull("Settings required for VirtualMachineExtension");
+
+            var settings = Settings ?? new BinaryData(new Dictionary<string, string>());
+            var protectedSettings = ProtectedSettings ?? new BinaryData(new Dictionary<string, string>());
 
             return (Name!, new VirtualMachineExtensionData(Location.Value) {
                 TypePropertiesType = TypePropertiesType,
@@ -31,8 +33,8 @@ namespace Microsoft.OneFuzz.Service {
                 AutoUpgradeMinorVersion = AutoUpgradeMinorVersion,
                 EnableAutomaticUpgrade = EnableAutomaticUpgrade,
                 ForceUpdateTag = ForceUpdateTag,
-                Settings = Settings,
-                ProtectedSettings = ProtectedSettings
+                Settings = settings,
+                ProtectedSettings = protectedSettings
             });
         }
 
@@ -42,6 +44,10 @@ namespace Microsoft.OneFuzz.Service {
             Publisher.EnsureNotNull("Publisher required for VirtualMachineScaleSetExtension");
             TypeHandlerVersion.EnsureNotNull("TypeHandlerVersion required for VirtualMachineScaleSetExtension");
             AutoUpgradeMinorVersion.EnsureNotNull("AutoUpgradeMinorVersion required for VirtualMachineScaleSetExtension");
+
+            var settings = Settings ?? new BinaryData(new Dictionary<string, string>());
+            var protectedSettings = ProtectedSettings ?? new BinaryData(new Dictionary<string, string>());
+
             return new VirtualMachineScaleSetExtensionData() {
                 Name = Name,
                 TypePropertiesType = TypePropertiesType,
@@ -50,8 +56,8 @@ namespace Microsoft.OneFuzz.Service {
                 AutoUpgradeMinorVersion = AutoUpgradeMinorVersion,
                 EnableAutomaticUpgrade = EnableAutomaticUpgrade,
                 ForceUpdateTag = ForceUpdateTag,
-                Settings = Settings,
-                ProtectedSettings = ProtectedSettings
+                Settings = settings,
+                ProtectedSettings = protectedSettings
             };
         }
     }
