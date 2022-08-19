@@ -15,7 +15,7 @@ use crate::buffer::TailBuffer;
 use crate::work::*;
 
 // Max length of captured output streams from worker child processes.
-const MAX_TAIL_LEN: usize = 4096;
+const MAX_TAIL_LEN: usize = 40960;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]

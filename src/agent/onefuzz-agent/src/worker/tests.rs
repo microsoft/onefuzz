@@ -253,10 +253,16 @@ sys.stderr.write('C' * 65536 + 'D' * 4000)";
     redirected.child.wait().unwrap();
     let captured = redirected.streams.unwrap().join().unwrap();
 
-    let stdout: String = repeat('A').take(96).chain(repeat('B').take(4000)).collect();
+    let stdout: String = repeat('A')
+        .take(MAX_TAIL_LEN - 4000)
+        .chain(repeat('B').take(4000))
+        .collect();
     assert_eq!(captured.stdout, stdout);
 
-    let stderr: String = repeat('C').take(96).chain(repeat('D').take(4000)).collect();
+    let stderr: String = repeat('C')
+        .take(MAX_TAIL_LEN - 4000)
+        .chain(repeat('D').take(4000))
+        .collect();
     assert_eq!(captured.stderr, stderr);
 }
 
@@ -282,7 +288,10 @@ fn test_redirected_child() {
     redirected.child.wait().unwrap();
     let captured = redirected.streams.unwrap().join().unwrap();
 
-    let mut stdout: String = repeat('A').take(94).chain(repeat('B').take(4000)).collect();
+    let mut stdout: String = repeat('A')
+        .take(MAX_TAIL_LEN - 4000 - 2)
+        .chain(repeat('B').take(4000))
+        .collect();
     stdout.push_str("\r\n");
     assert_eq!(captured.stdout, stdout);
 
