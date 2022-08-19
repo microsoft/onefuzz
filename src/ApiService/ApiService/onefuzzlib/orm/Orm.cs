@@ -38,7 +38,7 @@ namespace ApiService.OneFuzzLib.Orm {
         public Orm(ILogTracer logTracer, IOnefuzzContext context) {
             _context = context;
             _logTracer = logTracer;
-            _entityConverter = new EntityConverter();
+            _entityConverter = _context.EntityConverter;
         }
 
         public async IAsyncEnumerable<T> QueryAsync(string? filter = null) {

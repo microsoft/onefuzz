@@ -88,22 +88,24 @@ class OnefuzzNamingPolicy : JsonNamingPolicy {
     }
 }
 public class EntityConverter {
-    private readonly JsonSerializerOptions _options;
 
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
+    private static readonly JsonSerializerOptions _options;
+
+    static EntityConverter() {
+        _options = new JsonSerializerOptions() {
+            PropertyNamingPolicy = new OnefuzzNamingPolicy(),
+        };
+        _options.Converters.Add(new CustomEnumConverterFactory());
+        _options.Converters.Add(new PolymorphicConverterFactory());
+    }
 
     public EntityConverter() {
-        _options = GetJsonSerializerOptions();
         _cache = new ConcurrentDictionary<Type, EntityInfo>();
     }
 
     public static JsonSerializerOptions GetJsonSerializerOptions() {
-        var options = new JsonSerializerOptions() {
-            PropertyNamingPolicy = new OnefuzzNamingPolicy(),
-        };
-        options.Converters.Add(new CustomEnumConverterFactory());
-        options.Converters.Add(new PolymorphicConverterFactory());
-        return options;
+        return _options;
     }
 
     internal static Func<object?[], object> BuildConstructerFrom(ConstructorInfo constructorInfo) {
@@ -167,9 +169,9 @@ public class EntityConverter {
         });
     }
 
-    public string ToJsonString<T>(T typedEntity) => JsonSerializer.Serialize(typedEntity, _options);
+    public static string ToJsonString<T>(T typedEntity) => JsonSerializer.Serialize(typedEntity, _options);
 
-    public T? FromJsonString<T>(string value) => JsonSerializer.Deserialize<T>(value, _options);
+    public static T? FromJsonString<T>(string value) => JsonSerializer.Deserialize<T>(value, _options);
 
     public TableEntity ToTableEntity<T>(T typedEntity) where T : EntityBase {
         if (typedEntity == null) {

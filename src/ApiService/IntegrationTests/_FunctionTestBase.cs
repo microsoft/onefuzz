@@ -59,7 +59,7 @@ public abstract class FunctionTestBase : IDisposable {
     }
 
     protected static T BodyAs<T>(HttpResponseData data)
-        => new EntityConverter().FromJsonString<T>(BodyAsString(data)) ?? throw new Exception($"unable to deserialize body as {typeof(T)}");
+        => EntityConverter.FromJsonString<T>(BodyAsString(data)) ?? throw new Exception($"unable to deserialize body as {typeof(T)}");
 
     public void Dispose() {
         GC.SuppressFinalize(this);

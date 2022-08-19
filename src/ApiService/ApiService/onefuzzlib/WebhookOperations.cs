@@ -86,7 +86,6 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
     // Not converting to bytes, as it's not neccessary in C#. Just keeping as string.
     public async Async.Task<Tuple<string, string?>> BuildMessage(Guid webhookId, Guid eventId, EventType eventType, BaseEvent webhookEvent, String? secretToken, WebhookMessageFormat? messageFormat) {
-        var entityConverter = new EntityConverter();
         string data = "";
         if (messageFormat != null && messageFormat == WebhookMessageFormat.EventGrid) {
             var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: webhookEvent, DataVersion: "1.0.0", Subject: _context.Creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
