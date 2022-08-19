@@ -17,6 +17,18 @@ from onefuzz.api import Command
 from . import JobHelper
 
 LIBFUZZER_MAGIC_STRING = b"ERROR: libFuzzer"
+
+# These paths constants point to identically-named managed DLLs, so it may seem like one
+# of them is redundant. This is false: the DLLs are _not_ identical, and each one links
+# platform-native code.
+#
+# The reason for this is that `libfuzzer-dotnet` needs a _platform-native_ executable
+# wrapper to invoke the managed code under test as a child process, then communicate with
+# it using OS-specific IPC. As a result, we must deploy two variants of the managed DLL on
+# VMs, along with other platform-native executables to support the fuzzing task.
+#
+# The `dotnet_coverage` and `dotnet_crash_report` tasks must invoke the underlying DLL, so
+# it must not be statically linked into the platform-native executable wrapper.
 LIBFUZZER_DOTNET_LOADER_PATH_LINUX = "/onefuzz/third-party/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.dll"
 LIBFUZZER_DOTNET_LOADER_PATH_WINDOWS = "/onefuzz/third-party/dotnet-fuzzing-windows/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.dll"
 
