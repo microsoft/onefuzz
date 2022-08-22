@@ -9,7 +9,7 @@ import zipfile
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
-from onefuzztypes.enums import OS, ContainerType, TaskState
+from onefuzztypes.enums import OS, ContainerType, JobState, TaskState
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
@@ -209,16 +209,17 @@ class JobHelper:
 
     def check_current_job(self) -> Job:
         job = self.onefuzz.jobs.get(self.job.job_id)
-        if job.state in ["stopped", "stopping"]:
+        if job.state in JobState.shutting_down():
             raise StoppedEarly("job unexpectedly stopped early")
 
         errors = []
-        for task in self.onefuzz.tasks.list(job_id=self.job.job_id):
-            if task.state in ["stopped", "stopping"]:
-                if task.error:
-                    errors.append("%s: %s" % (task.config.task.type, task.error))
-                else:
-                    errors.append("%s" % task.config.task.type)
+        for task in self.onefuzz.tasks.list(
+            job_id=self.job.job_id, state=TaskState.shutting_down()
+        ):
+            if task.error:
+                errors.append("%s: %s" % (task.config.task.type, task.error))
+            else:
+                errors.append("%s" % task.config.task.type)
 
         if errors:
             raise StoppedEarly("tasks stopped unexpectedly.\n%s" % "\n".join(errors))
