@@ -29,8 +29,8 @@ LIBFUZZER_MAGIC_STRING = b"ERROR: libFuzzer"
 #
 # The `dotnet_coverage` and `dotnet_crash_report` tasks must invoke the underlying DLL, so
 # it must not be statically linked into the platform-native executable wrapper.
-LIBFUZZER_DOTNET_LOADER_PATH_LINUX = "/onefuzz/third-party/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.dll"
-LIBFUZZER_DOTNET_LOADER_PATH_WINDOWS = "/onefuzz/third-party/dotnet-fuzzing-windows/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.dll"
+LIBFUZZER_DOTNET_LOADER_PATH_LINUX = "{tools_dir}/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.dll"
+LIBFUZZER_DOTNET_LOADER_PATH_WINDOWS = "{tools_dir}/dotnet-fuzzing-windows/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.dll"
 
 
 class QemuArch(Enum):
