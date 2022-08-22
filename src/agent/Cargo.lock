@@ -62,7 +62,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sm",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -155,7 +155,33 @@ dependencies = [
  "serde_json",
  "thiserror",
  "url",
- "uuid",
+ "uuid 0.8.2",
+]
+
+[[package]]
+name = "azure_core"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6e66a6d993197d1b575cffd08bf725e04bc1414de6586baeb3537925e49b4ff"
+dependencies = [
+ "async-trait",
+ "base64",
+ "bytes",
+ "dyn-clone",
+ "futures",
+ "getrandom 0.2.3",
+ "http-types",
+ "log",
+ "paste",
+ "pin-project",
+ "rand 0.8.4",
+ "reqwest",
+ "rustc_version",
+ "serde",
+ "serde_json",
+ "time 0.3.13",
+ "url",
+ "uuid 1.1.2",
 ]
 
 [[package]]
@@ -166,7 +192,7 @@ checksum = "22c413e8459badf86c9e6e0c84f5894609663bcc8fa5eb1e49bfb985273dac58"
 dependencies = [
  "RustyXML",
  "async-trait",
- "azure_core",
+ "azure_core 0.1.1",
  "base64",
  "bytes",
  "chrono",
@@ -181,32 +207,55 @@ dependencies = [
  "serde_json",
  "thiserror",
  "url",
- "uuid",
+ "uuid 0.8.2",
+]
+
+[[package]]
+name = "azure_storage"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55aa63fb0426c76b9cc909234e94e69764f5e777a62b7ed6411f3cc04aa94a16"
+dependencies = [
+ "RustyXML",
+ "async-trait",
+ "azure_core 0.4.0",
+ "base64",
+ "bytes",
+ "futures",
+ "hmac",
+ "log",
+ "once_cell",
+ "serde",
+ "serde-xml-rs",
+ "serde_derive",
+ "serde_json",
+ "sha2 0.10.2",
+ "time 0.3.13",
+ "url",
+ "uuid 1.1.2",
 ]
 
 [[package]]
 name = "azure_storage_blobs"
-version = "0.1.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a70ec6fab8a2cae5d774098267870c0f3fbef1cb63cac12afab38b8c17cc8d97"
+checksum = "33f953cedd7c240347ed0f6ed8a0bd7472b32579c38341ab9e117eaa6173e9ba"
 dependencies = [
  "RustyXML",
- "azure_core",
- "azure_storage",
+ "azure_core 0.4.0",
+ "azure_storage 0.5.0",
  "base64",
  "bytes",
- "chrono",
  "futures",
- "http",
  "log",
  "md5",
  "serde",
  "serde-xml-rs",
  "serde_derive",
  "serde_json",
- "thiserror",
+ "time 0.3.13",
  "url",
- "uuid",
+ "uuid 1.1.2",
 ]
 
 [[package]]
@@ -403,7 +452,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "serde",
- "time",
+ "time 0.1.43",
  "winapi",
 ]
 
@@ -517,7 +566,7 @@ dependencies = [
  "serde_json",
  "structopt",
  "symbolic",
- "uuid",
+ "uuid 0.8.2",
  "win-util",
  "winapi",
  "xml-rs",
@@ -711,7 +760,7 @@ version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f91cf5a8c2f2097e2a32627123508635d47ce10563d999ec1a95addf08b502ba"
 dependencies = [
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -748,6 +797,7 @@ checksum = "f2fb860ca6fafa5552fb6d0e816a69c8e49f0908bf524e30a90d97c85892d506"
 dependencies = [
  "block-buffer 0.10.1",
  "crypto-common",
+ "subtle",
 ]
 
 [[package]]
@@ -1225,6 +1275,15 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+
+[[package]]
+name = "hmac"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
+dependencies = [
+ "digest 0.10.3",
+]
 
 [[package]]
 name = "hostname"
@@ -1808,6 +1867,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "num_threads"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2819ce041d2ee131036f4fc9d6ae7ae125a3a40e97ba64d04fe799ad9dabbb44"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "oauth2"
 version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1889,7 +1957,7 @@ dependencies = [
  "url",
  "url-escape",
  "urlparse",
- "uuid",
+ "uuid 0.8.2",
  "winapi",
  "winreg 0.10.1",
 ]
@@ -1917,7 +1985,7 @@ dependencies = [
  "tokio",
  "url",
  "users",
- "uuid",
+ "uuid 0.8.2",
  "winapi",
 ]
 
@@ -1929,8 +1997,8 @@ dependencies = [
  "arraydeque",
  "async-trait",
  "atexit",
- "azure_core",
- "azure_storage",
+ "azure_core 0.1.1",
+ "azure_storage 0.1.0",
  "azure_storage_blobs",
  "backoff",
  "chrono",
@@ -1964,7 +2032,7 @@ dependencies = [
  "tokio-util 0.7.2",
  "tui",
  "url",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -1979,7 +2047,7 @@ dependencies = [
  "log",
  "serde",
  "tokio",
- "uuid",
+ "uuid 0.8.2",
  "z3-sys",
 ]
 
@@ -2100,7 +2168,7 @@ checksum = "13f4d162ecaaa1467de5afbe62d597757b674b51da8bb4e587430c5fdb2af7aa"
 dependencies = [
  "fallible-iterator",
  "scroll 0.10.2",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -2940,7 +3008,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "tokio",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -3013,6 +3081,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "subtle"
+version = "2.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
+
+[[package]]
 name = "symbolic"
 version = "8.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3033,7 +3107,7 @@ dependencies = [
  "debugid",
  "memmap2",
  "stable_deref_trait",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -3188,6 +3262,25 @@ dependencies = [
  "libc",
  "winapi",
 ]
+
+[[package]]
+name = "time"
+version = "0.3.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db76ff9fa4b1458b3c7f077f3ff9887394058460d21e634355b273aaf11eea45"
+dependencies = [
+ "itoa 1.0.1",
+ "libc",
+ "num_threads",
+ "serde",
+ "time-macros",
+]
+
+[[package]]
+name = "time-macros"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42657b1a6f4d817cda8e7a0ace261fe0cc946cf3a80314390b22cc61ae080792"
 
 [[package]]
 name = "tinyvec"
@@ -3464,6 +3557,15 @@ dependencies = [
  "getrandom 0.2.3",
  "serde",
  "winapi",
+]
+
+[[package]]
+name = "uuid"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd6469f4314d5f1ffec476e05f17cc9a78bc7a27a6a857842170bdf8d6f98d2f"
+dependencies = [
+ "getrandom 0.2.3",
 ]
 
 [[package]]
