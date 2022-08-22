@@ -701,6 +701,10 @@ class Libfuzzer(Command):
             ContainerType.setup,
             ContainerType.inputs,
             ContainerType.crashes,
+            ContainerType.coverage,
+            ContainerType.reports,
+            ContainerType.unique_reports,
+            ContainerType.no_repro,
         )
 
         containers = helper.containers
