@@ -26,6 +26,7 @@ namespace Microsoft.OneFuzz.Service {
         private readonly ILogTracer _log;
         private readonly IContainers _containers;
         private readonly ICreds _creds;
+        private readonly JsonSerializerOptions _options;
 
         public Events(IQueue queue, IWebhookOperations webhook, ILogTracer log, IContainers containers, ICreds creds) {
             _queue = queue;
@@ -33,6 +34,10 @@ namespace Microsoft.OneFuzz.Service {
             _log = log;
             _containers = containers;
             _creds = creds;
+            _options = new JsonSerializerOptions(EntityConverter.GetJsonSerializerOptions()) {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+            _options.Converters.Add(new RemoveUserInfo());
         }
 
         public async Async.Task QueueSignalrEvent(EventMessage message) {
@@ -58,10 +63,7 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         public void LogEvent(BaseEvent anEvent) {
-            var options = EntityConverter.GetJsonSerializerOptions();
-            options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-            options.Converters.Add(new RemoveUserInfo());
-            var serializedEvent = JsonSerializer.Serialize(anEvent, anEvent.GetType(), options);
+            var serializedEvent = JsonSerializer.Serialize(anEvent, anEvent.GetType(), _options);
             _log.WithTag("Event Type", anEvent.GetEventType().ToString()).Info($"sending event: {anEvent.GetEventType()} - {serializedEvent}");
         }
     }
