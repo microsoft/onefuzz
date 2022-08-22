@@ -84,7 +84,7 @@ public class Queue : IQueue {
         var client = await GetQueueClient(name, storageType);
         var resp = await client.CreateIfNotExistsAsync();
 
-        if (resp.IsError) {
+        if (resp is not null && resp.IsError) {
             _log.Error($"failed to create queue {name} due to {resp.ReasonPhrase}");
         }
     }
