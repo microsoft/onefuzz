@@ -666,6 +666,17 @@ class Libfuzzer(Command):
         colocate_secondary_tasks: bool = True,
         expect_crash_on_failure: bool = False,
     ) -> Optional[Job]:
+        pool = self.onefuzz.pools.get(pool_name)
+
+        # We _must_ proactively specify the OS based on pool.
+        #
+        # This is because managed DLLs are always (Windows-native) PE files, so the job
+        # helper's platform guess (based on the file type of `target_exe`) will always
+        # evaluate to `OS.windows`. In the case of true Linux `libfuzzer dotnet_dll` jobs,
+        # this leads to a client- side validation error when the helper checks the nominal
+        # target OS against the pool OS.
+        platform = pool.os
+
         helper = JobHelper(
             self.onefuzz,
             self.logger,
@@ -675,6 +686,7 @@ class Libfuzzer(Command):
             duration,
             pool_name=pool_name,
             target_exe=target_dll,
+            platform=platform,
         )
 
         target_env = target_env or {}
@@ -708,8 +720,10 @@ class Libfuzzer(Command):
         helper.create_containers()
 
         helper.upload_setup(setup_dir, target_dll)
+
         if inputs:
             helper.upload_inputs(inputs)
+
         helper.wait_on(wait_for_files, wait_for_running)
 
         fuzzer_task = self.onefuzz.tasks.create(
@@ -744,8 +758,6 @@ class Libfuzzer(Command):
         # This provides a `main()` function that dynamically loads a target DLL
         # passed via environment variables. This is assumed to be installed on
         # the VMs.
-        pool = self.onefuzz.pools.get(pool_name)
-
         if pool.os == OS.linux:
             libfuzzer_dotnet_loader_dll = LIBFUZZER_DOTNET_LOADER_PATH_LINUX
         elif pool.os == OS.windows:
