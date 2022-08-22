@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Additional C# migration work. [#2235](https://github.com/microsoft/onefuzz/pull/2235), [#2257](https://github.com/microsoft/onefuzz/pull/2257), [#2254](https://github.com/microsoft/onefuzz/pull/2254), [#2191](https://github.com/microsoft/onefuzz/pull/2191), [#2262](https://github.com/microsoft/onefuzz/pull/2262), [#2263](https://github.com/microsoft/onefuzz/pull/2263), [#2269](https://github.com/microsoft/onefuzz/pull/2269)
 ### Changed
 * Agent: Increase the size of the output buffer when collecting logs from agent. [#2166](https://github.com/microsoft/onefuzz/pull/2166)
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#2270](https://github.com/microsoft/onefuzz/pull/2270)
 ### Fixed
 * Service: Use a singleton for logging to reduce memory use. [#2247](https://github.com/microsoft/onefuzz/pull/2247)
 * Service: Use a singleton for the EntityConverter. [#2267](https://github.com/microsoft/onefuzz/pull/2267)
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Fixed the pool comparison in the scheduler. [#2260](https://github.com/microsoft/onefuzz/pull/2260)
 * CLI: Fixed the way `job` and `task` state enumerations are compared. [#2004](https://github.com/microsoft/onefuzz/pull/2004)
 * Service: Clone the JsonSerializerOptions instead of just modifying it. [#2280](https://github.com/microsoft/onefuzz/pull/2280)
+* Service: Fixed a NullReferenceException in CreateQueue. [#2283](https://github.com/microsoft/onefuzz/pull/2283)
 
 ## 5.10.0
 ### Added
