@@ -48,6 +48,6 @@ url = { version = "2.2", features = ["serde"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 chrono = "0.4"
 
-azure_core = { version = "0.1.1", default-features = false, features = ["enable_reqwest_rustls"] }
+azure_core = { version = "0.4.0", default-features = false, features = ["enable_reqwest_rustls"] }
 azure_storage = { version = "0.1.0", default-features = false, features = ["enable_reqwest_rustls"] }
 azure_storage_blobs = { version = "0.1.0", default-features = false, features = ["enable_reqwest_rustls"] }

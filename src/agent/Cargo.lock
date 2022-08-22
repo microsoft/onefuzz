@@ -62,7 +62,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sm",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -155,7 +155,33 @@ dependencies = [
  "serde_json",
  "thiserror",
  "url",
- "uuid",
+ "uuid 0.8.2",
+]
+
+[[package]]
+name = "azure_core"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6e66a6d993197d1b575cffd08bf725e04bc1414de6586baeb3537925e49b4ff"
+dependencies = [
+ "async-trait",
+ "base64",
+ "bytes",
+ "dyn-clone",
+ "futures",
+ "getrandom 0.2.3",
+ "http-types",
+ "log",
+ "paste",
+ "pin-project",
+ "rand 0.8.4",
+ "reqwest",
+ "rustc_version",
+ "serde",
+ "serde_json",
+ "time 0.3.13",
+ "url",
+ "uuid 1.1.2",
 ]
 
 [[package]]
@@ -166,7 +192,7 @@ checksum = "22c413e8459badf86c9e6e0c84f5894609663bcc8fa5eb1e49bfb985273dac58"
 dependencies = [
  "RustyXML",
  "async-trait",
- "azure_core",
+ "azure_core 0.1.1",
  "base64",
  "bytes",
  "chrono",
@@ -181,7 +207,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "url",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -191,7 +217,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a70ec6fab8a2cae5d774098267870c0f3fbef1cb63cac12afab38b8c17cc8d97"
 dependencies = [
  "RustyXML",
- "azure_core",
+ "azure_core 0.1.1",
  "azure_storage",
  "base64",
  "bytes",
@@ -206,7 +232,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "url",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -403,7 +429,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "serde",
- "time",
+ "time 0.1.43",
  "winapi",
 ]
 
@@ -517,7 +543,7 @@ dependencies = [
  "serde_json",
  "structopt",
  "symbolic",
- "uuid",
+ "uuid 0.8.2",
  "win-util",
  "winapi",
  "xml-rs",
@@ -711,7 +737,7 @@ version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f91cf5a8c2f2097e2a32627123508635d47ce10563d999ec1a95addf08b502ba"
 dependencies = [
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -1808,6 +1834,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "num_threads"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2819ce041d2ee131036f4fc9d6ae7ae125a3a40e97ba64d04fe799ad9dabbb44"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "oauth2"
 version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1889,7 +1924,7 @@ dependencies = [
  "url",
  "url-escape",
  "urlparse",
- "uuid",
+ "uuid 0.8.2",
  "winapi",
  "winreg 0.10.1",
 ]
@@ -1917,7 +1952,7 @@ dependencies = [
  "tokio",
  "url",
  "users",
- "uuid",
+ "uuid 0.8.2",
  "winapi",
 ]
 
@@ -1929,7 +1964,7 @@ dependencies = [
  "arraydeque",
  "async-trait",
  "atexit",
- "azure_core",
+ "azure_core 0.4.0",
  "azure_storage",
  "azure_storage_blobs",
  "backoff",
@@ -1964,7 +1999,7 @@ dependencies = [
  "tokio-util 0.7.2",
  "tui",
  "url",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -1979,7 +2014,7 @@ dependencies = [
  "log",
  "serde",
  "tokio",
- "uuid",
+ "uuid 0.8.2",
  "z3-sys",
 ]
 
@@ -2100,7 +2135,7 @@ checksum = "13f4d162ecaaa1467de5afbe62d597757b674b51da8bb4e587430c5fdb2af7aa"
 dependencies = [
  "fallible-iterator",
  "scroll 0.10.2",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -2940,7 +2975,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "tokio",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -3033,7 +3068,7 @@ dependencies = [
  "debugid",
  "memmap2",
  "stable_deref_trait",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -3188,6 +3223,25 @@ dependencies = [
  "libc",
  "winapi",
 ]
+
+[[package]]
+name = "time"
+version = "0.3.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db76ff9fa4b1458b3c7f077f3ff9887394058460d21e634355b273aaf11eea45"
+dependencies = [
+ "itoa 1.0.1",
+ "libc",
+ "num_threads",
+ "serde",
+ "time-macros",
+]
+
+[[package]]
+name = "time-macros"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42657b1a6f4d817cda8e7a0ace261fe0cc946cf3a80314390b22cc61ae080792"
 
 [[package]]
 name = "tinyvec"
@@ -3465,6 +3519,12 @@ dependencies = [
  "serde",
  "winapi",
 ]
+
+[[package]]
+name = "uuid"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd6469f4314d5f1ffec476e05f17cc9a78bc7a27a6a857842170bdf8d6f98d2f"
 
 [[package]]
 name = "vec_map"
