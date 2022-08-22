@@ -17,7 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Add retries when creating a connection to a repro machine for debugging on windows. [#2252](https://github.com/microsoft/onefuzz/pull/2252)
 * Deployment: Fix deploy to use the correct date formats when querying MSGraph. [#2258](https://github.com/microsoft/onefuzz/pull/2258)
 * Service: Sync the Autoscale table to current scaleset settings. [#2255](https://github.com/microsoft/onefuzz/pull/2255)
-* Service: Fixed the pool comparison in the scheduler.[#2260](https://github.com/microsoft/onefuzz/pull/2260)
+* Service: Fixed the pool comparison in the scheduler. [#2260](https://github.com/microsoft/onefuzz/pull/2260)
+* CLI: Fixed the way `job` and `task` state enumerations are compared. [#2004](https://github.com/microsoft/onefuzz/pull/2004)
+* Service: Clone the JsonSerializerOptions instead of just modifying it. [#2280](https://github.com/microsoft/onefuzz/pull/2280)
 
 ## 5.10.0
 ### Added
