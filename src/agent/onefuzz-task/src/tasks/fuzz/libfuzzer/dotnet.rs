@@ -10,27 +10,27 @@ use crate::tasks::fuzz::libfuzzer::common;
 
 #[cfg(target_os = "linux")]
 const LIBFUZZER_DOTNET_PATH: &str =
-    "/onefuzz/third-party/dotnet-fuzzing-linux/libfuzzer-dotnet/libfuzzer-dotnet";
+    "/onefuzz/tools/dotnet-fuzzing-linux/libfuzzer-dotnet/libfuzzer-dotnet";
 
 #[cfg(target_os = "windows")]
 const LIBFUZZER_DOTNET_PATH: &str =
-    "/onefuzz/third-party/dotnet-fuzzing-windows/libfuzzer-dotnet/libfuzzer-dotnet.exe";
+    "/onefuzz/tools/dotnet-fuzzing-windows/libfuzzer-dotnet/libfuzzer-dotnet.exe";
 
 #[cfg(target_os = "linux")]
 const LOADER_PATH: &str =
-    "/onefuzz/third-party/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader";
+    "/onefuzz/tools/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader";
 
 #[cfg(target_os = "windows")]
 const LOADER_PATH: &str =
-    "/onefuzz/third-party/dotnet-fuzzing-windows/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.exe";
+    "/onefuzz/tools/dotnet-fuzzing-windows/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.exe";
 
 #[cfg(target_os = "linux")]
 const SHARPFUZZ_PATH: &str =
-    "/onefuzz/third-party/dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine";
+    "/onefuzz/tools/dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine";
 
 #[cfg(target_os = "windows")]
 const SHARPFUZZ_PATH: &str =
-    "/onefuzz/third-party/dotnet-fuzzing-windows/sharpfuzz/SharpFuzz.CommandLine.exe";
+    "/onefuzz/tools/dotnet-fuzzing-windows/sharpfuzz/SharpFuzz.CommandLine.exe";
 
 #[derive(Debug)]
 pub struct LibFuzzerDotnet;
