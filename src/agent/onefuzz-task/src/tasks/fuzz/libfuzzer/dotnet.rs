@@ -25,8 +25,7 @@ const LOADER_PATH: &str =
     "/onefuzz/tools/dotnet-fuzzing-windows/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.exe";
 
 #[cfg(target_os = "linux")]
-const SHARPFUZZ_PATH: &str =
-    "/onefuzz/tools/dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine";
+const SHARPFUZZ_PATH: &str = "/onefuzz/tools/dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine";
 
 #[cfg(target_os = "windows")]
 const SHARPFUZZ_PATH: &str =
