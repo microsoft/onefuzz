@@ -56,16 +56,17 @@ public class Config : IConfig {
         }
 
         if (job.Config.Logs == null) {
-            throw new Exception($"Missing log container:  job_id {job.JobId}, task_id {task.TaskId}");
+            _logTracer.Warning($"Missing log container:  job_id {job.JobId}, task_id {task.TaskId}");
         }
 
         var definition = Defs.TASK_DEFINITIONS[task.Config.Task.Type];
+        var configLogs = job.Config.Logs == null ? null : await _containers.AddContainerSasUrl(new Uri(job.Config.Logs));
 
         var config = new TaskUnitConfig(
             InstanceId: await _containers.GetInstanceId(),
             JobId: job.JobId,
             TaskId: task.TaskId,
-            logs: await _containers.AddContainerSasUrl(new Uri(job.Config.Logs)),
+            logs: configLogs,
             TaskType: task.Config.Task.Type,
             InstanceTelemetryKey: _serviceConfig.ApplicationInsightsInstrumentationKey,
             MicrosoftTelemetryKey: _serviceConfig.OneFuzzTelemetry,
