@@ -19,3 +19,6 @@ members = [
 
 [profile.release]
 lto = "thin"
+
+[patch.crates-io]
+appinsights = { git = "https://github.com/Porges/appinsights-rs", branch="audit-fixes" }
