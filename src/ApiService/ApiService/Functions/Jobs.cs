@@ -58,7 +58,7 @@ public class Jobs {
         // log container must not have the SAS included
         var logContainerUri = new UriBuilder(containerSas) { Query = "" }.Uri;
         job = job with { Config = job.Config with { Logs = logContainerUri.ToString() } };
-        await _context.JobOperations.Update(job);
+        await _context.JobOperations.Insert(job);
         return await RequestHandling.Ok(req, JobResponse.ForJob(job));
     }
 
