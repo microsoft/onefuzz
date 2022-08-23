@@ -175,6 +175,12 @@ TASK_DEFINITIONS = {
                 value=0,
                 permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
+            ContainerDefinition(
+                type=ContainerType.tools,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
         ],
         monitor_queue=None,
     ),
