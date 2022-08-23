@@ -46,7 +46,7 @@ async fn run(proxy_config: Config) -> Result<()> {
     if let Err(err) = &result {
         error!("run loop failed: {:?}", err);
     }
-    onefuzz_telemetry::try_flush_and_close();
+    onefuzz_telemetry::try_flush_and_close().await;
     result
 }
 
