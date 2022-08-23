@@ -75,7 +75,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     else:
         log_container = log_container_sas
 
-
     job.config.logs = log_container
     job.save()
 
