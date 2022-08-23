@@ -191,7 +191,7 @@ fn run(opt: RunOpt) -> Result<()> {
         }
     }
 
-    telemetry::try_flush_and_close();
+    rt.block_on(telemetry::try_flush_and_close());
 
     result
 }
