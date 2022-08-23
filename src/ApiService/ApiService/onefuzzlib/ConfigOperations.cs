@@ -46,3 +46,4 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
         await _context.Events.SendEvent(new EventInstanceConfigUpdated(config));
     }
 }
+

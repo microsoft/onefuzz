@@ -252,3 +252,7 @@ public record WebhookUpdate(
     string? SecretToken,
     WebhookMessageFormat? MessageFormat
 );
+
+public record InstanceConfigUpdate(
+    InstanceConfig config 
+);
