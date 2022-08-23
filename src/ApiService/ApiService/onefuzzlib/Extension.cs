@@ -11,6 +11,7 @@ public interface IExtensions {
     Async.Task<IList<VirtualMachineScaleSetExtensionData>> FuzzExtensions(Pool pool, Scaleset scaleset);
 
     Async.Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer);
+    Task<IList<VMExtensionWrapper>> ProxyManagerExtensions(string region, Guid proxyId);
 }
 
 public class Extensions : IExtensions {
@@ -449,4 +450,19 @@ public class Extensions : IExtensions {
         return extensionsDict;
     }
 
+    public async Task<IList<VMExtensionWrapper>> ProxyManagerExtensions(string region, Guid proxyId) {
+        var config = await _context.Containers.GetFileSasUrl(new Container("proxy-config"),
+            $"{region}/{proxyId}/config.json", StorageType.Config, BlobSasPermissions.Read);
+
+        var proxyManager = await _context.Containers.GetFileSasUrl(new Container("tools"),
+            $"linux/onefuzz-proxy-manager", StorageType.Config, BlobSasPermissions.Read);
+
+
+        var baseExtension =
+            await AgentConfig(region, Os.Linux, AgentMode.Proxy, new List<Uri> { config, proxyManager }, true);
+
+        var extensions = await GenericExtensions(region, Os.Linux);
+        extensions.Add(baseExtension);
+        return extensions;
+    }
 }

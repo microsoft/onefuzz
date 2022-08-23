@@ -11,7 +11,7 @@ public interface IVmOperations {
 
     Async.Task<bool> HasComponents(string name);
 
-    Async.Task<VirtualMachineResource?> GetVm(string name);
+    Task<VirtualMachineData?> GetVm(string name);
 
     Async.Task<bool> Delete(Vm vm);
 
@@ -64,14 +64,23 @@ public class VmOperations : IVmOperations {
         return false;
     }
 
-    public async Async.Task<VirtualMachineResource?> GetVm(string name) {
+    public async Task<VirtualMachineData?> GetVm(string name) {
         // _logTracer.Debug($"getting vm: {name}");
         try {
-            return await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(name);
+            var result = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(name, InstanceViewTypes.InstanceView);
+            if (result == null) {
+                return null;
+            }
+            if (result.Value.HasData) {
+                return result.Value.Data;
+            }
+
         } catch (RequestFailedException) {
             // _logTracer.Debug($"vm does not exist {ex});
             return null;
         }
+
+        return null;
     }
 
     public async Async.Task<bool> Delete(Vm vm) {
