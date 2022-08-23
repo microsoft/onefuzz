@@ -1,35 +1,34 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::path::PathBuf;
+
 use anyhow::Result;
 use async_trait::async_trait;
+use onefuzz::fs::set_executable;
 use onefuzz::libfuzzer::LibFuzzer;
+use onefuzz::syncdir::SyncedDir;
 use tokio::process::Command;
 
 use crate::tasks::fuzz::libfuzzer::common;
 
 #[cfg(target_os = "linux")]
-const LIBFUZZER_DOTNET_PATH: &str =
-    "/onefuzz/tools/dotnet-fuzzing-linux/libfuzzer-dotnet/libfuzzer-dotnet";
+const LIBFUZZER_DOTNET_PATH: &str = "dotnet-fuzzing-linux/libfuzzer-dotnet/libfuzzer-dotnet";
 
 #[cfg(target_os = "windows")]
-const LIBFUZZER_DOTNET_PATH: &str =
-    "/onefuzz/tools/dotnet-fuzzing-windows/libfuzzer-dotnet/libfuzzer-dotnet.exe";
+const LIBFUZZER_DOTNET_PATH: &str = "dotnet-fuzzing-windows/libfuzzer-dotnet/libfuzzer-dotnet.exe";
 
 #[cfg(target_os = "linux")]
-const LOADER_PATH: &str =
-    "/onefuzz/tools/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader";
+const LOADER_PATH: &str = "dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader";
 
 #[cfg(target_os = "windows")]
-const LOADER_PATH: &str =
-    "/onefuzz/tools/dotnet-fuzzing-windows/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.exe";
+const LOADER_PATH: &str = "dotnet-fuzzing-windows/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.exe";
 
 #[cfg(target_os = "linux")]
-const SHARPFUZZ_PATH: &str = "/onefuzz/tools/dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine";
+const SHARPFUZZ_PATH: &str = "dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine";
 
 #[cfg(target_os = "windows")]
-const SHARPFUZZ_PATH: &str =
-    "/onefuzz/tools/dotnet-fuzzing-windows/sharpfuzz/SharpFuzz.CommandLine.exe";
+const SHARPFUZZ_PATH: &str = "dotnet-fuzzing-windows/sharpfuzz/SharpFuzz.CommandLine.exe";
 
 #[derive(Debug)]
 pub struct LibFuzzerDotnet;
@@ -39,6 +38,21 @@ pub struct LibFuzzerDotnetConfig {
     pub target_assembly: String,
     pub target_class: String,
     pub target_method: String,
+    pub tools: SyncedDir,
+}
+
+impl LibFuzzerDotnetConfig {
+    fn libfuzzer_dotnet_path(&self) -> PathBuf {
+        self.tools.local_path.join(LIBFUZZER_DOTNET_PATH)
+    }
+
+    fn loader_path(&self) -> PathBuf {
+        self.tools.local_path.join(LOADER_PATH)
+    }
+
+    fn sharpfuzz_path(&self) -> PathBuf {
+        self.tools.local_path.join(SHARPFUZZ_PATH)
+    }
 }
 
 #[async_trait]
@@ -62,10 +76,13 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
         );
 
         let mut options = config.target_options.clone();
-        options.push(format!("--target_path={}", LOADER_PATH));
+        options.push(format!(
+            "--target_path={}",
+            config.extra.loader_path().display()
+        ));
 
-        Ok(LibFuzzer::new(
-            LIBFUZZER_DOTNET_PATH,
+        LibFuzzer::new(
+            config.extra.libfuzzer_dotnet_path(),
             options,
             env,
             &config.common.setup_dir,
@@ -73,8 +90,12 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
     }
 
     async fn extra_setup(config: &common::Config<Self>) -> Result<()> {
+        // Download dotnet fuzzing tools.
+        config.extra.tools.init_pull().await?;
+        set_executable(&config.extra.tools.local_path).await?;
+
         // Use SharpFuzz to statically instrument the target assembly.
-        let mut cmd = Command::new(SHARPFUZZ_PATH);
+        let mut cmd = Command::new(config.extra.sharpfuzz_path());
         cmd.arg(&config.extra.target_assembly);
 
         let mut child = cmd.spawn()?;
