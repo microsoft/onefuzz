@@ -40,9 +40,7 @@ public class Jobs {
             UserInfo = userInfo.OkV,
         };
 
-        await _context.JobOperations.Insert(job);
-
-        // create the job logs container 
+        // create the job logs container
         var metadata = new Dictionary<string, string>{
             { "container_type", "logs" }, // TODO: use ContainerType.Logs enum somehow; needs snake case name
         };
