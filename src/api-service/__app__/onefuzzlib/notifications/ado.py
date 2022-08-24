@@ -175,9 +175,14 @@ class ADO:
 
         if document:
             self.client.update_work_item(document, item.id, project=self.project)
-            "notify ado: updated work item" f" {item.id} - {notification_info}"
+            logging.info(
+                "notify ado: updated work item" f" {item.id} - {notification_info}"
+            )
         else:
-            "notify ado: no update for work item" f" {item.id} - {notification_info}"
+            logging.info(
+                "notify ado: no update for work item"
+                f" {item.id} - {notification_info}"
+            )
 
     def render_new(self) -> Tuple[str, List[JsonPatchOperation]]:
         task_type = self.render(self.config.type)
