@@ -847,7 +847,7 @@ public record TaskUnitConfig(
     Guid InstanceId,
     Guid JobId,
     Guid TaskId,
-    Uri? logs,
+    Uri logs,
     TaskType TaskType,
     string? InstanceTelemetryKey,
     string? MicrosoftTelemetryKey,

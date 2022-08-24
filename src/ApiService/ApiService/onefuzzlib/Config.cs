@@ -6,7 +6,7 @@ namespace Microsoft.OneFuzz.Service;
 
 
 public interface IConfig {
-    Async.Task<TaskUnitConfig> BuildTaskConfig(Job job, Task task);
+    Async.Task<TaskUnitConfig?> BuildTaskConfig(Job job, Task task);
     Task<ResultVoid<TaskConfigError>> CheckConfig(TaskConfig config);
 }
 
@@ -49,7 +49,7 @@ public class Config : IConfig {
         return blobPermissions;
     }
 
-    public async Async.Task<TaskUnitConfig> BuildTaskConfig(Job job, Task task) {
+    public async Async.Task<TaskUnitConfig?> BuildTaskConfig(Job job, Task task) {
 
         if (!Defs.TASK_DEFINITIONS.ContainsKey(task.Config.Task.Type)) {
             throw new Exception($"unsupported task type: {task.Config.Task.Type}");
@@ -57,16 +57,16 @@ public class Config : IConfig {
 
         if (job.Config.Logs == null) {
             _logTracer.Warning($"Missing log container:  job_id {job.JobId}, task_id {task.TaskId}");
+            return null;
         }
 
         var definition = Defs.TASK_DEFINITIONS[task.Config.Task.Type];
-        var configLogs = job.Config.Logs == null ? null : await _containers.AddContainerSasUrl(new Uri(job.Config.Logs));
 
         var config = new TaskUnitConfig(
             InstanceId: await _containers.GetInstanceId(),
             JobId: job.JobId,
             TaskId: task.TaskId,
-            logs: configLogs,
+            logs: await _containers.AddContainerSasUrl(new Uri(job.Config.Logs)),
             TaskType: task.Config.Task.Type,
             InstanceTelemetryKey: _serviceConfig.ApplicationInsightsInstrumentationKey,
             MicrosoftTelemetryKey: _serviceConfig.OneFuzzTelemetry,
