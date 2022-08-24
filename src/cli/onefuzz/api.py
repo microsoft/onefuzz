@@ -1393,7 +1393,7 @@ class Scaleset(Endpoint):
     def create(
         self,
         pool_name: primitives.PoolName,
-        size: int,
+        max_size: int,
         *,
         image: Optional[str] = None,
         vm_sku: Optional[str] = "Standard_D2s_v3",
@@ -1423,8 +1423,8 @@ class Scaleset(Endpoint):
 
         auto_scale = requests.AutoScaleOptions(
             min=min_instances,
-            max=size,
-            default=size,
+            max=max_size,
+            default=max_size,
             scale_out_amount=scale_out_amount,
             scale_out_cooldown=scale_out_cooldown,
             scale_in_amount=scale_in_amount,
@@ -1439,7 +1439,7 @@ class Scaleset(Endpoint):
                 vm_sku=vm_sku,
                 image=image,
                 region=region,
-                size=size,
+                size=min_size,
                 spot_instances=spot_instances,
                 ephemeral_os_disks=ephemeral_os_disks,
                 tags=tags,
