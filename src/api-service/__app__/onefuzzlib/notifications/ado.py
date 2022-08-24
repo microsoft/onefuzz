@@ -135,7 +135,7 @@ class ADO:
                 continue
             yield item
 
-    def update_existing(self, item: WorkItem) -> None:
+    def update_existing(self, item: WorkItem, notification_info: str) -> None:
         if self.config.on_duplicate.comment:
             comment = self.render(self.config.on_duplicate.comment)
             self.client.add_comment(
@@ -175,6 +175,9 @@ class ADO:
 
         if document:
             self.client.update_work_item(document, item.id, project=self.project)
+            "notify ado: updated work item" f" {item.id} - {notification_info}"
+        else:
+            "notify ado: no update for work item" f" {item.id} - {notification_info}"
 
     def render_new(self) -> Tuple[str, List[JsonPatchOperation]]:
         task_type = self.render(self.config.type)
@@ -195,7 +198,7 @@ class ADO:
             )
         return (task_type, document)
 
-    def create_new(self) -> Any:
+    def create_new(self) -> WorkItem:
         task_type, document = self.render_new()
 
         entry = self.client.create_work_item(
@@ -214,17 +217,13 @@ class ADO:
     def process(self, notification_info: str) -> None:
         seen = False
         for work_item in self.existing_work_items():
-            self.update_existing(work_item)
-            logging.info(
-                "notify ado: updated work item" f" {work_item.id} - {notification_info}"
-            )
+            self.update_existing(work_item, notification_info)
             seen = True
 
         if not seen:
-            self.create_new()
+            entry = self.create_new()
             logging.info(
-                "notify ado: created new work item"
-                f" {work_item.id} - {notification_info}"
+                "notify ado: created new work item" f" {entry.id} - {notification_info}"
             )
 
 
