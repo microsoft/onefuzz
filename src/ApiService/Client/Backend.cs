@@ -70,15 +70,15 @@ class Backend {
     }
 
     public OneFuzzClient CreateClient() {
-        var http = new HttpClient();
+        var client = new HttpClient();
 
         if (Config.Endpoint is Uri endpoint) {
-            http.BaseAddress = new Uri(endpoint, "api");
+            client.BaseAddress = new Uri(endpoint, "/api/");
         } else {
             throw new InvalidOperationException("endpoint not set, use `onefuzz config --endpoint <uri>` to set it");
         }
 
-        return new OneFuzzClient(http, _app);
+        return new OneFuzzClient(client, _app);
     }
 
     public async Task SaveConfig() {

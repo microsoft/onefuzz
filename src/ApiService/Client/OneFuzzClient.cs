@@ -52,6 +52,11 @@ internal sealed class OneFuzzClient : IDisposable {
     }
 
     public async Task<TResp> Invoke<TReq, TResp>(HttpFunction<TReq, TResp> func, TReq request, CancellationToken cancellationToken = default) {
+        Debug.Assert(_client.BaseAddress != null);
+
+        // TODO: verbosity log
+        Console.WriteLine("Invoking " + new Uri(_client.BaseAddress, func.Path));
+
         using var response = await _client.SendAsync(
             new HttpRequestMessage {
                 Content = JsonContent.Create(request),
