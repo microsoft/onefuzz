@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Iterator, List, Optional, Tuple, Union
+from typing import Any, Iterator, List, Optional, Tuple, Union
 
 from azure.devops.connection import Connection
 from azure.devops.credentials import BasicAuthentication
@@ -195,7 +195,7 @@ class ADO:
             )
         return (task_type, document)
 
-    def create_new(self) -> None:
+    def create_new(self) -> Any:
         task_type, document = self.render_new()
 
         entry = self.client.create_work_item(
@@ -209,15 +209,22 @@ class ADO:
                 self.project,
                 entry.id,
             )
+        return entry
 
-    def process(self) -> None:
+    def process(self, notification_info: str) -> None:
         seen = False
         for work_item in self.existing_work_items():
             self.update_existing(work_item)
+            logging.info(
+                f"notify ado: updated work item {work_item.id} - {notification_info}"
+            )
             seen = True
 
         if not seen:
             self.create_new()
+            logging.info(
+                f"notify ado: created new work item {work_item.id} - {notification_info}"
+            )
 
 
 def is_transient(err: Exception) -> bool:
@@ -250,19 +257,14 @@ def notify_ado(
         )
         return
 
-    notification_info = (
-        "job_id:%s task_id:%s container:%s filename:%s",
-        report.job_id,
-        report.task_id,
-        container,
-        filename,
-    )
+    notification_info = f"job_id:%s{report.job_id} task_id:{report.task_id} container:{container} filename:{filename}"
+
     logging.info("notify ado: %s", notification_info)
 
     try:
         ado = ADO(container, filename, config, report)
         ado.connect()
-        ado.process()
+        ado.process(notification_info)
     except (
         AzureDevOpsAuthenticationError,
         AzureDevOpsClientError,
