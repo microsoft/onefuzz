@@ -20,7 +20,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let setup_dir = value_t!(args, "setup_dir", PathBuf)?;
     let config = Config::from_file(config_path, setup_dir)?;
 
-    init_telemetry(config.common());
+    init_telemetry(config.common()).await;
 
     let min_available_memory_bytes = 1_000_000 * config.common().min_available_memory_mb;
 
@@ -111,11 +111,12 @@ struct OutOfMemory {
     min_bytes: u64,
 }
 
-fn init_telemetry(config: &CommonConfig) {
+async fn init_telemetry(config: &CommonConfig) {
     onefuzz_telemetry::set_appinsights_clients(
         config.instance_telemetry_key.clone(),
         config.microsoft_telemetry_key.clone(),
-    );
+    )
+    .await;
 }
 
 pub fn args(name: &str) -> App<'static, 'static> {

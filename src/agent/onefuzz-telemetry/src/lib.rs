@@ -450,7 +450,10 @@ mod global {
 }
 
 const REDACTED: &str = "Redacted";
-pub fn set_appinsights_clients(
+// This function doesn't do anything async, but TelemetryClient::new must be invoked
+// upon a Tokio runtime task, since it calls Tokio::spawn. The easiest way to ensure this
+// statically is to make this function async.
+pub async fn set_appinsights_clients(
     instance_key: Option<InstanceTelemetryKey>,
     microsoft_key: Option<MicrosoftTelemetryKey>,
 ) {
