@@ -1,9 +1,13 @@
 ﻿using System;
 using System.CommandLine;
+using System.CommandLine.Binding;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Xml;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Extensibility;
 
@@ -15,18 +19,35 @@ public enum OutputFormat {
 
 public static class GlobalOptions {
     public static readonly Option<OutputFormat> Format = new("--format", "output format");
+    public static readonly Option<bool> Verbose = new("--verbose", "verbose output");
 }
 
 public static class EntryPoint {
     public static async Task<int> Main(string[] args) {
+        using var loggerFactory = LoggerFactory.Create(builder => {
+            if (args.Any(x => x == "--verbose")) {
+                // TODO: this should be done inside commands so they have access to parsed version
+                builder.SetMinimumLevel(Extensions.Logging.LogLevel.Debug);
+            }
+
+            builder.AddSimpleConsole(options => {
+                options.IncludeScopes = true;
+                options.SingleLine = true;
+            });
+
+            builder.AddDebug();
+        });
+
+        var logger = loggerFactory.CreateLogger("OneFuzz");
         var backend = await Backend.Create();
 
         var rootCommand = new RootCommand("test") {
-            new Config(backend).Command,
-            new Versions(backend).Command,
+            new Config(backend, logger).Command,
+            new Versions(backend, logger).Command,
         };
 
         rootCommand.AddGlobalOption(GlobalOptions.Format);
+        rootCommand.AddGlobalOption(GlobalOptions.Verbose);
 
         return await rootCommand.InvokeAsync(args);
     }
@@ -34,9 +55,11 @@ public static class EntryPoint {
 
 class Config {
     private readonly Backend _backend;
+    private readonly ILogger _logger;
 
-    public Config(Backend backend) {
+    public Config(Backend backend, ILogger logger) {
         _backend = backend;
+        _logger = logger;
     }
 
     public Command Command {
@@ -56,7 +79,7 @@ class Config {
             using (var client = new HttpClient()) {
                 var response = await client.GetAsync(endpoint);
                 if (response.StatusCode != HttpStatusCode.Unauthorized) {
-                    Console.Error.WriteLine("This endpoint might not be a valid OneFuzz endpoint: Missing HTTP Authentication");
+                    _logger.LogWarning("This endpoint might not be a valid OneFuzz endpoint: Missing HTTP Authentication");
                 }
             }
 
@@ -72,14 +95,17 @@ class Config {
         }
 
         await _backend.SaveConfig();
+        _logger.LogInformation("Updated OneFuzz config");
     }
 }
 
 class Versions {
     private readonly Backend _backend;
+    private readonly ILogger _logger;
 
-    public Versions(Backend backend) {
+    public Versions(Backend backend, ILogger logger) {
         _backend = backend;
+        _logger = logger;
     }
 
     public Command Command
@@ -95,7 +121,7 @@ class Versions {
     }
 
     async Task RunCheck(bool exact) {
-        using var client = _backend.CreateClient();
+        using var client = _backend.CreateClient(_logger);
         var info = await client.Invoke(Functions.Info);
         var apiStr = info.Versions["onefuzz"].Version;
         var cliStr = "3.0.0";
@@ -107,9 +133,9 @@ class Versions {
         }
 
         if (!result) {
-            Console.Error.WriteLine($"incompatible versions. api: {apiStr} cli: {cliStr}");
+            _logger.LogError("Incompatible versions. API: {ApiVersion}, CLI: {CliVersion}", apiStr, cliStr);
         } else {
-            Console.WriteLine("compatible");
+            _logger.LogInformation("compatible");
         }
     }
 }

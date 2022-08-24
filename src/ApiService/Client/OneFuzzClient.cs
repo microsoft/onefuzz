@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Extensions.Msal;
 
@@ -15,10 +16,12 @@ namespace Microsoft.OneFuzz.Client;
 internal sealed class OneFuzzClient : IDisposable {
     private readonly HttpClient _client;
     private readonly IPublicClientApplication _app;
+    private readonly ILogger _logger;
 
-    public OneFuzzClient(HttpClient client, IPublicClientApplication app) {
+    public OneFuzzClient(HttpClient client, IPublicClientApplication app, ILogger logger) {
         _client = client;
         _app = app;
+        _logger = logger;
     }
 
     private async Task<AuthenticationResult> GetAccessToken(CancellationToken cancellationToken = default) {
@@ -54,8 +57,7 @@ internal sealed class OneFuzzClient : IDisposable {
     public async Task<TResp> Invoke<TReq, TResp>(HttpFunction<TReq, TResp> func, TReq request, CancellationToken cancellationToken = default) {
         Debug.Assert(_client.BaseAddress != null);
 
-        // TODO: verbosity log
-        Console.WriteLine("Invoking " + new Uri(_client.BaseAddress, func.Path));
+        _logger.LogDebug("Performing {Method}: {URL}", func.Method, new Uri(_client.BaseAddress, func.Path));
 
         using var response = await _client.SendAsync(
             new HttpRequestMessage {
@@ -67,6 +69,8 @@ internal sealed class OneFuzzClient : IDisposable {
                 },
             },
             cancellationToken);
+
+        _logger.LogDebug("Status code: {StatusCode}", response.StatusCode);
 
         response.EnsureSuccessStatusCode();
 

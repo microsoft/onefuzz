@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Extensions.Msal;
 
@@ -69,7 +70,7 @@ class Backend {
         return new Backend(fullConfigPath, fullTokenPath, config, app);
     }
 
-    public OneFuzzClient CreateClient() {
+    public OneFuzzClient CreateClient(ILogger logger) {
         var client = new HttpClient();
 
         if (Config.Endpoint is Uri endpoint) {
@@ -78,7 +79,7 @@ class Backend {
             throw new InvalidOperationException("endpoint not set, use `onefuzz config --endpoint <uri>` to set it");
         }
 
-        return new OneFuzzClient(client, _app);
+        return new OneFuzzClient(client, _app, logger);
     }
 
     public async Task SaveConfig() {
