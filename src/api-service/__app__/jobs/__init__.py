@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 from uuid import uuid4
+
 import azure.functions as func
 from onefuzztypes.enums import ContainerType, ErrorCode, JobState
 from onefuzztypes.models import Error, JobConfig, JobTaskInfo
