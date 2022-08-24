@@ -136,6 +136,10 @@ public class Scheduler : IScheduler {
         }
 
         var taskConfig = await _config.BuildTaskConfig(job, task);
+        if (taskConfig == null) {
+            _logTracer.Info($"unable to build task config for task: {task.TaskId}");
+            return null;
+        }
         var setupContainer = task.Config.Containers?.FirstOrDefault(c => c.Type == ContainerType.Setup) ?? throw new Exception($"task missing setup container: task_type = {task.Config.Task.Type}");
 
         var setupPs1Exist = _containers.BlobExists(setupContainer.Name, "setup.ps1", StorageType.Corpus);
@@ -176,8 +180,6 @@ public class Scheduler : IScheduler {
             setupContainer.Name,
             setupScript,
             pool with { ETag = null });
-
-
 
         return (bucketConfig, workUnit);
     }
