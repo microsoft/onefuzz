@@ -6,7 +6,7 @@ namespace Microsoft.OneFuzz.Service;
 
 
 public interface IConfig {
-    Async.Task<TaskUnitConfig> BuildTaskConfig(Job job, Task task);
+    Async.Task<TaskUnitConfig?> BuildTaskConfig(Job job, Task task);
     Task<ResultVoid<TaskConfigError>> CheckConfig(TaskConfig config);
 }
 
@@ -49,14 +49,15 @@ public class Config : IConfig {
         return blobPermissions;
     }
 
-    public async Async.Task<TaskUnitConfig> BuildTaskConfig(Job job, Task task) {
+    public async Async.Task<TaskUnitConfig?> BuildTaskConfig(Job job, Task task) {
 
         if (!Defs.TASK_DEFINITIONS.ContainsKey(task.Config.Task.Type)) {
             throw new Exception($"unsupported task type: {task.Config.Task.Type}");
         }
 
         if (job.Config.Logs == null) {
-            throw new Exception($"Missing log container:  job_id {job.JobId}, task_id {task.TaskId}");
+            _logTracer.Warning($"Missing log container:  job_id {job.JobId}, task_id {task.TaskId}");
+            return null;
         }
 
         var definition = Defs.TASK_DEFINITIONS[task.Config.Task.Type];

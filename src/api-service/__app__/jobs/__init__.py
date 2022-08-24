@@ -3,6 +3,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+from uuid import uuid4
+
 import azure.functions as func
 from onefuzztypes.enums import ContainerType, ErrorCode, JobState
 from onefuzztypes.models import Error, JobConfig, JobTaskInfo
@@ -53,9 +55,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(user_info, Error):
         return not_ok(user_info, context="jobs create")
 
-    job = Job(config=request, user_info=user_info)
-    job.save()
-
+    job = Job(job_id=uuid4(), config=request, user_info=user_info)
     # create the job logs container
     log_container_sas = create_container(
         Container(f"logs-{job.job_id}"),
