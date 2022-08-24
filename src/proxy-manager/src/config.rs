@@ -80,7 +80,8 @@ impl Config {
         set_appinsights_clients(
             data.instance_telemetry_key.clone(),
             data.microsoft_telemetry_key.clone(),
-        ).await;
+        )
+        .await;
 
         onefuzz_telemetry::set_property(EventData::Region(data.region.to_owned()));
         onefuzz_telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
