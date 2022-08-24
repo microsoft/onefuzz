@@ -83,7 +83,7 @@ def get_instance_url() -> str:
 
 @cached
 def use_dotnet_agent_functions() -> bool:
-    return os.environ.get("USE_DOTNET_AGENT_FUNCTIONS") == "1"
+    return os.environ.get("ONEFUZZ_USE_DOTNET_AGENT_FUNCTIONS") == "1"
 
 
 @cached
