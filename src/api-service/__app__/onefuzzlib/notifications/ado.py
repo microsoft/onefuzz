@@ -216,14 +216,15 @@ class ADO:
         for work_item in self.existing_work_items():
             self.update_existing(work_item)
             logging.info(
-                f"notify ado: updated work item {work_item.id} - {notification_info}"
+                "notify ado: updated work item" f" {work_item.id} - {notification_info}"
             )
             seen = True
 
         if not seen:
             self.create_new()
             logging.info(
-                f"notify ado: created new work item {work_item.id} - {notification_info}"
+                "notify ado: created new work item"
+                f" {work_item.id} - {notification_info}"
             )
 
 
@@ -257,7 +258,10 @@ def notify_ado(
         )
         return
 
-    notification_info = f"job_id:%s{report.job_id} task_id:{report.task_id} container:{container} filename:{filename}"
+    notification_info = (
+        f"job_id:%s{report.job_id} task_id:{report.task_id}"
+        f"container:{container} filename:{filename}"
+    )
 
     logging.info("notify ado: %s", notification_info)
 
