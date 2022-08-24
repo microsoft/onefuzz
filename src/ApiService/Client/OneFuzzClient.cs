@@ -62,7 +62,7 @@ internal sealed class OneFuzzClient : IDisposable {
         using var response = await _client.SendAsync(
             new HttpRequestMessage {
                 Content = JsonContent.Create(request),
-                RequestUri = func.Path,
+                RequestUri = new Uri(func.Path, UriKind.Relative),
                 Method = func.Method,
                 Headers = {
                     { "Authorization", await AuthorizationHeader() },

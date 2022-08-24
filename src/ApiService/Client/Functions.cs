@@ -1,20 +1,17 @@
-using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using Microsoft.OneFuzz.Api;
 
 namespace Microsoft.OneFuzz.Client;
 
-// A marker that input or output is empty.
+/// Defines a specific HTTP function with the specified request & response types:
+internal readonly record struct HttpFunction<TReq, TResp>(string Path, HttpMethod Method);
+
+// A marker that the request or response is empty:
 internal readonly struct None { };
 
-internal sealed record HttpFunction<TReq, TResp>(Uri Path, HttpMethod Method);
-
+// Defines the available functions on the service:
 internal static class Functions {
-    internal static class Containers {
-        static readonly Uri _path = new("containers", UriKind.Relative);
-        // internal static readonly HttpFunction<None, List<ContainerInfo>> List = new(_path, HttpMethod.Get);
-    }
+    // internal static readonly HttpFunction<None, List<ContainerInfo>> ContainersList = new("containers", HttpMethod.Get);
 
-    internal static readonly HttpFunction<None, InfoResponse> Info = new(new Uri("info", UriKind.Relative), HttpMethod.Get);
+    internal static readonly HttpFunction<None, InfoResponse> Info = new("info", HttpMethod.Get);
 }
