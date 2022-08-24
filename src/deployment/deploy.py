@@ -156,6 +156,7 @@ class Client:
         admins: List[UUID],
         allowed_aad_tenants: List[UUID],
         enable_dotnet: List[str],
+        use_dotnet_agent_functions: bool,
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -191,6 +192,7 @@ class Client:
         self.arm_template = bicep_to_arm(bicep_template)
 
         self.enable_dotnet = enable_dotnet
+        self.use_dotnet_agent_functions = use_dotnet_agent_functions
 
         machine = platform.machine()
         system = platform.system()
@@ -618,6 +620,7 @@ class Client:
             "signedExpiry": {"value": expiry},
             "multi_tenant_domain": multi_tenant_domain,
             "workbookData": {"value": self.workbook_data},
+            "use_dotnet_agent_functions": {"value":self.use_dotnet_agent_functions}
         }
         deployment = Deployment(
             properties=DeploymentProperties(
@@ -1363,6 +1366,11 @@ def main() -> None:
         "their functions and enable corresponding dotnet functions in the Azure "
         "Function App deployment",
     )
+    parser.add_argument(
+        "--use-dotnet-agent-functions",
+        action="store_true",
+        help="Tell the OneFuzz agent to use the dotnet endpoint",
+    )
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -1393,6 +1401,7 @@ def main() -> None:
         admins=args.set_admins,
         allowed_aad_tenants=args.allowed_aad_tenants or [],
         enable_dotnet=args.enable_dotnet,
+        use_dotnet_agent_functions=args.use_dotnet_agent_functions
     )
     if args.verbose:
         level = logging.DEBUG

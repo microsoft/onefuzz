@@ -82,16 +82,13 @@ def get_instance_url() -> str:
 
 
 @cached
-def python_agent_functions_are_disabled() -> bool:
-    # note that we only check one function here;
-    # these should be enabled or disabled as a group
-    return os.environ["AzureWebJobs_agent_can_schedule_Disabled"] == "1"
-    # periods become underscores here
+def use_dotnet_agent_functions() -> bool:
+    return os.environ.get("USE_DOTNET_AGENT_FUNCTIONS") == "1"
 
 
 @cached
 def get_agent_instance_url() -> str:
-    if python_agent_functions_are_disabled():
+    if use_dotnet_agent_functions():
         return "https://%s-net.azurewebsites.net" % get_instance_name()
     else:
         return get_instance_url()

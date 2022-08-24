@@ -24,6 +24,8 @@ param workbookData object
 ])
 param diagnosticsLogLevel string = 'Verbose'
 
+param use_dotnet_agent_functions bool
+
 var log_retention = 30
 var tenantId = subscription().tenantId
 
@@ -270,6 +272,7 @@ module pythonFunctionSettings 'bicep-templates/function-settings.bicep' = {
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
     functions_disabled: python_functions_disabled
+    use_dotnet_agent_functions: use_dotnet_agent_functions
     all_function_names: [
       'agent_can_schedule'    //0
       'agent_commands'        //1
@@ -334,6 +337,7 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
     functions_disabled: dotnet_functions_disabled
+    use_dotnet_agent_functions: false // this doesn’t do anything on the .NET service
     all_function_names: [
       'AgentCanSchedule'      //0
       'AgentCommands'         //1
