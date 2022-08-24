@@ -1367,7 +1367,7 @@ def main() -> None:
         "Function App deployment",
     )
     parser.add_argument(
-        "--use-dotnet-agent-functions",
+        "--use_dotnet_agent_functions",
         action="store_true",
         help="Tell the OneFuzz agent to use the dotnet endpoint",
     )
