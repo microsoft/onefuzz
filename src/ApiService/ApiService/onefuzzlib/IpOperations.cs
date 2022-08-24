@@ -60,12 +60,14 @@ public class IpOperations : IIpOperations {
 
     public async System.Threading.Tasks.Task DeleteNic(string resourceGroup, string name) {
         _logTracer.Info($"deleting nic {resourceGroup}:{name}");
-        await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name).Result.Value.DeleteAsync(WaitUntil.Started);
+        var networkInterface = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name);
+        await networkInterface.Value.DeleteAsync(WaitUntil.Started);
     }
 
     public async System.Threading.Tasks.Task DeleteIp(string resourceGroup, string name) {
         _logTracer.Info($"deleting ip {resourceGroup}:{name}");
-        await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(name).Result.Value.DeleteAsync(WaitUntil.Started);
+        var publicIpAddressAsync = await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(name);
+        await publicIpAddressAsync.Value.DeleteAsync(WaitUntil.Started);
     }
 
     public async Task<string?> GetScalesetInstanceIp(Guid scalesetId, Guid machineId) {
