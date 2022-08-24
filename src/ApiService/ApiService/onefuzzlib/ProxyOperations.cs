@@ -16,6 +16,7 @@ public interface IProxyOperations : IStatefulOrm<Proxy, VmState> {
     bool IsOutdated(Proxy proxy);
     Async.Task<Proxy?> GetOrCreate(string region);
 
+    Task<bool> IsUsed(Proxy proxy);
 }
 public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IProxyOperations {
 
@@ -56,6 +57,15 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         await Replace(newProxy);
         await _context.Events.SendEvent(new EventProxyCreated(region, newProxy.ProxyId));
         return newProxy;
+    }
+
+    public async Task<bool> IsUsed(Proxy proxy) {
+        var forwards = await GetForwards(proxy);
+        if (forwards.Count == 0) {
+            _logTracer.Info($"no forwards {proxy.Region}");
+            return false;
+        }
+        return true;
     }
 
     public bool IsAlive(Proxy proxy) {
