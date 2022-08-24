@@ -71,6 +71,6 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       ONEFUZZ_KEYVAULT: keyvault_name
       ONEFUZZ_OWNER: owner
       ONEFUZZ_CLIENT_SECRET: client_secret
-      ONEFUZZ_USE_DOTNET_AGENT_FUNCTIONS: use_dotnet_agent_functions
+      ONEFUZZ_USE_DOTNET_AGENT_FUNCTIONS: use_dotnet_agent_functions ? '1' : '0'
   }, disabledFunctions.outputs.appSettings)
 }
