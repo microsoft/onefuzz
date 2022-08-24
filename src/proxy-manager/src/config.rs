@@ -69,7 +69,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn from_file(path: String) -> Result<Self> {
+    pub async fn from_file(path: String) -> Result<Self> {
         let config_path = PathBuf::from(&path);
 
         let f = File::open(&config_path).map_err(|source| ProxyError::FileError { source })?;
@@ -80,7 +80,7 @@ impl Config {
         set_appinsights_clients(
             data.instance_telemetry_key.clone(),
             data.microsoft_telemetry_key.clone(),
-        );
+        ).await;
 
         onefuzz_telemetry::set_property(EventData::Region(data.region.to_owned()));
         onefuzz_telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
