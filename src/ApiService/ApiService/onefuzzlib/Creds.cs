@@ -33,6 +33,7 @@ public interface ICreds {
     public Async.Task<T> QueryMicrosoftGraph<T>(HttpMethod method, string resource);
 
     public GenericResource ParseResourceId(string resourceId);
+    public GenericResource ParseResourceId(ResourceIdentifier resourceId);
 
     public Async.Task<GenericResource> GetData(GenericResource resource);
     Async.Task<IReadOnlyList<string>> GetRegions();
@@ -166,6 +167,10 @@ public sealed class Creds : ICreds, IDisposable {
             var errorText = await response.Content.ReadAsStringAsync();
             throw new GraphQueryException($"request did not succeed: HTTP {response.StatusCode} - {errorText}");
         }
+    }
+
+    public GenericResource ParseResourceId(ResourceIdentifier resourceId) {
+        return ArmClient.GetGenericResource(resourceId);
     }
 
     public GenericResource ParseResourceId(string resourceId) {

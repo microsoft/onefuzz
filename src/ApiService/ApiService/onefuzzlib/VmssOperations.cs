@@ -262,15 +262,15 @@ public class VmssOperations : IVmssOperations {
             Sku = new ComputeSku() { Name = vmSku, Capacity = vmCount },
             Overprovision = false,
             SinglePlacementGroup = false,
-            UpgradePolicy = new UpgradePolicy() { Mode = UpgradeMode.Manual },
+            UpgradePolicy = new VirtualMachineScaleSetUpgradePolicy() { Mode = VirtualMachineScaleSetUpgradeMode.Manual },
             Identity = new ManagedServiceIdentity(managedServiceIdentityType: ManagedServiceIdentityType.UserAssigned),
         };
         vmssData.Identity.UserAssignedIdentities.Add(_creds.GetScalesetIdentityResourcePath(), new UserAssignedIdentity());
-        vmssData.VirtualMachineProfile = new VirtualMachineScaleSetVmProfile() { Priority = VirtualMachinePriorityTypes.Regular };
+        vmssData.VirtualMachineProfile = new VirtualMachineScaleSetVmProfile() { Priority = VirtualMachinePriorityType.Regular };
         var imageRef = new ImageReference();
 
         if (image.StartsWith('/')) {
-            imageRef.Id = image;
+            imageRef.Id = new ResourceIdentifier(image);
         } else {
             var info = IImageOperations.GetImageInfo(image);
             imageRef.Publisher = info.Publisher;
@@ -303,7 +303,7 @@ public class VmssOperations : IVmssOperations {
             case Os.Linux:
                 vmssData.VirtualMachineProfile.OSProfile.LinuxConfiguration = new LinuxConfiguration();
                 vmssData.VirtualMachineProfile.OSProfile.LinuxConfiguration.DisablePasswordAuthentication = true;
-                var i = new SshPublicKeyInfo() { KeyData = sshPublicKey, Path = "/home/onefuzz/.ssh/authorized_keys" };
+                var i = new SshPublicKeyConfiguration() { KeyData = sshPublicKey, Path = "/home/onefuzz/.ssh/authorized_keys" };
                 vmssData.VirtualMachineProfile.OSProfile.LinuxConfiguration.SshPublicKeys.Add(i);
                 break;
             default:
@@ -311,10 +311,10 @@ public class VmssOperations : IVmssOperations {
         }
 
         if (ephemeralOsDisks) {
-            vmssData.VirtualMachineProfile.StorageProfile.OSDisk = new VirtualMachineScaleSetOSDisk(DiskCreateOptionTypes.FromImage);
+            vmssData.VirtualMachineProfile.StorageProfile.OSDisk = new VirtualMachineScaleSetOSDisk(DiskCreateOptionType.FromImage);
             vmssData.VirtualMachineProfile.StorageProfile.OSDisk.DiffDiskSettings = new DiffDiskSettings();
-            vmssData.VirtualMachineProfile.StorageProfile.OSDisk.DiffDiskSettings.Option = DiffDiskOptions.Local;
-            vmssData.VirtualMachineProfile.StorageProfile.OSDisk.Caching = CachingTypes.ReadOnly;
+            vmssData.VirtualMachineProfile.StorageProfile.OSDisk.DiffDiskSettings.Option = DiffDiskOption.Local;
+            vmssData.VirtualMachineProfile.StorageProfile.OSDisk.Caching = CachingType.ReadOnly;
         }
 
         if (spotInstance.HasValue && spotInstance.Value) {
@@ -323,8 +323,8 @@ public class VmssOperations : IVmssOperations {
             //
             // https://docs.microsoft.com/en-us/azure/
             //   virtual-machine-scale-sets/use-spot#resource-manager-templates
-            vmssData.VirtualMachineProfile.EvictionPolicy = VirtualMachineEvictionPolicyTypes.Deallocate;
-            vmssData.VirtualMachineProfile.Priority = VirtualMachinePriorityTypes.Spot;
+            vmssData.VirtualMachineProfile.EvictionPolicy = VirtualMachineEvictionPolicyType.Deallocate;
+            vmssData.VirtualMachineProfile.Priority = VirtualMachinePriorityType.Spot;
             vmssData.VirtualMachineProfile.BillingMaxPrice = 1.0;
         }
 
@@ -370,14 +370,14 @@ public class VmssOperations : IVmssOperations {
             entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
 
             var sub = _creds.GetSubscriptionResource();
-            var skus = sub.GetResourceSkusAsync(filter: TableClient.CreateQueryFilter($"location eq '{region}'"));
+            var skus = sub.GetComputeResourceSkusAsync(filter: TableClient.CreateQueryFilter($"location eq '{region}'"));
 
             var skuNames = new List<string>();
             await foreach (var sku in skus) {
                 var available = true;
                 if (sku.Restrictions is not null) {
                     foreach (var restriction in sku.Restrictions) {
-                        if (restriction.RestrictionsType == ResourceSkuRestrictionsType.Location &&
+                        if (restriction.RestrictionsType == ComputeResourceSkuRestrictionsType.Location &&
                             restriction.Values.Contains(region, StringComparer.OrdinalIgnoreCase)) {
                             available = false;
                             break;
