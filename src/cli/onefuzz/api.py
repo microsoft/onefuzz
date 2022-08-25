@@ -1395,6 +1395,7 @@ class Scaleset(Endpoint):
         pool_name: primitives.PoolName,
         max_size: int,
         *,
+        intialized_size: Optional[int] = 1,
         image: Optional[str] = None,
         vm_sku: Optional[str] = "Standard_D2s_v3",
         region: Optional[primitives.Region] = None,
