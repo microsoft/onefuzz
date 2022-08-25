@@ -26,7 +26,8 @@ public class TimerProxy {
                 // As this function is called via a timer, this works around a user
                 // requesting to use the proxy while this function is checking if it's
                 // out of date
-                if (proxy.Outdated) {
+                if (proxy.Outdated && !(await _context.ProxyOperations.IsUsed(proxy))) {
+                    _logger.Warning($"scaleset-proxy: outdated and not used: {proxy.Region}");
                     await proxyOperations.SetState(proxy, VmState.Stopping);
                     // If something is "wrong" with a proxy, delete & recreate it
                 } else if (!proxyOperations.IsAlive(proxy)) {
