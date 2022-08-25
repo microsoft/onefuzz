@@ -1431,7 +1431,7 @@ class Scaleset(Endpoint):
             scale_in_cooldown=scale_in_cooldown,
         )
 
-        # Setting size=1 so that the scaleset is intialized with only 1 node. 
+        # Setting size=1 so that the scaleset is intialized with only 1 node.
         # The default and max are defined above
         return self._req_model(
             "POST",
