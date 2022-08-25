@@ -36,12 +36,12 @@ public static class EntryPoint {
         var logger = loggerFactory.CreateLogger("OneFuzz");
         var backend = await Backend.Create();
 
-        var rootCommand = new RootCommand("test") {
+        var rootCommand = new RootCommand("The OneFuzz command-line interface") {
             new Config(backend, logger).Command,
             new Versions(backend, logger).Command,
         };
 
-        rootCommand.AddGlobalOption(GlobalOptions.Format);
+        // rootCommand.AddGlobalOption(GlobalOptions.Format);
         rootCommand.AddGlobalOption(GlobalOptions.Verbose);
 
         return await rootCommand.InvokeAsync(args);
@@ -62,8 +62,15 @@ class Config {
             var endpointOption = new Option<Uri?>("--endpoint", "The OneFuzz endpoint to use.");
             var clientIdOption = new Option<string?>("--client_id");
             var authorityOption = new Option<string?>("--authority");
-            var cmd = new Command("config") { endpointOption, clientIdOption, authorityOption };
+
+            var cmd = new Command("config", "update the stored OneFuzz configuration") { 
+                endpointOption,
+                clientIdOption,
+                authorityOption,
+            };
+
             cmd.SetHandler(Run, endpointOption, clientIdOption, authorityOption);
+
             return cmd;
         }
     }
@@ -110,8 +117,13 @@ class Versions {
 
     Command GetCheckCommand() {
         var exactOption = new Option<bool>("--exact");
-        var checkCommand = new Command("check") { exactOption };
+
+        var checkCommand = new Command("check", "check that the CLI and API are compatible") {
+            exactOption
+        };
+
         checkCommand.SetHandler(RunCheck, exactOption);
+
         return checkCommand;
     }
 
