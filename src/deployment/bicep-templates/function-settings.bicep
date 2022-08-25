@@ -27,6 +27,7 @@ param functions_worker_runtime string
 param functions_extension_version string
 
 param functions_disabled string
+param use_dotnet_agent_functions bool
 
 param all_function_names array
 
@@ -50,26 +51,26 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
   parent: function
   name: 'appsettings'
   properties: union({
-      'FUNCTIONS_EXTENSION_VERSION': functions_extension_version
-      'FUNCTIONS_WORKER_RUNTIME': functions_worker_runtime
-      'FUNCTIONS_WORKER_PROCESS_COUNT': '1'
-      'APPINSIGHTS_INSTRUMENTATIONKEY': app_insights_key
-      'APPINSIGHTS_APPID': app_insights_app_id
-      'ONEFUZZ_TELEMETRY': telemetry
-      'AzureWebJobsStorage': func_sas_url
-      'MULTI_TENANT_DOMAIN': multi_tenant_domain
-      'AzureWebJobsDisableHomepage': 'true'
-      'AzureSignalRConnectionString': signal_r_connection_string
-      'AzureSignalRServiceTransportType': 'Transient'
-      'ONEFUZZ_INSTANCE_NAME': instance_name
-      'ONEFUZZ_INSTANCE': 'https://${name}.azurewebsites.net'
-      'ONEFUZZ_RESOURCE_GROUP': resourceGroup().id
-      'ONEFUZZ_DATA_STORAGE': fuzz_storage_resource_id
-      'ONEFUZZ_FUNC_STORAGE': func_storage_resource_id
-      'ONEFUZZ_MONITOR': monitor_account_name
-      'ONEFUZZ_KEYVAULT': keyvault_name
-      'ONEFUZZ_OWNER': owner
-      'ONEFUZZ_CLIENT_SECRET': client_secret
+      FUNCTIONS_EXTENSION_VERSION: functions_extension_version
+      FUNCTIONS_WORKER_RUNTIME: functions_worker_runtime
+      FUNCTIONS_WORKER_PROCESS_COUNT: '1'
+      APPINSIGHTS_INSTRUMENTATIONKEY: app_insights_key
+      APPINSIGHTS_APPID: app_insights_app_id
+      ONEFUZZ_TELEMETRY: telemetry
+      AzureWebJobsStorage: func_sas_url
+      MULTI_TENANT_DOMAIN: multi_tenant_domain
+      AzureWebJobsDisableHomepage: 'true'
+      AzureSignalRConnectionString: signal_r_connection_string
+      AzureSignalRServiceTransportType: 'Transient'
+      ONEFUZZ_INSTANCE_NAME: instance_name
+      ONEFUZZ_INSTANCE: 'https://${name}.azurewebsites.net'
+      ONEFUZZ_RESOURCE_GROUP: resourceGroup().id
+      ONEFUZZ_DATA_STORAGE: fuzz_storage_resource_id
+      ONEFUZZ_FUNC_STORAGE: func_storage_resource_id
+      ONEFUZZ_MONITOR: monitor_account_name
+      ONEFUZZ_KEYVAULT: keyvault_name
+      ONEFUZZ_OWNER: owner
+      ONEFUZZ_CLIENT_SECRET: client_secret
+      ONEFUZZ_USE_DOTNET_AGENT_FUNCTIONS: use_dotnet_agent_functions ? '1' : '0'
   }, disabledFunctions.outputs.appSettings)
 }
-
