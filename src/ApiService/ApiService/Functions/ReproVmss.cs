@@ -15,8 +15,8 @@ public class ReproVmss {
         _context = context;
     }
 
-    [Function("repro_vmss")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req) {
+    [Function("repro_vms")]
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req) {
         return _auth.CallIfUser(req, r => r.Method switch {
             "GET" => Get(r),
             "POST" => Post(r),
@@ -43,7 +43,7 @@ public class ReproVmss {
             return response;
         }
 
-        var vms = await _context.ReproOperations.SearchStates(VmStateHelper.Available).Select(vm => vm with { Auth = null }).ToListAsync();
+        var vms = _context.ReproOperations.SearchStates(VmStateHelper.Available).Select(vm => vm with { Auth = null });
         var response2 = req.CreateResponse(HttpStatusCode.OK);
         await response2.WriteAsJsonAsync(vms);
         return response2;
