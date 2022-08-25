@@ -1,15 +1,10 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Binding;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Xml;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
-using Microsoft.Identity.Client;
-using Microsoft.Identity.Client.Extensibility;
 
 namespace Microsoft.OneFuzz.Client;
 
@@ -120,7 +115,7 @@ class Versions {
         return checkCommand;
     }
 
-    async Task RunCheck(bool exact) {
+    async Task<int> RunCheck(bool exact) {
         using var client = _backend.CreateClient(_logger);
         var info = await client.Invoke(Functions.Info);
         var apiStr = info.Versions["onefuzz"].Version;
@@ -134,8 +129,10 @@ class Versions {
 
         if (!result) {
             _logger.LogError("Incompatible versions. API: {ApiVersion}, CLI: {CliVersion}", apiStr, cliStr);
+            return 1;
         } else {
             _logger.LogInformation("compatible");
+            return 0;
         }
     }
 }
