@@ -70,11 +70,11 @@ public class Config : IConfig {
             TaskType: task.Config.Task.Type,
             InstanceTelemetryKey: _serviceConfig.ApplicationInsightsInstrumentationKey,
             MicrosoftTelemetryKey: _serviceConfig.OneFuzzTelemetry,
-            HeartbeatQueue: await _queue.GetQueueSas("task-heartbeat", StorageType.Config, QueueSasPermissions.Add) ?? throw new Exception("unable to get heartbeat queue sas")
+            HeartbeatQueue: _queue.GetQueueSas("task-heartbeat", StorageType.Config, QueueSasPermissions.Add) ?? throw new Exception("unable to get heartbeat queue sas")
         );
 
         if (definition.MonitorQueue != null) {
-            config.inputQueue = await _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Corpus, QueueSasPermissions.Add | QueueSasPermissions.Read | QueueSasPermissions.Update | QueueSasPermissions.Process);
+            config.inputQueue = _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Corpus, QueueSasPermissions.Add | QueueSasPermissions.Read | QueueSasPermissions.Update | QueueSasPermissions.Process);
         }
 
         var containersByType = definition.Containers.Where(c => c.Type != ContainerType.Setup && task.Config.Containers != null)

@@ -1,9 +1,9 @@
 ﻿using System.Text.Json;
 using Azure.Core;
 using Azure.Data.Tables;
+using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
-using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Caching.Memory;
@@ -48,29 +48,11 @@ public interface IStorage {
         return secondaryAccounts[Random.Shared.Next(secondaryAccounts.Count)];
     }
 
-    protected abstract Async.Task<(string, string)> GetStorageAccountNameAndKey(string accountId);
+    public BlobServiceClient GetBlobServiceClientForAccount(string accountId);
 
-    public async Async.Task<BlobServiceClient> GetBlobServiceClientForAccount(string accountId) {
-        var (accountName, accountKey) = await GetStorageAccountNameAndKey(accountId);
-        var storageKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
-        var accountUrl = GetBlobEndpoint(accountName);
-        return new BlobServiceClient(accountUrl, storageKeyCredential);
-    }
+    public TableServiceClient GetTableServiceClientForAccount(string accountId);
 
-    public async Async.Task<TableServiceClient> GetTableServiceClientForAccount(string accountId) {
-        var (accountName, accountKey) = await GetStorageAccountNameAndKey(accountId);
-        var storageKeyCredential = new TableSharedKeyCredential(accountName, accountKey);
-        var accountUrl = GetTableEndpoint(accountName);
-        return new TableServiceClient(accountUrl, storageKeyCredential);
-    }
-
-    public async Async.Task<QueueServiceClient> GetQueueServiceClientForAccount(string accountId) {
-        var (accountName, accountKey) = await GetStorageAccountNameAndKey(accountId);
-        var storageKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
-        var endpoint = GetQueueEndpoint(accountName);
-        var options = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
-        return new QueueServiceClient(endpoint, storageKeyCredential, options);
-    }
+    public QueueServiceClient GetQueueServiceClientForAccount(string accountId);
 }
 
 public sealed class Storage : IStorage {
@@ -187,4 +169,28 @@ public sealed class Storage : IStorage {
 
     public Uri GetBlobEndpoint(string accountId)
         => new($"https://{accountId}.blob.core.windows.net/");
+
+    // According to guidance these should be reused as they manage HttpClients:
+
+    record BlobClientKey(string AccountId);
+    public BlobServiceClient GetBlobServiceClientForAccount(string accountId)
+        => _cache.GetOrCreate(new BlobClientKey(accountId), cacheEntry => {
+            cacheEntry.Priority = CacheItemPriority.NeverRemove;
+            return new BlobServiceClient(GetBlobEndpoint(accountId), new DefaultAzureCredential());
+        });
+
+    record TableClientKey(string AccountId);
+    public TableServiceClient GetTableServiceClientForAccount(string accountId)
+        => _cache.GetOrCreate(new TableClientKey(accountId), cacheEntry => {
+            cacheEntry.Priority = CacheItemPriority.NeverRemove;
+            return new TableServiceClient(GetTableEndpoint(accountId), new DefaultAzureCredential());
+        });
+
+    record QueueClientKey(string AccountId);
+    private static readonly QueueClientOptions _queueClientOptions = new() { MessageEncoding = QueueMessageEncoding.Base64 };
+    public QueueServiceClient GetQueueServiceClientForAccount(string accountId)
+        => _cache.GetOrCreate(new QueueClientKey(accountId), cacheEntry => {
+            cacheEntry.Priority = CacheItemPriority.NeverRemove;
+            return new QueueServiceClient(GetQueueEndpoint(accountId), new DefaultAzureCredential(), _queueClientOptions);
+        });
 }

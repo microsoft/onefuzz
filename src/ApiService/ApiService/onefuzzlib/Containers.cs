@@ -104,7 +104,7 @@ public class Containers : IContainers {
         }
 
         var account = _storage.ChooseAccount(storageType);
-        var client = await _storage.GetBlobServiceClientForAccount(account);
+        var client = _storage.GetBlobServiceClientForAccount(account);
         var containerName = _config.OneFuzzStoragePrefix + container.ContainerName;
         var cc = client.GetBlobContainerClient(containerName);
         try {
@@ -134,10 +134,9 @@ public class Containers : IContainers {
         var containers =
             _storage.GetAccounts(storageType)
             .Reverse()
-            .Select(async account => (await _storage.GetBlobServiceClientForAccount(account)).GetBlobContainerClient(containerName));
+            .Select(account => _storage.GetBlobServiceClientForAccount(account).GetBlobContainerClient(containerName));
 
-        foreach (var c in containers) {
-            var client = await c;
+        foreach (var client in containers) {
             if ((await client.ExistsAsync()).Value) {
                 return client;
             }
@@ -236,11 +235,7 @@ public class Containers : IContainers {
         var accounts = _storage.GetAccounts(corpus);
         IEnumerable<IEnumerable<KeyValuePair<string, IDictionary<string, string>>>> data =
          await Async.Task.WhenAll(accounts.Select(async acc => {
-             var service = await _storage.GetBlobServiceClientForAccount(acc);
-             if (service is null) {
-                 throw new InvalidOperationException($"unable to get blob service for account {acc}");
-             }
-
+             var service = _storage.GetBlobServiceClientForAccount(acc);
              return await service.GetBlobContainersAsync(BlobContainerTraits.Metadata).Select(container =>
                 KeyValuePair.Create(container.Name, container.Properties.Metadata)).ToListAsync();
          }));

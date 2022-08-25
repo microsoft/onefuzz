@@ -9,7 +9,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IQueue {
     Async.Task SendMessage(string name, string message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
     Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
-    Async.Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
+    Uri GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
     ResourceIdentifier GetResourceId(string queueName, StorageType storageType);
     Task<IList<T>> PeekQueue<T>(string name, StorageType storageType);
     Async.Task<bool> RemoveFirstMessage(string name, StorageType storageType);
@@ -32,7 +32,7 @@ public class Queue : IQueue {
 
 
     public async Async.Task SendMessage(string name, string message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
-        var queue = await GetQueueClient(name, storageType);
+        var queue = GetQueueClient(name, storageType);
         try {
             await queue.SendMessageAsync(message, visibilityTimeout: visibilityTimeout, timeToLive: timeToLive);
         } catch (Exception ex) {
@@ -41,16 +41,14 @@ public class Queue : IQueue {
         }
     }
 
-    public async Task<QueueClient> GetQueueClient(string name, StorageType storageType) {
-        var client = await GetQueueClientService(storageType);
-        return client.GetQueueClient(name);
-    }
+    public QueueClient GetQueueClient(string name, StorageType storageType)
+        => GetQueueClientService(storageType).GetQueueClient(name);
 
-    public Task<QueueServiceClient> GetQueueClientService(StorageType storageType)
+    public QueueServiceClient GetQueueClientService(StorageType storageType)
         => _storage.GetQueueServiceClientForAccount(_storage.GetPrimaryAccount(storageType));
 
     public async Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
-        var queueClient = await GetQueueClient(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
+        var queueClient = GetQueueClient(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
         try {
             var serialized = JsonSerializer.Serialize(obj, EntityConverter.GetJsonSerializerOptions());
             var res = await queueClient.SendMessageAsync(serialized, visibilityTimeout: visibilityTimeout, timeToLive);
@@ -66,15 +64,15 @@ public class Queue : IQueue {
         }
     }
 
-    public async Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
-        var queue = await GetQueueClient(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
+    public Uri GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
+        var queue = GetQueueClient(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
         var sasaBuilder = new QueueSasBuilder(permissions, DateTimeOffset.UtcNow + (duration ?? DEFAULT_DURATION));
         return queue.GenerateSasUri(sasaBuilder);
     }
 
 
     public async Async.Task CreateQueue(string name, StorageType storageType) {
-        var client = await GetQueueClient(name, storageType);
+        var client = GetQueueClient(name, storageType);
         var resp = await client.CreateIfNotExistsAsync();
 
         if (resp is not null && resp.IsError) {
@@ -83,7 +81,7 @@ public class Queue : IQueue {
     }
 
     public async Async.Task DeleteQueue(string name, StorageType storageType) {
-        var client = await GetQueueClient(name, storageType);
+        var client = GetQueueClient(name, storageType);
         var resp = await client.DeleteIfExistsAsync();
         if (resp.GetRawResponse() is not null && resp.GetRawResponse().IsError) {
             _log.Error($"failed to delete queue {name} due to {resp.GetRawResponse().ReasonPhrase}");
@@ -91,7 +89,7 @@ public class Queue : IQueue {
     }
 
     public async Async.Task ClearQueue(string name, StorageType storageType) {
-        var client = await GetQueueClient(name, storageType);
+        var client = GetQueueClient(name, storageType);
         var resp = await client.ClearMessagesAsync();
         if (resp is not null && resp.IsError) {
             _log.Error($"failed to clear the queue {name} due to {resp.ReasonPhrase}");
@@ -99,7 +97,7 @@ public class Queue : IQueue {
     }
 
     public async Async.Task<bool> RemoveFirstMessage(string name, StorageType storageType) {
-        var client = await GetQueueClient(name, storageType);
+        var client = GetQueueClient(name, storageType);
 
         var msgs = await client.ReceiveMessagesAsync();
         foreach (var msg in msgs.Value) {
@@ -115,7 +113,7 @@ public class Queue : IQueue {
     }
 
     public async Task<IList<T>> PeekQueue<T>(string name, StorageType storageType) {
-        var client = await GetQueueClient(name, storageType);
+        var client = GetQueueClient(name, storageType);
 
         var result = new List<T>();
 

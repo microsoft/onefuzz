@@ -1,13 +1,14 @@
 ﻿using System.Collections.Concurrent;
 using System.Reflection;
 using System.Threading.Tasks;
+using Azure.Core;
 using Azure.Data.Tables;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace ApiService.OneFuzzLib.Orm {
     public interface IOrm<T> where T : EntityBase {
-        Task<TableClient> GetTableClient(string table, string? accountId = null);
+        TableClient GetTableClient(string table, string? accountId = null);
         IAsyncEnumerable<T> QueryAsync(string? filter = null);
 
         Task<T> GetEntityAsync(string partitionKey, string rowKey);
@@ -42,7 +43,7 @@ namespace ApiService.OneFuzzLib.Orm {
         }
 
         public async IAsyncEnumerable<T> QueryAsync(string? filter = null) {
-            var tableClient = await GetTableClient(typeof(T).Name);
+            var tableClient = GetTableClient(typeof(T).Name);
 
             if (filter == "") {
                 filter = null;
@@ -56,7 +57,7 @@ namespace ApiService.OneFuzzLib.Orm {
         /// Inserts the entity into table storage.
         /// If successful, updates the ETag of the passed-in entity.
         public async Task<ResultVoid<(int, string)>> Insert(T entity) {
-            var tableClient = await GetTableClient(typeof(T).Name);
+            var tableClient = GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
             var response = await tableClient.AddEntityAsync(tableEntity);
 
@@ -71,7 +72,7 @@ namespace ApiService.OneFuzzLib.Orm {
         }
 
         public async Task<ResultVoid<(int, string)>> Replace(T entity) {
-            var tableClient = await GetTableClient(typeof(T).Name);
+            var tableClient = GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
             var response = await tableClient.UpsertEntityAsync(tableEntity, TableUpdateMode.Replace);
             if (response.IsError) {
@@ -86,7 +87,7 @@ namespace ApiService.OneFuzzLib.Orm {
                 throw new ArgumentException("ETag must be set when updating an entity", nameof(entity));
             }
 
-            var tableClient = await GetTableClient(typeof(T).Name);
+            var tableClient = GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
 
             var response = await tableClient.UpdateEntityAsync(tableEntity, entity.ETag.Value);
@@ -98,22 +99,22 @@ namespace ApiService.OneFuzzLib.Orm {
         }
 
         public async Task<T> GetEntityAsync(string partitionKey, string rowKey) {
-            var tableClient = await GetTableClient(typeof(T).Name);
+            var tableClient = GetTableClient(typeof(T).Name);
             var tableEntity = await tableClient.GetEntityAsync<TableEntity>(partitionKey, rowKey);
             return _entityConverter.ToRecord<T>(tableEntity);
         }
 
-        public async Task<TableClient> GetTableClient(string table, string? accountId = null) {
+        public TableClient GetTableClient(string table, string? accountId = null) {
             // TODO: do this less often, instead of once per request:
             var tableName = _context.ServiceConfiguration.OneFuzzStoragePrefix + table;
 
             var account = accountId ?? _context.ServiceConfiguration.OneFuzzFuncStorage ?? throw new ArgumentNullException(nameof(accountId));
-            var tableClient = await _context.Storage.GetTableServiceClientForAccount(account);
+            var tableClient = _context.Storage.GetTableServiceClientForAccount(account);
             return tableClient.GetTableClient(tableName);
         }
 
         public async Task<ResultVoid<(int, string)>> Delete(T entity) {
-            var tableClient = await GetTableClient(typeof(T).Name);
+            var tableClient = GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
             var response = await tableClient.DeleteEntityAsync(tableEntity.PartitionKey, tableEntity.RowKey);
             if (response.IsError) {

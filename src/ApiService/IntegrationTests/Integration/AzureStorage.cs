@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Azure.Data.Tables;
+using Azure.Storage;
+using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
 using Microsoft.OneFuzz.Service;
 
 using Async = System.Threading.Tasks;
@@ -37,8 +41,6 @@ sealed class AzureStorage : IStorage {
         return new[] { AccountName };
     }
 
-    public Task<(string, string)> GetStorageAccountNameAndKey(string accountId)
-        => Async.Task.FromResult((AccountName, AccountKey));
 
     public Task<string?> GetStorageAccountNameKeyByName(string accountName) {
         return Async.Task.FromResult<string?>(AccountName);
@@ -52,6 +54,22 @@ sealed class AzureStorage : IStorage {
 
     public Uri GetBlobEndpoint(string accountId)
         => new($"https://{AccountName}.blob.core.windows.net/");
+
+    public BlobServiceClient GetBlobServiceClientForAccount(string accountId) {
+        var cred = new StorageSharedKeyCredential(AccountName, AccountKey);
+        return new BlobServiceClient(GetBlobEndpoint(accountId), cred);
+    }
+
+    public TableServiceClient GetTableServiceClientForAccount(string accountId) {
+        var cred = new TableSharedKeyCredential(AccountName, AccountKey);
+        return new TableServiceClient(GetTableEndpoint(accountId), cred);
+    }
+
+    private static readonly QueueClientOptions _queueClientOptions = new() { MessageEncoding = QueueMessageEncoding.Base64 };
+    public QueueServiceClient GetQueueServiceClientForAccount(string accountId) {
+        var cred = new StorageSharedKeyCredential(AccountName, AccountKey);
+        return new QueueServiceClient(GetQueueEndpoint(accountId), cred, _queueClientOptions);
+    }
 
     IReadOnlyList<string> IStorage.CorpusAccounts() {
         throw new NotImplementedException();

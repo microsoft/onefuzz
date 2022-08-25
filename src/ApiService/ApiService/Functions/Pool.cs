@@ -114,8 +114,8 @@ public class Pool {
             ScalesetSummary: null);
 
     private async Task<PoolGetResult> Populate(PoolGetResult p, bool skipSummaries = false) {
-        var (queueSas, instanceId, workQueue, scalesetSummary) = await (
-            _context.Queue.GetQueueSas("node-heartbeat", StorageType.Config, QueueSasPermissions.Add),
+        var queueSas = _context.Queue.GetQueueSas("node-heartbeat", StorageType.Config, QueueSasPermissions.Add);
+        var (instanceId, workQueue, scalesetSummary) = await (
             _context.Containers.GetInstanceId(),
             skipSummaries ? Async.Task.FromResult(new List<WorkSetSummary>()) : _context.PoolOperations.GetWorkQueue(p.PoolId, p.State),
             skipSummaries ? Async.Task.FromResult(new List<ScalesetSummary>()) : _context.PoolOperations.GetScalesetSummary(p.Name));
