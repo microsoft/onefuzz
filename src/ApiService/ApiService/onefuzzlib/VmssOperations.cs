@@ -259,7 +259,7 @@ public class VmssOperations : IVmssOperations {
 
         var vmssData = new VirtualMachineScaleSetData(location) {
             DoNotRunExtensionsOnOverprovisionedVms = false,
-            Sku = new ComputeSku() { Name = vmSku },
+            Sku = new ComputeSku() { Name = vmSku, Capacity = vmCount },
             Overprovision = false,
             SinglePlacementGroup = false,
             UpgradePolicy = new UpgradePolicy() { Mode = UpgradeMode.Manual },
