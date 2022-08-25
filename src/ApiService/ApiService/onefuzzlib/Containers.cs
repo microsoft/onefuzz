@@ -5,6 +5,7 @@ using Azure.ResourceManager;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
 
 namespace Microsoft.OneFuzz.Service;
@@ -146,17 +147,23 @@ public class Containers : IContainers {
 
     public async Async.Task<Uri> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
+        var serviceClient = client.GetParentBlobServiceClient();
 
         var (startTime, endTime) = SasTimeWindow(duration ?? TimeSpan.FromDays(30));
+        var delegationKey = await serviceClient.GetUserDelegationKeyAsync(startTime, endTime);
 
         var sasBuilder = new BlobSasBuilder(permissions, endTime) {
             StartsOn = startTime,
-            BlobContainerName = _config.OneFuzzStoragePrefix + container.ContainerName,
+            BlobContainerName = client.Name,
             BlobName = name
         };
 
-        var sasUrl = client.GetBlobClient(name).GenerateSasUri(sasBuilder);
-        return sasUrl;
+        var blobClient = client.GetBlobClient(name);
+        var blobUriBuilder = new BlobUriBuilder(blobClient.Uri) {
+            Sas = sasBuilder.ToSasQueryParameters(delegationKey, serviceClient.AccountName),
+        };
+
+        return blobUriBuilder.ToUri();
     }
 
     public static (DateTimeOffset, DateTimeOffset) SasTimeWindow(TimeSpan timeSpan) {
@@ -216,30 +223,38 @@ public class Containers : IContainers {
 
     public async Async.Task<Uri> GetContainerSasUrl(Container container, StorageType storageType, BlobContainerSasPermissions permissions, TimeSpan? duration = null) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
+        var serviceClient = client.GetParentBlobServiceClient();
+
         var (startTime, endTime) = SasTimeWindow(duration ?? CONTAINER_SAS_DEFAULT_DURATION);
+
+        var delegationKey = await serviceClient.GetUserDelegationKeyAsync(startTime, endTime);
+
         var sasBuilder = new BlobSasBuilder(permissions, endTime) {
             StartsOn = startTime,
-            BlobContainerName = _config.OneFuzzStoragePrefix + container.ContainerName,
+            BlobContainerName = client.Name,
         };
 
-        var sasUrl = client.GenerateSasUri(sasBuilder);
-        return sasUrl;
+        var blobUriBuilder = new BlobUriBuilder(client.Uri) {
+            Sas = sasBuilder.ToSasQueryParameters(delegationKey, serviceClient.AccountName),
+        };
+
+        return blobUriBuilder.ToUri();
     }
 
-    public async Async.Task<bool> BlobExists(Container container, string name, StorageType storageType) {
-        var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
-        return await client.GetBlobClient(name).ExistsAsync();
-    }
+public async Async.Task<bool> BlobExists(Container container, string name, StorageType storageType) {
+    var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container.ContainerName} - {storageType}");
+    return await client.GetBlobClient(name).ExistsAsync();
+}
 
-    public async Task<Dictionary<string, IDictionary<string, string>>> GetContainers(StorageType corpus) {
-        var accounts = _storage.GetAccounts(corpus);
-        IEnumerable<IEnumerable<KeyValuePair<string, IDictionary<string, string>>>> data =
-         await Async.Task.WhenAll(accounts.Select(async acc => {
-             var service = _storage.GetBlobServiceClientForAccount(acc);
-             return await service.GetBlobContainersAsync(BlobContainerTraits.Metadata).Select(container =>
-                KeyValuePair.Create(container.Name, container.Properties.Metadata)).ToListAsync();
-         }));
+public async Task<Dictionary<string, IDictionary<string, string>>> GetContainers(StorageType corpus) {
+    var accounts = _storage.GetAccounts(corpus);
+    IEnumerable<IEnumerable<KeyValuePair<string, IDictionary<string, string>>>> data =
+     await Async.Task.WhenAll(accounts.Select(async acc => {
+         var service = _storage.GetBlobServiceClientForAccount(acc);
+         return await service.GetBlobContainersAsync(BlobContainerTraits.Metadata).Select(container =>
+            KeyValuePair.Create(container.Name, container.Properties.Metadata)).ToListAsync();
+     }));
 
-        return new(data.SelectMany(x => x));
-    }
+    return new(data.SelectMany(x => x));
+}
 }

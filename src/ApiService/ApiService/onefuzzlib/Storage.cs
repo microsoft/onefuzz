@@ -149,7 +149,6 @@ public sealed class Storage : IStorage {
             return key?.Value;
         });
 
-
     public IReadOnlyList<string> GetAccounts(StorageType storageType) {
         switch (storageType) {
             case StorageType.Corpus:

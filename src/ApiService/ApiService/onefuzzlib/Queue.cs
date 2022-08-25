@@ -66,10 +66,10 @@ public class Queue : IQueue {
 
     public Uri GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
         var queue = GetQueueClient(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
+
         var sasaBuilder = new QueueSasBuilder(permissions, DateTimeOffset.UtcNow + (duration ?? DEFAULT_DURATION));
         return queue.GenerateSasUri(sasaBuilder);
     }
-
 
     public async Async.Task CreateQueue(string name, StorageType storageType) {
         var client = GetQueueClient(name, storageType);
