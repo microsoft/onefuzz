@@ -37,11 +37,23 @@ public class Request {
         return await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
     }
 
-    public async Task<HttpResponseMessage> Get(Uri url) {
-        return await Send(method: HttpMethod.Get, url: url);
+    public async Task<HttpResponseMessage> Get(Uri url, string? json = null) {
+        if (json is not null) {
+            using var b = new StringContent(json);
+            b.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+            return await Send(method: HttpMethod.Get, url: url, content: b);
+        } else {
+            return await Send(method: HttpMethod.Get, url: url);
+        }
     }
-    public async Task<HttpResponseMessage> Delete(Uri url) {
-        return await Send(method: HttpMethod.Delete, url: url);
+    public async Task<HttpResponseMessage> Delete(Uri url, string? json = null) {
+        if (json is not null) {
+            using var b = new StringContent(json);
+            b.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+            return await Send(method: HttpMethod.Delete, url: url, content: b);
+        } else {
+            return await Send(method: HttpMethod.Delete, url: url);
+        }
     }
 
     public async Task<HttpResponseMessage> Post(Uri url, String json, IDictionary<string, string>? headers = null) {
