@@ -859,7 +859,7 @@ class TestOnefuzz:
                 break
 
             # ignore logging.info coming from Azure Functions
-            if entry.get("customDimensions", {}).get("LogLevel") == "Information":
+            if entry.get("customDimensions", {}).get("LogLevel") == "Information" or entry.get("severityLevel") <= 2:
                 continue
 
             # ignore warnings coming from the rust code, only be concerned

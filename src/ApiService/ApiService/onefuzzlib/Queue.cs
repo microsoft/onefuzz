@@ -92,7 +92,7 @@ public class Queue : IQueue {
     public async Async.Task DeleteQueue(string name, StorageType storageType) {
         var client = await GetQueueClient(name, storageType);
         var resp = await client.DeleteIfExistsAsync();
-        if (resp.GetRawResponse().IsError) {
+        if (resp.GetRawResponse() is not null && resp.GetRawResponse().IsError) {
             _log.Error($"failed to delete queue {name} due to {resp.GetRawResponse().ReasonPhrase}");
         }
     }
@@ -100,7 +100,7 @@ public class Queue : IQueue {
     public async Async.Task ClearQueue(string name, StorageType storageType) {
         var client = await GetQueueClient(name, storageType);
         var resp = await client.ClearMessagesAsync();
-        if (resp.IsError) {
+        if (resp is not null && resp.IsError) {
             _log.Error($"failed to clear the queue {name} due to {resp.ReasonPhrase}");
         }
     }

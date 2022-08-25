@@ -496,7 +496,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public IAsyncEnumerable<Node> SearchByPoolName(PoolName poolName) {
-        return QueryAsync(TableClient.CreateQueryFilter($"(pool_name eq {poolName})"));
+        return QueryAsync($"(pool_name eq '{poolName}')");
     }
 
 
