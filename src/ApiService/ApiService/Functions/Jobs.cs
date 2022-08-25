@@ -40,9 +40,7 @@ public class Jobs {
             UserInfo = userInfo.OkV,
         };
 
-        await _context.JobOperations.Insert(job);
-
-        // create the job logs container 
+        // create the job logs container
         var metadata = new Dictionary<string, string>{
             { "container_type", "logs" }, // TODO: use ContainerType.Logs enum somehow; needs snake case name
         };
@@ -60,7 +58,7 @@ public class Jobs {
         // log container must not have the SAS included
         var logContainerUri = new UriBuilder(containerSas) { Query = "" }.Uri;
         job = job with { Config = job.Config with { Logs = logContainerUri.ToString() } };
-        await _context.JobOperations.Update(job);
+        await _context.JobOperations.Insert(job);
         return await RequestHandling.Ok(req, JobResponse.ForJob(job));
     }
 
