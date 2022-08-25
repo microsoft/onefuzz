@@ -378,10 +378,8 @@ impl LibFuzzerLine {
     }
 
     pub fn parse(line: &str) -> Result<Option<Self>> {
-        let caps = match LIBFUZZERLINEREGEX.captures(line) {
-            Some(caps) => caps,
-            None => return Ok(None),
-        };
+        let caps = LIBFUZZERLINEREGEX.captures(line)
+            .context(format!("Failed to capture libfuzzer line regex in: {:?}", line))?;
 
         let iters = caps[1].parse()?;
         let execs_sec = caps[2].parse()?;
