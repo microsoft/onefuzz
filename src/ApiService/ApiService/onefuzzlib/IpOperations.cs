@@ -61,7 +61,14 @@ public class IpOperations : IIpOperations {
     public async System.Threading.Tasks.Task DeleteNic(string resourceGroup, string name) {
         _logTracer.Info($"deleting nic {resourceGroup}:{name}");
         var networkInterface = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name);
-        await networkInterface.Value.DeleteAsync(WaitUntil.Started);
+        try {
+            await networkInterface.Value.DeleteAsync(WaitUntil.Started);
+        } catch (RequestFailedException ex) {
+            if (ex.ErrorCode != "NicReservedForAnotherVm") {
+                throw;
+            }
+            _logTracer.Warning($"unable to delete nic {resourceGroup}:{name}  {ex.Message}");
+        }
     }
 
     public async System.Threading.Tasks.Task DeleteIp(string resourceGroup, string name) {

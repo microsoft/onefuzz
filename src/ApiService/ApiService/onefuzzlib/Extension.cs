@@ -451,7 +451,7 @@ public class Extensions : IExtensions {
     }
 
     public async Task<IList<VMExtensionWrapper>> ProxyManagerExtensions(string region, Guid proxyId) {
-        var config = await _context.Containers.GetFileSasUrl(new Container("proxy-config"),
+        var config = await _context.Containers.GetFileSasUrl(new Container("proxy-configs"),
             $"{region}/{proxyId}/config.json", StorageType.Config, BlobSasPermissions.Read);
 
         var proxyManager = await _context.Containers.GetFileSasUrl(new Container("tools"),
