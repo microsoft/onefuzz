@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Data.Tables;
-
 namespace Microsoft.OneFuzz.Service;
 
 public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {
@@ -16,6 +15,9 @@ public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {
     Async.Task<Pool> SetShutdown(Pool pool, bool Now);
 
     Async.Task<Pool> Init(Pool pool);
+
+    Async.Task<Pool> Create(PoolName name, Os os, Architecture architecture, bool managed, Guid? clientId = null);
+    new Async.Task Delete(Pool pool);
 }
 
 public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoolOperations {
@@ -25,6 +27,23 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
     }
 
+    public async Async.Task<Pool> Create(PoolName name, Os os, Architecture architecture, bool managed, Guid? clientId = null) {
+        var newPool = new Service.Pool(
+        PoolId: Guid.NewGuid(),
+        State: PoolState.Init,
+        Name: name,
+        Os: os,
+        Managed: managed,
+        Arch: architecture,
+        ClientId: clientId);
+
+        var r = await Insert(newPool);
+        if (!r.IsOk) {
+            _logTracer.Error($"Failed to save new pool. Pool name: {newPool.Name}, PoolId: {newPool.PoolId} due to {r.ErrorV}");
+        }
+        await _context.Events.SendEvent(new EventPoolCreated(PoolName: newPool.Name, Os: newPool.Os, Arch: newPool.Arch, Managed: newPool.Managed));
+        return newPool;
+    }
     public async Async.Task<OneFuzzResult<Pool>> GetByName(PoolName poolName) {
         var pools = QueryAsync(Query.PartitionKey(poolName.String));
 
@@ -124,7 +143,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         }
 
         pool = pool with { State = state };
-        await Update(pool);
+        await Replace(pool);
         return pool;
     }
 
@@ -134,6 +153,14 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         await shrinkQueue.Create();
         await SetState(pool, PoolState.Running);
         return pool;
+    }
+
+    new public async Async.Task Delete(Pool pool) {
+        var r = await base.Delete(pool);
+        if (!r.IsOk) {
+            _logTracer.Error($"Failed to delete pool: {pool.Name} due to {r.ErrorV}");
+        }
+        await _context.Events.SendEvent(new EventPoolDeleted(PoolName: pool.Name));
     }
 
     public async Async.Task<Pool> Shutdown(Pool pool) {
@@ -180,10 +207,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
             var shrinkQueue = new ShrinkQueue(pool.PoolId, _context.Queue, _logTracer);
             await shrinkQueue.Delete();
             _logTracer.Info($"pool stopped, deleting: {pool.Name}");
-            var r = await Delete(pool);
-            if (!r.IsOk) {
-                _logTracer.Error($"Failed to delete pool: {pool.Name} due to {r.ErrorV}");
-            }
+            await Delete(pool);
         }
 
         if (scalesets is not null) {
