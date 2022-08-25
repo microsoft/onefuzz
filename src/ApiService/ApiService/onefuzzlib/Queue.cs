@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Core;
-using Azure.Storage;
 using Azure.Storage.Queues;
 using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;

@@ -26,8 +26,6 @@ public interface IStorage {
 
     public Uri GetBlobEndpoint(string accountId);
 
-    public Async.Task<(string, string)> GetStorageAccountNameAndKey(string accountId);
-
     public Async.Task<string?> GetStorageAccountNameKeyByName(string accountName);
 
     /// Picks either the single primary account or a random secondary account.
@@ -49,6 +47,8 @@ public interface IStorage {
         var secondaryAccounts = accounts.Skip(1).ToList();
         return secondaryAccounts[Random.Shared.Next(secondaryAccounts.Count)];
     }
+
+    protected abstract Async.Task<(string, string)> GetStorageAccountNameAndKey(string accountId);
 
     public async Async.Task<BlobServiceClient> GetBlobServiceClientForAccount(string accountId) {
         var (accountName, accountKey) = await GetStorageAccountNameAndKey(accountId);
