@@ -11,7 +11,7 @@ from azure.identity import AzureCliCredential
 from azure.mgmt.resource import SubscriptionClient
 from azure.mgmt.storage import StorageManagementClient
 
-from deploylib.configuration import (
+from configuration import (
     InstanceConfigClient,
     update_admins,
     update_allowed_aad_tenants,
@@ -23,12 +23,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(formatter_class=formatter)
     parser.add_argument("resource_group")
     parser.add_argument("storage_account")
+    parser.add_argument("subscription_id")
     parser.add_argument("--admins", type=UUID, nargs="*")
     parser.add_argument("--allowed_aad_tenants", type=UUID, nargs="*")
     args = parser.parse_args()
 
     credential = AzureCliCredential()
-    client = StorageManagementClient(credential)
+    client = StorageManagementClient(credential, args.subscription_id)
     storage_keys = client.storage_accounts.list_keys(
         args.resource_group, args.storage_account
     )
