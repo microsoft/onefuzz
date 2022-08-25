@@ -124,7 +124,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
 
         var updatedScaleSet = scaleset with { State = state };
-        var r = await Update(updatedScaleSet);
+        var r = await Replace(updatedScaleSet);
         if (!r.IsOk) {
             var msg = "Failed to update scaleset {scaleSet.ScalesetId} when updating state from {scaleSet.State} to {state}";
             _log.Error(msg);
@@ -279,7 +279,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             }
         }
 
-        var rr = await Update(scaleset);
+        var rr = await Replace(scaleset);
         if (!rr.IsOk) {
             _logTracer.Error($"Failed to save scale data for scale set: {scaleset.ScalesetId}");
         }

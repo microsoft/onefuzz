@@ -102,7 +102,7 @@ public class Scaleset {
                 context: "ScalesetCreate");
         }
 
-        var tags = create.Tags;
+        var tags = create.Tags ?? new Dictionary<string, string>();
         var configTags = (await _context.ConfigOperations.Fetch()).VmssTags;
         if (configTags is not null) {
             foreach (var (key, value) in configTags) {
