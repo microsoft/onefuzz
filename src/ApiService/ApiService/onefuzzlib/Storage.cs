@@ -64,21 +64,22 @@ public interface IStorage {
     }
 }
 
-public sealed class Storage : IStorage, IDisposable {
+public sealed class Storage : IStorage {
     private readonly ICreds _creds;
     private readonly ArmClient _armClient;
     private readonly ILogTracer _log;
     private readonly IServiceConfig _config;
-    private readonly MemoryCache _cache;
+    private readonly IMemoryCache _cache;
 
-    public Storage(ICreds creds, ILogTracer log, IServiceConfig config) {
+    public Storage(ICreds creds,
+        ILogTracer log,
+        IServiceConfig config,
+        IMemoryCache cache) {
         _creds = creds;
         _armClient = creds.ArmClient;
         _log = log;
         _config = config;
-        _cache = new MemoryCache(new MemoryCacheOptions() {
-
-        });
+        _cache = cache;
     }
 
     public string GetFuncStorage() {
@@ -135,8 +136,9 @@ public sealed class Storage : IStorage, IDisposable {
             var x => throw new NotSupportedException($"invalid StorageType: {x}"),
         };
 
-    public Async.Task<(string, string)> GetStorageAccountNameAndKey(string accountId) {
-        return _cache.GetOrCreateAsync<(string, string)>($"GetStorageAccountNameAndKey-{accountId}", async cacheEntry => {
+    record GetStorageAccountNameAndKey_CacheKey(string AccountId);
+    public Async.Task<(string, string)> GetStorageAccountNameAndKey(string accountId)
+        => _cache.GetOrCreateAsync<(string, string)>(new GetStorageAccountNameAndKey_CacheKey(accountId), async cacheEntry => {
             var resourceId = new ResourceIdentifier(accountId);
             var armClient = GetMgmtClient();
             var storageAccount = armClient.GetStorageAccountResource(resourceId);
@@ -144,10 +146,10 @@ public sealed class Storage : IStorage, IDisposable {
             var key = keys.Value.Keys.FirstOrDefault() ?? throw new Exception("no keys found");
             return (resourceId.Name, key.Value);
         });
-    }
 
-    public Async.Task<string?> GetStorageAccountNameKeyByName(string accountName) {
-        return _cache.GetOrCreateAsync<string?>($"GetStorageAccountNameKeyByName-{accountName}", async cacheEntry => {
+    record GetStorageAccountNameKeyByName_CacheKey(string AccountName);
+    public Async.Task<string?> GetStorageAccountNameKeyByName(string accountName)
+        => _cache.GetOrCreateAsync(new GetStorageAccountNameKeyByName_CacheKey(accountName), async cacheEntry => {
             var armClient = GetMgmtClient();
             var resourceGroup = _creds.GetResourceGroupResourceIdentifier();
             var storageAccount = await armClient.GetResourceGroupResource(resourceGroup).GetStorageAccountAsync(accountName);
@@ -155,7 +157,6 @@ public sealed class Storage : IStorage, IDisposable {
             var key = keys.Value.Keys.FirstOrDefault();
             return key?.Value;
         });
-    }
 
 
     public IReadOnlyList<string> GetAccounts(StorageType storageType) {
@@ -177,8 +178,4 @@ public sealed class Storage : IStorage, IDisposable {
 
     public Uri GetBlobEndpoint(string accountId)
         => new($"https://{accountId}.blob.core.windows.net/");
-
-    public void Dispose() {
-        _cache.Dispose();
-    }
 }
