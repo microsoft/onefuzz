@@ -1442,7 +1442,7 @@ class Scaleset(Endpoint):
                 vm_sku=vm_sku,
                 image=image,
                 region=region,
-                size=1,
+                size=intialized_size,
                 spot_instances=spot_instances,
                 ephemeral_os_disks=ephemeral_os_disks,
                 tags=tags,
