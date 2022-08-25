@@ -47,14 +47,8 @@ public class Queue : IQueue {
         return client.GetQueueClient(name);
     }
 
-    public async Task<QueueServiceClient> GetQueueClientService(StorageType storageType) {
-        var accountId = _storage.GetPrimaryAccount(storageType);
-        _log.Verbose($"getting blob container (account_id: {accountId})");
-        var (name, key) = await _storage.GetStorageAccountNameAndKey(accountId);
-        var endpoint = _storage.GetQueueEndpoint(name);
-        var options = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
-        return new QueueServiceClient(endpoint, new StorageSharedKeyCredential(name, key), options);
-    }
+    public Task<QueueServiceClient> GetQueueClientService(StorageType storageType)
+        => _storage.GetQueueServiceClientForAccount(_storage.GetPrimaryAccount(storageType));
 
     public async Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
         var queueClient = await GetQueueClient(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");

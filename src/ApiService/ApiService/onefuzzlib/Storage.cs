@@ -5,6 +5,7 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Storage;
 using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.OneFuzz.Service;
@@ -61,6 +62,14 @@ public interface IStorage {
         var storageKeyCredential = new TableSharedKeyCredential(accountName, accountKey);
         var accountUrl = GetTableEndpoint(accountName);
         return new TableServiceClient(accountUrl, storageKeyCredential);
+    }
+
+    public async Async.Task<QueueServiceClient> GetQueueServiceClientForAccount(string accountId) {
+        var (accountName, accountKey) = await GetStorageAccountNameAndKey(accountId);
+        var storageKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
+        var endpoint = GetQueueEndpoint(accountName);
+        var options = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
+        return new QueueServiceClient(endpoint, storageKeyCredential, options);
     }
 }
 
