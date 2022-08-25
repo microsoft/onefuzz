@@ -11,7 +11,7 @@ from azure.identity import AzureCliCredential
 from azure.mgmt.resource import SubscriptionClient
 from azure.mgmt.storage import StorageManagementClient
 
-from configuration import (
+from deploylib.configuration import (
     InstanceConfigClient,
     update_admins,
     update_allowed_aad_tenants,
