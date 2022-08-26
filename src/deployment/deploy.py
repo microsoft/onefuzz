@@ -551,14 +551,14 @@ class Client:
             subscription_id=self.get_subscription_id(),
         )
 
-        if not cli_app:
+        if not cli_app and not self.auto_create_cli_app:
             logger.error(
                 "error deploying. could not find specified CLI app registrion."
                 "use flag --auto_create_cli_app to automatically create CLI registration"
             )
             sys.exit(1)
 
-        if self.auto_create_cli_app:
+        if not cli_app and self.auto_create_cli_app:
             logger.info(
                 "Could not find the default CLI application under the current "
                 "subscription and auto_create specified, creating a new one"
