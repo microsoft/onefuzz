@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Deployment: Add `--use_dotnet_agent_functions` to deploy.py. [#2292](https://github.com/microsoft/onefuzz/pull/2292)
 * Service: Additional C# migration work. [#2183](https://github.com/microsoft/onefuzz/pull/2183), [#2296](https://github.com/microsoft/onefuzz/pull/2296), [#2286](https://github.com/microsoft/onefuzz/pull/2286), [#2282](https://github.com/microsoft/onefuzz/pull/2282), [#2289](https://github.com/microsoft/onefuzz/pull/2289)
 ### Changed
-* CLI: Changing CLI Scaleset `size` positional parameter to `max_size`. [#2293](https://github.com/microsoft/onefuzz/pull/2293)
+* CLI: Changed the CLI's `scaleset` commands `size` positional parameter to `max_size` to better communicate its use in auto scaling properties. [#2293](https://github.com/microsoft/onefuzz/pull/2293)
 ### Fixed
 * Deployment: Fixed `set_admins.py` script. [#2300](https://github.com/microsoft/onefuzz/pull/2300)
 * Service: Include serialization options when sending event message. [#2290](https://github.com/microsoft/onefuzz/pull/2290)
