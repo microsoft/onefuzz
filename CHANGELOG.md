@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * CLI: Changing CLI Scaleset `size` positional parameter to `max_size`. [#2293](https://github.com/microsoft/onefuzz/pull/2293)
 ### Fixed
-* Deployment: Fixing `set_admins.py` Script. [#2300](https://github.com/microsoft/onefuzz/pull/2300)
+* Deployment: Fixed `set_admins.py` script. [#2300](https://github.com/microsoft/onefuzz/pull/2300)
 * Service: Include serialization options when sending event message. [#2290](https://github.com/microsoft/onefuzz/pull/2290)
 
 ## 5.11.0
