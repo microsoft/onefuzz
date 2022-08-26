@@ -42,49 +42,33 @@ sealed class AzureStorage : IStorage {
         return new[] { AccountName };
     }
 
+    private Uri TableEndpoint => new($"https://{AccountName}.table.core.windows.net/");
 
-    public Task<string?> GetStorageAccountNameKeyByName(string accountName) {
-        return Async.Task.FromResult<string?>(AccountName);
-    }
+    private Uri QueueEndpoint => new($"https://{AccountName}.queue.core.windows.net/");
 
-    public Uri GetTableEndpoint(string accountId)
-        => new($"https://{AccountName}.table.core.windows.net/");
-
-    public Uri GetQueueEndpoint(string accountId)
-        => new($"https://{AccountName}.queue.core.windows.net/");
-
-    public Uri GetBlobEndpoint(string accountId)
-        => new($"https://{AccountName}.blob.core.windows.net/");
+    private Uri BlobEndpoint => new($"https://{AccountName}.blob.core.windows.net/");
 
     public BlobServiceClient GetBlobServiceClientForAccount(string accountId) {
         var cred = new StorageSharedKeyCredential(AccountName, AccountKey);
-        return new BlobServiceClient(GetBlobEndpoint(accountId), cred);
+        return new BlobServiceClient(BlobEndpoint, cred);
     }
 
     public TableServiceClient GetTableServiceClientForAccount(string accountId) {
         var cred = new TableSharedKeyCredential(AccountName, AccountKey);
-        return new TableServiceClient(GetTableEndpoint(accountId), cred);
+        return new TableServiceClient(TableEndpoint, cred);
     }
 
     private static readonly QueueClientOptions _queueClientOptions = new() { MessageEncoding = QueueMessageEncoding.Base64 };
     public QueueServiceClient GetQueueServiceClientForAccount(string accountId) {
         var cred = new StorageSharedKeyCredential(AccountName, AccountKey);
-        return new QueueServiceClient(GetQueueEndpoint(accountId), cred, _queueClientOptions);
+        return new QueueServiceClient(QueueEndpoint, cred, _queueClientOptions);
     }
 
     IReadOnlyList<string> IStorage.CorpusAccounts() {
         throw new NotImplementedException();
     }
 
-    public IReadOnlyList<string> CorpusAccounts() {
-        throw new System.NotImplementedException();
-    }
-
     public string GetPrimaryAccount(StorageType storageType) {
-        throw new System.NotImplementedException();
-    }
-
-    public Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {
         throw new System.NotImplementedException();
     }
 

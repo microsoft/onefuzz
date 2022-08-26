@@ -62,10 +62,6 @@ sealed class AzuriteStorage : IStorage {
 
     public string GetPrimaryAccount(StorageType storageType) => AccountName;
 
-    public Task<string?> GetStorageAccountNameKeyByName(string accountName) {
-        throw new NotImplementedException();
-    }
-
     public Task<Uri> GenerateBlobContainerSasUri(
         BlobContainerSasPermissions permissions,
         BlobContainerClient containerClient,
