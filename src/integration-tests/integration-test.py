@@ -289,7 +289,7 @@ class TestOnefuzz:
             self.of.pools.create(name, entry)
             self.logger.info("creating scaleset for pool: %s", name)
             self.of.scalesets.create(
-                name, pool_size, region=region, intitial_size=pool_size
+                name, pool_size, region=region, initial_size=pool_size
             )
 
     def launch(
