@@ -176,12 +176,11 @@ class ADO:
         if document:
             self.client.update_work_item(document, item.id, project=self.project)
             logging.info(
-                "notify ado: updated work item" f" {item.id} - {notification_info}"
+                f"notify ado: updated work item {item.id} - {notification_info}"
             )
         else:
             logging.info(
-                "notify ado: no update for work item"
-                f" {item.id} - {notification_info}"
+                f"notify ado: no update for work item {item.id} - {notification_info}"
             )
 
     def render_new(self) -> Tuple[str, List[JsonPatchOperation]]:
@@ -264,7 +263,7 @@ def notify_ado(
 
     notification_info = (
         f"job_id:%s{report.job_id} task_id:{report.task_id}"
-        f"container:{container} filename:{filename}"
+        f" container:{container} filename:{filename}"
     )
 
     logging.info("notify ado: %s", notification_info)
