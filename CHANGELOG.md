@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Deployment: Add `--use_dotnet_agent_functions` to deploy.py. [#2292](https://github.com/microsoft/onefuzz/pull/2292)
 * Service: Added Logging to `az_copy` calls for improved failure tracking. [#2303](https://github.com/microsoft/onefuzz/pull/2303)
+* Service: Added Logging when sending ADO Notifications [#2291](https://github.com/microsoft/onefuzz/pull/2291)
 * Service: Additional C# migration work. [#2183](https://github.com/microsoft/onefuzz/pull/2183), [#2296](https://github.com/microsoft/onefuzz/pull/2296), [#2286](https://github.com/microsoft/onefuzz/pull/2286), [#2282](https://github.com/microsoft/onefuzz/pull/2282), [#2289](https://github.com/microsoft/onefuzz/pull/2289)
 ### Changed
 * CLI: Changed the CLI's `scaleset` commands `size` positional parameter to `max_size` to better communicate its use in auto scaling properties. [#2293](https://github.com/microsoft/onefuzz/pull/2293)
