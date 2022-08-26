@@ -184,8 +184,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     private async System.Threading.Tasks.Task<Proxy> SetProvisionFailed(Proxy proxy, VirtualMachineData vmData) {
         var errors = GetErrors(proxy, vmData).ToArray();
-        await SetFailed(proxy, new Error(ErrorCode.PROXY_FAILED, errors));
-        return proxy;
+        return await SetFailed(proxy, new Error(ErrorCode.PROXY_FAILED, errors));
     }
 
     private async Task<Proxy> SetFailed(Proxy proxy, Error error) {
@@ -276,8 +275,8 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
     private async Task<Proxy> Stopped(Proxy proxy) {
         var stoppedVm = await SetState(proxy, VmState.Stopped);
         _logTracer.Info($"removing proxy: {proxy.Region}");
-        await _context.Events.SendEvent(new EventProxyDeleted(proxy.Region, proxy.ProxyId));
-        await Delete(proxy);
+        await _context.Events.SendEvent(new EventProxyDeleted(stoppedVm.Region, stoppedVm.ProxyId));
+        await Delete(stoppedVm);
         return stoppedVm;
     }
 }
