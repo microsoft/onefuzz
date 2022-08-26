@@ -551,33 +551,32 @@ class Client:
             subscription_id=self.get_subscription_id(),
         )
 
-        if not cli_app and not self.auto_create_cli_app:
-            logger.error(
-                "error deploying. could not find specified CLI app registrion."
-                "use flag --auto_create_cli_app to automatically create CLI registration"
-            )
-            sys.exit(1)
-
-        if not cli_app and self.auto_create_cli_app:
-            logger.info(
-                "Could not find the default CLI application under the current "
-                "subscription and auto_create specified, creating a new one"
-            )
-            app_info = register_application(
-                "onefuzz-cli",
-                self.application_name,
-                OnefuzzAppRole.CliClient,
-                self.get_subscription_id(),
-            )
-            if self.multi_tenant_domain:
-                authority = COMMON_AUTHORITY
+        if not cli_app:
+            if self.auto_create_cli_app:
+                logger.info(
+                    "Could not find the default CLI application under the current "
+                    "subscription and auto_create specified, creating a new one"
+                )
+                app_info = register_application(
+                    "onefuzz-cli",
+                    self.application_name,
+                    OnefuzzAppRole.CliClient,
+                    self.get_subscription_id(),
+                )
+                if self.multi_tenant_domain:
+                    authority = COMMON_AUTHORITY
+                else:
+                    authority = app_info.authority
+                self.cli_config = {
+                    "client_id": app_info.client_id,
+                    "authority": authority,
+                }
             else:
-                authority = app_info.authority
-            self.cli_config = {
-                "client_id": app_info.client_id,
-                "authority": authority,
-            }
-
+                logger.error(
+                    "error deploying. could not find specified CLI app registrion."
+                    "use flag --auto_create_cli_app to automatically create CLI registration"
+                )
+                sys.exit(1)
         else:
             onefuzz_cli_app = cli_app
             authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
