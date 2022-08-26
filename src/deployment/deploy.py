@@ -557,7 +557,7 @@ class Client:
                 "use flag --auto_create_cli_app to automatically create CLI registration"
             )
             sys.exit(1)
-            
+
         if self.auto_create_cli_app:
             logger.info(
                 "Could not find the default CLI application under the current "
