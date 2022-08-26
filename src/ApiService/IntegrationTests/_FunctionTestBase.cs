@@ -53,7 +53,7 @@ public abstract class FunctionTestBase : IAsyncLifetime {
         Context = new TestContext(Logger, _storage, creds, _storagePrefix);
 
         // set up blob client for test purposes:
-        _blobClient = _storage.GetBlobServiceClientForAccount(""); 
+        _blobClient = _storage.GetBlobServiceClientForAccount("");
     }
 
     public async Task InitializeAsync() {

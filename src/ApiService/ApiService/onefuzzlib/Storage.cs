@@ -1,11 +1,15 @@
 ﻿using System.Text.Json;
+using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Data.Tables;
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
+using Azure.Storage;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Queues;
+using Azure.Storage.Sas;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.OneFuzz.Service;
@@ -19,14 +23,6 @@ public interface IStorage {
     public IReadOnlyList<string> CorpusAccounts();
     public string GetPrimaryAccount(StorageType storageType);
     public IReadOnlyList<string> GetAccounts(StorageType storageType);
-
-    public Uri GetTableEndpoint(string accountId);
-
-    public Uri GetQueueEndpoint(string accountId);
-
-    public Uri GetBlobEndpoint(string accountId);
-
-    public Async.Task<string?> GetStorageAccountNameKeyByName(string accountName);
 
     /// Picks either the single primary account or a random secondary account.
     public string ChooseAccount(StorageType storageType) {
@@ -49,10 +45,24 @@ public interface IStorage {
     }
 
     public BlobServiceClient GetBlobServiceClientForAccount(string accountId);
+    public Task<Uri> GenerateBlobContainerSasUri(
+        BlobContainerSasPermissions permissions,
+        BlobContainerClient containerClient,
+        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow);
+
+    public Task<Uri> GenerateBlobSasUri(
+        BlobSasPermissions permissions,
+        BlobClient blobClient,
+        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow);
 
     public TableServiceClient GetTableServiceClientForAccount(string accountId);
 
     public QueueServiceClient GetQueueServiceClientForAccount(string accountId);
+    public Task<Uri> GenerateQueueSasUri(
+        QueueSasPermissions permissions,
+        string accountId,
+        string queueName,
+        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow);
 }
 
 public sealed class Storage : IStorage {
@@ -160,16 +170,18 @@ public sealed class Storage : IStorage {
         }
     }
 
-    public Uri GetTableEndpoint(string accountId)
+    private static Uri GetTableEndpoint(string accountId)
         => new($"https://{accountId}.table.core.windows.net/");
 
-    public Uri GetQueueEndpoint(string accountId)
+    private static Uri GetQueueEndpoint(string accountId)
         => new($"https://{accountId}.queue.core.windows.net/");
 
-    public Uri GetBlobEndpoint(string accountId)
+    private static Uri GetBlobEndpoint(string accountId)
         => new($"https://{accountId}.blob.core.windows.net/");
 
-    // According to guidance these should be reused as they manage HttpClients:
+
+    // According to guidance these should be reused as they manage HttpClients,
+    // so we cache them all by account:
 
     record BlobClientKey(string AccountId);
     public BlobServiceClient GetBlobServiceClientForAccount(string accountId)
@@ -192,4 +204,69 @@ public sealed class Storage : IStorage {
             cacheEntry.Priority = CacheItemPriority.NeverRemove;
             return new QueueServiceClient(GetQueueEndpoint(accountId), new DefaultAzureCredential(), _queueClientOptions);
         });
+
+    record SharedKeyQueueClientKey(string AccountId);
+    private Task<QueueServiceClient> GetSharedKeyQueueServiceClientForAccount(string accountId)
+        => _cache.GetOrCreateAsync(new SharedKeyQueueClientKey(accountId), async cacheEntry => {
+            var (accountName, accountKey) = await GetStorageAccountNameAndKey(accountId);
+            var skc = new StorageSharedKeyCredential(accountName, accountKey);
+            return new QueueServiceClient(GetQueueEndpoint(accountId), skc);
+        });
+
+    public async Task<Uri> GenerateBlobContainerSasUri(
+        BlobContainerSasPermissions permissions,
+        BlobContainerClient containerClient,
+        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow) {
+
+        var serviceClient = containerClient.GetParentBlobServiceClient();
+        var delegationKey = await serviceClient.GetUserDelegationKeyAsync(timeWindow.startTime, timeWindow.endTime);
+
+        var sasBuilder = new BlobSasBuilder(permissions, timeWindow.endTime) {
+            StartsOn = timeWindow.startTime,
+            BlobContainerName = containerClient.Name,
+        };
+
+        var blobUriBuilder = new BlobUriBuilder(containerClient.Uri) {
+            Sas = sasBuilder.ToSasQueryParameters(delegationKey, serviceClient.AccountName),
+        };
+
+        return blobUriBuilder.ToUri();
+    }
+
+    public async Task<Uri> GenerateBlobSasUri(
+        BlobSasPermissions permissions,
+        BlobClient blobClient,
+        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow) {
+
+        var containerClient = blobClient.GetParentBlobContainerClient();
+        var serviceClient = containerClient.GetParentBlobServiceClient();
+        var delegationKey = await serviceClient.GetUserDelegationKeyAsync(timeWindow.startTime, timeWindow.endTime);
+
+        var sasBuilder = new BlobSasBuilder(permissions, timeWindow.endTime) {
+            StartsOn = timeWindow.startTime,
+            BlobContainerName = containerClient.Name,
+            BlobName = blobClient.Name
+        };
+
+        var blobUriBuilder = new BlobUriBuilder(blobClient.Uri) {
+            Sas = sasBuilder.ToSasQueryParameters(delegationKey, serviceClient.AccountName),
+        };
+
+        return blobUriBuilder.ToUri();
+    }
+
+    public async Task<Uri> GenerateQueueSasUri(
+        QueueSasPermissions permissions,
+        string accountId,
+        string queueName,
+        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow) {
+
+        // must have the shared-key client to build a SAS URI for queues:
+        var serviceClient = await GetSharedKeyQueueServiceClientForAccount(accountId);
+        var sasBuilder = new QueueSasBuilder(permissions, timeWindow.endTime) {
+            StartsOn = timeWindow.startTime,
+        };
+
+        return serviceClient.GetQueueClient(queueName).GenerateSasUri(sasBuilder);
+    }
 }

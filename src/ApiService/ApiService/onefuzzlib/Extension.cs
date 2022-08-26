@@ -213,7 +213,7 @@ public class Extensions : IExtensions {
     public async Async.Task<Uri?> BuildPoolConfig(Pool pool) {
         var instanceId = await _context.Containers.GetInstanceId();
 
-        var queueSas = _context.Queue.GetQueueSas("node-heartbeat", StorageType.Config, QueueSasPermissions.Add);
+        var queueSas = await _context.Queue.GetQueueSas("node-heartbeat", StorageType.Config, QueueSasPermissions.Add);
         var config = new AgentConfig(
             ClientCredentials: null,
             OneFuzzUrl: _context.Creds.GetInstanceUrl(),

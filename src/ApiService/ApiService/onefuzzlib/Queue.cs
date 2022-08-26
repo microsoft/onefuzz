@@ -9,7 +9,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IQueue {
     Async.Task SendMessage(string name, string message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
     Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
-    Uri GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
+    Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
     ResourceIdentifier GetResourceId(string queueName, StorageType storageType);
     Task<IList<T>> PeekQueue<T>(string name, StorageType storageType);
     Async.Task<bool> RemoveFirstMessage(string name, StorageType storageType);
@@ -64,11 +64,14 @@ public class Queue : IQueue {
         }
     }
 
-    public Uri GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
+    public Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
         var queue = GetQueueClient(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
-
-        var sasaBuilder = new QueueSasBuilder(permissions, DateTimeOffset.UtcNow + (duration ?? DEFAULT_DURATION));
-        return queue.GenerateSasUri(sasaBuilder);
+        var now = DateTimeOffset.UtcNow;
+        return _storage.GenerateQueueSasUri(
+            permissions,
+            queue.AccountName,
+            queue.Name,
+            (now, now + (duration ?? DEFAULT_DURATION)));
     }
 
     public async Async.Task CreateQueue(string name, StorageType storageType) {

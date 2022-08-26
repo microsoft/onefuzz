@@ -5,6 +5,7 @@ using Azure.Data.Tables;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
+using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service;
 
 using Async = System.Threading.Tasks;
@@ -85,5 +86,32 @@ sealed class AzureStorage : IStorage {
 
     public Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {
         throw new System.NotImplementedException();
+    }
+
+    public Task<Uri> GenerateBlobContainerSasUri(
+        BlobContainerSasPermissions permissions,
+        BlobContainerClient containerClient,
+        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow)
+        => Async.Task.FromResult(containerClient.GenerateSasUri(new BlobSasBuilder(permissions, timeWindow.endTime) {
+            StartsOn = timeWindow.startTime,
+        }));
+
+    public Task<Uri> GenerateBlobSasUri(
+        BlobSasPermissions permissions,
+        BlobClient blobClient,
+        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow)
+        => Async.Task.FromResult(blobClient.GenerateSasUri(new BlobSasBuilder(permissions, timeWindow.endTime) {
+            StartsOn = timeWindow.startTime,
+        }));
+
+    public Task<Uri> GenerateQueueSasUri(
+        QueueSasPermissions permissions,
+        string accountId,
+        string queueName,
+        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow) {
+        var client = GetQueueServiceClientForAccount(accountId).GetQueueClient(queueName);
+        return Async.Task.FromResult(client.GenerateSasUri(new QueueSasBuilder(permissions, timeWindow.endTime) {
+            StartsOn = timeWindow.startTime,
+        }));
     }
 }
