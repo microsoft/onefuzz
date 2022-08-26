@@ -127,7 +127,10 @@ public class VmssOperations : IVmssOperations {
         if (canUpdate.IsOk) {
             _log.Info($"updating VM extensions: {name}");
             var res = GetVmssResource(name);
-            var patch = new VirtualMachineScaleSetPatch();
+            var patch = new VirtualMachineScaleSetPatch() {
+                VirtualMachineProfile =
+                    new VirtualMachineScaleSetUpdateVmProfile() { ExtensionProfile = new VirtualMachineScaleSetExtensionProfile() }
+            };
 
             foreach (var ext in extensions) {
                 patch.VirtualMachineProfile.ExtensionProfile.Extensions.Add(ext);

@@ -42,7 +42,7 @@ namespace Microsoft.OneFuzz.Service {
 
         public async Async.Task QueueSignalrEvent(EventMessage message) {
             var ev = new SignalREvent("events", new List<EventMessage>() { message });
-            await _queue.SendMessage("signalr-events", JsonSerializer.Serialize(ev), StorageType.Config);
+            await _queue.SendMessage("signalr-events", JsonSerializer.Serialize(ev, _options), StorageType.Config);
         }
 
         public async Async.Task SendEvent(BaseEvent anEvent) {

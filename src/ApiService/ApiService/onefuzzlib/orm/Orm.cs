@@ -205,7 +205,7 @@ namespace ApiService.OneFuzzLib.Orm {
         /// <param name="entity"></param>
         /// <returns></returns>
         public async Async.Task<T?> ProcessStateUpdate(T entity) {
-            TState state = entity.BaseState;
+            TState state = entity.State;
             var func = GetType().GetMethod(state.ToString()) switch {
                 null => null,
                 MethodInfo info => info.CreateDelegate<StateTransition>(this)
@@ -227,13 +227,13 @@ namespace ApiService.OneFuzzLib.Orm {
         /// <param name="MaxUpdates"></param>
         public async Async.Task<T?> ProcessStateUpdates(T entity, int MaxUpdates = 5) {
             for (int i = 0; i < MaxUpdates; i++) {
-                var state = entity.BaseState;
+                var state = entity.State;
                 var newEntity = await ProcessStateUpdate(entity);
 
                 if (newEntity == null)
                     return null;
 
-                if (newEntity.BaseState.Equals(state)) {
+                if (newEntity.State.Equals(state)) {
                     return newEntity;
                 }
             }

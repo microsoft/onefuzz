@@ -167,7 +167,15 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
             ..ExponentialBackoff::default()
         },
         operation,
-        |err, dur| debug!("azcopy attempt failed after {:?}: {:?}", dur, err),
+        |err, dur| {
+            info!(
+                "azcopy attempt failed after {:?}: {:?} {} {}",
+                dur,
+                err,
+                attempt_counter.load(Ordering::SeqCst),
+                failure_counter.load(Ordering::SeqCst)
+            )
+        },
     )
     .await
     .with_context(|| format!("azcopy failed after retrying.  mode: {}", mode))?;

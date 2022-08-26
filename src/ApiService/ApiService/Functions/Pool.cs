@@ -66,18 +66,7 @@ public class Pool {
                     Errors: new string[] { "pool with that name already exists" }),
                 "PoolCreate");
         }
-
-        // logging.Info(request)
-
-        var newPool = new Service.Pool(
-            PoolId: Guid.NewGuid(),
-            State: PoolState.Init,
-            Name: create.Name,
-            Os: create.Os,
-            Managed: create.Managed,
-            Arch: create.Arch);
-
-        await _context.PoolOperations.Insert(newPool);
+        var newPool = await _context.PoolOperations.Create(name: create.Name, os: create.Os, architecture: create.Arch, managed: create.Managed, clientId: create.ClientId);
         return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(newPool), true));
     }
 
