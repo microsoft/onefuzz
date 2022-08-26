@@ -75,7 +75,6 @@ from deploylib.registration import (
 USER_READ_PERMISSION = "e1fe6dd8-ba31-4d61-89e7-88639da4683d"
 MICROSOFT_GRAPH_APP_ID = "00000003-0000-0000-c000-000000000000"
 
-ONEFUZZ_CLI_APP = "72f1562a-8c0c-41ea-beb9-fa2b71c80134"
 ONEFUZZ_CLI_AUTHORITY = (
     "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47"
 )
@@ -162,6 +161,8 @@ class Client:
         allowed_aad_tenants: List[UUID],
         enable_dotnet: List[str],
         use_dotnet_agent_functions: bool,
+        onefuzz_app_id: str,
+        auto_create_cli_app: bool,
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -185,10 +186,6 @@ class Client:
             authority = COMMON_AUTHORITY
         else:
             authority = ONEFUZZ_CLI_AUTHORITY
-        self.cli_config: Dict[str, Union[str, UUID]] = {
-            "client_id": ONEFUZZ_CLI_APP,
-            "authority": authority,
-        }
         self.migrations = migrations
         self.export_appinsights = export_appinsights
         self.admins = admins
@@ -198,6 +195,13 @@ class Client:
 
         self.enable_dotnet = enable_dotnet
         self.use_dotnet_agent_functions = use_dotnet_agent_functions
+        self.onefuzz_app_id = onefuzz_app_id
+        self.auto_create_cli_app = auto_create_cli_app
+
+        self.cli_config: Dict[str, Union[str, UUID]] = {
+            "client_id": self.onefuzz_app_id,
+            "authority": authority,
+        }
 
         machine = platform.machine()
         system = platform.system()
@@ -543,7 +547,7 @@ class Client:
         (password_id, password) = self.create_password(app["id"])
 
         cli_app = get_application(
-            app_id=uuid.UUID(ONEFUZZ_CLI_APP),
+            app_id=uuid.UUID(self.onefuzz_app_id),
             subscription_id=self.get_subscription_id(),
         )
 
@@ -1371,6 +1375,18 @@ def main() -> None:
         action="store_true",
         help="Tell the OneFuzz agent to use the dotnet endpoint",
     )
+    parser.add_argument(
+        "--onefuzz_app_id",
+        type=str,
+        default="72f1562a-8c0c-41ea-beb9-fa2b71c80134",
+        help="CLI App Registration to be used during deployment.",
+    )
+    parser.add_argument(
+        "--auto_create_cli_app",
+        action="store_false",
+        help="Create a new CLI App Registration if the default app or custom "
+        "app is not found. ",
+    )
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -1402,6 +1418,8 @@ def main() -> None:
         allowed_aad_tenants=args.allowed_aad_tenants or [],
         enable_dotnet=args.enable_dotnet,
         use_dotnet_agent_functions=args.use_dotnet_agent_functions,
+        onefuzz_app_id=args.onefuzz_app_id,
+        auto_create_cli_app=args.auto_create_cli_app,
     )
     if args.verbose:
         level = logging.DEBUG
