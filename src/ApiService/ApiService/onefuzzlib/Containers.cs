@@ -184,7 +184,7 @@ public class Containers : IContainers {
         }
 
         var blobUriBuilder = new BlobUriBuilder(uri);
-        var serviceClient = _storage.GetBlobServiceClientForAccount(blobUriBuilder.AccountName);
+        var serviceClient = _storage.GetBlobServiceClientForAccountName(blobUriBuilder.AccountName);
         var containerClient = serviceClient.GetBlobContainerClient(blobUriBuilder.BlobContainerName);
 
         var permissions = BlobContainerSasPermissions.Read | BlobContainerSasPermissions.Write | BlobContainerSasPermissions.Delete | BlobContainerSasPermissions.List;

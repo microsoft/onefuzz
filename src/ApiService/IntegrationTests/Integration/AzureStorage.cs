@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Azure.Core;
 using Azure.Data.Tables;
+using Azure.ResourceManager.Storage;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
@@ -38,8 +40,13 @@ sealed class AzureStorage : IStorage {
         AccountKey = accountKey;
     }
 
-    public IReadOnlyList<string> GetAccounts(StorageType storageType) {
-        return new[] { AccountName };
+    private readonly string _fakeSubscription = Guid.NewGuid().ToString();
+
+    private ResourceIdentifier _fakeResourceIdentifier =>
+        StorageAccountResource.CreateResourceIdentifier(_fakeSubscription, "unused", AccountName);
+
+    public IReadOnlyList<ResourceIdentifier> GetAccounts(StorageType storageType) {
+        return new[] { _fakeResourceIdentifier };
     }
 
     private Uri TableEndpoint => new($"https://{AccountName}.table.core.windows.net/");
@@ -48,27 +55,33 @@ sealed class AzureStorage : IStorage {
 
     private Uri BlobEndpoint => new($"https://{AccountName}.blob.core.windows.net/");
 
-    public BlobServiceClient GetBlobServiceClientForAccount(string accountId) {
+    public BlobServiceClient GetBlobServiceClientForAccountName(string accountName) {
         var cred = new StorageSharedKeyCredential(AccountName, AccountKey);
         return new BlobServiceClient(BlobEndpoint, cred);
     }
 
-    public TableServiceClient GetTableServiceClientForAccount(string accountId) {
+    public BlobServiceClient GetBlobServiceClientForAccount(ResourceIdentifier accountId)
+        => GetBlobServiceClientForAccountName(accountId.Name);
+
+    public TableServiceClient GetTableServiceClientForAccount(ResourceIdentifier accountId) {
         var cred = new TableSharedKeyCredential(AccountName, AccountKey);
         return new TableServiceClient(TableEndpoint, cred);
     }
 
     private static readonly QueueClientOptions _queueClientOptions = new() { MessageEncoding = QueueMessageEncoding.Base64 };
-    public QueueServiceClient GetQueueServiceClientForAccount(string accountId) {
+    private QueueServiceClient GetQueueServiceClientForAccountName(string accountName) {
         var cred = new StorageSharedKeyCredential(AccountName, AccountKey);
         return new QueueServiceClient(QueueEndpoint, cred, _queueClientOptions);
     }
 
-    IReadOnlyList<string> IStorage.CorpusAccounts() {
+    public QueueServiceClient GetQueueServiceClientForAccount(ResourceIdentifier accountId)
+        => GetQueueServiceClientForAccountName(accountId.Name);
+
+    IReadOnlyList<ResourceIdentifier> IStorage.CorpusAccounts() {
         throw new NotImplementedException();
     }
 
-    public string GetPrimaryAccount(StorageType storageType) {
+    public ResourceIdentifier GetPrimaryAccount(StorageType storageType) {
         throw new System.NotImplementedException();
     }
 
@@ -90,10 +103,10 @@ sealed class AzureStorage : IStorage {
 
     public Task<Uri> GenerateQueueSasUri(
         QueueSasPermissions permissions,
-        string accountId,
+        string accountName,
         string queueName,
         (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow) {
-        var client = GetQueueServiceClientForAccount(accountId).GetQueueClient(queueName);
+        var client = GetQueueServiceClientForAccountName(accountName).GetQueueClient(queueName);
         return Async.Task.FromResult(client.GenerateSasUri(new QueueSasBuilder(permissions, timeWindow.endTime) {
             StartsOn = timeWindow.startTime,
         }));

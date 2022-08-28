@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Azure.Core;
 using Azure.Data.Tables;
+using Azure.ResourceManager.Storage;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
@@ -35,32 +37,38 @@ sealed class AzuriteStorage : IStorage {
     // https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string#configure-a-connection-string-for-azurite
     const string AccountName = "devstoreaccount1";
     const string AccountKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
+    private static readonly ResourceIdentifier _fakeResourceIdentifier = StorageAccountResource.CreateResourceIdentifier(Guid.NewGuid().ToString(), "unused", AccountName);
 
-    public BlobServiceClient GetBlobServiceClientForAccount(string accountId) {
+    public BlobServiceClient GetBlobServiceClientForAccountName(string accountName) {
         var cred = new StorageSharedKeyCredential(AccountName, AccountKey);
         return new BlobServiceClient(_blobEndpoint, cred);
     }
 
-    public TableServiceClient GetTableServiceClientForAccount(string accountId) {
+    public BlobServiceClient GetBlobServiceClientForAccount(ResourceIdentifier accountId)
+        => GetBlobServiceClientForAccountName(accountId.Name);
+
+    public TableServiceClient GetTableServiceClientForAccount(ResourceIdentifier accountId) {
         var cred = new TableSharedKeyCredential(AccountName, AccountKey);
         return new TableServiceClient(_tableEndpoint, cred);
     }
 
     private static readonly QueueClientOptions _queueClientOptions = new() { MessageEncoding = QueueMessageEncoding.Base64 };
-    public QueueServiceClient GetQueueServiceClientForAccount(string accountId) {
+    private static QueueServiceClient GetQueueServiceClientForAccountName(string accountName) {
         var cred = new StorageSharedKeyCredential(AccountName, AccountKey);
         return new QueueServiceClient(_queueEndpoint, cred, _queueClientOptions);
     }
+    public QueueServiceClient GetQueueServiceClientForAccount(ResourceIdentifier accountId)
+        => GetQueueServiceClientForAccountName(accountId.Name);
 
-    public IReadOnlyList<string> GetAccounts(StorageType storageType) {
-        return new[] { AccountName };
+    public IReadOnlyList<ResourceIdentifier> GetAccounts(StorageType storageType) {
+        return new[] { _fakeResourceIdentifier };
     }
 
-    public IReadOnlyList<string> CorpusAccounts() {
+    public IReadOnlyList<ResourceIdentifier> CorpusAccounts() {
         throw new System.NotImplementedException();
     }
 
-    public string GetPrimaryAccount(StorageType storageType) => AccountName;
+    public ResourceIdentifier GetPrimaryAccount(StorageType storageType) => _fakeResourceIdentifier;
 
     public Task<Uri> GenerateBlobContainerSasUri(
         BlobContainerSasPermissions permissions,
@@ -81,7 +89,7 @@ sealed class AzuriteStorage : IStorage {
         string accountId,
         string queueName,
         (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow) {
-        var client = GetQueueServiceClientForAccount(accountId).GetQueueClient(queueName);
+        var client = GetQueueServiceClientForAccountName(accountId).GetQueueClient(queueName);
         return Async.Task.FromResult(client.GenerateSasUri(new QueueSasBuilder(permissions, timeWindow.endTime) {
             StartsOn = timeWindow.startTime,
         }));

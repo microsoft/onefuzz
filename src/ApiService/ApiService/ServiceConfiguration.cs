@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+﻿using Azure.Core;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -25,8 +26,8 @@ public interface IServiceConfig {
     public string? DiagnosticsAzureBlobRetentionDays { get; }
 
     public string? MultiTenantDomain { get; }
-    public string? OneFuzzDataStorage { get; }
-    public string? OneFuzzFuncStorage { get; }
+    public ResourceIdentifier? OneFuzzDataStorage { get; }
+    public ResourceIdentifier? OneFuzzFuncStorage { get; }
     public string? OneFuzzInstance { get; }
     public string? OneFuzzInstanceName { get; }
     public string? OneFuzzKeyvault { get; }
@@ -92,8 +93,20 @@ public class ServiceConfiguration : IServiceConfig {
 
     public string? MultiTenantDomain { get => GetEnv("MULTI_TENANT_DOMAIN"); }
 
-    public string? OneFuzzDataStorage { get => GetEnv("ONEFUZZ_DATA_STORAGE"); }
-    public string? OneFuzzFuncStorage { get => GetEnv("ONEFUZZ_FUNC_STORAGE"); }
+    public ResourceIdentifier? OneFuzzDataStorage {
+        get {
+            var env = GetEnv("ONEFUZZ_DATA_STORAGE");
+            return env is null ? null : new ResourceIdentifier(env);
+        }
+    }
+
+    public ResourceIdentifier? OneFuzzFuncStorage {
+        get {
+            var env = GetEnv("ONEFUZZ_FUNC_STORAGE");
+            return env is null ? null : new ResourceIdentifier(env);
+        }
+    }
+
     public string? OneFuzzInstance { get => GetEnv("ONEFUZZ_INSTANCE"); }
     public string? OneFuzzInstanceName { get => GetEnv("ONEFUZZ_INSTANCE_NAME"); }
     public string? OneFuzzKeyvault { get => GetEnv("ONEFUZZ_KEYVAULT"); }

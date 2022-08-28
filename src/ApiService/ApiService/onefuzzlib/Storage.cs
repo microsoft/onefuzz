@@ -20,12 +20,12 @@ public enum StorageType {
 }
 
 public interface IStorage {
-    public IReadOnlyList<string> CorpusAccounts();
-    public string GetPrimaryAccount(StorageType storageType);
-    public IReadOnlyList<string> GetAccounts(StorageType storageType);
+    public IReadOnlyList<ResourceIdentifier> CorpusAccounts();
+    public ResourceIdentifier GetPrimaryAccount(StorageType storageType);
+    public IReadOnlyList<ResourceIdentifier> GetAccounts(StorageType storageType);
 
     /// Picks either the single primary account or a random secondary account.
-    public string ChooseAccount(StorageType storageType) {
+    public ResourceIdentifier ChooseAccount(StorageType storageType) {
         var accounts = GetAccounts(storageType);
         if (!accounts.Any()) {
             throw new InvalidOperationException($"no storage accounts for {storageType}");
@@ -44,7 +44,10 @@ public interface IStorage {
         return secondaryAccounts[Random.Shared.Next(secondaryAccounts.Count)];
     }
 
-    public BlobServiceClient GetBlobServiceClientForAccount(string accountId);
+    public BlobServiceClient GetBlobServiceClientForAccount(ResourceIdentifier accountId);
+
+    public BlobServiceClient GetBlobServiceClientForAccountName(string accountName);
+
     public Task<Uri> GenerateBlobContainerSasUri(
         BlobContainerSasPermissions permissions,
         BlobContainerClient containerClient,
@@ -55,12 +58,12 @@ public interface IStorage {
         BlobClient blobClient,
         (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow);
 
-    public TableServiceClient GetTableServiceClientForAccount(string accountId);
+    public TableServiceClient GetTableServiceClientForAccount(ResourceIdentifier accountId);
 
-    public QueueServiceClient GetQueueServiceClientForAccount(string accountId);
+    public QueueServiceClient GetQueueServiceClientForAccount(ResourceIdentifier accountId);
     public Task<Uri> GenerateQueueSasUri(
         QueueSasPermissions permissions,
-        string accountId,
+        string accountName,
         string queueName,
         (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow);
 }
@@ -83,12 +86,12 @@ public sealed class Storage : IStorage {
         _cache = cache;
     }
 
-    public string GetFuncStorage() {
+    public ResourceIdentifier GetFuncStorage() {
         return _config.OneFuzzFuncStorage
             ?? throw new Exception("Func storage env var is missing");
     }
 
-    public string GetFuzzStorage() {
+    public ResourceIdentifier GetFuzzStorage() {
         return _config.OneFuzzDataStorage
             ?? throw new Exception("Fuzz storage env var is missing");
     }
@@ -97,10 +100,10 @@ public sealed class Storage : IStorage {
         return _armClient;
     }
 
-    public IReadOnlyList<string> CorpusAccounts() {
-        return _cache.GetOrCreate<IReadOnlyList<string>>("CorpusAccounts", cacheEntry => {
+    public IReadOnlyList<ResourceIdentifier> CorpusAccounts() {
+        return _cache.GetOrCreate<IReadOnlyList<ResourceIdentifier>>("CorpusAccounts", cacheEntry => {
             var skip = GetFuncStorage();
-            var results = new List<string> { GetFuzzStorage() };
+            var results = new List<ResourceIdentifier> { GetFuzzStorage() };
 
             var client = GetMgmtClient();
             var group = _creds.GetResourceGroupResourceIdentifier();
@@ -113,7 +116,7 @@ public sealed class Storage : IStorage {
                     continue;
                 }
 
-                if (results.Contains(account.Id!)) {
+                if (results.Contains(account.Id)) {
                     continue;
                 }
 
@@ -122,7 +125,7 @@ public sealed class Storage : IStorage {
                     continue;
                 }
 
-                results.Add(account.Id!);
+                results.Add(account.Id);
             }
 
             _log.Info($"corpus accounts: {JsonSerializer.Serialize(results)}");
@@ -130,88 +133,81 @@ public sealed class Storage : IStorage {
         });
     }
 
-    public string GetPrimaryAccount(StorageType storageType)
+    public ResourceIdentifier GetPrimaryAccount(StorageType storageType)
         => storageType switch {
             StorageType.Corpus => GetFuzzStorage(),
             StorageType.Config => GetFuncStorage(),
             var x => throw new NotSupportedException($"invalid StorageType: {x}"),
         };
 
-    record GetStorageAccountNameAndKey_CacheKey(string AccountId);
-    public Async.Task<(string, string)> GetStorageAccountNameAndKey(string accountId)
-        => _cache.GetOrCreateAsync<(string, string)>(new GetStorageAccountNameAndKey_CacheKey(accountId), async cacheEntry => {
-            var resourceId = new ResourceIdentifier(accountId);
+    record GetStorageAccountKey_CacheKey(ResourceIdentifier Identifier);
+    public Async.Task<string?> GetStorageAccountKey(string accountName) {
+        var resourceGroupId = _creds.GetResourceGroupResourceIdentifier();
+        var storageAccountId = StorageAccountResource.CreateResourceIdentifier(resourceGroupId.SubscriptionId, resourceGroupId.Name, accountName);
+        return _cache.GetOrCreateAsync(new GetStorageAccountKey_CacheKey(storageAccountId), async cacheEntry => {
             var armClient = GetMgmtClient();
-            var storageAccount = armClient.GetStorageAccountResource(resourceId);
-            var keys = await storageAccount.GetKeysAsync();
-            var key = keys.Value.Keys.FirstOrDefault() ?? throw new Exception("no keys found");
-            return (resourceId.Name, key.Value);
+            var keys = await armClient.GetStorageAccountResource(storageAccountId).GetKeysAsync();
+            return keys.Value.Keys.FirstOrDefault()?.Value;
         });
-
-    record GetStorageAccountNameKeyByName_CacheKey(string AccountName);
-    public Async.Task<string?> GetStorageAccountNameKeyByName(string accountName)
-        => _cache.GetOrCreateAsync(new GetStorageAccountNameKeyByName_CacheKey(accountName), async cacheEntry => {
-            var armClient = GetMgmtClient();
-            var resourceGroup = _creds.GetResourceGroupResourceIdentifier();
-            var storageAccount = await armClient.GetResourceGroupResource(resourceGroup).GetStorageAccountAsync(accountName);
-            var keys = await storageAccount.Value.GetKeysAsync();
-            var key = keys.Value.Keys.FirstOrDefault();
-            return key?.Value;
-        });
-
-    public IReadOnlyList<string> GetAccounts(StorageType storageType) {
-        switch (storageType) {
-            case StorageType.Corpus:
-                return CorpusAccounts();
-            case StorageType.Config:
-                return new[] { GetFuncStorage() };
-            default:
-                throw new NotSupportedException();
-        }
     }
 
-    private static Uri GetTableEndpoint(string accountId)
-        => new($"https://{accountId}.table.core.windows.net/");
+    public IReadOnlyList<ResourceIdentifier> GetAccounts(StorageType storageType)
+        => storageType switch {
+            StorageType.Corpus => CorpusAccounts(),
+            StorageType.Config => new[] { GetFuncStorage() },
+            _ => throw new NotSupportedException(),
+        };
 
-    private static Uri GetQueueEndpoint(string accountId)
-        => new($"https://{accountId}.queue.core.windows.net/");
+    private static Uri GetTableEndpoint(string accountName)
+        => new($"https://{accountName}.table.core.windows.net/");
 
-    private static Uri GetBlobEndpoint(string accountId)
-        => new($"https://{accountId}.blob.core.windows.net/");
+    private static Uri GetQueueEndpoint(string accountName)
+        => new($"https://{accountName}.queue.core.windows.net/");
 
+    private static Uri GetBlobEndpoint(string accountName)
+        => new($"https://{accountName}.blob.core.windows.net/");
 
     // According to guidance these should be reused as they manage HttpClients,
     // so we cache them all by account:
 
-    record BlobClientKey(string AccountId);
-    public BlobServiceClient GetBlobServiceClientForAccount(string accountId)
-        => _cache.GetOrCreate(new BlobClientKey(accountId), cacheEntry => {
-            cacheEntry.Priority = CacheItemPriority.NeverRemove;
-            return new BlobServiceClient(GetBlobEndpoint(accountId), new DefaultAzureCredential());
-        });
+    public BlobServiceClient GetBlobServiceClientForAccount(ResourceIdentifier accountId)
+        => GetBlobServiceClientForAccountName(accountId.Name);
 
-    record TableClientKey(string AccountId);
-    public TableServiceClient GetTableServiceClientForAccount(string accountId)
-        => _cache.GetOrCreate(new TableClientKey(accountId), cacheEntry => {
+    record BlobClientKey(string AccountName);
+    public BlobServiceClient GetBlobServiceClientForAccountName(string accountName) {
+        return _cache.GetOrCreate(new BlobClientKey(accountName), cacheEntry => {
             cacheEntry.Priority = CacheItemPriority.NeverRemove;
-            return new TableServiceClient(GetTableEndpoint(accountId), new DefaultAzureCredential());
+            return new BlobServiceClient(GetBlobEndpoint(accountName), new DefaultAzureCredential());
         });
+    }
 
-    record QueueClientKey(string AccountId);
+    record TableClientKey(string AccountName);
+    public TableServiceClient GetTableServiceClientForAccount(ResourceIdentifier accountId) {
+        var accountName = accountId.Name;
+        return _cache.GetOrCreate(new TableClientKey(accountName), cacheEntry => {
+            cacheEntry.Priority = CacheItemPriority.NeverRemove;
+            return new TableServiceClient(GetTableEndpoint(accountName), new DefaultAzureCredential());
+        });
+    }
+
+    record QueueClientKey(string AccountName);
     private static readonly QueueClientOptions _queueClientOptions = new() { MessageEncoding = QueueMessageEncoding.Base64 };
-    public QueueServiceClient GetQueueServiceClientForAccount(string accountId)
-        => _cache.GetOrCreate(new QueueClientKey(accountId), cacheEntry => {
+    public QueueServiceClient GetQueueServiceClientForAccount(ResourceIdentifier accountId) {
+        var accountName = accountId.Name;
+        return _cache.GetOrCreate(new QueueClientKey(accountName), cacheEntry => {
             cacheEntry.Priority = CacheItemPriority.NeverRemove;
-            return new QueueServiceClient(GetQueueEndpoint(accountId), new DefaultAzureCredential(), _queueClientOptions);
+            return new QueueServiceClient(GetQueueEndpoint(accountName), new DefaultAzureCredential(), _queueClientOptions);
         });
+    }
 
-    record SharedKeyQueueClientKey(string AccountId);
-    private Task<QueueServiceClient> GetSharedKeyQueueServiceClientForAccount(string accountId)
-        => _cache.GetOrCreateAsync(new SharedKeyQueueClientKey(accountId), async cacheEntry => {
-            var (accountName, accountKey) = await GetStorageAccountNameAndKey(accountId);
+    record SharedKeyQueueClient_CacheKey(string AccountName);
+    private Task<QueueServiceClient> GetSharedKeyQueueServiceClientForAccountName(string accountName) {
+        return _cache.GetOrCreateAsync(new SharedKeyQueueClient_CacheKey(accountName), async cacheEntry => {
+            var accountKey = await GetStorageAccountKey(accountName);
             var skc = new StorageSharedKeyCredential(accountName, accountKey);
-            return new QueueServiceClient(GetQueueEndpoint(accountId), skc);
+            return new QueueServiceClient(GetQueueEndpoint(accountName), skc);
         });
+    }
 
     public async Task<Uri> GenerateBlobContainerSasUri(
         BlobContainerSasPermissions permissions,
@@ -257,12 +253,12 @@ public sealed class Storage : IStorage {
 
     public async Task<Uri> GenerateQueueSasUri(
         QueueSasPermissions permissions,
-        string accountId,
+        string accountName,
         string queueName,
         (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow) {
 
         // must have the shared-key client to build a SAS URI for queues:
-        var serviceClient = await GetSharedKeyQueueServiceClientForAccount(accountId);
+        var serviceClient = await GetSharedKeyQueueServiceClientForAccountName(accountName);
         var sasBuilder = new QueueSasBuilder(permissions, timeWindow.endTime) {
             StartsOn = timeWindow.startTime,
         };
