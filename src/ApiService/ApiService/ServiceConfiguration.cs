@@ -1,4 +1,6 @@
-﻿namespace Microsoft.OneFuzz.Service;
+﻿using System.Reflection;
+
+namespace Microsoft.OneFuzz.Service;
 
 public enum LogDestination {
     Console,
@@ -49,6 +51,11 @@ public interface IServiceConfig {
 
 public class ServiceConfiguration : IServiceConfig {
 
+    // Version is baked into the assembly by the build process:
+    private static readonly string? _oneFuzzVersion = 
+        Assembly.GetExecutingAssembly()
+        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
     public ServiceConfiguration() {
 #if DEBUG
         LogDestinations = new LogDestination[] { LogDestination.AppInsights, LogDestination.Console };
@@ -86,7 +93,16 @@ public class ServiceConfiguration : IServiceConfig {
     public string? OneFuzzOwner { get => Environment.GetEnvironmentVariable("ONEFUZZ_OWNER"); }
     public string? OneFuzzResourceGroup { get => Environment.GetEnvironmentVariable("ONEFUZZ_RESOURCE_GROUP"); }
     public string? OneFuzzTelemetry { get => Environment.GetEnvironmentVariable("ONEFUZZ_TELEMETRY"); }
-    public string OneFuzzVersion { get => Environment.GetEnvironmentVariable("ONEFUZZ_VERSION") ?? "0.0.0"; }
+
+    public string OneFuzzVersion {
+        get {
+            // version can be overridden by config:
+            return Environment.GetEnvironmentVariable("ONEFUZZ_VERSION")
+                ?? _oneFuzzVersion
+                ?? "0.0.0";
+        }
+    }
+
     public string? OneFuzzAllowOutdatedAgent => Environment.GetEnvironmentVariable("ONEFUZZ_ALLOW_OUTDATED_AGENT");
 
     public string OneFuzzNodeDisposalStrategy { get => Environment.GetEnvironmentVariable("ONEFUZZ_NODE_DISPOSAL_STRATEGY") ?? "scale_in"; }
