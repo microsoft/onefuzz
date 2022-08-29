@@ -99,7 +99,7 @@ public class ServiceConfiguration : IServiceConfig {
             // version can be overridden by config:
             return Environment.GetEnvironmentVariable("ONEFUZZ_VERSION")
                 ?? _oneFuzzVersion
-                ?? "0.0.0";
+                ?? throw new InvalidOperationException("Unable to read OneFuzz version from assembly");
         }
     }
 
