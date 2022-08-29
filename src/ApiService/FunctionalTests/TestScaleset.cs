@@ -127,6 +127,8 @@ namespace FunctionalTests {
                 var postDeleteScalesets = await _scalesetApi.Get();
                 Assert.True(postDeleteScalesets.IsOk, $"failed to get scalesets after finishing pool deletion due to {postDeleteScalesets.ErrorV}");
 
+                _output.WriteLine($"Pool is deleted {newPoolName}");
+
                 var postDelete = postDeleteScalesets.OkV!.Where(sc => sc.PoolName == newPoolName);
                 Assert.False(postDelete.Any());
                 var patch1 = await _scalesetApi.Patch(newScaleset.ScalesetId, 1);
