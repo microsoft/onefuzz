@@ -108,7 +108,9 @@ public class Program {
 
                 .AddSingleton<TelemetryConfiguration>(provider => {
                     var config = provider.GetRequiredService<IServiceConfig>();
-                    return new(config.ApplicationInsightsInstrumentationKey);
+                    return new() { 
+                        ConnectionString = $"InstrumentationKey={config.ApplicationInsightsInstrumentationKey}",
+                    };
                 })
                 .AddSingleton<DependencyTrackingTelemetryModule>()
                 .AddSingleton<ICreds, Creds>()
