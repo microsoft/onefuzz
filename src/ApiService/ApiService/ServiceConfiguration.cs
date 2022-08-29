@@ -52,7 +52,7 @@ public interface IServiceConfig {
 public class ServiceConfiguration : IServiceConfig {
 
     // Version is baked into the assembly by the build process:
-    private static readonly string? _oneFuzzVersion = 
+    private static readonly string? _oneFuzzVersion =
         Assembly.GetExecutingAssembly()
         .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
 
