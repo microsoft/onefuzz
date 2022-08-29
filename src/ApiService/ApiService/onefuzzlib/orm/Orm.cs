@@ -27,7 +27,7 @@ namespace ApiService.OneFuzzLib.Orm {
     }
 
 
-    public class Orm<T> : IOrm<T> where T : EntityBase {
+    public abstract class Orm<T> : IOrm<T> where T : EntityBase {
 #pragma warning disable CA1051 // permit visible instance fields
         protected readonly EntityConverter _entityConverter;
         protected readonly IOnefuzzContext _context;
@@ -109,7 +109,6 @@ namespace ApiService.OneFuzzLib.Orm {
 
             var account = accountId ?? _context.ServiceConfiguration.OneFuzzFuncStorage ?? throw new ArgumentNullException(nameof(accountId));
             var tableClient = await _context.Storage.GetTableServiceClientForAccount(account);
-            await tableClient.CreateTableIfNotExistsAsync(tableName);
             return tableClient.GetTableClient(tableName);
         }
 
@@ -146,7 +145,7 @@ namespace ApiService.OneFuzzLib.Orm {
     }
 
 
-    public class StatefulOrm<T, TState, TSelf> : Orm<T>, IStatefulOrm<T, TState> where T : StatefulEntityBase<TState> where TState : Enum {
+    public abstract class StatefulOrm<T, TState, TSelf> : Orm<T>, IStatefulOrm<T, TState> where T : StatefulEntityBase<TState> where TState : Enum {
         static Lazy<Func<object>>? _partitionKeyGetter;
         static Lazy<Func<object>>? _rowKeyGetter;
         static ConcurrentDictionary<string, Func<T, Async.Task<T>>?> _stateFuncs = new ConcurrentDictionary<string, Func<T, Async.Task<T>>?>();

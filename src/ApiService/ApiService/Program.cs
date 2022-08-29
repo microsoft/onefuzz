@@ -7,6 +7,7 @@ using System.Linq;
 global
 using Async = System.Threading.Tasks;
 using System.Text.Json;
+using ApiService.OneFuzzLib.Orm;
 using Azure.Core.Serialization;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
@@ -109,12 +110,39 @@ public class Program {
             .AddSingleton<ILogSinks, LogSinks>()
             .AddHttpClient()
             .AddMemoryCache();
-        }
-        )
+        })
         .Build();
+
+        await SetupStorage(
+            host.Services.GetRequiredService<IStorage>(),
+            host.Services.GetRequiredService<IServiceConfig>());
 
         await host.RunAsync();
     }
 
+    public static async Async.Task SetupStorage(IStorage storage, IServiceConfig serviceConfig) {
+        // Creates the tables for each implementor of IOrm<T>
 
+        // locate all IOrm<T> instances and collect the Ts
+        var toCreate = new List<Type>();
+        var types = typeof(Program).Assembly.GetTypes();
+        foreach (var type in types) {
+            if (type.IsAbstract) {
+                continue;
+            }
+
+            foreach (var iface in type.GetInterfaces()) {
+                if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IOrm<>)) {
+                    toCreate.Add(iface.GenericTypeArguments.Single());
+                    break;
+                }
+            }
+        }
+
+        var storageAccount = serviceConfig.OneFuzzFuncStorage;
+        if (storageAccount is not null) {
+            var tableClient = await storage.GetTableServiceClientForAccount(storageAccount);
+            await Async.Task.WhenAll(toCreate.Select(t => tableClient.CreateTableIfNotExistsAsync(serviceConfig.OneFuzzStoragePrefix + t.Name)));
+        }
+    }
 }
