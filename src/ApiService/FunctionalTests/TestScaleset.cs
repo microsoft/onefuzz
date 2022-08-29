@@ -24,12 +24,15 @@ namespace FunctionalTests {
             if (!scalesets.OkV!.Any()) {
                 _output.WriteLine("Got empty scalesets");
             } else {
+                
                 foreach (var sc in scalesets.OkV!) {
-                    _output.WriteLine($"Pool: {sc.PoolName} Scaleset: {sc.ScalesetId}");
+                    if (sc.Error is not null)
+                        _output.WriteLine($"Pool: {sc.PoolName} Scaleset: {sc.ScalesetId}, state; {sc.State}, error: {sc.Error}");
+                    else
+                        _output.WriteLine($"Pool: {sc.PoolName} Scaleset: {sc.ScalesetId}, state; {sc.State}");
                 }
             }
         }
-
 
         [Fact]
         public async Task CreateAndDelete() {
@@ -61,17 +64,8 @@ namespace FunctionalTests {
 
                 string currentState = "";
                 Console.WriteLine($"Waiting for scaleset to move out from Init State");
-                do {
-                    await Task.Delay(TimeSpan.FromSeconds(10.0));
-                    var sc = await _scalesetApi.Get(id: newScaleset.ScalesetId);
-                    Assert.True(sc.IsOk, $"failed to get scaleset with id: {newScaleset.ScalesetId} due to {sc.ErrorV}");
-                    newScaleset = sc.OkV!.First();
+                newScaleset = await _scalesetApi.WaitWhile(newScaleset.ScalesetId, sc => sc.State == "init" || sc.State == "setup");
 
-                    if (currentState != newScaleset.State) {
-                        _output.WriteLine($"Scaleset is in {newScaleset.State}");
-                        currentState = newScaleset.State;
-                    }
-                } while (newScaleset.State == "init" || newScaleset.State == "setup");
                 _output.WriteLine($"Scaleset is in {newScaleset.State}");
 
                 if (currentState == "creation_failed") {
@@ -92,17 +86,7 @@ namespace FunctionalTests {
                 //Assert.True(patch3.IsOk);
                 //Assert.True(patch3.OkV!.Size == 3);
 
-                do {
-                    await Task.Delay(TimeSpan.FromSeconds(10.0));
-                    var sc = await _scalesetApi.Get(id: newScaleset.ScalesetId);
-                    Assert.True(sc.IsOk, $"failed to get scaleset with id: {newScaleset.ScalesetId} due to {sc.ErrorV}");
-                    newScaleset = sc.OkV!.First();
-
-                    if (currentState != newScaleset.State) {
-                        _output.WriteLine($"Scaleset is in {newScaleset.State}");
-                        currentState = newScaleset.State;
-                    }
-                } while (newScaleset.State == "resize");
+                newScaleset = await _scalesetApi.WaitWhile(newScaleset.ScalesetId, sc => sc.State == "resize");
 
                 if (currentState == "creation_failed") {
                     throw new Exception($"Scaleset creation failed due {newScaleset.Error}");

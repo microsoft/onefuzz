@@ -92,7 +92,7 @@ public class Proxy {
                 "ProxyCreate");
         }
 
-        var scaleset = await _context.ScalesetOperations.GetById(request.OkV.MachineId);
+        var scaleset = await _context.ScalesetOperations.GetById(request.OkV.ScalesetId);
         if (!scaleset.IsOk) {
             return await _context.RequestHandling.NotOk(req, scaleset.ErrorV, "debug_proxy create");
         }

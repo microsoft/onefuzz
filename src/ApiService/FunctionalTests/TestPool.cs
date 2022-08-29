@@ -51,18 +51,17 @@ namespace FunctionalTests {
             var newPoolName = PoolApi.TestPoolPrefix + newPoolId;
             _output.WriteLine($"creating pool {newPoolName}");
             var newPool = await _poolApi.Create(newPoolName, "linux");
-            try {
-                Assert.True(newPool.IsOk, $"failed to create new pool: {newPool.ErrorV}");
 
-                var poolsCreated = await _poolApi.Get();
-                Assert.True(poolsCreated.IsOk, $"failed to get pools: {poolsCreated.ErrorV}");
+            Assert.True(newPool.IsOk, $"failed to create new pool: {newPool.ErrorV}");
 
-                var newPools = poolsCreated.OkV!.Where(p => p.Name == newPoolName);
-                Assert.True(newPools.Count() == 1);
-            } finally {
-                var deletedPoolResult = await _poolApi.Delete(newPoolName);
-                Assert.True(deletedPoolResult);
-            }
+            var poolsCreated = await _poolApi.Get();
+            Assert.True(poolsCreated.IsOk, $"failed to get pools: {poolsCreated.ErrorV}");
+
+            var newPools = poolsCreated.OkV!.Where(p => p.Name == newPoolName);
+            Assert.True(newPools.Count() == 1);
+
+            var deletedPoolResult = await _poolApi.Delete(newPoolName);
+            Assert.True(deletedPoolResult);
         }
     }
 }

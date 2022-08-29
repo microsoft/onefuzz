@@ -46,4 +46,6 @@ class Error : IComparable<Error> {
     public bool UnableToFindPoolError => Code == 450 && Errors.First() == "unable to find pool";
 
     public bool UnableToFindScalesetError => Code == 450 && Errors.First() == "unable to find scaleset";
+
+    public bool UnableToFindNode => Code == 467 && Errors.First() == "unable to find node ";
 }
