@@ -217,7 +217,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         }
 
         foreach (var status in instanceView.Statuses) {
-            if (status.Level == StatusLevelTypes.Error) {
+            if (status.Level == ComputeStatusLevelType.Error) {
                 yield return $"code:{status.Code} status:{status.DisplayStatus} message:{status.Message}";
             }
         }

@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Azure;
+using Azure.Core;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
 using Newtonsoft.Json;
@@ -67,7 +68,7 @@ public class VmOperations : IVmOperations {
     public async Task<VirtualMachineData?> GetVm(string name) {
         // _logTracer.Debug($"getting vm: {name}");
         try {
-            var result = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(name, InstanceViewTypes.InstanceView);
+            var result = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(name, InstanceViewType.InstanceView);
             if (result == null) {
                 return null;
             }
@@ -255,20 +256,20 @@ public class VmOperations : IVmOperations {
         }
 
         var vmParams = new VirtualMachineData(location) {
-            OSProfile = new OSProfile {
+            OSProfile = new VirtualMachineOSProfile {
                 ComputerName = "node",
                 AdminUsername = "onefuzz",
             },
-            HardwareProfile = new HardwareProfile {
+            HardwareProfile = new VirtualMachineHardwareProfile {
                 VmSize = vmSku,
             },
-            StorageProfile = new StorageProfile {
+            StorageProfile = new VirtualMachineStorageProfile {
                 ImageReference = GenerateImageReference(image),
             },
-            NetworkProfile = new NetworkProfile(),
+            NetworkProfile = new VirtualMachineNetworkProfile(),
         };
 
-        vmParams.NetworkProfile.NetworkInterfaces.Add(new NetworkInterfaceReference { Id = nic.Id });
+        vmParams.NetworkProfile.NetworkInterfaces.Add(new VirtualMachineNetworkInterfaceReference { Id = nic.Id });
 
         var imageOs = await _context.ImageOperations.GetOs(location, image);
         if (!imageOs.IsOk) {
@@ -285,7 +286,7 @@ public class VmOperations : IVmOperations {
                         DisablePasswordAuthentication = true,
                     };
                     vmParams.OSProfile.LinuxConfiguration.SshPublicKeys.Add(
-                        new SshPublicKeyInfo {
+                        new SshPublicKeyConfiguration {
                             Path = "/home/onefuzz/.ssh/authorized_keys",
                             KeyData = sshPublicKey
                         }
@@ -332,7 +333,7 @@ public class VmOperations : IVmOperations {
         var imageRef = new ImageReference();
 
         if (image.StartsWith("/", StringComparison.Ordinal)) {
-            imageRef.Id = image;
+            imageRef.Id = new ResourceIdentifier(image);
         } else {
             var imageVal = image.Split(":", 4);
             imageRef.Publisher = imageVal[0];

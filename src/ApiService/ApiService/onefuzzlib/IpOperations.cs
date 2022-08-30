@@ -14,7 +14,7 @@ public interface IIpOperations {
 
     public Async.Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, string region, Nsg? nsg);
 
-    public Async.Task<string?> GetPublicIp(string resourceId);
+    public Async.Task<string?> GetPublicIp(ResourceIdentifier resourceId);
 
     public Async.Task<PublicIPAddressResource?> GetIp(string resourceGroup, string name);
 
@@ -87,7 +87,7 @@ public class IpOperations : IIpOperations {
         return ips.FirstOrDefault();
     }
 
-    public async Task<string?> GetPublicIp(string resourceId) {
+    public async Task<string?> GetPublicIp(ResourceIdentifier resourceId) {
         // TODO: Parts of this function seem redundant, but I'm mirroring
         // the python code exactly. We should revisit this.
         _logTracer.Info($"getting ip for {resourceId}");
