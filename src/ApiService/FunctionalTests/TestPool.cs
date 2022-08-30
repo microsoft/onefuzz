@@ -24,7 +24,8 @@ namespace FunctionalTests {
         }
 
 
-        [Fact]
+        // This for manual test cleanup during development of tests
+        //[Fact]
         public async Task DeleteFunctionalTestPools() {
             await _poolApi.DeleteAll();
         }
@@ -61,7 +62,7 @@ namespace FunctionalTests {
             Assert.True(newPools.Count() == 1);
 
             var deletedPoolResult = await _poolApi.Delete(newPoolName);
-            Assert.True(deletedPoolResult);
+            Assert.True(deletedPoolResult.Result);
         }
     }
 }

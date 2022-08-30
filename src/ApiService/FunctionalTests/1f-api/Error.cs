@@ -3,7 +3,7 @@ using Xunit;
 
 namespace FunctionalTests;
 
-class Error : IComparable<Error> {
+class Error : IComparable<Error>, IFromJsonElement<Error> {
     JsonElement _e;
 
     public Error(JsonElement e) {
@@ -14,6 +14,8 @@ class Error : IComparable<Error> {
     public int Code => _e.GetProperty("code").GetInt32();
 
     public IEnumerable<string> Errors => _e.GetProperty("errors").EnumerateArray().Select(e => e.GetString()!);
+
+    public Error Convert(JsonElement e) => new Error(e);
 
     public static bool IsError(JsonElement res) {
         return res.ValueKind == JsonValueKind.Object && res.TryGetProperty("code", out _) && res.TryGetProperty("errors", out _);

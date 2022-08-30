@@ -32,7 +32,7 @@ class ScalesetNodeState {
     public string? NodeState => _e.GetProperty("state").GetString();
 }
 
-class Scaleset {
+class Scaleset : IFromJsonElement<Scaleset> {
     JsonElement _e;
     public Scaleset() { }
     public Scaleset(JsonElement e) => _e = e;
@@ -64,9 +64,11 @@ class Scaleset {
     public Guid? ClientObjectId => _e.GetProperty("client_object_id").ValueKind == JsonValueKind.Null ? null : _e.GetProperty("client_object_id").GetGuid();
 
     public List<ScalesetNodeState>? Nodes => _e.GetProperty("nodes").ValueKind == JsonValueKind.Null ? null : _e.GetProperty("nodes").EnumerateArray().Select(node => new ScalesetNodeState(node)).ToList();
+
+    public Scaleset Convert(JsonElement e) => new Scaleset(e);
 }
 
-class ScalesetApi : ApiBase<Scaleset> {
+class ScalesetApi : ApiBase {
 
     public const string Image_Ubuntu_20_04 = "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest";
 
@@ -74,15 +76,13 @@ class ScalesetApi : ApiBase<Scaleset> {
         base(endpoint, "/api/Scaleset", request, output) { }
 
 
-    public override Scaleset Convert(JsonElement e) { return new Scaleset(e); }
-
     public async Task<Result<IEnumerable<Scaleset>, Error>> Get(Guid? id = null, string? state = null, bool? includeAuth = false) {
         var root = new JsonObject();
         root.Add("scaleset_id", id);
         root.Add("state", state);
         root.Add("include_auth", includeAuth);
         var res = await Get(root);
-        return IEnumerableResult(res);
+        return IEnumerableResult<Scaleset>(res);
     }
 
     public async Task<Result<Scaleset, Error>> Create(string poolName, int size, string vmSku = "Standard_D2s_v3", string image = Image_Ubuntu_20_04, bool spotInstance = false) {
@@ -97,22 +97,22 @@ class ScalesetApi : ApiBase<Scaleset> {
         tags.Add("Purpose", "Functional-Test");
         rootScalesetCreate.Add("tags", tags);
 
-        return Result(await Post(rootScalesetCreate));
+        return Result<Scaleset>(await Post(rootScalesetCreate));
     }
 
     public async Task<Result<Scaleset, Error>> Patch(Guid id, int size) {
         var scalesetPatch = new JsonObject();
         scalesetPatch.Add("scaleset_id", id);
         scalesetPatch.Add("size", size);
-        return Result(await Patch(scalesetPatch));
+        return Result<Scaleset>(await Patch(scalesetPatch));
     }
 
-    public async Task<bool> Delete(Guid id, bool now) {
+    public async Task<BooleanResult> Delete(Guid id, bool now) {
         var scalesetDelete = new JsonObject();
         scalesetDelete.Add("scaleset_id", id);
         scalesetDelete.Add("now", now);
 
-        return DeleteResult(await Delete(scalesetDelete));
+        return DeleteResult<BooleanResult>(await Delete(scalesetDelete));
     }
 
 

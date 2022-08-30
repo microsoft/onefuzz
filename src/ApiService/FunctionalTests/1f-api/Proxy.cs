@@ -5,7 +5,7 @@ using Xunit.Abstractions;
 namespace FunctionalTests;
 
 
-class Proxy {
+class Proxy : IFromJsonElement<Proxy> {
 
     JsonElement _e;
     public Proxy() { }
@@ -16,16 +16,43 @@ class Proxy {
 
     public string VmState => _e.GetProperty("state").GetString()!;
 
-
+    public Proxy Convert(JsonElement e) => new Proxy(e);
 }
 
-class ProxyApi : ApiBase<Proxy> {
+
+class Forward : IFromJsonElement<Forward> {
+    JsonElement _e;
+    public Forward() { }
+    public Forward(JsonElement e) => _e = e;
+
+    public long SrcPort => _e.GetProperty("src_port").GetInt64();
+    public long DstPort => _e.GetProperty("dst_port").GetInt64();
+
+    public string DstIp => _e.GetProperty("dst_ip").GetString()!;
+
+    public Forward Convert(JsonElement e) => new Forward(e);
+}
+
+class ProxyGetResult : IFromJsonElement<ProxyGetResult> {
+    JsonElement _e;
+
+    public ProxyGetResult() { }
+
+    public ProxyGetResult(JsonElement e) => _e = e;
+
+    public string? Ip => _e.ValueKind == JsonValueKind.Null ? null : _e.GetProperty("ip").GetString();
+
+    public Forward Forward => new Forward(_e.GetProperty("forward"));
+
+    public ProxyGetResult Convert(JsonElement e) => new ProxyGetResult(e);
+}
+
+
+class ProxyApi : ApiBase {
 
     public ProxyApi(Uri endpoint, Microsoft.OneFuzz.Service.Request request, ITestOutputHelper output) :
         base(endpoint, "/api/proxy", request, output) {
     }
-
-    public override Proxy Convert(JsonElement e) => new Proxy(e);
 
     public async Task<Result<IEnumerable<Proxy>, Error>> Get(Guid? scalesetId = null, Guid? machineId = null, int? dstPort = null) {
         var root = new JsonObject();
@@ -37,16 +64,16 @@ class ProxyApi : ApiBase<Proxy> {
         if (Error.IsError(r)) {
             return Result<IEnumerable<Proxy>, Error>.Error(new Error(r));
         } else {
-            return IEnumerableResult(r.GetProperty("proxies"));
+            return IEnumerableResult<Proxy>(r.GetProperty("proxies"));
         }
     }
 
-    public async Task<bool> Delete(Guid? scalesetId = null, Guid? machineId = null, int? dstPort = null) {
+    public async Task<BooleanResult> Delete(Guid? scalesetId = null, Guid? machineId = null, int? dstPort = null) {
         var root = new JsonObject();
         root.Add("scaleset_id", scalesetId);
         root.Add("machine_id", machineId);
         root.Add("dst_port", dstPort);
-        return DeleteResult(await Delete(root));
+        return DeleteResult<BooleanResult>(await Delete(root));
     }
 
     public async Task<JsonElement> Reset(string region) {
@@ -56,7 +83,7 @@ class ProxyApi : ApiBase<Proxy> {
         return r;
     }
 
-    public async Task<Result<Proxy, Error>> Create(Guid scalesetId, Guid machineId, int dstPort, int duration) {
+    public async Task<Result<ProxyGetResult, Error>> Create(Guid scalesetId, Guid machineId, int dstPort, int duration) {
         var root = new JsonObject();
         root.Add("scaleset_id", scalesetId);
         root.Add("machine_id", machineId);
@@ -64,7 +91,7 @@ class ProxyApi : ApiBase<Proxy> {
         root.Add("duration", duration);
 
         var r = await Post(root);
-        return Result(r);
+        return Result<ProxyGetResult>(r);
     }
 
 }

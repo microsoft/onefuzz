@@ -62,19 +62,25 @@ namespace FunctionalTests {
 
             var proxy = await _proxyApi.Create(newScaleset.ScalesetId, node.MachineId, 2222, 1);
 
+            var proxyAgain = await _proxyApi.Create(newScaleset.ScalesetId, node.MachineId, 2222, 1);
+
             Assert.True(proxy.IsOk, $"failed to create proxy due to {proxy.ErrorV}");
-            _output.WriteLine($"created proxy {proxy.OkV!.ProxyId}, region: {proxy.OkV!.Region}, state: {proxy.OkV!.VmState}");
+
+            _output.WriteLine($"created proxy dst ip: {proxy.OkV!.Forward.DstIp}, srcPort: {proxy.OkV.Forward.SrcPort} dstport: {proxy.OkV!.Forward.DstPort}, ip: {proxy.OkV!.Ip}");
+
+            //TODO: compare proxies, result should be the same
+            Assert.True(proxyAgain.IsOk, $"failed to create proxy with same config due to {proxyAgain.ErrorV}");
 
 
-            var proxyReset = await _proxyApi.Reset(proxy.OkV!.Region);
+            var proxyReset = await _proxyApi.Reset(newScaleset.Region);
 
             var deleteProxy = await _proxyApi.Delete(node.MachineId);
-            Assert.True(deleteProxy);
+            Assert.True(deleteProxy.Result);
 
-            _output.WriteLine($"deleted proxy {proxy.OkV!.ProxyId}, region: {proxy.OkV!.Region}, state: {proxy.OkV!.VmState}");
+            _output.WriteLine($"deleted proxy");
 
             var deletePool = await _poolApi.Delete(newPoolName);
-            Assert.True(deletePool);
+            Assert.True(deletePool.Result);
         }
 
 

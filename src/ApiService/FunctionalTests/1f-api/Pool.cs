@@ -5,7 +5,7 @@ using Xunit.Abstractions;
 
 namespace FunctionalTests;
 
-class Pool {
+class Pool : IFromJsonElement<Pool>{
 
     JsonElement _e;
 
@@ -15,22 +15,23 @@ class Pool {
     public string Name => _e.GetProperty("name").GetString()!;
     public string PoolId => _e.GetProperty("pool_id").GetString()!;
     public string Os => _e.GetProperty("os").GetString()!;
+
+    public Pool Convert(JsonElement e) => new Pool(e);
 }
 
-class PoolApi : ApiBase<Pool> {
+class PoolApi : ApiBase {
 
     public static string TestPoolPrefix = "FT-DELETE-";
 
     public PoolApi(Uri endpoint, Microsoft.OneFuzz.Service.Request request, ITestOutputHelper output) :
         base(endpoint, "/api/Pool", request, output) {
     }
-    public override Pool Convert(JsonElement e) { return new Pool(e); }
 
-    public async Task<bool> Delete(string name, bool now = true) {
+    public async Task<BooleanResult> Delete(string name, bool now = true) {
         var root = new JsonObject();
         root.Add("name", JsonValue.Create(name));
         root.Add("now", JsonValue.Create(now));
-        return DeleteResult(await Delete(root));
+        return DeleteResult<BooleanResult>(await Delete(root));
     }
 
     public async Task<Result<IEnumerable<Pool>, Error>> Get(string? poolName = null, string? poolId = null, string? state = null) {
@@ -40,7 +41,7 @@ class PoolApi : ApiBase<Pool> {
         root.Add("state", state);
 
         var res = await Get(root);
-        return IEnumerableResult(res);
+        return IEnumerableResult<Pool>(res);
     }
 
     public async Task DeleteAll() {
@@ -53,7 +54,7 @@ class PoolApi : ApiBase<Pool> {
             if (pool.Name.StartsWith(TestPoolPrefix)) {
                 _output.WriteLine($"Deleting {pool.Name}");
                 var deleted = await Delete(pool.Name);
-                Assert.True(deleted);
+                Assert.True(deleted.Result);
             }
         }
     }
@@ -64,6 +65,6 @@ class PoolApi : ApiBase<Pool> {
         rootPoolCreate.Add("os", os);
         rootPoolCreate.Add("arch", arch);
         rootPoolCreate.Add("managed", true);
-        return Result(await Post(rootPoolCreate));
+        return Result<Pool>(await Post(rootPoolCreate));
     }
 }

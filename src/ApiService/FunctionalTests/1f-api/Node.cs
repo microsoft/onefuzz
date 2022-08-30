@@ -5,7 +5,7 @@ using Xunit.Abstractions;
 
 namespace FunctionalTests;
 
-class Node {
+class Node : IFromJsonElement<Node> {
     JsonElement _e;
 
     public Node() { }
@@ -30,15 +30,16 @@ class Node {
     public bool ReimageRequested => _e.GetProperty("reimage_requested").GetBoolean();
     public bool DeleteRequested => _e.GetProperty("delete_requested").GetBoolean();
     public bool DebugKeepNode => _e.GetProperty("debug_keep_node").GetBoolean();
+
+    public Node Convert(JsonElement e) => new Node(e);
 }
 
 
-class NodeApi : ApiBase<Node> {
+class NodeApi : ApiBase {
 
     public NodeApi(Uri endpoint, Microsoft.OneFuzz.Service.Request request, ITestOutputHelper output) :
         base(endpoint, "/api/Node", request, output) {
     }
-    public override Node Convert(JsonElement e) { return new Node(e); }
 
     public async Task<JsonElement> Update(Guid machineId, bool? debugKeepNode = null) {
         var j = new JsonObject();
@@ -62,7 +63,7 @@ class NodeApi : ApiBase<Node> {
         if (poolName is not null)
             j.Add("pool_name", JsonValue.Create(poolName));
 
-        return IEnumerableResult(await Get(j));
+        return IEnumerableResult<Node>(await Get(j));
     }
 
     public async Task<JsonElement> Patch(Guid machineId) {
@@ -71,10 +72,10 @@ class NodeApi : ApiBase<Node> {
         return await Patch(j);
     }
 
-    public async Task<bool> Delete(Guid machineId) {
+    public async Task<BooleanResult> Delete(Guid machineId) {
         var j = new JsonObject();
         j.Add("machine_id", JsonValue.Create(machineId));
-        return DeleteResult(await Delete(j));
+        return DeleteResult<BooleanResult>(await Delete(j));
     }
 
     public async Task<Node> WaitWhile(Guid id, Func<Node, bool> wait) {
