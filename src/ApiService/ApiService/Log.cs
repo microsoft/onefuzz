@@ -13,10 +13,10 @@ public interface ILog {
 }
 
 class AppInsights : ILog {
-    private TelemetryClient _telemetryClient;
+    private readonly TelemetryClient _telemetryClient;
 
-    public AppInsights(string instrumentationKey) {
-        _telemetryClient = new TelemetryClient(new TelemetryConfiguration(instrumentationKey));
+    public AppInsights(TelemetryConfiguration config) {
+        _telemetryClient = new TelemetryClient(config);
     }
 
     public void Log(Guid correlationId, String message, SeverityLevel level, IReadOnlyDictionary<string, string> tags, string? caller) {
@@ -25,6 +25,7 @@ class AppInsights : ILog {
         if (caller is not null) copyTags["CalledBy"] = caller;
         _telemetryClient.TrackTrace(message, level, copyTags);
     }
+
     public void LogEvent(Guid correlationId, String evt, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller) {
         Dictionary<string, string> copyTags = new(tags);
         copyTags["Correlation ID"] = correlationId.ToString();
@@ -37,6 +38,7 @@ class AppInsights : ILog {
 
         _telemetryClient.TrackEvent(evt, properties: copyTags, metrics: copyMetrics);
     }
+
     public void LogException(Guid correlationId, Exception ex, string message, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller) {
         Dictionary<string, string> copyTags = new(tags);
         copyTags["Correlation ID"] = correlationId.ToString();
@@ -290,12 +292,12 @@ public interface ILogSinks {
 public class LogSinks : ILogSinks {
     private readonly List<ILog> _loggers;
 
-    public LogSinks(IServiceConfig config) {
+    public LogSinks(IServiceConfig config, TelemetryConfiguration telemetryConfiguration) {
         _loggers = new List<ILog>();
         foreach (var dest in config.LogDestinations) {
             _loggers.Add(
                 dest switch {
-                    LogDestination.AppInsights => new AppInsights(config.ApplicationInsightsInstrumentationKey!),
+                    LogDestination.AppInsights => new AppInsights(telemetryConfiguration),
                     LogDestination.Console => new Console(),
                     _ => throw new Exception($"Unhandled Log Destination type: {dest}"),
                 }
