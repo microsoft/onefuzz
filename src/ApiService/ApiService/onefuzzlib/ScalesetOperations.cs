@@ -341,14 +341,14 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         } else {
             _logTracer.Info("Using existing auto scale settings from database");
             autoScaleProfile = _context.AutoScaleOperations.CreateAutoScaleProfile(
-                    poolQueueUri!,
-                    autoScaleConfig.Min,
-                    autoScaleConfig.Max,
-                    autoScaleConfig.Default,
-                    autoScaleConfig.ScaleOutAmount,
-                    autoScaleConfig.ScaleOutCooldown,
-                    autoScaleConfig.ScaleInAmount,
-                    autoScaleConfig.ScaleInCooldown
+                    queueUri: poolQueueUri!,
+                    minAmount: autoScaleConfig.Min,
+                    maxAmount: autoScaleConfig.Max,
+                    defaultAmount: autoScaleConfig.Default,
+                    scaleOutAmount: autoScaleConfig.ScaleOutAmount,
+                    scaleOutCooldownMinutes: autoScaleConfig.ScaleOutCooldown,
+                    scaleInAmount: autoScaleConfig.ScaleInAmount,
+                    scaleInCooldownMinutes: autoScaleConfig.ScaleInCooldown
                 );
 
         }

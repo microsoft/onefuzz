@@ -54,7 +54,11 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         _logTracer.Info($"creating proxy: region:{region}");
         var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, Auth.BuildAuth(), null, null, _context.ServiceConfiguration.OneFuzzVersion, null, false);
 
-        await Replace(newProxy);
+        var r = await Replace(newProxy);
+        if (!r.IsOk) {
+            _logTracer.Error($"failed to save new proxy {newProxy.ProxyId} due to {r.ErrorV}");
+        }
+
         await _context.Events.SendEvent(new EventProxyCreated(region, newProxy.ProxyId));
         return newProxy;
     }
@@ -128,8 +132,11 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         }
 
         var newProxy = proxy with { State = state };
-        await Replace(newProxy);
-        await _context.Events.SendEvent(new EventProxyStateUpdated(proxy.Region, proxy.ProxyId, proxy.State));
+        var r = await Replace(newProxy);
+        if (!r.IsOk) {
+            _logTracer.Error($"Failed to replace proxy with id {newProxy.ProxyId} due to {r.ErrorV}");
+        }
+        await _context.Events.SendEvent(new EventProxyStateUpdated(newProxy.Region, newProxy.ProxyId, newProxy.State));
         return newProxy;
     }
 
@@ -178,6 +185,10 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             if (!result3.IsOk) {
                 return await SetFailed(proxy, result3.ErrorV);
             }
+            var r = await Replace(proxy);
+            if (!r.IsOk) {
+                _logTracer.Error($"Failed to save proxy {proxy.ProxyId} due: {r.ErrorV}");
+            }
             return proxy;
         }
     }
@@ -222,7 +233,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             Sku: config.ProxyVmSku,
             Image: PROXY_IMAGE,
             Auth: proxy.Auth,
-            Tags: config.VmssTags,
+            Tags: tags,
             Nsg: null
         );
     }
@@ -264,8 +275,10 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         var config = await _context.ConfigOperations.Fetch();
         var vm = GetVm(proxy, config);
         if (!await _context.VmOperations.IsDeleted(vm)) {
-            _logTracer.Error($"stopping proxy: {proxy.Region}");
-            await _context.VmOperations.Delete(vm);
+            _logTracer.Info($"stopping proxy: {proxy.Region}");
+            if (await _context.VmOperations.Delete(vm)) {
+                _logTracer.Info($"deleted proxy vm for region {proxy.Region}, name: {vm.Name}");
+            }
             return proxy;
         }
 
@@ -274,7 +287,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     private async Task<Proxy> Stopped(Proxy proxy) {
         var stoppedVm = await SetState(proxy, VmState.Stopped);
-        _logTracer.Info($"removing proxy: {proxy.Region}");
+        _logTracer.Info($"removing proxy: {stoppedVm.Region}");
         await _context.Events.SendEvent(new EventProxyDeleted(stoppedVm.Region, stoppedVm.ProxyId));
         await Delete(stoppedVm);
         return stoppedVm;

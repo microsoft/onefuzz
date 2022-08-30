@@ -37,7 +37,7 @@ public class IpOperations : IIpOperations {
     public IpOperations(ILogTracer log, IOnefuzzContext context) {
         _logTracer = log;
         _context = context;
-        _networkInterfaceQuery = new NetworkInterfaceQuery(context);
+        _networkInterfaceQuery = new NetworkInterfaceQuery(context, log);
     }
 
     public async Async.Task<NetworkInterfaceResource?> GetPublicNic(string resourceGroup, string name) {
@@ -219,13 +219,15 @@ public class IpOperations : IIpOperations {
 
         private readonly IOnefuzzContext _context;
 
-        public NetworkInterfaceQuery(IOnefuzzContext context) {
+        private readonly ILogTracer _logTracer;
+
+        public NetworkInterfaceQuery(IOnefuzzContext context, ILogTracer logTracer) {
             _context = context;
+            _logTracer = logTracer;
         }
 
 
         public async Task<List<string>> ListInstancePrivateIps(Guid scalesetId, string instanceId) {
-
             var token = _context.Creds.GetIdentity().GetToken(
                 new TokenRequestContext(
                     new[] { $"https://management.azure.com" }));
@@ -234,13 +236,15 @@ public class IpOperations : IIpOperations {
             client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token.Token);
             var baseUrl = new Uri($"https://management.azure.com/");
             // https://docs.microsoft.com/en-us/rest/api/virtualnetwork/network-interface-in-vm-ss/get-virtual-machine-scale-set-network-interface?tabs=HTTP
-            var requestURl = baseUrl + $"subscriptions/{_context.Creds.GetSubscription()}/resourceGroups/{_context.Creds.GetBaseResourceGroup()}/providers/Microsoft.Compute/virtualMachineScaleSets/{scalesetId}/virtualMachines/{instanceId}/networkInterfaces?api-version=2021-08-01";
+            var requestURl = baseUrl + $"subscriptions/{_context.Creds.GetSubscription()}/resourceGroups/{_context.Creds.GetBaseResourceGroup()}/providers/Microsoft.Compute/virtualMachineScaleSets/{scalesetId}/virtualMachines/{instanceId}/networkInterfaces?api-version=2022-08-01";
             var response = await client.GetAsync(requestURl);
             if (response.IsSuccessStatusCode) {
                 var responseStream = await response.Content.ReadAsStreamAsync();
                 var nics = await JsonSerializer.DeserializeAsync<ValueList<NetworkInterface>>(responseStream);
                 if (nics != null)
                     return nics.value.SelectMany(x => x.properties.ipConfigurations.Select(i => i.properties.privateIPAddress)).WhereNotNull().ToList();
+            } else {
+                _logTracer.Error($"failed to get ListInstancePrivateIps due to {await response.Content.ReadAsStringAsync()}");
             }
             return new List<string>();
         }
