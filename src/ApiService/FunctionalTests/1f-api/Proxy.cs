@@ -5,7 +5,7 @@ using Xunit.Abstractions;
 namespace FunctionalTests;
 
 
-class Proxy {
+class Proxy : IFromJsonElement<Proxy> {
 
     JsonElement _e;
     public Proxy() { }
@@ -16,16 +16,71 @@ class Proxy {
 
     public string VmState => _e.GetProperty("state").GetString()!;
 
-
+    public Proxy Convert(JsonElement e) => new Proxy(e);
 }
 
-class ProxyApi : ApiBase<Proxy> {
+
+class Forward : IFromJsonElement<Forward>, IComparable<Forward> {
+    JsonElement _e;
+    public Forward() { }
+    public Forward(JsonElement e) => _e = e;
+
+    public long SrcPort => _e.GetProperty("src_port").GetInt64();
+    public long DstPort => _e.GetProperty("dst_port").GetInt64();
+
+    public string DstIp => _e.GetProperty("dst_ip").GetString()!;
+
+    public Forward Convert(JsonElement e) => new Forward(e);
+
+    public int CompareTo(Forward? other) {
+        if (other == null) return 1;
+        var c = other.DstIp.CompareTo(DstIp);
+        if (c != 0) return c;
+        c = other.SrcPort.CompareTo(SrcPort);
+        if (c != 0) return c;
+        c = other.DstPort.CompareTo(DstPort);
+        return c;
+    }
+}
+
+class ProxyGetResult : IFromJsonElement<ProxyGetResult>, IComparable<ProxyGetResult> {
+    JsonElement _e;
+
+    public ProxyGetResult() { }
+
+    public ProxyGetResult(JsonElement e) => _e = e;
+
+    public string? Ip => _e.ValueKind == JsonValueKind.Null ? null : _e.GetProperty("ip").GetString();
+
+    public Forward Forward => new Forward(_e.GetProperty("forward"));
+
+    public ProxyGetResult Convert(JsonElement e) => new ProxyGetResult(e);
+
+    public int CompareTo(ProxyGetResult? other) {
+
+        if (other is null)
+            return 1;
+
+        var c = 0;
+        if (other.Ip is not null && Ip is not null) {
+            c = other.Ip.CompareTo(Ip);
+            if (c != 0) return c;
+        } else if (other.Ip is null && Ip is null) {
+            c = 0;
+        } else {
+            return -1;
+        }
+        c = other.Forward.CompareTo(Forward);
+        return c;
+    }
+}
+
+
+class ProxyApi : ApiBase {
 
     public ProxyApi(Uri endpoint, Microsoft.OneFuzz.Service.Request request, ITestOutputHelper output) :
         base(endpoint, "/api/proxy", request, output) {
     }
-
-    public override Proxy Convert(JsonElement e) => new Proxy(e);
 
     public async Task<Result<IEnumerable<Proxy>, Error>> Get(Guid? scalesetId = null, Guid? machineId = null, int? dstPort = null) {
         var root = new JsonObject();
@@ -37,26 +92,27 @@ class ProxyApi : ApiBase<Proxy> {
         if (Error.IsError(r)) {
             return Result<IEnumerable<Proxy>, Error>.Error(new Error(r));
         } else {
-            return IEnumerableResult(r.GetProperty("proxies"));
+            return IEnumerableResult<Proxy>(r.GetProperty("proxies"));
         }
     }
 
-    public async Task<bool> Delete(Guid? scalesetId = null, Guid? machineId = null, int? dstPort = null) {
+    public async Task<BooleanResult> Delete(Guid scalesetId, Guid machineId, int? dstPort = null) {
         var root = new JsonObject();
         root.Add("scaleset_id", scalesetId);
         root.Add("machine_id", machineId);
-        root.Add("dst_port", dstPort);
-        return DeleteResult(await Delete(root));
+        if (dstPort != null)
+            root.Add("dst_port", dstPort);
+        return Return<BooleanResult>(await Delete(root));
     }
 
-    public async Task<JsonElement> Reset(string region) {
+    public async Task<BooleanResult> Reset(string region) {
         var root = new JsonObject();
         root.Add("region", region);
         var r = await Patch(root);
-        return r;
+        return Return<BooleanResult>(r);
     }
 
-    public async Task<Result<Proxy, Error>> Create(Guid scalesetId, Guid machineId, int dstPort, int duration) {
+    public async Task<Result<ProxyGetResult, Error>> Create(Guid scalesetId, Guid machineId, int dstPort, int duration) {
         var root = new JsonObject();
         root.Add("scaleset_id", scalesetId);
         root.Add("machine_id", machineId);
@@ -64,7 +120,7 @@ class ProxyApi : ApiBase<Proxy> {
         root.Add("duration", duration);
 
         var r = await Post(root);
-        return Result(r);
+        return Result<ProxyGetResult>(r);
     }
 
 }
