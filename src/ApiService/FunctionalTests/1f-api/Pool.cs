@@ -31,7 +31,7 @@ class PoolApi : ApiBase {
         var root = new JsonObject();
         root.Add("name", JsonValue.Create(name));
         root.Add("now", JsonValue.Create(now));
-        return DeleteResult<BooleanResult>(await Delete(root));
+        return Return<BooleanResult>(await Delete(root));
     }
 
     public async Task<Result<IEnumerable<Pool>, Error>> Get(string? poolName = null, string? poolId = null, string? state = null) {

@@ -20,7 +20,7 @@ class Proxy : IFromJsonElement<Proxy> {
 }
 
 
-class Forward : IFromJsonElement<Forward> {
+class Forward : IFromJsonElement<Forward>, IComparable<Forward> {
     JsonElement _e;
     public Forward() { }
     public Forward(JsonElement e) => _e = e;
@@ -31,9 +31,19 @@ class Forward : IFromJsonElement<Forward> {
     public string DstIp => _e.GetProperty("dst_ip").GetString()!;
 
     public Forward Convert(JsonElement e) => new Forward(e);
+
+    public int CompareTo(Forward? other) { 
+        if (other == null) return 1;
+        var c = other.DstIp.CompareTo(DstIp);
+        if (c != 0) return c;
+        c = other.SrcPort.CompareTo(SrcPort);
+        if (c != 0) return c;
+        c = other.DstPort.CompareTo(DstPort);
+        return c;
+    }
 }
 
-class ProxyGetResult : IFromJsonElement<ProxyGetResult> {
+class ProxyGetResult : IFromJsonElement<ProxyGetResult>, IComparable<ProxyGetResult> {
     JsonElement _e;
 
     public ProxyGetResult() { }
@@ -45,6 +55,24 @@ class ProxyGetResult : IFromJsonElement<ProxyGetResult> {
     public Forward Forward => new Forward(_e.GetProperty("forward"));
 
     public ProxyGetResult Convert(JsonElement e) => new ProxyGetResult(e);
+
+    public int CompareTo(ProxyGetResult? other) {
+
+        if (other is null)
+            return 1;
+
+        var c = 0;
+        if (other.Ip is not null && Ip is not null) {
+            c = other.Ip.CompareTo(Ip);
+            if (c != 0) return c;
+        } else if (other.Ip is null && Ip is null) {
+            c = 0;
+        } else {
+            return -1;
+        }
+        c = other.Forward.CompareTo(Forward);
+        return c;
+    }
 }
 
 
@@ -68,19 +96,20 @@ class ProxyApi : ApiBase {
         }
     }
 
-    public async Task<BooleanResult> Delete(Guid? scalesetId = null, Guid? machineId = null, int? dstPort = null) {
+    public async Task<BooleanResult> Delete(Guid scalesetId, Guid machineId, int? dstPort = null) {
         var root = new JsonObject();
         root.Add("scaleset_id", scalesetId);
         root.Add("machine_id", machineId);
-        root.Add("dst_port", dstPort);
-        return DeleteResult<BooleanResult>(await Delete(root));
+        if (dstPort != null)
+            root.Add("dst_port", dstPort);
+        return Return<BooleanResult>(await Delete(root));
     }
 
-    public async Task<JsonElement> Reset(string region) {
+    public async Task<BooleanResult> Reset(string region) {
         var root = new JsonObject();
         root.Add("region", region);
         var r = await Patch(root);
-        return r;
+        return Return<BooleanResult>(r);
     }
 
     public async Task<Result<ProxyGetResult, Error>> Create(Guid scalesetId, Guid machineId, int dstPort, int duration) {

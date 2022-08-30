@@ -112,7 +112,7 @@ class ScalesetApi : ApiBase {
         scalesetDelete.Add("scaleset_id", id);
         scalesetDelete.Add("now", now);
 
-        return DeleteResult<BooleanResult>(await Delete(scalesetDelete));
+        return Return<BooleanResult>(await Delete(scalesetDelete));
     }
 
 

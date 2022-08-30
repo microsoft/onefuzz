@@ -75,7 +75,7 @@ class NodeApi : ApiBase {
     public async Task<BooleanResult> Delete(Guid machineId) {
         var j = new JsonObject();
         j.Add("machine_id", JsonValue.Create(machineId));
-        return DeleteResult<BooleanResult>(await Delete(j));
+        return Return<BooleanResult>(await Delete(j));
     }
 
     public async Task<Node> WaitWhile(Guid id, Func<Node, bool> wait) {

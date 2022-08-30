@@ -62,16 +62,15 @@ namespace FunctionalTests {
                 Assert.True(newPools.Count() == 1);
                 Assert.True(newScalesets.Count() == 1);
 
-                string currentState = "";
                 Console.WriteLine($"Waiting for scaleset to move out from Init State");
                 newScaleset = await _scalesetApi.WaitWhile(newScaleset.ScalesetId, sc => sc.State == "init" || sc.State == "setup");
 
                 _output.WriteLine($"Scaleset is in {newScaleset.State}");
 
-                if (currentState == "creation_failed") {
+                if (newScaleset.State == "creation_failed") {
                     throw new Exception($"Scaleset creation failed due {newScaleset.Error}");
-                } else if (currentState != "running") {
-                    throw new Exception($"Expected scaleset to be in Running state, instead got {currentState}");
+                } else if (newScaleset.State != "running") {
+                    throw new Exception($"Expected scaleset to be in Running state, instead got {newScaleset.State}");
                 }
 
                 var patch0 = await _scalesetApi.Patch(newScaleset.ScalesetId, 0);
@@ -88,10 +87,10 @@ namespace FunctionalTests {
 
                 newScaleset = await _scalesetApi.WaitWhile(newScaleset.ScalesetId, sc => sc.State == "resize");
 
-                if (currentState == "creation_failed") {
+                if (newScaleset.State == "creation_failed") {
                     throw new Exception($"Scaleset creation failed due {newScaleset.Error}");
-                } else if (currentState != "running") {
-                    throw new Exception($"Expected scaleset to be in Running state, instead got {currentState}");
+                } else if (newScaleset.State != "running") {
+                    throw new Exception($"Expected scaleset to be in Running state, instead got {newScaleset.State}");
                 }
             } finally {
                 var preDeleteScalesets = await _scalesetApi.Get();

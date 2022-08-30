@@ -80,7 +80,7 @@ abstract class ApiBase {
         }
     }
 
-    public static T DeleteResult<T>(JsonElement res) where T: IFromJsonElement<T>, new() {
+    public static T Return<T>(JsonElement res) where T: IFromJsonElement<T>, new() {
         return (new T()).Convert(res);
     }
 
