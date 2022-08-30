@@ -1,5 +1,5 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Microsoft.Graph;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -21,10 +21,19 @@ abstract class GroupMembershipChecker {
 }
 
 class AzureADGroupMembership : GroupMembershipChecker {
-    private readonly ICreds _creds;
-    public AzureADGroupMembership(ICreds creds) => _creds = creds;
-    protected override async Task<IEnumerable<Guid>> GetGroups(Guid memberId) =>
-        await _creds.QueryMicrosoftGraph<List<Guid>>(HttpMethod.Get, $"users/{memberId}/transitiveMemberOf");
+    private readonly GraphServiceClient _graphClient;
+    public AzureADGroupMembership(GraphServiceClient graphClient) => _graphClient = graphClient;
+    protected override async Task<IEnumerable<Guid>> GetGroups(Guid memberId)
+    {
+        var result = new List<DirectoryObject>();
+        var page = await _graphClient.Users[memberId.ToString()].TransitiveMemberOf.Request().GetAsync();
+        while (page is not null) {
+            result.AddRange(page);
+            page = await page.NextPageRequest.GetAsync();
+        }
+
+        return result.Select(x => Guid.Parse(x.Id));
+    }
 }
 
 class StaticGroupMembership : GroupMembershipChecker {
