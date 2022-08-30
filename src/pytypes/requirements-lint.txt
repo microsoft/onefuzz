@@ -2,7 +2,7 @@ flake8
 mypy==0.910
 pytest
 isort
-pydantic
+pydantic~=1.8.2 --no-binary=pydantic
 vulture
 click==8.0.4
 black
