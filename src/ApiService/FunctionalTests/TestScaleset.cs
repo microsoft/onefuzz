@@ -24,7 +24,7 @@ namespace FunctionalTests {
             if (!scalesets.OkV!.Any()) {
                 _output.WriteLine("Got empty scalesets");
             } else {
-                
+
                 foreach (var sc in scalesets.OkV!) {
                     if (sc.Error is not null)
                         _output.WriteLine($"Pool: {sc.PoolName} Scaleset: {sc.ScalesetId}, state; {sc.State}, error: {sc.Error}");

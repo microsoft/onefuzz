@@ -32,7 +32,7 @@ class Forward : IFromJsonElement<Forward>, IComparable<Forward> {
 
     public Forward Convert(JsonElement e) => new Forward(e);
 
-    public int CompareTo(Forward? other) { 
+    public int CompareTo(Forward? other) {
         if (other == null) return 1;
         var c = other.DstIp.CompareTo(DstIp);
         if (c != 0) return c;

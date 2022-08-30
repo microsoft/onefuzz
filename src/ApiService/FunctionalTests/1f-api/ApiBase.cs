@@ -56,7 +56,7 @@ abstract class ApiBase {
         return (await JsonDocument.ParseAsync(r.Content.ReadAsStream())).RootElement;
     }
 
-    public static Result<IEnumerable<T>, Error> IEnumerableResult<T>(JsonElement res) where T: IFromJsonElement<T>, new() {
+    public static Result<IEnumerable<T>, Error> IEnumerableResult<T>(JsonElement res) where T : IFromJsonElement<T>, new() {
         if (Error.IsError(res)) {
             return Result<IEnumerable<T>, Error>.Error(new Error(res));
         } else {
@@ -71,7 +71,7 @@ abstract class ApiBase {
             }
         }
     }
-    public static Result<T, Error> Result<T>(JsonElement res) where T: IFromJsonElement<T>, new(){
+    public static Result<T, Error> Result<T>(JsonElement res) where T : IFromJsonElement<T>, new() {
         if (Error.IsError(res)) {
             return Result<T, Error>.Error(new Error(res));
         } else {
@@ -80,7 +80,7 @@ abstract class ApiBase {
         }
     }
 
-    public static T Return<T>(JsonElement res) where T: IFromJsonElement<T>, new() {
+    public static T Return<T>(JsonElement res) where T : IFromJsonElement<T>, new() {
         return (new T()).Convert(res);
     }
 

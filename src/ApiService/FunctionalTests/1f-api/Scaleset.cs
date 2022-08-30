@@ -41,7 +41,7 @@ class Scaleset : IFromJsonElement<Scaleset> {
     public string PoolName => _e.GetProperty("pool_name").GetString()!;
     public string State => _e.GetProperty("state").GetString()!;
 
-    public Error? Error => _e.GetProperty("error").ValueKind == JsonValueKind.Null ? null : new Error(_e.GetProperty("error")) ;
+    public Error? Error => _e.GetProperty("error").ValueKind == JsonValueKind.Null ? null : new Error(_e.GetProperty("error"));
     public int Size => _e.GetProperty("size").GetInt32();
 
     public string VmSku => _e.GetProperty("vm_sku").GetString()!;

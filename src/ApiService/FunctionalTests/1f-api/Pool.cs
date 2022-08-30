@@ -5,7 +5,7 @@ using Xunit.Abstractions;
 
 namespace FunctionalTests;
 
-class Pool : IFromJsonElement<Pool>{
+class Pool : IFromJsonElement<Pool> {
 
     JsonElement _e;
 

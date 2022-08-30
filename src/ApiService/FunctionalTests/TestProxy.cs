@@ -70,7 +70,7 @@ namespace FunctionalTests {
             Assert.Equal(proxy.OkV!, proxyAgain.OkV!);
 
             _output.WriteLine($"created proxy dst ip: {proxy.OkV!.Forward.DstIp}, srcPort: {proxy.OkV.Forward.SrcPort} dstport: {proxy.OkV!.Forward.DstPort}, ip: {proxy.OkV!.Ip}");
-            
+
 
             var proxyReset = await _proxyApi.Reset(newScaleset.Region);
             Assert.True(proxyReset.Result);
