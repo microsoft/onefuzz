@@ -5,7 +5,21 @@ using Xunit.Abstractions;
 
 namespace FunctionalTests;
 
-abstract class ApiBase<T> where T : new() {
+interface IFromJsonElement<T> {
+    T Convert(JsonElement e);
+}
+
+class BooleanResult : IFromJsonElement<BooleanResult> {
+    JsonElement _e;
+    public BooleanResult() { }
+    public BooleanResult(JsonElement e) => _e = e;
+
+    public bool Result => _e.GetProperty("result").GetBoolean();
+
+    public BooleanResult Convert(JsonElement e) => new BooleanResult(e);
+}
+
+abstract class ApiBase {
 
     Uri _endpoint;
     Microsoft.OneFuzz.Service.Request _request;
@@ -16,8 +30,6 @@ abstract class ApiBase<T> where T : new() {
         _endpoint = new Uri(endpoint, relativeUri);
         _output = output;
     }
-
-    public abstract T Convert(JsonElement e);
 
     public async Task<JsonElement> Get(JsonObject root) {
         var body = root.ToJsonString();
@@ -44,14 +56,14 @@ abstract class ApiBase<T> where T : new() {
         return (await JsonDocument.ParseAsync(r.Content.ReadAsStream())).RootElement;
     }
 
-    public Result<IEnumerable<T>, Error> IEnumerableResult(JsonElement res) {
+    public static Result<IEnumerable<T>, Error> IEnumerableResult<T>(JsonElement res) where T : IFromJsonElement<T>, new() {
         if (Error.IsError(res)) {
             return Result<IEnumerable<T>, Error>.Error(new Error(res));
         } else {
             if (res.ValueKind == JsonValueKind.Array)
-                return Result<IEnumerable<T>, Error>.Ok(res.EnumerateArray().Select(e => Convert(e)));
+                return Result<IEnumerable<T>, Error>.Ok(res.EnumerateArray().Select(e => (new T()).Convert(e)));
             else {
-                var r = Result(res);
+                var r = Result<T>(res);
                 if (r.IsOk)
                     return Result<IEnumerable<T>, Error>.Ok(new[] { r.OkV });
                 else
@@ -59,17 +71,17 @@ abstract class ApiBase<T> where T : new() {
             }
         }
     }
-    public Result<T, Error> Result(JsonElement res) {
+    public static Result<T, Error> Result<T>(JsonElement res) where T : IFromJsonElement<T>, new() {
         if (Error.IsError(res)) {
             return Result<T, Error>.Error(new Error(res));
         } else {
             Assert.True(res.ValueKind != JsonValueKind.Array);
-            return Result<T, Error>.Ok(Convert(res));
+            return Result<T, Error>.Ok((new T()).Convert(res));
         }
     }
 
-    public static bool DeleteResult(JsonElement res) {
-        return res.GetProperty("result").GetBoolean();
+    public static T Return<T>(JsonElement res) where T : IFromJsonElement<T>, new() {
+        return (new T()).Convert(res);
     }
 
 }
