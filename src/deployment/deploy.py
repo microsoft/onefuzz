@@ -75,7 +75,6 @@ from deploylib.registration import (
 USER_READ_PERMISSION = "e1fe6dd8-ba31-4d61-89e7-88639da4683d"
 MICROSOFT_GRAPH_APP_ID = "00000003-0000-0000-c000-000000000000"
 
-ONEFUZZ_CLI_APP = "72f1562a-8c0c-41ea-beb9-fa2b71c80134"
 ONEFUZZ_CLI_AUTHORITY = (
     "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47"
 )
@@ -162,6 +161,8 @@ class Client:
         allowed_aad_tenants: List[UUID],
         enable_dotnet: List[str],
         use_dotnet_agent_functions: bool,
+        cli_app_id: str,
+        auto_create_cli_app: bool,
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -185,10 +186,6 @@ class Client:
             authority = COMMON_AUTHORITY
         else:
             authority = ONEFUZZ_CLI_AUTHORITY
-        self.cli_config: Dict[str, Union[str, UUID]] = {
-            "client_id": ONEFUZZ_CLI_APP,
-            "authority": authority,
-        }
         self.migrations = migrations
         self.export_appinsights = export_appinsights
         self.admins = admins
@@ -198,6 +195,13 @@ class Client:
 
         self.enable_dotnet = enable_dotnet
         self.use_dotnet_agent_functions = use_dotnet_agent_functions
+        self.cli_app_id = cli_app_id
+        self.auto_create_cli_app = auto_create_cli_app
+
+        self.cli_config: Dict[str, Union[str, UUID]] = {
+            "client_id": self.cli_app_id,
+            "authority": authority,
+        }
 
         machine = platform.machine()
         system = platform.system()
@@ -543,43 +547,54 @@ class Client:
         (password_id, password) = self.create_password(app["id"])
 
         cli_app = get_application(
-            app_id=uuid.UUID(ONEFUZZ_CLI_APP),
+            app_id=uuid.UUID(self.cli_app_id),
             subscription_id=self.get_subscription_id(),
         )
 
         if not cli_app:
-            logger.info(
-                "Could not find the default CLI application under the current "
-                "subscription, creating a new one"
-            )
-            app_info = register_application(
-                "onefuzz-cli",
-                self.application_name,
-                OnefuzzAppRole.CliClient,
-                self.get_subscription_id(),
-            )
-            if self.multi_tenant_domain:
-                authority = COMMON_AUTHORITY
+            if self.auto_create_cli_app:
+                logger.info(
+                    "Could not find the default CLI application under the current "
+                    "subscription and auto_create specified, creating a new one"
+                )
+                app_info = register_application(
+                    "onefuzz-cli",
+                    self.application_name,
+                    OnefuzzAppRole.CliClient,
+                    self.get_subscription_id(),
+                )
+                if self.multi_tenant_domain:
+                    authority = COMMON_AUTHORITY
+                else:
+                    authority = app_info.authority
+                self.cli_config = {
+                    "client_id": app_info.client_id,
+                    "authority": authority,
+                }
             else:
-                authority = app_info.authority
-            self.cli_config = {
-                "client_id": app_info.client_id,
-                "authority": authority,
-            }
-
+                logger.error(
+                    "error deploying. could not find specified CLI app registrion."
+                    "use flag --auto_create_cli_app to automatically create CLI registration"
+                )
+                sys.exit(1)
         else:
             onefuzz_cli_app = cli_app
             authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
             if self.multi_tenant_domain:
                 authority = COMMON_AUTHORITY
             else:
-
                 tenant_id = get_tenant_id(self.get_subscription_id())
                 authority = "https://login.microsoftonline.com/%s" % tenant_id
             self.cli_config = {
                 "client_id": onefuzz_cli_app["appId"],
                 "authority": authority,
             }
+            assign_instance_app_role(
+                self.application_name,
+                onefuzz_cli_app["displayName"],
+                self.get_subscription_id(),
+                OnefuzzAppRole.ManagedNode,
+            )
 
         self.results["client_id"] = app["appId"]
         self.results["client_secret"] = password
@@ -1382,6 +1397,18 @@ def main() -> None:
         action="store_true",
         help="Tell the OneFuzz agent to use the dotnet endpoint",
     )
+    parser.add_argument(
+        "--cli_app_id",
+        type=str,
+        default="72f1562a-8c0c-41ea-beb9-fa2b71c80134",
+        help="CLI App Registration to be used during deployment.",
+    )
+    parser.add_argument(
+        "--auto_create_cli_app",
+        action="store_false",
+        help="Create a new CLI App Registration if the default app or custom "
+        "app is not found. ",
+    )
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -1413,6 +1440,8 @@ def main() -> None:
         allowed_aad_tenants=args.allowed_aad_tenants or [],
         enable_dotnet=args.enable_dotnet,
         use_dotnet_agent_functions=args.use_dotnet_agent_functions,
+        cli_app_id=args.cli_app_id,
+        auto_create_cli_app=args.auto_create_cli_app,
     )
     if args.verbose:
         level = logging.DEBUG
