@@ -40,7 +40,7 @@ public interface ICreds {
     public ResourceIdentifier GetScalesetIdentityResourcePath();
 }
 
-public sealed class Creds : ICreds, IDisposable {
+public sealed class Creds : ICreds {
     private readonly ArmClient _armClient;
     private readonly DefaultAzureCredential _azureCredential;
     private readonly IServiceConfig _config;
@@ -182,9 +182,6 @@ public sealed class Creds : ICreds, IDisposable {
             return await resource.GetAsync();
         }
         return resource;
-    }
-    public void Dispose() {
-        throw new NotImplementedException();
     }
 
     public Task<IReadOnlyList<string>> GetRegions()
