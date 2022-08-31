@@ -1,9 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Microsoft.OneFuzz.Service;
 
-public record BaseRequest();
+public record BaseRequest{
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+};
 
 public record CanScheduleRequest(
     Guid MachineId,
@@ -130,40 +134,55 @@ public record NotificationGet(
 
 public record JobGet(
     Guid JobId
-);
+) : BaseRequest;
+
+public record JobCreate(
+    string Project,
+    string Name,
+    string Build,
+    long Duration,
+    string? Logs
+) : BaseRequest;
 
 public record JobSearch(
     Guid? JobId = null,
     List<JobState>? State = null,
     List<TaskState>? TaskState = null,
     bool? WithTasks = null
-);
+) : BaseRequest;
 
-public record NodeAddSshKeyPost(Guid MachineId, string PublicKey);
+public record NodeAddSshKeyPost(Guid MachineId, string PublicKey) : BaseRequest;
 
-public record ReproGet(Guid? VmId);
+public record ReproGet(Guid? VmId) : BaseRequest;
+
+public record ReproCreate(
+    Container Container,
+    string Path,
+    long Duration
+) : BaseRequest;
 
 public record ProxyGet(
     Guid? ScalesetId,
     Guid? MachineId,
-    int? DstPort);
+    int? DstPort
+): BaseRequest;
 
 public record ProxyCreate(
     Guid ScalesetId,
     Guid MachineId,
     int DstPort,
     int Duration
-);
+) : BaseRequest;
 
 public record ProxyDelete(
     Guid ScalesetId,
     Guid MachineId,
     int? DstPort
-);
+) : BaseRequest;
 
 public record ProxyReset(
     string Region
-);
+) : BaseRequest;
 
 public record ScalesetCreate(
     PoolName PoolName,
@@ -176,7 +195,7 @@ public record ScalesetCreate(
     Dictionary<string, string> Tags,
     bool EphemeralOsDisks = false,
     AutoScaleOptions? AutoScale = null
-);
+) : BaseRequest;
 
 public record AutoScaleOptions(
     [property: Range(0, long.MaxValue)] long Min,
@@ -192,36 +211,48 @@ public record ScalesetSearch(
     Guid? ScalesetId = null,
     List<ScalesetState>? State = null,
     bool IncludeAuth = false
-);
+) : BaseRequest;
 
 public record ScalesetStop(
     Guid ScalesetId,
     bool Now
-);
+) : BaseRequest;
 
 public record ScalesetUpdate(
     Guid ScalesetId,
     [property: Range(1, long.MaxValue)]
     long? Size
-);
+) : BaseRequest;
 
-public record TaskGet(Guid TaskId);
+public record TaskGet(Guid TaskId) : BaseRequest;
+
+public record TaskCreate(
+   Guid JobId,
+   List<Guid>? PrereqTasks,
+   TaskDetails Task,
+   [Required]
+   TaskPool Pool,
+   List<TaskContainers>? Containers = null,
+   Dictionary<string, string>? Tags = null,
+   List<TaskDebugFlag>? Debug = null,
+   bool? Colocate = null
+) : BaseRequest;
 
 public record TaskSearch(
     Guid? JobId,
     Guid? TaskId,
-    List<TaskState> State);
+    List<TaskState> State) : BaseRequest;
 
 public record PoolSearch(
     Guid? PoolId = null,
     PoolName? Name = null,
     List<PoolState>? State = null
-);
+) : BaseRequest;
 
 public record PoolStop(
     PoolName Name,
     bool Now
-);
+) : BaseRequest;
 
 public record PoolCreate(
     PoolName Name,
@@ -229,7 +260,7 @@ public record PoolCreate(
     Architecture Arch,
     bool Managed,
     Guid? ClientId = null
-);
+) : BaseRequest;
 
 public record WebhookCreate(
     string Name,
@@ -237,12 +268,11 @@ public record WebhookCreate(
     List<EventType> EventTypes,
     string? SecretToken,
     WebhookMessageFormat? MessageFormat
-);
+) : BaseRequest;
 
+public record WebhookSearch(Guid? WebhookId) : BaseRequest;
 
-public record WebhookSearch(Guid? WebhookId);
-
-public record WebhookGet(Guid WebhookId);
+public record WebhookGet(Guid WebhookId) : BaseRequest;
 
 public record WebhookUpdate(
     Guid WebhookId,
@@ -251,4 +281,4 @@ public record WebhookUpdate(
     List<EventType>? EventTypes,
     string? SecretToken,
     WebhookMessageFormat? MessageFormat
-);
+) : BaseRequest;
