@@ -583,17 +583,15 @@ class Client:
             if self.multi_tenant_domain:
                 authority = COMMON_AUTHORITY
             else:
-
                 tenant_id = get_tenant_id(self.get_subscription_id())
                 authority = "https://login.microsoftonline.com/%s" % tenant_id
             self.cli_config = {
                 "client_id": onefuzz_cli_app["appId"],
                 "authority": authority,
             }
-            logger.info("assigning the user managed identity role")
             assign_instance_app_role(
                 self.application_name,
-                onefuzz_cli_app["appId"],
+                onefuzz_cli_app["displayName"],
                 self.get_subscription_id(),
                 OnefuzzAppRole.ManagedNode,
             )
