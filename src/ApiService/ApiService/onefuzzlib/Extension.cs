@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.ResourceManager.Compute;
@@ -129,7 +130,11 @@ public class Extensions : IExtensions {
             AutoUpgradeMinorVersion = true,
             Settings = new BinaryData(JsonSerializer.Serialize(new { EnableGenevaUpload = true, EnableAutoConfig = true }, _extensionSerializerOptions))
         };
+    }
 
+    private class Settings {
+        [JsonPropertyName("GCS_AUTO_CONFIG")]
+        public bool GCS_AUTO_CONFIG { get; set; } = true;
     }
 
     public static VMExtensionWrapper AzMonExtension(AzureLocation region, AzureMonitorExtensionConfig azureMonitor) {
@@ -140,6 +145,7 @@ public class Extensions : IExtensions {
         var environment = azureMonitor.MonitoringGSEnvironment;
         var account = azureMonitor.MonitoringGCSAccount;
         var authIdType = azureMonitor.MonitoringGCSAuthIdType;
+        var settings = JsonSerializer.Serialize(new Settings(), _extensionSerializerOptions);
 
         return new VMExtensionWrapper {
             Location = region,
@@ -148,7 +154,8 @@ public class Extensions : IExtensions {
             TypePropertiesType = "AzureMonitorLinuxAgent",
             AutoUpgradeMinorVersion = true,
             TypeHandlerVersion = "1.0",
-            Settings = new BinaryData(JsonSerializer.Serialize(new { GCS_AUTO_CONFIG = true }, _extensionSerializerOptions)),
+            Settings = new BinaryData(settings),
+            EnableAutomaticUpgrade = true,
             ProtectedSettings =
                 new BinaryData(JsonSerializer.Serialize(
                     new {
@@ -326,7 +333,8 @@ public class Extensions : IExtensions {
                 TypeHandlerVersion = "1.0",
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(extensionSettings),
-                ProtectedSettings = new BinaryData(protectedExtensionSettings)
+                ProtectedSettings = new BinaryData(protectedExtensionSettings),
+                EnableAutomaticUpgrade = false
             };
         } else if (vmOs == Os.Linux) {
             return new VMExtensionWrapper {
@@ -337,7 +345,8 @@ public class Extensions : IExtensions {
                 TypeHandlerVersion = "1.12",
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(extensionSettings),
-                ProtectedSettings = new BinaryData(protectedExtensionSettings)
+                ProtectedSettings = new BinaryData(protectedExtensionSettings),
+                EnableAutomaticUpgrade = false
             };
         } else {
             throw new NotSupportedException($"unsupported os: {vmOs}");

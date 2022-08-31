@@ -76,7 +76,7 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
                 ProxyId: null
             );
 
-            var result = await Insert(entry);
+            var result = await Replace(entry);
             if (!result.IsOk) {
                 _logTracer.Info($"port is already used {entry}");
             }
