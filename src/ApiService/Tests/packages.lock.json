@@ -8,6 +8,15 @@
         "resolved": "3.1.2",
         "contentHash": "wuLDIDKD5XMt0A7lE31JPenT7QQwZPFkP5rRpdJeblyXZ9MGLI8rYjvm5fvAKln+2/X+4IxxQDxBtwdrqKNLZw=="
       },
+      "FluentAssertions": {
+        "type": "Direct",
+        "requested": "[6.7.0, )",
+        "resolved": "6.7.0",
+        "contentHash": "PWbow/R3MnYDP8UW7zh/w80rGb+1NufGoNJeuzouTo2bqpvwNTFxbDwF6XWfFZ5IuquL2225Um+qSyZ8jVsT+w==",
+        "dependencies": {
+          "System.Configuration.ConfigurationManager": "4.4.0"
+        }
+      },
       "FsCheck": {
         "type": "Direct",
         "requested": "[2.16.4, )",
@@ -1127,6 +1136,11 @@
         "resolved": "4.3.0",
         "contentHash": "VB5cn/7OzUfzdnC8tqAIMQciVLiq2epm2NrAm1E9OjNRyG4lVhfR61SMcLizejzQP8R8Uf/0l5qOIbUEi+RdEg=="
       },
+      "Scriban": {
+        "type": "Transitive",
+        "resolved": "5.5.0",
+        "contentHash": "e6n2qpSPlOx43+y1PeEukwu5n4i0slIUIMaFSndiIydfNuVqRbqL2QLd4y+BzFWDfN349YT71N/J38CH2IYb+w=="
+      },
       "Semver": {
         "type": "Transitive",
         "resolved": "2.1.0",
@@ -1244,6 +1258,14 @@
           "System.Runtime": "4.3.0",
           "System.Runtime.Extensions": "4.3.0",
           "System.Threading": "4.3.0"
+        }
+      },
+      "System.Configuration.ConfigurationManager": {
+        "type": "Transitive",
+        "resolved": "4.4.0",
+        "contentHash": "gWwQv/Ug1qWJmHCmN17nAbxJYmQBM/E94QxKLksvUiiKB1Ld3Sc/eK1lgmbSjDFxkQhVuayI/cGFZhpBSodLrg==",
+        "dependencies": {
+          "System.Security.Cryptography.ProtectedData": "4.4.0"
         }
       },
       "System.Console": {
@@ -2270,38 +2292,39 @@
       "apiservice": {
         "type": "Project",
         "dependencies": {
-          "Azure.Core": "[1.25.0, )",
-          "Azure.Data.Tables": "[12.5.0, )",
-          "Azure.Identity": "[1.6.0, )",
-          "Azure.Messaging.EventGrid": "[4.10.0, )",
-          "Azure.ResourceManager": "[1.3.1, )",
-          "Azure.ResourceManager.Compute": "[1.0.0, )",
-          "Azure.ResourceManager.Monitor": "[1.0.0-beta.2, )",
-          "Azure.ResourceManager.Network": "[1.0.0, )",
-          "Azure.ResourceManager.Resources": "[1.3.0, )",
-          "Azure.ResourceManager.Storage": "[1.0.0-beta.11, )",
-          "Azure.Security.KeyVault.Secrets": "[4.3.0, )",
-          "Azure.Storage.Blobs": "[12.13.0, )",
-          "Azure.Storage.Queues": "[12.11.0, )",
-          "Faithlife.Utility": "[0.12.2, )",
-          "Microsoft.ApplicationInsights.DependencyCollector": "[2.21.0, )",
-          "Microsoft.Azure.Functions.Worker": "[1.6.0, )",
-          "Microsoft.Azure.Functions.Worker.Extensions.EventGrid": "[2.1.0, )",
-          "Microsoft.Azure.Functions.Worker.Extensions.Http": "[3.0.13, )",
-          "Microsoft.Azure.Functions.Worker.Extensions.SignalRService": "[1.7.0, )",
-          "Microsoft.Azure.Functions.Worker.Extensions.Storage": "[5.0.0, )",
-          "Microsoft.Azure.Functions.Worker.Extensions.Timer": "[4.1.0, )",
-          "Microsoft.Azure.Functions.Worker.Sdk": "[1.3.0, )",
-          "Microsoft.Azure.Management.Monitor": "[0.28.0-preview, )",
-          "Microsoft.Azure.Management.OperationalInsights": "[0.24.0-preview, )",
-          "Microsoft.Extensions.Logging.ApplicationInsights": "[2.21.0, )",
-          "Microsoft.Graph": "[4.24.0, )",
-          "Microsoft.Identity.Client": "[4.43.0, )",
-          "Microsoft.Identity.Web.TokenCache": "[1.23.1, )",
-          "Semver": "[2.1.0, )",
-          "System.IdentityModel.Tokens.Jwt": "[6.17.0, )",
-          "System.Linq.Async": "[6.0.1, )",
-          "TaskTupleAwaiter": "[2.0.0, )"
+          "Azure.Core": "1.25.0",
+          "Azure.Data.Tables": "12.5.0",
+          "Azure.Identity": "1.6.0",
+          "Azure.Messaging.EventGrid": "4.10.0",
+          "Azure.ResourceManager": "1.3.1",
+          "Azure.ResourceManager.Compute": "1.0.0",
+          "Azure.ResourceManager.Monitor": "1.0.0-beta.2",
+          "Azure.ResourceManager.Network": "1.0.0",
+          "Azure.ResourceManager.Resources": "1.3.0",
+          "Azure.ResourceManager.Storage": "1.0.0-beta.11",
+          "Azure.Security.KeyVault.Secrets": "4.3.0",
+          "Azure.Storage.Blobs": "12.13.0",
+          "Azure.Storage.Queues": "12.11.0",
+          "Faithlife.Utility": "0.12.2",
+          "Microsoft.ApplicationInsights.DependencyCollector": "2.21.0",
+          "Microsoft.Azure.Functions.Worker": "1.6.0",
+          "Microsoft.Azure.Functions.Worker.Extensions.EventGrid": "2.1.0",
+          "Microsoft.Azure.Functions.Worker.Extensions.Http": "3.0.13",
+          "Microsoft.Azure.Functions.Worker.Extensions.SignalRService": "1.7.0",
+          "Microsoft.Azure.Functions.Worker.Extensions.Storage": "5.0.0",
+          "Microsoft.Azure.Functions.Worker.Extensions.Timer": "4.1.0",
+          "Microsoft.Azure.Functions.Worker.Sdk": "1.3.0",
+          "Microsoft.Azure.Management.Monitor": "0.28.0-preview",
+          "Microsoft.Azure.Management.OperationalInsights": "0.24.0-preview",
+          "Microsoft.Extensions.Logging.ApplicationInsights": "2.21.0",
+          "Microsoft.Graph": "4.24.0",
+          "Microsoft.Identity.Client": "4.43.0",
+          "Microsoft.Identity.Web.TokenCache": "1.23.1",
+          "Scriban": "5.5.0",
+          "Semver": "2.1.0",
+          "System.IdentityModel.Tokens.Jwt": "6.17.0",
+          "System.Linq.Async": "6.0.1",
+          "TaskTupleAwaiter": "2.0.0"
         }
       }
     }
