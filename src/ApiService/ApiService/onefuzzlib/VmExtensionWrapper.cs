@@ -27,7 +27,7 @@ namespace Microsoft.OneFuzz.Service {
             var protectedSettings = ProtectedSettings ?? new BinaryData(new Dictionary<string, string>());
 
             return (Name!, new VirtualMachineExtensionData(Location.Value) {
-                TypePropertiesType = TypePropertiesType,
+                ExtensionType = TypePropertiesType,
                 Publisher = Publisher,
                 TypeHandlerVersion = TypeHandlerVersion,
                 AutoUpgradeMinorVersion = AutoUpgradeMinorVersion,
@@ -49,8 +49,7 @@ namespace Microsoft.OneFuzz.Service {
             var protectedSettings = ProtectedSettings ?? new BinaryData(new Dictionary<string, string>());
 
             return new VirtualMachineScaleSetExtensionData() {
-                Name = Name,
-                TypePropertiesType = TypePropertiesType,
+                ExtensionType = TypePropertiesType,
                 Publisher = Publisher,
                 TypeHandlerVersion = TypeHandlerVersion,
                 AutoUpgradeMinorVersion = AutoUpgradeMinorVersion,

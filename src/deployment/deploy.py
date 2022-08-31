@@ -1132,71 +1132,82 @@ class Client:
                 map(expand_agent, self.enable_dotnet)
             )
 
-            func = shutil.which("az")
-            assert func is not None
+            python_settings = []
+            dotnet_settings = []
+
             for function_name in enable_dotnet:
                 format_name = function_name.split("_")
                 dotnet_name = "".join(x.title() for x in format_name)
-                error: Optional[subprocess.CalledProcessError] = None
-                max_tries = 5
-                for i in range(max_tries):
-                    try:
-                        # keep the python versions of http function to allow the service to be backward compatible
-                        # with older version of the CLI and the agents
-                        if function_name.startswith(
-                            "queue_"
-                        ) or function_name.startswith("timer_"):
-                            logger.info(f"disabling PYTHON function: {function_name}")
-                            disable_python = "1"
-                        else:
-                            logger.info(f"enabling PYTHON function: {function_name}")
-                            disable_python = "0"
-                        subprocess.check_output(
-                            [
-                                func,
-                                "functionapp",
-                                "config",
-                                "appsettings",
-                                "set",
-                                "--name",
-                                self.application_name,
-                                "--resource-group",
-                                self.application_name,
-                                "--settings",
-                                f"AzureWebJobs.{function_name}.Disabled={disable_python}",
-                            ],
-                            env=dict(os.environ, CLI_DEBUG="1"),
-                        )
+                # keep the python versions of http function to allow the service to be backward compatible
+                # with older version of the CLI and the agents
+                if function_name.startswith("queue_") or function_name.startswith(
+                    "timer_"
+                ):
+                    logger.info(f"disabling PYTHON function: {function_name}")
+                    disable_python = "1"
+                else:
+                    logger.info(f"enabling PYTHON function: {function_name}")
+                    disable_python = "0"
 
-                        # enable dotnet function
-                        logger.info(f"enabling DOTNET function: {dotnet_name}")
-                        subprocess.check_output(
-                            [
-                                func,
-                                "functionapp",
-                                "config",
-                                "appsettings",
-                                "set",
-                                "--name",
-                                self.application_name + DOTNET_APPLICATION_SUFFIX,
-                                "--resource-group",
-                                self.application_name,
-                                "--settings",
-                                f"AzureWebJobs.{dotnet_name}.Disabled=0",
-                            ],
-                            env=dict(os.environ, CLI_DEBUG="1"),
+                python_settings.append(
+                    f"AzureWebJobs.{function_name}.Disabled={disable_python}"
+                )
+
+                # enable dotnet function
+                logger.info(f"enabling DOTNET function: {dotnet_name}")
+                dotnet_settings.append(f"AzureWebJobs.{dotnet_name}.Disabled=0")
+
+            func = shutil.which("az")
+            assert func is not None
+
+            max_tries = 5
+            error: Optional[subprocess.CalledProcessError] = None
+            for i in range(max_tries):
+                try:
+                    logger.info("updating Python settings")
+                    subprocess.check_output(
+                        [
+                            func,
+                            "functionapp",
+                            "config",
+                            "appsettings",
+                            "set",
+                            "--name",
+                            self.application_name,
+                            "--resource-group",
+                            self.application_name,
+                            "--settings",
+                        ]
+                        + python_settings,
+                        env=dict(os.environ, CLI_DEBUG="1"),
+                    )
+                    logger.info("updating .NET settings")
+                    subprocess.check_output(
+                        [
+                            func,
+                            "functionapp",
+                            "config",
+                            "appsettings",
+                            "set",
+                            "--name",
+                            self.application_name + DOTNET_APPLICATION_SUFFIX,
+                            "--resource-group",
+                            self.application_name,
+                            "--settings",
+                        ]
+                        + dotnet_settings,
+                        env=dict(os.environ, CLI_DEBUG="1"),
+                    )
+                    break
+                except subprocess.CalledProcessError as err:
+                    error = err
+                    if i + 1 < max_tries:
+                        logger.debug("func failure error: %s", err)
+                        logger.warning(
+                            "unable to update settings, waiting 60 seconds and trying again"
                         )
-                        break
-                    except subprocess.CalledProcessError as err:
-                        error = err
-                        if i + 1 < max_tries:
-                            logger.debug("func failure error: %s", err)
-                            logger.warning(
-                                f"{function_name} function didn't respond to "
-                                "status change request, waiting 60 seconds "
-                                "and trying again"
-                            )
-                            time.sleep(60)
+                        time.sleep(60)
+
             if error is not None:
                 raise error
 

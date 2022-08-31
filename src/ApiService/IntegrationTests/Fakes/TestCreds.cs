@@ -67,6 +67,11 @@ class TestCreds : ICreds {
         throw new NotImplementedException();
     }
 
+    public GenericResource ParseResourceId(ResourceIdentifier resourceId) {
+        throw new NotImplementedException();
+    }
+
+
     public Task<GenericResource> GetData(GenericResource resource) {
         throw new NotImplementedException();
     }

@@ -65,7 +65,7 @@ public class ImageOperations : IImageOperations {
                 }
             } else {
                 try {
-                    name = (await _context.Creds.GetResourceGroupResource().GetImages().GetAsync(
+                    name = (await _context.Creds.GetResourceGroupResource().GetDiskImages().GetAsync(
                         parsed.Data.Name
                     )).Value.Data.StorageProfile.OSDisk.OSType.ToString().ToLowerInvariant();
                 } catch (Exception ex) when (
@@ -96,13 +96,15 @@ public class ImageOperations : IImageOperations {
                     version = imageInfo.Version;
                 }
 
-                name = (await subscription.GetVirtualMachineImageAsync(
-                    region,
-                    imageInfo.Publisher,
-                    imageInfo.Offer,
-                    imageInfo.Sku
-                    , version
-                )).Value.OSDiskImageOperatingSystem.ToString().ToLower();
+                var vmImage = await subscription.GetVirtualMachineImageAsync(
+                            region,
+                            imageInfo.Publisher,
+                            imageInfo.Offer,
+                            imageInfo.Sku
+                            , version
+                        );
+
+                name = vmImage.Value.OSDiskImageOperatingSystem!.Value.ToString().ToLower();
             } catch (RequestFailedException ex) {
                 return OneFuzzResult<Os>.Error(
                     ErrorCode.INVALID_IMAGE,
