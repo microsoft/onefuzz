@@ -13,22 +13,22 @@ use tokio::process::Command;
 use crate::tasks::fuzz::libfuzzer::common;
 
 #[cfg(target_os = "linux")]
-const LIBFUZZER_DOTNET_PATH: &str = "dotnet-fuzzing-linux/libfuzzer-dotnet/libfuzzer-dotnet";
+const LIBFUZZER_DOTNET_PATH: &str = "libfuzzer-dotnet/libfuzzer-dotnet";
 
 #[cfg(target_os = "windows")]
-const LIBFUZZER_DOTNET_PATH: &str = "dotnet-fuzzing-windows/libfuzzer-dotnet/libfuzzer-dotnet.exe";
+const LIBFUZZER_DOTNET_PATH: &str = "libfuzzer-dotnet/libfuzzer-dotnet.exe";
 
 #[cfg(target_os = "linux")]
-const LOADER_PATH: &str = "dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader";
+const LOADER_PATH: &str = "LibFuzzerDotnetLoader/LibFuzzerDotnetLoader";
 
 #[cfg(target_os = "windows")]
-const LOADER_PATH: &str = "dotnet-fuzzing-windows/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.exe";
+const LOADER_PATH: &str = "LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.exe";
 
 #[cfg(target_os = "linux")]
-const SHARPFUZZ_PATH: &str = "dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine";
+const SHARPFUZZ_PATH: &str = "sharpfuzz/SharpFuzz.CommandLine";
 
 #[cfg(target_os = "windows")]
-const SHARPFUZZ_PATH: &str = "dotnet-fuzzing-windows/sharpfuzz/SharpFuzz.CommandLine.exe";
+const SHARPFUZZ_PATH: &str = "sharpfuzz/SharpFuzz.CommandLine.exe";
 
 #[derive(Debug)]
 pub struct LibFuzzerDotnet;
