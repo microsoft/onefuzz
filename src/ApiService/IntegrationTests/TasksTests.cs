@@ -48,6 +48,27 @@ public abstract class TasksTestBase : FunctionTestBase {
         var result = await func.Run(testData);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
         var err = BodyAs<Error>(result);
-        Assert.Equal(new[]{"Unexpected property: \"vm\""}, err.Errors);
+        Assert.Equal(new[] { "Unexpected property: \"vm\"" }, err.Errors);
+    }
+
+    [Fact]
+    public async Async.Task PoolIsRequired() {
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new Tasks(Logger, auth, Context);
+
+        // override the found user credentials - need these to check for admin
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn");
+        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+
+        var req = new TaskCreate(
+            Guid.NewGuid(),
+            null,
+            new TaskDetails(TaskType.DotnetCoverage, 100),
+            null! /* <- here */);
+
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+        var err = BodyAs<Error>(result);
+        Assert.Equal(new[] { "The Pool field is required." }, err.Errors);
     }
 }

@@ -53,7 +53,7 @@ public class RequestHandling : IRequestHandling {
 
                 var validationContext = new ValidationContext(t);
                 var validationResults = new List<ValidationResult>();
-                if (Validator.TryValidateObject(t, validationContext, validationResults, true)) {
+                if (Validator.TryValidateObject(t, validationContext, validationResults, validateAllProperties: true)) {
                     return OneFuzzResult.Ok(t);
                 } else {
                     return new Error(

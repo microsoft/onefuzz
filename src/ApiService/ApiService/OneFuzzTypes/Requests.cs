@@ -230,7 +230,7 @@ public record TaskCreate(
    Guid JobId,
    List<Guid>? PrereqTasks,
    TaskDetails Task,
-   [Required]
+   [property: Required]
    TaskPool Pool,
    List<TaskContainers>? Containers = null,
    Dictionary<string, string>? Tags = null,
