@@ -1,8 +1,14 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using Azure.Core.Serialization;
+using FluentAssertions;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Xunit;
@@ -38,6 +44,43 @@ public class RequestsTests {
         result = result.Replace(System.Environment.NewLine, "\n");
         json = json.Replace(System.Environment.NewLine, "\n");
         Assert.Equal(json, result);
+    }
+
+    // Finds all non-nullable properties exposed on request objects (inheriting from BaseRequest).
+    // Note that at the moment we do not validate inner types since we are reusing some model types
+    // as request objects/DTOs, which we should stop doing.
+    public static IEnumerable<object[]> NonNullableRequestProperties() {
+        var baseType = typeof(BaseRequest);
+        var asm = baseType.Assembly;
+        foreach (var requestType in asm.GetTypes().Where(t => t.IsAssignableTo(baseType))) {
+            if (requestType == baseType) {
+                continue;
+            }
+
+            foreach (var property in requestType.GetProperties()) {
+                var nullabilityContext = new NullabilityInfoContext();
+                var nullability = nullabilityContext.Create(property);
+                if (nullability.ReadState == NullabilityState.NotNull) {
+                    yield return new object[] { requestType, property };
+                }
+            }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(NonNullableRequestProperties))]
+    public void EnsureRequiredAttributesExistsOnNonNullableRequestProperties(Type requestType, PropertyInfo property) {
+        if (!property.IsDefined(typeof(RequiredAttribute))) {
+            // if not required it must have a default
+
+            // find appropriate parameter
+            var param = requestType.GetConstructors().Single().GetParameters().Single(p => p.Name == property.Name);
+            Assert.True(param.HasDefaultValue,
+                "For request types, all non-nullable properties should either have a default value, or the [Required] attribute."
+            );
+        } else {
+            // it is required, okay
+        }
     }
 
     [Fact]
