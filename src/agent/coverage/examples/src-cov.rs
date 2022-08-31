@@ -24,6 +24,9 @@ struct Opt {
 
     #[structopt(short, long, long_help = "Timeout in ms", default_value = "5000")]
     timeout: u64,
+
+    #[structopt(short = "x", long)]
+    cobertura_xml: bool,
 }
 
 fn main() -> Result<()> {
@@ -59,12 +62,17 @@ fn main() -> Result<()> {
     let mut debug_info = coverage::debuginfo::DebugInfo::default();
     let src_coverage = total.source_coverage(&mut debug_info)?;
 
-    for file_coverage in src_coverage.files {
-        for location in &file_coverage.locations {
-            println!(
-                "{} {}:{}",
-                location.count, file_coverage.file, location.line
-            );
+    if opt.cobertura_xml {
+        let cobertura = coverage::cobertura::cobertura(src_coverage)?;
+        println!("{}", cobertura);
+    } else {
+        for file_coverage in src_coverage.files {
+            for location in &file_coverage.locations {
+                println!(
+                    "{} {}:{}",
+                    location.count, file_coverage.file, location.line
+                );
+            }
         }
     }
 
