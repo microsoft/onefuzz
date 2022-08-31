@@ -164,6 +164,7 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
         ExponentialBackoff {
             current_interval: RETRY_INTERVAL,
             initial_interval: RETRY_INTERVAL,
+            max_elapsed_time: None,
             ..ExponentialBackoff::default()
         },
         operation,
