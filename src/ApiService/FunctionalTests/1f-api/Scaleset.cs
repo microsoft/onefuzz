@@ -4,10 +4,7 @@ using Xunit;
 using Xunit.Abstractions;
 
 namespace FunctionalTests;
-
-
-
-class Authentication {
+public class Authentication {
     JsonElement _e;
 
     public Authentication() { }
@@ -20,7 +17,7 @@ class Authentication {
 }
 
 
-class ScalesetNodeState {
+public class ScalesetNodeState {
     JsonElement _e;
 
     public ScalesetNodeState() { }
@@ -32,7 +29,7 @@ class ScalesetNodeState {
     public string? NodeState => _e.GetProperty("state").GetString();
 }
 
-class Scaleset : IFromJsonElement<Scaleset> {
+public class Scaleset : IFromJsonElement<Scaleset> {
     JsonElement _e;
     public Scaleset() { }
     public Scaleset(JsonElement e) => _e = e;
@@ -68,7 +65,7 @@ class Scaleset : IFromJsonElement<Scaleset> {
     public Scaleset Convert(JsonElement e) => new Scaleset(e);
 }
 
-class ScalesetApi : ApiBase {
+public class ScalesetApi : ApiBase {
 
     public const string Image_Ubuntu_20_04 = "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest";
 
@@ -78,20 +75,25 @@ class ScalesetApi : ApiBase {
 
     public async Task<Result<IEnumerable<Scaleset>, Error>> Get(Guid? id = null, string? state = null, bool? includeAuth = false) {
         var root = new JsonObject();
-        root.Add("scaleset_id", id);
-        root.Add("state", state);
-        root.Add("include_auth", includeAuth);
+        if (id is not null)
+            root.Add("scaleset_id", id);
+        if (state is not null)
+            root.Add("state", state);
+        if (includeAuth is not null)
+            root.Add("include_auth", includeAuth);
         var res = await Get(root);
         return IEnumerableResult<Scaleset>(res);
     }
 
-    public async Task<Result<Scaleset, Error>> Create(string poolName, int size, string vmSku = "Standard_D2s_v3", string image = Image_Ubuntu_20_04, bool spotInstance = false) {
+    public async Task<Result<Scaleset, Error>> Create(string poolName, int size, string? region=null, string vmSku = "Standard_D2s_v3", string image = Image_Ubuntu_20_04, bool spotInstance = false) {
         var rootScalesetCreate = new JsonObject();
         rootScalesetCreate.Add("pool_name", poolName);
         rootScalesetCreate.Add("vm_sku", vmSku);
         rootScalesetCreate.Add("image", image);
         rootScalesetCreate.Add("size", size);
-        rootScalesetCreate.Add("spot_instance", spotInstance);
+        rootScalesetCreate.Add("spot_instances", spotInstance);
+        if (region is not null)
+            rootScalesetCreate.Add("region", region);
 
         var tags = new JsonObject();
         tags.Add("Purpose", "Functional-Test");

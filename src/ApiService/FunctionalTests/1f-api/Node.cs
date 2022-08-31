@@ -5,7 +5,7 @@ using Xunit.Abstractions;
 
 namespace FunctionalTests;
 
-class Node : IFromJsonElement<Node> {
+public class Node : IFromJsonElement<Node> {
     JsonElement _e;
 
     public Node() { }
@@ -35,7 +35,7 @@ class Node : IFromJsonElement<Node> {
 }
 
 
-class NodeApi : ApiBase {
+public class NodeApi : ApiBase {
 
     public NodeApi(Uri endpoint, Microsoft.OneFuzz.Service.Request request, ITestOutputHelper output) :
         base(endpoint, "/api/Node", request, output) {

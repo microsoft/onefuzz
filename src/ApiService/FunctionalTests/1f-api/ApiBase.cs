@@ -5,11 +5,11 @@ using Xunit.Abstractions;
 
 namespace FunctionalTests;
 
-interface IFromJsonElement<T> {
+public interface IFromJsonElement<T> {
     T Convert(JsonElement e);
 }
 
-class BooleanResult : IFromJsonElement<BooleanResult> {
+public class BooleanResult : IFromJsonElement<BooleanResult> {
     JsonElement _e;
     public BooleanResult() { }
     public BooleanResult(JsonElement e) => _e = e;
@@ -19,7 +19,7 @@ class BooleanResult : IFromJsonElement<BooleanResult> {
     public BooleanResult Convert(JsonElement e) => new BooleanResult(e);
 }
 
-abstract class ApiBase {
+public abstract class ApiBase {
 
     Uri _endpoint;
     Microsoft.OneFuzz.Service.Request _request;

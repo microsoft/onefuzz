@@ -36,16 +36,10 @@ namespace FunctionalTests {
 
         [Fact]
         public async Task CreateAndDelete() {
-            var newPoolId = Guid.NewGuid().ToString();
-            var newPoolName = PoolApi.TestPoolPrefix + newPoolId;
-            var newPool = await _poolApi.Create(newPoolName, "linux");
+            var (newPool, newScaleset) = await Helpers.CreatePoolAndScaleset(_poolApi, _scalesetApi, "linux");
 
-            Assert.True(newPool.IsOk, $"failed to create new pool: {newPool.ErrorV}");
-
-            var newScalesetResult = await _scalesetApi.Create(newPool.OkV!.Name, 2);
-
-            Assert.True(newScalesetResult.IsOk, $"failed to crate new scaleset: {newScalesetResult.ErrorV}");
-            var newScaleset = newScalesetResult.OkV!;
+            var newScalesetResultAgain = await _scalesetApi.Create(newPool.Name, 2);
+            var newScalesetResultAgainAgain = await _scalesetApi.Create(newPool.Name, 5);
 
             try {
                 _output.WriteLine($"New scale set info id: {newScaleset.ScalesetId}, pool: {newScaleset.PoolName}, state: {newScaleset.State}, error: {newScaleset.Error}");
@@ -56,7 +50,7 @@ namespace FunctionalTests {
                 var poolsCreated = await _poolApi.Get();
                 Assert.True(poolsCreated.IsOk, $"failed to get pools: {poolsCreated.ErrorV}");
 
-                var newPools = poolsCreated.OkV!.Where(p => p.Name == newPoolName);
+                var newPools = poolsCreated.OkV!.Where(p => p.Name == newPool.Name);
                 var newScalesets = scalesetsCreated.OkV!.Where(sc => sc.ScalesetId == newScaleset.ScalesetId);
 
                 Assert.True(newPools.Count() == 1);
@@ -94,25 +88,25 @@ namespace FunctionalTests {
                 }
             } finally {
                 var preDeleteScalesets = await _scalesetApi.Get();
-                var deletedPoolResult = await _poolApi.Delete(newPoolName);
+                var deletedPoolResult = await _poolApi.Delete(newPool.Name);
 
                 Assert.True(preDeleteScalesets.IsOk, $"failed to get pre-deleted scalesets due to: {preDeleteScalesets.ErrorV}");
-                var preDelete = preDeleteScalesets.OkV!.Where(sc => sc.PoolName == newPoolName);
+                var preDelete = preDeleteScalesets.OkV!.Where(sc => sc.PoolName == newPool.Name);
                 Assert.True(preDelete.Count() == 1);
 
                 Result<IEnumerable<Pool>, Error> deletedPool;
                 do {
                     await Task.Delay(TimeSpan.FromSeconds(10.0));
-                    deletedPool = await _poolApi.Get(newPoolName);
+                    deletedPool = await _poolApi.Get(newPool.Name);
 
                 } while (deletedPool.IsOk);
                 Assert.True(deletedPool.ErrorV!.UnableToFindPoolError);
                 var postDeleteScalesets = await _scalesetApi.Get();
                 Assert.True(postDeleteScalesets.IsOk, $"failed to get scalesets after finishing pool deletion due to {postDeleteScalesets.ErrorV}");
 
-                _output.WriteLine($"Pool is deleted {newPoolName}");
+                _output.WriteLine($"Pool is deleted {newPool.Name}");
 
-                var postDelete = postDeleteScalesets.OkV!.Where(sc => sc.PoolName == newPoolName);
+                var postDelete = postDeleteScalesets.OkV!.Where(sc => sc.PoolName == newPool.Name);
                 Assert.False(postDelete.Any());
                 var patch1 = await _scalesetApi.Patch(newScaleset.ScalesetId, 1);
                 Assert.False(patch1.IsOk);

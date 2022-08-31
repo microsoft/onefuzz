@@ -149,7 +149,7 @@ public class Proxy {
             return await _context.RequestHandling.NotOk(
                 req,
                 request.ErrorV,
-                "debug_proxy delet");
+                "debug_proxy delete");
         }
 
         var regions = await _context.ProxyForwardOperations.RemoveForward(

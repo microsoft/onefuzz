@@ -204,7 +204,8 @@ public class VmOperations : IVmOperations {
 
             return (await vm.Value.GetVirtualMachineExtensionAsync(extensionName)).Value.Data;
         } catch (RequestFailedException ex) {
-            _logTracer.Info($"extension does not exist {ex}");
+            _logTracer.Exception(ex, $"extension {extensionName} does not exist");
+            _logTracer.Info($"extension {extensionName} does not exist {ex}");
             return null;
         }
     }

@@ -5,7 +5,7 @@ using Xunit.Abstractions;
 
 namespace FunctionalTests;
 
-class Pool : IFromJsonElement<Pool> {
+public class Pool : IFromJsonElement<Pool> {
 
     JsonElement _e;
 
@@ -19,9 +19,9 @@ class Pool : IFromJsonElement<Pool> {
     public Pool Convert(JsonElement e) => new Pool(e);
 }
 
-class PoolApi : ApiBase {
+public class PoolApi : ApiBase {
 
-    public static string TestPoolPrefix = "FT-DELETE-";
+    public const string TestPoolPrefix = "FT-DELETE-";
 
     public PoolApi(Uri endpoint, Microsoft.OneFuzz.Service.Request request, ITestOutputHelper output) :
         base(endpoint, "/api/Pool", request, output) {
