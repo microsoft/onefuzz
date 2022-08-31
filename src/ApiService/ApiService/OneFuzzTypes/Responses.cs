@@ -35,6 +35,21 @@ public record NodeSearchResult(
     bool DebugKeepNode
 ) : BaseResponse();
 
+public record TaskSearchResult(
+     Guid JobId,
+     Guid TaskId,
+    TaskState State,
+    Os Os,
+    TaskConfig Config,
+    Error? Error,
+    Authentication? Auth,
+    DateTimeOffset? Heartbeat,
+    DateTimeOffset? EndTime,
+    UserInfo? UserInfo,
+    List<TaskEventSummary> Events,
+    List<NodeAssignment> Nodes
+) : BaseResponse();
+
 public record BoolResult(
     bool Result
 ) : BaseResponse();

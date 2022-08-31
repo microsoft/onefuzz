@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
@@ -34,17 +35,33 @@ public class Tasks {
         if (request.OkV.TaskId != null) {
             var task = await _context.TaskOperations.GetByTaskId(request.OkV.TaskId.Value);
             if (task == null) {
-                return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find task"
-                }), "task get");
-
+                return await _context.RequestHandling.NotOk(
+                    req,
+                    new Error(
+                        ErrorCode.INVALID_REQUEST,
+                        new[] { "unable to find task" }),
+                    "task get");
             }
-            task.Nodes = await _context.NodeTasksOperations.GetNodeAssignments(request.OkV.TaskId.Value).ToListAsync();
-            task.Events = await _context.TaskEventOperations.GetSummary(request.OkV.TaskId.Value).ToListAsync();
 
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(task);
-            return response;
+            var (nodes, events) = await (
+                _context.NodeTasksOperations.GetNodeAssignments(request.OkV.TaskId.Value).ToListAsync().AsTask(),
+                _context.TaskEventOperations.GetSummary(request.OkV.TaskId.Value).ToListAsync().AsTask());
 
+            var result = new TaskSearchResult(
+                JobId: task.JobId,
+                TaskId: task.TaskId,
+                State: task.State,
+                Os: task.Os,
+                Config: task.Config,
+                Error: task.Error,
+                Auth: task.Auth,
+                Heartbeat: task.Heartbeat,
+                EndTime: task.EndTime,
+                UserInfo: task.UserInfo,
+                Nodes: nodes,
+                Events: events);
+
+            return await RequestHandling.Ok(req, result);
         }
 
         var tasks = await _context.TaskOperations.SearchAll().ToListAsync();
