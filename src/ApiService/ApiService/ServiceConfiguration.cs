@@ -1,5 +1,5 @@
 ﻿using System.Reflection;
-﻿using Azure.Core;
+using Azure.Core;
 
 namespace Microsoft.OneFuzz.Service;
 
