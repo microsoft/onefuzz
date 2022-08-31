@@ -1078,11 +1078,6 @@
         "resolved": "4.3.0",
         "contentHash": "VB5cn/7OzUfzdnC8tqAIMQciVLiq2epm2NrAm1E9OjNRyG4lVhfR61SMcLizejzQP8R8Uf/0l5qOIbUEi+RdEg=="
       },
-      "Scriban": {
-        "type": "Transitive",
-        "resolved": "5.5.0",
-        "contentHash": "e6n2qpSPlOx43+y1PeEukwu5n4i0slIUIMaFSndiIydfNuVqRbqL2QLd4y+BzFWDfN349YT71N/J38CH2IYb+w=="
-      },
       "Semver": {
         "type": "Transitive",
         "resolved": "2.1.0",
