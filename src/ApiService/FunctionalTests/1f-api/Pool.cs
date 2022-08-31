@@ -56,7 +56,6 @@ public class PoolApi : ApiBase {
 
         foreach (var pool in pools.OkV) {
             if (pool.Name.StartsWith(TestPoolPrefix)) {
-                _output.WriteLine($"Deleting {pool.Name}");
                 var deleted = await Delete(pool.Name);
                 Assert.True(deleted.Result);
             }

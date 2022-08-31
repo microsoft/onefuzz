@@ -91,7 +91,7 @@ namespace FunctionalTests {
 
                 Assert.True(preDeleteScalesets.IsOk, $"failed to get pre-deleted scalesets due to: {preDeleteScalesets.ErrorV}");
                 var preDelete = preDeleteScalesets.OkV!.Where(sc => sc.PoolName == newPool.Name);
-                Assert.True(preDelete.Count() == 1);
+                Assert.True(preDelete.Count() == 3);
 
                 Result<IEnumerable<Pool>, Error> deletedPool;
                 do {
