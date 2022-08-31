@@ -53,7 +53,8 @@ public abstract class FunctionTestBase : IAsyncLifetime {
         Context = new TestContext(Logger, _storage, creds, _storagePrefix);
 
         // set up blob client for test purposes:
-        _blobClient = _storage.GetBlobServiceClientForAccount(_storage.GetPrimaryAccount(StorageType.Config));
+        // this is always sync for test purposes
+        _blobClient = _storage.GetBlobServiceClientForAccount(_storage.GetPrimaryAccount(StorageType.Config)).Result;
     }
 
     public async Task InitializeAsync() {
@@ -64,8 +65,8 @@ public abstract class FunctionTestBase : IAsyncLifetime {
         // clean up any tables & blobs that this test created
         var account = _storage.GetPrimaryAccount(StorageType.Config);
         await (
-            CleanupTables(_storage.GetTableServiceClientForAccount(account)),
-            CleanupBlobs(_storage.GetBlobServiceClientForAccount(account)));
+            CleanupTables(await _storage.GetTableServiceClientForAccount(account)),
+            CleanupBlobs(await _storage.GetBlobServiceClientForAccount(account)));
     }
 
     protected static string BodyAsString(HttpResponseData data) {

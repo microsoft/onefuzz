@@ -159,7 +159,7 @@ public class Program {
 
         var storageAccount = serviceConfig.OneFuzzFuncStorage;
         if (storageAccount is not null) {
-            var tableClient = storage.GetTableServiceClientForAccount(storageAccount);
+            var tableClient = await storage.GetTableServiceClientForAccount(storageAccount);
             await Async.Task.WhenAll(toCreate.Select(t => tableClient.CreateTableIfNotExistsAsync(serviceConfig.OneFuzzStoragePrefix + t.Name)));
         }
     }

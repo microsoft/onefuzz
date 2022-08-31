@@ -1,5 +1,6 @@
 ﻿using System;
 using Azure.Core;
+using Azure.ResourceManager.Storage;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.OneFuzz.Service;
 
@@ -12,7 +13,9 @@ public sealed class TestServiceConfiguration : IServiceConfig {
 
     public string OneFuzzStoragePrefix { get; }
 
-    public ResourceIdentifier? OneFuzzFuncStorage { get; } = new ResourceIdentifier("not-used-by-test");
+    public ResourceIdentifier? OneFuzzFuncStorage { get; } =
+        // not used by test code, this is a placeholder value
+        StorageAccountResource.CreateResourceIdentifier(Guid.NewGuid().ToString(), "resource-group", "account-name");
 
     public string OneFuzzVersion => "9999.0.0"; // very big version to pass any >= checks
 

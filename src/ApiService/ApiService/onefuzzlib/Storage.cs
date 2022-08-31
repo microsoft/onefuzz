@@ -2,12 +2,10 @@
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Data.Tables;
-using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Storage;
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Queues;
 using Azure.Storage.Sas;
 using Microsoft.Extensions.Caching.Memory;
@@ -44,28 +42,47 @@ public interface IStorage {
         return secondaryAccounts[Random.Shared.Next(secondaryAccounts.Count)];
     }
 
-    public BlobServiceClient GetBlobServiceClientForAccount(ResourceIdentifier accountId);
+    public Task<BlobServiceClient> GetBlobServiceClientForAccount(ResourceIdentifier accountId)
+        => GetBlobServiceClientForAccountName(accountId.Name);
 
-    public BlobServiceClient GetBlobServiceClientForAccountName(string accountName);
+    public Task<BlobServiceClient> GetBlobServiceClientForAccountName(string accountName);
 
-    public Task<Uri> GenerateBlobContainerSasUri(
+    public Uri GenerateBlobContainerSasUri(
         BlobContainerSasPermissions permissions,
         BlobContainerClient containerClient,
-        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow);
+        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow)
+        => containerClient.GenerateSasUri(new BlobSasBuilder(permissions, timeWindow.endTime) {
+            StartsOn = timeWindow.startTime,
+            BlobContainerName = containerClient.Name,
+        });
 
-    public Task<Uri> GenerateBlobSasUri(
+    public Uri GenerateBlobSasUri(
         BlobSasPermissions permissions,
         BlobClient blobClient,
-        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow);
+        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow)
+        => blobClient.GenerateSasUri(new BlobSasBuilder(permissions, timeWindow.endTime) {
+            StartsOn = timeWindow.startTime,
+            BlobContainerName = blobClient.BlobContainerName,
+            BlobName = blobClient.Name
+        });
 
-    public TableServiceClient GetTableServiceClientForAccount(ResourceIdentifier accountId);
+    public Task<TableServiceClient> GetTableServiceClientForAccount(ResourceIdentifier accountId)
+        => GetTableServiceClientForAccountName(accountId.Name);
 
-    public QueueServiceClient GetQueueServiceClientForAccount(ResourceIdentifier accountId);
-    public Task<Uri> GenerateQueueSasUri(
+    public Task<TableServiceClient> GetTableServiceClientForAccountName(string accountName);
+
+    public Task<QueueServiceClient> GetQueueServiceClientForAccount(ResourceIdentifier accountId)
+        => GetQueueServiceClientForAccountName(accountId.Name);
+
+    public Task<QueueServiceClient> GetQueueServiceClientForAccountName(string accountName);
+
+    public Uri GenerateQueueSasUri(
         QueueSasPermissions permissions,
-        string accountName,
-        string queueName,
-        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow);
+        QueueClient queueClient,
+        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow)
+        => queueClient.GenerateSasUri(new QueueSasBuilder(permissions, timeWindow.endTime) {
+            StartsOn = timeWindow.startTime,
+        });
 }
 
 public sealed class Storage : IStorage {
@@ -170,99 +187,32 @@ public sealed class Storage : IStorage {
     // According to guidance these should be reused as they manage HttpClients,
     // so we cache them all by account:
 
-    public BlobServiceClient GetBlobServiceClientForAccount(ResourceIdentifier accountId)
-        => GetBlobServiceClientForAccountName(accountId.Name);
-
     record BlobClientKey(string AccountName);
-    public BlobServiceClient GetBlobServiceClientForAccountName(string accountName) {
-        return _cache.GetOrCreate(new BlobClientKey(accountName), cacheEntry => {
+    public Task<BlobServiceClient> GetBlobServiceClientForAccountName(string accountName) {
+        return _cache.GetOrCreate(new BlobClientKey(accountName), async cacheEntry => {
             cacheEntry.Priority = CacheItemPriority.NeverRemove;
-            return new BlobServiceClient(GetBlobEndpoint(accountName), new DefaultAzureCredential());
+            var accountKey = await GetStorageAccountKey(accountName);
+            var skc = new StorageSharedKeyCredential(accountName, accountKey);
+            return new BlobServiceClient(GetBlobEndpoint(accountName), skc);
         });
     }
 
     record TableClientKey(string AccountName);
-    public TableServiceClient GetTableServiceClientForAccount(ResourceIdentifier accountId) {
-        var accountName = accountId.Name;
-        return _cache.GetOrCreate(new TableClientKey(accountName), cacheEntry => {
+    public Task<TableServiceClient> GetTableServiceClientForAccountName(string accountName)
+        => _cache.GetOrCreate(new TableClientKey(accountName), async cacheEntry => {
             cacheEntry.Priority = CacheItemPriority.NeverRemove;
-            return new TableServiceClient(GetTableEndpoint(accountName), new DefaultAzureCredential());
+            var accountKey = await GetStorageAccountKey(accountName);
+            var skc = new TableSharedKeyCredential(accountName, accountKey);
+            return new TableServiceClient(GetTableEndpoint(accountName), skc);
         });
-    }
 
     record QueueClientKey(string AccountName);
     private static readonly QueueClientOptions _queueClientOptions = new() { MessageEncoding = QueueMessageEncoding.Base64 };
-    public QueueServiceClient GetQueueServiceClientForAccount(ResourceIdentifier accountId) {
-        var accountName = accountId.Name;
-        return _cache.GetOrCreate(new QueueClientKey(accountName), cacheEntry => {
+    public Task<QueueServiceClient> GetQueueServiceClientForAccountName(string accountName)
+        => _cache.GetOrCreateAsync(new QueueClientKey(accountName), async cacheEntry => {
             cacheEntry.Priority = CacheItemPriority.NeverRemove;
-            return new QueueServiceClient(GetQueueEndpoint(accountName), new DefaultAzureCredential(), _queueClientOptions);
-        });
-    }
-
-    record SharedKeyQueueClient_CacheKey(string AccountName);
-    private Task<QueueServiceClient> GetSharedKeyQueueServiceClientForAccountName(string accountName) {
-        return _cache.GetOrCreateAsync(new SharedKeyQueueClient_CacheKey(accountName), async cacheEntry => {
             var accountKey = await GetStorageAccountKey(accountName);
             var skc = new StorageSharedKeyCredential(accountName, accountKey);
-            return new QueueServiceClient(GetQueueEndpoint(accountName), skc);
+            return new QueueServiceClient(GetQueueEndpoint(accountName), skc, _queueClientOptions);
         });
-    }
-
-    public async Task<Uri> GenerateBlobContainerSasUri(
-        BlobContainerSasPermissions permissions,
-        BlobContainerClient containerClient,
-        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow) {
-
-        var serviceClient = containerClient.GetParentBlobServiceClient();
-        var delegationKey = await serviceClient.GetUserDelegationKeyAsync(timeWindow.startTime, timeWindow.endTime);
-
-        var sasBuilder = new BlobSasBuilder(permissions, timeWindow.endTime) {
-            StartsOn = timeWindow.startTime,
-            BlobContainerName = containerClient.Name,
-        };
-
-        var blobUriBuilder = new BlobUriBuilder(containerClient.Uri) {
-            Sas = sasBuilder.ToSasQueryParameters(delegationKey, serviceClient.AccountName),
-        };
-
-        return blobUriBuilder.ToUri();
-    }
-
-    public async Task<Uri> GenerateBlobSasUri(
-        BlobSasPermissions permissions,
-        BlobClient blobClient,
-        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow) {
-
-        var containerClient = blobClient.GetParentBlobContainerClient();
-        var serviceClient = containerClient.GetParentBlobServiceClient();
-        var delegationKey = await serviceClient.GetUserDelegationKeyAsync(timeWindow.startTime, timeWindow.endTime);
-
-        var sasBuilder = new BlobSasBuilder(permissions, timeWindow.endTime) {
-            StartsOn = timeWindow.startTime,
-            BlobContainerName = containerClient.Name,
-            BlobName = blobClient.Name
-        };
-
-        var blobUriBuilder = new BlobUriBuilder(blobClient.Uri) {
-            Sas = sasBuilder.ToSasQueryParameters(delegationKey, serviceClient.AccountName),
-        };
-
-        return blobUriBuilder.ToUri();
-    }
-
-    public async Task<Uri> GenerateQueueSasUri(
-        QueueSasPermissions permissions,
-        string accountName,
-        string queueName,
-        (DateTimeOffset startTime, DateTimeOffset endTime) timeWindow) {
-
-        // must have the shared-key client to build a SAS URI for queues:
-        var serviceClient = await GetSharedKeyQueueServiceClientForAccountName(accountName);
-        var sasBuilder = new QueueSasBuilder(permissions, timeWindow.endTime) {
-            StartsOn = timeWindow.startTime,
-        };
-
-        return serviceClient.GetQueueClient(queueName).GenerateSasUri(sasBuilder);
-    }
 }
