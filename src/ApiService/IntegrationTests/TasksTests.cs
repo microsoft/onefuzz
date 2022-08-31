@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -11,7 +9,6 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Xunit;
 using Xunit.Abstractions;
 using Async = System.Threading.Tasks;
-using ScalesetFunction = Microsoft.OneFuzz.Service.Functions.Scaleset;
 
 namespace IntegrationTests.Functions;
 

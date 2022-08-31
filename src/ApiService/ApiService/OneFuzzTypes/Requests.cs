@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Microsoft.OneFuzz.Service;
 
-public record BaseRequest{
+public record BaseRequest {
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? ExtensionData { get; set; }
 };
@@ -165,7 +165,7 @@ public record ProxyGet(
     Guid? ScalesetId,
     Guid? MachineId,
     int? DstPort
-): BaseRequest;
+) : BaseRequest;
 
 public record ProxyCreate(
     Guid ScalesetId,
