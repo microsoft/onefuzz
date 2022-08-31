@@ -590,6 +590,13 @@ class Client:
                 "client_id": onefuzz_cli_app["appId"],
                 "authority": authority,
             }
+            logger.info("assigning the user managed identity role")
+            assign_instance_app_role(
+                self.application_name,
+                self.results["deploy"]["scaleset_identity"]["value"],
+                self.get_subscription_id(),
+                OnefuzzAppRole.ManagedNode,
+            )
 
         self.results["client_id"] = app["appId"]
         self.results["client_secret"] = password
