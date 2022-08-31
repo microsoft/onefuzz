@@ -135,7 +135,7 @@ class ADO:
                 continue
             yield item
 
-    def update_existing(self, item: WorkItem) -> None:
+    def update_existing(self, item: WorkItem, notification_info: str) -> None:
         if self.config.on_duplicate.comment:
             comment = self.render(self.config.on_duplicate.comment)
             self.client.add_comment(
@@ -175,6 +175,13 @@ class ADO:
 
         if document:
             self.client.update_work_item(document, item.id, project=self.project)
+            logging.info(
+                f"notify ado: updated work item {item.id} - {notification_info}"
+            )
+        else:
+            logging.info(
+                f"notify ado: no update for work item {item.id} - {notification_info}"
+            )
 
     def render_new(self) -> Tuple[str, List[JsonPatchOperation]]:
         task_type = self.render(self.config.type)
@@ -195,7 +202,7 @@ class ADO:
             )
         return (task_type, document)
 
-    def create_new(self) -> None:
+    def create_new(self) -> WorkItem:
         task_type, document = self.render_new()
 
         entry = self.client.create_work_item(
@@ -209,15 +216,19 @@ class ADO:
                 self.project,
                 entry.id,
             )
+        return entry
 
-    def process(self) -> None:
+    def process(self, notification_info: str) -> None:
         seen = False
         for work_item in self.existing_work_items():
-            self.update_existing(work_item)
+            self.update_existing(work_item, notification_info)
             seen = True
 
         if not seen:
-            self.create_new()
+            entry = self.create_new()
+            logging.info(
+                "notify ado: created new work item" f" {entry.id} - {notification_info}"
+            )
 
 
 def is_transient(err: Exception) -> bool:
@@ -251,18 +262,16 @@ def notify_ado(
         return
 
     notification_info = (
-        "job_id:%s task_id:%s container:%s filename:%s",
-        report.job_id,
-        report.task_id,
-        container,
-        filename,
+        f"job_id:%s{report.job_id} task_id:{report.task_id}"
+        f" container:{container} filename:{filename}"
     )
+
     logging.info("notify ado: %s", notification_info)
 
     try:
         ado = ADO(container, filename, config, report)
         ado.connect()
-        ado.process()
+        ado.process(notification_info)
     except (
         AzureDevOpsAuthenticationError,
         AzureDevOpsClientError,
