@@ -226,7 +226,8 @@ public class Extensions : IExtensions {
             );
 
         var fileName = $"{pool.Name}/config.json";
-        await _context.Containers.SaveBlob(new Container("vm-scripts"), fileName, (JsonSerializer.Serialize(config, EntityConverter.GetJsonSerializerOptions())), StorageType.Config);
+        var configJson = JsonSerializer.Serialize(config, EntityConverter.GetJsonSerializerOptions());
+        await _context.Containers.SaveBlob(new Container("vm-scripts"), fileName, configJson, StorageType.Config);
         return await ConfigUrl(new Container("vm-scripts"), fileName, false);
     }
 
