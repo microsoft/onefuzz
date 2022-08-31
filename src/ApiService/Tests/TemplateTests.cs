@@ -1,9 +1,9 @@
-using Xunit;
-using Microsoft.OneFuzz.Service;
-using Scriban;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using FluentAssertions;
+using Microsoft.OneFuzz.Service;
+using Scriban;
+using Xunit;
 
 namespace Tests;
 
@@ -17,10 +17,10 @@ public class TemplateTests {
     //     * Change "endfor" in python to "end"
     //     * Change "{% ... %}" in python to "{{ ... }}"
     private static readonly string _testString1 = "This is the call stack as determined by heuristics. You may wish to confirm this stack trace with a debugger via repro: <ul> {{ for item in report.call_stack }} <li> {{ item }} </li> {{ end }} </ul>";
-    
+
     // Original python template just works
     private static readonly string _testString2 = "The OneFuzz job {{ task.job_id }} found a crash in <a href='{{ target_url }}'>{{ report.executable }}</a> with input <a href='{{ input_url }}'>{{ report.input_sha256 }}</a>. ASan log:<br><br>{{ report.asan_log }}";
-    
+
     // Original python template: "The fuzzing target ({{ job.project }} {{ job.name }} {{ job.build }}) reported a crash. <br> {%if report.asan_log %} AddressSanitizer reported the following details: <br> <pre> {{ report.asan_log }} </pre> {% else %} Faulting call stack: <ul> {% for item in report.call_stack %} <li> {{ item }} </li> {% endfor %} </ul> <br> {% endif %} You can reproduce the issue remotely in OneFuzz by running the following command: <pre> {{ repro_cmd }} </pre>"
     // Changes for dotnet:
     //     * Change "endfor" in python to "end"
