@@ -299,6 +299,12 @@
           "System.Text.Encodings.Web": "5.0.1"
         }
       },
+      "Scriban": {
+        "type": "Direct",
+        "requested": "[5.5.0, )",
+        "resolved": "5.5.0",
+        "contentHash": "e6n2qpSPlOx43+y1PeEukwu5n4i0slIUIMaFSndiIydfNuVqRbqL2QLd4y+BzFWDfN349YT71N/J38CH2IYb+w=="
+      },
       "Semver": {
         "type": "Direct",
         "requested": "[2.1.0, )",
