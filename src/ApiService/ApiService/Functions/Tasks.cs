@@ -32,8 +32,8 @@ public class Tasks {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "task get");
         }
 
-        if (request.OkV.TaskId != null) {
-            var task = await _context.TaskOperations.GetByTaskId(request.OkV.TaskId.Value);
+        if (request.OkV.TaskId is Guid taskId) {
+            var task = await _context.TaskOperations.GetByTaskId(taskId);
             if (task == null) {
                 return await _context.RequestHandling.NotOk(
                     req,
@@ -44,8 +44,8 @@ public class Tasks {
             }
 
             var (nodes, events) = await (
-                _context.NodeTasksOperations.GetNodeAssignments(request.OkV.TaskId.Value).ToListAsync().AsTask(),
-                _context.TaskEventOperations.GetSummary(request.OkV.TaskId.Value).ToListAsync().AsTask());
+                _context.NodeTasksOperations.GetNodeAssignments(taskId).ToListAsync().AsTask(),
+                _context.TaskEventOperations.GetSummary(taskId).ToListAsync().AsTask());
 
             var result = new TaskSearchResult(
                 JobId: task.JobId,
