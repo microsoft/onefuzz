@@ -41,13 +41,13 @@ public class NodeApi : ApiBase {
         base(endpoint, "/api/Node", request, output) {
     }
 
-    public async Task<JsonElement> Update(Guid machineId, bool? debugKeepNode = null) {
+    public async Task<BooleanResult> Update(Guid machineId, bool? debugKeepNode = null) {
         var j = new JsonObject();
         if (debugKeepNode is not null)
             j.Add("debug_keep_node", JsonValue.Create(debugKeepNode));
 
         j.Add("machine_id", JsonValue.Create(machineId));
-        return await Post(j);
+        return Return<BooleanResult>(await Post(j));
     }
     public async Task<Result<IEnumerable<Node>, Error>> Get(Guid? machineId = null, List<string>? state = null, Guid? scalesetId = null, string? poolName = null) {
         var j = new JsonObject();
@@ -66,10 +66,10 @@ public class NodeApi : ApiBase {
         return IEnumerableResult<Node>(await Get(j));
     }
 
-    public async Task<JsonElement> Patch(Guid machineId) {
+    public async Task<BooleanResult> Patch(Guid machineId) {
         var j = new JsonObject();
         j.Add("machine_id", JsonValue.Create(machineId));
-        return await Patch(j);
+        return Return<BooleanResult>(await Patch(j));
     }
 
     public async Task<BooleanResult> Delete(Guid machineId) {

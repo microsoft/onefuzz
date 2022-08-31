@@ -16,6 +16,8 @@ public interface IIpOperations {
 
     public Async.Task<string?> GetPublicIp(ResourceIdentifier resourceId);
 
+    public Async.Task<string?> GetPublicIp(string resourceId);
+
     public Async.Task<PublicIPAddressResource?> GetIp(string resourceGroup, string name);
 
     public Async.Task DeleteNic(string resourceGroup, string name);
@@ -86,6 +88,9 @@ public class IpOperations : IIpOperations {
         var ips = await _networkInterfaceQuery.ListInstancePrivateIps(scalesetId, instance.OkV);
         return ips.FirstOrDefault();
     }
+    public async Task<string?> GetPublicIp(string resourceId) {
+        return await GetPublicIp(new ResourceIdentifier(resourceId));
+    }
 
     public async Task<string?> GetPublicIp(ResourceIdentifier resourceId) {
         // TODO: Parts of this function seem redundant, but I'm mirroring
@@ -117,12 +122,15 @@ public class IpOperations : IIpOperations {
     public async Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, string region, Nsg? nsg) {
         _logTracer.Info($"creating nic for {resourceGroup}:{name} in {region}");
 
-        var network = await Network.Create(region, _context);
+        var network = await Network.Init(region, _context);
         var subnetId = await network.GetId();
 
         if (subnetId is null) {
-            await network.Create();
-            return OneFuzzResultVoid.Ok;
+            var r = await network.Create();
+            if (!r.IsOk) {
+                _logTracer.Error($"failed to create network in region {region} due to {r.ErrorV}");
+            }
+            return r;
         }
 
         if (nsg != null) {

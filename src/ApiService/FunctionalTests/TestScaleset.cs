@@ -34,9 +34,8 @@ namespace FunctionalTests {
             }
         }
 
-        [Fact]
-        public async Task CreateAndDelete() {
-            var (newPool, newScaleset) = await Helpers.CreatePoolAndScaleset(_poolApi, _scalesetApi, "linux");
+        public async Task CreateAndDelete(string os) {
+            var (newPool, newScaleset) = await Helpers.CreatePoolAndScaleset(_poolApi, _scalesetApi, os);
 
             var newScalesetResultAgain = await _scalesetApi.Create(newPool.Name, 2);
             var newScalesetResultAgainAgain = await _scalesetApi.Create(newPool.Name, 5);
@@ -113,6 +112,18 @@ namespace FunctionalTests {
                 Assert.True(patch1.ErrorV!.UnableToFindScalesetError);
             }
             return;
+
+        }
+
+
+        [Fact]
+        public async Task CreateAndDeleteLinux() {
+            await CreateAndDelete("linux");
+        }
+
+        [Fact]
+        public async Task CreateAndDeleteWindows() {
+            await CreateAndDelete("windows");
         }
     }
 }

@@ -46,11 +46,24 @@ namespace FunctionalTests {
             scaleset = await _scalesetApi.WaitWhile(scaleset.ScalesetId, sc => sc.State == "init" || sc.State == "setup");
             Assert.True(scaleset.Nodes!.Count > 0);
 
+            var nodeState = scaleset.Nodes!.First();
+            var nodeResult = await _nodeApi.Get(nodeState.MachineId);
 
+            Assert.True(nodeResult.IsOk, $"failed to get node due to {nodeResult.ErrorV}");
+            var node = nodeResult.OkV!.First();
+            node = await _nodeApi.WaitWhile(node.MachineId, n => n.State == "init" || n.State == "setup");
 
+            var r = await _nodeApi.Patch(node.MachineId);
+            Assert.True(r.Result);
 
+            var rr = await _nodeApi.Update(node.MachineId, false);
+
+            var d = await _nodeApi.Delete(node.MachineId);
+            Assert.True(d.Result);
+
+            var deletePool = await _poolApi.Delete(pool.Name);
+            Assert.True(deletePool.Result);
         }
-
 
     }
 }

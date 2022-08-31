@@ -28,17 +28,21 @@ public class PoolApi : ApiBase {
     }
 
     public async Task<BooleanResult> Delete(string name, bool now = true) {
+        _output.WriteLine($"deleting pool: {name}, now: {now}");
         var root = new JsonObject();
         root.Add("name", JsonValue.Create(name));
         root.Add("now", JsonValue.Create(now));
         return Return<BooleanResult>(await Delete(root));
     }
 
-    public async Task<Result<IEnumerable<Pool>, Error>> Get(string? poolName = null, string? poolId = null, string? state = null) {
+    public async Task<Result<IEnumerable<Pool>, Error>> Get(string? name = null, string? id = null, string? state = null) {
         var root = new JsonObject();
-        root.Add("pool_id", poolId);
-        root.Add("name", poolName);
-        root.Add("state", state);
+        if (id is not null)
+            root.Add("pool_id", id);
+        if (name is not null)
+            root.Add("name", name);
+        if (state is not null)
+            root.Add("state", state);
 
         var res = await Get(root);
         return IEnumerableResult<Pool>(res);
@@ -60,6 +64,8 @@ public class PoolApi : ApiBase {
     }
 
     public async Task<Result<Pool, Error>> Create(string poolName, string os, string arch = "x86_64") {
+        _output.WriteLine($"creating new pool {poolName} os: {os}");
+
         var rootPoolCreate = new JsonObject();
         rootPoolCreate.Add("name", poolName);
         rootPoolCreate.Add("os", os);

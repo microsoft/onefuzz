@@ -94,9 +94,12 @@ public class ProxyApi : ApiBase {
 
     public async Task<Result<IEnumerable<Proxy>, Error>> Get(Guid? scalesetId = null, Guid? machineId = null, int? dstPort = null) {
         var root = new JsonObject();
-        root.Add("scaleset_id", scalesetId);
-        root.Add("machine_id", machineId);
-        root.Add("dst_port", dstPort);
+        if (scalesetId is not null)
+            root.Add("scaleset_id", scalesetId);
+        if (machineId is not null)
+            root.Add("machine_id", machineId);
+        if (dstPort is not null)
+            root.Add("dst_port", dstPort);
 
         var r = await Get(root);
         if (Error.IsError(r)) {
