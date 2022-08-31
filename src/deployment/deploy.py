@@ -593,7 +593,7 @@ class Client:
             logger.info("assigning the user managed identity role")
             assign_instance_app_role(
                 self.application_name,
-                self.results["deploy"]["scaleset_identity"]["value"],
+                onefuzz_cli_app["appId"],
                 self.get_subscription_id(),
                 OnefuzzAppRole.ManagedNode,
             )
