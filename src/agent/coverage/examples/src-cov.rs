@@ -38,7 +38,7 @@ fn main() -> Result<()> {
         for entry in std::fs::read_dir(dir)? {
             let input = entry?.path();
 
-            println!("testing input: {}", input.display());
+            eprintln!("testing input: {}", input.display());
 
             let cmd = input_command(&opt.cmd, &input);
             let coverage = record(&mut cache, filter.clone(), cmd, timeout)?;
@@ -48,7 +48,7 @@ fn main() -> Result<()> {
     }
 
     for input in &opt.inputs {
-        println!("testing input: {}", input.display());
+        eprintln!("testing input: {}", input.display());
 
         let cmd = input_command(&opt.cmd, input);
         let coverage = record(&mut cache, filter.clone(), cmd, timeout)?;
