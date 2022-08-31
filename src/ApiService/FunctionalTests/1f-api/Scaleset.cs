@@ -86,7 +86,7 @@ public class ScalesetApi : ApiBase {
         return IEnumerableResult<Scaleset>(res);
     }
 
-    public async Task<Result<Scaleset, Error>> Create(string poolName, int size, string? region=null, string vmSku = "Standard_D2s_v3", string image = Image_Ubuntu_20_04, bool spotInstance = false) {
+    public async Task<Result<Scaleset, Error>> Create(string poolName, int size, string? region = null, string vmSku = "Standard_D2s_v3", string image = Image_Ubuntu_20_04, bool spotInstance = false) {
         _output.WriteLine($"Creating scaleset in pool {poolName}, size: {size}");
         var rootScalesetCreate = new JsonObject();
         rootScalesetCreate.Add("pool_name", poolName);

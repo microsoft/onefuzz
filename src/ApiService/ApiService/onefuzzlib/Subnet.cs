@@ -78,7 +78,7 @@ public class Subnet : ISubnet {
         } catch (RequestFailedException ex) when (ex.Status == 404) {
             return null;
         }
-        
+
     }
 
     public async Task<ResourceIdentifier?> GetSubnetId(string name, string subnetName) {

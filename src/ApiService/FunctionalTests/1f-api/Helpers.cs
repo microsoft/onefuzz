@@ -8,7 +8,7 @@ using Xunit;
 namespace FunctionalTests {
     public class Helpers {
 
-        public static async Task<(Pool, Scaleset)> CreatePoolAndScaleset(PoolApi poolApi, ScalesetApi scalesetApi, string os = "linux", string? region = null, int numNodes = 2 ) {
+        public static async Task<(Pool, Scaleset)> CreatePoolAndScaleset(PoolApi poolApi, ScalesetApi scalesetApi, string os = "linux", string? region = null, int numNodes = 2) {
             var image = (os == "linux") ? ScalesetApi.Image_Ubuntu_20_04 : ScalesetApi.ImageWindows;
 
             var newPoolId = Guid.NewGuid().ToString();

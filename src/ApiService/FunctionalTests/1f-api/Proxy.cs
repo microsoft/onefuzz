@@ -50,7 +50,7 @@ public class ProxyGetResult : IFromJsonElement<ProxyGetResult>, IComparable<Prox
     public string? Ip {
         get {
             JsonElement ip;
-            if (_e.TryGetProperty("ip", out ip)){
+            if (_e.TryGetProperty("ip", out ip)) {
                 if (ip.ValueKind == JsonValueKind.Null) {
                     return null;
                 } else {
