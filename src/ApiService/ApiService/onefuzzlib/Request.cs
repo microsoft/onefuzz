@@ -50,9 +50,11 @@ public class RequestHandling : IRequestHandling {
                         }
                     }
 
-                    return new Error(
-                        Code: ErrorCode.INVALID_REQUEST,
-                        Errors: errors.ToArray());
+                    if (errors.Any()) {
+                        return new Error(
+                            Code: ErrorCode.INVALID_REQUEST,
+                            Errors: errors.ToArray());
+                    }
                 }
 
                 var validationContext = new ValidationContext(t);
