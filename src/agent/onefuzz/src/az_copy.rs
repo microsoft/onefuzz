@@ -18,7 +18,8 @@ use tokio::process::Command;
 use url::Url;
 
 const RETRY_INTERVAL: Duration = Duration::from_secs(5);
-const RETRY_COUNT: usize = 5;
+const MAX_FAILURE_COUNT: usize = 5;
+const MAX_RETRY_COUNT: usize = 10;
 
 const ALWAYS_RETRY_ERROR_STRINGS: &[&str] = &[
     // There isn't an ergonomic method to sync between the OneFuzz agent and fuzzers generating
@@ -151,7 +152,7 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
                 if !should_always_retry(&err) {
                     failure_count = failure_counter.fetch_add(1, Ordering::SeqCst);
                 }
-                if failure_count >= RETRY_COUNT {
+                if failure_count >= MAX_FAILURE_COUNT || attempt_count >= MAX_RETRY_COUNT {
                     Err(backoff::Error::Permanent(err))
                 } else {
                     Err(backoff::Error::transient(err))
