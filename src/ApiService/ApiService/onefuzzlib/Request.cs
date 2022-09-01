@@ -42,8 +42,12 @@ public class RequestHandling : IRequestHandling {
                 // properties set:
                 if (t.ExtensionData != null) {
                     var errors = new List<string>();
-                    foreach (var property in t.ExtensionData.Keys) {
-                        errors.Add($"Unexpected property: \"{property}\"");
+                    foreach (var (name, value) in t.ExtensionData) {
+                        // allow additional properties if they are null,
+                        // otherwise produce an error
+                        if (value.ValueKind != JsonValueKind.Null) {
+                            errors.Add($"Unexpected property: \"{name}\"");
+                        }
                     }
 
                     return new Error(
