@@ -35,7 +35,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             done.Add(notification.Config);
 
             if (notification.Config is TeamsTemplate teamsTemplate) {
-                NotifyTeams(teamsTemplate, container, filename, reportOrRegression!);
+                await _context.Teams.NotifyTeams(teamsTemplate, container, filename, reportOrRegression!);
             }
 
             if (reportOrRegression == null) {
@@ -144,10 +144,6 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     }
 
     private void NotifyAdo(AdoTemplate config, Container container, string filename, IReport report, bool failTaskOnTransientError) {
-        throw new NotImplementedException();
-    }
-
-    private void NotifyTeams(TeamsTemplate config, Container container, string filename, IReport report) {
         throw new NotImplementedException();
     }
 }

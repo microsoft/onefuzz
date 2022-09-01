@@ -216,16 +216,16 @@ public class Scheduler : IScheduler {
                 unique = Guid.NewGuid();
             }
 
-            return new BucketId(task.Os, task.JobId, vm, pool, GetSetupContainer(task.Config), task.Config.Task.RebootAfterSetup, unique);
+            return new BucketId(task.Os, task.JobId, vm, pool, GetSetupContainer(task.Config).ContainerName, task.Config.Task.RebootAfterSetup, unique);
 
         });
     }
 
-    static string GetSetupContainer(TaskConfig config) {
+    public static Container GetSetupContainer(TaskConfig config) {
 
         foreach (var container in config.Containers ?? throw new Exception("Missing containers")) {
             if (container.Type == ContainerType.Setup) {
-                return container.Name.ContainerName;
+                return container.Name;
             }
         }
 

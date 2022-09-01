@@ -100,6 +100,7 @@ public class Program {
                 .AddScoped<INodeMessageOperations, NodeMessageOperations>()
                 .AddScoped<IRequestHandling, RequestHandling>()
                 .AddScoped<IImageOperations, ImageOperations>()
+                .AddScoped<ITeams, Teams>()
                 .AddScoped<IOnefuzzContext, OnefuzzContext>()
                 .AddScoped<IEndpointAuthorization, EndpointAuthorization>()
                 .AddScoped<INodeMessageOperations, NodeMessageOperations>()

@@ -435,7 +435,7 @@ public record Notification(
 
 public record BlobRef(
     string Account,
-    Container container,
+    Container Container,
     string Name
 );
 

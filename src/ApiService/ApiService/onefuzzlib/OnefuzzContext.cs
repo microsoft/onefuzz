@@ -43,6 +43,7 @@ public interface IOnefuzzContext {
     ISubnet Subnet { get; }
     IImageOperations ImageOperations { get; }
     EntityConverter EntityConverter { get; }
+    ITeams Teams { get; }
 }
 
 public class OnefuzzContext : IOnefuzzContext {
@@ -89,4 +90,5 @@ public class OnefuzzContext : IOnefuzzContext {
     public ISubnet Subnet => _serviceProvider.GetRequiredService<ISubnet>();
     public IImageOperations ImageOperations => _serviceProvider.GetRequiredService<IImageOperations>();
     public EntityConverter EntityConverter => _serviceProvider.GetRequiredService<EntityConverter>();
+    public ITeams Teams => _serviceProvider.GetRequiredService<ITeams>();
 }
