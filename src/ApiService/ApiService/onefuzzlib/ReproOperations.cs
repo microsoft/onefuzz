@@ -18,7 +18,7 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 
     public Async.Task<Repro> Stopped(Repro repro);
 
-    public Async.Task<Repro> SetFailed(Repro repro, VirtualMachineResource vmData);
+    public Async.Task<Repro> SetFailed(Repro repro, VirtualMachineData vmData);
 
     public Async.Task<Repro> SetError(Repro repro, Error result);
 
@@ -31,8 +31,8 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
     private static readonly Dictionary<Os, string> DEFAULT_OS = new()
     {
-        {Os.Linux, "Canonical:UbuntuServer:18.04-LTS:latest"},
-        {Os.Windows, "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest"}
+        { Os.Linux, "Canonical:UbuntuServer:18.04-LTS:latest" },
+        { Os.Windows, "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest" }
     };
 
     const string DEFAULT_SKU = "Standard_DS1_v2";
@@ -120,7 +120,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var vm = await GetVm(repro, config);
         var vmData = await _context.VmOperations.GetVm(vm.Name);
         if (vmData != null) {
-            if (vmData.Data.ProvisioningState == "Failed") {
+            if (vmData.ProvisioningState == "Failed") {
                 return await _context.ReproOperations.SetFailed(repro, vmData);
             } else {
                 var scriptResult = await BuildReproScript(repro);
@@ -167,13 +167,13 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             );
         }
 
-        if (vmData.Data.ProvisioningState == "Failed") {
+        if (vmData.ProvisioningState == "Failed") {
             return await _context.ReproOperations.SetFailed(repro, vmData);
         }
 
         if (string.IsNullOrEmpty(repro.Ip)) {
             repro = repro with {
-                Ip = await _context.IpOperations.GetPublicIp(vmData.Data.NetworkProfile.NetworkInterfaces.First().Id)
+                Ip = await _context.IpOperations.GetPublicIp(vmData.NetworkProfile.NetworkInterfaces.First().Id)
             };
         }
 
@@ -196,8 +196,8 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         return repro;
     }
 
-    public async Async.Task<Repro> SetFailed(Repro repro, VirtualMachineResource vmData) {
-        var errors = (await vmData.InstanceViewAsync()).Value.Statuses
+    public async Async.Task<Repro> SetFailed(Repro repro, VirtualMachineData vmData) {
+        var errors = vmData.InstanceView.Statuses
             .Where(status => status.Level.HasValue && string.Equals(status.Level?.ToString(), "error", StringComparison.OrdinalIgnoreCase))
             .Select(status => $"{status.Code} {status.DisplayStatus} {status.Message}")
             .ToArray();

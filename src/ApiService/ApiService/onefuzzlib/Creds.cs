@@ -33,13 +33,14 @@ public interface ICreds {
     public Async.Task<T> QueryMicrosoftGraph<T>(HttpMethod method, string resource);
 
     public GenericResource ParseResourceId(string resourceId);
+    public GenericResource ParseResourceId(ResourceIdentifier resourceId);
 
     public Async.Task<GenericResource> GetData(GenericResource resource);
     Async.Task<IReadOnlyList<string>> GetRegions();
     public ResourceIdentifier GetScalesetIdentityResourcePath();
 }
 
-public sealed class Creds : ICreds, IDisposable {
+public sealed class Creds : ICreds {
     private readonly ArmClient _armClient;
     private readonly DefaultAzureCredential _azureCredential;
     private readonly IServiceConfig _config;
@@ -168,6 +169,10 @@ public sealed class Creds : ICreds, IDisposable {
         }
     }
 
+    public GenericResource ParseResourceId(ResourceIdentifier resourceId) {
+        return ArmClient.GetGenericResource(resourceId);
+    }
+
     public GenericResource ParseResourceId(string resourceId) {
         return ArmClient.GetGenericResource(new ResourceIdentifier(resourceId));
     }
@@ -177,9 +182,6 @@ public sealed class Creds : ICreds, IDisposable {
             return await resource.GetAsync();
         }
         return resource;
-    }
-    public void Dispose() {
-        throw new NotImplementedException();
     }
 
     public Task<IReadOnlyList<string>> GetRegions()

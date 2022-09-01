@@ -14,7 +14,7 @@ public interface IIpOperations {
 
     public Async.Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, string region, Nsg? nsg);
 
-    public Async.Task<string?> GetPublicIp(string resourceId);
+    public Async.Task<string?> GetPublicIp(ResourceIdentifier resourceId);
 
     public Async.Task<PublicIPAddressResource?> GetIp(string resourceGroup, string name);
 
@@ -37,7 +37,7 @@ public class IpOperations : IIpOperations {
     public IpOperations(ILogTracer log, IOnefuzzContext context) {
         _logTracer = log;
         _context = context;
-        _networkInterfaceQuery = new NetworkInterfaceQuery(context);
+        _networkInterfaceQuery = new NetworkInterfaceQuery(context, log);
     }
 
     public async Async.Task<NetworkInterfaceResource?> GetPublicNic(string resourceGroup, string name) {
@@ -60,12 +60,21 @@ public class IpOperations : IIpOperations {
 
     public async System.Threading.Tasks.Task DeleteNic(string resourceGroup, string name) {
         _logTracer.Info($"deleting nic {resourceGroup}:{name}");
-        await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name).Result.Value.DeleteAsync(WaitUntil.Started);
+        var networkInterface = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name);
+        try {
+            await networkInterface.Value.DeleteAsync(WaitUntil.Started);
+        } catch (RequestFailedException ex) {
+            if (ex.ErrorCode != "NicReservedForAnotherVm") {
+                throw;
+            }
+            _logTracer.Warning($"unable to delete nic {resourceGroup}:{name}  {ex.Message}");
+        }
     }
 
     public async System.Threading.Tasks.Task DeleteIp(string resourceGroup, string name) {
         _logTracer.Info($"deleting ip {resourceGroup}:{name}");
-        await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(name).Result.Value.DeleteAsync(WaitUntil.Started);
+        var publicIpAddressAsync = await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(name);
+        await publicIpAddressAsync.Value.DeleteAsync(WaitUntil.Started);
     }
 
     public async Task<string?> GetScalesetInstanceIp(Guid scalesetId, Guid machineId) {
@@ -78,7 +87,7 @@ public class IpOperations : IIpOperations {
         return ips.FirstOrDefault();
     }
 
-    public async Task<string?> GetPublicIp(string resourceId) {
+    public async Task<string?> GetPublicIp(ResourceIdentifier resourceId) {
         // TODO: Parts of this function seem redundant, but I'm mirroring
         // the python code exactly. We should revisit this.
         _logTracer.Info($"getting ip for {resourceId}");
@@ -210,13 +219,15 @@ public class IpOperations : IIpOperations {
 
         private readonly IOnefuzzContext _context;
 
-        public NetworkInterfaceQuery(IOnefuzzContext context) {
+        private readonly ILogTracer _logTracer;
+
+        public NetworkInterfaceQuery(IOnefuzzContext context, ILogTracer logTracer) {
             _context = context;
+            _logTracer = logTracer;
         }
 
 
         public async Task<List<string>> ListInstancePrivateIps(Guid scalesetId, string instanceId) {
-
             var token = _context.Creds.GetIdentity().GetToken(
                 new TokenRequestContext(
                     new[] { $"https://management.azure.com" }));
@@ -225,13 +236,15 @@ public class IpOperations : IIpOperations {
             client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token.Token);
             var baseUrl = new Uri($"https://management.azure.com/");
             // https://docs.microsoft.com/en-us/rest/api/virtualnetwork/network-interface-in-vm-ss/get-virtual-machine-scale-set-network-interface?tabs=HTTP
-            var requestURl = baseUrl + $"subscriptions/{_context.Creds.GetSubscription()}/resourceGroups/{_context.Creds.GetBaseResourceGroup()}/providers/Microsoft.Compute/virtualMachineScaleSets/{scalesetId}/virtualMachines/{instanceId}/networkInterfaces?api-version=2021-08-01";
+            var requestURl = baseUrl + $"subscriptions/{_context.Creds.GetSubscription()}/resourceGroups/{_context.Creds.GetBaseResourceGroup()}/providers/Microsoft.Compute/virtualMachineScaleSets/{scalesetId}/virtualMachines/{instanceId}/networkInterfaces?api-version=2022-08-01";
             var response = await client.GetAsync(requestURl);
             if (response.IsSuccessStatusCode) {
                 var responseStream = await response.Content.ReadAsStreamAsync();
                 var nics = await JsonSerializer.DeserializeAsync<ValueList<NetworkInterface>>(responseStream);
                 if (nics != null)
                     return nics.value.SelectMany(x => x.properties.ipConfigurations.Select(i => i.properties.privateIPAddress)).WhereNotNull().ToList();
+            } else {
+                _logTracer.Error($"failed to get ListInstancePrivateIps due to {await response.Content.ReadAsStringAsync()}");
             }
             return new List<string>();
         }

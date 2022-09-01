@@ -124,7 +124,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
 
         var updatedScaleSet = scaleset with { State = state };
-        var r = await Update(updatedScaleSet);
+        var r = await Replace(updatedScaleSet);
         if (!r.IsOk) {
             var msg = "Failed to update scaleset {scaleSet.ScalesetId} when updating state from {scaleSet.State} to {state}";
             _log.Error(msg);
@@ -279,7 +279,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             }
         }
 
-        var rr = await Update(scaleset);
+        var rr = await Replace(scaleset);
         if (!rr.IsOk) {
             _logTracer.Error($"Failed to save scale data for scale set: {scaleset.ScalesetId}");
         }
@@ -341,14 +341,14 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         } else {
             _logTracer.Info("Using existing auto scale settings from database");
             autoScaleProfile = _context.AutoScaleOperations.CreateAutoScaleProfile(
-                    poolQueueUri!,
-                    autoScaleConfig.Min,
-                    autoScaleConfig.Max,
-                    autoScaleConfig.Default,
-                    autoScaleConfig.ScaleOutAmount,
-                    autoScaleConfig.ScaleOutCooldown,
-                    autoScaleConfig.ScaleInAmount,
-                    autoScaleConfig.ScaleInCooldown
+                    queueUri: poolQueueUri!,
+                    minAmount: autoScaleConfig.Min,
+                    maxAmount: autoScaleConfig.Max,
+                    defaultAmount: autoScaleConfig.Default,
+                    scaleOutAmount: autoScaleConfig.ScaleOutAmount,
+                    scaleOutCooldownMinutes: autoScaleConfig.ScaleOutCooldown,
+                    scaleInAmount: autoScaleConfig.ScaleInAmount,
+                    scaleInCooldownMinutes: autoScaleConfig.ScaleInCooldown
                 );
 
         }

@@ -328,7 +328,7 @@ public record InstanceConfig
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkConfig NetworkConfig,
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
-    string? ProxyVmSku,
+    string ProxyVmSku,
     bool AllowPoolManagement = true,
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
     IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,

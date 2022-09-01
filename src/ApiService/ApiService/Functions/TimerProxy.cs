@@ -26,7 +26,8 @@ public class TimerProxy {
                 // As this function is called via a timer, this works around a user
                 // requesting to use the proxy while this function is checking if it's
                 // out of date
-                if (proxy.Outdated) {
+                if (proxy.Outdated && !(await _context.ProxyOperations.IsUsed(proxy))) {
+                    _logger.Warning($"scaleset-proxy: outdated and not used: {proxy.Region}");
                     await proxyOperations.SetState(proxy, VmState.Stopping);
                     // If something is "wrong" with a proxy, delete & recreate it
                 } else if (!proxyOperations.IsAlive(proxy)) {
@@ -74,17 +75,15 @@ public class TimerProxy {
                     }
                 }
             }
-
-            // if there are NSGs with name same as the region that they are allocated
-            // and have no NIC associated with it then delete the NSG
-            await foreach (var nsg in nsgOpertions.ListNsgs()) {
-                if (nsgOpertions.OkToDelete(regions, nsg.Data.Location!, nsg.Data.Name)) {
-                    if (nsg.Data.NetworkInterfaces.Count == 0 && nsg.Data.Subnets.Count == 0) {
-                        await nsgOpertions.StartDeleteNsg(nsg.Data.Name);
-                    }
+        }
+        // if there are NSGs with name same as the region that they are allocated
+        // and have no NIC associated with it then delete the NSG
+        await foreach (var nsg in nsgOpertions.ListNsgs()) {
+            if (nsgOpertions.OkToDelete(regions, nsg.Data.Location!, nsg.Data.Name)) {
+                if (nsg.Data.NetworkInterfaces.Count == 0 && nsg.Data.Subnets.Count == 0) {
+                    await nsgOpertions.StartDeleteNsg(nsg.Data.Name);
                 }
             }
         }
-
     }
 }

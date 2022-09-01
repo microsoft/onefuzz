@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.ResourceManager.Compute;
@@ -11,6 +12,7 @@ public interface IExtensions {
     Async.Task<IList<VirtualMachineScaleSetExtensionData>> FuzzExtensions(Pool pool, Scaleset scaleset);
 
     Async.Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer);
+    Task<IList<VMExtensionWrapper>> ProxyManagerExtensions(string region, Guid proxyId);
 }
 
 public class Extensions : IExtensions {
@@ -128,7 +130,11 @@ public class Extensions : IExtensions {
             AutoUpgradeMinorVersion = true,
             Settings = new BinaryData(JsonSerializer.Serialize(new { EnableGenevaUpload = true, EnableAutoConfig = true }, _extensionSerializerOptions))
         };
+    }
 
+    private class Settings {
+        [JsonPropertyName("GCS_AUTO_CONFIG")]
+        public bool GCS_AUTO_CONFIG { get; set; } = true;
     }
 
     public static VMExtensionWrapper AzMonExtension(AzureLocation region, AzureMonitorExtensionConfig azureMonitor) {
@@ -139,6 +145,7 @@ public class Extensions : IExtensions {
         var environment = azureMonitor.MonitoringGSEnvironment;
         var account = azureMonitor.MonitoringGCSAccount;
         var authIdType = azureMonitor.MonitoringGCSAuthIdType;
+        var settings = JsonSerializer.Serialize(new Settings(), _extensionSerializerOptions);
 
         return new VMExtensionWrapper {
             Location = region,
@@ -147,7 +154,8 @@ public class Extensions : IExtensions {
             TypePropertiesType = "AzureMonitorLinuxAgent",
             AutoUpgradeMinorVersion = true,
             TypeHandlerVersion = "1.0",
-            Settings = new BinaryData(JsonSerializer.Serialize(new { GCS_AUTO_CONFIG = true }, _extensionSerializerOptions)),
+            Settings = new BinaryData(settings),
+            EnableAutomaticUpgrade = true,
             ProtectedSettings =
                 new BinaryData(JsonSerializer.Serialize(
                     new {
@@ -325,7 +333,8 @@ public class Extensions : IExtensions {
                 TypeHandlerVersion = "1.0",
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(extensionSettings),
-                ProtectedSettings = new BinaryData(protectedExtensionSettings)
+                ProtectedSettings = new BinaryData(protectedExtensionSettings),
+                EnableAutomaticUpgrade = false
             };
         } else if (vmOs == Os.Linux) {
             return new VMExtensionWrapper {
@@ -336,7 +345,8 @@ public class Extensions : IExtensions {
                 TypeHandlerVersion = "1.12",
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(extensionSettings),
-                ProtectedSettings = new BinaryData(protectedExtensionSettings)
+                ProtectedSettings = new BinaryData(protectedExtensionSettings),
+                EnableAutomaticUpgrade = false
             };
         } else {
             throw new NotSupportedException($"unsupported os: {vmOs}");
@@ -449,4 +459,19 @@ public class Extensions : IExtensions {
         return extensionsDict;
     }
 
+    public async Task<IList<VMExtensionWrapper>> ProxyManagerExtensions(string region, Guid proxyId) {
+        var config = await _context.Containers.GetFileSasUrl(new Container("proxy-configs"),
+            $"{region}/{proxyId}/config.json", StorageType.Config, BlobSasPermissions.Read);
+
+        var proxyManager = await _context.Containers.GetFileSasUrl(new Container("tools"),
+            $"linux/onefuzz-proxy-manager", StorageType.Config, BlobSasPermissions.Read);
+
+
+        var baseExtension =
+            await AgentConfig(region, Os.Linux, AgentMode.Proxy, new List<Uri> { config, proxyManager }, true);
+
+        var extensions = await GenericExtensions(region, Os.Linux);
+        extensions.Add(baseExtension);
+        return extensions;
+    }
 }

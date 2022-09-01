@@ -1,5 +1,7 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
+using Azure.ResourceManager.Compute;
+using Azure.ResourceManager.Compute.Models;
 using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -8,12 +10,13 @@ namespace Microsoft.OneFuzz.Service;
 public interface IProxyOperations : IStatefulOrm<Proxy, VmState> {
     Task<Proxy?> GetByProxyId(Guid proxyId);
 
-    Async.Task SetState(Proxy proxy, VmState state);
+    Async.Task<Proxy> SetState(Proxy proxy, VmState state);
     bool IsAlive(Proxy proxy);
     Async.Task SaveProxyConfig(Proxy proxy);
     bool IsOutdated(Proxy proxy);
     Async.Task<Proxy?> GetOrCreate(string region);
 
+    Task<bool> IsUsed(Proxy proxy);
 }
 public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IProxyOperations {
 
@@ -51,9 +54,22 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         _logTracer.Info($"creating proxy: region:{region}");
         var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, Auth.BuildAuth(), null, null, _context.ServiceConfiguration.OneFuzzVersion, null, false);
 
-        await Replace(newProxy);
+        var r = await Replace(newProxy);
+        if (!r.IsOk) {
+            _logTracer.Error($"failed to save new proxy {newProxy.ProxyId} due to {r.ErrorV}");
+        }
+
         await _context.Events.SendEvent(new EventProxyCreated(region, newProxy.ProxyId));
         return newProxy;
+    }
+
+    public async Task<bool> IsUsed(Proxy proxy) {
+        var forwards = await GetForwards(proxy);
+        if (forwards.Count == 0) {
+            _logTracer.Info($"no forwards {proxy.Region}");
+            return false;
+        }
+        return true;
     }
 
     public bool IsAlive(Proxy proxy) {
@@ -110,14 +126,18 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
     }
 
 
-    public async Async.Task SetState(Proxy proxy, VmState state) {
+    public async Async.Task<Proxy> SetState(Proxy proxy, VmState state) {
         if (proxy.State == state) {
-            return;
+            return proxy;
         }
 
-        await Replace(proxy with { State = state });
-
-        await _context.Events.SendEvent(new EventProxyStateUpdated(proxy.Region, proxy.ProxyId, proxy.State));
+        var newProxy = proxy with { State = state };
+        var r = await Replace(newProxy);
+        if (!r.IsOk) {
+            _logTracer.Error($"Failed to replace proxy with id {newProxy.ProxyId} due to {r.ErrorV}");
+        }
+        await _context.Events.SendEvent(new EventProxyStateUpdated(newProxy.Region, newProxy.ProxyId, newProxy.State));
+        return newProxy;
     }
 
 
@@ -132,5 +152,144 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             }
         }
         return forwards;
+    }
+
+    public async Async.Task<Proxy> Init(Proxy proxy) {
+        var config = await _context.ConfigOperations.Fetch();
+        var vm = GetVm(proxy, config);
+        var vmData = await _context.VmOperations.GetVm(vm.Name);
+
+        if (vmData != null) {
+            if (vmData.ProvisioningState == "Failed") {
+                return await SetProvisionFailed(proxy, vmData);
+            } else {
+                await SaveProxyConfig(proxy);
+                return await SetState(proxy, VmState.ExtensionsLaunch);
+            }
+        } else {
+            var nsg = new Nsg(proxy.Region, proxy.Region);
+            var result = await _context.NsgOperations.Create(nsg);
+            if (!result.IsOk) {
+                return await SetFailed(proxy, result.ErrorV);
+            }
+
+            var nsgConfig = config.ProxyNsgConfig;
+            var result2 = await _context.NsgOperations.SetAllowedSources(nsg, nsgConfig);
+
+            if (!result2.IsOk) {
+                return await SetFailed(proxy, result2.ErrorV);
+            }
+
+            var result3 = await _context.VmOperations.Create(vm with { Nsg = nsg });
+
+            if (!result3.IsOk) {
+                return await SetFailed(proxy, result3.ErrorV);
+            }
+            var r = await Replace(proxy);
+            if (!r.IsOk) {
+                _logTracer.Error($"Failed to save proxy {proxy.ProxyId} due: {r.ErrorV}");
+            }
+            return proxy;
+        }
+    }
+
+    private async System.Threading.Tasks.Task<Proxy> SetProvisionFailed(Proxy proxy, VirtualMachineData vmData) {
+        var errors = GetErrors(proxy, vmData).ToArray();
+        return await SetFailed(proxy, new Error(ErrorCode.PROXY_FAILED, errors));
+    }
+
+    private async Task<Proxy> SetFailed(Proxy proxy, Error error) {
+        if (proxy.Error != null) {
+            return proxy;
+        }
+
+        _logTracer.Error($"vm failed: {proxy.Region} -{error}");
+        await _context.Events.SendEvent(new EventProxyFailed(proxy.Region, proxy.ProxyId, error));
+        return await SetState(proxy with { Error = error }, VmState.Stopping);
+    }
+
+
+    private static IEnumerable<string> GetErrors(Proxy proxy, VirtualMachineData vmData) {
+        var instanceView = vmData.InstanceView;
+        yield return "provisioning failed";
+        if (instanceView is null) {
+            yield break;
+        }
+
+        foreach (var status in instanceView.Statuses) {
+            if (status.Level == ComputeStatusLevelType.Error) {
+                yield return $"code:{status.Code} status:{status.DisplayStatus} message:{status.Message}";
+            }
+        }
+    }
+
+    public static Vm GetVm(Proxy proxy, InstanceConfig config) {
+        var tags = config.VmssTags;
+        const string PROXY_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest";
+        return new Vm(
+            // name should be less than 40 chars otherwise it gets truncated by azure
+            Name: $"proxy-{proxy.ProxyId:N}",
+            Region: proxy.Region,
+            Sku: config.ProxyVmSku,
+            Image: PROXY_IMAGE,
+            Auth: proxy.Auth,
+            Tags: tags,
+            Nsg: null
+        );
+    }
+
+    public async Task<Proxy> ExtensionsLaunch(Proxy proxy) {
+        var config = await _context.ConfigOperations.Fetch();
+        var vm = GetVm(proxy, config);
+        var vmData = await _context.VmOperations.GetVm(vm.Name);
+
+        if (vmData == null) {
+            return await SetFailed(proxy, new Error(ErrorCode.PROXY_FAILED, new[] { "azure not able to find vm" }));
+        }
+
+        if (vmData.ProvisioningState == "Failed") {
+            return await SetProvisionFailed(proxy, vmData);
+        }
+
+        var ip = await _context.IpOperations.GetPublicIp(vmData.NetworkProfile.NetworkInterfaces[0].Id);
+        if (ip == null) {
+            return proxy;
+        }
+
+        var newProxy = proxy with { Ip = ip };
+
+        var extensions = await _context.Extensions.ProxyManagerExtensions(newProxy.Region, newProxy.ProxyId);
+        var result = await _context.VmOperations.AddExtensions(vm,
+            extensions
+                .Select(e => e.GetAsVirtualMachineExtension())
+                .ToDictionary(x => x.Item1, x => x.Item2));
+
+        if (!result.IsOk) {
+            return await SetFailed(newProxy, result.ErrorV);
+        }
+
+        return await SetState(newProxy, VmState.Running);
+    }
+
+    public async Task<Proxy> Stopping(Proxy proxy) {
+        var config = await _context.ConfigOperations.Fetch();
+        var vm = GetVm(proxy, config);
+        if (!await _context.VmOperations.IsDeleted(vm)) {
+            _logTracer.Info($"stopping proxy: {proxy.Region}");
+            if (await _context.VmOperations.Delete(vm)) {
+                _logTracer.Info($"deleted proxy vm for region {proxy.Region}, name: {vm.Name}");
+            }
+            return proxy;
+        }
+
+        return await Stopped(proxy);
+    }
+
+    private async Task<Proxy> Stopped(Proxy proxy) {
+        var stoppedVm = await SetState(proxy, VmState.Stopped);
+        _logTracer.Info($"removing proxy: {stoppedVm.Region}");
+        await _context.Events.SendEvent(new EventProxyDeleted(stoppedVm.Region, stoppedVm.ProxyId));
+        await Delete(stoppedVm);
+        return stoppedVm;
     }
 }

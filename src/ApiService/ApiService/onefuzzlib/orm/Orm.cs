@@ -27,7 +27,7 @@ namespace ApiService.OneFuzzLib.Orm {
     }
 
 
-    public class Orm<T> : IOrm<T> where T : EntityBase {
+    public abstract class Orm<T> : IOrm<T> where T : EntityBase {
 #pragma warning disable CA1051 // permit visible instance fields
         protected readonly EntityConverter _entityConverter;
         protected readonly IOnefuzzContext _context;
@@ -109,7 +109,6 @@ namespace ApiService.OneFuzzLib.Orm {
 
             var account = accountId ?? _context.ServiceConfiguration.OneFuzzFuncStorage ?? throw new ArgumentNullException(nameof(accountId));
             var tableClient = await _context.Storage.GetTableServiceClientForAccount(account);
-            await tableClient.CreateTableIfNotExistsAsync(tableName);
             return tableClient.GetTableClient(tableName);
         }
 
@@ -146,7 +145,7 @@ namespace ApiService.OneFuzzLib.Orm {
     }
 
 
-    public class StatefulOrm<T, TState, TSelf> : Orm<T>, IStatefulOrm<T, TState> where T : StatefulEntityBase<TState> where TState : Enum {
+    public abstract class StatefulOrm<T, TState, TSelf> : Orm<T>, IStatefulOrm<T, TState> where T : StatefulEntityBase<TState> where TState : Enum {
         static Lazy<Func<object>>? _partitionKeyGetter;
         static Lazy<Func<object>>? _rowKeyGetter;
         static ConcurrentDictionary<string, Func<T, Async.Task<T>>?> _stateFuncs = new ConcurrentDictionary<string, Func<T, Async.Task<T>>?>();
@@ -205,7 +204,7 @@ namespace ApiService.OneFuzzLib.Orm {
         /// <param name="entity"></param>
         /// <returns></returns>
         public async Async.Task<T?> ProcessStateUpdate(T entity) {
-            TState state = entity.BaseState;
+            TState state = entity.State;
             var func = GetType().GetMethod(state.ToString()) switch {
                 null => null,
                 MethodInfo info => info.CreateDelegate<StateTransition>(this)
@@ -227,13 +226,13 @@ namespace ApiService.OneFuzzLib.Orm {
         /// <param name="MaxUpdates"></param>
         public async Async.Task<T?> ProcessStateUpdates(T entity, int MaxUpdates = 5) {
             for (int i = 0; i < MaxUpdates; i++) {
-                var state = entity.BaseState;
+                var state = entity.State;
                 var newEntity = await ProcessStateUpdate(entity);
 
                 if (newEntity == null)
                     return null;
 
-                if (newEntity.BaseState.Equals(state)) {
+                if (newEntity.State.Equals(state)) {
                     return newEntity;
                 }
             }

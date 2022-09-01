@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -12,19 +13,25 @@ public interface IConfigOperations : IOrm<InstanceConfig> {
 
 public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
     private readonly ILogTracer _log;
+    private readonly IMemoryCache _cache;
 
-    public ConfigOperations(ILogTracer log, IOnefuzzContext context) : base(log, context) {
+    public ConfigOperations(ILogTracer log, IOnefuzzContext context, IMemoryCache cache)
+        : base(log, context) {
         _log = log;
+        _cache = cache;
     }
 
-    public async Task<InstanceConfig> Fetch() {
-        // TODO: cache this for some period
-        var key = _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set");
-        var config = await GetEntityAsync(key, key);
-        return config;
-    }
+    private sealed record InstanceConfigCacheKey();
+    private static readonly InstanceConfigCacheKey _key = new(); // singleton key
+    public Task<InstanceConfig> Fetch()
+        => _cache.GetOrCreateAsync(_key, async entry => {
+            entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10)); // cached for 10 minutes
+            var key = _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set");
+            return await GetEntityAsync(key, key);
+        });
 
     public async Async.Task Save(InstanceConfig config, bool isNew = false, bool requireEtag = false) {
+
         ResultVoid<(int, string)> r;
         if (isNew) {
             r = await Insert(config);
@@ -41,6 +48,10 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
             if (!r.IsOk) {
                 _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace instance config record");
             }
+        }
+
+        if (r.IsOk) {
+            _cache.Set(_key, config);
         }
 
         await _context.Events.SendEvent(new EventInstanceConfigUpdated(config));

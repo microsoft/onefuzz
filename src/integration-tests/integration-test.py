@@ -288,7 +288,9 @@ class TestOnefuzz:
             self.logger.info("creating pool: %s:%s", entry.name, name)
             self.of.pools.create(name, entry)
             self.logger.info("creating scaleset for pool: %s", name)
-            self.of.scalesets.create(name, pool_size, region=region)
+            self.of.scalesets.create(
+                name, pool_size, region=region, initial_size=pool_size
+            )
 
     def launch(
         self, path: Directory, *, os_list: List[OS], targets: List[str], duration=int
@@ -859,7 +861,10 @@ class TestOnefuzz:
                 break
 
             # ignore logging.info coming from Azure Functions
-            if entry.get("customDimensions", {}).get("LogLevel") == "Information":
+            if (
+                entry.get("customDimensions", {}).get("LogLevel") == "Information"
+                or entry.get("severityLevel") <= 2
+            ):
                 continue
 
             # ignore warnings coming from the rust code, only be concerned
@@ -978,7 +983,9 @@ class Run(Command):
         if test_id is None:
             test_id = uuid4()
         self.logger.info("launching test_id: %s", test_id)
-        self.logger.info("dotnet configuration: %s, %s", dotnet_endpoint, dotnet_functions)
+        self.logger.info(
+            "dotnet configuration: %s, %s", dotnet_endpoint, dotnet_functions
+        )
 
         def try_setup(data: Any) -> None:
             self.onefuzz.__setup__(

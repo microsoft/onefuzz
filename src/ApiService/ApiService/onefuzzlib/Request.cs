@@ -45,6 +45,11 @@ public class RequestHandling : IRequestHandling {
                         Code: ErrorCode.INVALID_REQUEST,
                         Errors: validationResults.Select(vr => vr.ToString()).ToArray());
                 }
+            } else {
+                return OneFuzzResult<T>.Error(
+                    ErrorCode.INVALID_REQUEST,
+                    $"Failed to deserialize message into type: {typeof(T)} - null"
+                );
             }
         } catch (Exception e) {
             exception = e;

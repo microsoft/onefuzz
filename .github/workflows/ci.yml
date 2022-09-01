@@ -21,6 +21,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install specific Rust version
+      # note: keep this in sync with .devcontainer/Dockerfile
       run: |
         rustup default 1.63 
         rustup component add clippy rustfmt

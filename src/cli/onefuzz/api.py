@@ -1393,8 +1393,9 @@ class Scaleset(Endpoint):
     def create(
         self,
         pool_name: primitives.PoolName,
-        size: int,
+        max_size: int,
         *,
+        initial_size: Optional[int] = 1,
         image: Optional[str] = None,
         vm_sku: Optional[str] = "Standard_D2s_v3",
         region: Optional[primitives.Region] = None,
@@ -1423,14 +1424,16 @@ class Scaleset(Endpoint):
 
         auto_scale = requests.AutoScaleOptions(
             min=min_instances,
-            max=size,
-            default=size,
+            max=max_size,
+            default=max_size,
             scale_out_amount=scale_out_amount,
             scale_out_cooldown=scale_out_cooldown,
             scale_in_amount=scale_in_amount,
             scale_in_cooldown=scale_in_cooldown,
         )
 
+        # Setting size=1 so that the scaleset is intialized with only 1 node.
+        # The default and max are defined above
         return self._req_model(
             "POST",
             models.Scaleset,
@@ -1439,7 +1442,7 @@ class Scaleset(Endpoint):
                 vm_sku=vm_sku,
                 image=image,
                 region=region,
-                size=size,
+                size=initial_size,
                 spot_instances=spot_instances,
                 ephemeral_os_disks=ephemeral_os_disks,
                 tags=tags,
