@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using Azure.ResourceManager.Compute;
 
+
 namespace Microsoft.OneFuzz.Service {
     public class VMExtensionWrapper {
         public AzureLocation? Location { get; init; }
@@ -27,7 +28,7 @@ namespace Microsoft.OneFuzz.Service {
             var protectedSettings = ProtectedSettings ?? new BinaryData(new Dictionary<string, string>());
 
             return (Name!, new VirtualMachineExtensionData(Location.Value) {
-                ExtensionType = TypePropertiesType,
+                TypePropertiesType = TypePropertiesType,
                 Publisher = Publisher,
                 TypeHandlerVersion = TypeHandlerVersion,
                 AutoUpgradeMinorVersion = AutoUpgradeMinorVersion,
@@ -49,7 +50,8 @@ namespace Microsoft.OneFuzz.Service {
             var protectedSettings = ProtectedSettings ?? new BinaryData(new Dictionary<string, string>());
 
             return new VirtualMachineScaleSetExtensionData() {
-                ExtensionType = TypePropertiesType,
+                Name = Name,
+                TypePropertiesType = TypePropertiesType,
                 Publisher = Publisher,
                 TypeHandlerVersion = TypeHandlerVersion,
                 AutoUpgradeMinorVersion = AutoUpgradeMinorVersion,
@@ -62,3 +64,4 @@ namespace Microsoft.OneFuzz.Service {
     }
 
 }
+

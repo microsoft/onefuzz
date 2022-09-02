@@ -68,12 +68,17 @@ public class Subnet : ISubnet {
     }
 
     public async Async.Task<SubnetResource?> GetSubnet(string vnetName, string subnetName) {
-        var vnet = await this.GetVnet(vnetName);
+        try {
+            var vnet = await this.GetVnet(vnetName);
 
-        if (vnet != null) {
-            return await vnet.GetSubnetAsync(subnetName);
+            if (vnet != null) {
+                return await vnet.GetSubnetAsync(subnetName);
+            }
+            return null;
+        } catch (RequestFailedException ex) when (ex.Status == 404) {
+            return null;
         }
-        return null;
+
     }
 
     public async Task<ResourceIdentifier?> GetSubnetId(string name, string subnetName) {

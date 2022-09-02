@@ -234,20 +234,20 @@ public record TaskConfig(
    Dictionary<string, string>? Tags = null,
    List<TaskDebugFlag>? Debug = null,
    bool? Colocate = null
-   );
+);
 
 public record TaskEventSummary(
     DateTimeOffset? Timestamp,
     string EventData,
     string EventType
-    );
+);
 
 
 public record NodeAssignment(
     Guid NodeId,
     Guid? ScalesetId,
     NodeTaskState State
-    );
+);
 
 
 public record Task(
@@ -261,8 +261,6 @@ public record Task(
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? EndTime = null,
     UserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
-    public List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
-    public List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
 }
 
 public record TaskEvent(

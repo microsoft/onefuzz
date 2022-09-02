@@ -198,7 +198,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         //# This was done as part of the generated per-task setup script.
         _logTracer.Info($"{SCALESET_LOG_PREFIX} setup. scalset_id: {scaleset.ScalesetId}");
 
-        var network = await Network.Create(scaleset.Region, _context);
+        var network = await Network.Init(scaleset.Region, _context);
         var networkId = await network.GetId();
         if (networkId is null) {
             _logTracer.Info($"{SCALESET_LOG_PREFIX} creating network. region: {scaleset.Region} scaleset_id:{scaleset.ScalesetId}");
