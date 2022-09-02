@@ -229,20 +229,20 @@ public record TaskConfig(
    Dictionary<string, string>? Tags = null,
    List<TaskDebugFlag>? Debug = null,
    bool? Colocate = null
-   );
+);
 
 public record TaskEventSummary(
     DateTimeOffset? Timestamp,
     string EventData,
     string EventType
-    );
+);
 
 
 public record NodeAssignment(
     Guid NodeId,
     Guid? ScalesetId,
     NodeTaskState State
-    );
+);
 
 
 public record Task(
