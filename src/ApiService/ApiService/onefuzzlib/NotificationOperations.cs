@@ -47,7 +47,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             }
 
             if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {
-                GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression);
+                await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression);
             }
         }
 
@@ -137,10 +137,6 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
         _logTracer.Error($"unable to find crash_report or no repro entry for report: {JsonSerializer.Serialize(report)}");
         return null;
-    }
-
-    private void GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport report) {
-        throw new NotImplementedException();
     }
 
     private void NotifyAdo(AdoTemplate config, Container container, string filename, IReport report, bool failTaskOnTransientError) {

@@ -299,6 +299,12 @@
           "System.Text.Encodings.Web": "5.0.1"
         }
       },
+      "Octokit": {
+        "type": "Direct",
+        "requested": "[2.0.1, )",
+        "resolved": "2.0.1",
+        "contentHash": "JVlfUY+sfItl6RSyVKDJTutuy28cDydUwKKfzcelwNMor2Sa18pYVKna6phO8lug1b+ep+pcuFh/FPayuImsQw=="
+      },
       "Scriban": {
         "type": "Direct",
         "requested": "[5.5.0, )",

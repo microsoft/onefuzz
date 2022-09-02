@@ -73,9 +73,7 @@ public class Teams : ITeams {
 
             var setupContainer = Scheduler.GetSetupContainer(task.Config);
             if (setupContainer != null) {
-                var setup = "setup/";
-                int index = report.Executable.IndexOf(setup, StringComparison.InvariantCultureIgnoreCase);
-                var setupFileName = (index < 0) ? report.Executable : report.Executable.Remove(index, setup.Length);
+                var setupFileName = NotificationsBase.ReplaceFirstSetup(report.Executable);
                 links.Add(
                     $"[executable]({await _context.Containers.AuthDownloadUrl(setupContainer, setupFileName)})"
                 );
