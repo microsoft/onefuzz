@@ -226,7 +226,8 @@ public class Extensions : IExtensions {
             );
 
         var fileName = $"{pool.Name}/config.json";
-        await _context.Containers.SaveBlob(new Container("vm-scripts"), fileName, (JsonSerializer.Serialize(config, EntityConverter.GetJsonSerializerOptions())), StorageType.Config);
+        var configJson = JsonSerializer.Serialize(config, EntityConverter.GetJsonSerializerOptions());
+        await _context.Containers.SaveBlob(new Container("vm-scripts"), fileName, configJson, StorageType.Config);
         return await ConfigUrl(new Container("vm-scripts"), fileName, false);
     }
 
@@ -264,6 +265,7 @@ public class Extensions : IExtensions {
         await UpdateManagedScripts();
         var urlsUpdated = urls ?? new();
 
+        var managedIdentity = JsonSerializer.Serialize(new { ManagedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions);
         if (vmOs == Os.Windows) {
             var vmScripts = await ConfigUrl(new Container("vm-scripts"), "managed.ps1", withSas) ?? throw new Exception("failed to get VmScripts config url");
             var toolsAzCopy = await ConfigUrl(new Container("tools"), "win64/azcopy.exe", withSas) ?? throw new Exception("failed to get toolsAzCopy config url");
@@ -286,7 +288,7 @@ public class Extensions : IExtensions {
                 TypeHandlerVersion = "1.9",
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(JsonSerializer.Serialize(new { commandToExecute = toExecuteCmd, fileUris = urlsUpdated }, _extensionSerializerOptions)),
-                ProtectedSettings = new BinaryData(JsonSerializer.Serialize(new { managedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions))
+                ProtectedSettings = new BinaryData(managedIdentity)
             };
             return extension;
         } else if (vmOs == Os.Linux) {
@@ -301,7 +303,6 @@ public class Extensions : IExtensions {
 
             var toExecuteCmd = $"sh setup.sh {mode.ToString().ToLowerInvariant()}";
             var extensionSettings = JsonSerializer.Serialize(new { CommandToExecute = toExecuteCmd, FileUris = urlsUpdated }, _extensionSerializerOptions);
-            var protectedExtensionSettings = JsonSerializer.Serialize(new { ManagedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions);
 
             var extension = new VMExtensionWrapper {
                 Name = "CustomScript",
@@ -312,7 +313,7 @@ public class Extensions : IExtensions {
                 ForceUpdateTag = Guid.NewGuid().ToString(),
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(extensionSettings),
-                ProtectedSettings = new BinaryData(protectedExtensionSettings)
+                ProtectedSettings = new BinaryData(managedIdentity)
             };
             return extension;
         }

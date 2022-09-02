@@ -3,7 +3,7 @@ using Xunit;
 
 namespace FunctionalTests;
 
-class Error : IComparable<Error>, IFromJsonElement<Error> {
+public class Error : IComparable<Error>, IFromJsonElement<Error> {
     JsonElement _e;
 
     public Error(JsonElement e) {
@@ -21,18 +21,18 @@ class Error : IComparable<Error>, IFromJsonElement<Error> {
         return res.ValueKind == JsonValueKind.Object && res.TryGetProperty("code", out _) && res.TryGetProperty("errors", out _);
     }
 
-    public int CompareTo(Error? error) {
-        if (error is null) {
+    public int CompareTo(Error? other) {
+        if (other is null) {
             return -1;
         }
 
-        var sameErrorMessages = Errors.Count() == error.Errors.Count();
-        foreach (var s in error.Errors) {
+        var sameErrorMessages = Errors.Count() == other.Errors.Count();
+        foreach (var s in other.Errors) {
             if (!sameErrorMessages) break;
             sameErrorMessages = Errors.Contains(s);
         }
 
-        if (error.Code == this.Code && sameErrorMessages) {
+        if (other.Code == this.Code && sameErrorMessages) {
             return 0;
         } else
             return 1;

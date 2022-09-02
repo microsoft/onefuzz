@@ -37,16 +37,7 @@ namespace FunctionalTests {
 
         [Fact]
         public async Task CreateResetDelete() {
-            var newPoolId = Guid.NewGuid().ToString();
-            var newPoolName = PoolApi.TestPoolPrefix + newPoolId;
-            var newPool = await _poolApi.Create(newPoolName, "linux");
-
-            Assert.True(newPool.IsOk, $"failed to create new pool: {newPool.ErrorV}");
-
-            var newScalesetResult = await _scalesetApi.Create(newPool.OkV!.Name, 2);
-
-            Assert.True(newScalesetResult.IsOk, $"failed to crate new scaleset: {newScalesetResult.ErrorV}");
-            var newScaleset = newScalesetResult.OkV!;
+            var (newPool, newScaleset) = await Helpers.CreatePoolAndScaleset(_poolApi, _scalesetApi, "linux");
 
             newScaleset = await _scalesetApi.WaitWhile(newScaleset.ScalesetId, sc => sc.State == "init" || sc.State == "setup");
 
@@ -81,12 +72,10 @@ namespace FunctionalTests {
 
             _output.WriteLine($"deleted proxy");
 
-            var deletePool = await _poolApi.Delete(newPoolName);
+            var deletePool = await _poolApi.Delete(newPool.Name);
             Assert.True(deletePool.Result);
 
-            _output.WriteLine($"deleted pool {newPoolName}");
+            _output.WriteLine($"deleted pool {newPool.Name}");
         }
-
-
     }
 }

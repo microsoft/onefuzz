@@ -122,7 +122,7 @@ public sealed class Creds : ICreds {
 
             var resource = await uid.GetAsync();
             var principalId = resource.Value.Data.Properties.ToObjectFromJson<ScaleSetIdentity>().principalId;
-            return new Guid(principalId);
+            return Guid.Parse(principalId);
         });
     }
 
