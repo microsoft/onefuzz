@@ -89,15 +89,13 @@ class OnefuzzNamingPolicy : JsonNamingPolicy {
 public class EntityConverter {
 
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
-    private static readonly JsonSerializerOptions _options;
-
-    static EntityConverter() {
-        _options = new JsonSerializerOptions() {
-            PropertyNamingPolicy = new OnefuzzNamingPolicy(),
-        };
-        _options.Converters.Add(new CustomEnumConverterFactory());
-        _options.Converters.Add(new PolymorphicConverterFactory());
-    }
+    private static readonly JsonSerializerOptions _options = new() {
+        PropertyNamingPolicy = new OnefuzzNamingPolicy(),
+        Converters = {
+            new CustomEnumConverterFactory(),
+            new PolymorphicConverterFactory(),
+        }
+    };
 
     public EntityConverter() {
         _cache = new ConcurrentDictionary<Type, EntityInfo>();

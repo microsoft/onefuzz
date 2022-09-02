@@ -481,8 +481,6 @@ jobs:
           cp artifacts/service/api-service.zip src/deployment
           cp artifacts/service-net/api-service-net.zip src/deployment
           cp -r artifacts/third-party src/deployment
-          cp -r src/agent/script/linux/libfuzzer-coverage src/deployment/tools/linux/libfuzzer-coverage
-          cp -r src/agent/script/win64/libfuzzer-coverage src/deployment/tools/win64/libfuzzer-coverage
           echo $GITHUB_RUN_ID | tee src/deployment/.build.id
           echo $GITHUB_SHA | tee src/deployment/.sha
           ./src/ci/get-version.sh > src/deployment/VERSION

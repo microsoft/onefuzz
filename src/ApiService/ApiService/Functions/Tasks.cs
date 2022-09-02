@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
@@ -31,20 +32,36 @@ public class Tasks {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "task get");
         }
 
-        if (request.OkV.TaskId != null) {
-            var task = await _context.TaskOperations.GetByTaskId(request.OkV.TaskId.Value);
+        if (request.OkV.TaskId is Guid taskId) {
+            var task = await _context.TaskOperations.GetByTaskId(taskId);
             if (task == null) {
-                return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find task"
-                }), "task get");
-
+                return await _context.RequestHandling.NotOk(
+                    req,
+                    new Error(
+                        ErrorCode.INVALID_REQUEST,
+                        new[] { "unable to find task" }),
+                    "task get");
             }
-            task.Nodes = await _context.NodeTasksOperations.GetNodeAssignments(request.OkV.TaskId.Value).ToListAsync();
-            task.Events = await _context.TaskEventOperations.GetSummary(request.OkV.TaskId.Value).ToListAsync();
 
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(task);
-            return response;
+            var (nodes, events) = await (
+                _context.NodeTasksOperations.GetNodeAssignments(taskId).ToListAsync().AsTask(),
+                _context.TaskEventOperations.GetSummary(taskId).ToListAsync().AsTask());
 
+            var result = new TaskSearchResult(
+                JobId: task.JobId,
+                TaskId: task.TaskId,
+                State: task.State,
+                Os: task.Os,
+                Config: task.Config,
+                Error: task.Error,
+                Auth: task.Auth,
+                Heartbeat: task.Heartbeat,
+                EndTime: task.EndTime,
+                UserInfo: task.UserInfo,
+                Nodes: nodes,
+                Events: events);
+
+            return await RequestHandling.Ok(req, result);
         }
 
         var tasks = await _context.TaskOperations.SearchAll().ToListAsync();
@@ -55,7 +72,7 @@ public class Tasks {
 
 
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
-        var request = await RequestHandling.ParseRequest<TaskConfig>(req);
+        var request = await RequestHandling.ParseRequest<TaskCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
@@ -68,7 +85,19 @@ public class Tasks {
             return await _context.RequestHandling.NotOk(req, userInfo.ErrorV, "task create");
         }
 
-        var checkConfig = await _context.Config.CheckConfig(request.OkV);
+        var create = request.OkV;
+        var cfg = new TaskConfig(
+            JobId: create.JobId,
+            PrereqTasks: create.PrereqTasks,
+            Task: create.Task,
+            Vm: null,
+            Pool: create.Pool,
+            Containers: create.Containers,
+            Tags: create.Tags,
+            Debug: create.Debug,
+            Colocate: create.Colocate);
+
+        var checkConfig = await _context.Config.CheckConfig(cfg);
         if (!checkConfig.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
@@ -82,23 +111,23 @@ public class Tasks {
             return response;
         }
 
-        var job = await _context.JobOperations.Get(request.OkV.JobId);
+        var job = await _context.JobOperations.Get(cfg.JobId);
         if (job == null) {
             return await _context.RequestHandling.NotOk(
                 req,
                 new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find job" }),
-                request.OkV.JobId.ToString());
+                cfg.JobId.ToString());
         }
 
         if (job.State != JobState.Enabled && job.State != JobState.Init) {
             return await _context.RequestHandling.NotOk(
                 req,
                 new Error(ErrorCode.UNABLE_TO_ADD_TASK_TO_JOB, new[] { $"unable to add a job in state {job.State}" }),
-                request.OkV.JobId.ToString());
+                cfg.JobId.ToString());
         }
 
-        if (request.OkV.PrereqTasks != null) {
-            foreach (var taskId in request.OkV.PrereqTasks) {
+        if (cfg.PrereqTasks != null) {
+            foreach (var taskId in cfg.PrereqTasks) {
                 var prereq = await _context.TaskOperations.GetByTaskId(taskId);
 
                 if (prereq == null) {
@@ -110,7 +139,7 @@ public class Tasks {
             }
         }
 
-        var task = await _context.TaskOperations.Create(request.OkV, request.OkV.JobId, userInfo.OkV);
+        var task = await _context.TaskOperations.Create(cfg, cfg.JobId, userInfo.OkV);
 
         if (!task.IsOk) {
             return await _context.RequestHandling.NotOk(
