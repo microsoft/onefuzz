@@ -294,7 +294,7 @@ public record AgentRegistrationGet(
 
 public record AgentRegistrationPost(
     PoolName PoolName,
-    Guid? ScalesetId,
+    Guid ScalesetId,
     Guid MachineId,
     string Version,
     Os? Os

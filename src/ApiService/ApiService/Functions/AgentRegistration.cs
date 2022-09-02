@@ -90,6 +90,24 @@ public class AgentRegistration {
         var version = request.OkV.Version;
         var os = request.OkV.Os;
 
+        if (machineId == Guid.Empty) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                new Error(
+                    ErrorCode.INVALID_REQUEST,
+                    new string[] { "'machine_id' query parameter must be provided" }),
+                "agent registration");
+        }
+
+        if (poolName is null) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                new Error(
+                    ErrorCode.INVALID_REQUEST,
+                    new string[] { "'pool_name' query parameter must be provided" }),
+                "agent registration");
+        }
+
         _log.Info($"registration request: machine_id: {machineId} pool_name: {poolName} scaleset_id: {scalesetId} version: {version}");
         var poolResult = await _context.PoolOperations.GetByName(poolName);
         if (!poolResult.IsOk) {
