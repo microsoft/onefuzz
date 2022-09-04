@@ -41,7 +41,8 @@ public interface IVmssOperations {
         IDictionary<string, string> tags);
 
     Async.Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter);
-    Async.Task ReimageNodes(Guid scalesetId, HashSet<Guid> machineIds);
+    Async.Task ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
+    Async.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
 }
 
 public class VmssOperations : IVmssOperations {
@@ -394,7 +395,7 @@ public class VmssOperations : IVmssOperations {
             return skuNames;
         });
 
-    public async Async.Task ReimageNodes(Guid scalesetId, HashSet<Guid> machineIds) {
+    public async Async.Task ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
         var result = await CheckCanUpdate(scalesetId);
         if (!result.IsOk) {
             throw new Exception($"cannot reimage scaleset {scalesetId}: {result.ErrorV}");
@@ -426,12 +427,12 @@ public class VmssOperations : IVmssOperations {
         // the instance is up-to-date with the VMSS model.
         // The expectation is that these requests are queued and handled subsequently.
         // The VMSS Team confirmed this expectation and testing supports it, as well.
-        _log.Info($"upgrading VMSS ndoes - name: {scalesetId} vm_ids: {string.Join(", ", machineIds)}");
+        _log.Info($"upgrading VMSS ndoes - name: {scalesetId} ids: {string.Join(", ", instanceIds)}");
         await vmssResource.UpdateInstancesAsync(
             WaitUntil.Started,
             new VirtualMachineScaleSetVmInstanceRequiredIds(instanceIds));
 
-        _log.Info($"reimaging VMSS nodes - name: {scalesetId} vm_ids: {string.Join(", ", machineIds)}");
+        _log.Info($"reimaging VMSS nodes - name: {scalesetId} ids: {string.Join(", ", instanceIds)}");
 
         // very weird API here…
         var reqInstanceIds = new VirtualMachineScaleSetVmInstanceIds();
@@ -440,5 +441,39 @@ public class VmssOperations : IVmssOperations {
         }
 
         await vmssResource.ReimageAllAsync(WaitUntil.Started, reqInstanceIds);
+    }
+
+    public async Async.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
+        var result = await CheckCanUpdate(scalesetId);
+        if (!result.IsOk) {
+            throw new Exception($"cannot delete nodes from scaleset {scalesetId}: {result.ErrorV}");
+        }
+
+        var instanceIds = new HashSet<string>();
+        var machineToInstance = await ListInstanceIds(scalesetId);
+        foreach (var machineId in machineIds) {
+            if (machineToInstance.TryGetValue(machineId, out var instanceId)) {
+                instanceIds.Add(instanceId);
+            } else {
+                _log.Info($"unable to find instance ID for {scalesetId}:{machineId}");
+            }
+        }
+
+        if (!instanceIds.Any()) {
+            return;
+        }
+
+        var subscription = _creds.GetSubscription();
+        var resourceGroup = _creds.GetBaseResourceGroup();
+        var vmssId = VirtualMachineScaleSetResource.CreateResourceIdentifier(
+            subscription, resourceGroup, scalesetId.ToString());
+
+        var computeClient = _creds.ArmClient;
+        var vmssResource = computeClient.GetVirtualMachineScaleSetResource(vmssId);
+
+        _log.Info($"deleting scaleset VMs - name: {scalesetId} ids: {instanceIds}");
+        await vmssResource.DeleteInstancesAsync(
+            WaitUntil.Started,
+            new VirtualMachineScaleSetVmInstanceRequiredIds(instanceIds));
     }
 }
