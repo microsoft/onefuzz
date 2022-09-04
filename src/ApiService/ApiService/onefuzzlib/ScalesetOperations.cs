@@ -530,12 +530,12 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             toReimage[deadNode.MachineId] = deadNode;
         }
 
-        // Perform operations until they fail due to scaleset getting locked
-        NodeDisposalStrategy strategy =
-            (_context.ServiceConfiguration.OneFuzzNodeDisposalStrategy.ToLowerInvariant()) switch {
-                "decomission" => NodeDisposalStrategy.Decomission,
-                _ => NodeDisposalStrategy.ScaleIn
-            };
+        // Perform operations until they fail due to scaleset getting locked:
+        var strategy = _context.ServiceConfiguration.OneFuzzNodeDisposalStrategy.ToLowerInvariant() switch {
+            // allowing typo’d or correct name for config setting:
+            "decomission" or "decommission" => NodeDisposalStrategy.Decommission,
+            _ => NodeDisposalStrategy.ScaleIn,
+        };
 
         await ReimageNodes(scaleSet, toReimage.Values, strategy);
         await DeleteNodes(scaleSet, toDelete.Values, strategy);
