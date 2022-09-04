@@ -1,4 +1,4 @@
-# OneFuzz 
+# <img src="https://user-images.githubusercontent.com/12575/188333006-ad5a7e1d-9bfe-4180-ba9b-282f2faf1b05.svg" height="60" /> OneFuzz
 
 [![Onefuzz build status](https://github.com/microsoft/onefuzz/workflows/Build/badge.svg?branch=main)](https://github.com/microsoft/onefuzz/actions/workflows/ci.yml?query=branch%3Amain)
 
