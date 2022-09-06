@@ -101,16 +101,10 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
     public async Async.Task MarkFailed(Task task, Error error, List<Task>? taskInJob = null) {
         if (task.State.ShuttingDown()) {
-            _logTracer.Verbose(
-                $"ignoring post-task stop failures for {task.JobId}:{task.TaskId}"
-            );
             return;
         }
 
         if (task.Error != null) {
-            _logTracer.Verbose(
-                $"ignoring additional task error {task.JobId}:{task.TaskId}"
-            );
             return;
         }
 
@@ -127,7 +121,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         foreach (var t in taskInJob) {
             if (t.Config.PrereqTasks != null) {
                 if (t.Config.PrereqTasks.Contains(t.TaskId)) {
-                    await MarkFailed(task, new Error(ErrorCode.TASK_FAILED, new[] { $"prerequisite task failed.  task_id:{t.TaskId}" }), taskInJob);
+                    await MarkFailed(t, new Error(ErrorCode.TASK_FAILED, new[] { $"prerequisite task failed.  task_id:{t.TaskId}" }), taskInJob);
                 }
             }
         }
