@@ -76,8 +76,13 @@ public class InstanceConfig {
             await foreach (var nsg in _context.NsgOperations.ListNsgs()) {
                 _log.Info($"Checking if nsg: {nsg.region} ({nsg.name}) owned by OneFuz");
                 if (nsg.region == nsg.name) {
-                    var result = _context.NsgOperations.SetAllowedSources(nsg.location, request.OkV.config.ProxyNsgConfig);
-
+                    var result = await _context.NsgOperations.SetAllowedSources(nsg.location, request.OkV.config.ProxyNsgConfig);
+                    if (!result.IsOk) {
+                        return await _context.RequestHandling.NotOk(
+                        req,
+                        result.ErrorV,
+                        context: "instance_config update");
+                    }
                 }
             }
         }
