@@ -15,8 +15,16 @@ public interface IProxyOperations : IStatefulOrm<Proxy, VmState> {
     Async.Task SaveProxyConfig(Proxy proxy);
     bool IsOutdated(Proxy proxy);
     Async.Task<Proxy?> GetOrCreate(string region);
-
     Task<bool> IsUsed(Proxy proxy);
+
+    // state transitions:
+    Async.Task<Proxy> Init(Proxy proxy);
+    Async.Task<Proxy> ExtensionsLaunch(Proxy proxy);
+    Async.Task<Proxy> ExtensionsFailed(Proxy proxy);
+    Async.Task<Proxy> VmAllocationFailed(Proxy proxy);
+    Async.Task<Proxy> Running(Proxy proxy);
+    Async.Task<Proxy> Stopping(Proxy proxy);
+    Async.Task<Proxy> Stopped(Proxy proxy);
 }
 public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IProxyOperations {
 
@@ -285,11 +293,26 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         return await Stopped(proxy);
     }
 
-    private async Task<Proxy> Stopped(Proxy proxy) {
+    public async Task<Proxy> Stopped(Proxy proxy) {
         var stoppedVm = await SetState(proxy, VmState.Stopped);
         _logTracer.Info($"removing proxy: {stoppedVm.Region}");
         await _context.Events.SendEvent(new EventProxyDeleted(stoppedVm.Region, stoppedVm.ProxyId));
         await Delete(stoppedVm);
         return stoppedVm;
+    }
+
+    public Task<Proxy> ExtensionsFailed(Proxy proxy) {
+        // nothing to do
+        return Async.Task.FromResult(proxy);
+    }
+
+    public Task<Proxy> VmAllocationFailed(Proxy proxy) {
+        // nothing to do
+        return Async.Task.FromResult(proxy);
+    }
+
+    public Task<Proxy> Running(Proxy proxy) {
+        // nothing to do
+        return Async.Task.FromResult(proxy);
     }
 }
