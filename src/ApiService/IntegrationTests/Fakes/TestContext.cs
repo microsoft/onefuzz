@@ -112,6 +112,7 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IImageOperations ImageOperations => throw new NotImplementedException();
     public ITeams Teams => throw new NotImplementedException();
+    public IGithubIssues GithubIssues => throw new NotImplementedException();
 
 
 }

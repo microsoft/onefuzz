@@ -30,25 +30,29 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
 
     private async Async.Task Process(GithubIssuesTemplate config, Container container, string filename, Report report) {
         var renderer = await Renderer.ConstructRenderer(_context, container, filename, report);
-        var handler = new GithubConnnector(config, container, filename, report, renderer, _context.Creds.GetInstanceUrl());
+        var handler = await GithubConnnector.GithubConnnectorCreator(config, container, filename, renderer, _context.Creds.GetInstanceUrl(), _context);
         await handler.Process();
     }
     class GithubConnnector {
-        private GitHubClient _gh;
-        private GithubIssuesTemplate _config;
-        private Report _report;
-        private Renderer _renderer;
-        private Uri _instanceUrl;
+        private readonly GitHubClient _gh;
+        private readonly GithubIssuesTemplate _config;
+        private readonly Renderer _renderer;
+        private readonly Uri _instanceUrl;
 
-        public GithubConnnector(GithubIssuesTemplate config, Container container, string filename, Report report, Renderer renderer, Uri instanceUrl) {
+        public static async Async.Task<GithubConnnector> GithubConnnectorCreator(GithubIssuesTemplate config, Container container, string filename, Renderer renderer, Uri instanceUrl, IOnefuzzContext context) {
+            var auth = config.Auth.Secret switch {
+                SecretAddress<GithubAuth> sa => await context.SecretsOperations.GetSecretObj<GithubAuth>(sa.Url),
+                SecretValue<GithubAuth> sv => sv.Value,
+                _ => throw new ArgumentException($"Unexpected secret type {config.Auth.Secret.GetType()}")
+            };
+            return new GithubConnnector(config, container, filename, renderer, instanceUrl, auth!);
+        }
+
+        public GithubConnnector(GithubIssuesTemplate config, Container container, string filename, Renderer renderer, Uri instanceUrl, GithubAuth auth) {
             _config = config;
-            _report = report;
-            _gh = new GitHubClient(new ProductHeaderValue("microsoft/OneFuzz"));
-
-            // We have an if/else here in the python code but the type (both C# and python)
-            // doesn't allow for anything other than GithubAuth....
-            var auth = config.Auth.Value;
-            _gh.Credentials = new Credentials(auth.User, auth.PersonalAccessToken);
+            _gh = new GitHubClient(new ProductHeaderValue("microsoft/OneFuzz")) {
+                Credentials = new Credentials(auth.User, auth.PersonalAccessToken)
+            };
             _renderer = renderer;
             _instanceUrl = instanceUrl;
         }
