@@ -163,7 +163,7 @@ class Client:
         use_dotnet_agent_functions: bool,
         cli_app_id: str,
         auto_create_cli_app: bool,
-        use_windows: bool,
+        host_dotnet_on_windows: bool,
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -198,7 +198,7 @@ class Client:
         self.use_dotnet_agent_functions = use_dotnet_agent_functions
         self.cli_app_id = cli_app_id
         self.auto_create_cli_app = auto_create_cli_app
-        self.use_windows = use_windows
+        self.host_dotnet_on_windows = host_dotnet_on_windows
 
         self.cli_config: Dict[str, Union[str, UUID]] = {
             "client_id": self.cli_app_id,
@@ -633,7 +633,7 @@ class Client:
             multi_tenant_domain = {"value": ""}
 
         logger.info(
-            "template parameter enable_remote_debugging is set to: %s", self.use_windows
+            "template parameter enable_remote_debugging is set to: %s", self.host_dotnet_on_windows
         )
 
         params = {
@@ -647,7 +647,7 @@ class Client:
             "multi_tenant_domain": multi_tenant_domain,
             "workbookData": {"value": self.workbook_data},
             "use_dotnet_agent_functions": {"value": self.use_dotnet_agent_functions},
-            "enable_remote_debugging": {"value": self.use_windows},
+            "enable_remote_debugging": {"value": self.host_dotnet_on_windows},
         }
         deployment = Deployment(
             properties=DeploymentProperties(
@@ -1417,7 +1417,7 @@ def main() -> None:
         "app is not found. ",
     )
     parser.add_argument(
-        "--use_windows",
+        "--host_dotnet_on_windows",
         action="store_true",
         help="Use windows runtime for hosting dotnet Azure Function",
     )
@@ -1454,7 +1454,7 @@ def main() -> None:
         use_dotnet_agent_functions=args.use_dotnet_agent_functions,
         cli_app_id=args.cli_app_id,
         auto_create_cli_app=args.auto_create_cli_app,
-        use_windows=args.use_windows,
+        host_dotnet_on_windows=args.host_dotnet_on_windows,
     )
     if args.verbose:
         level = logging.DEBUG
