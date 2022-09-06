@@ -10,6 +10,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Task<bool> CanProcessNewWork(Node node);
 
     Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node);
+    Task<OneFuzzResultVoid> ReleaseScaleInProtection(Node node);
 
     bool IsOutdated(Node node);
     Async.Task Stop(Node node, bool done = false);
@@ -75,19 +76,25 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
 
 public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INodeOperations {
 
-
-    public NodeOperations(
-        ILogTracer log,
-        IOnefuzzContext context
-        )
+    public NodeOperations(ILogTracer log, IOnefuzzContext context)
         : base(log, context) {
-
     }
 
     public async Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node) {
-        if (await ScalesetNodeExists(node) && node.ScalesetId is Guid scalesetId) {
+        if (node.ScalesetId is Guid scalesetId && await ScalesetNodeExists(node)) {
             _logTracer.Info($"Setting scale-in protection on node {node.MachineId}");
             return await _context.VmssOperations.UpdateScaleInProtection(scalesetId, node.MachineId, protectFromScaleIn: true);
+        }
+
+        return OneFuzzResultVoid.Ok;
+    }
+
+    public async Task<OneFuzzResultVoid> ReleaseScaleInProtection(Node node) {
+        if (!node.DebugKeepNode &&
+            node.ScalesetId is Guid scalesetId &&
+            await ScalesetNodeExists(node)) {
+            _logTracer.Info($"Removing scale-in protection on node {node.MachineId}");
+            return await _context.VmssOperations.UpdateScaleInProtection(scalesetId, node.MachineId, protectFromScaleIn: false);
         }
 
         return OneFuzzResultVoid.Ok;

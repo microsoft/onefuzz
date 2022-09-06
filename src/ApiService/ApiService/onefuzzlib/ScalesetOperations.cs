@@ -530,12 +530,12 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             toReimage[deadNode.MachineId] = deadNode;
         }
 
-        // Perform operations until they fail due to scaleset getting locked
-        NodeDisposalStrategy strategy =
-            (_context.ServiceConfiguration.OneFuzzNodeDisposalStrategy.ToLowerInvariant()) switch {
-                "decomission" => NodeDisposalStrategy.Decomission,
-                _ => NodeDisposalStrategy.ScaleIn
-            };
+        // Perform operations until they fail due to scaleset getting locked:
+        var strategy = _context.ServiceConfiguration.OneFuzzNodeDisposalStrategy.ToLowerInvariant() switch {
+            // allowing typo’d or correct name for config setting:
+            "decomission" or "decommission" => NodeDisposalStrategy.Decommission,
+            _ => NodeDisposalStrategy.ScaleIn,
+        };
 
         await ReimageNodes(scaleSet, toReimage.Values, strategy);
         await DeleteNodes(scaleSet, toDelete.Values, strategy);
@@ -544,71 +544,105 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
     }
 
 
-    public async Async.Task ReimageNodes(Scaleset scaleSet, IEnumerable<Node> nodes, NodeDisposalStrategy disposalStrategy) {
+    public async Async.Task ReimageNodes(Scaleset scaleset, IEnumerable<Node> nodes, NodeDisposalStrategy disposalStrategy) {
 
         if (nodes is null || !nodes.Any()) {
-            _log.Info($"{SCALESET_LOG_PREFIX} no nodes to reimage: scaleset_id: {scaleSet.ScalesetId}");
+            _log.Info($"{SCALESET_LOG_PREFIX} no nodes to reimage: scaleset_id: {scaleset.ScalesetId}");
             return;
         }
 
-        if (scaleSet.State == ScalesetState.Shutdown) {
-            _log.Info($"{SCALESET_LOG_PREFIX} scaleset shutting down, deleting rather than reimaging nodes. scaleset_id: {scaleSet.ScalesetId}");
-            await DeleteNodes(scaleSet, nodes, disposalStrategy);
+        if (scaleset.State == ScalesetState.Shutdown) {
+            _log.Info($"{SCALESET_LOG_PREFIX} scaleset shutting down, deleting rather than reimaging nodes. scaleset_id: {scaleset.ScalesetId}");
+            await DeleteNodes(scaleset, nodes, disposalStrategy);
             return;
         }
 
-        if (scaleSet.State == ScalesetState.Halt) {
-            _log.Info($"{SCALESET_LOG_PREFIX} scaleset halting, ignoring node reimage: scaleset_id:{scaleSet.ScalesetId}");
+        if (scaleset.State == ScalesetState.Halt) {
+            _log.Info($"{SCALESET_LOG_PREFIX} scaleset halting, ignoring node reimage: scaleset_id:{scaleset.ScalesetId}");
             return;
         }
 
         var machineIds = new HashSet<Guid>();
         foreach (var node in nodes) {
-            if (node.State == NodeState.Done) {
+            if (node.State != NodeState.Done) {
                 continue;
             }
 
             if (node.DebugKeepNode) {
-                _log.Warning($"{SCALESET_LOG_PREFIX} not reimaging manually overriden node. scaleset_id:{scaleSet.ScalesetId} machine_id:{node.MachineId}");
+                _log.Warning($"{SCALESET_LOG_PREFIX} not reimaging manually overriden node. scaleset_id:{scaleset.ScalesetId} machine_id:{node.MachineId}");
             } else {
                 machineIds.Add(node.MachineId);
             }
         }
 
         if (!machineIds.Any()) {
-            _log.Info($"{SCALESET_LOG_PREFIX} no nodes to reimage: {scaleSet.ScalesetId}");
+            _log.Info($"{SCALESET_LOG_PREFIX} no nodes to reimage: {scaleset.ScalesetId}");
             return;
         }
 
-        throw new NotImplementedException();
+        switch (disposalStrategy) {
+            case NodeDisposalStrategy.Decommission:
+                _log.Info($"{SCALESET_LOG_PREFIX} decommissioning nodes");
+                await Async.Task.WhenAll(nodes
+                    .Where(node => machineIds.Contains(node.MachineId))
+                    .Select(node => _context.NodeOperations.ReleaseScaleInProtection(node)));
+                return;
+
+            case NodeDisposalStrategy.ScaleIn:
+                await _context.VmssOperations.ReimageNodes(scaleset.ScalesetId, machineIds);
+                await Async.Task.WhenAll(nodes
+                    .Where(node => machineIds.Contains(node.MachineId))
+                    .Select(async node => {
+                        await _context.NodeOperations.Delete(node);
+                        await _context.NodeOperations.ReleaseScaleInProtection(node);
+                    }));
+                return;
+        }
     }
 
-    public async Async.Task DeleteNodes(Scaleset scaleSet, IEnumerable<Node> nodes, NodeDisposalStrategy disposalStrategy) {
+
+    public async Async.Task DeleteNodes(Scaleset scaleset, IEnumerable<Node> nodes, NodeDisposalStrategy disposalStrategy) {
         if (nodes is null || !nodes.Any()) {
-            _log.Info($"{SCALESET_LOG_PREFIX} no nodes to delete: scaleset_id: {scaleSet.ScalesetId}");
+            _log.Info($"{SCALESET_LOG_PREFIX} no nodes to delete: scaleset_id: {scaleset.ScalesetId}");
             return;
         }
 
-        foreach (var node in nodes) {
-            await _context.NodeOperations.SetHalt(node);
-        }
+        // TODO: try to do this as one atomic operation:
+        await Async.Task.WhenAll(nodes.Select(node => _context.NodeOperations.SetHalt(node)));
 
-        if (scaleSet.State == ScalesetState.Halt) {
-            _log.Info($"{SCALESET_LOG_PREFIX} scaleset halting, ignoring deletion {scaleSet.ScalesetId}");
+        if (scaleset.State == ScalesetState.Halt) {
+            _log.Info($"{SCALESET_LOG_PREFIX} scaleset halting, ignoring deletion {scaleset.ScalesetId}");
             return;
         }
 
         HashSet<Guid> machineIds = new();
-
         foreach (var node in nodes) {
             if (node.DebugKeepNode) {
-                _log.Warning($"{SCALESET_LOG_PREFIX} not deleting manually overriden node. scaleset_id:{scaleSet.ScalesetId} machine_id:{node.MachineId}");
+                _log.Warning($"{SCALESET_LOG_PREFIX} not deleting manually overriden node. scaleset_id:{scaleset.ScalesetId} machine_id:{node.MachineId}");
             } else {
                 machineIds.Add(node.MachineId);
             }
         }
 
-        throw new NotImplementedException();
+        switch (disposalStrategy) {
+            case NodeDisposalStrategy.Decommission:
+                _log.Info($"{SCALESET_LOG_PREFIX} decommissioning nodes");
+                await Async.Task.WhenAll(nodes
+                    .Where(node => machineIds.Contains(node.MachineId))
+                    .Select(node => _context.NodeOperations.ReleaseScaleInProtection(node)));
+                return;
+
+            case NodeDisposalStrategy.ScaleIn:
+                _log.Info($"{SCALESET_LOG_PREFIX} deleting nodes scaleset_id: {scaleset.ScalesetId} machine_id: {string.Join(", ", machineIds)}");
+                await _context.VmssOperations.DeleteNodes(scaleset.ScalesetId, machineIds);
+                await Async.Task.WhenAll(nodes
+                    .Where(node => machineIds.Contains(node.MachineId))
+                    .Select(async node => {
+                        await _context.NodeOperations.Delete(node);
+                        await _context.NodeOperations.ReleaseScaleInProtection(node);
+                    }));
+                return;
+        }
     }
 
     public async Task<OneFuzzResult<Scaleset>> GetById(Guid scalesetId) {
