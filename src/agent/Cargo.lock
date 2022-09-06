@@ -50,7 +50,7 @@ checksum = "8b26702f315f53b6071259e15dd9d64528213b44d61de1ec926eca7715d62203"
 [[package]]
 name = "appinsights"
 version = "0.2.2"
-source = "git+https://github.com/Porges/appinsights-rs?branch=audit-fixes#8264e0236c7a2729c4af4a2ba0017ca0270d7d0e"
+source = "git+https://github.com/Porges/appinsights-rs?rev=8264e0236c7a2729c4af4a2ba0017ca0270d7d0e#8264e0236c7a2729c4af4a2ba0017ca0270d7d0e"
 dependencies = [
  "async-trait",
  "chrono",
