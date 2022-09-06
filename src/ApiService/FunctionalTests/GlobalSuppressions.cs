@@ -6,3 +6,6 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Style", "IDE0005:Using directive is unnecessary.", Justification = "Test code")]
+[assembly: SuppressMessage("Design", "CA1036:Override methods on comparable types", Justification = "Test code", Scope = "type", Target = "~T:FunctionalTests.Error")]
+[assembly: SuppressMessage("Design", "CA1036:Override methods on comparable types", Justification = "Test code", Scope = "type", Target = "~T:FunctionalTests.Forward")]
+[assembly: SuppressMessage("Design", "CA1036:Override methods on comparable types", Justification = "Test code", Scope = "type", Target = "~T:FunctionalTests.ProxyGetResult")]

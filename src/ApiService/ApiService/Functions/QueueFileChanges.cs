@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Azure.Core;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -39,7 +40,7 @@ public class QueueFileChanges {
 
         const string topic = "topic";
         if (!fileChangeEvent.RootElement.TryGetProperty(topic, out var topicElement)
-            || !_storage.CorpusAccounts().Contains(topicElement.GetString())) {
+            || !_storage.CorpusAccounts().Contains(new ResourceIdentifier(topicElement.GetString()!))) {
             return;
         }
 

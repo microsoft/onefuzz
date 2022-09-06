@@ -53,7 +53,7 @@ public class Scheduler : IScheduler {
 
         var notReadyCount = tasks.Count - seen.Count;
         if (notReadyCount > 0) {
-            _logTracer.Info($"tasks not ready {notReadyCount}");
+            _logTracer.Info($"tasks not ready {notReadyCount}. Tasks seen: {seen.Count}");
         }
     }
 

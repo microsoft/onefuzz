@@ -5,7 +5,7 @@ using Azure.ResourceManager.Compute;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IDiskOperations {
-    DiskImageCollection ListDisks(string resourceGroup);
+    DiskCollection ListDisks(string resourceGroup);
 
     Async.Task<bool> DeleteDisk(string resourceGroup, string name);
 }
@@ -23,7 +23,7 @@ public class DiskOperations : IDiskOperations {
     public async Task<bool> DeleteDisk(string resourceGroup, string name) {
         try {
             _logTracer.Info($"deleting disks {resourceGroup} : {name}");
-            var disk = await _creds.GetResourceGroupResource().GetDiskImageAsync(name);
+            var disk = await _creds.GetResourceGroupResource().GetDiskAsync(name);
             if (disk != null) {
                 await disk.Value.DeleteAsync(WaitUntil.Started);
                 return true;
@@ -35,8 +35,8 @@ public class DiskOperations : IDiskOperations {
         return false;
     }
 
-    public DiskImageCollection ListDisks(string resourceGroup) {
+    public DiskCollection ListDisks(string resourceGroup) {
         _logTracer.Info($"listing disks {resourceGroup}");
-        return _creds.GetResourceGroupResource().GetDiskImages();
+        return _creds.GetResourceGroupResource().GetDisks();
     }
 }

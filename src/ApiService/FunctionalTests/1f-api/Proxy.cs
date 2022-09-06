@@ -3,9 +3,7 @@ using System.Text.Json.Nodes;
 using Xunit.Abstractions;
 
 namespace FunctionalTests;
-
-
-class Proxy : IFromJsonElement<Proxy> {
+public class Proxy : IFromJsonElement<Proxy> {
 
     JsonElement _e;
     public Proxy() { }
@@ -19,8 +17,7 @@ class Proxy : IFromJsonElement<Proxy> {
     public Proxy Convert(JsonElement e) => new Proxy(e);
 }
 
-
-class Forward : IFromJsonElement<Forward>, IComparable<Forward> {
+public class Forward : IFromJsonElement<Forward>, IComparable<Forward> {
     JsonElement _e;
     public Forward() { }
     public Forward(JsonElement e) => _e = e;
@@ -43,14 +40,27 @@ class Forward : IFromJsonElement<Forward>, IComparable<Forward> {
     }
 }
 
-class ProxyGetResult : IFromJsonElement<ProxyGetResult>, IComparable<ProxyGetResult> {
+public class ProxyGetResult : IFromJsonElement<ProxyGetResult>, IComparable<ProxyGetResult> {
     JsonElement _e;
 
     public ProxyGetResult() { }
 
     public ProxyGetResult(JsonElement e) => _e = e;
 
-    public string? Ip => _e.ValueKind == JsonValueKind.Null ? null : _e.GetProperty("ip").GetString();
+    public string? Ip {
+        get {
+            JsonElement ip;
+            if (_e.TryGetProperty("ip", out ip)) {
+                if (ip.ValueKind == JsonValueKind.Null) {
+                    return null;
+                } else {
+                    return ip.GetString();
+                }
+            } else {
+                return null;
+            }
+        }
+    }
 
     public Forward Forward => new Forward(_e.GetProperty("forward"));
 
@@ -76,7 +86,7 @@ class ProxyGetResult : IFromJsonElement<ProxyGetResult>, IComparable<ProxyGetRes
 }
 
 
-class ProxyApi : ApiBase {
+public class ProxyApi : ApiBase {
 
     public ProxyApi(Uri endpoint, Microsoft.OneFuzz.Service.Request request, ITestOutputHelper output) :
         base(endpoint, "/api/proxy", request, output) {
@@ -84,9 +94,12 @@ class ProxyApi : ApiBase {
 
     public async Task<Result<IEnumerable<Proxy>, Error>> Get(Guid? scalesetId = null, Guid? machineId = null, int? dstPort = null) {
         var root = new JsonObject();
-        root.Add("scaleset_id", scalesetId);
-        root.Add("machine_id", machineId);
-        root.Add("dst_port", dstPort);
+        if (scalesetId is not null)
+            root.Add("scaleset_id", scalesetId);
+        if (machineId is not null)
+            root.Add("machine_id", machineId);
+        if (dstPort is not null)
+            root.Add("dst_port", dstPort);
 
         var r = await Get(root);
         if (Error.IsError(r)) {

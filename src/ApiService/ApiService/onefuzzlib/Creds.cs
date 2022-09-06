@@ -40,7 +40,7 @@ public interface ICreds {
     public ResourceIdentifier GetScalesetIdentityResourcePath();
 }
 
-public sealed class Creds : ICreds, IDisposable {
+public sealed class Creds : ICreds {
     private readonly ArmClient _armClient;
     private readonly DefaultAzureCredential _azureCredential;
     private readonly IServiceConfig _config;
@@ -65,15 +65,15 @@ public sealed class Creds : ICreds, IDisposable {
     public string GetSubscription() {
         var storageResourceId = _config.OneFuzzDataStorage
             ?? throw new System.Exception("Data storage env var is not present");
-        var storageResource = new ResourceIdentifier(storageResourceId);
-        return storageResource.SubscriptionId!;
+        return storageResourceId.SubscriptionId
+            ?? throw new Exception("OneFuzzDataStorage did not have subscription ID");
     }
 
     public string GetBaseResourceGroup() {
         var storageResourceId = _config.OneFuzzDataStorage
             ?? throw new System.Exception("Data storage env var is not present");
-        var storageResource = new ResourceIdentifier(storageResourceId);
-        return storageResource.ResourceGroupName!;
+        return storageResourceId.ResourceGroupName
+            ?? throw new Exception("OneFuzzDataStorage did not have resource group name");
     }
 
     public ResourceIdentifier GetResourceGroupResourceIdentifier() {
@@ -122,7 +122,7 @@ public sealed class Creds : ICreds, IDisposable {
 
             var resource = await uid.GetAsync();
             var principalId = resource.Value.Data.Properties.ToObjectFromJson<ScaleSetIdentity>().principalId;
-            return new Guid(principalId);
+            return Guid.Parse(principalId);
         });
     }
 
@@ -182,9 +182,6 @@ public sealed class Creds : ICreds, IDisposable {
             return await resource.GetAsync();
         }
         return resource;
-    }
-    public void Dispose() {
-        throw new NotImplementedException();
     }
 
     public Task<IReadOnlyList<string>> GetRegions()

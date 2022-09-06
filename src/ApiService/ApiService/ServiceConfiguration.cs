@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Azure.Core;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -25,8 +26,8 @@ public interface IServiceConfig {
     public string? DiagnosticsAzureBlobRetentionDays { get; }
 
     public string? MultiTenantDomain { get; }
-    public string? OneFuzzDataStorage { get; }
-    public string? OneFuzzFuncStorage { get; }
+    public ResourceIdentifier? OneFuzzDataStorage { get; }
+    public ResourceIdentifier? OneFuzzFuncStorage { get; }
     public string? OneFuzzInstance { get; }
     public string? OneFuzzInstanceName { get; }
     public string? OneFuzzKeyvault { get; }
@@ -64,47 +65,67 @@ public class ServiceConfiguration : IServiceConfig {
 #endif
     }
 
+    private static string? GetEnv(string name) {
+        var v = Environment.GetEnvironmentVariable(name);
+        if (String.IsNullOrEmpty(v))
+            return null;
+
+        return v;
+    }
+
     //TODO: Add environment variable to control where to write logs to
     public LogDestination[] LogDestinations { get; set; }
 
     //TODO: Get this from Environment variable
     public ApplicationInsights.DataContracts.SeverityLevel LogSeverityLevel => ApplicationInsights.DataContracts.SeverityLevel.Verbose;
 
-    public string? ApplicationInsightsAppId => Environment.GetEnvironmentVariable("APPINSIGHTS_APPID");
-    public string? ApplicationInsightsInstrumentationKey => Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATIONKEY");
+    public string? ApplicationInsightsAppId => GetEnv("APPINSIGHTS_APPID");
+    public string? ApplicationInsightsInstrumentationKey => GetEnv("APPINSIGHTS_INSTRUMENTATIONKEY");
 
-    public string? AzureSignalRConnectionString => Environment.GetEnvironmentVariable("AzureSignalRConnectionString");
-    public string? AzureSignalRServiceTransportType => Environment.GetEnvironmentVariable("AzureSignalRServiceTransportType");
+    public string? AzureSignalRConnectionString => GetEnv("AzureSignalRConnectionString");
+    public string? AzureSignalRServiceTransportType => GetEnv("AzureSignalRServiceTransportType");
 
-    public string? AzureWebJobDisableHomePage { get => Environment.GetEnvironmentVariable("AzureWebJobsDisableHomepage"); }
-    public string? AzureWebJobStorage { get => Environment.GetEnvironmentVariable("AzureWebJobsStorage"); }
+    public string? AzureWebJobDisableHomePage { get => GetEnv("AzureWebJobsDisableHomepage"); }
+    public string? AzureWebJobStorage { get => GetEnv("AzureWebJobsStorage"); }
 
-    public string? DiagnosticsAzureBlobContainerSasUrl { get => Environment.GetEnvironmentVariable("DIAGNOSTICS_AZUREBLOBCONTAINERSASURL"); }
-    public string? DiagnosticsAzureBlobRetentionDays { get => Environment.GetEnvironmentVariable("DIAGNOSTICS_AZUREBLOBRETENTIONINDAYS"); }
+    public string? DiagnosticsAzureBlobContainerSasUrl { get => GetEnv("DIAGNOSTICS_AZUREBLOBCONTAINERSASURL"); }
+    public string? DiagnosticsAzureBlobRetentionDays { get => GetEnv("DIAGNOSTICS_AZUREBLOBRETENTIONINDAYS"); }
 
-    public string? MultiTenantDomain { get => Environment.GetEnvironmentVariable("MULTI_TENANT_DOMAIN"); }
+    public string? MultiTenantDomain { get => GetEnv("MULTI_TENANT_DOMAIN"); }
 
-    public string? OneFuzzDataStorage { get => Environment.GetEnvironmentVariable("ONEFUZZ_DATA_STORAGE"); }
-    public string? OneFuzzFuncStorage { get => Environment.GetEnvironmentVariable("ONEFUZZ_FUNC_STORAGE"); }
-    public string? OneFuzzInstance { get => Environment.GetEnvironmentVariable("ONEFUZZ_INSTANCE"); }
-    public string? OneFuzzInstanceName { get => Environment.GetEnvironmentVariable("ONEFUZZ_INSTANCE_NAME"); }
-    public string? OneFuzzKeyvault { get => Environment.GetEnvironmentVariable("ONEFUZZ_KEYVAULT"); }
-    public string? OneFuzzMonitor { get => Environment.GetEnvironmentVariable("ONEFUZZ_MONITOR"); }
-    public string? OneFuzzOwner { get => Environment.GetEnvironmentVariable("ONEFUZZ_OWNER"); }
-    public string? OneFuzzResourceGroup { get => Environment.GetEnvironmentVariable("ONEFUZZ_RESOURCE_GROUP"); }
-    public string? OneFuzzTelemetry { get => Environment.GetEnvironmentVariable("ONEFUZZ_TELEMETRY"); }
+    public ResourceIdentifier? OneFuzzDataStorage {
+        get {
+            var env = GetEnv("ONEFUZZ_DATA_STORAGE");
+            return env is null ? null : new ResourceIdentifier(env);
+        }
+    }
+
+    public ResourceIdentifier? OneFuzzFuncStorage {
+        get {
+            var env = GetEnv("ONEFUZZ_FUNC_STORAGE");
+            return env is null ? null : new ResourceIdentifier(env);
+        }
+    }
+
+    public string? OneFuzzInstance { get => GetEnv("ONEFUZZ_INSTANCE"); }
+    public string? OneFuzzInstanceName { get => GetEnv("ONEFUZZ_INSTANCE_NAME"); }
+    public string? OneFuzzKeyvault { get => GetEnv("ONEFUZZ_KEYVAULT"); }
+    public string? OneFuzzMonitor { get => GetEnv("ONEFUZZ_MONITOR"); }
+    public string? OneFuzzOwner { get => GetEnv("ONEFUZZ_OWNER"); }
+    public string? OneFuzzResourceGroup { get => GetEnv("ONEFUZZ_RESOURCE_GROUP"); }
+    public string? OneFuzzTelemetry { get => GetEnv("ONEFUZZ_TELEMETRY"); }
 
     public string OneFuzzVersion {
         get {
             // version can be overridden by config:
-            return Environment.GetEnvironmentVariable("ONEFUZZ_VERSION")
+            return GetEnv("ONEFUZZ_VERSION")
                 ?? _oneFuzzVersion
                 ?? throw new InvalidOperationException("Unable to read OneFuzz version from assembly");
         }
     }
 
-    public string? OneFuzzAllowOutdatedAgent => Environment.GetEnvironmentVariable("ONEFUZZ_ALLOW_OUTDATED_AGENT");
+    public string? OneFuzzAllowOutdatedAgent => GetEnv("ONEFUZZ_ALLOW_OUTDATED_AGENT");
 
-    public string OneFuzzNodeDisposalStrategy { get => Environment.GetEnvironmentVariable("ONEFUZZ_NODE_DISPOSAL_STRATEGY") ?? "scale_in"; }
+    public string OneFuzzNodeDisposalStrategy { get => GetEnv("ONEFUZZ_NODE_DISPOSAL_STRATEGY") ?? "scale_in"; }
     public string OneFuzzStoragePrefix => ""; // in production we never prefix the tables
 }
