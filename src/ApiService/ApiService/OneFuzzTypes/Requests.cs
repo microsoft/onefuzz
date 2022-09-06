@@ -287,5 +287,5 @@ public record WebhookUpdate(
 ) : BaseRequest;
 
 public record InstanceConfigUpdate(
-    InstanceConfig config 
+    InstanceConfig config
 ) : BaseRequest;

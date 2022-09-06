@@ -1,9 +1,7 @@
 using System.Net;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service.Functions;
@@ -66,7 +64,7 @@ public class InstanceConfig {
         // // there is no way to know which etag to use
         // bool requireEtag = UriExtension.GetBool("requireEtag", query, false);
         await _context.ConfigOperations.Save(request.OkV.config, false);
-        if (updateNsg) { 
+        if (updateNsg) {
             await foreach (var nsg in _context.NsgOperations.ListNsgs()) {
                 _log.Info($"Checking if nsg: {nsg.region} ({nsg.name}) owned by OneFuz");
                 if (nsg.region == nsg.name) {
