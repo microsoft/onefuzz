@@ -18,7 +18,7 @@ public sealed class TestContext : IOnefuzzContext {
         ServiceConfiguration = new TestServiceConfiguration(storagePrefix);
         Storage = storage;
         Creds = creds;
-        Containers = new Containers(logTracer, Storage, Creds, ServiceConfiguration);
+        Containers = new Containers(logTracer, Storage, ServiceConfiguration);
         Queue = new Queue(Storage, logTracer);
         RequestHandling = new RequestHandling(logTracer);
         TaskOperations = new TaskOperations(logTracer, this);

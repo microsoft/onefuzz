@@ -65,15 +65,15 @@ public sealed class Creds : ICreds {
     public string GetSubscription() {
         var storageResourceId = _config.OneFuzzDataStorage
             ?? throw new System.Exception("Data storage env var is not present");
-        var storageResource = new ResourceIdentifier(storageResourceId);
-        return storageResource.SubscriptionId!;
+        return storageResourceId.SubscriptionId
+            ?? throw new Exception("OneFuzzDataStorage did not have subscription ID");
     }
 
     public string GetBaseResourceGroup() {
         var storageResourceId = _config.OneFuzzDataStorage
             ?? throw new System.Exception("Data storage env var is not present");
-        var storageResource = new ResourceIdentifier(storageResourceId);
-        return storageResource.ResourceGroupName!;
+        return storageResourceId.ResourceGroupName
+            ?? throw new Exception("OneFuzzDataStorage did not have resource group name");
     }
 
     public ResourceIdentifier GetResourceGroupResourceIdentifier() {
