@@ -61,7 +61,7 @@ public class InstanceConfig {
             await foreach (var nsg in _context.NsgOperations.ListNsgs()) {
                 _log.Info($"Checking if nsg: {nsg.Data.Location!} ({nsg.Data.Name}) owned by OneFuz");
                 if (nsg.Data.Location! == nsg.Data.Name) {
-                    var result = await _context.NsgOperations.SetAllowedSources(nsg.Data.Location!, request.OkV.config.ProxyNsgConfig);
+                    var result = await _context.NsgOperations.SetAllowedSources(nsg, request.OkV.config.ProxyNsgConfig);
                     if (!result.IsOk) {
                         return await _context.RequestHandling.NotOk(
                         req,
