@@ -37,6 +37,7 @@ var commonSiteConfig = {
   detailedErrorLoggingEnabled: true
   http20Enabled: true
   ftpsState: 'Disabled'
+  use32BitWorkerProcess: false
 }
 
 var extraProperties = (use_windows && enable_remote_debugging) ? {
