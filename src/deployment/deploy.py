@@ -164,6 +164,7 @@ class Client:
         cli_app_id: str,
         auto_create_cli_app: bool,
         host_dotnet_on_windows: bool,
+        enable_profiler: bool,
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -199,6 +200,7 @@ class Client:
         self.cli_app_id = cli_app_id
         self.auto_create_cli_app = auto_create_cli_app
         self.host_dotnet_on_windows = host_dotnet_on_windows
+        self.enable_profiler = enable_profiler
 
         self.cli_config: Dict[str, Union[str, UUID]] = {
             "client_id": self.cli_app_id,
@@ -637,6 +639,10 @@ class Client:
             self.host_dotnet_on_windows,
         )
 
+        logger.info(
+            "template parameter enable_profiler is set to: %s", self.enable_profiler
+        )
+
         params = {
             "app_func_audiences": {"value": app_func_audiences},
             "name": {"value": self.application_name},
@@ -649,6 +655,7 @@ class Client:
             "workbookData": {"value": self.workbook_data},
             "use_dotnet_agent_functions": {"value": self.use_dotnet_agent_functions},
             "enable_remote_debugging": {"value": self.host_dotnet_on_windows},
+            "enable_profiler": {"value": self.enable_profiler},
         }
         deployment = Deployment(
             properties=DeploymentProperties(
@@ -1422,6 +1429,12 @@ def main() -> None:
         action="store_true",
         help="Use windows runtime for hosting dotnet Azure Function",
     )
+
+    parser.add_argument(
+        "--enable_profiler",
+        action="store_true",
+        help="Enable CPU and memory profiler in dotnet Azure Function",
+    )
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -1456,6 +1469,7 @@ def main() -> None:
         cli_app_id=args.cli_app_id,
         auto_create_cli_app=args.auto_create_cli_app,
         host_dotnet_on_windows=args.host_dotnet_on_windows,
+        enable_profiler=args.enable_profiler,
     )
     if args.verbose:
         level = logging.DEBUG

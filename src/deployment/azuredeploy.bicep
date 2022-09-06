@@ -10,6 +10,7 @@ param app_func_issuer string
 param app_func_audiences array
 param multi_tenant_domain string
 param enable_remote_debugging bool = false
+param enable_profiler bool = false
 
 param location string = resourceGroup().location
 
@@ -315,6 +316,7 @@ module pythonFunctionSettings 'bicep-templates/function-settings.bicep' = {
     multi_tenant_domain: multi_tenant_domain
     functions_disabled: python_functions_disabled
     use_dotnet_agent_functions: use_dotnet_agent_functions
+    enable_profiler: false
     all_function_names: [
       'agent_can_schedule'    //0
       'agent_commands'        //1
@@ -380,6 +382,7 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     multi_tenant_domain: multi_tenant_domain
     functions_disabled: dotnet_functions_disabled
     use_dotnet_agent_functions: false // this doesn’t do anything on the .NET service
+    enable_profiler: enable_profiler
     all_function_names: [
       'AgentCanSchedule'      //0
       'AgentCommands'         //1
