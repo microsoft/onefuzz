@@ -106,6 +106,10 @@ public record JobResponse(
         );
 }
 
+public record InstanceConfigResponse(
+    InstanceConfig config
+) : BaseResponse();
+
 public record PoolGetResult(
     PoolName Name,
     Guid PoolId,
@@ -183,3 +187,6 @@ public record ProxyInfo(
 public record ProxyList(
     List<ProxyInfo> Proxies
 );
+
+
+

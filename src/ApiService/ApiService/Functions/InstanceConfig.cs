@@ -71,6 +71,6 @@ public class InstanceConfig {
                 }
             }
         }
-        return await RequestHandling.Ok(req, new InstanceConfigUpdate(config));
+        return await RequestHandling.Ok(req, new InstanceConfigResponse(config));
     }
 }
