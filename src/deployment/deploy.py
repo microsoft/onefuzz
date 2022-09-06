@@ -163,6 +163,7 @@ class Client:
         use_dotnet_agent_functions: bool,
         cli_app_id: str,
         auto_create_cli_app: bool,
+        host_dotnet_on_windows: bool,
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -197,6 +198,7 @@ class Client:
         self.use_dotnet_agent_functions = use_dotnet_agent_functions
         self.cli_app_id = cli_app_id
         self.auto_create_cli_app = auto_create_cli_app
+        self.host_dotnet_on_windows = host_dotnet_on_windows
 
         self.cli_config: Dict[str, Union[str, UUID]] = {
             "client_id": self.cli_app_id,
@@ -630,6 +632,11 @@ class Client:
             app_func_issuer = "https://sts.windows.net/%s/" % tenant_oid
             multi_tenant_domain = {"value": ""}
 
+        logger.info(
+            "template parameter enable_remote_debugging is set to: %s",
+            self.host_dotnet_on_windows,
+        )
+
         params = {
             "app_func_audiences": {"value": app_func_audiences},
             "name": {"value": self.application_name},
@@ -641,6 +648,7 @@ class Client:
             "multi_tenant_domain": multi_tenant_domain,
             "workbookData": {"value": self.workbook_data},
             "use_dotnet_agent_functions": {"value": self.use_dotnet_agent_functions},
+            "enable_remote_debugging": {"value": self.host_dotnet_on_windows},
         }
         deployment = Deployment(
             properties=DeploymentProperties(
@@ -1409,6 +1417,11 @@ def main() -> None:
         help="Create a new CLI App Registration if the default app or custom "
         "app is not found. ",
     )
+    parser.add_argument(
+        "--host_dotnet_on_windows",
+        action="store_true",
+        help="Use windows runtime for hosting dotnet Azure Function",
+    )
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -1442,6 +1455,7 @@ def main() -> None:
         use_dotnet_agent_functions=args.use_dotnet_agent_functions,
         cli_app_id=args.cli_app_id,
         auto_create_cli_app=args.auto_create_cli_app,
+        host_dotnet_on_windows=args.host_dotnet_on_windows,
     )
     if args.verbose:
         level = logging.DEBUG
