@@ -142,7 +142,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             );
         }
 
-        return scaleset;
+        return updatedScaleSet;
     }
 
     async Async.Task<Scaleset> SetFailed(Scaleset scaleset, Error error) {
