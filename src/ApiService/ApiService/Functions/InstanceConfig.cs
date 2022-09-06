@@ -52,21 +52,16 @@ public class InstanceConfig {
         if (request.OkV.config.ProxyNsgConfig is not null && config.ProxyNsgConfig is not null) {
             var requestConfig = request.OkV.config.ProxyNsgConfig;
             var currentConfig = config.ProxyNsgConfig;
-            if ((new HashSet<string>(requestConfig.AllowedServiceTags)).SetEquals(new HashSet<string>(currentConfig.AllowedServiceTags)) || ((new HashSet<string>(requestConfig.allowed_ips)).SetEquals(new HashSet<string>(currentConfig.AllowedIps)))) {
+            if ((new HashSet<string>(requestConfig.AllowedServiceTags)).SetEquals(new HashSet<string>(currentConfig.AllowedServiceTags)) || ((new HashSet<string>(requestConfig.AllowedIps)).SetEquals(new HashSet<string>(currentConfig.AllowedIps)))) {
                 updateNsg = true;
             }
         }
-        // var query = UriExtension.GetQueryComponents(req.Url);
-        // bool isNew = UriExtension.GetBool("isNew", query, false);
-        // //requireEtag wont' work since our current schema does not return etag to the client when getting data form the table, so
-        // // there is no way to know which etag to use
-        // bool requireEtag = UriExtension.GetBool("requireEtag", query, false);
-        await _context.ConfigOperations.Save(request.OkV.config, false);
+        await _context.ConfigOperations.Save(request.OkV.config, false, false);
         if (updateNsg) {
             await foreach (var nsg in _context.NsgOperations.ListNsgs()) {
-                _log.Info($"Checking if nsg: {nsg.region} ({nsg.name}) owned by OneFuz");
-                if (nsg.region == nsg.name) {
-                    var result = await _context.NsgOperations.SetAllowedSources(nsg.location, request.OkV.config.ProxyNsgConfig);
+                _log.Info($"Checking if nsg: {nsg.Data.region} ({nsg.Data.name}) owned by OneFuz");
+                if (nsg.Data.region == nsg.Data.name) {
+                    var result = await _context.NsgOperations.SetAllowedSources(nsg.Data.location, request.OkV.config.ProxyNsgConfig);
                     if (!result.IsOk) {
                         return await _context.RequestHandling.NotOk(
                         req,
