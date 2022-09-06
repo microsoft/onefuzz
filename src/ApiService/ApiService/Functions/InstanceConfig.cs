@@ -29,7 +29,7 @@ public class InstanceConfig {
         });
     }
     public async Async.Task<HttpResponseData> Get(HttpRequestData req) {
-         _log.Info($"getting instance_config");
+        _log.Info($"getting instance_config");
         var config = await _context.ConfigOperations.Fetch();
 
         var response = req.CreateResponse(HttpStatusCode.OK);
@@ -46,16 +46,13 @@ public class InstanceConfig {
                 request.ErrorV,
                 context: "instance_config update");
         }
-
-        var config = await _context.ConfigOperations.Fetch(); 
-        
+        var config = await _context.ConfigOperations.Fetch();
         // Check if can modify
         var answer = await _auth.CheckRequireAdmins(req);
         if (!answer.IsOk) {
             return await _context.RequestHandling.NotOk(req, answer.ErrorV, "instance_config update");
         }
-
-        var updateNsg = false; 
+        var updateNsg = false;
         if (request.OkV.config.ProxyNsgConfig is not null && config.ProxyNsgConfig is not null) {
             var requestConfig = request.OkV.config.ProxyNsgConfig;
             var currentConfig = config.ProxyNsgConfig;
@@ -63,15 +60,12 @@ public class InstanceConfig {
                 updateNsg = true;
             }
         }
-
         // var query = UriExtension.GetQueryComponents(req.Url);
         // bool isNew = UriExtension.GetBool("isNew", query, false);
         // //requireEtag wont' work since our current schema does not return etag to the client when getting data form the table, so
         // // there is no way to know which etag to use
         // bool requireEtag = UriExtension.GetBool("requireEtag", query, false);
-        
         await _context.ConfigOperations.Save(request.OkV.config, false);
-        
         if (updateNsg) { 
             await foreach (var nsg in _context.NsgOperations.ListNsgs()) {
                 _log.Info($"Checking if nsg: {nsg.region} ({nsg.name}) owned by OneFuz");
@@ -86,5 +80,6 @@ public class InstanceConfig {
                 }
             }
         }
+        return await _context.RequestHandling.Ok(req, new InstanceConfigUpdate(config));
     }
 }
