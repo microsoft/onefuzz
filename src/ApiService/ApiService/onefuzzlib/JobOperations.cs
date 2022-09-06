@@ -1,4 +1,5 @@
-﻿using ApiService.OneFuzzLib.Orm;
+﻿using System.Threading.Tasks;
+using ApiService.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -6,15 +7,19 @@ public interface IJobOperations : IStatefulOrm<Job, JobState> {
     Async.Task<Job?> Get(Guid jobId);
     Async.Task OnStart(Job job);
     IAsyncEnumerable<Job> SearchExpired();
-    Async.Task<Job> Stopping(Job job);
-    Async.Task<Job> Init(Job job);
     IAsyncEnumerable<Job> SearchState(IEnumerable<JobState> states);
     Async.Task StopNeverStartedJobs();
     Async.Task StopIfAllDone(Job job);
+
+    // state transitions
+    Async.Task<Job> Init(Job job);
+    Async.Task<Job> Enabled(Job job);
+    Async.Task<Job> Stopping(Job job);
+    Async.Task<Job> Stopped(Job job);
 }
 
 public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOperations {
-    private static TimeSpan JOB_NEVER_STARTED_DURATION = TimeSpan.FromDays(30);
+    private static readonly TimeSpan JOB_NEVER_STARTED_DURATION = TimeSpan.FromDays(30);
 
     public JobOperations(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
@@ -110,5 +115,15 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
         } else {
             throw new Exception($"Failed to save job {job.JobId} : {result.ErrorV}");
         }
+    }
+
+    public Task<Job> Enabled(Job job) {
+        // nothing to do
+        return Async.Task.FromResult(job);
+    }
+
+    public Task<Job> Stopped(Job job) {
+        // nothing to do
+        return Async.Task.FromResult(job);
     }
 }

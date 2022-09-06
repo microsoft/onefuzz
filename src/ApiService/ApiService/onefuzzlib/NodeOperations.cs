@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Data.Tables;
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -55,6 +54,17 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     IAsyncEnumerable<Node> SearchByPoolName(PoolName poolName);
 
     Async.Task SetShutdown(Node node);
+
+    // state transitions:
+    Async.Task<Node> Init(Node node);
+    Async.Task<Node> Free(Node node);
+    Async.Task<Node> SettingUp(Node node);
+    Async.Task<Node> Rebooting(Node node);
+    Async.Task<Node> Ready(Node node);
+    Async.Task<Node> Busy(Node node);
+    Async.Task<Node> Done(Node node);
+    Async.Task<Node> Shutdown(Node node);
+    Async.Task<Node> Halt(Node node);
 }
 
 
@@ -572,108 +582,49 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         await Stop(node, done: done);
         return true;
     }
-}
 
-
-public interface INodeTasksOperations : IStatefulOrm<NodeTasks, NodeTaskState> {
-    IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId);
-    IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId);
-    IAsyncEnumerable<NodeTasks> GetByMachineId(Guid machineId);
-    IAsyncEnumerable<NodeTasks> GetByTaskId(Guid taskId);
-    Async.Task ClearByMachineId(Guid machineId);
-}
-
-public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState, NodeTasksOperations>, INodeTasksOperations {
-
-    ILogTracer _log;
-
-    public NodeTasksOperations(ILogTracer log, IOnefuzzContext context)
-        : base(log, context) {
-        _log = log;
+    public Task<Node> Init(Node node) {
+        // nothing to do
+        return Async.Task.FromResult(node);
     }
 
-    //TODO: suggest by Cheick: this can probably be optimize by query all NodesTasks then query the all machine in single request
-
-    public async IAsyncEnumerable<Node> GetNodesByTaskId(Guid taskId) {
-        await foreach (var entry in QueryAsync(Query.RowKey(taskId.ToString()))) {
-            var node = await _context.NodeOperations.GetByMachineId(entry.MachineId);
-            if (node is not null) {
-                yield return node;
-            }
-        }
+    public Task<Node> Free(Node node) {
+        // nothing to do
+        return Async.Task.FromResult(node);
     }
 
-    public async IAsyncEnumerable<NodeAssignment> GetNodeAssignments(Guid taskId) {
-
-        await foreach (var entry in QueryAsync(Query.RowKey(taskId.ToString()))) {
-            var node = await _context.NodeOperations.GetByMachineId(entry.MachineId);
-            if (node is not null) {
-                var nodeAssignment = new NodeAssignment(node.MachineId, node.ScalesetId, entry.State);
-                yield return nodeAssignment;
-            }
-        }
+    public Task<Node> SettingUp(Node node) {
+        // nothing to do
+        return Async.Task.FromResult(node);
     }
 
-    public IAsyncEnumerable<NodeTasks> GetByMachineId(Guid machineId) {
-        return QueryAsync(Query.PartitionKey(machineId.ToString()));
+    public Task<Node> Rebooting(Node node) {
+        // nothing to do
+        return Async.Task.FromResult(node);
     }
 
-    public IAsyncEnumerable<NodeTasks> GetByTaskId(Guid taskId) {
-        return QueryAsync(Query.RowKey(taskId.ToString()));
+    public Task<Node> Ready(Node node) {
+        // nothing to do
+        return Async.Task.FromResult(node);
     }
 
-    public async Async.Task ClearByMachineId(Guid machineId) {
-        _logTracer.Info($"clearing tasks for node {machineId}");
-        await foreach (var entry in GetByMachineId(machineId)) {
-            var res = await Delete(entry);
-            if (!res.IsOk) {
-                _logTracer.WithHttpStatus(res.ErrorV).Error($"failed to delete node task entry for machine_id: {entry.MachineId}");
-            }
-        }
-    }
-}
-
-//# this isn't anticipated to be needed by the client, hence it not
-//# being in onefuzztypes
-public record NodeMessage(
-    [PartitionKey] Guid MachineId,
-    [RowKey] string MessageId,
-    NodeCommand Message
-) : EntityBase {
-    public NodeMessage(Guid machineId, NodeCommand message) : this(machineId, NewSortedKey, message) { }
-};
-
-public interface INodeMessageOperations : IOrm<NodeMessage> {
-    IAsyncEnumerable<NodeMessage> GetMessage(Guid machineId);
-    Async.Task ClearMessages(Guid machineId);
-
-    Async.Task SendMessage(Guid machineId, NodeCommand message, string? messageId = null);
-}
-
-
-public class NodeMessageOperations : Orm<NodeMessage>, INodeMessageOperations {
-
-    private readonly ILogTracer _log;
-    public NodeMessageOperations(ILogTracer log, IOnefuzzContext context) : base(log, context) {
-        _log = log;
+    public Task<Node> Busy(Node node) {
+        // nothing to do
+        return Async.Task.FromResult(node);
     }
 
-    public IAsyncEnumerable<NodeMessage> GetMessage(Guid machineId)
-        => QueryAsync(Query.PartitionKey(machineId.ToString()));
-
-    public async Async.Task ClearMessages(Guid machineId) {
-        _logTracer.Info($"clearing messages for node {machineId}");
-
-        await foreach (var message in GetMessage(machineId)) {
-            var r = await Delete(message);
-            if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete message for node {machineId}");
-            }
-        }
+    public Task<Node> Done(Node node) {
+        // nothing to do
+        return Async.Task.FromResult(node);
     }
 
-    public async Async.Task SendMessage(Guid machineId, NodeCommand message, string? messageId = null) {
-        messageId = messageId ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
-        await Insert(new NodeMessage(machineId, messageId, message));
+    public Task<Node> Shutdown(Node node) {
+        // nothing to do
+        return Async.Task.FromResult(node);
+    }
+
+    public Task<Node> Halt(Node node) {
+        // nothing to do
+        return Async.Task.FromResult(node);
     }
 }
