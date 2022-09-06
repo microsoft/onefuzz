@@ -59,9 +59,9 @@ public class InstanceConfig {
         await _context.ConfigOperations.Save(request.OkV.config, false, false);
         if (updateNsg) {
             await foreach (var nsg in _context.NsgOperations.ListNsgs()) {
-                _log.Info($"Checking if nsg: {nsg.Data.Region} ({nsg.Data.Name}) owned by OneFuz");
-                if (nsg.Data.Region == nsg.Data.Name) {
-                    var result = await _context.NsgOperations.SetAllowedSources(nsg.Data.Region, request.OkV.config.ProxyNsgConfig);
+                _log.Info($"Checking if nsg: {nsg.Data.Location} ({nsg.Data.Name}) owned by OneFuz");
+                if (nsg.Data.Location == nsg.Data.Name) {
+                    var result = await _context.NsgOperations.SetAllowedSources(nsg.Data.Location, request.OkV.config.ProxyNsgConfig);
                     if (!result.IsOk) {
                         return await _context.RequestHandling.NotOk(
                         req,
