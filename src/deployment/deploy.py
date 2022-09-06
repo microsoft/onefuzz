@@ -633,7 +633,8 @@ class Client:
             multi_tenant_domain = {"value": ""}
 
         logger.info(
-            "template parameter enable_remote_debugging is set to: %s", self.host_dotnet_on_windows
+            "template parameter enable_remote_debugging is set to: %s",
+            self.host_dotnet_on_windows,
         )
 
         params = {
