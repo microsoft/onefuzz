@@ -176,6 +176,8 @@ fn run(opt: RunOpt) -> Result<()> {
     let rt = tokio::runtime::Runtime::new()?;
     let config = rt.block_on(load_config(opt));
 
+    // We can't send telemetry, because we couldn't get a telemetry key from the config.
+    // Instead, log to an assumed-redirected stdout for the sake of debugging.
     if let Err(err) = &config {
         error!("error loading supervisor agent config: {:?}", err);
     }
