@@ -110,7 +110,7 @@ public class IpOperations : IIpOperations {
 
             resource = _context.Creds.ParseResourceId(publicIp.Id!);
 
-                resource = await _context.Creds.GetData(resource);
+            resource = await _context.Creds.GetData(resource);
             var publicIpResource = await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(
                 resource.Data.Name
             );
