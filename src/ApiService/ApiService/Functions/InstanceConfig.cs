@@ -34,6 +34,7 @@ public class InstanceConfig {
     }
 
     public async Async.Task<HttpResponseData> Post(HttpRequestData req) {
+        _log.Info($"attempting instance_config update");
         var request = await RequestHandling.ParseRequest<InstanceConfigUpdate>(req);
 
         if (!request.IsOk) {
@@ -52,11 +53,12 @@ public class InstanceConfig {
         if (request.OkV.config.ProxyNsgConfig is not null && config.ProxyNsgConfig is not null) {
             var requestConfig = request.OkV.config.ProxyNsgConfig;
             var currentConfig = config.ProxyNsgConfig;
-            if ((new HashSet<string>(requestConfig.AllowedServiceTags)).SetEquals(new HashSet<string>(currentConfig.AllowedServiceTags)) || ((new HashSet<string>(requestConfig.AllowedIps)).SetEquals(new HashSet<string>(currentConfig.AllowedIps)))) {
+            if (!((new HashSet<string>(requestConfig.AllowedServiceTags)).SetEquals(new HashSet<string>(currentConfig.AllowedServiceTags))) || !((new HashSet<string>(requestConfig.AllowedIps)).SetEquals(new HashSet<string>(currentConfig.AllowedIps)))) {
                 updateNsg = true;
             }
         }
         await _context.ConfigOperations.Save(request.OkV.config, false, false);
+        _log.Info($"updated instance_config");
         if (updateNsg) {
             await foreach (var nsg in _context.NsgOperations.ListNsgs()) {
                 _log.Info($"Checking if nsg: {nsg.Data.Location!} ({nsg.Data.Name}) owned by OneFuz");
