@@ -647,22 +647,23 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
     public async Task<OneFuzzResult<Scaleset>> GetById(Guid scalesetId) {
         var data = QueryAsync(filter: $"RowKey eq '{scalesetId}'");
-        var count = await data.CountAsync();
-        if (data == null || count == 0) {
+        var scaleSets = data is not null ? (await data.ToListAsync()) : null;
+
+        if (scaleSets == null || scaleSets.Count == 0) {
             return OneFuzzResult<Scaleset>.Error(
                 ErrorCode.INVALID_REQUEST,
                 "unable to find scaleset"
             );
         }
 
-        if (count != 1) {
+        if (scaleSets.Count != 1) {
             return OneFuzzResult<Scaleset>.Error(
                 ErrorCode.INVALID_REQUEST,
                 "error identifying scaleset"
             );
         }
 
-        return OneFuzzResult<Scaleset>.Ok(await data.SingleAsync());
+        return OneFuzzResult<Scaleset>.Ok(scaleSets.First());
     }
 
     public IAsyncEnumerable<Scaleset> GetByObjectId(Guid objectId) {
