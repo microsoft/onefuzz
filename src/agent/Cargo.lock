@@ -177,7 +177,7 @@ dependencies = [
  "log",
  "once_cell",
  "serde",
- "serde-xml-rs",
+ "serde-xml-rs 0.5.1",
  "serde_derive",
  "serde_json",
  "sha2",
@@ -201,7 +201,7 @@ dependencies = [
  "log",
  "md5",
  "serde",
- "serde-xml-rs",
+ "serde-xml-rs 0.5.1",
  "serde_derive",
  "serde_json",
  "time",
@@ -1931,7 +1931,7 @@ dependencies = [
  "reqwest",
  "reqwest-retry",
  "serde",
- "serde-xml-rs",
+ "serde-xml-rs 0.6.0",
  "serde_json",
  "stacktrace-parser",
  "storage-queue",
@@ -2652,6 +2652,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-xml-rs"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb3aa78ecda1ebc9ec9847d5d3aba7d618823446a049ba2491940506da6e2782"
+dependencies = [
+ "log",
+ "serde",
+ "thiserror",
+ "xml-rs",
+]
+
+[[package]]
 name = "serde_derive"
 version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2887,7 +2899,7 @@ dependencies = [
  "reqwest",
  "reqwest-retry",
  "serde",
- "serde-xml-rs",
+ "serde-xml-rs 0.6.0",
  "serde_derive",
  "serde_json",
  "tokio",
