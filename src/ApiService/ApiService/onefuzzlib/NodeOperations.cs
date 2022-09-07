@@ -528,7 +528,10 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
                 await _context.TaskOperations.MarkFailed(task, error);
             }
             if (!node.DebugKeepNode) {
-                await Delete(node);
+                var r = await _context.NodeTasksOperations.Delete(entry);
+                if (!r.IsOk) {
+                    _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete task operation for task {entry.TaskId}");
+                }
             }
         }
     }
