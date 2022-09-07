@@ -52,30 +52,30 @@ impl SrcView {
     /// Insert a new pdb into the SrcView only if the `pdb` path is not in the SrcView already,
     /// returning a  [Result] indicating the success of the insert, if any was necessary.
     /// If the [Result] is [Ok], the contained bool indicates whether a value was inserted.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `module` - Module name to store the PDB info as
     /// * `pdb` - Path to PDB
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// If the PDB at the provided path has not been inserted already **and**
     /// cannot be parsed or contains otherwise unexpected data.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```no_run
     /// use srcview::SrcView;
-    /// 
+    ///
     /// let mut sv = SrcView::new();
     /// let modoffs = get_coverage();
-    /// 
+    ///
     /// // Map each modoff to a PDB name/path and make sure it's in the SrcView
     /// for modoff in modoffs {
     ///     let module_name =  mod_name_from_modoff(modoff);
     ///     let res = sv.try_insert(module_name, format!("~/pdbs/{module_name}.pdb"));
-    /// 
+    ///
     ///     if let Ok(inserted) = res {
     ///         println!("PDB was inserted: {inserted}");
     ///     }
