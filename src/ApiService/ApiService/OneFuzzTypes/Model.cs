@@ -327,12 +327,11 @@ public record InstanceConfig
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
     string ProxyVmSku = "Standard_B2s",
-    bool? AllowPoolManagement = true,
+    bool RequireAdminPrivileges = false,
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
     IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,
     IDictionary<string, string>? VmTags = null,
-    IDictionary<string, string>? VmssTags = null,
-    bool RequireAdminPrivileges = false
+    IDictionary<string, string>? VmssTags = null
 ) : EntityBase() {
     public InstanceConfig(string instanceName) : this(
         instanceName,
@@ -341,8 +340,8 @@ public record InstanceConfig
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
         null,
-        "Standard_B2s",
-        true
+        "Standard_B2s", 
+        false
         ) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {

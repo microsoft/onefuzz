@@ -32,19 +32,20 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
 
     public async Async.Task Save(InstanceConfig config, bool isNew = false, bool requireEtag = false) {
         var newConfig = config with { InstanceName =  _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set") };
+        _log.Info("Updating Instance Config");
         ResultVoid<(int, string)> r;
         if (isNew) {
-            r = await Insert(config);
+            r = await Insert(newConfig);
             if (!r.IsOk) {
                 _log.WithHttpStatus(r.ErrorV).Error($"Failed to save new instance config record");
             }
         } else if (requireEtag && config.ETag.HasValue) {
-            r = await Update(config);
+            r = await Update(newConfig);
             if (!r.IsOk) {
                 _log.WithHttpStatus(r.ErrorV).Error($"Failed to update instance config record");
             }
         } else {
-            r = await Replace(config);
+            r = await Replace(newConfig);
             if (!r.IsOk) {
                 _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace instance config record");
             }
