@@ -589,13 +589,17 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 return;
 
             case NodeDisposalStrategy.ScaleIn:
-                await _context.VmssOperations.ReimageNodes(scaleset.ScalesetId, machineIds);
-                await Async.Task.WhenAll(nodes
-                    .Where(node => machineIds.Contains(node.MachineId))
-                    .Select(async node => {
-                        await _context.NodeOperations.Delete(node);
-                        await _context.NodeOperations.ReleaseScaleInProtection(node);
-                    }));
+                var r = await _context.VmssOperations.ReimageNodes(scaleset.ScalesetId, machineIds);
+                if (r.IsOk) {
+                    await Async.Task.WhenAll(nodes
+                        .Where(node => machineIds.Contains(node.MachineId))
+                        .Select(async node => {
+                            await _context.NodeOperations.Delete(node);
+                            await _context.NodeOperations.ReleaseScaleInProtection(node);
+                        }));
+                } else {
+                    _log.Info($"failed to reimage nodes due to {r.ErrorV}");
+                }
                 return;
         }
     }

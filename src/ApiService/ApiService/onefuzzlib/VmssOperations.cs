@@ -41,7 +41,7 @@ public interface IVmssOperations {
         IDictionary<string, string> tags);
 
     Async.Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter);
-    Async.Task ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
+    Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
     Async.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
 }
 
@@ -395,10 +395,10 @@ public class VmssOperations : IVmssOperations {
             return skuNames;
         });
 
-    public async Async.Task ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
+    public async Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
         var result = await CheckCanUpdate(scalesetId);
         if (!result.IsOk) {
-            throw new Exception($"cannot reimage scaleset {scalesetId}: {result.ErrorV}");
+            return OneFuzzResultVoid.Error(result.ErrorV);
         }
 
         var instanceIds = new HashSet<string>();
@@ -412,7 +412,7 @@ public class VmssOperations : IVmssOperations {
         }
 
         if (!instanceIds.Any()) {
-            return;
+            return OneFuzzResultVoid.Ok;
         }
 
         var subscription = _creds.GetSubscription();
@@ -441,6 +441,7 @@ public class VmssOperations : IVmssOperations {
         }
 
         await vmssResource.ReimageAllAsync(WaitUntil.Started, reqInstanceIds);
+        return OneFuzzResultVoid.Ok;
     }
 
     public async Async.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
