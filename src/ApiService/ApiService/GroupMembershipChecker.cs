@@ -1,44 +1,46 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Microsoft.Graph;
 
 namespace Microsoft.OneFuzz.Service;
 
 abstract class GroupMembershipChecker {
-    protected abstract Async.Task<IEnumerable<Guid>> GetGroups(Guid memberId);
+    protected abstract IAsyncEnumerable<Guid> GetGroups(Guid memberId);
 
-    public async Async.Task<bool> IsMember(IEnumerable<Guid> groupIds, Guid memberId) {
+    public async ValueTask<bool> IsMember(IEnumerable<Guid> groupIds, Guid memberId) {
         if (groupIds.Contains(memberId)) {
             return true;
         }
 
-        var memberGroups = await GetGroups(memberId);
-        if (groupIds.Any(memberGroups.Contains)) {
-            return true;
-        }
-
-        return false;
+        return await GetGroups(memberId).AnyAsync(memberGroup => groupIds.Contains(memberGroup));
     }
 }
 
 class AzureADGroupMembership : GroupMembershipChecker {
-    private readonly ICreds _creds;
-    public AzureADGroupMembership(ICreds creds) => _creds = creds;
-    protected override async Task<IEnumerable<Guid>> GetGroups(Guid memberId) =>
-        await _creds.QueryMicrosoftGraph<List<Guid>>(HttpMethod.Get, $"users/{memberId}/transitiveMemberOf");
+    private readonly GraphServiceClient _graphClient;
+    public AzureADGroupMembership(GraphServiceClient graphClient) => _graphClient = graphClient;
+    protected override async IAsyncEnumerable<Guid> GetGroups(Guid memberId) {
+        var page = await _graphClient.Users[memberId.ToString()].TransitiveMemberOf.Request().GetAsync();
+        while (page is not null) {
+            foreach (var obj in page) {
+                yield return Guid.Parse(obj.Id);
+            }
+
+            page = await page.NextPageRequest.GetAsync();
+        }
+    }
 }
 
 class StaticGroupMembership : GroupMembershipChecker {
-    private readonly Dictionary<Guid, List<Guid>> _memberships;
+    private readonly IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> _memberships;
     public StaticGroupMembership(IDictionary<Guid, Guid[]> memberships) {
-        _memberships = memberships.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToList());
+        _memberships = memberships.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<Guid>)kvp.Value.ToList());
     }
 
-    protected override Task<IEnumerable<Guid>> GetGroups(Guid memberId) {
-        var result = Enumerable.Empty<Guid>();
-        if (_memberships.TryGetValue(memberId, out var found)) {
-            result = found;
+    protected override IAsyncEnumerable<Guid> GetGroups(Guid memberId) {
+        if (_memberships.TryGetValue(memberId, out var groups)) {
+            return groups.ToAsyncEnumerable();
         }
 
-        return Async.Task.FromResult(result);
+        return AsyncEnumerable.Empty<Guid>();
     }
 }
