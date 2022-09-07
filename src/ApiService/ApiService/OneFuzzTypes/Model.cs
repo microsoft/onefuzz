@@ -332,7 +332,7 @@ public record InstanceConfig
     IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,
     IDictionary<string, string>? VmTags = null,
     IDictionary<string, string>? VmssTags = null,
-    bool? RequireAdminPrivileges = false
+    bool RequireAdminPrivileges = false
 ) : EntityBase() {
     public InstanceConfig(string instanceName) : this(
         instanceName,
