@@ -46,7 +46,7 @@ async fn run(proxy_config: Config) -> Result<()> {
     if let Err(err) = &result {
         error!("run loop failed: {:?}", err);
     }
-    onefuzz_telemetry::try_flush_and_close();
+    onefuzz_telemetry::try_flush_and_close().await;
     result
 }
 
@@ -82,9 +82,10 @@ fn main() -> Result<()> {
         .value_of("config")
         .ok_or_else(|| MissingArg("--config".to_string()))?
         .parse()?;
-    let proxy = Config::from_file(config_path)?;
 
-    info!("parsed initial config");
     let rt = Runtime::new()?;
+    let proxy = rt.block_on(Config::from_file(config_path))?;
+    info!("parsed initial config");
+
     rt.block_on(run(proxy))
 }

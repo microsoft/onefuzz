@@ -67,7 +67,7 @@ impl fmt::Display for InstanceTelemetryKey {
     }
 }
 
-pub type TelemetryClient = appinsights::TelemetryClient<appinsights::InMemoryChannel>;
+pub type TelemetryClient = appinsights::TelemetryClient;
 pub enum ClientType {
     Instance,
     Microsoft,
@@ -450,7 +450,10 @@ mod global {
 }
 
 const REDACTED: &str = "Redacted";
-pub fn set_appinsights_clients(
+// This function doesn't do anything async, but TelemetryClient::new must be invoked
+// upon a Tokio runtime task, since it calls Tokio::spawn. The easiest way to ensure this
+// statically is to make this function async.
+pub async fn set_appinsights_clients(
     instance_key: Option<InstanceTelemetryKey>,
     microsoft_key: Option<MicrosoftTelemetryKey>,
 ) {
@@ -481,12 +484,11 @@ pub fn set_appinsights_clients(
 /// Meant for a final attempt at flushing pending items before an abnormal exit.
 /// After calling this function, any existing telemetry client will be dropped,
 /// and subsequent telemetry submission will be a silent no-op.
-pub fn try_flush_and_close() {
+pub async fn try_flush_and_close() {
     let clients = global::take_clients();
 
     for client in clients {
-        client.flush_channel();
-        client.close_channel();
+        client.close_channel().await;
     }
 
     // dropping the broadcast sender to make sure all pending events are sent
