@@ -51,7 +51,7 @@ impl SrcView {
 
     /// Insert a new pdb into the SrcView only if the `pdb` path is not in the SrcView already,
     /// returning a  [Result] indicating the success of the insert, if any was necessary.
-    /// If an insert was not necessary, returns [Ok].
+    /// If the [Result] is [Ok], the contained bool indicates whether a value was inserted.
     /// 
     /// # Arguments
     /// 
@@ -74,14 +74,18 @@ impl SrcView {
     /// // Map each modoff to a PDB name/path and make sure it's in the SrcView
     /// for modoff in modoffs {
     ///     let module_name =  mod_name_from_modoff(modoff);
-    ///     sv.try_insert(module_name, format!("~/pdbs/{module_name}.pdb"));
+    ///     let res = sv.try_insert(module_name, format!("~/pdbs/{module_name}.pdb"));
+    /// 
+    ///     if let Ok(inserted) = res {
+    ///         println!("PDB was inserted: {inserted}");
+    ///     }
     /// }
     /// ```
-    pub fn try_insert<P: AsRef<Path>>(&mut self, module: &str, pdb: P) -> Result<()> {
+    pub fn try_insert<P: AsRef<Path>>(&mut self, module: &str, pdb: P) -> Result<bool> {
         if self.0.contains_key(&module.to_owned()) {
-            Ok(())
+            Ok(false)
         } else {
-            self.insert(module, pdb).map(|_| ())
+            self.insert(module, pdb).map(|_| true)
         }
     }
 
