@@ -159,6 +159,15 @@ class Libfuzzer(Command):
             (ContainerType.coverage, containers[ContainerType.coverage]),
             (ContainerType.readonly_inputs, containers[ContainerType.inputs]),
         ]
+
+        if ContainerType.readonly_inputs in containers:
+            coverage_containers.append(
+                (
+                    ContainerType.readonly_inputs,
+                    containers[ContainerType.readonly_inputs],
+                )
+            )
+
         self.logger.info("creating coverage task")
 
         # The `coverage` task is not libFuzzer-aware, so invocations of the target fuzzer
