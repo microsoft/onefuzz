@@ -971,6 +971,11 @@
         "resolved": "5.11.0",
         "contentHash": "eaiXkUjC4NPcquGWzAGMXjuxvLwc6XGKMptSyOGQeT0X70BUZObuybJFZLA0OfTdueLd3US23NBPTBb6iF3V1Q=="
       },
+      "Octokit": {
+        "type": "Transitive",
+        "resolved": "2.0.1",
+        "contentHash": "JVlfUY+sfItl6RSyVKDJTutuy28cDydUwKKfzcelwNMor2Sa18pYVKna6phO8lug1b+ep+pcuFh/FPayuImsQw=="
+      },
       "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl": {
         "type": "Transitive",
         "resolved": "4.3.0",
@@ -2176,6 +2181,7 @@
           "Microsoft.Graph": "4.24.0",
           "Microsoft.Identity.Client": "4.43.0",
           "Microsoft.Identity.Web.TokenCache": "1.23.1",
+          "Octokit": "2.0.1",
           "Scriban": "5.5.0",
           "Semver": "2.1.0",
           "System.IdentityModel.Tokens.Jwt": "6.17.0",
