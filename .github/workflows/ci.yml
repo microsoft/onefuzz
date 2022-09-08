@@ -43,7 +43,7 @@ jobs:
       with:
         # if nothing has changed inside src/agent, we can reuse the artifacts directory
         path: artifacts
-        key: agent-artifacts-${{ matrix.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-${{ hashFiles('src/agent/**/*') }}
+        key: agent-artifacts-${{ join(matrix.os) }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-${{ hashFiles('src/agent/**/*') }}
         # note: also including the ACTIONS_CACHE_KEY_DATE to rebuild if the Prereq Cache is invalidated
     - name: Rust Prereq Cache
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
@@ -54,7 +54,7 @@ jobs:
           ~/.cargo/registry
           ~/.cargo/git
           ~/.cargo/bin
-        key: rust-${{ matrix.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+        key: rust-${{ join(matrix.os) }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}
     - name: Install Rust Prereqs
       if: steps.cache-rust-prereqs.outputs.cache-hit != 'true' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       shell: bash
@@ -66,9 +66,9 @@ jobs:
         path: |
           sccache
           src/agent/target
-        key: agent-${{ matrix.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-${{ hashFiles('src/agent/Cargo.lock') }}
+        key: agent-${{ join(matrix.os) }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-${{ hashFiles('src/agent/Cargo.lock') }}
         restore-keys: |
-          agent-${{ matrix.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-
+          agent-${{ join(matrix.os) }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-
     - name: Linux Prereqs
       if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       run: |
