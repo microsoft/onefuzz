@@ -41,7 +41,7 @@ public interface IVmssOperations {
         IDictionary<string, string> tags);
 
     Async.Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter);
-    Async.Task ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
+    Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
     Async.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
 }
 
@@ -259,18 +259,7 @@ public class VmssOperations : IVmssOperations {
             return getOsResult.ErrorV;
         }
 
-        var vmssData = new VirtualMachineScaleSetData(location) {
-            DoNotRunExtensionsOnOverprovisionedVms = false,
-            Sku = new ComputeSku() { Name = vmSku, Capacity = vmCount },
-            Overprovision = false,
-            SinglePlacementGroup = false,
-            UpgradePolicy = new UpgradePolicy() { Mode = UpgradeMode.Manual },
-            Identity = new ManagedServiceIdentity(managedServiceIdentityType: ManagedServiceIdentityType.UserAssigned),
-        };
-        vmssData.Identity.UserAssignedIdentities.Add(_creds.GetScalesetIdentityResourcePath(), new UserAssignedIdentity());
-        vmssData.VirtualMachineProfile = new VirtualMachineScaleSetVmProfile() { Priority = VirtualMachinePriorityTypes.Regular };
         var imageRef = new ImageReference();
-
         if (image.StartsWith('/')) {
             imageRef.Id = image;
         } else {
@@ -280,19 +269,50 @@ public class VmssOperations : IVmssOperations {
             imageRef.Sku = info.Sku;
             imageRef.Version = info.Version;
         }
-        vmssData.VirtualMachineProfile.StorageProfile = new VirtualMachineScaleSetStorageProfile() { ImageReference = imageRef };
-        vmssData.VirtualMachineProfile.OSProfile = new VirtualMachineScaleSetOSProfile() { ComputerNamePrefix = "node", AdminUsername = "onefuzz" };
 
-        var networkConfiguration = new VirtualMachineScaleSetNetworkConfiguration("onefuzz-nic") { Primary = true };
-        var ipConfig = new VirtualMachineScaleSetIPConfiguration("onefuzz-ip-config");
-        ipConfig.SubnetId = new ResourceIdentifier(networkId);
-        networkConfiguration.IPConfigurations.Add(ipConfig);
-
-        vmssData.VirtualMachineProfile.NetworkProfile = new VirtualMachineScaleSetNetworkProfile();
-        vmssData.VirtualMachineProfile.NetworkProfile.NetworkInterfaceConfigurations.Add(networkConfiguration);
+        var vmssData = new VirtualMachineScaleSetData(location) {
+            DoNotRunExtensionsOnOverprovisionedVms = true,
+            UpgradePolicy = new() {
+                Mode = UpgradeMode.Manual,
+            },
+            Sku = new() {
+                Name = vmSku,
+                Tier = "Standard",
+                Capacity = vmCount,
+            },
+            Overprovision = false,
+            SinglePlacementGroup = false,
+            Identity = new(ManagedServiceIdentityType.UserAssigned) {
+                UserAssignedIdentities = {
+                    { _creds.GetScalesetIdentityResourcePath(), new UserAssignedIdentity() },
+                },
+            },
+            VirtualMachineProfile = new() {
+                Priority = VirtualMachinePriorityTypes.Regular,
+                StorageProfile = new() {
+                    ImageReference = imageRef,
+                },
+                OSProfile = new() {
+                    ComputerNamePrefix = "node",
+                    AdminUsername = "onefuzz",
+                },
+                NetworkProfile = new() {
+                    NetworkInterfaceConfigurations = {
+                        new("onefuzz-nic") {
+                            Primary = true,
+                            IPConfigurations = {
+                                new("onefuzz-ip-config") {
+                                    SubnetId = new ResourceIdentifier(networkId)
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        };
 
         if (extensions is not null) {
-            vmssData.VirtualMachineProfile.ExtensionProfile = new VirtualMachineScaleSetExtensionProfile();
+            vmssData.VirtualMachineProfile.ExtensionProfile = new();
             foreach (var e in extensions) {
                 vmssData.VirtualMachineProfile.ExtensionProfile.Extensions.Add(e);
             }
@@ -303,20 +323,27 @@ public class VmssOperations : IVmssOperations {
                 vmssData.VirtualMachineProfile.OSProfile.AdminPassword = password;
                 break;
             case Os.Linux:
-                vmssData.VirtualMachineProfile.OSProfile.LinuxConfiguration = new LinuxConfiguration();
-                vmssData.VirtualMachineProfile.OSProfile.LinuxConfiguration.DisablePasswordAuthentication = true;
-                var i = new SshPublicKeyInfo() { KeyData = sshPublicKey, Path = "/home/onefuzz/.ssh/authorized_keys" };
-                vmssData.VirtualMachineProfile.OSProfile.LinuxConfiguration.SshPublicKeys.Add(i);
+                vmssData.VirtualMachineProfile.OSProfile.LinuxConfiguration = new() {
+                    DisablePasswordAuthentication = true,
+                    SshPublicKeys = {
+                        new() {
+                            KeyData = sshPublicKey,
+                            Path = "/home/onefuzz/.ssh/authorized_keys",
+                        },
+                    }
+                };
                 break;
             default:
                 return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"unhandled OS: {getOsResult.OkV} in image: {image}");
         }
 
         if (ephemeralOsDisks) {
-            vmssData.VirtualMachineProfile.StorageProfile.OSDisk = new VirtualMachineScaleSetOSDisk(DiskCreateOptionTypes.FromImage);
-            vmssData.VirtualMachineProfile.StorageProfile.OSDisk.DiffDiskSettings = new DiffDiskSettings();
-            vmssData.VirtualMachineProfile.StorageProfile.OSDisk.DiffDiskSettings.Option = DiffDiskOptions.Local;
-            vmssData.VirtualMachineProfile.StorageProfile.OSDisk.Caching = CachingTypes.ReadOnly;
+            vmssData.VirtualMachineProfile.StorageProfile.OSDisk = new(DiskCreateOptionTypes.FromImage) {
+                DiffDiskSettings = new DiffDiskSettings {
+                    Option = DiffDiskOptions.Local,
+                },
+                Caching = CachingTypes.ReadOnly,
+            };
         }
 
         if (spotInstance.HasValue && spotInstance.Value) {
@@ -325,9 +352,9 @@ public class VmssOperations : IVmssOperations {
             //
             // https://docs.microsoft.com/en-us/azure/
             //   virtual-machine-scale-sets/use-spot#resource-manager-templates
-            vmssData.VirtualMachineProfile.EvictionPolicy = VirtualMachineEvictionPolicyTypes.Deallocate;
+            vmssData.VirtualMachineProfile.EvictionPolicy = VirtualMachineEvictionPolicyTypes.Delete;
             vmssData.VirtualMachineProfile.Priority = VirtualMachinePriorityTypes.Spot;
-            vmssData.VirtualMachineProfile.BillingMaxPrice = 1.0;
+            vmssData.VirtualMachineProfile.BillingMaxPrice = -1.0;
         }
 
         foreach (var tag in tags) {
@@ -395,10 +422,10 @@ public class VmssOperations : IVmssOperations {
             return skuNames;
         });
 
-    public async Async.Task ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
+    public async Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
         var result = await CheckCanUpdate(scalesetId);
         if (!result.IsOk) {
-            throw new Exception($"cannot reimage scaleset {scalesetId}: {result.ErrorV}");
+            return OneFuzzResultVoid.Error(result.ErrorV);
         }
 
         var instanceIds = new HashSet<string>();
@@ -412,7 +439,7 @@ public class VmssOperations : IVmssOperations {
         }
 
         if (!instanceIds.Any()) {
-            return;
+            return OneFuzzResultVoid.Ok;
         }
 
         var subscription = _creds.GetSubscription();
@@ -441,6 +468,7 @@ public class VmssOperations : IVmssOperations {
         }
 
         await vmssResource.ReimageAllAsync(WaitUntil.Started, reqInstanceIds);
+        return OneFuzzResultVoid.Ok;
     }
 
     public async Async.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {

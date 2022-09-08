@@ -136,7 +136,10 @@ public class AgentEvents {
                         MachineId: machineId,
                         TaskId: task.TaskId,
                         State: NodeTaskState.SettingUp);
-                    await _context.NodeTasksOperations.Replace(nodeTask);
+                    var r = await _context.NodeTasksOperations.Replace(nodeTask);
+                    if (!r.IsOk) {
+                        _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace node task {task.TaskId}");
+                    }
                 }
             }
         } else if (ev.State == NodeState.Done) {
