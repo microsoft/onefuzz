@@ -176,16 +176,17 @@ namespace Tests {
 
         public static Gen<InstanceConfig> InstanceConfig() {
             return Arb.Generate<Tuple<
-                Tuple<string, Guid[]?, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?>,
+                Tuple<string, Guid[]?, bool, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?>,
                 Tuple<string, IDictionary<string, ApiAccessRule>?, IDictionary<Guid, Guid[]>?, IDictionary<string, string>?, IDictionary<string, string>?>>>().Select(
                 arg =>
                     new InstanceConfig(
                         InstanceName: arg.Item1.Item1,
                         Admins: arg.Item1.Item2,
-                        AllowedAadTenants: arg.Item1.Item3,
-                        NetworkConfig: arg.Item1.Item4,
-                        ProxyNsgConfig: arg.Item1.Item5,
-                        Extensions: arg.Item1.Item6,
+                        RequireAdminPrivileges: arg.Item1.Item3,
+                        AllowedAadTenants: arg.Item1.Item4,
+                        NetworkConfig: arg.Item1.Item5,
+                        ProxyNsgConfig: arg.Item1.Item6,
+                        Extensions: arg.Item1.Item7,
 
                         ProxyVmSku: arg.Item2.Item1,
                         ApiAccessRules: arg.Item2.Item2,

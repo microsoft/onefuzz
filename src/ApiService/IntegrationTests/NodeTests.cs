@@ -155,7 +155,7 @@ public abstract class NodeTestBase : FunctionTestBase {
     public async Async.Task RequiresAdmin(string method) {
         // config must be found
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!));
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!, RequireAdminPrivileges = true));
 
         // must be a user to auth
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
