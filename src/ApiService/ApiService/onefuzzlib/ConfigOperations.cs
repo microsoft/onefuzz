@@ -32,7 +32,6 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
 
     public async Async.Task Save(InstanceConfig config, bool isNew = false, bool requireEtag = false) {
         var newConfig = config with { InstanceName =  _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set") };
-        _log.Info("Updating Instance Config");
         ResultVoid<(int, string)> r;
         if (isNew) {
             r = await Insert(newConfig);
@@ -50,11 +49,9 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
                 _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace instance config record");
             }
         }
-
         if (r.IsOk) {
-            _cache.Set(_key, config);
+            _cache.Set(_key, newConfig);
         }
-
-        await _context.Events.SendEvent(new EventInstanceConfigUpdated(config));
+        await _context.Events.SendEvent(new EventInstanceConfigUpdated(newConfig));
     }
 }

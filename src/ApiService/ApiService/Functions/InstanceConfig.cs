@@ -44,7 +44,6 @@ public class InstanceConfig {
                 context: "instance_config update");
         }
         var config = await _context.ConfigOperations.Fetch();
-        // Check if can modify
         var answer = await _auth.CheckRequireAdmins(req);
         if (!answer.IsOk) {
             return await _context.RequestHandling.NotOk(req, answer.ErrorV, "instance_config update");
@@ -58,7 +57,6 @@ public class InstanceConfig {
             }
         }
         await _context.ConfigOperations.Save(request.OkV.config, false, false);
-        _log.Info($"updated instance_config");
         if (updateNsg) {
             await foreach (var nsg in _context.NsgOperations.ListNsgs()) {
                 _log.Info($"Checking if nsg: {nsg.Data.Location!} ({nsg.Data.Name}) owned by OneFuz");
@@ -73,6 +71,8 @@ public class InstanceConfig {
                 }
             }
         }
-        return await RequestHandling.Ok(req, new InstanceConfigResponse(config));
+        var instanceConfigResponse = req.CreateResponse(HttpStatusCode.OK);
+        await instanceConfigResponse.WriteAsJsonAsync(request.OkV.config);
+        return instanceConfigResponse;
     }
 }

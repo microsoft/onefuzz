@@ -124,7 +124,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
 
             return new Error(
                 Code: ErrorCode.UNAUTHORIZED,
-                Errors: new string[] { "not authorized to manage pools" });
+                Errors: new string[] { "not authorized to manage instance" });
         } else {
             return new Error(
                 Code: ErrorCode.UNAUTHORIZED,

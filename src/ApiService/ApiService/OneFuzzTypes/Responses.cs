@@ -106,10 +106,6 @@ public record JobResponse(
         );
 }
 
-public record InstanceConfigResponse(
-    InstanceConfig config
-) : BaseResponse();
-
 public record PoolGetResult(
     PoolName Name,
     Guid PoolId,
