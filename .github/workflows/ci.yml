@@ -86,6 +86,7 @@ jobs:
         os:
         - ubuntu-18.04
         - windows-2019
+        - [ self-hosted, "1ES.Pool=onefuzz-ci" ]
   azcopy:
     runs-on: ubuntu-18.04
     steps:
