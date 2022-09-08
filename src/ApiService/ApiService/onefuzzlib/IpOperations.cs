@@ -96,25 +96,26 @@ public class IpOperations : IIpOperations {
         // TODO: Parts of this function seem redundant, but I'm mirroring
         // the python code exactly. We should revisit this.
         _logTracer.Info($"getting ip for {resourceId}");
-        var resource = await (_context.Creds.GetData(_context.Creds.ParseResourceId(resourceId)));
-        var networkInterfaces = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(
-            resource.Data.Name
-        );
-        var publicIpConfigResource = (await networkInterfaces.Value.GetNetworkInterfaceIPConfigurations().FirstAsync());
-        publicIpConfigResource = await publicIpConfigResource.GetAsync();
-        var publicIp = publicIpConfigResource.Data.PublicIPAddress;
-        if (publicIp == null) {
-            return null;
-        }
-
-        resource = _context.Creds.ParseResourceId(publicIp.Id!);
         try {
+            var resource = await (_context.Creds.GetData(_context.Creds.ParseResourceId(resourceId)));
+            var networkInterfaces = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(
+                resource.Data.Name
+            );
+            var publicIpConfigResource = (await networkInterfaces.Value.GetNetworkInterfaceIPConfigurations().FirstAsync());
+            publicIpConfigResource = await publicIpConfigResource.GetAsync();
+            var publicIp = publicIpConfigResource.Data.PublicIPAddress;
+            if (publicIp == null) {
+                return null;
+            }
+
+            resource = _context.Creds.ParseResourceId(publicIp.Id!);
+
             resource = await _context.Creds.GetData(resource);
             var publicIpResource = await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(
                 resource.Data.Name
             );
             return publicIpResource.Value.Data.IPAddress;
-        } catch (RequestFailedException) {
+        } catch (RequestFailedException ex) when (ex.Status == 404) {
             return null;
         }
     }

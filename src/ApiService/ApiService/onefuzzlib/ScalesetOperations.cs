@@ -589,13 +589,17 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 return;
 
             case NodeDisposalStrategy.ScaleIn:
-                await _context.VmssOperations.ReimageNodes(scaleset.ScalesetId, machineIds);
-                await Async.Task.WhenAll(nodes
-                    .Where(node => machineIds.Contains(node.MachineId))
-                    .Select(async node => {
-                        await _context.NodeOperations.Delete(node);
-                        await _context.NodeOperations.ReleaseScaleInProtection(node);
-                    }));
+                var r = await _context.VmssOperations.ReimageNodes(scaleset.ScalesetId, machineIds);
+                if (r.IsOk) {
+                    await Async.Task.WhenAll(nodes
+                        .Where(node => machineIds.Contains(node.MachineId))
+                        .Select(async node => {
+                            await _context.NodeOperations.Delete(node);
+                            await _context.NodeOperations.ReleaseScaleInProtection(node);
+                        }));
+                } else {
+                    _log.Info($"failed to reimage nodes due to {r.ErrorV}");
+                }
                 return;
         }
     }
@@ -647,22 +651,23 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
     public async Task<OneFuzzResult<Scaleset>> GetById(Guid scalesetId) {
         var data = QueryAsync(filter: $"RowKey eq '{scalesetId}'");
-        var count = await data.CountAsync();
-        if (data == null || count == 0) {
+        var scaleSets = data is not null ? (await data.ToListAsync()) : null;
+
+        if (scaleSets == null || scaleSets.Count == 0) {
             return OneFuzzResult<Scaleset>.Error(
                 ErrorCode.INVALID_REQUEST,
                 "unable to find scaleset"
             );
         }
 
-        if (count != 1) {
+        if (scaleSets.Count != 1) {
             return OneFuzzResult<Scaleset>.Error(
                 ErrorCode.INVALID_REQUEST,
                 "error identifying scaleset"
             );
         }
 
-        return OneFuzzResult<Scaleset>.Ok(await data.SingleAsync());
+        return OneFuzzResult<Scaleset>.Ok(scaleSets.First());
     }
 
     public IAsyncEnumerable<Scaleset> GetByObjectId(Guid objectId) {
