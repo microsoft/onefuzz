@@ -340,8 +340,7 @@ public record InstanceConfig
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
         null,
-        "Standard_B2s",
-        false
+        "Standard_B2s"
         ) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {
