@@ -326,7 +326,7 @@ public record InstanceConfig
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkConfig NetworkConfig,
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
-    string ProxyVmSku = "Standard_B2s",
+    string ProxyVmSku,
     bool RequireAdminPrivileges = false,
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
     IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,
@@ -339,7 +339,9 @@ public record InstanceConfig
         Array.Empty<string>(),
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
-        null
+        null,
+        "Standard_B2s",
+        false
         ) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {
