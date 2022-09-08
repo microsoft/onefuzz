@@ -156,7 +156,7 @@ public abstract class NodeTestBase : FunctionTestBase {
         // config must be found
         await Context.InsertAll(
             new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) {
-                RequireAdminPrivileges = false
+                RequireAdminPrivileges = true
             });
 
         // must be a user to auth
