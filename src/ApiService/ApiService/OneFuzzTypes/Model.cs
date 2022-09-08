@@ -339,8 +339,7 @@ public record InstanceConfig
         Array.Empty<string>(),
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
-        null,
-        "Standard_B2s"
+        null
         ) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {
