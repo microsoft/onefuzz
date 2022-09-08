@@ -59,18 +59,6 @@ public class Reports : IReports {
         }
         return regressionReport;
     }
-
-    private IReport? ParseReportOrRegression(IEnumerable<byte> content, string? filePath, bool expectReports = false) {
-        try {
-            var str = System.Text.Encoding.UTF8.GetString(content.ToArray());
-            return ParseReportOrRegression(str, filePath, expectReports);
-        } catch (Exception e) {
-            if (expectReports) {
-                _log.Error($"unable to parse report ({filePath}): unicode decode of report failed - {e.Message} {e.StackTrace}");
-            }
-            return null;
-        }
-    }
 }
 
 public interface IReport { };

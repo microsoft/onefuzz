@@ -138,8 +138,4 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         _logTracer.Error($"unable to find crash_report or no repro entry for report: {JsonSerializer.Serialize(report)}");
         return null;
     }
-
-    private void NotifyAdo(AdoTemplate config, Container container, string filename, IReport report, bool failTaskOnTransientError) {
-        throw new NotImplementedException();
-    }
 }

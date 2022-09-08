@@ -29,7 +29,7 @@ public class Ado : NotificationsBase, IAdo {
         _logTracer.Info($"notify ado: {notificationInfo}");
 
         try {
-            var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report);
+            var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
             await ado.Process(notificationInfo);
         } catch (Exception e) {
             /*
@@ -69,26 +69,28 @@ public class Ado : NotificationsBase, IAdo {
         private readonly Renderer _renderer;
         private readonly string _project;
         private readonly WorkItemTrackingHttpClient _client;
-        private Uri _instanceUrl;
-        public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, Renderer? renderer = null) {
+        private readonly Uri _instanceUrl;
+        private readonly ILogTracer _logTracer;
+        public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogTracer logTracer, Renderer? renderer = null) {
             renderer ??= await Renderer.ConstructRenderer(context, container, filename, report);
             var instanceUrl = context.Creds.GetInstanceUrl();
             var project = await renderer.Render(config.Project, instanceUrl);
 
             var authToken = await context.SecretsOperations.GetSecretStringValue(config.AuthToken);
             var client = GetAdoClient(config.BaseUrl, authToken!);
-            return new AdoConnector(container, filename, config, report, renderer, project!, client, instanceUrl);
+            return new AdoConnector(container, filename, config, report, renderer, project!, client, instanceUrl, logTracer);
         }
 
         private static WorkItemTrackingHttpClient GetAdoClient(Uri baseUrl, string token) {
             return new WorkItemTrackingHttpClient(baseUrl, new VssBasicCredential("PAT", token));
         }
-        public AdoConnector(Container container, string filename, AdoTemplate config, Report report, Renderer renderer, string project, WorkItemTrackingHttpClient client, Uri instanceUrl) {
+        public AdoConnector(Container container, string filename, AdoTemplate config, Report report, Renderer renderer, string project, WorkItemTrackingHttpClient client, Uri instanceUrl, ILogTracer logTracer) {
             _config = config;
             _renderer = renderer;
             _project = project;
             _client = client;
             _instanceUrl = instanceUrl;
+            _logTracer = logTracer;
         }
 
         public async Async.Task<string> Render(string template) {
@@ -155,7 +157,6 @@ public class Ado : NotificationsBase, IAdo {
             foreach (var workItemReference in (await _client.QueryByWiqlAsync(wiql)).WorkItems) {
                 var item = await _client.GetWorkItemAsync(_project, workItemReference.Id, expand: WorkItemExpand.Fields);
 
-                // This code is questionable
                 var loweredFields = item.Fields.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => JsonSerializer.Serialize(kvp.Value));
                 if (postQueryFilter.Any() && !postQueryFilter.All(kvp => {
                     var lowerKey = kvp.Key.ToLowerInvariant();
@@ -163,7 +164,6 @@ public class Ado : NotificationsBase, IAdo {
                 })) {
                     continue;
                 }
-                // End questionable code
 
                 yield return item;
             }
@@ -212,9 +212,9 @@ public class Ado : NotificationsBase, IAdo {
 
             if (document.Any()) {
                 await _client.UpdateWorkItemAsync(document, _project, (int)(item.Id!));
-                // TODO: _logging.Info($""notify ado: updated work item {item.Id} - {notificationInfo}); 
+                _logTracer.Info($"notify ado: updated work item {item.Id} - {notificationInfo}");
             } else {
-                // TODO: _logging.Info($"notify ado: no update for work item {item.Id} - {notificationInfo}");
+                _logTracer.Info($"notify ado: no update for work item {item.Id} - {notificationInfo}");
             }
         }
 
@@ -278,7 +278,7 @@ public class Ado : NotificationsBase, IAdo {
 
             if (!seen) {
                 var entry = await CreateNew();
-                // TODO: _logTracer.Info($"notify ado: created new work item {entry.Id} - {notificationInfo}");
+                _logTracer.Info($"notify ado: created new work item {entry.Id} - {notificationInfo}");
             }
         }
     }

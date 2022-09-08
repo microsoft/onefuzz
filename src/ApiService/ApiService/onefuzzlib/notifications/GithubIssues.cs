@@ -30,7 +30,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
 
     private async Async.Task Process(GithubIssuesTemplate config, Container container, string filename, Report report) {
         var renderer = await Renderer.ConstructRenderer(_context, container, filename, report);
-        var handler = await GithubConnnector.GithubConnnectorCreator(config, container, filename, renderer, _context.Creds.GetInstanceUrl(), _context);
+        var handler = await GithubConnnector.GithubConnnectorCreator(config, container, filename, renderer, _context.Creds.GetInstanceUrl(), _context, _logTracer);
         await handler.Process();
     }
     class GithubConnnector {
@@ -38,23 +38,25 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         private readonly GithubIssuesTemplate _config;
         private readonly Renderer _renderer;
         private readonly Uri _instanceUrl;
+        private readonly ILogTracer _logTracer;
 
-        public static async Async.Task<GithubConnnector> GithubConnnectorCreator(GithubIssuesTemplate config, Container container, string filename, Renderer renderer, Uri instanceUrl, IOnefuzzContext context) {
+        public static async Async.Task<GithubConnnector> GithubConnnectorCreator(GithubIssuesTemplate config, Container container, string filename, Renderer renderer, Uri instanceUrl, IOnefuzzContext context, ILogTracer logTracer) {
             var auth = config.Auth.Secret switch {
                 SecretAddress<GithubAuth> sa => await context.SecretsOperations.GetSecretObj<GithubAuth>(sa.Url),
                 SecretValue<GithubAuth> sv => sv.Value,
                 _ => throw new ArgumentException($"Unexpected secret type {config.Auth.Secret.GetType()}")
             };
-            return new GithubConnnector(config, container, filename, renderer, instanceUrl, auth!);
+            return new GithubConnnector(config, container, filename, renderer, instanceUrl, auth!, logTracer);
         }
 
-        public GithubConnnector(GithubIssuesTemplate config, Container container, string filename, Renderer renderer, Uri instanceUrl, GithubAuth auth) {
+        public GithubConnnector(GithubIssuesTemplate config, Container container, string filename, Renderer renderer, Uri instanceUrl, GithubAuth auth, ILogTracer logTracer) {
             _config = config;
             _gh = new GitHubClient(new ProductHeaderValue("microsoft/OneFuzz")) {
                 Credentials = new Credentials(auth.User, auth.PersonalAccessToken)
             };
             _renderer = renderer;
             _instanceUrl = instanceUrl;
+            _logTracer = logTracer;
         }
 
         public async Async.Task Process() {
@@ -108,7 +110,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         }
 
         private async Async.Task Update(Issue issue) {
-            // TODO: logging.info($"updating issue: {issue}");
+            _logTracer.Info($"updating issue: {issue}");
             if (_config.OnDuplicate.Comment != null) {
                 await _gh.Issue.Comment.Create(issue.Repository.Id, issue.Number, await Render(_config.OnDuplicate.Comment));
             }
@@ -127,7 +129,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         }
 
         private async Async.Task Create() {
-            //TODO: logging.info($"creating issue");
+            _logTracer.Info($"creating issue");
             var assignees = await _config.Assignees.ToAsyncEnumerable()
                 .SelectAwait(async assignee => await Render(assignee))
                 .ToListAsync();
