@@ -13,6 +13,6 @@ fi
 
 cargo install cargo-audit
 
-if ! cargo-license --help; then
+if ! cargo license --help; then
     cargo install cargo-license@0.4.2
 fi
