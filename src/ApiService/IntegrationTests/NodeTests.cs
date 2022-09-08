@@ -243,7 +243,7 @@ public abstract class NodeTestBase : FunctionTestBase {
         // config specifies that a different user is admin
         await Context.InsertAll(
             new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) {
-                Admins = new[] { otherObjectId, RequireAdminPrivileges = true }
+                Admins = new[] { otherObjectId }, RequireAdminPrivileges = true
             });
 
         // must be a user to auth
