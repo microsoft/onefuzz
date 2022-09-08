@@ -340,7 +340,7 @@ public record InstanceConfig
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
         null,
-        "Standard_B2s", 
+        "Standard_B2s",
         false
         ) { }
 
@@ -737,7 +737,6 @@ public record WorkUnit(
     Guid JobId,
     Guid TaskId,
     TaskType TaskType,
-
     // JSON-serialized `TaskUnitConfig`.
     [property: JsonConverter(typeof(TaskUnitConfigConverter))] TaskUnitConfig Config
 );

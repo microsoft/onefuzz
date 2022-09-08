@@ -31,7 +31,7 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
         });
 
     public async Async.Task Save(InstanceConfig config, bool isNew = false, bool requireEtag = false) {
-        var newConfig = config with { InstanceName =  _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set") };
+        var newConfig = config with { InstanceName = _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set") };
         ResultVoid<(int, string)> r;
         if (isNew) {
             r = await Insert(newConfig);
