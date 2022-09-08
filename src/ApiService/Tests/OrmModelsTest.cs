@@ -182,7 +182,6 @@ namespace Tests {
                     new InstanceConfig(
                         InstanceName: arg.Item1.Item1,
                         Admins: arg.Item1.Item2,
-                        AllowPoolManagement: arg.Item1.Item3,
                         AllowedAadTenants: arg.Item1.Item4,
                         NetworkConfig: arg.Item1.Item5,
                         ProxyNsgConfig: arg.Item1.Item6,
