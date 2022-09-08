@@ -25,7 +25,9 @@ public class SchedulerTests {
                         TargetEnv: new Dictionary<string, string>(),
                         TargetOptions: new List<string>()),
                     Pool: new TaskPool(1, PoolName.Parse("pool")),
-                    Containers: new List<TaskContainers> { new TaskContainers(ContainerType.Setup, new Container("setup")) },
+                    Containers: new List<TaskContainers> {
+                        new TaskContainers(ContainerType.Setup, Container.Parse("setup"))
+                    },
                     Colocate: true
 
                 ),
@@ -105,7 +107,7 @@ public class SchedulerTests {
         var tasks = BuildTasks(100).Select((task, i) => {
             var containers = new List<TaskContainers>(task.Config.Containers!);
             if (i % 4 == 0) {
-                containers[0] = containers[0] with { Name = new Container("setup2") };
+                containers[0] = containers[0] with { Name = Container.Parse("setup2") };
             }
             return task with {
                 JobId = i % 2 == 0 ? jobId : task.JobId,

@@ -63,14 +63,14 @@ public class TimerProxy {
             // assignment though. This behavior is acceptable at this point
             // since we do not support bring your own NSG
 
-            if (await nsgOpertions.GetNsg(region) != null) {
+            if (await nsgOpertions.GetNsg(region.String) != null) {
                 var network = await Network.Init(region, _context);
 
                 var subnet = await network.GetSubnet();
                 if (subnet != null) {
                     var vnet = await network.GetVnet();
                     if (vnet != null) {
-                        var result = await nsgOpertions.AssociateSubnet(region, vnet, subnet);
+                        var result = await nsgOpertions.AssociateSubnet(region.String, vnet, subnet);
                         if (!result.OkV) {
                             _logger.Error($"Failed to associate NSG and subnet due to {result.ErrorV} in region {region}");
                         }

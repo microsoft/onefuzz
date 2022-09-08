@@ -2,7 +2,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using Region = System.String;
 
 namespace Microsoft.OneFuzz.Service;
 

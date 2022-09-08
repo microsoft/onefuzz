@@ -48,7 +48,8 @@ public abstract class InfoTestBase : FunctionTestBase {
         // store the instance ID in the expected location:
         // for production this is done by the deploy script
         var instanceId = Guid.NewGuid().ToString();
-        var containerClient = GetContainerClient("base-config");
+        var baseConfigContainer = Container.Parse("base-config");
+        var containerClient = GetContainerClient(baseConfigContainer);
         await containerClient.CreateAsync();
         await containerClient.GetBlobClient("instance_id").UploadAsync(new BinaryData(instanceId));
 

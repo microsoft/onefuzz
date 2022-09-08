@@ -42,7 +42,7 @@ public class ContainersFunction {
                     new Error(
                         Code: ErrorCode.INVALID_REQUEST,
                         Errors: new[] { "invalid container" }),
-                    context: get.Name.ContainerName);
+                    context: get.Name.String);
             }
 
             var metadata = (await container.GetPropertiesAsync()).Value.Metadata;
@@ -63,7 +63,7 @@ public class ContainersFunction {
 
         // otherwise list all containers
         var containers = await _context.Containers.GetContainers(StorageType.Corpus);
-        var result = containers.Select(c => new ContainerInfoBase(new Container(c.Key), c.Value));
+        var result = containers.Select(c => new ContainerInfoBase(c.Key, c.Value));
         return await RequestHandling.Ok(req, result);
     }
 
@@ -104,7 +104,7 @@ public class ContainersFunction {
                 new Error(
                     Code: ErrorCode.INVALID_REQUEST,
                     Errors: new[] { "invalid container" }),
-                context: post.Name.ContainerName);
+                context: post.Name.String);
         }
 
         return await RequestHandling.Ok(

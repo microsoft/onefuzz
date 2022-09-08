@@ -14,7 +14,7 @@ public interface IProxyOperations : IStatefulOrm<Proxy, VmState> {
     bool IsAlive(Proxy proxy);
     Async.Task SaveProxyConfig(Proxy proxy);
     bool IsOutdated(Proxy proxy);
-    Async.Task<Proxy?> GetOrCreate(string region);
+    Async.Task<Proxy?> GetOrCreate(Region region);
     Task<bool> IsUsed(Proxy proxy);
 
     // state transitions:
@@ -27,13 +27,10 @@ public interface IProxyOperations : IStatefulOrm<Proxy, VmState> {
     Async.Task<Proxy> Stopped(Proxy proxy);
 }
 public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IProxyOperations {
-
-
-    static TimeSpan PROXY_LIFESPAN = TimeSpan.FromDays(7);
+    static readonly TimeSpan PROXY_LIFESPAN = TimeSpan.FromDays(7);
 
     public ProxyOperations(ILogTracer log, IOnefuzzContext context)
         : base(log.WithTag("Component", "scaleset-proxy"), context) {
-
     }
 
 
@@ -44,7 +41,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         return await data.FirstOrDefaultAsync();
     }
 
-    public async Async.Task<Proxy?> GetOrCreate(string region) {
+    public async Async.Task<Proxy?> GetOrCreate(Region region) {
         var proxyList = QueryAsync(filter: $"region eq '{region}' and outdated eq false");
 
         await foreach (var proxy in proxyList) {
@@ -117,7 +114,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     public async Async.Task SaveProxyConfig(Proxy proxy) {
         var forwards = await GetForwards(proxy);
-        var url = (await _context.Containers.GetFileSasUrl(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", StorageType.Config, BlobSasPermissions.Read)).EnsureNotNull("Can't generate file sas");
+        var url = (await _context.Containers.GetFileSasUrl(WellKnownContainers.ProxyConfigs, $"{proxy.Region}/{proxy.ProxyId}/config.json", StorageType.Config, BlobSasPermissions.Read)).EnsureNotNull("Can't generate file sas");
         var queueSas = await _context.Queue.GetQueueSas("proxy", StorageType.Config, QueueSasPermissions.Add).EnsureNotNull("can't generate queue sas") ?? throw new Exception("Queue sas is null");
 
         var proxyConfig = new ProxyConfig(
@@ -130,7 +127,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             MicrosoftTelemetryKey: _context.ServiceConfiguration.OneFuzzTelemetry.EnsureNotNull("missing Telemetry"),
             InstanceId: await _context.Containers.GetInstanceId());
 
-        await _context.Containers.SaveBlob(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", EntityConverter.ToJsonString(proxyConfig), StorageType.Config);
+        await _context.Containers.SaveBlob(WellKnownContainers.ProxyConfigs, $"{proxy.Region}/{proxy.ProxyId}/config.json", EntityConverter.ToJsonString(proxyConfig), StorageType.Config);
     }
 
 
@@ -175,7 +172,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
                 return await SetState(proxy, VmState.ExtensionsLaunch);
             }
         } else {
-            var nsg = new Nsg(proxy.Region, proxy.Region);
+            var nsg = new Nsg(proxy.Region.String, proxy.Region);
             var result = await _context.NsgOperations.Create(nsg);
             if (!result.IsOk) {
                 return await SetFailed(proxy, result.ErrorV);

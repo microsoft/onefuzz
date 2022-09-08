@@ -11,7 +11,7 @@ public interface ISubnet {
 
     Async.Task<SubnetResource?> GetSubnet(string vnetName, string subnetName);
 
-    Async.Task<OneFuzzResultVoid> CreateVirtualNetwork(string resourceGroup, string name, string region, NetworkConfig networkConfig);
+    Async.Task<OneFuzzResultVoid> CreateVirtualNetwork(string resourceGroup, string name, Region region, NetworkConfig networkConfig);
 
     Async.Task<ResourceIdentifier?> GetSubnetId(string name, string subnetName);
 }
@@ -29,7 +29,7 @@ public class Subnet : ISubnet {
         _context = context;
     }
 
-    public async Task<OneFuzzResultVoid> CreateVirtualNetwork(string resourceGroup, string name, string region, NetworkConfig networkConfig) {
+    public async Task<OneFuzzResultVoid> CreateVirtualNetwork(string resourceGroup, string name, Region region, NetworkConfig networkConfig) {
         _logTracer.Info($"creating subnet - resource group:{resourceGroup} name:{name} region: {region}");
 
         var virtualNetParam = new VirtualNetworkData {

@@ -131,7 +131,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
                 repro = repro with { State = VmState.ExtensionsLaunch };
             }
         } else {
-            var nsg = new Nsg(vm.Region, vm.Region);
+            var nsg = new Nsg(vm.Region.String, vm.Region);
             var result = await _context.NsgOperations.Create(nsg);
             if (!result.IsOk) {
                 return await _context.ReproOperations.SetError(repro, result.ErrorV);
@@ -260,7 +260,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
 
         foreach (var (fileName, fileContents) in files) {
             await _context.Containers.SaveBlob(
-                new Container("repro-scripts"),
+                WellKnownContainers.ReproScripts,
                 $"{repro.VmId}/{fileName}",
                 fileContents,
                 StorageType.Config

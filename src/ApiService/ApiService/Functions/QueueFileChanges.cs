@@ -56,6 +56,6 @@ public class QueueFileChanges {
         var path = string.Join('/', parts.Skip(1));
 
         log.Info($"file added container: {container} - path: {path}");
-        await _notificationOperations.NewFiles(new Container(container), path, failTaskOnTransientError);
+        await _notificationOperations.NewFiles(Container.Parse(container), path, failTaskOnTransientError);
     }
 }
