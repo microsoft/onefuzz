@@ -244,7 +244,8 @@ public record TaskCreate(
 public record TaskSearch(
     Guid? JobId,
     Guid? TaskId,
-    [property: Required] List<TaskState> State) : BaseRequest;
+    List<TaskState>? State = null
+) : BaseRequest;
 
 public record PoolSearch(
     Guid? PoolId = null,
