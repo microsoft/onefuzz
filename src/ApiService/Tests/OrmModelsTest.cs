@@ -176,7 +176,7 @@ namespace Tests {
 
         public static Gen<InstanceConfig> InstanceConfig() {
             return Arb.Generate<Tuple<
-                Tuple<string, Guid[]?, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?, string, bool>,
+                Tuple<string, Guid[]?, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?, string>,
                 Tuple<bool, IDictionary<string, ApiAccessRule>?, IDictionary<Guid, Guid[]>?, IDictionary<string, string>?, IDictionary<string, string>?>>>().Select(
                 arg =>
                     new InstanceConfig(
