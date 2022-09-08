@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using FluentAssertions;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace FunctionalTests {
@@ -24,7 +25,8 @@ namespace FunctionalTests {
         [Fact]
         public async Task GetProxies() {
             var allProxiesResult = await _proxyApi.Get();
-            Assert.True(allProxiesResult.IsOk, $"failed to get proxies due to {allProxiesResult.ErrorV}");
+
+            allProxiesResult.IsOk.Should().BeTrue("failed to get proxies due to {0}", allProxiesResult.ErrorV);
 
             if (!allProxiesResult.OkV!.Any()) {
                 _output.WriteLine("Got empty list of proxies");
@@ -35,18 +37,18 @@ namespace FunctionalTests {
             }
         }
 
-        [Fact]
+        //TODO: do not run this for now - this triggers: https://github.com/microsoft/onefuzz/issues/2331
+        //[Fact]
         public async Task CreateResetDelete() {
             var (newPool, newScaleset) = await Helpers.CreatePoolAndScaleset(_poolApi, _scalesetApi, "linux");
 
             newScaleset = await _scalesetApi.WaitWhile(newScaleset.ScalesetId, sc => sc.State == "init" || sc.State == "setup");
+            newScaleset.Nodes!.Should().NotBeEmpty();
 
-            Assert.True(newScaleset.Nodes!.Count > 0);
-
-            var firstNode = newScaleset.Nodes.First();
+            var firstNode = newScaleset.Nodes!.First();
 
             var nodeResult = await _nodeApi.Get(machineId: firstNode.MachineId);
-            Assert.True(nodeResult.IsOk);
+            nodeResult.IsOk.Should().BeTrue();
             var node = nodeResult.OkV!.First();
 
             node = await _nodeApi.WaitWhile(node.MachineId, n => n.State == "init" || n.State == "setup");
@@ -55,26 +57,23 @@ namespace FunctionalTests {
 
             var proxyAgain = await _proxyApi.Create(newScaleset.ScalesetId, node.MachineId, 2223, 1);
 
-            Assert.True(proxy.IsOk, $"failed to create proxy due to {proxy.ErrorV}");
-            Assert.True(proxyAgain.IsOk, $"failed to create proxy with same config due to {proxyAgain.ErrorV}");
+            proxy.IsOk.Should().BeTrue("failed to create proxy due to {0}", proxy.ErrorV);
+            proxyAgain.IsOk.Should().BeTrue("failed to create proxy with same config due to {0}", proxyAgain.ErrorV);
 
-            Assert.Equal(proxy.OkV!, proxyAgain.OkV!);
-
+            proxy.OkV!.Should().BeEquivalentTo(proxyAgain.OkV!);
             _output.WriteLine($"created proxy dst ip: {proxy.OkV!.Forward.DstIp}, srcPort: {proxy.OkV.Forward.SrcPort} dstport: {proxy.OkV!.Forward.DstPort}, ip: {proxy.OkV!.Ip}");
 
 
             var proxyReset = await _proxyApi.Reset(newScaleset.Region);
-            Assert.True(proxyReset.Result);
+            proxyReset.Result.Should().BeTrue();
 
             var deleteProxy = await _proxyApi.Delete(newScaleset.ScalesetId, node.MachineId);
-            Assert.True(deleteProxy.Result);
-
+            deleteProxy.Result.Should().BeTrue();
 
             _output.WriteLine($"deleted proxy");
 
             var deletePool = await _poolApi.Delete(newPool.Name);
-            Assert.True(deletePool.Result);
-
+            deletePool.Result.Should().BeTrue();
             _output.WriteLine($"deleted pool {newPool.Name}");
         }
     }

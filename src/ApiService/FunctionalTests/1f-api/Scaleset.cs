@@ -4,65 +4,55 @@ using Xunit;
 using Xunit.Abstractions;
 
 namespace FunctionalTests;
-public class Authentication {
-    JsonElement _e;
 
-    public Authentication() { }
-    public Authentication(JsonElement e) => _e = e;
-
-    string Password => _e.GetProperty("password").GetString()!;
-
-    string PublicKey => _e.GetProperty("public_key").GetString()!;
-    string PrivateKey => _e.GetProperty("private_key").GetString()!;
-}
-
-
-public class ScalesetNodeState {
+public class ScalesetNodeState : IFromJsonElement<ScalesetNodeState> {
     JsonElement _e;
 
     public ScalesetNodeState() { }
     public ScalesetNodeState(JsonElement e) => _e = e;
 
-    public Guid MachineId => _e.GetProperty("machine_id").GetGuid();
-    public string InstanceId => _e.GetProperty("instance_id").GetString()!;
+    public ScalesetNodeState Convert(JsonElement e) => new ScalesetNodeState(e);
 
-    public string? NodeState => _e.GetProperty("state").GetString();
+    public Guid MachineId => _e.GetGuidProperty("machine_id");
+    public string InstanceId => _e.GetStringProperty("instance_id");
+
+    public string? NodeState => _e.GetNullableStringProperty("state");
 }
 
 public class Scaleset : IFromJsonElement<Scaleset> {
     JsonElement _e;
     public Scaleset() { }
     public Scaleset(JsonElement e) => _e = e;
-
-    public Guid ScalesetId => _e.GetProperty("scaleset_id").GetGuid();
-    public string PoolName => _e.GetProperty("pool_name").GetString()!;
-    public string State => _e.GetProperty("state").GetString()!;
-
-    public Error? Error => _e.GetProperty("error").ValueKind == JsonValueKind.Null ? null : new Error(_e.GetProperty("error"));
-    public int Size => _e.GetProperty("size").GetInt32();
-
-    public string VmSku => _e.GetProperty("vm_sku").GetString()!;
-    public string Image => _e.GetProperty("image").GetString()!;
-
-    public string Region => _e.GetProperty("region").GetString()!;
-
-    public bool? SpotInstance => _e.GetProperty("spot_instance").ValueKind == JsonValueKind.Null ? null : _e.GetProperty("spot_instance").GetBoolean();
-
-    public bool EphemeralOsDisks => _e.GetProperty("ephemeral_os_disks").GetBoolean();
-
-    public bool NeedsConfigUpdate => _e.GetProperty("needs_config_update").GetBoolean();
-
-    public Dictionary<string, string> Tags => _e.GetProperty("tags").Deserialize<Dictionary<string, string>>()!;
-
-    public Authentication? Auth => _e.GetProperty("auth").ValueKind == JsonValueKind.Null ? null : new Authentication(_e.GetProperty("auth"));
-
-    public Guid? ClientId => _e.GetProperty("client_id").ValueKind == JsonValueKind.Null ? null : _e.GetProperty("client_id").GetGuid();
-
-    public Guid? ClientObjectId => _e.GetProperty("client_object_id").ValueKind == JsonValueKind.Null ? null : _e.GetProperty("client_object_id").GetGuid();
-
-    public List<ScalesetNodeState>? Nodes => _e.GetProperty("nodes").ValueKind == JsonValueKind.Null ? null : _e.GetProperty("nodes").EnumerateArray().Select(node => new ScalesetNodeState(node)).ToList();
-
     public Scaleset Convert(JsonElement e) => new Scaleset(e);
+
+    public Guid ScalesetId => _e.GetGuidProperty("scaleset_id");
+    public string PoolName => _e.GetStringProperty("pool_name");
+    public string State => _e.GetStringProperty("state");
+
+    public Error? Error => _e.GetNullableObjectProperty<Error>("error");
+
+    public long Size => _e.GetLongProperty("size");
+
+    public string VmSku => _e.GetStringProperty("vm_sku");
+    public string Image => _e.GetStringProperty("image");
+
+    public string Region => _e.GetStringProperty("region");
+
+    public bool? SpotInstance => _e.GetNullableBoolProperty("spot_instance");
+
+    public bool EphemeralOsDisks => _e.GetBoolProperty("ephemeral_os_disks");
+
+    public bool NeedsConfigUpdate => _e.GetBoolProperty("needs_config_update");
+
+    public IDictionary<string, string> Tags => _e.GetStringDictProperty("tags");
+
+    public Authentication? Auth => _e.GetNullableObjectProperty<Authentication>("auth");
+
+    public Guid? ClientId => _e.GetNullableGuidProperty("client_id");
+
+    public Guid? ClientObjectId => _e.GetNullableGuidProperty("client_object_id");
+
+    public IEnumerable<ScalesetNodeState>? Nodes => _e.GetEnumerableNullableProperty<ScalesetNodeState>("nodes");
 }
 
 public class ScalesetApi : ApiBase {
@@ -75,47 +65,41 @@ public class ScalesetApi : ApiBase {
 
 
     public async Task<Result<IEnumerable<Scaleset>, Error>> Get(Guid? id = null, string? state = null, bool? includeAuth = false) {
-        var root = new JsonObject();
-        if (id is not null)
-            root.Add("scaleset_id", id);
-        if (state is not null)
-            root.Add("state", state);
-        if (includeAuth is not null)
-            root.Add("include_auth", includeAuth);
-        var res = await Get(root);
+        var j = new JsonObject()
+            .AddIfNotNullV("scaleset_id", id)
+            .AddIfNotNullV("state", state)
+            .AddIfNotNullV("include_auth", includeAuth);
+        var res = await Get(j);
         return IEnumerableResult<Scaleset>(res);
     }
 
     public async Task<Result<Scaleset, Error>> Create(string poolName, int size, string? region = null, string vmSku = "Standard_D2s_v3", string image = Image_Ubuntu_20_04, bool spotInstance = false) {
         _output.WriteLine($"Creating scaleset in pool {poolName}, size: {size}");
-        var rootScalesetCreate = new JsonObject();
-        rootScalesetCreate.Add("pool_name", poolName);
-        rootScalesetCreate.Add("vm_sku", vmSku);
-        rootScalesetCreate.Add("image", image);
-        rootScalesetCreate.Add("size", size);
-        rootScalesetCreate.Add("spot_instances", spotInstance);
-        if (region is not null)
-            rootScalesetCreate.Add("region", region);
 
-        var tags = new JsonObject();
-        tags.Add("Purpose", "Functional-Test");
-        rootScalesetCreate.Add("tags", tags);
+        var rootScalesetCreate = new JsonObject()
+            .AddV("pool_name", poolName)
+            .AddV("vm_sku", vmSku)
+            .AddV("image", image)
+            .AddV("size", size)
+            .AddV("spot_instances", spotInstance)
+            .AddIfNotNullV("region", region);
+
+        rootScalesetCreate.Add("tags", new JsonObject().AddV("Purpose", "Functional-Test"));
 
         return Result<Scaleset>(await Post(rootScalesetCreate));
     }
 
     public async Task<Result<Scaleset, Error>> Patch(Guid id, int size) {
-        var scalesetPatch = new JsonObject();
-        scalesetPatch.Add("scaleset_id", id);
-        scalesetPatch.Add("size", size);
+        var scalesetPatch = new JsonObject()
+            .AddV("scaleset_id", id)
+            .AddV("size", size);
         return Result<Scaleset>(await Patch(scalesetPatch));
     }
 
     public async Task<BooleanResult> Delete(Guid id, bool now) {
-        var scalesetDelete = new JsonObject();
-        scalesetDelete.Add("scaleset_id", id);
-        scalesetDelete.Add("now", now);
-
+        var scalesetDelete = new JsonObject()
+            .AddV("scaleset_id", id)
+            .AddV("now", now);
         return Return<BooleanResult>(await Delete(scalesetDelete));
     }
 
