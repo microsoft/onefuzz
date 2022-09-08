@@ -17,6 +17,11 @@ env:
 
 jobs:
   agent:
+    strategy:
+      matrix:
+        os:
+        - [ self-hosted, "1ES.Pool=onefuzz-ci", windows ] # this is currently Windows 2019
+        - [ self-hosted, "1ES.Pool=onefuzz-ci", linux ] # this is currently Ubuntu 18.04
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v2
@@ -81,12 +86,6 @@ jobs:
       with:
         name: build-artifacts
         path: artifacts
-    strategy:
-      matrix:
-        os:
-        - ubuntu-18.04
-        - windows-2019
-        - [ self-hosted, "1ES.Pool=onefuzz-ci" ]
   azcopy:
     runs-on: ubuntu-18.04
     steps:
