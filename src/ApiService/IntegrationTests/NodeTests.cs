@@ -262,7 +262,7 @@ public abstract class NodeTestBase : FunctionTestBase {
 
         var err = BodyAs<Error>(result);
         Assert.Equal(ErrorCode.UNAUTHORIZED, err.Code);
-        Assert.Contains("not authorized to manage pools", err.Errors?.Single());
+        Assert.Contains("not authorized to manage instance", err.Errors?.Single());
     }
 
     [Theory]
