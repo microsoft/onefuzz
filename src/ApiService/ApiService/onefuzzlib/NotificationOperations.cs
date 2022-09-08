@@ -43,7 +43,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             }
 
             if (notification.Config is AdoTemplate adoTemplate) {
-                NotifyAdo(adoTemplate, container, filename, reportOrRegression, failTaskOnTransientError);
+                await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, failTaskOnTransientError);
             }
 
             if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {

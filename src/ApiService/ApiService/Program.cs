@@ -102,6 +102,7 @@ public class Program {
                 .AddScoped<IImageOperations, ImageOperations>()
                 .AddScoped<ITeams, Teams>()
                 .AddScoped<IGithubIssues, GithubIssues>()
+                .AddScoped<IAdo, Ado>()
                 .AddScoped<IOnefuzzContext, OnefuzzContext>()
                 .AddScoped<IEndpointAuthorization, EndpointAuthorization>()
                 .AddScoped<INodeMessageOperations, NodeMessageOperations>()

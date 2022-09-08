@@ -45,6 +45,7 @@ public interface IOnefuzzContext {
     EntityConverter EntityConverter { get; }
     ITeams Teams { get; }
     IGithubIssues GithubIssues { get; }
+    IAdo Ado { get; }
 }
 
 public class OnefuzzContext : IOnefuzzContext {
@@ -93,4 +94,5 @@ public class OnefuzzContext : IOnefuzzContext {
     public EntityConverter EntityConverter => _serviceProvider.GetRequiredService<EntityConverter>();
     public ITeams Teams => _serviceProvider.GetRequiredService<ITeams>();
     public IGithubIssues GithubIssues => _serviceProvider.GetRequiredService<IGithubIssues>();
+    public IAdo Ado => _serviceProvider.GetRequiredService<IAdo>();
 }
