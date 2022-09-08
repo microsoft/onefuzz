@@ -49,11 +49,14 @@ checksum = "8b26702f315f53b6071259e15dd9d64528213b44d61de1ec926eca7715d62203"
 
 [[package]]
 name = "appinsights"
-version = "0.1.5"
-source = "git+https://github.com/dmolokanov/appinsights-rs?rev=0af6ec83bad1c050160f5258ab08e9834596ce20#0af6ec83bad1c050160f5258ab08e9834596ce20"
+version = "0.2.2"
+source = "git+https://github.com/Porges/appinsights-rs?rev=8264e0236c7a2729c4af4a2ba0017ca0270d7d0e#8264e0236c7a2729c4af4a2ba0017ca0270d7d0e"
 dependencies = [
+ "async-trait",
  "chrono",
- "crossbeam-channel",
+ "crossbeam-queue",
+ "futures-channel",
+ "futures-util",
  "hostname",
  "http",
  "log",
@@ -62,6 +65,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sm",
+ "tokio",
  "uuid 0.8.2",
 ]
 
@@ -152,7 +156,7 @@ dependencies = [
  "rustc_version",
  "serde",
  "serde_json",
- "time 0.3.13",
+ "time",
  "url",
  "uuid 1.1.2",
 ]
@@ -177,7 +181,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "sha2",
- "time 0.3.13",
+ "time",
  "url",
  "uuid 1.1.2",
 ]
@@ -200,7 +204,7 @@ dependencies = [
  "serde-xml-rs",
  "serde_derive",
  "serde_json",
- "time 0.3.13",
+ "time",
  "url",
  "uuid 1.1.2",
 ]
@@ -382,14 +386,14 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chrono"
-version = "0.4.19"
+version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "670ad68c9088c2a963aaa298cb369688cf3f9465ce5e2d4ca10e6e0098a1ce73"
+checksum = "6127248204b9aba09a362f6c930ef6a78f2c1b2215f8a7b398c06e1083f17af0"
 dependencies = [
- "libc",
+ "js-sys",
  "num-integer",
  "num-traits",
- "time 0.1.43",
+ "wasm-bindgen",
  "winapi",
 ]
 
@@ -2248,7 +2252,6 @@ checksum = "0941606b9934e2d98a3677759a971756eb821f75764d0e0d26946d08e74d9104"
 dependencies = [
  "bitflags",
  "byteorder",
- "chrono",
  "flate2",
  "hex",
  "lazy_static",
@@ -3131,16 +3134,6 @@ dependencies = [
  "proc-macro2 1.0.39",
  "quote 1.0.9",
  "syn 1.0.95",
-]
-
-[[package]]
-name = "time"
-version = "0.1.43"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca8a50ef2360fbd1eeb0ecd46795a87a19024eb4b53c5dc916ca1fd95fe62438"
-dependencies = [
- "libc",
- "winapi",
 ]
 
 [[package]]

@@ -10,6 +10,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Task<bool> CanProcessNewWork(Node node);
 
     Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node);
+    Task<OneFuzzResultVoid> ReleaseScaleInProtection(Node node);
 
     bool IsOutdated(Node node);
     Async.Task Stop(Node node, bool done = false);
@@ -75,19 +76,25 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
 
 public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INodeOperations {
 
-
-    public NodeOperations(
-        ILogTracer log,
-        IOnefuzzContext context
-        )
+    public NodeOperations(ILogTracer log, IOnefuzzContext context)
         : base(log, context) {
-
     }
 
     public async Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node) {
-        if (await ScalesetNodeExists(node) && node.ScalesetId is Guid scalesetId) {
+        if (node.ScalesetId is Guid scalesetId && await ScalesetNodeExists(node)) {
             _logTracer.Info($"Setting scale-in protection on node {node.MachineId}");
             return await _context.VmssOperations.UpdateScaleInProtection(scalesetId, node.MachineId, protectFromScaleIn: true);
+        }
+
+        return OneFuzzResultVoid.Ok;
+    }
+
+    public async Task<OneFuzzResultVoid> ReleaseScaleInProtection(Node node) {
+        if (!node.DebugKeepNode &&
+            node.ScalesetId is Guid scalesetId &&
+            await ScalesetNodeExists(node)) {
+            _logTracer.Info($"Removing scale-in protection on node {node.MachineId}");
+            return await _context.VmssOperations.UpdateScaleInProtection(scalesetId, node.MachineId, protectFromScaleIn: false);
         }
 
         return OneFuzzResultVoid.Ok;
@@ -433,10 +440,10 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         if (node.State != state) {
             newNode = newNode with { State = state };
             await _context.Events.SendEvent(new EventNodeStateUpdated(
-                node.MachineId,
-                node.ScalesetId,
-                node.PoolName,
-                node.State
+                newNode.MachineId,
+                newNode.ScalesetId,
+                newNode.PoolName,
+                state
             ));
         }
 
@@ -501,7 +508,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         if (numResults is null) {
             return QueryAsync(query);
         } else {
-            return QueryAsync(query).TakeWhile((_, i) => i < numResults);
+            return QueryAsync(query).Take(numResults.Value);
         }
     }
 
@@ -521,7 +528,10 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
                 await _context.TaskOperations.MarkFailed(task, error);
             }
             if (!node.DebugKeepNode) {
-                await Delete(node);
+                var r = await _context.NodeTasksOperations.Delete(entry);
+                if (!r.IsOk) {
+                    _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete task operation for task {entry.TaskId}");
+                }
             }
         }
     }
@@ -530,7 +540,10 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         await MarkTasksStoppedEarly(node);
         await _context.NodeTasksOperations.ClearByMachineId(node.MachineId);
         await _context.NodeMessageOperations.ClearMessages(node.MachineId);
-        await base.Delete(node);
+        var r = await base.Delete(node);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to delete node {node.MachineId}");
+        }
 
         await _context.Events.SendEvent(new EventNodeDeleted(node.MachineId, node.ScalesetId, node.PoolName, node.State));
     }

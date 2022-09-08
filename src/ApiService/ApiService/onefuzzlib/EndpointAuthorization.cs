@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Graph;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -27,10 +28,12 @@ public interface IEndpointAuthorization {
 public class EndpointAuthorization : IEndpointAuthorization {
     private readonly IOnefuzzContext _context;
     private readonly ILogTracer _log;
+    private readonly GraphServiceClient _graphClient;
 
-    public EndpointAuthorization(IOnefuzzContext context, ILogTracer log) {
+    public EndpointAuthorization(IOnefuzzContext context, ILogTracer log, GraphServiceClient graphClient) {
         _context = context;
         _log = log;
+        _graphClient = graphClient;
     }
 
     public virtual async Async.Task<HttpResponseData> CallIf(HttpRequestData req, Func<HttpRequestData, Async.Task<HttpResponseData>> method, bool allowUser = false, bool allowAgent = false) {
@@ -170,7 +173,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
             return new StaticGroupMembership(config.GroupMembership);
         }
 
-        return new AzureADGroupMembership(_context.Creds);
+        return new AzureADGroupMembership(_graphClient);
     }
 
     private static RequestAccess? GetRules(InstanceConfig config) {
