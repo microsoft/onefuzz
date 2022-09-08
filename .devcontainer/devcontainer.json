@@ -41,7 +41,6 @@
 	"remoteUser": "vscode",
 	// Note: available features are listed in: https://github.com/microsoft/vscode-dev-containers/blob/main/script-library/container-features/src/devcontainer-features.json
 	"features": {
-		"azure-cli": "latest",
-		"python": "os-provided"
+		"azure-cli": "latest"
 	}
 }
