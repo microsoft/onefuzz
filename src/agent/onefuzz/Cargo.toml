@@ -38,7 +38,7 @@ storage-queue = { path = "../storage-queue" }
 strum = "0.24"
 strum_macros = "0.24"
 tempfile = "3.2"
-process_control = "3.0"
+process_control = "3.5"
 reqwest-retry = { path = "../reqwest-retry"}
 onefuzz-telemetry = { path = "../onefuzz-telemetry"}
 stacktrace-parser = { path = "../stacktrace-parser" }
