@@ -30,10 +30,10 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
-    private static readonly Dictionary<Os, string> DEFAULT_OS = new()
+    private static readonly Dictionary<Os, ImageReference> DEFAULT_OS = new()
     {
-        { Os.Linux, "Canonical:UbuntuServer:18.04-LTS:latest" },
-        { Os.Windows, "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest" }
+        { Os.Linux, ImageReference.MustParse("Canonical:UbuntuServer:18.04-LTS:latest") },
+        { Os.Windows, ImageReference.MustParse("MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest") }
     };
 
     const string DEFAULT_SKU = "Standard_DS1_v2";

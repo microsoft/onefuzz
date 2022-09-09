@@ -191,7 +191,8 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
         Os os;
         if (config.Vm != null) {
-            var osResult = await _context.ImageOperations.GetOs(config.Vm.Region, config.Vm.Image);
+            var armClient = _context.Creds.ArmClient;
+            var osResult = await config.Vm.Image.GetOs(armClient, config.Vm.Region);
             if (!osResult.IsOk) {
                 return OneFuzzResult<Task>.Error(osResult.ErrorV);
             }

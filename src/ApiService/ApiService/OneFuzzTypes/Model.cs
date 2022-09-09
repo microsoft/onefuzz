@@ -206,7 +206,7 @@ public record TaskDetails(
 public record TaskVm(
     Region Region,
     string Sku,
-    string Image,
+    ImageReference Image,
     bool? RebootAfterSetup,
     long Count = 1,
     bool SpotInstance = false
@@ -394,7 +394,7 @@ public record Scaleset(
     [RowKey] Guid ScalesetId,
     ScalesetState State,
     string VmSku,
-    string Image,
+    ImageReference Image,
     Region Region,
     long Size,
     bool? SpotInstances,
@@ -674,7 +674,7 @@ public record Vm(
     string Name,
     Region Region,
     string Sku,
-    string Image,
+    ImageReference Image,
     Authentication Auth,
     Nsg? Nsg,
     IDictionary<string, string>? Tags

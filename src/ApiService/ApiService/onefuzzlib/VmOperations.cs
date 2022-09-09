@@ -228,7 +228,7 @@ public class VmOperations : IVmOperations {
         string name,
         Region location,
         string vmSku,
-        string image,
+        ImageReference image,
         string password,
         string sshPublicKey,
         Nsg? nsg,
@@ -267,14 +267,15 @@ public class VmOperations : IVmOperations {
                 VmSize = vmSku,
             },
             StorageProfile = new StorageProfile {
-                ImageReference = GenerateImageReference(image),
+                ImageReference = image.ToArm(),
             },
             NetworkProfile = new NetworkProfile(),
         };
 
         vmParams.NetworkProfile.NetworkInterfaces.Add(new NetworkInterfaceReference { Id = nic.Id });
 
-        var imageOs = await _context.ImageOperations.GetOs(location, image);
+        var armClient = _context.Creds.ArmClient;
+        var imageOs = await image.GetOs(armClient, location);
         if (!imageOs.IsOk) {
             return OneFuzzResultVoid.Error(imageOs.ErrorV);
         }
@@ -330,21 +331,5 @@ public class VmOperations : IVmOperations {
         }
 
         return OneFuzzResultVoid.Ok;
-    }
-
-    private static ImageReference GenerateImageReference(string image) {
-        var imageRef = new ImageReference();
-
-        if (image.StartsWith("/", StringComparison.Ordinal)) {
-            imageRef.Id = image;
-        } else {
-            var imageVal = image.Split(":", 4);
-            imageRef.Publisher = imageVal[0];
-            imageRef.Offer = imageVal[1];
-            imageRef.Sku = imageVal[2];
-            imageRef.Version = imageVal[3];
-        }
-
-        return imageRef;
     }
 }

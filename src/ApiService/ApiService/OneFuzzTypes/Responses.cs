@@ -126,7 +126,7 @@ public record ScalesetResponse(
     ScalesetState State,
     Authentication? Auth,
     string VmSku,
-    string Image,
+    ImageReference Image,
     Region Region,
     long Size,
     bool? SpotInstances,

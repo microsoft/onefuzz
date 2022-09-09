@@ -41,7 +41,6 @@ public interface IOnefuzzContext {
     IRequestHandling RequestHandling { get; }
     INsgOperations NsgOperations { get; }
     ISubnet Subnet { get; }
-    IImageOperations ImageOperations { get; }
     EntityConverter EntityConverter { get; }
     ITeams Teams { get; }
     IGithubIssues GithubIssues { get; }
@@ -90,7 +89,6 @@ public class OnefuzzContext : IOnefuzzContext {
     public IRequestHandling RequestHandling => _serviceProvider.GetRequiredService<IRequestHandling>();
     public INsgOperations NsgOperations => _serviceProvider.GetRequiredService<INsgOperations>();
     public ISubnet Subnet => _serviceProvider.GetRequiredService<ISubnet>();
-    public IImageOperations ImageOperations => _serviceProvider.GetRequiredService<IImageOperations>();
     public EntityConverter EntityConverter => _serviceProvider.GetRequiredService<EntityConverter>();
     public ITeams Teams => _serviceProvider.GetRequiredService<ITeams>();
     public IGithubIssues GithubIssues => _serviceProvider.GetRequiredService<IGithubIssues>();

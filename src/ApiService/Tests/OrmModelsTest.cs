@@ -231,20 +231,25 @@ namespace Tests {
                         )
                 );
         }
+
+        public static Gen<ImageReference> ImageReferenceGen { get; } =
+            Gen.Constant(ImageReference.MustParse("Canonical:UbuntuServer:18.04-LTS:latest"));
+
         public static Gen<Scaleset> Scaleset { get; }
             = from arg in Arb.Generate<Tuple<
-                    Tuple<Guid, ScalesetState, Authentication?, string, string>,
+                    Tuple<Guid, ScalesetState, Authentication?, string>,
                     Tuple<int, bool, bool, bool, Error?, Guid?>,
                     Tuple<Guid?, Dictionary<string, string>>>>()
               from poolName in PoolNameGen
               from region in RegionGen
+              from image in ImageReferenceGen
               select new Scaleset(
                           PoolName: poolName,
                           ScalesetId: arg.Item1.Item1,
                           State: arg.Item1.Item2,
                           Auth: arg.Item1.Item3,
                           VmSku: arg.Item1.Item4,
-                          Image: arg.Item1.Item5,
+                          Image: image,
                           Region: region,
 
                           Size: arg.Item2.Item1,
@@ -533,6 +538,9 @@ namespace Tests {
         public static Arbitrary<Task> Task() {
             return Arb.From(OrmGenerators.Task());
         }
+
+        public static Arbitrary<ImageReference> ImageReference()
+            => Arb.From(OrmGenerators.ImageReferenceGen);
 
         public static Arbitrary<Scaleset> Scaleset()
             => Arb.From(OrmGenerators.Scaleset);

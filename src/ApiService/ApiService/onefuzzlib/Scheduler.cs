@@ -211,7 +211,7 @@ public class Scheduler : IScheduler {
         return (bucketConfig, workUnit);
     }
 
-    public record struct BucketId(Os os, Guid jobId, (string, string)? vm, PoolName? pool, Container setupContainer, bool? reboot, Guid? unique);
+    public record struct BucketId(Os os, Guid jobId, (string, ImageReference)? vm, PoolName? pool, Container setupContainer, bool? reboot, Guid? unique);
 
     public static ILookup<BucketId, Task> BucketTasks(IEnumerable<Task> tasks) {
 
@@ -228,7 +228,7 @@ public class Scheduler : IScheduler {
             Guid? unique = null;
 
             // check for multiple VMs for pre-1.0.0 tasks
-            (string, string)? vm = task.Config.Vm != null ? (task.Config.Vm.Sku, task.Config.Vm.Image) : null;
+            (string, ImageReference)? vm = task.Config.Vm != null ? (task.Config.Vm.Sku, task.Config.Vm.Image) : null;
             if ((task.Config.Vm?.Count ?? 0) > 1) {
                 unique = Guid.NewGuid();
             }

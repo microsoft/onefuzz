@@ -229,20 +229,14 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         }
     }
 
+    private static readonly ImageReference PROXY_IMAGE = ImageReference.MustParse("Canonical:UbuntuServer:18.04-LTS:latest");
     public static Vm GetVm(Proxy proxy, InstanceConfig config) {
         var tags = config.VmssTags;
-        string proxyVmSku;
-        const string PROXY_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest";
-        if (config.ProxyVmSku is null) {
-            proxyVmSku = "Standard_B2s";
-        } else {
-            proxyVmSku = config.ProxyVmSku;
-        }
         return new Vm(
             // name should be less than 40 chars otherwise it gets truncated by azure
             Name: $"proxy-{proxy.ProxyId:N}",
             Region: proxy.Region,
-            Sku: proxyVmSku,
+            Sku: config.ProxyVmSku ?? "Standard_B2s",
             Image: PROXY_IMAGE,
             Auth: proxy.Auth,
             Tags: tags,

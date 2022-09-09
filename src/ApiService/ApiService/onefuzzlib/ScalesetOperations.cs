@@ -97,7 +97,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         await shrinkQueue.Clear();
 
         //# just in case, always ensure size is within max capacity
-        scaleset = scaleset with { Size = Math.Min(scaleset.Size, MaxSize(scaleset)) };
+        scaleset = scaleset with { Size = Math.Min(scaleset.Size, scaleset.Image.MaximumVmCount) };
 
         // # Treat Azure knowledge of the size of the scaleset as "ground truth"
         var vmssSize = await _context.VmssOperations.GetVmssSize(scaleset.ScalesetId);
@@ -381,7 +381,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         if (pool.State == PoolState.Init) {
             _logTracer.Info($"{SCALESET_LOG_PREFIX} waiting for pool. pool_name:{scaleset.PoolName} scaleset_id:{scaleset.ScalesetId}");
         } else if (pool.State == PoolState.Running) {
-            var imageOsResult = await _context.ImageOperations.GetOs(scaleset.Region, scaleset.Image);
+            var armClient = _context.Creds.ArmClient;
+            var imageOsResult = await scaleset.Image.GetOs(armClient, scaleset.Region);
             if (!imageOsResult.IsOk) {
                 _logTracer.Error($"Failed to get OS with region: {scaleset.Region} image:{scaleset.Image} for scaleset: {scaleset.ScalesetId} due to {imageOsResult.ErrorV}");
                 return await SetFailed(scaleset, imageOsResult.ErrorV);
@@ -739,7 +740,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         => QueryAsync(Query.EqualAnyEnum("state", states));
 
     public Async.Task<Scaleset> SetSize(Scaleset scaleset, long size) {
-        var permittedSize = Math.Min(size, MaxSize(scaleset));
+        var permittedSize = Math.Min(size, scaleset.Image.MaximumVmCount);
         if (permittedSize == scaleset.Size) {
             return Async.Task.FromResult(scaleset); // nothing to do
         }
@@ -821,15 +822,6 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
 
         return scaleset;
-    }
-
-    private static long MaxSize(Scaleset scaleset) {
-        // https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-placement-groups#checklist-for-using-large-scale-sets
-        if (scaleset.Image.StartsWith("/", StringComparison.Ordinal)) {
-            return 600;
-        } else {
-            return 1000;
-        }
     }
 
     public Task<Scaleset> Running(Scaleset scaleset) {

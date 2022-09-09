@@ -31,7 +31,7 @@ public interface IVmssOperations {
         Guid name,
         string vmSku,
         long vmCount,
-        string image,
+        ImageReference image,
         string networkId,
         bool? spotInstance,
         bool ephemeralOsDisks,
@@ -48,14 +48,12 @@ public interface IVmssOperations {
 public class VmssOperations : IVmssOperations {
     private readonly ILogTracer _log;
     private readonly ICreds _creds;
-    private readonly IImageOperations _imageOps;
     private readonly IServiceConfig _serviceConfig;
     private readonly IMemoryCache _cache;
 
     public VmssOperations(ILogTracer log, IOnefuzzContext context, IMemoryCache cache) {
         _log = log;
         _creds = context.Creds;
-        _imageOps = context.ImageOperations;
         _serviceConfig = context.ServiceConfiguration;
         _cache = cache;
     }
@@ -240,7 +238,7 @@ public class VmssOperations : IVmssOperations {
         Guid name,
         string vmSku,
         long vmCount,
-        string image,
+        ImageReference image,
         string networkId,
         bool? spotInstance,
         bool ephemeralOsDisks,
@@ -253,23 +251,13 @@ public class VmssOperations : IVmssOperations {
             return OneFuzzResultVoid.Ok;
         }
         _log.Info($"creating VM name: {name}, vm_sku: {vmSku}, vm_count: {vmCount}, image: {image}, subnet: {networkId}, spot_instance: {spotInstance}");
-        var getOsResult = await _imageOps.GetOs(location, image);
+        var client = _creds.ArmClient;
 
+        var getOsResult = await image.GetOs(client, location);
         if (!getOsResult.IsOk) {
             return getOsResult.ErrorV;
         }
-
-        var imageRef = new ImageReference();
-        if (image.StartsWith('/')) {
-            imageRef.Id = image;
-        } else {
-            var info = IImageOperations.GetImageInfo(image);
-            imageRef.Publisher = info.Publisher;
-            imageRef.Offer = info.Offer;
-            imageRef.Sku = info.Sku;
-            imageRef.Version = info.Version;
-        }
-
+        
         var vmssData = new VirtualMachineScaleSetData(location) {
             DoNotRunExtensionsOnOverprovisionedVms = false,
             UpgradePolicy = new() {
@@ -290,7 +278,7 @@ public class VmssOperations : IVmssOperations {
             VirtualMachineProfile = new() {
                 Priority = VirtualMachinePriorityTypes.Regular,
                 StorageProfile = new() {
-                    ImageReference = imageRef,
+                    ImageReference = image.ToArm(),
                 },
                 OSProfile = new() {
                     ComputerNamePrefix = "node",
