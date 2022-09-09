@@ -36,7 +36,7 @@ public class DefaultValueAttribute : Attribute {
     public string InitStr { get; }
     public DefaultValueAttribute(string initStr) {
         InitStr = initStr;
-    } 
+    }
 }
 
 /// Indicates that the enum cases should no be renamed

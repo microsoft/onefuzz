@@ -333,7 +333,6 @@ public record InstanceConfig
     IDictionary<string, string>? VmTags = null,
     IDictionary<string, string>? VmssTags = null
 ) : EntityBase() {
-    
     public InstanceConfig(string instanceName) : this(
         instanceName,
         null,
