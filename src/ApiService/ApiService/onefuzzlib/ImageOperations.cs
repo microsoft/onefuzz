@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Azure;
+using Azure.Core;
 using Azure.ResourceManager.Compute;
 
 namespace Microsoft.OneFuzz.Service;
@@ -24,64 +25,44 @@ public interface IImageOperations {
 }
 
 public class ImageOperations : IImageOperations {
-    private IOnefuzzContext _context;
-    private ILogTracer _logTracer;
+    private readonly IOnefuzzContext _context;
 
-    public ImageOperations(ILogTracer logTracer, IOnefuzzContext context) {
-        _logTracer = logTracer;
+    public ImageOperations(IOnefuzzContext context) {
         _context = context;
     }
 
     public async Task<OneFuzzResult<Os>> GetOs(Region region, string image) {
-        string? name = null;
+        string? name;
+        var client = _context.Creds.ArmClient;
         try {
-            var parsed = _context.Creds.ParseResourceId(image);
-            parsed = await _context.Creds.GetData(parsed);
-            if (string.Equals(parsed.Id.ResourceType, "galleries", StringComparison.OrdinalIgnoreCase)) {
+            var imageId = new ResourceIdentifier(image);
+            if (imageId.ResourceType == GalleryImageResource.ResourceType) {
                 try {
-                    // This is not _exactly_ the same as the python code  
-                    // because in C# we don't have access to child_name_1
-                    var gallery = await _context.Creds.GetResourceGroupResource().GetGalleries().GetAsync(
-                        parsed.Data.Name
-                    );
-
-                    var galleryImage = gallery.Value.GetGalleryImages()
-                        .ToEnumerable()
-                        .Where(galleryImage => string.Equals(galleryImage.Id, parsed.Id, StringComparison.OrdinalIgnoreCase))
-                        .First();
-
-                    galleryImage = await galleryImage.GetAsync();
-
-                    name = galleryImage.Data?.OSType?.ToString().ToLowerInvariant()!;
-
-                } catch (Exception ex) when (
-                      ex is RequestFailedException ||
-                      ex is NullReferenceException
-                  ) {
+                    var resource = await client.GetGalleryImageResource(imageId).GetAsync();
+                    name = resource.Value.Data.OSType?.ToString();
+                } catch (Exception ex) when (ex is RequestFailedException) {
                     return OneFuzzResult<Os>.Error(
                         ErrorCode.INVALID_IMAGE,
-                        ex.ToString()
-                    );
+                        ex.ToString());
+                }
+            } else if (imageId.ResourceType == ImageResource.ResourceType) {
+                try {
+                    var resource = await client.GetImageResource(imageId).GetAsync();
+                    name = resource.Value.Data.StorageProfile.OSDisk.OSType.ToString();
+                } catch (Exception ex) when (ex is RequestFailedException) {
+                    return OneFuzzResult<Os>.Error(
+                        ErrorCode.INVALID_IMAGE,
+                        ex.ToString());
                 }
             } else {
-                try {
-                    name = (await _context.Creds.GetResourceGroupResource().GetImages().GetAsync(
-                        parsed.Data.Name
-                    )).Value.Data.StorageProfile.OSDisk.OSType.ToString().ToLowerInvariant();
-                } catch (Exception ex) when (
-                    ex is RequestFailedException ||
-                    ex is NullReferenceException
-                ) {
-                    return OneFuzzResult<Os>.Error(
-                        ErrorCode.INVALID_IMAGE,
-                        ex.ToString()
-                    );
-                }
+                return OneFuzzResult<Os>.Error(
+                    ErrorCode.INVALID_IMAGE,
+                    $"Unknown image resource type: {imageId.ResourceType}");
             }
         } catch (FormatException) {
             var imageInfo = IImageOperations.GetImageInfo(image);
             try {
-                var subscription = await _context.Creds.ArmClient.GetDefaultSubscriptionAsync();
+                var subscription = await client.GetDefaultSubscriptionAsync();
                 string version;
                 if (string.Equals(imageInfo.Version, "latest", StringComparison.Ordinal)) {
                     version =
@@ -100,9 +81,9 @@ public class ImageOperations : IImageOperations {
                     region.String,
                     imageInfo.Publisher,
                     imageInfo.Offer,
-                    imageInfo.Sku
-                    , version
-                )).Value.OSDiskImageOperatingSystem.ToString().ToLower();
+                    imageInfo.Sku,
+                    version
+                )).Value.OSDiskImageOperatingSystem.ToString();
             } catch (RequestFailedException ex) {
                 return OneFuzzResult<Os>.Error(
                     ErrorCode.INVALID_IMAGE,
@@ -112,8 +93,7 @@ public class ImageOperations : IImageOperations {
         }
 
         if (name != null) {
-            name = string.Concat(name[0].ToString().ToUpper(), name.AsSpan(1));
-            if (Enum.TryParse(name, out Os os)) {
+            if (Enum.TryParse(name, ignoreCase: true, out Os os)) {
                 return OneFuzzResult<Os>.Ok(os);
             }
         }
