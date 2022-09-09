@@ -174,7 +174,7 @@ class DebugScaleset(Command):
 
 
 class DebugTask(Command):
-    """Debug a specific job"""
+    """Debug a specific task"""
 
     def list_nodes(self, task_id: UUID_EXPANSION) -> Optional[List[NodeAssignment]]:
         task = self.onefuzz.tasks.get(task_id)
@@ -254,6 +254,11 @@ class DebugTask(Command):
         return self.onefuzz.debug.logs._query_libfuzzer_execs_sec(
             query, timespan, limit
         )
+
+    def download_files(self, task_id: UUID_EXPANSION, output: Directory) -> None:
+        """Download the containers by container type for the specified task"""
+
+        self.onefuzz.containers.download_task(task_id, output=output)
 
 
 class DebugJobTask(Command):
@@ -339,7 +344,7 @@ class DebugJob(Command):
     def download_files(self, job_id: UUID_EXPANSION, output: Directory) -> None:
         """Download the containers by container type for each task in the specified job"""
 
-        self.onefuzz.jobs.containers.download(job_id, output=output)
+        self.onefuzz.containers.download_job(job_id, output=output)
 
     def rerun(
         self,
