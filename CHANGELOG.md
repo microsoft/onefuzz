@@ -36,8 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Fixed inconsistencies in VMSS creation between C#/Python functions [#2358](https://github.com/microsoft/onefuzz/pull/2358)
 * Service: Fixed dotnet `Info` function to correctly get version number from assembly attributes instead of the config [#2316](https://github.com/microsoft/onefuzz/pull/2316)
 * Service: Fixed bug in python types [#2319](https://github.com/microsoft/onefuzz/pull/2319)
-* CLI: Coverage task should have access to `readonly_inputs` containers [#2352](https://github.com/microsoft/onefuzz/pull/2352)
 * Service: Fixed bugs in `timer_workers` to allow it to run properly [#2343](https://github.com/microsoft/onefuzz/pull/2343)
+* CLI: Coverage task should have access to `readonly_inputs` containers [#2352](https://github.com/microsoft/onefuzz/pull/2352)
+* Devcontainer: Ensure that python virtual environment is installed [#2372](https://github.com/microsoft/onefuzz/pull/2372)
 
 ## 5.12.0
 ### Added
