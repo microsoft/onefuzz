@@ -8,15 +8,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IReproOperations : IStatefulOrm<Repro, VmState> {
     public IAsyncEnumerable<Repro> SearchExpired();
 
-    public Async.Task<Repro> Stopping(Repro repro);
-
     public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? states);
-
-
-    public Async.Task<Repro> Init(Repro repro);
-    public Async.Task<Repro> ExtensionsLaunch(Repro repro);
-
-    public Async.Task<Repro> Stopped(Repro repro);
 
     public Async.Task<Repro> SetFailed(Repro repro, VirtualMachineData vmData);
 
@@ -26,6 +18,15 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 
     public Async.Task<Container?> GetSetupContainer(Repro repro);
     Task<OneFuzzResult<Repro>> Create(ReproConfig config, UserInfo userInfo);
+
+    // state transitions:
+    Task<Repro> Init(Repro repro);
+    Task<Repro> ExtensionsLaunch(Repro repro);
+    Task<Repro> ExtensionsFailed(Repro repro);
+    Task<Repro> VmAllocationFailed(Repro repro);
+    Task<Repro> Running(Repro repro);
+    Task<Repro> Stopping(Repro repro);
+    Task<Repro> Stopped(Repro repro);
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
@@ -315,5 +316,20 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         } else {
             return OneFuzzResult<Repro>.Error(ErrorCode.UNABLE_TO_FIND, "unable to find report");
         }
+    }
+
+    public Task<Repro> ExtensionsFailed(Repro repro) {
+        // nothing to do
+        return Async.Task.FromResult(repro);
+    }
+
+    public Task<Repro> VmAllocationFailed(Repro repro) {
+        // nothing to do
+        return Async.Task.FromResult(repro);
+    }
+
+    public Task<Repro> Running(Repro repro) {
+        // nothing to do
+        return Async.Task.FromResult(repro);
     }
 }

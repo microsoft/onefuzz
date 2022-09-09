@@ -10,3 +10,6 @@
 *.swp
 
 /.ionide/symbolCache.db
+
+/src/ApiService/ApiService/Properties/PublishProfiles/*
+/src/ApiService/ApiService/Properties/ServiceDependencies/*

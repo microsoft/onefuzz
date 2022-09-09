@@ -14,10 +14,14 @@ public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {
     IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> states);
     Async.Task<Pool> SetShutdown(Pool pool, bool Now);
 
-    Async.Task<Pool> Init(Pool pool);
-
     Async.Task<Pool> Create(PoolName name, Os os, Architecture architecture, bool managed, Guid? clientId = null);
     new Async.Task Delete(Pool pool);
+
+    // state transitions:
+    Async.Task<Pool> Init(Pool pool);
+    Async.Task<Pool> Running(Pool pool);
+    Async.Task<Pool> Shutdown(Pool pool);
+    Async.Task<Pool> Halt(Pool pool);
 }
 
 public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoolOperations {
@@ -225,5 +229,10 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         }
 
         return pool;
+    }
+
+    public Task<Pool> Running(Pool pool) {
+        // nothing to do
+        return Async.Task.FromResult(pool);
     }
 }

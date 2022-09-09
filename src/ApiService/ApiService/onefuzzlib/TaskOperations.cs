@@ -26,6 +26,16 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
     Async.Task<Pool?> GetPool(Task task);
     Async.Task<Task> SetState(Task task, TaskState state);
     Async.Task<OneFuzzResult<Task>> Create(TaskConfig config, Guid jobId, UserInfo userInfo);
+
+    // state transitions:
+    Async.Task<Task> Init(Task task);
+    Async.Task<Task> Waiting(Task task);
+    Async.Task<Task> Scheduled(Task task);
+    Async.Task<Task> SettingUp(Task task);
+    Async.Task<Task> Running(Task task);
+    Async.Task<Task> Stopping(Task task);
+    Async.Task<Task> Stopped(Task task);
+    Async.Task<Task> WaitJob(Task task);
 }
 
 public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITaskOperations {
@@ -91,16 +101,10 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
     public async Async.Task MarkFailed(Task task, Error error, List<Task>? taskInJob = null) {
         if (task.State.ShuttingDown()) {
-            _logTracer.Verbose(
-                $"ignoring post-task stop failures for {task.JobId}:{task.TaskId}"
-            );
             return;
         }
 
         if (task.Error != null) {
-            _logTracer.Verbose(
-                $"ignoring additional task error {task.JobId}:{task.TaskId}"
-            );
             return;
         }
 
@@ -117,7 +121,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         foreach (var t in taskInJob) {
             if (t.Config.PrereqTasks != null) {
                 if (t.Config.PrereqTasks.Contains(t.TaskId)) {
-                    await MarkFailed(task, new Error(ErrorCode.TASK_FAILED, new[] { $"prerequisite task failed.  task_id:{t.TaskId}" }), taskInJob);
+                    await MarkFailed(t, new Error(ErrorCode.TASK_FAILED, new[] { $"prerequisite task failed.  task_id:{t.TaskId}" }), taskInJob);
                 }
             }
         }
@@ -305,8 +309,8 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         return task;
     }
 
-    private async Async.Task<Task> Stopped(Task inputTask) {
-        var task = await SetState(inputTask, TaskState.Stopped);
+    public async Async.Task<Task> Stopped(Task task) {
+        task = await SetState(task, TaskState.Stopped);
         await _context.Queue.DeleteQueue($"{task.TaskId}", StorageType.Corpus);
 
         //     # TODO: we need to 'unschedule' this task from the existing pools
@@ -316,5 +320,30 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         }
 
         return task;
+    }
+
+    public Task<Task> Waiting(Task task) {
+        // nothing to do
+        return Async.Task.FromResult(task);
+    }
+
+    public Task<Task> Scheduled(Task task) {
+        // nothing to do
+        return Async.Task.FromResult(task);
+    }
+
+    public Task<Task> SettingUp(Task task) {
+        // nothing to do
+        return Async.Task.FromResult(task);
+    }
+
+    public Task<Task> Running(Task task) {
+        // nothing to do
+        return Async.Task.FromResult(task);
+    }
+
+    public Task<Task> WaitJob(Task task) {
+        // nothing to do
+        return Async.Task.FromResult(task);
     }
 }

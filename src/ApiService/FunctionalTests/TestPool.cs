@@ -19,7 +19,7 @@ namespace FunctionalTests {
 
         [Fact]
         async Task GetNonExistentPool() {
-            var p = await _poolApi.Get(poolName: Guid.NewGuid().ToString());
+            var p = await _poolApi.Get(name: Guid.NewGuid().ToString());
             Assert.True(p.ErrorV!.UnableToFindPoolError);
         }
 

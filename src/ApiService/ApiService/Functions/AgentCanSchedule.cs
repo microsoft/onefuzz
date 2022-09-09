@@ -23,6 +23,7 @@ public class AgentCanSchedule {
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<CanScheduleRequest>(req);
         if (!request.IsOk) {
+            _log.Warning($"Cannot schedule due to {request.ErrorV}");
             return await _context.RequestHandling.NotOk(req, request.ErrorV, typeof(CanScheduleRequest).ToString());
         }
 
@@ -30,6 +31,7 @@ public class AgentCanSchedule {
 
         var node = await _context.NodeOperations.GetByMachineId(canScheduleRequest.MachineId);
         if (node == null) {
+            _log.Warning($"Unable to find node {canScheduleRequest.MachineId}");
             return await _context.RequestHandling.NotOk(
                 req,
                 new Error(
@@ -50,11 +52,16 @@ public class AgentCanSchedule {
         var workStopped = task == null || task.State.ShuttingDown();
 
         if (workStopped) {
+            _log.Info($"Work stopped {canScheduleRequest.MachineId}");
             allowed = false;
         }
 
         if (allowed) {
-            allowed = (await _context.NodeOperations.AcquireScaleInProtection(node)).IsOk;
+            var scp = await _context.NodeOperations.AcquireScaleInProtection(node);
+            if (!scp.IsOk) {
+                _log.Warning($"Failed to acquire scale in protection due to {scp.ErrorV}");
+            }
+            allowed = scp.IsOk;
         }
 
         return await RequestHandling.Ok(req, new CanSchedule(Allowed: allowed, WorkStopped: workStopped));

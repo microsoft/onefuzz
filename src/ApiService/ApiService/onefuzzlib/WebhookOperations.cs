@@ -233,10 +233,6 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
 
     }
 
-    private void QueueObject(string v, WebhookMessageQueueObj obj, StorageType config, int? visibility_timeout) {
-        throw new NotImplementedException();
-    }
-
     public IAsyncEnumerable<WebhookMessageLog> SearchExpired() {
         var expireTime = (DateTimeOffset.UtcNow - TimeSpan.FromDays(EXPIRE_DAYS)).ToString("o");
 

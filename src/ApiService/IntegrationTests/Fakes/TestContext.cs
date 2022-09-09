@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Async = System.Threading.Tasks;
@@ -11,11 +13,12 @@ namespace IntegrationTests.Fakes;
 // of functions as unit or integration tests.
 public sealed class TestContext : IOnefuzzContext {
     public TestContext(ILogTracer logTracer, IStorage storage, ICreds creds, string storagePrefix) {
+        var cache = new MemoryCache(Options.Create(new MemoryCacheOptions()));
         EntityConverter = new EntityConverter();
         ServiceConfiguration = new TestServiceConfiguration(storagePrefix);
         Storage = storage;
         Creds = creds;
-        Containers = new Containers(logTracer, Storage, Creds, ServiceConfiguration);
+        Containers = new Containers(logTracer, Storage, ServiceConfiguration);
         Queue = new Queue(Storage, logTracer);
         RequestHandling = new RequestHandling(logTracer);
         TaskOperations = new TaskOperations(logTracer, this);
@@ -24,7 +27,7 @@ public sealed class TestContext : IOnefuzzContext {
         NodeTasksOperations = new NodeTasksOperations(logTracer, this);
         TaskEventOperations = new TaskEventOperations(logTracer, this);
         NodeMessageOperations = new NodeMessageOperations(logTracer, this);
-        ConfigOperations = new ConfigOperations(logTracer, this);
+        ConfigOperations = new ConfigOperations(logTracer, this, cache);
         PoolOperations = new PoolOperations(logTracer, this);
         ScalesetOperations = new ScalesetOperations(logTracer, this);
         UserCredentials = new UserCredentials(logTracer, ConfigOperations);

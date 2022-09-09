@@ -262,7 +262,7 @@ def notify_ado(
         return
 
     notification_info = (
-        f"job_id:%s{report.job_id} task_id:{report.task_id}"
+        f"job_id:{report.job_id} task_id:{report.task_id}"
         f" container:{container} filename:{filename}"
     )
 

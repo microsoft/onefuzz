@@ -173,15 +173,17 @@ fn run(opt: RunOpt) -> Result<()> {
     }
 
     // We can't send telemetry if this fails.
-    let config = load_config(opt);
+    let rt = tokio::runtime::Runtime::new()?;
+    let config = rt.block_on(load_config(opt));
 
+    // We can't send telemetry, because we couldn't get a telemetry key from the config.
+    // Instead, log to an assumed-redirected stdout for the sake of debugging.
     if let Err(err) = &config {
         error!("error loading supervisor agent config: {:?}", err);
     }
 
     let config = config?;
 
-    let rt = tokio::runtime::Runtime::new()?;
     let result = rt.block_on(run_agent(config));
 
     if let Err(err) = &result {
@@ -191,12 +193,12 @@ fn run(opt: RunOpt) -> Result<()> {
         }
     }
 
-    telemetry::try_flush_and_close();
+    rt.block_on(telemetry::try_flush_and_close());
 
     result
 }
 
-fn load_config(opt: RunOpt) -> Result<StaticConfig> {
+async fn load_config(opt: RunOpt) -> Result<StaticConfig> {
     info!("loading supervisor agent config");
 
     let config = match &opt.config_path {
@@ -204,7 +206,7 @@ fn load_config(opt: RunOpt) -> Result<StaticConfig> {
         None => StaticConfig::from_env()?,
     };
 
-    init_telemetry(&config);
+    init_telemetry(&config).await;
 
     Ok(config)
 }
@@ -320,9 +322,10 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
     Ok(())
 }
 
-fn init_telemetry(config: &StaticConfig) {
+async fn init_telemetry(config: &StaticConfig) {
     telemetry::set_appinsights_clients(
         config.instance_telemetry_key.clone(),
         config.microsoft_telemetry_key.clone(),
-    );
+    )
+    .await;
 }

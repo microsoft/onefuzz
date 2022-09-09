@@ -212,11 +212,15 @@ public class VmOperations : IVmOperations {
         _logTracer.Info($"creating extension: {_context.Creds.GetBaseResourceGroup()}:{vmName}:{extensionName}");
         var vm = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(vmName);
 
-        await vm.Value.GetVirtualMachineExtensions().CreateOrUpdateAsync(
-            WaitUntil.Started,
-            extensionName,
-            extension
-        );
+        try {
+            await vm.Value.GetVirtualMachineExtensions().CreateOrUpdateAsync(
+                WaitUntil.Started,
+                extensionName,
+                extension
+            );
+        } catch (RequestFailedException ex) when (ex.Status == 409 && ex.Message.Contains("VM is marked for deletion")) {
+            _logTracer.Info(ex.Message);
+        }
         return;
     }
 

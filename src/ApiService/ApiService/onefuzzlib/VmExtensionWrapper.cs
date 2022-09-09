@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using Azure.ResourceManager.Compute;
 
+
 namespace Microsoft.OneFuzz.Service {
     public class VMExtensionWrapper {
         public AzureLocation? Location { get; init; }
@@ -63,3 +64,4 @@ namespace Microsoft.OneFuzz.Service {
     }
 
 }
+

@@ -3,12 +3,14 @@ param server_farm_id string
 param owner string
 param workspaceId string
 param logRetention int
+param autoscale_name string
+param function_diagnostics_settings_name string
+param create_new bool
 
-var autoscale_name = 'onefuzz-autoscale-${uniqueString(resourceGroup().id)}' 
 
-resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
+resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = if (create_new) {
   name: autoscale_name
-  location: location 
+  location: location
   properties: {
     name: autoscale_name
     enabled: true
@@ -70,8 +72,8 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
   }
 }
 
-resource functionDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
-  name: 'functionDiagnosticSettings'
+resource functionDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (create_new) {
+  name: function_diagnostics_settings_name
   scope: autoscaleSettings
   properties: {
     logs: [

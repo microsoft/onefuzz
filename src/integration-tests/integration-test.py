@@ -871,7 +871,7 @@ class TestOnefuzz:
             # about errors
             if (
                 entry.get("severityLevel") == 2
-                and entry.get("sdkVersion") == "rust:0.1.5"
+                and "rust" in entry.get("sdkVersion")
             ):
                 continue
 
@@ -897,7 +897,7 @@ class TestOnefuzz:
             if (
                 "storage queue pop failed" in message
                 or "storage queue delete failed" in message
-            ) and entry.get("sdkVersion") == "rust:0.1.5":
+            ) and ("rust" in entry.get("sdkVersion")):
                 continue
 
             if message is None:

@@ -44,9 +44,9 @@ tokio = { version = "1.16", features = ["full"] }
 tokio-util = { version = "0.7", features = ["full"] }
 tokio-stream = "0.1"
 tui = { version = "0.18", default-features = false, features = ['crossterm'] }
-url = { version = "2.2", features = ["serde"] }
+url = { version = "2.3", features = ["serde"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
-chrono = "0.4"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 
 azure_core = { version = "0.4", default-features = false, features = ["enable_reqwest_rustls"] }
 azure_storage = { version = "0.5", default-features = false, features = ["enable_reqwest_rustls"] }

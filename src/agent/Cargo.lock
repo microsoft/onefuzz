@@ -49,11 +49,14 @@ checksum = "8b26702f315f53b6071259e15dd9d64528213b44d61de1ec926eca7715d62203"
 
 [[package]]
 name = "appinsights"
-version = "0.1.5"
-source = "git+https://github.com/dmolokanov/appinsights-rs?rev=0af6ec83bad1c050160f5258ab08e9834596ce20#0af6ec83bad1c050160f5258ab08e9834596ce20"
+version = "0.2.2"
+source = "git+https://github.com/Porges/appinsights-rs?rev=8264e0236c7a2729c4af4a2ba0017ca0270d7d0e#8264e0236c7a2729c4af4a2ba0017ca0270d7d0e"
 dependencies = [
+ "async-trait",
  "chrono",
- "crossbeam-channel",
+ "crossbeam-queue",
+ "futures-channel",
+ "futures-util",
  "hostname",
  "http",
  "log",
@@ -62,6 +65,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sm",
+ "tokio",
  "uuid 0.8.2",
 ]
 
@@ -152,7 +156,7 @@ dependencies = [
  "rustc_version",
  "serde",
  "serde_json",
- "time 0.3.13",
+ "time",
  "url",
  "uuid 1.1.2",
 ]
@@ -177,7 +181,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "sha2",
- "time 0.3.13",
+ "time",
  "url",
  "uuid 1.1.2",
 ]
@@ -200,7 +204,7 @@ dependencies = [
  "serde-xml-rs",
  "serde_derive",
  "serde_json",
- "time 0.3.13",
+ "time",
  "url",
  "uuid 1.1.2",
 ]
@@ -382,14 +386,14 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chrono"
-version = "0.4.19"
+version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "670ad68c9088c2a963aaa298cb369688cf3f9465ce5e2d4ca10e6e0098a1ce73"
+checksum = "6127248204b9aba09a362f6c930ef6a78f2c1b2215f8a7b398c06e1083f17af0"
 dependencies = [
- "libc",
+ "js-sys",
  "num-integer",
  "num-traits",
- "time 0.1.43",
+ "wasm-bindgen",
  "winapi",
 ]
 
@@ -2164,14 +2168,14 @@ checksum = "925383efa346730478fb4838dbe9137d2a47675ad789c546d150a6e1dd4ab31c"
 
 [[package]]
 name = "pretty_assertions"
-version = "1.0.0"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec0cfe1b2403f172ba0f234e500906ee0a3e493fb81092dac23ebefe129301cc"
+checksum = "a25e9bcb20aa780fd0bb16b72403a9064d6b3f22f026946029acb941a50af755"
 dependencies = [
- "ansi_term",
  "ctor",
  "diff",
  "output_vt100",
+ "yansi",
 ]
 
 [[package]]
@@ -2248,7 +2252,6 @@ checksum = "0941606b9934e2d98a3677759a971756eb821f75764d0e0d26946d08e74d9104"
 dependencies = [
  "bitflags",
  "byteorder",
- "chrono",
  "flate2",
  "hex",
  "lazy_static",
@@ -3135,16 +3138,6 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.1.43"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca8a50ef2360fbd1eeb0ecd46795a87a19024eb4b53c5dc916ca1fd95fe62438"
-dependencies = [
- "libc",
- "winapi",
-]
-
-[[package]]
-name = "time"
 version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db76ff9fa4b1458b3c7f077f3ff9887394058460d21e634355b273aaf11eea45"
@@ -3392,13 +3385,12 @@ dependencies = [
 
 [[package]]
 name = "url"
-version = "2.2.2"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a507c383b2d33b5fc35d1861e77e6b383d158b2da5e14fe51b83dfedf6fd578c"
+checksum = "22fe195a4f217c25b25cb5058ced57059824a678474874038dc88d211bf508d3"
 dependencies = [
  "form_urlencoded",
  "idna",
- "matches",
  "percent-encoding",
  "serde",
 ]
@@ -3759,6 +3751,12 @@ name = "xml-rs"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2d7d3948613f75c98fd9328cfdcc45acc4d360655289d0a7d4ec931392200a3"
+
+[[package]]
+name = "yansi"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09041cd90cf85f7f8b2df60c646f853b7f535ce68f85244eb6731cf89fa498ec"
 
 [[package]]
 name = "z3-sys"
