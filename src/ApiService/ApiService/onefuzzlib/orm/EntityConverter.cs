@@ -31,7 +31,12 @@ public class DefaultValueAttribute : Attribute {
     public InitMethod InitMethod { get; }
     public DefaultValueAttribute(InitMethod initMethod) {
         InitMethod = initMethod;
+        InitStr = String.Empty;
     }
+    public string InitStr { get; }
+    public DefaultValueAttribute(string initStr) {
+        InitStr = initStr;
+    } 
 }
 
 /// Indicates that the enum cases should no be renamed
