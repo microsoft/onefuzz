@@ -233,7 +233,10 @@ namespace Tests {
         }
 
         public static Gen<ImageReference> ImageReferenceGen { get; } =
-            Gen.Constant(ImageReference.MustParse("Canonical:UbuntuServer:18.04-LTS:latest"));
+            Gen.Elements(
+                ImageReference.MustParse("Canonical:UbuntuServer:18.04-LTS:latest"),
+                ImageReference.MustParse($"/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/galleries/gallery/images/imageName"),
+                ImageReference.MustParse($"/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/images/imageName"));
 
         public static Gen<Scaleset> Scaleset { get; }
             = from arg in Arb.Generate<Tuple<
