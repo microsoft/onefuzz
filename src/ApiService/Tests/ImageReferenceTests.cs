@@ -1,6 +1,5 @@
-using System;
+﻿using System;
 using System.Text.Json;
-using Azure.Core;
 using Azure.ResourceManager.Compute;
 using Microsoft.OneFuzz.Service;
 using Xunit;

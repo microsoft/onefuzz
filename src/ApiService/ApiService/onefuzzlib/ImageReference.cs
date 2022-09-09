@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -168,7 +168,7 @@ public abstract record ImageReference {
     }
 
     // ImageReference serializes to and from JSON as a string.
-    public sealed class Converter<T> : JsonConverter<T> where T: ImageReference {
+    public sealed class Converter<T> : JsonConverter<T> where T : ImageReference {
         public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
             Debug.Assert(typeToConvert.IsAssignableTo(typeof(ImageReference)));
 

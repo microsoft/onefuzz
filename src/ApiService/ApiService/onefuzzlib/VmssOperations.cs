@@ -257,7 +257,7 @@ public class VmssOperations : IVmssOperations {
         if (!getOsResult.IsOk) {
             return getOsResult.ErrorV;
         }
-        
+
         var vmssData = new VirtualMachineScaleSetData(location) {
             DoNotRunExtensionsOnOverprovisionedVms = false,
             UpgradePolicy = new() {
