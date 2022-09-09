@@ -29,8 +29,14 @@ public abstract record ImageReference {
         try {
             // see if it is a valid ARM resource identifier:
             identifier = new ResourceIdentifier(image);
-            if (identifier.ResourceType == GalleryImageResource.ResourceType) {
+            if (identifier.ResourceType == SharedGalleryImageResource.ResourceType) {
+                result = new LatestSharedGalleryImage(identifier);
+            } else if (identifier.ResourceType == SharedGalleryImageVersionResource.ResourceType) {
+                result = new SharedGalleryImage(identifier);
+            } else if (identifier.ResourceType == GalleryImageVersionResource.ResourceType) {
                 result = new GalleryImage(identifier);
+            } else if (identifier.ResourceType == GalleryImageResource.ResourceType) {
+                result = new LatestGalleryImage(identifier);
             } else if (identifier.ResourceType == ImageResource.ResourceType) {
                 result = new Image(identifier);
             } else {
@@ -70,10 +76,17 @@ public abstract record ImageReference {
 
     public abstract override string ToString();
 
-    [JsonConverter(typeof(Converter<GalleryImage>))]
-    public sealed record GalleryImage(ResourceIdentifier Identifier) : ImageReference {
-        public override long MaximumVmCount => CustomImageMaximumVmCount;
+    public abstract record ArmImageReference(ResourceIdentifier Identifier) : ImageReference {
+        public sealed override long MaximumVmCount => CustomImageMaximumVmCount;
 
+        public sealed override Compute.Models.ImageReference ToArm()
+            => new() { Id = Identifier };
+
+        public sealed override string ToString() => Identifier.ToString();
+    }
+
+    [JsonConverter(typeof(Converter<LatestGalleryImage>))]
+    public sealed record LatestGalleryImage(ResourceIdentifier Identifier) : ArmImageReference(Identifier) {
         public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, string region) {
             try {
                 var resource = await armClient.GetGalleryImageResource(Identifier).GetAsync();
@@ -86,17 +99,60 @@ public abstract record ImageReference {
                 return new Error(ErrorCode.INVALID_IMAGE, new[] { ex.ToString() });
             }
         }
+    }
 
-        public override Compute.Models.ImageReference ToArm()
-            => new() { Id = Identifier };
+    [JsonConverter(typeof(Converter<GalleryImage>))]
+    public sealed record GalleryImage(ResourceIdentifier Identifier) : ArmImageReference(Identifier) {
+        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, string region) {
+            try {
+                // need to access parent of versioned resource to get the OS data
+                var resource = await armClient.GetGalleryImageResource(Identifier.Parent!).GetAsync();
+                if (resource.Value.Data.OSType is OperatingSystemTypes os) {
+                    return OneFuzzResult.Ok(Enum.Parse<Os>(os.ToString(), ignoreCase: true));
+                } else {
+                    return new Error(ErrorCode.INVALID_IMAGE, new[] { "Specified image had no OSType" });
+                }
+            } catch (Exception ex) when (ex is RequestFailedException) {
+                return new Error(ErrorCode.INVALID_IMAGE, new[] { ex.ToString() });
+            }
+        }
+    }
 
-        public override string ToString() => Identifier.ToString();
+    [JsonConverter(typeof(Converter<LatestSharedGalleryImage>))]
+    public sealed record LatestSharedGalleryImage(ResourceIdentifier Identifier) : ArmImageReference(Identifier) {
+        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, string region) {
+            try {
+                var resource = await armClient.GetSharedGalleryImageResource(Identifier).GetAsync();
+                if (resource.Value.Data.OSType is OperatingSystemTypes os) {
+                    return OneFuzzResult.Ok(Enum.Parse<Os>(os.ToString(), ignoreCase: true));
+                } else {
+                    return new Error(ErrorCode.INVALID_IMAGE, new[] { "Specified image had no OSType" });
+                }
+            } catch (Exception ex) when (ex is RequestFailedException) {
+                return new Error(ErrorCode.INVALID_IMAGE, new[] { ex.ToString() });
+            }
+        }
+    }
+
+    [JsonConverter(typeof(Converter<SharedGalleryImage>))]
+    public sealed record SharedGalleryImage(ResourceIdentifier Identifier) : ArmImageReference(Identifier) {
+        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, string region) {
+            try {
+                // need to access parent of versioned resource to get OS info
+                var resource = await armClient.GetSharedGalleryImageResource(Identifier.Parent!).GetAsync();
+                if (resource.Value.Data.OSType is OperatingSystemTypes os) {
+                    return OneFuzzResult.Ok(Enum.Parse<Os>(os.ToString(), ignoreCase: true));
+                } else {
+                    return new Error(ErrorCode.INVALID_IMAGE, new[] { "Specified image had no OSType" });
+                }
+            } catch (Exception ex) when (ex is RequestFailedException) {
+                return new Error(ErrorCode.INVALID_IMAGE, new[] { ex.ToString() });
+            }
+        }
     }
 
     [JsonConverter(typeof(Converter<Image>))]
-    public sealed record Image(ResourceIdentifier Identifier) : ImageReference {
-        public override long MaximumVmCount => CustomImageMaximumVmCount;
-
+    public sealed record Image(ResourceIdentifier Identifier) : ArmImageReference(Identifier) {
         public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, string region) {
             try {
                 var resource = await armClient.GetImageResource(Identifier).GetAsync();
@@ -106,11 +162,6 @@ public abstract record ImageReference {
                 return new Error(ErrorCode.INVALID_IMAGE, new[] { ex.ToString() });
             }
         }
-
-        public override Compute.Models.ImageReference ToArm()
-            => new() { Id = Identifier };
-
-        public override string ToString() => Identifier.ToString();
     }
 
     [JsonConverter(typeof(Converter<Marketplace>))]

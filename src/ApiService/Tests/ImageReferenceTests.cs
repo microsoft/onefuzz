@@ -15,7 +15,7 @@ public class ImageReferenceTests {
             subId.ToString(), "resource-group", "gallery", "imageName");
 
         var result = ImageReference.MustParse(fakeId.ToString());
-        var galleryImage = Assert.IsType<ImageReference.GalleryImage>(result);
+        var galleryImage = Assert.IsType<ImageReference.LatestGalleryImage>(result);
         Assert.Equal("imageName", galleryImage.Identifier.Name);
         Assert.Equal("gallery", galleryImage.Identifier.Parent?.Name);
         Assert.Equal("resource-group", galleryImage.Identifier.ResourceGroupName);
@@ -46,6 +46,47 @@ public class ImageReferenceTests {
     }
 
     [Fact]
+    public void CanParseSpecificVersionGalleryImage() {
+        var subId = Guid.NewGuid();
+        var fakeId = GalleryImageVersionResource.CreateResourceIdentifier(
+            subId.ToString(), "resource-group", "gallery", "imageName", "latest");
+
+        var result = ImageReference.MustParse(fakeId.ToString());
+        var galleryImage = Assert.IsType<ImageReference.GalleryImage>(result);
+        Assert.Equal("latest", galleryImage.Identifier.Name);
+        Assert.Equal("imageName", galleryImage.Identifier.Parent?.Name);
+        Assert.Equal("gallery", galleryImage.Identifier.Parent?.Parent?.Name);
+        Assert.Equal("resource-group", galleryImage.Identifier.ResourceGroupName);
+    }
+
+    [Fact]
+    public void CanParseSharedGalleryImage() {
+        var subId = Guid.NewGuid();
+        var fakeId = SharedGalleryImageResource.CreateResourceIdentifier(
+            subId.ToString(), "location", "gallery", "imageName");
+
+        var result = ImageReference.MustParse(fakeId.ToString());
+        var galleryImage = Assert.IsType<ImageReference.LatestSharedGalleryImage>(result);
+        Assert.Equal("imageName", galleryImage.Identifier.Name);
+        Assert.Equal("gallery", galleryImage.Identifier.Parent?.Name);
+        Assert.Null(galleryImage.Identifier.ResourceGroupName);
+    }
+
+    [Fact]
+    public void CanParseSpecificVersionSharedGalleryImage() {
+        var subId = Guid.NewGuid();
+        var fakeId = SharedGalleryImageVersionResource.CreateResourceIdentifier(
+            subId.ToString(), "location", "gallery", "imageName", "latest");
+
+        var result = ImageReference.MustParse(fakeId.ToString());
+        var galleryImage = Assert.IsType<ImageReference.SharedGalleryImage>(result);
+        Assert.Equal("latest", galleryImage.Identifier.Name);
+        Assert.Equal("imageName", galleryImage.Identifier.Parent?.Name);
+        Assert.Equal("gallery", galleryImage.Identifier.Parent?.Parent?.Name);
+        Assert.Null(galleryImage.Identifier.ResourceGroupName);
+    }
+
+    [Fact]
     public void UnknownResourceTypeGeneratesError() {
         var subId = Guid.NewGuid();
         var fakeId = VirtualMachineResource.CreateResourceIdentifier(
@@ -56,21 +97,31 @@ public class ImageReferenceTests {
     }
 
     static readonly string _expected = @$"{{
-  ""galleryImageId"": ""/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/galleries/gallery/images/imageName"",
+  ""latestGalleryId"": ""/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/galleries/gallery/images/imageName"",
   ""imageId"": ""/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/images/imageName"",
-  ""marketplaceId"": ""Canonical:UbuntuServer:18.04-LTS:latest""
+  ""marketplaceId"": ""Canonical:UbuntuServer:18.04-LTS:latest"",
+  ""galleryId"": ""/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/galleries/gallery/images/imageName/versions/latest"",
+  ""latestSharedGalleryId"": ""/subscriptions/{Guid.Empty}/providers/Microsoft.Compute/locations/location/sharedGalleries/gallery/images/imageName"",
+  ""sharedGalleryId"": ""/subscriptions/{Guid.Empty}/providers/Microsoft.Compute/locations/location/sharedGalleries/gallery/images/imageName/versions/latest""
 }}";
 
     private record Holder(
-        ImageReference galleryImageId,
+        ImageReference latestGalleryId,
         ImageReference imageId,
-        ImageReference marketplaceId);
+        ImageReference marketplaceId,
+        ImageReference galleryId,
+        ImageReference.LatestSharedGalleryImage latestSharedGalleryId,
+        ImageReference.SharedGalleryImage sharedGalleryId);
 
     [Fact]
     public void SerializesToStringAndDeserializesFromString() {
         var subId = Guid.Empty;
 
-        var galleryImageId = new ImageReference.GalleryImage(
+        var galleryId = new ImageReference.GalleryImage(
+            GalleryImageVersionResource.CreateResourceIdentifier(
+                subId.ToString(), "resource-group", "gallery", "imageName", "latest"));
+
+        var latestGalleryId = new ImageReference.LatestGalleryImage(
             GalleryImageResource.CreateResourceIdentifier(
                 subId.ToString(), "resource-group", "gallery", "imageName"));
 
@@ -81,16 +132,33 @@ public class ImageReferenceTests {
         var marketplaceId = new ImageReference.Marketplace(
             "Canonical", "UbuntuServer", "18.04-LTS", "latest");
 
+        var latestSharedGalleryId = new ImageReference.LatestSharedGalleryImage(
+            SharedGalleryImageResource.CreateResourceIdentifier(
+                subId.ToString(), "location", "gallery", "imageName"));
+
+        var sharedGalleryId = new ImageReference.SharedGalleryImage(
+            SharedGalleryImageVersionResource.CreateResourceIdentifier(
+                subId.ToString(), "location", "gallery", "imageName", "latest"));
+
         var result = JsonSerializer.Serialize(
-            new Holder(galleryImageId, imageId, marketplaceId),
+            new Holder(
+                latestGalleryId,
+                imageId,
+                marketplaceId,
+                galleryId,
+                latestSharedGalleryId,
+                sharedGalleryId),
             new JsonSerializerOptions { WriteIndented = true });
 
         Assert.Equal(_expected, result);
 
         var deserialized = JsonSerializer.Deserialize<Holder>(result);
         Assert.NotNull(deserialized);
-        Assert.Equal(galleryImageId, deserialized!.galleryImageId);
+        Assert.Equal(latestGalleryId, deserialized!.latestGalleryId);
+        Assert.Equal(galleryId, deserialized.galleryId);
         Assert.Equal(imageId, deserialized.imageId);
         Assert.Equal(marketplaceId, deserialized.marketplaceId);
+        Assert.Equal(latestSharedGalleryId, deserialized.latestSharedGalleryId);
+        Assert.Equal(sharedGalleryId, deserialized.sharedGalleryId);
     }
 }
