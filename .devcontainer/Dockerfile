@@ -12,7 +12,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
     libunwind-dev clang build-essential libssl-dev pkg-config lldb \
     bash-completion npm dotnet6 \
-    python-is-python3 direnv uuid-runtime python3-distutils python3-pip
+    python-is-python3 direnv uuid-runtime python3-distutils python3-pip python3-venv
 
 # Install Rust:
 USER vscode
@@ -21,6 +21,9 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --defau
 # Install other dependencies:
 COPY install-dependencies.sh .
 RUN ./install-dependencies.sh 
+
+# Setup direnv for Python stuff:
+RUN echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
 
 USER root
 RUN rm install-dependencies.sh
