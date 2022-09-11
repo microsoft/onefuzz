@@ -35,15 +35,15 @@ public abstract class FunctionTestBase : IAsyncLifetime {
 
     private readonly Guid _subscriptionId = Guid.NewGuid();
     private readonly string _resourceGroup = "FakeResourceGroup";
-    private readonly string _region = "fakeregion";
+    private readonly Region _region = Region.Parse("fakeregion");
 
     protected ILogTracer Logger { get; }
 
     protected TestContext Context { get; }
 
     private readonly BlobServiceClient _blobClient;
-    protected BlobContainerClient GetContainerClient(string container)
-        => _blobClient.GetBlobContainerClient(_storagePrefix + container);
+    protected BlobContainerClient GetContainerClient(Container container)
+        => _blobClient.GetBlobContainerClient(_storagePrefix + container.String);
 
     public FunctionTestBase(ITestOutputHelper output, IStorage storage) {
         Logger = new TestLogTracer(output);

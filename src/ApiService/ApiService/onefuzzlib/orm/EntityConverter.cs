@@ -225,17 +225,23 @@ public class EntityConverter {
     private object? GetFieldValue(EntityInfo info, string name, TableEntity entity) {
         var ef = info.properties[name].First();
         if (ef.kind == EntityPropertyKind.PartitionKey || ef.kind == EntityPropertyKind.RowKey) {
-            if (ef.type == typeof(string))
-                return entity.GetString(ef.kind.ToString());
-            else if (ef.type == typeof(Guid))
-                return Guid.Parse(entity.GetString(ef.kind.ToString()));
-            else if (ef.type == typeof(int))
-                return int.Parse(entity.GetString(ef.kind.ToString()));
-            else if (ef.type == typeof(long))
-                return long.Parse(entity.GetString(ef.kind.ToString()));
-            else if (ef.type.IsClass)
-                return ef.type.GetConstructor(new[] { typeof(string) })!.Invoke(new[] { entity.GetString(ef.kind.ToString()) });
-            else {
+            // partition & row keys must always be strings
+            var stringValue = entity.GetString(ef.kind.ToString());
+            if (ef.type == typeof(string)) {
+                return stringValue;
+            } else if (ef.type == typeof(Guid)) {
+                return Guid.Parse(stringValue);
+            } else if (ef.type == typeof(int)) {
+                return int.Parse(stringValue);
+            } else if (ef.type == typeof(long)) {
+                return long.Parse(stringValue);
+            } else if (ef.type.IsClass) {
+                if (ef.type.IsAssignableTo(typeof(ValidatedString))) {
+                    return ef.type.GetMethod("Parse")!.Invoke(null, new[] { stringValue });
+                }
+
+                return Activator.CreateInstance(ef.type, new[] { stringValue });
+            } else {
                 throw new Exception($"invalid partition or row key type of {info.type} property {name}: {ef.type}");
             }
         }

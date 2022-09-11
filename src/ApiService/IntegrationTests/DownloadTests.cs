@@ -72,7 +72,8 @@ public abstract class DownloadTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Download_RedirectsToResult_WithLocationHeader() {
         // set up a file to download
-        var container = GetContainerClient("xxx");
+        var containerName = Container.Parse("xxx");
+        var container = GetContainerClient(containerName);
         await container.CreateAsync();
         await container.UploadBlobAsync("yyy", new BinaryData("content"));
 

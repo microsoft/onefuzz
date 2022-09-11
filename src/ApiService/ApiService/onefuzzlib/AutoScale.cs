@@ -105,7 +105,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
         return OneFuzzResultVoid.Ok;
     }
-    private async Async.Task<OneFuzzResult<AutoscaleSettingResource>> CreateAutoScaleResourceFor(Guid resourceId, string location, AutoscaleProfile profile) {
+    private async Async.Task<OneFuzzResult<AutoscaleSettingResource>> CreateAutoScaleResourceFor(Guid resourceId, Region location, AutoscaleProfile profile) {
         _logTracer.Info($"Creating auto-scale resource for: {resourceId}");
 
         var resourceGroup = _context.Creds.GetBaseResourceGroup();

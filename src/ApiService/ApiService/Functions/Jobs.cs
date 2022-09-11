@@ -52,7 +52,7 @@ public class Jobs {
         var metadata = new Dictionary<string, string>{
             { "container_type", "logs" }, // TODO: use ContainerType.Logs enum somehow; needs snake case name
         };
-        var containerName = new Container($"logs-{job.JobId}");
+        var containerName = Container.Parse($"logs-{job.JobId}");
         var containerSas = await _context.Containers.CreateContainer(containerName, StorageType.Corpus, metadata);
         if (containerSas is null) {
             return await _context.RequestHandling.NotOk(

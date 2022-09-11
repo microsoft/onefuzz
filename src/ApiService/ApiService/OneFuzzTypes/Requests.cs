@@ -191,7 +191,7 @@ public record ScalesetCreate(
     [property: Required] PoolName PoolName,
     [property: Required] string VmSku,
     [property: Required] string Image,
-    string? Region,
+    Region? Region,
     [property: Range(1, long.MaxValue), Required] long Size,
     [property: Required] bool SpotInstances,
     [property: Required] Dictionary<string, string> Tags,

@@ -226,7 +226,7 @@ public class VmOperations : IVmOperations {
 
     async Task<OneFuzzResultVoid> CreateVm(
         string name,
-        string location,
+        Region location,
         string vmSku,
         string image,
         string password,
