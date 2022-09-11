@@ -62,15 +62,16 @@ public class TimerProxy {
             // nsg enabled OneFuzz this will overwrite existing NSG
             // assignment though. This behavior is acceptable at this point
             // since we do not support bring your own NSG
+            var nsgName = Nsg.NameFromRegion(region);
 
-            if (await nsgOpertions.GetNsg(region.String) != null) {
+            if (await nsgOpertions.GetNsg(nsgName) != null) {
                 var network = await Network.Init(region, _context);
 
                 var subnet = await network.GetSubnet();
                 if (subnet != null) {
                     var vnet = await network.GetVnet();
                     if (vnet != null) {
-                        var result = await nsgOpertions.AssociateSubnet(region.String, vnet, subnet);
+                        var result = await nsgOpertions.AssociateSubnet(nsgName, vnet, subnet);
                         if (!result.OkV) {
                             _logger.Error($"Failed to associate NSG and subnet due to {result.ErrorV} in region {region}");
                         }

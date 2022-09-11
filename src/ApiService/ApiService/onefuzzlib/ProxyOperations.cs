@@ -172,7 +172,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
                 return await SetState(proxy, VmState.ExtensionsLaunch);
             }
         } else {
-            var nsg = new Nsg(proxy.Region.String, proxy.Region);
+            var nsg = Nsg.ForRegion(proxy.Region);
             var result = await _context.NsgOperations.Create(nsg);
             if (!result.IsOk) {
                 return await SetFailed(proxy, result.ErrorV);

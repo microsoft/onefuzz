@@ -129,7 +129,7 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         public bool OkToDelete(IReadOnlySet<Region> active_regions, Region nsg_region, string nsg_name) {
-            return !active_regions.Contains(nsg_region) && nsg_region.String == nsg_name;
+            return !active_regions.Contains(nsg_region) && Nsg.NameFromRegion(nsg_region) == nsg_name;
         }
 
         /// <summary>

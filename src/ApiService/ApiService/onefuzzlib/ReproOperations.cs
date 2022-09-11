@@ -131,7 +131,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
                 repro = repro with { State = VmState.ExtensionsLaunch };
             }
         } else {
-            var nsg = new Nsg(vm.Region.String, vm.Region);
+            var nsg = Nsg.ForRegion(vm.Region);
             var result = await _context.NsgOperations.Create(nsg);
             if (!result.IsOk) {
                 return await _context.ReproOperations.SetError(repro, result.ErrorV);

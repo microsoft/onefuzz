@@ -712,7 +712,14 @@ public record Job(
     public UserInfo? UserInfo { get; set; }
 }
 
-public record Nsg(string Name, Region Region);
+public record Nsg(string Name, Region Region) {
+    public static Nsg ForRegion(Region region)
+        => new(NameFromRegion(region), region);
+
+    // Currently, the name of a NSG is the same as the region it is in.
+    public static string NameFromRegion(Region region)
+        => region.String;
+};
 
 public record WorkUnit(
     Guid JobId,
