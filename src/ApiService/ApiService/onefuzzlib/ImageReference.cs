@@ -64,7 +64,7 @@ public abstract record ImageReference {
         return OneFuzzResult.Ok(result);
     }
 
-    public abstract Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, string region);
+    public abstract Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, Region region);
 
     public abstract Compute.Models.ImageReference ToArm();
 
@@ -87,7 +87,7 @@ public abstract record ImageReference {
 
     [JsonConverter(typeof(Converter<LatestGalleryImage>))]
     public sealed record LatestGalleryImage(ResourceIdentifier Identifier) : ArmImageReference(Identifier) {
-        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, string region) {
+        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, Region region) {
             try {
                 var resource = await armClient.GetGalleryImageResource(Identifier).GetAsync();
                 if (resource.Value.Data.OSType is OperatingSystemTypes os) {
@@ -103,7 +103,7 @@ public abstract record ImageReference {
 
     [JsonConverter(typeof(Converter<GalleryImage>))]
     public sealed record GalleryImage(ResourceIdentifier Identifier) : ArmImageReference(Identifier) {
-        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, string region) {
+        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, Region region) {
             try {
                 // need to access parent of versioned resource to get the OS data
                 var resource = await armClient.GetGalleryImageResource(Identifier.Parent!).GetAsync();
@@ -120,7 +120,7 @@ public abstract record ImageReference {
 
     [JsonConverter(typeof(Converter<LatestSharedGalleryImage>))]
     public sealed record LatestSharedGalleryImage(ResourceIdentifier Identifier) : ArmImageReference(Identifier) {
-        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, string region) {
+        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, Region region) {
             try {
                 var resource = await armClient.GetSharedGalleryImageResource(Identifier).GetAsync();
                 if (resource.Value.Data.OSType is OperatingSystemTypes os) {
@@ -136,7 +136,7 @@ public abstract record ImageReference {
 
     [JsonConverter(typeof(Converter<SharedGalleryImage>))]
     public sealed record SharedGalleryImage(ResourceIdentifier Identifier) : ArmImageReference(Identifier) {
-        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, string region) {
+        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, Region region) {
             try {
                 // need to access parent of versioned resource to get OS info
                 var resource = await armClient.GetSharedGalleryImageResource(Identifier.Parent!).GetAsync();
@@ -153,7 +153,7 @@ public abstract record ImageReference {
 
     [JsonConverter(typeof(Converter<Image>))]
     public sealed record Image(ResourceIdentifier Identifier) : ArmImageReference(Identifier) {
-        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, string region) {
+        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, Region region) {
             try {
                 var resource = await armClient.GetImageResource(Identifier).GetAsync();
                 var os = resource.Value.Data.StorageProfile.OSDisk.OSType.ToString();
@@ -172,14 +172,14 @@ public abstract record ImageReference {
         string Version) : ImageReference {
         public override long MaximumVmCount => MarketplaceImageMaximumVmCount;
 
-        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, string region) {
+        public override async Task<OneFuzzResult<Os>> GetOs(ArmClient armClient, Region region) {
             try {
                 var subscription = await armClient.GetDefaultSubscriptionAsync();
                 string version;
                 if (string.Equals(Version, "latest", StringComparison.Ordinal)) {
                     version =
                         (await subscription.GetVirtualMachineImagesAsync(
-                            region,
+                            region.String,
                             Publisher,
                             Offer,
                             Sku,
@@ -190,7 +190,7 @@ public abstract record ImageReference {
                 }
 
                 var vm = await subscription.GetVirtualMachineImageAsync(
-                    region,
+                    region.String,
                     Publisher,
                     Offer,
                     Sku,
