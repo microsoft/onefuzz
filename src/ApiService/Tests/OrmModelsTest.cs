@@ -175,8 +175,8 @@ namespace Tests {
         }
 
         public static Gen<InstanceConfig> InstanceConfig() {
-            return Arb.Generate<Tuple<
-                Tuple<string, Guid[]?, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?, string>,
+            var config = Arb.Generate<Tuple<
+                Tuple<string, Guid[]?, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?, StringNoNulls>,
                 Tuple<bool, IDictionary<string, ApiAccessRule>?, IDictionary<Guid, Guid[]>?, IDictionary<string, string>?, IDictionary<string, string>?>>>().Select(
                 arg =>
                     new InstanceConfig(
@@ -186,7 +186,7 @@ namespace Tests {
                         NetworkConfig: arg.Item1.Item4,
                         ProxyNsgConfig: arg.Item1.Item5,
                         Extensions: arg.Item1.Item6,
-                        ProxyVmSku: arg.Item1.Item7,
+                        ProxyVmSku: arg.Item1.Item7.Get,
 
                         RequireAdminPrivileges: arg.Item2.Item1,
                         ApiAccessRules: arg.Item2.Item2,
@@ -194,7 +194,8 @@ namespace Tests {
                         VmTags: arg.Item2.Item4,
                         VmssTags: arg.Item2.Item5
                     )
-            );
+                );
+            return config;
         }
 
         public static Gen<Task> Task() {
@@ -658,17 +659,17 @@ namespace Tests {
             return Test(j);
         }
 
-        /*
+        
         //Sample function on how repro a failing test run, using Replay
         //functionality of FsCheck. Feel free to
         [Property]
         void Replay()
         {
-            var seed = FsCheck.Random.StdGen.NewStdGen(515508280, 297027790);
+            var seed = FsCheck.Random.StdGen.NewStdGen(610100457,297085446);
             var p = Prop.ForAll((InstanceConfig x) => InstanceConfig(x) );
             p.Check(new Configuration { Replay = seed });
         }
-        */
+        
     }
 
 
