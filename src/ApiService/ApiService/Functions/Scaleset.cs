@@ -148,7 +148,7 @@ public class Scaleset {
 
             await _context.AutoScaleOperations.Insert(autoScale);
         }
-        
+
         // auth not included on create results, only GET with include_auth set
         var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: false);
         return await RequestHandling.Ok(req, response);
@@ -183,7 +183,7 @@ public class Scaleset {
         if (request.OkV.Size is long size) {
             scaleset = await _context.ScalesetOperations.SetSize(scaleset, size);
         }
-    
+
         var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: false);
         return await RequestHandling.Ok(req, response);
     }
