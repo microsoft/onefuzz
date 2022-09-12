@@ -47,9 +47,7 @@ public class Teams : ITeams {
 
         var configUrl = await _context.SecretsOperations.GetSecretStringValue(config.Url);
         var client = new Request(_httpFactory.CreateClient());
-        var m = JsonSerializer.Serialize(message);
-        _logTracer.Info($"THIS IS THE MESSAGE WE'RE SENDING TO TEAMS -------------- {m}");
-        var response = await client.Post(url: new Uri(configUrl!), m);
+        var response = await client.Post(url: new Uri(configUrl!), JsonSerializer.Serialize(message));
         if (response == null || !response.IsSuccessStatusCode) {
             _logTracer.Error($"webhook failed {response?.StatusCode} {response?.Content}");
         }
@@ -108,7 +106,7 @@ public class Teams : ITeams {
 
             facts.Add(new Dictionary<string, string>() {
                 {"name", "file"},
-                {"value", $"[{MarkdownEscape(container.ContainerName)}/{MarkdownEscape(filename)}]({fileUrl})"}
+                {"value", $"[{MarkdownEscape(container.String)}/{MarkdownEscape(filename)}]({fileUrl})"}
             });
         }
 

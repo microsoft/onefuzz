@@ -17,7 +17,7 @@ public class Ado : NotificationsBase, IAdo {
 
     public async Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool failTaskonTransientError) {
         if (reportable is RegressionReport) {
-            _logTracer.Info($"ado integration does not support regressiong report. container:{container} filename:{filename}");
+            _logTracer.Info($"ado integration does not support regression report. container:{container} filename:{filename}");
             return;
         }
 
