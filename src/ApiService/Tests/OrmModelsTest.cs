@@ -176,7 +176,7 @@ namespace Tests {
 
         public static Gen<InstanceConfig> InstanceConfig() {
             var config = Arb.Generate<Tuple<
-                Tuple<string, Guid[]?, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?, StringNoNulls>,
+                Tuple<string, Guid[]?, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?, NonNull<string>>,
                 Tuple<bool, IDictionary<string, ApiAccessRule>?, IDictionary<Guid, Guid[]>?, IDictionary<string, string>?, IDictionary<string, string>?>>>().Select(
                 arg =>
                     new InstanceConfig(
@@ -186,7 +186,7 @@ namespace Tests {
                         NetworkConfig: arg.Item1.Item4,
                         ProxyNsgConfig: arg.Item1.Item5,
                         Extensions: arg.Item1.Item6,
-                        ProxyVmSku: arg.Item1.Item7.Get,
+                        ProxyVmSku: arg.Item1.Item7.Item,
 
                         RequireAdminPrivileges: arg.Item2.Item1,
                         ApiAccessRules: arg.Item2.Item2,
@@ -659,7 +659,7 @@ namespace Tests {
             return Test(j);
         }
 
-        
+        /*
         //Sample function on how repro a failing test run, using Replay
         //functionality of FsCheck. Feel free to
         [Property]
@@ -669,7 +669,7 @@ namespace Tests {
             var p = Prop.ForAll((InstanceConfig x) => InstanceConfig(x) );
             p.Check(new Configuration { Replay = seed });
         }
-        
+        */
     }
 
 
