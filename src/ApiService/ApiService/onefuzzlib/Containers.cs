@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager;
@@ -253,11 +252,11 @@ public class Containers : IContainers {
 
     public string AuthDownloadUrl(Container container, string filename) {
         var instance = _config.OneFuzzInstance;
-        var urlParams = System.Web.HttpUtility.UrlEncode(JsonSerializer.Serialize(new Dictionary<string, string>()
-        {
-            {"container", container.ContainerName},
-            {"filename", filename}
-        }));
-        return $"{instance}/api/download?{urlParams}";
+
+        var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+        queryString.Add("container", container.ContainerName);
+        queryString.Add("filename", filename);
+
+        return $"{instance}/api/download?{queryString}";
     }
 }
