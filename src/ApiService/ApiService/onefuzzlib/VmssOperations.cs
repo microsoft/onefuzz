@@ -271,7 +271,7 @@ public class VmssOperations : IVmssOperations {
         }
 
         var vmssData = new VirtualMachineScaleSetData(location) {
-            DoNotRunExtensionsOnOverprovisionedVms = true,
+            DoNotRunExtensionsOnOverprovisionedVms = false,
             UpgradePolicy = new() {
                 Mode = UpgradeMode.Manual,
             },
