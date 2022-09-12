@@ -107,7 +107,7 @@ public class VmssOperations : IVmssOperations {
             var res = await GetVmssResource(name).GetAsync();
             _log.Verbose($"getting vmss: {name}");
             return res.Value.Data;
-        } catch (Exception ex) when (ex is RequestFailedException) {
+        } catch (RequestFailedException ex) when (ex.Status == 404) {
             return null;
         }
     }
@@ -271,7 +271,7 @@ public class VmssOperations : IVmssOperations {
         }
 
         var vmssData = new VirtualMachineScaleSetData(location) {
-            DoNotRunExtensionsOnOverprovisionedVms = true,
+            DoNotRunExtensionsOnOverprovisionedVms = false,
             UpgradePolicy = new() {
                 Mode = UpgradeMode.Manual,
             },
@@ -399,7 +399,7 @@ public class VmssOperations : IVmssOperations {
             entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
 
             var sub = _creds.GetSubscriptionResource();
-            var skus = sub.GetResourceSkusAsync(filter: TableClient.CreateQueryFilter($"location eq '{region}'"));
+            var skus = sub.GetResourceSkusAsync(filter: TableClient.CreateQueryFilter($"location eq {region.String}"));
 
             var skuNames = new List<string>();
             await foreach (var sku in skus) {

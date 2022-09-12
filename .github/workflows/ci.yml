@@ -17,6 +17,11 @@ env:
 
 jobs:
   agent:
+    strategy:
+      matrix:
+        os:
+        - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-windows-2019" ]
+        - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-18.04" ] 
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v2
@@ -43,7 +48,7 @@ jobs:
       with:
         # if nothing has changed inside src/agent, we can reuse the artifacts directory
         path: artifacts
-        key: agent-artifacts-${{ runner.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-${{ hashFiles('src/agent/**/*') }}
+        key: agent-artifacts|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/**/*') }}
         # note: also including the ACTIONS_CACHE_KEY_DATE to rebuild if the Prereq Cache is invalidated
     - name: Rust Prereq Cache
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
@@ -54,7 +59,7 @@ jobs:
           ~/.cargo/registry
           ~/.cargo/git
           ~/.cargo/bin
-        key: rust-${{ runner.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+        key: rust|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}
     - name: Install Rust Prereqs
       if: steps.cache-rust-prereqs.outputs.cache-hit != 'true' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       shell: bash
@@ -66,14 +71,14 @@ jobs:
         path: |
           sccache
           src/agent/target
-        key: agent-${{ runner.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-${{ hashFiles('src/agent/Cargo.lock') }}
+        key: agent|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/Cargo.lock') }}
         restore-keys: |
-          agent-${{ runner.os }}-${{steps.rust-version.outputs.RUST_VERSION}}-${{ env.ACTIONS_CACHE_KEY_DATE }}-
+          agent|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|
     - name: Linux Prereqs
+      if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       run: |
         sudo apt-get -y update
         sudo apt-get -y install libssl1.0-dev libunwind-dev
-      if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
     - run: src/ci/agent.sh
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       shell: bash
@@ -81,11 +86,6 @@ jobs:
       with:
         name: build-artifacts
         path: artifacts
-    strategy:
-      matrix:
-        os:
-        - ubuntu-18.04
-        - windows-2019
   azcopy:
     runs-on: ubuntu-18.04
     steps:

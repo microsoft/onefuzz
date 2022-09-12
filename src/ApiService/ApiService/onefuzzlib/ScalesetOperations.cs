@@ -77,7 +77,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             _log.Info($"{SCALESET_LOG_PREFIX} unexpected scaleset size, resizing. scaleset_id: {scaleset.ScalesetId} expected:{scaleset.Size} actual:{size}");
 
             scaleset = scaleset with { Size = size.Value };
-            var replaceResult = await Update(scaleset);
+            var replaceResult = await Replace(scaleset);
             if (!replaceResult.IsOk) {
                 _log.Error($"Failed to update scaleset size for scaleset {scaleset.ScalesetId} due to {replaceResult.ErrorV}");
             }
