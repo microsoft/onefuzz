@@ -271,7 +271,7 @@ public class VmssOperations : IVmssOperations {
         }
 
         var vmssData = new VirtualMachineScaleSetData(location) {
-            DoNotRunExtensionsOnOverprovisionedVms = true,
+            DoNotRunExtensionsOnOverprovisionedVms = false,
             UpgradePolicy = new() {
                 Mode = UpgradeMode.Manual,
             },
@@ -399,7 +399,7 @@ public class VmssOperations : IVmssOperations {
             entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
 
             var sub = _creds.GetSubscriptionResource();
-            var skus = sub.GetResourceSkusAsync(filter: TableClient.CreateQueryFilter($"location eq '{region}'"));
+            var skus = sub.GetResourceSkusAsync(filter: TableClient.CreateQueryFilter($"location eq {region.String}"));
 
             var skuNames = new List<string>();
             await foreach (var sku in skus) {
