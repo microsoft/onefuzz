@@ -24,7 +24,7 @@ public class Ado : NotificationsBase, IAdo {
         var report = (Report)reportable;
 
         var notificationInfo = @$"job_id:{report.JobId} task_id:{report.TaskId}
-         container:{container} filename:{filename}";
+container:{container} filename:{filename}";
 
         _logTracer.Info($"notify ado: {notificationInfo}");
 
@@ -41,8 +41,6 @@ public class Ado : NotificationsBase, IAdo {
                 ValueError,
             */
             if (!failTaskonTransientError && IsTransient(e)) {
-                // In the python code we rethrow the exception but we'll lose the stack info
-                // Instead, I'm logging an error here that it's a transient ADO failure
                 _logTracer.Error($"transient ADO notification failure {notificationInfo}");
                 throw;
             } else {
@@ -54,9 +52,9 @@ public class Ado : NotificationsBase, IAdo {
     private static bool IsTransient(Exception e) {
         var errorCodes = new List<string>()
         {
-            //# "TF401349: An unexpected error has occurred, please verify your request and try again." # noqa: E501
+            //TF401349: An unexpected error has occurred, please verify your request and try again.
             "TF401349",
-            //# TF26071: This work item has been changed by someone else since you opened it. You will need to refresh it and discard your changes. # noqa: E501
+            //TF26071: This work item has been changed by someone else since you opened it. You will need to refresh it and discard your changes.
             "TF26071",
         };
 
