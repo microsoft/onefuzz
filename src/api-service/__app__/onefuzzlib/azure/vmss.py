@@ -106,6 +106,13 @@ def resize_vmss(name: UUID, capacity: int) -> None:
             capacity,
             err,
         )
+    except HttpResponseError as err:
+        if "limit of 10 models that may be referenced" in str(err):
+            logging.error(
+                "unable to resize scaleset due to model error. name: %s - err:%s",
+                name,
+                err,
+            )
 
 
 @retry_on_auth_failure()
@@ -206,6 +213,14 @@ def update_scale_in_protection(
                     % instance_id
                 )
                 return None
+            if "limit of 10 models that may be referenced" in str(err):
+                logging.error(
+                    "unable to resize scaleset due to model error. name: %s - err:%s",
+                    name,
+                    err,
+                )
+                return None
+
         return Error(
             code=ErrorCode.UNABLE_TO_UPDATE,
             errors=["unable to set protection policy on: %s:%s" % (vm_id, instance_id)],
@@ -302,12 +317,24 @@ def update_extensions(name: UUID, extensions: List[Any]) -> None:
     resource_group = get_base_resource_group()
     logging.info("updating VM extensions: %s", name)
     compute_client = get_compute_client()
-    compute_client.virtual_machine_scale_sets.begin_update(
-        resource_group,
-        str(name),
-        {"virtual_machine_profile": {"extension_profile": {"extensions": extensions}}},
-    )
-    logging.info("VM extensions updated: %s", name)
+    try:
+        compute_client.virtual_machine_scale_sets.begin_update(
+            resource_group,
+            str(name),
+            {
+                "virtual_machine_profile": {
+                    "extension_profile": {"extensions": extensions}
+                }
+            },
+        )
+        logging.info("VM extensions updated: %s", name)
+    except HttpResponseError as err:
+        if "limit of 10 models that may be referenced" in str(err):
+            logging.error(
+                "unable to resize scaleset due to model error. name: %s - err:%s",
+                name,
+                err,
+            )
 
 
 @retry_on_auth_failure()
