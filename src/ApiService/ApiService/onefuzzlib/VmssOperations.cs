@@ -107,7 +107,7 @@ public class VmssOperations : IVmssOperations {
             var res = await GetVmssResource(name).GetAsync();
             _log.Verbose($"getting vmss: {name}");
             return res.Value.Data;
-        } catch (Exception ex) when (ex is RequestFailedException) {
+        } catch (RequestFailedException ex) when (ex.Status == 404) {
             return null;
         }
     }

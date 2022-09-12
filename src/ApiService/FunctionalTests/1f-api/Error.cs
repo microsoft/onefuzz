@@ -6,14 +6,16 @@ namespace FunctionalTests;
 public class Error : IComparable<Error>, IFromJsonElement<Error> {
     JsonElement _e;
 
+    public Error() { }
+
     public Error(JsonElement e) {
         _e = e;
         Assert.True(_e.EnumerateObject().Count() == 2);
     }
 
-    public int Code => _e.GetProperty("code").GetInt32();
+    public int Code => _e.GetIntProperty("code");
 
-    public IEnumerable<string> Errors => _e.GetProperty("errors").EnumerateArray().Select(e => e.GetString()!);
+    public IEnumerable<string> Errors => _e.GetEnumerableStringProperty("errors");
 
     public Error Convert(JsonElement e) => new Error(e);
 
@@ -49,5 +51,9 @@ public class Error : IComparable<Error>, IFromJsonElement<Error> {
 
     public bool UnableToFindScalesetError => Code == 450 && Errors.First() == "unable to find scaleset";
 
-    public bool UnableToFindNode => Code == 467 && Errors.First() == "unable to find node ";
+    public bool UnableToFindNode => Code == 467 && Errors.First() == "unable to find node";
+
+    public bool ShouldBeProvided(string p) => Code == 450 && Errors.First() == $"'{p}' query parameter must be provided";
+
+    public bool UnableToFindTask => Code == 450 && Errors.First() == "unable to find task";
 }
