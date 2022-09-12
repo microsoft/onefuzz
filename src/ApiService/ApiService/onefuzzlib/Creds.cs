@@ -25,14 +25,14 @@ public interface ICreds {
 
     public SubscriptionResource GetSubscriptionResource();
 
-    public Async.Task<string> GetBaseRegion();
+    public Async.Task<Region> GetBaseRegion();
+    public Async.Task<IReadOnlyList<Region>> GetRegions();
 
     public Uri GetInstanceUrl();
     public Async.Task<Guid> GetScalesetPrincipalId();
     public GenericResource ParseResourceId(string resourceId);
     public GenericResource ParseResourceId(ResourceIdentifier resourceId);
     public Async.Task<GenericResource> GetData(GenericResource resource);
-    Async.Task<IReadOnlyList<string>> GetRegions();
     public ResourceIdentifier GetScalesetIdentityResourcePath();
 }
 
@@ -95,13 +95,13 @@ public sealed class Creds : ICreds {
         return ArmClient.GetSubscriptionResource(id);
     }
 
-    public Async.Task<string> GetBaseRegion() {
+    public Async.Task<Region> GetBaseRegion() {
         return _cache.GetOrCreateAsync(nameof(GetBaseRegion), async _ => {
             var rg = await ArmClient.GetResourceGroupResource(GetResourceGroupResourceIdentifier()).GetAsync();
             if (rg.GetRawResponse().IsError) {
                 throw new Exception($"Failed to get base region due to [{rg.GetRawResponse().Status}] {rg.GetRawResponse().ReasonPhrase}");
             }
-            return rg.Value.Data.Location.Name;
+            return Region.Parse(rg.Value.Data.Location.Name);
         });
     }
 
@@ -144,8 +144,8 @@ public sealed class Creds : ICreds {
         return resource;
     }
 
-    public Task<IReadOnlyList<string>> GetRegions()
-        => _cache.GetOrCreateAsync<IReadOnlyList<string>>(
+    public Task<IReadOnlyList<Region>> GetRegions()
+        => _cache.GetOrCreateAsync<IReadOnlyList<Region>>(
             nameof(Creds) + "." + nameof(GetRegions),
             async entry => {
                 // cache for one day
@@ -153,7 +153,7 @@ public sealed class Creds : ICreds {
                 var subscriptionId = SubscriptionResource.CreateResourceIdentifier(GetSubscription());
                 return await ArmClient.GetSubscriptionResource(subscriptionId)
                     .GetLocationsAsync()
-                    .Select(x => x.Name)
+                    .Select(x => Region.Parse(x.Name))
                     .ToListAsync();
             });
 

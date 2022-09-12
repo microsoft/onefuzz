@@ -16,7 +16,7 @@ public interface IVmssOperations {
     Async.Task<OneFuzzResultVoid> UpdateExtensions(Guid name, IList<VirtualMachineScaleSetExtensionData> extensions);
     Async.Task<VirtualMachineScaleSetData?> GetVmss(Guid name);
 
-    Async.Task<IReadOnlyList<string>> ListAvailableSkus(string region);
+    Async.Task<IReadOnlyList<string>> ListAvailableSkus(Region region);
 
     Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null);
 
@@ -27,7 +27,7 @@ public interface IVmssOperations {
     Async.Task<OneFuzzResultVoid> ResizeVmss(Guid name, long capacity);
 
     Async.Task<OneFuzzResultVoid> CreateVmss(
-        string location,
+        Region location,
         Guid name,
         string vmSku,
         long vmCount,
@@ -236,7 +236,7 @@ public class VmssOperations : IVmssOperations {
     }
 
     public async Async.Task<OneFuzzResultVoid> CreateVmss(
-        string location,
+        Region location,
         Guid name,
         string vmSku,
         long vmCount,
@@ -394,7 +394,7 @@ public class VmssOperations : IVmssOperations {
         return null;
     }
 
-    public Async.Task<IReadOnlyList<string>> ListAvailableSkus(string region)
+    public Async.Task<IReadOnlyList<string>> ListAvailableSkus(Region region)
         => _cache.GetOrCreateAsync<IReadOnlyList<string>>($"compute-skus-{region}", async entry => {
             entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
 
@@ -407,7 +407,7 @@ public class VmssOperations : IVmssOperations {
                 if (sku.Restrictions is not null) {
                     foreach (var restriction in sku.Restrictions) {
                         if (restriction.RestrictionsType == ResourceSkuRestrictionsType.Location &&
-                            restriction.Values.Contains(region, StringComparer.OrdinalIgnoreCase)) {
+                            restriction.Values.Contains(region.String, StringComparer.OrdinalIgnoreCase)) {
                             available = false;
                             break;
                         }

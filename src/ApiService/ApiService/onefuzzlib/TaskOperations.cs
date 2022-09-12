@@ -15,7 +15,7 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
 
     IAsyncEnumerable<Task> SearchStates(Guid? jobId = null, IEnumerable<TaskState>? states = null);
 
-    IEnumerable<string>? GetInputContainerQueues(TaskConfig config);
+    IEnumerable<Container>? GetInputContainerQueues(TaskConfig config);
 
     IAsyncEnumerable<Task> SearchExpired();
     Async.Task MarkStopping(Task task);
@@ -75,7 +75,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         return QueryAsync(filter: queryString);
     }
 
-    public IEnumerable<string>? GetInputContainerQueues(TaskConfig config) {
+    public IEnumerable<Container>? GetInputContainerQueues(TaskConfig config) {
         throw new NotImplementedException();
     }
 

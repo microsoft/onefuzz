@@ -265,15 +265,15 @@ namespace Tests {
 
         [Fact]
         public void TestContainerSerialization() {
-            var container = new Container("abc-123");
+            var container = Container.Parse("abc-123");
             var expected = new Entity3(123, "abc", container);
             var converter = new EntityConverter();
 
             var tableEntity = converter.ToTableEntity(expected);
             var actual = converter.ToRecord<Entity3>(tableEntity);
 
-            Assert.Equal(expected.Container.ContainerName, actual.Container.ContainerName);
-            Assert.Equal(expected.Container.ContainerName, tableEntity.GetString("container"));
+            Assert.Equal(expected.Container, actual.Container);
+            Assert.Equal(expected.Container.String, tableEntity.GetString("container"));
         }
 
         [Fact]
@@ -288,7 +288,7 @@ namespace Tests {
 
             Assert.Equal(123, entity?.Id);
             Assert.Equal("abc", entity?.TheName);
-            Assert.Equal("abc-123", entity?.Container.ContainerName);
+            Assert.Equal("abc-123", entity?.Container.String);
         }
 
 
@@ -300,7 +300,7 @@ namespace Tests {
 
         [Fact]
         public void TestPartitionKeyIsRowKey() {
-            var container = new Container("abc-123");
+            var container = Container.Parse("abc-123");
             var expected = new Entity4(123, "abc", container);
             var converter = new EntityConverter();
 
@@ -310,8 +310,8 @@ namespace Tests {
 
             var actual = converter.ToRecord<Entity4>(tableEntity);
 
-            Assert.Equal(expected.Container.ContainerName, actual.Container.ContainerName);
-            Assert.Equal(expected.Container.ContainerName, tableEntity.GetString("container"));
+            Assert.Equal(expected.Container, actual.Container);
+            Assert.Equal(expected.Container.String, tableEntity.GetString("container"));
         }
 
 

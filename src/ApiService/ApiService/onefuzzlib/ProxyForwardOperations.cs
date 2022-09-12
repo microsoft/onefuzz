@@ -5,10 +5,10 @@ namespace Microsoft.OneFuzz.Service;
 
 
 public interface IProxyForwardOperations : IOrm<ProxyForward> {
-    IAsyncEnumerable<ProxyForward> SearchForward(Guid? scalesetId = null, string? region = null, Guid? machineId = null, Guid? proxyId = null, int? dstPort = null);
+    IAsyncEnumerable<ProxyForward> SearchForward(Guid? scalesetId = null, Region? region = null, Guid? machineId = null, Guid? proxyId = null, int? dstPort = null);
     Forward ToForward(ProxyForward proxyForward);
-    Task<OneFuzzResult<ProxyForward>> UpdateOrCreate(string region, Guid scalesetId, Guid machineId, int dstPort, int duration);
-    Task<HashSet<string>> RemoveForward(Guid scalesetId, Guid? machineId = null, int? dstPort = null, Guid? proxyId = null);
+    Task<OneFuzzResult<ProxyForward>> UpdateOrCreate(Region region, Guid scalesetId, Guid machineId, int dstPort, int duration);
+    Task<HashSet<Region>> RemoveForward(Guid scalesetId, Guid? machineId = null, int? dstPort = null, Guid? proxyId = null);
 }
 
 
@@ -20,7 +20,7 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
 
     }
 
-    public IAsyncEnumerable<ProxyForward> SearchForward(Guid? scalesetId = null, string? region = null, Guid? machineId = null, Guid? proxyId = null, int? dstPort = null) {
+    public IAsyncEnumerable<ProxyForward> SearchForward(Guid? scalesetId = null, Region? region = null, Guid? machineId = null, Guid? proxyId = null, int? dstPort = null) {
 
         var conditions =
             new[] {
@@ -40,7 +40,7 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
         return new Forward(proxyForward.Port, proxyForward.DstPort, proxyForward.DstIp);
     }
 
-    public async Task<OneFuzzResult<ProxyForward>> UpdateOrCreate(string region, Guid scalesetId, Guid machineId, int dstPort, int duration) {
+    public async Task<OneFuzzResult<ProxyForward>> UpdateOrCreate(Region region, Guid scalesetId, Guid machineId, int dstPort, int duration) {
         var privateIp = await _context.IpOperations.GetScalesetInstanceIp(scalesetId, machineId);
 
         if (privateIp == null) {
@@ -88,10 +88,10 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
 
     }
 
-    public async Task<HashSet<string>> RemoveForward(Guid scalesetId, Guid? machineId, int? dstPort, Guid? proxyId) {
+    public async Task<HashSet<Region>> RemoveForward(Guid scalesetId, Guid? machineId, int? dstPort, Guid? proxyId) {
         var entries = await SearchForward(scalesetId: scalesetId, machineId: machineId, proxyId: proxyId, dstPort: dstPort).ToListAsync();
 
-        var regions = new HashSet<string>();
+        var regions = new HashSet<Region>();
         foreach (var entry in entries) {
             regions.Add(entry.Region);
             await Delete(entry);

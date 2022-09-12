@@ -7,7 +7,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface INotificationOperations : IOrm<Notification> {
     Async.Task NewFiles(Container container, string filename, bool failTaskOnTransientError);
     IAsyncEnumerable<Notification> GetNotifications(Container container);
-    IAsyncEnumerable<(Task, IEnumerable<string>)> GetQueueTasks();
+    IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks();
     Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting);
 }
 
@@ -52,8 +52,8 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         }
 
         await foreach (var (task, containers) in GetQueueTasks()) {
-            if (containers.Contains(container.ContainerName)) {
-                _logTracer.Info($"queuing input {container.ContainerName} {filename} {task.TaskId}");
+            if (containers.Contains(container)) {
+                _logTracer.Info($"queuing input {container} {filename} {task.TaskId}");
                 var url = _context.Containers.GetFileSasUrl(container, filename, StorageType.Corpus, BlobSasPermissions.Read | BlobSasPermissions.Delete);
                 await _context.Queue.SendMessage(task.TaskId.ToString(), url?.ToString() ?? "", StorageType.Corpus);
             }
@@ -77,10 +77,10 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     }
 
     public IAsyncEnumerable<Notification> GetNotifications(Container container) {
-        return QueryAsync(filter: $"container eq '{container.ContainerName}'");
+        return QueryAsync(filter: $"container eq '{container}'");
     }
 
-    public IAsyncEnumerable<(Task, IEnumerable<string>)> GetQueueTasks() {
+    public IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks() {
         // Nullability mismatch: We filter tuples where the containers are null
         return _context.TaskOperations.SearchStates(states: TaskStateHelper.AvailableStates)
             .Select(task => (task, _context.TaskOperations.GetInputContainerQueues(task.Config)))
@@ -93,7 +93,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         }
 
         if (replaceExisting) {
-            var existing = this.SearchByRowKeys(new[] { container.ContainerName });
+            var existing = this.SearchByRowKeys(new[] { container.String });
             await foreach (var existingEntry in existing) {
                 _logTracer.Info($"replacing existing notification: {existingEntry.NotificationId} - {container}");
                 await this.Delete(existingEntry);

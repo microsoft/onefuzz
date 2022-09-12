@@ -15,9 +15,9 @@ class TestCreds : ICreds {
 
     private readonly Guid _subscriptionId;
     private readonly string _resourceGroup;
-    private readonly string _region;
+    private readonly Region _region;
 
-    public TestCreds(Guid subscriptionId, string resourceGroup, string region) {
+    public TestCreds(Guid subscriptionId, string resourceGroup, Region region) {
         _subscriptionId = subscriptionId;
         _resourceGroup = resourceGroup;
         _region = region;
@@ -26,8 +26,8 @@ class TestCreds : ICreds {
     public ArmClient ArmClient => null!;
     // we have to return something in some test cases, even if it isn’t used
 
-    public Task<string> GetBaseRegion() => Task.FromResult(_region);
-    public Task<IReadOnlyList<string>> GetRegions() => Task.FromResult<IReadOnlyList<string>>(new[] { _region });
+    public Task<Region> GetBaseRegion() => Task.FromResult(_region);
+    public Task<IReadOnlyList<Region>> GetRegions() => Task.FromResult<IReadOnlyList<Region>>(new[] { _region });
 
     public string GetBaseResourceGroup() => _resourceGroup;
 

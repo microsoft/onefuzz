@@ -91,6 +91,11 @@ namespace Tests {
               where PoolName.TryParse(name.Get, out _)
               select PoolName.Parse(name.Get);
 
+        public static Gen<Region> RegionGen { get; }
+            = from name in Arb.Generate<NonEmptyString>()
+              where Region.TryParse(name.Get, out _)
+              select Region.Parse(name.Get);
+
         public static Gen<Node> Node { get; }
             = from arg in Arb.Generate<Tuple<Tuple<DateTimeOffset?, Guid?, Guid, NodeState>, Tuple<Guid?, DateTimeOffset, string, bool, bool, bool>>>()
               from poolName in PoolNameGen
@@ -107,39 +112,47 @@ namespace Tests {
                         DeleteRequested: arg.Item2.Item5,
                         DebugKeepNode: arg.Item2.Item6);
 
-        public static Gen<ProxyForward> ProxyForward() {
-            return Arb.Generate<Tuple<Tuple<string, long, Guid, Guid, Guid?, long>, Tuple<IPv4Address, DateTimeOffset>>>().Select(
-                arg =>
-                    new ProxyForward(
-                        Region: arg.Item1.Item1,
-                        Port: arg.Item1.Item2,
-                        ScalesetId: arg.Item1.Item3,
-                        MachineId: arg.Item1.Item4,
-                        ProxyId: arg.Item1.Item5,
-                        DstPort: arg.Item1.Item6,
-                        DstIp: arg.Item2.Item1.ToString(),
-                        EndTime: arg.Item2.Item2
-                    )
-            );
-        }
+        public static Gen<ProxyForward> ProxyForward { get; } =
+            from region in RegionGen
+            from port in Gen.Choose(0, ushort.MaxValue)
+            from scalesetId in Arb.Generate<Guid>()
+            from machineId in Arb.Generate<Guid>()
+            from proxyId in Arb.Generate<Guid?>()
+            from dstPort in Gen.Choose(0, ushort.MaxValue)
+            from dstIp in Arb.Generate<IPv4Address>()
+            from endTime in Arb.Generate<DateTimeOffset>()
+            select new ProxyForward(
+                Region: region,
+                Port: port,
+                ScalesetId: scalesetId,
+                MachineId: machineId,
+                ProxyId: proxyId,
+                DstPort: dstPort,
+                DstIp: dstIp.ToString(),
+                EndTime: endTime);
 
-        public static Gen<Proxy> Proxy() {
-            return Arb.Generate<Tuple<Tuple<string, Guid, DateTimeOffset?, VmState, Authentication, string?, Error?>, Tuple<string, ProxyHeartbeat?, bool>>>().Select(
-                arg =>
-                    new Proxy(
-                        Region: arg.Item1.Item1,
-                        ProxyId: arg.Item1.Item2,
-                        CreatedTimestamp: arg.Item1.Item3,
-                        State: arg.Item1.Item4,
-                        Auth: arg.Item1.Item5,
-                        Ip: arg.Item1.Item6,
-                        Error: arg.Item1.Item7,
-                        Version: arg.Item2.Item1,
-                        Heartbeat: arg.Item2.Item2,
-                        Outdated: arg.Item2.Item3
-                    )
-            );
-        }
+        public static Gen<Proxy> Proxy { get; } =
+            from region in RegionGen
+            from proxyId in Arb.Generate<Guid>()
+            from createdTimestamp in Arb.Generate<DateTimeOffset?>()
+            from state in Arb.Generate<VmState>()
+            from auth in Arb.Generate<Authentication>()
+            from ip in Arb.Generate<string>()
+            from error in Arb.Generate<Error?>()
+            from version in Arb.Generate<string>()
+            from heartbeat in Arb.Generate<ProxyHeartbeat?>()
+            from outdated in Arb.Generate<bool>()
+            select new Proxy(
+                Region: region,
+                ProxyId: proxyId,
+                CreatedTimestamp: createdTimestamp,
+                State: state,
+                Auth: auth,
+                Ip: ip,
+                Error: error,
+                Version: version,
+                Heartbeat: heartbeat,
+                Outdated: outdated);
 
         public static Gen<EventMessage> EventMessage() {
             return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string>>().Select(
@@ -220,10 +233,11 @@ namespace Tests {
         }
         public static Gen<Scaleset> Scaleset { get; }
             = from arg in Arb.Generate<Tuple<
-                    Tuple<Guid, ScalesetState, Authentication?, string, string, string>,
+                    Tuple<Guid, ScalesetState, Authentication?, string, string>,
                     Tuple<int, bool, bool, bool, Error?, Guid?>,
                     Tuple<Guid?, Dictionary<string, string>>>>()
               from poolName in PoolNameGen
+              from region in RegionGen
               select new Scaleset(
                           PoolName: poolName,
                           ScalesetId: arg.Item1.Item1,
@@ -231,7 +245,7 @@ namespace Tests {
                           Auth: arg.Item1.Item3,
                           VmSku: arg.Item1.Item4,
                           Image: arg.Item1.Item5,
-                          Region: arg.Item1.Item6,
+                          Region: region,
 
                           Size: arg.Item2.Item1,
                           SpotInstances: arg.Item2.Item2,
@@ -347,11 +361,12 @@ namespace Tests {
             );
         }
 
-        public static Gen<Container> Container() {
-            return Arb.Generate<Tuple<NonNull<string>>>().Select(
-                arg => new Container(string.Join("", arg.Item1.Get.Where(c => char.IsLetterOrDigit(c) || c == '-'))!)
-            );
-        }
+        public static Gen<Container> ContainerGen { get; } =
+            from len in Gen.Choose(3, 63)
+            from name in Gen.ArrayOf(len, Gen.Elements<char>("abcdefghijklmnopqrstuvwxyz0123456789-"))
+            let nameString = new string(name)
+            where Container.TryParse(nameString, out var _)
+            select Container.Parse(nameString);
 
         public static Gen<NotificationTemplate> NotificationTemplate() {
             return Gen.OneOf(new[] {
@@ -412,11 +427,11 @@ namespace Tests {
         }
 
         public static Arbitrary<ProxyForward> ProxyForward() {
-            return Arb.From(OrmGenerators.ProxyForward());
+            return Arb.From(OrmGenerators.ProxyForward);
         }
 
         public static Arbitrary<Proxy> Proxy() {
-            return Arb.From(OrmGenerators.Proxy());
+            return Arb.From(OrmGenerators.Proxy);
         }
 
         public static Arbitrary<EventMessage> EventMessage() {
@@ -459,9 +474,12 @@ namespace Tests {
         }
 
         public static Arbitrary<Container> Container() {
-            return Arb.From(OrmGenerators.Container());
+            return Arb.From(OrmGenerators.ContainerGen);
         }
 
+        public static Arbitrary<Region> Region() {
+            return Arb.From(OrmGenerators.RegionGen);
+        }
 
         public static Arbitrary<NotificationTemplate> NotificationTemplate() {
             return Arb.From(OrmGenerators.NotificationTemplate());

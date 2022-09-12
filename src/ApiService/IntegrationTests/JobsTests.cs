@@ -169,7 +169,7 @@ public abstract class JobsTestBase : FunctionTestBase {
         Assert.NotNull(job.Config.Logs);
         Assert.Empty(new Uri(job.Config.Logs!).Query);
 
-        var container = Assert.Single(await Context.Containers.GetContainers(StorageType.Corpus), c => c.Key.Contains(job.JobId.ToString()));
+        var container = Assert.Single(await Context.Containers.GetContainers(StorageType.Corpus), c => c.Key.String.Contains(job.JobId.ToString()));
         var metadata = Assert.Single(container.Value);
         Assert.Equal(new KeyValuePair<string, string>("container_type", "logs"), metadata);
     }
