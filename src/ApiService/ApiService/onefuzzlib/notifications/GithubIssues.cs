@@ -3,7 +3,7 @@
 namespace Microsoft.OneFuzz.Service;
 
 public interface IGithubIssues {
-    Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? report);
+    Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? reportable);
 }
 
 public class GithubIssues : NotificationsBase, IGithubIssues {
@@ -11,20 +11,22 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
     public GithubIssues(ILogTracer logTracer, IOnefuzzContext context)
     : base(logTracer, context) { }
 
-    public async Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? report) {
-        if (report == null) {
+    public async Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? reportable) {
+        if (reportable == null) {
             return;
         }
 
-        if (report is RegressionReport) {
+        if (reportable is RegressionReport) {
             _logTracer.Info($"github issue integration does not support regression reports. container:{container} filename:{filename}");
             return;
         }
 
+        var report = (Report)reportable;
+
         try {
-            await Process(config, container, filename, (Report)report);
-        } catch (Exception e) { // TODO: You only want to catch "GithubException" and ValueError
-            await FailTask((Report)report, e);
+            await Process(config, container, filename, report);
+        } catch (ApiException e) {
+            await FailTask(report, e);
         }
     }
 

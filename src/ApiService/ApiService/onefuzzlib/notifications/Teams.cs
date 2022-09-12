@@ -26,10 +26,10 @@ public class Teams : ITeams {
     private async Async.Task SendTeamsWebhook(TeamsTemplate config, string title, IList<Dictionary<string, string>> facts, string? text) {
         title = MarkdownEscape(title);
 
-        var sections = new List<Dictionary<string, string>>() {
+        var sections = new List<Dictionary<string, object>>() {
             new() {
                 {"activityTitle", title},
-                {"facts", JsonSerializer.Serialize(facts)}
+                {"facts", facts}
             }
         };
         if (text != null) {
@@ -38,16 +38,18 @@ public class Teams : ITeams {
             });
         }
 
-        var message = new Dictionary<string, string>() {
+        var message = new Dictionary<string, object>() {
             {"@type", "MessageCard"},
             {"@context", "https://schema.org/extensions"},
             {"summary", title},
-            {"sections", JsonSerializer.Serialize(sections)}
+            {"sections", sections}
         };
 
         var configUrl = await _context.SecretsOperations.GetSecretStringValue(config.Url);
         var client = new Request(_httpFactory.CreateClient());
-        var response = await client.Post(url: new Uri(configUrl!), JsonSerializer.Serialize(message));
+        var m = JsonSerializer.Serialize(message);
+        _logTracer.Info($"THIS IS THE MESSAGE WE'RE SENDING TO TEAMS -------------- {m}");
+        var response = await client.Post(url: new Uri(configUrl!), m);
         if (response == null || !response.IsSuccessStatusCode) {
             _logTracer.Error($"webhook failed {response?.StatusCode} {response?.Content}");
         }
@@ -68,20 +70,20 @@ public class Teams : ITeams {
             title = $"new crash in {report.Executable}: {report.CrashType} @ {report.CrashSite}";
 
             var links = new List<string> {
-                $"[report]({await _context.Containers.AuthDownloadUrl(container, filename)})"
+                $"[report]({_context.Containers.AuthDownloadUrl(container, filename)})"
             };
 
             var setupContainer = Scheduler.GetSetupContainer(task.Config);
             if (setupContainer != null) {
                 var setupFileName = NotificationsBase.ReplaceFirstSetup(report.Executable);
                 links.Add(
-                    $"[executable]({await _context.Containers.AuthDownloadUrl(setupContainer, setupFileName)})"
+                    $"[executable]({_context.Containers.AuthDownloadUrl(setupContainer, setupFileName)})"
                 );
             }
 
             if (report.InputBlob != null) {
                 links.Add(
-                    $"[input]({await _context.Containers.AuthDownloadUrl(report.InputBlob.Container, report.InputBlob.Name)})"
+                    $"[input]({_context.Containers.AuthDownloadUrl(report.InputBlob.Container, report.InputBlob.Name)})"
                 );
             }
 
@@ -102,7 +104,7 @@ public class Teams : ITeams {
             text = "## Call Stack\n" + string.Join("\n", report.CallStack.Select(cs => CodeBlock(cs)));
         } else {
             title = "new file found";
-            var fileUrl = await _context.Containers.AuthDownloadUrl(container, filename);
+            var fileUrl = _context.Containers.AuthDownloadUrl(container, filename);
 
             facts.Add(new Dictionary<string, string>() {
                 {"name", "file"},

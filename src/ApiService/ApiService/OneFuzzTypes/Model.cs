@@ -85,7 +85,11 @@ public record ProxyHeartbeat
     Guid ProxyId,
     List<Forward> Forwards,
     DateTimeOffset TimeStamp
-);
+) {
+    public override string ToString() {
+        return JsonSerializer.Serialize(this);
+    }
+};
 
 public record Node
 (
@@ -493,19 +497,33 @@ public class NotificationTemplateConverter : JsonConverter<NotificationTemplate>
     public override NotificationTemplate? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         using var templateJson = JsonDocument.ParseValue(ref reader);
         try {
-            return templateJson.Deserialize<AdoTemplate>(options);
-        } catch (JsonException) {
+            return ValidateDeserialization(templateJson.Deserialize<AdoTemplate>(options));
+        } catch (Exception ex) when (
+            ex is JsonException
+            || ex is ArgumentNullException
+            || ex is ArgumentOutOfRangeException
+        ) {
 
         }
 
         try {
-            return templateJson.Deserialize<TeamsTemplate>(options);
-        } catch (JsonException) {
+            return ValidateDeserialization(templateJson.Deserialize<TeamsTemplate>(options));
+        } catch (Exception ex) when (
+            ex is JsonException
+            || ex is ArgumentNullException
+            || ex is ArgumentOutOfRangeException
+        ) {
+
         }
 
         try {
-            return templateJson.Deserialize<GithubIssuesTemplate>(options);
-        } catch (JsonException) {
+            return ValidateDeserialization(templateJson.Deserialize<GithubIssuesTemplate>(options));
+        } catch (Exception ex) when (
+            ex is JsonException
+            || ex is ArgumentNullException
+            || ex is ArgumentOutOfRangeException
+        ) {
+
         }
         throw new JsonException("Unsupported notification template");
     }
@@ -521,6 +539,23 @@ public class NotificationTemplateConverter : JsonConverter<NotificationTemplate>
             throw new JsonException("Unsupported notification template");
         }
 
+    }
+
+    private static T ValidateDeserialization<T>(T? obj) {
+        if (obj == null) {
+            throw new ArgumentNullException($"Failed to deserialize type: {typeof(T)}. It was null.");
+        }
+        var nullNonNullableProperties = obj.GetType().GetProperties()
+            // Get all non-nullable properties
+            .Where(property => Nullable.GetUnderlyingType(property.PropertyType) == null)
+            // If any of them are null
+            .Where(property => property.GetValue(obj) == null);
+            
+        if (nullNonNullableProperties.Any()) {
+            throw new ArgumentOutOfRangeException($"Failed to deserialize type: {obj.GetType()}. The following non nullable properties are missing values: {string.Join(", ", nullNonNullableProperties.Select(p => p.Name))}");
+        }
+
+        return obj;
     }
 }
 
@@ -542,7 +577,6 @@ public record AdoTemplate(
     Dictionary<string, string> AdoFields,
     ADODuplicateTemplate OnDuplicate
     ) : NotificationTemplate;
-
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate;
 
 

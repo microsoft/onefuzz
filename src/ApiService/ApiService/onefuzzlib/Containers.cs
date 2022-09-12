@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager;
@@ -32,7 +33,7 @@ public interface IContainers {
     public Async.Task<Uri> AddContainerSasUrl(Uri uri, TimeSpan? duration = null);
     public Async.Task<Dictionary<string, IDictionary<string, string>>> GetContainers(StorageType corpus);
 
-    public Async.Task<string> AuthDownloadUrl(Container container, string filename);
+    public string AuthDownloadUrl(Container container, string filename);
 }
 
 public class Containers : IContainers {
@@ -250,7 +251,13 @@ public class Containers : IContainers {
         return new(data.SelectMany(x => x));
     }
 
-    public Task<string> AuthDownloadUrl(Container container, string filename) {
-        throw new NotImplementedException();
+    public string AuthDownloadUrl(Container container, string filename) {
+        var instance = _config.OneFuzzInstance;
+        var urlParams = System.Web.HttpUtility.UrlEncode(JsonSerializer.Serialize(new Dictionary<string, string>()
+        {
+            {"container", container.ContainerName},
+            {"filename", filename}
+        }));
+        return $"{instance}/api/download?{urlParams}";
     }
 }

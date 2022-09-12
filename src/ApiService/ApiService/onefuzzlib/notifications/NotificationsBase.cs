@@ -51,15 +51,15 @@ public abstract class NotificationsBase {
 
             if (targetUrl == null) {
                 var setupContainer = Scheduler.GetSetupContainer(task?.Config!);
-                targetUrl = new Uri(await context.Containers.AuthDownloadUrl(setupContainer, ReplaceFirstSetup(report.Executable)));
+                targetUrl = new Uri(context.Containers.AuthDownloadUrl(setupContainer, ReplaceFirstSetup(report.Executable)));
             }
 
             if (reportUrl == null) {
-                reportUrl = new Uri(await context.Containers.AuthDownloadUrl(container, filename));
+                reportUrl = new Uri(context.Containers.AuthDownloadUrl(container, filename));
             }
 
             if (inputUrl == null && report.InputBlob != null) {
-                inputUrl = new Uri(await context.Containers.AuthDownloadUrl(report.InputBlob.Container, report.InputBlob.Name));
+                inputUrl = new Uri(context.Containers.AuthDownloadUrl(report.InputBlob.Container, report.InputBlob.Name));
             }
 
             return new Renderer(container, filename, report, task!, job!, targetUrl, inputUrl!, reportUrl);
