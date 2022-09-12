@@ -75,7 +75,7 @@ public class Scaleset {
                 context: "ScalesetCreate");
         }
 
-        string region;
+        Region region;
         if (create.Region is null) {
             region = await _context.Creds.GetBaseRegion();
         } else {

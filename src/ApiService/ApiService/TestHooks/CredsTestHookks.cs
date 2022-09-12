@@ -49,7 +49,7 @@ namespace ApiService.TestHooks {
             _log.Info("Get base region");
             var resp = req.CreateResponse(HttpStatusCode.OK);
             var region = await _creds.GetBaseRegion();
-            await resp.WriteStringAsync(region);
+            await resp.WriteStringAsync(region.String);
             return resp;
         }
 

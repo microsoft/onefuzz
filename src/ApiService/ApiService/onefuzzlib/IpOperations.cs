@@ -12,7 +12,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IIpOperations {
     public Async.Task<NetworkInterfaceResource?> GetPublicNic(string resourceGroup, string name);
 
-    public Async.Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, string region, Nsg? nsg);
+    public Async.Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, Region region, Nsg? nsg);
 
     public Async.Task<string?> GetPublicIp(ResourceIdentifier resourceId);
 
@@ -26,7 +26,7 @@ public interface IIpOperations {
 
     public Async.Task<string?> GetScalesetInstanceIp(Guid scalesetId, Guid machineId);
 
-    public Async.Task CreateIp(string resourceGroup, string name, string region);
+    public Async.Task CreateIp(string resourceGroup, string name, Region region);
 }
 
 
@@ -120,7 +120,7 @@ public class IpOperations : IIpOperations {
         }
     }
 
-    public async Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, string region, Nsg? nsg) {
+    public async Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, Region region, Nsg? nsg) {
         _logTracer.Info($"creating nic for {resourceGroup}:{name} in {region}");
 
         var network = await Network.Init(region, _context);
@@ -190,7 +190,7 @@ public class IpOperations : IIpOperations {
         return OneFuzzResultVoid.Ok;
     }
 
-    public async Async.Task CreateIp(string resourceGroup, string name, string region) {
+    public async Async.Task CreateIp(string resourceGroup, string name, Region region) {
         var ipParams = new PublicIPAddressData() {
             Location = region,
             PublicIPAllocationMethod = NetworkIPAllocationMethod.Dynamic
@@ -259,5 +259,3 @@ public class IpOperations : IIpOperations {
         }
     }
 }
-
-

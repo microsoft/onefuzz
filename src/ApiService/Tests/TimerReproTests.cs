@@ -101,10 +101,9 @@ public class TimerReproTests {
             Guid.NewGuid(),
             Guid.Empty,
             new ReproConfig(
-                new Container(String.Empty),
-                String.Empty,
-                0
-            ),
+                Container.Parse("container"),
+                "",
+                0),
             null,
             Os.Linux,
             VmState.Init,

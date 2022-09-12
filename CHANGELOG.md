@@ -4,6 +4,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.13.0
+### Added
+* Deployment: Added optional flags `--onefuzz_app_id` & `--auto_create_cli_app` for `deploy.py` to allow for custom app registrations. [#2305](https://github.com/microsoft/onefuzz/pull/2305)
+* Deployment: Added optional flag `--host_dotnet_on_windows` for `deploy.py` that enables running dotnet functions on Windows based hosts to allow for attaching a remote debugger [#2344](https://github.com/microsoft/onefuzz/pull/2344)
+* Deployment: Added optional flag `--enable_profiler` for `deploy.py` to enable memory and cpu profilers in dotnet Azure functions [#2345](https://github.com/microsoft/onefuzz/pull/2345)
+* Service: Enabled AppInsights dependency tracking to enable better analysis of Azure Storage usage on OneFuzz deployments[#2315](https://github.com/microsoft/onefuzz/pull/2315)
+* Service: Added `Scriban` templating library as a dependency stand-in for Jinja on C# ported services [#2330](https://github.com/microsoft/onefuzz/pull/2330)
+* Service: Use 64-bit worker for dotnet functions [#2349](https://github.com/microsoft/onefuzz/pull/2349)
+* Agent: Add Cobertura XML output to `src-cov` example binary [#2334](https://github.com/microsoft/onefuzz/pull/2334)
+* CLI: Add `onefuzz debug task download_files <task_id> <output>` command to download a task’s containers [#2359](https://github.com/microsoft/onefuzz/pull/2359)
+
+### Changed
+* Service: Removed some response-only properties from the Task model [#2335](https://github.com/microsoft/onefuzz/pull/2335)
+* Service: Create storage tables on startup [#2309](https://github.com/microsoft/onefuzz/pull/2309)
+* Service: Switched to using Graph SDK instead of manually constructing queries [#2324](https://github.com/microsoft/onefuzz/pull/2324)
+* Service: Cache `InstanceConfig` for improved read performance [#2329](https://github.com/microsoft/onefuzz/pull/2329)
+* Deployment: Updated `deploy.py` to set all function settings at once for faster deployment and upgrades [#2325](https://github.com/microsoft/onefuzz/pull/2325)
+* Devcontainer: Move global tool installs into another script so they can be cached [#2365](https://github.com/microsoft/onefuzz/pull/2365)
+* Bumped several dependencies in multiple files [#2321](https://github.com/microsoft/onefuzz/pull/2321), [#2322](https://github.com/microsoft/onefuzz/pull/2322), [#2360](https://github.com/microsoft/onefuzz/pull/2360), [#2361](https://github.com/microsoft/onefuzz/pull/2361), [#2364](https://github.com/microsoft/onefuzz/pull/2364), [#2355](https://github.com/microsoft/onefuzz/pull/2355)
+
+### Fixed
+* Service: Fix `az_copy` syncing issues by removing the `max_elapsed_time limit` and relying on `RETRY_COUNT` instead [#2332](https://github.com/microsoft/onefuzz/pull/2332)
+* Service: Implement not implemented bits in Scaleset/VMSS Operations for `RemiageNodes` & `DeleteNodes`[#2341](https://github.com/microsoft/onefuzz/pull/2341)
+* Service: Fixed bugs in C# port of `Proxy` and `TimerProxy` functions [#2317](https://github.com/microsoft/onefuzz/pull/2317), [#2333](https://github.com/microsoft/onefuzz/pull/2333)
+* Service: Enforce that there are no extra properties in request JSON, and that non-null properties are `[Required]` [#2328](https://github.com/microsoft/onefuzz/pull/2328)
+* Service: Remove `IDisposable` from `Creds` [#2327](https://github.com/microsoft/onefuzz/pull/2327)
+* Service: Removed required field in `Requests` to match python behavior [#2367](https://github.com/microsoft/onefuzz/pull/2367)
+* Service: Fixed bug in Azure DevOps notification information [#2368](https://github.com/microsoft/onefuzz/pull/2368)
+* Service: Fixed memory leaks in `AgentEvents` and several supporting libraries [#2356](https://github.com/microsoft/onefuzz/pull/2356)
+* Service: Fixed inconsistencies in VMSS creation between C#/Python functions [#2358](https://github.com/microsoft/onefuzz/pull/2358)
+* Service: Fixed dotnet `Info` function to correctly get version number from assembly attributes instead of the config [#2316](https://github.com/microsoft/onefuzz/pull/2316)
+* Service: Fixed bug in python types [#2319](https://github.com/microsoft/onefuzz/pull/2319)
+* Service: Fixed bugs in `timer_workers` to allow it to run properly [#2343](https://github.com/microsoft/onefuzz/pull/2343)
+* CLI: Coverage task should have access to `readonly_inputs` containers [#2352](https://github.com/microsoft/onefuzz/pull/2352)
+* Devcontainer: Ensure that python virtual environment is installed [#2372](https://github.com/microsoft/onefuzz/pull/2372)
+
 ## 5.12.0
 ### Added
 * Deployment: Add `--use_dotnet_agent_functions` to deploy.py. [#2292](https://github.com/microsoft/onefuzz/pull/2292)

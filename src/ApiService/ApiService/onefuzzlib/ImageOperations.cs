@@ -7,7 +7,7 @@ namespace Microsoft.OneFuzz.Service;
 public record ImageInfo(string Publisher, string Offer, string Sku, string Version);
 
 public interface IImageOperations {
-    public Async.Task<OneFuzzResult<Os>> GetOs(string region, string image);
+    public Async.Task<OneFuzzResult<Os>> GetOs(Region region, string image);
 
     public static ImageInfo GetImageInfo(string image) {
         var imageParts = image.Split(":");
@@ -32,7 +32,7 @@ public class ImageOperations : IImageOperations {
         _context = context;
     }
 
-    public async Task<OneFuzzResult<Os>> GetOs(string region, string image) {
+    public async Task<OneFuzzResult<Os>> GetOs(Region region, string image) {
         string? name = null;
         try {
             var parsed = _context.Creds.ParseResourceId(image);
@@ -86,7 +86,7 @@ public class ImageOperations : IImageOperations {
                 if (string.Equals(imageInfo.Version, "latest", StringComparison.Ordinal)) {
                     version =
                         (await subscription.GetVirtualMachineImagesAsync(
-                            region,
+                            region.String,
                             imageInfo.Publisher,
                             imageInfo.Offer,
                             imageInfo.Sku,
@@ -97,7 +97,7 @@ public class ImageOperations : IImageOperations {
                 }
 
                 name = (await subscription.GetVirtualMachineImageAsync(
-                    region,
+                    region.String,
                     imageInfo.Publisher,
                     imageInfo.Offer,
                     imageInfo.Sku

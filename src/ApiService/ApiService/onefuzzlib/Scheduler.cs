@@ -184,7 +184,7 @@ public class Scheduler : IScheduler {
         return (bucketConfig, workUnit);
     }
 
-    public record struct BucketId(Os os, Guid jobId, (string, string)? vm, PoolName? pool, string setupContainer, bool? reboot, Guid? unique);
+    public record struct BucketId(Os os, Guid jobId, (string, string)? vm, PoolName? pool, Container setupContainer, bool? reboot, Guid? unique);
 
     public static ILookup<BucketId, Task> BucketTasks(IEnumerable<Task> tasks) {
 
@@ -221,11 +221,11 @@ public class Scheduler : IScheduler {
         });
     }
 
-    static string GetSetupContainer(TaskConfig config) {
+    static Container GetSetupContainer(TaskConfig config) {
 
         foreach (var container in config.Containers ?? throw new Exception("Missing containers")) {
             if (container.Type == ContainerType.Setup) {
-                return container.Name.ContainerName;
+                return container.Name;
             }
         }
 

@@ -21,13 +21,13 @@ public class Download {
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         var query = HttpUtility.ParseQueryString(req.Url.Query);
 
-        var container = query["container"];
-        if (container is null) {
+        var queryContainer = query["container"];
+        if (queryContainer is null || !Container.TryParse(queryContainer, out var container)) {
             return await _context.RequestHandling.NotOk(
                 req,
                 new Error(
                     ErrorCode.INVALID_REQUEST,
-                    new string[] { "'container' query parameter must be provided" }),
+                    new string[] { "'container' query parameter must be provided and valid" }),
                 "download");
         }
 
@@ -42,7 +42,7 @@ public class Download {
         }
 
         var sasUri = await _context.Containers.GetFileSasUrl(
-            new Container(container),
+            container,
             filename,
             StorageType.Corpus,
             BlobSasPermissions.Read,
