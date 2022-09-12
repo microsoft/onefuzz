@@ -85,7 +85,8 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         // Nullability mismatch: We filter tuples where the containers are null
         return _context.TaskOperations.SearchStates(states: TaskStateHelper.AvailableStates)
             .Select(task => (task, _context.TaskOperations.GetInputContainerQueues(task.Config)))
-            .Where(taskTuple => taskTuple.Item2 != null)!;
+            .Where(taskTuple => taskTuple.Item2.IsOk && taskTuple.Item2.OkV != null)
+            .Select(x => (x.Item1, x.Item2.OkV))!;
     }
 
     public async Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting) {
