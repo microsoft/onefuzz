@@ -550,7 +550,7 @@ public class NotificationTemplateConverter : JsonConverter<NotificationTemplate>
             .Where(property => Nullable.GetUnderlyingType(property.PropertyType) == null)
             // If any of them are null
             .Where(property => property.GetValue(obj) == null);
-            
+
         if (nullNonNullableProperties.Any()) {
             throw new ArgumentOutOfRangeException($"Failed to deserialize type: {obj.GetType()}. The following non nullable properties are missing values: {string.Join(", ", nullNonNullableProperties.Select(p => p.Name))}");
         }

@@ -77,7 +77,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     }
 
     public IAsyncEnumerable<Notification> GetNotifications(Container container) {
-        return SearchByRowKeys(new [] { container.ContainerName});
+        return SearchByRowKeys(new[] { container.ContainerName });
     }
 
     public IAsyncEnumerable<(Task, IEnumerable<string>)> GetQueueTasks() {
