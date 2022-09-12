@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
+using Azure.Data.Tables;
 using Azure.Storage.Sas;
 
 namespace Microsoft.OneFuzz.Service;
@@ -77,14 +78,15 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     }
 
     public IAsyncEnumerable<Notification> GetNotifications(Container container) {
-        return QueryAsync(filter: $"container eq '{container}'");
+        return QueryAsync(filter: TableClient.CreateQueryFilter($"container eq {container.String}"));
     }
 
     public IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks() {
         // Nullability mismatch: We filter tuples where the containers are null
         return _context.TaskOperations.SearchStates(states: TaskStateHelper.AvailableStates)
             .Select(task => (task, _context.TaskOperations.GetInputContainerQueues(task.Config)))
-            .Where(taskTuple => taskTuple.Item2 != null)!;
+            .Where(taskTuple => taskTuple.Item2.IsOk && taskTuple.Item2.OkV != null)
+            .Select(x => (Task: x.Item1, Containers: x.Item2.OkV))!;
     }
 
     public async Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting) {
