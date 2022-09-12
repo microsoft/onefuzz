@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using System.Threading.Tasks;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
@@ -43,23 +44,24 @@ public class InstanceConfig {
                 request.ErrorV,
                 context: "instance_config update");
         }
-        var config = await _context.ConfigOperations.Fetch();
-        var answer = await _auth.CheckRequireAdmins(req);
+        var (config, answer) = await (
+            _context.ConfigOperations.Fetch(),
+            _auth.CheckRequireAdmins(req));
         if (!answer.IsOk) {
             return await _context.RequestHandling.NotOk(req, answer.ErrorV, "instance_config update");
         }
         var updateNsg = false;
-        if (request.OkV.config.ProxyNsgConfig is not null && config.ProxyNsgConfig is not null) {
-            var requestConfig = request.OkV.config.ProxyNsgConfig;
-            var currentConfig = config.ProxyNsgConfig;
-            if (!((new HashSet<string>(requestConfig.AllowedServiceTags)).SetEquals(new HashSet<string>(currentConfig.AllowedServiceTags))) || !((new HashSet<string>(requestConfig.AllowedIps)).SetEquals(new HashSet<string>(currentConfig.AllowedIps)))) {
+        if (request.OkV.config.ProxyNsgConfig is NetworkSecurityGroupConfig requestConfig
+            && config.ProxyNsgConfig is NetworkSecurityGroupConfig currentConfig) {
+            if (!requestConfig.AllowedServiceTags.ToHashSet().SetEquals(currentConfig.AllowedServiceTags)
+                || !requestConfig.AllowedIps.ToHashSet().SetEquals(currentConfig.AllowedIps)) {
                 updateNsg = true;
             }
         }
         await _context.ConfigOperations.Save(request.OkV.config, false, false);
         if (updateNsg) {
             await foreach (var nsg in _context.NsgOperations.ListNsgs()) {
-                _log.Info($"Checking if nsg: {nsg.Data.Location!} ({nsg.Data.Name}) owned by OneFuz");
+                _log.Info($"Checking if nsg: {nsg.Data.Location!} ({nsg.Data.Name}) owned by OneFuzz");
                 if (nsg.Data.Location! == nsg.Data.Name) {
                     var result = await _context.NsgOperations.SetAllowedSources(new Nsg(nsg.Data.Location!, nsg.Data.Location!), request.OkV.config.ProxyNsgConfig!);
                     if (!result.IsOk) {
