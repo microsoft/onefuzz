@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
+using Azure.Data.Tables;
 using Azure.Storage.Sas;
 
 namespace Microsoft.OneFuzz.Service;
@@ -77,7 +78,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     }
 
     public IAsyncEnumerable<Notification> GetNotifications(Container container) {
-        return QueryAsync(filter: $"container eq '{container}'");
+        return QueryAsync(filter: TableClient.CreateQueryFilter($"container eq {container.String}"));
     }
 
     public IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks() {
