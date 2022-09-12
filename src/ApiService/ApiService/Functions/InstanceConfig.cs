@@ -1,7 +1,7 @@
 ﻿using System.Net;
+using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using System.Threading.Tasks;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
