@@ -22,8 +22,9 @@ public class Notifications {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "notification search");
         }
 
-        var entries = request.OkV switch { { Container: null } => _context.NotificationOperations.SearchAll(), { Container: var c } => _context.NotificationOperations.SearchByRowKeys(c.Select(x => x.ContainerName))
+        var entries = request.OkV switch { { Container: null } => _context.NotificationOperations.SearchAll(), { Container: var c } => _context.NotificationOperations.SearchByRowKeys(c.Select(x => x.String))
         };
+
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(entries);
         return response;

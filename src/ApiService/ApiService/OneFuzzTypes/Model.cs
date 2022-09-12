@@ -5,7 +5,6 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
 using GroupId = System.Guid;
 using PrincipalId = System.Guid;
-using Region = System.String;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -233,20 +232,20 @@ public record TaskConfig(
    Dictionary<string, string>? Tags = null,
    List<TaskDebugFlag>? Debug = null,
    bool? Colocate = null
-   );
+);
 
 public record TaskEventSummary(
     DateTimeOffset? Timestamp,
     string EventData,
     string EventType
-    );
+);
 
 
 public record NodeAssignment(
     Guid NodeId,
     Guid? ScalesetId,
     NodeTaskState State
-    );
+);
 
 
 public record Task(
@@ -260,8 +259,6 @@ public record Task(
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? EndTime = null,
     UserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
-    public List<TaskEventSummary> Events { get; set; } = new List<TaskEventSummary>();
-    public List<NodeAssignment> Nodes { get; set; } = new List<NodeAssignment>();
 }
 
 public record TaskEvent(
@@ -411,25 +408,6 @@ public record Scaleset(
     Guid? ClientObjectId = null
 // 'Nodes' removed when porting from Python: only used in search response
 ) : StatefulEntityBase<ScalesetState>(State);
-
-[JsonConverter(typeof(ContainerConverter))]
-public record Container(string ContainerName) {
-    public string ContainerName { get; } = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
-    public override string ToString() {
-        return ContainerName;
-    }
-}
-
-public class ContainerConverter : JsonConverter<Container> {
-    public override Container? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-        var containerName = reader.GetString();
-        return containerName == null ? null : new Container(containerName);
-    }
-
-    public override void Write(Utf8JsonWriter writer, Container value, JsonSerializerOptions options) {
-        writer.WriteStringValue(value.ContainerName);
-    }
-}
 
 public record Notification(
     [PartitionKey] Guid NotificationId,
@@ -768,7 +746,14 @@ public record Job(
     public UserInfo? UserInfo { get; set; }
 }
 
-public record Nsg(string Name, Region Region);
+public record Nsg(string Name, Region Region) {
+    public static Nsg ForRegion(Region region)
+        => new(NameFromRegion(region), region);
+
+    // Currently, the name of a NSG is the same as the region it is in.
+    public static string NameFromRegion(Region region)
+        => region.String;
+};
 
 public record WorkUnit(
     Guid JobId,

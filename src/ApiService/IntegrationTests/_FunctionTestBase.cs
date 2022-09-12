@@ -35,15 +35,15 @@ public abstract class FunctionTestBase : IAsyncLifetime {
 
     private readonly Guid _subscriptionId = Guid.NewGuid();
     private readonly string _resourceGroup = "FakeResourceGroup";
-    private readonly string _region = "fakeregion";
+    private readonly Region _region = Region.Parse("fakeregion");
 
     protected ILogTracer Logger { get; }
 
     protected TestContext Context { get; }
 
     private readonly BlobServiceClient _blobClient;
-    protected BlobContainerClient GetContainerClient(string container)
-        => _blobClient.GetBlobContainerClient(_storagePrefix + container);
+    protected BlobContainerClient GetContainerClient(Container container)
+        => _blobClient.GetBlobContainerClient(_storagePrefix + container.String);
 
     public FunctionTestBase(ITestOutputHelper output, IStorage storage) {
         Logger = new TestLogTracer(output);
@@ -53,7 +53,8 @@ public abstract class FunctionTestBase : IAsyncLifetime {
         Context = new TestContext(Logger, _storage, creds, _storagePrefix);
 
         // set up blob client for test purposes:
-        _blobClient = _storage.GetBlobServiceClientForAccount("").Result; // for test implementations this is always sync
+        // this is always sync for test purposes
+        _blobClient = _storage.GetBlobServiceClientForAccount(_storage.GetPrimaryAccount(StorageType.Config)).Result;
     }
 
     public async Task InitializeAsync() {
@@ -62,10 +63,10 @@ public abstract class FunctionTestBase : IAsyncLifetime {
 
     public async Task DisposeAsync() {
         // clean up any tables & blobs that this test created
-        // these Get methods are always sync for test impls
+        var account = _storage.GetPrimaryAccount(StorageType.Config);
         await (
-            CleanupTables(_storage.GetTableServiceClientForAccount("").Result),
-            CleanupBlobs(_storage.GetBlobServiceClientForAccount("").Result));
+            CleanupTables(await _storage.GetTableServiceClientForAccount(account)),
+            CleanupBlobs(await _storage.GetBlobServiceClientForAccount(account)));
     }
 
     protected static string BodyAsString(HttpResponseData data) {
@@ -90,7 +91,8 @@ public abstract class FunctionTestBase : IAsyncLifetime {
                     // swallow any exceptions: this is a best-effort attempt to cleanup
                     Logger.Exception(ex, "error deleting container at end of test");
                 }
-            }).ToListAsync());
+            })
+            .ToListAsync());
 
     private async Task CleanupTables(TableServiceClient tableClient)
         => await Task.WhenAll(
@@ -104,5 +106,6 @@ public abstract class FunctionTestBase : IAsyncLifetime {
                         // swallow any exceptions: this is a best-effort attempt to cleanup
                         Logger.Exception(ex, "error deleting table at end of test");
                     }
-                }).ToListAsync());
+                })
+                .ToListAsync());
 }

@@ -9,6 +9,8 @@ param signedExpiry string
 param app_func_issuer string
 param app_func_audiences array
 param multi_tenant_domain string
+param enable_remote_debugging bool = false
+param enable_profiler bool = false
 
 param location string = resourceGroup().location
 
@@ -78,14 +80,29 @@ module operationalInsights 'bicep-templates/operational-insights.bicep' = {
   }
 }
 
-module serverFarms 'bicep-templates/server-farms.bicep' = {
-  name: 'server-farms' 
+module linuxServerFarm 'bicep-templates/server-farms.bicep' = {
+  name: 'linux-server-farm'
   params: {
     server_farm_name: name
     owner: owner
     location: location
+    use_windows: false
+    create: true
   }
 }
+
+module dotNetServerFarm 'bicep-templates/server-farms.bicep' = {
+  name: (enable_remote_debugging) ? 'windows-server-farm' : 'same-linux-server-farm'
+  params: {
+    server_farm_name: (enable_remote_debugging) ? '${name}-net' : name
+    owner: owner
+    location: location
+    use_windows: enable_remote_debugging
+    create: enable_remote_debugging
+  }
+}
+
+
 var keyVaultName = 'of-kv-${uniqueString(resourceGroup().id)}'
 resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: keyVaultName
@@ -152,11 +169,31 @@ module autoscaleSettings 'bicep-templates/autoscale-settings.bicep' = {
   name: 'autoscaleSettings'
   params: {
     location: location
-    server_farm_id: serverFarms.outputs.id
+    server_farm_id: linuxServerFarm.outputs.id
     owner: owner
     workspaceId: operationalInsights.outputs.workspaceId
     logRetention: log_retention
+    autoscale_name: 'onefuzz-autoscale-${uniqueString(resourceGroup().id)}' 
+    create_new: true
+    function_diagnostics_settings_name: 'functionDiagnosticSettings'
   }
+}
+
+module autoscaleSettingsNet 'bicep-templates/autoscale-settings.bicep' = {
+  name: 'autoscaleSettingsNet'
+  params: {
+    location: location
+    server_farm_id: dotNetServerFarm.outputs.id
+    owner: owner
+    workspaceId: operationalInsights.outputs.workspaceId
+    logRetention: log_retention
+    autoscale_name: (enable_remote_debugging) ? 'onefuzz-autoscale-${uniqueString(resourceGroup().id)}-net' : 'onefuzz-autoscale-${uniqueString(resourceGroup().id)}'
+    create_new: enable_remote_debugging
+    function_diagnostics_settings_name: (enable_remote_debugging) ? 'functionDiagnosticSettings' : 'functionDiagnosticsSettingsNet'
+  }
+  dependsOn: [
+    autoscaleSettings
+  ]
 }
 
 module eventGrid 'bicep-templates/event-grid.bicep' = {
@@ -182,7 +219,7 @@ resource roleAssigmentsPy 'Microsoft.Authorization/roleAssignments@2020-10-01-pr
   dependsOn: [
     eventGrid
     keyVault
-    serverFarms
+    linuxServerFarm
   ]
 }]
 
@@ -196,7 +233,7 @@ resource roleAssigmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-p
   dependsOn: [
     eventGrid
     keyVault
-    serverFarms
+    dotNetServerFarm
   ]
 }]
 
@@ -211,7 +248,8 @@ resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10
   dependsOn: [
     eventGrid
     keyVault
-    serverFarms
+    linuxServerFarm
+    dotNetServerFarm
   ]
 }
 
@@ -230,8 +268,10 @@ module pythonFunction 'bicep-templates/function.bicep' = {
     location: location
     log_retention: log_retention
     owner: owner
-    server_farm_id: serverFarms.outputs.id
+    server_farm_id: linuxServerFarm.outputs.id
     client_id: clientId
+    use_windows: false
+    enable_remote_debugging: false
   }
 }
 
@@ -249,7 +289,10 @@ module netFunction 'bicep-templates/function.bicep' = {
     location: location
     log_retention: log_retention
     owner: owner
-    server_farm_id: serverFarms.outputs.id
+    server_farm_id: dotNetServerFarm.outputs.id
+
+    use_windows: enable_remote_debugging
+    enable_remote_debugging: enable_remote_debugging
   }
 }
 
@@ -273,6 +316,7 @@ module pythonFunctionSettings 'bicep-templates/function-settings.bicep' = {
     multi_tenant_domain: multi_tenant_domain
     functions_disabled: python_functions_disabled
     use_dotnet_agent_functions: use_dotnet_agent_functions
+    enable_profiler: false
     all_function_names: [
       'agent_can_schedule'    //0
       'agent_commands'        //1
@@ -338,6 +382,7 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     multi_tenant_domain: multi_tenant_domain
     functions_disabled: dotnet_functions_disabled
     use_dotnet_agent_functions: false // this doesn’t do anything on the .NET service
+    enable_profiler: enable_profiler
     all_function_names: [
       'AgentCanSchedule'      //0
       'AgentCommands'         //1
@@ -392,3 +437,5 @@ output func_key string = storage.outputs.FuncKey
 
 output scaleset_identity string = scaleset_identity
 output tenant_id string = tenantId
+
+output enable_remote_debugging bool = enable_remote_debugging

@@ -53,7 +53,7 @@ public class Scheduler : IScheduler {
 
         var notReadyCount = tasks.Count - seen.Count;
         if (notReadyCount > 0) {
-            _logTracer.Info($"tasks not ready {notReadyCount}");
+            _logTracer.Info($"tasks not ready {notReadyCount}. Tasks seen: {seen.Count}");
         }
     }
 
@@ -184,7 +184,7 @@ public class Scheduler : IScheduler {
         return (bucketConfig, workUnit);
     }
 
-    public record struct BucketId(Os os, Guid jobId, (string, string)? vm, PoolName? pool, string setupContainer, bool? reboot, Guid? unique);
+    public record struct BucketId(Os os, Guid jobId, (string, string)? vm, PoolName? pool, Container setupContainer, bool? reboot, Guid? unique);
 
     public static ILookup<BucketId, Task> BucketTasks(IEnumerable<Task> tasks) {
 
@@ -216,12 +216,12 @@ public class Scheduler : IScheduler {
                 unique = Guid.NewGuid();
             }
 
-            return new BucketId(task.Os, task.JobId, vm, pool, GetSetupContainer(task.Config).ContainerName, task.Config.Task.RebootAfterSetup, unique);
+            return new BucketId(task.Os, task.JobId, vm, pool, GetSetupContainer(task.Config), task.Config.Task.RebootAfterSetup, unique);
 
         });
     }
 
-    public static Container GetSetupContainer(TaskConfig config) {
+    static Container GetSetupContainer(TaskConfig config) {
 
         foreach (var container in config.Containers ?? throw new Exception("Missing containers")) {
             if (container.Type == ContainerType.Setup) {

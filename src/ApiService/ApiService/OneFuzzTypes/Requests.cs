@@ -1,30 +1,34 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Microsoft.OneFuzz.Service;
 
-public record BaseRequest();
+public record BaseRequest {
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+};
 
 public record CanScheduleRequest(
-    Guid MachineId,
-    Guid TaskId
+    [property: Required] Guid MachineId,
+    [property: Required] Guid TaskId
 ) : BaseRequest;
 
 public record NodeCommandGet(
-    Guid MachineId
+    [property: Required] Guid MachineId
 ) : BaseRequest;
 
 public record NodeCommandDelete(
-    Guid MachineId,
-    string MessageId
+    [property: Required] Guid MachineId,
+    [property: Required] string MessageId
 ) : BaseRequest;
 
 public record NodeGet(
-    Guid MachineId
+    [property: Required] Guid MachineId
 ) : BaseRequest;
 
 public record NodeUpdate(
-    Guid MachineId,
+    [property: Required] Guid MachineId,
     bool? DebugKeepNode
 ) : BaseRequest;
 
@@ -36,8 +40,8 @@ public record NodeSearch(
 ) : BaseRequest;
 
 public record NodeStateEnvelope(
-    NodeEventBase Event,
-    Guid MachineId
+    [property: Required] NodeEventBase Event,
+    [property: Required] Guid MachineId
 ) : BaseRequest;
 
 // either NodeEvent or WorkerEvent
@@ -59,16 +63,16 @@ public record WorkerEvent(
 ) : NodeEventBase;
 
 public record WorkerRunningEvent(
-    Guid TaskId);
+    [property: Required] Guid TaskId);
 
 public record WorkerDoneEvent(
-    Guid TaskId,
-    ExitStatus ExitStatus,
-    string Stderr,
-    string Stdout);
+    [property: Required] Guid TaskId,
+    [property: Required] ExitStatus ExitStatus,
+    [property: Required] string Stderr,
+    [property: Required] string Stdout);
 
 public record NodeStateUpdate(
-    NodeState State,
+    [property: Required] NodeState State,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     NodeStateData? Data = null
 ) : NodeEventBase;
@@ -78,7 +82,7 @@ public record NodeStateUpdate(
 public abstract record NodeStateData;
 
 public record NodeSettingUpEventData(
-    List<Guid> Tasks
+   [property: Required] List<Guid> Tasks
 ) : NodeStateData;
 
 public record NodeDoneEventData(
@@ -101,23 +105,23 @@ public record ExitStatus(
     bool Success);
 
 public record ContainerGet(
-    Container Name
+    [property: Required] Container Name
 ) : BaseRequest;
 
 public record ContainerCreate(
-    Container Name,
+    [property: Required] Container Name,
     IDictionary<string, string>? Metadata = null
 ) : BaseRequest;
 
 public record ContainerDelete(
-    Container Name,
+    [property: Required] Container Name,
     IDictionary<string, string>? Metadata = null
 ) : BaseRequest;
 
 public record NotificationCreate(
-    Container Container,
-    bool ReplaceExisting,
-    NotificationTemplate Config
+    [property: Required] Container Container,
+    [property: Required] bool ReplaceExisting,
+    [property: Required] NotificationTemplate Config
 ) : BaseRequest;
 
 public record NotificationSearch(
@@ -125,58 +129,75 @@ public record NotificationSearch(
 ) : BaseRequest;
 
 public record NotificationGet(
-    Guid NotificationId
+    [property: Required] Guid NotificationId
 ) : BaseRequest;
 
 public record JobGet(
-    Guid JobId
-);
+    [property: Required] Guid JobId
+) : BaseRequest;
+
+public record JobCreate(
+    [property: Required] string Project,
+    [property: Required] string Name,
+    [property: Required] string Build,
+    [property: Required] long Duration,
+    string? Logs
+) : BaseRequest;
 
 public record JobSearch(
     Guid? JobId = null,
     List<JobState>? State = null,
     List<TaskState>? TaskState = null,
     bool? WithTasks = null
-);
+) : BaseRequest;
 
-public record NodeAddSshKeyPost(Guid MachineId, string PublicKey);
+public record NodeAddSshKeyPost(
+    [property: Required] Guid MachineId,
+    [property: Required] string PublicKey
+) : BaseRequest;
 
-public record ReproGet(Guid? VmId);
+public record ReproGet(Guid? VmId) : BaseRequest;
+
+public record ReproCreate(
+    [property: Required] Container Container,
+    [property: Required] string Path,
+    [property: Required] long Duration
+) : BaseRequest;
 
 public record ProxyGet(
     Guid? ScalesetId,
     Guid? MachineId,
-    int? DstPort);
+    int? DstPort
+) : BaseRequest;
 
 public record ProxyCreate(
-    Guid ScalesetId,
-    Guid MachineId,
-    int DstPort,
-    int Duration
-);
+    [property: Required] Guid ScalesetId,
+    [property: Required] Guid MachineId,
+    [property: Required] int DstPort,
+    [property: Required] int Duration
+) : BaseRequest;
 
 public record ProxyDelete(
-    Guid ScalesetId,
-    Guid MachineId,
+    [property: Required] Guid ScalesetId,
+    [property: Required] Guid MachineId,
     int? DstPort
-);
+) : BaseRequest;
 
 public record ProxyReset(
-    string Region
-);
+    [property: Required] string Region
+) : BaseRequest;
 
 public record ScalesetCreate(
-    PoolName PoolName,
-    string VmSku,
-    string Image,
-    string? Region,
-    [property: Range(1, long.MaxValue)]
-    long Size,
-    bool SpotInstances,
-    Dictionary<string, string> Tags,
+    [property: Required] PoolName PoolName,
+    [property: Required] string VmSku,
+    [property: Required] string Image,
+    Region? Region,
+    [property: Range(1, long.MaxValue), Required] long Size,
+    [property: Required] bool SpotInstances,
+    [property: Required] Dictionary<string, string> Tags,
     bool EphemeralOsDisks = false,
     AutoScaleOptions? AutoScale = null
-);
+) : BaseRequest;
 
 public record AutoScaleOptions(
     [property: Range(0, long.MaxValue)] long Min,
@@ -192,63 +213,76 @@ public record ScalesetSearch(
     Guid? ScalesetId = null,
     List<ScalesetState>? State = null,
     bool IncludeAuth = false
-);
+) : BaseRequest;
 
 public record ScalesetStop(
-    Guid ScalesetId,
-    bool Now
-);
+    [property: Required] Guid ScalesetId,
+    [property: Required] bool Now
+) : BaseRequest;
 
 public record ScalesetUpdate(
-    Guid ScalesetId,
+    [property: Required] Guid ScalesetId,
     [property: Range(1, long.MaxValue)]
     long? Size
-);
+) : BaseRequest;
 
-public record TaskGet(Guid TaskId);
+public record TaskGet(
+    [property: Required] Guid TaskId
+) : BaseRequest;
+
+public record TaskCreate(
+   [property: Required] Guid JobId,
+   List<Guid>? PrereqTasks,
+   [property: Required] TaskDetails Task,
+   [property: Required] TaskPool Pool,
+   List<TaskContainers>? Containers = null,
+   Dictionary<string, string>? Tags = null,
+   List<TaskDebugFlag>? Debug = null,
+   bool? Colocate = null
+) : BaseRequest;
 
 public record TaskSearch(
     Guid? JobId,
     Guid? TaskId,
-    List<TaskState> State);
+    List<TaskState>? State = null
+) : BaseRequest;
 
 public record PoolSearch(
     Guid? PoolId = null,
     PoolName? Name = null,
     List<PoolState>? State = null
-);
+) : BaseRequest;
 
 public record PoolStop(
-    PoolName Name,
-    bool Now
-);
+    [property: Required] PoolName Name,
+    [property: Required] bool Now
+) : BaseRequest;
 
 public record PoolCreate(
-    PoolName Name,
-    Os Os,
-    Architecture Arch,
-    bool Managed,
+    [property: Required] PoolName Name,
+    [property: Required] Os Os,
+    [property: Required] Architecture Arch,
+    [property: Required] bool Managed,
     Guid? ClientId = null
-);
+) : BaseRequest;
 
 public record WebhookCreate(
-    string Name,
-    Uri Url,
-    List<EventType> EventTypes,
+    [property: Required] string Name,
+    [property: Required] Uri Url,
+    [property: Required] List<EventType> EventTypes,
     string? SecretToken,
     WebhookMessageFormat? MessageFormat
-);
+) : BaseRequest;
 
+public record WebhookSearch(Guid? WebhookId) : BaseRequest;
 
-public record WebhookSearch(Guid? WebhookId);
-
-public record WebhookGet(Guid WebhookId);
+public record WebhookGet([property: Required] Guid WebhookId) : BaseRequest;
 
 public record WebhookUpdate(
-    Guid WebhookId,
+    [property: Required] Guid WebhookId,
     string? Name,
     Uri? Url,
     List<EventType>? EventTypes,
     string? SecretToken,
     WebhookMessageFormat? MessageFormat
-);
+) : BaseRequest;

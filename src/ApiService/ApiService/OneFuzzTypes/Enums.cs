@@ -333,7 +333,7 @@ public static class NodeStateHelper {
 
 public enum NodeDisposalStrategy {
     ScaleIn,
-    Decomission
+    Decommission
 }
 
 

@@ -460,6 +460,44 @@ class Containers(Endpoint):
         self.logger.debug("list containers")
         return self._req_model_list("GET", responses.ContainerInfoBase)
 
+    def download_job(
+        self, job_id: UUID_EXPANSION, *, output: Optional[primitives.Directory] = None
+    ) -> None:
+        tasks = self.onefuzz.tasks.list(job_id=job_id, state=None)
+        if not tasks:
+            raise Exception("no tasks with job_id:%s" % job_id)
+
+        self._download_tasks(tasks, output)
+
+    def download_task(
+        self, task_id: UUID_EXPANSION, *, output: Optional[primitives.Directory] = None
+    ) -> None:
+        self._download_tasks([self.onefuzz.tasks.get(task_id=task_id)], output)
+
+    def _download_tasks(
+        self, tasks: List[models.Task], output: Optional[primitives.Directory]
+    ) -> None:
+
+        to_download: Dict[str, str] = {}
+        for task in tasks:
+            for container in task.config.containers:
+                info = self.onefuzz.containers.get(container.name)
+                name = os.path.join(container.type.name, container.name)
+                to_download[name] = info.sas_url
+
+        if output is None:
+            output = primitives.Directory(os.getcwd())
+
+        for name in to_download:
+            outdir = os.path.join(output, name)
+            if not os.path.exists(outdir):
+                os.makedirs(outdir)
+            self.logger.info("downloading: %s", name)
+            # security note: the src for azcopy comes from the server which is
+            # trusted in this context, while the destination is provided by the
+            # user
+            azcopy_sync(to_download[name], outdir)
+
 
 class Repro(Endpoint):
     """Interact with Reproduction VMs"""
@@ -1004,33 +1042,6 @@ class JobContainers(Endpoint):
         for container in containers:
             results[container] = self.onefuzz.containers.files.list(container).files
         return results
-
-    def download(
-        self, job_id: UUID_EXPANSION, *, output: Optional[primitives.Directory] = None
-    ) -> None:
-        to_download = {}
-        tasks = self.onefuzz.tasks.list(job_id=job_id, state=None)
-        if not tasks:
-            raise Exception("no tasks with job_id:%s" % job_id)
-
-        for task in tasks:
-            for container in task.config.containers:
-                info = self.onefuzz.containers.get(container.name)
-                name = os.path.join(container.type.name, container.name)
-                to_download[name] = info.sas_url
-
-        if output is None:
-            output = primitives.Directory(os.getcwd())
-
-        for name in to_download:
-            outdir = os.path.join(output, name)
-            if not os.path.exists(outdir):
-                os.makedirs(outdir)
-            self.logger.info("downloading: %s", name)
-            # security note: the src for azcopy comes from the server which is
-            # trusted in this context, while the destination is provided by the
-            # user
-            azcopy_sync(to_download[name], outdir)
 
     def delete(
         self,

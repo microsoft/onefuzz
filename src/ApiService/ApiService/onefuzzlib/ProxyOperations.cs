@@ -14,18 +14,23 @@ public interface IProxyOperations : IStatefulOrm<Proxy, VmState> {
     bool IsAlive(Proxy proxy);
     Async.Task SaveProxyConfig(Proxy proxy);
     bool IsOutdated(Proxy proxy);
-    Async.Task<Proxy?> GetOrCreate(string region);
-
+    Async.Task<Proxy?> GetOrCreate(Region region);
     Task<bool> IsUsed(Proxy proxy);
+
+    // state transitions:
+    Async.Task<Proxy> Init(Proxy proxy);
+    Async.Task<Proxy> ExtensionsLaunch(Proxy proxy);
+    Async.Task<Proxy> ExtensionsFailed(Proxy proxy);
+    Async.Task<Proxy> VmAllocationFailed(Proxy proxy);
+    Async.Task<Proxy> Running(Proxy proxy);
+    Async.Task<Proxy> Stopping(Proxy proxy);
+    Async.Task<Proxy> Stopped(Proxy proxy);
 }
 public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IProxyOperations {
-
-
-    static TimeSpan PROXY_LIFESPAN = TimeSpan.FromDays(7);
+    static readonly TimeSpan PROXY_LIFESPAN = TimeSpan.FromDays(7);
 
     public ProxyOperations(ILogTracer log, IOnefuzzContext context)
         : base(log.WithTag("Component", "scaleset-proxy"), context) {
-
     }
 
 
@@ -36,7 +41,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         return await data.FirstOrDefaultAsync();
     }
 
-    public async Async.Task<Proxy?> GetOrCreate(string region) {
+    public async Async.Task<Proxy?> GetOrCreate(Region region) {
         var proxyList = QueryAsync(filter: $"region eq '{region}' and outdated eq false");
 
         await foreach (var proxy in proxyList) {
@@ -109,7 +114,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     public async Async.Task SaveProxyConfig(Proxy proxy) {
         var forwards = await GetForwards(proxy);
-        var url = (await _context.Containers.GetFileSasUrl(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", StorageType.Config, BlobSasPermissions.Read)).EnsureNotNull("Can't generate file sas");
+        var url = (await _context.Containers.GetFileSasUrl(WellKnownContainers.ProxyConfigs, $"{proxy.Region}/{proxy.ProxyId}/config.json", StorageType.Config, BlobSasPermissions.Read)).EnsureNotNull("Can't generate file sas");
         var queueSas = await _context.Queue.GetQueueSas("proxy", StorageType.Config, QueueSasPermissions.Add).EnsureNotNull("can't generate queue sas") ?? throw new Exception("Queue sas is null");
 
         var proxyConfig = new ProxyConfig(
@@ -122,7 +127,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             MicrosoftTelemetryKey: _context.ServiceConfiguration.OneFuzzTelemetry.EnsureNotNull("missing Telemetry"),
             InstanceId: await _context.Containers.GetInstanceId());
 
-        await _context.Containers.SaveBlob(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", EntityConverter.ToJsonString(proxyConfig), StorageType.Config);
+        await _context.Containers.SaveBlob(WellKnownContainers.ProxyConfigs, $"{proxy.Region}/{proxy.ProxyId}/config.json", EntityConverter.ToJsonString(proxyConfig), StorageType.Config);
     }
 
 
@@ -167,7 +172,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
                 return await SetState(proxy, VmState.ExtensionsLaunch);
             }
         } else {
-            var nsg = new Nsg(proxy.Region, proxy.Region);
+            var nsg = Nsg.ForRegion(proxy.Region);
             var result = await _context.NsgOperations.Create(nsg);
             if (!result.IsOk) {
                 return await SetFailed(proxy, result.ErrorV);
@@ -217,7 +222,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         }
 
         foreach (var status in instanceView.Statuses) {
-            if (status.Level == ComputeStatusLevelType.Error) {
+            if (status.Level == StatusLevelTypes.Error) {
                 yield return $"code:{status.Code} status:{status.DisplayStatus} message:{status.Message}";
             }
         }
@@ -285,11 +290,26 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         return await Stopped(proxy);
     }
 
-    private async Task<Proxy> Stopped(Proxy proxy) {
+    public async Task<Proxy> Stopped(Proxy proxy) {
         var stoppedVm = await SetState(proxy, VmState.Stopped);
         _logTracer.Info($"removing proxy: {stoppedVm.Region}");
         await _context.Events.SendEvent(new EventProxyDeleted(stoppedVm.Region, stoppedVm.ProxyId));
         await Delete(stoppedVm);
         return stoppedVm;
+    }
+
+    public Task<Proxy> ExtensionsFailed(Proxy proxy) {
+        // nothing to do
+        return Async.Task.FromResult(proxy);
+    }
+
+    public Task<Proxy> VmAllocationFailed(Proxy proxy) {
+        // nothing to do
+        return Async.Task.FromResult(proxy);
+    }
+
+    public Task<Proxy> Running(Proxy proxy) {
+        // nothing to do
+        return Async.Task.FromResult(proxy);
     }
 }

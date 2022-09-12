@@ -27,7 +27,7 @@ public class Reports : IReports {
     }
 
     public async Async.Task<IReport?> GetReportOrRegression(Container container, string fileName, bool expectReports = false, params string[] args) {
-        var filePath = String.Join("/", new[] { container.ContainerName, fileName });
+        var filePath = string.Join("/", new[] { container.String, fileName });
         if (!fileName.EndsWith(".json", StringComparison.Ordinal)) {
             if (expectReports) {
                 _log.Error($"get_report invalid extension: {filePath}");

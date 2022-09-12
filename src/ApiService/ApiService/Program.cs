@@ -9,12 +9,14 @@ using Async = System.Threading.Tasks;
 using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Core.Serialization;
+using Azure.Identity;
 using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Graph;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
@@ -115,6 +117,7 @@ public class Program {
                         ConnectionString = $"InstrumentationKey={config.ApplicationInsightsInstrumentationKey}",
                     };
                 })
+                .AddSingleton<GraphServiceClient>(new GraphServiceClient(new DefaultAzureCredential()))
                 .AddSingleton<DependencyTrackingTelemetryModule>()
                 .AddSingleton<ICreds, Creds>()
                 .AddSingleton<EntityConverter>()

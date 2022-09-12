@@ -23,7 +23,7 @@ public class Jobs {
         });
 
     private async Task<HttpResponseData> Post(HttpRequestData req) {
-        var request = await RequestHandling.ParseRequest<JobConfig>(req);
+        var request = await RequestHandling.ParseRequest<JobCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "jobs create");
         }
@@ -33,10 +33,18 @@ public class Jobs {
             return await _context.RequestHandling.NotOk(req, userInfo.ErrorV, "jobs create");
         }
 
+        var create = request.OkV;
+        var cfg = new JobConfig(
+            Build: create.Build,
+            Duration: create.Duration,
+            Logs: create.Logs,
+            Name: create.Name,
+            Project: create.Project);
+
         var job = new Job(
             JobId: Guid.NewGuid(),
             State: JobState.Init,
-            Config: request.OkV) {
+            Config: cfg) {
             UserInfo = userInfo.OkV,
         };
 
@@ -44,7 +52,7 @@ public class Jobs {
         var metadata = new Dictionary<string, string>{
             { "container_type", "logs" }, // TODO: use ContainerType.Logs enum somehow; needs snake case name
         };
-        var containerName = new Container($"logs-{job.JobId}");
+        var containerName = Container.Parse($"logs-{job.JobId}");
         var containerSas = await _context.Containers.CreateContainer(containerName, StorageType.Corpus, metadata);
         if (containerSas is null) {
             return await _context.RequestHandling.NotOk(

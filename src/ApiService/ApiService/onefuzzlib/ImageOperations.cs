@@ -7,7 +7,7 @@ namespace Microsoft.OneFuzz.Service;
 public record ImageInfo(string Publisher, string Offer, string Sku, string Version);
 
 public interface IImageOperations {
-    public Async.Task<OneFuzzResult<Os>> GetOs(string region, string image);
+    public Async.Task<OneFuzzResult<Os>> GetOs(Region region, string image);
 
     public static ImageInfo GetImageInfo(string image) {
         var imageParts = image.Split(":");
@@ -32,7 +32,7 @@ public class ImageOperations : IImageOperations {
         _context = context;
     }
 
-    public async Task<OneFuzzResult<Os>> GetOs(string region, string image) {
+    public async Task<OneFuzzResult<Os>> GetOs(Region region, string image) {
         string? name = null;
         try {
             var parsed = _context.Creds.ParseResourceId(image);
@@ -65,7 +65,7 @@ public class ImageOperations : IImageOperations {
                 }
             } else {
                 try {
-                    name = (await _context.Creds.GetResourceGroupResource().GetDiskImages().GetAsync(
+                    name = (await _context.Creds.GetResourceGroupResource().GetImages().GetAsync(
                         parsed.Data.Name
                     )).Value.Data.StorageProfile.OSDisk.OSType.ToString().ToLowerInvariant();
                 } catch (Exception ex) when (
@@ -86,7 +86,7 @@ public class ImageOperations : IImageOperations {
                 if (string.Equals(imageInfo.Version, "latest", StringComparison.Ordinal)) {
                     version =
                         (await subscription.GetVirtualMachineImagesAsync(
-                            region,
+                            region.String,
                             imageInfo.Publisher,
                             imageInfo.Offer,
                             imageInfo.Sku,
@@ -96,15 +96,13 @@ public class ImageOperations : IImageOperations {
                     version = imageInfo.Version;
                 }
 
-                var vmImage = await subscription.GetVirtualMachineImageAsync(
-                            region,
-                            imageInfo.Publisher,
-                            imageInfo.Offer,
-                            imageInfo.Sku
-                            , version
-                        );
-
-                name = vmImage.Value.OSDiskImageOperatingSystem!.Value.ToString().ToLower();
+                name = (await subscription.GetVirtualMachineImageAsync(
+                    region.String,
+                    imageInfo.Publisher,
+                    imageInfo.Offer,
+                    imageInfo.Sku
+                    , version
+                )).Value.OSDiskImageOperatingSystem.ToString().ToLower();
             } catch (RequestFailedException ex) {
                 return OneFuzzResult<Os>.Error(
                     ErrorCode.INVALID_IMAGE,

@@ -12,9 +12,11 @@ namespace Microsoft.OneFuzz.Service;
 public interface IIpOperations {
     public Async.Task<NetworkInterfaceResource?> GetPublicNic(string resourceGroup, string name);
 
-    public Async.Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, string region, Nsg? nsg);
+    public Async.Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, Region region, Nsg? nsg);
 
     public Async.Task<string?> GetPublicIp(ResourceIdentifier resourceId);
+
+    public Async.Task<string?> GetPublicIp(string resourceId);
 
     public Async.Task<PublicIPAddressResource?> GetIp(string resourceGroup, string name);
 
@@ -24,7 +26,7 @@ public interface IIpOperations {
 
     public Async.Task<string?> GetScalesetInstanceIp(Guid scalesetId, Guid machineId);
 
-    public Async.Task CreateIp(string resourceGroup, string name, string region);
+    public Async.Task CreateIp(string resourceGroup, string name, Region region);
 }
 
 
@@ -86,43 +88,50 @@ public class IpOperations : IIpOperations {
         var ips = await _networkInterfaceQuery.ListInstancePrivateIps(scalesetId, instance.OkV);
         return ips.FirstOrDefault();
     }
+    public async Task<string?> GetPublicIp(string resourceId) {
+        return await GetPublicIp(new ResourceIdentifier(resourceId));
+    }
 
     public async Task<string?> GetPublicIp(ResourceIdentifier resourceId) {
         // TODO: Parts of this function seem redundant, but I'm mirroring
         // the python code exactly. We should revisit this.
         _logTracer.Info($"getting ip for {resourceId}");
-        var resource = await (_context.Creds.GetData(_context.Creds.ParseResourceId(resourceId)));
-        var networkInterfaces = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(
-            resource.Data.Name
-        );
-        var publicIpConfigResource = (await networkInterfaces.Value.GetNetworkInterfaceIPConfigurations().FirstAsync());
-        publicIpConfigResource = await publicIpConfigResource.GetAsync();
-        var publicIp = publicIpConfigResource.Data.PublicIPAddress;
-        if (publicIp == null) {
-            return null;
-        }
-
-        resource = _context.Creds.ParseResourceId(publicIp.Id!);
         try {
+            var resource = await (_context.Creds.GetData(_context.Creds.ParseResourceId(resourceId)));
+            var networkInterfaces = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(
+                resource.Data.Name
+            );
+            var publicIpConfigResource = (await networkInterfaces.Value.GetNetworkInterfaceIPConfigurations().FirstAsync());
+            publicIpConfigResource = await publicIpConfigResource.GetAsync();
+            var publicIp = publicIpConfigResource.Data.PublicIPAddress;
+            if (publicIp == null) {
+                return null;
+            }
+
+            resource = _context.Creds.ParseResourceId(publicIp.Id!);
+
             resource = await _context.Creds.GetData(resource);
             var publicIpResource = await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(
                 resource.Data.Name
             );
             return publicIpResource.Value.Data.IPAddress;
-        } catch (RequestFailedException) {
+        } catch (RequestFailedException ex) when (ex.Status == 404) {
             return null;
         }
     }
 
-    public async Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, string region, Nsg? nsg) {
+    public async Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, Region region, Nsg? nsg) {
         _logTracer.Info($"creating nic for {resourceGroup}:{name} in {region}");
 
-        var network = await Network.Create(region, _context);
+        var network = await Network.Init(region, _context);
         var subnetId = await network.GetId();
 
         if (subnetId is null) {
-            await network.Create();
-            return OneFuzzResultVoid.Ok;
+            var r = await network.Create();
+            if (!r.IsOk) {
+                _logTracer.Error($"failed to create network in region {region} due to {r.ErrorV}");
+            }
+            return r;
         }
 
         if (nsg != null) {
@@ -181,7 +190,7 @@ public class IpOperations : IIpOperations {
         return OneFuzzResultVoid.Ok;
     }
 
-    public async Async.Task CreateIp(string resourceGroup, string name, string region) {
+    public async Async.Task CreateIp(string resourceGroup, string name, Region region) {
         var ipParams = new PublicIPAddressData() {
             Location = region,
             PublicIPAllocationMethod = NetworkIPAllocationMethod.Dynamic
@@ -250,5 +259,3 @@ public class IpOperations : IIpOperations {
         }
     }
 }
-
-

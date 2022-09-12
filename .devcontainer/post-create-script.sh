@@ -1,24 +1,9 @@
 #!/bin/bash
 
-# Install Azure Functions Core Tools 4
-# Source: https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=v4%2Clinux%2Ccsharp%2Cportal%2Cbash
-echo "Installing Azure Functions Core Tools 4 ..."
-# note that 'dotnet' feature in devcontainer.json already sets up the PPA for this
-sudo apt install azure-functions-core-tools-4
-
-# Install azcopy
-echo "Installing azcopy ..."
-cd /tmp
-wget https://aka.ms/downloadazcopy-v10-linux
-tar -xvf downloadazcopy-v10-linux
-sudo cp ./azcopy_linux_amd64_*/azcopy /usr/bin/
-
-# Install Azurite
-sudo npm install -g azurite
+set -eux
 
 # Restore rust dependencies
 echo "Restoring rust dependencies"
-cargo install cargo-audit cargo-license@0.4.2 # requirements if you want to run ci/agent.sh
 cd /workspaces/onefuzz/src/agent
 cargo fetch
 
@@ -26,9 +11,6 @@ cargo fetch
 echo "Restore dotnet dependencies"
 cd /workspaces/onefuzz/src/ApiService
 dotnet restore
-
-sudo apt-get install direnv uuid-runtime
-pip install wheel
 
 echo "Setting up venv"
 cd /workspaces/onefuzz/src

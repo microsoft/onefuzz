@@ -31,6 +31,8 @@ param use_dotnet_agent_functions bool
 
 param all_function_names array
 
+param enable_profiler bool
+
 var disabledFunctionName = 'disabledFunctions-${functions_worker_runtime}'
 
 var telemetry = 'd7a73cf4-5a1a-4030-85e1-e5b25867e45a'
@@ -46,6 +48,11 @@ module disabledFunctions 'function-settings-disabled-apps.bicep' = {
     allFunctions: all_function_names
   }
 }
+
+var enable_profilers = enable_profiler ? {
+  APPINSIGHTS_PROFILERFEATURE_VERSION : '1.0.0'
+  DiagnosticServices_EXTENSION_VERSION: '~3'
+} : {}
 
 resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
   parent: function
@@ -72,5 +79,5 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       ONEFUZZ_OWNER: owner
       ONEFUZZ_CLIENT_SECRET: client_secret
       ONEFUZZ_USE_DOTNET_AGENT_FUNCTIONS: use_dotnet_agent_functions ? '1' : '0'
-  }, disabledFunctions.outputs.appSettings)
+  }, disabledFunctions.outputs.appSettings, enable_profilers)
 }

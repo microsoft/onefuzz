@@ -51,7 +51,7 @@ public class ReproVmss {
 
 
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
-        var request = await RequestHandling.ParseRequest<ReproConfig>(req);
+        var request = await RequestHandling.ParseRequest<ReproCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
@@ -67,7 +67,13 @@ public class ReproVmss {
                 "repro_vm create");
         }
 
-        var vm = await _context.ReproOperations.Create(request.OkV, userInfo.OkV);
+        var create = request.OkV;
+        var cfg = new ReproConfig(
+            Container: create.Container,
+            Path: create.Path,
+            Duration: create.Duration);
+
+        var vm = await _context.ReproOperations.Create(cfg, userInfo.OkV);
         if (!vm.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
