@@ -289,8 +289,9 @@ class JobHelper:
             # setup-relative path to `local_file` is just the filename of `local_file`.
             relative = os.path.basename(local_file)
 
-        # Prefix the `{setup_dir}` template variable for eventual expansion at runtime.
-        prefixed = "{setup_dir}/" + relative
+        # Prefix an assumed, hardcoded `setup` path. This should get replaced with a
+        # template variable for eventual expansion at runtime.
+        prefixed = "setup/" + relative
         return prefixed
 
 
