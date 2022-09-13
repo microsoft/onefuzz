@@ -299,7 +299,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd src/ApiService/
-        dotnet restore --locked-mode -v d
+        dotnet restore --locked-mode
         dotnet tool restore
         sudo npm install -g azurite
     - name: Check Formatting
