@@ -257,7 +257,7 @@ public class Config : IConfig {
         }
 
         if (definition.Features.Contains(TaskFeature.CoverageFilter)) {
-            if (coverageFilter != null) {
+            if (task.Config.Task.CoverageFilter != null) {
                 config.CoverageFilter = task.Config.Task.CoverageFilter;
             }
         }
