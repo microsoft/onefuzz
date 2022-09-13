@@ -107,7 +107,10 @@ def resize_vmss(name: UUID, capacity: int) -> None:
             err,
         )
     except HttpResponseError as err:
-        if "limit of 10 models that may be referenced" in str(err):
+        if (
+            "models that may be referenced by one or more VMs belonging to the Virtual Machine Scale Set"
+            in str(err)
+        ):
             logging.error(
                 "unable to resize scaleset due to model error. name: %s - err:%s",
                 name,
@@ -213,7 +216,10 @@ def update_scale_in_protection(
                     % instance_id
                 )
                 return None
-            if "limit of 10 models that may be referenced" in str(err):
+            if (
+                "models that may be referenced by one or more VMs belonging to the Virtual Machine Scale Set"
+                in str(err)
+            ):
                 logging.error(
                     "unable to resize scaleset due to model error. name: %s - err:%s",
                     name,
@@ -329,7 +335,10 @@ def update_extensions(name: UUID, extensions: List[Any]) -> None:
         )
         logging.info("VM extensions updated: %s", name)
     except HttpResponseError as err:
-        if "limit of 10 models that may be referenced" in str(err):
+        if (
+            "models that may be referenced by one or more VMs belonging to the Virtual Machine Scale Set"
+            in str(err)
+        ):
             logging.error(
                 "unable to resize scaleset due to model error. name: %s - err:%s",
                 name,
