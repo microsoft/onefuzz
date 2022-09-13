@@ -315,12 +315,6 @@
           "System.ComponentModel.Annotations": "4.4.1"
         }
       },
-      "Microsoft.TeamFoundationServer.ExtendedClient": {
-        "type": "Direct",
-        "requested": "[19.209.0-preview, )",
-        "resolved": "19.209.0-preview",
-        "contentHash": "4njlEMoVRResvzSd7sKIzCkeS5eDpEZFnLm00uzS2rhU734/plorBOlEMp14hRUKYz/uUmwfZLi1m1NEsmItgw=="
-      },
       "Octokit": {
         "type": "Direct",
         "requested": "[2.0.1, )",

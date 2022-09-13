@@ -907,11 +907,6 @@
           "System.ComponentModel.Annotations": "4.4.1"
         }
       },
-      "Microsoft.TeamFoundationServer.ExtendedClient": {
-        "type": "Transitive",
-        "resolved": "19.209.0-preview",
-        "contentHash": "4njlEMoVRResvzSd7sKIzCkeS5eDpEZFnLm00uzS2rhU734/plorBOlEMp14hRUKYz/uUmwfZLi1m1NEsmItgw=="
-      },
       "Microsoft.TestPlatform.ObjectModel": {
         "type": "Transitive",
         "resolved": "17.1.0",
@@ -2311,7 +2306,6 @@
           "Microsoft.Identity.Client": "4.46.2",
           "Microsoft.Identity.Web.TokenCache": "1.23.1",
           "Microsoft.TeamFoundationServer.Client": "19.209.0-preview",
-          "Microsoft.TeamFoundationServer.ExtendedClient": "19.209.0-preview",
           "Octokit": "2.0.1",
           "Scriban": "5.5.0",
           "Semver": "2.1.0",
