@@ -33,9 +33,12 @@ public class Scheduler : IScheduler {
 
         var buckets = BucketTasks(tasks.Values);
 
+        // only fetch pools once from storage; see explanation in BuildWorkUnit for more
+        var poolCache = new Dictionary<PoolKey, Pool>();
+
         foreach (var bucketedTasks in buckets) {
             foreach (var chunks in bucketedTasks.Chunk(MAX_TASKS_PER_SET)) {
-                var result = await BuildWorkSet(chunks);
+                var result = await BuildWorkSet(chunks, poolCache);
                 if (result is var (bucketConfig, workSet)) {
                     if (await ScheduleWorkset(workSet, bucketConfig.pool, bucketConfig.count)) {
                         foreach (var workUnit in workSet.WorkUnits) {
@@ -69,12 +72,9 @@ public class Scheduler : IScheduler {
         return true;
     }
 
-    private async Async.Task<(BucketConfig, WorkSet)?> BuildWorkSet(Task[] tasks) {
+    private async Async.Task<(BucketConfig, WorkSet)?> BuildWorkSet(Task[] tasks, Dictionary<PoolKey, Pool> poolCache) {
         var taskIds = tasks.Select(x => x.TaskId).ToHashSet();
         var workUnits = new List<WorkUnit>();
-
-        // only fetch pools once from storage; see explanation in BuildWorkUnit for more
-        var poolCache = new Dictionary<PoolKey, Pool>();
 
         BucketConfig? bucketConfig = null;
         foreach (var task in tasks) {
