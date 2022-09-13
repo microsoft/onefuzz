@@ -15,7 +15,7 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
 
     IAsyncEnumerable<Task> SearchStates(Guid? jobId = null, IEnumerable<TaskState>? states = null);
 
-    IEnumerable<Container>? GetInputContainerQueues(TaskConfig config);
+    Result<IEnumerable<Container>?, TaskConfigError> GetInputContainerQueues(TaskConfig config);
 
     IAsyncEnumerable<Task> SearchExpired();
     Async.Task MarkStopping(Task task);
@@ -64,19 +64,32 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         return await data.FirstOrDefaultAsync();
     }
     public IAsyncEnumerable<Task> SearchStates(Guid? jobId = null, IEnumerable<TaskState>? states = null) {
+        if (states is not null && !states.Any()) {
+            states = null;
+        }
+
         var queryString =
             (jobId, states) switch {
                 (null, null) => "",
-                (Guid id, null) => Query.PartitionKey($"{id}"),
+                (Guid id, null) => Query.PartitionKey(id.ToString()),
                 (null, IEnumerable<TaskState> s) => Query.EqualAnyEnum("state", s),
-                (Guid id, IEnumerable<TaskState> s) => Query.And(Query.PartitionKey($"{id}"), Query.EqualAnyEnum("state", s)),
+                (Guid id, IEnumerable<TaskState> s) => Query.And(Query.PartitionKey(id.ToString()), Query.EqualAnyEnum("state", s)),
             };
 
         return QueryAsync(filter: queryString);
     }
 
-    public IEnumerable<Container>? GetInputContainerQueues(TaskConfig config) {
-        throw new NotImplementedException();
+    public Result<IEnumerable<Container>?, TaskConfigError> GetInputContainerQueues(TaskConfig config) {
+
+        if (!Defs.TASK_DEFINITIONS.ContainsKey(config.Task.Type)) {
+            return Result<IEnumerable<Container>?, TaskConfigError>.Error(new TaskConfigError($"unsupported task type: {config.Task.Type}"));
+        }
+
+        var containerType = Defs.TASK_DEFINITIONS[config.Task.Type].MonitorQueue;
+        if (containerType is not null && config.Containers is not null)
+            return Result<IEnumerable<Container>?, TaskConfigError>.Ok(config.Containers.Where(x => x.Type == containerType).Select(x => x.Name));
+        else
+            return Result<IEnumerable<Container>?, TaskConfigError>.Ok(null);
     }
 
     public IAsyncEnumerable<Task> SearchExpired() {

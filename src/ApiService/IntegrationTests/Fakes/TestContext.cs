@@ -18,6 +18,10 @@ public sealed class TestContext : IOnefuzzContext {
         ServiceConfiguration = new TestServiceConfiguration(storagePrefix);
         Storage = storage;
         Creds = creds;
+
+        // this one is faked entirely; we can’t perform these operations at test time
+        VmssOperations = new TestVmssOperations();
+
         Containers = new Containers(logTracer, Storage, ServiceConfiguration);
         Queue = new Queue(Storage, logTracer);
         RequestHandling = new RequestHandling(logTracer);
@@ -71,6 +75,7 @@ public sealed class TestContext : IOnefuzzContext {
     public IConfigOperations ConfigOperations { get; }
     public IPoolOperations PoolOperations { get; }
     public IScalesetOperations ScalesetOperations { get; }
+    public IVmssOperations VmssOperations { get; }
     public EntityConverter EntityConverter { get; }
 
     // -- Remainder not implemented --
@@ -102,8 +107,6 @@ public sealed class TestContext : IOnefuzzContext {
     public ISecretsOperations SecretsOperations => throw new System.NotImplementedException();
 
     public IVmOperations VmOperations => throw new System.NotImplementedException();
-
-    public IVmssOperations VmssOperations => throw new System.NotImplementedException();
 
     public IWebhookMessageLogOperations WebhookMessageLogOperations => throw new System.NotImplementedException();
 

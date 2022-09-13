@@ -40,7 +40,7 @@ public class Node {
                     req,
                     new Error(
                         Code: ErrorCode.UNABLE_TO_FIND,
-                        Errors: new string[] { "unable to find node " }),
+                        Errors: new string[] { "unable to find node" }),
                     context: machineId.ToString());
             }
 
@@ -96,7 +96,7 @@ public class Node {
                 req,
                 new Error(
                     Code: ErrorCode.UNABLE_TO_FIND,
-                    Errors: new string[] { "unable to find node " }),
+                    Errors: new string[] { "unable to find node" }),
                 context: patch.MachineId.ToString());
         }
 
@@ -129,7 +129,7 @@ public class Node {
                 req,
                 new Error(
                     Code: ErrorCode.UNABLE_TO_FIND,
-                    Errors: new string[] { "unable to find node " }),
+                    Errors: new string[] { "unable to find node" }),
                 context: post.MachineId.ToString());
         }
 

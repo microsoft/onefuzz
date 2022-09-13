@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -67,5 +68,19 @@ public abstract class TasksTestBase : FunctionTestBase {
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
         var err = BodyAs<Error>(result);
         Assert.Equal(new[] { "The Pool field is required." }, err.Errors);
+    }
+
+    [Fact]
+    public async Async.Task CanSearchWithJobIdAndEmptyListOfStates() {
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+
+        var req = new TaskSearch(
+            JobId: Guid.NewGuid(),
+            TaskId: null,
+            State: new List<TaskState>());
+
+        var func = new Tasks(Logger, auth, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
     }
 }

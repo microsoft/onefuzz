@@ -9,10 +9,10 @@ public class Proxy : IFromJsonElement<Proxy> {
     public Proxy() { }
     public Proxy(JsonElement e) => _e = e;
 
-    public string Region => _e.GetProperty("region").GetString()!;
-    public Guid ProxyId => _e.GetProperty("proxy_id").GetGuid()!;
+    public string Region => _e.GetStringProperty("region");
+    public Guid ProxyId => _e.GetGuidProperty("proxy_id");
 
-    public string VmState => _e.GetProperty("state").GetString()!;
+    public string VmState => _e.GetStringProperty("state");
 
     public Proxy Convert(JsonElement e) => new Proxy(e);
 }
@@ -22,10 +22,10 @@ public class Forward : IFromJsonElement<Forward>, IComparable<Forward> {
     public Forward() { }
     public Forward(JsonElement e) => _e = e;
 
-    public long SrcPort => _e.GetProperty("src_port").GetInt64();
-    public long DstPort => _e.GetProperty("dst_port").GetInt64();
+    public long SrcPort => _e.GetLongProperty("src_port");
+    public long DstPort => _e.GetLongProperty("dst_port");
 
-    public string DstIp => _e.GetProperty("dst_ip").GetString()!;
+    public string DstIp => _e.GetStringProperty("dst_ip");
 
     public Forward Convert(JsonElement e) => new Forward(e);
 
@@ -93,44 +93,35 @@ public class ProxyApi : ApiBase {
     }
 
     public async Task<Result<IEnumerable<Proxy>, Error>> Get(Guid? scalesetId = null, Guid? machineId = null, int? dstPort = null) {
-        var root = new JsonObject();
-        if (scalesetId is not null)
-            root.Add("scaleset_id", scalesetId);
-        if (machineId is not null)
-            root.Add("machine_id", machineId);
-        if (dstPort is not null)
-            root.Add("dst_port", dstPort);
+        var root = new JsonObject()
+            .AddIfNotNullV("scaleset_id", scalesetId)
+            .AddIfNotNullV("machine_id", machineId)
+            .AddIfNotNullV("dst_port", dstPort);
 
         var r = await Get(root);
-        if (Error.IsError(r)) {
-            return Result<IEnumerable<Proxy>, Error>.Error(new Error(r));
-        } else {
-            return IEnumerableResult<Proxy>(r.GetProperty("proxies"));
-        }
+        return IEnumerableResult<Proxy>(r.GetProperty("proxies"));
     }
 
     public async Task<BooleanResult> Delete(Guid scalesetId, Guid machineId, int? dstPort = null) {
-        var root = new JsonObject();
-        root.Add("scaleset_id", scalesetId);
-        root.Add("machine_id", machineId);
-        if (dstPort != null)
-            root.Add("dst_port", dstPort);
+        var root = new JsonObject()
+            .AddV("scaleset_id", scalesetId)
+            .AddV("machine_id", machineId)
+            .AddIfNotNullV("dst_port", dstPort);
         return Return<BooleanResult>(await Delete(root));
     }
 
     public async Task<BooleanResult> Reset(string region) {
-        var root = new JsonObject();
-        root.Add("region", region);
+        var root = new JsonObject().AddV("region", region);
         var r = await Patch(root);
         return Return<BooleanResult>(r);
     }
 
     public async Task<Result<ProxyGetResult, Error>> Create(Guid scalesetId, Guid machineId, int dstPort, int duration) {
-        var root = new JsonObject();
-        root.Add("scaleset_id", scalesetId);
-        root.Add("machine_id", machineId);
-        root.Add("dst_port", dstPort);
-        root.Add("duration", duration);
+        var root = new JsonObject()
+            .AddV("scaleset_id", scalesetId)
+            .AddV("machin_id", machineId)
+            .AddV("dst_port", dstPort)
+            .AddV("duration", duration);
 
         var r = await Post(root);
         return Result<ProxyGetResult>(r);

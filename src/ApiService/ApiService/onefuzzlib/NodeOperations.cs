@@ -235,15 +235,15 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         List<string> queryParts = new();
 
         if (poolId is not null) {
-            queryParts.Add($"(pool_id eq '{poolId}')");
+            queryParts.Add(TableClient.CreateQueryFilter($"(pool_id eq {poolId})"));
         }
 
         if (poolName is not null) {
-            queryParts.Add($"(pool_name eq '{poolName}')");
+            queryParts.Add(TableClient.CreateQueryFilter($"(pool_name eq {poolName.String})"));
         }
 
         if (scalesetId is not null) {
-            queryParts.Add($"(scaleset_id eq '{scalesetId}')");
+            queryParts.Add(TableClient.CreateQueryFilter($"(scaleset_id eq {scalesetId})"));
         }
 
         if (states is not null) {
@@ -469,7 +469,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         }
 
         if (poolName is not null) {
-            queryParts.Add($"(PartitionKey eq '{poolName}')");
+            queryParts.Add($"(PartitionKey eq '{poolName.String}')");
         }
 
         if (scaleSetId is not null) {
@@ -513,7 +513,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public IAsyncEnumerable<Node> SearchByPoolName(PoolName poolName) {
-        return QueryAsync($"(pool_name eq '{poolName}')");
+        return QueryAsync(TableClient.CreateQueryFilter($"(pool_name eq {poolName.String})"));
     }
 
 

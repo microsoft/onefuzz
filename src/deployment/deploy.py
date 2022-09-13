@@ -579,6 +579,7 @@ class Client:
                 logger.error(
                     "error deploying. could not find specified CLI app registrion."
                     "use flag --auto_create_cli_app to automatically create CLI registration"
+                    "or specify a correct app id with --cli_app_id."
                 )
                 sys.exit(1)
         else:
@@ -1420,7 +1421,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--auto_create_cli_app",
-        action="store_false",
+        action="store_true",
         help="Create a new CLI App Registration if the default app or custom "
         "app is not found. ",
     )
