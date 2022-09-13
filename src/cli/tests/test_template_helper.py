@@ -33,17 +33,17 @@ class TestHelper(unittest.TestCase):
             ),
         )
         values = {
-            (File("filename.txt"), None): "filename.txt",
-            (File("dir/filename.txt"), None): "filename.txt",
-            (File("./filename.txt"), None): "filename.txt",
-            (File("./filename.txt"), Directory(".")): "filename.txt",
-            (File("dir/filename.txt"), Directory("dir")): "filename.txt",
-            (File("dir/filename.txt"), Directory("dir/")): "filename.txt",
-            (File("dir/filename.txt"), Directory("./dir")): "filename.txt",
-            (File("./dir/filename.txt"), Directory("./dir/")): "filename.txt",
+            (File("filename.txt"), None): "setup/filename.txt",
+            (File("dir/filename.txt"), None): "setup/filename.txt",
+            (File("./filename.txt"), None): "setup/filename.txt",
+            (File("./filename.txt"), Directory(".")): "setup/filename.txt",
+            (File("dir/filename.txt"), Directory("dir")): "setup/filename.txt",
+            (File("dir/filename.txt"), Directory("dir/")): "setup/filename.txt",
+            (File("dir/filename.txt"), Directory("./dir")): "setup/filename.txt",
+            (File("./dir/filename.txt"), Directory("./dir/")): "setup/filename.txt",
         }
 
-        expected = "filename.txt"
+        expected = "setup/filename.txt"
         if sys.platform == "linux":
             filename = File("/unused/filename.txt")
             values[(filename, None)] = expected
