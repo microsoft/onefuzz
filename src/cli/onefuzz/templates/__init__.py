@@ -293,6 +293,7 @@ class JobHelper:
         prefixed = "{setup_dir}/" + relative
         return prefixed
 
+
     def add_tags(self, tags: Optional[Dict[str, str]]) -> None:
         if tags:
             self.tags.update(tags)
