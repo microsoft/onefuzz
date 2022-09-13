@@ -200,7 +200,10 @@ public class AgentEvents {
             MachineId: machineId,
             TaskId: running.TaskId,
             State: NodeTaskState.Running);
-        await _context.NodeTasksOperations.Replace(nodeTask);
+        var r = await _context.NodeTasksOperations.Replace(nodeTask);
+        if (!r.IsOk) {
+            _log.Error($"failed to replace node task {nodeTask.TaskId} due to {r.ErrorV}");
+        }
 
         if (task.State.ShuttingDown()) {
             _log.Info($"ignoring task start from node. machine_id:{machineId} job_id:{task.JobId} task_id:{task.TaskId} (state: {task.State})");
@@ -214,7 +217,10 @@ public class AgentEvents {
             TaskId: task.TaskId,
             MachineId: machineId,
             EventData: new WorkerEvent(Running: running));
-        await _context.TaskEventOperations.Replace(taskEvent);
+        r = await _context.TaskEventOperations.Replace(taskEvent);
+        if (!r.IsOk) {
+            _log.Error($"failed to replace taskEvent for task with id {taskEvent.TaskId} due to {r.ErrorV}");
+        }
 
         return null;
     }
