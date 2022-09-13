@@ -325,13 +325,12 @@ public record InstanceConfig
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkConfig NetworkConfig,
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
-    string ProxyVmSku,
-    bool AllowPoolManagement = true,
+    string ProxyVmSku = "Standard_B2s",
+    bool RequireAdminPrivileges = false,
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
     IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,
     IDictionary<string, string>? VmTags = null,
-    IDictionary<string, string>? VmssTags = null,
-    bool? RequireAdminPrivileges = null
+    IDictionary<string, string>? VmssTags = null
 ) : EntityBase() {
     public InstanceConfig(string instanceName) : this(
         instanceName,
@@ -341,7 +340,7 @@ public record InstanceConfig
         new NetworkSecurityGroupConfig(),
         null,
         "Standard_B2s",
-        true
+        false
         ) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {
@@ -725,7 +724,6 @@ public record WorkUnit(
     Guid JobId,
     Guid TaskId,
     TaskType TaskType,
-
     // JSON-serialized `TaskUnitConfig`.
     [property: JsonConverter(typeof(TaskUnitConfigConverter))] TaskUnitConfig Config
 );

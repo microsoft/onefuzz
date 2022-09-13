@@ -155,7 +155,9 @@ public abstract class NodeTestBase : FunctionTestBase {
     public async Async.Task RequiresAdmin(string method) {
         // config must be found
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!));
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) {
+                RequireAdminPrivileges = true
+            });
 
         // must be a user to auth
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
@@ -243,7 +245,7 @@ public abstract class NodeTestBase : FunctionTestBase {
         // config specifies that a different user is admin
         await Context.InsertAll(
             new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) {
-                Admins = new[] { otherObjectId }
+                Admins = new[] { otherObjectId }, RequireAdminPrivileges = true
             });
 
         // must be a user to auth
@@ -260,7 +262,7 @@ public abstract class NodeTestBase : FunctionTestBase {
 
         var err = BodyAs<Error>(result);
         Assert.Equal(ErrorCode.UNAUTHORIZED, err.Code);
-        Assert.Contains("not authorized to manage pools", err.Errors?.Single());
+        Assert.Contains("not authorized to manage instance", err.Errors?.Single());
     }
 
     [Theory]
