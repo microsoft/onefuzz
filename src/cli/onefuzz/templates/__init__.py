@@ -262,12 +262,14 @@ class JobHelper:
             wait_for_stopped=self.wait_for_stopped,
         )
 
+    # Returns a virtual path to `local_file` as a `setup`-relative blob, prefixed with an
+    # expansion variable to ensure it is located under the VM-local `setup` dir at runtime.
     def setup_relative_blob_name(
         self, local_file: File, setup_dir: Optional[Directory]
     ) -> str:
-        # The local file must end up as a remote blob in the setup container. The blob
+        # The local file must end up as a remote blob in the `setup` container. The blob
         # name, which is a virtual `setup`-relative path, must be passed to the tasks as a
-        # value relative to the local copy of the setup directory.
+        # value relative to the VM-local copy of the setup directory.
         if setup_dir:
             # If we have a `setup_dir`, then `local_file` must occur inside of it. When we
             # upload the `setup_dir`, the blob name will match the `setup_dir`-relative
@@ -280,12 +282,16 @@ class JobHelper:
                     % (local_file, setup_dir)
                 )
 
-            return resolved
+            relative = resolved
         else:
             # If no `setup_dir` was given, we will upload the file at `local_file` to the
             # root of the setup container created for the user. In that case, the future,
             # setup-relative path to `local_file` is just the filename of `local_file`.
-            return os.path.basename(local_file)
+            relative = os.path.basename(local_file)
+
+        # Prefix the `{setup_dir}` template variable for eventual expansion at runtime.
+        prefixed = "{setup_dir}/" + relative
+        return prefixed
 
     def add_tags(self, tags: Optional[Dict[str, str]]) -> None:
         if tags:
