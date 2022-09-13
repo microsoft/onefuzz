@@ -262,8 +262,8 @@ class JobHelper:
             wait_for_stopped=self.wait_for_stopped,
         )
 
-    # Returns a virtual path to `local_file` as a `setup`-relative blob, prefixed with an
-    # expansion variable to ensure it is located under the VM-local `setup` dir at runtime.
+    # Returns a virtual path to `local_file` as a `setup`-relative blob, prefixed to
+    # ensure it is located under the VM-local `setup` dir at runtime.
     def setup_relative_blob_name(
         self, local_file: File, setup_dir: Optional[Directory]
     ) -> str:
