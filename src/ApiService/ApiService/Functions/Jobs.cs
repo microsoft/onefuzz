@@ -7,10 +7,12 @@ namespace Microsoft.OneFuzz.Service.Functions;
 public class Jobs {
     private readonly IOnefuzzContext _context;
     private readonly IEndpointAuthorization _auth;
+    private readonly ILogTracer _logTracer;
 
-    public Jobs(IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Jobs(IEndpointAuthorization auth, IOnefuzzContext context, ILogTracer logTracer) {
         _context = context;
         _auth = auth;
+        _logTracer = logTracer;
     }
 
     [Function("Jobs")]
@@ -89,7 +91,10 @@ public class Jobs {
 
         if (job.State != JobState.Stopped && job.State != JobState.Stopping) {
             job = job with { State = JobState.Stopping };
-            await _context.JobOperations.Replace(job);
+            var r = await _context.JobOperations.Replace(job);
+            if (!r.IsOk) {
+                _logTracer.Error($"Failed to replace job {job.JobId} due to {r.ErrorV}");
+            }
         }
 
         return await RequestHandling.Ok(req, JobResponse.ForJob(job));
