@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IAdo {
-    public Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool failTaskonTransientError);
+    public Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool failTaskOnTransientError);
 
 }
 
@@ -15,7 +15,7 @@ public class Ado : NotificationsBase, IAdo {
     public Ado(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
 
-    public async Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool failTaskonTransientError) {
+    public async Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool failTaskOnTransientError) {
         if (reportable is RegressionReport) {
             _logTracer.Info($"ado integration does not support regression report. container:{container} filename:{filename}");
             return;
@@ -40,7 +40,7 @@ container:{container} filename:{filename}";
                 AzureDevOpsClientRequestError,
                 ValueError,
             */
-            if (!failTaskonTransientError && IsTransient(e)) {
+            if (!failTaskOnTransientError && IsTransient(e)) {
                 _logTracer.Error($"transient ADO notification failure {notificationInfo}");
                 throw;
             } else {

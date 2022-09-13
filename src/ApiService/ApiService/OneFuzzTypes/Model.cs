@@ -503,7 +503,15 @@ public class NotificationTemplateConverter : JsonConverter<NotificationTemplate>
         ) {
 
         }
-        throw new JsonException("Unsupported notification template");
+
+        var expectedTemplateTypes = new List<Type> {
+            typeof(AdoTemplate),
+            typeof(TeamsTemplate),
+            typeof(GithubIssuesTemplate)
+        }
+        .Select(type => type.ToString());
+
+        throw new JsonException($"Unsupported notification template. Could not deserialize {templateJson} into one of the following template types: {string.Join(", ", expectedTemplateTypes)}");
     }
 
     public override void Write(Utf8JsonWriter writer, NotificationTemplate value, JsonSerializerOptions options) {
