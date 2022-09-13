@@ -149,7 +149,9 @@ public class Scaleset {
             await _context.AutoScaleOperations.Insert(autoScale);
         }
 
-        return await RequestHandling.Ok(req, ScalesetResponse.ForScaleset(scaleset));
+        // auth not included on create results, only GET with include_auth set
+        var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: false);
+        return await RequestHandling.Ok(req, response);
     }
 
     private async Task<HttpResponseData> Patch(HttpRequestData req) {
@@ -182,8 +184,8 @@ public class Scaleset {
             scaleset = await _context.ScalesetOperations.SetSize(scaleset, size);
         }
 
-        scaleset = scaleset with { Auth = null };
-        return await RequestHandling.Ok(req, ScalesetResponse.ForScaleset(scaleset));
+        var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: false);
+        return await RequestHandling.Ok(req, response);
     }
 
     private async Task<HttpResponseData> Get(HttpRequestData req) {
@@ -201,19 +203,15 @@ public class Scaleset {
 
             var scaleset = scalesetResult.OkV;
 
-            var response = ScalesetResponse.ForScaleset(scaleset);
+            var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: search.IncludeAuth);
             response = response with { Nodes = await _context.ScalesetOperations.GetNodes(scaleset) };
-            if (!search.IncludeAuth) {
-                response = response with { Auth = null };
-            }
-
             return await RequestHandling.Ok(req, response);
         }
 
         var states = search.State ?? Enumerable.Empty<ScalesetState>();
         var scalesets = await _context.ScalesetOperations.SearchStates(states).ToListAsync();
         // don't return auths during list actions, only 'get'
-        var result = scalesets.Select(ss => ScalesetResponse.ForScaleset(ss with { Auth = null }));
+        var result = scalesets.Select(ss => ScalesetResponse.ForScaleset(ss, includeAuth: false));
         return await RequestHandling.Ok(req, result);
     }
 }

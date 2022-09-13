@@ -138,12 +138,12 @@ public record ScalesetResponse(
     Dictionary<string, string> Tags,
     List<ScalesetNodeState>? Nodes
 ) : BaseResponse() {
-    public static ScalesetResponse ForScaleset(Scaleset s)
+    public static ScalesetResponse ForScaleset(Scaleset s, bool includeAuth)
         => new(
             PoolName: s.PoolName,
             ScalesetId: s.ScalesetId,
             State: s.State,
-            Auth: s.Auth,
+            Auth: includeAuth ? s.Auth : null,
             VmSku: s.VmSku,
             Image: s.Image,
             Region: s.Region,

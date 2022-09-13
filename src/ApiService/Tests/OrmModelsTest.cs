@@ -188,26 +188,27 @@ namespace Tests {
         }
 
         public static Gen<InstanceConfig> InstanceConfig() {
-            return Arb.Generate<Tuple<
-                Tuple<string, Guid[]?, bool, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?>,
-                Tuple<string, IDictionary<string, ApiAccessRule>?, IDictionary<Guid, Guid[]>?, IDictionary<string, string>?, IDictionary<string, string>?>>>().Select(
+            var config = Arb.Generate<Tuple<
+                Tuple<string, Guid[]?, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?, NonNull<string>>,
+                Tuple<bool, IDictionary<string, ApiAccessRule>?, IDictionary<Guid, Guid[]>?, IDictionary<string, string>?, IDictionary<string, string>?>>>().Select(
                 arg =>
                     new InstanceConfig(
                         InstanceName: arg.Item1.Item1,
                         Admins: arg.Item1.Item2,
-                        AllowPoolManagement: arg.Item1.Item3,
-                        AllowedAadTenants: arg.Item1.Item4,
-                        NetworkConfig: arg.Item1.Item5,
-                        ProxyNsgConfig: arg.Item1.Item6,
-                        Extensions: arg.Item1.Item7,
+                        AllowedAadTenants: arg.Item1.Item3,
+                        NetworkConfig: arg.Item1.Item4,
+                        ProxyNsgConfig: arg.Item1.Item5,
+                        Extensions: arg.Item1.Item6,
+                        ProxyVmSku: arg.Item1.Item7.Item,
 
-                        ProxyVmSku: arg.Item2.Item1,
+                        RequireAdminPrivileges: arg.Item2.Item1,
                         ApiAccessRules: arg.Item2.Item2,
                         GroupMembership: arg.Item2.Item3,
                         VmTags: arg.Item2.Item4,
                         VmssTags: arg.Item2.Item5
                     )
-            );
+                );
+            return config;
         }
 
         public static Gen<Task> Task() {
@@ -682,7 +683,7 @@ namespace Tests {
         [Property]
         void Replay()
         {
-            var seed = FsCheck.Random.StdGen.NewStdGen(515508280, 297027790);
+            var seed = FsCheck.Random.StdGen.NewStdGen(610100457,297085446);
             var p = Prop.ForAll((InstanceConfig x) => InstanceConfig(x) );
             p.Check(new Configuration { Replay = seed });
         }
