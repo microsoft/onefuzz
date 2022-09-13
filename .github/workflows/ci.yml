@@ -21,7 +21,9 @@ jobs:
       matrix:
         os:
         - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-windows-2019" ]
-        - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-18.04" ] 
+        # disabled while issue is affecting instances
+        #- [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-18.04" ] 
+        - ubuntu-18.04
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v2
