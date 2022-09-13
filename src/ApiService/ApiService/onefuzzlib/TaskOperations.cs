@@ -64,12 +64,16 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         return await data.FirstOrDefaultAsync();
     }
     public IAsyncEnumerable<Task> SearchStates(Guid? jobId = null, IEnumerable<TaskState>? states = null) {
+        if (states is not null && !states.Any()) {
+            states = null;
+        }
+
         var queryString =
             (jobId, states) switch {
                 (null, null) => "",
-                (Guid id, null) => Query.PartitionKey($"{id}"),
+                (Guid id, null) => Query.PartitionKey(id.ToString()),
                 (null, IEnumerable<TaskState> s) => Query.EqualAnyEnum("state", s),
-                (Guid id, IEnumerable<TaskState> s) => Query.And(Query.PartitionKey($"{id}"), Query.EqualAnyEnum("state", s)),
+                (Guid id, IEnumerable<TaskState> s) => Query.And(Query.PartitionKey(id.ToString()), Query.EqualAnyEnum("state", s)),
             };
 
         return QueryAsync(filter: queryString);
