@@ -108,7 +108,8 @@ def resize_vmss(name: UUID, capacity: int) -> None:
         )
     except HttpResponseError as err:
         if (
-            "models that may be referenced by one or more VMs belonging to the Virtual Machine Scale Set"
+            "models that may be referenced by one or more"
+            + " VMs belonging to the Virtual Machine Scale Set"
             in str(err)
         ):
             logging.error(
@@ -217,7 +218,8 @@ def update_scale_in_protection(
                 )
                 return None
             if (
-                "models that may be referenced by one or more VMs belonging to the Virtual Machine Scale Set"
+                "models that may be referenced by one or more"
+                + " VMs belonging to the Virtual Machine Scale Set"
                 in str(err)
             ):
                 logging.error(
@@ -336,7 +338,8 @@ def update_extensions(name: UUID, extensions: List[Any]) -> None:
         logging.info("VM extensions updated: %s", name)
     except HttpResponseError as err:
         if (
-            "models that may be referenced by one or more VMs belonging to the Virtual Machine Scale Set"
+            "models that may be referenced by one or more"
+            + " VMs belonging to the Virtual Machine Scale Set"
             in str(err)
         ):
             logging.error(
