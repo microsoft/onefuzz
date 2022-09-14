@@ -29,6 +29,8 @@ public interface IContainers {
 
     public Async.Task<Uri> AddContainerSasUrl(Uri uri, TimeSpan? duration = null);
     public Async.Task<Dictionary<Container, IDictionary<string, string>>> GetContainers(StorageType corpus);
+
+    public string AuthDownloadUrl(Container container, string filename);
 }
 
 public class Containers : IContainers {
@@ -214,5 +216,15 @@ public class Containers : IContainers {
          }));
 
         return new(data.SelectMany(x => x));
+    }
+
+    public string AuthDownloadUrl(Container container, string filename) {
+        var instance = _config.OneFuzzInstance;
+
+        var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+        queryString.Add("container", container.String);
+        queryString.Add("filename", filename);
+
+        return $"{instance}/api/download?{queryString}";
     }
 }

@@ -368,11 +368,87 @@ namespace Tests {
             where Container.TryParse(nameString, out var _)
             select Container.Parse(nameString);
 
+        public static Gen<ADODuplicateTemplate> AdoDuplicateTemplate() {
+            return Arb.Generate<Tuple<List<string>, Dictionary<string, string>, string?>>().Select(
+                arg =>
+                    new ADODuplicateTemplate(
+                        arg.Item1,
+                        arg.Item2,
+                        arg.Item2,
+                        arg.Item3
+                    )
+            );
+        }
+
+        public static Gen<AdoTemplate> AdoTemplate() {
+            return Arb.Generate<Tuple<Uri, SecretData<string>, NonEmptyString, List<string>, Dictionary<string, string>, ADODuplicateTemplate, string?>>().Select(
+                arg =>
+                    new AdoTemplate(
+                        arg.Item1,
+                        arg.Item2,
+                        arg.Item3.Item,
+                        arg.Item3.Item,
+                        arg.Item4,
+                        arg.Item5,
+                        AdoDuplicateTemplate().Sample(1, 1).First(),
+                        arg.Item7
+                    )
+            );
+        }
+
+        public static Gen<TeamsTemplate> TeamsTemplate() {
+            return Arb.Generate<Tuple<SecretData<string>>>().Select(
+                arg =>
+                    new TeamsTemplate(
+                        arg.Item1
+                    )
+            );
+        }
+
+        public static Gen<GithubAuth> GithubAuth() {
+            return Arb.Generate<Tuple<string>>().Select(
+                arg =>
+                    new GithubAuth(
+                        arg.Item1,
+                        arg.Item1
+                    )
+            );
+        }
+
+        public static Gen<GithubIssueSearch> GithubIssueSearch() {
+            return Arb.Generate<Tuple<List<GithubIssueSearchMatch>, string, string?, GithubIssueState?>>().Select(
+                arg =>
+                    new GithubIssueSearch(
+                        arg.Item1,
+                        arg.Item2,
+                        arg.Item3,
+                        arg.Item4
+                    )
+            );
+        }
+
+        public static Gen<GithubIssuesTemplate> GithubIssuesTemplate() {
+            return Arb.Generate<Tuple<SecretData<GithubAuth>, NonEmptyString, GithubIssueSearch, List<string>, GithubIssueDuplicate>>().Select(
+                arg =>
+                    new GithubIssuesTemplate(
+                        arg.Item1,
+                        arg.Item2.Item,
+                        arg.Item2.Item,
+                        arg.Item2.Item,
+                        arg.Item2.Item,
+                        arg.Item3,
+                        arg.Item4,
+                        arg.Item4,
+                        arg.Item5
+                    )
+            );
+        }
+
         public static Gen<NotificationTemplate> NotificationTemplate() {
             return Gen.OneOf(new[] {
-                Arb.Generate<AdoTemplate>().Select(e => e as NotificationTemplate),
-                Arb.Generate<TeamsTemplate>().Select(e => e as NotificationTemplate),
-                Arb.Generate<GithubIssuesTemplate>().Select(e => e as NotificationTemplate)
+                AdoTemplate().Select(a => a as NotificationTemplate),
+                TeamsTemplate().Select(e => e as NotificationTemplate),
+                GithubIssuesTemplate().Select(e => e as NotificationTemplate)
             });
         }
 
@@ -1006,17 +1082,15 @@ namespace Tests {
         }
 
 
-        /*
+
         //Sample function on how repro a failing test run, using Replay
         //functionality of FsCheck. Feel free to
         [Property]
-        void Replay()
-        {
-            var seed = FsCheck.Random.StdGen.NewStdGen(4570702, 297027754);
-            var p = Prop.ForAll((WebhookMessageEventGrid x) => WebhookMessageEventGrid(x) );
+        void Replay() {
+            var seed = FsCheck.Random.StdGen.NewStdGen(811038773, 297085737);
+            var p = Prop.ForAll((NotificationTemplate x) => NotificationTemplate(x));
             p.Check(new Configuration { Replay = seed });
         }
-        */
     }
 
 }
