@@ -136,13 +136,6 @@ public class Extensions : IExtensions {
     }
 
     public static VMExtensionWrapper AzMonExtension(AzureLocation region, AzureMonitorExtensionConfig azureMonitor) {
-        var authId = azureMonitor.MonitoringGCSAuthId;
-        var configVersion = azureMonitor.ConfigVersion;
-        var moniker = azureMonitor.Moniker;
-        var namespaceName = azureMonitor.Namespace;
-        var environment = azureMonitor.MonitoringGSEnvironment;
-        var account = azureMonitor.MonitoringGCSAccount;
-        var authIdType = azureMonitor.MonitoringGCSAuthIdType;
         var settings = JsonSerializer.Serialize(new Settings(), _extensionSerializerOptions);
 
         return new VMExtensionWrapper {
@@ -154,18 +147,6 @@ public class Extensions : IExtensions {
             TypeHandlerVersion = "1.0",
             Settings = new BinaryData(settings),
             EnableAutomaticUpgrade = true,
-            ProtectedSettings =
-                new BinaryData(JsonSerializer.Serialize(
-                    new {
-                        ConfigVersion = configVersion,
-                        Moniker = moniker,
-                        Namespace = namespaceName,
-                        MonitoringGCSEnvironment = environment,
-                        MonitoringGCSAccount = account,
-                        MonitoringGCSRegion = region,
-                        MonitoringGCSAuthId = authId,
-                        MonitoringGCSAuthIdType = authIdType,
-                    }, _extensionSerializerOptions))
         };
     }
 
