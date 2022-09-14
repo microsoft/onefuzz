@@ -28,8 +28,8 @@ else
     fi
 fi
 
-
-mkdir -p artifacts/agent-$(uname)
+platform=$(uname)
+mkdir -p "artifacts/agent-$platform"
 
 cd src/agent
 
@@ -54,7 +54,32 @@ cargo build --release --locked
 cargo clippy --release --locked --all-targets -- -D warnings
 # export RUST_LOG=trace
 export RUST_BACKTRACE=full
-cargo test --release --locked --workspace
+
+if [ "$platform" = 'Linux' ]; then
+    # Run tests and collect coverage if on Linux
+    # https://doc.rust-lang.org/stable/rustc/instrument-coverage.html#test-coverage
+    RUSTFLAGS="-C instrument-coverage" cargo test --locked --workspace
+
+    # merge all coverage files
+    $(rustc --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/llvm-profdata merge -sparse **/default.profraw -o test.profdata
+    # output coverage report (the ugly for loop is to find the right binaries; see link above)
+    $(rustc --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/llvm-cov show --instr-profile=test.profdata \
+        -Xdemangler=rustfilt --show-line-counts-or-regions --show-instantiations \
+        --ignore-filename-regex='/\.cargo/(registry|git)' \
+        $( for file in \
+            $( \
+                RUSTFLAGS="-C instrument-coverage" cargo test --locked --workspace --no-run --message-format=json \
+                | jq -r "select(.profile.test == true) | .filenames[]"  \
+                | grep -v dSYM - \
+                ); \
+            do printf "%s %s " -object $file; \
+            done \
+        ) > agent-coverage.txt
+else 
+    # Else just run tests
+    cargo test --locked --workspace
+fi
+
 
 # TODO: re-enable integration tests.
 # cargo test --release --manifest-path ./onefuzz-task/Cargo.toml --features integration_test -- --nocapture

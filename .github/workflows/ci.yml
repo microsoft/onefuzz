@@ -35,7 +35,7 @@ jobs:
       # note: keep this in sync with .devcontainer/Dockerfile
       run: |
         rustup default 1.63 
-        rustup component add clippy rustfmt
+        rustup component add clippy rustfmt llvm-tools-preview
     - name: Get Rust version & build version
       shell: bash
       run: |
@@ -88,6 +88,9 @@ jobs:
     - run: src/ci/agent.sh
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       shell: bash
+    - name: Upload coverage to Codecov
+      if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
+      uses: codecov/codecov-action@v3
     - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts

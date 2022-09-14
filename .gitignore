@@ -6,6 +6,10 @@
 **/.envrc
 **/venv
 
+# profiling files
+*.profraw
+*.profdata
+
 # vim
 *.swp
 

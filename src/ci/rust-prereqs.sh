@@ -11,7 +11,7 @@ fi
 # sccache --start-server
 # export RUSTC_WRAPPER=$(which sccache)
 
-cargo install cargo-audit
+cargo install cargo-audit rustfilt
 
 if ! cargo license --help; then
     cargo install cargo-license@0.4.2
