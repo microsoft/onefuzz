@@ -8,6 +8,12 @@ on:
       - '*'
   workflow_dispatch:
 
+# limit to one concurrent run per PR/branch,
+# and cancel any previous runs still going
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
@@ -21,7 +27,9 @@ jobs:
       matrix:
         os:
         - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-windows-2019" ]
-        - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-18.04" ] 
+        # disabled while issue is affecting instances
+        #- [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-18.04" ] 
+        - ubuntu-18.04
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v2

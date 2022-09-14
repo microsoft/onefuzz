@@ -286,3 +286,7 @@ public record WebhookUpdate(
     string? SecretToken,
     WebhookMessageFormat? MessageFormat
 ) : BaseRequest;
+
+public record InstanceConfigUpdate(
+    [property: Required] InstanceConfig config
+) : BaseRequest;
