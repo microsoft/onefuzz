@@ -8,6 +8,12 @@ on:
       - '*'
   workflow_dispatch:
 
+# limit to one concurrent run per PR/branch,
+# and cancel any previous runs still going
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
