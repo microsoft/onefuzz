@@ -295,7 +295,7 @@ jobs:
         ../ci/disable-py-cache.sh
         mypy __app__ ./tests
   service-net:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v2
     - name: Setup .NET Core SDK
@@ -325,6 +325,9 @@ jobs:
         dotnet tool run reportgenerator -reports:*/TestResults/*/coverage.cobertura.xml -targetdir:coverage -reporttypes:MarkdownSummary
         kill %1
         cat coverage/*.md > $GITHUB_STEP_SUMMARY
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
 
     - name: Build Service
       run: |
