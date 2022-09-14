@@ -213,9 +213,11 @@ class Repro(BASE_REPRO, ORMMixin):
             cmd = "\r\n".join(cmds)
             files["repro.ps1"] = cmd
         elif task.os == OS.linux:
+            # Assumes `setup` container has been downloaded to `/onefuzz/setup` and that
+            # `target_exe` has been prefixed with `setup/` by task-creating clients.
             gdb_fmt = (
                 "ASAN_OPTIONS='abort_on_error=1' gdbserver "
-                "%s /onefuzz/setup/%s /onefuzz/downloaded/%s"
+                "%s /onefuzz/%s /onefuzz/downloaded/%s"
             )
             cmd = "while :; do %s; done" % (
                 gdb_fmt
