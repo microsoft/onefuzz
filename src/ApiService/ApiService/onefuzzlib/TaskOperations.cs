@@ -55,6 +55,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
     }
 
     public IAsyncEnumerable<Task> GetByJobId(Guid jobId) {
+
         return QueryAsync(filter: $"PartitionKey eq '{jobId}'");
     }
 
@@ -124,7 +125,6 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         _logTracer.Error($"task failed {task.JobId}:{task.TaskId} - {error}");
 
         task = await SetState(task with { Error = error }, TaskState.Stopping);
-        //self.set_state(TaskState.stopping)
         await MarkDependantsFailed(task, taskInJob);
     }
 
@@ -151,7 +151,11 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             task = task with { State = state };
         }
 
-        await this.Replace(task);
+        var r = await Replace(task);
+        if (!r.IsOk) {
+            _logTracer.Error($"Failed to replace task with jobid: {task.JobId} and taskid: {task.TaskId} due to {r.ErrorV}");
+        }
+
         var _events = _context.Events;
         if (task.State == TaskState.Stopped) {
             if (task.Error != null) {
@@ -221,9 +225,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             if (job != null) {
                 await jobOperations.OnStart(job);
             }
-
         }
-
         return task;
 
     }
@@ -280,7 +282,9 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         if (task.Config.Pool is TaskPool p) {
             var pool = await _context.PoolOperations.GetByName(p.PoolName);
             if (!pool.IsOk) {
-                _logTracer.Info($"unable to schedule task to pool: {task.TaskId} - {pool.ErrorV}");
+                _logTracer.Info(
+                    $"unable to schedule task to pool [{task.Config.Pool.PoolName}]: {task.TaskId} - {pool.ErrorV}"
+                );
                 return null;
             }
 
@@ -292,7 +296,9 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             await foreach (var scaleset in scalesets) {
                 var pool = await _context.PoolOperations.GetByName(scaleset.PoolName);
                 if (!pool.IsOk) {
-                    _logTracer.Info($"unable to schedule task to pool: {task.TaskId} - {pool.ErrorV}");
+                    _logTracer.Info(
+                        $"unable to schedule task to pool [{scaleset.PoolName}]: {task.TaskId} - {pool.ErrorV}"
+                    );
                     return null;
                 }
 

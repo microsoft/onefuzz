@@ -53,11 +53,11 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         var result = await pools.ToListAsync();
         if (result.Count == 0) {
-            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, "unable to find pool");
+            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, $"unable to find pool with name {poolName.String}");
         }
 
         if (result.Count != 1) {
-            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, "error identifying pool");
+            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, $"error identifying pool with name {poolName.String}");
         }
 
         return OneFuzzResult<Pool>.Ok(result.Single());
@@ -68,11 +68,11 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         var result = await pools.ToListAsync();
         if (result.Count == 0) {
-            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, "unable to find pool");
+            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, $"unable to find pool with id {poolId}");
         }
 
         if (result.Count != 1) {
-            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, "error identifying pool");
+            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, $"error identifying pool with id {poolId}");
         }
 
         return OneFuzzResult<Pool>.Ok(result.Single());
