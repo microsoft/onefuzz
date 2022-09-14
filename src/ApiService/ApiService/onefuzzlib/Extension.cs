@@ -136,7 +136,7 @@ public class Extensions : IExtensions {
     }
 
     public static VMExtensionWrapper AzMonExtension(AzureLocation region) {
-        var settings = JsonSerializer.Serialize(new Settings());
+        var settings = JsonSerializer.Serialize(new Settings(), _extensionSerializerOptions);
 
         return new VMExtensionWrapper {
             Location = region,
