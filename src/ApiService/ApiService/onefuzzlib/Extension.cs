@@ -135,7 +135,7 @@ public class Extensions : IExtensions {
         public bool GCS_AUTO_CONFIG { get; set; } = true;
     }
 
-    public static VMExtensionWrapper AzMonExtension(AzureLocation region) {
+    public static VMExtensionWrapper AzMonExtension(AzureLocation region, AzureMonitorExtensionConfig azureMonitor) {
         var settings = JsonSerializer.Serialize(new Settings(), _extensionSerializerOptions);
 
         return new VMExtensionWrapper {
