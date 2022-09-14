@@ -92,7 +92,7 @@ jobs:
       if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       uses: codecov/codecov-action@v3
       with:
-        files: src/agent/agent-coverage.txt
+        files: src/agent/lcov.info
     - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts

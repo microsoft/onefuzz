@@ -6,9 +6,10 @@
 **/.envrc
 **/venv
 
-# profiling files
+# profiling/coverage files
 *.profraw
 *.profdata
+lcov.info
 
 # vim
 *.swp
