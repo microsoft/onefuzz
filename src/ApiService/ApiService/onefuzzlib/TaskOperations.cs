@@ -274,36 +274,34 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
     }
 
     public async Async.Task<Pool?> GetPool(Task task) {
-        if (task.Config.Pool != null) {
-            var pool = await _context.PoolOperations.GetByName(task.Config.Pool.PoolName);
+        // Note: if the behaviour of this method changes,
+        // then Scheduler.GetPoolKey will probably also need to change
+
+        if (task.Config.Pool is TaskPool p) {
+            var pool = await _context.PoolOperations.GetByName(p.PoolName);
             if (!pool.IsOk) {
-                _logTracer.Info(
-                    $"unable to schedule task to pool: {task.TaskId} - {pool.ErrorV}"
-                );
+                _logTracer.Info($"unable to schedule task to pool: {task.TaskId} - {pool.ErrorV}");
                 return null;
             }
-            return pool.OkV;
-        } else if (task.Config.Vm != null) {
-            var scalesets = _context.ScalesetOperations.Search().Where(s => s.VmSku == task.Config.Vm.Sku && s.Image == task.Config.Vm.Image);
 
+            return pool.OkV;
+        }
+
+        if (task.Config.Vm is TaskVm taskVm) {
+            var scalesets = _context.ScalesetOperations.Search().Where(s => s.VmSku == taskVm.Sku && s.Image == taskVm.Image);
             await foreach (var scaleset in scalesets) {
-                if (task.Config.Pool == null) {
-                    continue;
-                }
-                var pool = await _context.PoolOperations.GetByName(task.Config.Pool.PoolName);
+                var pool = await _context.PoolOperations.GetByName(scaleset.PoolName);
                 if (!pool.IsOk) {
-                    _logTracer.Info(
-                        $"unable to schedule task to pool: {task.TaskId} - {pool.ErrorV}"
-                    );
+                    _logTracer.Info($"unable to schedule task to pool: {task.TaskId} - {pool.ErrorV}");
                     return null;
                 }
+
                 return pool.OkV;
             }
         }
 
         _logTracer.Warning($"unable to find a scaleset that matches the task prereqs: {task.TaskId}");
         return null;
-
     }
 
     public async Async.Task<Task> Init(Task task) {
