@@ -121,7 +121,7 @@ public class Extensions : IExtensions {
     public static VMExtensionWrapper AzSecExtension(AzureLocation region) {
         return new VMExtensionWrapper {
             Location = region,
-            Name = "AzureSecurityLinuxAgent",
+            Name = "Microsoft.Azure.Security.Monitoring.AzureSecurityLinuxAgent",
             Publisher = "Microsoft.Azure.Security.Monitoring",
             TypePropertiesType = "AzureSecurityLinuxAgent",
             TypeHandlerVersion = "2.0",
@@ -147,7 +147,7 @@ public class Extensions : IExtensions {
 
         return new VMExtensionWrapper {
             Location = region,
-            Name = "AzureMonitorLinuxAgent",
+            Name = "Microsoft.Azure.Monitor.AzureMonitorLinuxAgent",
             Publisher = "Microsoft.Azure.Monitor",
             TypePropertiesType = "AzureMonitorLinuxAgent",
             AutoUpgradeMinorVersion = true,
