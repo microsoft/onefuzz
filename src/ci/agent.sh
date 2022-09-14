@@ -58,7 +58,7 @@ export RUST_BACKTRACE=full
 if [ "$platform" = 'Linux' ]; then
     # Run tests and collect coverage if on Linux
     # https://github.com/taiki-e/cargo-llvm-cov
-    cargo llvm-cov --locked --workspace --lcov lcov.info
+    cargo llvm-cov --locked --workspace --lcov --output-path lcov.info
 else 
     # On Windows, just run tests
     cargo test --locked --workspace
