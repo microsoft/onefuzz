@@ -100,7 +100,7 @@ public class Node {
                 context: patch.MachineId.ToString());
         }
 
-        await _context.NodeOperations.Stop(node, done: true);
+        node = await _context.NodeOperations.Stop(node, done: true);
         if (node.DebugKeepNode) {
             await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
         }
@@ -166,7 +166,7 @@ public class Node {
                 context: delete.MachineId.ToString());
         }
 
-        await _context.NodeOperations.SetHalt(node);
+        node = await _context.NodeOperations.SetHalt(node);
         if (node.DebugKeepNode) {
             await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
         }

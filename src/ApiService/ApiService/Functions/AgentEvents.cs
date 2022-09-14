@@ -73,13 +73,13 @@ public class AgentEvents {
         if (ev.State == NodeState.Free) {
             if (node.ReimageRequested || node.DeleteRequested) {
                 _log.Info($"stopping free node with reset flags: {machineId}");
-                await _context.NodeOperations.Stop(node);
+                _ = await _context.NodeOperations.Stop(node);
                 return null;
             }
 
             if (await _context.NodeOperations.CouldShrinkScaleset(node)) {
                 _log.Info($"stopping free node to resize scaleset: {machineId}");
-                await _context.NodeOperations.SetHalt(node);
+                _ = await _context.NodeOperations.SetHalt(node);
                 return null;
             }
         }
@@ -87,7 +87,7 @@ public class AgentEvents {
         if (ev.State == NodeState.Init) {
             if (node.DeleteRequested) {
                 _log.Info($"stopping node (init and delete_requested): {machineId}");
-                await _context.NodeOperations.Stop(node);
+                _ = await _context.NodeOperations.Stop(node);
                 return null;
             }
 
@@ -95,12 +95,12 @@ public class AgentEvents {
             // they send 'init' with reimage_requested, it's because the node was reimaged
             // successfully.
             node = node with { ReimageRequested = false, InitializedAt = DateTimeOffset.UtcNow };
-            await _context.NodeOperations.SetState(node, ev.State);
+            _ = await _context.NodeOperations.SetState(node, ev.State);
             return null;
         }
 
         _log.Info($"node state update: {machineId} from {node.State} to {ev.State}");
-        await _context.NodeOperations.SetState(node, ev.State);
+        node = await _context.NodeOperations.SetState(node, ev.State);
 
         if (ev.State == NodeState.Free) {
             _log.Info($"node now available for work: {machineId}");
@@ -193,7 +193,8 @@ public class AgentEvents {
         }
 
         if (!node.State.ReadyForReset()) {
-            await _context.NodeOperations.SetState(node, NodeState.Busy);
+            _ = await _context.NodeOperations.SetState(node, NodeState.Busy);
+            // node unused after this point
         }
 
         var nodeTask = new NodeTasks(
