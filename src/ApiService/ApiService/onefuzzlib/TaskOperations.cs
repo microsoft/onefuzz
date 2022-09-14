@@ -282,9 +282,9 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         if (task.Config.Pool is TaskPool p) {
             var pool = await _context.PoolOperations.GetByName(p.PoolName);
             if (!pool.IsOk) {
-				_logTracer.Info(
+                _logTracer.Info(
                     $"unable to schedule task to pool [{task.Config.Pool.PoolName}]: {task.TaskId} - {pool.ErrorV}"
-				);
+                );
                 return null;
             }
 
@@ -296,9 +296,9 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             await foreach (var scaleset in scalesets) {
                 var pool = await _context.PoolOperations.GetByName(scaleset.PoolName);
                 if (!pool.IsOk) {
-					_logTracer.Info(
+                    _logTracer.Info(
                         $"unable to schedule task to pool [{scaleset.PoolName}]: {task.TaskId} - {pool.ErrorV}"
-					);
+                    );
                     return null;
                 }
 

@@ -54,9 +54,9 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
             _logTracer.Warning($"StopIfAllDone could not find any tasks for job with id {job.JobId}");
         }
 
-        var anyNotStoppedJobs = await jobs.AnyAsync(task => task.State != TaskState.Stopped);
+        var anyNotStoppedTasks = await jobs.AnyAsync(task => task.State != TaskState.Stopped);
 
-        if (anyNotStoppedJobs) {
+        if (anyNotStoppedTasks) {
             return;
         }
 
