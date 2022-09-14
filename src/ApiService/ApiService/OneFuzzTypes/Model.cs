@@ -531,14 +531,21 @@ public class NotificationTemplateConverter : JsonConverter<NotificationTemplate>
         if (obj == null) {
             throw new ArgumentNullException($"Failed to deserialize type: {typeof(T)}. It was null.");
         }
-        var nullNonNullableProperties = obj.GetType().GetProperties()
-            // Get all non-nullable properties
-            .Where(property => Nullable.GetUnderlyingType(property.PropertyType) == null)
-            // If any of them are null
-            .Where(property => property.GetValue(obj) == null);
+        var nonNullableParameters = obj.GetType().GetConstructors().First().GetParameters()
+            .Where(parameter => !parameter.HasDefaultValue)
+            .Select(parameter => parameter.Name)
+            .Where(pName => pName != null)
+            .ToHashSet();
+
+        var nullProperties = obj.GetType().GetProperties()
+            .Where(property => property.GetValue(obj) == null)
+            .Select(property => property.Name)
+            .ToHashSet<Endpoint>();
+
+        var nullNonNullableProperties = nonNullableParameters.Intersect(nullProperties);
 
         if (nullNonNullableProperties.Any()) {
-            throw new ArgumentOutOfRangeException($"Failed to deserialize type: {obj.GetType()}. The following non nullable properties are missing values: {string.Join(", ", nullNonNullableProperties.Select(p => p.Name))}");
+            throw new ArgumentOutOfRangeException($"Failed to deserialize type: {obj.GetType()}. The following non nullable properties are missing values: {string.Join(", ", nullNonNullableProperties)}");
         }
 
         return obj;
@@ -548,9 +555,9 @@ public class NotificationTemplateConverter : JsonConverter<NotificationTemplate>
 
 public record ADODuplicateTemplate(
     List<string> Increment,
-    string? Comment,
     Dictionary<string, string> SetState,
-    Dictionary<string, string> AdoFields
+    Dictionary<string, string> AdoFields,
+    string? Comment = null
 );
 
 public record AdoTemplate(
@@ -559,9 +566,9 @@ public record AdoTemplate(
     string Project,
     string Type,
     List<string> UniqueFields,
-    string? Comment,
     Dictionary<string, string> AdoFields,
-    ADODuplicateTemplate OnDuplicate
+    ADODuplicateTemplate OnDuplicate,
+    string? Comment = null
     ) : NotificationTemplate;
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate;
 
@@ -569,16 +576,16 @@ public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate;
 public record GithubAuth(string User, string PersonalAccessToken);
 
 public record GithubIssueSearch(
-    string? Author,
-    GithubIssueState? State,
     List<GithubIssueSearchMatch> FieldMatch,
-    [property: JsonPropertyName("string")] String str
+    [property: JsonPropertyName("string")] String str,
+    string? Author = null,
+    GithubIssueState? State = null
 );
 
 public record GithubIssueDuplicate(
-    string? Comment,
     List<string> Labels,
-    bool Reopen
+    bool Reopen,
+    string? Comment = null
 );
 
 
