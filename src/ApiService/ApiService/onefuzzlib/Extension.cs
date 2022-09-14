@@ -395,7 +395,7 @@ public class Extensions : IExtensions {
                 BlobSasPermissions.Read
             ),
             await _context.Containers.GetFileSasUrl(
-                report?.InputBlob?.container!,
+                report?.InputBlob?.Container!,
                 report?.InputBlob?.Name!,
                 StorageType.Corpus,
                 BlobSasPermissions.Read

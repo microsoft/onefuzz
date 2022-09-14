@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using FluentAssertions;
 using Microsoft.OneFuzz.Service;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Scriban;
 using Xunit;
 
@@ -113,6 +115,19 @@ public class TemplateTests {
 
         // The template logic results in either the asan_log or call stack to be present
         output.Should().NotContainAny(report.CallStack);
+    }
+
+    [Fact]
+    public void TemplatesShouldDeserializeAppropriately() {
+        var teamsTemplate = @"{""url"": {""secret"": {""url"": ""https://example.com""}}}";
+        var template = JsonSerializer.Deserialize<NotificationTemplate>(teamsTemplate, EntityConverter.GetJsonSerializerOptions());
+        var a = template is AdoTemplate;
+        var t = template is TeamsTemplate;
+        var g = template is GithubIssuesTemplate;
+
+        a.Should().BeFalse();
+        t.Should().BeTrue();
+        g.Should().BeFalse();
     }
 
     private static Report GetReport() {

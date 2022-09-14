@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
-using Azure.Data.Tables;
 using Azure.Storage.Sas;
 
 namespace Microsoft.OneFuzz.Service;
@@ -36,7 +35,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             done.Add(notification.Config);
 
             if (notification.Config is TeamsTemplate teamsTemplate) {
-                NotifyTeams(teamsTemplate, container, filename, reportOrRegression!);
+                await _context.Teams.NotifyTeams(teamsTemplate, container, filename, reportOrRegression!);
             }
 
             if (reportOrRegression == null) {
@@ -44,11 +43,11 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             }
 
             if (notification.Config is AdoTemplate adoTemplate) {
-                NotifyAdo(adoTemplate, container, filename, reportOrRegression, failTaskOnTransientError);
+                await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, failTaskOnTransientError);
             }
 
             if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {
-                GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression);
+                await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression);
             }
         }
 
@@ -78,7 +77,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     }
 
     public IAsyncEnumerable<Notification> GetNotifications(Container container) {
-        return QueryAsync(filter: TableClient.CreateQueryFilter($"container eq {container.String}"));
+        return SearchByRowKeys(new[] { container.String });
     }
 
     public IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks() {
@@ -139,17 +138,5 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
         _logTracer.Error($"unable to find crash_report or no repro entry for report: {JsonSerializer.Serialize(report)}");
         return null;
-    }
-
-    private void GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport report) {
-        throw new NotImplementedException();
-    }
-
-    private void NotifyAdo(AdoTemplate config, Container container, string filename, IReport report, bool failTaskOnTransientError) {
-        throw new NotImplementedException();
-    }
-
-    private void NotifyTeams(TeamsTemplate config, Container container, string filename, IReport report) {
-        throw new NotImplementedException();
     }
 }

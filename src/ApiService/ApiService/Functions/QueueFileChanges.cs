@@ -22,9 +22,9 @@ public class QueueFileChanges {
         _notificationOperations = notificationOperations;
     }
 
-    //[Function("QueueFileChanges")]
+    [Function("QueueFileChanges")]
     public async Async.Task Run(
-        [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
+        [QueueTrigger("file-changes", Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount) {
         var fileChangeEvent = JsonSerializer.Deserialize<JsonDocument>(msg, EntityConverter.GetJsonSerializerOptions());
         var lastTry = dequeueCount == MAX_DEQUEUE_COUNT;
@@ -44,10 +44,10 @@ public class QueueFileChanges {
             return;
         }
 
-        await file_added(_log, fileChangeEvent, lastTry);
+        await FileAdded(_log, fileChangeEvent, lastTry);
     }
 
-    private async Async.Task file_added(ILogTracer log, JsonDocument fileChangeEvent, bool failTaskOnTransientError) {
+    private async Async.Task FileAdded(ILogTracer log, JsonDocument fileChangeEvent, bool failTaskOnTransientError) {
         var data = fileChangeEvent.RootElement.GetProperty("data");
         var url = data.GetProperty("url").GetString()!;
         var parts = url.Split("/").Skip(3).ToList();
