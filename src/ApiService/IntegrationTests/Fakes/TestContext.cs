@@ -117,6 +117,9 @@ public sealed class TestContext : IOnefuzzContext {
     public ISubnet Subnet => throw new NotImplementedException();
 
     public IImageOperations ImageOperations => throw new NotImplementedException();
+    public ITeams Teams => throw new NotImplementedException();
+    public IGithubIssues GithubIssues => throw new NotImplementedException();
+    public IAdo Ado => throw new NotImplementedException();
 
 
 }
