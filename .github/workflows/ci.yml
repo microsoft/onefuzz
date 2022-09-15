@@ -32,6 +32,7 @@ jobs:
         - build
         - test
     runs-on: "${{ matrix.os }}"
+    name: Agent ${{matrix.target}} (${{matrix.os[2]}})
     steps:
     - uses: actions/checkout@v2
     - name: Install specific Rust version
