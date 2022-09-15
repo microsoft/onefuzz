@@ -18,7 +18,7 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
-  ACTIONS_CACHE_KEY_DATE: 2022-06-02-01
+  ACTIONS_CACHE_KEY_DATE: 2022-09-15-02
   CI: true
 
 jobs:
@@ -27,9 +27,7 @@ jobs:
       matrix:
         os:
         - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-windows-2019" ]
-        # disabled while issue is affecting instances
-        #- [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-18.04" ] 
-        - ubuntu-18.04
+        - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-18.04" ] 
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v2
@@ -37,7 +35,7 @@ jobs:
       # note: keep this in sync with .devcontainer/Dockerfile
       run: |
         rustup default 1.63 
-        rustup component add clippy rustfmt
+        rustup component add clippy rustfmt llvm-tools-preview
     - name: Get Rust version & build version
       shell: bash
       run: |
@@ -56,7 +54,7 @@ jobs:
       with:
         # if nothing has changed inside src/agent, we can reuse the artifacts directory
         path: artifacts
-        key: agent-artifacts|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/**/*') }}
+        key: agent-artifacts|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/**/*') }}|${{hashFiles('src/ci/agent.sh')}}
         # note: also including the ACTIONS_CACHE_KEY_DATE to rebuild if the Prereq Cache is invalidated
     - name: Rust Prereq Cache
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
@@ -90,6 +88,10 @@ jobs:
     - run: src/ci/agent.sh
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       shell: bash
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: artifacts/lcov.info
     - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts
@@ -297,7 +299,7 @@ jobs:
         ../ci/disable-py-cache.sh
         mypy __app__ ./tests
   service-net:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v2
     - name: Setup .NET Core SDK
@@ -324,9 +326,10 @@ jobs:
         cd src/ApiService/
         azurite --silent &
         dotnet test --no-restore --collect:"XPlat Code Coverage" --filter 'Category!=Live'
-        dotnet tool run reportgenerator -reports:*/TestResults/*/coverage.cobertura.xml -targetdir:coverage -reporttypes:MarkdownSummary
-        kill %1
-        cat coverage/*.md > $GITHUB_STEP_SUMMARY
+        kill %1 
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
 
     - name: Build Service
       run: |
