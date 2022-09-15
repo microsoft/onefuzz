@@ -54,7 +54,7 @@ jobs:
       with:
         # if nothing has changed inside src/agent, we can reuse the artifacts directory
         path: artifacts
-        key: agent-artifacts|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/**/*') }}
+        key: agent-artifacts|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/**/*') }}|${{hashFiles('src/ci/agent.sh')}}
         # note: also including the ACTIONS_CACHE_KEY_DATE to rebuild if the Prereq Cache is invalidated
     - name: Rust Prereq Cache
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'

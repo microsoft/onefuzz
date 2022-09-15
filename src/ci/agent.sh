@@ -69,12 +69,12 @@ if [ ! -z "$SCCACHE" ]; then
     sccache --show-stats
 fi
 
-cp target/release/onefuzz-task* ../../artifacts/agent-$(uname)
-cp target/release/onefuzz-agent* ../../artifacts/agent-$(uname)
-cp target/release/srcview* ../../artifacts/agent-$(uname)
+cp target/release/onefuzz-task* "../../artifacts/agent-$platform"
+cp target/release/onefuzz-agent* "../../artifacts/agent-$platform"
+cp target/release/srcview* "../../artifacts/agent-$platform"
 
 if exists target/release/*.pdb; then
     for file in target/release/*.pdb; do
-        cp ${file} ../../artifacts/agent-$(uname)
+        cp "$file" "../../artifacts/agent-$platform"
     done
 fi
