@@ -218,8 +218,10 @@ public class VmOperations : IVmOperations {
                 extensionName,
                 extension
             );
-        } catch (RequestFailedException ex) when (ex.Status == 409 && ex.Message.Contains("VM is marked for deletion")) {
-            _logTracer.Info(ex.Message);
+        } catch (RequestFailedException ex) when
+            (ex.Status == 409 &&
+                (ex.Message.Contains("VM is marked for deletion") || ex.Message.Contains("The request failed due to conflict with a concurrent request."))) {
+            _logTracer.Info($"Tried to create extension but failed due to {ex.Message}");
         }
         return;
     }
