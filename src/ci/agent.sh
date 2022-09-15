@@ -57,7 +57,7 @@ export RUST_BACKTRACE=full
 
 # Run tests and collect coverage 
 # https://github.com/taiki-e/cargo-llvm-cov
-cargo llvm-cov --locked --workspace --lcov --output-path lcov.info
+cargo llvm-cov --locked --workspace --lcov --output-path "../../artifacts/lcov.info"
 
 # TODO: re-enable integration tests.
 # cargo test --release --manifest-path ./onefuzz-task/Cargo.toml --features integration_test -- --nocapture
