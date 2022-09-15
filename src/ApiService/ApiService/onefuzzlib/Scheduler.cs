@@ -120,7 +120,7 @@ public class Scheduler : IScheduler {
 
     record PoolKey(
         PoolName? poolName = null,
-        (string sku, string image)? vm = null);
+        (string sku, ImageReference image)? vm = null);
 
     private static PoolKey? GetPoolKey(Task task) {
         // the behaviour of this key should match the behaviour of TaskOperations.GetPool

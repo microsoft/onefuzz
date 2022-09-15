@@ -16,10 +16,11 @@ sealed class TestVmssOperations : IVmssOperations {
 
     public static IReadOnlyList<string> TestSkus = new[] { TestSku };
     public const string TestSku = "Test_Sku";
+    public static readonly ImageReference TestImage = ImageReference.MustParse("Canonical:UbuntuServer:18.04-LTS:latest");
 
     /* below not implemented */
 
-    public Task<OneFuzzResultVoid> CreateVmss(Region location, Guid name, string vmSku, long vmCount, string image, string networkId, bool? spotInstance, bool ephemeralOsDisks, IList<VirtualMachineScaleSetExtensionData>? extensions, string password, string sshPublicKey, IDictionary<string, string> tags) {
+    public Task<OneFuzzResultVoid> CreateVmss(Region location, Guid name, string vmSku, long vmCount, ImageReference image, string networkId, bool? spotInstance, bool ephemeralOsDisks, IList<VirtualMachineScaleSetExtensionData>? extensions, string password, string sshPublicKey, IDictionary<string, string> tags) {
         throw new NotImplementedException();
     }
 
