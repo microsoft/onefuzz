@@ -28,6 +28,9 @@ jobs:
         os:
         - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-windows-2019" ]
         - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-18.04" ] 
+        target:
+        - build
+        - test
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v2
@@ -77,18 +80,19 @@ jobs:
         path: |
           sccache
           src/agent/target
-        key: agent|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/Cargo.lock') }}
+        key: agent|${{ join(matrix.os, ':') }}|${{matrix.target}}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/Cargo.lock') }}
         restore-keys: |
-          agent|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|
+          agent|${{ join(matrix.os, ':') }}|${{matrix.target}}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|
     - name: Linux Prereqs
       if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       run: |
         sudo apt-get -y update
         sudo apt-get -y install libssl1.0-dev libunwind-dev
-    - run: src/ci/agent.sh
+    - run: src/ci/agent.sh ${{matrix.target}}
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       shell: bash
     - name: Upload coverage to Codecov
+      if: matrix.target == 'test'
       uses: codecov/codecov-action@v3
       with:
         files: artifacts/lcov.info
