@@ -123,6 +123,8 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
 }
 
 async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
+    let target_exe = config.common.setup_dir.join(&config.target_exe);
+
     let expand = Expand::new()
         .machine_id()
         .await?
@@ -132,7 +134,7 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
         .supervisor_exe(&config.supervisor_exe)
         .supervisor_options(&config.supervisor_options)
         .generated_inputs(output_dir)
-        .target_exe(&config.target_exe)
+        .target_exe(&target_exe)
         .setup_dir(&config.common.setup_dir)
         .tools_dir(&config.tools.local_path)
         .job_id(&config.common.job_id)

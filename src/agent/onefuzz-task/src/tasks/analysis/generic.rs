@@ -194,11 +194,13 @@ pub async fn run_tool(
     config: &Config,
     reports_dir: &Option<PathBuf>,
 ) -> Result<()> {
+    let target_exe = config.common.setup_dir.join(&config.target_exe);
+
     let expand = Expand::new()
         .machine_id()
         .await?
         .input_path(&input)
-        .target_exe(&config.target_exe)
+        .target_exe(&target_exe)
         .target_options(&config.target_options)
         .analyzer_exe(&config.analyzer_exe)
         .analyzer_options(&config.analyzer_options)

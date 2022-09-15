@@ -56,10 +56,12 @@ pub struct GenericRegressionTask {
 #[async_trait]
 impl RegressionHandler for GenericRegressionTask {
     async fn get_crash_result(&self, input: PathBuf, input_url: Url) -> Result<CrashTestResult> {
+        let target_exe = self.config.common.setup_dir.join(&self.config.target_exe);
+
         let args = generic::TestInputArgs {
             input_url: Some(input_url),
             input: &input,
-            target_exe: &self.config.target_exe,
+            target_exe: &target_exe,
             target_options: &self.config.target_options,
             target_env: &self.config.target_env,
             setup_dir: &self.config.common.setup_dir,

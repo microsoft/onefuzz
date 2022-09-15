@@ -128,12 +128,9 @@ impl AsanProcessor {
 
         let job_id = self.config.common.task_id;
         let task_id = self.config.common.task_id;
-        let executable = self.config.target_exe.to_owned();
+        let executable = self.config.common.setup_dir.join(&self.config.target_exe);
 
-        let mut args = vec![
-            "dotnet".to_owned(),
-            self.config.target_exe.display().to_string(),
-        ];
+        let mut args = vec!["dotnet".to_owned(), executable.display().to_string()];
         args.extend(self.config.target_options.clone());
 
         let env = self.config.target_env.clone();

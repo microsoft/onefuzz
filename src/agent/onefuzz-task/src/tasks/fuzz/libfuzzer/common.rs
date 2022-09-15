@@ -236,12 +236,7 @@ where
                 .for_each(|d| inputs.push(&d.local_path));
         }
 
-        let fuzzer = LibFuzzer::new(
-            &self.config.target_exe,
-            self.config.target_options.clone(),
-            self.config.target_env.clone(),
-            &self.config.common.setup_dir,
-        );
+        let fuzzer = L::from_config(&self.config);
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs).await?;
         let notify = Arc::new(Notify::new());
 

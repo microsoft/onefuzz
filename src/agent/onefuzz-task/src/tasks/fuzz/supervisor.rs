@@ -198,6 +198,11 @@ async fn start_supervisor(
     inputs: &SyncedDir,
     reports_dir: PathBuf,
 ) -> Result<Child> {
+    let target_exe = config
+        .target_exe
+        .as_ref()
+        .map(|e| config.common.setup_dir.join(e));
+
     let expand = Expand::new()
         .machine_id()
         .await?
@@ -216,7 +221,7 @@ async fn start_supervisor(
         .set_optional_ref(&config.coverage, |expand, coverage| {
             expand.coverage_dir(&coverage.local_path)
         })
-        .set_optional_ref(&config.target_exe, |expand, target_exe| {
+        .set_optional_ref(&target_exe, |expand, target_exe| {
             expand.target_exe(target_exe)
         })
         .set_optional_ref(&config.supervisor_input_marker, |expand, input_marker| {
