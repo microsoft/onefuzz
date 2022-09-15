@@ -5,12 +5,14 @@
 
 set -ex
 
+target=$1
+
 exists() {
     [ -e "$1" ]
 }
 
 SCCACHE=$(which sccache || echo '')
-if [ ! -z "$SCCACHE" ]; then
+if [ -n "$SCCACHE" ]; then
     # only set RUSTC_WRAPPER if sccache exists
     export RUSTC_WRAPPER=$SCCACHE
     # incremental interferes with (disables) sccache
@@ -45,36 +47,41 @@ if [ X${CARGO_INCREMENTAL} == X ]; then
     cargo clean
 fi
 
-cargo fmt -- --check
-# RUSTSEC-2022-0048: xml-rs is unmaintained
-# RUSTSEC-2021-0139: ansi_term is unmaintained
-cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2022-0048 --ignore RUSTSEC-2021-0139
-cargo license -j > data/licenses.json
-cargo build --release --locked
-cargo clippy --release --locked --all-targets -- -D warnings
-# export RUST_LOG=trace
-export RUST_BACKTRACE=full
+if [ "$target" = 'build' ]; then
+    cargo fmt -- --check
+    # RUSTSEC-2022-0048: xml-rs is unmaintained
+    # RUSTSEC-2021-0139: ansi_term is unmaintained
+    cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2022-0048 --ignore RUSTSEC-2021-0139
+    cargo license -j > data/licenses.json
+    cargo build --release --locked
+    cargo clippy --release --locked --all-targets -- -D warnings
+    # TODO: once Salvo is integrated, this can get deleted
+    cargo build --release --locked --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
 
-# Run tests and collect coverage 
-# https://github.com/taiki-e/cargo-llvm-cov
-cargo llvm-cov --locked --workspace --lcov --output-path "../../artifacts/lcov.info"
+    cp target/release/onefuzz-task* "../../artifacts/agent-$platform"
+    cp target/release/onefuzz-agent* "../../artifacts/agent-$platform"
+    cp target/release/srcview* "../../artifacts/agent-$platform"
 
-# TODO: re-enable integration tests.
-# cargo test --release --manifest-path ./onefuzz-task/Cargo.toml --features integration_test -- --nocapture
+    if exists target/release/*.pdb; then
+        for file in target/release/*.pdb; do
+            cp "$file" "../../artifacts/agent-$platform"
+        done
+    fi
+elif [ "$target" = 'test' ]; then
+    # export RUST_LOG=trace
+    export RUST_BACKTRACE=full
 
-# TODO: once Salvo is integrated, this can get deleted
-cargo build --release --locked --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
+    # Run tests and collect coverage 
+    # https://github.com/taiki-e/cargo-llvm-cov
+    cargo llvm-cov --locked --workspace --lcov --output-path "../../artifacts/lcov.info"
 
-if [ ! -z "$SCCACHE" ]; then
-    sccache --show-stats
+    # TODO: re-enable integration tests.
+    # cargo test --release --manifest-path ./onefuzz-task/Cargo.toml --features integration_test -- --nocapture
+else 
+    echo "Usage: $0 (build|test)"
+    exit 1
 fi
 
-cp target/release/onefuzz-task* "../../artifacts/agent-$platform"
-cp target/release/onefuzz-agent* "../../artifacts/agent-$platform"
-cp target/release/srcview* "../../artifacts/agent-$platform"
-
-if exists target/release/*.pdb; then
-    for file in target/release/*.pdb; do
-        cp "$file" "../../artifacts/agent-$platform"
-    done
+if [ -n "$SCCACHE" ]; then
+    sccache --show-stats
 fi
