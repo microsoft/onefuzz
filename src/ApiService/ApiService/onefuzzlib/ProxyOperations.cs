@@ -15,7 +15,7 @@ public interface IProxyOperations : IStatefulOrm<Proxy, VmState> {
     bool IsAlive(Proxy proxy);
     Async.Task SaveProxyConfig(Proxy proxy);
     bool IsOutdated(Proxy proxy);
-    Async.Task<Proxy?> GetOrCreate(Region region);
+    Async.Task<Proxy> GetOrCreate(Region region);
     Task<bool> IsUsed(Proxy proxy);
 
     // state transitions:
@@ -42,7 +42,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         return await data.FirstOrDefaultAsync();
     }
 
-    public async Async.Task<Proxy?> GetOrCreate(Region region) {
+    public async Async.Task<Proxy> GetOrCreate(Region region) {
         var proxyList = QueryAsync(filter: TableClient.CreateQueryFilter($"region eq {region.String} and outdated eq false"));
 
         await foreach (var proxy in proxyList) {

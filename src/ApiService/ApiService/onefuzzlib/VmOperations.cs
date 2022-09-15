@@ -218,7 +218,9 @@ public class VmOperations : IVmOperations {
                 extensionName,
                 extension
             );
-        } catch (RequestFailedException ex) when (ex.Status == 409 && ex.Message.Contains("VM is marked for deletion")) {
+        } catch (RequestFailedException ex) when
+            (ex.Status == 409 &&
+                (ex.Message.Contains("VM is marked for deletion") || ex.Message.Contains("The request failed due to conflict with a concurrent request."))) {
             _logTracer.Info(ex.Message);
         }
         return;
