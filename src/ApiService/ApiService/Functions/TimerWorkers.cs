@@ -19,6 +19,10 @@ public class TimerWorkers {
         _log.Verbose($"checking scaleset for updates: {scaleset.ScalesetId}");
 
         await _scaleSetOps.UpdateConfigs(scaleset);
+        var r = await _scaleSetOps.SyncAutoscaleSettings(scaleset);
+        if (!r.IsOk) {
+            _log.Error($"failed to sync auto scale settings due to {r.ErrorV}");
+        }
 
         // if the scaleset is touched during cleanup, don't continue to process it
         if (await _scaleSetOps.CleanupNodes(scaleset)) {
@@ -27,7 +31,7 @@ public class TimerWorkers {
         }
 
         await _scaleSetOps.SyncScalesetSize(scaleset);
-        await _scaleSetOps.ProcessStateUpdate(scaleset);
+        var _ = await _scaleSetOps.ProcessStateUpdate(scaleset);
     }
 
 
@@ -41,7 +45,7 @@ public class TimerWorkers {
         await foreach (var pool in pools) {
             if (PoolStateHelper.NeedsWork.Contains(pool.State)) {
                 _log.Info($"update pool: {pool.PoolId} ({pool.Name})");
-                await _poolOps.ProcessStateUpdate(pool);
+                var _ = await _poolOps.ProcessStateUpdate(pool);
             }
         }
 
@@ -57,7 +61,7 @@ public class TimerWorkers {
         var nodes = _nodeOps.SearchStates(states: NodeStateHelper.NeedsWorkStates);
         await foreach (var node in nodes) {
             _log.Info($"update node: {node.MachineId}");
-            await _nodeOps.ProcessStateUpdate(node);
+            var _ = await _nodeOps.ProcessStateUpdate(node);
         }
 
         var scalesets = _scaleSetOps.SearchAll();
