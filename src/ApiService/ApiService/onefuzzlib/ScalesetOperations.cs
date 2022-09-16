@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Monitor.Models;
-
 namespace Microsoft.OneFuzz.Service;
 
 public interface IScalesetOperations : IStatefulOrm<Scaleset, ScalesetState> {
@@ -34,6 +33,8 @@ public interface IScalesetOperations : IStatefulOrm<Scaleset, ScalesetState> {
     Async.Task<Scaleset> Shutdown(Scaleset scaleset);
     Async.Task<Scaleset> Halt(Scaleset scaleset);
     Async.Task<Scaleset> CreationFailed(Scaleset scaleset);
+
+    Async.Task<OneFuzzResultVoid> SyncAutoscaleSettings(Scaleset scaleset);
 }
 
 public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetOperations>, IScalesetOperations {
@@ -82,6 +83,64 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 _log.Error($"Failed to update scaleset size for scaleset {scaleset.ScalesetId} due to {replaceResult.ErrorV}");
             }
         }
+    }
+
+    public async Async.Task<OneFuzzResultVoid> SyncAutoscaleSettings(Scaleset scaleset) {
+        if (scaleset.State != ScalesetState.Running)
+            return OneFuzzResultVoid.Ok;
+
+        _log.Info($"syncing auto-scale settings for scaleset {scaleset.ScalesetId}");
+
+        var autoscaleProfile = await _context.AutoScaleOperations.GetAutoScaleProfile(scaleset.ScalesetId);
+        if (!autoscaleProfile.IsOk) {
+            return autoscaleProfile.ErrorV;
+        }
+        var profile = autoscaleProfile.OkV;
+
+        var minAmount = Int64.Parse(profile.Capacity.Minimum);
+        var maxAmount = Int64.Parse(profile.Capacity.Maximum);
+        var defaultAmount = Int64.Parse(profile.Capacity.Default);
+
+        var scaleOutAmount = 1;
+        var scaleOutCooldown = 10L;
+        var scaleInAmount = 1;
+        var scaleInCooldown = 15L;
+
+        foreach (var rule in profile.Rules) {
+            var scaleAction = rule.ScaleAction;
+
+            if (scaleAction.Direction == ScaleDirection.Increase) {
+                scaleOutAmount = Int32.Parse(scaleAction.Value);
+                _logTracer.Info($"Scaleout cooldown in seconds. Before: {scaleOutCooldown}");
+                scaleOutCooldown = (long)scaleAction.Cooldown.TotalMinutes;
+                _logTracer.Info($"Scaleout cooldown in seconds. After: {scaleOutCooldown}");
+            } else if (scaleAction.Direction == ScaleDirection.Decrease) {
+                scaleInAmount = Int32.Parse(scaleAction.Value);
+                _logTracer.Info($"Scalin cooldown in seconds. Before: {scaleInCooldown}");
+                scaleInCooldown = (long)scaleAction.Cooldown.TotalMinutes;
+                _logTracer.Info($"Scalein cooldown in seconds. After: {scaleInCooldown}");
+            } else {
+                continue;
+            }
+        }
+
+        var poolResult = await _context.PoolOperations.GetByName(scaleset.PoolName);
+        if (!poolResult.IsOk) {
+            return poolResult.ErrorV;
+        }
+
+        _logTracer.Info($"Updating auto-scale entry for scaleset: {scaleset.ScalesetId}");
+        var _ = await _context.AutoScaleOperations.Update(
+                    scalesetId: scaleset.ScalesetId,
+                    minAmount: minAmount,
+                    maxAmount: maxAmount,
+                    defaultAmount: defaultAmount,
+                    scaleOutAmount: scaleOutAmount,
+                    scaleOutCooldown: scaleOutCooldown,
+                    scaleInAmount: scaleInAmount,
+                    scaleInCooldown: scaleInCooldown);
+
+        return OneFuzzResultVoid.Ok;
     }
 
     public async Async.Task<Scaleset> Resize(Scaleset scaleset) {
