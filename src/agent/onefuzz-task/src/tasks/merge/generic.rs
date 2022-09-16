@@ -1,7 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils};
+use crate::tasks::{
+    config::CommonConfig,
+    heartbeat::HeartbeatSender,
+    utils::{self, try_resolve_setup_relative_path},
+};
 use anyhow::{Context, Result};
 use onefuzz::{
     expand::Expand, fs::set_executable, http::ResponseExt, jitter::delay_with_jitter,
@@ -123,7 +127,8 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
 }
 
 async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
-    let target_exe = config.common.setup_dir.join(&config.target_exe);
+    let target_exe =
+        try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
 
     let expand = Expand::new()
         .machine_id()

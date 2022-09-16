@@ -6,7 +6,7 @@ use crate::tasks::{
     config::CommonConfig,
     generic::input_poller::*,
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
-    utils::default_bool_true,
+    utils::{default_bool_true, try_resolve_setup_relative_path},
 };
 use anyhow::{Context, Result};
 use async_trait::async_trait;
@@ -65,7 +65,9 @@ impl ReportTask {
     }
 
     pub async fn verify(&self) -> Result<()> {
-        let target_exe = self.config.common.setup_dir.join(&self.config.target_exe);
+        let target_exe =
+            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
+                .await?;
 
         let fuzzer = LibFuzzer::new(
             &target_exe,
@@ -197,7 +199,9 @@ impl AsanProcessor {
     ) -> Result<CrashTestResult> {
         self.heartbeat_client.alive();
 
-        let target_exe = self.config.common.setup_dir.join(&self.config.target_exe);
+        let target_exe =
+            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
+                .await?;
 
         let args = TestInputArgs {
             input_url,

@@ -26,6 +26,7 @@ use crate::tasks::{
     coverage::COBERTURA_COVERAGE_FILE,
     generic::input_poller::{CallbackImpl, InputPoller, Processor},
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
+    utils::try_resolve_setup_relative_path,
 };
 
 const MAX_COVERAGE_RECORDING_ATTEMPTS: usize = 2;
@@ -257,7 +258,9 @@ impl<'a> TaskContext<'a> {
     }
 
     async fn command_for_input(&self, input: &Path) -> Result<Command> {
-        let target_exe = self.config.common.setup_dir.join(&self.config.target_exe);
+        let target_exe =
+            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
+                .await?;
 
         let expand = Expand::new()
             .machine_id()

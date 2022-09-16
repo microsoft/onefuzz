@@ -20,7 +20,7 @@ use crate::tasks::{
     config::CommonConfig,
     generic::input_poller::*,
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
-    utils::default_bool_true,
+    utils::{default_bool_true, try_resolve_setup_relative_path},
 };
 
 const DOTNET_DUMP_TOOL_NAME: &str = "dotnet-dump";
@@ -128,7 +128,9 @@ impl AsanProcessor {
 
         let job_id = self.config.common.task_id;
         let task_id = self.config.common.task_id;
-        let executable = self.config.common.setup_dir.join(&self.config.target_exe);
+        let executable =
+            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
+                .await?;
 
         let mut args = vec!["dotnet".to_owned(), executable.display().to_string()];
         args.extend(self.config.target_options.clone());

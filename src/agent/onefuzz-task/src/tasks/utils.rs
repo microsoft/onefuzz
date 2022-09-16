@@ -107,7 +107,13 @@ pub async fn try_resolve_setup_relative_path(
 
     resolve_setup_relative_path(setup_dir, subpath)
         .await?
-        .ok_or_else(|| anyhow::format_err!("unable to resolve subpath `{}` under setup dir `{}`", subpath.display(), setup_dir.display()))
+        .ok_or_else(|| {
+            anyhow::format_err!(
+                "unable to resolve subpath `{}` under setup dir `{}`",
+                subpath.display(),
+                setup_dir.display()
+            )
+        })
 }
 
 /// Try to resolve an ambiguous setup-relative subpath, returning `None` if not found.

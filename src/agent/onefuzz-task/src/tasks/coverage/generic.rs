@@ -27,6 +27,7 @@ use url::Url;
 use crate::tasks::config::CommonConfig;
 use crate::tasks::generic::input_poller::{CallbackImpl, InputPoller, Processor};
 use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
+use crate::tasks::utils::resolve_setup_relative_path;
 
 use super::COBERTURA_COVERAGE_FILE;
 
@@ -138,33 +139,16 @@ impl CoverageTask {
             return Ok(CmdFilter::default());
         };
 
-        let setup_dir = &self.config.common.setup_dir;
-
-        // Ensure users can locate the filter relative to the setup container.
-        let expand = Expand::new().setup_dir(setup_dir);
-        let expanded_filter_path = expand.evaluate_value(raw_filter_path)?;
-
-        // Determine if `coverage_filter` is already prefixed with a absolute or relative
-        // path to the local `setup` directory.
-        //
-        // This happens when `coverage_filter` is prefixed by by `"setup/"` (due to legacy
-        // server-side prefixing) or if it had been user-prefixed with the `{setup_dir}`
-        // placeholder variable (which we just expanded to the full local path of the
-        // `setup` dir).
-        let is_absolutely_prefixed =
-            expanded_filter_path.starts_with(&*setup_dir.to_string_lossy());
-        let is_relatively_prefixed = expanded_filter_path.starts_with("setup/");
-        let is_setup_prefixed = is_absolutely_prefixed || is_relatively_prefixed;
-
-        let filter_path = if is_setup_prefixed {
-            // The filter path should now name an existing local file (via a relative or
-            // absolute path).
-            expanded_filter_path
+        let resolved =
+            resolve_setup_relative_path(&self.config.common.setup_dir, raw_filter_path).await?;
+        let filter_path = if let Some(path) = resolved {
+            path
         } else {
-            // The filter path is still a `setup`-relative subpath. To locate the filter
-            // file, we need to prefix the subpath with the local path to the `setup` dir.
-            let full = setup_dir.join(expanded_filter_path);
-            full.to_string_lossy().into_owned()
+            error!(
+                "unable to resolve setup-relative coverage filter path: {}",
+                raw_filter_path
+            );
+            return Ok(CmdFilter::default());
         };
 
         let data = fs::read(&filter_path).await?;

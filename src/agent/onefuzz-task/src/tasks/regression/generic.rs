@@ -4,7 +4,7 @@
 use crate::tasks::{
     config::CommonConfig,
     report::{crash_report::CrashTestResult, generic},
-    utils::default_bool_true,
+    utils::{default_bool_true, try_resolve_setup_relative_path},
 };
 use anyhow::Result;
 use async_trait::async_trait;
@@ -56,7 +56,9 @@ pub struct GenericRegressionTask {
 #[async_trait]
 impl RegressionHandler for GenericRegressionTask {
     async fn get_crash_result(&self, input: PathBuf, input_url: Url) -> Result<CrashTestResult> {
-        let target_exe = self.config.common.setup_dir.join(&self.config.target_exe);
+        let target_exe =
+            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
+                .await?;
 
         let args = generic::TestInputArgs {
             input_url: Some(input_url),
