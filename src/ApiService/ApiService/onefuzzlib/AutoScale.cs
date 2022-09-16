@@ -4,6 +4,7 @@ using ApiService.OneFuzzLib.Orm;
 using Azure;
 using Azure.ResourceManager.Monitor;
 using Azure.ResourceManager.Monitor.Models;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -98,9 +99,12 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
             await foreach (var setting in settings.GetAllAsync()) {
 
                 if (setting.Data.TargetResourceId.EndsWith(scalesetId.ToString())) {
-                    if (setting.Data.Profiles.Count != 1) {
+                    if (setting.Data.Profiles.IsNullOrEmpty()) {
                         return OneFuzzResult<AutoscaleProfile>.Error(ErrorCode.INVALID_CONFIGURATION, $"found {setting.Data.Profiles.Count} auto-scale profiles for {scalesetId}");
                     } else {
+                        if (setting.Data.Profiles.Count != 1) {
+                            _logTracer.Warning($"Found more than one autoscaling profile for scaleset {scalesetId}");
+                        }
                         return OneFuzzResult<AutoscaleProfile>.Ok(setting.Data.Profiles.First());
                     }
                 }
