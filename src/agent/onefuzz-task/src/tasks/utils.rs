@@ -97,6 +97,7 @@ pub fn default_bool_true() -> bool {
     true
 }
 
+/// Try to resolve an ambiguous setup-relative subpath, returning an error if not found.
 pub async fn try_resolve_setup_relative_path(
     setup_dir: impl AsRef<Path>,
     subpath: impl AsRef<Path>,
@@ -109,6 +110,7 @@ pub async fn try_resolve_setup_relative_path(
         .ok_or_else(|| anyhow::format_err!("unable to resolve subpath `{}` under setup dir `{}`", subpath.display(), setup_dir.display()))
 }
 
+/// Try to resolve an ambiguous setup-relative subpath, returning `None` if not found.
 pub async fn resolve_setup_relative_path(
     setup_dir: impl AsRef<Path>,
     subpath: impl AsRef<Path>,
