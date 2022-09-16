@@ -97,6 +97,18 @@ pub fn default_bool_true() -> bool {
     true
 }
 
+pub async fn try_resolve_setup_relative_path(
+    setup_dir: impl AsRef<Path>,
+    subpath: impl AsRef<Path>,
+) -> Result<PathBuf> {
+    let setup_dir = setup_dir.as_ref();
+    let subpath = subpath.as_ref();
+
+    resolve_setup_relative_path(setup_dir, subpath)
+        .await?
+        .ok_or_else(|| anyhow::format_err!("unable to resolve subpath `{}` under setup dir `{}`", subpath.display(), setup_dir.display()))
+}
+
 pub async fn resolve_setup_relative_path(
     setup_dir: impl AsRef<Path>,
     subpath: impl AsRef<Path>,
