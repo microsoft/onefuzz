@@ -89,14 +89,16 @@ public class Scheduler : IScheduler {
             }
 
             var result = await BuildWorkunit(task, poolCache);
-            if (result is var (newBucketConfig, workUnit)) {
+            if (result.IsOk) {
+                var (newBucketConfig, workUnit) = result.OkV;
                 if (bucketConfig is null) {
                     bucketConfig = newBucketConfig;
                 } else if (bucketConfig != newBucketConfig) {
                     throw new Exception($"bucket configs differ: {bucketConfig} VS {newBucketConfig}");
                 }
-
                 workUnits.Add(workUnit);
+            } else {
+                await _taskOperations.MarkFailed(task, result.ErrorV);
             }
         }
 
@@ -136,10 +138,10 @@ public class Scheduler : IScheduler {
         return null;
     }
 
-    private async Async.Task<(BucketConfig, WorkUnit)?> BuildWorkunit(Task task, Dictionary<PoolKey, Pool> poolCache) {
+    private async Async.Task<OneFuzzResult<(BucketConfig, WorkUnit)>> BuildWorkunit(Task task, Dictionary<PoolKey, Pool> poolCache) {
         var poolKey = GetPoolKey(task);
         if (poolKey is null) {
-            return null;
+            return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.UNABLE_TO_FIND, $"unable to find pool key for the task {task.TaskId} in job {task.JobId}");
         }
 
         // we cache the pools by key so that we only fetch each pool once
@@ -149,7 +151,7 @@ public class Scheduler : IScheduler {
             var foundPool = await _taskOperations.GetPool(task);
             if (foundPool is null) {
                 _logTracer.Info($"unable to find pool for task: {task.TaskId}");
-                return null;
+                return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.UNABLE_TO_FIND, $"unable to find pool for the task {task.TaskId} in job {task.JobId}");
             }
 
             pool = poolCache[poolKey] = foundPool;
@@ -159,13 +161,14 @@ public class Scheduler : IScheduler {
 
         var job = await _jobOperations.Get(task.JobId);
         if (job is null) {
-            throw new Exception($"invalid job_id {task.JobId} for task {task.TaskId}");
+            _logTracer.Error($"invalid job_id {task.JobId} for task {task.TaskId}");
+            return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.INVALID_JOB, $"invalid job_id {task.JobId} for task {task.TaskId}");
         }
 
         var taskConfig = await _config.BuildTaskConfig(job, task);
         if (taskConfig is null) {
-            _logTracer.Info($"unable to build task config for task: {task.TaskId}");
-            return null;
+            _logTracer.Error($"unable to build task config for task: {task.TaskId}");
+            return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.INVALID_CONFIGURATION, $"unable to build task config for task: {task.TaskId} in job {task.JobId}");
         }
         var setupContainer = task.Config.Containers?.FirstOrDefault(c => c.Type == ContainerType.Setup) ?? throw new Exception($"task missing setup container: task_type = {task.Config.Task.Type}");
 
@@ -190,7 +193,7 @@ public class Scheduler : IScheduler {
             count = vm.Count;
             reboot = (vm.RebootAfterSetup ?? false) || (task.Config.Task.RebootAfterSetup ?? false);
         } else {
-            throw new Exception("Either Pool or VM should be set");
+            return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.INVALID_CONFIGURATION, $"Either Pool or VM should be set for task: {task.TaskId} in job {task.JobId}");
         }
 
         var workUnit = new WorkUnit(
@@ -208,7 +211,7 @@ public class Scheduler : IScheduler {
             setupScript,
             pool with { ETag = default, TimeStamp = default });
 
-        return (bucketConfig, workUnit);
+        return OneFuzzResult<(BucketConfig, WorkUnit)>.Ok((bucketConfig, workUnit));
     }
 
     public record struct BucketId(Os os, Guid jobId, (string, string)? vm, PoolName? pool, Container setupContainer, bool? reboot, Guid? unique);

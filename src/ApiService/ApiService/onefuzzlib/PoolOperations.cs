@@ -147,7 +147,10 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         }
 
         pool = pool with { State = state };
-        await Replace(pool);
+        var r = await Replace(pool);
+        if (!r.IsOk) {
+            _logTracer.Error($"failed to replace pool {pool.PoolId} when setting state due to {r.ErrorV}");
+        }
         return pool;
     }
 
@@ -155,7 +158,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         await _context.Queue.CreateQueue(GetPoolQueue(pool.PoolId), StorageType.Corpus);
         var shrinkQueue = new ShrinkQueue(pool.PoolId, _context.Queue, _logTracer);
         await shrinkQueue.Create();
-        await SetState(pool, PoolState.Running);
+        var _ = await SetState(pool, PoolState.Running);
         return pool;
     }
 
@@ -180,7 +183,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         if (scalesets is not null) {
             await foreach (var scaleset in scalesets) {
                 if (scaleset is not null) {
-                    await _context.ScalesetOperations.SetShutdown(scaleset, now: true);
+                    var _ = await _context.ScalesetOperations.SetShutdown(scaleset, now: true);
                 }
             }
         }
@@ -217,7 +220,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         if (scalesets is not null) {
             await foreach (var scaleset in scalesets) {
                 if (scaleset is not null) {
-                    await _context.ScalesetOperations.SetState(scaleset, ScalesetState.Halt);
+                    var _ = await _context.ScalesetOperations.SetState(scaleset, ScalesetState.Halt);
                 }
             }
         }
