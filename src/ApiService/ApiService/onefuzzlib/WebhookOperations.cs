@@ -234,14 +234,14 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     }
 
     public IAsyncEnumerable<WebhookMessageLog> SearchExpired() {
-        var expireTime = (DateTimeOffset.UtcNow - TimeSpan.FromDays(EXPIRE_DAYS)).ToString("o");
+        var expireTime = DateTimeOffset.UtcNow - TimeSpan.FromDays(EXPIRE_DAYS);
 
-        var timeFilter = $"Timestamp lt datetime'{expireTime}'";
+        var timeFilter = Query.TimestampOlderThan(expireTime);
         return QueryAsync(filter: timeFilter);
     }
 
     public async Async.Task<WebhookMessageLog?> GetWebhookMessageById(Guid webhookId, Guid eventId) {
-        var data = QueryAsync(filter: $"PartitionKey eq '{webhookId}' and RowKey eq '{eventId}'");
+        var data = QueryAsync(filter: Query.SingleEntity(webhookId.ToString(), eventId.ToString()));
 
         return await data.FirstOrDefaultAsync();
     }
