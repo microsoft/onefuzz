@@ -341,10 +341,10 @@ public class Extensions : IExtensions {
         } else if (vmOs == Os.Linux) {
             return new VMExtensionWrapper {
                 Location = region,
-                Name = "OMSExtension",
+                Name = "OmsAgentForLinux",
                 TypePropertiesType = "OmsAgentForLinux",
                 Publisher = "Microsoft.EnterpriseCloud.Monitoring",
-                TypeHandlerVersion = "1.12",
+                TypeHandlerVersion = "1.0",
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(extensionSettings),
                 ProtectedSettings = new BinaryData(protectedExtensionSettings),
