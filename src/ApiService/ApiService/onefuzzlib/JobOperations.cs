@@ -75,7 +75,7 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
 
         var filter = Query.And(new[] {
             $"Timestamp lt datetime'{lastTimeStamp}' and not(end_time ge datetime'2000-01-11T00:00:00.0Z')",
-            Query.EqualAnyEnum("state", new[] {JobState.Enabled})
+            Query.EqualEnum("state", JobState.Enabled)
         });
 
         var jobs = this.QueryAsync(filter);

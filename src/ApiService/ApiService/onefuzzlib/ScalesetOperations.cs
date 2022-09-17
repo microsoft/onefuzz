@@ -709,7 +709,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
     }
 
     public async Task<OneFuzzResult<Scaleset>> GetById(Guid scalesetId) {
-        var data = QueryAsync(filter: $"RowKey eq '{scalesetId}'");
+        var data = QueryAsync(filter: Query.RowKey(scalesetId.ToString()));
         var scaleSets = data is not null ? (await data.ToListAsync()) : null;
 
         if (scaleSets == null || scaleSets.Count == 0) {

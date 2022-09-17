@@ -46,7 +46,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     }
 
     public IAsyncEnumerable<Repro> SearchExpired() {
-        return QueryAsync(filter: $"end_time lt datetime'{DateTime.UtcNow.ToString("o")}'");
+        return QueryAsync(filter: Query.OlderThan("end_time", DateTimeOffset.UtcNow));
     }
 
     public async Async.Task<Vm> GetVm(Repro repro, InstanceConfig config) {
