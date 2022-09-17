@@ -34,7 +34,7 @@ public class TimerRetention {
         var timeRetainedNewer = now + SEARCH_EXTENT;
 
         var timeFilter = Query.TimeRange(timeRetainedOlder, timeRetainedNewer);
-        var timeFilterNewer = Query.NewerThan(timeRetainedOlder);
+        var timeFilterNewer = Query.TimestampNewerThan(timeRetainedOlder);
 
         // Collecting 'still relevant' task containers.
         // NOTE: This must be done before potentially modifying tasks otherwise

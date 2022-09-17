@@ -92,7 +92,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
     }
 
     public IAsyncEnumerable<Task> SearchExpired() {
-        var timeFilter = Query.OlderThan(DateTimeOffset.UtcNow);
+        var timeFilter = Query.OlderThan("end_time", DateTimeOffset.UtcNow);
         var stateFilter = Query.EqualAnyEnum("state", TaskStateHelper.AvailableStates);
         var filter = Query.And(stateFilter, timeFilter);
         return QueryAsync(filter: filter);
