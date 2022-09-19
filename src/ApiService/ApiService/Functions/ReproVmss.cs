@@ -102,7 +102,7 @@ public class ReproVmss {
                 context: "repro delete");
         }
 
-        var vm = await _context.ReproOperations.SearchByPartitionKeys(new[] { $"request.OkV.VmId" }).FirstOrDefaultAsync();
+        var vm = await _context.ReproOperations.SearchByPartitionKeys(new[] { request.OkV.VmId.ToString()! }).FirstOrDefaultAsync();
 
         if (vm == null) {
             return await _context.RequestHandling.NotOk(
@@ -112,7 +112,10 @@ public class ReproVmss {
         }
 
         var updatedRepro = vm with { State = VmState.Stopping };
-        await _context.ReproOperations.Replace(updatedRepro);
+        var r = await _context.ReproOperations.Replace(updatedRepro);
+        if (!r.IsOk) {
+            _log.Error($"Failed to replace repro {updatedRepro.VmId} due to {r.ErrorV}");
+        }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(updatedRepro);
