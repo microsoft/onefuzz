@@ -11,14 +11,22 @@ public class Auth {
         if (File.Exists(winAzureFunctionPath)) {
             keyGen = winAzureFunctionPath;
         }
-        return new ProcessStartInfo() {
+        var p = new ProcessStartInfo() {
             FileName = keyGen,
-            Arguments = $"-t rsa -f {tempFile} -P \"\" -b 2048",
             CreateNoWindow = false,
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true
         };
+        p.ArgumentList.Add("-t");
+        p.ArgumentList.Add("rsa");
+        p.ArgumentList.Add("-f");
+        p.ArgumentList.Add(tempFile);
+        p.ArgumentList.Add("-P");
+        p.ArgumentList.Add("");
+        p.ArgumentList.Add("-b");
+        p.ArgumentList.Add("2048");
+        return p;
     }
 
     // This works both on Windows and Linux azure function hosts
