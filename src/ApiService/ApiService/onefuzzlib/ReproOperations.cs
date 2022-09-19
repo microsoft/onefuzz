@@ -306,7 +306,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
                 Config: config,
                 TaskId: task.TaskId,
                 Os: task.Os,
-                Auth: Auth.BuildAuth(),
+                Auth: await Auth.BuildAuth(),
                 EndTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(config.Duration),
                 UserInfo: userInfo
             );
