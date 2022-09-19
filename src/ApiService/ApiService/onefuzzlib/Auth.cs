@@ -13,7 +13,7 @@ public class Auth {
         }
         return new ProcessStartInfo() {
             FileName = keyGen,
-            Arguments = $"-t rsa -f {tempFile} -P '\"\"' -b 2048",
+            Arguments = $"-t rsa -f {tempFile} -P \"\" -b 2048",
             CreateNoWindow = false,
             UseShellExecute = false,
             RedirectStandardOutput = true,
