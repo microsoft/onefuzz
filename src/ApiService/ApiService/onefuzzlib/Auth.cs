@@ -5,8 +5,14 @@ using System.IO;
 public class Auth {
 
     private static ProcessStartInfo SshKeyGenProcConfig(string tempFile) {
+
+        string keyGen = "ssh-keygen";
+        var winAzureFunctionPath = "C:\\Program Files\\Git\\usr\\bin\\ssh-keygen.exe";
+        if (File.Exists(winAzureFunctionPath)) {
+            keyGen = winAzureFunctionPath;
+        }
         return new ProcessStartInfo() {
-            FileName = "ssh-keygen",
+            FileName = keyGen,
             Arguments = $"-t rsa -f {tempFile} -N '\"\"' -b 2048",
             CreateNoWindow = false,
             UseShellExecute = false,
