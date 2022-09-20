@@ -10,7 +10,7 @@ exists() {
 }
 
 SCCACHE=$(which sccache || echo '')
-if [ ! -z "$SCCACHE" ]; then
+if [ -n "$SCCACHE" ]; then
     # only set RUSTC_WRAPPER if sccache exists
     export RUSTC_WRAPPER=$SCCACHE
     # incremental interferes with (disables) sccache
@@ -28,8 +28,27 @@ else
     fi
 fi
 
-platform=$(uname)
-mkdir -p "artifacts/agent-$platform"
+function get_output_dir() {
+    platform=$(uname)
+    if [ "$platform" = "Linux" ]; then
+        # Linux builds are specific to distro/version, due to 
+        # dynamic linkage of OpenSSL (this is for compliance reasons)
+        distro=$(lsb_release --id --short)
+        version=$(lsb_release --release --short)
+        output_dir="artifacts/agent-Linux/$distro-$version"
+        mkdir -p "$output_dir"
+    else 
+        # Windows builds are shared
+        output_dir="artifacts/agent-$platform"
+    fi
+
+    mkdir -p "$output_dir"
+
+    # return absolute path
+    realpath "$output_dir"
+}
+
+output_dir=$(get_output_dir)
 
 cd src/agent
 
@@ -57,7 +76,7 @@ export RUST_BACKTRACE=full
 
 # Run tests and collect coverage 
 # https://github.com/taiki-e/cargo-llvm-cov
-cargo llvm-cov --locked --workspace --lcov --output-path "../../artifacts/lcov.info"
+cargo llvm-cov --locked --workspace --lcov --output-path "$output_dir/lcov.info"
 
 # TODO: re-enable integration tests.
 # cargo test --release --manifest-path ./onefuzz-task/Cargo.toml --features integration_test -- --nocapture
@@ -65,16 +84,18 @@ cargo llvm-cov --locked --workspace --lcov --output-path "../../artifacts/lcov.i
 # TODO: once Salvo is integrated, this can get deleted
 cargo build --release --locked --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
 
-if [ ! -z "$SCCACHE" ]; then
+if [ -n "$SCCACHE" ]; then
     sccache --show-stats
 fi
 
-cp target/release/onefuzz-task* "../../artifacts/agent-$platform"
-cp target/release/onefuzz-agent* "../../artifacts/agent-$platform"
-cp target/release/srcview* "../../artifacts/agent-$platform"
+echo "Copying artifacts to $output_dir"
+
+cp target/release/onefuzz-task* "$output_dir"
+cp target/release/onefuzz-agent* "$output_dir"
+cp target/release/srcview* "$output_dir"
 
 if exists target/release/*.pdb; then
     for file in target/release/*.pdb; do
-        cp "$file" "../../artifacts/agent-$platform"
+        cp "$file" "$output_dir"
     done
 fi

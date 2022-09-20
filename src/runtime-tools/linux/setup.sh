@@ -6,6 +6,9 @@
 find .
 set -x
 
+# e.g. Ubuntu-22.04
+LINUX_ID="$(lsb_release --id --short)-$(lsb_release --release --short)"
+
 INSTANCE_OS_SETUP="/onefuzz/instance-specific-setup/linux/setup.sh"
 INSTANCE_SETUP="/onefuzz/instance-specific-setup/setup.sh"
 USER_SETUP="/onefuzz/setup/setup.sh"
@@ -32,7 +35,7 @@ mkdir -p /onefuzz/instance-specific-setup
 mkdir -p "$DOTNET_ROOT"
 
 echo $1 > /onefuzz/etc/mode
-export PATH=$PATH:/onefuzz/bin:/onefuzz/tools/linux:/onefuzz/tools/linux/afl:/onefuzz/tools/linux/radamsa
+export PATH=$PATH:/onefuzz/bin:/onefuzz/tools/$LINUX_ID:/onefuzz/tools/linux:/onefuzz/tools/linux/afl:/onefuzz/tools/linux/radamsa
 
 # Basic setup
 mv /onefuzz/downloaded/config.json /onefuzz

@@ -4,7 +4,10 @@
 
 set -ex
 
-export PATH=$PATH:/onefuzz/bin:/onefuzz/tools/linux:/onefuzz/tools/linux/afl:/onefuzz/tools/linux/radamsa
+# e.g. Ubuntu-22.04
+LINUX_ID="$(lsb_release --id --short)-$(lsb_release --release --short)"
+
+export PATH=$PATH:/onefuzz/bin:/onefuzz/tools/$LINUX_ID:/onefuzz/tools/linux:/onefuzz/tools/linux/afl:/onefuzz/tools/linux/radamsa
 export DOTNET_ROOT=/onefuzz/tools/dotnet
 export ONEFUZZ_TOOLS=/onefuzz/tools
 export ONEFUZZ_ROOT=/onefuzz
