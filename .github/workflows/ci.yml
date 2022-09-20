@@ -88,7 +88,7 @@ jobs:
       if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       run: |
         sudo apt-get -y update
-        sudo apt-get -y install libssl1.0-dev libunwind-dev build-essential
+        sudo apt-get -y install libssl-dev libunwind-dev build-essential
     - run: src/ci/agent.sh
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       shell: bash
