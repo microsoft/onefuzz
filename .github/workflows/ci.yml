@@ -64,7 +64,7 @@ jobs:
       if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       run: |
         sudo apt-get -y update
-        sudo apt-get -y install libssl-dev libunwind-dev build-essential
+        sudo apt-get -y install libssl-dev libunwind-dev build-essential pkg-config
     - name: Rust Prereq Cache
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       uses: actions/cache@v2
