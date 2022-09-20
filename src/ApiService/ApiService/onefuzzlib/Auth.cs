@@ -32,9 +32,14 @@ public class Auth {
     }
 
     // This works both on Windows and Linux azure function hosts
-    private static async Async.Task<(string, string)> GenerateKeyValuePair() {
+    private static async Async.Task<(string, string)> GenerateKeyValuePair(ILogTracer log) {
         var tmpFile = Path.GetTempFileName();
-        File.Delete(tmpFile);
+        try {
+            File.Delete(tmpFile);
+        } catch (Exception ex) {
+            //bad but not worth the failure
+            log.Warning($"failed to delete temp file {tmpFile} due to {ex}");
+        }
         tmpFile = tmpFile + ".key";
         var startInfo = SshKeyGenProcConfig(tmpFile);
         using var proc = new Process() { StartInfo = startInfo };
@@ -44,10 +49,21 @@ public class Auth {
             if (proc.ExitCode != 0) {
                 throw new Exception($"ssh-keygen failed due to {stdErr}");
             }
-
+            var tmpFilePub = tmpFile + ".pub";
             var priv = File.ReadAllText(tmpFile);
-            var pub = File.ReadAllText(tmpFile + ".pub");
-            File.Delete(tmpFile);
+            var pub = File.ReadAllText(tmpFilePub);
+            try {
+                File.Delete(tmpFile);
+            } catch (Exception ex) {
+                //bad but not worth failing
+                log.Warning($"failed to delete temp file {tmpFile} due to {ex}");
+            }
+            try {
+                File.Delete(tmpFilePub);
+            } catch (Exception ex) {
+                //bad but not worth failing
+                log.Warning($"failed to delete temp file {tmpFilePub} due to {ex}");
+            }
             return (priv, pub.Trim());
         } else {
             throw new Exception("failed to start new ssh-keygen");
@@ -55,8 +71,8 @@ public class Auth {
     }
 
 
-    public static async Async.Task<Authentication> BuildAuth() {
-        var (priv, pub) = await GenerateKeyValuePair();
+    public static async Async.Task<Authentication> BuildAuth(ILogTracer log) {
+        var (priv, pub) = await GenerateKeyValuePair(log);
         return new Authentication(
             Password: Guid.NewGuid().ToString(),
             PublicKey: pub,
