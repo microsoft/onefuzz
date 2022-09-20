@@ -46,7 +46,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     }
 
     public IAsyncEnumerable<Repro> SearchExpired() {
-        return QueryAsync(filter: $"end_time lt datetime'{DateTime.UtcNow.ToString("o")}'");
+        return QueryAsync(filter: Query.OlderThan("end_time", DateTimeOffset.UtcNow));
     }
 
     public async Async.Task<Vm> GetVm(Repro repro, InstanceConfig config) {
@@ -281,7 +281,10 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             State = VmState.Stopping
         };
 
-        await Replace(repro);
+        var r = await Replace(repro);
+        if (!r.IsOk) {
+            _logTracer.Error($"failed to replace repro record for {repro.VmId} due to {r.ErrorV}");
+        }
         return repro;
     }
 
@@ -306,12 +309,15 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
                 Config: config,
                 TaskId: task.TaskId,
                 Os: task.Os,
-                Auth: Auth.BuildAuth(),
+                Auth: await Auth.BuildAuth(_logTracer),
                 EndTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(config.Duration),
                 UserInfo: userInfo
             );
 
-            await _context.ReproOperations.Insert(vm);
+            var r = await _context.ReproOperations.Insert(vm);
+            if (!r.IsOk) {
+                _logTracer.Error($"failed to insert repro record for {vm.VmId} due to {r.ErrorV}");
+            }
             return OneFuzzResult<Repro>.Ok(vm);
         } else {
             return OneFuzzResult<Repro>.Error(ErrorCode.UNABLE_TO_FIND, "unable to find report");

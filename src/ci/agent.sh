@@ -28,8 +28,8 @@ else
     fi
 fi
 
-
-mkdir -p artifacts/agent-$(uname)
+platform=$(uname)
+mkdir -p "artifacts/agent-$platform"
 
 cd src/agent
 
@@ -54,7 +54,10 @@ cargo build --release --locked
 cargo clippy --release --locked --all-targets -- -D warnings
 # export RUST_LOG=trace
 export RUST_BACKTRACE=full
-cargo test --release --locked --workspace
+
+# Run tests and collect coverage 
+# https://github.com/taiki-e/cargo-llvm-cov
+cargo llvm-cov --locked --workspace --lcov --output-path "../../artifacts/lcov.info"
 
 # TODO: re-enable integration tests.
 # cargo test --release --manifest-path ./onefuzz-task/Cargo.toml --features integration_test -- --nocapture
@@ -66,12 +69,12 @@ if [ ! -z "$SCCACHE" ]; then
     sccache --show-stats
 fi
 
-cp target/release/onefuzz-task* ../../artifacts/agent-$(uname)
-cp target/release/onefuzz-agent* ../../artifacts/agent-$(uname)
-cp target/release/srcview* ../../artifacts/agent-$(uname)
+cp target/release/onefuzz-task* "../../artifacts/agent-$platform"
+cp target/release/onefuzz-agent* "../../artifacts/agent-$platform"
+cp target/release/srcview* "../../artifacts/agent-$platform"
 
 if exists target/release/*.pdb; then
     for file in target/release/*.pdb; do
-        cp ${file} ../../artifacts/agent-$(uname)
+        cp "$file" "../../artifacts/agent-$platform"
     done
 fi

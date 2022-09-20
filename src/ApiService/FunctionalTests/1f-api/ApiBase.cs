@@ -176,10 +176,9 @@ public abstract class ApiBase {
         }
     }
 
-    public async Task<JsonElement> Get(JsonObject root) {
+    public async Task<JsonElement> Get(JsonObject root, string? subPath = null) {
         var body = root.ToJsonString();
-        var r = await _request.Get(_endpoint, body);
-        var ss = await r.Content.ReadAsStringAsync();
+        var r = await _request.Get(subPath is null ? _endpoint : new Uri($"{_endpoint}{subPath}"), body);
         return (await JsonDocument.ParseAsync(r.Content.ReadAsStream())).RootElement;
     }
 

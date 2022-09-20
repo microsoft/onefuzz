@@ -1,5 +1,5 @@
-﻿using Microsoft.Azure.Functions.Worker;
-
+﻿using ApiService.OneFuzzLib.Orm;
+using Microsoft.Azure.Functions.Worker;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class TimerRetention {
@@ -33,8 +33,8 @@ public class TimerRetention {
         var timeRetainedOlder = now - RETENTION_POLICY;
         var timeRetainedNewer = now + SEARCH_EXTENT;
 
-        var timeFilter = $"Timestamp lt datetime'{timeRetainedOlder.ToString("o")}' and Timestamp gt datetime'{timeRetainedNewer.ToString("o")}'";
-        var timeFilterNewer = $"Timestamp gt datetime '{timeRetainedOlder.ToString("o")}'";
+        var timeFilter = Query.TimeRange(timeRetainedOlder, timeRetainedNewer);
+        var timeFilterNewer = Query.TimestampNewerThan(timeRetainedOlder);
 
         // Collecting 'still relevant' task containers.
         // NOTE: This must be done before potentially modifying tasks otherwise
@@ -52,7 +52,6 @@ public class TimerRetention {
             }
         }
 
-
         await foreach (var notification in _notificaitonOps.QueryAsync(timeFilter)) {
             _log.Verbose($"checking expired notification for removal: {notification.NotificationId}");
             var container = notification.Container;
@@ -66,7 +65,7 @@ public class TimerRetention {
             }
         }
 
-        await foreach (var job in _jobOps.QueryAsync($"{timeFilter} and state eq '{JobState.Enabled}'")) {
+        await foreach (var job in _jobOps.QueryAsync(Query.And(timeFilter, Query.EqualEnum("state", JobState.Enabled)))) {
             if (job.UserInfo is not null && job.UserInfo.Upn is not null) {
                 _log.Info($"removing PII from job {job.JobId}");
                 var userInfo = job.UserInfo with { Upn = null };
@@ -78,7 +77,7 @@ public class TimerRetention {
             }
         }
 
-        await foreach (var task in _taskOps.QueryAsync($"{timeFilter} and state eq '{TaskState.Stopped}'")) {
+        await foreach (var task in _taskOps.QueryAsync(Query.And(timeFilter, Query.EqualEnum("state", TaskState.Stopped)))) {
             if (task.UserInfo is not null && task.UserInfo.Upn is not null) {
                 _log.Info($"removing PII from task {task.TaskId}");
                 var userInfo = task.UserInfo with { Upn = null };
