@@ -36,9 +36,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
 
     public async Task<Proxy?> GetByProxyId(Guid proxyId) {
-
-        var data = QueryAsync(filter: $"RowKey eq '{proxyId}'");
-
+        var data = QueryAsync(filter: Query.RowKey(proxyId.ToString()));
         return await data.FirstOrDefaultAsync();
     }
 

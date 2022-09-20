@@ -27,6 +27,10 @@ public class ImageOperations : IImageOperations {
     private IOnefuzzContext _context;
     private ILogTracer _logTracer;
 
+    const string SubscriptionsStr = "/subscriptions/";
+    const string ProvidersStr = "/providers/";
+
+
     public ImageOperations(ILogTracer logTracer, IOnefuzzContext context) {
         _logTracer = logTracer;
         _context = context;
@@ -34,7 +38,7 @@ public class ImageOperations : IImageOperations {
 
     public async Task<OneFuzzResult<Os>> GetOs(Region region, string image) {
         string? name = null;
-        try {
+        if (image.StartsWith(SubscriptionsStr) || image.StartsWith(ProvidersStr)) {
             var parsed = _context.Creds.ParseResourceId(image);
             parsed = await _context.Creds.GetData(parsed);
             if (string.Equals(parsed.Id.ResourceType, "galleries", StringComparison.OrdinalIgnoreCase)) {
@@ -78,7 +82,7 @@ public class ImageOperations : IImageOperations {
                     );
                 }
             }
-        } catch (FormatException) {
+        } else {
             var imageInfo = IImageOperations.GetImageInfo(image);
             try {
                 var subscription = await _context.Creds.ArmClient.GetDefaultSubscriptionAsync();
