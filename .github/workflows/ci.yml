@@ -34,10 +34,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install specific Rust version
+      uses: actions-rs/toolchain@v1
       # note: keep this in sync with .devcontainer/Dockerfile
-      run: |
-        rustup default 1.64 
-        rustup component add clippy rustfmt llvm-tools-preview
+      with:
+        toolchain: 1.64
+        default: true
+        components: clippy, rustfmt, llvm-tools-preview
     - name: Get Rust version & build version
       shell: bash
       run: |
