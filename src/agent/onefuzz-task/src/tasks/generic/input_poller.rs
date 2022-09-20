@@ -4,6 +4,7 @@
 use std::{fmt, path::PathBuf};
 
 use anyhow::{Context, Result};
+use log::{error};
 use onefuzz::{blob::BlobUrl, jitter::delay_with_jitter, syncdir::SyncedDir};
 use reqwest::Url;
 use tempfile::{tempdir, TempDir};
@@ -251,6 +252,7 @@ impl<M> InputPoller<M> {
         if result.is_err() {
             // We must maintain a valid state, and we can logically recover from
             // any failed action or invalid transition.
+            error!("State Transition Failed. Resetting state to 'Ready.'");
             self.state = Some(State::Ready);
         }
 
