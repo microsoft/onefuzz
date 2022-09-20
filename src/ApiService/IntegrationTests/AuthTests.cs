@@ -1,11 +1,20 @@
 ﻿using FluentAssertions;
+using IntegrationTests;
+using Microsoft.OneFuzz.Service;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Tests {
+
     public class AuthTests {
+        protected ILogTracer Logger { get; }
+        public AuthTests(ITestOutputHelper output) {
+            Logger = new TestLogTracer(output);
+        }
+
         [Fact]
         public async System.Threading.Tasks.Task TestAuth() {
-            var auth = await Microsoft.OneFuzz.Service.Auth.BuildAuth();
+            var auth = await Microsoft.OneFuzz.Service.Auth.BuildAuth(Logger);
 
             auth.Should().NotBeNull();
             auth.PrivateKey.StartsWith("-----BEGIN OPENSSH PRIVATE KEY-----").Should().BeTrue();
