@@ -44,10 +44,11 @@ public class Auth {
             if (proc.ExitCode != 0) {
                 throw new Exception($"ssh-keygen failed due to {stdErr}");
             }
-
+            var tmpFilePub = tmpFile + ".pub";
             var priv = File.ReadAllText(tmpFile);
-            var pub = File.ReadAllText(tmpFile + ".pub");
+            var pub = File.ReadAllText(tmpFilePub);
             File.Delete(tmpFile);
+            File.Delete(tmpFilePub);
             return (priv, pub.Trim());
         } else {
             throw new Exception("failed to start new ssh-keygen");
