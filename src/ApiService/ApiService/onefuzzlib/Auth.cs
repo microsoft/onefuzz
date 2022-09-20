@@ -15,17 +15,19 @@ public class Auth {
             FileName = keyGen,
             CreateNoWindow = false,
             UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true
+            RedirectStandardOutput = false,
+            RedirectStandardError = true,
+            ArgumentList = {
+                "-t",
+                "rsa",
+                "-f",
+                tempFile,
+                "-P",
+                "",
+                "-b",
+                "2048"
+            }
         };
-        p.ArgumentList.Add("-t");
-        p.ArgumentList.Add("rsa");
-        p.ArgumentList.Add("-f");
-        p.ArgumentList.Add(tempFile);
-        p.ArgumentList.Add("-P");
-        p.ArgumentList.Add("");
-        p.ArgumentList.Add("-b");
-        p.ArgumentList.Add("2048");
         return p;
     }
 
@@ -35,14 +37,12 @@ public class Auth {
         File.Delete(tmpFile);
         tmpFile = tmpFile + ".key";
         var startInfo = SshKeyGenProcConfig(tmpFile);
-        var proc = new Process() { StartInfo = startInfo };
-        if (proc is null) {
-            throw new Exception($"ssh-keygen process could start (got null)");
-        }
+        using var proc = new Process() { StartInfo = startInfo };
         if (proc.Start()) {
+            var stdErr = await proc.StandardError.ReadToEndAsync();
             await proc.WaitForExitAsync();
             if (proc.ExitCode != 0) {
-                throw new Exception($"ssh-keygen failed due to {await proc.StandardError.ReadToEndAsync()}");
+                throw new Exception($"ssh-keygen failed due to {stdErr}");
             }
 
             var priv = File.ReadAllText(tmpFile);
