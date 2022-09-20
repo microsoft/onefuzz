@@ -281,7 +281,10 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             State = VmState.Stopping
         };
 
-        await Replace(repro);
+        var r = await Replace(repro);
+        if (!r.IsOk) {
+            _logTracer.Error($"failed to replace repro record for {repro.VmId} due to {r.ErrorV}");
+        }
         return repro;
     }
 
@@ -306,12 +309,15 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
                 Config: config,
                 TaskId: task.TaskId,
                 Os: task.Os,
-                Auth: Auth.BuildAuth(),
+                Auth: await Auth.BuildAuth(),
                 EndTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(config.Duration),
                 UserInfo: userInfo
             );
 
-            await _context.ReproOperations.Insert(vm);
+            var r = await _context.ReproOperations.Insert(vm);
+            if (!r.IsOk) {
+                _logTracer.Error($"failed to insert repro record for {vm.VmId} due to {r.ErrorV}");
+            }
             return OneFuzzResult<Repro>.Ok(vm);
         } else {
             return OneFuzzResult<Repro>.Error(ErrorCode.UNABLE_TO_FIND, "unable to find report");

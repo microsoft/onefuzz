@@ -100,9 +100,12 @@ public class Node {
                 context: patch.MachineId.ToString());
         }
 
-        await _context.NodeOperations.Stop(node, done: true);
+        node = await _context.NodeOperations.Stop(node, done: true);
         if (node.DebugKeepNode) {
-            await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
+            var r = await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
+            if (!r.IsOk) {
+                _log.Error($"Failed to replace node {node.MachineId} due to {r.ErrorV}");
+            }
         }
 
         return await RequestHandling.Ok(req, true);
@@ -137,7 +140,10 @@ public class Node {
             node = node with { DebugKeepNode = value };
         }
 
-        await _context.NodeOperations.Replace(node);
+        var r = await _context.NodeOperations.Replace(node);
+        if (!r.IsOk) {
+            _log.Error($"Failed to replace node {node.MachineId} due to {r.ErrorV}");
+        }
         return await RequestHandling.Ok(req, true);
     }
 
@@ -166,9 +172,12 @@ public class Node {
                 context: delete.MachineId.ToString());
         }
 
-        await _context.NodeOperations.SetHalt(node);
+        node = await _context.NodeOperations.SetHalt(node);
         if (node.DebugKeepNode) {
-            await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
+            var r = await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
+            if (!r.IsOk) {
+                _log.Error($"Failed to replace node {node.MachineId} due to {r.ErrorV}");
+            }
         }
 
         return await RequestHandling.Ok(req, true);

@@ -562,11 +562,9 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 toDelete[node.MachineId] = node;
             } else {
                 if (await new ShrinkQueue(scaleSet.ScalesetId, _context.Queue, _log).ShouldShrink()) {
-                    await _context.NodeOperations.SetHalt(node);
-                    toDelete[node.MachineId] = node;
+                    toDelete[node.MachineId] = await _context.NodeOperations.SetHalt(node);
                 } else if (await new ShrinkQueue(pool.OkV!.PoolId, _context.Queue, _log).ShouldShrink()) {
-                    await _context.NodeOperations.SetHalt(node);
-                    toDelete[node.MachineId] = node;
+                    toDelete[node.MachineId] = await _context.NodeOperations.SetHalt(node);
                 } else {
                     toReimage[node.MachineId] = node;
                 }
@@ -585,8 +583,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
             var error = new Error(ErrorCode.TASK_FAILED, new[] { $"{errorMessage} scaleset_id {deadNode.ScalesetId} last heartbeat:{deadNode.Heartbeat}" });
             await _context.NodeOperations.MarkTasksStoppedEarly(deadNode, error);
-            await _context.NodeOperations.ToReimage(deadNode, true);
-            toReimage[deadNode.MachineId] = deadNode;
+            toReimage[deadNode.MachineId] = await _context.NodeOperations.ToReimage(deadNode, true);
         }
 
         // Perform operations until they fail due to scaleset getting locked:
@@ -671,7 +668,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
 
         // TODO: try to do this as one atomic operation:
-        await Async.Task.WhenAll(nodes.Select(node => _context.NodeOperations.SetHalt(node)));
+        nodes = await Async.Task.WhenAll(nodes.Select(node => _context.NodeOperations.SetHalt(node)));
 
         if (scaleset.State == ScalesetState.Halt) {
             _log.Info($"{SCALESET_LOG_PREFIX} scaleset halting, ignoring deletion {scaleset.ScalesetId}");
