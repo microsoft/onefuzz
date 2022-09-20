@@ -4,7 +4,6 @@
 use std::{fmt, path::PathBuf};
 
 use anyhow::{Context, Result};
-use log::{error};
 use onefuzz::{blob::BlobUrl, jitter::delay_with_jitter, syncdir::SyncedDir};
 use reqwest::Url;
 use tempfile::{tempdir, TempDir};
