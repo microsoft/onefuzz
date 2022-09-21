@@ -57,9 +57,6 @@ public class Scaleset : IFromJsonElement<Scaleset> {
 
 public class ScalesetApi : ApiBase {
 
-    public const string Image_Ubuntu_20_04 = "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest";
-    public const string ImageWindows = "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest";
-
     public ScalesetApi(Uri endpoint, Microsoft.OneFuzz.Service.Request request, ITestOutputHelper output) :
         base(endpoint, "/api/Scaleset", request, output) { }
 

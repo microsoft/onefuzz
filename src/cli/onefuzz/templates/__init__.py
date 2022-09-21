@@ -178,13 +178,6 @@ class JobHelper:
             )
 
     @classmethod
-    def get_image(_cls, platform: OS) -> str:
-        if platform == OS.linux:
-            return DEFAULT_LINUX_IMAGE
-        else:
-            return DEFAULT_WINDOWS_IMAGE
-
-    @classmethod
     def get_platform(_cls, target_exe: File) -> OS:
         with open(target_exe, "rb") as handle:
             header = handle.read(4)
