@@ -15,7 +15,7 @@ public interface IProxyOperations : IStatefulOrm<Proxy, VmState> {
     bool IsAlive(Proxy proxy);
     Async.Task SaveProxyConfig(Proxy proxy);
     bool IsOutdated(Proxy proxy);
-    Async.Task<Proxy?> GetOrCreate(Region region);
+    Async.Task<Proxy> GetOrCreate(Region region);
     Task<bool> IsUsed(Proxy proxy);
 
     // state transitions:
@@ -42,7 +42,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         return await data.FirstOrDefaultAsync();
     }
 
-    public async Async.Task<Proxy?> GetOrCreate(Region region) {
+    public async Async.Task<Proxy> GetOrCreate(Region region) {
         var proxyList = QueryAsync(filter: TableClient.CreateQueryFilter($"region eq {region.String} and outdated eq false"));
 
         await foreach (var proxy in proxyList) {
@@ -58,7 +58,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         }
 
         _logTracer.Info($"creating proxy: region:{region}");
-        var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, Auth.BuildAuth(), null, null, _context.ServiceConfiguration.OneFuzzVersion, null, false);
+        var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, await Auth.BuildAuth(_logTracer), null, null, _context.ServiceConfiguration.OneFuzzVersion, null, false);
 
         var r = await Replace(newProxy);
         if (!r.IsOk) {
@@ -81,12 +81,12 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
     public bool IsAlive(Proxy proxy) {
         var tenMinutesAgo = DateTimeOffset.UtcNow - TimeSpan.FromMinutes(10);
 
-        if (proxy.Heartbeat != null && proxy.Heartbeat.TimeStamp < tenMinutesAgo) {
+        if (proxy.Heartbeat is not null && proxy.Heartbeat.TimeStamp < tenMinutesAgo) {
             _logTracer.Info($"last heartbeat is more than an 10 minutes old:  {proxy.Region} - last heartbeat:{proxy.Heartbeat} compared_to:{tenMinutesAgo}");
             return false;
         }
 
-        if (proxy.Heartbeat != null && proxy.TimeStamp != null && proxy.TimeStamp < tenMinutesAgo) {
+        if (proxy.Heartbeat is not null && proxy.TimeStamp is not null && proxy.TimeStamp < tenMinutesAgo) {
             _logTracer.Error($"no heartbeat in the last 10 minutes: {proxy.Region} timestamp: {proxy.TimeStamp} compared_to:{tenMinutesAgo}");
             return false;
         }
@@ -104,7 +104,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             return true;
         }
 
-        if (proxy.CreatedTimestamp != null) {
+        if (proxy.CreatedTimestamp is not null) {
             if (proxy.CreatedTimestamp < (DateTimeOffset.UtcNow - PROXY_LIFESPAN)) {
                 _logTracer.Info($"proxy older than 7 days:proxy-created:{proxy.CreatedTimestamp} state:{proxy.State}");
                 return true;
@@ -205,7 +205,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
     }
 
     private async Task<Proxy> SetFailed(Proxy proxy, Error error) {
-        if (proxy.Error != null) {
+        if (proxy.Error is not null) {
             return proxy;
         }
 
@@ -231,9 +231,9 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     public static Vm GetVm(Proxy proxy, InstanceConfig config) {
         var tags = config.VmssTags;
-        var proxyVmSku = "";
+        string proxyVmSku;
         const string PROXY_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest";
-        if (config.ProxyVmSku == null) {
+        if (config.ProxyVmSku is null) {
             proxyVmSku = "Standard_B2s";
         } else {
             proxyVmSku = config.ProxyVmSku;
@@ -255,7 +255,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         var vm = GetVm(proxy, config);
         var vmData = await _context.VmOperations.GetVm(vm.Name);
 
-        if (vmData == null) {
+        if (vmData is null) {
             return await SetFailed(proxy, new Error(ErrorCode.PROXY_FAILED, new[] { "azure not able to find vm" }));
         }
 
@@ -264,7 +264,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         }
 
         var ip = await _context.IpOperations.GetPublicIp(vmData.NetworkProfile.NetworkInterfaces[0].Id);
-        if (ip == null) {
+        if (ip is null) {
             return proxy;
         }
 

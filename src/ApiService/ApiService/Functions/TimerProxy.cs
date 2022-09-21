@@ -20,7 +20,9 @@ public class TimerProxy {
 
         var proxies = await proxyOperations.QueryAsync().ToListAsync();
 
-        foreach (var proxy in proxies) {
+        foreach (var p in proxies) {
+            var proxy = p;
+
             if (VmStateHelper.Available.Contains(proxy.State)) {
                 // Note, outdated checked at the start, but set at the end of this loop.
                 // As this function is called via a timer, this works around a user
@@ -40,11 +42,14 @@ public class TimerProxy {
 
             if (VmStateHelper.NeedsWork.Contains(proxy.State)) {
                 _logger.Info($"scaleset-proxy: update state. proxy:{proxy.Region} state:{proxy.State}");
-                await proxyOperations.ProcessStateUpdate(proxy);
+                proxy = await proxyOperations.ProcessStateUpdate(proxy);
             }
 
-            if (proxy.State != VmState.Stopped && proxyOperations.IsOutdated(proxy)) {
-                await proxyOperations.Replace(proxy with { Outdated = true });
+            if (proxy is not null && proxy.State != VmState.Stopped && proxyOperations.IsOutdated(proxy)) {
+                var r = await proxyOperations.Replace(proxy with { Outdated = true });
+                if (!r.IsOk) {
+                    _logger.Error($"Failed to replace proxy recordy for proxy {proxy.ProxyId} due to {r.ErrorV}");
+                }
             }
         }
 
@@ -54,8 +59,8 @@ public class TimerProxy {
         foreach (var region in regions) {
             var allOutdated = proxies.Where(x => x.Region == region).All(p => p.Outdated);
             if (allOutdated) {
-                await proxyOperations.GetOrCreate(region);
-                _logger.Info($"Creating new proxy in region {region}");
+                var proxy = await proxyOperations.GetOrCreate(region);
+                _logger.Info($"Creating new proxy with id {proxy.ProxyId} in region {region}");
             }
 
             // this is required in order to support upgrade from non-nsg to

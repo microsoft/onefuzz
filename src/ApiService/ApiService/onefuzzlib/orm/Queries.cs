@@ -46,10 +46,29 @@ namespace ApiService.OneFuzzLib.Orm {
             return EqualAny(property, convertedEnums);
         }
 
+        public static string EqualEnum<T>(string property, T e) where T : Enum {
+            string convertedEnum = JsonSerializer.Serialize(e, EntityConverter.GetJsonSerializerOptions()).Trim('"');
+            return $"{property} eq '{EscapeString(convertedEnum)}'";
+        }
+
         public static string TimeRange(DateTimeOffset min, DateTimeOffset max) {
             // NB: this uses the auto-populated Timestamp property, and will result in a table scan
             // TODO: should this be inclusive at the endpoints?
             return TableClient.CreateQueryFilter($"Timestamp lt {max} and Timestamp gt {min}");
+        }
+
+        public static string TimestampNewerThan(DateTimeOffset t) {
+            return TableClient.CreateQueryFilter($"Timestamp gt {t}");
+        }
+        public static string NewerThan(string field, DateTimeOffset t) {
+            return $"{field} gt {TableClient.CreateQueryFilter($"{t}")}";
+        }
+        public static string TimestampOlderThan(DateTimeOffset t) {
+            return TableClient.CreateQueryFilter($"Timestamp lt {t}");
+        }
+
+        public static string OlderThan(string field, DateTimeOffset t) {
+            return $"{field} lt {TableClient.CreateQueryFilter($"{t}")}";
         }
 
         public static string StartsWith(string property, string prefix) {

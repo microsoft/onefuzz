@@ -121,7 +121,7 @@ public class Extensions : IExtensions {
     public static VMExtensionWrapper AzSecExtension(AzureLocation region) {
         return new VMExtensionWrapper {
             Location = region,
-            Name = "AzureSecurityLinuxAgent",
+            Name = "Microsoft.Azure.Security.Monitoring.AzureSecurityLinuxAgent",
             Publisher = "Microsoft.Azure.Security.Monitoring",
             TypePropertiesType = "AzureSecurityLinuxAgent",
             TypeHandlerVersion = "2.0",
@@ -147,7 +147,7 @@ public class Extensions : IExtensions {
 
         return new VMExtensionWrapper {
             Location = region,
-            Name = "AzureMonitorLinuxAgent",
+            Name = "Microsoft.Azure.Monitor.AzureMonitorLinuxAgent",
             Publisher = "Microsoft.Azure.Monitor",
             TypePropertiesType = "AzureMonitorLinuxAgent",
             AutoUpgradeMinorVersion = true,
@@ -341,10 +341,10 @@ public class Extensions : IExtensions {
         } else if (vmOs == Os.Linux) {
             return new VMExtensionWrapper {
                 Location = region,
-                Name = "OMSExtension",
+                Name = "OmsAgentForLinux",
                 TypePropertiesType = "OmsAgentForLinux",
                 Publisher = "Microsoft.EnterpriseCloud.Monitoring",
-                TypeHandlerVersion = "1.12",
+                TypeHandlerVersion = "1.0",
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(extensionSettings),
                 ProtectedSettings = new BinaryData(protectedExtensionSettings),

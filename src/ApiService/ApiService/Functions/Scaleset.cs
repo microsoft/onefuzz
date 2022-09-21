@@ -114,7 +114,7 @@ public class Scaleset {
             ScalesetId: Guid.NewGuid(),
             State: ScalesetState.Init,
             NeedsConfigUpdate: false,
-            Auth: Auth.BuildAuth(),
+            Auth: await Auth.BuildAuth(_log),
             PoolName: create.PoolName,
             VmSku: create.VmSku,
             Image: create.Image,

@@ -17,6 +17,9 @@ jobs:
       matrix:
         language: ["csharp", "python"]
 
+    permissions:
+      security-events: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
