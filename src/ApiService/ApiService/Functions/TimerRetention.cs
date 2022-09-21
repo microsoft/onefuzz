@@ -125,10 +125,14 @@ public class TimerRetention {
                 //this is a task queue
                 var taskQueue = await _taskOps.GetByTaskId(queueId);
                 if (taskQueue is null) {
-                    // task does not exist. ok to delete the queue
+                    // task does not exist. Ok to delete the task queue
                     _log.Info($"Deleting task queue, since task could not be found in Task table {q.Name}");
                     await _queue.DeleteQueue(q.Name, StorageType.Corpus);
                 }
+            } else if (q.Name.StartsWith(ShrinkQueue.ShrinkQueueNamePrefix)) {
+                //ignore Shrink Queues, since they seem to behave ok
+            } else {
+                _log.Warning($"Unhandled queue name {q.Name} when doing garbage collection on queues");
             }
         }
     }
