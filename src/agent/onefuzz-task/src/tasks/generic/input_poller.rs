@@ -251,7 +251,7 @@ impl<M> InputPoller<M> {
         if result.is_err() {
             // We must maintain a valid state, and we can logically recover from
             // any failed action or invalid transition.
-            log::error!("State Transition Failed. Resetting state to 'Ready.'");
+            error!("State Transition Failed. Resetting state to 'Ready.'");
             self.state = Some(State::Ready);
         }
 
