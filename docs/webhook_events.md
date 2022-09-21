@@ -826,7 +826,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "default_linux_vm_image": {
                     "default": "Canonical:UbuntuServer:18.04-LTS:latest",
-                    "title": "Default  Linux Vm Image",
+                    "title": "Default Linux Vm Image",
                     "type": "string"
                 },
                 "default_windows_vm_image": {
@@ -6060,7 +6060,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "default_linux_vm_image": {
                     "default": "Canonical:UbuntuServer:18.04-LTS:latest",
-                    "title": "Default  Linux Vm Image",
+                    "title": "Default Linux Vm Image",
                     "type": "string"
                 },
                 "default_windows_vm_image": {
