@@ -35,7 +35,7 @@ mkdir -p /onefuzz/instance-specific-setup
 mkdir -p "$DOTNET_ROOT"
 
 echo $1 > /onefuzz/etc/mode
-export PATH=$PATH:/onefuzz/bin:/onefuzz/tools/$LINUX_ID:/onefuzz/tools/linux:/onefuzz/tools/linux/afl:/onefuzz/tools/linux/radamsa
+export PATH=$PATH:/onefuzz/bin:/onefuzz/tools/linux/$LINUX_ID:/onefuzz/tools/linux:/onefuzz/tools/linux/afl:/onefuzz/tools/linux/radamsa
 
 # Basic setup
 mv /onefuzz/downloaded/config.json /onefuzz

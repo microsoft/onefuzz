@@ -492,7 +492,7 @@ jobs:
           cp artifacts/agent-MINGW*/onefuzz_task.pdb src/deployment/tools/win64/
 
           for linux_dir in artifacts/agent-Linux/*; do 
-            dest="src/deployment/tools/$(basename "$linux_dir")"
+            dest="src/deployment/tools/linux/$(basename "$linux_dir")"
             mkdir -p "$dest"
             cp "$linux_dir/onefuzz-agent" "$dest"
             cp "$linux_dir/onefuzz-task" "$dest"
