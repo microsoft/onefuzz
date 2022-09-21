@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode, OS, ScalesetState
+from onefuzztypes.enums import OS, ErrorCode, ScalesetState
 from onefuzztypes.models import Error
 from onefuzztypes.requests import (
     ScalesetCreate,
