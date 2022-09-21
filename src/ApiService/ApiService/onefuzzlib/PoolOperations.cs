@@ -169,6 +169,10 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         }
         var poolQueue = GetPoolQueue(pool.PoolId);
         await _context.Queue.DeleteQueue(poolQueue, StorageType.Corpus);
+
+        var shrinkQueue = new ShrinkQueue(pool.PoolId, _context.Queue, _logTracer);
+        await shrinkQueue.Delete();
+
         await _context.Events.SendEvent(new EventPoolDeleted(PoolName: pool.Name));
     }
 
@@ -211,8 +215,6 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         var nodes = _context.NodeOperations.SearchByPoolName(pool.Name);
 
         if (scalesets is null && nodes is null) {
-            var shrinkQueue = new ShrinkQueue(pool.PoolId, _context.Queue, _logTracer);
-            await shrinkQueue.Delete();
             _logTracer.Info($"pool stopped, deleting: {pool.Name}");
             await Delete(pool);
         }
