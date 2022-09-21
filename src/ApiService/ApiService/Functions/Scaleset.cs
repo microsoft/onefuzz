@@ -77,10 +77,11 @@ public class Scaleset {
 
         string image;
         if (create.Image is null) {
+            var config = await _context.ConfigOperations.Fetch();
             if (pool.Os == Os.Windows) {
-                image = (await _context.ConfigOperations.Fetch()).DefaultWindowsVmImage;
+                image = config.DefaultWindowsVmImage;
             } else {
-                image = (await _context.ConfigOperations.Fetch()).DefaultLinxuVmImage;
+                image = config.DefaultLinxuVmImage;
             }
         } else {
             image = create.Image;
