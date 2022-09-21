@@ -330,7 +330,7 @@ public record InstanceConfig
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
     string DefaultWindowsVmImage = "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
-    string DefaultLinxuVmImage = "Canonical:UbuntuServer:18.04-LTS:latest",
+    string DefaultLinuxVmImage = "Canonical:UbuntuServer:18.04-LTS:latest",
     string ProxyVmSku = "Standard_B2s",
     bool RequireAdminPrivileges = false,
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,

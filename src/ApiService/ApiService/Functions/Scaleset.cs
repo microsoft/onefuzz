@@ -81,7 +81,7 @@ public class Scaleset {
             if (pool.Os == Os.Windows) {
                 image = config.DefaultWindowsVmImage;
             } else {
-                image = config.DefaultLinxuVmImage;
+                image = config.DefaultLinuxVmImage;
             }
         } else {
             image = create.Image;
