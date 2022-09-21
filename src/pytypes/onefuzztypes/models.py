@@ -880,6 +880,12 @@ class InstanceConfig(BaseModel):
         default_factory=NetworkSecurityGroupConfig
     )
     extensions: Optional[AzureVmExtensionConfig]
+    default_windows_vm_image: str = Field(
+        default="MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest"
+    )
+    default__linux_vm_image: str = Field(
+        default="Canonical:UbuntuServer:18.04-LTS:latest"
+    )
     proxy_vm_sku: str = Field(default="Standard_B2s")
     api_access_rules: Optional[Dict[Endpoint, ApiAccessRule]] = None
     group_membership: Optional[Dict[PrincipalID, List[GroupId]]] = None

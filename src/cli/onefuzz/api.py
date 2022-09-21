@@ -1427,9 +1427,9 @@ class Scaleset(Endpoint):
         if image is None:
             pool = self.onefuzz.pools.get(pool_name)
             if pool.os == enums.OS.linux:
-                image = DEFAULT_LINUX_IMAGE
+                image = "default_linux"
             elif pool.os == enums.OS.windows:
-                image = DEFAULT_WINDOWS_IMAGE
+                image = "default_windows"
             else:
                 raise NotImplementedError
 

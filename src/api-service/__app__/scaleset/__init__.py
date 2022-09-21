@@ -78,6 +78,14 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
         region = request.region
 
+    if request.image is None:
+        if pool.os == "windows":
+            image = instance_config.default_windows_vm_image
+        else:
+            image = instance_config.default_linux_vm_image
+    else:
+        image = request.image
+
     if request.vm_sku not in list_available_skus(region):
         return not_ok(
             Error(
@@ -97,7 +105,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     scaleset = Scaleset.create(
         pool_name=request.pool_name,
         vm_sku=request.vm_sku,
-        image=request.image,
+        image=image,
         region=region,
         size=request.size,
         spot_instances=request.spot_instances,
