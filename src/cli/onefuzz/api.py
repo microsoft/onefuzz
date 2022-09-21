@@ -1424,15 +1424,6 @@ class Scaleset(Endpoint):
         if tags is None:
             tags = {}
 
-        if image is None:
-            pool = self.onefuzz.pools.get(pool_name)
-            if pool.os == enums.OS.linux:
-                image = "default_linux"
-            elif pool.os == enums.OS.windows:
-                image = "default_windows"
-            else:
-                raise NotImplementedError
-
         auto_scale = requests.AutoScaleOptions(
             min=min_instances,
             max=max_size,
