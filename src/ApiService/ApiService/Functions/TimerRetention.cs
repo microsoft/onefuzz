@@ -11,18 +11,24 @@ public class TimerRetention {
     private readonly INotificationOperations _notificaitonOps;
     private readonly IJobOperations _jobOps;
     private readonly IReproOperations _reproOps;
+    private readonly IQueue _queue;
+    private readonly IPoolOperations _poolOps;
 
     public TimerRetention(
             ILogTracer log,
             ITaskOperations taskOps,
             INotificationOperations notificaitonOps,
             IJobOperations jobOps,
-            IReproOperations reproOps) {
+            IReproOperations reproOps,
+            IQueue queue,
+            IPoolOperations poolOps) {
         _log = log;
         _taskOps = taskOps;
         _notificaitonOps = notificaitonOps;
         _jobOps = jobOps;
         _reproOps = reproOps;
+        _queue = queue;
+        _poolOps = poolOps;
     }
 
 
@@ -97,6 +103,31 @@ public class TimerRetention {
                 var r = await _reproOps.Replace(updatedRepro);
                 if (!r.IsOk) {
                     _log.WithHttpStatus(r.ErrorV).Error($"Failed to save repro {updatedRepro.VmId}");
+                }
+            }
+        }
+
+        //delete Task queues for tasks that do not exist in the table (manually deleted from the table)
+        //delete Pool queues for pools that were deleted before https://github.com/microsoft/onefuzz/issues/2430 got fixed
+        await foreach (var q in _queue.ListQueues(StorageType.Corpus)) {
+            Guid queueId;
+            if (q.Name.StartsWith(IPoolOperations.PoolQueueNamePrefix)) {
+                var queueIdStr = q.Name[IPoolOperations.PoolQueueNamePrefix.Length..];
+                if (Guid.TryParse(queueIdStr, out queueId)) {
+                    var pool = await _poolOps.GetById(queueId);
+                    if (!pool.IsOk) {
+                        //pool does not exist. Ok to delete the pool queue
+                        _log.Info($"Deleting pool queue since pool could not be found in Pool table {q.Name}");
+                        await _queue.DeleteQueue(q.Name, StorageType.Corpus);
+                    }
+                }
+            } else if (Guid.TryParse(q.Name, out queueId)) {
+                //this is a task queue
+                var taskQueue = await _taskOps.GetByTaskId(queueId);
+                if (taskQueue is null) {
+                    // task does not exist. ok to delete the queue
+                    _log.Info($"Deleting task queue, since task could not be found in Task table {q.Name}");
+                    await _queue.DeleteQueue(q.Name, StorageType.Corpus);
                 }
             }
         }
