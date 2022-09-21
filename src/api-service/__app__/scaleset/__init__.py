@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode, ScalesetState
+from onefuzztypes.enums import ErrorCode, OS, ScalesetState
 from onefuzztypes.models import Error
 from onefuzztypes.requests import (
     ScalesetCreate,
@@ -79,7 +79,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         region = request.region
 
     if request.image is None:
-        if pool.os == "windows":
+        if pool.os == OS.windows:
             image = instance_config.default_windows_vm_image
         else:
             image = instance_config.default_linux_vm_image
