@@ -248,7 +248,7 @@ impl<M> InputPoller<M> {
 
         let result = self.try_trigger(state, event).await;
 
-        if let Err(err) = result {
+        if let Err(err) = &result {
             // We must maintain a valid state, and we can logically recover from
             // any failed action or invalid transition.
             error!("State Transition Failed. Resetting state to 'Ready.' Error: {}", err);
