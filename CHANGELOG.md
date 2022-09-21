@@ -6,7 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 5.14.0
 ### Added
-* Service: Added error message to catch VMSS Model `HttpResponseError` [#2384](https://github.com/microsoft/onefuzz/pull/2384)
 * Service: Implement not-implemented `GetInputContainerQueues` [#2380](https://github.com/microsoft/onefuzz/pull/2380)
 ### Changed
 * Service: Port `SyncAutoscaleSettings` from Python to C# [#2407](https://github.com/microsoft/onefuzz/pull/2407)
