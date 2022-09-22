@@ -45,7 +45,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         var r = await Insert(newPool);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to save new pool. Pool name: {newPool.Name}, PoolId: {newPool.PoolId} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save new pool. Pool name: {newPool.Name}, PoolId: {newPool.PoolId}");
         }
         await _context.Events.SendEvent(new EventPoolCreated(PoolName: newPool.Name, Os: newPool.Os, Arch: newPool.Arch, Managed: newPool.Managed));
         return newPool;

@@ -325,7 +325,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
 
             var r = await _context.ReproOperations.Insert(vm);
             if (!r.IsOk) {
-                _logTracer.Error($"failed to insert repro record for {vm.VmId} due to {r.ErrorV}");
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert repro record for {vm.VmId}");
             }
             return OneFuzzResult<Repro>.Ok(vm);
         } else {

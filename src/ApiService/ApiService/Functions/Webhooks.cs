@@ -107,7 +107,10 @@ public class Webhooks {
         var webhook = new Webhook(Guid.NewGuid(), request.OkV.Name, request.OkV.Url, request.OkV.EventTypes,
             request.OkV.SecretToken, request.OkV.MessageFormat);
 
-        await _context.WebhookOperations.Insert(webhook);
+        var r = await _context.WebhookOperations.Insert(webhook);
+        if (!r.IsOk) {
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to insert webhook {webhook.WebhookId}");
+        }
 
         _log.Info($"added webhook: {webhook.WebhookId}");
 

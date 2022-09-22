@@ -209,7 +209,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
         var r = await _context.TaskOperations.Insert(task);
         if (!r.IsOk) {
-            _logTracer.Error($"failed to insert task {task.TaskId} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert task {task.TaskId}");
         }
         await _context.Events.SendEvent(new EventTaskCreated(jobId, task.TaskId, config, userInfo));
 

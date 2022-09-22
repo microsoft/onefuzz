@@ -102,7 +102,10 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         }
         var configWithHiddenSecret = await HideSecrets(config);
         var entry = new Notification(Guid.NewGuid(), container, configWithHiddenSecret);
-        await this.Insert(entry);
+        var r = await this.Insert(entry);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert notification with id {entry.NotificationId}");
+        }
         _logTracer.Info($"created notification.  notification_id:{entry.NotificationId} container:{entry.Container}");
 
         return OneFuzzResult<Notification>.Ok(entry);
