@@ -136,7 +136,7 @@ public class AgentRegistration {
 
         var r = await _context.NodeOperations.Replace(node);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace node operations for node {node.MachineId}");
+            _log.WithHttpStatus(r.ErrorV).WithTag("MachineId", node.MachineId.ToString()).Error("failed to replace node operations for node {MachineId}");
         }
 
         return await RequestHandling.Ok(req, await CreateRegistrationResponse(pool));
