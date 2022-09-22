@@ -27,14 +27,14 @@ public class QueueTaskHearbeat {
         var log = _log.WithTag("TaskId", hb.TaskId.ToString());
 
         if (task == null) {
-            _log.Warning($"invalid task id");
+            log.Warning($"invalid task id");
             return;
         }
 
         var newTask = task with { Heartbeat = DateTimeOffset.UtcNow };
         var r = await _tasks.Replace(newTask);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace with new task");
+            log.WithHttpStatus(r.ErrorV).Error($"failed to replace with new task");
         }
         await _events.SendEvent(new EventTaskHeartbeat(newTask.JobId, newTask.TaskId, newTask.Config));
     }
