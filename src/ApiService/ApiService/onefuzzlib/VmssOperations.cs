@@ -455,9 +455,12 @@ public class VmssOperations : IVmssOperations {
         // The expectation is that these requests are queued and handled subsequently.
         // The VMSS Team confirmed this expectation and testing supports it, as well.
         _log.Info($"upgrading VMSS ndoes - name: {scalesetId} ids: {string.Join(", ", instanceIds)}");
-        await vmssResource.UpdateInstancesAsync(
+        var r = await vmssResource.UpdateInstancesAsync(
             WaitUntil.Started,
             new VirtualMachineScaleSetVmInstanceRequiredIds(instanceIds));
+        if (r.GetRawResponse().IsError) {
+            _log.Error($"failed to start update instance for scaleset {scalesetId} due to {r.GetRawResponse().ReasonPhrase}");
+        }
 
         _log.Info($"reimaging VMSS nodes - name: {scalesetId} ids: {string.Join(", ", instanceIds)}");
 
@@ -467,7 +470,10 @@ public class VmssOperations : IVmssOperations {
             reqInstanceIds.InstanceIds.Add(instanceId);
         }
 
-        await vmssResource.ReimageAllAsync(WaitUntil.Started, reqInstanceIds);
+        r = await vmssResource.ReimageAllAsync(WaitUntil.Started, reqInstanceIds);
+        if (r.GetRawResponse().IsError) {
+            _log.Error($"failed to start reimage all for scaleset {scalesetId} due to {r.GetRawResponse().ReasonPhrase}");
+        }
         return OneFuzzResultVoid.Ok;
     }
 
