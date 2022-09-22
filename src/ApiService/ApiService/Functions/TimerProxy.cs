@@ -48,7 +48,7 @@ public class TimerProxy {
             if (proxy is not null && proxy.State != VmState.Stopped && proxyOperations.IsOutdated(proxy)) {
                 var r = await proxyOperations.Replace(proxy with { Outdated = true });
                 if (!r.IsOk) {
-                    _logger.Error($"Failed to replace proxy recordy for proxy {proxy.ProxyId} due to {r.ErrorV}");
+                    _logger.WithHttpStatus(r.ErrorV).Error($"Failed to replace proxy recordy for proxy {proxy.ProxyId}");
                 }
             }
         }

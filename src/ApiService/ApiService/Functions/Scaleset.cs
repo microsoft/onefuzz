@@ -43,7 +43,7 @@ public class Scaleset {
         }
 
         var scaleset = scalesetResult.OkV;
-        await _context.ScalesetOperations.SetShutdown(scaleset, request.OkV.Now);
+        _ = await _context.ScalesetOperations.SetShutdown(scaleset, request.OkV.Now);
         return await RequestHandling.Ok(req, true);
     }
 
@@ -126,6 +126,7 @@ public class Scaleset {
 
         var inserted = await _context.ScalesetOperations.Insert(scaleset);
         if (!inserted.IsOk) {
+            _log.WithHttpStatus(inserted.ErrorV).Error($"failed to insert new scaleset {scaleset.ScalesetId}");
             return await _context.RequestHandling.NotOk(
                 req,
                 new Error(
@@ -146,7 +147,10 @@ public class Scaleset {
                 ScaleInAmount: options.ScaleInAmount,
                 ScaleInCooldown: options.ScaleInCooldown);
 
-            await _context.AutoScaleOperations.Insert(autoScale);
+            var r = await _context.AutoScaleOperations.Insert(autoScale);
+            if (!r.IsOk) {
+                _log.WithHttpStatus(r.ErrorV).Error($"failed to insert autoscale options for sclaeset id {autoScale.ScalesetId}");
+            }
         }
 
         // auth not included on create results, only GET with include_auth set

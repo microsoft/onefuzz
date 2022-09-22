@@ -68,7 +68,10 @@ public class Jobs {
         // log container must not have the SAS included
         var logContainerUri = new UriBuilder(containerSas) { Query = "" }.Uri;
         job = job with { Config = job.Config with { Logs = logContainerUri.ToString() } };
-        await _context.JobOperations.Insert(job);
+        var r = await _context.JobOperations.Insert(job);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert job {job.JobId}");
+        }
         return await RequestHandling.Ok(req, JobResponse.ForJob(job));
     }
 
@@ -93,7 +96,7 @@ public class Jobs {
             job = job with { State = JobState.Stopping };
             var r = await _context.JobOperations.Replace(job);
             if (!r.IsOk) {
-                _logTracer.Error($"Failed to replace job {job.JobId} due to {r.ErrorV}");
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace job {job.JobId}");
             }
         }
 

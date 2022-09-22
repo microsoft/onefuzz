@@ -286,7 +286,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         var nodes = _context.NodeOperations.SearchStates(states: NodeStateHelper.BusyStates);
 
         await foreach (var node in nodes) {
-            await StopIfComplete(node, true);
+            _ = await StopIfComplete(node, true);
         }
     }
 
@@ -382,7 +382,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         node = node with { DeleteRequested = true };
         var r = await Replace(node);
         if (!r.IsOk) {
-            _logTracer.Error($"failed to update node with delete requested. machine id: {node.MachineId}, pool name: {node.PoolName}, pool id: {node.PoolId}, scaleset id: {node.ScalesetId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to update node with delete requested. machine id: {node.MachineId}, pool name: {node.PoolName}, pool id: {node.PoolId}, scaleset id: {node.ScalesetId}");
         }
 
         await SendStopIfFree(node);

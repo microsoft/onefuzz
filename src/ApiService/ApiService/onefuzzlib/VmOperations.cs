@@ -120,7 +120,7 @@ public class VmOperations : IVmOperations {
         if (await disks.AnyAsync()) {
             await foreach (var disk in disks) {
                 _logTracer.Info($"deleting disk {resourceGroup}:{disk?.Data.Name}");
-                await _context.DiskOperations.DeleteDisk(resourceGroup, disk?.Data.Name!);
+                _ = await _context.DiskOperations.DeleteDisk(resourceGroup, disk?.Data.Name!);
             }
             return false;
         }
@@ -131,9 +131,13 @@ public class VmOperations : IVmOperations {
     public async System.Threading.Tasks.Task DeleteVm(string name) {
         _logTracer.Info($"deleting vm: {_context.Creds.GetBaseResourceGroup()} {name}");
 
-        await _context.Creds.GetResourceGroupResource()
+        var r = await _context.Creds.GetResourceGroupResource()
             .GetVirtualMachineAsync(name).Result.Value
             .DeleteAsync(WaitUntil.Started);
+        if (r.GetRawResponse().IsError) {
+            _logTracer.Error($"failed to start deletion of vm {name} due to {r.GetRawResponse().ReasonPhrase}");
+        }
+        return;
     }
 
 

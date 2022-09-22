@@ -36,9 +36,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
 
     public async Task<Proxy?> GetByProxyId(Guid proxyId) {
-
-        var data = QueryAsync(filter: $"RowKey eq '{proxyId}'");
-
+        var data = QueryAsync(filter: Query.RowKey(proxyId.ToString()));
         return await data.FirstOrDefaultAsync();
     }
 
@@ -47,7 +45,10 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
         await foreach (var proxy in proxyList) {
             if (IsOutdated(proxy)) {
-                await Replace(proxy with { Outdated = true });
+                var r1 = await Replace(proxy with { Outdated = true });
+                if (!r1.IsOk) {
+                    _logTracer.WithHttpStatus(r1.ErrorV).Error($"failed to replace record to mark proxy {proxy.ProxyId} as outdated");
+                }
                 continue;
             }
 
@@ -62,7 +63,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
         var r = await Replace(newProxy);
         if (!r.IsOk) {
-            _logTracer.Error($"failed to save new proxy {newProxy.ProxyId} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to save new proxy {newProxy.ProxyId}");
         }
 
         await _context.Events.SendEvent(new EventProxyCreated(region, newProxy.ProxyId));
@@ -140,7 +141,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         var newProxy = proxy with { State = state };
         var r = await Replace(newProxy);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to replace proxy with id {newProxy.ProxyId} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace proxy with id {newProxy.ProxyId}");
         }
         await _context.Events.SendEvent(new EventProxyStateUpdated(newProxy.Region, newProxy.ProxyId, newProxy.State));
         return newProxy;
@@ -152,7 +153,10 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
         await foreach (var entry in _context.ProxyForwardOperations.SearchForward(region: proxy.Region, proxyId: proxy.ProxyId)) {
             if (entry.EndTime < DateTimeOffset.UtcNow) {
-                await _context.ProxyForwardOperations.Delete(entry);
+                var r = await _context.ProxyForwardOperations.Delete(entry);
+                if (!r.IsOk) {
+                    _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete proxy forward for proxy {proxy.ProxyId} in region {proxy.Region}");
+                }
             } else {
                 forwards.Add(new Forward(entry.Port, entry.DstPort, entry.DstIp));
             }
@@ -193,7 +197,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             }
             var r = await Replace(proxy);
             if (!r.IsOk) {
-                _logTracer.Error($"Failed to save proxy {proxy.ProxyId} due: {r.ErrorV}");
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save proxy {proxy.ProxyId}");
             }
             return proxy;
         }

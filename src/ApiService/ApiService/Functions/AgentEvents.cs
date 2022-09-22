@@ -203,7 +203,7 @@ public class AgentEvents {
             State: NodeTaskState.Running);
         var r = await _context.NodeTasksOperations.Replace(nodeTask);
         if (!r.IsOk) {
-            _log.Error($"failed to replace node task {nodeTask.TaskId} due to {r.ErrorV}");
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace node task {nodeTask.TaskId}");
         }
 
         if (task.State.ShuttingDown()) {
@@ -220,7 +220,7 @@ public class AgentEvents {
             EventData: new WorkerEvent(Running: running));
         r = await _context.TaskEventOperations.Replace(taskEvent);
         if (!r.IsOk) {
-            _log.Error($"failed to replace taskEvent for task with id {taskEvent.TaskId} due to {r.ErrorV}");
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace taskEvent for task with id {taskEvent.TaskId}");
         }
 
         return null;
@@ -256,7 +256,10 @@ public class AgentEvents {
             // keep node if keep-on-completion is set
             if (task.Config.Debug?.Contains(TaskDebugFlag.KeepNodeOnCompletion) == true) {
                 node = node with { DebugKeepNode = true };
-                await _context.NodeOperations.Replace(node);
+                var r = await _context.NodeOperations.Replace(node);
+                if (!r.IsOk) {
+                    _log.WithHttpStatus(r.ErrorV).Error($"keepNodeOnCompletion: failed to replace node {node.MachineId} when setting debug keep node to true");
+                }
             }
         } else {
             await _context.TaskOperations.MarkFailed(
@@ -273,16 +276,25 @@ public class AgentEvents {
             if ((task.Config.Debug?.Contains(TaskDebugFlag.KeepNodeOnFailure) == true)
                 || (task.Config.Debug?.Contains(TaskDebugFlag.KeepNodeOnCompletion) == true)) {
                 node = node with { DebugKeepNode = true };
-                await _context.NodeOperations.Replace(node);
+                var r = await _context.NodeOperations.Replace(node);
+                if (!r.IsOk) {
+                    _log.WithHttpStatus(r.ErrorV).Error($"keepNodeOnfFailure: failed to replace node {node.MachineId} when setting debug keep node to true");
+                }
             }
         }
 
         if (!node.DebugKeepNode) {
-            await _context.NodeTasksOperations.Delete(new NodeTasks(machineId, done.TaskId));
+            var r = await _context.NodeTasksOperations.Delete(new NodeTasks(machineId, done.TaskId));
+            if (!r.IsOk) {
+                _log.WithHttpStatus(r.ErrorV).Error($"failed to deleting node task since DebugKeepNode is false");
+            }
         }
 
         var taskEvent = new TaskEvent(done.TaskId, machineId, new WorkerEvent { Done = done });
-        await _context.TaskEventOperations.Replace(taskEvent);
+        var r1 = await _context.TaskEventOperations.Replace(taskEvent);
+        if (!r1.IsOk) {
+            _log.WithHttpStatus(r1.ErrorV).Error($"failed to update task event for done task {done.TaskId}");
+        }
         return null;
     }
 

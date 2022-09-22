@@ -140,7 +140,10 @@ namespace Microsoft.OneFuzz.Service {
             _logTracer.Info($"deleting nsg: {name}");
             try {
                 var nsg = await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroupAsync(name);
-                await nsg.Value.DeleteAsync(WaitUntil.Started);
+                var r = await nsg.Value.DeleteAsync(WaitUntil.Started);
+                if (r.GetRawResponse().IsError) {
+                    _logTracer.Error($"failed to start nsg deletion for nsg: {name} due to {r.GetRawResponse().ReasonPhrase}");
+                }
                 return true;
             } catch (RequestFailedException ex) {
                 if (ex.ErrorCode == "ResourceNotFound") {
