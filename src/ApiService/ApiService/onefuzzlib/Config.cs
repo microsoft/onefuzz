@@ -470,7 +470,7 @@ public class Config : IConfig {
                 return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"missing container: {container.Name}"));
             }
 
-            exist.Add(container.Name);
+            _ = exist.Add(container.Name);
 
             if (!containers.ContainsKey(container.Type)) {
                 containers.Add(container.Type, new List<Container>());

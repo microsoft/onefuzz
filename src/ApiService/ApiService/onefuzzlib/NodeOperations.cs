@@ -286,7 +286,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         var nodes = _context.NodeOperations.SearchStates(states: NodeStateHelper.BusyStates);
 
         await foreach (var node in nodes) {
-            await StopIfComplete(node, true);
+            _ = await StopIfComplete(node, true);
         }
     }
 

@@ -64,7 +64,7 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
         }
 
         _logTracer.Info($"stopping job as all tasks are stopped: {job.JobId}");
-        var _ = await Stopping(job);
+        _ = await Stopping(job);
     }
 
     public async Async.Task StopNeverStartedJobs() {
@@ -85,7 +85,7 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
                 await _context.TaskOperations.MarkFailed(task, new Error(ErrorCode.TASK_FAILED, new[] { "job never not start" }));
             }
             _logTracer.Info($"stopping job that never started: {job.JobId}");
-            await _context.JobOperations.Stopping(job);
+            _ = await _context.JobOperations.Stopping(job);
         }
     }
 
@@ -96,7 +96,8 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
         if (result.IsOk) {
             return enabled;
         } else {
-            throw new Exception($"Failed to save job {job.JobId} : {result.ErrorV}");
+            _logTracer.WithHttpStatus(result.ErrorV).Error($"Failed to save job when init {job.JobId} : {result.ErrorV}");
+            throw new Exception($"Failed to save job when init {job.JobId} : {result.ErrorV}");
         }
     }
 
@@ -123,7 +124,8 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
         if (result.IsOk) {
             return job;
         } else {
-            throw new Exception($"Failed to save job {job.JobId} : {result.ErrorV}");
+            _logTracer.WithHttpStatus(result.ErrorV).Error($"Failed to save job when stopping {job.JobId} : {result.ErrorV}");
+            throw new Exception($"Failed to save job when stopping {job.JobId} : {result.ErrorV}");
         }
     }
 

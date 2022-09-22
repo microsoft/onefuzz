@@ -130,7 +130,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
 
         _logTracer.Info($"Updating auto-scale entry for scaleset: {scaleset.ScalesetId}");
-        var _ = await _context.AutoScaleOperations.Update(
+        _ = await _context.AutoScaleOperations.Update(
                     scalesetId: scaleset.ScalesetId,
                     minAmount: minAmount,
                     maxAmount: maxAmount,
@@ -540,7 +540,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
             //Python code does use created node
             //pool.IsOk was handled above, OkV must be not null at this point
-            var _ = await _context.NodeOperations.Create(pool.OkV!.PoolId, scaleSet.PoolName, machineId, scaleSet.ScalesetId, _context.ServiceConfiguration.OneFuzzVersion, true);
+            _ = await _context.NodeOperations.Create(pool.OkV!.PoolId, scaleSet.PoolName, machineId, scaleSet.ScalesetId, _context.ServiceConfiguration.OneFuzzVersion, true);
         }
 
         var existingNodes =

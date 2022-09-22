@@ -120,7 +120,7 @@ public class VmOperations : IVmOperations {
         if (await disks.AnyAsync()) {
             await foreach (var disk in disks) {
                 _logTracer.Info($"deleting disk {resourceGroup}:{disk?.Data.Name}");
-                var _ = await _context.DiskOperations.DeleteDisk(resourceGroup, disk?.Data.Name!);
+                _ = await _context.DiskOperations.DeleteDisk(resourceGroup, disk?.Data.Name!);
             }
             return false;
         }

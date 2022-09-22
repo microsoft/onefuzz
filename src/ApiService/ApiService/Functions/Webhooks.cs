@@ -137,7 +137,10 @@ public class Webhooks {
             return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find webhook" }), "webhook delete");
         }
 
-        await _context.WebhookOperations.Delete(webhook);
+        var r = await _context.WebhookOperations.Delete(webhook);
+        if (!r.IsOk) {
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to delete webhook {webhook.Name} - {webhook.WebhookId}");
+        }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(new BoolResult(true));

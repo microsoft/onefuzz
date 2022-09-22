@@ -160,7 +160,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         await _context.Queue.CreateQueue(GetPoolQueue(pool.PoolId), StorageType.Corpus);
         var shrinkQueue = new ShrinkQueue(pool.PoolId, _context.Queue, _logTracer);
         await shrinkQueue.Create();
-        var _ = await SetState(pool, PoolState.Running);
+        _ = await SetState(pool, PoolState.Running);
         return pool;
     }
 
@@ -191,7 +191,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         if (scalesets is not null) {
             await foreach (var scaleset in scalesets) {
                 if (scaleset is not null) {
-                    var _ = await _context.ScalesetOperations.SetShutdown(scaleset, now: true);
+                    _ = await _context.ScalesetOperations.SetShutdown(scaleset, now: true);
                 }
             }
         }
@@ -224,7 +224,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         if (scalesets is not null) {
             await foreach (var scaleset in scalesets) {
                 if (scaleset is not null) {
-                    var _ = await _context.ScalesetOperations.SetState(scaleset, ScalesetState.Halt);
+                    _ = await _context.ScalesetOperations.SetState(scaleset, ScalesetState.Halt);
                 }
             }
         }

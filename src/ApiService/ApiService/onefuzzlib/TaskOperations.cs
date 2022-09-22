@@ -107,7 +107,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         if (!task.State.HasStarted()) {
             await MarkFailed(task, new Error(Code: ErrorCode.TASK_FAILED, Errors: new[] { "task never started" }));
         } else {
-            var _ = await SetState(task, TaskState.Stopping);
+            _ = await SetState(task, TaskState.Stopping);
         }
     }
 

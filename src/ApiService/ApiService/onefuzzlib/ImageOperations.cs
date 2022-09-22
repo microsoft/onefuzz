@@ -62,6 +62,7 @@ public class ImageOperations : IImageOperations {
                       ex is RequestFailedException ||
                       ex is NullReferenceException
                   ) {
+                    _logTracer.Exception(ex);
                     return OneFuzzResult<Os>.Error(
                         ErrorCode.INVALID_IMAGE,
                         ex.ToString()
@@ -76,6 +77,7 @@ public class ImageOperations : IImageOperations {
                     ex is RequestFailedException ||
                     ex is NullReferenceException
                 ) {
+                    _logTracer.Exception(ex);
                     return OneFuzzResult<Os>.Error(
                         ErrorCode.INVALID_IMAGE,
                         ex.ToString()
@@ -108,6 +110,7 @@ public class ImageOperations : IImageOperations {
                     , version
                 )).Value.OSDiskImageOperatingSystem.ToString().ToLower();
             } catch (RequestFailedException ex) {
+                _logTracer.Exception(ex);
                 return OneFuzzResult<Os>.Error(
                     ErrorCode.INVALID_IMAGE,
                     ex.ToString()

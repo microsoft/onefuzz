@@ -137,7 +137,7 @@ public class VmssOperations : IVmssOperations {
             foreach (var ext in extensions) {
                 patch.VirtualMachineProfile.ExtensionProfile.Extensions.Add(ext);
             }
-            var _ = await res.UpdateAsync(WaitUntil.Started, patch);
+            _ = await res.UpdateAsync(WaitUntil.Started, patch);
             _log.Info($"VM extensions updated: {name}");
             return OneFuzzResultVoid.Ok;
 
@@ -389,7 +389,7 @@ public class VmssOperations : IVmssOperations {
                 .Select(vm => vm.Data.InstanceId)
                 .ToList();
         } catch (RequestFailedException ex) {
-            _log.Error($"cloud error listing vmss: {name} ({ex})");
+            _log.Exception(ex, $"cloud error listing vmss: {name}");
         }
         return null;
     }
@@ -432,7 +432,7 @@ public class VmssOperations : IVmssOperations {
         var machineToInstance = await ListInstanceIds(scalesetId);
         foreach (var machineId in machineIds) {
             if (machineToInstance.TryGetValue(machineId, out var instanceId)) {
-                instanceIds.Add(instanceId);
+                _ = instanceIds.Add(instanceId);
             } else {
                 _log.Info($"unable to find instance ID for {scalesetId}:{machineId}");
             }
@@ -487,7 +487,7 @@ public class VmssOperations : IVmssOperations {
         var machineToInstance = await ListInstanceIds(scalesetId);
         foreach (var machineId in machineIds) {
             if (machineToInstance.TryGetValue(machineId, out var instanceId)) {
-                instanceIds.Add(instanceId);
+                _ = instanceIds.Add(instanceId);
             } else {
                 _log.Info($"unable to find instance ID for {scalesetId}:{machineId}");
             }
