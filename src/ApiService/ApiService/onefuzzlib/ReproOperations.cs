@@ -30,15 +30,8 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
-    private static readonly Dictionary<Os, string> DEFAULT_OS = new()
-    {
-        { Os.Linux, "Canonical:UbuntuServer:18.04-LTS:latest" },
-        { Os.Windows, "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest" }
-    };
 
     const string DEFAULT_SKU = "Standard_DS1_v2";
-
-
 
     public ReproOperations(ILogTracer log, IOnefuzzContext context)
         : base(log, context) {
@@ -57,16 +50,22 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             throw new Exception($"previous existing task missing: {repro.TaskId}");
         }
 
+        Dictionary<Os, string> default_os = new()
+        {
+            { Os.Linux, config.DefaultLinuxVmImage },
+            { Os.Windows, config.DefaultWindowsVmImage }
+        };
+
         var vmConfig = await taskOperations.GetReproVmConfig(task);
         if (vmConfig == null) {
-            if (!DEFAULT_OS.ContainsKey(task.Os)) {
+            if (!default_os.ContainsKey(task.Os)) {
                 throw new NotSupportedException($"unsupport OS for repro {task.Os}");
             }
 
             vmConfig = new TaskVm(
                 await _context.Creds.GetBaseRegion(),
                 DEFAULT_SKU,
-                DEFAULT_OS[task.Os],
+                default_os[task.Os],
                 null
             );
         }
