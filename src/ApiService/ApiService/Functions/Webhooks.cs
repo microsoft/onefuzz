@@ -84,7 +84,10 @@ public class Webhooks {
             MessageFormat = request.OkV.MessageFormat ?? webhook.MessageFormat
         };
 
-        await _context.WebhookOperations.Replace(updated);
+        var r = await _context.WebhookOperations.Replace(updated);
+        if (!r.IsOk) {
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace webhook with updated entry");
+        }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(updated with { Url = null, SecretToken = null });

@@ -134,7 +134,10 @@ public class AgentRegistration {
             ScalesetId: scalesetId,
             Version: version);
 
-        await _context.NodeOperations.Replace(node);
+        var r = await _context.NodeOperations.Replace(node);
+        if (!r.IsOk) {
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace node operations for node {node.MachineId}");
+        }
 
         return await RequestHandling.Ok(req, await CreateRegistrationResponse(pool));
     }

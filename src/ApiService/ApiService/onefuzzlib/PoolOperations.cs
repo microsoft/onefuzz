@@ -151,7 +151,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         pool = pool with { State = state };
         var r = await Replace(pool);
         if (!r.IsOk) {
-            _logTracer.Error($"failed to replace pool {pool.PoolId} when setting state due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace pool {pool.PoolId} when setting state");
         }
         return pool;
     }

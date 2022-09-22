@@ -151,7 +151,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
         var r = await Replace(task);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to replace task with jobid: {task.JobId} and taskid: {task.TaskId} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace task with jobid: {task.JobId} and taskid: {task.TaskId}");
         }
 
         var _events = _context.Events;

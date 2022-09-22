@@ -46,8 +46,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
         var r = await _context.WebhookMessageLogOperations.Replace(message);
         if (!r.IsOk) {
-            var (status, reason) = r.ErrorV;
-            _logTracer.Error($"Failed to replace webhook message log due to [{status}] {reason}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace webhook message log");
         }
         await _context.WebhookMessageLogOperations.QueueWebhook(message);
     }
@@ -192,16 +191,26 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         var success = await Send(newMessage);
         if (success) {
             newMessage = newMessage with { State = WebhookMessageState.Succeeded };
-            await Replace(newMessage);
+            var r = await Replace(newMessage);
+            if (!r.IsOk) {
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace webhook message with EventId {newMessage.EventId} with Succeeded");
+            }
             _logTracer.Info($"sent webhook event {newMessage.WebhookId}:{newMessage.EventId}");
         } else if (newMessage.TryCount < MAX_TRIES) {
             newMessage = newMessage with { State = WebhookMessageState.Retrying };
-            await Replace(newMessage);
+            var r = await Replace(newMessage);
+            if (!r.IsOk) {
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace webhook message with EventId {newMessage.EventId} with Retrying");
+            }
             await QueueWebhook(newMessage);
             _logTracer.Warning($"sending webhook event failed, re-queued {newMessage.WebhookId}:{newMessage.EventId}");
         } else {
             newMessage = newMessage with { State = WebhookMessageState.Failed };
-            await Replace(newMessage);
+            var r = await Replace(newMessage);
+            if (!r.IsOk) {
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace webhook message with EventId {newMessage.EventId} with Failed");
+            }
+
             _logTracer.Info($"sending webhook: {newMessage.WebhookId} event: {newMessage.EventId} failed {newMessage.TryCount} times.");
         }
 

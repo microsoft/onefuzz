@@ -32,7 +32,7 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
         if (job.EndTime == null) {
             var r = await Replace(job with { EndTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(job.Config.Duration) });
             if (!r.IsOk) {
-                _logTracer.Error($"failed to replace job {job.JobId} when calling OnStart due to {r.ErrorV}");
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace job {job.JobId} when calling OnStart");
             }
         }
     }

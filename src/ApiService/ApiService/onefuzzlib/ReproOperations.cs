@@ -94,7 +94,10 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             _logTracer.Info($"vm stopping: {repro.VmId}");
             await vmOperations.Delete(vm);
             repro = repro with { State = VmState.Stopping };
-            await Replace(repro);
+            var r = await Replace(repro);
+            if (!r.IsOk) {
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro {repro.VmId} marked Stopping");
+            }
             return repro;
         } else {
             return await Stopped(repro);
@@ -104,7 +107,10 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     public async Async.Task<Repro> Stopped(Repro repro) {
         _logTracer.Info($"vm stopped: {repro.VmId}");
         repro = repro with { State = VmState.Stopped };
-        await Delete(repro);
+        var r = await Delete(repro);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete repro {repro.VmId} marked as stopped");
+        }
         return repro;
     }
 
@@ -150,7 +156,10 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             }
         }
 
-        await Replace(repro);
+        var r = await Replace(repro);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace init repro");
+        }
         return repro;
     }
 
@@ -272,7 +281,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     }
 
     public async Async.Task<Repro> SetError(Repro repro, Error result) {
-        _logTracer.Error(
+        _logTracer.Info(
             $"repro failed: vm_id: {repro.VmId} task_id: {repro.TaskId} error: {result}"
         );
 
@@ -283,7 +292,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
 
         var r = await Replace(repro);
         if (!r.IsOk) {
-            _logTracer.Error($"failed to replace repro record for {repro.VmId} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro record for {repro.VmId}");
         }
         return repro;
     }

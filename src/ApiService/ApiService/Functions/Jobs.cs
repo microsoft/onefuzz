@@ -93,7 +93,7 @@ public class Jobs {
             job = job with { State = JobState.Stopping };
             var r = await _context.JobOperations.Replace(job);
             if (!r.IsOk) {
-                _logTracer.Error($"Failed to replace job {job.JobId} due to {r.ErrorV}");
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace job {job.JobId}");
             }
         }
 

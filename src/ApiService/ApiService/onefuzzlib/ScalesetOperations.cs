@@ -80,7 +80,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             scaleset = scaleset with { Size = size.Value };
             var replaceResult = await Replace(scaleset);
             if (!replaceResult.IsOk) {
-                _log.Error($"Failed to update scaleset size for scaleset {scaleset.ScalesetId} due to {replaceResult.ErrorV}");
+                _log.WithHttpStatus(replaceResult.ErrorV).Error($"Failed to update scaleset size for scaleset {scaleset.ScalesetId}");
             }
         }
     }
@@ -190,8 +190,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         var updatedScaleSet = scaleset with { State = state };
         var r = await Replace(updatedScaleSet);
         if (!r.IsOk) {
-            var msg = "Failed to update scaleset {scaleSet.ScalesetId} when updating state from {scaleSet.State} to {state}";
-            _log.Error(msg);
+            var msg = $"Failed to update scaleset {updatedScaleSet.ScalesetId} when updating state from {updatedScaleSet.State} to {state}";
+            _log.WithHttpStatus(r.ErrorV).Error(msg);
             // TODO: this should really return OneFuzzResult but then that propagates up the call stack
             throw new Exception(msg);
         }
@@ -345,7 +345,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         var rr = await Replace(scaleset);
         if (!rr.IsOk) {
-            _logTracer.Error($"Failed to save scale data for scale set: {scaleset.ScalesetId}");
+            _logTracer.WithHttpStatus(rr.ErrorV).Error($"Failed to save scale data for scale set: {scaleset.ScalesetId}");
         }
 
         return scaleset;
