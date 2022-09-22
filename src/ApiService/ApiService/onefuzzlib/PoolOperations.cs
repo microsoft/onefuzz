@@ -22,6 +22,8 @@ public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {
     Async.Task<Pool> Running(Pool pool);
     Async.Task<Pool> Shutdown(Pool pool);
     Async.Task<Pool> Halt(Pool pool);
+
+    public static string PoolQueueNamePrefix => "pool-";
 }
 
 public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoolOperations {
@@ -91,7 +93,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
     }
 
     public string GetPoolQueue(Guid poolId)
-        => $"pool-{poolId:N}";
+        => $"{IPoolOperations.PoolQueueNamePrefix}{poolId:N}";
 
     public async Async.Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name)
         => await _context.ScalesetOperations.SearchByPool(name)
