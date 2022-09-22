@@ -14,8 +14,10 @@ public class ShrinkQueue {
         _log = log;
     }
 
+    public static string ShrinkQueueNamePrefix => "to-shrink-";
+
     public override string ToString() {
-        return $"to-shrink-{_baseId:N}";
+        return $"{ShrinkQueue.ShrinkQueueNamePrefix}{_baseId:N}";
     }
 
     public string QueueName => this.ToString();
