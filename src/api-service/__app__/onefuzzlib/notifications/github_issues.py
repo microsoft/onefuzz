@@ -5,6 +5,7 @@
 
 import logging
 from typing import List, Optional, Union
+from uuid import UUID
 
 from github3 import login
 from github3.exceptions import GitHubException
@@ -19,7 +20,7 @@ from onefuzztypes.models import (
 from onefuzztypes.primitives import Container
 
 from ..secrets import get_secret_obj
-from .common import Render, fail_task
+from .common import Render, log_failed_notification
 
 
 class GithubIssue:
@@ -113,6 +114,7 @@ def github_issue(
     container: Container,
     filename: str,
     report: Optional[Union[Report, RegressionReport]],
+    notification_id: UUID,
 ) -> None:
     if report is None:
         return
@@ -129,4 +131,4 @@ def github_issue(
         handler = GithubIssue(config, container, filename, report)
         handler.process()
     except (GitHubException, ValueError) as err:
-        fail_task(report, err)
+        log_failed_notification(report, err, notification_id)
