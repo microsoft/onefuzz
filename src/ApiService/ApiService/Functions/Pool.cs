@@ -58,7 +58,7 @@ public class Pool {
 
         var create = request.OkV;
         var pool = await _context.PoolOperations.GetByName(create.Name);
-        if (pool.IsOk) {
+        if (!pool.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
                 new Error(
