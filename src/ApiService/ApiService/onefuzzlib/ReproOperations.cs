@@ -92,7 +92,10 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var vmOperations = _context.VmOperations;
         if (!await vmOperations.IsDeleted(vm)) {
             _logTracer.Info($"vm stopping: {repro.VmId}");
-            await vmOperations.Delete(vm);
+            var rr = await vmOperations.Delete(vm);
+            if (!rr) {
+                _logTracer.Error($"failed to delete repro vm with id {repro.VmId}");
+            }
             repro = repro with { State = VmState.Stopping };
             var r = await Replace(repro);
             if (!r.IsOk) {

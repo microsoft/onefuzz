@@ -500,8 +500,13 @@ public class VmssOperations : IVmssOperations {
         var vmssResource = computeClient.GetVirtualMachineScaleSetResource(vmssId);
 
         _log.Info($"deleting scaleset VMs - name: {scalesetId} ids: {instanceIds}");
-        await vmssResource.DeleteInstancesAsync(
+        var r = await vmssResource.DeleteInstancesAsync(
             WaitUntil.Started,
             new VirtualMachineScaleSetVmInstanceRequiredIds(instanceIds));
+
+        if (r.GetRawResponse().IsError) {
+            _log.Error($"failed to start deletion of scaleset {scalesetId} due to {r.GetRawResponse().ReasonPhrase}");
+        }
+        return;
     }
 }

@@ -96,8 +96,11 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         if (replaceExisting) {
             var existing = this.SearchByRowKeys(new[] { container.String });
             await foreach (var existingEntry in existing) {
-                _logTracer.Info($"replacing existing notification: {existingEntry.NotificationId} - {container}");
-                await this.Delete(existingEntry);
+                _logTracer.Info($"deleting existing notification: {existingEntry.NotificationId} - {container}");
+                var rr = await this.Delete(existingEntry);
+                if (!rr.IsOk) {
+                    _logTracer.WithHttpStatus(rr.ErrorV).Error($"failed to delete existing notification {existingEntry.NotificationId} - {container}");
+                }
             }
         }
         var configWithHiddenSecret = await HideSecrets(config);

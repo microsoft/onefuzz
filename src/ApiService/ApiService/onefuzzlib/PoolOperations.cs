@@ -167,7 +167,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
     new public async Async.Task Delete(Pool pool) {
         var r = await base.Delete(pool);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to delete pool: {pool.Name} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to delete pool: {pool.Name}");
         }
         var poolQueue = GetPoolQueue(pool.PoolId);
         await _context.Queue.DeleteQueue(poolQueue, StorageType.Corpus);

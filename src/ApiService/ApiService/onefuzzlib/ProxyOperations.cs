@@ -153,7 +153,10 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
         await foreach (var entry in _context.ProxyForwardOperations.SearchForward(region: proxy.Region, proxyId: proxy.ProxyId)) {
             if (entry.EndTime < DateTimeOffset.UtcNow) {
-                await _context.ProxyForwardOperations.Delete(entry);
+                var r = await _context.ProxyForwardOperations.Delete(entry);
+                if (!r.IsOk) {
+                    _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete proxy forward for proxy {proxy.ProxyId} in region {proxy.Region}");
+                }
             } else {
                 forwards.Add(new Forward(entry.Port, entry.DstPort, entry.DstIp));
             }
