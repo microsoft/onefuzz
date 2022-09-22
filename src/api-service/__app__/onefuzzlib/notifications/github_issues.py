@@ -133,5 +133,6 @@ def github_issue(
     except (GitHubException, ValueError) as err:
         log_failed_notification(report, err, notification_id)
         raise GitHubException(
-            f"Sending file change event for notification {notification_id} to poison queue"
+            "Sending file change event for notification %s to poison queue"
+            % notification_id
         ) from err

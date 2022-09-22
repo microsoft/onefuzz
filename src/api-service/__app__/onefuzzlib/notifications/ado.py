@@ -289,5 +289,6 @@ def notify_ado(
         else:
             log_failed_notification(report, err, notification_id)
             raise AdoNotificationException(
-                f"Sending file changed event for notification {notification_id} to poison queue"
+                "Sending file changed event for notification %s to poison queue"
+                % notification_id
             ) from err
