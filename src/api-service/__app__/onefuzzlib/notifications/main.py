@@ -141,7 +141,13 @@ def new_files(
             done.append(notification.config)
 
             if isinstance(notification.config, TeamsTemplate):
-                notify_teams(notification.config, container, filename, report)
+                notify_teams(
+                    notification.config,
+                    container,
+                    filename,
+                    report,
+                    notification.notification_id,
+                )
 
             if not report:
                 continue
@@ -153,10 +159,17 @@ def new_files(
                     filename,
                     report,
                     fail_task_on_transient_error,
+                    notification.notification_id,
                 )
 
             if isinstance(notification.config, GithubIssueTemplate):
-                github_issue(notification.config, container, filename, report)
+                github_issue(
+                    notification.config,
+                    container,
+                    filename,
+                    report,
+                    notification.notification_id,
+                )
 
     for (task, containers) in get_queue_tasks():
         if container in containers:

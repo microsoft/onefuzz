@@ -5,6 +5,7 @@
 
 import logging
 from typing import Any, Dict, List, Optional, Union
+from uuid import UUID
 
 import requests
 from onefuzztypes.models import RegressionReport, Report, TeamsTemplate
@@ -34,6 +35,7 @@ def send_teams_webhook(
     title: str,
     facts: List[Dict[str, str]],
     text: Optional[str],
+    notification_id: UUID,
 ) -> None:
     title = markdown_escape(title)
 
@@ -50,7 +52,12 @@ def send_teams_webhook(
     config_url = get_secret_string_value(config.url)
     response = requests.post(config_url, json=message)
     if not response.ok:
-        logging.error("webhook failed %s %s", response.status_code, response.content)
+        logging.error(
+            "webhook failed notification_id:%s %s %s",
+            notification_id,
+            response.status_code,
+            response.content,
+        )
 
 
 def notify_teams(
@@ -58,6 +65,7 @@ def notify_teams(
     container: Container,
     filename: str,
     report: Optional[Union[Report, RegressionReport]],
+    notification_id: UUID,
 ) -> None:
     text = None
     facts: List[Dict[str, str]] = []
@@ -130,4 +138,4 @@ def notify_teams(
             }
         ]
 
-    send_teams_webhook(config, title, facts, text)
+    send_teams_webhook(config, title, facts, text, notification_id)
