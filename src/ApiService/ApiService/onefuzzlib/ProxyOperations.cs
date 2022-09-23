@@ -51,6 +51,12 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
                     }
                     continue;
                 }
+
+                if (!VmStateHelper.Available.Contains(proxy.State)) {
+                    continue;
+                }
+
+                return proxy;
             }
         }
 
