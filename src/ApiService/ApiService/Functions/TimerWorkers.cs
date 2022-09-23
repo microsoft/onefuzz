@@ -25,11 +25,13 @@ public class TimerWorkers {
         }
 
         // if the scaleset is touched during cleanup, don't continue to process it
-        if (await _scaleSetOps.CleanupNodes(scaleset) is (true, _)) {
+        var (touched, ss) = await _scaleSetOps.CleanupNodes(scaleset);
+        if (touched) {
             _log.Verbose($"scaleset needed cleanup: {scaleset.ScalesetId}");
             return;
         }
 
+        scaleset = ss;
         scaleset = await _scaleSetOps.SyncScalesetSize(scaleset);
         _ = await _scaleSetOps.ProcessStateUpdate(scaleset);
     }
