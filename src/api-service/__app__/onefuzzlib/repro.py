@@ -27,11 +27,6 @@ from .orm import ORMMixin, QueryFilter
 from .reports import get_report
 from .tasks.main import Task
 
-DEFAULT_OS = {
-    OS.linux: "Canonical:UbuntuServer:18.04-LTS:latest",
-    OS.windows: "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest",
-}
-
 DEFAULT_SKU = "Standard_DS1_v2"
 
 
@@ -56,14 +51,19 @@ class Repro(BASE_REPRO, ORMMixin):
         if isinstance(task, Error):
             raise Exception("previously existing task missing: %s" % self.task_id)
 
+        config = InstanceConfig.fetch()
+        default_os = {
+            OS.linux: config.default_linux_vm_image,
+            OS.windows: config.default_windows_vm_image,
+        }
         vm_config = task.get_repro_vm_config()
         if vm_config is None:
             # if using a pool without any scalesets defined yet, use reasonable defaults
-            if task.os not in DEFAULT_OS:
+            if task.os not in default_os:
                 raise NotImplementedError("unsupported OS for repro %s" % task.os)
 
             vm_config = TaskVm(
-                region=get_base_region(), sku=DEFAULT_SKU, image=DEFAULT_OS[task.os]
+                region=get_base_region(), sku=DEFAULT_SKU, image=default_os[task.os]
             )
 
         if self.auth is None:

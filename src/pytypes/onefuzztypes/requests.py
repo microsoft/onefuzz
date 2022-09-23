@@ -182,7 +182,7 @@ class AutoScaleOptions(BaseModel):
 class ScalesetCreate(BaseRequest):
     pool_name: PoolName
     vm_sku: str
-    image: str
+    image: Optional[str]
     region: Optional[Region]
     size: int = Field(ge=1)
     spot_instances: bool

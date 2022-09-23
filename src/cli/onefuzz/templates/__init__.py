@@ -16,8 +16,6 @@ from onefuzztypes.primitives import Container, Directory, File
 from ..job_templates.job_monitor import JobMonitor
 
 ELF_MAGIC = b"\x7fELF"
-DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
-DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest"
 
 
 class StoppedEarly(Exception):
@@ -176,13 +174,6 @@ class JobHelper:
             self.onefuzz.containers.files.upload_dir(
                 self.containers[ContainerType.inputs], Directory(tmp_dir)
             )
-
-    @classmethod
-    def get_image(_cls, platform: OS) -> str:
-        if platform == OS.linux:
-            return DEFAULT_LINUX_IMAGE
-        else:
-            return DEFAULT_WINDOWS_IMAGE
 
     @classmethod
     def get_platform(_cls, target_exe: File) -> OS:
