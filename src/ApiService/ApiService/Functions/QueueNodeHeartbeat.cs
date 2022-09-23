@@ -28,17 +28,14 @@ public class QueueNodeHearbeat {
         var log = _log.WithTag("NodeId", hb.NodeId.ToString());
 
         if (node == null) {
-            log.Warning($"invalid node id: {hb.NodeId}");
+            log.Warning("invalid node id");
             return;
         }
 
         var newNode = node with { Heartbeat = DateTimeOffset.UtcNow };
-
         var r = await nodes.Replace(newNode);
-
         if (!r.IsOk) {
-            var (status, reason) = r.ErrorV;
-            log.Error($"Failed to replace heartbeat info due to [{status}] {reason}");
+            log.WithHttpStatus(r.ErrorV).Error($"Failed to replace heartbeat");
         }
 
         // TODO: do we still send event if we fail do update the table ?

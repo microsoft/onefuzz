@@ -29,7 +29,7 @@ public class QueueFileChanges {
         var fileChangeEvent = JsonSerializer.Deserialize<JsonDocument>(msg, EntityConverter.GetJsonSerializerOptions());
         var lastTry = dequeueCount == MAX_DEQUEUE_COUNT;
 
-        var _ = fileChangeEvent ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
+        _ = fileChangeEvent ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
 
         // check type first before calling Azure APIs
         const string eventType = "eventType";
