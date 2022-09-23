@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 5.14.0
 ### Added
 * Service: Implement not-implemented `GetInputContainerQueues` [#2380](https://github.com/microsoft/onefuzz/pull/2380)
+* Service: Adding new default image config value to instance config [2434](https://github.com/microsoft/onefuzz/pull/2434)
 ### Changed
 * Service: Port `SyncAutoscaleSettings` from Python to C# [#2407](https://github.com/microsoft/onefuzz/pull/2407)
 ### Fixed
 * Deployment: Updating error and fixing default value for `auto_create_cli_app` [#2378](https://github.com/microsoft/onefuzz/pull/2378)
+* Service: Do not discard proxy objects when setting state [#2441](https://github.com/microsoft/onefuzz/pull/2441)
+* Service: Do not fail task on notification failure [#2435](https://github.com/microsoft/onefuzz/pull/2435)
+* Service: Cleanup queues for non-existent pools and non-existent tasks [#2433](https://github.com/microsoft/onefuzz/pull/2433)
+* Service: Delete pool queue when pool is deleted [#2431](https://github.com/microsoft/onefuzz/pull/2431)
 * Service: Minor fixes to service logging and error handling [#2420](https://github.com/microsoft/onefuzz/pull/2420)
 * Service: Fixed linux repro extensions [#2415](https://github.com/microsoft/onefuzz/pull/2415)
 * Service: Mark tasks as failed if a work unit cannot be created for the task [#2409](https://github.com/microsoft/onefuzz/pull/2409)
