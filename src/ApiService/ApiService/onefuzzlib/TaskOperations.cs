@@ -107,7 +107,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         if (!task.State.HasStarted()) {
             await MarkFailed(task, new Error(Code: ErrorCode.TASK_FAILED, Errors: new[] { "task never started" }));
         } else {
-            var _ = await SetState(task, TaskState.Stopping);
+            _ = await SetState(task, TaskState.Stopping);
         }
     }
 
@@ -151,7 +151,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
         var r = await Replace(task);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to replace task with jobid: {task.JobId} and taskid: {task.TaskId} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace task with jobid: {task.JobId} and taskid: {task.TaskId}");
         }
 
         var _events = _context.Events;
@@ -209,7 +209,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
         var r = await _context.TaskOperations.Insert(task);
         if (!r.IsOk) {
-            _logTracer.Error($"failed to insert task {task.TaskId} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert task {task.TaskId}");
         }
         await _context.Events.SendEvent(new EventTaskCreated(jobId, task.TaskId, config, userInfo));
 

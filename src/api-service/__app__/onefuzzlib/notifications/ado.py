@@ -5,6 +5,7 @@
 
 import logging
 from typing import Iterator, List, Optional, Tuple, Union
+from uuid import UUID
 
 from azure.devops.connection import Connection
 from azure.devops.credentials import BasicAuthentication
@@ -28,7 +29,7 @@ from onefuzztypes.models import ADOTemplate, RegressionReport, Report
 from onefuzztypes.primitives import Container
 
 from ..secrets import get_secret_string_value
-from .common import Render, fail_task
+from .common import Render, log_failed_notification
 
 
 class AdoNotificationException(Exception):
@@ -84,7 +85,7 @@ class ADO:
                 value = self.render(self.config.project)
             else:
                 value = self.render(self.config.ado_fields[key])
-            filters[key.lower()] = value
+        filters[key.lower()] = value
 
         valid_fields = get_valid_fields(
             self.client, project=filters.get("system.teamproject")
@@ -251,6 +252,7 @@ def notify_ado(
     filename: str,
     report: Union[Report, RegressionReport],
     fail_task_on_transient_error: bool,
+    notification_id: UUID,
 ) -> None:
     if isinstance(report, RegressionReport):
         logging.info(
@@ -285,4 +287,8 @@ def notify_ado(
                 f"transient ADO notification failure {notification_info}"
             ) from err
         else:
-            fail_task(report, err)
+            log_failed_notification(report, err, notification_id)
+            raise AdoNotificationException(
+                "Sending file changed event for notification %s to poison queue"
+                % notification_id
+            ) from err

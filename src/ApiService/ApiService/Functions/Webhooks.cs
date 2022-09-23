@@ -84,7 +84,10 @@ public class Webhooks {
             MessageFormat = request.OkV.MessageFormat ?? webhook.MessageFormat
         };
 
-        await _context.WebhookOperations.Replace(updated);
+        var r = await _context.WebhookOperations.Replace(updated);
+        if (!r.IsOk) {
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace webhook with updated entry");
+        }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(updated with { Url = null, SecretToken = null });
@@ -104,7 +107,10 @@ public class Webhooks {
         var webhook = new Webhook(Guid.NewGuid(), request.OkV.Name, request.OkV.Url, request.OkV.EventTypes,
             request.OkV.SecretToken, request.OkV.MessageFormat);
 
-        await _context.WebhookOperations.Insert(webhook);
+        var r = await _context.WebhookOperations.Insert(webhook);
+        if (!r.IsOk) {
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to insert webhook {webhook.WebhookId}");
+        }
 
         _log.Info($"added webhook: {webhook.WebhookId}");
 
@@ -131,7 +137,10 @@ public class Webhooks {
             return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find webhook" }), "webhook delete");
         }
 
-        await _context.WebhookOperations.Delete(webhook);
+        var r = await _context.WebhookOperations.Delete(webhook);
+        if (!r.IsOk) {
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to delete webhook {webhook.Name} - {webhook.WebhookId}");
+        }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(new BoolResult(true));

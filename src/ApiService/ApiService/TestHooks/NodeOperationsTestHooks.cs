@@ -185,9 +185,8 @@ namespace ApiService.TestHooks {
             var s = await req.ReadAsStringAsync();
             var node = JsonSerializer.Deserialize<Node>(s!, EntityConverter.GetJsonSerializerOptions());
 
-            var r = _nodeOps.Delete(node!);
+            await _nodeOps.Delete(node!);
             var resp = req.CreateResponse(HttpStatusCode.OK);
-            await resp.WriteAsJsonAsync(r);
             return resp;
         }
 

@@ -82,7 +82,8 @@ public class UserCredentials : IUserCredentials {
 
                     return OneFuzzResult<UserInfo>.Ok(new(applicationId, objectId, upn));
                 } else {
-                    _log.Error($"issuer not from allowed tenant. issuer: {token.Issuer} - tenants: {allowedTenants.OkV}");
+                    var tenantsStr = allowedTenants.OkV is null ? "null" : String.Join(';', allowedTenants.OkV!);
+                    _log.Error($"issuer not from allowed tenant. issuer: {token.Issuer} - tenants: {tenantsStr}");
                     return OneFuzzResult<UserInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unauthorized AAD issuer" });
                 }
             } else {

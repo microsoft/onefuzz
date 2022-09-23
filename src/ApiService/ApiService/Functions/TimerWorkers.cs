@@ -15,7 +15,7 @@ public class TimerWorkers {
         _nodeOps = context.NodeOperations;
     }
 
-    public async Async.Task ProcessScalesets(Service.Scaleset scaleset) {
+    private async Async.Task ProcessScalesets(Service.Scaleset scaleset) {
         _log.Verbose($"checking scaleset for updates: {scaleset.ScalesetId}");
 
         await _scaleSetOps.UpdateConfigs(scaleset);
@@ -31,7 +31,7 @@ public class TimerWorkers {
         }
 
         await _scaleSetOps.SyncScalesetSize(scaleset);
-        var _ = await _scaleSetOps.ProcessStateUpdate(scaleset);
+        _ = await _scaleSetOps.ProcessStateUpdate(scaleset);
     }
 
 
@@ -45,7 +45,7 @@ public class TimerWorkers {
         await foreach (var pool in pools) {
             if (PoolStateHelper.NeedsWork.Contains(pool.State)) {
                 _log.Info($"update pool: {pool.PoolId} ({pool.Name})");
-                var _ = await _poolOps.ProcessStateUpdate(pool);
+                _ = await _poolOps.ProcessStateUpdate(pool);
             }
         }
 
@@ -61,7 +61,7 @@ public class TimerWorkers {
         var nodes = _nodeOps.SearchStates(states: NodeStateHelper.NeedsWorkStates);
         await foreach (var node in nodes) {
             _log.Info($"update node: {node.MachineId}");
-            var _ = await _nodeOps.ProcessStateUpdate(node);
+            _ = await _nodeOps.ProcessStateUpdate(node);
         }
 
         var scalesets = _scaleSetOps.SearchAll();
