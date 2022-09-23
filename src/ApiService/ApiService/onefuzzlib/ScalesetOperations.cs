@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.ResourceManager.Compute;

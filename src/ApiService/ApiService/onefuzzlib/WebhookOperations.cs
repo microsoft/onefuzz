@@ -64,7 +64,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         if (digest != null) {
             headers["X-Onefuzz-Digest"] = digest;
         }
-        
+
         using var httpClient = _httpFactory.CreateClient();
         var client = new Request(httpClient);
         _logTracer.Info(data);
