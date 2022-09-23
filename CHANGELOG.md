@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Port `SyncAutoscaleSettings` from Python to C# [#2407](https://github.com/microsoft/onefuzz/pull/2407)
 ### Fixed
 * Deployment: Updating error and fixing default value for `auto_create_cli_app` [#2378](https://github.com/microsoft/onefuzz/pull/2378)
+* Service: Do not discard proxy objects when setting state [#2441](https://github.com/microsoft/onefuzz/pull/2441)
 * Service: Do not fail task on notification failure [#2435](https://github.com/microsoft/onefuzz/pull/2435)
 * Service: Cleanup queues for non-existent pools and non-existent tasks [#2433](https://github.com/microsoft/onefuzz/pull/2433)
 * Service: Delete pool queue when pool is deleted [#2431](https://github.com/microsoft/onefuzz/pull/2431)
