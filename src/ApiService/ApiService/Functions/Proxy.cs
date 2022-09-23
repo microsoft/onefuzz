@@ -136,8 +136,8 @@ public class Proxy {
 
         bool any = false;
         {
-            var proxyList = await _context.ProxyOperations.SearchByPartitionKeys(new[] { $"{request.OkV.Region}" }).ToListAsync();
-            foreach (var proxy in proxyList) {
+            var proxyList = _context.ProxyOperations.SearchByPartitionKeys(new[] { $"{request.OkV.Region}" });
+            await foreach (var proxy in proxyList) {
                 any = true;
                 // ignoring result, proxyList not used outside this block
                 _ = await _context.ProxyOperations.SetState(proxy, VmState.Stopping);
