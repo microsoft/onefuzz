@@ -100,7 +100,7 @@ public class VmOperations : IVmOperations {
         if (nic != null) {
             _logTracer.Info($"deleting nic {resourceGroup}:{name}");
             if (nic.Data.NetworkSecurityGroup != null && nsg != null) {
-                await _context.NsgOperations.DissociateNic(nsg, nic);
+                _ = await _context.NsgOperations.DissociateNic(nsg, nic);
                 return false;
             }
             await _context.IpOperations.DeleteNic(resourceGroup, name);
@@ -217,7 +217,7 @@ public class VmOperations : IVmOperations {
         var vm = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(vmName);
 
         try {
-            await vm.Value.GetVirtualMachineExtensions().CreateOrUpdateAsync(
+            _ = await vm.Value.GetVirtualMachineExtensions().CreateOrUpdateAsync(
                 WaitUntil.Started,
                 extensionName,
                 extension
@@ -318,11 +318,10 @@ public class VmOperations : IVmOperations {
         }
 
         try {
-            await _context.Creds.GetResourceGroupResource().GetVirtualMachines().CreateOrUpdateAsync(
+            _ = await _context.Creds.GetResourceGroupResource().GetVirtualMachines().CreateOrUpdateAsync(
                 WaitUntil.Started,
                 name,
-                vmParams
-            );
+                vmParams);
         } catch (RequestFailedException ex) {
             if (ex.ErrorCode == "ResourceNotFound" && ex.Message.Contains("The request failed due to conflict with a concurrent request")) {
                 // _logTracer.Debug($"create VM had conflicts with concurrent request, ignoring {ex.ToString()}");

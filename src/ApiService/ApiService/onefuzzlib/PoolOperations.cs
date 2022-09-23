@@ -198,7 +198,8 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         if (nodes is not null) {
             await foreach (var node in nodes) {
-                await _context.NodeOperations.SetShutdown(node);
+                // ignoring updated result - nodes not returned
+                _ = await _context.NodeOperations.SetShutdown(node);
             }
         }
 
@@ -231,7 +232,8 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         if (nodes is not null) {
             await foreach (var node in nodes) {
-                await _context.NodeOperations.SetHalt(node);
+                // updated value ignored: 'nodes' is not returned
+                _ = await _context.NodeOperations.SetHalt(node);
             }
         }
 

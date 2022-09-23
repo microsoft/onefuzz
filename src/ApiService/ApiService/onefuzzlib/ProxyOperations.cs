@@ -41,21 +41,17 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
     }
 
     public async Async.Task<Proxy> GetOrCreate(Region region) {
-        var proxyList = QueryAsync(filter: TableClient.CreateQueryFilter($"region eq {region.String} and outdated eq false"));
-
-        await foreach (var proxy in proxyList) {
-            if (IsOutdated(proxy)) {
-                var r1 = await Replace(proxy with { Outdated = true });
-                if (!r1.IsOk) {
-                    _logTracer.WithHttpStatus(r1.ErrorV).Error($"failed to replace record to mark proxy {proxy.ProxyId} as outdated");
+        {
+            var proxyList = QueryAsync(filter: TableClient.CreateQueryFilter($"region eq {region.String} and outdated eq false"));
+            await foreach (var proxy in proxyList) {
+                if (IsOutdated(proxy)) {
+                    var r1 = await Replace(proxy with { Outdated = true });
+                    if (!r1.IsOk) {
+                        _logTracer.WithHttpStatus(r1.ErrorV).Error($"failed to replace record to mark proxy {proxy.ProxyId} as outdated");
+                    }
+                    continue;
                 }
-                continue;
             }
-
-            if (!VmStateHelper.Available.Contains(proxy.State)) {
-                continue;
-            }
-            return proxy;
         }
 
         _logTracer.Info($"creating proxy: region:{region}");
@@ -305,7 +301,8 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         var stoppedVm = await SetState(proxy, VmState.Stopped);
         _logTracer.Info($"removing proxy: {stoppedVm.Region}");
         await _context.Events.SendEvent(new EventProxyDeleted(stoppedVm.Region, stoppedVm.ProxyId));
-        await Delete(stoppedVm);
+        // TODO: result ignored
+        _ = await Delete(stoppedVm);
         return stoppedVm;
     }
 

@@ -129,7 +129,7 @@ public class AgentEvents {
                     // Other states we would want to preserve are excluded by the
                     // outermost conditional check.
                     if (task.State != TaskState.Running && task.State != TaskState.SettingUp) {
-                        await _context.TaskOperations.SetState(task, TaskState.SettingUp);
+                        task = await _context.TaskOperations.SetState(task, TaskState.SettingUp);
                     }
 
                     var nodeTask = new NodeTasks(
@@ -155,7 +155,8 @@ public class AgentEvents {
             // if tasks are running on the node when it reports as Done
             // those are stopped early
             await _context.NodeOperations.MarkTasksStoppedEarly(node, error);
-            await _context.NodeOperations.ToReimage(node, done: true);
+            // result ignored: not used after this point
+            _ = await _context.NodeOperations.ToReimage(node, done: true);
         }
 
         return null;
@@ -212,7 +213,7 @@ public class AgentEvents {
         }
 
         _log.Info($"task started on node. machine_id:{machineId} job_id:{task.JobId} task_id:{task.TaskId}");
-        await _context.TaskOperations.SetState(task, TaskState.Running);
+        task = await _context.TaskOperations.SetState(task, TaskState.Running);
 
         var taskEvent = new TaskEvent(
             TaskId: task.TaskId,

@@ -54,8 +54,8 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         await foreach (var (task, containers) in GetQueueTasks()) {
             if (containers.Contains(container)) {
                 _logTracer.Info($"queuing input {container} {filename} {task.TaskId}");
-                var url = _context.Containers.GetFileSasUrl(container, filename, StorageType.Corpus, BlobSasPermissions.Read | BlobSasPermissions.Delete);
-                await _context.Queue.SendMessage(task.TaskId.ToString(), url?.ToString() ?? "", StorageType.Corpus);
+                var url = await _context.Containers.GetFileSasUrl(container, filename, StorageType.Corpus, BlobSasPermissions.Read | BlobSasPermissions.Delete);
+                await _context.Queue.SendMessage(task.TaskId.ToString(), url.ToString(), StorageType.Corpus);
             }
         }
 

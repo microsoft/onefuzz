@@ -44,6 +44,7 @@
     <PackageReference Include="Scriban" Version="5.5.0" />
     <PackageReference Include="Octokit" Version="2.0.1" />
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="19.209.0-preview" />
+    <PackageReference Include="SmartAnalyzers.CSharpExtensions.Annotations" Version="4.2.7" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
@@ -59,5 +60,9 @@
     <EmbeddedResource Include="onefuzzlib/git.version" Condition="Exists('onefuzzlib/git.version')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="../CSharpExtensions.json" />
   </ItemGroup>
 </Project>

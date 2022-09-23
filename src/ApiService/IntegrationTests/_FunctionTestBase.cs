@@ -70,7 +70,7 @@ public abstract class FunctionTestBase : IAsyncLifetime {
     }
 
     protected static string BodyAsString(HttpResponseData data) {
-        data.Body.Seek(0, SeekOrigin.Begin);
+        _ = data.Body.Seek(0, SeekOrigin.Begin);
         using var sr = new StreamReader(data.Body);
         return sr.ReadToEnd();
     }
@@ -85,7 +85,7 @@ public abstract class FunctionTestBase : IAsyncLifetime {
             .Where(c => c.IsDeleted != true)
             .Select(async container => {
                 try {
-                    await blobClient.DeleteBlobContainerAsync(container.Name);
+                    using var _ = await blobClient.DeleteBlobContainerAsync(container.Name);
                     Logger.Info($"cleaned up container {container.Name}");
                 } catch (Exception ex) {
                     // swallow any exceptions: this is a best-effort attempt to cleanup
@@ -100,7 +100,7 @@ public abstract class FunctionTestBase : IAsyncLifetime {
                 .QueryAsync(filter: Query.StartsWith("TableName", _storagePrefix))
                 .Select(async table => {
                     try {
-                        await tableClient.DeleteTableAsync(table.Name);
+                        using var _ = await tableClient.DeleteTableAsync(table.Name);
                         Logger.Info($"cleaned up table {table.Name}");
                     } catch (Exception ex) {
                         // swallow any exceptions: this is a best-effort attempt to cleanup

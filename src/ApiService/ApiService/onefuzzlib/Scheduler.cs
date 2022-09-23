@@ -44,7 +44,7 @@ public class Scheduler : IScheduler {
                         foreach (var workUnit in workSet.WorkUnits) {
                             var task1 = tasks[workUnit.TaskId];
                             Task task = await _taskOperations.SetState(task1, TaskState.Scheduled);
-                            seen.Add(task.TaskId);
+                            _ = seen.Add(task.TaskId);
                         }
                     }
                 }
@@ -172,16 +172,17 @@ public class Scheduler : IScheduler {
         }
         var setupContainer = task.Config.Containers?.FirstOrDefault(c => c.Type == ContainerType.Setup) ?? throw new Exception($"task missing setup container: task_type = {task.Config.Task.Type}");
 
-        var setupPs1Exist = _containers.BlobExists(setupContainer.Name, "setup.ps1", StorageType.Corpus);
-        var setupShExist = _containers.BlobExists(setupContainer.Name, "setup.sh", StorageType.Corpus);
-
         string? setupScript = null;
-        if (task.Os == Os.Windows && await setupPs1Exist) {
-            setupScript = "setup.ps1";
+        if (task.Os == Os.Windows) {
+            if (await _containers.BlobExists(setupContainer.Name, "setup.ps1", StorageType.Corpus)) {
+                setupScript = "setup.ps1";
+            }
         }
 
-        if (task.Os == Os.Linux && await setupShExist) {
-            setupScript = "setup.sh";
+        if (task.Os == Os.Linux) {
+            if (await _containers.BlobExists(setupContainer.Name, "setup.sh", StorageType.Corpus)) {
+                setupScript = "setup.sh";
+            }
         }
 
         var reboot = false;

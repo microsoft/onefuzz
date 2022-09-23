@@ -129,7 +129,7 @@ public class SchedulerTests {
         Assert.Equal(buckets.Count, bucketCount);
 
         foreach (var task in tasks) {
-            Assert.Single(buckets, b => b.Contains(task));
+            _ = Assert.Single(buckets, b => b.Contains(task));
         }
     }
 }

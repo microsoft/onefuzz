@@ -64,14 +64,15 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         if (digest != null) {
             headers["X-Onefuzz-Digest"] = digest;
         }
-
-        var client = new Request(_httpFactory.CreateClient());
+        
+        using var httpClient = _httpFactory.CreateClient();
+        var client = new Request(httpClient);
         _logTracer.Info(data);
-        var response = client.Post(url: webhook.Url, json: data, headers: headers);
-        var result = response.Result;
-        if (result.StatusCode == HttpStatusCode.Accepted) {
+        using var response = await client.Post(url: webhook.Url, json: data, headers: headers);
+        if (response.StatusCode == HttpStatusCode.Accepted) {
             return true;
         }
+
         return false;
     }
 

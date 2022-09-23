@@ -54,7 +54,8 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
         var firstEntry = entries.FirstOrDefault();
         if (firstEntry != null) {
             var updated = firstEntry with { EndTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(duration) };
-            await this.Update(updated);
+            // TODO: result ignored
+            _ = await this.Update(updated);
             return OneFuzzResult.Ok(updated);
         }
 
@@ -94,8 +95,9 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
 
         var regions = new HashSet<Region>();
         foreach (var entry in entries) {
-            regions.Add(entry.Region);
-            await Delete(entry);
+            _ = regions.Add(entry.Region);
+            // TODO: result ignored
+            _ = await Delete(entry);
         }
 
         return regions;

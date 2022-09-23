@@ -70,7 +70,7 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum {
                 return false;
             }
 
-            FormatAndAddToCaches(value, options.Encoder, _skipFormat);
+            _ = FormatAndAddToCaches(value, options.Encoder, _skipFormat);
             return true;
         }
     }
@@ -248,7 +248,7 @@ public sealed class PolymorphicConverter<T> : JsonConverter<T> {
                 var newOptions = new JsonSerializerOptions(k);
                 var thisConverter = newOptions.Converters.FirstOrDefault(c => c.GetType() == typeof(PolymorphicConverterFactory));
                 if (thisConverter != null) {
-                    newOptions.Converters.Remove(thisConverter);
+                    _ = newOptions.Converters.Remove(thisConverter);
                 }
 
                 return newOptions;

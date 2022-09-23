@@ -87,7 +87,7 @@ public class VmssOperations : IVmssOperations {
             var scalesetResource = GetVmssResource(name);
             var patch = new VirtualMachineScaleSetPatch();
             patch.Sku.Capacity = capacity;
-            await scalesetResource.UpdateAsync(WaitUntil.Started, patch);
+            _ = await scalesetResource.UpdateAsync(WaitUntil.Started, patch);
             return OneFuzzResultVoid.Ok;
         } else {
             return OneFuzzResultVoid.Error(canUpdate.ErrorV);
@@ -222,7 +222,7 @@ public class VmssOperations : IVmssOperations {
                 instanceVm.Data.ProtectionPolicy.ProtectFromScaleIn = protectFromScaleIn;
                 var vmCollection = GetVmssResource(name).GetVirtualMachineScaleSetVms();
                 try {
-                    await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceVm.Data.InstanceId, instanceVm.Data);
+                    _ = await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceVm.Data.InstanceId, instanceVm.Data);
                     return OneFuzzResultVoid.Ok;
                 } catch {
                     var msg = $"unable to set protection policy on: {vmId}:{instanceVm.Id}";
@@ -396,7 +396,7 @@ public class VmssOperations : IVmssOperations {
 
     public Async.Task<IReadOnlyList<string>> ListAvailableSkus(Region region)
         => _cache.GetOrCreateAsync<IReadOnlyList<string>>($"compute-skus-{region}", async entry => {
-            entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
+            entry = entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
 
             var sub = _creds.GetSubscriptionResource();
             var skus = sub.GetResourceSkusAsync(filter: TableClient.CreateQueryFilter($"location eq {region.String}"));

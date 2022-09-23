@@ -108,6 +108,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
 
     public async Async.Task<Repro> Stopped(Repro repro) {
         _logTracer.Info($"vm stopped: {repro.VmId}");
+        // BUG?: why are we updating repro and then deleting it and returning a new value
         repro = repro with { State = VmState.Stopped };
         var r = await Delete(repro);
         if (!r.IsOk) {
@@ -204,7 +205,8 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             repro = repro with { State = VmState.Running };
         }
 
-        await Replace(repro);
+        // TODO: result ignored
+        _ = await Replace(repro);
         return repro;
     }
 
