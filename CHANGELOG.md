@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 5.14.0
 ### Added
 * Service: Implement not-implemented `GetInputContainerQueues` [#2380](https://github.com/microsoft/onefuzz/pull/2380)
+* Service: Adding new default image config value to instance config [2434](https://github.com/microsoft/onefuzz/pull/2434)
 ### Changed
 * Service: Port `SyncAutoscaleSettings` from Python to C# [#2407](https://github.com/microsoft/onefuzz/pull/2407)
 ### Fixed
