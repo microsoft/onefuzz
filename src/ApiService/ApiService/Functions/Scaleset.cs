@@ -75,6 +75,18 @@ public class Scaleset {
                 context: "ScalesetCreate");
         }
 
+        string image;
+        if (create.Image is null) {
+            var config = await _context.ConfigOperations.Fetch();
+            if (pool.Os == Os.Windows) {
+                image = config.DefaultWindowsVmImage;
+            } else {
+                image = config.DefaultLinuxVmImage;
+            }
+        } else {
+            image = create.Image;
+        }
+
         Region region;
         if (create.Region is null) {
             region = await _context.Creds.GetBaseRegion();
@@ -117,7 +129,7 @@ public class Scaleset {
             Auth: await Auth.BuildAuth(_log),
             PoolName: create.PoolName,
             VmSku: create.VmSku,
-            Image: create.Image,
+            Image: image,
             Region: region,
             Size: create.Size,
             SpotInstances: create.SpotInstances,

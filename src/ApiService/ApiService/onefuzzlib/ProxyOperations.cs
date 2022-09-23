@@ -236,7 +236,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
     public static Vm GetVm(Proxy proxy, InstanceConfig config) {
         var tags = config.VmssTags;
         string proxyVmSku;
-        const string PROXY_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest";
+        string proxyImage = config.DefaultLinuxVmImage;
         if (config.ProxyVmSku is null) {
             proxyVmSku = "Standard_B2s";
         } else {
@@ -247,7 +247,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             Name: $"proxy-{proxy.ProxyId:N}",
             Region: proxy.Region,
             Sku: proxyVmSku,
-            Image: PROXY_IMAGE,
+            Image: proxyImage,
             Auth: proxy.Auth,
             Tags: tags,
             Nsg: null
