@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
 using Azure.Core;
@@ -145,8 +146,8 @@ namespace ApiService.OneFuzzLib.Orm {
 
 
     public abstract class StatefulOrm<T, TState, TSelf> : Orm<T>, IStatefulOrm<T, TState> where T : StatefulEntityBase<TState> where TState : Enum {
-        static Lazy<Func<object>>? _partitionKeyGetter;
-        static Lazy<Func<object>>? _rowKeyGetter;
+        static Func<T, object?>? _partitionKeyGetter;
+        static Func<T, object?>? _rowKeyGetter;
         static ConcurrentDictionary<string, Func<T, Async.Task<T>>?> _stateFuncs = new ConcurrentDictionary<string, Func<T, Async.Task<T>>?>();
 
         delegate Async.Task<T> StateTransition(T entity);
@@ -186,18 +187,27 @@ namespace ApiService.OneFuzzLib.Orm {
             }
 
             _partitionKeyGetter =
-                typeof(T).GetProperties().FirstOrDefault(p => p.GetCustomAttributes(true).OfType<PartitionKeyAttribute>().Any())?.GetMethod switch {
-                    null => null,
-                    MethodInfo info => new Lazy<Func<object>>(() => (Func<object>)Delegate.CreateDelegate(typeof(Func<object>), info), true)
-                };
+                typeof(T).GetConstructors()
+                         .SelectMany(x => x.GetParameters())
+                         .FirstOrDefault(p => p.GetCustomAttributes(true).OfType<PartitionKeyAttribute>().Any()) switch {
+                             null => null, { Name: null } => null, { Name: var name } => BuildGetter(typeof(T).GetProperty(name))
+                         };
 
             _rowKeyGetter =
-                typeof(T).GetProperties().FirstOrDefault(p => p.GetCustomAttributes(true).OfType<RowKeyAttribute>().Any())?.GetMethod switch {
-                    null => null,
-                    MethodInfo info => new Lazy<Func<object>>(() => (Func<object>)Delegate.CreateDelegate(typeof(Func<object>), info), true)
-                };
+                typeof(T).GetConstructors()
+                         .SelectMany(x => x.GetParameters())
+                         .FirstOrDefault(p => p.GetCustomAttributes(true).OfType<RowKeyAttribute>().Any()) switch {
+                             null => null, { Name: null } => null, { Name: var name } => BuildGetter(typeof(T).GetProperty(name))
+                         };
+        }
 
-            return;
+        static Func<T, object?>? BuildGetter(PropertyInfo? property) {
+            if (property == null)
+                return null;
+
+            var paramter = Expression.Parameter(typeof(T));
+            var call = Expression.Convert(Expression.Property(paramter, property), typeof(object));
+            return Expression.Lambda<Func<T, object?>>(call, paramter).Compile();
         }
 
         public StatefulOrm(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
@@ -217,8 +227,8 @@ namespace ApiService.OneFuzzLib.Orm {
             };
 
             if (func != null) {
-                var partitionKey = _partitionKeyGetter?.Value();
-                var rowKey = _rowKeyGetter?.Value();
+                var partitionKey = _partitionKeyGetter?.Invoke(entity);
+                var rowKey = _rowKeyGetter?.Invoke(entity);
                 _logTracer.Info($"processing state update: {typeof(T)} - PartitionKey: {partitionKey} RowKey: {rowKey} - {state}");
                 return await func(entity);
             } else {
