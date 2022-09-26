@@ -55,7 +55,7 @@ public abstract class TasksTestBase : FunctionTestBase {
         var func = new Tasks(Logger, auth, Context);
 
         // override the found user credentials - need these to check for admin
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn", new List<string>());
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn");
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         var req = new TaskCreate(

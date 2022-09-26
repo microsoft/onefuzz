@@ -167,6 +167,10 @@ public record Error(ErrorCode Code, string[]? Errors = null) {
 };
 
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn, List<string> Roles) {
+
+    public UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn) : this(ApplicationId, ObjectId, Upn, new List<string>()) {
+    }
+
     public static UserInfo Create() {
         return new UserInfo(null, null, null, new List<string>());
     }

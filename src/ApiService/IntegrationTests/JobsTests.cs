@@ -157,7 +157,7 @@ public abstract class JobsTestBase : FunctionTestBase {
         var func = new Jobs(auth, Context, Logger);
 
         // need user credentials to put into the job object
-        var userInfo = new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn", new List<string>());
+        var userInfo = new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn");
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult.Ok(userInfo));
 
         var result = await func.Run(TestHttpRequestData.FromJson("POST", _config));

@@ -145,7 +145,7 @@ public abstract class PoolTestBase : FunctionTestBase {
             new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Running, null));
 
         // override the found user credentials - need these to check for admin
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn", new List<string>());
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
@@ -167,7 +167,7 @@ public abstract class PoolTestBase : FunctionTestBase {
             new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Halt, null));
 
         // override the found user credentials - need these to check for admin
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn", new List<string>());
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
@@ -189,7 +189,7 @@ public abstract class PoolTestBase : FunctionTestBase {
             new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Running, null));
 
         // override the found user credentials - need these to check for admin
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn", new List<string>());
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
@@ -210,7 +210,7 @@ public abstract class PoolTestBase : FunctionTestBase {
             new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }); // needed for admin check
 
         // override the found user credentials - need these to check for admin
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn", new List<string>());
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         // need to override instance id
@@ -241,7 +241,7 @@ public abstract class PoolTestBase : FunctionTestBase {
             new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Running, null));
 
         // override the found user credentials - need these to check for admin
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn", new List<string>());
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);

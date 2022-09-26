@@ -71,7 +71,7 @@ public abstract class ScalesetTestBase : FunctionTestBase {
     public async Async.Task Create_Scaleset() {
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
 
-        // override the found user credentials 
+        // override the found user credentials
         var userObjectId = Guid.NewGuid();
         var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn");
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
