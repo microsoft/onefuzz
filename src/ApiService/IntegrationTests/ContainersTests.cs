@@ -50,7 +50,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
     public async Async.Task CanDelete() {
         var containerName = Container.Parse("test");
         var client = GetContainerClient(containerName);
-        await client.CreateIfNotExistsAsync();
+        _ = await client.CreateIfNotExistsAsync();
 
         var msg = TestHttpRequestData.FromJson("DELETE", new ContainerDelete(containerName));
 
@@ -89,7 +89,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
     public async Async.Task CanPost_Existing() {
         var containerName = Container.Parse("test");
         var client = GetContainerClient(containerName);
-        await client.CreateIfNotExistsAsync();
+        _ = await client.CreateIfNotExistsAsync();
 
         var metadata = new Dictionary<string, string> { { "some", "value" } };
         var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(containerName, metadata));
@@ -113,7 +113,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
         var containerName = Container.Parse("test");
         {
             var client = GetContainerClient(containerName);
-            await client.CreateIfNotExistsAsync();
+            _ = await client.CreateIfNotExistsAsync();
         }
 
         var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(containerName));
@@ -143,8 +143,8 @@ public abstract class ContainersTestBase : FunctionTestBase {
     public async Async.Task List_Existing() {
         var meta1 = new Dictionary<string, string> { { "key1", "value1" } };
         var meta2 = new Dictionary<string, string> { { "key2", "value2" } };
-        await GetContainerClient(Container.Parse("one")).CreateIfNotExistsAsync(metadata: meta1);
-        await GetContainerClient(Container.Parse("two")).CreateIfNotExistsAsync(metadata: meta2);
+        _ = await GetContainerClient(Container.Parse("one")).CreateIfNotExistsAsync(metadata: meta1);
+        _ = await GetContainerClient(Container.Parse("two")).CreateIfNotExistsAsync(metadata: meta2);
 
         var msg = TestHttpRequestData.Empty("GET"); // this means list all
 
@@ -166,12 +166,12 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
     private static async Async.Task AssertCanCRUD(Uri sasUrl) {
         var client = new BlobContainerClient(sasUrl);
-        await client.UploadBlobAsync("blob", new BinaryData("content")); // create
+        _ = await client.UploadBlobAsync("blob", new BinaryData("content")); // create
         var b = Assert.Single(await client.GetBlobsAsync().ToListAsync()); // list
         using (var s = await client.GetBlobClient(b.Name).OpenReadAsync())
         using (var sr = new StreamReader(s)) {
             Assert.Equal("content", await sr.ReadToEndAsync()); // read
         }
-        await client.DeleteBlobAsync("blob"); // delete
+        using var r = await client.DeleteBlobAsync("blob"); // delete
     }
 }

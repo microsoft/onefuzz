@@ -16,7 +16,7 @@ public class TimerProxy {
 
         var proxyOperations = _context.ProxyOperations;
         var scalesetOperations = _context.ScalesetOperations;
-        var nsgOpertions = _context.NsgOperations;
+        var nsgOperations = _context.NsgOperations;
 
         var proxies = await proxyOperations.QueryAsync().ToListAsync();
 
@@ -69,14 +69,14 @@ public class TimerProxy {
             // since we do not support bring your own NSG
             var nsgName = Nsg.NameFromRegion(region);
 
-            if (await nsgOpertions.GetNsg(nsgName) != null) {
+            if (await nsgOperations.GetNsg(nsgName) != null) {
                 var network = await Network.Init(region, _context);
 
                 var subnet = await network.GetSubnet();
                 if (subnet != null) {
                     var vnet = await network.GetVnet();
                     if (vnet != null) {
-                        var result = await nsgOpertions.AssociateSubnet(nsgName, vnet, subnet);
+                        var result = await nsgOperations.AssociateSubnet(nsgName, vnet, subnet);
                         if (!result.OkV) {
                             _logger.Error($"Failed to associate NSG and subnet due to {result.ErrorV} in region {region}");
                         }
@@ -86,10 +86,10 @@ public class TimerProxy {
         }
         // if there are NSGs with name same as the region that they are allocated
         // and have no NIC associated with it then delete the NSG
-        await foreach (var nsg in nsgOpertions.ListNsgs()) {
-            if (nsgOpertions.OkToDelete(regions, nsg.Data.Location!, nsg.Data.Name)) {
+        await foreach (var nsg in nsgOperations.ListNsgs()) {
+            if (nsgOperations.OkToDelete(regions, nsg.Data.Location!, nsg.Data.Name)) {
                 if (nsg.Data.NetworkInterfaces.Count == 0 && nsg.Data.Subnets.Count == 0) {
-                    if (!await nsgOpertions.StartDeleteNsg(nsg.Data.Name)) {
+                    if (!await nsgOperations.StartDeleteNsg(nsg.Data.Name)) {
                         _logger.Warning($"failed to start deleting NSG {nsg.Data.Name}");
                     }
                 }

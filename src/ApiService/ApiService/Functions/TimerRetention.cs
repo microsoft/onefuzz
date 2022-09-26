@@ -54,7 +54,7 @@ public class TimerRetention {
                 select container.Name;
 
             foreach (var c in containerNames) {
-                usedContainers.Add(c);
+                _ = usedContainers.Add(c);
             }
         }
 

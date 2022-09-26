@@ -19,49 +19,32 @@ namespace Microsoft.OneFuzz.Service {
             if (Location == null) { // EnsureNotNull does not satisfy the nullability checker
                 throw new ArgumentNullException("Location required for VirtualMachineExtension");
             }
-            TypePropertiesType.EnsureNotNull("TypePropertiesType required for VirtualMachineExtension");
-            Publisher.EnsureNotNull("Publisher required for VirtualMachineExtension");
-            TypeHandlerVersion.EnsureNotNull("TypeHandlerVersion required for VirtualMachineExtension");
-            AutoUpgradeMinorVersion.EnsureNotNull("AutoUpgradeMinorVersion required for VirtualMachineExtension");
-
-            var settings = Settings ?? new BinaryData(new Dictionary<string, string>());
-            var protectedSettings = ProtectedSettings ?? new BinaryData(new Dictionary<string, string>());
 
             return (Name!, new VirtualMachineExtensionData(Location.Value) {
-                TypePropertiesType = TypePropertiesType,
-                Publisher = Publisher,
-                TypeHandlerVersion = TypeHandlerVersion,
-                AutoUpgradeMinorVersion = AutoUpgradeMinorVersion,
+                TypePropertiesType = TypePropertiesType.EnsureNotNull("TypePropertiesType required for VirtualMachineExtension"),
+                Publisher = Publisher.EnsureNotNull("Publisher required for VirtualMachineExtension"),
+                TypeHandlerVersion = TypeHandlerVersion.EnsureNotNull("TypeHandlerVersion required for VirtualMachineExtension"),
+                AutoUpgradeMinorVersion = AutoUpgradeMinorVersion.EnsureNotNull("AutoUpgradeMinorVersion required for VirtualMachineExtension"),
                 EnableAutomaticUpgrade = EnableAutomaticUpgrade,
                 ForceUpdateTag = ForceUpdateTag,
-                Settings = settings,
-                ProtectedSettings = protectedSettings
+                Settings = Settings ?? new BinaryData(new Dictionary<string, string>()),
+                ProtectedSettings = ProtectedSettings ?? new BinaryData(new Dictionary<string, string>()),
             });
         }
 
         public VirtualMachineScaleSetExtensionData GetAsVirtualMachineScaleSetExtension() {
-            Name.EnsureNotNull("Name required for VirtualMachineScaleSetExtension");
-            TypePropertiesType.EnsureNotNull("TypePropertiesType required for VirtualMachineScaleSetExtension");
-            Publisher.EnsureNotNull("Publisher required for VirtualMachineScaleSetExtension");
-            TypeHandlerVersion.EnsureNotNull("TypeHandlerVersion required for VirtualMachineScaleSetExtension");
-            AutoUpgradeMinorVersion.EnsureNotNull("AutoUpgradeMinorVersion required for VirtualMachineScaleSetExtension");
-
-            var settings = Settings ?? new BinaryData(new Dictionary<string, string>());
-            var protectedSettings = ProtectedSettings ?? new BinaryData(new Dictionary<string, string>());
-
             return new VirtualMachineScaleSetExtensionData() {
-                Name = Name,
-                TypePropertiesType = TypePropertiesType,
-                Publisher = Publisher,
-                TypeHandlerVersion = TypeHandlerVersion,
-                AutoUpgradeMinorVersion = AutoUpgradeMinorVersion,
+                Name = Name.EnsureNotNull("Name required for VirtualMachineScaleSetExtension"),
+                TypePropertiesType = TypePropertiesType.EnsureNotNull("TypePropertiesType required for VirtualMachineScaleSetExtension"),
+                Publisher = Publisher.EnsureNotNull("Publisher required for VirtualMachineScaleSetExtension"),
+                TypeHandlerVersion = TypeHandlerVersion.EnsureNotNull("TypeHandlerVersion required for VirtualMachineScaleSetExtension"),
+                AutoUpgradeMinorVersion = AutoUpgradeMinorVersion.EnsureNotNull("AutoUpgradeMinorVersion required for VirtualMachineScaleSetExtension"),
                 EnableAutomaticUpgrade = EnableAutomaticUpgrade,
                 ForceUpdateTag = ForceUpdateTag,
-                Settings = settings,
-                ProtectedSettings = protectedSettings
+                Settings = Settings ?? new BinaryData(new Dictionary<string, string>()),
+                ProtectedSettings = ProtectedSettings ?? new BinaryData(new Dictionary<string, string>()),
             };
         }
     }
 
 }
-

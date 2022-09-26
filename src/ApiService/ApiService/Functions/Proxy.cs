@@ -134,14 +134,18 @@ public class Proxy {
                 "ProxyReset");
         }
 
-        var proxyList = await _context.ProxyOperations.SearchByPartitionKeys(new[] { $"{request.OkV.Region}" }).ToListAsync();
-
-        foreach (var proxy in proxyList) {
-            await _context.ProxyOperations.SetState(proxy, VmState.Stopping);
+        bool any = false;
+        {
+            var proxyList = _context.ProxyOperations.SearchByPartitionKeys(new[] { $"{request.OkV.Region}" });
+            await foreach (var proxy in proxyList) {
+                any = true;
+                // ignoring result, proxyList not used outside this block
+                _ = await _context.ProxyOperations.SetState(proxy, VmState.Stopping);
+            }
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(new BoolResult(proxyList.Any()));
+        await response.WriteAsJsonAsync(new BoolResult(any));
         return response;
     }
 

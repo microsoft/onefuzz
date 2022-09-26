@@ -25,7 +25,7 @@ public class DiskOperations : IDiskOperations {
             _logTracer.Info($"deleting disks {resourceGroup} : {name}");
             var disk = await _creds.GetResourceGroupResource().GetDiskAsync(name);
             if (disk != null) {
-                await disk.Value.DeleteAsync(WaitUntil.Started);
+                _ = await disk.Value.DeleteAsync(WaitUntil.Started);
                 return true;
             }
         } catch (Exception e) {

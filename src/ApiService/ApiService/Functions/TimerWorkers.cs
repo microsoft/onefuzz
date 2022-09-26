@@ -18,19 +18,21 @@ public class TimerWorkers {
     private async Async.Task ProcessScalesets(Service.Scaleset scaleset) {
         _log.Verbose($"checking scaleset for updates: {scaleset.ScalesetId}");
 
-        await _scaleSetOps.UpdateConfigs(scaleset);
+        scaleset = await _scaleSetOps.UpdateConfigs(scaleset);
         var r = await _scaleSetOps.SyncAutoscaleSettings(scaleset);
         if (!r.IsOk) {
             _log.Error($"failed to sync auto scale settings due to {r.ErrorV}");
         }
 
         // if the scaleset is touched during cleanup, don't continue to process it
-        if (await _scaleSetOps.CleanupNodes(scaleset)) {
+        var (touched, ss) = await _scaleSetOps.CleanupNodes(scaleset);
+        if (touched) {
             _log.Verbose($"scaleset needed cleanup: {scaleset.ScalesetId}");
             return;
         }
 
-        await _scaleSetOps.SyncScalesetSize(scaleset);
+        scaleset = ss;
+        scaleset = await _scaleSetOps.SyncScalesetSize(scaleset);
         _ = await _scaleSetOps.ProcessStateUpdate(scaleset);
     }
 
