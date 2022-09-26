@@ -284,13 +284,17 @@ impl<'a> TaskContext<'a> {
     }
 
     async fn command_for_input(&self, input: &Path) -> Result<Command> {
+        let target_exe =
+            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
+                .await?;
+
         let expand = Expand::new()
             .machine_id()
             .await?
             .input_path(input)
             .job_id(&self.config.common.job_id)
             .setup_dir(&self.config.common.setup_dir)
-            .target_exe(&self.config.target_exe)
+            .target_exe(&target_exe)
             .target_options(&self.config.target_options)
             .task_id(&self.config.common.task_id);
 
