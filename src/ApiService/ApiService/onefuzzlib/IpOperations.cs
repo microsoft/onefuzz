@@ -12,7 +12,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IIpOperations {
     public Async.Task<NetworkInterfaceResource?> GetPublicNic(string resourceGroup, string name);
 
-    public Async.Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, string region, Nsg? nsg);
+    public Async.Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, Region region, Nsg? nsg);
 
     public Async.Task<string?> GetPublicIp(ResourceIdentifier resourceId);
 
@@ -26,7 +26,7 @@ public interface IIpOperations {
 
     public Async.Task<string?> GetScalesetInstanceIp(Guid scalesetId, Guid machineId);
 
-    public Async.Task CreateIp(string resourceGroup, string name, string region);
+    public Async.Task CreateIp(string resourceGroup, string name, Region region);
 }
 
 
@@ -64,8 +64,12 @@ public class IpOperations : IIpOperations {
         _logTracer.Info($"deleting nic {resourceGroup}:{name}");
         var networkInterface = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name);
         try {
-            await networkInterface.Value.DeleteAsync(WaitUntil.Started);
+            var r = await networkInterface.Value.DeleteAsync(WaitUntil.Started);
+            if (r.GetRawResponse().IsError) {
+                _logTracer.Error($"failed to start deleting nic {name} due to {r.GetRawResponse().ReasonPhrase}");
+            }
         } catch (RequestFailedException ex) {
+            _logTracer.Exception(ex);
             if (ex.ErrorCode != "NicReservedForAnotherVm") {
                 throw;
             }
@@ -76,12 +80,16 @@ public class IpOperations : IIpOperations {
     public async System.Threading.Tasks.Task DeleteIp(string resourceGroup, string name) {
         _logTracer.Info($"deleting ip {resourceGroup}:{name}");
         var publicIpAddressAsync = await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(name);
-        await publicIpAddressAsync.Value.DeleteAsync(WaitUntil.Started);
+        var r = await publicIpAddressAsync.Value.DeleteAsync(WaitUntil.Started);
+        if (r.GetRawResponse().IsError) {
+            _logTracer.Error($"failed to start deleting ip address due to {r.GetRawResponse().ReasonPhrase}");
+        }
     }
 
     public async Task<string?> GetScalesetInstanceIp(Guid scalesetId, Guid machineId) {
         var instance = await _context.VmssOperations.GetInstanceId(scalesetId, machineId);
         if (!instance.IsOk) {
+            _logTracer.Verbose($"failed to get vmss {scalesetId} for instance id {machineId} due to {instance.ErrorV}");
             return null;
         }
 
@@ -96,30 +104,31 @@ public class IpOperations : IIpOperations {
         // TODO: Parts of this function seem redundant, but I'm mirroring
         // the python code exactly. We should revisit this.
         _logTracer.Info($"getting ip for {resourceId}");
-        var resource = await (_context.Creds.GetData(_context.Creds.ParseResourceId(resourceId)));
-        var networkInterfaces = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(
-            resource.Data.Name
-        );
-        var publicIpConfigResource = (await networkInterfaces.Value.GetNetworkInterfaceIPConfigurations().FirstAsync());
-        publicIpConfigResource = await publicIpConfigResource.GetAsync();
-        var publicIp = publicIpConfigResource.Data.PublicIPAddress;
-        if (publicIp == null) {
-            return null;
-        }
-
-        resource = _context.Creds.ParseResourceId(publicIp.Id!);
         try {
+            var resource = await (_context.Creds.GetData(_context.Creds.ParseResourceId(resourceId)));
+            var networkInterfaces = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(
+                resource.Data.Name
+            );
+            var publicIpConfigResource = (await networkInterfaces.Value.GetNetworkInterfaceIPConfigurations().FirstAsync());
+            publicIpConfigResource = await publicIpConfigResource.GetAsync();
+            var publicIp = publicIpConfigResource.Data.PublicIPAddress;
+            if (publicIp == null) {
+                return null;
+            }
+
+            resource = _context.Creds.ParseResourceId(publicIp.Id!);
+
             resource = await _context.Creds.GetData(resource);
             var publicIpResource = await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(
                 resource.Data.Name
             );
             return publicIpResource.Value.Data.IPAddress;
-        } catch (RequestFailedException) {
+        } catch (RequestFailedException ex) when (ex.Status == 404) {
             return null;
         }
     }
 
-    public async Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, string region, Nsg? nsg) {
+    public async Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, Region region, Nsg? nsg) {
         _logTracer.Info($"creating nic for {resourceGroup}:{name} in {region}");
 
         var network = await Network.Init(region, _context);
@@ -172,11 +181,16 @@ public class IpOperations : IIpOperations {
         }
 
         try {
-            await _context.Creds.GetResourceGroupResource().GetNetworkInterfaces().CreateOrUpdateAsync(
-                WaitUntil.Started,
-                name,
-                networkInterface
-            );
+            var r =
+                await _context.Creds.GetResourceGroupResource().GetNetworkInterfaces().CreateOrUpdateAsync(
+                    WaitUntil.Started,
+                    name,
+                    networkInterface
+                );
+
+            if (r.GetRawResponse().IsError) {
+                _logTracer.Error($"failed to createOrUpdate network interface {name} due to {r.GetRawResponse().ReasonPhrase}");
+            }
         } catch (RequestFailedException ex) {
             if (!ex.ToString().Contains("RetryableError")) {
                 return OneFuzzResultVoid.Error(
@@ -189,7 +203,7 @@ public class IpOperations : IIpOperations {
         return OneFuzzResultVoid.Ok;
     }
 
-    public async Async.Task CreateIp(string resourceGroup, string name, string region) {
+    public async Async.Task CreateIp(string resourceGroup, string name, Region region) {
         var ipParams = new PublicIPAddressData() {
             Location = region,
             PublicIPAllocationMethod = NetworkIPAllocationMethod.Dynamic
@@ -202,9 +216,13 @@ public class IpOperations : IIpOperations {
             }
         }
 
-        await _context.Creds.GetResourceGroupResource().GetPublicIPAddresses().CreateOrUpdateAsync(
+        var r = await _context.Creds.GetResourceGroupResource().GetPublicIPAddresses().CreateOrUpdateAsync(
             WaitUntil.Started, name, ipParams
         );
+        if (r.GetRawResponse().IsError) {
+            _logTracer.Error($"Failed to create or update Public Ip Address {name} due to {r.GetRawResponse().ReasonPhrase}");
+        }
+
         return;
     }
 
@@ -258,5 +276,3 @@ public class IpOperations : IIpOperations {
         }
     }
 }
-
-

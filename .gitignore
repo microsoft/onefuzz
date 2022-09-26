@@ -6,7 +6,15 @@
 **/.envrc
 **/venv
 
+# profiling/coverage files
+*.profraw
+*.profdata
+lcov.info
+
 # vim
 *.swp
 
 /.ionide/symbolCache.db
+
+/src/ApiService/ApiService/Properties/PublishProfiles/*
+/src/ApiService/ApiService/Properties/ServiceDependencies/*

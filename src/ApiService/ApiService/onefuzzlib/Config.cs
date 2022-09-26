@@ -458,21 +458,24 @@ public class Config : IConfig {
             return ResultVoid<TaskConfigError>.Ok();
         }
 
-        var exist = new HashSet<string>();
+        var exist = new HashSet<Container>();
         var containers = new Dictionary<ContainerType, List<Container>>();
 
         foreach (var container in config.Containers) {
-            if (exist.Contains(container.Name.ContainerName)) {
+            if (exist.Contains(container.Name)) {
                 continue;
             }
+
             if (await _containers.FindContainer(container.Name, StorageType.Corpus) == null) {
                 return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"missing container: {container.Name}"));
             }
-            exist.Add(container.Name.ContainerName);
+
+            _ = exist.Add(container.Name);
 
             if (!containers.ContainsKey(container.Type)) {
                 containers.Add(container.Type, new List<Container>());
             }
+
             containers[container.Type].Add(container.Name);
         }
 

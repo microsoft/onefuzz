@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Azure.Core;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -21,14 +22,14 @@ public class QueueFileChanges {
         _notificationOperations = notificationOperations;
     }
 
-    //[Function("QueueFileChanges")]
+    [Function("QueueFileChanges")]
     public async Async.Task Run(
-        [QueueTrigger("file-changes-refactored", Connection = "AzureWebJobsStorage")] string msg,
+        [QueueTrigger("file-changes", Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount) {
         var fileChangeEvent = JsonSerializer.Deserialize<JsonDocument>(msg, EntityConverter.GetJsonSerializerOptions());
         var lastTry = dequeueCount == MAX_DEQUEUE_COUNT;
 
-        var _ = fileChangeEvent ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
+        _ = fileChangeEvent ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
 
         // check type first before calling Azure APIs
         const string eventType = "eventType";
@@ -39,14 +40,14 @@ public class QueueFileChanges {
 
         const string topic = "topic";
         if (!fileChangeEvent.RootElement.TryGetProperty(topic, out var topicElement)
-            || !_storage.CorpusAccounts().Contains(topicElement.GetString())) {
+            || !_storage.CorpusAccounts().Contains(new ResourceIdentifier(topicElement.GetString()!))) {
             return;
         }
 
-        await file_added(_log, fileChangeEvent, lastTry);
+        await FileAdded(_log, fileChangeEvent, lastTry);
     }
 
-    private async Async.Task file_added(ILogTracer log, JsonDocument fileChangeEvent, bool failTaskOnTransientError) {
+    private async Async.Task FileAdded(ILogTracer log, JsonDocument fileChangeEvent, bool failTaskOnTransientError) {
         var data = fileChangeEvent.RootElement.GetProperty("data");
         var url = data.GetProperty("url").GetString()!;
         var parts = url.Split("/").Skip(3).ToList();
@@ -55,6 +56,6 @@ public class QueueFileChanges {
         var path = string.Join('/', parts.Skip(1));
 
         log.Info($"file added container: {container} - path: {path}");
-        await _notificationOperations.NewFiles(new Container(container), path, failTaskOnTransientError);
+        await _notificationOperations.NewFiles(Container.Parse(container), path, failTaskOnTransientError);
     }
 }

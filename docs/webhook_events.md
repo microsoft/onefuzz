@@ -682,6 +682,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "allowed_aad_tenants": [
             "00000000-0000-0000-0000-000000000000"
         ],
+        "default_linux_vm_image": "Canonical:UbuntuServer:18.04-LTS:latest",
+        "default_windows_vm_image": "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
         "network_config": {
             "address_space": "10.0.0.0/8",
             "subnet": "10.0.0.0/16"
@@ -821,6 +823,16 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Api Access Rules",
                     "type": "object"
+                },
+                "default_linux_vm_image": {
+                    "default": "Canonical:UbuntuServer:18.04-LTS:latest",
+                    "title": "Default Linux Vm Image",
+                    "type": "string"
+                },
+                "default_windows_vm_image": {
+                    "default": "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
+                    "title": "Default Windows Vm Image",
+                    "type": "string"
                 },
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"
@@ -6045,6 +6057,16 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Api Access Rules",
                     "type": "object"
+                },
+                "default_linux_vm_image": {
+                    "default": "Canonical:UbuntuServer:18.04-LTS:latest",
+                    "title": "Default Linux Vm Image",
+                    "type": "string"
+                },
+                "default_windows_vm_image": {
+                    "default": "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
+                    "title": "Default Windows Vm Image",
+                    "type": "string"
                 },
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"

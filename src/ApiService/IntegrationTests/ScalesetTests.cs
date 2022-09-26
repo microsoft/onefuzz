@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using IntegrationTests.Fakes;
@@ -64,5 +65,42 @@ public abstract class ScalesetTestBase : FunctionTestBase {
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
         Assert.Equal("[]", BodyAsString(result));
+    }
+
+    [Fact]
+    public async Async.Task Create_Scaleset() {
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+
+        // override the found user credentials 
+        var userObjectId = Guid.NewGuid();
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn");
+        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+
+        var poolName = PoolName.Parse("mypool");
+        await Context.InsertAll(
+            // user must be admin
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { userObjectId } },
+            // pool must exist and be managed
+            new Pool(poolName, Guid.NewGuid(), Os.Linux, Managed: true, Architecture.x86_64, PoolState.Running));
+
+        var req = new ScalesetCreate(
+            poolName,
+            TestVmssOperations.TestSku,
+            "Image",
+            Region: null,
+            Size: 1,
+            SpotInstances: false,
+            Tags: new Dictionary<string, string>());
+
+        var func = new ScalesetFunction(Logger, auth, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
+
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var resp = BodyAs<ScalesetResponse>(result);
+        Assert.Equal(poolName, resp.PoolName);
+
+        // auth should not be included in the response
+        Assert.Null(resp.Auth);
     }
 }

@@ -144,7 +144,10 @@ public class AgentRegistration {
             Os: os ?? pool.Os
             );
 
-        await _context.NodeOperations.Replace(node);
+        var r = await _context.NodeOperations.Replace(node);
+        if (!r.IsOk) {
+            _log.WithHttpStatus(r.ErrorV).WithTag("MachineId", node.MachineId.ToString()).Error("failed to replace node operations for node {MachineId}");
+        }
 
         return await RequestHandling.Ok(req, await CreateRegistrationResponse(pool));
     }

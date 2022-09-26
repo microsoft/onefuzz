@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Core;
-using Azure.Storage;
 using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
 using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -10,14 +10,17 @@ namespace Microsoft.OneFuzz.Service;
 public interface IQueue {
     Async.Task SendMessage(string name, string message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
     Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
-    Async.Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
+    Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
     ResourceIdentifier GetResourceId(string queueName, StorageType storageType);
     Task<IList<T>> PeekQueue<T>(string name, StorageType storageType);
     Async.Task<bool> RemoveFirstMessage(string name, StorageType storageType);
     Async.Task ClearQueue(string name, StorageType storageType);
     Async.Task DeleteQueue(string name, StorageType storageType);
     Async.Task CreateQueue(string name, StorageType storageType);
+    IAsyncEnumerable<QueueItem> ListQueues(StorageType storageType);
 }
+
+
 
 
 public class Queue : IQueue {
@@ -31,6 +34,12 @@ public class Queue : IQueue {
         _log = log;
     }
 
+    public async IAsyncEnumerable<QueueItem> ListQueues(StorageType storageType) {
+        var queueServiceClient = await GetQueueClientService(storageType);
+        await foreach (var q in queueServiceClient.GetQueuesAsync()) {
+            yield return q;
+        }
+    }
 
     public async Async.Task SendMessage(string name, string message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
         var queue = await GetQueueClient(name, storageType);
@@ -42,22 +51,14 @@ public class Queue : IQueue {
         }
     }
 
-    public async Task<QueueClient> GetQueueClient(string name, StorageType storageType) {
-        var client = await GetQueueClientService(storageType);
-        return client.GetQueueClient(name);
-    }
+    public async Task<QueueClient> GetQueueClient(string name, StorageType storageType)
+        => (await GetQueueClientService(storageType)).GetQueueClient(name);
 
-    public async Task<QueueServiceClient> GetQueueClientService(StorageType storageType) {
-        var accountId = _storage.GetPrimaryAccount(storageType);
-        _log.Verbose($"getting blob container (account_id: {accountId})");
-        var (name, key) = await _storage.GetStorageAccountNameAndKey(accountId);
-        var endpoint = _storage.GetQueueEndpoint(name);
-        var options = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
-        return new QueueServiceClient(endpoint, new StorageSharedKeyCredential(name, key), options);
-    }
+    public Task<QueueServiceClient> GetQueueClientService(StorageType storageType)
+        => _storage.GetQueueServiceClientForAccount(_storage.GetPrimaryAccount(storageType));
 
     public async Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
-        var queueClient = await GetQueueClient(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
+        var queueClient = await GetQueueClient(name, storageType);
         try {
             var serialized = JsonSerializer.Serialize(obj, EntityConverter.GetJsonSerializerOptions());
             var res = await queueClient.SendMessageAsync(serialized, visibilityTimeout: visibilityTimeout, timeToLive);
@@ -74,11 +75,13 @@ public class Queue : IQueue {
     }
 
     public async Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
-        var queue = await GetQueueClient(name, storageType) ?? throw new Exception($"unable to queue object, no such queue: {name}");
-        var sasaBuilder = new QueueSasBuilder(permissions, DateTimeOffset.UtcNow + (duration ?? DEFAULT_DURATION));
-        return queue.GenerateSasUri(sasaBuilder);
+        var queueClient = await GetQueueClient(name, storageType);
+        var now = DateTimeOffset.UtcNow;
+        return _storage.GenerateQueueSasUri(
+            permissions,
+            queueClient,
+            (now, now + (duration ?? DEFAULT_DURATION)));
     }
-
 
     public async Async.Task CreateQueue(string name, StorageType storageType) {
         var client = await GetQueueClient(name, storageType);

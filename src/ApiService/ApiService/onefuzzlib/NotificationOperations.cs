@@ -7,7 +7,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface INotificationOperations : IOrm<Notification> {
     Async.Task NewFiles(Container container, string filename, bool failTaskOnTransientError);
     IAsyncEnumerable<Notification> GetNotifications(Container container);
-    IAsyncEnumerable<(Task, IEnumerable<string>)> GetQueueTasks();
+    IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks();
     Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting);
 }
 
@@ -20,12 +20,12 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     public async Async.Task NewFiles(Container container, string filename, bool failTaskOnTransientError) {
         var notifications = GetNotifications(container);
         var hasNotifications = await notifications.AnyAsync();
-        var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
 
         if (!hasNotifications) {
             return;
         }
 
+        var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
         var done = new List<NotificationTemplate>();
         await foreach (var notification in notifications) {
             if (done.Contains(notification.Config)) {
@@ -35,7 +35,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             done.Add(notification.Config);
 
             if (notification.Config is TeamsTemplate teamsTemplate) {
-                NotifyTeams(teamsTemplate, container, filename, reportOrRegression!);
+                await _context.Teams.NotifyTeams(teamsTemplate, container, filename, reportOrRegression!);
             }
 
             if (reportOrRegression == null) {
@@ -43,17 +43,17 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             }
 
             if (notification.Config is AdoTemplate adoTemplate) {
-                NotifyAdo(adoTemplate, container, filename, reportOrRegression, failTaskOnTransientError);
+                await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, failTaskOnTransientError);
             }
 
             if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {
-                GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression);
+                await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression);
             }
         }
 
         await foreach (var (task, containers) in GetQueueTasks()) {
-            if (containers.Contains(container.ContainerName)) {
-                _logTracer.Info($"queuing input {container.ContainerName} {filename} {task.TaskId}");
+            if (containers.Contains(container)) {
+                _logTracer.Info($"queuing input {container} {filename} {task.TaskId}");
                 var url = _context.Containers.GetFileSasUrl(container, filename, StorageType.Corpus, BlobSasPermissions.Read | BlobSasPermissions.Delete);
                 await _context.Queue.SendMessage(task.TaskId.ToString(), url?.ToString() ?? "", StorageType.Corpus);
             }
@@ -77,14 +77,15 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     }
 
     public IAsyncEnumerable<Notification> GetNotifications(Container container) {
-        return QueryAsync(filter: $"container eq '{container.ContainerName}'");
+        return SearchByRowKeys(new[] { container.String });
     }
 
-    public IAsyncEnumerable<(Task, IEnumerable<string>)> GetQueueTasks() {
+    public IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks() {
         // Nullability mismatch: We filter tuples where the containers are null
         return _context.TaskOperations.SearchStates(states: TaskStateHelper.AvailableStates)
             .Select(task => (task, _context.TaskOperations.GetInputContainerQueues(task.Config)))
-            .Where(taskTuple => taskTuple.Item2 != null)!;
+            .Where(taskTuple => taskTuple.Item2.IsOk && taskTuple.Item2.OkV != null)
+            .Select(x => (Task: x.Item1, Containers: x.Item2.OkV))!;
     }
 
     public async Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting) {
@@ -93,15 +94,21 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         }
 
         if (replaceExisting) {
-            var existing = this.SearchByRowKeys(new[] { container.ContainerName });
+            var existing = this.SearchByRowKeys(new[] { container.String });
             await foreach (var existingEntry in existing) {
-                _logTracer.Info($"replacing existing notification: {existingEntry.NotificationId} - {container}");
-                await this.Delete(existingEntry);
+                _logTracer.Info($"deleting existing notification: {existingEntry.NotificationId} - {container}");
+                var rr = await this.Delete(existingEntry);
+                if (!rr.IsOk) {
+                    _logTracer.WithHttpStatus(rr.ErrorV).Error($"failed to delete existing notification {existingEntry.NotificationId} - {container}");
+                }
             }
         }
         var configWithHiddenSecret = await HideSecrets(config);
         var entry = new Notification(Guid.NewGuid(), container, configWithHiddenSecret);
-        await this.Insert(entry);
+        var r = await this.Insert(entry);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert notification with id {entry.NotificationId}");
+        }
         _logTracer.Info($"created notification.  notification_id:{entry.NotificationId} container:{entry.Container}");
 
         return OneFuzzResult<Notification>.Ok(entry);
@@ -137,17 +144,5 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
         _logTracer.Error($"unable to find crash_report or no repro entry for report: {JsonSerializer.Serialize(report)}");
         return null;
-    }
-
-    private void GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport report) {
-        throw new NotImplementedException();
-    }
-
-    private void NotifyAdo(AdoTemplate config, Container container, string filename, IReport report, bool failTaskOnTransientError) {
-        throw new NotImplementedException();
-    }
-
-    private void NotifyTeams(TeamsTemplate config, Container container, string filename, IReport report) {
-        throw new NotImplementedException();
     }
 }

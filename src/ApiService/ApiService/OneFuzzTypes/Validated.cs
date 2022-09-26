@@ -1,7 +1,9 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Azure.Core;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -11,6 +13,10 @@ static class Check {
 
     private static readonly Regex _isAlnumDash = new(@"\A[a-zA-Z0-9\-]+\z", RegexOptions.Compiled);
     public static bool IsAlnumDash(string input) => _isAlnumDash.IsMatch(input);
+
+    // Permits 1-64 characters: alphanumeric, underscore, or dash.
+    private static readonly Regex _isNameLike = new(@"\A[_a-zA-Z0-9\-]{1,64}\z", RegexOptions.Compiled);
+    public static bool IsNameLike(string input) => _isNameLike.IsMatch(input);
 }
 
 // Base class for types that are wrappers around a validated string.
@@ -47,9 +53,11 @@ public abstract class ValidatedStringConverter<T> : JsonConverter<T> where T : V
 }
 
 [JsonConverter(typeof(Converter))]
-public record PoolName : ValidatedString {
-    public PoolName(string value) : base(value) {
-        // Debug.Assert(Check.IsAlnumDash(value));
+public sealed record PoolName : ValidatedString {
+    private static bool IsValid(string input) => Check.IsNameLike(input);
+
+    private PoolName(string value) : base(value) {
+        Debug.Assert(IsValid(value));
     }
 
     public static PoolName Parse(string input) {
@@ -61,14 +69,10 @@ public record PoolName : ValidatedString {
     }
 
     public static bool TryParse(string input, [NotNullWhen(returnValue: true)] out PoolName? result) {
-
-        // bypassing the validation because this code has a stricter validation than the python equivalent
-        // see (issue #2080)
-
-        // if (!Check.IsAlnumDash(input)) {
-        //     result = default;
-        //     return false;
-        // }
+        if (!IsValid(input)) {
+            result = default;
+            return false;
+        }
 
         result = new PoolName(input);
         return true;
@@ -80,12 +84,12 @@ public record PoolName : ValidatedString {
     }
 }
 
-/* TODO: to be enabled in a separate PR
-
 [JsonConverter(typeof(Converter))]
 public record Region : ValidatedString {
-    private Region(string value) : base(value) {
-        Debug.Assert(Check.IsAlnum(value));
+    private static bool IsValid(string input) => Check.IsAlnum(input);
+
+    private Region(string value) : base(value.ToLowerInvariant()) {
+        Debug.Assert(IsValid(value));
     }
 
     public static Region Parse(string input) {
@@ -93,11 +97,11 @@ public record Region : ValidatedString {
             return result;
         }
 
-        throw new ArgumentException("Region name must have only numbers, letters or dashes");
+        throw new ArgumentException("Region name must have only numbers or letters");
     }
 
     public static bool TryParse(string input, [NotNullWhen(returnValue: true)] out Region? result) {
-        if (!Check.IsAlnum(input)) {
+        if (!IsValid(input)) {
             result = default;
             return false;
         }
@@ -105,6 +109,9 @@ public record Region : ValidatedString {
         result = new Region(input);
         return true;
     }
+
+    public static implicit operator AzureLocation(Region me) => new(me.String);
+    public static implicit operator Region(AzureLocation it) => new(it.Name);
 
     public sealed class Converter : ValidatedStringConverter<Region> {
         protected override bool TryParse(string input, out Region? output)
@@ -114,8 +121,16 @@ public record Region : ValidatedString {
 
 [JsonConverter(typeof(Converter))]
 public record Container : ValidatedString {
+    // See: https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftstorage
+    // - 3-63
+    // - Lowercase letters, numbers, and hyphens.
+    // - Start with lowercase letter or number. Can't use consecutive hyphens.
+    private static readonly Regex _containerRegex = new(@"\A(?!-)(?!.*--)[a-z0-9\-]{3,63}\z", RegexOptions.Compiled);
+
+    private static bool IsValid(string input) => _containerRegex.IsMatch(input);
+
     private Container(string value) : base(value) {
-        Debug.Assert(Check.IsAlnumDash(value));
+        Debug.Assert(IsValid(value));
     }
 
     public static Container Parse(string input) {
@@ -127,7 +142,7 @@ public record Container : ValidatedString {
     }
 
     public static bool TryParse(string input, [NotNullWhen(returnValue: true)] out Container? result) {
-        if (!Check.IsAlnumDash(input)) {
+        if (!IsValid(input)) {
             result = default;
             return false;
         }
@@ -141,4 +156,3 @@ public record Container : ValidatedString {
             => Container.TryParse(input, out output);
     }
 }
-*/

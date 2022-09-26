@@ -7,7 +7,7 @@ namespace Microsoft.OneFuzz.Service;
 public record ImageInfo(string Publisher, string Offer, string Sku, string Version);
 
 public interface IImageOperations {
-    public Async.Task<OneFuzzResult<Os>> GetOs(string region, string image);
+    public Async.Task<OneFuzzResult<Os>> GetOs(Region region, string image);
 
     public static ImageInfo GetImageInfo(string image) {
         var imageParts = image.Split(":");
@@ -27,14 +27,18 @@ public class ImageOperations : IImageOperations {
     private IOnefuzzContext _context;
     private ILogTracer _logTracer;
 
+    const string SubscriptionsStr = "/subscriptions/";
+    const string ProvidersStr = "/providers/";
+
+
     public ImageOperations(ILogTracer logTracer, IOnefuzzContext context) {
         _logTracer = logTracer;
         _context = context;
     }
 
-    public async Task<OneFuzzResult<Os>> GetOs(string region, string image) {
+    public async Task<OneFuzzResult<Os>> GetOs(Region region, string image) {
         string? name = null;
-        try {
+        if (image.StartsWith(SubscriptionsStr) || image.StartsWith(ProvidersStr)) {
             var parsed = _context.Creds.ParseResourceId(image);
             parsed = await _context.Creds.GetData(parsed);
             if (string.Equals(parsed.Id.ResourceType, "galleries", StringComparison.OrdinalIgnoreCase)) {
@@ -58,6 +62,7 @@ public class ImageOperations : IImageOperations {
                       ex is RequestFailedException ||
                       ex is NullReferenceException
                   ) {
+                    _logTracer.Exception(ex);
                     return OneFuzzResult<Os>.Error(
                         ErrorCode.INVALID_IMAGE,
                         ex.ToString()
@@ -72,13 +77,14 @@ public class ImageOperations : IImageOperations {
                     ex is RequestFailedException ||
                     ex is NullReferenceException
                 ) {
+                    _logTracer.Exception(ex);
                     return OneFuzzResult<Os>.Error(
                         ErrorCode.INVALID_IMAGE,
                         ex.ToString()
                     );
                 }
             }
-        } catch (FormatException) {
+        } else {
             var imageInfo = IImageOperations.GetImageInfo(image);
             try {
                 var subscription = await _context.Creds.ArmClient.GetDefaultSubscriptionAsync();
@@ -86,7 +92,7 @@ public class ImageOperations : IImageOperations {
                 if (string.Equals(imageInfo.Version, "latest", StringComparison.Ordinal)) {
                     version =
                         (await subscription.GetVirtualMachineImagesAsync(
-                            region,
+                            region.String,
                             imageInfo.Publisher,
                             imageInfo.Offer,
                             imageInfo.Sku,
@@ -97,13 +103,14 @@ public class ImageOperations : IImageOperations {
                 }
 
                 name = (await subscription.GetVirtualMachineImageAsync(
-                    region,
+                    region.String,
                     imageInfo.Publisher,
                     imageInfo.Offer,
                     imageInfo.Sku
                     , version
                 )).Value.OSDiskImageOperatingSystem.ToString().ToLower();
             } catch (RequestFailedException ex) {
+                _logTracer.Exception(ex);
                 return OneFuzzResult<Os>.Error(
                     ErrorCode.INVALID_IMAGE,
                     ex.ToString()

@@ -30,7 +30,7 @@ namespace ApiService.TestHooks {
             var fileName = query["fileName"];
             var failTaskOnTransientError = UriExtension.GetBool("failTaskOnTransientError", query, true);
 
-            await _notificationOps.NewFiles(new Container(container), fileName, failTaskOnTransientError);
+            await _notificationOps.NewFiles(Container.Parse(container), fileName, failTaskOnTransientError);
             var resp = req.CreateResponse(HttpStatusCode.OK);
             return resp;
         }
@@ -43,7 +43,7 @@ namespace ApiService.TestHooks {
 
             var query = UriExtension.GetQueryComponents(req.Url);
             var container = query["container"];
-            var notifications = _notificationOps.GetNotifications(new Container(container));
+            var notifications = _notificationOps.GetNotifications(Container.Parse(container));
 
             var json = JsonSerializer.Serialize(await notifications.ToListAsync(), EntityConverter.GetJsonSerializerOptions());
             var resp = req.CreateResponse(HttpStatusCode.OK);

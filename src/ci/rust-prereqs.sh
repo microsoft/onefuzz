@@ -11,8 +11,8 @@ fi
 # sccache --start-server
 # export RUSTC_WRAPPER=$(which sccache)
 
-cargo install cargo-audit
+cargo install cargo-audit cargo-llvm-cov
 
-if ! cargo-license --help; then
+if ! cargo license --help; then
     cargo install cargo-license@0.4.2
 fi

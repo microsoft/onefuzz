@@ -6,7 +6,7 @@ namespace Microsoft.OneFuzz.Service;
 public class Network {
     private readonly string _name;
     private readonly string _group;
-    private readonly string _region;
+    private readonly Region _region;
     private readonly IOnefuzzContext _context;
 
     private readonly NetworkConfig _networkConfig;
@@ -14,7 +14,7 @@ public class Network {
     // This was generated randomly and should be preserved moving forwards
     static Guid NETWORK_GUID_NAMESPACE = Guid.Parse("372977ad-b533-416a-b1b4-f770898e0b11");
 
-    public Network(string region, string group, string name, IOnefuzzContext context, NetworkConfig networkConfig) {
+    public Network(Region region, string group, string name, IOnefuzzContext context, NetworkConfig networkConfig) {
         _region = region;
         _group = group;
         _name = name;
@@ -22,7 +22,7 @@ public class Network {
         _networkConfig = networkConfig;
     }
 
-    public static async Async.Task<Network> Init(string region, IOnefuzzContext context) {
+    public static async Async.Task<Network> Init(Region region, IOnefuzzContext context) {
         var group = context.Creds.GetBaseResourceGroup();
         var instanceConfig = await context.ConfigOperations.Fetch();
         var networkConfig = instanceConfig.NetworkConfig;
@@ -33,15 +33,13 @@ public class Network {
         // configs.
 
         string name;
-
         if (networkConfig.AddressSpace == NetworkConfig.Default.AddressSpace && networkConfig.Subnet == NetworkConfig.Default.Subnet) {
-            name = region;
+            name = region.String;
         } else {
             //TODO: Remove dependency on "Faithlife"
             var networkId = Faithlife.Utility.GuidUtility.Create(NETWORK_GUID_NAMESPACE, string.Join("|", networkConfig.AddressSpace, networkConfig.Subnet), 5);
             name = $"{region}-{networkId}";
         }
-
 
         return new Network(region, group, name, context, networkConfig);
     }

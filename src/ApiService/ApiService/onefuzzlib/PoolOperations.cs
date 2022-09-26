@@ -14,10 +14,16 @@ public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {
     IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> states);
     Async.Task<Pool> SetShutdown(Pool pool, bool Now);
 
-    Async.Task<Pool> Init(Pool pool);
-
     Async.Task<Pool> Create(PoolName name, Os os, Architecture architecture, bool managed, Guid? clientId = null);
     new Async.Task Delete(Pool pool);
+
+    // state transitions:
+    Async.Task<Pool> Init(Pool pool);
+    Async.Task<Pool> Running(Pool pool);
+    Async.Task<Pool> Shutdown(Pool pool);
+    Async.Task<Pool> Halt(Pool pool);
+
+    public static string PoolQueueNamePrefix => "pool-";
 }
 
 public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoolOperations {
@@ -39,7 +45,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         var r = await Insert(newPool);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to save new pool. Pool name: {newPool.Name}, PoolId: {newPool.PoolId} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save new pool. Pool name: {newPool.Name}, PoolId: {newPool.PoolId}");
         }
         await _context.Events.SendEvent(new EventPoolCreated(PoolName: newPool.Name, Os: newPool.Os, Arch: newPool.Arch, Managed: newPool.Managed));
         return newPool;
@@ -49,11 +55,11 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         var result = await pools.ToListAsync();
         if (result.Count == 0) {
-            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, "unable to find pool");
+            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, $"unable to find pool with name {poolName.String}");
         }
 
         if (result.Count != 1) {
-            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, "error identifying pool");
+            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, $"error identifying pool with name {poolName.String}");
         }
 
         return OneFuzzResult<Pool>.Ok(result.Single());
@@ -64,11 +70,11 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         var result = await pools.ToListAsync();
         if (result.Count == 0) {
-            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, "unable to find pool");
+            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, $"unable to find pool with id {poolId}");
         }
 
         if (result.Count != 1) {
-            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, "error identifying pool");
+            return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, $"error identifying pool with id {poolId}");
         }
 
         return OneFuzzResult<Pool>.Ok(result.Single());
@@ -87,7 +93,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
     }
 
     public string GetPoolQueue(Guid poolId)
-        => $"pool-{poolId:N}";
+        => $"{IPoolOperations.PoolQueueNamePrefix}{poolId:N}";
 
     public async Async.Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name)
         => await _context.ScalesetOperations.SearchByPool(name)
@@ -143,7 +149,10 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         }
 
         pool = pool with { State = state };
-        await Replace(pool);
+        var r = await Replace(pool);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace pool {pool.PoolId} when setting state");
+        }
         return pool;
     }
 
@@ -151,15 +160,21 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         await _context.Queue.CreateQueue(GetPoolQueue(pool.PoolId), StorageType.Corpus);
         var shrinkQueue = new ShrinkQueue(pool.PoolId, _context.Queue, _logTracer);
         await shrinkQueue.Create();
-        await SetState(pool, PoolState.Running);
+        _ = await SetState(pool, PoolState.Running);
         return pool;
     }
 
     new public async Async.Task Delete(Pool pool) {
         var r = await base.Delete(pool);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to delete pool: {pool.Name} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to delete pool: {pool.Name}");
         }
+        var poolQueue = GetPoolQueue(pool.PoolId);
+        await _context.Queue.DeleteQueue(poolQueue, StorageType.Corpus);
+
+        var shrinkQueue = new ShrinkQueue(pool.PoolId, _context.Queue, _logTracer);
+        await shrinkQueue.Delete();
+
         await _context.Events.SendEvent(new EventPoolDeleted(PoolName: pool.Name));
     }
 
@@ -176,7 +191,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         if (scalesets is not null) {
             await foreach (var scaleset in scalesets) {
                 if (scaleset is not null) {
-                    await _context.ScalesetOperations.SetShutdown(scaleset, now: true);
+                    _ = await _context.ScalesetOperations.SetShutdown(scaleset, now: true);
                 }
             }
         }
@@ -202,10 +217,6 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         var nodes = _context.NodeOperations.SearchByPoolName(pool.Name);
 
         if (scalesets is null && nodes is null) {
-            var poolQueue = GetPoolQueue(pool.PoolId);
-            await _context.Queue.DeleteQueue(poolQueue, StorageType.Corpus);
-            var shrinkQueue = new ShrinkQueue(pool.PoolId, _context.Queue, _logTracer);
-            await shrinkQueue.Delete();
             _logTracer.Info($"pool stopped, deleting: {pool.Name}");
             await Delete(pool);
         }
@@ -213,7 +224,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         if (scalesets is not null) {
             await foreach (var scaleset in scalesets) {
                 if (scaleset is not null) {
-                    await _context.ScalesetOperations.SetState(scaleset, ScalesetState.Halt);
+                    _ = await _context.ScalesetOperations.SetState(scaleset, ScalesetState.Halt);
                 }
             }
         }
@@ -225,5 +236,10 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         }
 
         return pool;
+    }
+
+    public Task<Pool> Running(Pool pool) {
+        // nothing to do
+        return Async.Task.FromResult(pool);
     }
 }

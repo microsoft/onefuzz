@@ -69,4 +69,18 @@ public abstract class TasksTestBase : FunctionTestBase {
         var err = BodyAs<Error>(result);
         Assert.Equal(new[] { "The Pool field is required." }, err.Errors);
     }
+
+    [Fact]
+    public async Async.Task CanSearchWithJobIdAndEmptyListOfStates() {
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+
+        var req = new TaskSearch(
+            JobId: Guid.NewGuid(),
+            TaskId: null,
+            State: new List<TaskState>());
+
+        var func = new Tasks(Logger, auth, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+    }
 }

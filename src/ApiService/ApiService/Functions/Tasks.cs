@@ -64,10 +64,10 @@ public class Tasks {
             return await RequestHandling.Ok(req, result);
         }
 
-        var tasks = await _context.TaskOperations.SearchAll().ToListAsync();
-        var response2 = req.CreateResponse(HttpStatusCode.OK);
-        await response2.WriteAsJsonAsync(tasks);
-        return response2;
+        var tasks = await _context.TaskOperations.SearchStates(request.OkV.JobId, request.OkV.State).ToListAsync();
+        var response = req.CreateResponse(HttpStatusCode.OK);
+        await response.WriteAsJsonAsync(tasks);
+        return response;
     }
 
 

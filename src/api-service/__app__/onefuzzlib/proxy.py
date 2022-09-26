@@ -43,7 +43,6 @@ from .extension import proxy_manager_extensions
 from .orm import ORMMixin, QueryFilter
 from .proxy_forward import ProxyForward
 
-PROXY_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
 PROXY_LOG_PREFIX = "scaleset-proxy: "
 PROXY_LIFESPAN = datetime.timedelta(days=7)
 
@@ -70,6 +69,7 @@ class Proxy(ORMMixin):
         return ("region", "proxy_id")
 
     def get_vm(self, config: InstanceConfig) -> VM:
+        config = InstanceConfig.fetch()
         sku = config.proxy_vm_sku
         tags = None
         if config.vm_tags:
@@ -78,7 +78,7 @@ class Proxy(ORMMixin):
             name="proxy-%s" % base58.b58encode(self.proxy_id.bytes).decode(),
             region=self.region,
             sku=sku,
-            image=PROXY_IMAGE,
+            image=config.default_linux_vm_image,
             auth=self.auth,
             tags=tags,
         )

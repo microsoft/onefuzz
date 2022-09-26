@@ -1,6 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Azure.Core;
+using Azure.Data.Tables;
+using Azure.ResourceManager.Storage;
+using Azure.Storage;
+using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
 using Microsoft.OneFuzz.Service;
 
 using Async = System.Threading.Tasks;
@@ -33,39 +39,42 @@ sealed class AzureStorage : IStorage {
         AccountKey = accountKey;
     }
 
-    public IReadOnlyList<string> GetAccounts(StorageType storageType) {
-        return new[] { AccountName };
+    private readonly string _fakeSubscription = Guid.NewGuid().ToString();
+
+    private ResourceIdentifier _fakeResourceIdentifier =>
+        StorageAccountResource.CreateResourceIdentifier(_fakeSubscription, "unused", AccountName);
+
+    public IReadOnlyList<ResourceIdentifier> GetAccounts(StorageType storageType) {
+        return new[] { _fakeResourceIdentifier };
     }
 
-    public Task<(string, string)> GetStorageAccountNameAndKey(string accountId)
-        => Async.Task.FromResult((AccountName, AccountKey));
+    private Uri TableEndpoint => new($"https://{AccountName}.table.core.windows.net/");
 
-    public Task<string?> GetStorageAccountNameKeyByName(string accountName) {
-        return Async.Task.FromResult<string?>(AccountName);
+    private Uri QueueEndpoint => new($"https://{AccountName}.queue.core.windows.net/");
+
+    private Uri BlobEndpoint => new($"https://{AccountName}.blob.core.windows.net/");
+
+    public Task<BlobServiceClient> GetBlobServiceClientForAccountName(string accountName) {
+        var cred = new StorageSharedKeyCredential(AccountName, AccountKey);
+        return Async.Task.FromResult(new BlobServiceClient(BlobEndpoint, cred));
     }
 
-    public Uri GetTableEndpoint(string accountId)
-        => new($"https://{AccountName}.table.core.windows.net/");
+    public Task<TableServiceClient> GetTableServiceClientForAccountName(string accountName) {
+        var cred = new TableSharedKeyCredential(AccountName, AccountKey);
+        return Async.Task.FromResult(new TableServiceClient(TableEndpoint, cred));
+    }
 
-    public Uri GetQueueEndpoint(string accountId)
-        => new($"https://{AccountName}.queue.core.windows.net/");
+    private static readonly QueueClientOptions _queueClientOptions = new() { MessageEncoding = QueueMessageEncoding.Base64 };
+    public Task<QueueServiceClient> GetQueueServiceClientForAccountName(string accountName) {
+        var cred = new StorageSharedKeyCredential(AccountName, AccountKey);
+        return Async.Task.FromResult(new QueueServiceClient(QueueEndpoint, cred, _queueClientOptions));
+    }
 
-    public Uri GetBlobEndpoint(string accountId)
-        => new($"https://{AccountName}.blob.core.windows.net/");
-
-    IReadOnlyList<string> IStorage.CorpusAccounts() {
+    IReadOnlyList<ResourceIdentifier> IStorage.CorpusAccounts() {
         throw new NotImplementedException();
     }
 
-    public IReadOnlyList<string> CorpusAccounts() {
-        throw new System.NotImplementedException();
-    }
-
-    public string GetPrimaryAccount(StorageType storageType) {
-        throw new System.NotImplementedException();
-    }
-
-    public Task<string?> GetStorageAccountNameAndKeyByName(string accountName) {
+    public ResourceIdentifier GetPrimaryAccount(StorageType storageType) {
         throw new System.NotImplementedException();
     }
 }

@@ -15,7 +15,7 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
 
     IAsyncEnumerable<Task> SearchStates(Guid? jobId = null, IEnumerable<TaskState>? states = null);
 
-    IEnumerable<string>? GetInputContainerQueues(TaskConfig config);
+    Result<IEnumerable<Container>?, TaskConfigError> GetInputContainerQueues(TaskConfig config);
 
     IAsyncEnumerable<Task> SearchExpired();
     Async.Task MarkStopping(Task task);
@@ -26,6 +26,16 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
     Async.Task<Pool?> GetPool(Task task);
     Async.Task<Task> SetState(Task task, TaskState state);
     Async.Task<OneFuzzResult<Task>> Create(TaskConfig config, Guid jobId, UserInfo userInfo);
+
+    // state transitions:
+    Async.Task<Task> Init(Task task);
+    Async.Task<Task> Waiting(Task task);
+    Async.Task<Task> Scheduled(Task task);
+    Async.Task<Task> SettingUp(Task task);
+    Async.Task<Task> Running(Task task);
+    Async.Task<Task> Stopping(Task task);
+    Async.Task<Task> Stopped(Task task);
+    Async.Task<Task> WaitJob(Task task);
 }
 
 public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITaskOperations {
@@ -45,32 +55,44 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
     }
 
     public IAsyncEnumerable<Task> GetByJobId(Guid jobId) {
-        return QueryAsync(filter: $"PartitionKey eq '{jobId}'");
+        return QueryAsync(Query.PartitionKey(jobId.ToString()));
     }
 
     public async Async.Task<Task?> GetByJobIdAndTaskId(Guid jobId, Guid taskId) {
-        var data = QueryAsync(filter: $"PartitionKey eq '{jobId}' and RowKey eq '{taskId}'");
-
+        var data = QueryAsync(Query.SingleEntity(jobId.ToString(), taskId.ToString()));
         return await data.FirstOrDefaultAsync();
     }
     public IAsyncEnumerable<Task> SearchStates(Guid? jobId = null, IEnumerable<TaskState>? states = null) {
+        if (states is not null && !states.Any()) {
+            states = null;
+        }
+
         var queryString =
             (jobId, states) switch {
                 (null, null) => "",
-                (Guid id, null) => Query.PartitionKey($"{id}"),
+                (Guid id, null) => Query.PartitionKey(id.ToString()),
                 (null, IEnumerable<TaskState> s) => Query.EqualAnyEnum("state", s),
-                (Guid id, IEnumerable<TaskState> s) => Query.And(Query.PartitionKey($"{id}"), Query.EqualAnyEnum("state", s)),
+                (Guid id, IEnumerable<TaskState> s) => Query.And(Query.PartitionKey(id.ToString()), Query.EqualAnyEnum("state", s)),
             };
 
         return QueryAsync(filter: queryString);
     }
 
-    public IEnumerable<string>? GetInputContainerQueues(TaskConfig config) {
-        throw new NotImplementedException();
+    public Result<IEnumerable<Container>?, TaskConfigError> GetInputContainerQueues(TaskConfig config) {
+
+        if (!Defs.TASK_DEFINITIONS.ContainsKey(config.Task.Type)) {
+            return Result<IEnumerable<Container>?, TaskConfigError>.Error(new TaskConfigError($"unsupported task type: {config.Task.Type}"));
+        }
+
+        var containerType = Defs.TASK_DEFINITIONS[config.Task.Type].MonitorQueue;
+        if (containerType is not null && config.Containers is not null)
+            return Result<IEnumerable<Container>?, TaskConfigError>.Ok(config.Containers.Where(x => x.Type == containerType).Select(x => x.Name));
+        else
+            return Result<IEnumerable<Container>?, TaskConfigError>.Ok(null);
     }
 
     public IAsyncEnumerable<Task> SearchExpired() {
-        var timeFilter = $"end_time lt datetime'{DateTimeOffset.UtcNow.ToString("o")}'";
+        var timeFilter = Query.OlderThan("end_time", DateTimeOffset.UtcNow);
         var stateFilter = Query.EqualAnyEnum("state", TaskStateHelper.AvailableStates);
         var filter = Query.And(stateFilter, timeFilter);
         return QueryAsync(filter: filter);
@@ -85,29 +107,22 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         if (!task.State.HasStarted()) {
             await MarkFailed(task, new Error(Code: ErrorCode.TASK_FAILED, Errors: new[] { "task never started" }));
         } else {
-            await SetState(task, TaskState.Stopping);
+            _ = await SetState(task, TaskState.Stopping);
         }
     }
 
     public async Async.Task MarkFailed(Task task, Error error, List<Task>? taskInJob = null) {
         if (task.State.ShuttingDown()) {
-            _logTracer.Verbose(
-                $"ignoring post-task stop failures for {task.JobId}:{task.TaskId}"
-            );
             return;
         }
 
         if (task.Error != null) {
-            _logTracer.Verbose(
-                $"ignoring additional task error {task.JobId}:{task.TaskId}"
-            );
             return;
         }
 
-        _logTracer.Error($"task failed {task.JobId}:{task.TaskId} - {error}");
+        _logTracer.Info($"task failed {task.JobId}:{task.TaskId} - {error}");
 
         task = await SetState(task with { Error = error }, TaskState.Stopping);
-        //self.set_state(TaskState.stopping)
         await MarkDependantsFailed(task, taskInJob);
     }
 
@@ -116,8 +131,8 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
         foreach (var t in taskInJob) {
             if (t.Config.PrereqTasks != null) {
-                if (t.Config.PrereqTasks.Contains(t.TaskId)) {
-                    await MarkFailed(task, new Error(ErrorCode.TASK_FAILED, new[] { $"prerequisite task failed.  task_id:{t.TaskId}" }), taskInJob);
+                if (t.Config.PrereqTasks.Contains(task.TaskId)) {
+                    await MarkFailed(t, new Error(ErrorCode.TASK_FAILED, new[] { $"prerequisite task failed.  task_id:{t.TaskId}" }), taskInJob);
                 }
             }
         }
@@ -134,7 +149,11 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             task = task with { State = state };
         }
 
-        await this.Replace(task);
+        var r = await Replace(task);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace task with jobid: {task.JobId} and taskid: {task.TaskId}");
+        }
+
         var _events = _context.Events;
         if (task.State == TaskState.Stopped) {
             if (task.Error != null) {
@@ -188,7 +207,10 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
         var task = new Task(jobId, Guid.NewGuid(), TaskState.Init, os, config, UserInfo: userInfo);
 
-        await _context.TaskOperations.Insert(task);
+        var r = await _context.TaskOperations.Insert(task);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert task {task.TaskId}");
+        }
         await _context.Events.SendEvent(new EventTaskCreated(jobId, task.TaskId, config, userInfo));
 
         _logTracer.Info($"created task. job_id:{jobId} task_id:{task.TaskId} type:{task.Config.Task.Type}");
@@ -204,9 +226,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             if (job != null) {
                 await jobOperations.OnStart(job);
             }
-
         }
-
         return task;
 
     }
@@ -248,6 +268,10 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
                     return false;
                 }
 
+                if (t.JobId != task.JobId) {
+                    _logTracer.Critical("Tasks are not from the same job");
+                }
+
                 if (!t.State.HasStarted()) {
                     return false;
                 }
@@ -257,36 +281,38 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
     }
 
     public async Async.Task<Pool?> GetPool(Task task) {
-        if (task.Config.Pool != null) {
-            var pool = await _context.PoolOperations.GetByName(task.Config.Pool.PoolName);
+        // Note: if the behaviour of this method changes,
+        // then Scheduler.GetPoolKey will probably also need to change
+
+        if (task.Config.Pool is TaskPool p) {
+            var pool = await _context.PoolOperations.GetByName(p.PoolName);
             if (!pool.IsOk) {
                 _logTracer.Info(
-                    $"unable to schedule task to pool: {task.TaskId} - {pool.ErrorV}"
+                    $"unable to schedule task to pool [{task.Config.Pool.PoolName}]: {task.TaskId} - {pool.ErrorV}"
                 );
                 return null;
             }
-            return pool.OkV;
-        } else if (task.Config.Vm != null) {
-            var scalesets = _context.ScalesetOperations.Search().Where(s => s.VmSku == task.Config.Vm.Sku && s.Image == task.Config.Vm.Image);
 
+            return pool.OkV;
+        }
+
+        if (task.Config.Vm is TaskVm taskVm) {
+            var scalesets = _context.ScalesetOperations.Search().Where(s => s.VmSku == taskVm.Sku && s.Image == taskVm.Image);
             await foreach (var scaleset in scalesets) {
-                if (task.Config.Pool == null) {
-                    continue;
-                }
-                var pool = await _context.PoolOperations.GetByName(task.Config.Pool.PoolName);
+                var pool = await _context.PoolOperations.GetByName(scaleset.PoolName);
                 if (!pool.IsOk) {
                     _logTracer.Info(
-                        $"unable to schedule task to pool: {task.TaskId} - {pool.ErrorV}"
+                        $"unable to schedule task to pool [{scaleset.PoolName}]: {task.TaskId} - {pool.ErrorV}"
                     );
                     return null;
                 }
+
                 return pool.OkV;
             }
         }
 
         _logTracer.Warning($"unable to find a scaleset that matches the task prereqs: {task.TaskId}");
         return null;
-
     }
 
     public async Async.Task<Task> Init(Task task) {
@@ -305,8 +331,8 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         return task;
     }
 
-    private async Async.Task<Task> Stopped(Task inputTask) {
-        var task = await SetState(inputTask, TaskState.Stopped);
+    public async Async.Task<Task> Stopped(Task task) {
+        task = await SetState(task, TaskState.Stopped);
         await _context.Queue.DeleteQueue($"{task.TaskId}", StorageType.Corpus);
 
         //     # TODO: we need to 'unschedule' this task from the existing pools
@@ -316,5 +342,30 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         }
 
         return task;
+    }
+
+    public Task<Task> Waiting(Task task) {
+        // nothing to do
+        return Async.Task.FromResult(task);
+    }
+
+    public Task<Task> Scheduled(Task task) {
+        // nothing to do
+        return Async.Task.FromResult(task);
+    }
+
+    public Task<Task> SettingUp(Task task) {
+        // nothing to do
+        return Async.Task.FromResult(task);
+    }
+
+    public Task<Task> Running(Task task) {
+        // nothing to do
+        return Async.Task.FromResult(task);
+    }
+
+    public Task<Task> WaitJob(Task task) {
+        // nothing to do
+        return Async.Task.FromResult(task);
     }
 }

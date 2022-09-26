@@ -56,7 +56,7 @@ public record BoolResult(
 
 public record InfoResponse(
     string ResourceGroup,
-    string Region,
+    Region Region,
     string Subscription,
     IReadOnlyDictionary<string, InfoVersion> Versions,
     Guid? InstanceId,
@@ -128,7 +128,7 @@ public record ScalesetResponse(
     Authentication? Auth,
     string VmSku,
     string Image,
-    string Region,
+    Region Region,
     long Size,
     bool? SpotInstances,
     bool EmphemeralOsDisks,
@@ -139,12 +139,12 @@ public record ScalesetResponse(
     Dictionary<string, string> Tags,
     List<ScalesetNodeState>? Nodes
 ) : BaseResponse() {
-    public static ScalesetResponse ForScaleset(Scaleset s)
+    public static ScalesetResponse ForScaleset(Scaleset s, bool includeAuth)
         => new(
             PoolName: s.PoolName,
             ScalesetId: s.ScalesetId,
             State: s.State,
-            Auth: s.Auth,
+            Auth: includeAuth ? s.Auth : null,
             VmSku: s.VmSku,
             Image: s.Image,
             Region: s.Region,
@@ -176,7 +176,7 @@ public record ProxyGetResult(
 );
 
 public record ProxyInfo(
-    string Region,
+    Region Region,
     Guid ProxyId,
     VmState State
 );

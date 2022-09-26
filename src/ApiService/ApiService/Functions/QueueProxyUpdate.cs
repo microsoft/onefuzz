@@ -33,8 +33,7 @@ public class QueueProxyHearbeat {
 
         var r = await _proxy.Replace(newProxy);
         if (!r.IsOk) {
-            var (status, reason) = r.ErrorV;
-            log.Error($"Failed to replace proxy heartbeat record due to [{status}] {reason}");
+            log.WithHttpStatus(r.ErrorV).Error($"Failed to replace proxy heartbeat");
         }
     }
 }

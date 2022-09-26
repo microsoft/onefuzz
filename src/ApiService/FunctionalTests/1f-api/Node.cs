@@ -12,24 +12,24 @@ public class Node : IFromJsonElement<Node> {
 
     public Node(JsonElement e) => _e = e;
 
-    public string PoolName => _e.GetProperty("pool_name").GetString()!;
+    public string PoolName => _e.GetStringProperty("pool_name");
 
-    public Guid MachineId => _e.GetProperty("machine_id").GetGuid();
+    public Guid MachineId => _e.GetGuidProperty("machine_id");
 
-    public Guid? PoolId => _e.GetProperty("pool_id").ValueKind == JsonValueKind.Null ? null : _e.GetProperty("pool_id").GetGuid();
+    public Guid? PoolId => _e.GetNullableGuidProperty("pool_id");
 
-    public string Version => _e.GetProperty("version").GetString()!;
+    public string Version => _e.GetStringProperty("version");
 
-    public DateTimeOffset? HeartBeat => _e.GetProperty("heart_beat").ValueKind == JsonValueKind.Null ? null : _e.GetProperty("heart_beat").GetDateTimeOffset();
+    public DateTimeOffset? HeartBeat => _e.GetNullableDateTimeOffsetProperty("heart_beat");
 
-    public DateTimeOffset? InitializedAt => _e.GetProperty("initialized_at").ValueKind == JsonValueKind.Null ? null : _e.GetProperty("initialized_at").GetDateTimeOffset();
+    public DateTimeOffset? InitializedAt => _e.GetNullableDateTimeOffsetProperty("initialized_at");
 
-    public string State => _e.GetProperty("state").GetString()!;
+    public string State => _e.GetStringProperty("state");
 
-    public Guid? ScalesetId => _e.GetProperty("scaleset_id").ValueKind == JsonValueKind.Null ? null : _e.GetProperty("scaleset_id").GetGuid();
-    public bool ReimageRequested => _e.GetProperty("reimage_requested").GetBoolean();
-    public bool DeleteRequested => _e.GetProperty("delete_requested").GetBoolean();
-    public bool DebugKeepNode => _e.GetProperty("debug_keep_node").GetBoolean();
+    public Guid? ScalesetId => _e.GetNullableGuidProperty("scaleset_id");
+    public bool ReimageRequested => _e.GetBoolProperty("reimage_requested");
+    public bool DeleteRequested => _e.GetBoolProperty("delete_requested");
+    public bool DebugKeepNode => _e.GetBoolProperty("debug_keep_node");
 
     public Node Convert(JsonElement e) => new Node(e);
 }
@@ -42,39 +42,28 @@ public class NodeApi : ApiBase {
     }
 
     public async Task<BooleanResult> Update(Guid machineId, bool? debugKeepNode = null) {
-        var j = new JsonObject();
-        if (debugKeepNode is not null)
-            j.Add("debug_keep_node", JsonValue.Create(debugKeepNode));
-
-        j.Add("machine_id", JsonValue.Create(machineId));
+        var j = new JsonObject()
+            .AddIfNotNullV("debug_keep_node", debugKeepNode)
+            .AddV("machine_id", machineId);
         return Return<BooleanResult>(await Post(j));
     }
-    public async Task<Result<IEnumerable<Node>, Error>> Get(Guid? machineId = null, List<string>? state = null, Guid? scalesetId = null, string? poolName = null) {
-        var j = new JsonObject();
-        if (machineId is not null)
-            j.Add("machine_id", JsonValue.Create(machineId));
-        if (state is not null) {
-            var states = new JsonArray(state.Select(s => JsonValue.Create(s)).ToArray());
-            j.Add("state", JsonValue.Create(states));
-        }
-        if (scalesetId is not null)
-            j.Add("scaleset_id", JsonValue.Create(scalesetId));
-
-        if (poolName is not null)
-            j.Add("pool_name", JsonValue.Create(poolName));
+    public async Task<Result<IEnumerable<Node>, Error>> Get(Guid? machineId = null, IEnumerable<string>? state = null, Guid? scalesetId = null, string? poolName = null) {
+        var j = new JsonObject()
+            .AddIfNotNullV("machine_id", machineId)
+            .AddIfNotNullEnumerableV("state", state)
+            .AddIfNotNullV("scaleset_id", scalesetId)
+            .AddIfNotNullV("pool_name", poolName);
 
         return IEnumerableResult<Node>(await Get(j));
     }
 
     public async Task<BooleanResult> Patch(Guid machineId) {
-        var j = new JsonObject();
-        j.Add("machine_id", JsonValue.Create(machineId));
+        var j = new JsonObject().AddV("machine_id", machineId);
         return Return<BooleanResult>(await Patch(j));
     }
 
     public async Task<BooleanResult> Delete(Guid machineId) {
-        var j = new JsonObject();
-        j.Add("machine_id", JsonValue.Create(machineId));
+        var j = new JsonObject().AddV("machine_id", machineId);
         return Return<BooleanResult>(await Delete(j));
     }
 

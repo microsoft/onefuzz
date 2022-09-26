@@ -15,15 +15,13 @@ public interface IExtensions {
 
     Async.Task<Uri?> BuildPoolConfig(Pool pool);
     Task<AgentConfig> CreatePoolConfig(Pool pool);
-    Task<IList<VMExtensionWrapper>> ProxyManagerExtensions(string region, Guid proxyId);
+    Task<IList<VMExtensionWrapper>> ProxyManagerExtensions(Region region, Guid proxyId);
 }
 
 public class Extensions : IExtensions {
-    IOnefuzzContext _context;
+    private readonly IOnefuzzContext _context;
 
-    private static readonly JsonSerializerOptions _extensionSerializerOptions = new JsonSerializerOptions {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
+    private static readonly JsonSerializerOptions _extensionSerializerOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     public Extensions(IOnefuzzContext context) {
         _context = context;
@@ -126,7 +124,7 @@ public class Extensions : IExtensions {
     public static VMExtensionWrapper AzSecExtension(AzureLocation region) {
         return new VMExtensionWrapper {
             Location = region,
-            Name = "AzureSecurityLinuxAgent",
+            Name = "Microsoft.Azure.Security.Monitoring.AzureSecurityLinuxAgent",
             Publisher = "Microsoft.Azure.Security.Monitoring",
             TypePropertiesType = "AzureSecurityLinuxAgent",
             TypeHandlerVersion = "2.0",
@@ -152,7 +150,7 @@ public class Extensions : IExtensions {
 
         return new VMExtensionWrapper {
             Location = region,
-            Name = "AzureMonitorLinuxAgent",
+            Name = "Microsoft.Azure.Monitor.AzureMonitorLinuxAgent",
             Publisher = "Microsoft.Azure.Monitor",
             TypePropertiesType = "AzureMonitorLinuxAgent",
             AutoUpgradeMinorVersion = true,
@@ -218,8 +216,8 @@ public class Extensions : IExtensions {
 
         var fileName = $"{pool.Name}/config.json";
         var configJson = JsonSerializer.Serialize(config, EntityConverter.GetJsonSerializerOptions());
-        await _context.Containers.SaveBlob(new Container("vm-scripts"), fileName, configJson, StorageType.Config);
-        return await ConfigUrl(new Container("vm-scripts"), fileName, false);
+        await _context.Containers.SaveBlob(WellKnownContainers.VmScripts, fileName, configJson, StorageType.Config);
+        return await ConfigUrl(WellKnownContainers.VmScripts, fileName, false);
     }
 
     public async Task<AgentConfig> CreatePoolConfig(Pool pool) {
@@ -240,6 +238,7 @@ public class Extensions : IExtensions {
     }
 
 
+
     public async Async.Task<Uri?> BuildScaleSetScript(Pool pool, Scaleset scaleSet) {
         List<string> commands = new();
         var extension = pool.Os == Os.Windows ? "ps1" : "sh";
@@ -252,21 +251,23 @@ public class Extensions : IExtensions {
             commands.Add($"Set-Content -Path {sshPath} -Value \"{sshKey}\"");
         }
 
-        await _context.Containers.SaveBlob(new Container("vm-scripts"), fileName, string.Join(sep, commands) + sep, StorageType.Config);
-        return await _context.Containers.GetFileUrl(new Container("vm-scripts"), fileName, StorageType.Config);
+        await _context.Containers.SaveBlob(WellKnownContainers.VmScripts, fileName, string.Join(sep, commands) + sep, StorageType.Config);
+        return await _context.Containers.GetFileUrl(WellKnownContainers.VmScripts, fileName, StorageType.Config);
     }
 
+
     public async Async.Task UpdateManagedScripts() {
-        var instanceSpecificSetupSas = await _context.Containers.GetContainerSasUrl(new Container("instance-specific-setup"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
-        var toolsSas = await _context.Containers.GetContainerSasUrl(new Container("tools"), StorageType.Config, BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
+        var listAndRead = BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read;
+        var instanceSpecificSetupSas = await _context.Containers.GetContainerSasUrl(WellKnownContainers.InstanceSpecificSetup, StorageType.Config, listAndRead);
+        var toolsSas = await _context.Containers.GetContainerSasUrl(WellKnownContainers.Tools, StorageType.Config, listAndRead);
 
         string[] commands = {
             $"azcopy sync '{instanceSpecificSetupSas}' instance-specific-setup",
             $"azcopy sync '{toolsSas}' tools"
         };
 
-        await _context.Containers.SaveBlob(new Container("vm-scripts"), "managed.ps1", string.Join("\r\n", commands) + "\r\n", StorageType.Config);
-        await _context.Containers.SaveBlob(new Container("vm-scripts"), "managed.sh", string.Join("\n", commands) + "\n", StorageType.Config);
+        await _context.Containers.SaveBlob(WellKnownContainers.VmScripts, "managed.ps1", string.Join("\r\n", commands) + "\r\n", StorageType.Config);
+        await _context.Containers.SaveBlob(WellKnownContainers.VmScripts, "managed.sh", string.Join("\n", commands) + "\n", StorageType.Config);
     }
 
     public async Async.Task<VMExtensionWrapper> AgentConfig(AzureLocation region, Os vmOs, AgentMode mode, List<Uri>? urls = null, bool withSas = false) {
@@ -275,10 +276,10 @@ public class Extensions : IExtensions {
 
         var managedIdentity = JsonSerializer.Serialize(new { ManagedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions);
         if (vmOs == Os.Windows) {
-            var vmScripts = await ConfigUrl(new Container("vm-scripts"), "managed.ps1", withSas) ?? throw new Exception("failed to get VmScripts config url");
-            var toolsAzCopy = await ConfigUrl(new Container("tools"), "win64/azcopy.exe", withSas) ?? throw new Exception("failed to get toolsAzCopy config url");
-            var toolsSetup = await ConfigUrl(new Container("tools"), "win64/setup.ps1", withSas) ?? throw new Exception("failed to get toolsSetup config url");
-            var toolsOneFuzz = await ConfigUrl(new Container("tools"), "win64/onefuzz.ps1", withSas) ?? throw new Exception("failed to get toolsOneFuzz config url");
+            var vmScripts = await ConfigUrl(WellKnownContainers.VmScripts, "managed.ps1", withSas) ?? throw new Exception("failed to get VmScripts config url");
+            var toolsAzCopy = await ConfigUrl(WellKnownContainers.Tools, "win64/azcopy.exe", withSas) ?? throw new Exception("failed to get toolsAzCopy config url");
+            var toolsSetup = await ConfigUrl(WellKnownContainers.Tools, "win64/setup.ps1", withSas) ?? throw new Exception("failed to get toolsSetup config url");
+            var toolsOneFuzz = await ConfigUrl(WellKnownContainers.Tools, "win64/onefuzz.ps1", withSas) ?? throw new Exception("failed to get toolsOneFuzz config url");
 
             urlsUpdated.Add(vmScripts);
             urlsUpdated.Add(toolsAzCopy);
@@ -301,9 +302,9 @@ public class Extensions : IExtensions {
             return extension;
         } else if (vmOs == Os.Linux) {
 
-            var vmScripts = await ConfigUrl(new Container("vm-scripts"), "managed.sh", withSas) ?? throw new Exception("failed to get VmScripts config url");
-            var toolsAzCopy = await ConfigUrl(new Container("tools"), "linux/azcopy", withSas) ?? throw new Exception("failed to get toolsAzCopy config url");
-            var toolsSetup = await ConfigUrl(new Container("tools"), "linux/setup.sh", withSas) ?? throw new Exception("failed to get toolsSetup config url");
+            var vmScripts = await ConfigUrl(WellKnownContainers.VmScripts, "managed.sh", withSas) ?? throw new Exception("failed to get VmScripts config url");
+            var toolsAzCopy = await ConfigUrl(WellKnownContainers.Tools, "linux/azcopy", withSas) ?? throw new Exception("failed to get toolsAzCopy config url");
+            var toolsSetup = await ConfigUrl(WellKnownContainers.Tools, "linux/setup.sh", withSas) ?? throw new Exception("failed to get toolsSetup config url");
 
             urlsUpdated.Add(vmScripts);
             urlsUpdated.Add(toolsAzCopy);
@@ -348,10 +349,10 @@ public class Extensions : IExtensions {
         } else if (vmOs == Os.Linux) {
             return new VMExtensionWrapper {
                 Location = region,
-                Name = "OMSExtension",
+                Name = "OmsAgentForLinux",
                 TypePropertiesType = "OmsAgentForLinux",
                 Publisher = "Microsoft.EnterpriseCloud.Monitoring",
-                TypeHandlerVersion = "1.12",
+                TypeHandlerVersion = "1.0",
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(extensionSettings),
                 ProtectedSettings = new BinaryData(protectedExtensionSettings),
@@ -402,7 +403,7 @@ public class Extensions : IExtensions {
                 BlobSasPermissions.Read
             ),
             await _context.Containers.GetFileSasUrl(
-                report?.InputBlob?.container!,
+                report?.InputBlob?.Container!,
                 report?.InputBlob?.Name!,
                 StorageType.Corpus,
                 BlobSasPermissions.Read
@@ -431,7 +432,7 @@ public class Extensions : IExtensions {
         }
 
         await _context.Containers.SaveBlob(
-            new Container("task-configs"),
+            WellKnownContainers.TaskConfigs,
             $"{reproId}/{scriptName}",
             taskScript,
             StorageType.Config
@@ -441,13 +442,13 @@ public class Extensions : IExtensions {
             urls.AddRange(new List<Uri>()
             {
                 await _context.Containers.GetFileSasUrl(
-                    new Container("repro-scripts"),
+                    WellKnownContainers.ReproScripts,
                     reproFile,
                     StorageType.Config,
                     BlobSasPermissions.Read
                 ),
                 await _context.Containers.GetFileSasUrl(
-                    new Container("task-configs"),
+                    WellKnownContainers.TaskConfigs,
                     $"{reproId}/{scriptName}",
                     StorageType.Config,
                     BlobSasPermissions.Read
@@ -468,13 +469,18 @@ public class Extensions : IExtensions {
         return extensionsDict;
     }
 
-    public async Task<IList<VMExtensionWrapper>> ProxyManagerExtensions(string region, Guid proxyId) {
-        var config = await _context.Containers.GetFileSasUrl(new Container("proxy-configs"),
-            $"{region}/{proxyId}/config.json", StorageType.Config, BlobSasPermissions.Read);
+    public async Task<IList<VMExtensionWrapper>> ProxyManagerExtensions(Region region, Guid proxyId) {
+        var config = await _context.Containers.GetFileSasUrl(
+            WellKnownContainers.ProxyConfigs,
+            $"{region}/{proxyId}/config.json",
+            StorageType.Config,
+            BlobSasPermissions.Read);
 
-        var proxyManager = await _context.Containers.GetFileSasUrl(new Container("tools"),
-            $"linux/onefuzz-proxy-manager", StorageType.Config, BlobSasPermissions.Read);
-
+        var proxyManager = await _context.Containers.GetFileSasUrl(
+            WellKnownContainers.Tools,
+            $"linux/onefuzz-proxy-manager",
+            StorageType.Config,
+            BlobSasPermissions.Read);
 
         var baseExtension =
             await AgentConfig(region, Os.Linux, AgentMode.Proxy, new List<Uri> { config, proxyManager }, true);

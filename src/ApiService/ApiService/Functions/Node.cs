@@ -40,7 +40,7 @@ public class Node {
                     req,
                     new Error(
                         Code: ErrorCode.UNABLE_TO_FIND,
-                        Errors: new string[] { "unable to find node " }),
+                        Errors: new string[] { "unable to find node" }),
                     context: machineId.ToString());
             }
 
@@ -96,13 +96,16 @@ public class Node {
                 req,
                 new Error(
                     Code: ErrorCode.UNABLE_TO_FIND,
-                    Errors: new string[] { "unable to find node " }),
+                    Errors: new string[] { "unable to find node" }),
                 context: patch.MachineId.ToString());
         }
 
-        await _context.NodeOperations.Stop(node, done: true);
+        node = await _context.NodeOperations.Stop(node, done: true);
         if (node.DebugKeepNode) {
-            await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
+            var r = await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
+            if (!r.IsOk) {
+                _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace node {node.MachineId}");
+            }
         }
 
         return await RequestHandling.Ok(req, true);
@@ -129,7 +132,7 @@ public class Node {
                 req,
                 new Error(
                     Code: ErrorCode.UNABLE_TO_FIND,
-                    Errors: new string[] { "unable to find node " }),
+                    Errors: new string[] { "unable to find node" }),
                 context: post.MachineId.ToString());
         }
 
@@ -137,7 +140,10 @@ public class Node {
             node = node with { DebugKeepNode = value };
         }
 
-        await _context.NodeOperations.Replace(node);
+        var r = await _context.NodeOperations.Replace(node);
+        if (!r.IsOk) {
+            _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace node {node.MachineId}");
+        }
         return await RequestHandling.Ok(req, true);
     }
 
@@ -166,9 +172,12 @@ public class Node {
                 context: delete.MachineId.ToString());
         }
 
-        await _context.NodeOperations.SetHalt(node);
+        node = await _context.NodeOperations.SetHalt(node);
         if (node.DebugKeepNode) {
-            await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
+            var r = await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
+            if (!r.IsOk) {
+                _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace node {node.MachineId}");
+            }
         }
 
         return await RequestHandling.Ok(req, true);

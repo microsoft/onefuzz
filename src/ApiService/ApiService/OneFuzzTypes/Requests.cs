@@ -190,8 +190,8 @@ public record ProxyReset(
 public record ScalesetCreate(
     [property: Required] PoolName PoolName,
     [property: Required] string VmSku,
-    [property: Required] string Image,
-    string? Region,
+    string? Image,
+    Region? Region,
     [property: Range(1, long.MaxValue), Required] long Size,
     [property: Required] bool SpotInstances,
     [property: Required] Dictionary<string, string> Tags,
@@ -244,7 +244,8 @@ public record TaskCreate(
 public record TaskSearch(
     Guid? JobId,
     Guid? TaskId,
-    [property: Required] List<TaskState> State) : BaseRequest;
+    List<TaskState>? State = null
+) : BaseRequest;
 
 public record PoolSearch(
     Guid? PoolId = null,
@@ -284,6 +285,10 @@ public record WebhookUpdate(
     List<EventType>? EventTypes,
     string? SecretToken,
     WebhookMessageFormat? MessageFormat
+) : BaseRequest;
+
+public record InstanceConfigUpdate(
+    [property: Required] InstanceConfig config
 ) : BaseRequest;
 
 

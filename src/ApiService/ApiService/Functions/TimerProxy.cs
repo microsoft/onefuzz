@@ -20,7 +20,9 @@ public class TimerProxy {
 
         var proxies = await proxyOperations.QueryAsync().ToListAsync();
 
-        foreach (var proxy in proxies) {
+        foreach (var p in proxies) {
+            var proxy = p;
+
             if (VmStateHelper.Available.Contains(proxy.State)) {
                 // Note, outdated checked at the start, but set at the end of this loop.
                 // As this function is called via a timer, this works around a user
@@ -28,11 +30,11 @@ public class TimerProxy {
                 // out of date
                 if (proxy.Outdated && !(await _context.ProxyOperations.IsUsed(proxy))) {
                     _logger.Warning($"scaleset-proxy: outdated and not used: {proxy.Region}");
-                    await proxyOperations.SetState(proxy, VmState.Stopping);
+                    proxy = await proxyOperations.SetState(proxy, VmState.Stopping);
                     // If something is "wrong" with a proxy, delete & recreate it
                 } else if (!proxyOperations.IsAlive(proxy)) {
                     _logger.Error($"scaleset-proxy: alive check failed, stopping: {proxy.Region}");
-                    await proxyOperations.SetState(proxy, VmState.Stopping);
+                    proxy = await proxyOperations.SetState(proxy, VmState.Stopping);
                 } else {
                     await proxyOperations.SaveProxyConfig(proxy);
                 }
@@ -40,11 +42,14 @@ public class TimerProxy {
 
             if (VmStateHelper.NeedsWork.Contains(proxy.State)) {
                 _logger.Info($"scaleset-proxy: update state. proxy:{proxy.Region} state:{proxy.State}");
-                await proxyOperations.ProcessStateUpdate(proxy);
+                proxy = await proxyOperations.ProcessStateUpdate(proxy);
             }
 
-            if (proxy.State != VmState.Stopped && proxyOperations.IsOutdated(proxy)) {
-                await proxyOperations.Replace(proxy with { Outdated = true });
+            if (proxy is not null && proxy.State != VmState.Stopped && proxyOperations.IsOutdated(proxy)) {
+                var r = await proxyOperations.Replace(proxy with { Outdated = true });
+                if (!r.IsOk) {
+                    _logger.WithHttpStatus(r.ErrorV).Error($"Failed to replace proxy recordy for proxy {proxy.ProxyId}");
+                }
             }
         }
 
@@ -54,23 +59,24 @@ public class TimerProxy {
         foreach (var region in regions) {
             var allOutdated = proxies.Where(x => x.Region == region).All(p => p.Outdated);
             if (allOutdated) {
-                await proxyOperations.GetOrCreate(region);
-                _logger.Info($"Creating new proxy in region {region}");
+                var proxy = await proxyOperations.GetOrCreate(region);
+                _logger.Info($"Creating new proxy with id {proxy.ProxyId} in region {region}");
             }
 
             // this is required in order to support upgrade from non-nsg to
             // nsg enabled OneFuzz this will overwrite existing NSG
             // assignment though. This behavior is acceptable at this point
             // since we do not support bring your own NSG
+            var nsgName = Nsg.NameFromRegion(region);
 
-            if (await nsgOpertions.GetNsg(region) != null) {
+            if (await nsgOpertions.GetNsg(nsgName) != null) {
                 var network = await Network.Init(region, _context);
 
                 var subnet = await network.GetSubnet();
                 if (subnet != null) {
                     var vnet = await network.GetVnet();
                     if (vnet != null) {
-                        var result = await nsgOpertions.AssociateSubnet(region, vnet, subnet);
+                        var result = await nsgOpertions.AssociateSubnet(nsgName, vnet, subnet);
                         if (!result.OkV) {
                             _logger.Error($"Failed to associate NSG and subnet due to {result.ErrorV} in region {region}");
                         }
@@ -83,7 +89,9 @@ public class TimerProxy {
         await foreach (var nsg in nsgOpertions.ListNsgs()) {
             if (nsgOpertions.OkToDelete(regions, nsg.Data.Location!, nsg.Data.Name)) {
                 if (nsg.Data.NetworkInterfaces.Count == 0 && nsg.Data.Subnets.Count == 0) {
-                    await nsgOpertions.StartDeleteNsg(nsg.Data.Name);
+                    if (!await nsgOpertions.StartDeleteNsg(nsg.Data.Name)) {
+                        _logger.Warning($"failed to start deleting NSG {nsg.Data.Name}");
+                    }
                 }
             }
         }

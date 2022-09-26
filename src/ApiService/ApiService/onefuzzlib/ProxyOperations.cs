@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
+using Azure.Data.Tables;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
 using Azure.Storage.Sas;
@@ -14,34 +15,40 @@ public interface IProxyOperations : IStatefulOrm<Proxy, VmState> {
     bool IsAlive(Proxy proxy);
     Async.Task SaveProxyConfig(Proxy proxy);
     bool IsOutdated(Proxy proxy);
-    Async.Task<Proxy?> GetOrCreate(string region);
-
+    Async.Task<Proxy> GetOrCreate(Region region);
     Task<bool> IsUsed(Proxy proxy);
+
+    // state transitions:
+    Async.Task<Proxy> Init(Proxy proxy);
+    Async.Task<Proxy> ExtensionsLaunch(Proxy proxy);
+    Async.Task<Proxy> ExtensionsFailed(Proxy proxy);
+    Async.Task<Proxy> VmAllocationFailed(Proxy proxy);
+    Async.Task<Proxy> Running(Proxy proxy);
+    Async.Task<Proxy> Stopping(Proxy proxy);
+    Async.Task<Proxy> Stopped(Proxy proxy);
 }
 public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IProxyOperations {
-
-
-    static TimeSpan PROXY_LIFESPAN = TimeSpan.FromDays(7);
+    static readonly TimeSpan PROXY_LIFESPAN = TimeSpan.FromDays(7);
 
     public ProxyOperations(ILogTracer log, IOnefuzzContext context)
         : base(log.WithTag("Component", "scaleset-proxy"), context) {
-
     }
 
 
     public async Task<Proxy?> GetByProxyId(Guid proxyId) {
-
-        var data = QueryAsync(filter: $"RowKey eq '{proxyId}'");
-
+        var data = QueryAsync(filter: Query.RowKey(proxyId.ToString()));
         return await data.FirstOrDefaultAsync();
     }
 
-    public async Async.Task<Proxy?> GetOrCreate(string region) {
-        var proxyList = QueryAsync(filter: $"region eq '{region}' and outdated eq false");
+    public async Async.Task<Proxy> GetOrCreate(Region region) {
+        var proxyList = QueryAsync(filter: TableClient.CreateQueryFilter($"region eq {region.String} and outdated eq false"));
 
         await foreach (var proxy in proxyList) {
             if (IsOutdated(proxy)) {
-                await Replace(proxy with { Outdated = true });
+                var r1 = await Replace(proxy with { Outdated = true });
+                if (!r1.IsOk) {
+                    _logTracer.WithHttpStatus(r1.ErrorV).Error($"failed to replace record to mark proxy {proxy.ProxyId} as outdated");
+                }
                 continue;
             }
 
@@ -52,11 +59,11 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         }
 
         _logTracer.Info($"creating proxy: region:{region}");
-        var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, Auth.BuildAuth(), null, null, _context.ServiceConfiguration.OneFuzzVersion, null, false);
+        var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, await Auth.BuildAuth(_logTracer), null, null, _context.ServiceConfiguration.OneFuzzVersion, null, false);
 
         var r = await Replace(newProxy);
         if (!r.IsOk) {
-            _logTracer.Error($"failed to save new proxy {newProxy.ProxyId} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to save new proxy {newProxy.ProxyId}");
         }
 
         await _context.Events.SendEvent(new EventProxyCreated(region, newProxy.ProxyId));
@@ -75,12 +82,12 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
     public bool IsAlive(Proxy proxy) {
         var tenMinutesAgo = DateTimeOffset.UtcNow - TimeSpan.FromMinutes(10);
 
-        if (proxy.Heartbeat != null && proxy.Heartbeat.TimeStamp < tenMinutesAgo) {
+        if (proxy.Heartbeat is not null && proxy.Heartbeat.TimeStamp < tenMinutesAgo) {
             _logTracer.Info($"last heartbeat is more than an 10 minutes old:  {proxy.Region} - last heartbeat:{proxy.Heartbeat} compared_to:{tenMinutesAgo}");
             return false;
         }
 
-        if (proxy.Heartbeat != null && proxy.TimeStamp != null && proxy.TimeStamp < tenMinutesAgo) {
+        if (proxy.Heartbeat is not null && proxy.TimeStamp is not null && proxy.TimeStamp < tenMinutesAgo) {
             _logTracer.Error($"no heartbeat in the last 10 minutes: {proxy.Region} timestamp: {proxy.TimeStamp} compared_to:{tenMinutesAgo}");
             return false;
         }
@@ -98,7 +105,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             return true;
         }
 
-        if (proxy.CreatedTimestamp != null) {
+        if (proxy.CreatedTimestamp is not null) {
             if (proxy.CreatedTimestamp < (DateTimeOffset.UtcNow - PROXY_LIFESPAN)) {
                 _logTracer.Info($"proxy older than 7 days:proxy-created:{proxy.CreatedTimestamp} state:{proxy.State}");
                 return true;
@@ -109,7 +116,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     public async Async.Task SaveProxyConfig(Proxy proxy) {
         var forwards = await GetForwards(proxy);
-        var url = (await _context.Containers.GetFileSasUrl(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", StorageType.Config, BlobSasPermissions.Read)).EnsureNotNull("Can't generate file sas");
+        var url = (await _context.Containers.GetFileSasUrl(WellKnownContainers.ProxyConfigs, $"{proxy.Region}/{proxy.ProxyId}/config.json", StorageType.Config, BlobSasPermissions.Read)).EnsureNotNull("Can't generate file sas");
         var queueSas = await _context.Queue.GetQueueSas("proxy", StorageType.Config, QueueSasPermissions.Add).EnsureNotNull("can't generate queue sas") ?? throw new Exception("Queue sas is null");
 
         var proxyConfig = new ProxyConfig(
@@ -122,7 +129,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             MicrosoftTelemetryKey: _context.ServiceConfiguration.OneFuzzTelemetry.EnsureNotNull("missing Telemetry"),
             InstanceId: await _context.Containers.GetInstanceId());
 
-        await _context.Containers.SaveBlob(new Container("proxy-configs"), $"{proxy.Region}/{proxy.ProxyId}/config.json", EntityConverter.ToJsonString(proxyConfig), StorageType.Config);
+        await _context.Containers.SaveBlob(WellKnownContainers.ProxyConfigs, $"{proxy.Region}/{proxy.ProxyId}/config.json", EntityConverter.ToJsonString(proxyConfig), StorageType.Config);
     }
 
 
@@ -134,7 +141,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         var newProxy = proxy with { State = state };
         var r = await Replace(newProxy);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to replace proxy with id {newProxy.ProxyId} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace proxy with id {newProxy.ProxyId}");
         }
         await _context.Events.SendEvent(new EventProxyStateUpdated(newProxy.Region, newProxy.ProxyId, newProxy.State));
         return newProxy;
@@ -146,7 +153,10 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
         await foreach (var entry in _context.ProxyForwardOperations.SearchForward(region: proxy.Region, proxyId: proxy.ProxyId)) {
             if (entry.EndTime < DateTimeOffset.UtcNow) {
-                await _context.ProxyForwardOperations.Delete(entry);
+                var r = await _context.ProxyForwardOperations.Delete(entry);
+                if (!r.IsOk) {
+                    _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete proxy forward for proxy {proxy.ProxyId} in region {proxy.Region}");
+                }
             } else {
                 forwards.Add(new Forward(entry.Port, entry.DstPort, entry.DstIp));
             }
@@ -167,7 +177,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
                 return await SetState(proxy, VmState.ExtensionsLaunch);
             }
         } else {
-            var nsg = new Nsg(proxy.Region, proxy.Region);
+            var nsg = Nsg.ForRegion(proxy.Region);
             var result = await _context.NsgOperations.Create(nsg);
             if (!result.IsOk) {
                 return await SetFailed(proxy, result.ErrorV);
@@ -187,7 +197,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             }
             var r = await Replace(proxy);
             if (!r.IsOk) {
-                _logTracer.Error($"Failed to save proxy {proxy.ProxyId} due: {r.ErrorV}");
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save proxy {proxy.ProxyId}");
             }
             return proxy;
         }
@@ -199,7 +209,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
     }
 
     private async Task<Proxy> SetFailed(Proxy proxy, Error error) {
-        if (proxy.Error != null) {
+        if (proxy.Error is not null) {
             return proxy;
         }
 
@@ -225,13 +235,19 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     public static Vm GetVm(Proxy proxy, InstanceConfig config) {
         var tags = config.VmssTags;
-        const string PROXY_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest";
+        string proxyVmSku;
+        string proxyImage = config.DefaultLinuxVmImage;
+        if (config.ProxyVmSku is null) {
+            proxyVmSku = "Standard_B2s";
+        } else {
+            proxyVmSku = config.ProxyVmSku;
+        }
         return new Vm(
             // name should be less than 40 chars otherwise it gets truncated by azure
             Name: $"proxy-{proxy.ProxyId:N}",
             Region: proxy.Region,
-            Sku: config.ProxyVmSku,
-            Image: PROXY_IMAGE,
+            Sku: proxyVmSku,
+            Image: proxyImage,
             Auth: proxy.Auth,
             Tags: tags,
             Nsg: null
@@ -243,7 +259,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         var vm = GetVm(proxy, config);
         var vmData = await _context.VmOperations.GetVm(vm.Name);
 
-        if (vmData == null) {
+        if (vmData is null) {
             return await SetFailed(proxy, new Error(ErrorCode.PROXY_FAILED, new[] { "azure not able to find vm" }));
         }
 
@@ -252,7 +268,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         }
 
         var ip = await _context.IpOperations.GetPublicIp(vmData.NetworkProfile.NetworkInterfaces[0].Id);
-        if (ip == null) {
+        if (ip is null) {
             return proxy;
         }
 
@@ -285,11 +301,26 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         return await Stopped(proxy);
     }
 
-    private async Task<Proxy> Stopped(Proxy proxy) {
+    public async Task<Proxy> Stopped(Proxy proxy) {
         var stoppedVm = await SetState(proxy, VmState.Stopped);
         _logTracer.Info($"removing proxy: {stoppedVm.Region}");
         await _context.Events.SendEvent(new EventProxyDeleted(stoppedVm.Region, stoppedVm.ProxyId));
         await Delete(stoppedVm);
         return stoppedVm;
+    }
+
+    public Task<Proxy> ExtensionsFailed(Proxy proxy) {
+        // nothing to do
+        return Async.Task.FromResult(proxy);
+    }
+
+    public Task<Proxy> VmAllocationFailed(Proxy proxy) {
+        // nothing to do
+        return Async.Task.FromResult(proxy);
+    }
+
+    public Task<Proxy> Running(Proxy proxy) {
+        // nothing to do
+        return Async.Task.FromResult(proxy);
     }
 }

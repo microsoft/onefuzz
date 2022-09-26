@@ -8,7 +8,7 @@ namespace Microsoft.OneFuzz.Service {
         Async.Task<NetworkSecurityGroupResource?> GetNsg(string name);
         public Async.Task<OneFuzzResult<bool>> AssociateSubnet(string name, VirtualNetworkResource vnet, SubnetResource subnet);
         IAsyncEnumerable<NetworkSecurityGroupResource> ListNsgs();
-        bool OkToDelete(HashSet<string> active_regions, string nsg_region, string nsg_name);
+        bool OkToDelete(IReadOnlySet<Region> active_regions, Region nsg_region, string nsg_name);
         Async.Task<bool> StartDeleteNsg(string name);
 
         Async.Task<OneFuzzResultVoid> DissociateNic(Nsg nsg, NetworkInterfaceResource nic);
@@ -128,8 +128,8 @@ namespace Microsoft.OneFuzz.Service {
             return _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroups().GetAllAsync();
         }
 
-        public bool OkToDelete(HashSet<string> active_regions, string nsg_region, string nsg_name) {
-            return !active_regions.Contains(nsg_region) && nsg_region == nsg_name;
+        public bool OkToDelete(IReadOnlySet<Region> active_regions, Region nsg_region, string nsg_name) {
+            return !active_regions.Contains(nsg_region) && Nsg.NameFromRegion(nsg_region) == nsg_name;
         }
 
         /// <summary>
@@ -140,7 +140,10 @@ namespace Microsoft.OneFuzz.Service {
             _logTracer.Info($"deleting nsg: {name}");
             try {
                 var nsg = await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroupAsync(name);
-                await nsg.Value.DeleteAsync(WaitUntil.Started);
+                var r = await nsg.Value.DeleteAsync(WaitUntil.Started);
+                if (r.GetRawResponse().IsError) {
+                    _logTracer.Error($"failed to start nsg deletion for nsg: {name} due to {r.GetRawResponse().ReasonPhrase}");
+                }
                 return true;
             } catch (RequestFailedException ex) {
                 if (ex.ErrorCode == "ResourceNotFound") {
@@ -164,7 +167,7 @@ namespace Microsoft.OneFuzz.Service {
             return await CreateNsg(nsg.Name, nsg.Region);
         }
 
-        private async Task<OneFuzzResultVoid> CreateNsg(string name, string location) {
+        private async Task<OneFuzzResultVoid> CreateNsg(string name, Region location) {
             var resourceGroup = _context.Creds.GetBaseResourceGroup();
             _logTracer.Info($"creating nsg {resourceGroup}:{location}:{name}");
 

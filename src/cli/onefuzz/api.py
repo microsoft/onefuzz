@@ -48,9 +48,6 @@ ONEFUZZ_GUID_NAMESPACE = uuid.UUID("27f25e3f-6544-4b69-b309-9b096c5a9cbc")
 
 ONE_HOUR_IN_SECONDS = 3600
 
-DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
-DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest"
-
 REPRO_SSH_FORWARD = "1337:127.0.0.1:1337"
 
 UUID_RE = r"^[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}\Z"
@@ -459,6 +456,44 @@ class Containers(Endpoint):
         """Get a list of containers"""
         self.logger.debug("list containers")
         return self._req_model_list("GET", responses.ContainerInfoBase)
+
+    def download_job(
+        self, job_id: UUID_EXPANSION, *, output: Optional[primitives.Directory] = None
+    ) -> None:
+        tasks = self.onefuzz.tasks.list(job_id=job_id, state=None)
+        if not tasks:
+            raise Exception("no tasks with job_id:%s" % job_id)
+
+        self._download_tasks(tasks, output)
+
+    def download_task(
+        self, task_id: UUID_EXPANSION, *, output: Optional[primitives.Directory] = None
+    ) -> None:
+        self._download_tasks([self.onefuzz.tasks.get(task_id=task_id)], output)
+
+    def _download_tasks(
+        self, tasks: List[models.Task], output: Optional[primitives.Directory]
+    ) -> None:
+
+        to_download: Dict[str, str] = {}
+        for task in tasks:
+            for container in task.config.containers:
+                info = self.onefuzz.containers.get(container.name)
+                name = os.path.join(container.type.name, container.name)
+                to_download[name] = info.sas_url
+
+        if output is None:
+            output = primitives.Directory(os.getcwd())
+
+        for name in to_download:
+            outdir = os.path.join(output, name)
+            if not os.path.exists(outdir):
+                os.makedirs(outdir)
+            self.logger.info("downloading: %s", name)
+            # security note: the src for azcopy comes from the server which is
+            # trusted in this context, while the destination is provided by the
+            # user
+            azcopy_sync(to_download[name], outdir)
 
 
 class Repro(Endpoint):
@@ -1005,33 +1040,6 @@ class JobContainers(Endpoint):
             results[container] = self.onefuzz.containers.files.list(container).files
         return results
 
-    def download(
-        self, job_id: UUID_EXPANSION, *, output: Optional[primitives.Directory] = None
-    ) -> None:
-        to_download = {}
-        tasks = self.onefuzz.tasks.list(job_id=job_id, state=None)
-        if not tasks:
-            raise Exception("no tasks with job_id:%s" % job_id)
-
-        for task in tasks:
-            for container in task.config.containers:
-                info = self.onefuzz.containers.get(container.name)
-                name = os.path.join(container.type.name, container.name)
-                to_download[name] = info.sas_url
-
-        if output is None:
-            output = primitives.Directory(os.getcwd())
-
-        for name in to_download:
-            outdir = os.path.join(output, name)
-            if not os.path.exists(outdir):
-                os.makedirs(outdir)
-            self.logger.info("downloading: %s", name)
-            # security note: the src for azcopy comes from the server which is
-            # trusted in this context, while the destination is provided by the
-            # user
-            azcopy_sync(to_download[name], outdir)
-
     def delete(
         self,
         job_id: UUID_EXPANSION,
@@ -1425,15 +1433,6 @@ class Scaleset(Endpoint):
 
         if tags is None:
             tags = {}
-
-        if image is None:
-            pool = self.onefuzz.pools.get(pool_name)
-            if pool.os == enums.OS.linux:
-                image = DEFAULT_LINUX_IMAGE
-            elif pool.os == enums.OS.windows:
-                image = DEFAULT_WINDOWS_IMAGE
-            else:
-                raise NotImplementedError
 
         auto_scale = requests.AutoScaleOptions(
             min=min_instances,

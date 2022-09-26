@@ -163,6 +163,8 @@ class Client:
         use_dotnet_agent_functions: bool,
         cli_app_id: str,
         auto_create_cli_app: bool,
+        host_dotnet_on_windows: bool,
+        enable_profiler: bool,
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -197,6 +199,8 @@ class Client:
         self.use_dotnet_agent_functions = use_dotnet_agent_functions
         self.cli_app_id = cli_app_id
         self.auto_create_cli_app = auto_create_cli_app
+        self.host_dotnet_on_windows = host_dotnet_on_windows
+        self.enable_profiler = enable_profiler
 
         self.cli_config: Dict[str, Union[str, UUID]] = {
             "client_id": self.cli_app_id,
@@ -583,6 +587,7 @@ class Client:
                 logger.error(
                     "error deploying. could not find specified CLI app registrion."
                     "use flag --auto_create_cli_app to automatically create CLI registration"
+                    "or specify a correct app id with --cli_app_id."
                 )
                 sys.exit(1)
         else:
@@ -638,6 +643,15 @@ class Client:
             app_func_issuer = "https://sts.windows.net/%s/" % tenant_oid
             multi_tenant_domain = {"value": ""}
 
+        logger.info(
+            "template parameter enable_remote_debugging is set to: %s",
+            self.host_dotnet_on_windows,
+        )
+
+        logger.info(
+            "template parameter enable_profiler is set to: %s", self.enable_profiler
+        )
+
         params = {
             "app_func_audiences": {"value": app_func_audiences},
             "name": {"value": self.application_name},
@@ -649,6 +663,8 @@ class Client:
             "multi_tenant_domain": multi_tenant_domain,
             "workbookData": {"value": self.workbook_data},
             "use_dotnet_agent_functions": {"value": self.use_dotnet_agent_functions},
+            "enable_remote_debugging": {"value": self.host_dotnet_on_windows},
+            "enable_profiler": {"value": self.enable_profiler},
         }
         deployment = Deployment(
             properties=DeploymentProperties(
@@ -1413,9 +1429,20 @@ def main() -> None:
     )
     parser.add_argument(
         "--auto_create_cli_app",
-        action="store_false",
+        action="store_true",
         help="Create a new CLI App Registration if the default app or custom "
         "app is not found. ",
+    )
+    parser.add_argument(
+        "--host_dotnet_on_windows",
+        action="store_true",
+        help="Use windows runtime for hosting dotnet Azure Function",
+    )
+
+    parser.add_argument(
+        "--enable_profiler",
+        action="store_true",
+        help="Enable CPU and memory profiler in dotnet Azure Function",
     )
     args = parser.parse_args()
 
@@ -1450,6 +1477,8 @@ def main() -> None:
         use_dotnet_agent_functions=args.use_dotnet_agent_functions,
         cli_app_id=args.cli_app_id,
         auto_create_cli_app=args.auto_create_cli_app,
+        host_dotnet_on_windows=args.host_dotnet_on_windows,
+        enable_profiler=args.enable_profiler,
     )
     if args.verbose:
         level = logging.DEBUG

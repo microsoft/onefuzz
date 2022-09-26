@@ -7,10 +7,12 @@ namespace Microsoft.OneFuzz.Service.Functions;
 public class Jobs {
     private readonly IOnefuzzContext _context;
     private readonly IEndpointAuthorization _auth;
+    private readonly ILogTracer _logTracer;
 
-    public Jobs(IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Jobs(IEndpointAuthorization auth, IOnefuzzContext context, ILogTracer logTracer) {
         _context = context;
         _auth = auth;
+        _logTracer = logTracer;
     }
 
     [Function("Jobs")]
@@ -52,7 +54,7 @@ public class Jobs {
         var metadata = new Dictionary<string, string>{
             { "container_type", "logs" }, // TODO: use ContainerType.Logs enum somehow; needs snake case name
         };
-        var containerName = new Container($"logs-{job.JobId}");
+        var containerName = Container.Parse($"logs-{job.JobId}");
         var containerSas = await _context.Containers.CreateContainer(containerName, StorageType.Corpus, metadata);
         if (containerSas is null) {
             return await _context.RequestHandling.NotOk(
@@ -66,7 +68,10 @@ public class Jobs {
         // log container must not have the SAS included
         var logContainerUri = new UriBuilder(containerSas) { Query = "" }.Uri;
         job = job with { Config = job.Config with { Logs = logContainerUri.ToString() } };
-        await _context.JobOperations.Insert(job);
+        var r = await _context.JobOperations.Insert(job);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert job {job.JobId}");
+        }
         return await RequestHandling.Ok(req, JobResponse.ForJob(job));
     }
 
@@ -89,7 +94,10 @@ public class Jobs {
 
         if (job.State != JobState.Stopped && job.State != JobState.Stopping) {
             job = job with { State = JobState.Stopping };
-            await _context.JobOperations.Replace(job);
+            var r = await _context.JobOperations.Replace(job);
+            if (!r.IsOk) {
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace job {job.JobId}");
+            }
         }
 
         return await RequestHandling.Ok(req, JobResponse.ForJob(job));

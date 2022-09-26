@@ -18,7 +18,11 @@ public sealed class TestContext : IOnefuzzContext {
         ServiceConfiguration = new TestServiceConfiguration(storagePrefix);
         Storage = storage;
         Creds = creds;
-        Containers = new Containers(logTracer, Storage, Creds, ServiceConfiguration);
+
+        // this one is faked entirely; we can’t perform these operations at test time
+        VmssOperations = new TestVmssOperations();
+
+        Containers = new Containers(logTracer, Storage, ServiceConfiguration);
         Queue = new Queue(Storage, logTracer);
         RequestHandling = new RequestHandling(logTracer);
         TaskOperations = new TaskOperations(logTracer, this);
@@ -71,6 +75,7 @@ public sealed class TestContext : IOnefuzzContext {
     public IConfigOperations ConfigOperations { get; }
     public IPoolOperations PoolOperations { get; }
     public IScalesetOperations ScalesetOperations { get; }
+    public IVmssOperations VmssOperations { get; }
     public EntityConverter EntityConverter { get; }
 
     // -- Remainder not implemented --
@@ -103,8 +108,6 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IVmOperations VmOperations => throw new System.NotImplementedException();
 
-    public IVmssOperations VmssOperations => throw new System.NotImplementedException();
-
     public IWebhookMessageLogOperations WebhookMessageLogOperations => throw new System.NotImplementedException();
 
     public IWebhookOperations WebhookOperations => throw new System.NotImplementedException();
@@ -114,6 +117,9 @@ public sealed class TestContext : IOnefuzzContext {
     public ISubnet Subnet => throw new NotImplementedException();
 
     public IImageOperations ImageOperations => throw new NotImplementedException();
+    public ITeams Teams => throw new NotImplementedException();
+    public IGithubIssues GithubIssues => throw new NotImplementedException();
+    public IAdo Ado => throw new NotImplementedException();
 
 
 }

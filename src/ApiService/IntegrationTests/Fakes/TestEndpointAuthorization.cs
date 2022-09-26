@@ -17,7 +17,8 @@ sealed class TestEndpointAuthorization : EndpointAuthorization {
     private readonly RequestType _type;
     private readonly IOnefuzzContext _context;
 
-    public TestEndpointAuthorization(RequestType type, ILogTracer log, IOnefuzzContext context) : base(context, log) {
+    public TestEndpointAuthorization(RequestType type, ILogTracer log, IOnefuzzContext context)
+        : base(context, log, null! /* not needed for test */) {
         _type = type;
         _context = context;
     }

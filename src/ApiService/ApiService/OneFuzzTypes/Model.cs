@@ -5,7 +5,6 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
 using GroupId = System.Guid;
 using PrincipalId = System.Guid;
-using Region = System.String;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -85,7 +84,11 @@ public record ProxyHeartbeat
     Guid ProxyId,
     List<Forward> Forwards,
     DateTimeOffset TimeStamp
-);
+) {
+    public override string ToString() {
+        return JsonSerializer.Serialize(this);
+    }
+};
 
 public record Node
 (
@@ -331,13 +334,14 @@ public record InstanceConfig
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkConfig NetworkConfig,
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
-    string ProxyVmSku,
-    bool AllowPoolManagement = true,
+    string DefaultWindowsVmImage = "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
+    string DefaultLinuxVmImage = "Canonical:UbuntuServer:18.04-LTS:latest",
+    string ProxyVmSku = "Standard_B2s",
+    bool RequireAdminPrivileges = false,
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
     IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,
     IDictionary<string, string>? VmTags = null,
-    IDictionary<string, string>? VmssTags = null,
-    bool? RequireAdminPrivileges = null
+    IDictionary<string, string>? VmssTags = null
 ) : EntityBase() {
     public InstanceConfig(string instanceName) : this(
         instanceName,
@@ -346,8 +350,10 @@ public record InstanceConfig
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
         null,
+        "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
+        "Canonical:UbuntuServer:18.04-LTS:latest",
         "Standard_B2s",
-        true
+        false
         ) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {
@@ -411,25 +417,6 @@ public record Scaleset(
 // 'Nodes' removed when porting from Python: only used in search response
 ) : StatefulEntityBase<ScalesetState>(State);
 
-[JsonConverter(typeof(ContainerConverter))]
-public record Container(string ContainerName) {
-    public string ContainerName { get; } = ContainerName.All(c => char.IsLetterOrDigit(c) || c == '-') ? ContainerName : throw new ArgumentException("Container name must have only numbers, letters or dashes");
-    public override string ToString() {
-        return ContainerName;
-    }
-}
-
-public class ContainerConverter : JsonConverter<Container> {
-    public override Container? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-        var containerName = reader.GetString();
-        return containerName == null ? null : new Container(containerName);
-    }
-
-    public override void Write(Utf8JsonWriter writer, Container value, JsonSerializerOptions options) {
-        writer.WriteStringValue(value.ContainerName);
-    }
-}
-
 public record Notification(
     [PartitionKey] Guid NotificationId,
     [RowKey] Container Container,
@@ -438,7 +425,7 @@ public record Notification(
 
 public record BlobRef(
     string Account,
-    Container container,
+    Container Container,
     string Name
 );
 
@@ -496,21 +483,43 @@ public class NotificationTemplateConverter : JsonConverter<NotificationTemplate>
     public override NotificationTemplate? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         using var templateJson = JsonDocument.ParseValue(ref reader);
         try {
-            return templateJson.Deserialize<AdoTemplate>(options);
-        } catch (JsonException) {
+            return ValidateDeserialization(templateJson.Deserialize<AdoTemplate>(options));
+        } catch (Exception ex) when (
+            ex is JsonException
+            || ex is ArgumentNullException
+            || ex is ArgumentOutOfRangeException
+        ) {
 
         }
 
         try {
-            return templateJson.Deserialize<TeamsTemplate>(options);
-        } catch (JsonException) {
+            return ValidateDeserialization(templateJson.Deserialize<TeamsTemplate>(options));
+        } catch (Exception ex) when (
+            ex is JsonException
+            || ex is ArgumentNullException
+            || ex is ArgumentOutOfRangeException
+        ) {
+
         }
 
         try {
-            return templateJson.Deserialize<GithubIssuesTemplate>(options);
-        } catch (JsonException) {
+            return ValidateDeserialization(templateJson.Deserialize<GithubIssuesTemplate>(options));
+        } catch (Exception ex) when (
+            ex is JsonException
+            || ex is ArgumentNullException
+            || ex is ArgumentOutOfRangeException
+        ) {
+
         }
-        throw new JsonException("Unsupported notification template");
+
+        var expectedTemplateTypes = new List<Type> {
+            typeof(AdoTemplate),
+            typeof(TeamsTemplate),
+            typeof(GithubIssuesTemplate)
+        }
+        .Select(type => type.ToString());
+
+        throw new JsonException($"Unsupported notification template. Could not deserialize {templateJson} into one of the following template types: {string.Join(", ", expectedTemplateTypes)}");
     }
 
     public override void Write(Utf8JsonWriter writer, NotificationTemplate value, JsonSerializerOptions options) {
@@ -525,14 +534,38 @@ public class NotificationTemplateConverter : JsonConverter<NotificationTemplate>
         }
 
     }
+
+    private static T ValidateDeserialization<T>(T? obj) {
+        if (obj == null) {
+            throw new ArgumentNullException($"Failed to deserialize type: {typeof(T)}. It was null.");
+        }
+        var nonNullableParameters = obj.GetType().GetConstructors().First().GetParameters()
+            .Where(parameter => !parameter.HasDefaultValue)
+            .Select(parameter => parameter.Name)
+            .Where(pName => pName != null)
+            .ToHashSet();
+
+        var nullProperties = obj.GetType().GetProperties()
+            .Where(property => property.GetValue(obj) == null)
+            .Select(property => property.Name)
+            .ToHashSet<Endpoint>();
+
+        var nullNonNullableProperties = nonNullableParameters.Intersect(nullProperties);
+
+        if (nullNonNullableProperties.Any()) {
+            throw new ArgumentOutOfRangeException($"Failed to deserialize type: {obj.GetType()}. The following non nullable properties are missing values: {string.Join(", ", nullNonNullableProperties)}");
+        }
+
+        return obj;
+    }
 }
 
 
 public record ADODuplicateTemplate(
     List<string> Increment,
-    string? Comment,
     Dictionary<string, string> SetState,
-    Dictionary<string, string> AdoFields
+    Dictionary<string, string> AdoFields,
+    string? Comment = null
 );
 
 public record AdoTemplate(
@@ -541,27 +574,26 @@ public record AdoTemplate(
     string Project,
     string Type,
     List<string> UniqueFields,
-    string? Comment,
     Dictionary<string, string> AdoFields,
-    ADODuplicateTemplate OnDuplicate
+    ADODuplicateTemplate OnDuplicate,
+    string? Comment = null
     ) : NotificationTemplate;
-
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate;
 
 
 public record GithubAuth(string User, string PersonalAccessToken);
 
 public record GithubIssueSearch(
-    string? Author,
-    GithubIssueState? State,
     List<GithubIssueSearchMatch> FieldMatch,
-    [property: JsonPropertyName("string")] String str
+    [property: JsonPropertyName("string")] String str,
+    string? Author = null,
+    GithubIssueState? State = null
 );
 
 public record GithubIssueDuplicate(
-    string? Comment,
     List<string> Labels,
-    bool Reopen
+    bool Reopen,
+    string? Comment = null
 );
 
 
@@ -737,13 +769,19 @@ public record Job(
     public UserInfo? UserInfo { get; set; }
 }
 
-public record Nsg(string Name, Region Region);
+public record Nsg(string Name, Region Region) {
+    public static Nsg ForRegion(Region region)
+        => new(NameFromRegion(region), region);
+
+    // Currently, the name of a NSG is the same as the region it is in.
+    public static string NameFromRegion(Region region)
+        => region.String;
+};
 
 public record WorkUnit(
     Guid JobId,
     Guid TaskId,
     TaskType TaskType,
-
     // JSON-serialized `TaskUnitConfig`.
     [property: JsonConverter(typeof(TaskUnitConfigConverter))] TaskUnitConfig Config
 );

@@ -43,7 +43,7 @@ public class Scaleset {
         }
 
         var scaleset = scalesetResult.OkV;
-        await _context.ScalesetOperations.SetShutdown(scaleset, request.OkV.Now);
+        _ = await _context.ScalesetOperations.SetShutdown(scaleset, request.OkV.Now);
         return await RequestHandling.Ok(req, true);
     }
 
@@ -75,7 +75,19 @@ public class Scaleset {
                 context: "ScalesetCreate");
         }
 
-        string region;
+        string image;
+        if (create.Image is null) {
+            var config = await _context.ConfigOperations.Fetch();
+            if (pool.Os == Os.Windows) {
+                image = config.DefaultWindowsVmImage;
+            } else {
+                image = config.DefaultLinuxVmImage;
+            }
+        } else {
+            image = create.Image;
+        }
+
+        Region region;
         if (create.Region is null) {
             region = await _context.Creds.GetBaseRegion();
         } else {
@@ -114,10 +126,10 @@ public class Scaleset {
             ScalesetId: Guid.NewGuid(),
             State: ScalesetState.Init,
             NeedsConfigUpdate: false,
-            Auth: Auth.BuildAuth(),
+            Auth: await Auth.BuildAuth(_log),
             PoolName: create.PoolName,
             VmSku: create.VmSku,
-            Image: create.Image,
+            Image: image,
             Region: region,
             Size: create.Size,
             SpotInstances: create.SpotInstances,
@@ -126,6 +138,7 @@ public class Scaleset {
 
         var inserted = await _context.ScalesetOperations.Insert(scaleset);
         if (!inserted.IsOk) {
+            _log.WithHttpStatus(inserted.ErrorV).Error($"failed to insert new scaleset {scaleset.ScalesetId}");
             return await _context.RequestHandling.NotOk(
                 req,
                 new Error(
@@ -146,10 +159,15 @@ public class Scaleset {
                 ScaleInAmount: options.ScaleInAmount,
                 ScaleInCooldown: options.ScaleInCooldown);
 
-            await _context.AutoScaleOperations.Insert(autoScale);
+            var r = await _context.AutoScaleOperations.Insert(autoScale);
+            if (!r.IsOk) {
+                _log.WithHttpStatus(r.ErrorV).Error($"failed to insert autoscale options for sclaeset id {autoScale.ScalesetId}");
+            }
         }
 
-        return await RequestHandling.Ok(req, ScalesetResponse.ForScaleset(scaleset));
+        // auth not included on create results, only GET with include_auth set
+        var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: false);
+        return await RequestHandling.Ok(req, response);
     }
 
     private async Task<HttpResponseData> Patch(HttpRequestData req) {
@@ -182,8 +200,8 @@ public class Scaleset {
             scaleset = await _context.ScalesetOperations.SetSize(scaleset, size);
         }
 
-        scaleset = scaleset with { Auth = null };
-        return await RequestHandling.Ok(req, ScalesetResponse.ForScaleset(scaleset));
+        var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: false);
+        return await RequestHandling.Ok(req, response);
     }
 
     private async Task<HttpResponseData> Get(HttpRequestData req) {
@@ -201,19 +219,15 @@ public class Scaleset {
 
             var scaleset = scalesetResult.OkV;
 
-            var response = ScalesetResponse.ForScaleset(scaleset);
+            var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: search.IncludeAuth);
             response = response with { Nodes = await _context.ScalesetOperations.GetNodes(scaleset) };
-            if (!search.IncludeAuth) {
-                response = response with { Auth = null };
-            }
-
             return await RequestHandling.Ok(req, response);
         }
 
         var states = search.State ?? Enumerable.Empty<ScalesetState>();
         var scalesets = await _context.ScalesetOperations.SearchStates(states).ToListAsync();
         // don't return auths during list actions, only 'get'
-        var result = scalesets.Select(ss => ScalesetResponse.ForScaleset(ss with { Auth = null }));
+        var result = scalesets.Select(ss => ScalesetResponse.ForScaleset(ss, includeAuth: false));
         return await RequestHandling.Ok(req, result);
     }
 }

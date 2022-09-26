@@ -34,20 +34,20 @@ public class TimerTasks {
 
         await foreach (var job in expiredJobs) {
             _logger.Info($"stopping expired job. job_id:{job.JobId}");
-            await _jobOperations.Stopping(job);
+            _ = await _jobOperations.Stopping(job);
         }
 
         var jobs = _jobOperations.SearchState(states: JobStateHelper.NeedsWork);
 
         await foreach (var job in jobs) {
             _logger.Info($"update job: {job.JobId}");
-            await _jobOperations.ProcessStateUpdates(job);
+            _ = await _jobOperations.ProcessStateUpdates(job);
         }
 
         var tasks = _taskOperations.SearchStates(states: TaskStateHelper.NeedsWorkStates);
         await foreach (var task in tasks) {
             _logger.Info($"update task: {task.TaskId}");
-            await _taskOperations.ProcessStateUpdate(task);
+            _ = await _taskOperations.ProcessStateUpdate(task);
         }
 
         await _scheduler.ScheduleTasks();

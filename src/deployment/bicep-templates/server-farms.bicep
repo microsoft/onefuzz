@@ -1,13 +1,18 @@
 param server_farm_name string
 param owner string
 param location string
+param use_windows bool
+param create bool
 
-resource serverFarms 'Microsoft.Web/serverfarms@2021-03-01' = {
+var kind = (use_windows) ? 'app' : 'linux'
+
+resource serverFarms 'Microsoft.Web/serverfarms@2022-03-01' = if (create) {
   name: server_farm_name
   location: location
-  kind: 'linux'
+  kind: kind
   properties: {
-    reserved: true
+    // reserved must be set to true for Linux server farm, otherwise it is false
+    reserved: !use_windows
   }
   sku: {
     name: 'P2v2'
@@ -21,3 +26,4 @@ resource serverFarms 'Microsoft.Web/serverfarms@2021-03-01' = {
 }
 
 output id string = serverFarms.id
+output kind string = kind

@@ -64,7 +64,7 @@ public abstract class PoolTestBase : FunctionTestBase {
         await Context.Queue.CreateQueue(Context.PoolOperations.GetPoolQueue(_poolId), StorageType.Corpus);
 
         // use test class to override instance ID
-        Context.Containers = new TestContainers(Logger, Context.Storage, Context.Creds, Context.ServiceConfiguration);
+        Context.Containers = new TestContainers(Logger, Context.Storage, Context.ServiceConfiguration);
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
 
@@ -96,7 +96,7 @@ public abstract class PoolTestBase : FunctionTestBase {
         await Context.Queue.CreateQueue(Context.PoolOperations.GetPoolQueue(_poolId), StorageType.Corpus);
 
         // use test class to override instance ID
-        Context.Containers = new TestContainers(Logger, Context.Storage, Context.Creds, Context.ServiceConfiguration);
+        Context.Containers = new TestContainers(Logger, Context.Storage, Context.ServiceConfiguration);
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
 
@@ -214,7 +214,7 @@ public abstract class PoolTestBase : FunctionTestBase {
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         // need to override instance id
-        Context.Containers = new TestContainers(Logger, Context.Storage, Context.Creds, Context.ServiceConfiguration);
+        Context.Containers = new TestContainers(Logger, Context.Storage, Context.ServiceConfiguration);
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
         var func = new PoolFunction(Logger, auth, Context);

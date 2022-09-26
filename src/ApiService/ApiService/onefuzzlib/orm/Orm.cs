@@ -1,13 +1,14 @@
 ﻿using System.Collections.Concurrent;
 using System.Reflection;
 using System.Threading.Tasks;
+using Azure.Core;
 using Azure.Data.Tables;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace ApiService.OneFuzzLib.Orm {
     public interface IOrm<T> where T : EntityBase {
-        Task<TableClient> GetTableClient(string table, string? accountId = null);
+        Task<TableClient> GetTableClient(string table, ResourceIdentifier? accountId = null);
         IAsyncEnumerable<T> QueryAsync(string? filter = null);
 
         Task<T> GetEntityAsync(string partitionKey, string rowKey);
@@ -103,10 +104,8 @@ namespace ApiService.OneFuzzLib.Orm {
             return _entityConverter.ToRecord<T>(tableEntity);
         }
 
-        public async Task<TableClient> GetTableClient(string table, string? accountId = null) {
-            // TODO: do this less often, instead of once per request:
+        public async Task<TableClient> GetTableClient(string table, ResourceIdentifier? accountId = null) {
             var tableName = _context.ServiceConfiguration.OneFuzzStoragePrefix + table;
-
             var account = accountId ?? _context.ServiceConfiguration.OneFuzzFuncStorage ?? throw new ArgumentNullException(nameof(accountId));
             var tableClient = await _context.Storage.GetTableServiceClientForAccount(account);
             return tableClient.GetTableClient(tableName);
@@ -161,9 +160,11 @@ namespace ApiService.OneFuzzLib.Orm {
             var delegateType = typeof(StateTransition);
             MethodInfo delegateSignature = delegateType.GetMethod("Invoke")!;
 
+            var missing = new List<string>();
             foreach (var state in states) {
-                var methodInfo = thisType?.GetMethod(state.ToString());
+                var methodInfo = thisType.GetMethod(state.ToString());
                 if (methodInfo == null) {
+                    missing.Add(state);
                     continue;
                 }
 
@@ -177,9 +178,12 @@ namespace ApiService.OneFuzzLib.Orm {
                     continue;
                 }
 
-                throw new Exception($"State transition method '{state}' in '{thisType?.Name}' does not have the correct signature. Expected '{delegateSignature}'  actual '{methodInfo}' ");
+                throw new InvalidOperationException($"State transition method '{state}' in '{thisType.Name}' does not have the correct signature. Expected '{delegateSignature}'  actual '{methodInfo}' ");
             };
 
+            if (missing.Any()) {
+                throw new InvalidOperationException($"State transitions are missing for '{thisType.Name}': {string.Join(", ", missing)}");
+            }
 
             _partitionKeyGetter =
                 typeof(T).GetProperties().FirstOrDefault(p => p.GetCustomAttributes(true).OfType<PartitionKeyAttribute>().Any())?.GetMethod switch {
@@ -192,6 +196,8 @@ namespace ApiService.OneFuzzLib.Orm {
                     null => null,
                     MethodInfo info => new Lazy<Func<object>>(() => (Func<object>)Delegate.CreateDelegate(typeof(Func<object>), info), true)
                 };
+
+            return;
         }
 
         public StatefulOrm(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
@@ -211,7 +217,9 @@ namespace ApiService.OneFuzzLib.Orm {
             };
 
             if (func != null) {
-                _logTracer.Info($"processing state update: {typeof(T)} - PartitionKey {_partitionKeyGetter?.Value()} {_rowKeyGetter?.Value()} - {state}");
+                var partitionKey = _partitionKeyGetter?.Value();
+                var rowKey = _rowKeyGetter?.Value();
+                _logTracer.Info($"processing state update: {typeof(T)} - PartitionKey: {partitionKey} RowKey: {rowKey} - {state}");
                 return await func(entity);
             } else {
                 _logTracer.Info($"State function for state: '{state}' not found on type {typeof(T)}");

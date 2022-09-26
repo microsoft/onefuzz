@@ -48,11 +48,11 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task CanDelete() {
-        var containerName = "test";
+        var containerName = Container.Parse("test");
         var client = GetContainerClient(containerName);
         await client.CreateIfNotExistsAsync();
 
-        var msg = TestHttpRequestData.FromJson("DELETE", new ContainerDelete(new Container(containerName)));
+        var msg = TestHttpRequestData.FromJson("DELETE", new ContainerDelete(containerName));
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
         var func = new ContainersFunction(Logger, auth, Context);
@@ -67,8 +67,8 @@ public abstract class ContainersTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task CanPost_New() {
         var meta = new Dictionary<string, string> { { "some", "value" } };
-        var containerName = "test";
-        var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(new Container(containerName), meta));
+        var containerName = Container.Parse("test");
+        var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(containerName, meta));
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
         var func = new ContainersFunction(Logger, auth, Context);
@@ -87,12 +87,12 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task CanPost_Existing() {
-        var containerName = "test";
+        var containerName = Container.Parse("test");
         var client = GetContainerClient(containerName);
         await client.CreateIfNotExistsAsync();
 
         var metadata = new Dictionary<string, string> { { "some", "value" } };
-        var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(new Container(containerName), metadata));
+        var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(containerName, metadata));
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
         var func = new ContainersFunction(Logger, auth, Context);
@@ -110,13 +110,13 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Get_Existing() {
-        var containerName = "test";
+        var containerName = Container.Parse("test");
         {
             var client = GetContainerClient(containerName);
             await client.CreateIfNotExistsAsync();
         }
 
-        var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(new Container(containerName)));
+        var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(containerName));
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
         var func = new ContainersFunction(Logger, auth, Context);
@@ -130,7 +130,8 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Get_Missing_Fails() {
-        var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(new Container("container")));
+        var container = Container.Parse("container");
+        var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(container));
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
         var func = new ContainersFunction(Logger, auth, Context);
@@ -142,8 +143,8 @@ public abstract class ContainersTestBase : FunctionTestBase {
     public async Async.Task List_Existing() {
         var meta1 = new Dictionary<string, string> { { "key1", "value1" } };
         var meta2 = new Dictionary<string, string> { { "key2", "value2" } };
-        await GetContainerClient("one").CreateIfNotExistsAsync(metadata: meta1);
-        await GetContainerClient("two").CreateIfNotExistsAsync(metadata: meta2);
+        await GetContainerClient(Container.Parse("one")).CreateIfNotExistsAsync(metadata: meta1);
+        await GetContainerClient(Container.Parse("two")).CreateIfNotExistsAsync(metadata: meta2);
 
         var msg = TestHttpRequestData.Empty("GET"); // this means list all
 
@@ -154,7 +155,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
         var list = BodyAs<ContainerInfoBase[]>(result);
         // other tests can run in parallel, so filter to just our containers:
-        var cs = list.Where(ci => ci.Name.ContainerName.StartsWith(Context.ServiceConfiguration.OneFuzzStoragePrefix)).ToList();
+        var cs = list.Where(ci => ci.Name.String.StartsWith(Context.ServiceConfiguration.OneFuzzStoragePrefix)).ToList();
         Assert.Equal(2, cs.Count);
 
         // ensure correct metadata was returned.
