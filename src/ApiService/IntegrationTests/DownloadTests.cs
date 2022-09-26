@@ -74,8 +74,8 @@ public abstract class DownloadTestBase : FunctionTestBase {
         // set up a file to download
         var containerName = Container.Parse("xxx");
         var container = GetContainerClient(containerName);
-        await container.CreateAsync();
-        await container.UploadBlobAsync("yyy", new BinaryData("content"));
+        _ = await container.CreateAsync();
+        _ = await container.UploadBlobAsync("yyy", new BinaryData("content"));
 
         var req = TestHttpRequestData.Empty("GET");
         var url = new UriBuilder(req.Url) { Query = "container=xxx&filename=yyy" }.Uri;

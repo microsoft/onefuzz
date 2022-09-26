@@ -170,13 +170,12 @@ container:{container} filename:{filename}";
         public async Async.Task UpdateExisting(WorkItem item, string notificationInfo) {
             if (_config.OnDuplicate.Comment != null) {
                 var comment = await Render(_config.OnDuplicate.Comment);
-                await _client.AddCommentAsync(
+                _ = await _client.AddCommentAsync(
                     new CommentCreate() {
                         Text = comment
                     },
                     _project,
-                    (int)(item.Id!)
-                );
+                    (int)(item.Id!));
             }
 
             var document = new JsonPatchDocument();
@@ -209,7 +208,7 @@ container:{container} filename:{filename}";
             }
 
             if (document.Any()) {
-                await _client.UpdateWorkItemAsync(document, _project, (int)(item.Id!));
+                _ = await _client.UpdateWorkItemAsync(document, _project, (int)(item.Id!));
                 _logTracer.Info($"notify ado: updated work item {item.Id} - {notificationInfo}");
             } else {
                 _logTracer.Info($"notify ado: no update for work item {item.Id} - {notificationInfo}");
@@ -228,13 +227,12 @@ container:{container} filename:{filename}";
 
             if (_config.Comment != null) {
                 var comment = await Render(_config.Comment);
-                await _client.AddCommentAsync(
+                _ = await _client.AddCommentAsync(
                     new CommentCreate() {
                         Text = comment,
                     },
                     _project,
-                    (int)(entry.Id!)
-                );
+                    (int)(entry.Id!));
             }
             return entry;
         }

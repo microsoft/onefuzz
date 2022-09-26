@@ -84,7 +84,7 @@ namespace Microsoft.OneFuzz.Service {
             _logTracer.Info($"dissociating nic {nic.Data.Name} with nsg: {_context.Creds.GetBaseResourceGroup()} {nsg.Name}");
             nic.Data.NetworkSecurityGroup = null;
             try {
-                await _context.Creds.GetResourceGroupResource()
+                _ = await _context.Creds.GetResourceGroupResource()
                     .GetNetworkInterfaces()
                     .CreateOrUpdateAsync(WaitUntil.Started, nic.Data.Name, nic.Data);
             } catch (Exception e) {
@@ -183,11 +183,10 @@ namespace Microsoft.OneFuzz.Service {
             }
 
             try {
-                await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroups().CreateOrUpdateAsync(
+                _ = await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroups().CreateOrUpdateAsync(
                     WaitUntil.Started,
                     name,
-                    nsgParams
-                );
+                    nsgParams);
             } catch (RequestFailedException ex) {
                 if (IsConcurrentRequestError(ex.Message)) {
                     // _logTracer.Debug($"create NSG had conflicts with concurrent request, ignoring {ex}");
@@ -291,9 +290,8 @@ namespace Microsoft.OneFuzz.Service {
             _logTracer.Info($"associating nic {nic.Data.Name} with nsg: {_context.Creds.GetBaseResourceGroup()} {nsg.Data.Name}");
 
             try {
-                await _context.Creds.GetResourceGroupResource().GetNetworkInterfaces().CreateOrUpdateAsync(
-                    WaitUntil.Started, nic.Data.Name, nic.Data
-                );
+                _ = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaces().CreateOrUpdateAsync(
+                    WaitUntil.Started, nic.Data.Name, nic.Data);
             } catch (RequestFailedException ex) {
                 if (IsConcurrentRequestError(ex.Message)) {
                     // _logTracer.Debug($"associate NSG with NIC had conflicts with concurrent request, ignoring {ex}");
@@ -312,11 +310,10 @@ namespace Microsoft.OneFuzz.Service {
             _logTracer.Info($"updating nsg {_context.Creds.GetBaseResourceGroup()}:{nsg.Location}:{nsg.Name}");
 
             try {
-                await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroups().CreateOrUpdateAsync(
+                _ = await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroups().CreateOrUpdateAsync(
                     WaitUntil.Started,
                     nsg.Name,
-                    nsg
-                );
+                    nsg);
             } catch (RequestFailedException ex) {
                 if (IsConcurrentRequestError(ex.Message)) {
                     //_logTracer.Debug($"create NSG had conflicts with concurrent request, ignoring {ex}");

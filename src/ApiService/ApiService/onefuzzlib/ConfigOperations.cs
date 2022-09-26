@@ -25,7 +25,7 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
     private static readonly InstanceConfigCacheKey _key = new(); // singleton key
     public Task<InstanceConfig> Fetch()
         => _cache.GetOrCreateAsync(_key, async entry => {
-            entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10)); // cached for 10 minutes
+            entry = entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10)); // cached for 10 minutes
             var key = _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set");
             return await GetEntityAsync(key, key);
         });
@@ -49,9 +49,11 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
                 _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace instance config record");
             }
         }
+
         if (r.IsOk) {
-            _cache.Set(_key, newConfig);
+            _ = _cache.Set(_key, newConfig);
         }
+
         await _context.Events.SendEvent(new EventInstanceConfigUpdated(newConfig));
     }
 }

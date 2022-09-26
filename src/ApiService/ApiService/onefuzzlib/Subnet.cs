@@ -51,11 +51,10 @@ public class Subnet : ISubnet {
         }
 
         try {
-            await _creds.GetResourceGroupResource().GetVirtualNetworks().CreateOrUpdateAsync(
+            _ = await _creds.GetResourceGroupResource().GetVirtualNetworks().CreateOrUpdateAsync(
                 WaitUntil.Started,
                 name,
-                virtualNetParam
-            );
+                virtualNetParam);
         } catch (RequestFailedException ex) {
             _logTracer.Error($"network creation failed: {name}:{region} {{error}}");
             return OneFuzzResultVoid.Error(

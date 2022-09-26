@@ -138,7 +138,7 @@ namespace ApiService.OneFuzzLib.Orm {
 
 
     public interface IStatefulOrm<T, TState> : IOrm<T> where T : StatefulEntityBase<TState> where TState : Enum {
-        Async.Task<T?> ProcessStateUpdate(T entity);
+        Async.Task<T> ProcessStateUpdate(T entity);
 
         Async.Task<T?> ProcessStateUpdates(T entity, int MaxUpdates = 5);
     }
@@ -201,7 +201,7 @@ namespace ApiService.OneFuzzLib.Orm {
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public async Async.Task<T?> ProcessStateUpdate(T entity) {
+        public async Async.Task<T> ProcessStateUpdate(T entity) {
             TState state = entity.State;
             var func = GetType().GetMethod(state.ToString()) switch {
                 null => null,
@@ -214,9 +214,8 @@ namespace ApiService.OneFuzzLib.Orm {
                 _logTracer.Info($"processing state update: {typeof(T)} - PartitionKey: {partitionKey} RowKey: {rowKey} - {state}");
                 return await func(entity);
             } else {
-                _logTracer.Info($"State function for state: '{state}' not found on type {typeof(T)}");
+                throw new ArgumentException($"State function for state: '{state}' not found on type {typeof(T)}");
             }
-            return null;
         }
 
         /// <summary>

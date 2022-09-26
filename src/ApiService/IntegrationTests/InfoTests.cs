@@ -50,8 +50,8 @@ public abstract class InfoTestBase : FunctionTestBase {
         var instanceId = Guid.NewGuid().ToString();
         var baseConfigContainer = WellKnownContainers.BaseConfig;
         var containerClient = GetContainerClient(baseConfigContainer);
-        await containerClient.CreateAsync();
-        await containerClient.GetBlobClient("instance_id").UploadAsync(new BinaryData(instanceId));
+        _ = await containerClient.CreateAsync();
+        _ = await containerClient.GetBlobClient("instance_id").UploadAsync(new BinaryData(instanceId));
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
         var func = new Info(auth, Context);

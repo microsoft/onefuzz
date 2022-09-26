@@ -43,6 +43,7 @@ public class Scaleset {
         }
 
         var scaleset = scalesetResult.OkV;
+        // result ignored: not used after this point
         _ = await _context.ScalesetOperations.SetShutdown(scaleset, request.OkV.Now);
         return await RequestHandling.Ok(req, true);
     }

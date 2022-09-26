@@ -44,7 +44,7 @@ public class Queue : IQueue {
     public async Async.Task SendMessage(string name, string message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
         var queue = await GetQueueClient(name, storageType);
         try {
-            await queue.SendMessageAsync(message, visibilityTimeout: visibilityTimeout, timeToLive: timeToLive);
+            _ = await queue.SendMessageAsync(message, visibilityTimeout: visibilityTimeout, timeToLive: timeToLive);
         } catch (Exception ex) {
             _log.Exception(ex, $"Failed to send message {message}");
             throw;
