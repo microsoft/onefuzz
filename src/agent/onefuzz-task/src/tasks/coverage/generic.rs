@@ -27,7 +27,7 @@ use url::Url;
 use crate::tasks::config::CommonConfig;
 use crate::tasks::generic::input_poller::{CallbackImpl, InputPoller, Processor};
 use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
-use crate::tasks::utils::resolve_setup_relative_path;
+use crate::tasks::utils::{resolve_setup_relative_path, try_resolve_setup_relative_path};
 
 use super::COBERTURA_COVERAGE_FILE;
 
