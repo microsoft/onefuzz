@@ -399,5 +399,16 @@ namespace Tests {
         }
 
 
+        record TestKeyGetter([PartitionKey] Guid PartitionKey, [RowKey] Guid RowKey);
+        [Fact]
+        public void TestKeyGetters() {
+            var test = new TestKeyGetter(Guid.NewGuid(), Guid.NewGuid());
+
+            var actualPartitionKey = EntityConverter.PartitionKeyGetter<TestKeyGetter>()?.Invoke(test);
+            var actualRowKey = EntityConverter.RowKeyGetter<TestKeyGetter>()?.Invoke(test);
+
+            Assert.Equal(test.PartitionKey, actualPartitionKey);
+            Assert.Equal(test.RowKey, actualRowKey);
+        }
     }
 }
