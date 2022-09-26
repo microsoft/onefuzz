@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
 using Azure.Core;
@@ -186,28 +185,11 @@ namespace ApiService.OneFuzzLib.Orm {
                 throw new InvalidOperationException($"State transitions are missing for '{thisType.Name}': {string.Join(", ", missing)}");
             }
 
-            _partitionKeyGetter =
-                typeof(T).GetConstructors()
-                         .SelectMany(x => x.GetParameters())
-                         .FirstOrDefault(p => p.GetCustomAttributes(true).OfType<PartitionKeyAttribute>().Any()) switch {
-                             null => null, { Name: null } => null, { Name: var name } => BuildGetter(typeof(T).GetProperty(name))
-                         };
+            _partitionKeyGetter = EntityConverter.PartitionKeyGetter<T>();
 
-            _rowKeyGetter =
-                typeof(T).GetConstructors()
-                         .SelectMany(x => x.GetParameters())
-                         .FirstOrDefault(p => p.GetCustomAttributes(true).OfType<RowKeyAttribute>().Any()) switch {
-                             null => null, { Name: null } => null, { Name: var name } => BuildGetter(typeof(T).GetProperty(name))
-                         };
-        }
 
-        static Func<T, object?>? BuildGetter(PropertyInfo? property) {
-            if (property == null)
-                return null;
+            _rowKeyGetter = EntityConverter.RowKeyGetter<T>();
 
-            var paramter = Expression.Parameter(typeof(T));
-            var call = Expression.Convert(Expression.Property(paramter, property), typeof(object));
-            return Expression.Lambda<Func<T, object?>>(call, paramter).Compile();
         }
 
         public StatefulOrm(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
