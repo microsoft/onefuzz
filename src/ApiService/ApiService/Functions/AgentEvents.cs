@@ -73,12 +73,14 @@ public class AgentEvents {
         if (ev.State == NodeState.Free) {
             if (node.ReimageRequested || node.DeleteRequested) {
                 _log.Info($"stopping free node with reset flags: {machineId}");
+                // discard result: node not used after this point
                 _ = await _context.NodeOperations.Stop(node);
                 return null;
             }
 
             if (await _context.NodeOperations.CouldShrinkScaleset(node)) {
                 _log.Info($"stopping free node to resize scaleset: {machineId}");
+                // discard result: node not used after this point
                 _ = await _context.NodeOperations.SetHalt(node);
                 return null;
             }
@@ -87,6 +89,7 @@ public class AgentEvents {
         if (ev.State == NodeState.Init) {
             if (node.DeleteRequested) {
                 _log.Info($"stopping node (init and delete_requested): {machineId}");
+                // discard result: node not used after this point
                 _ = await _context.NodeOperations.Stop(node);
                 return null;
             }
@@ -95,6 +98,7 @@ public class AgentEvents {
             // they send 'init' with reimage_requested, it's because the node was reimaged
             // successfully.
             node = node with { ReimageRequested = false, InitializedAt = DateTimeOffset.UtcNow };
+            // discard result: node not used after this point
             _ = await _context.NodeOperations.SetState(node, ev.State);
             return null;
         }
@@ -155,7 +159,7 @@ public class AgentEvents {
             // if tasks are running on the node when it reports as Done
             // those are stopped early
             await _context.NodeOperations.MarkTasksStoppedEarly(node, error);
-            // result ignored: not used after this point
+            // discard result: node not used after this point
             _ = await _context.NodeOperations.ToReimage(node, done: true);
         }
 
@@ -194,8 +198,8 @@ public class AgentEvents {
         }
 
         if (!node.State.ReadyForReset()) {
+            // discard result: node not used after this point
             _ = await _context.NodeOperations.SetState(node, NodeState.Busy);
-            // node unused after this point
         }
 
         var nodeTask = new NodeTasks(

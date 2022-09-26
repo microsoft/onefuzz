@@ -643,8 +643,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 await Async.Task.WhenAll(nodes
                     .Where(node => machineIds.Contains(node.MachineId))
                     .Select(async node => {
-                        // TODO: result ignored
-                        _ = await _context.NodeOperations.ReleaseScaleInProtection(node);
+                        await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
                     }));
                 return;
 
@@ -655,8 +654,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                         .Where(node => machineIds.Contains(node.MachineId))
                         .Select(async node => {
                             await _context.NodeOperations.Delete(node);
-                            // TODO: result ignored
-                            _ = await _context.NodeOperations.ReleaseScaleInProtection(node);
+                            await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
                         }));
                 } else {
                     _log.Info($"failed to reimage nodes due to {r.ErrorV}");
@@ -695,8 +693,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 await Async.Task.WhenAll(nodes
                     .Where(node => machineIds.Contains(node.MachineId))
                     .Select(async node => {
-                        // TODO: result ignored
-                        _ = await _context.NodeOperations.ReleaseScaleInProtection(node);
+                        await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
                     }));
                 return;
 
@@ -707,8 +704,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                     .Where(node => machineIds.Contains(node.MachineId))
                     .Select(async node => {
                         await _context.NodeOperations.Delete(node);
-                        // TODO: result ignored
-                        _ = await _context.NodeOperations.ReleaseScaleInProtection(node);
+                        await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
                     }));
                 return;
         }

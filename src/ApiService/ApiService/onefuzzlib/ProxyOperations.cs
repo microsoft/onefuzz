@@ -307,8 +307,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         var stoppedVm = await SetState(proxy, VmState.Stopped);
         _logTracer.Info($"removing proxy: {stoppedVm.Region}");
         await _context.Events.SendEvent(new EventProxyDeleted(stoppedVm.Region, stoppedVm.ProxyId));
-        // TODO: result ignored
-        _ = await Delete(stoppedVm);
+        await Delete(stoppedVm).IgnoreResult();
         return stoppedVm;
     }
 

@@ -8,4 +8,10 @@ public static class ObjectExtention {
 
         return thisObject;
     }
+
+    // Explicitly discards the result value.
+    // In general we should not do this; eventually all call-sites should
+    // be updated.
+    public static Async.Task IgnoreResult<T>(this Async.Task<T> task)
+        => task;
 }

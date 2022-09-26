@@ -205,8 +205,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             repro = repro with { State = VmState.Running };
         }
 
-        // TODO: result ignored
-        _ = await Replace(repro);
+        await Replace(repro).IgnoreResult();
         return repro;
     }
 

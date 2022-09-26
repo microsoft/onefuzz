@@ -52,7 +52,7 @@ public class AgentCommands {
 
         var message = await _context.NodeMessageOperations.GetEntityAsync(nodeCommand.MachineId.ToString(), nodeCommand.MessageId);
         if (message != null) {
-            _ = await _context.NodeMessageOperations.Delete(message);
+            await _context.NodeMessageOperations.Delete(message).IgnoreResult();
         } else {
             _log.WithTag("Command", "DELETE").Verbose($"failed to find machine id {nodeCommand.MachineId} for message {nodeCommand.MessageId}");
         }
