@@ -30,15 +30,8 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
-    private static readonly Dictionary<Os, string> DEFAULT_OS = new()
-    {
-        { Os.Linux, "Canonical:UbuntuServer:18.04-LTS:latest" },
-        { Os.Windows, "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest" }
-    };
 
     const string DEFAULT_SKU = "Standard_DS1_v2";
-
-
 
     public ReproOperations(ILogTracer log, IOnefuzzContext context)
         : base(log, context) {
@@ -46,7 +39,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     }
 
     public IAsyncEnumerable<Repro> SearchExpired() {
-        return QueryAsync(filter: $"end_time lt datetime'{DateTime.UtcNow.ToString("o")}'");
+        return QueryAsync(filter: Query.OlderThan("end_time", DateTimeOffset.UtcNow));
     }
 
     public async Async.Task<Vm> GetVm(Repro repro, InstanceConfig config) {
@@ -57,16 +50,22 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             throw new Exception($"previous existing task missing: {repro.TaskId}");
         }
 
+        Dictionary<Os, string> default_os = new()
+        {
+            { Os.Linux, config.DefaultLinuxVmImage },
+            { Os.Windows, config.DefaultWindowsVmImage }
+        };
+
         var vmConfig = await taskOperations.GetReproVmConfig(task);
         if (vmConfig == null) {
-            if (!DEFAULT_OS.ContainsKey(task.Os)) {
+            if (!default_os.ContainsKey(task.Os)) {
                 throw new NotSupportedException($"unsupport OS for repro {task.Os}");
             }
 
             vmConfig = new TaskVm(
                 await _context.Creds.GetBaseRegion(),
                 DEFAULT_SKU,
-                DEFAULT_OS[task.Os],
+                default_os[task.Os],
                 null
             );
         }
@@ -92,9 +91,15 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var vmOperations = _context.VmOperations;
         if (!await vmOperations.IsDeleted(vm)) {
             _logTracer.Info($"vm stopping: {repro.VmId}");
-            await vmOperations.Delete(vm);
+            var rr = await vmOperations.Delete(vm);
+            if (!rr) {
+                _logTracer.Error($"failed to delete repro vm with id {repro.VmId}");
+            }
             repro = repro with { State = VmState.Stopping };
-            await Replace(repro);
+            var r = await Replace(repro);
+            if (!r.IsOk) {
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro {repro.VmId} marked Stopping");
+            }
             return repro;
         } else {
             return await Stopped(repro);
@@ -104,7 +109,10 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     public async Async.Task<Repro> Stopped(Repro repro) {
         _logTracer.Info($"vm stopped: {repro.VmId}");
         repro = repro with { State = VmState.Stopped };
-        await Delete(repro);
+        var r = await Delete(repro);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete repro {repro.VmId} marked as stopped");
+        }
         return repro;
     }
 
@@ -150,7 +158,10 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             }
         }
 
-        await Replace(repro);
+        var r = await Replace(repro);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace init repro");
+        }
         return repro;
     }
 
@@ -272,7 +283,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     }
 
     public async Async.Task<Repro> SetError(Repro repro, Error result) {
-        _logTracer.Error(
+        _logTracer.Info(
             $"repro failed: vm_id: {repro.VmId} task_id: {repro.TaskId} error: {result}"
         );
 
@@ -281,7 +292,10 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             State = VmState.Stopping
         };
 
-        await Replace(repro);
+        var r = await Replace(repro);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro record for {repro.VmId}");
+        }
         return repro;
     }
 
@@ -306,12 +320,15 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
                 Config: config,
                 TaskId: task.TaskId,
                 Os: task.Os,
-                Auth: Auth.BuildAuth(),
+                Auth: await Auth.BuildAuth(_logTracer),
                 EndTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(config.Duration),
                 UserInfo: userInfo
             );
 
-            await _context.ReproOperations.Insert(vm);
+            var r = await _context.ReproOperations.Insert(vm);
+            if (!r.IsOk) {
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert repro record for {vm.VmId}");
+            }
             return OneFuzzResult<Repro>.Ok(vm);
         } else {
             return OneFuzzResult<Repro>.Error(ErrorCode.UNABLE_TO_FIND, "unable to find report");

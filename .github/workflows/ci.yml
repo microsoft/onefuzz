@@ -11,7 +11,7 @@ on:
 # limit to one concurrent run per PR/branch,
 # and cancel any previous runs still going
 concurrency:
-  group: ${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:

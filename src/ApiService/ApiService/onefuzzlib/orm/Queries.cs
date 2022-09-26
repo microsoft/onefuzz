@@ -57,12 +57,18 @@ namespace ApiService.OneFuzzLib.Orm {
             return TableClient.CreateQueryFilter($"Timestamp lt {max} and Timestamp gt {min}");
         }
 
-        public static string NewerThan(DateTimeOffset t) {
+        public static string TimestampNewerThan(DateTimeOffset t) {
             return TableClient.CreateQueryFilter($"Timestamp gt {t}");
         }
-
-        public static string OlderThan(DateTimeOffset t) {
+        public static string NewerThan(string field, DateTimeOffset t) {
+            return $"{field} gt {TableClient.CreateQueryFilter($"{t}")}";
+        }
+        public static string TimestampOlderThan(DateTimeOffset t) {
             return TableClient.CreateQueryFilter($"Timestamp lt {t}");
+        }
+
+        public static string OlderThan(string field, DateTimeOffset t) {
+            return $"{field} lt {TableClient.CreateQueryFilter($"{t}")}";
         }
 
         public static string StartsWith(string property, string prefix) {

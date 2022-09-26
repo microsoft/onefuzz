@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
 using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -16,7 +17,10 @@ public interface IQueue {
     Async.Task ClearQueue(string name, StorageType storageType);
     Async.Task DeleteQueue(string name, StorageType storageType);
     Async.Task CreateQueue(string name, StorageType storageType);
+    IAsyncEnumerable<QueueItem> ListQueues(StorageType storageType);
 }
+
+
 
 
 public class Queue : IQueue {
@@ -30,6 +34,12 @@ public class Queue : IQueue {
         _log = log;
     }
 
+    public async IAsyncEnumerable<QueueItem> ListQueues(StorageType storageType) {
+        var queueServiceClient = await GetQueueClientService(storageType);
+        await foreach (var q in queueServiceClient.GetQueuesAsync()) {
+            yield return q;
+        }
+    }
 
     public async Async.Task SendMessage(string name, string message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
         var queue = await GetQueueClient(name, storageType);

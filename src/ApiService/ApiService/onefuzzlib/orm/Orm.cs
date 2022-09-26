@@ -196,6 +196,8 @@ namespace ApiService.OneFuzzLib.Orm {
                     null => null,
                     MethodInfo info => new Lazy<Func<object>>(() => (Func<object>)Delegate.CreateDelegate(typeof(Func<object>), info), true)
                 };
+
+            return;
         }
 
         public StatefulOrm(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
@@ -215,7 +217,9 @@ namespace ApiService.OneFuzzLib.Orm {
             };
 
             if (func != null) {
-                _logTracer.Info($"processing state update: {typeof(T)} - PartitionKey {_partitionKeyGetter?.Value()} {_rowKeyGetter?.Value()} - {state}");
+                var partitionKey = _partitionKeyGetter?.Value();
+                var rowKey = _rowKeyGetter?.Value();
+                _logTracer.Info($"processing state update: {typeof(T)} - PartitionKey: {partitionKey} RowKey: {rowKey} - {state}");
                 return await func(entity);
             } else {
                 _logTracer.Info($"State function for state: '{state}' not found on type {typeof(T)}");

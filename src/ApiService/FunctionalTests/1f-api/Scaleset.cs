@@ -57,9 +57,6 @@ public class Scaleset : IFromJsonElement<Scaleset> {
 
 public class ScalesetApi : ApiBase {
 
-    public const string Image_Ubuntu_20_04 = "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest";
-    public const string ImageWindows = "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest";
-
     public ScalesetApi(Uri endpoint, Microsoft.OneFuzz.Service.Request request, ITestOutputHelper output) :
         base(endpoint, "/api/Scaleset", request, output) { }
 
@@ -73,7 +70,7 @@ public class ScalesetApi : ApiBase {
         return IEnumerableResult<Scaleset>(res);
     }
 
-    public async Task<Result<Scaleset, Error>> Create(string poolName, int size, string? region = null, string vmSku = "Standard_D2s_v3", string image = Image_Ubuntu_20_04, bool spotInstance = false) {
+    public async Task<Result<Scaleset, Error>> Create(string poolName, int size, string? region = null, string vmSku = "Standard_D2s_v3", string? image = null, bool spotInstance = false) {
         _output.WriteLine($"Creating scaleset in pool {poolName}, size: {size}");
 
         var rootScalesetCreate = new JsonObject()

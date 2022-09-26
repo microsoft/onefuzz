@@ -13,12 +13,12 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Task<OneFuzzResultVoid> ReleaseScaleInProtection(Node node);
 
     bool IsOutdated(Node node);
-    Async.Task Stop(Node node, bool done = false);
+    Async.Task<Node> Stop(Node node, bool done = false);
     bool IsTooOld(Node node);
     Task<bool> CouldShrinkScaleset(Node node);
-    Async.Task SetHalt(Node node);
-    Async.Task SetState(Node node, NodeState state);
-    Async.Task ToReimage(Node node, bool done = false);
+    Async.Task<Node> SetHalt(Node node);
+    Async.Task<Node> SetState(Node node, NodeState state);
+    Async.Task<Node> ToReimage(Node node, bool done = false);
     Async.Task SendStopIfFree(Node node);
     IAsyncEnumerable<Node> SearchStates(Guid? poolId = default,
         Guid? scalesetId = default,
@@ -54,7 +54,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
 
     IAsyncEnumerable<Node> SearchByPoolName(PoolName poolName);
 
-    Async.Task SetShutdown(Node node);
+    Async.Task<Node> SetShutdown(Node node);
 
     // state transitions:
     Async.Task<Node> Init(Node node);
@@ -118,13 +118,13 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     public async Task<bool> CanProcessNewWork(Node node) {
         if (IsOutdated(node) && _context.ServiceConfiguration.OneFuzzAllowOutdatedAgent != "true") {
             _logTracer.Info($"can_process_new_work agent and service versions differ, stopping node. machine_id:{node.MachineId} agent_version:{node.Version} service_version:{_context.ServiceConfiguration.OneFuzzVersion}");
-            await Stop(node, done: true);
+            _ = await Stop(node, done: true);
             return false;
         }
 
         if (IsTooOld(node)) {
             _logTracer.Info($"can_process_new_work node is too old. machine_id:{node.MachineId}");
-            await Stop(node, done: true);
+            _ = await Stop(node, done: true);
             return false;
         }
 
@@ -140,19 +140,19 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
         if (node.DeleteRequested) {
             _logTracer.Info($"can_process_new_work is set to be deleted. machine_id:{node.MachineId}");
-            await Stop(node, done: true);
+            _ = await Stop(node, done: true);
             return false;
         }
 
         if (node.ReimageRequested) {
             _logTracer.Info($"can_process_new_work is set to be reimaged. machine_id:{node.MachineId}");
-            await Stop(node, done: true);
+            _ = await Stop(node, done: true);
             return false;
         }
 
         if (await CouldShrinkScaleset(node)) {
             _logTracer.Info($"can_process_new_work node scheduled to shrink. machine_id:{node.MachineId}");
-            await SetHalt(node);
+            _ = await SetHalt(node);
             return false;
         }
 
@@ -197,27 +197,26 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             if (node.DebugKeepNode) {
                 _logTracer.Info($"removing debug_keep_node for expired node. scaleset_id:{node.ScalesetId} machine_id:{node.MachineId}");
             }
-            await ToReimage(node with { DebugKeepNode = false });
+            _ = await ToReimage(node with { DebugKeepNode = false });
         }
     }
 
 
     public async Async.Task MarkOutdatedNodes() {
-        //#if outdated agents are allowed, do not attempt to update
-        bool allowOutdatedAgent;
-        var parsed = bool.TryParse(_context.ServiceConfiguration.OneFuzzAllowOutdatedAgent ?? "false", out allowOutdatedAgent);
+        //if outdated agents are allowed, do not attempt to update
+        var parsed = bool.TryParse(_context.ServiceConfiguration.OneFuzzAllowOutdatedAgent ?? "false", out var allowOutdatedAgent);
         if (parsed && allowOutdatedAgent) {
             return;
         }
 
-        var outdated = this.SearchOutdated(excludeUpdateScheduled: true);
+        var outdated = SearchOutdated(excludeUpdateScheduled: true);
         await foreach (var node in outdated) {
             _logTracer.Info($"node is outdated: {node.MachineId} - node_version:{node.Version} api_version:");
 
             if (node.Version == "1.0.0") {
-                await ToReimage(node, done: true);
+                _ = await ToReimage(node, done: true);
             } else {
-                await ToReimage(node);
+                _ = await ToReimage(node);
             }
         }
     }
@@ -287,11 +286,11 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         var nodes = _context.NodeOperations.SearchStates(states: NodeStateHelper.BusyStates);
 
         await foreach (var node in nodes) {
-            await StopIfComplete(node, true);
+            _ = await StopIfComplete(node, true);
         }
     }
 
-    public async Async.Task ToReimage(Node node, bool done = false) {
+    public async Async.Task<Node> ToReimage(Node node, bool done = false) {
 
         var nodeState = node.State;
         if (done) {
@@ -314,6 +313,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         if (!r.IsOk) {
             _logTracer.WithHttpStatus(r.ErrorV).Error("Failed to save Node record");
         }
+
+        return updatedNode;
     }
 
     public IAsyncEnumerable<Node> GetDeadNodes(Guid scaleSetId, TimeSpan expirationPeriod) {
@@ -356,9 +357,10 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         return node;
     }
 
-    public async Async.Task Stop(Node node, bool done = false) {
-        await ToReimage(node, done);
+    public async Async.Task<Node> Stop(Node node, bool done = false) {
+        node = await ToReimage(node, done);
         await SendMessage(node, new NodeCommand(Stop: new StopNodeCommand()));
+        return node;
     }
 
     /// <summary>
@@ -366,23 +368,25 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     /// </summary>
     /// <param name="node"></param>
     /// <returns></returns>
-    public async Async.Task SetHalt(Node node) {
+    public async Async.Task<Node> SetHalt(Node node) {
         _logTracer.Info($"setting halt: {node.MachineId}");
-        var updatedNode = node with { DeleteRequested = true };
-        await Stop(updatedNode, true);
-        await SendStopIfFree(updatedNode);
+        node = node with { DeleteRequested = true };
+        node = await Stop(node, true);
+        await SendStopIfFree(node);
+        return node;
     }
 
-    public async Async.Task SetShutdown(Node node) {
+    public async Async.Task<Node> SetShutdown(Node node) {
         //don't give out more work to the node, but let it finish existing work
         _logTracer.Info($"setting delete_requested: {node.MachineId}");
         node = node with { DeleteRequested = true };
         var r = await Replace(node);
         if (!r.IsOk) {
-            _logTracer.Error($"failed to update node with delete requested. machine id: {node.MachineId}, pool name: {node.PoolName}, pool id: {node.PoolId}, scaleset id: {node.ScalesetId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to update node with delete requested. machine id: {node.MachineId}, pool name: {node.PoolName}, pool id: {node.PoolId}, scaleset id: {node.ScalesetId}");
         }
 
         await SendStopIfFree(node);
+        return node;
     }
 
 
@@ -435,22 +439,26 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         return false;
     }
 
-    public async Async.Task SetState(Node node, NodeState state) {
-        var newNode = node;
-        if (node.State != state) {
-            newNode = newNode with { State = state };
-            await _context.Events.SendEvent(new EventNodeStateUpdated(
-                newNode.MachineId,
-                newNode.ScalesetId,
-                newNode.PoolName,
-                state
-            ));
+    public async Async.Task<Node> SetState(Node node, NodeState state) {
+        if (node.State == state) {
+            return node;
         }
 
-        var r = await Replace(newNode);
+        node = node with { State = state };
+        await _context.Events.SendEvent(new EventNodeStateUpdated(
+            node.MachineId,
+            node.ScalesetId,
+            node.PoolName,
+            state
+        ));
+
+        var r = await Update(node);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to update node for machine: {newNode.MachineId} to state {state} due to {r.ErrorV}");
+            _logTracer.Error($"Failed to update node for machine: {node.MachineId} to state {state} due to {r.ErrorV}");
+            // TODO: this should error out
         }
+
+        return node;
     }
 
     public static string SearchStatesQuery(
@@ -558,7 +566,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         await foreach (var node in nodes) {
             await _context.NodeMessageOperations.SendMessage(node.MachineId, new NodeCommand(StopTask: new StopTaskNodeCommand(task_id)));
 
-            if (!(await StopIfComplete(node))) {
+            if (!await StopIfComplete(node)) {
                 _logTracer.Info($"nodes: stopped task on node, but not reimaging due to other tasks: task_id:{task_id} machine_id:{node.MachineId}");
             }
         }
@@ -592,7 +600,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         }
         _logTracer.Info($"node: stopping busy node with all tasks complete: {node.MachineId}");
 
-        await Stop(node, done: done);
+        _ = await Stop(node, done: done);
         return true;
     }
 

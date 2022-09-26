@@ -48,9 +48,6 @@ ONEFUZZ_GUID_NAMESPACE = uuid.UUID("27f25e3f-6544-4b69-b309-9b096c5a9cbc")
 
 ONE_HOUR_IN_SECONDS = 3600
 
-DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
-DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest"
-
 REPRO_SSH_FORWARD = "1337:127.0.0.1:1337"
 
 UUID_RE = r"^[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}\Z"
@@ -1423,15 +1420,6 @@ class Scaleset(Endpoint):
 
         if tags is None:
             tags = {}
-
-        if image is None:
-            pool = self.onefuzz.pools.get(pool_name)
-            if pool.os == enums.OS.linux:
-                image = DEFAULT_LINUX_IMAGE
-            elif pool.os == enums.OS.windows:
-                image = DEFAULT_WINDOWS_IMAGE
-            else:
-                raise NotImplementedError
 
         auto_scale = requests.AutoScaleOptions(
             min=min_instances,
