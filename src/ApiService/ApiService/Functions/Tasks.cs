@@ -65,9 +65,9 @@ public class Tasks {
         }
 
         var tasks = await _context.TaskOperations.SearchStates(request.OkV.JobId, request.OkV.State).ToListAsync();
-        var response2 = req.CreateResponse(HttpStatusCode.OK);
-        await response2.WriteAsJsonAsync(tasks);
-        return response2;
+        var response = req.CreateResponse(HttpStatusCode.OK);
+        await response.WriteAsJsonAsync(tasks);
+        return response;
     }
 
 

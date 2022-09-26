@@ -1,45 +1,81 @@
 ﻿namespace Microsoft.OneFuzz.Service;
-
-using System.Buffers.Binary;
 using System.Diagnostics;
-using System.Security.Cryptography;
+using System.IO;
 
 public class Auth {
 
-    private static ReadOnlySpan<byte> SSHRSABytes => new byte[] { (byte)'s', (byte)'s', (byte)'h', (byte)'-', (byte)'r', (byte)'s', (byte)'a' };
+    private static ProcessStartInfo SshKeyGenProcConfig(string tempFile) {
 
-    private static byte[] BuildPublicKey(RSA rsa) {
-        static Span<byte> WriteLengthPrefixedBytes(ReadOnlySpan<byte> src, Span<byte> dest) {
-            BinaryPrimitives.WriteInt32BigEndian(dest, src.Length);
-            dest = dest[sizeof(int)..];
-            src.CopyTo(dest);
-            return dest[src.Length..];
+        string keyGen = "ssh-keygen";
+        var winAzureFunctionPath = "C:\\Program Files\\Git\\usr\\bin\\ssh-keygen.exe";
+        if (File.Exists(winAzureFunctionPath)) {
+            keyGen = winAzureFunctionPath;
         }
-
-        var parameters = rsa.ExportParameters(includePrivateParameters: false);
-
-        // public key format is "ssh-rsa", exponent, modulus, all written
-        // as (big-endian) length-prefixed bytes
-        var result = new byte[sizeof(int) + SSHRSABytes.Length + sizeof(int) + parameters.Modulus!.Length + sizeof(int) + parameters.Exponent!.Length];
-        var spanResult = result.AsSpan();
-        spanResult = WriteLengthPrefixedBytes(SSHRSABytes, spanResult);
-        spanResult = WriteLengthPrefixedBytes(parameters.Exponent, spanResult);
-        spanResult = WriteLengthPrefixedBytes(parameters.Modulus, spanResult);
-        Debug.Assert(spanResult.Length == 0);
-
-        return result;
+        var p = new ProcessStartInfo() {
+            FileName = keyGen,
+            CreateNoWindow = false,
+            UseShellExecute = false,
+            RedirectStandardOutput = false,
+            RedirectStandardError = true,
+            ArgumentList = {
+                "-t",
+                "rsa",
+                "-f",
+                tempFile,
+                "-P",
+                "",
+                "-b",
+                "2048"
+            }
+        };
+        return p;
     }
-    public static Authentication BuildAuth() {
-        using var rsa = RSA.Create(2048);
-        var privateKey = rsa.ExportRSAPrivateKey();
-        var formattedPrivateKey = $"-----BEGIN RSA PRIVATE KEY-----\n{Convert.ToBase64String(privateKey)}\n-----END RSA PRIVATE KEY-----\n";
 
-        var publicKey = BuildPublicKey(rsa);
-        var formattedPublicKey = $"ssh-rsa {Convert.ToBase64String(publicKey)} onefuzz-generated-key";
+    // This works both on Windows and Linux azure function hosts
+    private static async Async.Task<(string, string)> GenerateKeyValuePair(ILogTracer log) {
+        var tmpFile = Path.GetTempFileName();
+        try {
+            File.Delete(tmpFile);
+        } catch (Exception ex) {
+            //bad but not worth the failure
+            log.Warning($"failed to delete temp file {tmpFile} due to {ex}");
+        }
+        tmpFile = tmpFile + ".key";
+        var startInfo = SshKeyGenProcConfig(tmpFile);
+        using var proc = new Process() { StartInfo = startInfo };
+        if (proc.Start()) {
+            var stdErr = await proc.StandardError.ReadToEndAsync();
+            await proc.WaitForExitAsync();
+            if (proc.ExitCode != 0) {
+                throw new Exception($"ssh-keygen failed due to {stdErr}");
+            }
+            var tmpFilePub = tmpFile + ".pub";
+            var priv = File.ReadAllText(tmpFile);
+            var pub = File.ReadAllText(tmpFilePub);
+            try {
+                File.Delete(tmpFile);
+            } catch (Exception ex) {
+                //bad but not worth failing
+                log.Warning($"failed to delete temp file {tmpFile} due to {ex}");
+            }
+            try {
+                File.Delete(tmpFilePub);
+            } catch (Exception ex) {
+                //bad but not worth failing
+                log.Warning($"failed to delete temp file {tmpFilePub} due to {ex}");
+            }
+            return (priv, pub.Trim());
+        } else {
+            throw new Exception("failed to start new ssh-keygen");
+        }
+    }
 
+
+    public static async Async.Task<Authentication> BuildAuth(ILogTracer log) {
+        var (priv, pub) = await GenerateKeyValuePair(log);
         return new Authentication(
             Password: Guid.NewGuid().ToString(),
-            PublicKey: formattedPublicKey,
-            PrivateKey: formattedPrivateKey);
+            PublicKey: pub,
+            PrivateKey: priv);
     }
 }

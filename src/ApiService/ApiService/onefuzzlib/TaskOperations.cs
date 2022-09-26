@@ -55,13 +55,11 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
     }
 
     public IAsyncEnumerable<Task> GetByJobId(Guid jobId) {
-
-        return QueryAsync(filter: $"PartitionKey eq '{jobId}'");
+        return QueryAsync(Query.PartitionKey(jobId.ToString()));
     }
 
     public async Async.Task<Task?> GetByJobIdAndTaskId(Guid jobId, Guid taskId) {
-        var data = QueryAsync(filter: $"PartitionKey eq '{jobId}' and RowKey eq '{taskId}'");
-
+        var data = QueryAsync(Query.SingleEntity(jobId.ToString(), taskId.ToString()));
         return await data.FirstOrDefaultAsync();
     }
     public IAsyncEnumerable<Task> SearchStates(Guid? jobId = null, IEnumerable<TaskState>? states = null) {
@@ -94,7 +92,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
     }
 
     public IAsyncEnumerable<Task> SearchExpired() {
-        var timeFilter = $"end_time lt datetime'{DateTimeOffset.UtcNow.ToString("o")}'";
+        var timeFilter = Query.OlderThan("end_time", DateTimeOffset.UtcNow);
         var stateFilter = Query.EqualAnyEnum("state", TaskStateHelper.AvailableStates);
         var filter = Query.And(stateFilter, timeFilter);
         return QueryAsync(filter: filter);
@@ -109,7 +107,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         if (!task.State.HasStarted()) {
             await MarkFailed(task, new Error(Code: ErrorCode.TASK_FAILED, Errors: new[] { "task never started" }));
         } else {
-            await SetState(task, TaskState.Stopping);
+            _ = await SetState(task, TaskState.Stopping);
         }
     }
 
@@ -122,7 +120,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             return;
         }
 
-        _logTracer.Error($"task failed {task.JobId}:{task.TaskId} - {error}");
+        _logTracer.Info($"task failed {task.JobId}:{task.TaskId} - {error}");
 
         task = await SetState(task with { Error = error }, TaskState.Stopping);
         await MarkDependantsFailed(task, taskInJob);
@@ -153,7 +151,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
         var r = await Replace(task);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to replace task with jobid: {task.JobId} and taskid: {task.TaskId} due to {r.ErrorV}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace task with jobid: {task.JobId} and taskid: {task.TaskId}");
         }
 
         var _events = _context.Events;
@@ -210,7 +208,10 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
         var task = new Task(jobId, Guid.NewGuid(), TaskState.Init, os, config, UserInfo: userInfo);
 
-        await _context.TaskOperations.Insert(task);
+        var r = await _context.TaskOperations.Insert(task);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert task {task.TaskId}");
+        }
         await _context.Events.SendEvent(new EventTaskCreated(jobId, task.TaskId, config, userInfo));
 
         _logTracer.Info($"created task. job_id:{jobId} task_id:{task.TaskId} type:{task.Config.Task.Type}");
@@ -266,6 +267,10 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
                 if (t == null) {
                     await MarkFailed(task, new Error(ErrorCode.INVALID_REQUEST, Errors: new[] { "unable to find prereq task" }));
                     return false;
+                }
+
+                if (t.JobId != task.JobId) {
+                    _logTracer.Critical("Tasks are not from the same job");
                 }
 
                 if (!t.State.HasStarted()) {

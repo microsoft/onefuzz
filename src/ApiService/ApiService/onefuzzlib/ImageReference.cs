@@ -11,6 +11,11 @@ using Compute = Azure.ResourceManager.Compute;
 
 namespace Microsoft.OneFuzz.Service;
 
+public static class DefaultImages {
+    public static readonly ImageReference Windows = ImageReference.MustParse("MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest");
+    public static readonly ImageReference Linux = ImageReference.MustParse("Canonical:UbuntuServer:18.04-LTS:latest");
+}
+
 [JsonConverter(typeof(Converter<ImageReference>))]
 public abstract record ImageReference {
     public static ImageReference MustParse(string image) {

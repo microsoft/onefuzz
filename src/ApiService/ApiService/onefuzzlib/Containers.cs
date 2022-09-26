@@ -104,11 +104,14 @@ public class Containers : IContainers {
         var containerName = _config.OneFuzzStoragePrefix + container;
         var cc = client.GetBlobContainerClient(containerName);
         try {
-            await cc.CreateAsync(metadata: metadata);
+            var r = await cc.CreateAsync(metadata: metadata);
+            if (r.GetRawResponse().IsError) {
+                _log.Error($"failed to create blob {containerName} due to {r.GetRawResponse().ReasonPhrase}");
+            }
         } catch (RequestFailedException ex) when (ex.ErrorCode == "ContainerAlreadyExists") {
             // note: resource exists error happens during creation if the container
             // is being deleted
-            _log.Error($"unable to create container.  account: {account} container: {container} metadata: {metadata} - {ex.Message}");
+            _log.Exception(ex, $"unable to create container.  account: {account} container: {container} metadata: {metadata}");
             return null;
         }
 

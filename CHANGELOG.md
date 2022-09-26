@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.14.0
+### Added
+* Service: Implement not-implemented `GetInputContainerQueues` [#2380](https://github.com/microsoft/onefuzz/pull/2380)
+* Service: Adding new default image config value to instance config [2434](https://github.com/microsoft/onefuzz/pull/2434)
+### Changed
+* Service: Port `SyncAutoscaleSettings` from Python to C# [#2407](https://github.com/microsoft/onefuzz/pull/2407)
+### Fixed
+* Deployment: Updating error and fixing default value for `auto_create_cli_app` [#2378](https://github.com/microsoft/onefuzz/pull/2378)
+* Service: Do not discard proxy objects when setting state [#2441](https://github.com/microsoft/onefuzz/pull/2441)
+* Service: Do not fail task on notification failure [#2435](https://github.com/microsoft/onefuzz/pull/2435)
+* Service: Cleanup queues for non-existent pools and non-existent tasks [#2433](https://github.com/microsoft/onefuzz/pull/2433)
+* Service: Delete pool queue when pool is deleted [#2431](https://github.com/microsoft/onefuzz/pull/2431)
+* Service: Minor fixes to service logging and error handling [#2420](https://github.com/microsoft/onefuzz/pull/2420)
+* Service: Fixed linux repro extensions [#2415](https://github.com/microsoft/onefuzz/pull/2415)
+* Service: Mark tasks as failed if a work unit cannot be created for the task [#2409](https://github.com/microsoft/onefuzz/pull/2409)
+* Service: Fixed several bugs in C# ports for `TimerProxy`, `TimerRetention`, `AgentEvents`, `Node`, `Tasks` and  `Jobs` [#2406](https://github.com/microsoft/onefuzz/pull/2406), [#2392](https://github.com/microsoft/onefuzz/pull/2392), [#2379](https://github.com/microsoft/onefuzz/pull/2379)
+* Service: Fixed Azure linux instance proxy extensions provisioning failures [#2401](https://github.com/microsoft/onefuzz/pull/2401)
+* Service: Fixed C# scheduling bugs [#2390](https://github.com/microsoft/onefuzz/pull/2390)
+* Service: Fixed `MarkDependantsFailed` error checking [#2389](https://github.com/microsoft/onefuzz/pull/2389)
+* Service: Fixed `SearchStates` querying in `TaskOperations` [#2383](https://github.com/microsoft/onefuzz/pull/2383)
+* Service: Fixed Scaleset response Auth inclusion [#2382](https://github.com/microsoft/onefuzz/pull/2382)
+* Service: Fix custom type interpolation in queries [#2376](https://github.com/microsoft/onefuzz/pull/2376)
+* Service: Fixed error in C# port for `DoNotRunExtensionsOnOverprovisionedVms must be false if Overprovision is false` [#2375](https://github.com/microsoft/onefuzz/pull/2375)
+
 ## 5.13.0
 ### Added
 * Deployment: Added optional flags `--onefuzz_app_id` & `--auto_create_cli_app` for `deploy.py` to allow for custom app registrations. [#2305](https://github.com/microsoft/onefuzz/pull/2305)

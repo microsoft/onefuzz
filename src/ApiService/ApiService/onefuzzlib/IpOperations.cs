@@ -64,8 +64,12 @@ public class IpOperations : IIpOperations {
         _logTracer.Info($"deleting nic {resourceGroup}:{name}");
         var networkInterface = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name);
         try {
-            await networkInterface.Value.DeleteAsync(WaitUntil.Started);
+            var r = await networkInterface.Value.DeleteAsync(WaitUntil.Started);
+            if (r.GetRawResponse().IsError) {
+                _logTracer.Error($"failed to start deleting nic {name} due to {r.GetRawResponse().ReasonPhrase}");
+            }
         } catch (RequestFailedException ex) {
+            _logTracer.Exception(ex);
             if (ex.ErrorCode != "NicReservedForAnotherVm") {
                 throw;
             }
@@ -76,12 +80,16 @@ public class IpOperations : IIpOperations {
     public async System.Threading.Tasks.Task DeleteIp(string resourceGroup, string name) {
         _logTracer.Info($"deleting ip {resourceGroup}:{name}");
         var publicIpAddressAsync = await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(name);
-        await publicIpAddressAsync.Value.DeleteAsync(WaitUntil.Started);
+        var r = await publicIpAddressAsync.Value.DeleteAsync(WaitUntil.Started);
+        if (r.GetRawResponse().IsError) {
+            _logTracer.Error($"failed to start deleting ip address due to {r.GetRawResponse().ReasonPhrase}");
+        }
     }
 
     public async Task<string?> GetScalesetInstanceIp(Guid scalesetId, Guid machineId) {
         var instance = await _context.VmssOperations.GetInstanceId(scalesetId, machineId);
         if (!instance.IsOk) {
+            _logTracer.Verbose($"failed to get vmss {scalesetId} for instance id {machineId} due to {instance.ErrorV}");
             return null;
         }
 
@@ -173,11 +181,16 @@ public class IpOperations : IIpOperations {
         }
 
         try {
-            await _context.Creds.GetResourceGroupResource().GetNetworkInterfaces().CreateOrUpdateAsync(
-                WaitUntil.Started,
-                name,
-                networkInterface
-            );
+            var r =
+                await _context.Creds.GetResourceGroupResource().GetNetworkInterfaces().CreateOrUpdateAsync(
+                    WaitUntil.Started,
+                    name,
+                    networkInterface
+                );
+
+            if (r.GetRawResponse().IsError) {
+                _logTracer.Error($"failed to createOrUpdate network interface {name} due to {r.GetRawResponse().ReasonPhrase}");
+            }
         } catch (RequestFailedException ex) {
             if (!ex.ToString().Contains("RetryableError")) {
                 return OneFuzzResultVoid.Error(
@@ -203,9 +216,13 @@ public class IpOperations : IIpOperations {
             }
         }
 
-        await _context.Creds.GetResourceGroupResource().GetPublicIPAddresses().CreateOrUpdateAsync(
+        var r = await _context.Creds.GetResourceGroupResource().GetPublicIPAddresses().CreateOrUpdateAsync(
             WaitUntil.Started, name, ipParams
         );
+        if (r.GetRawResponse().IsError) {
+            _logTracer.Error($"Failed to create or update Public Ip Address {name} due to {r.GetRawResponse().ReasonPhrase}");
+        }
+
         return;
     }
 

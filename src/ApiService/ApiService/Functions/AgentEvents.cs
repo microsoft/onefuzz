@@ -73,13 +73,13 @@ public class AgentEvents {
         if (ev.State == NodeState.Free) {
             if (node.ReimageRequested || node.DeleteRequested) {
                 _log.Info($"stopping free node with reset flags: {machineId}");
-                await _context.NodeOperations.Stop(node);
+                _ = await _context.NodeOperations.Stop(node);
                 return null;
             }
 
             if (await _context.NodeOperations.CouldShrinkScaleset(node)) {
                 _log.Info($"stopping free node to resize scaleset: {machineId}");
-                await _context.NodeOperations.SetHalt(node);
+                _ = await _context.NodeOperations.SetHalt(node);
                 return null;
             }
         }
@@ -87,7 +87,7 @@ public class AgentEvents {
         if (ev.State == NodeState.Init) {
             if (node.DeleteRequested) {
                 _log.Info($"stopping node (init and delete_requested): {machineId}");
-                await _context.NodeOperations.Stop(node);
+                _ = await _context.NodeOperations.Stop(node);
                 return null;
             }
 
@@ -95,12 +95,12 @@ public class AgentEvents {
             // they send 'init' with reimage_requested, it's because the node was reimaged
             // successfully.
             node = node with { ReimageRequested = false, InitializedAt = DateTimeOffset.UtcNow };
-            await _context.NodeOperations.SetState(node, ev.State);
+            _ = await _context.NodeOperations.SetState(node, ev.State);
             return null;
         }
 
         _log.Info($"node state update: {machineId} from {node.State} to {ev.State}");
-        await _context.NodeOperations.SetState(node, ev.State);
+        node = await _context.NodeOperations.SetState(node, ev.State);
 
         if (ev.State == NodeState.Free) {
             _log.Info($"node now available for work: {machineId}");
@@ -193,7 +193,8 @@ public class AgentEvents {
         }
 
         if (!node.State.ReadyForReset()) {
-            await _context.NodeOperations.SetState(node, NodeState.Busy);
+            _ = await _context.NodeOperations.SetState(node, NodeState.Busy);
+            // node unused after this point
         }
 
         var nodeTask = new NodeTasks(
@@ -202,7 +203,7 @@ public class AgentEvents {
             State: NodeTaskState.Running);
         var r = await _context.NodeTasksOperations.Replace(nodeTask);
         if (!r.IsOk) {
-            _log.Error($"failed to replace node task {nodeTask.TaskId} due to {r.ErrorV}");
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace node task {nodeTask.TaskId}");
         }
 
         if (task.State.ShuttingDown()) {
@@ -219,7 +220,7 @@ public class AgentEvents {
             EventData: new WorkerEvent(Running: running));
         r = await _context.TaskEventOperations.Replace(taskEvent);
         if (!r.IsOk) {
-            _log.Error($"failed to replace taskEvent for task with id {taskEvent.TaskId} due to {r.ErrorV}");
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace taskEvent for task with id {taskEvent.TaskId}");
         }
 
         return null;
@@ -255,7 +256,10 @@ public class AgentEvents {
             // keep node if keep-on-completion is set
             if (task.Config.Debug?.Contains(TaskDebugFlag.KeepNodeOnCompletion) == true) {
                 node = node with { DebugKeepNode = true };
-                await _context.NodeOperations.Replace(node);
+                var r = await _context.NodeOperations.Replace(node);
+                if (!r.IsOk) {
+                    _log.WithHttpStatus(r.ErrorV).Error($"keepNodeOnCompletion: failed to replace node {node.MachineId} when setting debug keep node to true");
+                }
             }
         } else {
             await _context.TaskOperations.MarkFailed(
@@ -272,16 +276,25 @@ public class AgentEvents {
             if ((task.Config.Debug?.Contains(TaskDebugFlag.KeepNodeOnFailure) == true)
                 || (task.Config.Debug?.Contains(TaskDebugFlag.KeepNodeOnCompletion) == true)) {
                 node = node with { DebugKeepNode = true };
-                await _context.NodeOperations.Replace(node);
+                var r = await _context.NodeOperations.Replace(node);
+                if (!r.IsOk) {
+                    _log.WithHttpStatus(r.ErrorV).Error($"keepNodeOnfFailure: failed to replace node {node.MachineId} when setting debug keep node to true");
+                }
             }
         }
 
         if (!node.DebugKeepNode) {
-            await _context.NodeTasksOperations.Delete(new NodeTasks(machineId, done.TaskId));
+            var r = await _context.NodeTasksOperations.Delete(new NodeTasks(machineId, done.TaskId));
+            if (!r.IsOk) {
+                _log.WithHttpStatus(r.ErrorV).Error($"failed to deleting node task since DebugKeepNode is false");
+            }
         }
 
         var taskEvent = new TaskEvent(done.TaskId, machineId, new WorkerEvent { Done = done });
-        await _context.TaskEventOperations.Replace(taskEvent);
+        var r1 = await _context.TaskEventOperations.Replace(taskEvent);
+        if (!r1.IsOk) {
+            _log.WithHttpStatus(r1.ErrorV).Error($"failed to update task event for done task {done.TaskId}");
+        }
         return null;
     }
 

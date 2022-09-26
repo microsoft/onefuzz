@@ -20,12 +20,12 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     public async Async.Task NewFiles(Container container, string filename, bool failTaskOnTransientError) {
         var notifications = GetNotifications(container);
         var hasNotifications = await notifications.AnyAsync();
-        var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
 
         if (!hasNotifications) {
             return;
         }
 
+        var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
         var done = new List<NotificationTemplate>();
         await foreach (var notification in notifications) {
             if (done.Contains(notification.Config)) {
@@ -96,13 +96,19 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         if (replaceExisting) {
             var existing = this.SearchByRowKeys(new[] { container.String });
             await foreach (var existingEntry in existing) {
-                _logTracer.Info($"replacing existing notification: {existingEntry.NotificationId} - {container}");
-                await this.Delete(existingEntry);
+                _logTracer.Info($"deleting existing notification: {existingEntry.NotificationId} - {container}");
+                var rr = await this.Delete(existingEntry);
+                if (!rr.IsOk) {
+                    _logTracer.WithHttpStatus(rr.ErrorV).Error($"failed to delete existing notification {existingEntry.NotificationId} - {container}");
+                }
             }
         }
         var configWithHiddenSecret = await HideSecrets(config);
         var entry = new Notification(Guid.NewGuid(), container, configWithHiddenSecret);
-        await this.Insert(entry);
+        var r = await this.Insert(entry);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert notification with id {entry.NotificationId}");
+        }
         _logTracer.Info($"created notification.  notification_id:{entry.NotificationId} container:{entry.Container}");
 
         return OneFuzzResult<Notification>.Ok(entry);

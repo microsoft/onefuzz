@@ -329,6 +329,8 @@ public record InstanceConfig
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkConfig NetworkConfig,
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
+    ImageReference? DefaultWindowsVmImage = null,
+    ImageReference? DefaultLinuxVmImage = null,
     string ProxyVmSku = "Standard_B2s",
     bool RequireAdminPrivileges = false,
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
@@ -336,12 +338,15 @@ public record InstanceConfig
     IDictionary<string, string>? VmTags = null,
     IDictionary<string, string>? VmssTags = null
 ) : EntityBase() {
+
     public InstanceConfig(string instanceName) : this(
         instanceName,
         null,
         Array.Empty<string>(),
         new NetworkConfig(),
         new NetworkSecurityGroupConfig(),
+        null,
+        null,
         null,
         "Standard_B2s",
         false
@@ -357,8 +362,8 @@ public record InstanceConfig
 
     public InstanceConfig() : this(String.Empty) { }
 
-    //# At the moment, this only checks allowed_aad_tenants, however adding
-    //# support for 3rd party JWT validation is anticipated in a future release.
+    // At the moment, this only checks allowed_aad_tenants, however adding
+    // support for 3rd party JWT validation is anticipated in a future release.
     public ResultVoid<List<string>> CheckInstanceConfig() {
         List<string> errors = new();
         if (AllowedAadTenants.Length == 0) {

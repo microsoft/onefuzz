@@ -1,5 +1,5 @@
-﻿using Microsoft.Azure.Functions.Worker;
-
+﻿using ApiService.OneFuzzLib.Orm;
+using Microsoft.Azure.Functions.Worker;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class TimerRetention {
@@ -11,18 +11,24 @@ public class TimerRetention {
     private readonly INotificationOperations _notificaitonOps;
     private readonly IJobOperations _jobOps;
     private readonly IReproOperations _reproOps;
+    private readonly IQueue _queue;
+    private readonly IPoolOperations _poolOps;
 
     public TimerRetention(
             ILogTracer log,
             ITaskOperations taskOps,
             INotificationOperations notificaitonOps,
             IJobOperations jobOps,
-            IReproOperations reproOps) {
+            IReproOperations reproOps,
+            IQueue queue,
+            IPoolOperations poolOps) {
         _log = log;
         _taskOps = taskOps;
         _notificaitonOps = notificaitonOps;
         _jobOps = jobOps;
         _reproOps = reproOps;
+        _queue = queue;
+        _poolOps = poolOps;
     }
 
 
@@ -33,8 +39,8 @@ public class TimerRetention {
         var timeRetainedOlder = now - RETENTION_POLICY;
         var timeRetainedNewer = now + SEARCH_EXTENT;
 
-        var timeFilter = $"Timestamp lt datetime'{timeRetainedOlder.ToString("o")}' and Timestamp gt datetime'{timeRetainedNewer.ToString("o")}'";
-        var timeFilterNewer = $"Timestamp gt datetime '{timeRetainedOlder.ToString("o")}'";
+        var timeFilter = Query.TimeRange(timeRetainedOlder, timeRetainedNewer);
+        var timeFilterNewer = Query.TimestampNewerThan(timeRetainedOlder);
 
         // Collecting 'still relevant' task containers.
         // NOTE: This must be done before potentially modifying tasks otherwise
@@ -52,7 +58,6 @@ public class TimerRetention {
             }
         }
 
-
         await foreach (var notification in _notificaitonOps.QueryAsync(timeFilter)) {
             _log.Verbose($"checking expired notification for removal: {notification.NotificationId}");
             var container = notification.Container;
@@ -66,7 +71,7 @@ public class TimerRetention {
             }
         }
 
-        await foreach (var job in _jobOps.QueryAsync($"{timeFilter} and state eq '{JobState.Enabled}'")) {
+        await foreach (var job in _jobOps.QueryAsync(Query.And(timeFilter, Query.EqualEnum("state", JobState.Enabled)))) {
             if (job.UserInfo is not null && job.UserInfo.Upn is not null) {
                 _log.Info($"removing PII from job {job.JobId}");
                 var userInfo = job.UserInfo with { Upn = null };
@@ -78,7 +83,7 @@ public class TimerRetention {
             }
         }
 
-        await foreach (var task in _taskOps.QueryAsync($"{timeFilter} and state eq '{TaskState.Stopped}'")) {
+        await foreach (var task in _taskOps.QueryAsync(Query.And(timeFilter, Query.EqualEnum("state", TaskState.Stopped)))) {
             if (task.UserInfo is not null && task.UserInfo.Upn is not null) {
                 _log.Info($"removing PII from task {task.TaskId}");
                 var userInfo = task.UserInfo with { Upn = null };
@@ -99,6 +104,35 @@ public class TimerRetention {
                 if (!r.IsOk) {
                     _log.WithHttpStatus(r.ErrorV).Error($"Failed to save repro {updatedRepro.VmId}");
                 }
+            }
+        }
+
+        //delete Task queues for tasks that do not exist in the table (manually deleted from the table)
+        //delete Pool queues for pools that were deleted before https://github.com/microsoft/onefuzz/issues/2430 got fixed
+        await foreach (var q in _queue.ListQueues(StorageType.Corpus)) {
+            Guid queueId;
+            if (q.Name.StartsWith(IPoolOperations.PoolQueueNamePrefix)) {
+                var queueIdStr = q.Name[IPoolOperations.PoolQueueNamePrefix.Length..];
+                if (Guid.TryParse(queueIdStr, out queueId)) {
+                    var pool = await _poolOps.GetById(queueId);
+                    if (!pool.IsOk) {
+                        //pool does not exist. Ok to delete the pool queue
+                        _log.Info($"Deleting pool queue since pool could not be found in Pool table {q.Name}");
+                        await _queue.DeleteQueue(q.Name, StorageType.Corpus);
+                    }
+                }
+            } else if (Guid.TryParse(q.Name, out queueId)) {
+                //this is a task queue
+                var taskQueue = await _taskOps.GetByTaskId(queueId);
+                if (taskQueue is null) {
+                    // task does not exist. Ok to delete the task queue
+                    _log.Info($"Deleting task queue, since task could not be found in Task table {q.Name}");
+                    await _queue.DeleteQueue(q.Name, StorageType.Corpus);
+                }
+            } else if (q.Name.StartsWith(ShrinkQueue.ShrinkQueueNamePrefix)) {
+                //ignore Shrink Queues, since they seem to behave ok
+            } else {
+                _log.Warning($"Unhandled queue name {q.Name} when doing garbage collection on queues");
             }
         }
     }

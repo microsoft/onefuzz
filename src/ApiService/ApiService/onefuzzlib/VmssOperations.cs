@@ -135,7 +135,7 @@ public class VmssOperations : IVmssOperations {
             foreach (var ext in extensions) {
                 patch.VirtualMachineProfile.ExtensionProfile.Extensions.Add(ext);
             }
-            var _ = await res.UpdateAsync(WaitUntil.Started, patch);
+            _ = await res.UpdateAsync(WaitUntil.Started, patch);
             _log.Info($"VM extensions updated: {name}");
             return OneFuzzResultVoid.Ok;
 
@@ -377,7 +377,7 @@ public class VmssOperations : IVmssOperations {
                 .Select(vm => vm.Data.InstanceId)
                 .ToList();
         } catch (RequestFailedException ex) {
-            _log.Error($"cloud error listing vmss: {name} ({ex})");
+            _log.Exception(ex, $"cloud error listing vmss: {name}");
         }
         return null;
     }
@@ -420,7 +420,7 @@ public class VmssOperations : IVmssOperations {
         var machineToInstance = await ListInstanceIds(scalesetId);
         foreach (var machineId in machineIds) {
             if (machineToInstance.TryGetValue(machineId, out var instanceId)) {
-                instanceIds.Add(instanceId);
+                _ = instanceIds.Add(instanceId);
             } else {
                 _log.Info($"unable to find instance ID for {scalesetId}:{machineId}");
             }
@@ -443,9 +443,12 @@ public class VmssOperations : IVmssOperations {
         // The expectation is that these requests are queued and handled subsequently.
         // The VMSS Team confirmed this expectation and testing supports it, as well.
         _log.Info($"upgrading VMSS ndoes - name: {scalesetId} ids: {string.Join(", ", instanceIds)}");
-        await vmssResource.UpdateInstancesAsync(
+        var r = await vmssResource.UpdateInstancesAsync(
             WaitUntil.Started,
             new VirtualMachineScaleSetVmInstanceRequiredIds(instanceIds));
+        if (r.GetRawResponse().IsError) {
+            _log.Error($"failed to start update instance for scaleset {scalesetId} due to {r.GetRawResponse().ReasonPhrase}");
+        }
 
         _log.Info($"reimaging VMSS nodes - name: {scalesetId} ids: {string.Join(", ", instanceIds)}");
 
@@ -455,7 +458,10 @@ public class VmssOperations : IVmssOperations {
             reqInstanceIds.InstanceIds.Add(instanceId);
         }
 
-        await vmssResource.ReimageAllAsync(WaitUntil.Started, reqInstanceIds);
+        r = await vmssResource.ReimageAllAsync(WaitUntil.Started, reqInstanceIds);
+        if (r.GetRawResponse().IsError) {
+            _log.Error($"failed to start reimage all for scaleset {scalesetId} due to {r.GetRawResponse().ReasonPhrase}");
+        }
         return OneFuzzResultVoid.Ok;
     }
 
@@ -469,7 +475,7 @@ public class VmssOperations : IVmssOperations {
         var machineToInstance = await ListInstanceIds(scalesetId);
         foreach (var machineId in machineIds) {
             if (machineToInstance.TryGetValue(machineId, out var instanceId)) {
-                instanceIds.Add(instanceId);
+                _ = instanceIds.Add(instanceId);
             } else {
                 _log.Info($"unable to find instance ID for {scalesetId}:{machineId}");
             }
@@ -488,8 +494,13 @@ public class VmssOperations : IVmssOperations {
         var vmssResource = computeClient.GetVirtualMachineScaleSetResource(vmssId);
 
         _log.Info($"deleting scaleset VMs - name: {scalesetId} ids: {instanceIds}");
-        await vmssResource.DeleteInstancesAsync(
+        var r = await vmssResource.DeleteInstancesAsync(
             WaitUntil.Started,
             new VirtualMachineScaleSetVmInstanceRequiredIds(instanceIds));
+
+        if (r.GetRawResponse().IsError) {
+            _log.Error($"failed to start deletion of scaleset {scalesetId} due to {r.GetRawResponse().ReasonPhrase}");
+        }
+        return;
     }
 }

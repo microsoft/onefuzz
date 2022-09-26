@@ -4,6 +4,7 @@ using ApiService.OneFuzzLib.Orm;
 using Azure;
 using Azure.ResourceManager.Monitor;
 using Azure.ResourceManager.Monitor.Models;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -29,6 +30,18 @@ public interface IAutoScaleOperations {
     OneFuzzResult<AutoscaleSettingResource?> GetAutoscaleSettings(Guid vmss);
 
     Async.Task<OneFuzzResultVoid> UpdateAutoscale(AutoscaleSettingData autoscale);
+
+    Async.Task<OneFuzzResult<AutoscaleProfile>> GetAutoScaleProfile(Guid scalesetId);
+
+    Async.Task<AutoScale> Update(
+        Guid scalesetId,
+        long minAmount,
+        long maxAmount,
+        long defaultAmount,
+        long scaleOutAmount,
+        long scaleOutCooldown,
+        long scaleInAmount,
+        long scaleInCooldown);
 }
 
 
@@ -62,7 +75,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
         var r = await Insert(entry);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to save auto-scale record for scaleset ID: {scalesetId}, minAmount: {minAmount}, maxAmount: {maxAmount}, defaultAmount: {defaultAmount}, scaleOutAmount: {scaleOutAmount}, scaleOutCooldown: {scaleOutCooldown}, scaleInAmount: {scaleInAmount}, scaleInCooldown: {scaleInCooldown}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save auto-scale record for scaleset ID: {scalesetId}, minAmount: {minAmount}, maxAmount: {maxAmount}, defaultAmount: {defaultAmount}, scaleOutAmount: {scaleOutAmount}, scaleOutCooldown: {scaleOutCooldown}, scaleInAmount: {scaleInAmount}, scaleInCooldown: {scaleInCooldown}");
         }
         return entry;
     }
@@ -77,6 +90,28 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
         }
     }
 
+    public async Async.Task<OneFuzzResult<AutoscaleProfile>> GetAutoScaleProfile(Guid scalesetId) {
+        _logTracer.Info($"getting scaleset for existing auto-scale resources {scalesetId}");
+        var settings = _context.Creds.GetResourceGroupResource().GetAutoscaleSettings();
+        if (settings is null) {
+            return OneFuzzResult<AutoscaleProfile>.Error(ErrorCode.INVALID_CONFIGURATION, $"could not find any auto-scale settings for the resource group");
+        } else {
+            await foreach (var setting in settings.GetAllAsync()) {
+
+                if (setting.Data.TargetResourceId.EndsWith(scalesetId.ToString())) {
+                    if (setting.Data.Profiles.IsNullOrEmpty()) {
+                        return OneFuzzResult<AutoscaleProfile>.Error(ErrorCode.INVALID_CONFIGURATION, $"found {setting.Data.Profiles.Count} auto-scale profiles for {scalesetId}");
+                    } else {
+                        if (setting.Data.Profiles.Count != 1) {
+                            _logTracer.Warning($"Found more than one autoscaling profile for scaleset {scalesetId}");
+                        }
+                        return OneFuzzResult<AutoscaleProfile>.Ok(setting.Data.Profiles.First());
+                    }
+                }
+            }
+        }
+        return OneFuzzResult<AutoscaleProfile>.Error(ErrorCode.INVALID_CONFIGURATION, $"could not find auto-scale settings for scaleset {scalesetId}");
+    }
 
     public async Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(Guid vmss, AutoscaleProfile autoScaleProfile) {
         _logTracer.Info($"Checking scaleset {vmss} for existing auto scale resource");
@@ -253,9 +288,6 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
     public OneFuzzResult<AutoscaleSettingResource?> GetAutoscaleSettings(Guid vmss) {
         _logTracer.Info($"Checking scaleset {vmss} for existing auto scale resource");
-        var monitorManagementClient = _context.LogAnalytics.GetMonitorManagementClient();
-        var resourceGroup = _context.Creds.GetBaseResourceGroup();
-
         try {
             var autoscale = _context.Creds.GetResourceGroupResource().GetAutoscaleSettings()
                 .ToEnumerable()
@@ -318,5 +350,33 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
                new TimeSpan(0, 5, 0)
            ) { Value = "1" }
        );
+    }
+
+    public async Async.Task<AutoScale> Update(
+        Guid scalesetId,
+        long minAmount,
+        long maxAmount,
+        long defaultAmount,
+        long scaleOutAmount,
+        long scaleOutCooldown,
+        long scaleInAmount,
+        long scaleInCooldown) {
+
+        var entry = new AutoScale(
+                scalesetId,
+                Min: minAmount,
+                Max: maxAmount,
+                Default: defaultAmount,
+                ScaleOutAmount: scaleOutAmount,
+                ScaleOutCooldown: scaleOutCooldown,
+                ScaleInAmount: scaleInAmount,
+                ScaleInCooldown: scaleInCooldown
+                );
+
+        var r = await Replace(entry);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace auto-scale record for scaleset ID: {scalesetId}, minAmount: {minAmount}, maxAmount: {maxAmount}, defaultAmount: {defaultAmount}, scaleOutAmount: {scaleOutAmount}, scaleOutCooldown: {scaleOutCooldown}, scaleInAmount: {scaleInAmount}, scaleInCooldown: {scaleInCooldown}");
+        }
+        return entry;
     }
 }
