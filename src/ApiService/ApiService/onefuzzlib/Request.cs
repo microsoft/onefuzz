@@ -20,7 +20,7 @@ public class RequestHandling : IRequestHandling {
     public async Async.Task<HttpResponseData> NotOk(HttpRequestData request, Error error, string context, HttpStatusCode statusCode = HttpStatusCode.BadRequest) {
         var statusNum = (int)statusCode;
         if (statusNum >= 400 && statusNum <= 599) {
-            _log.Error($"request error - {context}: {error}");
+            _log.Error($"request error: {context:Tag:Context} - {error:Tag:Error}");
 
             var response = HttpResponseData.CreateResponse(request);
             await response.WriteAsJsonAsync(error);

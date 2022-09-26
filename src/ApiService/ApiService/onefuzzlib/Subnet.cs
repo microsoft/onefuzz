@@ -30,7 +30,7 @@ public class Subnet : ISubnet {
     }
 
     public async Task<OneFuzzResultVoid> CreateVirtualNetwork(string resourceGroup, string name, Region region, NetworkConfig networkConfig) {
-        _logTracer.Info($"creating subnet - resource group:{resourceGroup} name:{name} region: {region}");
+        _logTracer.Info($"creating subnet - {resourceGroup:Tag:ResourceGroup} {name:Tag:Name} {region:Tag:Region}");
 
         var virtualNetParam = new VirtualNetworkData {
             Location = region,
@@ -46,7 +46,7 @@ public class Subnet : ISubnet {
         var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
         if (!string.IsNullOrEmpty(onefuzzOwner)) {
             if (!virtualNetParam.Tags.TryAdd("OWNER", onefuzzOwner)) {
-                _logTracer.Warning($"Failed to add tag 'OWNER':{onefuzzOwner} to virtual network {resourceGroup}:{name}");
+                _logTracer.Warning($"Failed to add tag 'OWNER':{onefuzzOwner:Tag:Owner} to virtual network {resourceGroup:Tag:ResourceGroup}:{name:Tag:Name}");
             }
         }
 
@@ -56,7 +56,7 @@ public class Subnet : ISubnet {
                 name,
                 virtualNetParam);
         } catch (RequestFailedException ex) {
-            _logTracer.Error($"network creation failed: {name}:{region} {{error}}");
+            _logTracer.Error($"network creation failed: {name:Tag:Name}:{region:Tag:Region} {ex.Message:Tag:Error}");
             return OneFuzzResultVoid.Error(
                 ErrorCode.UNABLE_TO_CREATE_NETWORK,
                 ex.ToString()

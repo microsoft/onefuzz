@@ -17,7 +17,7 @@ public class Ado : NotificationsBase, IAdo {
 
     public async Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool failTaskOnTransientError) {
         if (reportable is RegressionReport) {
-            _logTracer.Info($"ado integration does not support regression report. container:{container} filename:{filename}");
+            _logTracer.Info($"ado integration does not support regression report. container:{container:Tag:Container} filename:{filename:Tag:Filename}");
             return;
         }
 
@@ -26,7 +26,7 @@ public class Ado : NotificationsBase, IAdo {
         var notificationInfo = @$"job_id:{report.JobId} task_id:{report.TaskId}
 container:{container} filename:{filename}";
 
-        _logTracer.Info($"notify ado: {notificationInfo}");
+        _logTracer.Info($"notify ado: {report.JobId:Tag:JobId} {report.TaskId:Tag:TaskId} {container:Tag:Container} {filename:Tag:Filename}");
 
         try {
             var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
@@ -41,7 +41,7 @@ container:{container} filename:{filename}";
                 ValueError,
             */
             if (!failTaskOnTransientError && IsTransient(e)) {
-                _logTracer.Error($"transient ADO notification failure {notificationInfo}");
+                _logTracer.Error($"transient ADO notification failure {report.JobId:Tag:JobId} {report.TaskId:Tag:TaskId} {container:Tag:Container} {filename:Tag:Filename}");
                 throw;
             } else {
                 await FailTask(report, e);
@@ -209,9 +209,9 @@ container:{container} filename:{filename}";
 
             if (document.Any()) {
                 _ = await _client.UpdateWorkItemAsync(document, _project, (int)(item.Id!));
-                _logTracer.Info($"notify ado: updated work item {item.Id} - {notificationInfo}");
+                _logTracer.Info($"notify ado: updated {item.Id:Tag:WorkItemId} - {notificationInfo}");
             } else {
-                _logTracer.Info($"notify ado: no update for work item {item.Id} - {notificationInfo}");
+                _logTracer.Info($"notify ado: no update {item.Id:Tag:WorkItemId} - {notificationInfo}");
             }
         }
 
@@ -274,7 +274,7 @@ container:{container} filename:{filename}";
 
             if (!seen) {
                 var entry = await CreateNew();
-                _logTracer.Info($"notify ado: created new work item {entry.Id} - {notificationInfo}");
+                _logTracer.Info($"notify ado: created new work item {entry.Id:Tag:EntryId} - {notificationInfo}");
             }
         }
     }

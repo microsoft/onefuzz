@@ -16,7 +16,7 @@ public class Notifications {
     }
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
-        _log.Info("Notification search");
+        _log.WithTag("HttpRequest", "GET").Info($"Notification search");
         var request = await RequestHandling.ParseUri<NotificationSearch>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "notification search");
@@ -32,7 +32,7 @@ public class Notifications {
 
 
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
-        _log.Info("adding notification hook");
+        _log.WithTag("HttpRequest", "POST").Info($"adding notification hook");
         var request = await RequestHandling.ParseRequest<NotificationCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "notification create");

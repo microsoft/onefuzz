@@ -29,12 +29,12 @@ public class NodeMessageOperations : Orm<NodeMessage>, INodeMessageOperations {
         => QueryAsync(Query.PartitionKey(machineId.ToString()));
 
     public async Async.Task ClearMessages(Guid machineId) {
-        _logTracer.Info($"clearing messages for node {machineId}");
+        _logTracer.Info($"clearing messages for node {machineId:Tag:MachineId}");
 
         await foreach (var message in GetMessage(machineId)) {
             var r = await Delete(message);
             if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete message for node {machineId}");
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete message for node {machineId:Tag:MachineId}");
             }
         }
     }
@@ -43,7 +43,7 @@ public class NodeMessageOperations : Orm<NodeMessage>, INodeMessageOperations {
         messageId ??= EntityBase.NewSortedKey;
         var r = await Insert(new NodeMessage(machineId, messageId, message));
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert message with id: {messageId} for machine id: {machineId} message: {message}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert message with id: {messageId:Tag:MessageId} for machine id: {machineId:Tag:MachineId} message: {message:Tag:Message}");
         }
     }
 }

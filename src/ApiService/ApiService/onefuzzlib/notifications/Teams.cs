@@ -49,7 +49,7 @@ public class Teams : ITeams {
         var client = new Request(_httpFactory.CreateClient());
         var response = await client.Post(url: new Uri(configUrl!), JsonSerializer.Serialize(message));
         if (response == null || !response.IsSuccessStatusCode) {
-            _logTracer.Error($"webhook failed {response?.StatusCode} {response?.Content}");
+            _logTracer.Error($"webhook failed {response?.StatusCode:Tag:StatusCode} {response?.Content}");
         }
     }
 
@@ -61,7 +61,7 @@ public class Teams : ITeams {
         if (reportOrRegression is Report report) {
             var task = await _context.TaskOperations.GetByJobIdAndTaskId(report.JobId, report.TaskId);
             if (task == null) {
-                _logTracer.Error($"report with invalid task {report.JobId}:{report.TaskId}");
+                _logTracer.Error($"report with invalid task {report.JobId:Tag:JobId}:{report.TaskId:Tag:TaskId}");
                 return;
             }
 

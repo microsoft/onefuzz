@@ -20,21 +20,19 @@ public class TimerDaily {
     public async Async.Task Run([TimerTrigger("1.00:00:00")] TimerInfo myTimer) {
         var scalesets = _scalesets.Search();
         await foreach (var scaleset in scalesets) {
-            var log = _log.WithTag("ScalesetId", scaleset.ScalesetId.ToString());
-            log.Info($"updating scaleset configs");
+            _log.Info($"updating scaleset configs {scaleset.ScalesetId:Tag:ScalesetId}");
             // todo: do it in batches
             var r = await _scalesets.Replace(scaleset with { NeedsConfigUpdate = true });
             if (!r.IsOk) {
-                log.WithHttpStatus(r.ErrorV).Error($"failed to replace scaleset with NeedsConfigUpdate set to true");
+                _log.WithHttpStatus(r.ErrorV).Error($"failed to replace scaleset {scaleset.ScalesetId:Tag:ScalesetId} with NeedsConfigUpdate set to true");
             }
         }
         var expiredWebhookLogs = _webhookMessageLogs.SearchExpired();
         await foreach (var logEntry in expiredWebhookLogs) {
-            var log = _log.WithTags(new[] { ("WebhookId", logEntry.WebhookId.ToString()), ("EventId", logEntry.EventId.ToString()) });
-            log.Info("stopping expired webhook message log");
+            _log.Info($"stopping expired webhook {logEntry.WebhookId:Tag:WebhookId} message log for {logEntry.EventId:Tag:EventId}");
             var r = await _webhookMessageLogs.Delete(logEntry);
             if (!r.IsOk) {
-                log.WithHttpStatus(r.ErrorV).Error("failed to delete log entry for an expired webhook message");
+                _log.WithHttpStatus(r.ErrorV).Error($"failed to delete log entry for an expired webhook {logEntry.WebhookId:Tag:WebhookId} message for {logEntry.EventId:Tag:EventId}");
             }
         }
     }

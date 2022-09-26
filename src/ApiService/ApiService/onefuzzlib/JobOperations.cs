@@ -32,7 +32,7 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
         if (job.EndTime == null) {
             var r = await Replace(job with { EndTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(job.Config.Duration) });
             if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace job {job.JobId} when calling OnStart");
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace job {job.JobId:Tag:JobId} when calling OnStart");
             }
         }
     }
@@ -54,7 +54,7 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
         var tasks = _context.TaskOperations.GetByJobId(job.JobId);
 
         if (!await tasks.AnyAsync()) {
-            _logTracer.Warning($"StopIfAllDone could not find any tasks for job with id {job.JobId}");
+            _logTracer.Warning($"StopIfAllDone could not find any tasks for job with id {job.JobId:Tag:JobId}");
         }
 
         var anyNotStoppedTasks = await tasks.AnyAsync(task => task.State != TaskState.Stopped);
@@ -63,7 +63,7 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
             return;
         }
 
-        _logTracer.Info($"stopping job as all tasks are stopped: {job.JobId}");
+        _logTracer.Info($"stopping job as all tasks are stopped: {job.JobId:Tag:JobId}");
         _ = await Stopping(job);
     }
 
@@ -82,7 +82,7 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
             await foreach (var task in _context.TaskOperations.QueryAsync(Query.PartitionKey(job.JobId.ToString()))) {
                 await _context.TaskOperations.MarkFailed(task, new Error(ErrorCode.TASK_FAILED, new[] { "job never not start" }));
             }
-            _logTracer.Info($"stopping job that never started: {job.JobId}");
+            _logTracer.Info($"stopping job that never started: {job.JobId:Tag:JobId}");
 
             // updated result ignored: not used after this loop
             _ = await _context.JobOperations.Stopping(job);
@@ -90,13 +90,13 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
     }
 
     public async Async.Task<Job> Init(Job job) {
-        _logTracer.Info($"init job: {job.JobId}");
+        _logTracer.Info($"init job: {job.JobId:Tag:JobId}");
         var enabled = job with { State = JobState.Enabled };
         var result = await Replace(enabled);
         if (result.IsOk) {
             return enabled;
         } else {
-            _logTracer.WithHttpStatus(result.ErrorV).Error($"Failed to save job when init {job.JobId} : {result.ErrorV}");
+            _logTracer.WithHttpStatus(result.ErrorV).Error($"Failed to save job when init {job.JobId:Tag:JobId} : {result.ErrorV:Tag:Error}");
             throw new Exception($"Failed to save job when init {job.JobId} : {result.ErrorV}");
         }
     }
@@ -124,7 +124,7 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
         if (result.IsOk) {
             return job;
         } else {
-            _logTracer.WithHttpStatus(result.ErrorV).Error($"Failed to save job when stopping {job.JobId} : {result.ErrorV}");
+            _logTracer.WithHttpStatus(result.ErrorV).Error($"Failed to save job when stopping {job.JobId:Tag:JobId} : {result.ErrorV:Tag:Error}");
             throw new Exception($"Failed to save job when stopping {job.JobId} : {result.ErrorV}");
         }
     }

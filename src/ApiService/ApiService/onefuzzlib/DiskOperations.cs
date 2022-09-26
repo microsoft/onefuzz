@@ -22,21 +22,21 @@ public class DiskOperations : IDiskOperations {
 
     public async Task<bool> DeleteDisk(string resourceGroup, string name) {
         try {
-            _logTracer.Info($"deleting disks {resourceGroup} : {name}");
+            _logTracer.Info($"deleting disks {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name}");
             var disk = await _creds.GetResourceGroupResource().GetDiskAsync(name);
             if (disk != null) {
                 _ = await disk.Value.DeleteAsync(WaitUntil.Started);
                 return true;
             }
         } catch (Exception e) {
-            _logTracer.Error($"unable to delete disk: {name} {e.Message}");
+            _logTracer.Error($"unable to delete disk: {name:Tag:Name} {e.Message:Tag:Error}");
             _logTracer.Exception(e);
         }
         return false;
     }
 
     public DiskCollection ListDisks(string resourceGroup) {
-        _logTracer.Info($"listing disks {resourceGroup}");
+        _logTracer.Info($"listing disks {resourceGroup:Tag:ResourceGroup}");
         return _creds.GetResourceGroupResource().GetDisks();
     }
 }

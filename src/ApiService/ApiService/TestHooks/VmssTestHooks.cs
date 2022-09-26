@@ -23,7 +23,7 @@ namespace ApiService.TestHooks {
 
         [Function("ListInstanceIdsTesHook")]
         public async Task<HttpResponseData> ListInstanceIds([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/vmssOperations/listInstanceIds")] HttpRequestData req) {
-            _log.Info("list instance ids");
+            _log.Info($"list instance ids");
             var query = UriExtension.GetQueryComponents(req.Url);
             var name = UriExtension.GetGuid("name", query) ?? throw new Exception("name must be set");
             var ids = await _vmssOps.ListInstanceIds(name);
@@ -36,7 +36,7 @@ namespace ApiService.TestHooks {
 
         [Function("GetInstanceIdsTesHook")]
         public async Task<HttpResponseData> GetInstanceId([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/vmssOperations/getInstanceId")] HttpRequestData req) {
-            _log.Info("list instance ids");
+            _log.Info($"list instance ids");
             var query = UriExtension.GetQueryComponents(req.Url);
             var name = UriExtension.GetGuid("name", query) ?? throw new Exception("name must be set");
             var vmId = UriExtension.GetGuid("vmId", query) ?? throw new Exception("vmId must be set");
@@ -50,7 +50,7 @@ namespace ApiService.TestHooks {
 
         [Function("UpdateScaleInProtectionTestHook")]
         public async Task<HttpResponseData> UpdateScaleInProtection([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "testhooks/vmssOperations/updateScaleInProtection")] HttpRequestData req) {
-            _log.Info("list instance ids");
+            _log.Info($"list instance ids");
             var query = UriExtension.GetQueryComponents(req.Url);
             var name = UriExtension.GetGuid("name", query) ?? throw new Exception("name must be set");
             var vmId = UriExtension.GetGuid("vmId", query) ?? throw new Exception("vmId must be set");

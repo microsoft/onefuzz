@@ -38,7 +38,7 @@ public class AgentCommands {
             var envelope = new NodeCommandEnvelope(command, messageId);
             return await RequestHandling.Ok(req, new PendingNodeCommand(envelope));
         } else {
-            _log.WithTag("Command", "GET").Verbose($"failed to find machine id {nodeCommand.MachineId}");
+            _log.WithTag("HttpRequest", "GET").Verbose($"failed to find {nodeCommand.MachineId:Tag:MachineId}");
             return await RequestHandling.Ok(req, new PendingNodeCommand(null));
         }
     }
@@ -54,7 +54,7 @@ public class AgentCommands {
         if (message != null) {
             await _context.NodeMessageOperations.Delete(message).IgnoreResult();
         } else {
-            _log.WithTag("Command", "DELETE").Verbose($"failed to find machine id {nodeCommand.MachineId} for message {nodeCommand.MessageId}");
+            _log.WithTag("HttpRequest", "DELETE").Verbose($"failed to find {nodeCommand.MachineId:Tag:MachineId} for {nodeCommand.MessageId:Tag:MessageId}");
         }
 
         return await RequestHandling.Ok(req, new BoolResult(true));
