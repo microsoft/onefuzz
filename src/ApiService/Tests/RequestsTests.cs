@@ -76,7 +76,7 @@ public class RequestsTests {
             // find appropriate parameter
             var param = requestType.GetConstructors().Single().GetParameters().Single(p => p.Name == property.Name);
             Assert.True(param.HasDefaultValue,
-                "For request types, all non-nullable properties should either have a default value, or the [Required] attribute."
+                $"type '{requestType}' is invalid. For request types, all non-nullable properties should either have a default value, or the [Required] attribute."
             );
         } else {
             // it is required, okay

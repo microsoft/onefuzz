@@ -44,7 +44,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
             return await _context.RequestHandling.NotOk(req, tokenResult.ErrorV, "token verification", HttpStatusCode.Unauthorized);
         }
 
-        var token = tokenResult.OkV;
+        var token = tokenResult.OkV.UserInfo;
         if (await IsUser(token)) {
             if (!allowUser) {
                 return await Reject(req, token);
@@ -96,7 +96,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
                 Errors: new string[] { "no instance configuration found " });
         }
 
-        return CheckRequireAdminsImpl(config, tokenResult.OkV);
+        return CheckRequireAdminsImpl(config, tokenResult.OkV.UserInfo);
     }
 
     private static OneFuzzResultVoid CheckRequireAdminsImpl(InstanceConfig config, UserInfo userInfo) {

@@ -73,7 +73,7 @@ public class ReproVmss {
             Path: create.Path,
             Duration: create.Duration);
 
-        var vm = await _context.ReproOperations.Create(cfg, userInfo.OkV);
+        var vm = await _context.ReproOperations.Create(cfg, userInfo.OkV.UserInfo);
         if (!vm.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,

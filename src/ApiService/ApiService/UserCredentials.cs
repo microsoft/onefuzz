@@ -10,8 +10,11 @@ namespace Microsoft.OneFuzz.Service;
 public interface IUserCredentials {
     public string? GetBearerToken(HttpRequestData req);
     public string? GetAuthToken(HttpRequestData req);
-    public Task<OneFuzzResult<UserInfo>> ParseJwtToken(HttpRequestData req);
+    public Task<OneFuzzResult<UserAuthInfo>> ParseJwtToken(HttpRequestData req);
 }
+
+public record UserAuthInfo(UserInfo UserInfo, List<string> Roles);
+
 
 public class UserCredentials : IUserCredentials {
     ILogTracer _log;
@@ -59,26 +62,26 @@ public class UserCredentials : IUserCredentials {
         return OneFuzzResult<string[]>.Ok(allowedAddTenantsQuery.ToArray());
     }
 
-    public virtual async Task<OneFuzzResult<UserInfo>> ParseJwtToken(HttpRequestData req) {
+    public virtual async Task<OneFuzzResult<UserAuthInfo>> ParseJwtToken(HttpRequestData req) {
 
 
         var authToken = GetAuthToken(req);
         if (authToken is null) {
-            return OneFuzzResult<UserInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find authorization token" });
+            return OneFuzzResult<UserAuthInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find authorization token" });
         } else {
             var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(authToken);
             var allowedTenants = await GetAllowedTenants();
             if (allowedTenants.IsOk) {
                 if (allowedTenants.OkV is not null && allowedTenants.OkV.Contains(token.Issuer)) {
                     var userInfo =
-                        token.Payload.Claims.Aggregate(UserInfo.Create(), (acc, claim) => {
+                        token.Payload.Claims.Aggregate(new UserAuthInfo(new UserInfo(null, null, null), new List<string>()), (acc, claim) => {
                             switch (claim.Type) {
                                 case "oid":
-                                    return acc with { ObjectId = Guid.Parse(claim.Value) };
+                                    return acc with { UserInfo = acc.UserInfo with { ObjectId = Guid.Parse(claim.Value) } };
                                 case "appId":
-                                    return acc with { ApplicationId = Guid.Parse(claim.Value) };
+                                    return acc with { UserInfo = acc.UserInfo with { ApplicationId = Guid.Parse(claim.Value) } };
                                 case "upn":
-                                    return acc with { Upn = claim.Value };
+                                    return acc with { UserInfo = acc.UserInfo with { Upn = claim.Value } };
                                 case "roles":
                                     acc.Roles.Add(claim.Value);
                                     return acc;
@@ -87,15 +90,15 @@ public class UserCredentials : IUserCredentials {
                             }
                         });
 
-                    return OneFuzzResult<UserInfo>.Ok(userInfo);
+                    return OneFuzzResult<UserAuthInfo>.Ok(userInfo);
                 } else {
                     var tenantsStr = allowedTenants.OkV is null ? "null" : String.Join(';', allowedTenants.OkV!);
                     _log.Error($"issuer not from allowed tenant. issuer: {token.Issuer} - tenants: {tenantsStr}");
-                    return OneFuzzResult<UserInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unauthorized AAD issuer" });
+                    return OneFuzzResult<UserAuthInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unauthorized AAD issuer" });
                 }
             } else {
                 _log.Error("Failed to get allowed tenants");
-                return OneFuzzResult<UserInfo>.Error(allowedTenants.ErrorV);
+                return OneFuzzResult<UserAuthInfo>.Error(allowedTenants.ErrorV);
             }
         }
     }

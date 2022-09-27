@@ -47,7 +47,7 @@ public class Jobs {
             JobId: Guid.NewGuid(),
             State: JobState.Init,
             Config: cfg) {
-            UserInfo = userInfo.OkV,
+            UserInfo = userInfo.OkV.UserInfo,
         };
 
         // create the job logs container

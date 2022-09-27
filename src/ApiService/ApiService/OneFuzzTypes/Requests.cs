@@ -293,15 +293,15 @@ public record InstanceConfigUpdate(
 
 
 public record AgentRegistrationGet(
-    Guid MachineId
+    [property: Required] Guid MachineId
 ) : BaseRequest;
 
 
 public record AgentRegistrationPost(
-    PoolName PoolName,
-    Guid ScalesetId,
-    Guid MachineId,
-    string Version,
+    [property: Required] PoolName PoolName,
+    [property: Required] Guid ScalesetId,
+    [property: Required] Guid MachineId,
+    [property: Required] string Version,
     Os? Os
 ) : BaseRequest;
 
