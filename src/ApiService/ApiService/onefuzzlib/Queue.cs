@@ -122,6 +122,7 @@ public class Queue : IQueue {
                 }
             }
         } catch (RequestFailedException ex) when (ex.Status == 404 || ex.ErrorCode == "QueueNotFound") {
+            _log.Info($"tried to remove message from queue {name} but it doesn't exist");
             return false;
         }
 
