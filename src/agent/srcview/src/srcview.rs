@@ -65,7 +65,7 @@ impl SrcView {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// use srcview::SrcView;
     ///
     /// let mut sv = SrcView::new();
