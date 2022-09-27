@@ -14,8 +14,8 @@ static class Check {
     private static readonly Regex _isAlnumDash = new(@"\A[a-zA-Z0-9\-]+\z", RegexOptions.Compiled);
     public static bool IsAlnumDash(string input) => _isAlnumDash.IsMatch(input);
 
-    // Permits 1-64 characters: alphanumeric, underscore, or dash.
-    private static readonly Regex _isNameLike = new(@"\A[_a-zA-Z0-9\-]{1,64}\z", RegexOptions.Compiled);
+    // Permits 1-64 characters: alphanumeric, underscore, period, or dash.
+    private static readonly Regex _isNameLike = new(@"\A[._a-zA-Z0-9\-]{1,64}\z", RegexOptions.Compiled);
     public static bool IsNameLike(string input) => _isNameLike.IsMatch(input);
 }
 
@@ -65,7 +65,7 @@ public sealed record PoolName : ValidatedString {
             return result;
         }
 
-        throw new ArgumentException("Pool name must have only numbers, letters or dashes");
+        throw new ArgumentException("Pool name must have only numbers, letters, underscores, periods, or dashes");
     }
 
     public static bool TryParse(string input, [NotNullWhen(returnValue: true)] out PoolName? result) {
