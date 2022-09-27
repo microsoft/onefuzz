@@ -301,7 +301,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
         var reimageRequested = node.ReimageRequested;
         if (!node.ReimageRequested && !node.DeleteRequested) {
-            _logTracer.Info($"setting reimage_requested: {node.MachineId}");
+            _logTracer.Info($"setting reimage_requested: {node.MachineId:Tag:MachineId}");
             reimageRequested = true;
         }
 
@@ -311,7 +311,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
         var r = await Replace(updatedNode);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error("Failed to save Node record");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save Node record for node {node.MachineId:Tag:MachineId}");
         }
 
         return updatedNode;
@@ -343,7 +343,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             r = await Update(node);
         }
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to save NodeRecord, isNew: {isNew}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to save NodeRecord for node {node.MachineId:Tag:MachineId} isNew: {isNew:Tag:IsNew}");
         } else {
             await _context.Events.SendEvent(
                 new EventNodeCreated(
@@ -369,7 +369,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     /// <param name="node"></param>
     /// <returns></returns>
     public async Async.Task<Node> SetHalt(Node node) {
-        _logTracer.Info($"setting halt: {node.MachineId}");
+        _logTracer.Info($"setting halt: {node.MachineId:Tag:MachineId}");
         node = node with { DeleteRequested = true };
         node = await Stop(node, true);
         await SendStopIfFree(node);
@@ -378,11 +378,11 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
     public async Async.Task<Node> SetShutdown(Node node) {
         //don't give out more work to the node, but let it finish existing work
-        _logTracer.Info($"setting delete_requested: {node.MachineId}");
+        _logTracer.Info($"setting delete_requested: {node.MachineId:Tag:MachineId}");
         node = node with { DeleteRequested = true };
         var r = await Replace(node);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to update node with delete requested. machine id: {node.MachineId}, pool name: {node.PoolName}, pool id: {node.PoolId}, scaleset id: {node.ScalesetId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to update node with delete requested. {node.MachineId:Tag:MachineId} {node.PoolName:Tag:PoolName} {node.PoolId:Tag:PoolId} {node.ScalesetId:Tag:ScalesetId}");
         }
 
         await SendStopIfFree(node);
@@ -400,7 +400,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     public async Async.Task SendMessage(Node node, NodeCommand message) {
         var r = await _context.NodeMessageOperations.Replace(new NodeMessage(node.MachineId, message));
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace NodeMessge record for machine_id: {node.MachineId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace NodeMessge record for {node.MachineId:Tag:MachineId}");
         }
     }
 
@@ -454,7 +454,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
         var r = await Update(node);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to update node for machine: {node.MachineId} to state {state} due to {r.ErrorV}");
+            _logTracer.Error($"Failed to update node for: {node.MachineId:Tag:MachineId} {state:Tag:State} due to {r.ErrorV:Tag:Error}");
             // TODO: this should error out
         }
 
@@ -538,7 +538,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             if (!node.DebugKeepNode) {
                 var r = await _context.NodeTasksOperations.Delete(entry);
                 if (!r.IsOk) {
-                    _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete task operation for task {entry.TaskId}");
+                    _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete task operation for {entry.TaskId:Tag:TaskId}");
                 }
             }
         }
@@ -550,7 +550,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         await _context.NodeMessageOperations.ClearMessages(node.MachineId);
         var r = await base.Delete(node);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to delete node {node.MachineId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to delete node {node.MachineId:Tag:MachineId}");
         }
 
         await _context.Events.SendEvent(new EventNodeDeleted(node.MachineId, node.ScalesetId, node.PoolName, node.State));
@@ -567,7 +567,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             await _context.NodeMessageOperations.SendMessage(node.MachineId, new NodeCommand(StopTask: new StopTaskNodeCommand(task_id)));
 
             if (!await StopIfComplete(node)) {
-                _logTracer.Info($"nodes: stopped task on node, but not reimaging due to other tasks: task_id:{task_id} machine_id:{node.MachineId}");
+                _logTracer.Info($"nodes: stopped task on node, but not reimaging due to other tasks: {task_id:Tag:TaskId} {node.MachineId:Tag:MachineId}");
             }
         }
 
@@ -598,7 +598,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
                 return false;
             }
         }
-        _logTracer.Info($"node: stopping busy node with all tasks complete: {node.MachineId}");
+        _logTracer.Info($"node: stopping busy node with all tasks complete: {node.MachineId:Tag:MachineId}");
 
         _ = await Stop(node, done: done);
         return true;

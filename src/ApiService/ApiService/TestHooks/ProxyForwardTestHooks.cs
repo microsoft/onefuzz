@@ -22,7 +22,7 @@ namespace ApiService.TestHooks {
 
         [Function("SearchForwardTestHook")]
         public async Task<HttpResponseData> SearchForward([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/proxyForwardOperations/search")] HttpRequestData req) {
-            _log.Info("search proxy forward");
+            _log.Info($"search proxy forward");
 
             var query = UriExtension.GetQueryComponents(req.Url);
 

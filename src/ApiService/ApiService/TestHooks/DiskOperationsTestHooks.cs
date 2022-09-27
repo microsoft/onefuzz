@@ -23,7 +23,7 @@ namespace ApiService.TestHooks {
 
         [Function("GetDiskNamesTestHook")]
         public async Task<HttpResponseData> GetSubscription([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/disks")] HttpRequestData req) {
-            _log.Info("Get disk names");
+            _log.Info($"Get disk names");
             var resp = req.CreateResponse(HttpStatusCode.OK);
             var diskNames = _diskOps.ListDisks(_creds.GetBaseResourceGroup()).ToList().Select(x => x.Data.Name);
             await resp.WriteAsJsonAsync(diskNames);

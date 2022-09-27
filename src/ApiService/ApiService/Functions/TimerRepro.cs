@@ -18,7 +18,7 @@ public class TimerRepro {
         {
             var expired = _onefuzzContext.ReproOperations.SearchExpired();
             await foreach (var repro in expired) {
-                _log.Info($"stopping repro: {repro.VmId}");
+                _log.Info($"stopping repro: {repro.VmId:Tag:VmId}");
                 _ = expiredVmIds.Add(repro.VmId);
                 // ignoring result: value not used later
                 _ = await _onefuzzContext.ReproOperations.Stopping(repro);
@@ -31,7 +31,7 @@ public class TimerRepro {
                 continue;
             }
 
-            _log.Info($"update repro: {repro.VmId}");
+            _log.Info($"update repro: {repro.VmId:Tag:VmId}");
             // ignoring result: value not used later
             _ = await _onefuzzContext.ReproOperations.ProcessStateUpdates(repro);
         }

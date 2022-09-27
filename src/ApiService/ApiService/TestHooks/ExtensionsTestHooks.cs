@@ -22,7 +22,7 @@ namespace ApiService.TestHooks {
 
         [Function("GenericExtensionsHook")]
         public async Task<HttpResponseData> GenericExtensions([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/extensions/genericExtensions")] HttpRequestData req) {
-            _log.Info("Get Generic extensions");
+            _log.Info($"Get Generic extensions");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             Os os = Enum.Parse<Os>(query["os"]);

@@ -74,7 +74,7 @@ public class ContainersFunction {
         }
 
         var delete = request.OkV;
-        _logger.Info($"container - deleting {delete.Name}");
+        _logger.Info($"deleting {delete.Name:Tag:ContainerName}");
         var container = await _context.Containers.FindContainer(delete.Name, StorageType.Corpus);
 
         var deleted = false;
@@ -92,7 +92,7 @@ public class ContainersFunction {
         }
 
         var post = request.OkV;
-        _logger.Info($"container - creating {post.Name}");
+        _logger.Info($"creating {post.Name:Tag:ContainerName}");
         var sas = await _context.Containers.CreateContainer(
             post.Name,
             StorageType.Corpus,

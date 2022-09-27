@@ -86,10 +86,10 @@ public abstract class FunctionTestBase : IAsyncLifetime {
             .Select(async container => {
                 try {
                     using var _ = await blobClient.DeleteBlobContainerAsync(container.Name);
-                    Logger.Info($"cleaned up container {container.Name}");
+                    Logger.Info($"cleaned up container {container.Name:Tag:ContainerName}");
                 } catch (Exception ex) {
                     // swallow any exceptions: this is a best-effort attempt to cleanup
-                    Logger.Exception(ex, "error deleting container at end of test");
+                    Logger.Exception(ex, $"error deleting container {container.Name:Tag:ContainerName} at end of test");
                 }
             })
             .ToListAsync());
@@ -101,10 +101,10 @@ public abstract class FunctionTestBase : IAsyncLifetime {
                 .Select(async table => {
                     try {
                         using var _ = await tableClient.DeleteTableAsync(table.Name);
-                        Logger.Info($"cleaned up table {table.Name}");
+                        Logger.Info($"cleaned up table {table.Name:Tag:TableName}");
                     } catch (Exception ex) {
                         // swallow any exceptions: this is a best-effort attempt to cleanup
-                        Logger.Exception(ex, "error deleting table at end of test");
+                        Logger.Exception(ex, $"error deleting table {table.Name:Tag:TableName} at end of test");
                     }
                 })
                 .ToListAsync());

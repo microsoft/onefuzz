@@ -14,20 +14,20 @@ sealed class TestLogTracer : ILogTracer {
     private readonly Dictionary<string, string> _tags = new();
     public IReadOnlyDictionary<string, string> Tags => _tags;
 
-    public void Critical(string message) {
-        _output.WriteLine($"[Critical] {message}");
+    public void Critical(LogStringHandler message) {
+        _output.WriteLine($"[Critical] {message.ToString()}");
     }
 
-    public void Error(string message) {
-        _output.WriteLine($"[Error] {message}");
+    public void Error(LogStringHandler message) {
+        _output.WriteLine($"[Error] {message.ToString()}");
     }
 
-    public void Event(string evt, IReadOnlyDictionary<string, double>? metrics) {
+    public void Event(LogStringHandler evt, IReadOnlyDictionary<string, double>? metrics) {
         // TODO: metrics
         _output.WriteLine($"[Event] [{evt}]");
     }
 
-    public void Exception(Exception ex, string message = "", IReadOnlyDictionary<string, double>? metrics = null) {
+    public void Exception(Exception ex, LogStringHandler message = $"", IReadOnlyDictionary<string, double>? metrics = null) {
         // TODO: metrics
         _output.WriteLine($"[Error] {message} {ex}");
     }
@@ -36,16 +36,16 @@ sealed class TestLogTracer : ILogTracer {
         // nothing to do
     }
 
-    public void Info(string message) {
-        _output.WriteLine($"[Info] {message}");
+    public void Info(LogStringHandler message) {
+        _output.WriteLine($"[Info] {message.ToString()}");
     }
 
-    public void Verbose(string message) {
-        _output.WriteLine($"[Verbose] {message}");
+    public void Verbose(LogStringHandler message) {
+        _output.WriteLine($"[Verbose] {message.ToString()}");
     }
 
-    public void Warning(string message) {
-        _output.WriteLine($"[Warning] {message}");
+    public void Warning(LogStringHandler message) {
+        _output.WriteLine($"[Warning] {message.ToString()}");
     }
 
     public ILogTracer WithHttpStatus((int, string) status) {
@@ -61,6 +61,6 @@ sealed class TestLogTracer : ILogTracer {
     }
 
     public void Error(Error error) {
-        Error(error.ToString());
+        Error($"{error}");
     }
 }

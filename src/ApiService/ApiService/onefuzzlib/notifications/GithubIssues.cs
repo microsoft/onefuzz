@@ -17,7 +17,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         }
 
         if (reportable is RegressionReport) {
-            _logTracer.Info($"github issue integration does not support regression reports. container:{container} filename:{filename}");
+            _logTracer.Info($"github issue integration does not support regression reports. {container:Tag:Container} - {filename:Tag:Filename}");
             return;
         }
 

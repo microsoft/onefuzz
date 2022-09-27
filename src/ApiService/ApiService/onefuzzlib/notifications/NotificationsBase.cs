@@ -14,7 +14,7 @@ public abstract class NotificationsBase {
     }
 
     public async Async.Task FailTask(Report report, Exception error) {
-        _logTracer.Error($"notification failed: job_id:{report.JobId} task_id:{report.TaskId} err:{error}");
+        _logTracer.Exception(error, $"notification failed {report.JobId:Tag:JobId} {report.TaskId:Tag:TaskId} {error.Message:Tag:Error}");
 
         var task = await _context.TaskOperations.GetByJobIdAndTaskId(report.JobId, report.TaskId);
         if (task != null) {
@@ -54,10 +54,10 @@ public abstract class NotificationsBase {
             Uri? reportUrl = null) {
 
             task ??= await context.TaskOperations.GetByJobIdAndTaskId(report.JobId, report.TaskId);
-            var checkedTask = task.EnsureNotNull($"invalid task {report.TaskId}");
+            var checkedTask = task.EnsureNotNull($"invalid task {report.TaskId:Tag:TaskId}");
 
             job ??= await context.JobOperations.Get(report.JobId);
-            var checkedJob = job.EnsureNotNull($"invalid job {report.JobId}");
+            var checkedJob = job.EnsureNotNull($"invalid job {report.JobId:Tag:JobId}");
 
             if (targetUrl == null) {
                 var setupContainer = Scheduler.GetSetupContainer(checkedTask.Config);

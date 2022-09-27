@@ -23,7 +23,7 @@ namespace ApiService.TestHooks {
 
         [Function("GetNsgTestHook")]
         public async Task<HttpResponseData> GetNsg([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/nsgOperations/nsg")] HttpRequestData req) {
-            _log.Info("get nsg");
+            _log.Info($"get nsg");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             var nsg = await _nsgOperations.GetNsg(query["name"]);
@@ -41,7 +41,7 @@ namespace ApiService.TestHooks {
 
         [Function("ListNsgsTestHook")]
         public async Task<HttpResponseData> ListNsgs([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/nsgOperations/listNsgs")] HttpRequestData req) {
-            _log.Info("list nsgs");
+            _log.Info($"list nsgs");
 
             var nsgs = await _nsgOperations.ListNsgs().ToListAsync();
 
@@ -53,7 +53,7 @@ namespace ApiService.TestHooks {
 
         [Function("DeleteNsgTestHook")]
         public async Task<HttpResponseData> DeleteNsg([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "testhooks/nsgOperations/nsg")] HttpRequestData req) {
-            _log.Info("delete nsgs");
+            _log.Info($"delete nsgs");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             var name = query["name"];

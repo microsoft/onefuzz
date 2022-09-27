@@ -89,16 +89,16 @@ public class VmOperations : IVmOperations {
 
     public async Async.Task<bool> DeleteVmComponents(string name, Nsg? nsg) {
         var resourceGroup = _context.Creds.GetBaseResourceGroup();
-        _logTracer.Info($"deleting vm components {resourceGroup}:{name}");
+        _logTracer.Info($"deleting vm components {resourceGroup:Tag:ResourceGroup}:{name:Tag:VmName}");
         if (await GetVm(name) != null) {
-            _logTracer.Info($"deleting vm {resourceGroup}:{name}");
+            _logTracer.Info($"deleting vm {resourceGroup:Tag:ResourceGroup}:{name:Tag:VmName}");
             await DeleteVm(name);
             return false;
         }
 
         var nic = await _context.IpOperations.GetPublicNic(resourceGroup, name);
         if (nic != null) {
-            _logTracer.Info($"deleting nic {resourceGroup}:{name}");
+            _logTracer.Info($"deleting nic {resourceGroup:Tag:ResourceGroup}:{name:Tag:VmName}");
             if (nic.Data.NetworkSecurityGroup != null && nsg != null) {
                 _ = await _context.NsgOperations.DissociateNic(nsg, nic);
                 return false;
@@ -108,7 +108,7 @@ public class VmOperations : IVmOperations {
         }
 
         if (await _context.IpOperations.GetIp(resourceGroup, name) != null) {
-            _logTracer.Info($"deleting ip {resourceGroup}:{name}");
+            _logTracer.Info($"deleting ip {resourceGroup:Tag:ResourceGroup}:{name:Tag:VmName}");
             await _context.IpOperations.DeleteIp(resourceGroup, name);
             return false;
         }
@@ -119,7 +119,7 @@ public class VmOperations : IVmOperations {
 
         if (await disks.AnyAsync()) {
             await foreach (var disk in disks) {
-                _logTracer.Info($"deleting disk {resourceGroup}:{disk?.Data.Name}");
+                _logTracer.Info($"deleting disk {resourceGroup:Tag:ResourceGroup}:{disk?.Data.Name:Tag:DiskName}");
                 _ = await _context.DiskOperations.DeleteDisk(resourceGroup, disk?.Data.Name!);
             }
             return false;
@@ -129,13 +129,13 @@ public class VmOperations : IVmOperations {
     }
 
     public async System.Threading.Tasks.Task DeleteVm(string name) {
-        _logTracer.Info($"deleting vm: {_context.Creds.GetBaseResourceGroup()} {name}");
+        _logTracer.Info($"deleting vm: {_context.Creds.GetBaseResourceGroup():Tag:ResourceGroup} {name:Tag:VmName}");
 
         var r = await _context.Creds.GetResourceGroupResource()
             .GetVirtualMachineAsync(name).Result.Value
             .DeleteAsync(WaitUntil.Started);
         if (r.GetRawResponse().IsError) {
-            _logTracer.Error($"failed to start deletion of vm {name} due to {r.GetRawResponse().ReasonPhrase}");
+            _logTracer.Error($"failed to start deletion of vm {name:Tag:VmName} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
         }
         return;
     }
@@ -151,7 +151,7 @@ public class VmOperations : IVmOperations {
             var extension = await GetExtension(vm.Name, extensionName);
             if (extension != null) {
                 _logTracer.Info(
-                    $"vm extension state: {vm.Name} - {extensionName} - {extension.ProvisioningState}"
+                    $"vm extension state: {vm.Name:Tag:VmName} - {extensionName:Tag:ExtensionName} - {extension.ProvisioningState:Tag:ExtensionProvisioningState}"
                 );
                 status.Add(extension.ProvisioningState);
             } else {
@@ -172,7 +172,7 @@ public class VmOperations : IVmOperations {
                     "failed to launch extension"
                 );
             } else if (!(status.Contains("Creating") || status.Contains("Updating"))) {
-                _logTracer.Error($"vm agent - unknown state {vm.Name}: {JsonConvert.SerializeObject(status)}");
+                _logTracer.Error($"vm agent - unknown state {vm.Name:Tag:VmName}: {JsonConvert.SerializeObject(status):Tag:Status}");
             }
         }
 
@@ -184,7 +184,7 @@ public class VmOperations : IVmOperations {
             return OneFuzzResultVoid.Ok;
         }
 
-        _logTracer.Info($"vm creating: {vm.Name}");
+        _logTracer.Info($"vm creating: {vm.Name:Tag:VmName}");
 
         return await CreateVm(
             vm.Name,
@@ -207,13 +207,13 @@ public class VmOperations : IVmOperations {
 
             return (await vm.Value.GetVirtualMachineExtensionAsync(extensionName)).Value.Data;
         } catch (RequestFailedException ex) {
-            _logTracer.Info($"extension does not exist {ex}");
+            _logTracer.Info($"extension does not exist {ex.Message:Tag:Error}");
             return null;
         }
     }
 
     public async Async.Task CreateExtension(string vmName, string extensionName, VirtualMachineExtensionData extension) {
-        _logTracer.Info($"creating extension: {_context.Creds.GetBaseResourceGroup()}:{vmName}:{extensionName}");
+        _logTracer.Info($"creating extension: {_context.Creds.GetBaseResourceGroup():Tag:ResourceGroup} - {vmName:Tag:VmName} - {extensionName:Tag:ExtensionName}");
         var vm = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(vmName);
 
         try {
@@ -225,7 +225,7 @@ public class VmOperations : IVmOperations {
         } catch (RequestFailedException ex) when
             (ex.Status == 409 &&
                 (ex.Message.Contains("VM is marked for deletion") || ex.Message.Contains("The request failed due to conflict with a concurrent request."))) {
-            _logTracer.Info($"Tried to create extension but failed due to {ex.Message}");
+            _logTracer.Info($"Tried to create {extensionName:Tag:ExtensionName} for {vmName:Tag:VmName} but failed due to {ex.Message:Tag:Error}");
         }
         return;
     }
@@ -241,7 +241,7 @@ public class VmOperations : IVmOperations {
         IDictionary<string, string>? tags
     ) {
         var resourceGroup = _context.Creds.GetBaseResourceGroup();
-        _logTracer.Info($"creating vm {resourceGroup}:{location}:{name}");
+        _logTracer.Info($"creating vm {resourceGroup:Tag:ResourceGroup} - {location:Tag:Location} {name:Tag:VmName}");
 
         var nic = await _context.IpOperations.GetPublicNic(resourceGroup, name);
         if (nic == null) {
@@ -250,7 +250,7 @@ public class VmOperations : IVmOperations {
                 return result;
             }
 
-            _logTracer.Info("waiting on nic creation");
+            _logTracer.Info($"waiting on nic creation for {name:Tag:VmName}");
             return OneFuzzResultVoid.Ok;
         }
 
@@ -312,7 +312,7 @@ public class VmOperations : IVmOperations {
             tags?.ToList()
                 .ForEach(kvp => {
                     if (!vmParams.Tags.TryAdd(kvp.Key, kvp.Value)) {
-                        _logTracer.Warning($"Failed to add tag {kvp.Key}:{kvp.Value} to vm {name}");
+                        _logTracer.Warning($"Failed to add tag {kvp.Key:Tag:Key}:{kvp.Value:Tag:Value} to vm {name:Tag:VmName}");
                     }
                 });
         }

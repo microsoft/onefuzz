@@ -96,10 +96,10 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         if (replaceExisting) {
             var existing = this.SearchByRowKeys(new[] { container.String });
             await foreach (var existingEntry in existing) {
-                _logTracer.Info($"deleting existing notification: {existingEntry.NotificationId} - {container}");
+                _logTracer.Info($"deleting existing notification: {existingEntry.NotificationId:Tag:NotificationId} - {container:Tag:Container}");
                 var rr = await this.Delete(existingEntry);
                 if (!rr.IsOk) {
-                    _logTracer.WithHttpStatus(rr.ErrorV).Error($"failed to delete existing notification {existingEntry.NotificationId} - {container}");
+                    _logTracer.WithHttpStatus(rr.ErrorV).Error($"failed to delete existing notification {existingEntry.NotificationId:Tag:NotificationId} - {container:Tag:Container}");
                 }
             }
         }
@@ -107,9 +107,9 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         var entry = new Notification(Guid.NewGuid(), container, configWithHiddenSecret);
         var r = await this.Insert(entry);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert notification with id {entry.NotificationId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert notification {entry.NotificationId:Tag:NotificationId}");
         }
-        _logTracer.Info($"created notification.  notification_id:{entry.NotificationId} container:{entry.Container}");
+        _logTracer.Info($"created notification {entry.NotificationId:Tag:NotificationId} - {entry.Container:Tag:Container}");
 
         return OneFuzzResult<Notification>.Ok(entry);
     }

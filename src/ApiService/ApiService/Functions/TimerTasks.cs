@@ -25,7 +25,7 @@ public class TimerTasks {
     public async Async.Task Run([TimerTrigger("00:00:15")] TimerInfo myTimer) {
         var expriredTasks = _taskOperations.SearchExpired();
         await foreach (var task in expriredTasks) {
-            _logger.Info($"stopping expired task. job_id:{task.JobId} task_id:{task.TaskId}");
+            _logger.Info($"stopping expired task. job_id:{task.JobId:Tag:JobId} task_id:{task.TaskId:Tag:TaskId}");
             await _taskOperations.MarkStopping(task);
         }
 
@@ -33,20 +33,20 @@ public class TimerTasks {
         var expiredJobs = _jobOperations.SearchExpired();
 
         await foreach (var job in expiredJobs) {
-            _logger.Info($"stopping expired job. job_id:{job.JobId}");
+            _logger.Info($"stopping expired job. job_id:{job.JobId:Tag:JobId}");
             _ = await _jobOperations.Stopping(job);
         }
 
         var jobs = _jobOperations.SearchState(states: JobStateHelper.NeedsWork);
 
         await foreach (var job in jobs) {
-            _logger.Info($"update job: {job.JobId}");
+            _logger.Info($"update job: {job.JobId:Tag:JobId}");
             _ = await _jobOperations.ProcessStateUpdates(job);
         }
 
         var tasks = _taskOperations.SearchStates(states: TaskStateHelper.NeedsWorkStates);
         await foreach (var task in tasks) {
-            _logger.Info($"update task: {task.TaskId}");
+            _logger.Info($"update task: {task.TaskId:Tag:TaskId}");
             _ = await _taskOperations.ProcessStateUpdate(task);
         }
 

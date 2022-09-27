@@ -6,7 +6,8 @@
             "Microsoft.Azure.Functions.Worker.IFunctionsWorkerApplicationBuilder",
             "Microsoft.Extensions.DependencyInjection.IServiceCollection",
             "Moq.Language.Flow.IReturnsResult",
-            "FluentAssertions.AndConstraint"
+            "FluentAssertions.AndConstraint",
+            "System.Text.StringBuilder"
         ]
     }
 }
