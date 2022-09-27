@@ -115,14 +115,14 @@ public class Queue : IQueue {
             foreach (var msg in msgs.Value) {
                 var resp = await client.DeleteMessageAsync(msg.MessageId, msg.PopReceipt);
                 if (resp.IsError) {
-                _log.Error($"failed to delete message from the {name:Tag:QueueName} due to {resp.ReasonPhrase:Tag:Error}");
+                    _log.Error($"failed to delete message from the {name:Tag:QueueName} due to {resp.ReasonPhrase:Tag:Error}");
                     return false;
                 } else {
                     return true;
                 }
             }
         } catch (RequestFailedException ex) when (ex.Status == 404 || ex.ErrorCode == "QueueNotFound") {
-            _log.Info($"tried to remove message from queue {name} but it doesn't exist");
+            _log.Info($"tried to remove message from queue {name:Tag:QueueName} but it doesn't exist");
             return false;
         }
 

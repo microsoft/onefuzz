@@ -21,11 +21,11 @@ public struct LogStringHandler {
     }
 
     public void AppendLiteral(string message) {
-        _ = _builder.Append(message);
+        _builder.Append(message);
     }
 
     public void AppendFormatted<T>(T message) {
-        _ = _builder.Append(message?.ToString());
+        _builder.Append(message?.ToString());
     }
 
     public void AppendFormatted<T>(T message, string? format) {
@@ -35,11 +35,11 @@ public struct LogStringHandler {
                 _tags = new Dictionary<string, string>();
             }
             _tags[tag] = $"{message}";
-            _ = _builder.Append('{').Append(tag).Append('}');
+            _builder.Append('{').Append(tag).Append('}');
         } else if (message is IFormattable msg) {
-            _ = _builder.Append(msg?.ToString(format, null));
+            _builder.Append(msg?.ToString(format, null));
         } else {
-            _ = _builder.Append(message?.ToString()).Append(':').Append(format);
+            _builder.Append(message?.ToString()).Append(':').Append(format);
         }
     }
 
