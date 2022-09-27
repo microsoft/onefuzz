@@ -126,7 +126,7 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: 3.7
-    - uses: actions/download-artifact@v2.0.8
+    - uses: actions/download-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -260,7 +260,7 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - uses: actions/download-artifact@v2.0.8
+    - uses: actions/download-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -451,7 +451,7 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/download-artifact@v2.0.8
+    - uses: actions/download-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -651,11 +651,11 @@ jobs:
       - dotnet-fuzzing-tools-linux
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2.0.8
+      - uses: actions/download-artifact@v3
         with:
           name: build-artifacts
           path: build-artifacts
-      - uses: actions/download-artifact@v2.0.8
+      - uses: actions/download-artifact@v3
         with:
           name: integration-test-artifacts
           path: integration-test-artifacts
