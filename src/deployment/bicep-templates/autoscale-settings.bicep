@@ -5,10 +5,8 @@ param workspaceId string
 param logRetention int
 param autoscale_name string
 param function_diagnostics_settings_name string
-param create_new bool
 
-
-resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = if (create_new) {
+resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
   name: autoscale_name
   location: location
   properties: {
@@ -72,7 +70,7 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = i
   }
 }
 
-resource functionDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (create_new) {
+resource functionDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: function_diagnostics_settings_name
   scope: autoscaleSettings
   properties: {
