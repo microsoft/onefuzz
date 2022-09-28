@@ -25,7 +25,11 @@ public struct LogStringHandler {
     }
 
     public void AppendFormatted<T>(T message) {
-        _builder.Append(message?.ToString());
+        if (message is not null) {
+            _builder.Append(message.ToString());
+        } else {
+            _builder.Append("<null>");
+        }
     }
 
     public void AppendFormatted<T>(T message, string? format) {
@@ -43,7 +47,9 @@ public struct LogStringHandler {
         }
     }
 
-    public override string ToString() => _builder.ToString();
+    private bool HasData => _builder is not null && _builder.Length > 0;
+
+    public override string ToString() => this.HasData ? _builder.ToString() : "<null>";
     public IReadOnlyDictionary<string, string>? Tags => _tags;
 }
 
@@ -105,14 +111,12 @@ class AppInsights : ILog {
             }
         }
 
-
         Dictionary<string, double>? copyMetrics = null;
         if (metrics is not null) {
             copyMetrics = new(metrics);
         }
         _telemetryClient.TrackException(ex, copyTags, copyMetrics);
-
-        Log(correlationId, $"{message} : {ex.Message}", SeverityLevel.Error, tags, caller);
+        Log(correlationId, $"[{message}] {ex.Message}", SeverityLevel.Error, tags, caller);
     }
 
     public void Flush() {
