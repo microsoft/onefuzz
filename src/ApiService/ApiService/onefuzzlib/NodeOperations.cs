@@ -338,10 +338,11 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
         ResultVoid<(int, string)> r;
         if (isNew) {
-            r = await Replace(node);
+            r = await Insert(node);
         } else {
-            r = await Update(node);
+            r = await Replace(node);
         }
+
         if (!r.IsOk) {
             _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to save NodeRecord for node {node.MachineId:Tag:MachineId} isNew: {isNew:Tag:IsNew}");
         } else {
@@ -350,8 +351,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
                     node.MachineId,
                     node.ScalesetId,
                     node.PoolName
-                    )
-                );
+                    ));
         }
 
         return node;
