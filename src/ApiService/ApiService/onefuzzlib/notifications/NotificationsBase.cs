@@ -46,10 +46,10 @@ public abstract class NotificationsBase {
             Uri? reportUrl = null) {
 
             task ??= await context.TaskOperations.GetByJobIdAndTaskId(report.JobId, report.TaskId);
-            var checkedTask = task.EnsureNotNull($"invalid task {report.TaskId:Tag:TaskId}");
+            var checkedTask = task.EnsureNotNull($"invalid task {report.TaskId}");
 
             job ??= await context.JobOperations.Get(report.JobId);
-            var checkedJob = job.EnsureNotNull($"invalid job {report.JobId:Tag:JobId}");
+            var checkedJob = job.EnsureNotNull($"invalid job {report.JobId}");
 
             if (targetUrl == null) {
                 var setupContainer = Scheduler.GetSetupContainer(checkedTask.Config);
