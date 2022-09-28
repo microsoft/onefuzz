@@ -34,7 +34,7 @@ public class ValidatedStringTests {
         Assert.Equal(valid, Container.TryParse(name, out var _));
     }
 
-    [Theory]
+    [Theory(Skip = "Validation is disabled for now")]
     [InlineData("xyz", true)]
     [InlineData("", false)]
     [InlineData("Default-Ubuntu20.04-Standard_D2", true)]
