@@ -67,6 +67,7 @@ azure_storage = { version = "0.10", default-features = false, features = [
 azure_storage_blobs = { version = "0.10", default-features = false, features = [
     "enable_reqwest",
 ] }
+nonempty = { version = "0.8.0", features = ["serialize"] }
 
 [dev-dependencies]
 pretty_assertions = "1.3"

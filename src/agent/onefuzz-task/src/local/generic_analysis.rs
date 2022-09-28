@@ -1,14 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::convert::TryFrom;
 use std::path::PathBuf;
 
 use crate::{
     local::common::{
-        build_local_context, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir, CmdType,
-        SyncCountDirMonitor, UiEvent, ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS,
-        CRASHES_DIR, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TOOLS_DIR,
-        UNIQUE_REPORTS_DIR,
+        build_local_context, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir,
+        get_synced_dirs, CmdType, SyncCountDirMonitor, UiEvent, ANALYSIS_DIR, ANALYZER_ENV,
+        ANALYZER_EXE, ANALYZER_OPTIONS, CRASHES_DIR, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV,
+        TARGET_EXE, TARGET_OPTIONS, TOOLS_DIR, UNIQUE_REPORTS_DIR,
     },
     tasks::{
         analysis::generic::{run as run_analysis, Config},
@@ -18,6 +19,7 @@ use crate::{
 use anyhow::Result;
 use clap::{Arg, Command};
 use flume::Sender;
+use nonempty::NonEmpty;
 use storage_queue::QueueClient;
 
 pub fn build_analysis_config(
@@ -41,8 +43,10 @@ pub fn build_analysis_config(
         .collect();
 
     let analyzer_env = get_hash_map(args, ANALYZER_ENV)?;
-    let analysis = get_synced_dir(ANALYSIS_DIR, common.job_id, common.task_id, args)?
-        .monitor_count(&event_sender)?;
+    let analysis_dirs = get_synced_dirs(ANALYSIS_DIR, common.job_id, common.task_id, args)?
+        .into_iter()
+        .map(|sd| sd.monitor_count(&event_sender))
+        .collect::<Result<Vec<_>>>()?;
     let tools = get_synced_dir(TOOLS_DIR, common.job_id, common.task_id, args)?;
     let crashes = if input_queue.is_none() {
         get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)
@@ -61,6 +65,9 @@ pub fn build_analysis_config(
         .ok()
         .monitor_count(&event_sender)?;
 
+    let analysis_dirs = NonEmpty::try_from(analysis_dirs)
+        .map_err(|_| anyhow!("Must provide at least one {ANALYSIS_DIR}"))?;
+
     let config = Config {
         analyzer_exe,
         analyzer_options,
@@ -69,7 +76,7 @@ pub fn build_analysis_config(
         target_options,
         input_queue,
         crashes,
-        analysis,
+        analysis_dirs,
         tools,
         reports,
         unique_reports,
@@ -120,6 +127,8 @@ pub fn build_shared_args(required_task: bool) -> Vec<Arg> {
             .required(required_task),
         Arg::new(ANALYSIS_DIR)
             .long(ANALYSIS_DIR)
+            .value_parser(value_parser!(PathBuf))
+            .num_args(0..)
             .requires(ANALYZER_EXE)
             .requires(CRASHES_DIR)
             .required(required_task),

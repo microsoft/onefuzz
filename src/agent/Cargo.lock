@@ -1848,6 +1848,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "nonempty"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09f1f8e5676e1a1f2ee8b21f38238e1243c827531c9435624c7bfb305102cee4"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "notify"
 version = "5.0.0-pre.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2035,6 +2044,7 @@ dependencies = [
  "ipc-channel",
  "lazy_static",
  "log",
+ "nonempty",
  "num_cpus",
  "onefuzz",
  "onefuzz-file-format",

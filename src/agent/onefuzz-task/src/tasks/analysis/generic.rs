@@ -6,6 +6,7 @@ use crate::tasks::{
     utils::try_resolve_setup_relative_path,
 };
 use anyhow::{Context, Result};
+use nonempty::NonEmpty;
 use onefuzz::{az_copy, blob::url::BlobUrl};
 use onefuzz::{
     expand::Expand,
@@ -36,7 +37,7 @@ pub struct Config {
     pub input_queue: Option<QueueClient>,
     pub crashes: Option<SyncedDir>,
 
-    pub analysis: SyncedDir,
+    pub analysis_dirs: NonEmpty<SyncedDir>,
     pub tools: SyncedDir,
 
     pub reports: Option<SyncedDir>,
@@ -48,8 +49,10 @@ pub struct Config {
 }
 
 pub async fn run(config: Config) -> Result<()> {
+    // put the temp directory in the directory above the first analysis dir
     let task_dir = config
-        .analysis
+        .analysis_dirs
+        .first()
         .local_path
         .parent()
         .ok_or_else(|| anyhow!("Invalid input path"))?;
@@ -60,7 +63,10 @@ pub async fn run(config: Config) -> Result<()> {
 
     tmp.reset().await?;
 
-    config.analysis.init().await?;
+    for analysis_dir in &config.analysis_dirs {
+        analysis_dir.init().await?;
+    }
+
     config.tools.init_pull().await?;
 
     // the tempdir is always created, however, the reports_path and
@@ -122,13 +128,20 @@ async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<
             run_tool(file.path(), config, reports_dir).await?;
             count += 1;
 
-            // sync the analysis container after every 10 inputs
+            // sync the analysis containers after every 10 inputs
             if count % 10 == 0 {
-                config.analysis.sync_push().await?;
+                for dir in &config.analysis_dirs {
+                    dir.sync_push().await?;
+                }
             }
         }
         info!("processed {} initial inputs", count);
-        config.analysis.sync_push().await?;
+        // sync if we didn't just sync
+        if count % 10 != 0 {
+            for dir in &config.analysis_dirs {
+                dir.sync_push().await?;
+            }
+        }
     }
     Ok(())
 }
@@ -163,7 +176,9 @@ async fn poll_inputs(
                     let destination_path = _copy(input_url, &tmp_dir).await?;
 
                     run_tool(destination_path, config, reports_dir).await?;
-                    config.analysis.sync_push().await?
+                    for dir in &config.analysis_dirs {
+                        dir.sync_push().await?
+                    }
                 }
                 message.delete().await?;
             } else {
@@ -206,7 +221,7 @@ pub async fn run_tool(
         .target_options(&config.target_options)
         .analyzer_exe(&config.analyzer_exe)
         .analyzer_options(&config.analyzer_options)
-        .output_dir(&config.analysis.local_path)
+        .output_dir(&config.analysis_dirs.head.local_path) // first analysis_dir is the output
         .tools_dir(&config.tools.local_path)
         .setup_dir(&config.common.setup_dir)
         .set_optional_ref(&config.common.extra_dir, |expand, extra_dir| {
