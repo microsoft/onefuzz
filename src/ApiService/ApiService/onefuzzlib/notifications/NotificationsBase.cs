@@ -13,16 +13,8 @@ public abstract class NotificationsBase {
         _context = context;
     }
 
-    public async Async.Task FailTask(Report report, Exception error) {
-        _logTracer.Error($"notification failed: job_id:{report.JobId} task_id:{report.TaskId} err:{error}");
-
-        var task = await _context.TaskOperations.GetByJobIdAndTaskId(report.JobId, report.TaskId);
-        if (task != null) {
-            await _context.TaskOperations.MarkFailed(task, new Error(ErrorCode.NOTIFICATION_FAILURE, new string[] {
-                "notification failed",
-                error.ToString()
-            }));
-        }
+    public void LogFailedNotification(Report report, Exception error, Guid notificationId) {
+        _logTracer.Error($"notification failed: notification_id:{notificationId} job_id:{report.JobId} task_id:{report.TaskId} err:{error}");
     }
 
     public static string ReplaceFirstSetup(string executable) {
