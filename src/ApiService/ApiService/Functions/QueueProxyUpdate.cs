@@ -23,17 +23,15 @@ public class QueueProxyHearbeat {
 
         var proxy = await _proxy.GetByProxyId(newHb.ProxyId);
 
-        var log = _log.WithTag("ProxyId", newHb.ProxyId.ToString());
-
         if (proxy == null) {
-            log.Warning($"invalid proxy id: {newHb.ProxyId}");
+            _log.Warning($"invalid proxy id: {newHb.ProxyId:Tag:ProxyId}");
             return;
         }
         var newProxy = proxy with { Heartbeat = newHb };
 
         var r = await _proxy.Replace(newProxy);
         if (!r.IsOk) {
-            log.WithHttpStatus(r.ErrorV).Error($"Failed to replace proxy heartbeat");
+            _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace proxy heartbeat {newHb.ProxyId:Tag:ProxyId}");
         }
     }
 }

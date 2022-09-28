@@ -28,23 +28,23 @@ public class TestHooks {
 
     [Function("_Info")]
     public async Task<HttpResponseData> Info([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/info")] HttpRequestData req) {
-        _log.Info("Creating function info response");
+        _log.Info($"Creating function info response");
         var response = req.CreateResponse();
         FunctionInfo info = new(
                 $"{_config.OneFuzzInstanceName}",
                 $"{_config.OneFuzzResourceGroup}",
                 Environment.GetEnvironmentVariable("WEBSITE_SLOT_NAME"));
 
-        _log.Info("Returning function info");
+        _log.Info($"Returning function info");
         await response.WriteAsJsonAsync(info);
-        _log.Info("Returned function info");
+        _log.Info($"Returned function info");
         return response;
     }
 
 
     [Function("GetKeyvaultAddress")]
     public async Task<HttpResponseData> GetKeyVaultAddress([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/secrets/keyvaultaddress")] HttpRequestData req) {
-        _log.Info("Getting keyvault address");
+        _log.Info($"Getting keyvault address");
         var addr = _secretOps.GetKeyvaultAddress();
         var resp = req.CreateResponse(HttpStatusCode.OK);
         await resp.WriteAsJsonAsync(addr);
@@ -56,7 +56,7 @@ public class TestHooks {
         var s = await req.ReadAsStringAsync();
         var secretData = JsonSerializer.Deserialize<SecretData<string>>(s!, EntityConverter.GetJsonSerializerOptions());
         if (secretData is null) {
-            _log.Error("Secret data is null");
+            _log.Error($"Secret data is null");
             return req.CreateResponse(HttpStatusCode.BadRequest);
         } else {
             _log.Info($"Saving secret data in the keyvault");

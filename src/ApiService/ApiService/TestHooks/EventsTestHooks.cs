@@ -22,7 +22,7 @@ namespace ApiService.TestHooks {
 
         [Function("LogEventTestHook")]
         public async Task<HttpResponseData> LogEvent([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "testhooks/events/logEvent")] HttpRequestData req) {
-            _log.Info("Log event");
+            _log.Info($"Log event");
 
             var s = await req.ReadAsStringAsync();
             var msg = JsonSerializer.Deserialize<EventMessage>(s!, EntityConverter.GetJsonSerializerOptions());
@@ -34,7 +34,7 @@ namespace ApiService.TestHooks {
 
         [Function("SendEventTestHook")]
         public async Task<HttpResponseData> SendEvent([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "testhooks/events/sendEvent")] HttpRequestData req) {
-            _log.Info("Send event");
+            _log.Info($"Send event");
 
             var s = await req.ReadAsStringAsync();
             var msg = JsonSerializer.Deserialize<EventMessage>(s!, EntityConverter.GetJsonSerializerOptions());

@@ -39,7 +39,7 @@ public class WebhookLogs {
             return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find webhook" }), "webhook log");
         }
 
-        _log.Info($"getting webhook logs: {request.OkV.WebhookId}");
+        _log.Info($"getting webhook logs: {request.OkV.WebhookId:Tag:WebhookId}");
         var logs = _context.WebhookMessageLogOperations.SearchByPartitionKeys(new[] { $"{request.OkV.WebhookId}" });
 
         var response = req.CreateResponse(HttpStatusCode.OK);

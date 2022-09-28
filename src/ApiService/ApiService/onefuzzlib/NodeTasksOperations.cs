@@ -53,11 +53,11 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState, NodeTas
     }
 
     public async Async.Task ClearByMachineId(Guid machineId) {
-        _logTracer.Info($"clearing tasks for node {machineId}");
+        _logTracer.Info($"clearing tasks for node {machineId:Tag:MachineId}");
         await foreach (var entry in GetByMachineId(machineId)) {
             var res = await Delete(entry);
             if (!res.IsOk) {
-                _logTracer.WithHttpStatus(res.ErrorV).Error($"failed to delete node task entry for machine_id: {entry.MachineId}");
+                _logTracer.WithHttpStatus(res.ErrorV).Error($"failed to delete node task entry for {entry.MachineId:Tag:MachineId}");
             }
         }
     }

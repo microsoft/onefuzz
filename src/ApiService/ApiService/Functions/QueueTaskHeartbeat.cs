@@ -24,17 +24,16 @@ public class QueueTaskHearbeat {
         var hb = JsonSerializer.Deserialize<TaskHeartbeatEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 
         var task = await _tasks.GetByTaskId(hb.TaskId);
-        var log = _log.WithTag("TaskId", hb.TaskId.ToString());
 
         if (task == null) {
-            log.Warning($"invalid task id");
+            _log.Warning($"invalid {hb.TaskId:Tag:TaskId}");
             return;
         }
 
         var newTask = task with { Heartbeat = DateTimeOffset.UtcNow };
         var r = await _tasks.Replace(newTask);
         if (!r.IsOk) {
-            log.WithHttpStatus(r.ErrorV).Error($"failed to replace with new task");
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace with new task {hb.TaskId:Tag:TaskId}");
         }
         await _events.SendEvent(new EventTaskHeartbeat(newTask.JobId, newTask.TaskId, newTask.Config));
     }

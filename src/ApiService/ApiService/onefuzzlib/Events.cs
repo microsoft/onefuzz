@@ -64,7 +64,7 @@ namespace Microsoft.OneFuzz.Service {
 
         public void LogEvent(BaseEvent anEvent) {
             var serializedEvent = JsonSerializer.Serialize(anEvent, anEvent.GetType(), _options);
-            _log.WithTag("Event Type", anEvent.GetEventType().ToString()).Info($"sending event: {anEvent.GetEventType()} - {serializedEvent}");
+            _log.Info($"sending event: {anEvent.GetEventType():Tag:EventType} - {serializedEvent}");
         }
     }
 
