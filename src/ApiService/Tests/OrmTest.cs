@@ -141,10 +141,10 @@ namespace Tests {
 
             var json = JsonNode.Parse(tableEntity.GetString("the_object"))?.AsObject() ?? throw new InvalidOperationException("Could not parse objec");
 
-            json.TryGetPropertyValue("the_name", out var theName);
-            json.TryGetPropertyValue("the_enum", out var theEnum);
-            json.TryGetPropertyValue("the_flag", out var theFlag);
-            json.TryGetPropertyValue("the_enum_value", out var theEnumValue);
+            Assert.True(json.TryGetPropertyValue("the_name", out var theName));
+            Assert.True(json.TryGetPropertyValue("the_enum", out var theEnum));
+            Assert.True(json.TryGetPropertyValue("the_flag", out var theFlag));
+            Assert.True(json.TryGetPropertyValue("the_enum_value", out var theEnumValue));
 
             Assert.Equal(entity1.TheObject.TheName, theName?.GetValue<string>());
             Assert.Equal("the_two", theEnum?.GetValue<string>());
@@ -399,5 +399,16 @@ namespace Tests {
         }
 
 
+        record TestKeyGetter([PartitionKey] Guid PartitionKey, [RowKey] Guid RowKey);
+        [Fact]
+        public void TestKeyGetters() {
+            var test = new TestKeyGetter(Guid.NewGuid(), Guid.NewGuid());
+
+            var actualPartitionKey = EntityConverter.PartitionKeyGetter<TestKeyGetter>()?.Invoke(test);
+            var actualRowKey = EntityConverter.RowKeyGetter<TestKeyGetter>()?.Invoke(test);
+
+            Assert.Equal(test.PartitionKey, actualPartitionKey);
+            Assert.Equal(test.RowKey, actualRowKey);
+        }
     }
 }

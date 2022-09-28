@@ -70,7 +70,7 @@ public abstract class FunctionTestBase : IAsyncLifetime {
     }
 
     protected static string BodyAsString(HttpResponseData data) {
-        data.Body.Seek(0, SeekOrigin.Begin);
+        _ = data.Body.Seek(0, SeekOrigin.Begin);
         using var sr = new StreamReader(data.Body);
         return sr.ReadToEnd();
     }
@@ -85,11 +85,11 @@ public abstract class FunctionTestBase : IAsyncLifetime {
             .Where(c => c.IsDeleted != true)
             .Select(async container => {
                 try {
-                    await blobClient.DeleteBlobContainerAsync(container.Name);
-                    Logger.Info($"cleaned up container {container.Name}");
+                    using var _ = await blobClient.DeleteBlobContainerAsync(container.Name);
+                    Logger.Info($"cleaned up container {container.Name:Tag:ContainerName}");
                 } catch (Exception ex) {
                     // swallow any exceptions: this is a best-effort attempt to cleanup
-                    Logger.Exception(ex, "error deleting container at end of test");
+                    Logger.Exception(ex, $"error deleting container {container.Name:Tag:ContainerName} at end of test");
                 }
             })
             .ToListAsync());
@@ -100,11 +100,11 @@ public abstract class FunctionTestBase : IAsyncLifetime {
                 .QueryAsync(filter: Query.StartsWith("TableName", _storagePrefix))
                 .Select(async table => {
                     try {
-                        await tableClient.DeleteTableAsync(table.Name);
-                        Logger.Info($"cleaned up table {table.Name}");
+                        using var _ = await tableClient.DeleteTableAsync(table.Name);
+                        Logger.Info($"cleaned up table {table.Name:Tag:TableName}");
                     } catch (Exception ex) {
                         // swallow any exceptions: this is a best-effort attempt to cleanup
-                        Logger.Exception(ex, "error deleting table at end of test");
+                        Logger.Exception(ex, $"error deleting table {table.Name:Tag:TableName} at end of test");
                     }
                 })
                 .ToListAsync());

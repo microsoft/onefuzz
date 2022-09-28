@@ -327,4 +327,36 @@ public class EntityConverter {
             throw new InvalidOperationException($"Could not initialize object of type {typeof(T)} with the following parameters: {stringParam} constructor {entityInfo.constructor}", ex);
         }
     }
+
+    public static Func<T, object?>? PartitionKeyGetter<T>() {
+        return
+            typeof(T).GetConstructors()
+                     .SelectMany(x => x.GetParameters())
+                     .FirstOrDefault(p => p.GetCustomAttribute<PartitionKeyAttribute>() != null) switch {
+                         null => null, { Name: null } => null, { Name: var name } => BuildGetter<T>(typeof(T).GetProperty(name))
+                     };
+    }
+
+    public static Func<T, object?>? RowKeyGetter<T>() {
+        var x =
+            typeof(T).GetConstructors()
+                     .SelectMany(x => x.GetParameters())
+                     .FirstOrDefault(p => p.GetCustomAttribute<RowKeyAttribute>() != null) switch {
+                         null => null, { Name: null } => null, { Name: var name } => BuildGetter<T>(typeof(T).GetProperty(name))
+                     };
+
+        return x;
+    }
+
+    static Func<T, object?>? BuildGetter<T>(PropertyInfo? property) {
+        if (property == null)
+            return null;
+
+        var paramter = Expression.Parameter(typeof(T));
+        var call = Expression.Convert(Expression.Property(paramter, property), typeof(object));
+        return Expression.Lambda<Func<T, object?>>(call, paramter).Compile();
+    }
+
+
+
 }

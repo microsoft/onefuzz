@@ -162,3 +162,6 @@ dotnet_diagnostic.CA1848.severity = none
 # allow throwing base "Exception" class, since it's done a lot
 # TODO: improve this
 dotnet_diagnostic.CA2201.severity = suggestion
+
+# ignore this custom diagnostic about "complex" code
+dotnet_diagnostic.CSE006.severity = none

@@ -16,7 +16,7 @@ public class TimerProxy {
 
         var proxyOperations = _context.ProxyOperations;
         var scalesetOperations = _context.ScalesetOperations;
-        var nsgOpertions = _context.NsgOperations;
+        var nsgOperations = _context.NsgOperations;
 
         var proxies = await proxyOperations.QueryAsync().ToListAsync();
 
@@ -29,11 +29,11 @@ public class TimerProxy {
                 // requesting to use the proxy while this function is checking if it's
                 // out of date
                 if (proxy.Outdated && !(await _context.ProxyOperations.IsUsed(proxy))) {
-                    _logger.Warning($"scaleset-proxy: outdated and not used: {proxy.Region}");
+                    _logger.Warning($"scaleset-proxy: outdated and not used: {proxy.Region:Tag:Region}");
                     proxy = await proxyOperations.SetState(proxy, VmState.Stopping);
                     // If something is "wrong" with a proxy, delete & recreate it
                 } else if (!proxyOperations.IsAlive(proxy)) {
-                    _logger.Error($"scaleset-proxy: alive check failed, stopping: {proxy.Region}");
+                    _logger.Error($"scaleset-proxy: alive check failed, stopping: {proxy.Region:Tag:Region}");
                     proxy = await proxyOperations.SetState(proxy, VmState.Stopping);
                 } else {
                     await proxyOperations.SaveProxyConfig(proxy);
@@ -41,14 +41,14 @@ public class TimerProxy {
             }
 
             if (VmStateHelper.NeedsWork.Contains(proxy.State)) {
-                _logger.Info($"scaleset-proxy: update state. proxy:{proxy.Region} state:{proxy.State}");
+                _logger.Info($"scaleset-proxy: update state. proxy:{proxy.Region:Tag:Region} - {proxy.State:Tag:State}");
                 proxy = await proxyOperations.ProcessStateUpdate(proxy);
             }
 
             if (proxy is not null && proxy.State != VmState.Stopped && proxyOperations.IsOutdated(proxy)) {
                 var r = await proxyOperations.Replace(proxy with { Outdated = true });
                 if (!r.IsOk) {
-                    _logger.WithHttpStatus(r.ErrorV).Error($"Failed to replace proxy recordy for proxy {proxy.ProxyId}");
+                    _logger.WithHttpStatus(r.ErrorV).Error($"Failed to replace proxy record for proxy {proxy.ProxyId:Tag:ProxyId}");
                 }
             }
         }
@@ -60,7 +60,7 @@ public class TimerProxy {
             var allOutdated = proxies.Where(x => x.Region == region).All(p => p.Outdated);
             if (allOutdated) {
                 var proxy = await proxyOperations.GetOrCreate(region);
-                _logger.Info($"Creating new proxy with id {proxy.ProxyId} in region {region}");
+                _logger.Info($"Creating new proxy with id {proxy.ProxyId:Tag:ProxyId} in {region:Tag:Region}");
             }
 
             // this is required in order to support upgrade from non-nsg to
@@ -69,16 +69,16 @@ public class TimerProxy {
             // since we do not support bring your own NSG
             var nsgName = Nsg.NameFromRegion(region);
 
-            if (await nsgOpertions.GetNsg(nsgName) != null) {
+            if (await nsgOperations.GetNsg(nsgName) != null) {
                 var network = await Network.Init(region, _context);
 
                 var subnet = await network.GetSubnet();
                 if (subnet != null) {
                     var vnet = await network.GetVnet();
                     if (vnet != null) {
-                        var result = await nsgOpertions.AssociateSubnet(nsgName, vnet, subnet);
+                        var result = await nsgOperations.AssociateSubnet(nsgName, vnet, subnet);
                         if (!result.OkV) {
-                            _logger.Error($"Failed to associate NSG and subnet due to {result.ErrorV} in region {region}");
+                            _logger.Error($"Failed to associate NSG and subnet due to {result.ErrorV} in {region:Tag:Region}");
                         }
                     }
                 }
@@ -86,11 +86,11 @@ public class TimerProxy {
         }
         // if there are NSGs with name same as the region that they are allocated
         // and have no NIC associated with it then delete the NSG
-        await foreach (var nsg in nsgOpertions.ListNsgs()) {
-            if (nsgOpertions.OkToDelete(regions, nsg.Data.Location!, nsg.Data.Name)) {
+        await foreach (var nsg in nsgOperations.ListNsgs()) {
+            if (nsgOperations.OkToDelete(regions, nsg.Data.Location!, nsg.Data.Name)) {
                 if (nsg.Data.NetworkInterfaces.Count == 0 && nsg.Data.Subnets.Count == 0) {
-                    if (!await nsgOpertions.StartDeleteNsg(nsg.Data.Name)) {
-                        _logger.Warning($"failed to start deleting NSG {nsg.Data.Name}");
+                    if (!await nsgOperations.StartDeleteNsg(nsg.Data.Name)) {
+                        _logger.Warning($"failed to start deleting NSG {nsg.Data.Name:Tag:NsgName}");
                     }
                 }
             }

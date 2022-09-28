@@ -20,7 +20,7 @@ namespace ApiService.TestHooks {
 
         [Function("GetPublicNicTestHook")]
         public async Task<HttpResponseData> GetPublicNic([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/ipOps/publicNic")] HttpRequestData req) {
-            _log.Info("Get public nic");
+            _log.Info($"Get public nic");
 
             var query = UriExtension.GetQueryComponents(req.Url);
 
@@ -39,7 +39,7 @@ namespace ApiService.TestHooks {
 
         [Function("GetIpTestHook")]
         public async Task<HttpResponseData> GetIp([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/ipOps/ip")] HttpRequestData req) {
-            _log.Info("Get public nic");
+            _log.Info($"Get public nic");
 
             var query = UriExtension.GetQueryComponents(req.Url);
 
@@ -60,7 +60,7 @@ namespace ApiService.TestHooks {
 
         [Function("DeletePublicNicTestHook")]
         public async Task<HttpResponseData> DeletePublicNic([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "testhooks/ipOps/publicNic")] HttpRequestData req) {
-            _log.Info("Get public nic");
+            _log.Info($"Get public nic");
 
             var query = UriExtension.GetQueryComponents(req.Url);
 
@@ -80,7 +80,7 @@ namespace ApiService.TestHooks {
 
         [Function("DeleteIpTestHook")]
         public async Task<HttpResponseData> DeleteIp([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "testhooks/ipOps/ip")] HttpRequestData req) {
-            _log.Info("Get public nic");
+            _log.Info($"Get public nic");
 
             var query = UriExtension.GetQueryComponents(req.Url);
 

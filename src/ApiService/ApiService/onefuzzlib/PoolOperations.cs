@@ -45,7 +45,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         var r = await Insert(newPool);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save new pool. Pool name: {newPool.Name}, PoolId: {newPool.PoolId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save new pool. {newPool.Name:Tag:PoolName} - {newPool.PoolId:Tag:PoolId}");
         }
         await _context.Events.SendEvent(new EventPoolCreated(PoolName: newPool.Name, Os: newPool.Os, Arch: newPool.Arch, Managed: newPool.Managed));
         return newPool;
@@ -151,7 +151,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         pool = pool with { State = state };
         var r = await Replace(pool);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace pool {pool.PoolId} when setting state");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace pool {pool.PoolId:Tag:PoolId} when setting state");
         }
         return pool;
     }
@@ -167,7 +167,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
     new public async Async.Task Delete(Pool pool) {
         var r = await base.Delete(pool);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to delete pool: {pool.Name}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to delete pool: {pool.Name:Tag:PoolName}");
         }
         var poolQueue = GetPoolQueue(pool.PoolId);
         await _context.Queue.DeleteQueue(poolQueue, StorageType.Corpus);
@@ -183,7 +183,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         var nodes = _context.NodeOperations.SearchByPoolName(pool.Name);
 
         if (scalesets is null && nodes is null) {
-            _logTracer.Info($"pool stopped, deleting {pool.Name}");
+            _logTracer.Info($"pool stopped, deleting {pool.Name:Tag:PoolName}");
             await Delete(pool);
             return pool;
         }
@@ -198,7 +198,8 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         if (nodes is not null) {
             await foreach (var node in nodes) {
-                await _context.NodeOperations.SetShutdown(node);
+                // ignoring updated result - nodes not returned
+                _ = await _context.NodeOperations.SetShutdown(node);
             }
         }
 
@@ -206,7 +207,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         //if it was changed by the caller - caller should perform save operation
         var r = await Update(pool);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to update pool record. pool name: {pool.Name}, pool id: {pool.PoolId}");
+            _logTracer.Error($"Failed to update pool record. {pool.Name:Tag:PoolName} - {pool.PoolId:Tag:PoolId}");
         }
         return pool;
     }
@@ -217,7 +218,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         var nodes = _context.NodeOperations.SearchByPoolName(pool.Name);
 
         if (scalesets is null && nodes is null) {
-            _logTracer.Info($"pool stopped, deleting: {pool.Name}");
+            _logTracer.Info($"pool stopped, deleting: {pool.Name:Tag:PoolName}");
             await Delete(pool);
         }
 
@@ -231,7 +232,8 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         if (nodes is not null) {
             await foreach (var node in nodes) {
-                await _context.NodeOperations.SetHalt(node);
+                // updated value ignored: 'nodes' is not returned
+                _ = await _context.NodeOperations.SetHalt(node);
             }
         }
 

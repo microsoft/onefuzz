@@ -49,7 +49,7 @@ namespace Microsoft.OneFuzz.Service {
             }
 
             if (subnet.Data.NetworkSecurityGroup != null && subnet.Data.NetworkSecurityGroup.Id == nsg.Id) {
-                _logTracer.Info($"Subnet {subnet.Data.Name} and NSG {name} already associated, not updating");
+                _logTracer.Info($"Subnet {subnet.Data.Name:Tag:SubnetName} - {name:Tag:NsgName} already associated, not updating");
                 return OneFuzzResult<bool>.Ok(true);
             }
 
@@ -81,10 +81,10 @@ namespace Microsoft.OneFuzz.Service {
                 );
             }
 
-            _logTracer.Info($"dissociating nic {nic.Data.Name} with nsg: {_context.Creds.GetBaseResourceGroup()} {nsg.Name}");
+            _logTracer.Info($"dissociating {nic.Data.Name:Tag:NicName} with {_context.Creds.GetBaseResourceGroup():Tag:ResourceGroup} - {nsg.Name:Tag:NsgName}");
             nic.Data.NetworkSecurityGroup = null;
             try {
-                await _context.Creds.GetResourceGroupResource()
+                _ = await _context.Creds.GetResourceGroupResource()
                     .GetNetworkInterfaces()
                     .CreateOrUpdateAsync(WaitUntil.Started, nic.Data.Name, nic.Data);
             } catch (Exception e) {
@@ -115,10 +115,10 @@ namespace Microsoft.OneFuzz.Service {
                 return response?.Value;
             } catch (RequestFailedException ex) {
                 if (ex.ErrorCode == "ResourceNotFound") {
-                    _logTracer.Verbose($"could not find nsg with name {name}");
+                    _logTracer.Verbose($"could not find {name:Tag:NsgName}");
                     return null;
                 } else {
-                    _logTracer.Exception(ex, $"failed to get nsg {name}");
+                    _logTracer.Exception(ex, $"failed to get {name:Tag:NsgName}");
                     throw;
                 }
             }
@@ -137,19 +137,19 @@ namespace Microsoft.OneFuzz.Service {
         /// Returns False if failed to start deletion.
         /// </summary>
         public async Async.Task<bool> StartDeleteNsg(string name) {
-            _logTracer.Info($"deleting nsg: {name}");
+            _logTracer.Info($"deleting nsg: {name:Tag:NsgName}");
             try {
                 var nsg = await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroupAsync(name);
                 var r = await nsg.Value.DeleteAsync(WaitUntil.Started);
                 if (r.GetRawResponse().IsError) {
-                    _logTracer.Error($"failed to start nsg deletion for nsg: {name} due to {r.GetRawResponse().ReasonPhrase}");
+                    _logTracer.Error($"failed to start nsg deletion for: {name:Tag:NsgName} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
                 }
                 return true;
             } catch (RequestFailedException ex) {
                 if (ex.ErrorCode == "ResourceNotFound") {
                     return true;
                 } else {
-                    _logTracer.Exception(ex, $"failed to delete nsg {name}");
+                    _logTracer.Exception(ex, $"failed to delete {name:Tag:NsgName}");
                     throw;
                 }
             }
@@ -183,11 +183,10 @@ namespace Microsoft.OneFuzz.Service {
             }
 
             try {
-                await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroups().CreateOrUpdateAsync(
+                _ = await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroups().CreateOrUpdateAsync(
                     WaitUntil.Started,
                     name,
-                    nsgParams
-                );
+                    nsgParams);
             } catch (RequestFailedException ex) {
                 if (IsConcurrentRequestError(ex.Message)) {
                     // _logTracer.Debug($"create NSG had conflicts with concurrent request, ignoring {ex}");
@@ -216,7 +215,7 @@ namespace Microsoft.OneFuzz.Service {
             }
 
             _logTracer.Info(
-                $"setting allowed incoming connection sources for nsg: {_context.Creds.GetBaseResourceGroup()} {name}"
+                $"setting allowed incoming connection sources for nsg: {_context.Creds.GetBaseResourceGroup():Tag:ResourceGroup} {name:Tag:NsgName}"
             );
 
             var allSources = new List<string>();
@@ -283,17 +282,16 @@ namespace Microsoft.OneFuzz.Service {
             }
 
             if (nic.Data.NetworkSecurityGroup != null && nic.Data.NetworkSecurityGroup.Id == nsg.Id) {
-                _logTracer.Info($"NIC {nic.Data.Name} and NSG {nsg.Data.Name} already associated, not updating");
+                _logTracer.Info($"{nic.Data.Name:Tag:NicName} - {nsg.Data.Name:Tag:NsgName} already associated, not updating");
                 return OneFuzzResultVoid.Ok;
             }
 
             nic.Data.NetworkSecurityGroup = nsg.Data;
-            _logTracer.Info($"associating nic {nic.Data.Name} with nsg: {_context.Creds.GetBaseResourceGroup()} {nsg.Data.Name}");
+            _logTracer.Info($"associating {nic.Data.Name:Tag:NicName} - {_context.Creds.GetBaseResourceGroup():Tag:ResourceGroup} - {nsg.Data.Name:Tag:NsgName}");
 
             try {
-                await _context.Creds.GetResourceGroupResource().GetNetworkInterfaces().CreateOrUpdateAsync(
-                    WaitUntil.Started, nic.Data.Name, nic.Data
-                );
+                _ = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaces().CreateOrUpdateAsync(
+                    WaitUntil.Started, nic.Data.Name, nic.Data);
             } catch (RequestFailedException ex) {
                 if (IsConcurrentRequestError(ex.Message)) {
                     // _logTracer.Debug($"associate NSG with NIC had conflicts with concurrent request, ignoring {ex}");
@@ -309,14 +307,13 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         public async Task<OneFuzzResultVoid> UpdateNsg(NetworkSecurityGroupData nsg) {
-            _logTracer.Info($"updating nsg {_context.Creds.GetBaseResourceGroup()}:{nsg.Location}:{nsg.Name}");
+            _logTracer.Info($"updating nsg {_context.Creds.GetBaseResourceGroup():Tag:ResourceGroup} - {nsg.Location:Tag:Location} - {nsg.Name:Tag:NsgName}");
 
             try {
-                await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroups().CreateOrUpdateAsync(
+                _ = await _context.Creds.GetResourceGroupResource().GetNetworkSecurityGroups().CreateOrUpdateAsync(
                     WaitUntil.Started,
                     nsg.Name,
-                    nsg
-                );
+                    nsg);
             } catch (RequestFailedException ex) {
                 if (IsConcurrentRequestError(ex.Message)) {
                     //_logTracer.Debug($"create NSG had conflicts with concurrent request, ignoring {ex}");

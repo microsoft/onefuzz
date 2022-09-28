@@ -41,29 +41,31 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
     }
 
     public async Async.Task<Proxy> GetOrCreate(Region region) {
-        var proxyList = QueryAsync(filter: TableClient.CreateQueryFilter($"region eq {region.String} and outdated eq false"));
-
-        await foreach (var proxy in proxyList) {
-            if (IsOutdated(proxy)) {
-                var r1 = await Replace(proxy with { Outdated = true });
-                if (!r1.IsOk) {
-                    _logTracer.WithHttpStatus(r1.ErrorV).Error($"failed to replace record to mark proxy {proxy.ProxyId} as outdated");
+        {
+            var proxyList = QueryAsync(filter: TableClient.CreateQueryFilter($"region eq {region.String} and outdated eq false"));
+            await foreach (var proxy in proxyList) {
+                if (IsOutdated(proxy)) {
+                    var r1 = await Replace(proxy with { Outdated = true });
+                    if (!r1.IsOk) {
+                        _logTracer.WithHttpStatus(r1.ErrorV).Error($"failed to replace record to mark proxy {proxy.ProxyId:Tag:ProxyId} as outdated");
+                    }
+                    continue;
                 }
-                continue;
-            }
 
-            if (!VmStateHelper.Available.Contains(proxy.State)) {
-                continue;
+                if (!VmStateHelper.Available.Contains(proxy.State)) {
+                    continue;
+                }
+
+                return proxy;
             }
-            return proxy;
         }
 
-        _logTracer.Info($"creating proxy: region:{region}");
+        _logTracer.Info($"creating proxy: region:{region:Tag:Region}");
         var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, await Auth.BuildAuth(_logTracer), null, null, _context.ServiceConfiguration.OneFuzzVersion, null, false);
 
         var r = await Replace(newProxy);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to save new proxy {newProxy.ProxyId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to save new proxy {newProxy.ProxyId:Tag:ProxyId} in {region:Tag:Region}");
         }
 
         await _context.Events.SendEvent(new EventProxyCreated(region, newProxy.ProxyId));
@@ -73,7 +75,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
     public async Task<bool> IsUsed(Proxy proxy) {
         var forwards = await GetForwards(proxy);
         if (forwards.Count == 0) {
-            _logTracer.Info($"no forwards {proxy.Region}");
+            _logTracer.Info($"no forwards {proxy.Region:Tag:Region}");
             return false;
         }
         return true;
@@ -83,12 +85,12 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         var tenMinutesAgo = DateTimeOffset.UtcNow - TimeSpan.FromMinutes(10);
 
         if (proxy.Heartbeat is not null && proxy.Heartbeat.TimeStamp < tenMinutesAgo) {
-            _logTracer.Info($"last heartbeat is more than an 10 minutes old:  {proxy.Region} - last heartbeat:{proxy.Heartbeat} compared_to:{tenMinutesAgo}");
+            _logTracer.Info($"last heartbeat is more than an 10 minutes old: {proxy.Region:Tag:Region} {proxy.Heartbeat:Tag:LastHeartbeat} {tenMinutesAgo:Tag:ComparedToMinutesAgo}");
             return false;
         }
 
         if (proxy.Heartbeat is not null && proxy.TimeStamp is not null && proxy.TimeStamp < tenMinutesAgo) {
-            _logTracer.Error($"no heartbeat in the last 10 minutes: {proxy.Region} timestamp: {proxy.TimeStamp} compared_to:{tenMinutesAgo}");
+            _logTracer.Error($"no heartbeat in the last 10 minutes: {proxy.Region:Tag:Region} {proxy.TimeStamp:Tag:Timestamp} {tenMinutesAgo:Tag:ComparedToMinutesAgo}");
             return false;
         }
 
@@ -101,13 +103,13 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         }
 
         if (proxy.Version != _context.ServiceConfiguration.OneFuzzVersion) {
-            _logTracer.Info($"mismatch version: proxy:{proxy.Version} service:{_context.ServiceConfiguration.OneFuzzVersion} state:{proxy.State}");
+            _logTracer.Info($"mismatch version: proxy:{proxy.Version:Tag:ProxyVersion} {_context.ServiceConfiguration.OneFuzzVersion:Tag:ServiceVersion} {proxy.State:Tag:State}");
             return true;
         }
 
         if (proxy.CreatedTimestamp is not null) {
             if (proxy.CreatedTimestamp < (DateTimeOffset.UtcNow - PROXY_LIFESPAN)) {
-                _logTracer.Info($"proxy older than 7 days:proxy-created:{proxy.CreatedTimestamp} state:{proxy.State}");
+                _logTracer.Info($"proxy older than 7 days: {proxy.CreatedTimestamp:Tag:ProxyCreated} - {proxy.State:Tag:State}");
                 return true;
             }
         }
@@ -141,7 +143,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         var newProxy = proxy with { State = state };
         var r = await Replace(newProxy);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace proxy with id {newProxy.ProxyId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace proxy with {newProxy.ProxyId:Tag:ProxyId}");
         }
         await _context.Events.SendEvent(new EventProxyStateUpdated(newProxy.Region, newProxy.ProxyId, newProxy.State));
         return newProxy;
@@ -155,7 +157,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             if (entry.EndTime < DateTimeOffset.UtcNow) {
                 var r = await _context.ProxyForwardOperations.Delete(entry);
                 if (!r.IsOk) {
-                    _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete proxy forward for proxy {proxy.ProxyId} in region {proxy.Region}");
+                    _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete proxy forward for {proxy.ProxyId:Tag:ProxyId} in {proxy.Region:Tag:Region}");
                 }
             } else {
                 forwards.Add(new Forward(entry.Port, entry.DstPort, entry.DstIp));
@@ -197,7 +199,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             }
             var r = await Replace(proxy);
             if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save proxy {proxy.ProxyId}");
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save proxy {proxy.ProxyId:Tag:ProxyId}");
             }
             return proxy;
         }
@@ -213,7 +215,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             return proxy;
         }
 
-        _logTracer.Error($"vm failed: {proxy.Region} -{error}");
+        _logTracer.Error($"vm failed: {proxy.Region:Tag:Region} -{error:Tag:Error}");
         await _context.Events.SendEvent(new EventProxyFailed(proxy.Region, proxy.ProxyId, error));
         return await SetState(proxy with { Error = error }, VmState.Stopping);
     }
@@ -291,9 +293,9 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         var config = await _context.ConfigOperations.Fetch();
         var vm = GetVm(proxy, config);
         if (!await _context.VmOperations.IsDeleted(vm)) {
-            _logTracer.Info($"stopping proxy: {proxy.Region}");
+            _logTracer.Info($"stopping proxy: {proxy.Region:Tag:Region}");
             if (await _context.VmOperations.Delete(vm)) {
-                _logTracer.Info($"deleted proxy vm for region {proxy.Region}, name: {vm.Name}");
+                _logTracer.Info($"deleted proxy vm for region {proxy.Region:Tag:Region}, name: {vm.Name:Tag:Name}");
             }
             return proxy;
         }
@@ -303,9 +305,9 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     public async Task<Proxy> Stopped(Proxy proxy) {
         var stoppedVm = await SetState(proxy, VmState.Stopped);
-        _logTracer.Info($"removing proxy: {stoppedVm.Region}");
+        _logTracer.Info($"removing proxy: {stoppedVm.Region:Tag:Region}");
         await _context.Events.SendEvent(new EventProxyDeleted(stoppedVm.Region, stoppedVm.ProxyId));
-        await Delete(stoppedVm);
+        await Delete(stoppedVm).IgnoreResult();
         return stoppedVm;
     }
 
