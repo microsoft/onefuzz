@@ -37,7 +37,7 @@ container:{container} filename:{filename}";
                 _logTracer.Error($"transient ADO notification failure {report.JobId:Tag:JobId} {report.TaskId:Tag:TaskId} {container:Tag:Container} {filename:Tag:Filename}");
                 throw;
             } else {
-                _logTracer.Exception(e, "Failed to process ado notification");
+                _logTracer.Exception(e, $"Failed to process ado notification");
                 LogFailedNotification(report, e, notificationId);
             }
         }
