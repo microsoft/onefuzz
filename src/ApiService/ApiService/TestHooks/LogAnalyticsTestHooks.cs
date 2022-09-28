@@ -23,7 +23,7 @@ namespace ApiService.TestHooks {
 
         [Function("MonitorSettingsTestHook")]
         public async Task<HttpResponseData> GetMonitorSettings([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/logAnalytics/monitorSettings")] HttpRequestData req) {
-            _log.Info("Get monitor settings");
+            _log.Info($"Get monitor settings");
 
             var monitorSettings = await _logAnalytics.GetMonitorSettings();
 
@@ -35,7 +35,7 @@ namespace ApiService.TestHooks {
 
         [Function("WorkspaceIdTestHook")]
         public async Task<HttpResponseData> GetWorkspaceId([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/logAnalytics/workspaceId")] HttpRequestData req) {
-            _log.Info("Get workspace id");
+            _log.Info($"Get workspace id");
 
             var workspaceId = _logAnalytics.GetWorkspaceId();
             var resp = req.CreateResponse(HttpStatusCode.OK);

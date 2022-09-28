@@ -56,7 +56,7 @@ public class Config : IConfig {
         }
 
         if (job.Config.Logs == null) {
-            _logTracer.Warning($"Missing log container:  job_id {job.JobId}, task_id {task.TaskId}");
+            _logTracer.Warning($"Missing log container {job.JobId:Tag:JobId} - {task.TaskId:Tag:TaskId}");
             return null;
         }
 
@@ -282,7 +282,7 @@ public class Config : IConfig {
 
         if (definition.Features.Contains(TaskFeature.SupervisorExe) && config.Task.SupervisorExe == null) {
             var err = "missing supervisor_exe";
-            _logTracer.Error(err);
+            _logTracer.Error($"{err}");
             return ResultVoid<TaskConfigError>.Error(new TaskConfigError(err));
         }
 
@@ -299,10 +299,8 @@ public class Config : IConfig {
         }
 
         if (!CheckVal(definition.Vm.Compare, definition.Vm.Value, config.Pool!.Count)) {
-            var err =
-                $"invalid vm count: expected {definition.Vm.Compare} {definition.Vm.Value}, got {config.Pool.Count}";
-            _logTracer.Error(err);
-            return ResultVoid<TaskConfigError>.Error(new TaskConfigError(err));
+            _logTracer.Error($"invalid vm count: expected {definition.Vm.Compare:Tag:Comparison} {definition.Vm.Value:Tag:Expected} {config.Pool.Count:Tag:Actual}");
+            return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"invalid vm count: expected {definition.Vm.Compare} {definition.Vm.Value}, actual {config.Pool.Count}"));
         }
 
         var pool = await _context.PoolOperations.GetByName(config.Pool.PoolName);
@@ -328,10 +326,8 @@ public class Config : IConfig {
                 if (config.Task.GeneratorExe.StartsWith(toolPath)) {
                     var generator = config.Task.GeneratorExe.Replace(toolPath, "");
                     if (!await _containers.BlobExists(container.Name, generator, StorageType.Corpus)) {
-                        var err =
-                            $"generator_exe `{config.Task.GeneratorExe}` does not exist in the tools container `{container.Name}`";
-                        _logTracer.Error(err);
-                        return ResultVoid<TaskConfigError>.Error(new TaskConfigError(err));
+                        _logTracer.Error($"{config.Task.GeneratorExe:Tag:GeneratorExe} does not exist in the tools `{container.Name:Tag:Container}`");
+                        return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"generator_exe `{config.Task.GeneratorExe}` does not exist in the tools container `{container.Name}`"));
                     }
                 }
             }
@@ -340,7 +336,7 @@ public class Config : IConfig {
         if (definition.Features.Contains(TaskFeature.StatsFile)) {
             if (config.Task.StatsFile != null && config.Task.StatsFormat == null) {
                 var err2 = "using a stats_file requires a stats_format";
-                _logTracer.Error(err2);
+                _logTracer.Error($"{err2}");
                 return ResultVoid<TaskConfigError>.Error(new TaskConfigError(err2));
             }
         }
@@ -375,10 +371,7 @@ public class Config : IConfig {
         var container = config.Containers!.FirstOrDefault(x => x.Type == ContainerType.Setup);
         if (container != null) {
             if (!await _containers.BlobExists(container.Name, config.Task.TargetExe, StorageType.Corpus)) {
-                var err =
-                    $"target_exe `{config.Task.TargetExe}` does not exist in the setup container `{container.Name}`";
-
-                _logTracer.Warning(err);
+                _logTracer.Warning($"target_exe `{config.Task.TargetExe:Tag:TargetExe}` does not exist in the setup container `{container.Name:Tag:Container}`");
             }
         }
 

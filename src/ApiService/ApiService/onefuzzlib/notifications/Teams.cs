@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace Microsoft.OneFuzz.Service;
 
 public interface ITeams {
-    Async.Task NotifyTeams(TeamsTemplate config, Container container, string filename, IReport reportOrRegression);
+    Async.Task NotifyTeams(TeamsTemplate config, Container container, string filename, IReport reportOrRegression, Guid notificationId);
 }
 
 public class Teams : ITeams {
@@ -23,7 +23,7 @@ public class Teams : ITeams {
         return $"\n```\n{data}\n```\n";
     }
 
-    private async Async.Task SendTeamsWebhook(TeamsTemplate config, string title, IList<Dictionary<string, string>> facts, string? text) {
+    private async Async.Task SendTeamsWebhook(TeamsTemplate config, string title, IList<Dictionary<string, string>> facts, string? text, Guid notificationId) {
         title = MarkdownEscape(title);
 
         var sections = new List<Dictionary<string, object>>() {
@@ -49,11 +49,11 @@ public class Teams : ITeams {
         var client = new Request(_httpFactory.CreateClient());
         var response = await client.Post(url: new Uri(configUrl!), JsonSerializer.Serialize(message));
         if (response == null || !response.IsSuccessStatusCode) {
-            _logTracer.Error($"webhook failed {response?.StatusCode} {response?.Content}");
+            _logTracer.Error($"webhook failed {notificationId:Tag:NotificationId} {response?.StatusCode:Tag:StatusCode} {response?.Content}");
         }
     }
 
-    public async Async.Task NotifyTeams(TeamsTemplate config, Container container, string filename, IReport reportOrRegression) {
+    public async Async.Task NotifyTeams(TeamsTemplate config, Container container, string filename, IReport reportOrRegression, Guid notificationId) {
         var facts = new List<Dictionary<string, string>>();
         string? text = null;
         var title = string.Empty;
@@ -61,7 +61,7 @@ public class Teams : ITeams {
         if (reportOrRegression is Report report) {
             var task = await _context.TaskOperations.GetByJobIdAndTaskId(report.JobId, report.TaskId);
             if (task == null) {
-                _logTracer.Error($"report with invalid task {report.JobId}:{report.TaskId}");
+                _logTracer.Error($"report with invalid task {report.JobId:Tag:JobId}:{report.TaskId:Tag:TaskId}");
                 return;
             }
 
@@ -110,7 +110,7 @@ public class Teams : ITeams {
             });
         }
 
-        await SendTeamsWebhook(config, title, facts, text);
+        await SendTeamsWebhook(config, title, facts, text, notificationId);
     }
 
     private static string MarkdownEscape(string data) {

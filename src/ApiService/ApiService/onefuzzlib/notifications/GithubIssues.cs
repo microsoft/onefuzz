@@ -3,7 +3,7 @@
 namespace Microsoft.OneFuzz.Service;
 
 public interface IGithubIssues {
-    Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? reportable);
+    Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? reportable, Guid notificationId);
 }
 
 public class GithubIssues : NotificationsBase, IGithubIssues {
@@ -11,13 +11,13 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
     public GithubIssues(ILogTracer logTracer, IOnefuzzContext context)
     : base(logTracer, context) { }
 
-    public async Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? reportable) {
+    public async Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? reportable, Guid notificationId) {
         if (reportable == null) {
             return;
         }
 
         if (reportable is RegressionReport) {
-            _logTracer.Info($"github issue integration does not support regression reports. container:{container} filename:{filename}");
+            _logTracer.Info($"github issue integration does not support regression reports. {container:Tag:Container} - {filename:Tag:Filename}");
             return;
         }
 
@@ -26,7 +26,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         try {
             await Process(config, container, filename, report);
         } catch (ApiException e) {
-            await FailTask(report, e);
+            LogFailedNotification(report, e, notificationId);
         }
     }
 

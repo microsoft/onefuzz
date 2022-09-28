@@ -79,7 +79,7 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
 
             var result = await Replace(entry);
             if (!result.IsOk) {
-                _logTracer.WithHttpStatus(result.ErrorV).Info($"port is already used {entry}");
+                _logTracer.WithHttpStatus(result.ErrorV).Info($"port is already used {entry:Tag:Entry}");
             }
 
             return OneFuzzResult.Ok(entry);

@@ -38,7 +38,7 @@ public class Auth {
             File.Delete(tmpFile);
         } catch (Exception ex) {
             //bad but not worth the failure
-            log.Warning($"failed to delete temp file {tmpFile} due to {ex}");
+            log.Warning($"failed to delete temp file {tmpFile:Tag:TempFile} due to {ex:Tag:Exception}");
         }
         tmpFile = tmpFile + ".key";
         var startInfo = SshKeyGenProcConfig(tmpFile);
@@ -56,13 +56,13 @@ public class Auth {
                 File.Delete(tmpFile);
             } catch (Exception ex) {
                 //bad but not worth failing
-                log.Warning($"failed to delete temp file {tmpFile} due to {ex}");
+                log.Warning($"failed to delete temp file {tmpFile:Tag:TempFile} due to {ex:Tag:Exception}");
             }
             try {
                 File.Delete(tmpFilePub);
             } catch (Exception ex) {
                 //bad but not worth failing
-                log.Warning($"failed to delete temp file {tmpFilePub} due to {ex}");
+                log.Warning($"failed to delete temp file {tmpFilePub:Tag:TempFile} due to {ex:Tag:Exception}");
             }
             return (priv, pub.Trim());
         } else {

@@ -114,7 +114,7 @@ public class Proxy {
             var updated = forwardResult.OkV with { ProxyId = proxy.ProxyId };
             var r = await _context.ProxyForwardOperations.Replace(updated);
             if (!r.IsOk) {
-                _log.WithHttpStatus(r.ErrorV).Error($"failed to update proxy forward with machine id {updated.MachineId} with new proxy id {proxy.ProxyId}");
+                _log.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"failed to update proxy forward with {updated.MachineId:Tag:MachineId} with new {proxy.ProxyId:Tag:ProxyId}");
             }
             await _context.ProxyOperations.SaveProxyConfig(proxy);
         }
