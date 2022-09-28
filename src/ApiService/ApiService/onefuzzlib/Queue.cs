@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
+using Azure;
 using Azure.Core;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
@@ -22,12 +23,11 @@ public interface IQueue {
 
 
 
-
 public class Queue : IQueue {
-    IStorage _storage;
-    ILogTracer _log;
+    readonly IStorage _storage;
+    readonly ILogTracer _log;
 
-    static TimeSpan DEFAULT_DURATION = TimeSpan.FromDays(30);
+    static readonly TimeSpan DEFAULT_DURATION = TimeSpan.FromDays(30);
 
     public Queue(IStorage storage, ILogTracer log) {
         _storage = storage;
@@ -110,17 +110,22 @@ public class Queue : IQueue {
 
     public async Async.Task<bool> RemoveFirstMessage(string name, StorageType storageType) {
         var client = await GetQueueClient(name, storageType);
-
-        var msgs = await client.ReceiveMessagesAsync();
-        foreach (var msg in msgs.Value) {
-            var resp = await client.DeleteMessageAsync(msg.MessageId, msg.PopReceipt);
-            if (resp.IsError) {
-                _log.Error($"failed to delete message from the queue {name} due to {resp.ReasonPhrase}");
-                return false;
-            } else {
-                return true;
+        try {
+            var msgs = await client.ReceiveMessagesAsync();
+            foreach (var msg in msgs.Value) {
+                var resp = await client.DeleteMessageAsync(msg.MessageId, msg.PopReceipt);
+                if (resp.IsError) {
+                    _log.Error($"failed to delete message from the queue {name} due to {resp.ReasonPhrase}");
+                    return false;
+                } else {
+                    return true;
+                }
             }
+        } catch (RequestFailedException ex) when (ex.Status == 404 || ex.ErrorCode == "QueueNotFound") {
+            _log.Info($"tried to remove message from queue {name} but it doesn't exist");
+            return false;
         }
+
         return false;
     }
 
