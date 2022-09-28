@@ -39,7 +39,7 @@ public class WebhookPing {
             return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find webhook" }), "webhook ping");
         }
 
-        _log.Info($"pinging webhook : {request.OkV.WebhookId}");
+        _log.Info($"pinging webhook : {request.OkV.WebhookId:Tag:WebhookId}");
         EventPing ping = await _context.WebhookOperations.Ping(webhook);
 
         var response = req.CreateResponse(HttpStatusCode.OK);

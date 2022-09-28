@@ -165,7 +165,10 @@ public class Program {
         var storageAccount = serviceConfig.OneFuzzFuncStorage;
         if (storageAccount is not null) {
             var tableClient = await storage.GetTableServiceClientForAccount(storageAccount);
-            await Async.Task.WhenAll(toCreate.Select(t => tableClient.CreateTableIfNotExistsAsync(serviceConfig.OneFuzzStoragePrefix + t.Name)));
+            await Async.Task.WhenAll(toCreate.Select(async t => {
+                // don't care if it was created or not
+                _ = await tableClient.CreateTableIfNotExistsAsync(serviceConfig.OneFuzzStoragePrefix + t.Name);
+            }));
         }
     }
 }

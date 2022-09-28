@@ -43,6 +43,7 @@ public class Scaleset {
         }
 
         var scaleset = scalesetResult.OkV;
+        // result ignored: not used after this point
         _ = await _context.ScalesetOperations.SetShutdown(scaleset, request.OkV.Now);
         return await RequestHandling.Ok(req, true);
     }
@@ -138,7 +139,7 @@ public class Scaleset {
 
         var inserted = await _context.ScalesetOperations.Insert(scaleset);
         if (!inserted.IsOk) {
-            _log.WithHttpStatus(inserted.ErrorV).Error($"failed to insert new scaleset {scaleset.ScalesetId}");
+            _log.WithHttpStatus(inserted.ErrorV).Error($"failed to insert new scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
             return await _context.RequestHandling.NotOk(
                 req,
                 new Error(
@@ -161,7 +162,7 @@ public class Scaleset {
 
             var r = await _context.AutoScaleOperations.Insert(autoScale);
             if (!r.IsOk) {
-                _log.WithHttpStatus(r.ErrorV).Error($"failed to insert autoscale options for sclaeset id {autoScale.ScalesetId}");
+                _log.WithHttpStatus(r.ErrorV).Error($"failed to insert autoscale options for sclaeset id {autoScale.ScalesetId:Tag:ScalesetId}");
             }
         }
 

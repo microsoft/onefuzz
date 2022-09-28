@@ -333,6 +333,12 @@
         "resolved": "2.1.0",
         "contentHash": "1jUT0PwgKO9d9F/X2n762qLp7v/30OpMtJPFRtmjPXUX2/J0lnqiGiSJNNsW3yYTj5StF0Z1yE36TrvtGpcbrg=="
       },
+      "SmartAnalyzers.CSharpExtensions.Annotations": {
+        "type": "Direct",
+        "requested": "[4.2.7, )",
+        "resolved": "4.2.7",
+        "contentHash": "9fRFxTUwPmH7lukckwEvvKawMcP8ObwnOngN8kx5Bx773WHSku1EGa5BIteV07th5553il76fPX7U1xz2bFmuQ=="
+      },
       "System.IdentityModel.Tokens.Jwt": {
         "type": "Direct",
         "requested": "[6.22.1, )",

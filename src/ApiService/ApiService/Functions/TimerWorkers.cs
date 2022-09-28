@@ -16,21 +16,23 @@ public class TimerWorkers {
     }
 
     private async Async.Task ProcessScalesets(Service.Scaleset scaleset) {
-        _log.Verbose($"checking scaleset for updates: {scaleset.ScalesetId}");
+        _log.Verbose($"checking scaleset for updates: {scaleset.ScalesetId:Tag:ScalesetId}");
 
-        await _scaleSetOps.UpdateConfigs(scaleset);
+        scaleset = await _scaleSetOps.UpdateConfigs(scaleset);
         var r = await _scaleSetOps.SyncAutoscaleSettings(scaleset);
         if (!r.IsOk) {
-            _log.Error($"failed to sync auto scale settings due to {r.ErrorV}");
+            _log.Error($"failed to sync auto scale settings {scaleset.ScalesetId:Tag:ScalesetId} due to {r.ErrorV:Tag:Error}");
         }
 
         // if the scaleset is touched during cleanup, don't continue to process it
-        if (await _scaleSetOps.CleanupNodes(scaleset)) {
-            _log.Verbose($"scaleset needed cleanup: {scaleset.ScalesetId}");
+        var (touched, ss) = await _scaleSetOps.CleanupNodes(scaleset);
+        if (touched) {
+            _log.Verbose($"scaleset needed cleanup: {scaleset.ScalesetId:Tag:ScalesetId}");
             return;
         }
 
-        await _scaleSetOps.SyncScalesetSize(scaleset);
+        scaleset = ss;
+        scaleset = await _scaleSetOps.SyncScalesetSize(scaleset);
         _ = await _scaleSetOps.ProcessStateUpdate(scaleset);
     }
 
@@ -44,7 +46,7 @@ public class TimerWorkers {
         var pools = _poolOps.SearchAll();
         await foreach (var pool in pools) {
             if (PoolStateHelper.NeedsWork.Contains(pool.State)) {
-                _log.Info($"update pool: {pool.PoolId} ({pool.Name})");
+                _log.Info($"update pool: {pool.PoolId:Tag:PoolId} - {pool.Name:Tag:PoolName}");
                 _ = await _poolOps.ProcessStateUpdate(pool);
             }
         }
@@ -60,7 +62,7 @@ public class TimerWorkers {
 
         var nodes = _nodeOps.SearchStates(states: NodeStateHelper.NeedsWorkStates);
         await foreach (var node in nodes) {
-            _log.Info($"update node: {node.MachineId}");
+            _log.Info($"update node: {node.MachineId:Tag:MachineId}");
             _ = await _nodeOps.ProcessStateUpdate(node);
         }
 

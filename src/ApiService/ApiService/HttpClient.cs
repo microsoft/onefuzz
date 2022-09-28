@@ -17,7 +17,7 @@ public class Request {
     }
 
     private async Task<HttpResponseMessage> Send(HttpMethod method, Uri url, HttpContent? content = null, IDictionary<string, string>? headers = null) {
-        var request = new HttpRequestMessage(method: method, requestUri: url);
+        using var request = new HttpRequestMessage(method: method, requestUri: url);
 
         if (_auth is not null) {
             var (tokenType, accessToken) = await _auth();

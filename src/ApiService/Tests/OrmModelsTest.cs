@@ -702,7 +702,7 @@ namespace Tests {
         ITestOutputHelper _output;
 
         public OrmModelsTest(ITestOutputHelper output) {
-            Arb.Register<OrmArb>();
+            _ = Arb.Register<OrmArb>();
             _output = output;
         }
 
@@ -784,7 +784,7 @@ namespace Tests {
         ITestOutputHelper _output;
 
         public OrmJsonSerialization(ITestOutputHelper output) {
-            Arb.Register<OrmArb>();
+            _ = Arb.Register<OrmArb>();
             _output = output;
         }
 

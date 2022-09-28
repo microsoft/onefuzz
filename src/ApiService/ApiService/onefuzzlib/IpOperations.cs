@@ -43,7 +43,7 @@ public class IpOperations : IIpOperations {
     }
 
     public async Async.Task<NetworkInterfaceResource?> GetPublicNic(string resourceGroup, string name) {
-        _logTracer.Info($"getting nic: {resourceGroup} {name}");
+        _logTracer.Info($"getting nic: {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name}");
         try {
             return await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name);
         } catch (RequestFailedException) {
@@ -52,7 +52,7 @@ public class IpOperations : IIpOperations {
     }
 
     public async Async.Task<PublicIPAddressResource?> GetIp(string resourceGroup, string name) {
-        _logTracer.Info($"getting ip {resourceGroup}:{name}");
+        _logTracer.Info($"getting ip {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name}");
         try {
             return await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(name);
         } catch (RequestFailedException) {
@@ -61,35 +61,35 @@ public class IpOperations : IIpOperations {
     }
 
     public async System.Threading.Tasks.Task DeleteNic(string resourceGroup, string name) {
-        _logTracer.Info($"deleting nic {resourceGroup}:{name}");
+        _logTracer.Info($"deleting nic {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name}");
         var networkInterface = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name);
         try {
             var r = await networkInterface.Value.DeleteAsync(WaitUntil.Started);
             if (r.GetRawResponse().IsError) {
-                _logTracer.Error($"failed to start deleting nic {name} due to {r.GetRawResponse().ReasonPhrase}");
+                _logTracer.Error($"failed to start deleting nic {name:Tag:Name} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
             }
         } catch (RequestFailedException ex) {
             _logTracer.Exception(ex);
             if (ex.ErrorCode != "NicReservedForAnotherVm") {
                 throw;
             }
-            _logTracer.Warning($"unable to delete nic {resourceGroup}:{name}  {ex.Message}");
+            _logTracer.Warning($"unable to delete nic {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name} {ex.Message:Tag:Error}");
         }
     }
 
     public async System.Threading.Tasks.Task DeleteIp(string resourceGroup, string name) {
-        _logTracer.Info($"deleting ip {resourceGroup}:{name}");
+        _logTracer.Info($"deleting ip {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name}");
         var publicIpAddressAsync = await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(name);
         var r = await publicIpAddressAsync.Value.DeleteAsync(WaitUntil.Started);
         if (r.GetRawResponse().IsError) {
-            _logTracer.Error($"failed to start deleting ip address due to {r.GetRawResponse().ReasonPhrase}");
+            _logTracer.Error($"failed to start deleting ip address {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
         }
     }
 
     public async Task<string?> GetScalesetInstanceIp(Guid scalesetId, Guid machineId) {
         var instance = await _context.VmssOperations.GetInstanceId(scalesetId, machineId);
         if (!instance.IsOk) {
-            _logTracer.Verbose($"failed to get vmss {scalesetId} for instance id {machineId} due to {instance.ErrorV}");
+            _logTracer.Verbose($"failed to get vmss {scalesetId:Tag:ScalesetId} for instance id {machineId:Tag:MachineId} due to {instance.ErrorV:Tag:Error}");
             return null;
         }
 
@@ -103,7 +103,7 @@ public class IpOperations : IIpOperations {
     public async Task<string?> GetPublicIp(ResourceIdentifier resourceId) {
         // TODO: Parts of this function seem redundant, but I'm mirroring
         // the python code exactly. We should revisit this.
-        _logTracer.Info($"getting ip for {resourceId}");
+        _logTracer.Info($"getting ip for {resourceId:Tag:ResourceId}");
         try {
             var resource = await (_context.Creds.GetData(_context.Creds.ParseResourceId(resourceId)));
             var networkInterfaces = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(
@@ -129,7 +129,7 @@ public class IpOperations : IIpOperations {
     }
 
     public async Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, Region region, Nsg? nsg) {
-        _logTracer.Info($"creating nic for {resourceGroup}:{name} in {region}");
+        _logTracer.Info($"creating nic for {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name} in {region:Tag:Region}");
 
         var network = await Network.Init(region, _context);
         var subnetId = await network.GetId();
@@ -137,7 +137,7 @@ public class IpOperations : IIpOperations {
         if (subnetId is null) {
             var r = await network.Create();
             if (!r.IsOk) {
-                _logTracer.Error($"failed to create network in region {region} due to {r.ErrorV}");
+                _logTracer.Error($"failed to create network in region {region:Tag:Region} due to {r.ErrorV:Tag:Error}");
             }
             return r;
         }
@@ -176,7 +176,7 @@ public class IpOperations : IIpOperations {
         var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
         if (!string.IsNullOrEmpty(onefuzzOwner)) {
             if (!networkInterface.Tags.TryAdd("OWNER", onefuzzOwner)) {
-                _logTracer.Warning($"Failed to add tag 'OWNER':{onefuzzOwner} to nic {resourceGroup}:{name}");
+                _logTracer.Warning($"Failed to add tag 'OWNER':{onefuzzOwner:Tag:Owner} to nic {resourceGroup:Tag:ResourceGroup}:{name:Tag:Name}");
             }
         }
 
@@ -189,7 +189,7 @@ public class IpOperations : IIpOperations {
                 );
 
             if (r.GetRawResponse().IsError) {
-                _logTracer.Error($"failed to createOrUpdate network interface {name} due to {r.GetRawResponse().ReasonPhrase}");
+                _logTracer.Error($"failed to createOrUpdate network interface {name:Tag:Name} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
             }
         } catch (RequestFailedException ex) {
             if (!ex.ToString().Contains("RetryableError")) {
@@ -212,7 +212,7 @@ public class IpOperations : IIpOperations {
         var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
         if (!string.IsNullOrEmpty(onefuzzOwner)) {
             if (!ipParams.Tags.TryAdd("OWNER", onefuzzOwner)) {
-                _logTracer.Warning($"Failed to add tag 'OWNER':{onefuzzOwner} to ip {resourceGroup}:{name}");
+                _logTracer.Warning($"Failed to add tag 'OWNER':{onefuzzOwner:Tag:Owner} to ip {resourceGroup:Tag:ResourceGroup}:{name:Tag:Name}");
             }
         }
 
@@ -220,7 +220,7 @@ public class IpOperations : IIpOperations {
             WaitUntil.Started, name, ipParams
         );
         if (r.GetRawResponse().IsError) {
-            _logTracer.Error($"Failed to create or update Public Ip Address {name} due to {r.GetRawResponse().ReasonPhrase}");
+            _logTracer.Error($"Failed to create or update Public Ip Address {name:Tag:Name} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
         }
 
         return;
@@ -270,7 +270,8 @@ public class IpOperations : IIpOperations {
                 if (nics != null)
                     return nics.value.SelectMany(x => x.properties.ipConfigurations.Select(i => i.properties.privateIPAddress)).WhereNotNull().ToList();
             } else {
-                _logTracer.Error($"failed to get ListInstancePrivateIps due to {await response.Content.ReadAsStringAsync()}");
+                var body = await response.Content.ReadAsStringAsync();
+                _logTracer.Error($"failed to get ListInstancePrivateIps due to {body}");
             }
             return new List<string>();
         }

@@ -44,7 +44,7 @@ public class Scheduler : IScheduler {
                         foreach (var workUnit in workSet.WorkUnits) {
                             var task1 = tasks[workUnit.TaskId];
                             Task task = await _taskOperations.SetState(task1, TaskState.Scheduled);
-                            seen.Add(task.TaskId);
+                            _ = seen.Add(task.TaskId);
                         }
                     }
                 }
@@ -53,19 +53,19 @@ public class Scheduler : IScheduler {
 
         var notReadyCount = tasks.Count - seen.Count;
         if (notReadyCount > 0) {
-            _logTracer.Info($"tasks not ready {notReadyCount}. Tasks seen: {seen.Count}");
+            _logTracer.Info($"{notReadyCount:Tag:TasksNotReady} - {seen.Count:Tag:TasksSeen}");
         }
     }
 
     private async Async.Task<bool> ScheduleWorkset(WorkSet workSet, Pool pool, long count) {
         if (!PoolStateHelper.Available.Contains(pool.State)) {
-            _logTracer.Info($"pool not available for work: {pool.Name} state: {pool.State}");
+            _logTracer.Info($"pool not available {pool.Name:Tag:PoolName} - {pool.State:Tag:PoolState}");
             return false;
         }
 
         for (var i = 0L; i < count; i++) {
             if (!await _poolOperations.ScheduleWorkset(pool, workSet)) {
-                _logTracer.Error($"unable to schedule workset. pool:{pool.Name} workset: {workSet}");
+                _logTracer.Error($"unable to schedule workset {pool.Name:Tag:PoolName} {workSet:Tag:WorkSet}");
                 return false;
             }
         }
@@ -150,38 +150,39 @@ public class Scheduler : IScheduler {
         if (!poolCache.TryGetValue(poolKey, out var pool)) {
             var foundPool = await _taskOperations.GetPool(task);
             if (foundPool is null) {
-                _logTracer.Info($"unable to find pool for task: {task.TaskId}");
+                _logTracer.Info($"unable to find pool for task: {task.TaskId:Tag:TaskId}");
                 return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.UNABLE_TO_FIND, $"unable to find pool for the task {task.TaskId} in job {task.JobId}");
             }
 
             pool = poolCache[poolKey] = foundPool;
         }
 
-        _logTracer.Info($"scheduling task: {task.TaskId}");
+        _logTracer.Info($"scheduling task: {task.TaskId:Tag:TaskId}");
 
         var job = await _jobOperations.Get(task.JobId);
         if (job is null) {
-            _logTracer.Error($"invalid job_id {task.JobId} for task {task.TaskId}");
+            _logTracer.Error($"invalid job {task.JobId:Tag:JobId} for task {task.TaskId:Tag:TaskId}");
             return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.INVALID_JOB, $"invalid job_id {task.JobId} for task {task.TaskId}");
         }
 
         var taskConfig = await _config.BuildTaskConfig(job, task);
         if (taskConfig is null) {
-            _logTracer.Error($"unable to build task config for task: {task.TaskId}");
+            _logTracer.Error($"unable to build task config for task: {task.TaskId:Tag:TaskId}");
             return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.INVALID_CONFIGURATION, $"unable to build task config for task: {task.TaskId} in job {task.JobId}");
         }
         var setupContainer = task.Config.Containers?.FirstOrDefault(c => c.Type == ContainerType.Setup) ?? throw new Exception($"task missing setup container: task_type = {task.Config.Task.Type}");
 
-        var setupPs1Exist = _containers.BlobExists(setupContainer.Name, "setup.ps1", StorageType.Corpus);
-        var setupShExist = _containers.BlobExists(setupContainer.Name, "setup.sh", StorageType.Corpus);
-
         string? setupScript = null;
-        if (task.Os == Os.Windows && await setupPs1Exist) {
-            setupScript = "setup.ps1";
+        if (task.Os == Os.Windows) {
+            if (await _containers.BlobExists(setupContainer.Name, "setup.ps1", StorageType.Corpus)) {
+                setupScript = "setup.ps1";
+            }
         }
 
-        if (task.Os == Os.Linux && await setupShExist) {
-            setupScript = "setup.sh";
+        if (task.Os == Os.Linux) {
+            if (await _containers.BlobExists(setupContainer.Name, "setup.sh", StorageType.Corpus)) {
+                setupScript = "setup.sh";
+            }
         }
 
         var reboot = false;

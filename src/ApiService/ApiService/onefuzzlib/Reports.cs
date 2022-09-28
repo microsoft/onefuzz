@@ -30,7 +30,7 @@ public class Reports : IReports {
         var filePath = string.Join("/", new[] { container.String, fileName });
         if (!fileName.EndsWith(".json", StringComparison.Ordinal)) {
             if (expectReports) {
-                _log.Error($"get_report invalid extension: {filePath}");
+                _log.Error($"get_report invalid extension: {filePath:Tag:FilePath}");
             }
             return null;
         }
@@ -39,7 +39,7 @@ public class Reports : IReports {
 
         if (blob == null) {
             if (expectReports) {
-                _log.Error($"get_report invalid blob: {filePath}");
+                _log.Error($"get_report invalid blob: {filePath:Tag:FilePath}");
             }
             return null;
         }
@@ -52,7 +52,7 @@ public class Reports : IReports {
         if (regressionReport == null || regressionReport.CrashTestResult == null) {
             var report = JsonSerializer.Deserialize<Report>(content, EntityConverter.GetJsonSerializerOptions());
             if (expectReports && report == null) {
-                _log.Error($"unable to parse report ({filePath}) as a report or regression");
+                _log.Error($"unable to parse report ({filePath:Tag:FilePath}) as a report or regression");
                 return null;
             }
             return report;

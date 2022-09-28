@@ -23,7 +23,7 @@ namespace ApiService.TestHooks {
 
         [Function("JobTestHook")]
         public async Task<HttpResponseData> GetJob([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/jobOps/job")] HttpRequestData req) {
-            _log.Info("Get job info");
+            _log.Info($"Get job info");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             var jobId = Guid.Parse(query["jobId"]);
@@ -38,7 +38,7 @@ namespace ApiService.TestHooks {
 
         [Function("SearchExpiredTestHook")]
         public async Task<HttpResponseData> SearchExpired([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/jobOps/searchExpired")] HttpRequestData req) {
-            _log.Info("Search expired jobs");
+            _log.Info($"Search expired jobs");
 
             var jobs = await _jobOps.SearchExpired().ToListAsync();
 
@@ -50,7 +50,7 @@ namespace ApiService.TestHooks {
 
         [Function("SearchStateTestHook")]
         public async Task<HttpResponseData> SearchState([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/jobOps/searchState")] HttpRequestData req) {
-            _log.Info("Search jobs by state");
+            _log.Info($"Search jobs by state");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             var init = UriExtension.GetBool("init", query, false);

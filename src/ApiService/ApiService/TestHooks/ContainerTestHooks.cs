@@ -21,7 +21,7 @@ namespace ApiService.TestHooks {
 
         [Function("GetInstanceIdTestHook")]
         public async Task<HttpResponseData> GetInstanceId([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/containers/instanceId")] HttpRequestData req) {
-            _log.Info("Get instance ID");
+            _log.Info($"Get instance ID");
             var instanceId = await _containers.GetInstanceId();
 
             var resp = req.CreateResponse(HttpStatusCode.OK);

@@ -21,11 +21,11 @@ namespace ApiService.TestHooks {
 
         [Function("GetInstanceConfigTestHook")]
         public async Task<HttpResponseData> Get([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/instance-config")] HttpRequestData req) {
-            _log.Info("Fetching instance config");
+            _log.Info($"Fetching instance config");
             var config = await _configOps.Fetch();
 
             if (config is null) {
-                _log.Error("Instance config is null");
+                _log.Error($"Instance config is null");
                 Error err = new(ErrorCode.INVALID_REQUEST, new[] { "Instance config is null" });
                 var resp = req.CreateResponse(HttpStatusCode.InternalServerError);
                 await resp.WriteAsJsonAsync(err);
@@ -41,7 +41,7 @@ namespace ApiService.TestHooks {
 
         [Function("PatchInstanceConfigTestHook")]
         public async Task<HttpResponseData> Patch([HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "testhooks/instance-config")] HttpRequestData req) {
-            _log.Info("Patch instance config");
+            _log.Info($"Patch instance config");
 
             var s = await req.ReadAsStringAsync();
             var newInstanceConfig = JsonSerializer.Deserialize<InstanceConfig>(s!, EntityConverter.GetJsonSerializerOptions());

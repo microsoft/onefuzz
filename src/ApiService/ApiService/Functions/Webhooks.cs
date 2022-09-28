@@ -36,7 +36,7 @@ public class Webhooks {
         }
 
         if (request.OkV.WebhookId != null) {
-            _log.Info($"getting webhook: {request.OkV.WebhookId}");
+            _log.Info($"getting webhook: {request.OkV.WebhookId:Tag:WebhookId}");
             var webhook = await _context.WebhookOperations.GetByWebhookId(request.OkV.WebhookId.Value);
 
             if (webhook == null) {
@@ -48,7 +48,7 @@ public class Webhooks {
             return response;
         }
 
-        _log.Info("listing webhooks");
+        _log.Info($"listing webhooks");
         var webhooks = _context.WebhookOperations.SearchAll().Select(w => w with { Url = null, SecretToken = null });
 
         var response2 = req.CreateResponse(HttpStatusCode.OK);
@@ -68,7 +68,7 @@ public class Webhooks {
                 "webhook update");
         }
 
-        _log.Info($"updating webhook: {request.OkV.WebhookId}");
+        _log.Info($"updating webhook: {request.OkV.WebhookId:Tag:WebhookId}");
 
         var webhook = await _context.WebhookOperations.GetByWebhookId(request.OkV.WebhookId);
 
@@ -86,7 +86,7 @@ public class Webhooks {
 
         var r = await _context.WebhookOperations.Replace(updated);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace webhook with updated entry");
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace webhook with updated entry {updated.WebhookId:Tag:WebhookId}");
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
@@ -109,10 +109,10 @@ public class Webhooks {
 
         var r = await _context.WebhookOperations.Insert(webhook);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to insert webhook {webhook.WebhookId}");
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to insert webhook {webhook.WebhookId:Tag:WebhookId}");
         }
 
-        _log.Info($"added webhook: {webhook.WebhookId}");
+        _log.Info($"added webhook: {webhook.WebhookId:Tag:WebhookId}");
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(webhook with { Url = null, SecretToken = null });
@@ -129,7 +129,7 @@ public class Webhooks {
                 context: "webhook delete");
         }
 
-        _log.Info($"deleting webhook: {request.OkV.WebhookId}");
+        _log.Info($"deleting webhook: {request.OkV.WebhookId:Tag:WebhookId}");
 
         var webhook = await _context.WebhookOperations.GetByWebhookId(request.OkV.WebhookId);
 
@@ -139,7 +139,7 @@ public class Webhooks {
 
         var r = await _context.WebhookOperations.Delete(webhook);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to delete webhook {webhook.Name} - {webhook.WebhookId}");
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to delete webhook {webhook.Name:Tag:WebhookName} - {webhook.WebhookId:Tag:WebhookId}");
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
