@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.14.1
+### Fixed
+* Service: Handle 404 messages without throwing an exception the queue does not exist.[#2451](https://github.com/microsoft/onefuzz/pull/2451)
+
 ## 5.14.0
 ### Added
 * Service: Implement not-implemented `GetInputContainerQueues` [#2380](https://github.com/microsoft/onefuzz/pull/2380)
