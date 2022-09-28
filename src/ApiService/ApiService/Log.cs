@@ -27,6 +27,8 @@ public struct LogStringHandler {
     public void AppendFormatted<T>(T message) {
         if (message is not null) {
             _builder.Append(message.ToString());
+        } else {
+            _builder.Append("<null>");
         }
     }
 
@@ -47,7 +49,7 @@ public struct LogStringHandler {
 
     private bool HasData => _builder is not null && _builder.Length > 0;
 
-    public override string ToString() => this.HasData ? _builder.ToString() : String.Empty;
+    public override string ToString() => this.HasData ? _builder.ToString() : "<null>";
     public IReadOnlyDictionary<string, string>? Tags => _tags;
 }
 
