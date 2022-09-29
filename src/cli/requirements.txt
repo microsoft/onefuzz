@@ -23,5 +23,7 @@ idna<3,>=2.10
 cryptography<3.4,>=3.3.2
 # PyJWT needs to be pinned to the version used by azure-cli-core
 PyJWT>=2.4.0
+# install rsa version >4.5 to fix CVE-2020-25658
+rsa>4.5
 # onefuzztypes version is set during build
 onefuzztypes==0.0.0
