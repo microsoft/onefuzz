@@ -54,7 +54,10 @@ public abstract class ValidatedStringConverter<T> : JsonConverter<T> where T : V
 
 [JsonConverter(typeof(Converter))]
 public sealed record PoolName : ValidatedString {
-    private static bool IsValid(string input) => Check.IsNameLike(input);
+    // NOTE: PoolName is currently _not_ validated, since this 
+    // can break existing users. When CSHARP-RELEASE happens, we can
+    // try to synchronize other breaking changes with that.
+    private static bool IsValid(string input) => true;
 
     private PoolName(string value) : base(value) {
         Debug.Assert(IsValid(value));
