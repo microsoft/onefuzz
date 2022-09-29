@@ -103,17 +103,17 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public async Async.Task<bool> ScalesetNodeExists(Node node) {
-        if (node.ScalesetId == null) {
+        var scalesetId = node.ScalesetId;
+        if (scalesetId is null) {
             return false;
         }
 
-        var scalesetResult = await _context.ScalesetOperations.GetById((Guid)(node.ScalesetId!));
+        var scalesetResult = await _context.ScalesetOperations.GetById(scalesetId.Value);
         if (!scalesetResult.IsOk || scalesetResult.OkV == null) {
             return false;
         }
-        var scaleset = scalesetResult.OkV;
 
-        var instanceId = await _context.VmssOperations.GetInstanceId(scaleset.ScalesetId, node.MachineId);
+        var instanceId = await _context.VmssOperations.GetInstanceId(scalesetResult.OkV.ScalesetId, node.MachineId);
         return instanceId.IsOk;
     }
 

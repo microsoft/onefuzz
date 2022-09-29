@@ -96,11 +96,21 @@ public class VmssOperations : IVmssOperations {
 
 
     private VirtualMachineScaleSetResource GetVmssResource(Guid name) {
-        var resourceGroup = _creds.GetBaseResourceGroup();
-        var id = VirtualMachineScaleSetResource.CreateResourceIdentifier(_creds.GetSubscription(), resourceGroup, name.ToString());
+        var id = VirtualMachineScaleSetResource.CreateResourceIdentifier(
+            _creds.GetSubscription(),
+            _creds.GetBaseResourceGroup(),
+            name.ToString());
         return _creds.ArmClient.GetVirtualMachineScaleSetResource(id);
     }
 
+    private VirtualMachineScaleSetVmResource GetVmssVmResource(Guid name, string instanceId) {
+        var id = VirtualMachineScaleSetVmResource.CreateResourceIdentifier(
+            _creds.GetSubscription(),
+            _creds.GetBaseResourceGroup(),
+            name.ToString(),
+            instanceId);
+        return _creds.ArmClient.GetVirtualMachineScaleSetVmResource(id);
+    }
 
     public async Async.Task<VirtualMachineScaleSetData?> GetVmss(Guid name) {
         try {
@@ -180,58 +190,74 @@ public class VmssOperations : IVmssOperations {
         return results;
     }
 
-    public async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(Guid name, Guid vmId) {
-        _log.Info($"get instance ID for scaleset node: {name:Tag:VmssName}:{vmId:Tag:VmId}");
-        var scaleSet = GetVmssResource(name);
-
-        try {
-            await foreach (var vm in scaleSet.GetVirtualMachineScaleSetVms().AsAsyncEnumerable()) {
+    private record InstanceIdKey(Guid Scaleset, Guid VmId);
+    private Task<string> GetInstanceIdForVmId(Guid scaleset, Guid vmId)
+        => _cache.GetOrCreateAsync(new InstanceIdKey(scaleset, vmId), async _ => {
+            var scalesetResource = GetVmssResource(scaleset);
+            var vmIdString = vmId.ToString();
+            await foreach (var vm in scalesetResource.GetVirtualMachineScaleSetVms().AsAsyncEnumerable()) {
                 var response = await vm.GetAsync();
-                if (!response.Value.HasData) {
-                    return OneFuzzResult<VirtualMachineScaleSetVmResource>.Error(ErrorCode.UNABLE_TO_FIND, $"failed to get vm data");
-                }
-
-                if (response.Value.Data.VmId == vmId.ToString()) {
-                    return OneFuzzResult<VirtualMachineScaleSetVmResource>.Ok(response);
+                var instanceId = response.Value.Data.InstanceId;
+                if (response.Value.Data.VmId == vmIdString) {
+                    // we found the VM we are looking for
+                    return instanceId;
+                } else {
+                    // if we find any other VMs, put them in the cache
+                    if (Guid.TryParse(response.Value.Data.VmId, out var vmId)) {
+                        _ = _cache.CreateEntry(new InstanceIdKey(scaleset, vmId)).SetValue(instanceId);
+                    }
                 }
             }
+
+            throw new Exception($"unable to find instance ID for scaleset vm {scaleset}:{vmId}");
+        });
+
+    public async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(Guid name, Guid vmId) {
+        _log.Info($"get instance ID for scaleset node: {name:Tag:VmssName}:{vmId:Tag:VmId}");
+        var instanceId = await GetInstanceId(name, vmId);
+        if (!instanceId.IsOk) {
+            return instanceId.ErrorV;
+        }
+
+        var resource = GetVmssVmResource(name, instanceId.OkV);
+        try {
+            var response = await resource.GetAsync();
+            return OneFuzzResult.Ok(response.Value);
         } catch (Exception ex) when (ex is RequestFailedException || ex is CloudException) {
             _log.Exception(ex, $"unable to find vm instance: {name:Tag:VmssName}:{vmId:Tag:VmId}");
-            return OneFuzzResult<VirtualMachineScaleSetVmResource>.Error(ErrorCode.UNABLE_TO_FIND, $"unable to find vm instance: {name}:{vmId}");
+            return OneFuzzResult<VirtualMachineScaleSetVmResource>.Error(ErrorCode.UNABLE_TO_FIND, $"unable to find vm instance: {name}:{instanceId}");
         }
-        return OneFuzzResult<VirtualMachineScaleSetVmResource>.Error(ErrorCode.UNABLE_TO_FIND, $"unable to find scaleset machine: {name}:{vmId}");
     }
 
     public async Async.Task<OneFuzzResult<string>> GetInstanceId(Guid name, Guid vmId) {
-        var vm = await GetInstanceVm(name, vmId);
-        if (vm.IsOk) {
-            return OneFuzzResult<string>.Ok(vm.OkV!.Data.InstanceId);
-        } else {
-            return OneFuzzResult<string>.Error(vm.ErrorV);
+        try {
+            return OneFuzzResult.Ok(await GetInstanceIdForVmId(name, vmId));
+        } catch {
+            return new Error(ErrorCode.UNABLE_TO_FIND, new string[] { $"unable to find scaleset machine: {name}:{vmId}" });
         }
     }
 
     public async Async.Task<OneFuzzResultVoid> UpdateScaleInProtection(Guid name, Guid vmId, bool protectFromScaleIn) {
         var res = await GetInstanceVm(name, vmId);
         if (!res.IsOk) {
-            return OneFuzzResultVoid.Error(res.ErrorV);
-        } else {
-            var instanceVm = res.OkV;
-            instanceVm.Data.ProtectionPolicy ??= new();
-            if (instanceVm.Data.ProtectionPolicy.ProtectFromScaleIn != protectFromScaleIn) {
-                instanceVm.Data.ProtectionPolicy.ProtectFromScaleIn = protectFromScaleIn;
-                var vmCollection = GetVmssResource(name).GetVirtualMachineScaleSetVms();
-                try {
-                    _ = await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceVm.Data.InstanceId, instanceVm.Data);
-                    return OneFuzzResultVoid.Ok;
-                } catch {
-                    var msg = $"unable to set protection policy on: {vmId}:{instanceVm.Id} in vmss {name}";
-                    return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, msg);
-                }
-            } else {
-                _log.Info($"scale in protection was already set to {protectFromScaleIn:Tag:ProtectFromScaleIn} on vm {vmId:Tag:VmId} for scaleset {name:Tag:VmssName}");
+            return res.ErrorV;
+        }
+
+        var instanceVm = res.OkV;
+        instanceVm.Data.ProtectionPolicy ??= new();
+        if (instanceVm.Data.ProtectionPolicy.ProtectFromScaleIn != protectFromScaleIn) {
+            instanceVm.Data.ProtectionPolicy.ProtectFromScaleIn = protectFromScaleIn;
+            var vmCollection = GetVmssResource(name).GetVirtualMachineScaleSetVms();
+            try {
+                _ = await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceVm.Data.InstanceId, instanceVm.Data);
                 return OneFuzzResultVoid.Ok;
+            } catch {
+                var msg = $"unable to set protection policy on: {vmId}:{instanceVm.Id} in vmss {name}";
+                return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, msg);
             }
+        } else {
+            _log.Info($"scale in protection was already set to {protectFromScaleIn:Tag:ProtectFromScaleIn} on vm {vmId:Tag:VmId} for scaleset {name:Tag:VmssName}");
+            return OneFuzzResultVoid.Ok;
         }
     }
 
