@@ -103,7 +103,8 @@ public record Node
     Guid? ScalesetId = null,
     bool ReimageRequested = false,
     bool DeleteRequested = false,
-    bool DebugKeepNode = false
+    bool DebugKeepNode = false,
+    string? InstanceId = null
 ) : StatefulEntityBase<NodeState>(State) {
 
     public List<NodeTasks>? Tasks { get; set; }

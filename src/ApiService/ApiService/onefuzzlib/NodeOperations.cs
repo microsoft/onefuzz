@@ -3,11 +3,12 @@ using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure;
 using Azure.Data.Tables;
-
 namespace Microsoft.OneFuzz.Service;
 
 public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Task<Node?> GetByMachineId(Guid machineId);
+
+    Async.Task<Node?> SetInstanceId(Guid scalesetId, Guid vmId, string instanceId);
 
     Task<bool> CanProcessNewWork(Node node);
 
@@ -167,7 +168,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
             var scaleset = scalesetResult.OkV;
             if (!scaleset.State.IsAvailable()) {
-                _logTracer.Info($"can_process_new_work scaleset not available for work {scaleset.ScalesetId:Tag:ScalesetId} - {node.MachineId:Tag:MachineId} {scaleset.State:Tag:State}");
+                _logTracer.Info($"can_process_new_work scaleset not available for work {node.ScalesetId:Tag:ScalesetId} - {node.MachineId:Tag:MachineId}");
                 return false;
             }
         }
@@ -422,10 +423,37 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         }
     }
 
+    public async Async.Task<Node?> SetInstanceId(Guid scalesetId, Guid vmId, string instanceId) {
+
+        var scaleset = await _context.ScalesetOperations.GetById(scalesetId);
+        if (scaleset.IsOk) {
+            var poolName = scaleset.OkV.PoolName.ToString();
+            var node = await QueryAsync(Query.SingleEntity(poolName, vmId.ToString())).FirstOrDefaultAsync();
+            if (node is null) {
+                _logTracer.Verbose($"failed to find node when updating {instanceId:Tag:InstanceId} {vmId:Tag:VmId} {poolName:Tag:PoolName}");
+                return null;
+            } else if (String.Equals(node.InstanceId, instanceId)) {
+                return node;
+            } else {
+                node = node with { InstanceId = instanceId };
+                var r = await Replace(node);
+                if (!r.IsOk) {
+                    _logTracer.Error($"failed to update {instanceId:Tag:InstanceId} {vmId:Tag:VmId} {poolName:Tag:PoolName}");
+                    return null;
+                } else {
+                    _logTracer.Info($"set {instanceId:Tag:InstanceId} {vmId:Tag:VmId} {poolName:Tag:PoolName}");
+                    return node;
+                }
+            }
+        } else {
+            _logTracer.Error($"failed to find scaleset {scalesetId:Tag:ScalesetId} when updating {instanceId:Tag:InstanceId} for {vmId:Tag:VmId} due to {scaleset.ErrorV:Tag:Error}");
+            return null;
+        }
+    }
+
 
     public async Async.Task<Node?> GetByMachineId(Guid machineId) {
         var data = QueryAsync(filter: Query.RowKey(machineId.ToString()));
-
         return await data.FirstOrDefaultAsync();
     }
 

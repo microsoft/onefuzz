@@ -279,14 +279,14 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             //TODO : why are we saving scaleset here ? 
             var r = await Update(scaleset);
             if (!r.IsOk) {
-                _logTracer.Error($"Failed to save scaleset {scaleset.ScalesetId:Tag:ScalesetId} due to {r.ErrorV:Tag:Error}");
+                _logTracer.Error($"Failed to save {scaleset.ScalesetId:Tag:ScalesetId} due to {r.ErrorV:Tag:Error}");
             }
 
             return scaleset;
         }
 
         if (scaleset.Auth is null) {
-            _logTracer.Error($"Scaleset Auth is missing for scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
+            _logTracer.Error($"Scaleset Auth is missing for {scaleset.ScalesetId:Tag:ScalesetId}");
             return await SetFailed(scaleset, new Error(ErrorCode.UNABLE_TO_CREATE, new[] { "missing required auth" }));
         }
 
@@ -295,7 +295,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         if (vmss is null) {
             var pool = await _context.PoolOperations.GetByName(scaleset.PoolName);
             if (!pool.IsOk) {
-                _logTracer.Error($"failed to get pool by name {scaleset.PoolName:Tag:PoolName} for scaleset: {scaleset.ScalesetId:Tag:ScalesetId}");
+                _logTracer.Error($"failed to get {scaleset.PoolName:Tag:PoolName} - {scaleset.ScalesetId:Tag:ScalesetId}");
                 return await SetFailed(scaleset, pool.ErrorV);
             }
 
