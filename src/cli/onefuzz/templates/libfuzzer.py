@@ -550,7 +550,7 @@ class Libfuzzer(Command):
         if target_options is None:
             target_options = []
         target_options = [
-            "--target_path={setup_dir}/" f"{target_harness}"
+            "--target_path={setup_dir}/" + "{target_harness}"
         ] + target_options
 
         helper = JobHelper(
