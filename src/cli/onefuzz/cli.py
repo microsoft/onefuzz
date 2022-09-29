@@ -16,7 +16,6 @@ import os
 import socket
 import sys
 import traceback
-import urllib3.connection
 from enum import Enum
 from typing import (
     Any,
@@ -33,6 +32,7 @@ from typing import (
 from uuid import UUID
 
 import jmespath
+import urllib3.connection
 from docstring_parser import parse as parse_docstring
 from msrest.serialization import Model
 from onefuzztypes.models import SecretData
