@@ -193,7 +193,6 @@ public class VmssOperations : IVmssOperations {
     private record InstanceIdKey(Guid Scaleset, Guid VmId);
     private Task<string> GetInstanceIdForVmId(Guid scaleset, Guid vmId)
         => _cache.GetOrCreateAsync(new InstanceIdKey(scaleset, vmId), async entry => {
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
             var scalesetResource = GetVmssResource(scaleset);
             var vmIdString = vmId.ToString();
             await foreach (var vm in scalesetResource.GetVirtualMachineScaleSetVms().AsAsyncEnumerable()) {
@@ -201,11 +200,14 @@ public class VmssOperations : IVmssOperations {
                 var instanceId = response.Value.Data.InstanceId;
                 if (response.Value.Data.VmId == vmIdString) {
                     // we found the VM we are looking for
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
                     return instanceId;
                 } else {
                     // if we find any other VMs, put them in the cache
                     if (Guid.TryParse(response.Value.Data.VmId, out var vmId)) {
-                        _ = _cache.CreateEntry(new InstanceIdKey(scaleset, vmId)).SetValue(instanceId);
+                        using var e = _cache.CreateEntry(new InstanceIdKey(scaleset, vmId));
+                        _ = e.SetValue(instanceId);
+                        e.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
                     }
                 }
             }
