@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager.Compute;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -26,17 +27,22 @@ public interface IImageOperations {
 public class ImageOperations : IImageOperations {
     private IOnefuzzContext _context;
     private ILogTracer _logTracer;
+    private readonly IMemoryCache _cache;
 
     const string SubscriptionsStr = "/subscriptions/";
     const string ProvidersStr = "/providers/";
 
 
-    public ImageOperations(ILogTracer logTracer, IOnefuzzContext context) {
+    public ImageOperations(ILogTracer logTracer, IOnefuzzContext context, IMemoryCache cache) {
         _logTracer = logTracer;
         _context = context;
+        _cache = cache;
     }
+    
+    public Task<OneFuzzResult<Os>> GetOs(Region region, string image)
+        => _cache.GetOrCreateAsync<OneFuzzResult<Os>>($"GetOs-{region}-{image}", entry => GetOsInternal(region, image));
 
-    public async Task<OneFuzzResult<Os>> GetOs(Region region, string image) {
+    private async Task<OneFuzzResult<Os>> GetOsInternal(Region region, string image) {
         string? name = null;
         if (image.StartsWith(SubscriptionsStr) || image.StartsWith(ProvidersStr)) {
             var parsed = _context.Creds.ParseResourceId(image);
