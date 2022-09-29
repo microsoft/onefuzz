@@ -97,7 +97,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
     public async Async.Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name)
         => await _context.ScalesetOperations.SearchByPool(name)
-            .Select(x => new ScalesetSummary(ScalesetId: x!.ScalesetId, State: x.State))
+            .Select(x => new ScalesetSummary(ScalesetId: x.ScalesetId, State: x.State))
             .ToListAsync();
 
     public async Async.Task<List<WorkSetSummary>> GetWorkQueue(Guid poolId, PoolState state) {
@@ -179,28 +179,22 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
     }
 
     public async Async.Task<Pool> Shutdown(Pool pool) {
-        var scalesets = _context.ScalesetOperations.SearchByPool(pool.Name);
-        var nodes = _context.NodeOperations.SearchByPoolName(pool.Name);
+        var scalesets = await _context.ScalesetOperations.SearchByPool(pool.Name).ToListAsync();
+        var nodes = await _context.NodeOperations.SearchByPoolName(pool.Name).ToListAsync();
 
-        if (scalesets is null && nodes is null) {
+        if (!scalesets.Any() && !nodes.Any()) {
             _logTracer.Info($"pool stopped, deleting {pool.Name:Tag:PoolName}");
             await Delete(pool);
             return pool;
         }
 
-        if (scalesets is not null) {
-            await foreach (var scaleset in scalesets) {
-                if (scaleset is not null) {
-                    _ = await _context.ScalesetOperations.SetShutdown(scaleset, now: true);
-                }
-            }
+        foreach (var scaleset in scalesets) {
+            _ = await _context.ScalesetOperations.SetShutdown(scaleset, now: true);
         }
 
-        if (nodes is not null) {
-            await foreach (var node in nodes) {
-                // ignoring updated result - nodes not returned
-                _ = await _context.NodeOperations.SetShutdown(node);
-            }
+        foreach (var node in nodes) {
+            // ignoring updated result - nodes not returned
+            _ = await _context.NodeOperations.SetShutdown(node);
         }
 
         //TODO: why do we save pool here ? there are no changes to pool record...
@@ -209,32 +203,30 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         if (!r.IsOk) {
             _logTracer.Error($"Failed to update pool record. {pool.Name:Tag:PoolName} - {pool.PoolId:Tag:PoolId}");
         }
+
         return pool;
     }
 
     public async Async.Task<Pool> Halt(Pool pool) {
         //halt the pool immediately
-        var scalesets = _context.ScalesetOperations.SearchByPool(pool.Name);
-        var nodes = _context.NodeOperations.SearchByPoolName(pool.Name);
+        var scalesets = await _context.ScalesetOperations.SearchByPool(pool.Name).ToListAsync();
+        var nodes = await _context.NodeOperations.SearchByPoolName(pool.Name).ToListAsync();
 
-        if (scalesets is null && nodes is null) {
+        if (!scalesets.Any() && !nodes.Any()) {
             _logTracer.Info($"pool stopped, deleting: {pool.Name:Tag:PoolName}");
             await Delete(pool);
+            return pool;
         }
 
-        if (scalesets is not null) {
-            await foreach (var scaleset in scalesets) {
-                if (scaleset is not null) {
-                    _ = await _context.ScalesetOperations.SetState(scaleset, ScalesetState.Halt);
-                }
+        foreach (var scaleset in scalesets) {
+            if (scaleset is not null) {
+                _ = await _context.ScalesetOperations.SetState(scaleset, ScalesetState.Halt);
             }
         }
 
-        if (nodes is not null) {
-            await foreach (var node in nodes) {
-                // updated value ignored: 'nodes' is not returned
-                _ = await _context.NodeOperations.SetHalt(node);
-            }
+        foreach (var node in nodes) {
+            // updated value ignored: 'nodes' is not returned
+            _ = await _context.NodeOperations.SetHalt(node);
         }
 
         return pool;
