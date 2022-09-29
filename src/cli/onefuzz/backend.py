@@ -323,6 +323,10 @@ class Backend:
                 check_application_error(response)
 
                 LOGGER.info("request bad status code: %s", response.status_code)
+            except ConnectionResetError as err:
+                # in our case this means some kind of lower-level timeout was hit;
+                # treat it as a retryable error
+                LOGGER.info("connection reset error: %s", err)
             except requests.exceptions.ConnectionError as err:
                 LOGGER.info("request connection error: %s", err)
             except requests.exceptions.ReadTimeout as err:
