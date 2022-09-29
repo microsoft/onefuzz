@@ -543,6 +543,7 @@ def log_exception(args: argparse.Namespace, err: Exception) -> None:
             LOGGER.error("traceback: %s", x)
     LOGGER.error("command failed: %s", " ".join([str(x) for x in err.args]))
 
+
 def set_tcp_keepalive() -> None:
     value = (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
     # monkey-patch the default socket options to enable TCP keep-alive
@@ -552,6 +553,7 @@ def set_tcp_keepalive() -> None:
     # https://urllib3.readthedocs.io/en/stable/reference/urllib3.connection.html?highlight=keep-alive#:~:text=For%20example%2C%20if,socket.SO_KEEPALIVE%2C%201)%2C%0A%5D
     if not value in urllib3.connection.HTTPConnection.default_socket_options:
         urllib3.connection.HTTPConnection.default_socket_options.extend((value,))
+
 
 def execute_api(api: Any, api_types: List[Any], version: str) -> int:
     set_tcp_keepalive()
