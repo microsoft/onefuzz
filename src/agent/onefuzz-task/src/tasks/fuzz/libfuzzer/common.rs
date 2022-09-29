@@ -51,7 +51,7 @@ pub trait LibFuzzerType: Send + Sync {
     ///
     /// This may include things like setting special environment variables, or overriding
     /// the defaults or values of some command arguments.
-    fn from_config(config: &Config<Self>) -> LibFuzzer;
+    async fn from_config(config: &Config<Self>) -> Result<LibFuzzer>;
 
     /// Perform any environmental setup common to all targets of this fuzzer type.
     ///
@@ -141,7 +141,7 @@ where
             directories.append(&mut dirs);
         }
 
-        let fuzzer = L::from_config(&self.config);
+        let fuzzer = L::from_config(&self.config).await?;
 
         fuzzer
             .verify(self.config.check_fuzzer_help, Some(directories))
@@ -236,12 +236,7 @@ where
                 .for_each(|d| inputs.push(&d.local_path));
         }
 
-        let fuzzer = LibFuzzer::new(
-            &self.config.target_exe,
-            self.config.target_options.clone(),
-            self.config.target_env.clone(),
-            &self.config.common.setup_dir,
-        );
+        let fuzzer = L::from_config(&self.config).await?;
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs).await?;
         let notify = Arc::new(Notify::new());
 

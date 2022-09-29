@@ -348,13 +348,13 @@ def build_task_config(job: Job, task: Task) -> TaskUnitConfig:
         config.supervisor_input_marker = task_config.task.supervisor_input_marker
 
     if TaskFeature.target_exe in definition.features:
-        config.target_exe = "setup/%s" % task_config.task.target_exe
+        config.target_exe = task_config.task.target_exe
 
     if (
         TaskFeature.target_exe_optional in definition.features
         and task_config.task.target_exe
     ):
-        config.target_exe = "setup/%s" % task_config.task.target_exe
+        config.target_exe = task_config.task.target_exe
 
     if TaskFeature.target_env in definition.features:
         config.target_env = task_config.task.target_env or EMPTY_DICT
@@ -438,7 +438,7 @@ def build_task_config(job: Job, task: Task) -> TaskUnitConfig:
         coverage_filter = task_config.task.coverage_filter
 
         if coverage_filter is not None:
-            config.coverage_filter = "setup/%s" % coverage_filter
+            config.coverage_filter = coverage_filter
 
     return config
 
