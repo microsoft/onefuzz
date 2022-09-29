@@ -38,7 +38,7 @@ public class ImageOperations : IImageOperations {
         _context = context;
         _cache = cache;
     }
-    
+
     public Task<OneFuzzResult<Os>> GetOs(Region region, string image)
         => _cache.GetOrCreateAsync<OneFuzzResult<Os>>($"GetOs-{region}-{image}", entry => GetOsInternal(region, image));
 
