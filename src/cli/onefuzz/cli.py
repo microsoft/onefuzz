@@ -551,7 +551,7 @@ def set_tcp_keepalive() -> None:
     # Azure Load Balancer default timeout (4 minutes)
     #
     # https://urllib3.readthedocs.io/en/stable/reference/urllib3.connection.html?highlight=keep-alive#:~:text=For%20example%2C%20if,socket.SO_KEEPALIVE%2C%201)%2C%0A%5D
-    if not value in urllib3.connection.HTTPConnection.default_socket_options:
+    if value not in urllib3.connection.HTTPConnection.default_socket_options:
         urllib3.connection.HTTPConnection.default_socket_options.extend((value,))
 
 
