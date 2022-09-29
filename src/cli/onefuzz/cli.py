@@ -13,8 +13,10 @@ import inspect
 import json
 import logging
 import os
+import socket
 import sys
 import traceback
+import urllib3.connection
 from enum import Enum
 from typing import (
     Any,
@@ -541,8 +543,19 @@ def log_exception(args: argparse.Namespace, err: Exception) -> None:
             LOGGER.error("traceback: %s", x)
     LOGGER.error("command failed: %s", " ".join([str(x) for x in err.args]))
 
+def set_tcp_keepalive() -> None:
+    value = (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+    # monkey-patch the default socket options to enable TCP keep-alive
+    # this enabled since we want to keep connections alive through the
+    # Azure Load Balancer default timeout (4 minutes)
+    #
+    # https://urllib3.readthedocs.io/en/stable/reference/urllib3.connection.html?highlight=keep-alive#:~:text=For%20example%2C%20if,socket.SO_KEEPALIVE%2C%201)%2C%0A%5D
+    if not value in urllib3.connection.HTTPConnection.default_socket_options:
+        urllib3.connection.HTTPConnection.default_socket_options.extend((value,))
 
 def execute_api(api: Any, api_types: List[Any], version: str) -> int:
+    set_tcp_keepalive()
+
     builder = Builder(api_types)
     builder.add_version(version)
     builder.parse_api(api)
