@@ -48,7 +48,7 @@ public class TimerWorkers {
             try {
                 _log.Info($"updating pool: {pool.PoolId:Tag:PoolId} ({pool.Name:Tag:PoolName}) - state: {pool.State:Tag:PoolState}");
                 var newPool = await _poolOps.ProcessStateUpdate(pool);
-                _log.Info($"completed updating pool - now in state {newPool.State:Tag:PoolState}");
+                _log.Info($"completed updating pool: {pool.PoolId:Tag:PoolId} ({pool.Name:Tag:PoolName}) - now in state {newPool.State:Tag:PoolState}");
             } catch (Exception ex) {
                 _log.Exception(ex, $"failed to process pool");
             }
@@ -68,7 +68,7 @@ public class TimerWorkers {
             try {
                 _log.Info($"updating node: {node.MachineId:Tag:MachineId} - state: {node.State:Tag:NodeState}");
                 var newNode = await _nodeOps.ProcessStateUpdate(node);
-                _log.Info($"completed updating node - now in state {newNode.State:Tag:NodeState}");
+                _log.Info($"completed updating node: {node.MachineId:Tag:MachineId} - now in state {newNode.State:Tag:NodeState}");
             } catch (Exception ex) {
                 _log.Exception(ex, $"failed to process node");
             }
@@ -79,7 +79,7 @@ public class TimerWorkers {
             try {
                 _log.Info($"updating scaleset: {scaleset.ScalesetId:Tag:ScalesetId} - state: {scaleset.State:Tag:ScalesetState}");
                 var newScaleset = await ProcessScalesets(scaleset);
-                _log.Info($"completed updating scaleset - now in state {newScaleset.State:Tag:ScalesetState}");
+                _log.Info($"completed updating scaleset: {scaleset.ScalesetId:Tag:ScalesetId} - now in state {newScaleset.State:Tag:ScalesetState}");
             } catch (Exception ex) {
                 _log.Exception(ex, $"failed to process scaleset");
             }
