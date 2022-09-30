@@ -10,7 +10,7 @@ license = "MIT"
 integration_test=[]
 
 [dependencies]
-anyhow = "1.0"
+anyhow = { version = "1.0", features = ["backtrace"] }
 arraydeque = "0.4"
 async-trait = "0.1"
 atexit = { path = "../atexit" }
