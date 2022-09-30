@@ -4,7 +4,7 @@
 use crate::tasks::{
     config::CommonConfig,
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
-    utils::{self, default_bool_true},
+    utils::{self, default_bool_true, try_resolve_setup_relative_path},
 };
 use anyhow::{Context, Result};
 use onefuzz::{
@@ -93,9 +93,13 @@ impl GeneratorTask {
     }
 
     async fn fuzzing_loop(&self, heartbeat_client: Option<TaskHeartbeatClient>) -> Result<()> {
+        let target_exe =
+            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
+                .await?;
+
         let tester = Tester::new(
             &self.config.common.setup_dir,
-            &self.config.target_exe,
+            &target_exe,
             &self.config.target_options,
             &self.config.target_env,
         )

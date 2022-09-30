@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IAdo {
-    public Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool failTaskOnTransientError);
+    public Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool failTaskOnTransientError, Guid notificationId);
 
 }
 
@@ -15,7 +15,7 @@ public class Ado : NotificationsBase, IAdo {
     public Ado(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
 
-    public async Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool failTaskOnTransientError) {
+    public async Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool failTaskOnTransientError, Guid notificationId) {
         if (reportable is RegressionReport) {
             _logTracer.Info($"ado integration does not support regression report. container:{container:Tag:Container} filename:{filename:Tag:Filename}");
             return;
@@ -31,20 +31,14 @@ container:{container} filename:{filename}";
         try {
             var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
             await ado.Process(notificationInfo);
-        } catch (Exception e) {
-            /*
-            TODO: Catch these
-                AzureDevOpsAuthenticationError,
-                AzureDevOpsClientError,
-                AzureDevOpsServiceError,
-                AzureDevOpsClientRequestError,
-                ValueError,
-            */
+        } catch (Exception e)
+              when (e is VssAuthenticationException || e is VssServiceException) {
             if (!failTaskOnTransientError && IsTransient(e)) {
                 _logTracer.Error($"transient ADO notification failure {report.JobId:Tag:JobId} {report.TaskId:Tag:TaskId} {container:Tag:Container} {filename:Tag:Filename}");
                 throw;
             } else {
-                await FailTask(report, e);
+                _logTracer.Exception(e, $"Failed to process ado notification");
+                LogFailedNotification(report, e, notificationId);
             }
         }
     }
@@ -107,7 +101,8 @@ container:{container} filename:{filename}";
                 filters.Add(key.ToLowerInvariant(), filter);
             }
 
-            var validFields = await GetValidFields(filters["system.teamproject"]);
+            var project = filters.ContainsKey("system.teamproject") ? filters["system.teamproject"] : null;
+            var validFields = await GetValidFields(project);
 
             var postQueryFilter = new Dictionary<string, string>();
             /*

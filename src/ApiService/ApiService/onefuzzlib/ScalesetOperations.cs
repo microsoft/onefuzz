@@ -242,10 +242,17 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
 
         var extensions = await _context.Extensions.FuzzExtensions(pool.OkV, scaleSet);
-
         var res = await _context.VmssOperations.UpdateExtensions(scaleSet.ScalesetId, extensions);
         if (!res.IsOk) {
             _log.Info($"unable to update configs {string.Join(',', res.ErrorV.Errors!)}");
+            return scaleSet;
+        }
+
+        // successfully performed config update, save that fact:
+        scaleSet = scaleSet with { NeedsConfigUpdate = false };
+        var updateResult = await Update(scaleSet);
+        if (!updateResult.IsOk) {
+            _log.Info($"unable to set NeedsConfigUpdate to false - will try again");
         }
 
         return scaleSet;
@@ -527,18 +534,23 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         foreach (var azureNode in azureNodes) {
             var machineId = azureNode.Key;
-
             if (nodeMachineIds.Contains(machineId)) {
                 continue;
             }
+
             _log.Info($"adding missing azure node {machineId:Tag:MachineId} to scaleset {scaleSet.ScalesetId:Tag:ScalesetId}");
 
-            //# Note, using `new=True` makes it such that if a node already has
-            //# checked in, this won't overwrite it.
+            // Note, using isNew:True makes it such that if a node already has
+            // checked in, this won't overwrite it.
 
-            //Python code does use created node
-            //pool.IsOk was handled above, OkV must be not null at this point
-            _ = await _context.NodeOperations.Create(pool.OkV!.PoolId, scaleSet.PoolName, machineId, scaleSet.ScalesetId, _context.ServiceConfiguration.OneFuzzVersion, true);
+            // don't use result, if there is one
+            _ = await _context.NodeOperations.Create(
+                pool.OkV.PoolId,
+                scaleSet.PoolName,
+                machineId,
+                scaleSet.ScalesetId,
+                _context.ServiceConfiguration.OneFuzzVersion,
+                isNew: true);
         }
 
         var existingNodes =
@@ -550,7 +562,6 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 from x in existingNodes
                 where x.State.ReadyForReset()
                 select x;
-
 
         Dictionary<Guid, Node> toDelete = new();
         Dictionary<Guid, Node> toReimage = new();

@@ -1,5 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System.Net;
+using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
+using Azure;
 using Azure.Data.Tables;
 
 namespace Microsoft.OneFuzz.Service;
@@ -31,7 +33,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
 
     Async.Task ReimageLongLivedNodes(Guid scaleSetId);
 
-    Async.Task<Node> Create(
+    Async.Task<Node?> Create(
         Guid poolId,
         PoolName poolName,
         Guid machineId,
@@ -326,7 +328,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
 
-    public async Async.Task<Node> Create(
+    public async Async.Task<Node?> Create(
         Guid poolId,
         PoolName poolName,
         Guid machineId,
@@ -338,21 +340,27 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
         ResultVoid<(int, string)> r;
         if (isNew) {
-            r = await Replace(node);
+            try {
+                r = await Insert(node);
+            } catch (RequestFailedException ex) when (
+                ex.Status == (int)HttpStatusCode.Conflict ||
+                ex.ErrorCode == "EntityAlreadyExists") {
+                return null;
+            }
         } else {
-            r = await Update(node);
+            r = await Replace(node);
         }
+
         if (!r.IsOk) {
             _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to save NodeRecord for node {node.MachineId:Tag:MachineId} isNew: {isNew:Tag:IsNew}");
-        } else {
-            await _context.Events.SendEvent(
-                new EventNodeCreated(
-                    node.MachineId,
-                    node.ScalesetId,
-                    node.PoolName
-                    )
-                );
+            return null;
         }
+
+        await _context.Events.SendEvent(
+            new EventNodeCreated(
+                node.MachineId,
+                node.ScalesetId,
+                node.PoolName));
 
         return node;
     }

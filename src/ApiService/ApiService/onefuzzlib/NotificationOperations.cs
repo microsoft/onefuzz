@@ -35,7 +35,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             done.Add(notification.Config);
 
             if (notification.Config is TeamsTemplate teamsTemplate) {
-                await _context.Teams.NotifyTeams(teamsTemplate, container, filename, reportOrRegression!);
+                await _context.Teams.NotifyTeams(teamsTemplate, container, filename, reportOrRegression!, notification.NotificationId);
             }
 
             if (reportOrRegression == null) {
@@ -43,11 +43,11 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             }
 
             if (notification.Config is AdoTemplate adoTemplate) {
-                await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, failTaskOnTransientError);
+                await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, failTaskOnTransientError, notification.NotificationId);
             }
 
             if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {
-                await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression);
+                await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression, notification.NotificationId);
             }
         }
 

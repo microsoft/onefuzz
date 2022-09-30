@@ -3,6 +3,7 @@
 
 use crate::tasks::{
     config::CommonConfig, heartbeat::HeartbeatSender, report::crash_report::monitor_reports,
+    utils::try_resolve_setup_relative_path,
 };
 use anyhow::{Context, Result};
 use onefuzz::{az_copy, blob::url::BlobUrl};
@@ -194,11 +195,14 @@ pub async fn run_tool(
     config: &Config,
     reports_dir: &Option<PathBuf>,
 ) -> Result<()> {
+    let target_exe =
+        try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
+
     let expand = Expand::new()
         .machine_id()
         .await?
         .input_path(&input)
-        .target_exe(&config.target_exe)
+        .target_exe(&target_exe)
         .target_options(&config.target_options)
         .analyzer_exe(&config.analyzer_exe)
         .analyzer_options(&config.analyzer_options)
