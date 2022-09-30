@@ -39,8 +39,10 @@ public class ImageOperations : IImageOperations {
         _cache = cache;
     }
 
+    record class GetOsKey(Region Region, string Image);
+
     public Task<OneFuzzResult<Os>> GetOs(Region region, string image)
-        => _cache.GetOrCreateAsync<OneFuzzResult<Os>>($"GetOs-{region}-{image}", entry => GetOsInternal(region, image));
+        => _cache.GetOrCreateAsync<OneFuzzResult<Os>>(new GetOsKey(region, image), entry => GetOsInternal(region, image));
 
     private async Task<OneFuzzResult<Os>> GetOsInternal(Region region, string image) {
         string? name = null;
@@ -49,7 +51,7 @@ public class ImageOperations : IImageOperations {
             parsed = await _context.Creds.GetData(parsed);
             if (string.Equals(parsed.Id.ResourceType, "galleries", StringComparison.OrdinalIgnoreCase)) {
                 try {
-                    // This is not _exactly_ the same as the python code  
+                    // This is not _exactly_ the same as the python code
                     // because in C# we don't have access to child_name_1
                     var gallery = await _context.Creds.GetResourceGroupResource().GetGalleries().GetAsync(
                         parsed.Data.Name
