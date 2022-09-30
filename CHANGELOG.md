@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 5.15.0
 ### Added
 * Service: Use `InterpolatedStringHandler` to move values to `CustomDimensions` Tags [#2450](https://github.com/microsoft/onefuzz/pull/2450)
-* Service: C# Can create ADO notifications [#2456](https://github.com/microsoft/onefuzz/pull/2456), [#2458](https://github.com/microsoft/onefuzz/pull/2458/files)
+* Service: C# Can create ADO notifications [#2456](https://github.com/microsoft/onefuzz/pull/2456), [#2458](https://github.com/microsoft/onefuzz/pull/2458)
+* ```
 * Service: C# Cache VMSS VM InstanceID lookups [#2464](https://github.com/microsoft/onefuzz/pull/2464)
 * CLI: Retry on connection reset [#2468](https://github.com/microsoft/onefuzz/pull/2468)
 * Agent: Enable backtraces for agent errors [#2437](https://github.com/microsoft/onefuzz/pull/2437)
