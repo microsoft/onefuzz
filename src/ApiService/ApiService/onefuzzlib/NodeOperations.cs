@@ -84,7 +84,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
     public async Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node) {
         if (node.ScalesetId is Guid scalesetId && await ScalesetNodeExists(node)) {
-            _logTracer.Info($"Setting scale-in protection on node {node.MachineId}");
+            _logTracer.Info($"Setting scale-in protection on node {node.MachineId:Tag:MachineId}");
             return await _context.VmssOperations.UpdateScaleInProtection(scalesetId, node.MachineId, protectFromScaleIn: true);
         }
 
@@ -95,7 +95,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         if (!node.DebugKeepNode &&
             node.ScalesetId is Guid scalesetId &&
             await ScalesetNodeExists(node)) {
-            _logTracer.Info($"Removing scale-in protection on node {node.MachineId}");
+            _logTracer.Info($"Removing scale-in protection on node {node.MachineId:Tag:MachineId}");
             return await _context.VmssOperations.UpdateScaleInProtection(scalesetId, node.MachineId, protectFromScaleIn: false);
         }
 
@@ -119,41 +119,41 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
     public async Task<bool> CanProcessNewWork(Node node) {
         if (IsOutdated(node) && _context.ServiceConfiguration.OneFuzzAllowOutdatedAgent != "true") {
-            _logTracer.Info($"can_process_new_work agent and service versions differ, stopping node. machine_id:{node.MachineId} agent_version:{node.Version} service_version:{_context.ServiceConfiguration.OneFuzzVersion}");
+            _logTracer.Info($"can_process_new_work agent and service versions differ, stopping node. {node.MachineId:Tag:MachineId} {node.Version:Tag:AgentVersion} {_context.ServiceConfiguration.OneFuzzVersion:Tag:ServiceVersion}");
             _ = await Stop(node, done: true);
             return false;
         }
 
         if (IsTooOld(node)) {
-            _logTracer.Info($"can_process_new_work node is too old. machine_id:{node.MachineId}");
+            _logTracer.Info($"can_process_new_work node is too old {node.MachineId:Tag:MachineId}");
             _ = await Stop(node, done: true);
             return false;
         }
 
         if (!node.State.CanProcessNewWork()) {
-            _logTracer.Info($"can_process_new_work node not in appropriate state for new work machine_id:{node.MachineId} state:{node.State}");
+            _logTracer.Info($"can_process_new_work node not in appropriate state for new work {node.MachineId:Tag:MachineId} {node.State:Tag:State}");
             return false;
         }
 
         if (node.State.ReadyForReset()) {
-            _logTracer.Info($"can_process_new_work node is set for reset. machine_id:{node.MachineId}");
+            _logTracer.Info($"can_process_new_work node is set for reset {node.MachineId:Tag:MachineId}");
             return false;
         }
 
         if (node.DeleteRequested) {
-            _logTracer.Info($"can_process_new_work is set to be deleted. machine_id:{node.MachineId}");
+            _logTracer.Info($"can_process_new_work is set to be deleted {node.MachineId:Tag:MachineId}");
             _ = await Stop(node, done: true);
             return false;
         }
 
         if (node.ReimageRequested) {
-            _logTracer.Info($"can_process_new_work is set to be reimaged. machine_id:{node.MachineId}");
+            _logTracer.Info($"can_process_new_work is set to be reimaged {node.MachineId:Tag:MachineId}");
             _ = await Stop(node, done: true);
             return false;
         }
 
         if (await CouldShrinkScaleset(node)) {
-            _logTracer.Info($"can_process_new_work node scheduled to shrink. machine_id:{node.MachineId}");
+            _logTracer.Info($"can_process_new_work node scheduled to shrink {node.MachineId:Tag:MachineId}");
             _ = await SetHalt(node);
             return false;
         }
@@ -161,26 +161,26 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         if (node.ScalesetId != null) {
             var scalesetResult = await _context.ScalesetOperations.GetById(node.ScalesetId.Value);
             if (!scalesetResult.IsOk) {
-                _logTracer.Info($"can_process_new_work invalid scaleset. scaleset_id:{node.ScalesetId} machine_id:{node.MachineId}");
+                _logTracer.Info($"can_process_new_work invalid scaleset {node.ScalesetId:Tag:ScalesetId} - {node.MachineId:Tag:MachineId}");
                 return false;
             }
 
             var scaleset = scalesetResult.OkV;
             if (!scaleset.State.IsAvailable()) {
-                _logTracer.Info($"can_process_new_work scaleset not available for work. scaleset_id:{node.ScalesetId} machine_id:{node.MachineId}");
+                _logTracer.Info($"can_process_new_work scaleset not available for work {scaleset.ScalesetId:Tag:ScalesetId} - {node.MachineId:Tag:MachineId} {scaleset.State:Tag:State}");
                 return false;
             }
         }
 
         var poolResult = await _context.PoolOperations.GetByName(node.PoolName);
         if (!poolResult.IsOk) {
-            _logTracer.Info($"can_schedule - invalid pool. pool_name:{node.PoolName} machine_id:{node.MachineId}");
+            _logTracer.Info($"can_schedule - invalid pool {node.PoolName:Tag:PoolName} - {node.MachineId:Tag:MachineId}");
             return false;
         }
 
         var pool = poolResult.OkV;
         if (!PoolStateHelper.Available.Contains(pool.State)) {
-            _logTracer.Info($"can_schedule - pool is not available for work. pool_name:{node.PoolName} machine_id:{node.MachineId}");
+            _logTracer.Info($"can_schedule - pool is not available for work {node.PoolName:Tag:PoolName} - {node.MachineId:Tag:MachineId}");
             return false;
         }
 
@@ -213,7 +213,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
         var outdated = SearchOutdated(excludeUpdateScheduled: true);
         await foreach (var node in outdated) {
-            _logTracer.Info($"node is outdated: {node.MachineId} - node_version:{node.Version} api_version:");
+            _logTracer.Info($"node is outdated: {node.MachineId:Tag:MachineId} - {node.Version:Tag:NodeVersion}");
 
             if (node.Version == "1.0.0") {
                 _ = await ToReimage(node, done: true);
@@ -313,7 +313,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
         var r = await Replace(updatedNode);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save Node record for node {node.MachineId:Tag:MachineId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save Node record for node {updatedNode.MachineId:Tag:MachineId}");
         }
 
         return updatedNode;
@@ -345,6 +345,15 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             } catch (RequestFailedException ex) when (
                 ex.Status == (int)HttpStatusCode.Conflict ||
                 ex.ErrorCode == "EntityAlreadyExists") {
+
+                var existingNode = await QueryAsync(Query.SingleEntity(poolName.ToString(), machineId.ToString())).FirstOrDefaultAsync();
+                if (existingNode is not null) {
+                    if (existingNode != node) {
+                        _logTracer.Error($"Found existing node record {existingNode:Tag:ExistingNode} when inserting a new node {node:Tag:NewNode}");
+                    }
+                } else {
+                    _logTracer.Critical($"Failed to get node when node insertion returned EntityAlreadyExists {poolName.ToString():Tag:PoolName} {machineId:Tag:MachineId}");
+                }
                 return null;
             }
         } else {
@@ -451,6 +460,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         if (node.State == state) {
             return node;
         }
+        _logTracer.Event($"SetState Node {node.MachineId:Tag:MachineId} {node.State:Tag:From} - {state:Tag:To}");
 
         node = node with { State = state };
         await _context.Events.SendEvent(new EventNodeStateUpdated(

@@ -130,7 +130,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             return poolResult.ErrorV;
         }
 
-        _logTracer.Info($"Updating auto-scale entry for scaleset: {scaleset.ScalesetId}");
+        _logTracer.Info($"Updating auto-scale entry for scaleset: {scaleset.ScalesetId:Tag:ScalesetId}");
         _ = await _context.AutoScaleOperations.Update(
                     scalesetId: scaleset.ScalesetId,
                     minAmount: minAmount,
@@ -188,6 +188,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             return scaleset;
         }
 
+        _log.WithTag("Pool", scaleset.PoolName.ToString()).Event($"SetState Scaleset {scaleset.ScalesetId:Tag:ScalesetId} {scaleset.State:Tag:From} - {state:Tag:To}");
         var updatedScaleSet = scaleset with { State = state };
         var r = await Replace(updatedScaleSet);
         if (!r.IsOk) {
@@ -217,7 +218,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         var updatedScaleset = await SetState(scaleset with { Error = error }, ScalesetState.CreationFailed);
 
-        await _context.Events.SendEvent(new EventScalesetFailed(scaleset.ScalesetId, scaleset.PoolName, error));
+        await _context.Events.SendEvent(new EventScalesetFailed(updatedScaleset.ScalesetId, updatedScaleset.PoolName, error));
         return updatedScaleset;
     }
 
@@ -329,7 +330,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 scaleset = result.OkV;
             }
         } else {
-            _logTracer.Info($"scaleset running {scaleset.ScalesetId:Tag:ScalesetId}");
+            _logTracer.Info($"scaleset {scaleset.ScalesetId:Tag:ScalesetId} is in {vmss.ProvisioningState:Tag:ScalesetState}");
 
             var autoScaling = await TryEnableAutoScaling(scaleset);
 
@@ -651,7 +652,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 await Async.Task.WhenAll(nodes
                     .Where(node => machineIds.Contains(node.MachineId))
                     .Select(async node => {
-                        await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
+                        _ = await _context.NodeOperations.ReleaseScaleInProtection(node);
                     }));
                 return;
 
@@ -661,8 +662,10 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                     await Async.Task.WhenAll(nodes
                         .Where(node => machineIds.Contains(node.MachineId))
                         .Select(async node => {
-                            await _context.NodeOperations.Delete(node);
-                            await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
+                            var r = await _context.NodeOperations.ReleaseScaleInProtection(node);
+                            if (r.IsOk) {
+                                await _context.NodeOperations.Delete(node);
+                            }
                         }));
                 } else {
                     _log.Info($"failed to reimage nodes due to {r.ErrorV:Tag:Error}");
