@@ -62,7 +62,8 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         var headers = new Dictionary<string, string> { { "User-Agent", $"onefuzz-webhook {_context.ServiceConfiguration.OneFuzzVersion}" } };
 
         if (digest != null) {
-            headers["X-Onefuzz-Digest"] = digest;
+            //make sure digest is lowercase to be backwards compatible with Python webhooks
+            headers["X-Onefuzz-Digest"] = digest.ToLowerInvariant();
         }
 
         using var httpClient = _httpFactory.CreateClient();
