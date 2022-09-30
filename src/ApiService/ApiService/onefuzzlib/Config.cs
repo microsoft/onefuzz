@@ -160,11 +160,11 @@ public class Config : IConfig {
         }
 
         if (definition.Features.Contains(TaskFeature.TargetExe)) {
-            config.TargetExe = $"setup/{task.Config.Task.TargetExe}";
+            config.TargetExe = task.Config.Task.TargetExe;
         }
 
         if (definition.Features.Contains(TaskFeature.TargetExeOptional) && config.TargetExe != null) {
-            config.TargetExe = $"setup/{task.Config.Task.TargetExe}";
+            config.TargetExe = task.Config.Task.TargetExe;
         }
 
         if (definition.Features.Contains(TaskFeature.TargetEnv)) {
@@ -257,9 +257,8 @@ public class Config : IConfig {
         }
 
         if (definition.Features.Contains(TaskFeature.CoverageFilter)) {
-            var coverageFilter = task.Config.Task.CoverageFilter;
-            if (coverageFilter != null) {
-                config.CoverageFilter = $"setup/{coverageFilter}";
+            if (task.Config.Task.CoverageFilter != null) {
+                config.CoverageFilter = task.Config.Task.CoverageFilter;
             }
         }
 

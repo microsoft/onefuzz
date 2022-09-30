@@ -7,7 +7,7 @@ publish = false
 
 
 [dependencies]
-anyhow = "1.0.51"
+anyhow = { version = "1.0", features = ["backtrace"] }
 async-trait = "0.1"
 downcast-rs = "1.2"
 env_logger = "0.9"

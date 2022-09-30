@@ -242,10 +242,17 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
 
         var extensions = await _context.Extensions.FuzzExtensions(pool.OkV, scaleSet);
-
         var res = await _context.VmssOperations.UpdateExtensions(scaleSet.ScalesetId, extensions);
         if (!res.IsOk) {
             _log.Info($"unable to update configs {string.Join(',', res.ErrorV.Errors!)}");
+            return scaleSet;
+        }
+
+        // successfully performed config update, save that fact:
+        scaleSet = scaleSet with { NeedsConfigUpdate = false };
+        var updateResult = await Update(scaleSet);
+        if (!updateResult.IsOk) {
+            _log.Info($"unable to set NeedsConfigUpdate to false - will try again");
         }
 
         return scaleSet;
