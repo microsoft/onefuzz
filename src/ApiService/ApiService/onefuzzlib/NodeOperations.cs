@@ -59,6 +59,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Async.Task<Node> SetShutdown(Node node);
 
     // state transitions:
+    Async.Task<Node> New(Node node);
     Async.Task<Node> Init(Node node);
     Async.Task<Node> Free(Node node);
     Async.Task<Node> SettingUp(Node node);
@@ -303,7 +304,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
         var reimageRequested = node.ReimageRequested;
         if (!node.ReimageRequested && !node.DeleteRequested) {
-            _logTracer.Info($"setting reimage_requested: {node.MachineId:Tag:MachineId}");
+            _logTracer.Info($"setting reimage_requested: {node.MachineId:Tag:MachineId} {node.ScalesetId:Tag:ScalesetId}");
             reimageRequested = true;
         }
 
@@ -313,7 +314,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
         var r = await Replace(updatedNode);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save Node record for node {updatedNode.MachineId:Tag:MachineId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save Node record for node {updatedNode.MachineId:Tag:MachineId} {node.ScalesetId:Tag:ScalesetId}");
         }
 
         return updatedNode;
@@ -608,6 +609,11 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
         _ = await Stop(node, done: done);
         return true;
+    }
+
+    public Task<Node> New(Node node) {
+        // nothing to do
+        return Async.Task.FromResult(node);
     }
 
     public Task<Node> Init(Node node) {
