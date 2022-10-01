@@ -279,7 +279,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
             Async.Task.Run(async () => {
                 // should still be in init state:
                 var node = await Context.NodeOperations.SearchAll().SingleAsync();
-                Assert.Equal(NodeState.Init, node.State);
+                Assert.Equal(NodeState.New, node.State);
             }),
             Async.Task.Run(async () => {
                 // the node should be told to stop:
@@ -308,7 +308,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
             Async.Task.Run(async () => {
                 // the node should still be in init state:
                 var node = await Context.NodeOperations.SearchAll().SingleAsync();
-                Assert.Equal(NodeState.Init, node.State);
+                Assert.Equal(NodeState.New, node.State);
             }),
             Async.Task.Run(async () => {
                 // the node should be told to stop:
