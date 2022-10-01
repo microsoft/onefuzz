@@ -348,13 +348,14 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
                 var existingNode = await QueryAsync(Query.SingleEntity(poolName.ToString(), machineId.ToString())).FirstOrDefaultAsync();
                 if (existingNode is not null) {
-                    if (existingNode != node) {
-                        _logTracer.Error($"Found existing node record {existingNode:Tag:ExistingNode} when inserting a new node {node:Tag:NewNode}");
+                    if (existingNode.State != node.State || existingNode.ReimageRequested != node.ReimageRequested || existingNode.Version != node.Version || existingNode.DeleteRequested != node.DeleteRequested) {
+                        _logTracer.Error($"Not replacing {existingNode:Tag:ExistingNode} with a new-and-different {node:Tag:Node}");
                     }
+                    return null;
                 } else {
                     _logTracer.Critical($"Failed to get node when node insertion returned EntityAlreadyExists {poolName.ToString():Tag:PoolName} {machineId:Tag:MachineId}");
+                    r = await Replace(node);
                 }
-                return null;
             }
         } else {
             r = await Replace(node);
@@ -480,12 +481,10 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public static string SearchStatesQuery(
-        string oneFuzzVersion,
         Guid? poolId = default,
         Guid? scaleSetId = default,
         IEnumerable<NodeState>? states = default,
         PoolName? poolName = default,
-        bool excludeUpdateScheduled = false,
         int? numResults = default) {
 
         List<string> queryParts = new();
@@ -507,17 +506,6 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             queryParts.Add($"({q})");
         }
 
-        if (excludeUpdateScheduled) {
-            queryParts.Add($"reimage_requested eq false");
-            queryParts.Add($"delete_requested eq false");
-        }
-
-        //# azure table query always return false when the column does not exist
-        //# We write the query this way to allow us to get the nodes where the
-        //# version is not defined as well as the nodes with a mismatched version
-        var versionQuery = TableClient.CreateQueryFilter($"not (version eq {oneFuzzVersion})");
-        queryParts.Add(versionQuery);
-
         return Query.And(queryParts);
     }
 
@@ -529,7 +517,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         PoolName? poolName = default,
         bool excludeUpdateScheduled = false,
         int? numResults = default) {
-        var query = NodeOperations.SearchStatesQuery(_context.ServiceConfiguration.OneFuzzVersion, poolId, scalesetId, states, poolName, excludeUpdateScheduled, numResults);
+        var query = NodeOperations.SearchStatesQuery(poolId, scalesetId, states, poolName, numResults);
 
         if (numResults is null) {
             return QueryAsync(query);
