@@ -539,7 +539,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 continue;
             }
 
-            _log.Info($"adding missing azure node {machineId:Tag:MachineId} to scaleset {scaleSet.ScalesetId:Tag:ScalesetId}");
+            _log.Info($"adding missing azure node {machineId:Tag:MachineId} {scaleSet.ScalesetId:Tag:ScalesetId}");
 
             // Note, using isNew:True makes it such that if a node already has
             // checked in, this won't overwrite it.
@@ -576,6 +576,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 } else if (await new ShrinkQueue(pool.OkV!.PoolId, _context.Queue, _log).ShouldShrink()) {
                     toDelete[node.MachineId] = await _context.NodeOperations.SetHalt(node);
                 } else {
+                    _logTracer.Info($"Node ready to reimage {node.MachineId:Tag:MachineId} {node.ScalesetId:Tag:ScalesetId} {node.State:Tag:State}");
                     toReimage[node.MachineId] = node;
                 }
             }
@@ -590,6 +591,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             } else {
                 errorMessage = "node reimaged due to never receiving heartbeat";
             }
+
+            _log.Info($"{errorMessage} {deadNode.MachineId:Tag:MachineId} {deadNode.ScalesetId:Tag:ScalesetId}");
 
             var error = new Error(ErrorCode.TASK_FAILED, new[] { $"{errorMessage} scaleset_id {deadNode.ScalesetId} last heartbeat:{deadNode.Heartbeat}" });
             await _context.NodeOperations.MarkTasksStoppedEarly(deadNode, error);
