@@ -97,6 +97,8 @@ public class AgentEvents {
             // Don’t check reimage_requested, as nodes only send 'init' state once.  If
             // they send 'init' with reimage_requested, it's because the node was reimaged
             // successfully.
+            // Node has to be in state other than Init, otherwise SetState ignores the change, and therefore
+            // InitializedAt field is never set
             node = node with { ReimageRequested = false, InitializedAt = DateTimeOffset.UtcNow };
             // discard result: node not used after this point
             _ = await _context.NodeOperations.SetState(node, ev.State);

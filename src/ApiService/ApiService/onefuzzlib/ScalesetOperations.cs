@@ -655,7 +655,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 await Async.Task.WhenAll(nodes
                     .Where(node => machineIds.Contains(node.MachineId))
                     .Select(async node => {
-                        _ = await _context.NodeOperations.ReleaseScaleInProtection(node);
+                        await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
                     }));
                 return;
 
