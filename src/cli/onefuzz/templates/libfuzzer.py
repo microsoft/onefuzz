@@ -723,14 +723,16 @@ class Libfuzzer(Command):
 
         # Assumes that `libfuzzer-dotnet` and supporting tools were uploaded upon deployment.
         fuzzer_tools_container = Container(
-            "dotnet-fuzzing-linux" if helper.platform == OS.linux else "dotnet-fuzzing-windows"
+            "dotnet-fuzzing-linux"
+            if helper.platform == OS.linux
+            else "dotnet-fuzzing-windows"
         )
 
         fuzzer_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.crashes, containers[ContainerType.crashes]),
             (ContainerType.inputs, containers[ContainerType.inputs]),
-            (ContainerType.tools, fuzzer_tools_container)
+            (ContainerType.tools, fuzzer_tools_container),
         ]
 
         helper.create_containers()
