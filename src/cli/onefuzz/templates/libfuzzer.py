@@ -695,8 +695,10 @@ class Libfuzzer(Command):
 
         target_env = target_env or {}
 
+        target_dll_blob_name = helper.setup_relative_blob_name(target_dll, setup_dir)
+
         # Set target environment variables for `LibFuzzerDotnetLoader`.
-        target_env["LIBFUZZER_DOTNET_TARGET_ASSEMBLY"] = 'setup/target_dll'
+        target_env["LIBFUZZER_DOTNET_TARGET_ASSEMBLY"] = f"setup/{target_dll_blob_name}"
         target_env["LIBFUZZER_DOTNET_TARGET_CLASS"] = target_class
         target_env["LIBFUZZER_DOTNET_TARGET_METHOD"] = target_method
 
@@ -743,7 +745,7 @@ class Libfuzzer(Command):
         fuzzer_task = self.onefuzz.tasks.create(
             helper.job.job_id,
             TaskType.libfuzzer_dotnet_fuzz,
-            target_dll,
+            target_dll_blob_name,
             fuzzer_containers,
             pool_name=pool_name,
             reboot_after_setup=reboot_after_setup,
