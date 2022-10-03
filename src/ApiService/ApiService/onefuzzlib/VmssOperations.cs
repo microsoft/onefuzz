@@ -203,8 +203,7 @@ public class VmssOperations : IVmssOperations {
             var existsInTable = node is not null && node.InstanceId is not null;
             if (existsInTable) {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
-                _ = entry.SetValue(node!.InstanceId!);
-                return node.InstanceId!;
+                return node!.InstanceId!;
             } else {
                 await foreach (var vm in scalesetResource.GetVirtualMachineScaleSetVms().AsAsyncEnumerable()) {
                     var response = await vm.GetAsync();
@@ -215,7 +214,6 @@ public class VmssOperations : IVmssOperations {
                     if (response.Value.Data.VmId == vmIdString) {
                         // we found the VM we are looking for
                         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
-                        _ = entry.SetValue(instanceId);
                         return instanceId;
                     } else {
                         // if we find any other VMs, put them in the cache
