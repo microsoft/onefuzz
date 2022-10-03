@@ -81,7 +81,7 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
             config.extra.loader_path().display()
         ));
 
-        LibFuzzer::new(
+        Ok(LibFuzzer::new(
             config.extra.libfuzzer_dotnet_path(),
             options,
             env,
