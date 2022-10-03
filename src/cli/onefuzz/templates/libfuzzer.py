@@ -741,7 +741,7 @@ class Libfuzzer(Command):
         fuzzer_task = self.onefuzz.tasks.create(
             helper.job.job_id,
             TaskType.libfuzzer_dotnet_fuzz,
-            target_dll_blob_name, # Not used
+            target_dll_blob_name,  # Not used
             fuzzer_containers,
             pool_name=pool_name,
             reboot_after_setup=reboot_after_setup,
