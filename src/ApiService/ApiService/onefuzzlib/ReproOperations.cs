@@ -90,15 +90,15 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var vm = await GetVm(repro, config);
         var vmOperations = _context.VmOperations;
         if (!await vmOperations.IsDeleted(vm)) {
-            _logTracer.Info($"vm stopping: {repro.VmId}");
+            _logTracer.Info($"vm stopping: {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
             var rr = await vmOperations.Delete(vm);
-            if (!rr) {
-                _logTracer.Error($"failed to delete repro {repro.VmId:Tag:VmId}");
+            if (rr) {
+                _logTracer.Info($"repro vm fully deleted {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
             }
             repro = repro with { State = VmState.Stopping };
             var r = await Replace(repro);
             if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro {repro.VmId:Tag:VmId} marked Stopping");
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName} marked Stopping");
             }
             return repro;
         } else {

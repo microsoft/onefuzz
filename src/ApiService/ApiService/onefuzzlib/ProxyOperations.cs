@@ -140,6 +140,8 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             return proxy;
         }
 
+        _logTracer.Event($"SetState Proxy {proxy.ProxyId:Tag:ProxyId} {proxy.State:Tag:From} - {state:Tag:To}");
+
         var newProxy = proxy with { State = state };
         var r = await Replace(newProxy);
         if (!r.IsOk) {
