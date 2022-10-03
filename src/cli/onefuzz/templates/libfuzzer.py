@@ -761,6 +761,7 @@ class Libfuzzer(Command):
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
             expect_crash_on_failure=expect_crash_on_failure,
+            check_fuzzer_help=False,
         )
 
         # Ensure the fuzzing task starts before we schedule the coverage and
