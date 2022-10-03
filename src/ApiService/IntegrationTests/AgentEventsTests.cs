@@ -277,7 +277,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
 
         await Async.Task.WhenAll(
             Async.Task.Run(async () => {
-                // should still be in init state:
+                // should still be in new state:
                 var node = await Context.NodeOperations.SearchAll().SingleAsync();
                 Assert.Equal(NodeState.New, node.State);
             }),
