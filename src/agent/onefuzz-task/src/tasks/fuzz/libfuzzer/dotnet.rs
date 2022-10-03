@@ -11,6 +11,7 @@ use onefuzz::syncdir::SyncedDir;
 use tokio::process::Command;
 
 use crate::tasks::fuzz::libfuzzer::common;
+use crate::tasks::utils::try_resolve_setup_relative_path;
 
 #[cfg(target_os = "linux")]
 const LIBFUZZER_DOTNET_PATH: &str = "libfuzzer-dotnet/libfuzzer-dotnet";
@@ -60,11 +61,17 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
     type Config = LibFuzzerDotnetConfig;
 
     async fn from_config(config: &common::Config<Self>) -> Result<LibFuzzer> {
+        let target_assembly_path = try_resolve_setup_relative_path(
+            &config.common.setup_dir,
+            &config.extra.target_assembly,
+        )
+        .await?;
+
         // Configure loader to fuzz user target DLL.
         let mut env = config.target_env.clone();
         env.insert(
             "LIBFUZZER_DOTNET_TARGET_ASSEMBLY".into(),
-            config.extra.target_assembly.clone(),
+            target_assembly_path,
         );
         env.insert(
             "LIBFUZZER_DOTNET_TARGET_CLASS".into(),
