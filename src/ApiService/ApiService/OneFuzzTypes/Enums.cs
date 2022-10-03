@@ -331,8 +331,14 @@ public static class NodeStateHelper {
 }
 
 
+/// Select how nodes should be disposed of after they complete a WorkSet
 public enum NodeDisposalStrategy {
+    /// Re-images the node (which resets its state), then either it can pick up more work
+    /// or auto scale will reap it if no work is queued
     ScaleIn,
+
+    /// Skips re-imaging the node, the node will no longer pick up new work. It will only be
+    /// scaled in by auto scale.
     Decommission
 }
 
