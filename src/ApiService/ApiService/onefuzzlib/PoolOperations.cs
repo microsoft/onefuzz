@@ -142,6 +142,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
             return pool;
         }
 
+        _logTracer.WithTag("PoolName", pool.Name.ToString()).Event($"SetState Pool {pool.PoolId:Tag:PoolId} {pool.State:Tag:From} - {state:Tag:To}");
         // scalesets should never leave the `halt` state
         // it is terminal
         if (pool.State == PoolState.Halt) {

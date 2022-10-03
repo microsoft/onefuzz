@@ -38,7 +38,6 @@ public class AgentCommands {
             var envelope = new NodeCommandEnvelope(command, messageId);
             return await RequestHandling.Ok(req, new PendingNodeCommand(envelope));
         } else {
-            _log.WithTag("HttpRequest", "GET").Verbose($"failed to find {nodeCommand.MachineId:Tag:MachineId}");
             return await RequestHandling.Ok(req, new PendingNodeCommand(null));
         }
     }

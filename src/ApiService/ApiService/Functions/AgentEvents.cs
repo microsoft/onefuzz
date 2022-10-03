@@ -103,7 +103,6 @@ public class AgentEvents {
             return null;
         }
 
-        _log.Info($"node state update: {machineId:Tag:MachineId} from {node.State:Tag:FromState} to {ev.State:Tag:ToState}");
         node = await _context.NodeOperations.SetState(node, ev.State);
 
         if (ev.State == NodeState.Free) {
