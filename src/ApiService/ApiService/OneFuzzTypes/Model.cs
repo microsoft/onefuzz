@@ -919,6 +919,9 @@ public record TaskUnitConfig(
     public List<string>? ReportList { get; set; }
     public long? MinimizedStackDepth { get; set; }
     public string? CoverageFilter { get; set; }
+    public string? TargetAssembly { get; set; }
+    public string? TargetClass { get; set; }
+    public string? TargetMethod { get; set; }
 
     // from here forwards are Container definitions.  These need to be inline
     // with TaskDefinitions and ContainerTypes
