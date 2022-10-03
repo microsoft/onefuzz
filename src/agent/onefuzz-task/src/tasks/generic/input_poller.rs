@@ -252,8 +252,8 @@ impl<M> InputPoller<M> {
             // We must maintain a valid state, and we can logically recover from
             // any failed action or invalid transition.
             warn!(
-                "State Transition Failed. Resetting state to 'Ready.' Error: {}",
-                err
+                "State Transition Failed. Resetting state to 'Ready.' Error: {}. Result: {:?}",
+                err, result
             );
             self.state = Some(State::Ready);
         }
