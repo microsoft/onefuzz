@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Service: Bump Dependencies [#2446](https://github.com/microsoft/onefuzz/pull/2446)
 * Service: Temporarily disable Pool validation [#2459](https://github.com/microsoft/onefuzz/pull/2459)
+* Service: Added `New` to Node State Machine. [#2476](https://github.com/microsoft/onefuzz/pull/2476)
 ### Fixed
 * Service: Fix logic to retrieve partitionKey and rowKey [#2447](https://github.com/microsoft/onefuzz/pull/2447)
 * Service: Permit periods in Pool names [#2452](https://github.com/microsoft/onefuzz/pull/2452)
