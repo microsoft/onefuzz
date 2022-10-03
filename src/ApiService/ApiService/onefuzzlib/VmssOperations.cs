@@ -187,41 +187,62 @@ public class VmssOperations : IVmssOperations {
                     }
                 }
             } catch (Exception ex) when (ex is RequestFailedException || ex is CloudException) {
-                _log.Exception(ex, $"vm does not exist {name:Tag:VmssName}");
+                _log.Exception(ex, $"scaleset does not exist {name:Tag:VmssName}");
             }
         }
         return results;
     }
 
-    private async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(Guid name, Guid vmId) {
-        _log.Info($"get instance ID for scaleset node: {name:Tag:VmssName}:{vmId:Tag:VmId}");
-        var scaleSet = GetVmssResource(name);
+    private record InstanceIdKey(Guid Scaleset, Guid VmId);
+    private Task<string> GetInstanceIdForVmId(Guid scaleset, Guid vmId)
+        => _cache.GetOrCreateAsync(new InstanceIdKey(scaleset, vmId), async entry => {
+            var scalesetResource = GetVmssResource(scaleset);
+            var vmIdString = vmId.ToString();
 
-        var node = await _nodeOps.GetByMachineId(vmId);
-        var expensiveSearch = node is null || node.InstanceId is null;
-        try {
-            if (!expensiveSearch) {
-                var resp = await scaleSet.GetVirtualMachineScaleSetVmAsync(node!.InstanceId);
-                _log.Event($"InstanceId  {node!.InstanceId:Tag:InstanceId} FOUND");
-                //sanity check
-                if (resp.Value.Data.VmId == vmId.ToString()) {
-                    _log.Event($"InstanceId {node!.InstanceId:Tag:InstanceId} HIT");
-                    return OneFuzzResult<VirtualMachineScaleSetVmResource>.Ok(resp);
-                } else {
-                    _log.Error($"VM with {node!.InstanceId:Tag:InstanceId} has {resp.Value.Data.VmId:Tag:ActualVmId} which does not match {vmId:Tag:ExpectedVmId}");
-                    _log.Event($"InstanceId  {node!.InstanceId:Tag:InstanceId} MISS");
-                    expensiveSearch = true;
-                }
+            var node = await _nodeOps.GetByMachineId(vmId);
+            var existsInTable = node is not null && node.InstanceId is not null;
+            if (existsInTable) {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                _ = entry.SetValue(node!.InstanceId!);
+                return node.InstanceId!;
             } else {
-                _log.Event($"InstanceId {name:Tag:ScalesetId} {vmId:Tag:VmId} TOTAL MISS");
-            }
+                await foreach (var vm in scalesetResource.GetVirtualMachineScaleSetVms().AsAsyncEnumerable()) {
+                    var response = await vm.GetAsync();
+                    var instanceId = response.Value.Data.InstanceId;
 
-            if (expensiveSearch) {
-                _log.Info($"Doing expensive instance ID search for {name:Tag:ScalesetId} {vmId:Tag:VmId}");
-                _ = await ListInstanceIds(name);
-                return await GetInstanceVm(name, vmId);
-            }
+                    _ = await _nodeOps.SetInstanceId(scaleset, vmId, instanceId);
 
+                    if (response.Value.Data.VmId == vmIdString) {
+                        // we found the VM we are looking for
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        _ = entry.SetValue(instanceId);
+                        return instanceId;
+                    } else {
+                        // if we find any other VMs, put them in the cache
+                        if (Guid.TryParse(response.Value.Data.VmId, out var vmId)) {
+                            using var e = _cache.CreateEntry(new InstanceIdKey(scaleset, vmId));
+                            _ = e.SetValue(instanceId);
+                            e.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        }
+                    }
+                }
+                throw new Exception($"unable to find instance ID for scaleset vm {scaleset}:{vmId}");
+
+            }
+        });
+
+
+    public async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(Guid name, Guid vmId) {
+        _log.Info($"get instance ID for scaleset node: {name:Tag:VmssName}:{vmId:Tag:VmId}");
+        var instanceId = await GetInstanceId(name, vmId);
+        if (!instanceId.IsOk) {
+            return instanceId.ErrorV;
+        }
+
+        var resource = GetVmssVmResource(name, instanceId.OkV);
+        try {
+            var response = await resource.GetAsync();
+            return OneFuzzResult.Ok(response.Value);
         } catch (Exception ex) when (ex is RequestFailedException || ex is CloudException) {
             _log.Exception(ex, $"unable to find vm instance: {name:Tag:VmssName}:{vmId:Tag:VmId}");
             return OneFuzzResult<VirtualMachineScaleSetVmResource>.Error(ErrorCode.UNABLE_TO_FIND, $"unable to find vm instance: {name}:{instanceId}");
@@ -488,20 +509,17 @@ public class VmssOperations : IVmssOperations {
             _log.Error($"failed to start update instance for scaleset {scalesetId:Tag:ScalesetId} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
         }
 
-        try {
-            _log.Info($"reimaging VMSS nodes: {scalesetId:Tag:ScalesetId} - {string.Join(", ", instanceIds):Tag:InstanceIds}");
-            // very weird API here…
-            var reqInstanceIds = new VirtualMachineScaleSetVmInstanceIds();
-            foreach (var instanceId in instanceIds) {
-                reqInstanceIds.InstanceIds.Add(instanceId);
-            }
+        _log.Info($"reimaging VMSS nodes: {scalesetId:Tag:ScalesetId} - {string.Join(", ", instanceIds):Tag:InstanceIds}");
 
-            r = await vmssResource.ReimageAllAsync(WaitUntil.Started, reqInstanceIds);
-            if (r.GetRawResponse().IsError) {
-                _log.Error($"failed to start reimage all for scaleset {scalesetId:Tag:ScalesetId} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
-            }
-        } catch (RequestFailedException ex) {
-            _log.Exception(ex, $"failed to reimage nodes in scaleset {scalesetId:Tag:ScalesetId}");
+        // very weird API here…
+        var reqInstanceIds = new VirtualMachineScaleSetVmInstanceIds();
+        foreach (var instanceId in instanceIds) {
+            reqInstanceIds.InstanceIds.Add(instanceId);
+        }
+
+        r = await vmssResource.ReimageAllAsync(WaitUntil.Started, reqInstanceIds);
+        if (r.GetRawResponse().IsError) {
+            _log.Error($"failed to start reimage all for scaleset {scalesetId:Tag:ScalesetId} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
         }
         return OneFuzzResultVoid.Ok;
     }
