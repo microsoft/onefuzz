@@ -98,7 +98,7 @@ public record Node
     string Version,
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? InitializedAt = null,
-    NodeState State = NodeState.New,
+    NodeState State = NodeState.Init,
 
     Guid? ScalesetId = null,
     bool ReimageRequested = false,

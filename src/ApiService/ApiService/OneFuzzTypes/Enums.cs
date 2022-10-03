@@ -294,7 +294,6 @@ public enum AgentMode {
 }
 
 public enum NodeState {
-    New,
     Init,
     Free,
     SettingUp,
