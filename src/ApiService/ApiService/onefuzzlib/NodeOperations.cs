@@ -194,9 +194,9 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     /// reasonably up-to-date with OS patches without disrupting running
     /// fuzzing tasks with patch reboot cycles.
     public async Async.Task ReimageLongLivedNodes(Guid scaleSetId) {
-        var timeFilter = $"not (initialized_at ge datetime'{(DateTimeOffset.UtcNow - INodeOperations.NODE_REIMAGE_TIME).ToString("o")}')";
-
-        await foreach (var node in QueryAsync($"(scaleset_id eq '{scaleSetId}') and {timeFilter}")) {
+        var timeFilter = Query.OlderThan("initialized_at", DateTimeOffset.UtcNow - INodeOperations.NODE_REIMAGE_TIME);
+        //force ToString(), since all GUIDs are strings in the table
+        await foreach (var node in QueryAsync(Query.And(TableClient.CreateQueryFilter($"scaleset_id eq {scaleSetId.ToString()}"), timeFilter))) {
             if (node.DebugKeepNode) {
                 _logTracer.Info($"removing debug_keep_node for expired node. scaleset_id:{node.ScalesetId} machine_id:{node.MachineId}");
             }
@@ -459,18 +459,17 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public async Async.Task<Node> SetState(Node node, NodeState state) {
-        if (node.State == state) {
-            return node;
-        }
-        _logTracer.Event($"SetState Node {node.MachineId:Tag:MachineId} {node.State:Tag:From} - {state:Tag:To}");
+        if (node.State != state) {
+            _logTracer.Event($"SetState Node {node.MachineId:Tag:MachineId} {node.State:Tag:From} - {state:Tag:To}");
 
-        node = node with { State = state };
-        await _context.Events.SendEvent(new EventNodeStateUpdated(
-            node.MachineId,
-            node.ScalesetId,
-            node.PoolName,
-            state
-        ));
+            node = node with { State = state };
+            await _context.Events.SendEvent(new EventNodeStateUpdated(
+                node.MachineId,
+                node.ScalesetId,
+                node.PoolName,
+                state
+            ));
+        }
 
         var r = await Update(node);
         if (!r.IsOk) {
