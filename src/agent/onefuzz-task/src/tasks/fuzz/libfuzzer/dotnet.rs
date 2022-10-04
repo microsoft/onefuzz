@@ -65,7 +65,9 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
             &config.common.setup_dir,
             &config.extra.target_assembly,
         )
-        .await?;
+        .await?
+        .to_string_lossy()
+        .into_owned();
 
         // Configure loader to fuzz user target DLL.
         let mut env = config.target_env.clone();
