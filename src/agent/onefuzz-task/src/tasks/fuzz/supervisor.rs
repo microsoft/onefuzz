@@ -7,7 +7,7 @@ use crate::tasks::{
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
     report::crash_report::monitor_reports,
     stats::common::{monitor_stats, StatsFormat},
-    utils::CheckNotify,
+    utils::{try_resolve_setup_relative_path, CheckNotify},
 };
 use anyhow::{Context, Error, Result};
 use onefuzz::{
@@ -198,6 +198,12 @@ async fn start_supervisor(
     inputs: &SyncedDir,
     reports_dir: PathBuf,
 ) -> Result<Child> {
+    let target_exe = if let Some(target_exe) = &config.target_exe {
+        Some(try_resolve_setup_relative_path(&config.common.setup_dir, target_exe).await?)
+    } else {
+        None
+    };
+
     let expand = Expand::new()
         .machine_id()
         .await?
@@ -216,7 +222,7 @@ async fn start_supervisor(
         .set_optional_ref(&config.coverage, |expand, coverage| {
             expand.coverage_dir(&coverage.local_path)
         })
-        .set_optional_ref(&config.target_exe, |expand, target_exe| {
+        .set_optional_ref(&target_exe, |expand, target_exe| {
             expand.target_exe(target_exe)
         })
         .set_optional_ref(&config.supervisor_input_marker, |expand, input_marker| {

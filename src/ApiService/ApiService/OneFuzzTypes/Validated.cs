@@ -14,8 +14,8 @@ static class Check {
     private static readonly Regex _isAlnumDash = new(@"\A[a-zA-Z0-9\-]+\z", RegexOptions.Compiled);
     public static bool IsAlnumDash(string input) => _isAlnumDash.IsMatch(input);
 
-    // Permits 1-64 characters: alphanumeric, underscore, or dash.
-    private static readonly Regex _isNameLike = new(@"\A[_a-zA-Z0-9\-]{1,64}\z", RegexOptions.Compiled);
+    // Permits 1-64 characters: alphanumeric, underscore, period, or dash.
+    private static readonly Regex _isNameLike = new(@"\A[._a-zA-Z0-9\-]{1,64}\z", RegexOptions.Compiled);
     public static bool IsNameLike(string input) => _isNameLike.IsMatch(input);
 }
 
@@ -54,7 +54,10 @@ public abstract class ValidatedStringConverter<T> : JsonConverter<T> where T : V
 
 [JsonConverter(typeof(Converter))]
 public sealed record PoolName : ValidatedString {
-    private static bool IsValid(string input) => Check.IsNameLike(input);
+    // NOTE: PoolName is currently _not_ validated, since this 
+    // can break existing users. When CSHARP-RELEASE happens, we can
+    // try to synchronize other breaking changes with that.
+    private static bool IsValid(string input) => true;
 
     private PoolName(string value) : base(value) {
         Debug.Assert(IsValid(value));
@@ -65,7 +68,7 @@ public sealed record PoolName : ValidatedString {
             return result;
         }
 
-        throw new ArgumentException("Pool name must have only numbers, letters or dashes");
+        throw new ArgumentException("Pool name must have only numbers, letters, underscores, periods, or dashes");
     }
 
     public static bool TryParse(string input, [NotNullWhen(returnValue: true)] out PoolName? result) {

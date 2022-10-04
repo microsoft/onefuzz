@@ -30,7 +30,6 @@ public class AgentCanSchedule {
         var canScheduleRequest = request.OkV;
 
         var node = await _context.NodeOperations.GetByMachineId(canScheduleRequest.MachineId);
-
         if (node == null) {
             _log.Warning($"Unable to find {canScheduleRequest.MachineId:Tag:MachineId}");
             return await _context.RequestHandling.NotOk(
@@ -44,14 +43,12 @@ public class AgentCanSchedule {
         }
 
         var allowed = true;
-
         if (!await _context.NodeOperations.CanProcessNewWork(node)) {
             allowed = false;
         }
 
         var task = await _context.TaskOperations.GetByTaskId(canScheduleRequest.TaskId);
         var workStopped = task == null || task.State.ShuttingDown();
-
         if (workStopped) {
             _log.Info($"Work stopped for: {canScheduleRequest.MachineId:Tag:MachineId} and {canScheduleRequest.TaskId:Tag:TaskId}");
             allowed = false;

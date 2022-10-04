@@ -4,9 +4,9 @@ public record ShrinkEntry(Guid ShrinkId);
 
 
 public class ShrinkQueue {
-    Guid _baseId;
-    IQueue _queueOps;
-    ILogTracer _log;
+    readonly Guid _baseId;
+    readonly IQueue _queueOps;
+    readonly ILogTracer _log;
 
     public ShrinkQueue(Guid baseId, IQueue queueOps, ILogTracer log) {
         _baseId = baseId;
@@ -17,10 +17,10 @@ public class ShrinkQueue {
     public static string ShrinkQueueNamePrefix => "to-shrink-";
 
     public override string ToString() {
-        return $"{ShrinkQueue.ShrinkQueueNamePrefix}{_baseId:N}";
+        return $"{ShrinkQueueNamePrefix}{_baseId:N}";
     }
 
-    public string QueueName => this.ToString();
+    public string QueueName => ToString();
 
     public async Async.Task Clear() {
         await _queueOps.ClearQueue(QueueName, StorageType.Config);
