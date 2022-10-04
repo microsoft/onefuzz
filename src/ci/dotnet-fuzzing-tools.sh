@@ -29,7 +29,7 @@ sudo apt-get install -y dotnet-sdk-6.0
 git clone $SHARPFUZZ_REPO sharpfuzz
 pushd sharpfuzz
 git checkout $SHARPFUZZ_COMMIT
-dotnet publish src/SharpFuzz.CommandLine -f net6.0 -c Release -o $ARTIFACTS/sharpfuzz --sc -r linux-x64
+dotnet publish src/SharpFuzz.CommandLine -f net6.0 -c Release -o $ARTIFACTS/sharpfuzz --self-contained -r linux-x64
 popd
 
 # Build SharpFuzz and our dynamic loader harness for `libfuzzer-dotnet`.
