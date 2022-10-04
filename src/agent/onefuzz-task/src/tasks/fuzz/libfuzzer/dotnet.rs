@@ -61,20 +61,11 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
     type Config = LibFuzzerDotnetConfig;
 
     async fn from_config(config: &common::Config<Self>) -> Result<LibFuzzer> {
-        let target_assembly_path = try_resolve_setup_relative_path(
-            &config.common.setup_dir,
-            &config.extra.target_assembly,
-        )
-        .await?
-        .to_string_lossy()
-        .into_owned();
+        let target_assembly = config.target_assembly().await?;
 
         // Configure loader to fuzz user target DLL.
         let mut env = config.target_env.clone();
-        env.insert(
-            "LIBFUZZER_DOTNET_TARGET_ASSEMBLY".into(),
-            target_assembly_path,
-        );
+        env.insert("LIBFUZZER_DOTNET_TARGET_ASSEMBLY".into(), target_assembly);
         env.insert(
             "LIBFUZZER_DOTNET_TARGET_CLASS".into(),
             config.extra.target_class.clone(),
@@ -105,7 +96,9 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
 
         // Use SharpFuzz to statically instrument the target assembly.
         let mut cmd = Command::new(config.extra.sharpfuzz_path());
-        cmd.arg(&config.extra.target_assembly);
+
+        let target_assembly = config.target_assembly().await?;
+        cmd.arg(target_assembly);
 
         let mut child = cmd.spawn()?;
         let status = child.wait().await?;
@@ -119,6 +112,18 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
         }
 
         Ok(())
+    }
+}
+
+impl common::Config<LibFuzzerDotnet> {
+    async fn target_assembly(&self) -> Result<String> {
+        let resolved =
+            try_resolve_setup_relative_path(&self.common.setup_dir, &self.extra.target_assembly)
+                .await?
+                .to_string_lossy()
+                .into_owned();
+
+        Ok(resolved)
     }
 }
 
