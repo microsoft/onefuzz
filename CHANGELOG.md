@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Fix UpdateConfigs [#2463](https://github.com/microsoft/onefuzz/pull/2463)
 * Service: Allow worker loops to continue after errors [#2469](https://github.com/microsoft/onefuzz/pull/2469)
 * Service: Lowercase webhooks digest header value [#2471](https://github.com/microsoft/onefuzz/pull/2471)
-* Service: Fix Node State Machine. [#2476](https://github.com/microsoft/onefuzz/pull/2476)
+* Service: Fix C# Node state machine. [#2476](https://github.com/microsoft/onefuzz/pull/2476)
 
 ## 5.14.0
 ### Added
