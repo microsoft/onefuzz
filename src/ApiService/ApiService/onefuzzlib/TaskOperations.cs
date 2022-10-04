@@ -142,7 +142,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         if (task.State == state) {
             return task;
         }
-
+        _logTracer.Event($"SetState Task {task.TaskId:Tag:TaskId} {task.State:Tag:From} - {state:Tag:To}");
         if (task.State == TaskState.Running || task.State == TaskState.SettingUp) {
             task = await OnStart(task with { State = state });
         } else {

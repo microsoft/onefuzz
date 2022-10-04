@@ -4,7 +4,7 @@
 use crate::tasks::{
     config::CommonConfig,
     report::{crash_report::CrashTestResult, libfuzzer_report},
-    utils::default_bool_true,
+    utils::{default_bool_true, try_resolve_setup_relative_path},
 };
 
 use anyhow::{Context, Result};
@@ -55,10 +55,14 @@ pub struct LibFuzzerRegressionTask {
 #[async_trait]
 impl RegressionHandler for LibFuzzerRegressionTask {
     async fn get_crash_result(&self, input: PathBuf, input_url: Url) -> Result<CrashTestResult> {
+        let target_exe =
+            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
+                .await?;
+
         let args = libfuzzer_report::TestInputArgs {
             input_url: Some(input_url),
             input: &input,
-            target_exe: &self.config.target_exe,
+            target_exe: &target_exe,
             target_options: &self.config.target_options,
             target_env: &self.config.target_env,
             setup_dir: &self.config.common.setup_dir,

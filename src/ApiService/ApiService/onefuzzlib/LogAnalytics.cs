@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using Microsoft.Azure.Management.Monitor;
 using Microsoft.Azure.Management.OperationalInsights;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -15,12 +16,14 @@ public interface ILogAnalytics {
 
 public class LogAnalytics : ILogAnalytics {
 
-    ICreds _creds;
-    IServiceConfig _config;
+    private readonly ICreds _creds;
+    private readonly IServiceConfig _config;
+    private readonly IMemoryCache _cache;
 
-    public LogAnalytics(ICreds creds, IServiceConfig config) {
+    public LogAnalytics(ICreds creds, IServiceConfig config, IMemoryCache cache) {
         _creds = creds;
         _config = config;
+        _cache = cache;
     }
 
     private AccessToken GetToken() {
@@ -28,8 +31,13 @@ public class LogAnalytics : ILogAnalytics {
         return _creds.GetIdentity().GetToken(new TokenRequestContext(scopes));
     }
 
+    public Async.Task<MonitorSettings> GetMonitorSettings() =>
+        _cache.GetOrCreateAsync(nameof(GetMonitorSettings), entry => {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
+            return GetMonitorSettingsInternal();
+        });
 
-    public async Async.Task<MonitorSettings> GetMonitorSettings() {
+    public async Async.Task<MonitorSettings> GetMonitorSettingsInternal() {
         var token = GetToken();
         var client = new OperationalInsightsManagementClient(new Rest.TokenCredentials(token.Token)) { SubscriptionId = _creds.GetSubscription() };
 

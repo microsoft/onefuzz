@@ -130,7 +130,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             return poolResult.ErrorV;
         }
 
-        _logTracer.Info($"Updating auto-scale entry for scaleset: {scaleset.ScalesetId}");
+        _logTracer.Info($"Updating auto-scale entry for scaleset: {scaleset.ScalesetId:Tag:ScalesetId}");
         _ = await _context.AutoScaleOperations.Update(
                     scalesetId: scaleset.ScalesetId,
                     minAmount: minAmount,
@@ -188,6 +188,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             return scaleset;
         }
 
+        _log.WithTag("Pool", scaleset.PoolName.ToString()).Event($"SetState Scaleset {scaleset.ScalesetId:Tag:ScalesetId} {scaleset.State:Tag:From} - {state:Tag:To}");
         var updatedScaleSet = scaleset with { State = state };
         var r = await Replace(updatedScaleSet);
         if (!r.IsOk) {
@@ -217,7 +218,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         var updatedScaleset = await SetState(scaleset with { Error = error }, ScalesetState.CreationFailed);
 
-        await _context.Events.SendEvent(new EventScalesetFailed(scaleset.ScalesetId, scaleset.PoolName, error));
+        await _context.Events.SendEvent(new EventScalesetFailed(updatedScaleset.ScalesetId, updatedScaleset.PoolName, error));
         return updatedScaleset;
     }
 
@@ -242,10 +243,17 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
 
         var extensions = await _context.Extensions.FuzzExtensions(pool.OkV, scaleSet);
-
         var res = await _context.VmssOperations.UpdateExtensions(scaleSet.ScalesetId, extensions);
         if (!res.IsOk) {
             _log.Info($"unable to update configs {string.Join(',', res.ErrorV.Errors!)}");
+            return scaleSet;
+        }
+
+        // successfully performed config update, save that fact:
+        scaleSet = scaleSet with { NeedsConfigUpdate = false };
+        var updateResult = await Update(scaleSet);
+        if (!updateResult.IsOk) {
+            _log.Info($"unable to set NeedsConfigUpdate to false - will try again");
         }
 
         return scaleSet;
@@ -322,7 +330,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 scaleset = result.OkV;
             }
         } else {
-            _logTracer.Info($"scaleset running {scaleset.ScalesetId:Tag:ScalesetId}");
+            _logTracer.Info($"scaleset {scaleset.ScalesetId:Tag:ScalesetId} is in {vmss.ProvisioningState:Tag:ScalesetState}");
 
             var autoScaling = await TryEnableAutoScaling(scaleset);
 
@@ -532,7 +540,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 continue;
             }
 
-            _log.Info($"adding missing azure node {machineId:Tag:MachineId} to scaleset {scaleSet.ScalesetId:Tag:ScalesetId}");
+            _log.Info($"adding missing azure node {machineId:Tag:MachineId} {scaleSet.ScalesetId:Tag:ScalesetId}");
 
             // Note, using isNew:True makes it such that if a node already has
             // checked in, this won't overwrite it.
@@ -569,6 +577,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 } else if (await new ShrinkQueue(pool.OkV!.PoolId, _context.Queue, _log).ShouldShrink()) {
                     toDelete[node.MachineId] = await _context.NodeOperations.SetHalt(node);
                 } else {
+                    _logTracer.Info($"Node ready to reimage {node.MachineId:Tag:MachineId} {node.ScalesetId:Tag:ScalesetId} {node.State:Tag:State}");
                     toReimage[node.MachineId] = node;
                 }
             }
@@ -583,6 +592,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             } else {
                 errorMessage = "node reimaged due to never receiving heartbeat";
             }
+
+            _log.Info($"{errorMessage} {deadNode.MachineId:Tag:MachineId} {deadNode.ScalesetId:Tag:ScalesetId}");
 
             var error = new Error(ErrorCode.TASK_FAILED, new[] { $"{errorMessage} scaleset_id {deadNode.ScalesetId} last heartbeat:{deadNode.Heartbeat}" });
             await _context.NodeOperations.MarkTasksStoppedEarly(deadNode, error);
@@ -655,8 +666,10 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                     await Async.Task.WhenAll(nodes
                         .Where(node => machineIds.Contains(node.MachineId))
                         .Select(async node => {
-                            await _context.NodeOperations.Delete(node);
-                            await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
+                            var r = await _context.NodeOperations.ReleaseScaleInProtection(node);
+                            if (r.IsOk) {
+                                await _context.NodeOperations.Delete(node);
+                            }
                         }));
                 } else {
                     _log.Info($"failed to reimage nodes due to {r.ErrorV:Tag:Error}");
