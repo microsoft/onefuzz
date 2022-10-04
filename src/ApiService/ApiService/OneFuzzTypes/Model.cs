@@ -200,7 +200,10 @@ public record TaskDetails(
     bool? PreserveExistingOutputs = null,
     List<string>? ReportList = null,
     long? MinimizedStackDepth = null,
-    string? CoverageFilter = null
+    string? CoverageFilter = null,
+    string? TargetAssembly = null,
+    string? TargetClass = null,
+    string? TargetMethod = null
 );
 
 public record TaskVm(
