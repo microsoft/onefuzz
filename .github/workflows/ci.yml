@@ -649,6 +649,20 @@ jobs:
     needs:
       - build-integration-tests-linux
       - dotnet-fuzzing-tools-linux
+      # even though this job doesn't use the artifacts for these other jobs,
+      # we must include them or we get spurious failures when the download-artifact
+      # step tries to download the named artifact which includes files from
+      # all of these jobs
+      - agent
+      - azcopy
+      - cli
+      - onefuzztypes
+      - proxy
+      - service
+      - afl
+      - aflpp
+      - radamsa-linux
+      - radamsa-win64
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v3
