@@ -15,6 +15,7 @@ public class TemplateTests {
     private static readonly string _defaultTemplate = "<a href='{{ input_url }}'>This input</a> caused the <a href='{{ target_url }}'>fuzz target</a> {{ report.executable }} to crash. The faulting input SHA256 hash is {{ report.input_sha256 }} <br>";
 
     // Original python template: "This is the call stack as determined by heuristics. You may wish to confirm this stack trace with a debugger via repro: <ul> {% for item in report.call_stack %} <li> {{ item }} </li> {% endfor %} </ul>"
+    private static readonly string _jinjaForLoop = "This is the call stack as determined by heuristics. You may wish to confirm this stack trace with a debugger via repro: <ul> {% for item in report.call_stack %} <li> {{ item }} </li> {% endfor %} </ul>";
     // Changes for dotnet:
     //     * Change "endfor" in python to "end"
     //     * Change "{% ... %}" in python to "{{ ... }}"
@@ -24,12 +25,14 @@ public class TemplateTests {
     private static readonly string _testString2 = "The OneFuzz job {{ task.job_id }} found a crash in <a href='{{ target_url }}'>{{ report.executable }}</a> with input <a href='{{ input_url }}'>{{ report.input_sha256 }}</a>. ASan log:<br><br>{{ report.asan_log }}";
 
     // Original python template: "The fuzzing target ({{ job.project }} {{ job.name }} {{ job.build }}) reported a crash. <br> {%if report.asan_log %} AddressSanitizer reported the following details: <br> <pre> {{ report.asan_log }} </pre> {% else %} Faulting call stack: <ul> {% for item in report.call_stack %} <li> {{ item }} </li> {% endfor %} </ul> <br> {% endif %} You can reproduce the issue remotely in OneFuzz by running the following command: <pre> {{ repro_cmd }} </pre>"
+    private static readonly string _jinjaComplex = "The fuzzing target ({{ job.project }} {{ job.name }} {{ job.build }}) reported a crash. <br> {% if report.asan_log %} AddressSanitizer reported the following details: <br> <pre> {{ report.asan_log }} </pre> {% else %} Faulting call stack: <ul> {% for item in report.call_stack %} <li> {{ item }} </li> {% endfor %} </ul> <br> {% endif %} You can reproduce the issue remotely in OneFuzz by running the following command: <pre> {{ repro_cmd }} </pre>";
     // Changes for dotnet:
     //     * Change "endfor" in python to "end"
     //     * Change "endif" in python for "end"
     //     * Change "{% ... %}" in python to "{{ ... }}"
-    //     * Change job.project -> job.config.project (same for job.name, job.build). This is actually a bug, it shouldn't work in python either
-    private static readonly string _testString3 = "The fuzzing target ({{ job.config.project }} {{ job.config.name }} {{ job.config.build }}) reported a crash. <br> {{ if report.asan_log }} AddressSanitizer reported the following details: <br> <pre> {{ report.asan_log }} </pre> {{ else }} Faulting call stack: <ul> {{ for item in report.call_stack }} <li> {{ item }} </li> {{ end }} </ul> <br> {{ end }} You can reproduce the issue remotely in OneFuzz by running the following command: <pre> {{ repro_cmd }} </pre>";
+    private static readonly string _testString3 = "The fuzzing target ({{ job.project }} {{ job.name }} {{ job.build }}) reported a crash. <br> {{ if report.asan_log }} AddressSanitizer reported the following details: <br> <pre> {{ report.asan_log }} </pre> {{ else }} Faulting call stack: <ul> {{ for item in report.call_stack }} <li> {{ item }} </li> {{ end }} </ul> <br> {{ end }} You can reproduce the issue remotely in OneFuzz by running the following command: <pre> {{ repro_cmd }} </pre>";
+
+    private static readonly string _jinjaIfStatement = "{% if report.asan_log %} AddressSanitizer reported the following details: <br> <pre> {{ report.asan_log }} </pre> {% else %} Faulting call stack: <ul> {% endif %}";
 
     [Fact]
     public void CanFormatDefaultTemplate() {
@@ -104,7 +107,7 @@ public class TemplateTests {
         var output = template.Render(new {
             ReproCmd = reproCmd,
             Report = report,
-            Job = job
+            Job = job.Config
         });
 
         output.Should().Contain(job.Config.Project);
@@ -128,6 +131,34 @@ public class TemplateTests {
         a.Should().BeFalse();
         t.Should().BeTrue();
         g.Should().BeFalse();
+    }
+
+    [Fact]
+    public void CanConvertJinjaForLoop() {
+        _testString1.Should().BeEquivalentTo(
+            JinjaTemplateAdapter.AdaptForScriban(_jinjaForLoop)
+        );
+    }
+
+    [Fact]
+    public void CanConvertJinjaIfStatement() {
+        _testString3.Should().Contain(
+            JinjaTemplateAdapter.AdaptForScriban(_jinjaIfStatement)
+        );
+    }
+
+    [Fact]
+    public void CanConvertJinjaComplex() {
+        _testString3.Should().BeEquivalentTo(
+            JinjaTemplateAdapter.AdaptForScriban(_jinjaComplex)
+        );
+    }
+
+    [Fact]
+    public void CanDetectJinja() {
+        JinjaTemplateAdapter.IsJinjaTemplate(_jinjaIfStatement).Should().BeTrue();
+        JinjaTemplateAdapter.IsJinjaTemplate(_jinjaComplex).Should().BeTrue();
+        JinjaTemplateAdapter.IsJinjaTemplate(_jinjaForLoop).Should().BeTrue();
     }
 
     private static Report GetReport() {
