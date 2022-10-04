@@ -34,7 +34,7 @@ jobs:
     - name: Install specific Rust version
       # note: keep this in sync with .devcontainer/Dockerfile
       run: |
-        rustup default 1.63 
+        rustup default 1.64 
         rustup component add clippy rustfmt llvm-tools-preview
     - name: Get Rust version & build version
       shell: bash

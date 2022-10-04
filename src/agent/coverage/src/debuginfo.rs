@@ -123,7 +123,7 @@ impl ModuleDebugInfo {
                     // via `Object::parse()`. We manually dropped `object`, so the raw pointer is no
                     // longer aliased.
                     unsafe {
-                        Box::from_raw(data_ptr);
+                        drop(Box::from_raw(data_ptr));
                     }
 
                     return Ok(None);
@@ -139,7 +139,7 @@ impl ModuleDebugInfo {
                 // hold a reference to the leaked data. The raw pointer is no longer aliased, so we
                 // can both free its referent and also return the error.
                 unsafe {
-                    Box::from_raw(data_ptr);
+                    drop(Box::from_raw(data_ptr));
                 }
 
                 return Err(err.into());
@@ -164,7 +164,7 @@ impl ModuleDebugInfo {
                 // not hold a reference to the leaked data. The pointer is no longer aliased, so we
                 // can both free its referent and also return the error.
                 unsafe {
-                    Box::from_raw(cache_data_ptr);
+                    drop(Box::from_raw(cache_data_ptr));
                 }
 
                 Err(err.into())
