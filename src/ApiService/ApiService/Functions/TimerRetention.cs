@@ -54,55 +54,55 @@ public class TimerRetention {
                 select container.Name;
 
             foreach (var c in containerNames) {
-                usedContainers.Add(c);
+                _ = usedContainers.Add(c);
             }
         }
 
         await foreach (var notification in _notificaitonOps.QueryAsync(timeFilter)) {
-            _log.Verbose($"checking expired notification for removal: {notification.NotificationId}");
+            _log.Verbose($"checking expired notification for removal: {notification.NotificationId:Tag:NotificationId}");
             var container = notification.Container;
 
             if (!usedContainers.Contains(container)) {
-                _log.Info($"deleting expired notification: {notification.NotificationId}");
+                _log.Info($"deleting expired notification: {notification.NotificationId:Tag:NotificationId}");
                 var r = await _notificaitonOps.Delete(notification);
                 if (!r.IsOk) {
-                    _log.WithHttpStatus(r.ErrorV).Error($"failed to delete notification with id {notification.NotificationId}");
+                    _log.WithHttpStatus(r.ErrorV).Error($"failed to delete notification {notification.NotificationId:Tag:NotificationId}");
                 }
             }
         }
 
         await foreach (var job in _jobOps.QueryAsync(Query.And(timeFilter, Query.EqualEnum("state", JobState.Enabled)))) {
             if (job.UserInfo is not null && job.UserInfo.Upn is not null) {
-                _log.Info($"removing PII from job {job.JobId}");
+                _log.Info($"removing PII from job {job.JobId:Tag:JobId}");
                 var userInfo = job.UserInfo with { Upn = null };
                 var updatedJob = job with { UserInfo = userInfo };
                 var r = await _jobOps.Replace(updatedJob);
                 if (!r.IsOk) {
-                    _log.WithHttpStatus(r.ErrorV).Error($"Failed to save job {updatedJob.JobId}");
+                    _log.WithHttpStatus(r.ErrorV).Error($"Failed to save job {updatedJob.JobId:Tag:JobId}");
                 }
             }
         }
 
         await foreach (var task in _taskOps.QueryAsync(Query.And(timeFilter, Query.EqualEnum("state", TaskState.Stopped)))) {
             if (task.UserInfo is not null && task.UserInfo.Upn is not null) {
-                _log.Info($"removing PII from task {task.TaskId}");
+                _log.Info($"removing PII from task {task.TaskId:Tag:TaskId}");
                 var userInfo = task.UserInfo with { Upn = null };
                 var updatedTask = task with { UserInfo = userInfo };
                 var r = await _taskOps.Replace(updatedTask);
                 if (!r.IsOk) {
-                    _log.WithHttpStatus(r.ErrorV).Error($"Failed to save task {updatedTask.TaskId}");
+                    _log.WithHttpStatus(r.ErrorV).Error($"Failed to save task {updatedTask.TaskId:Tag:TaskId}");
                 }
             }
         }
 
         await foreach (var repro in _reproOps.QueryAsync(timeFilter)) {
             if (repro.UserInfo is not null && repro.UserInfo.Upn is not null) {
-                _log.Info($"removing PII from repro: {repro.VmId}");
+                _log.Info($"removing PII from repro: {repro.VmId:Tag:VmId}");
                 var userInfo = repro.UserInfo with { Upn = null };
                 var updatedRepro = repro with { UserInfo = userInfo };
                 var r = await _reproOps.Replace(updatedRepro);
                 if (!r.IsOk) {
-                    _log.WithHttpStatus(r.ErrorV).Error($"Failed to save repro {updatedRepro.VmId}");
+                    _log.WithHttpStatus(r.ErrorV).Error($"Failed to save repro {updatedRepro.VmId:Tag:VmId}");
                 }
             }
         }
@@ -117,7 +117,7 @@ public class TimerRetention {
                     var pool = await _poolOps.GetById(queueId);
                     if (!pool.IsOk) {
                         //pool does not exist. Ok to delete the pool queue
-                        _log.Info($"Deleting pool queue since pool could not be found in Pool table {q.Name}");
+                        _log.Info($"Deleting {q.Name:Tag:PoolQueueName} since pool could not be found in Pool table");
                         await _queue.DeleteQueue(q.Name, StorageType.Corpus);
                     }
                 }
@@ -126,13 +126,13 @@ public class TimerRetention {
                 var taskQueue = await _taskOps.GetByTaskId(queueId);
                 if (taskQueue is null) {
                     // task does not exist. Ok to delete the task queue
-                    _log.Info($"Deleting task queue, since task could not be found in Task table {q.Name}");
+                    _log.Info($"Deleting {q.Name:Tag:TaskQueueName} since task could not be found in Task table ");
                     await _queue.DeleteQueue(q.Name, StorageType.Corpus);
                 }
             } else if (q.Name.StartsWith(ShrinkQueue.ShrinkQueueNamePrefix)) {
                 //ignore Shrink Queues, since they seem to behave ok
             } else {
-                _log.Warning($"Unhandled queue name {q.Name} when doing garbage collection on queues");
+                _log.Warning($"Unhandled {q.Name:Tag:QueueName} when doing garbage collection on queues");
             }
         }
     }

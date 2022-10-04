@@ -19,7 +19,7 @@ public sealed class TaskEventOperations : Orm<TaskEvent>, ITaskEventOperations {
 
     private static string GetEventData(WorkerEvent ev) {
         return ev.Done != null ? $"exit status: {ev.Done.ExitStatus}" :
-            ev.Running != null ? string.Empty : "Unrecognized event: {ev}";
+            ev.Running != null ? string.Empty : $"Unrecognized event: {ev}";
     }
 
     private static string GetEventType(WorkerEvent ev) {

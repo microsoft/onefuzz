@@ -67,7 +67,7 @@ public class RequestAccess {
         var segments = path.Split("/", StringSplitOptions.RemoveEmptyEntries);
 
         var currentNode = _root;
-        currentNode.Rules.TryGetValue(method, out var currentRule);
+        _ = currentNode.Rules.TryGetValue(method, out var currentRule);
 
         foreach (var currentSegment in segments) {
             if (currentNode.Children.TryGetValue(currentSegment, out var node)) {

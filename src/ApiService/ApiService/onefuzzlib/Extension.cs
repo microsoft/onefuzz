@@ -379,8 +379,8 @@ public class Extensions : IExtensions {
     public async Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer) {
         // TODO: what about contents of repro.ps1 / repro.sh?
         var report = await _context.Reports.GetReport(reproConfig.Container, reproConfig.Path);
-        report.EnsureNotNull($"invalid report: {reproConfig}");
-        report?.InputBlob.EnsureNotNull("unable to perform reproduction without an input blob");
+        var checkedReport = report.EnsureNotNull($"invalid report: {reproConfig}");
+        var inputBlob = checkedReport.InputBlob.EnsureNotNull("unable to perform reproduction without an input blob");
 
         var commands = new List<string>();
         if (setupContainer != null) {
@@ -403,8 +403,8 @@ public class Extensions : IExtensions {
                 BlobSasPermissions.Read
             ),
             await _context.Containers.GetFileSasUrl(
-                report?.InputBlob?.Container!,
-                report?.InputBlob?.Name!,
+                inputBlob.Container,
+                inputBlob.Name,
                 StorageType.Corpus,
                 BlobSasPermissions.Read
             )

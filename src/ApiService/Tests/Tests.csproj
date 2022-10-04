@@ -25,4 +25,7 @@
     <ProjectReference Include="..\ApiService\ApiService.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AdditionalFiles Include="../CSharpExtensions.json" />
+  </ItemGroup>
 </Project>

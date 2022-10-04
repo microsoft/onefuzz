@@ -41,7 +41,8 @@ public class Pool {
             return await _context.RequestHandling.NotOk(r, poolResult.ErrorV, "pool stop");
         }
 
-        await _context.PoolOperations.SetShutdown(poolResult.OkV, Now: request.OkV.Now);
+        // discard result: not used after this point
+        _ = await _context.PoolOperations.SetShutdown(poolResult.OkV, Now: request.OkV.Now);
         return await RequestHandling.Ok(r, true);
     }
 

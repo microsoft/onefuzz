@@ -29,7 +29,7 @@ public class AgentEvents {
         }
 
         var envelope = request.OkV;
-        _log.Info($"node event: machine_id: {envelope.MachineId} event: {EntityConverter.ToJsonString(envelope)}");
+        _log.WithTag("HttpRequest", "POST").Info($"node event: {envelope.MachineId:Tag:MachineId} {EntityConverter.ToJsonString(envelope):Tag:Event}");
 
         var error = envelope.Event switch {
             NodeStateUpdate updateEvent => await OnStateUpdate(envelope.MachineId, updateEvent),
@@ -66,19 +66,21 @@ public class AgentEvents {
     private async Async.Task<Error?> OnStateUpdate(Guid machineId, NodeStateUpdate ev) {
         var node = await _context.NodeOperations.GetByMachineId(machineId);
         if (node is null) {
-            _log.Warning($"unable to process state update event. machine_id:{machineId} state event:{ev}");
+            _log.Warning($"unable to process state update event. {machineId:Tag:MachineId} {ev:Tag:Event}");
             return null;
         }
 
         if (ev.State == NodeState.Free) {
             if (node.ReimageRequested || node.DeleteRequested) {
-                _log.Info($"stopping free node with reset flags: {machineId}");
+                _log.Info($"stopping free node with reset flags: {machineId:Tag:MachineId}");
+                // discard result: node not used after this point
                 _ = await _context.NodeOperations.Stop(node);
                 return null;
             }
 
             if (await _context.NodeOperations.CouldShrinkScaleset(node)) {
-                _log.Info($"stopping free node to resize scaleset: {machineId}");
+                _log.Info($"stopping free node to resize scaleset: {machineId:Tag:MachineId}");
+                // discard result: node not used after this point
                 _ = await _context.NodeOperations.SetHalt(node);
                 return null;
             }
@@ -86,7 +88,8 @@ public class AgentEvents {
 
         if (ev.State == NodeState.Init) {
             if (node.DeleteRequested) {
-                _log.Info($"stopping node (init and delete_requested): {machineId}");
+                _log.Info($"stopping node (init and delete_requested): {machineId:Tag:MachineId}");
+                // discard result: node not used after this point
                 _ = await _context.NodeOperations.Stop(node);
                 return null;
             }
@@ -95,15 +98,15 @@ public class AgentEvents {
             // they send 'init' with reimage_requested, it's because the node was reimaged
             // successfully.
             node = node with { ReimageRequested = false, InitializedAt = DateTimeOffset.UtcNow };
+            // discard result: node not used after this point
             _ = await _context.NodeOperations.SetState(node, ev.State);
             return null;
         }
 
-        _log.Info($"node state update: {machineId} from {node.State} to {ev.State}");
         node = await _context.NodeOperations.SetState(node, ev.State);
 
         if (ev.State == NodeState.Free) {
-            _log.Info($"node now available for work: {machineId}");
+            _log.Info($"node now available for work: {machineId:Tag:MachineId}");
         } else if (ev.State == NodeState.SettingUp) {
             if (ev.Data is NodeSettingUpEventData settingUpData) {
                 if (!settingUpData.Tasks.Any()) {
@@ -120,7 +123,7 @@ public class AgentEvents {
                             Errors: new string[] { $"unable to find task: {taskId}" });
                     }
 
-                    _log.Info($"node starting task.  machine_id: {machineId} job_id: {task.JobId} task_id: {task.TaskId}");
+                    _log.Info($"node starting task. {machineId:Tag:MachineId} {task.JobId:Tag:JobId} {task.TaskId:Tag:TaskId}");
 
                     // The task state may be `running` if it has `vm_count` > 1, and
                     // another node is concurrently executing the task. If so, leave
@@ -129,7 +132,7 @@ public class AgentEvents {
                     // Other states we would want to preserve are excluded by the
                     // outermost conditional check.
                     if (task.State != TaskState.Running && task.State != TaskState.SettingUp) {
-                        await _context.TaskOperations.SetState(task, TaskState.SettingUp);
+                        task = await _context.TaskOperations.SetState(task, TaskState.SettingUp);
                     }
 
                     var nodeTask = new NodeTasks(
@@ -138,7 +141,7 @@ public class AgentEvents {
                         State: NodeTaskState.SettingUp);
                     var r = await _context.NodeTasksOperations.Replace(nodeTask);
                     if (!r.IsOk) {
-                        _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace node task {task.TaskId}");
+                        _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace node task {task.TaskId:Tag:TaskId}");
                     }
                 }
             }
@@ -148,14 +151,15 @@ public class AgentEvents {
                 if (doneData.Error is not null) {
                     var errorText = EntityConverter.ToJsonString(doneData);
                     error = new Error(ErrorCode.TASK_FAILED, Errors: new string[] { errorText });
-                    _log.Error($"node 'done' with error: machine_id:{machineId}, data:{errorText}");
+                    _log.Error($"node 'done' {machineId:Tag:MachineId} - {errorText:Tag:Error}");
                 }
             }
 
             // if tasks are running on the node when it reports as Done
             // those are stopped early
             await _context.NodeOperations.MarkTasksStoppedEarly(node, error);
-            await _context.NodeOperations.ToReimage(node, done: true);
+            // discard result: node not used after this point
+            _ = await _context.NodeOperations.ToReimage(node, done: true);
         }
 
         return null;
@@ -193,8 +197,8 @@ public class AgentEvents {
         }
 
         if (!node.State.ReadyForReset()) {
+            // discard result: node not used after this point
             _ = await _context.NodeOperations.SetState(node, NodeState.Busy);
-            // node unused after this point
         }
 
         var nodeTask = new NodeTasks(
@@ -203,16 +207,16 @@ public class AgentEvents {
             State: NodeTaskState.Running);
         var r = await _context.NodeTasksOperations.Replace(nodeTask);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace node task {nodeTask.TaskId}");
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace node task {nodeTask.TaskId:Tag:TaskId}");
         }
 
         if (task.State.ShuttingDown()) {
-            _log.Info($"ignoring task start from node. machine_id:{machineId} job_id:{task.JobId} task_id:{task.TaskId} (state: {task.State})");
+            _log.Info($"ignoring task start from node. {machineId:Tag:MachineId} {task.JobId:Tag:JobId} {task.TaskId:Tag:TaskId} ({task.State:Tag:State})");
             return null;
         }
 
-        _log.Info($"task started on node. machine_id:{machineId} job_id:{task.JobId} task_id:{task.TaskId}");
-        await _context.TaskOperations.SetState(task, TaskState.Running);
+        _log.Info($"task started on node. {machineId:Tag:MachineId} {task.JobId:Tag:JobId} {task.TaskId:Tag:TaskId}");
+        task = await _context.TaskOperations.SetState(task, TaskState.Running);
 
         var taskEvent = new TaskEvent(
             TaskId: task.TaskId,
@@ -220,7 +224,7 @@ public class AgentEvents {
             EventData: new WorkerEvent(Running: running));
         r = await _context.TaskEventOperations.Replace(taskEvent);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace taskEvent for task with id {taskEvent.TaskId}");
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace taskEvent {taskEvent.TaskId:Tag:TaskId}");
         }
 
         return null;
@@ -250,7 +254,7 @@ public class AgentEvents {
         };
 
         if (done.ExitStatus.Success) {
-            _log.Info($"task done. {task.JobId}:{task.TaskId} status:{done.ExitStatus}");
+            _log.Info($"task done. {task.JobId:Tag:JobId}:{task.TaskId:Tag:TaskId} {done.ExitStatus:Tag:Status}");
             await _context.TaskOperations.MarkStopping(task);
 
             // keep node if keep-on-completion is set
@@ -258,7 +262,7 @@ public class AgentEvents {
                 node = node with { DebugKeepNode = true };
                 var r = await _context.NodeOperations.Replace(node);
                 if (!r.IsOk) {
-                    _log.WithHttpStatus(r.ErrorV).Error($"keepNodeOnCompletion: failed to replace node {node.MachineId} when setting debug keep node to true");
+                    _log.WithHttpStatus(r.ErrorV).Error($"keepNodeOnCompletion: failed to replace node {node.MachineId:Tag:MachineId} when setting debug keep node to true");
                 }
             }
         } else {
@@ -278,7 +282,7 @@ public class AgentEvents {
                 node = node with { DebugKeepNode = true };
                 var r = await _context.NodeOperations.Replace(node);
                 if (!r.IsOk) {
-                    _log.WithHttpStatus(r.ErrorV).Error($"keepNodeOnfFailure: failed to replace node {node.MachineId} when setting debug keep node to true");
+                    _log.WithHttpStatus(r.ErrorV).Error($"keepNodeOnfFailure: failed to replace node {node.MachineId:Tag:MachineId} when setting debug keep node to true");
                 }
             }
         }
@@ -286,14 +290,14 @@ public class AgentEvents {
         if (!node.DebugKeepNode) {
             var r = await _context.NodeTasksOperations.Delete(new NodeTasks(machineId, done.TaskId));
             if (!r.IsOk) {
-                _log.WithHttpStatus(r.ErrorV).Error($"failed to deleting node task since DebugKeepNode is false");
+                _log.WithHttpStatus(r.ErrorV).Error($"failed to deleting node task {done.TaskId:Tag:TaskId} for: {machineId:Tag:MachineId} since DebugKeepNode is false");
             }
         }
 
         var taskEvent = new TaskEvent(done.TaskId, machineId, new WorkerEvent { Done = done });
         var r1 = await _context.TaskEventOperations.Replace(taskEvent);
         if (!r1.IsOk) {
-            _log.WithHttpStatus(r1.ErrorV).Error($"failed to update task event for done task {done.TaskId}");
+            _log.WithHttpStatus(r1.ErrorV).Error($"failed to update task event for done task {done.TaskId:Tag:TaskId}");
         }
         return null;
     }

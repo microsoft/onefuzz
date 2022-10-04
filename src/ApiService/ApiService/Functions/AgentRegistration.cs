@@ -108,7 +108,7 @@ public class AgentRegistration {
                 "agent registration");
         }
 
-        _log.Info($"registration request: machine_id: {machineId} pool_name: {poolName} scaleset_id: {scalesetId} version: {version}");
+        _log.Info($"registration request: {machineId:Tag:MachineId} {poolName:Tag:PoolName} {scalesetId:Tag:ScalesetId} {version:Tag:Version}");
         var poolResult = await _context.PoolOperations.GetByName(poolName);
         if (!poolResult.IsOk) {
             return await _context.RequestHandling.NotOk(
@@ -146,7 +146,7 @@ public class AgentRegistration {
 
         var r = await _context.NodeOperations.Replace(node);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).WithTag("MachineId", node.MachineId.ToString()).Error("failed to replace node operations for node {MachineId}");
+            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace node operations for {node.MachineId:Tag:MachineId}");
         }
 
         return await RequestHandling.Ok(req, await CreateRegistrationResponse(pool));

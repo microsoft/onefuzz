@@ -59,9 +59,9 @@ public class RequestAccessTests {
 
     [Fact]
     public void TestAddingRuleOnSamePath() {
-        Assert.Throws<RuleConflictException>(() => {
+        _ = Assert.Throws<RuleConflictException>(() => {
             var guid1 = Guid.NewGuid();
-            RequestAccess.Build(
+            _ = RequestAccess.Build(
                 new Dictionary<string, ApiAccessRule>{
                     { "a/b/c", new ApiAccessRule(
                         Methods: new[]{"get"},

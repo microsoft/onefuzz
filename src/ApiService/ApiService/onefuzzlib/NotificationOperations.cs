@@ -35,7 +35,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             done.Add(notification.Config);
 
             if (notification.Config is TeamsTemplate teamsTemplate) {
-                await _context.Teams.NotifyTeams(teamsTemplate, container, filename, reportOrRegression!);
+                await _context.Teams.NotifyTeams(teamsTemplate, container, filename, reportOrRegression!, notification.NotificationId);
             }
 
             if (reportOrRegression == null) {
@@ -43,19 +43,19 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             }
 
             if (notification.Config is AdoTemplate adoTemplate) {
-                await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, failTaskOnTransientError);
+                await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, failTaskOnTransientError, notification.NotificationId);
             }
 
             if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {
-                await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression);
+                await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression, notification.NotificationId);
             }
         }
 
         await foreach (var (task, containers) in GetQueueTasks()) {
             if (containers.Contains(container)) {
                 _logTracer.Info($"queuing input {container} {filename} {task.TaskId}");
-                var url = _context.Containers.GetFileSasUrl(container, filename, StorageType.Corpus, BlobSasPermissions.Read | BlobSasPermissions.Delete);
-                await _context.Queue.SendMessage(task.TaskId.ToString(), url?.ToString() ?? "", StorageType.Corpus);
+                var url = await _context.Containers.GetFileSasUrl(container, filename, StorageType.Corpus, BlobSasPermissions.Read | BlobSasPermissions.Delete);
+                await _context.Queue.SendMessage(task.TaskId.ToString(), url.ToString(), StorageType.Corpus);
             }
         }
 
@@ -96,10 +96,10 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         if (replaceExisting) {
             var existing = this.SearchByRowKeys(new[] { container.String });
             await foreach (var existingEntry in existing) {
-                _logTracer.Info($"deleting existing notification: {existingEntry.NotificationId} - {container}");
+                _logTracer.Info($"deleting existing notification: {existingEntry.NotificationId:Tag:NotificationId} - {container:Tag:Container}");
                 var rr = await this.Delete(existingEntry);
                 if (!rr.IsOk) {
-                    _logTracer.WithHttpStatus(rr.ErrorV).Error($"failed to delete existing notification {existingEntry.NotificationId} - {container}");
+                    _logTracer.WithHttpStatus(rr.ErrorV).Error($"failed to delete existing notification {existingEntry.NotificationId:Tag:NotificationId} - {container:Tag:Container}");
                 }
             }
         }
@@ -107,9 +107,9 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         var entry = new Notification(Guid.NewGuid(), container, configWithHiddenSecret);
         var r = await this.Insert(entry);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert notification with id {entry.NotificationId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert notification {entry.NotificationId:Tag:NotificationId}");
         }
-        _logTracer.Info($"created notification.  notification_id:{entry.NotificationId} container:{entry.Container}");
+        _logTracer.Info($"created notification {entry.NotificationId:Tag:NotificationId} - {entry.Container:Tag:Container}");
 
         return OneFuzzResult<Notification>.Ok(entry);
     }

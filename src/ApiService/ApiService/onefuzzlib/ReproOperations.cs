@@ -90,15 +90,15 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var vm = await GetVm(repro, config);
         var vmOperations = _context.VmOperations;
         if (!await vmOperations.IsDeleted(vm)) {
-            _logTracer.Info($"vm stopping: {repro.VmId}");
+            _logTracer.Info($"vm stopping: {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
             var rr = await vmOperations.Delete(vm);
-            if (!rr) {
-                _logTracer.Error($"failed to delete repro vm with id {repro.VmId}");
+            if (rr) {
+                _logTracer.Info($"repro vm fully deleted {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
             }
             repro = repro with { State = VmState.Stopping };
             var r = await Replace(repro);
             if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro {repro.VmId} marked Stopping");
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName} marked Stopping");
             }
             return repro;
         } else {
@@ -107,11 +107,12 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     }
 
     public async Async.Task<Repro> Stopped(Repro repro) {
-        _logTracer.Info($"vm stopped: {repro.VmId}");
+        _logTracer.Info($"vm stopped: {repro.VmId:Tag:VmId}");
+        // BUG?: why are we updating repro and then deleting it and returning a new value
         repro = repro with { State = VmState.Stopped };
         var r = await Delete(repro);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete repro {repro.VmId} marked as stopped");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete repro {repro.VmId:Tag:VmId} marked as stopped");
         }
         return repro;
     }
@@ -160,7 +161,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
 
         var r = await Replace(repro);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace init repro");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace init repro: {repro.VmId:Tag:VmId}");
         }
         return repro;
     }
@@ -204,7 +205,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             repro = repro with { State = VmState.Running };
         }
 
-        await Replace(repro);
+        await Replace(repro).IgnoreResult();
         return repro;
     }
 
@@ -278,13 +279,13 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             );
         }
 
-        _logTracer.Info("saved repro script");
+        _logTracer.Info($"saved repro script {repro.VmId:Tag:VmId}");
         return OneFuzzResultVoid.Ok;
     }
 
     public async Async.Task<Repro> SetError(Repro repro, Error result) {
         _logTracer.Info(
-            $"repro failed: vm_id: {repro.VmId} task_id: {repro.TaskId} error: {result}"
+            $"repro failed: {repro.VmId:Tag:VmId} - {repro.TaskId:Tag:TaskId} {result:Tag:Error}"
         );
 
         repro = repro with {
@@ -294,7 +295,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
 
         var r = await Replace(repro);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro record for {repro.VmId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro record for {repro.VmId:Tag:VmId}");
         }
         return repro;
     }
@@ -327,7 +328,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
 
             var r = await _context.ReproOperations.Insert(vm);
             if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert repro record for {vm.VmId}");
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert repro record for {vm.VmId:Tag:VmId}");
             }
             return OneFuzzResult<Repro>.Ok(vm);
         } else {

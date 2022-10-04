@@ -106,12 +106,12 @@ public class Containers : IContainers {
         try {
             var r = await cc.CreateAsync(metadata: metadata);
             if (r.GetRawResponse().IsError) {
-                _log.Error($"failed to create blob {containerName} due to {r.GetRawResponse().ReasonPhrase}");
+                _log.Error($"failed to create blob {containerName:Tag:ContainerName} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
             }
         } catch (RequestFailedException ex) when (ex.ErrorCode == "ContainerAlreadyExists") {
             // note: resource exists error happens during creation if the container
             // is being deleted
-            _log.Exception(ex, $"unable to create container.  account: {account} container: {container} metadata: {metadata}");
+            _log.Exception(ex, $"unable to create container.  {account:Tag:Account} {container:Tag:Container} {metadata:Tag:Metadata}");
             return null;
         }
 
@@ -166,7 +166,11 @@ public class Containers : IContainers {
 
     public async Async.Task SaveBlob(Container container, string name, string data, StorageType storageType) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container} - {storageType}");
-        await client.GetBlobClient(name).UploadAsync(new BinaryData(data), overwrite: true);
+        var blobSave = await client.GetBlobClient(name).UploadAsync(new BinaryData(data), overwrite: true);
+        var r = blobSave.GetRawResponse();
+        if (r.IsError) {
+            throw new Exception($"failed to save blob {name} due to {r.ReasonPhrase}");
+        }
     }
 
     public virtual Async.Task<Guid> GetInstanceId() => _getInstanceId.Value;

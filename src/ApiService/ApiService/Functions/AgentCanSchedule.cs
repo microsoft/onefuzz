@@ -31,7 +31,7 @@ public class AgentCanSchedule {
 
         var node = await _context.NodeOperations.GetByMachineId(canScheduleRequest.MachineId);
         if (node == null) {
-            _log.Warning($"Unable to find node {canScheduleRequest.MachineId}");
+            _log.Warning($"Unable to find {canScheduleRequest.MachineId:Tag:MachineId}");
             return await _context.RequestHandling.NotOk(
                 req,
                 new Error(
@@ -43,23 +43,21 @@ public class AgentCanSchedule {
         }
 
         var allowed = true;
-
         if (!await _context.NodeOperations.CanProcessNewWork(node)) {
             allowed = false;
         }
 
         var task = await _context.TaskOperations.GetByTaskId(canScheduleRequest.TaskId);
         var workStopped = task == null || task.State.ShuttingDown();
-
         if (workStopped) {
-            _log.Info($"Work stopped {canScheduleRequest.MachineId}");
+            _log.Info($"Work stopped for: {canScheduleRequest.MachineId:Tag:MachineId} and {canScheduleRequest.TaskId:Tag:TaskId}");
             allowed = false;
         }
 
         if (allowed) {
             var scp = await _context.NodeOperations.AcquireScaleInProtection(node);
             if (!scp.IsOk) {
-                _log.Warning($"Failed to acquire scale in protection due to {scp.ErrorV}");
+                _log.Warning($"Failed to acquire scale in protection for: {node.MachineId:Tag:MachineId} in: {node.PoolName:Tag:PoolName} due to {scp.ErrorV:Tag:Error}");
             }
             allowed = scp.IsOk;
         }

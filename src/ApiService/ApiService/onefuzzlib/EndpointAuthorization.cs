@@ -68,9 +68,8 @@ public class EndpointAuthorization : IEndpointAuthorization {
     }
 
     public async Async.Task<HttpResponseData> Reject(HttpRequestData req, UserInfo token) {
-        _log.Error(
-            $"reject token. url:{req.Url} token:{token} body:{await req.ReadAsStringAsync()}"
-        );
+        var body = await req.ReadAsStringAsync();
+        _log.Error($"reject token. url:{req.Url:Tag:Url} token:{token:Tag:Token} body:{body:Tag:Body}");
 
         return await _context.RequestHandling.NotOk(
             req,
@@ -155,7 +154,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
             var membershipChecker = CreateGroupMembershipChecker(instanceConfig);
             var allowed = await membershipChecker.IsMember(rule.AllowedGroupsIds, memberId);
             if (!allowed) {
-                _log.Error($"unauthorized access: {memberId} is not authorized to access {path}");
+                _log.Error($"unauthorized access: {memberId:Tag:MemberId} is not authorized to access {path:Tag:Path}");
                 return new Error(
                     Code: ErrorCode.UNAUTHORIZED,
                     Errors: new string[] { "not approved to use this endpoint" });

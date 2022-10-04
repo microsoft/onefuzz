@@ -46,7 +46,7 @@ pub struct LibFuzzerDotnetConfig {
 impl common::LibFuzzerType for LibFuzzerDotnet {
     type Config = LibFuzzerDotnetConfig;
 
-    fn from_config(config: &common::Config<Self>) -> LibFuzzer {
+    async fn from_config(config: &common::Config<Self>) -> Result<LibFuzzer> {
         // Configure loader to fuzz user target DLL.
         let mut env = config.target_env.clone();
         env.insert(
@@ -65,12 +65,12 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
         let mut options = config.target_options.clone();
         options.push(format!("--target_path={}", LOADER_PATH));
 
-        LibFuzzer::new(
+        Ok(LibFuzzer::new(
             LIBFUZZER_DOTNET_PATH,
             options,
             env,
             &config.common.setup_dir,
-        )
+        ))
     }
 
     async fn extra_setup(config: &common::Config<Self>) -> Result<()> {

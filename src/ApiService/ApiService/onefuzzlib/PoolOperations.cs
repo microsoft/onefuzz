@@ -45,7 +45,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         var r = await Insert(newPool);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save new pool. Pool name: {newPool.Name}, PoolId: {newPool.PoolId}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save new pool. {newPool.Name:Tag:PoolName} - {newPool.PoolId:Tag:PoolId}");
         }
         await _context.Events.SendEvent(new EventPoolCreated(PoolName: newPool.Name, Os: newPool.Os, Arch: newPool.Arch, Managed: newPool.Managed));
         return newPool;
@@ -97,7 +97,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
     public async Async.Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name)
         => await _context.ScalesetOperations.SearchByPool(name)
-            .Select(x => new ScalesetSummary(ScalesetId: x!.ScalesetId, State: x.State))
+            .Select(x => new ScalesetSummary(ScalesetId: x.ScalesetId, State: x.State))
             .ToListAsync();
 
     public async Async.Task<List<WorkSetSummary>> GetWorkQueue(Guid poolId, PoolState state) {
@@ -142,6 +142,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
             return pool;
         }
 
+        _logTracer.WithTag("PoolName", pool.Name.ToString()).Event($"SetState Pool {pool.PoolId:Tag:PoolId} {pool.State:Tag:From} - {state:Tag:To}");
         // scalesets should never leave the `halt` state
         // it is terminal
         if (pool.State == PoolState.Halt) {
@@ -151,7 +152,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         pool = pool with { State = state };
         var r = await Replace(pool);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace pool {pool.PoolId} when setting state");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace pool {pool.PoolId:Tag:PoolId} when setting state");
         }
         return pool;
     }
@@ -167,7 +168,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
     new public async Async.Task Delete(Pool pool) {
         var r = await base.Delete(pool);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to delete pool: {pool.Name}");
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to delete pool: {pool.Name:Tag:PoolName}");
         }
         var poolQueue = GetPoolQueue(pool.PoolId);
         await _context.Queue.DeleteQueue(poolQueue, StorageType.Corpus);
@@ -179,60 +180,54 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
     }
 
     public async Async.Task<Pool> Shutdown(Pool pool) {
-        var scalesets = _context.ScalesetOperations.SearchByPool(pool.Name);
-        var nodes = _context.NodeOperations.SearchByPoolName(pool.Name);
+        var scalesets = await _context.ScalesetOperations.SearchByPool(pool.Name).ToListAsync();
+        var nodes = await _context.NodeOperations.SearchByPoolName(pool.Name).ToListAsync();
 
-        if (scalesets is null && nodes is null) {
-            _logTracer.Info($"pool stopped, deleting {pool.Name}");
+        if (!scalesets.Any() && !nodes.Any()) {
+            _logTracer.Info($"pool stopped, deleting {pool.Name:Tag:PoolName}");
             await Delete(pool);
             return pool;
         }
 
-        if (scalesets is not null) {
-            await foreach (var scaleset in scalesets) {
-                if (scaleset is not null) {
-                    _ = await _context.ScalesetOperations.SetShutdown(scaleset, now: true);
-                }
-            }
+        foreach (var scaleset in scalesets) {
+            _ = await _context.ScalesetOperations.SetShutdown(scaleset, now: true);
         }
 
-        if (nodes is not null) {
-            await foreach (var node in nodes) {
-                await _context.NodeOperations.SetShutdown(node);
-            }
+        foreach (var node in nodes) {
+            // ignoring updated result - nodes not returned
+            _ = await _context.NodeOperations.SetShutdown(node);
         }
 
         //TODO: why do we save pool here ? there are no changes to pool record...
         //if it was changed by the caller - caller should perform save operation
         var r = await Update(pool);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to update pool record. pool name: {pool.Name}, pool id: {pool.PoolId}");
+            _logTracer.Error($"Failed to update pool record. {pool.Name:Tag:PoolName} - {pool.PoolId:Tag:PoolId}");
         }
+
         return pool;
     }
 
     public async Async.Task<Pool> Halt(Pool pool) {
         //halt the pool immediately
-        var scalesets = _context.ScalesetOperations.SearchByPool(pool.Name);
-        var nodes = _context.NodeOperations.SearchByPoolName(pool.Name);
+        var scalesets = await _context.ScalesetOperations.SearchByPool(pool.Name).ToListAsync();
+        var nodes = await _context.NodeOperations.SearchByPoolName(pool.Name).ToListAsync();
 
-        if (scalesets is null && nodes is null) {
-            _logTracer.Info($"pool stopped, deleting: {pool.Name}");
+        if (!scalesets.Any() && !nodes.Any()) {
+            _logTracer.Info($"pool stopped, deleting: {pool.Name:Tag:PoolName}");
             await Delete(pool);
+            return pool;
         }
 
-        if (scalesets is not null) {
-            await foreach (var scaleset in scalesets) {
-                if (scaleset is not null) {
-                    _ = await _context.ScalesetOperations.SetState(scaleset, ScalesetState.Halt);
-                }
+        foreach (var scaleset in scalesets) {
+            if (scaleset is not null) {
+                _ = await _context.ScalesetOperations.SetState(scaleset, ScalesetState.Halt);
             }
         }
 
-        if (nodes is not null) {
-            await foreach (var node in nodes) {
-                await _context.NodeOperations.SetHalt(node);
-            }
+        foreach (var node in nodes) {
+            // updated value ignored: 'nodes' is not returned
+            _ = await _context.NodeOperations.SetHalt(node);
         }
 
         return pool;

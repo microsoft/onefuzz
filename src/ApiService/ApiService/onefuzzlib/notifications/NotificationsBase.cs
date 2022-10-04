@@ -13,16 +13,8 @@ public abstract class NotificationsBase {
         _context = context;
     }
 
-    public async Async.Task FailTask(Report report, Exception error) {
-        _logTracer.Error($"notification failed: job_id:{report.JobId} task_id:{report.TaskId} err:{error}");
-
-        var task = await _context.TaskOperations.GetByJobIdAndTaskId(report.JobId, report.TaskId);
-        if (task != null) {
-            await _context.TaskOperations.MarkFailed(task, new Error(ErrorCode.NOTIFICATION_FAILURE, new string[] {
-                "notification failed",
-                error.ToString()
-            }));
-        }
+    public void LogFailedNotification(Report report, Exception error, Guid notificationId) {
+        _logTracer.Error($"notification failed: notification_id:{notificationId:Tag:NotificationId} job_id:{report.JobId:Tag:JobId} task_id:{report.TaskId:Tag:TaskId} err:{error.Message:Tag:Error}");
     }
 
     public static string ReplaceFirstSetup(string executable) {
@@ -42,15 +34,25 @@ public abstract class NotificationsBase {
         private readonly Uri _inputUrl;
         private readonly Uri _reportUrl;
 
-        public static async Async.Task<Renderer> ConstructRenderer(IOnefuzzContext context, Container container, string filename, Report report, Task? task = null, Job? job = null, Uri? targetUrl = null, Uri? inputUrl = null, Uri? reportUrl = null) {
+        public static async Async.Task<Renderer> ConstructRenderer(
+            IOnefuzzContext context,
+            Container container,
+            string filename,
+            Report report,
+            Task? task = null,
+            Job? job = null,
+            Uri? targetUrl = null,
+            Uri? inputUrl = null,
+            Uri? reportUrl = null) {
+
             task ??= await context.TaskOperations.GetByJobIdAndTaskId(report.JobId, report.TaskId);
-            task.EnsureNotNull($"invalid task {report.TaskId}");
+            var checkedTask = task.EnsureNotNull($"invalid task {report.TaskId}");
 
             job ??= await context.JobOperations.Get(report.JobId);
-            job.EnsureNotNull($"invalid job {report.JobId}");
+            var checkedJob = job.EnsureNotNull($"invalid job {report.JobId}");
 
             if (targetUrl == null) {
-                var setupContainer = Scheduler.GetSetupContainer(task?.Config!);
+                var setupContainer = Scheduler.GetSetupContainer(checkedTask.Config);
                 targetUrl = new Uri(context.Containers.AuthDownloadUrl(setupContainer, ReplaceFirstSetup(report.Executable)));
             }
 
@@ -62,9 +64,25 @@ public abstract class NotificationsBase {
                 inputUrl = new Uri(context.Containers.AuthDownloadUrl(report.InputBlob.Container, report.InputBlob.Name));
             }
 
-            return new Renderer(container, filename, report, task!, job!, targetUrl, inputUrl!, reportUrl);
+            return new Renderer(
+                container,
+                filename,
+                report,
+                checkedTask,
+                checkedJob,
+                targetUrl,
+                inputUrl!, // TODO: incorrect
+                reportUrl);
         }
-        public Renderer(Container container, string filename, Report report, Task task, Job job, Uri targetUrl, Uri inputUrl, Uri reportUrl) {
+        public Renderer(
+            Container container,
+            string filename,
+            Report report,
+            Task task,
+            Job job,
+            Uri targetUrl,
+            Uri inputUrl,
+            Uri reportUrl) {
             _report = report;
             _container = container;
             _filename = filename;

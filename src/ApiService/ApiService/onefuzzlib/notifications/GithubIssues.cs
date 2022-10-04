@@ -3,7 +3,7 @@
 namespace Microsoft.OneFuzz.Service;
 
 public interface IGithubIssues {
-    Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? reportable);
+    Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? reportable, Guid notificationId);
 }
 
 public class GithubIssues : NotificationsBase, IGithubIssues {
@@ -11,13 +11,13 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
     public GithubIssues(ILogTracer logTracer, IOnefuzzContext context)
     : base(logTracer, context) { }
 
-    public async Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? reportable) {
+    public async Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? reportable, Guid notificationId) {
         if (reportable == null) {
             return;
         }
 
         if (reportable is RegressionReport) {
-            _logTracer.Info($"github issue integration does not support regression reports. container:{container} filename:{filename}");
+            _logTracer.Info($"github issue integration does not support regression reports. {container:Tag:Container} - {filename:Tag:Filename}");
             return;
         }
 
@@ -26,7 +26,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         try {
             await Process(config, container, filename, report);
         } catch (ApiException e) {
-            await FailTask(report, e);
+            LogFailedNotification(report, e, notificationId);
         }
     }
 
@@ -114,17 +114,17 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         private async Async.Task Update(Issue issue) {
             _logTracer.Info($"updating issue: {issue}");
             if (_config.OnDuplicate.Comment != null) {
-                await _gh.Issue.Comment.Create(issue.Repository.Id, issue.Number, await Render(_config.OnDuplicate.Comment));
+                _ = await _gh.Issue.Comment.Create(issue.Repository.Id, issue.Number, await Render(_config.OnDuplicate.Comment));
             }
             if (_config.OnDuplicate.Labels.Any()) {
                 var labels = await _config.OnDuplicate.Labels.ToAsyncEnumerable()
                     .SelectAwait(async label => await Render(label))
                     .ToArrayAsync();
 
-                await _gh.Issue.Labels.ReplaceAllForIssue(issue.Repository.Id, issue.Number, labels);
+                _ = await _gh.Issue.Labels.ReplaceAllForIssue(issue.Repository.Id, issue.Number, labels);
             }
             if (_config.OnDuplicate.Reopen && issue.State != ItemState.Open) {
-                await _gh.Issue.Update(issue.Repository.Id, issue.Number, new IssueUpdate() {
+                _ = await _gh.Issue.Update(issue.Repository.Id, issue.Number, new IssueUpdate() {
                     State = ItemState.Open
                 });
             }
@@ -140,7 +140,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
                 .SelectAwait(async label => await Render(label))
                 .ToHashSetAsync();
 
-            labels.Add("OneFuzz");
+            _ = labels.Add("OneFuzz");
 
             var newIssue = new NewIssue(await Render(_config.Title)) {
                 Body = await Render(_config.Body),
@@ -149,12 +149,10 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
             labels.ToList().ForEach(label => newIssue.Labels.Add(label));
             assignees.ForEach(assignee => newIssue.Assignees.Add(assignee));
 
-            await _gh.Issue.Create(
+            _ = await _gh.Issue.Create(
                 await Render(_config.Organization),
                 await Render(_config.Repository),
-                newIssue
-            );
+                newIssue);
         }
     }
 }
-

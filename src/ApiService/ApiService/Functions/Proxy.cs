@@ -114,7 +114,7 @@ public class Proxy {
             var updated = forwardResult.OkV with { ProxyId = proxy.ProxyId };
             var r = await _context.ProxyForwardOperations.Replace(updated);
             if (!r.IsOk) {
-                _log.WithHttpStatus(r.ErrorV).Error($"failed to update proxy forward with machine id {updated.MachineId} with new proxy id {proxy.ProxyId}");
+                _log.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"failed to update proxy forward with {updated.MachineId:Tag:MachineId} with new {proxy.ProxyId:Tag:ProxyId}");
             }
             await _context.ProxyOperations.SaveProxyConfig(proxy);
         }
@@ -134,14 +134,18 @@ public class Proxy {
                 "ProxyReset");
         }
 
-        var proxyList = await _context.ProxyOperations.SearchByPartitionKeys(new[] { $"{request.OkV.Region}" }).ToListAsync();
-
-        foreach (var proxy in proxyList) {
-            await _context.ProxyOperations.SetState(proxy, VmState.Stopping);
+        bool any = false;
+        {
+            var proxyList = _context.ProxyOperations.SearchByPartitionKeys(new[] { $"{request.OkV.Region}" });
+            await foreach (var proxy in proxyList) {
+                any = true;
+                // ignoring result, proxyList not used outside this block
+                _ = await _context.ProxyOperations.SetState(proxy, VmState.Stopping);
+            }
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(new BoolResult(proxyList.Any()));
+        await response.WriteAsJsonAsync(new BoolResult(any));
         return response;
     }
 
