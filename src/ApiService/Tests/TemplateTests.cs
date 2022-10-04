@@ -142,9 +142,10 @@ public class TemplateTests {
 
     [Fact]
     public void CanConvertJinjaIfStatement() {
-        _testString3.Should().Contain(
-            JinjaTemplateAdapter.AdaptForScriban(_jinjaIfStatement)
-        );
+        var migrated = JinjaTemplateAdapter.AdaptForScriban(_jinjaIfStatement);
+
+        migrated.Should().Contain("{{ if report.asan_log }}");
+        migrated.Should().Contain("{{ end }}");
     }
 
     [Fact]
