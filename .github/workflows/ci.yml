@@ -34,7 +34,7 @@ jobs:
     - name: Install specific Rust version
       # note: keep this in sync with .devcontainer/Dockerfile
       run: |
-        rustup default 1.63 
+        rustup default 1.64 
         rustup component add clippy rustfmt llvm-tools-preview
     - name: Get Rust version & build version
       shell: bash
@@ -649,6 +649,20 @@ jobs:
     needs:
       - build-integration-tests-linux
       - dotnet-fuzzing-tools-linux
+      # even though this job doesn't use the artifacts for these other jobs,
+      # we must include them or we get spurious failures when the download-artifact
+      # step tries to download the named artifact which includes files from
+      # all of these jobs
+      - agent
+      - azcopy
+      - cli
+      - onefuzztypes
+      - proxy
+      - service
+      - afl
+      - aflpp
+      - radamsa-linux
+      - radamsa-win64
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v3
