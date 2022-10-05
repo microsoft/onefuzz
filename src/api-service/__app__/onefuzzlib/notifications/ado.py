@@ -85,7 +85,7 @@ class ADO:
                 value = self.render(self.config.project)
             else:
                 value = self.render(self.config.ado_fields[key])
-        filters[key.lower()] = value
+            filters[key.lower()] = value
 
         valid_fields = get_valid_fields(
             self.client, project=filters.get("system.teamproject")
