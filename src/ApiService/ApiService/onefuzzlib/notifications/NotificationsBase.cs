@@ -97,6 +97,7 @@ public abstract class NotificationsBase {
         // implementation doesn't have that so I'm trying to match it.
         // We should probably propagate any errors up 
         public async Async.Task<string> Render(string templateString, Uri instanceUrl) {
+            templateString = JinjaTemplateAdapter.IsJinjaTemplate(templateString) ? JinjaTemplateAdapter.AdaptForScriban(templateString) : templateString;
             var template = Template.Parse(templateString);
             if (template != null) {
                 return await template.RenderAsync(new {
