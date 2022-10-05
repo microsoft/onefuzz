@@ -1,0 +1,91 @@
+name: Create new release branch
+
+# only manually run
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Release Type"
+        required: true
+        type: choice
+        default: normal
+        options:
+        - normal
+        - hotfix
+        - major
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # needs to push a new branch
+      pull-requests: write # needs to create a PR
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # required to access tags
+
+    - id: ensure-no-existing-releases
+      run: |
+      release_branches=$(git branch -l '*/release/*' --remote | wc -l)
+      if [ $release_branches -ne 0 ]; then 
+        echo "Outstanding release branches found: only one release should be active."
+        exit 1
+      fi
+
+    - id: generate-version
+      run: |
+      # find the latest full version
+      latest_version=$(git describe --tags | sed 's/-.*//')
+
+      case "${{inputs.release_type}}" in
+        major) 
+          field_to_increment=1
+          based_on=main
+        ;;
+        normal)
+          field_to_increment=2
+          based_on=main
+        ;;
+        hotfix)
+          field_to_increment=3
+          based_on=latest_version
+        ;;
+      esac
+
+      new_version=$(echo "$old_version" | awk -F . -v OFS=. "{++\$$field_to_increment; print}")
+      echo "::set-output name=based_on::$based_on" 
+      echo "::set-output name=version::$new_version"
+
+    - name: Create release branch
+      # create a new branch and push it with updated version & placeholder CHANGELOG
+      #
+      # $based_on is the branch or tag to create the new branch from
+      # - it will be 'main' for major/normal releases
+      # - it will be the last version tag for hotfix releases
+      # $version is the new version we are making
+      run: |
+        version=${{steps.generate-version.version}}
+        based_on=${{steps.generate-version.based_on}}
+
+        git checkout "$based_on"
+
+        # update CURRENT_VERSION
+        echo -n "$version" > CURRENT_VERSION
+
+        # generate a placeholder CHANGELOG
+        csplit CHANGELOG.md '/##/' # splits into xx00 and xx01 before the first header
+        log_content=$(git log --pretty=format:'* %s' "$based_on.." | sed -E 's%\((#([0-9]{4,}))\)%[\1](https://github.com/microsoft.onefuzz/pull/\2)%')
+        cat xx00 <(echo "## $version"; echo "### Changes (EDIT THIS BEFORE MERGING):") <(echo "$log_content") xx01 > CHANGELOG.md
+        rm xx00 xx01 # cleanup
+
+    - name: Create release PR
+      uses: peter-evans/create-pull-request@v4
+      with:
+        branch: "release/${{steps.generate-version.version}}""
+        title: "Release ${{steps.generate-version.version}}"
+        body: "Releasing ${{steps.generate-version.version}}"
+        commit-message: "Update CURRENT_VERSION to ${{steps.generate-version.version}}"
+        base: main
+        draft: true
+        delete-branch: true
