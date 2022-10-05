@@ -27,35 +27,35 @@ jobs:
 
     - id: ensure-no-existing-releases
       run: |
-      release_branches=$(git branch -l '*/release/*' --remote | wc -l)
-      if [ $release_branches -ne 0 ]; then 
-        echo "Outstanding release branches found: only one release should be active."
-        exit 1
-      fi
+        release_branches=$(git branch -l '*/release/*' --remote | wc -l)
+        if [ $release_branches -ne 0 ]; then
+          echo "Outstanding release branches found: only one release should be active."
+          exit 1
+        fi
 
     - id: generate-version
       run: |
-      # find the latest full version
-      latest_version=$(git describe --tags | sed 's/-.*//')
+        # find the latest full version
+        latest_version=$(git describe --tags | sed 's/-.*//')
 
-      case "${{inputs.release_type}}" in
-        major) 
-          field_to_increment=1
-          based_on=main
-        ;;
-        normal)
-          field_to_increment=2
-          based_on=main
-        ;;
-        hotfix)
-          field_to_increment=3
-          based_on=latest_version
-        ;;
-      esac
+        case "${{inputs.release_type}}" in
+          major) 
+            field_to_increment=1
+            based_on=main
+          ;;
+          normal)
+            field_to_increment=2
+            based_on=main
+          ;;
+          hotfix)
+            field_to_increment=3
+            based_on=latest_version
+          ;;
+        esac
 
-      new_version=$(echo "$old_version" | awk -F . -v OFS=. "{++\$$field_to_increment; print}")
-      echo "::set-output name=based_on::$based_on" 
-      echo "::set-output name=version::$new_version"
+        new_version=$(echo "$old_version" | awk -F . -v OFS=. "{++\$$field_to_increment; print}")
+        echo "::set-output name=based_on::$based_on" 
+        echo "::set-output name=version::$new_version"
 
     - name: Create release branch
       # create a new branch and push it with updated version & placeholder CHANGELOG
@@ -82,7 +82,7 @@ jobs:
     - name: Create release PR
       uses: peter-evans/create-pull-request@v4
       with:
-        branch: "release/${{steps.generate-version.version}}""
+        branch: "release/${{steps.generate-version.version}}"
         title: "Release ${{steps.generate-version.version}}"
         body: "Releasing ${{steps.generate-version.version}}"
         commit-message: "Update CURRENT_VERSION to ${{steps.generate-version.version}}"
