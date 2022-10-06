@@ -72,7 +72,14 @@ public static class Defs {
                         ContainerPermission.Read |
                         ContainerPermission.Write
 
-                )},
+                ),
+                new ContainerDefinition(
+                    Type:ContainerType.Tools,
+                    Compare: Compare.Equal,
+                    Value:1,
+                    Permissions: ContainerPermission.Read | ContainerPermission.List
+                ),
+            },
             MonitorQueue: ContainerType.ReadonlyInputs)
     },
     {
@@ -117,6 +124,12 @@ public static class Defs {
                    Compare: Compare.AtMost,
                    Value: 1,
                    Permissions: ContainerPermission.Write
+               ),
+               new ContainerDefinition(
+                   Type:ContainerType.Tools,
+                   Compare: Compare.Equal,
+                   Value:1,
+                   Permissions: ContainerPermission.Read | ContainerPermission.List
                ),
            },
            MonitorQueue: ContainerType.Crashes
