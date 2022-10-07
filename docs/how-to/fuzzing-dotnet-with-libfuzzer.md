@@ -71,11 +71,17 @@ Let's fuzz the `Func` function of our example library named [problems](../../src
   }
   ```
 
-3. Build our [wrapper](../../src/integration-tests/libfuzzer-dotnet/wrapper/)
+3. Build our [wrapper](../../src/integration-tests/libfuzzer-dotnet/wrapper/):
   ```
-  dotnet publish ./wrapper/wrapper.csproj -c release -r linux-x64 -o my-fuzzer
+  dotnet publish ./wrapper/wrapper.csproj -c release -r ubuntu.18.04-x64 -o my-fuzzer
   ```
-  > NOTE: Specifying the runtime `linux-x64` is important such that we make a self-contained deployment.
+  > **Warning**
+  > This will generate a “self-contained” .NET binary. The runtime identifier (RID) specified
+  > for the `-r` option should match the OS that your OneFuzz nodes are running.
+  > If this is not correct, running your .NET binary on OneFuzz may fail due to missing shared libraries.
+  > 
+  > The Linux node OS is currently Ubuntu 18.04 by default, so in that case use `ubuntu.18.04-x64`.
+  > RIDs for other versions can be found in the [.NET Core RID Catalog](https://github.com/dotnet/docs/blob/main/docs/core/rid-catalog.md).
 
 4. Then we need to ensure our [problems](../../src/integration-tests/libfuzzer-dotnet/problems/) library is instrumented:
   ```
