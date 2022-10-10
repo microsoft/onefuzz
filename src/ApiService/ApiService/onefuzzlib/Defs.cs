@@ -35,7 +35,6 @@ public static class Defs {
                         ContainerPermission.List |
                         ContainerPermission.Read |
                         ContainerPermission.Write
-
                 )},
             MonitorQueue: ContainerType.ReadonlyInputs)
     },
@@ -175,12 +174,12 @@ public static class Defs {
                    Value: 0,
                    Permissions: ContainerPermission.Read | ContainerPermission.List
                ),
-                new ContainerDefinition(
-                    Type:ContainerType.Tools,
-                    Compare: Compare.Equal,
-                    Value:1,
-                    Permissions: ContainerPermission.Read | ContainerPermission.List
-                ),
+               new ContainerDefinition(
+                   Type:ContainerType.Tools,
+                   Compare: Compare.Equal,
+                   Value:1,
+                   Permissions: ContainerPermission.Read | ContainerPermission.List
+               ),
            }
     )},
     { TaskType.GenericAnalysis ,
