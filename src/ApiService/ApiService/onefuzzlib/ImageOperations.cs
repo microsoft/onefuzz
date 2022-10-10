@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager.Compute;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -26,24 +27,31 @@ public interface IImageOperations {
 public class ImageOperations : IImageOperations {
     private IOnefuzzContext _context;
     private ILogTracer _logTracer;
+    private readonly IMemoryCache _cache;
 
     const string SubscriptionsStr = "/subscriptions/";
     const string ProvidersStr = "/providers/";
 
 
-    public ImageOperations(ILogTracer logTracer, IOnefuzzContext context) {
+    public ImageOperations(ILogTracer logTracer, IOnefuzzContext context, IMemoryCache cache) {
         _logTracer = logTracer;
         _context = context;
+        _cache = cache;
     }
 
-    public async Task<OneFuzzResult<Os>> GetOs(Region region, string image) {
+    record class GetOsKey(Region Region, string Image);
+
+    public Task<OneFuzzResult<Os>> GetOs(Region region, string image)
+        => _cache.GetOrCreateAsync<OneFuzzResult<Os>>(new GetOsKey(region, image), entry => GetOsInternal(region, image));
+
+    private async Task<OneFuzzResult<Os>> GetOsInternal(Region region, string image) {
         string? name = null;
         if (image.StartsWith(SubscriptionsStr) || image.StartsWith(ProvidersStr)) {
             var parsed = _context.Creds.ParseResourceId(image);
             parsed = await _context.Creds.GetData(parsed);
             if (string.Equals(parsed.Id.ResourceType, "galleries", StringComparison.OrdinalIgnoreCase)) {
                 try {
-                    // This is not _exactly_ the same as the python code  
+                    // This is not _exactly_ the same as the python code
                     // because in C# we don't have access to child_name_1
                     var gallery = await _context.Creds.GetResourceGroupResource().GetGalleries().GetAsync(
                         parsed.Data.Name
