@@ -97,6 +97,7 @@ pub fn build_coverage_config(
         input_queue,
         readonly_inputs,
         coverage,
+        tools: todo!(),
         common,
     };
 
