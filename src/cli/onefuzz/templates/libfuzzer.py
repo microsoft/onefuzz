@@ -698,10 +698,11 @@ class Libfuzzer(Command):
         target_env = target_env or {}
 
         # Set target environment variables for `LibFuzzerDotnetLoader`.
-        target_env["LIBFUZZER_DOTNET_TARGET_ASSEMBLY"] = "{setup_dir}/" + target_dll_blob_name
+        target_env["LIBFUZZER_DOTNET_TARGET_ASSEMBLY"] = (
+            "{setup_dir}/" + target_dll_blob_name
+        )
         target_env["LIBFUZZER_DOTNET_TARGET_CLASS"] = target_class
         target_env["LIBFUZZER_DOTNET_TARGET_METHOD"] = target_method
-
 
         helper.add_tags(tags)
         helper.define_containers(
