@@ -37,12 +37,10 @@ pub async fn collect_exception_info(
 
 const DUMP_FILE_NAME: &str = "tmp.dmp";
 
-// Assumes `dotnet` >= 6.0.
-//
 // See: https://docs.microsoft.com/en-us/dotnet/core/diagnostics/dumps
-const ENABLE_MINIDUMP_VAR: &str = "DOTNET_DbgEnableMiniDump";
-const MINIDUMP_TYPE_VAR: &str = "DOTNET_DbgMiniDumpType";
-const MINIDUMP_NAME_VAR: &str = "DOTNET_DbgMiniDumpName";
+const ENABLE_MINIDUMP_VAR: &str = "COMPlus_DbgEnableMiniDump";
+const MINIDUMP_TYPE_VAR: &str = "COMPlus_DbgMiniDumpType";
+const MINIDUMP_NAME_VAR: &str = "COMPlus_DbgMiniDumpName";
 
 const MINIDUMP_ENABLE: &str = "1";
 const MINIDUMP_TYPE_NORMAL: &str = "1";
