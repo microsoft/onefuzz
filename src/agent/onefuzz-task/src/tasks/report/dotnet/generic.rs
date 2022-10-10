@@ -10,9 +10,9 @@ use std::{
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use onefuzz::{blob::BlobUrl, sha256, syncdir::SyncedDir};
 use onefuzz::expand::Expand;
 use onefuzz::fs::set_executable;
+use onefuzz::{blob::BlobUrl, sha256, syncdir::SyncedDir};
 use reqwest::Url;
 use serde::Deserialize;
 use storage_queue::{Message, QueueClient};
@@ -148,10 +148,12 @@ impl AsanProcessor {
 
         // We haven't yet resolved a local path for `target_exe`. Try the usual
         // `setup`-relative interpretation of the configured value of `target_exe`.
-        Ok(try_resolve_setup_relative_path(&self.config.common.setup_dir, expanded)
+        let resolved = try_resolve_setup_relative_path(&self.config.common.setup_dir, expanded)
             .await?
             .to_string_lossy()
-            .into_owned())
+            .into_owned();
+
+        Ok(resolved)
     }
 
     pub async fn test_input(
@@ -178,7 +180,9 @@ impl AsanProcessor {
         let mut args = vec![target_exe];
         args.extend(self.config.target_options.clone());
 
-        let expand = Expand::new().input_path(input).setup_dir(&self.config.common.setup_dir);
+        let expand = Expand::new()
+            .input_path(input)
+            .setup_dir(&self.config.common.setup_dir);
         let expanded_args = expand.evaluate(&args)?;
 
         let env = {
@@ -192,47 +196,48 @@ impl AsanProcessor {
             new
         };
 
-        let crash_test_result = if let Some(exception) = collect_exception_info(&expanded_args, env).await? {
-            let call_stack_sha256 = stacktrace_parser::digest_iter(&exception.call_stack, None);
+        let crash_test_result =
+            if let Some(exception) = collect_exception_info(&expanded_args, env).await? {
+                let call_stack_sha256 = stacktrace_parser::digest_iter(&exception.call_stack, None);
 
-            let crash_report = CrashReport {
-                input_sha256,
-                input_blob,
-                executable,
-                crash_type: exception.exception,
-                crash_site: exception.call_stack[0].clone(),
-                call_stack: exception.call_stack,
-                call_stack_sha256,
-                minimized_stack: None,
-                minimized_stack_sha256: None,
-                minimized_stack_function_names: None,
-                minimized_stack_function_names_sha256: None,
-                minimized_stack_function_lines: None,
-                minimized_stack_function_lines_sha256: None,
-                asan_log: None,
-                task_id,
-                job_id,
-                scariness_score: None,
-                scariness_description: None,
-                onefuzz_version: Some(env!("ONEFUZZ_VERSION").to_owned()),
-                tool_name: Some(DOTNET_DUMP_TOOL_NAME.to_owned()),
-                tool_version: None,
+                let crash_report = CrashReport {
+                    input_sha256,
+                    input_blob,
+                    executable,
+                    crash_type: exception.exception,
+                    crash_site: exception.call_stack[0].clone(),
+                    call_stack: exception.call_stack,
+                    call_stack_sha256,
+                    minimized_stack: None,
+                    minimized_stack_sha256: None,
+                    minimized_stack_function_names: None,
+                    minimized_stack_function_names_sha256: None,
+                    minimized_stack_function_lines: None,
+                    minimized_stack_function_lines_sha256: None,
+                    asan_log: None,
+                    task_id,
+                    job_id,
+                    scariness_score: None,
+                    scariness_description: None,
+                    onefuzz_version: Some(env!("ONEFUZZ_VERSION").to_owned()),
+                    tool_name: Some(DOTNET_DUMP_TOOL_NAME.to_owned()),
+                    tool_version: None,
+                };
+
+                crash_report.into()
+            } else {
+                let no_repro = NoCrash {
+                    input_sha256,
+                    input_blob,
+                    executable,
+                    job_id,
+                    task_id,
+                    tries: 1,
+                    error: None,
+                };
+
+                no_repro.into()
             };
-
-            crash_report.into()
-        } else {
-            let no_repro = NoCrash {
-                input_sha256,
-                input_blob,
-                executable,
-                job_id,
-                task_id,
-                tries: 1,
-                error: None,
-            };
-
-            no_repro.into()
-        };
 
         Ok(crash_test_result)
     }

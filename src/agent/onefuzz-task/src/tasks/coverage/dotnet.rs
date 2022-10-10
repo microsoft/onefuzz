@@ -282,10 +282,12 @@ impl<'a> TaskContext<'a> {
 
         // We haven't yet resolved a local path for `target_exe`. Try the usual
         // `setup`-relative interpretation of the configured value of `target_exe`.
-        Ok(try_resolve_setup_relative_path(&self.config.common.setup_dir, expanded)
+        let resolved = try_resolve_setup_relative_path(&self.config.common.setup_dir, expanded)
             .await?
             .to_string_lossy()
-            .into_owned())
+            .into_owned();
+
+        Ok(resolved)
     }
 
     async fn command_for_input(&self, input: &Path) -> Result<Command> {
