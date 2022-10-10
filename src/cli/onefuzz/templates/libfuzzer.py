@@ -18,21 +18,9 @@ from . import JobHelper
 
 LIBFUZZER_MAGIC_STRING = b"ERROR: libFuzzer"
 
-# These path constants point to identically-named managed DLLs, so it may seem like one
-# of them is redundant. This is false: the DLLs are _not_ identical, and each one links
-# platform-native code.
-#
-# The reason for this is that `libfuzzer-dotnet` needs a _platform-native_ executable
-# wrapper to invoke the managed code under test as a child process, then communicate with
-# it using OS-specific IPC. As a result, we must deploy two variants of the managed DLL on
-# VMs, along with other platform-native executables to support the fuzzing task.
-#
-# The `dotnet_coverage` and `dotnet_crash_report` tasks must invoke the underlying DLL, so
-# it must not be statically linked into the platform-native executable wrapper.
-LIBFUZZER_DOTNET_LOADER_PATH_LINUX = (
-    "{tools_dir}/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.dll"
-)
-LIBFUZZER_DOTNET_LOADER_PATH_WINDOWS = (
+# The loader DLL is managed, but links platform-specific code. Task VMs must pull the
+# tools container that matches their platform (which will contain the correct DLL).
+LIBFUZZER_DOTNET_LOADER_PATH = (
     "{tools_dir}/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.dll"
 )
 
@@ -725,9 +713,7 @@ class Libfuzzer(Command):
 
         # Assumes that `libfuzzer-dotnet` and supporting tools were uploaded upon deployment.
         fuzzer_tools_container = Container(
-            "dotnet-fuzzing-linux"
-            if helper.platform == OS.linux
-            else "dotnet-fuzzing-windows"
+            "dotnet-fuzzing-linux" if platform == OS.linux else "dotnet-fuzzing-windows"
         )
 
         fuzzer_containers = [
@@ -782,12 +768,7 @@ class Libfuzzer(Command):
         # This provides a `main()` function that dynamically loads a target DLL
         # passed via environment variables. This is assumed to be installed on
         # the VMs.
-        if pool.os == OS.linux:
-            libfuzzer_dotnet_loader_dll = LIBFUZZER_DOTNET_LOADER_PATH_LINUX
-        elif pool.os == OS.windows:
-            libfuzzer_dotnet_loader_dll = LIBFUZZER_DOTNET_LOADER_PATH_WINDOWS
-        else:
-            raise Exception("libfuzzer-dotnet jobs must run on Windows or Linux hosts")
+        libfuzzer_dotnet_loader_dll = LIBFUZZER_DOTNET_LOADER_PATH
 
         coverage_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
