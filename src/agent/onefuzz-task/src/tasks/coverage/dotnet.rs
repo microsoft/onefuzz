@@ -42,6 +42,7 @@ pub struct Config {
     pub input_queue: Option<QueueClient>,
     pub readonly_inputs: Vec<SyncedDir>,
     pub coverage: SyncedDir,
+    pub tools: SyncedDir,
 
     #[serde(flatten)]
     pub common: CommonConfig,
@@ -68,6 +69,8 @@ impl DotnetCoverageTask {
 
     pub async fn run(&mut self) -> Result<()> {
         info!("starting dotnet_coverage task");
+
+        self.config.tools.init_pull().await?;
         self.config.coverage.init_pull().await?;
 
         let dotnet_path = dotnet_path()?;
