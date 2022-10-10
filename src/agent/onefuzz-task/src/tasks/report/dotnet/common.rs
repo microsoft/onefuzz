@@ -14,6 +14,7 @@ pub async fn collect_exception_info(
     args: &[impl AsRef<OsStr>],
     env: impl IntoIterator<Item = (impl AsRef<OsStr>, impl AsRef<OsStr>)>,
 ) -> Result<Option<DotnetExceptionInfo>> {
+    // Create temp dir cooperatively.
     let tmp_dir = spawn_blocking(tempfile::tempdir).await??;
 
     let dump_path = tmp_dir.path().join(DUMP_FILE_NAME);
@@ -21,13 +22,14 @@ pub async fn collect_exception_info(
     let dump = match collect_dump(args, env, &dump_path).await? {
         Some(dump) => dump,
         None => {
+            warn!("no minidump found, expected at {}", dump_path.display());
             return Ok(None);
         }
     };
 
     let exception = dump.exception().await?;
 
-    // Remove temp dir without blocking.
+    // Remove temp dir cooperatively.
     spawn_blocking(move || tmp_dir).await?;
 
     Ok(exception)
