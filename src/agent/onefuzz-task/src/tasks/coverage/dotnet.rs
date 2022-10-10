@@ -260,10 +260,36 @@ impl<'a> TaskContext<'a> {
         Ok(())
     }
 
+    async fn target_exe(&self) -> Result<String> {
+        let tools_dir = self.config.tools.local_path.to_string_lossy().into_owned();
+
+        // Try to expand `target_exe` with support for `{tools_dir}`.
+        //
+        // Allows using `LibFuzzerDotnetLoader.dll` from a shared tools container.
+        let expand = Expand::new().tools_dir(tools_dir);
+        let expanded = expand.evaluate_value(&self.config.target_exe.to_string_lossy())?;
+        let expanded_path = Path::new(&expanded);
+
+        // Check if `target_exe` was resolved to an absolute path and an existing file.
+        // If so, then the user specified a `target_exe` under the `tools` dir.
+        let is_absolute = expanded_path.is_absolute();
+        let file_exists = fs::metadata(&expanded).await.is_ok();
+
+        if is_absolute && file_exists {
+            // We have found `target_exe`, so skip `setup`-relative expansion.
+            return Ok(expanded);
+        }
+
+        // We haven't yet resolved a local path for `target_exe`. Try the usual
+        // `setup`-relative interpretation of the configured value of `target_exe`.
+        Ok(try_resolve_setup_relative_path(&self.config.common.setup_dir, expanded)
+            .await?
+            .to_string_lossy()
+            .into_owned())
+    }
+
     async fn command_for_input(&self, input: &Path) -> Result<Command> {
-        let target_exe =
-            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
-                .await?;
+        let target_exe = self.target_exe().await?;
 
         let expand = Expand::new()
             .machine_id()
@@ -291,7 +317,7 @@ impl<'a> TaskContext<'a> {
             .arg(format!(
                 "{} {} -- {}",
                 dotnet_path.to_string_lossy(),
-                self.config.target_exe.canonicalize()?.to_string_lossy(),
+                &target_exe,
                 target_options.join(" ")
             ));
 
