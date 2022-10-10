@@ -3,7 +3,7 @@
 
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
-use std::process::Output;
+use std::process::{Output, Stdio};
 
 use anyhow::Result;
 use tokio::fs;
@@ -55,12 +55,14 @@ async fn collect_dump(
 ) -> Result<Option<DotnetDumpFile>> {
     let dump_path = dump_path.as_ref();
 
-    let mut cmd = Command::new("dotnet");
+    let dotnet = dotnet_path()?;
+    let mut cmd = Command::new(dotnet);
     cmd.arg("exec");
     cmd.args(args);
 
     cmd.envs(env);
 
+    // Set `dotnet` environment vars to enable saving minidumps on crash.
     cmd.env(ENABLE_MINIDUMP_VAR, MINIDUMP_ENABLE);
     cmd.env(MINIDUMP_TYPE_VAR, MINIDUMP_TYPE_NORMAL);
     cmd.env(MINIDUMP_NAME_VAR, dump_path);
@@ -80,6 +82,8 @@ async fn collect_dump(
 
         Ok(Some(dump))
     } else {
+        warn!("target exited nonzero, but no dump file found");
+
         Ok(None)
     }
 }
@@ -102,12 +106,17 @@ impl DotnetDumpFile {
     }
 
     async fn exec_sos_command(&self, sos_cmd: &str) -> Result<Output> {
-        let mut cmd = Command::new("dotnet");
+        let dotnet_dump = dotnet_dump_path()?;
+        let mut cmd = Command::new(&dotnet_dump);
 
-        // Run `dotnet-analyze` with a single SOS command on startup, then exit
-        // the otherwise-interactive SOS session.
+        // Run `dotnet-dump analyze` with a single SOS command on startup, then
+        // exit the otherwise-interactive SOS session.
         let dump_path = self.path.display().to_string();
-        cmd.args(["dump", "analyze", &dump_path, "-c", sos_cmd, "-c", SOS_EXIT]);
+        let args = ["analyze", &dump_path, "-c", sos_cmd, "-c", SOS_EXIT];
+        cmd.args(args);
+
+        cmd.stderr(Stdio::piped());
+        cmd.stdout(Stdio::piped());
 
         let output = cmd.spawn()?.wait_with_output().await?;
 
@@ -227,6 +236,34 @@ pub fn parse_sos_print_exception_output(text: &str) -> Result<DotnetExceptionInf
 // https://docs.microsoft.com/en-us/dotnet/core/diagnostics/dotnet-dump#analyze-sos-commands
 const SOS_EXIT: &str = "exit";
 const SOS_PRINT_EXCEPTION: &str = "printexception -lines";
+
+fn dotnet_path() -> Result<PathBuf> {
+    let dotnet_root_dir = std::env::var("DOTNET_ROOT")?;
+
+    #[cfg(target_os = "windows")]
+    let exe_name = "dotnet.exe";
+
+    #[cfg(not(target_os = "windows"))]
+    let exe_name = "dotnet";
+
+    let exe_path = Path::new(&dotnet_root_dir).join(exe_name);
+
+    Ok(exe_path)
+}
+
+fn dotnet_dump_path() -> Result<PathBuf> {
+    let tools_dir = std::env::var("ONEFUZZ_TOOLS")?;
+
+    #[cfg(target_os = "windows")]
+    let exe_name = "dotnet-dump.exe";
+
+    #[cfg(not(target_os = "windows"))]
+    let exe_name = "dotnet-dump";
+
+    let exe_path = Path::new(&tools_dir).join(exe_name);
+
+    Ok(exe_path)
+}
 
 #[cfg(test)]
 mod tests;
