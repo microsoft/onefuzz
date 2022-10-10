@@ -792,6 +792,7 @@ class Libfuzzer(Command):
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.coverage, containers[ContainerType.coverage]),
             (ContainerType.readonly_inputs, containers[ContainerType.inputs]),
+            (ContainerType.tools, fuzzer_tools_container),
         ]
 
         self.logger.info("creating `dotnet_coverage` task")
@@ -819,6 +820,7 @@ class Libfuzzer(Command):
             (ContainerType.reports, containers[ContainerType.reports]),
             (ContainerType.unique_reports, containers[ContainerType.unique_reports]),
             (ContainerType.no_repro, containers[ContainerType.no_repro]),
+            (ContainerType.tools, fuzzer_tools_container),
         ]
 
         self.logger.info("creating `dotnet_crash_report` task")
