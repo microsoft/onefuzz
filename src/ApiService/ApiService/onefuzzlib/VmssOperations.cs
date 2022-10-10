@@ -254,9 +254,11 @@ public class VmssOperations : IVmssOperations {
             try {
                 _ = await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceVm.Data.InstanceId, instanceVm.Data);
                 return OneFuzzResultVoid.Ok;
-            } catch {
-                var msg = $"unable to set protection policy on: {vmId}:{instanceVm.Id} in vmss {name}";
-                return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, msg);
+            } catch (RequestFailedException ex) when (ex.Status == 409 && ex.Message.StartsWith("The request failed due to conflict with a concurrent request")) {
+                return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"protection policy update is already in progress: {vmId}:{instanceVm.Id} in vmss {name}");
+            } catch (Exception ex) {
+                _log.Exception(ex, $"unable to set protection policy on: {vmId:Tag:MachineId}:{instanceVm.Id:Tag:InstanceId} in vmss {name:Tag:ScalesetId}");
+                return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"unable to set protection policy on: {vmId}:{instanceVm.Id} in vmss {name}");
             }
         } else {
             _log.Info($"scale in protection was already set to {protectFromScaleIn:Tag:ProtectFromScaleIn} on vm {vmId:Tag:VmId} for scaleset {name:Tag:VmssName}");

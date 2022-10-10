@@ -179,7 +179,7 @@ public interface ILogTracer {
     void Error(LogStringHandler message);
 
     void Error(Error error);
-    void Event(LogStringHandler evt, IReadOnlyDictionary<string, double>? metrics);
+    void Event(LogStringHandler evt, IReadOnlyDictionary<string, double>? metrics = null);
     void Exception(Exception ex, LogStringHandler message = $"", IReadOnlyDictionary<string, double>? metrics = null);
     void ForceFlush();
     void Info(LogStringHandler message);
