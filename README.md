@@ -1,4 +1,4 @@
-# <img src="docs/onefuzz_text.svg" height="80" alt="OneFuzz" />
+# <center><img src="docs/onefuzz_text.svg" height="120" alt="OneFuzz" /></center>
 
 [![Onefuzz build status](https://github.com/microsoft/onefuzz/workflows/Build/badge.svg?branch=main)](https://github.com/microsoft/onefuzz/actions/workflows/ci.yml?query=branch%3Amain)
 
