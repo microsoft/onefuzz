@@ -43,7 +43,7 @@ const MINIDUMP_TYPE_VAR: &str = "COMPlus_DbgMiniDumpType";
 const MINIDUMP_NAME_VAR: &str = "COMPlus_DbgMiniDumpName";
 
 const MINIDUMP_ENABLE: &str = "1";
-const MINIDUMP_TYPE_NORMAL: &str = "1";
+const MINIDUMP_TYPE_HEAP: &str = "2";
 
 // Invoke target with .NET runtime environment vars set to create minidumps.
 //
@@ -64,7 +64,7 @@ async fn collect_dump(
 
     // Set `dotnet` environment vars to enable saving minidumps on crash.
     cmd.env(ENABLE_MINIDUMP_VAR, MINIDUMP_ENABLE);
-    cmd.env(MINIDUMP_TYPE_VAR, MINIDUMP_TYPE_NORMAL);
+    cmd.env(MINIDUMP_TYPE_VAR, MINIDUMP_TYPE_HEAP);
     cmd.env(MINIDUMP_NAME_VAR, dump_path);
 
     let mut child = cmd.spawn()?;
