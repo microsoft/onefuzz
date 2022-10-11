@@ -7,8 +7,7 @@ use anyhow::{Context, Result};
 use futures::stream::TryStreamExt;
 use reqwest::{Body, Client, Response, StatusCode, Url};
 use reqwest_retry::{
-    send_retry_reqwest, send_retry_reqwest_default, RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD,
-    MAX_RETRY_ATTEMPTS,
+    send_retry_reqwest, RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS,
 };
 use serde::Serialize;
 use tokio::{fs, io};
