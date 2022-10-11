@@ -165,6 +165,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "azure_core"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6424becb946de1b1eff7bf5fbc86fabf7457637c88b63dd967b219a712c322c"
+dependencies = [
+ "async-trait",
+ "base64",
+ "bytes",
+ "dyn-clone",
+ "futures",
+ "getrandom 0.2.3",
+ "http-types",
+ "log",
+ "paste",
+ "pin-project",
+ "rand 0.8.4",
+ "reqwest",
+ "rustc_version",
+ "serde",
+ "serde_json",
+ "time",
+ "url",
+ "uuid 1.1.2",
+]
+
+[[package]]
 name = "azure_storage"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -172,7 +198,7 @@ checksum = "55aa63fb0426c76b9cc909234e94e69764f5e777a62b7ed6411f3cc04aa94a16"
 dependencies = [
  "RustyXML",
  "async-trait",
- "azure_core",
+ "azure_core 0.4.0",
  "base64",
  "bytes",
  "futures",
@@ -196,7 +222,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33f953cedd7c240347ed0f6ed8a0bd7472b32579c38341ab9e117eaa6173e9ba"
 dependencies = [
  "RustyXML",
- "azure_core",
+ "azure_core 0.4.0",
  "azure_storage",
  "base64",
  "bytes",
@@ -1912,7 +1938,7 @@ dependencies = [
  "arraydeque",
  "async-trait",
  "atexit",
- "azure_core",
+ "azure_core 0.5.0",
  "azure_storage",
  "azure_storage_blobs",
  "backoff",
