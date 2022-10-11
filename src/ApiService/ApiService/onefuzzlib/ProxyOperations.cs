@@ -271,7 +271,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         }
 
         if (vmData.ProvisioningState == "Failed") {
-            var failedVmData = await _context.VmOperations.GetVm(vm.Name);
+            var failedVmData = await _context.VmOperations.GetVmWithInstanceView(vm.Name);
             if (failedVmData is null) {
                 // this should exist since we just loaded the VM above
                 throw new InvalidOperationException("Unable to load instance-view data for VM");

@@ -12,6 +12,7 @@ public interface IVmOperations {
     Async.Task<bool> HasComponents(string name);
 
     Task<VirtualMachineData?> GetVm(string name);
+
     Task<VirtualMachineData?> GetVmWithInstanceView(string name);
 
     Async.Task<bool> Delete(Vm vm);
