@@ -66,7 +66,7 @@ impl BlobUploader {
                 Ok(request_builder)
             },
             |status| {
-                if status == StatusCode::PRECONDITION_FAILED {
+                if status == StatusCode::PRECONDITION_FAILED || status == StatusCode::CONFLICT {
                     RetryCheck::Succeed
                 } else {
                     RetryCheck::Retry
