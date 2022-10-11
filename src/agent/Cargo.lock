@@ -165,6 +165,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "azure_core"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6424becb946de1b1eff7bf5fbc86fabf7457637c88b63dd967b219a712c322c"
+dependencies = [
+ "async-trait",
+ "base64",
+ "bytes",
+ "dyn-clone",
+ "futures",
+ "getrandom 0.2.3",
+ "http-types",
+ "log",
+ "paste",
+ "pin-project",
+ "rand 0.8.4",
+ "reqwest",
+ "rustc_version",
+ "serde",
+ "serde-xml-rs 0.6.0",
+ "serde_json",
+ "time",
+ "url",
+ "uuid 1.1.2",
+]
+
+[[package]]
 name = "azure_storage"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -172,7 +199,7 @@ checksum = "55aa63fb0426c76b9cc909234e94e69764f5e777a62b7ed6411f3cc04aa94a16"
 dependencies = [
  "RustyXML",
  "async-trait",
- "azure_core",
+ "azure_core 0.4.0",
  "base64",
  "bytes",
  "futures",
@@ -180,7 +207,32 @@ dependencies = [
  "log",
  "once_cell",
  "serde",
- "serde-xml-rs",
+ "serde-xml-rs 0.5.1",
+ "serde_derive",
+ "serde_json",
+ "sha2",
+ "time",
+ "url",
+ "uuid 1.1.2",
+]
+
+[[package]]
+name = "azure_storage"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28d0de4ed66067ca1afa0a07d787a6fe001288a162409b8308c45909044552ca"
+dependencies = [
+ "RustyXML",
+ "async-trait",
+ "azure_core 0.5.0",
+ "base64",
+ "bytes",
+ "futures",
+ "hmac",
+ "log",
+ "once_cell",
+ "serde",
+ "serde-xml-rs 0.6.0",
  "serde_derive",
  "serde_json",
  "sha2",
@@ -191,20 +243,20 @@ dependencies = [
 
 [[package]]
 name = "azure_storage_blobs"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33f953cedd7c240347ed0f6ed8a0bd7472b32579c38341ab9e117eaa6173e9ba"
+checksum = "a69ea7177f0b3c64196766fcd442ac9664658a194070d082ae8876406800040b"
 dependencies = [
  "RustyXML",
- "azure_core",
- "azure_storage",
+ "azure_core 0.5.0",
+ "azure_storage 0.6.0",
  "base64",
  "bytes",
  "futures",
  "log",
  "md5",
  "serde",
- "serde-xml-rs",
+ "serde-xml-rs 0.6.0",
  "serde_derive",
  "serde_json",
  "time",
@@ -1912,8 +1964,8 @@ dependencies = [
  "arraydeque",
  "async-trait",
  "atexit",
- "azure_core",
- "azure_storage",
+ "azure_core 0.4.0",
+ "azure_storage 0.5.0",
  "azure_storage_blobs",
  "backoff",
  "chrono",
@@ -1934,7 +1986,7 @@ dependencies = [
  "reqwest",
  "reqwest-retry",
  "serde",
- "serde-xml-rs",
+ "serde-xml-rs 0.5.1",
  "serde_json",
  "stacktrace-parser",
  "storage-queue",
@@ -2655,6 +2707,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-xml-rs"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb3aa78ecda1ebc9ec9847d5d3aba7d618823446a049ba2491940506da6e2782"
+dependencies = [
+ "log",
+ "serde",
+ "thiserror",
+ "xml-rs",
+]
+
+[[package]]
 name = "serde_derive"
 version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2890,7 +2954,7 @@ dependencies = [
  "reqwest",
  "reqwest-retry",
  "serde",
- "serde-xml-rs",
+ "serde-xml-rs 0.5.1",
  "serde_derive",
  "serde_json",
  "tokio",
