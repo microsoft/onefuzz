@@ -49,5 +49,5 @@ uuid = { version = "0.8", features = ["serde", "v4"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 
 azure_core = { version = "0.4", default-features = false, features = ["enable_reqwest_rustls"] }
-azure_storage = { version = "0.5", default-features = false, features = ["enable_reqwest_rustls"] }
+azure_storage = { version = "0.6", default-features = false, features = ["enable_reqwest_rustls"] }
 azure_storage_blobs = { version = "0.5", default-features = false, features = ["enable_reqwest_rustls"] }
