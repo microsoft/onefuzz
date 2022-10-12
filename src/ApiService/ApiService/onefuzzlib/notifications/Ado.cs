@@ -23,16 +23,9 @@ public class Ado : NotificationsBase, IAdo {
 
         var report = (Report)reportable;
 
-        var job = await _context.JobOperations.Get(report.JobId);
-        if (job is null) {
-            _logTracer.Info($"no corresponding job for ado notificaion. job id: {report.JobId}");
-            return;
-        }
+        var notificationInfo = @$"notification_id: {notificationId:Tag:NotificationId} job_id:{report.JobId} task_id:{report.TaskId}  AdoProject: {config.Project:Tag:AdoProject} AdoUrl: {config.BaseUrl}:Tag:AdoUrl container:{container} filename:{filename}";
 
-        var notificationInfo = @$"job_id:{report.JobId} task_id:{report.TaskId} project: {job.Config.Project} name: {job.Config.Name}
-container:{container} filename:{filename}";
-
-        _logTracer.Info($"notify ado: {report.JobId:Tag:JobId} {report.TaskId:Tag:TaskId} {container:Tag:Container} {filename:Tag:Filename}");
+        _logTracer.Event($"AdoNotify {notificationInfo}");
 
         try {
             var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
@@ -210,9 +203,9 @@ container:{container} filename:{filename}";
 
             if (document.Any()) {
                 _ = await _client.UpdateWorkItemAsync(document, _project, (int)(item.Id!));
-                _logTracer.Info($"notify ado: updated {item.Id:Tag:WorkItemId} - {notificationInfo}");
+                _logTracer.Event($"AdoUpdate {item.Id:Tag:WorkItemId} - {notificationInfo}");
             } else {
-                _logTracer.Info($"notify ado: no update {item.Id:Tag:WorkItemId} - {notificationInfo}");
+                _logTracer.Event($"AdoNoUpdate {item.Id:Tag:WorkItemId} - {notificationInfo}");
             }
         }
 
@@ -275,7 +268,7 @@ container:{container} filename:{filename}";
 
             if (!seen) {
                 var entry = await CreateNew();
-                _logTracer.Info($"notify ado: created new work item {entry.Id:Tag:EntryId} - {notificationInfo}");
+                _logTracer.Event($"AdoNewItem {entry.Id:Tag:EntryId} - {notificationInfo}");
             }
         }
     }
