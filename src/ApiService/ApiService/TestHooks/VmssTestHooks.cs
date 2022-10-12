@@ -13,11 +13,13 @@ namespace ApiService.TestHooks {
         private readonly ILogTracer _log;
         private readonly IConfigOperations _configOps;
         private readonly IVmssOperations _vmssOps;
+        private readonly IScalesetOperations _scalesetOperations;
 
-        public VmssTestHooks(ILogTracer log, IConfigOperations configOps, IVmssOperations vmssOps) {
+        public VmssTestHooks(ILogTracer log, IConfigOperations configOps, IVmssOperations vmssOps, IScalesetOperations scalesetOperations) {
             _log = log.WithTag("TestHooks", nameof(VmssTestHooks));
-            _configOps = configOps; ;
-            _vmssOps = vmssOps; ;
+            _configOps = configOps;
+            _vmssOps = vmssOps;
+            _scalesetOperations = scalesetOperations;
         }
 
 
@@ -54,8 +56,13 @@ namespace ApiService.TestHooks {
             var query = UriExtension.GetQueryComponents(req.Url);
             var name = UriExtension.GetGuid("name", query) ?? throw new Exception("name must be set");
             var vmId = UriExtension.GetGuid("vmId", query) ?? throw new Exception("vmId must be set");
+            var scalesetResult = await _scalesetOperations.GetById(name);
+            if (!scalesetResult.IsOk) {
+                throw new Exception("invalid scaleset name");
+            }
             var protectFromScaleIn = UriExtension.GetBool("protectFromScaleIn", query);
-            var id = await _vmssOps.UpdateScaleInProtection(name, vmId, protectFromScaleIn);
+
+            var id = await _vmssOps.UpdateScaleInProtection(scalesetResult.OkV, vmId, protectFromScaleIn);
 
             var json = JsonSerializer.Serialize(id, EntityConverter.GetJsonSerializerOptions());
             var resp = req.CreateResponse(HttpStatusCode.OK);

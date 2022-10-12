@@ -11,7 +11,7 @@ using Microsoft.Rest.Azure;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IVmssOperations {
-    Async.Task<OneFuzzResultVoid> UpdateScaleInProtection(Guid name, Guid vmId, bool protectFromScaleIn);
+    Async.Task<OneFuzzResultVoid> UpdateScaleInProtection(Scaleset scaleset, Guid vmId, bool protectFromScaleIn);
     Async.Task<OneFuzzResult<string>> GetInstanceId(Guid name, Guid vmId);
     Async.Task<OneFuzzResultVoid> UpdateExtensions(Guid name, IList<VirtualMachineScaleSetExtensionData> extensions);
     Async.Task<VirtualMachineScaleSetData?> GetVmss(Guid name);
@@ -50,14 +50,18 @@ public class VmssOperations : IVmssOperations {
     private readonly ICreds _creds;
     private readonly IImageOperations _imageOps;
     private readonly IServiceConfig _serviceConfig;
+    private readonly IOnefuzzContext _context;
     private readonly IMemoryCache _cache;
+
 
     public VmssOperations(ILogTracer log, IOnefuzzContext context, IMemoryCache cache) {
         _log = log.WithTag("Component", "vmss-operations");
         _creds = context.Creds;
         _imageOps = context.ImageOperations;
         _serviceConfig = context.ServiceConfiguration;
+        _context = context;
         _cache = cache;
+
     }
 
     public async Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null) {
@@ -240,30 +244,29 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    public async Async.Task<OneFuzzResultVoid> UpdateScaleInProtection(Guid name, Guid vmId, bool protectFromScaleIn) {
-        var res = await GetInstanceVm(name, vmId);
-        if (!res.IsOk) {
-            return res.ErrorV;
+    public async Async.Task<OneFuzzResultVoid> UpdateScaleInProtection(Scaleset scaleset, Guid vmId, bool protectFromScaleIn) {
+        var instanceIdResult = await GetInstanceId(scaleset.ScalesetId, vmId);
+        if (!instanceIdResult.IsOk) {
+            return instanceIdResult.ErrorV;
+        }
+        var instanceId = instanceIdResult.OkV;
+        var data = new VirtualMachineScaleSetVmData(scaleset.Region) {
+            ProtectionPolicy = new VirtualMachineScaleSetVmProtectionPolicy {
+                ProtectFromScaleIn = true,
+                ProtectFromScaleSetActions = true
+            }
+        };
+        var vmCollection = GetVmssResource(scaleset.ScalesetId).GetVirtualMachineScaleSetVms();
+        try {
+            _ = await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceId, data);
+            return OneFuzzResultVoid.Ok;
+        } catch (RequestFailedException ex) when (ex.Status == 409 && ex.Message.StartsWith("The request failed due to conflict with a concurrent request")) {
+            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"protection policy update is already in progress: {vmId}:{instanceId} in vmss {scaleset.ScalesetId}");
+        } catch (Exception ex) {
+            _log.Exception(ex, $"unable to set protection policy on: {vmId:Tag:MachineId}:{instanceId:Tag:InstanceId} in vmss {scaleset.ScalesetId:Tag:ScalesetId}");
+            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"unable to set protection policy on: {vmId}:{instanceId} in vmss {scaleset.ScalesetId}");
         }
 
-        var instanceVm = res.OkV;
-        instanceVm.Data.ProtectionPolicy ??= new();
-        if (instanceVm.Data.ProtectionPolicy.ProtectFromScaleIn != protectFromScaleIn) {
-            instanceVm.Data.ProtectionPolicy.ProtectFromScaleIn = protectFromScaleIn;
-            var vmCollection = GetVmssResource(name).GetVirtualMachineScaleSetVms();
-            try {
-                _ = await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceVm.Data.InstanceId, instanceVm.Data);
-                return OneFuzzResultVoid.Ok;
-            } catch (RequestFailedException ex) when (ex.Status == 409 && ex.Message.StartsWith("The request failed due to conflict with a concurrent request")) {
-                return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"protection policy update is already in progress: {vmId}:{instanceVm.Id} in vmss {name}");
-            } catch (Exception ex) {
-                _log.Exception(ex, $"unable to set protection policy on: {vmId:Tag:MachineId}:{instanceVm.Id:Tag:InstanceId} in vmss {name:Tag:ScalesetId}");
-                return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"unable to set protection policy on: {vmId}:{instanceVm.Id} in vmss {name}");
-            }
-        } else {
-            _log.Info($"scale in protection was already set to {protectFromScaleIn:Tag:ProtectFromScaleIn} on vm {vmId:Tag:VmId} for scaleset {name:Tag:VmssName}");
-            return OneFuzzResultVoid.Ok;
-        }
     }
 
     public async Async.Task<OneFuzzResultVoid> CreateVmss(
