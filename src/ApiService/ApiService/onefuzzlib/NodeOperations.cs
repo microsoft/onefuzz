@@ -83,9 +83,10 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public async Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node) {
-        if (node.ScalesetId is Guid scalesetId && await ScalesetNodeExists(node)) {
+        if (node.ScalesetId is Guid scalesetId && await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
+
             _logTracer.Info($"Setting scale-in protection on node {node.MachineId:Tag:MachineId}");
-            return await _context.VmssOperations.UpdateScaleInProtection(scalesetId, node.MachineId, protectFromScaleIn: true);
+            return await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, node.MachineId, protectFromScaleIn: true);
         }
 
         return OneFuzzResultVoid.Ok;
@@ -94,27 +95,32 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     public async Task<OneFuzzResultVoid> ReleaseScaleInProtection(Node node) {
         if (!node.DebugKeepNode &&
             node.ScalesetId is Guid scalesetId &&
-            await ScalesetNodeExists(node)) {
+            await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
             _logTracer.Info($"Removing scale-in protection on node {node.MachineId:Tag:MachineId}");
-            return await _context.VmssOperations.UpdateScaleInProtection(scalesetId, node.MachineId, protectFromScaleIn: false);
+            return await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, node.MachineId, protectFromScaleIn: false);
         }
 
         return OneFuzzResultVoid.Ok;
     }
 
-    public async Async.Task<bool> ScalesetNodeExists(Node node) {
+    record NodeInfo(Node Node, Scaleset Scaleset, string InstanceId);
+    private async Async.Task<NodeInfo?> TryGetNodeInfo(Node node) {
         var scalesetId = node.ScalesetId;
         if (scalesetId is null) {
-            return false;
+            return null;
         }
 
         var scalesetResult = await _context.ScalesetOperations.GetById(scalesetId.Value);
         if (!scalesetResult.IsOk || scalesetResult.OkV == null) {
-            return false;
+            return null;
         }
 
         var instanceId = await _context.VmssOperations.GetInstanceId(scalesetResult.OkV.ScalesetId, node.MachineId);
-        return instanceId.IsOk;
+        if (!instanceId.IsOk) {
+            return null;
+        }
+
+        return new NodeInfo(node, scalesetResult.OkV, instanceId.OkV);
     }
 
     public async Task<bool> CanProcessNewWork(Node node) {
