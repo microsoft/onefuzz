@@ -23,7 +23,13 @@ public class Ado : NotificationsBase, IAdo {
 
         var report = (Report)reportable;
 
-        var notificationInfo = @$"job_id:{report.JobId} task_id:{report.TaskId}
+        var job = await _context.JobOperations.Get(report.JobId);
+        if (job is null) {
+            _logTracer.Info($"no corresponding job for ado notificaion. job id: {report.JobId}");
+            return;
+        }
+
+        var notificationInfo = @$"job_id:{report.JobId} task_id:{report.TaskId} project: {job.Config.Project} name: {job.Config.Name}
 container:{container} filename:{filename}";
 
         _logTracer.Info($"notify ado: {report.JobId:Tag:JobId} {report.TaskId:Tag:TaskId} {container:Tag:Container} {filename:Tag:Filename}");
