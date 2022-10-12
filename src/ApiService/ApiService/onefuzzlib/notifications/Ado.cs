@@ -23,9 +23,11 @@ public class Ado : NotificationsBase, IAdo {
 
         var report = (Report)reportable;
 
-        var notificationInfo = @$"notification_id: {notificationId:Tag:NotificationId} job_id:{report.JobId} task_id:{report.TaskId}  AdoProject: {config.Project:Tag:AdoProject} AdoUrl: {config.BaseUrl}:Tag:AdoUrl container:{container} filename:{filename}";
+        var notificationInfo = new Dictionary<string, string>() { { "notification_id", notificationId.ToString() }, { "job_id", report.JobId.ToString() }, { "task_id", report.TaskId.ToString() }, { "ado_project", config.Project }, { "ado_url", config.BaseUrl.ToString() }, { "container", container.String }, { "filename", filename } };
 
-        _logTracer.Event($"AdoNotify {notificationInfo}");
+        // var notificationInfo = {"notification_id: {notificationId.ToString():Tag:NotificationId} job_id:{report.JobId:Tag:JobId} task_id:{report.TaskId:Tag:TaskId}  AdoProject: {config.Project:Tag:AdoProject} AdoUrl: {config.BaseUrl:Tag:AdoUrl}:Tag:AdoUrl container:{container:Tag:Container} filename:{filename:Tag:filename}}";
+        var adoEventType = "AdoNotify";
+        _logTracer.Event($"{adoEventType:Tag:AdoEventType} {notificationInfo["notification_id"]:Tag:NotificationId} {notificationInfo["job_id"]:Tag:JobId} {notificationInfo["task_id"]:Tag:TaskId} {notificationInfo["ado_project"]:Tag:AdoProject} {notificationInfo["ado_url"]:Tag:AdoUrl}:Tag:AdoUrl {notificationInfo["container"]:Tag:Container} filename:{notificationInfo["filename"]:Tag:filename}");
 
         try {
             var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
@@ -41,6 +43,11 @@ public class Ado : NotificationsBase, IAdo {
             }
         }
     }
+
+    // public static string CreateAdoEvent(string eventType, string notificationId, string jobId, string taskId, string adoProject, string adoUrl, string ) 
+    // {
+    //     return @$"notification_id: {notificationId:Tag:NotificationId} job_id:{jobId} task_id:{taskId:Tag:TaskId}  AdoProject: {adoProject:Tag:AdoProject} AdoUrl: {adoUrl:Tag:AdoUrl}:Tag:AdoUrl container:{container:Tag:Container} filename:{filename:Tag:filename}"
+    // }
 
     private static bool IsTransient(Exception e) {
         var errorCodes = new List<string>()
@@ -161,7 +168,7 @@ public class Ado : NotificationsBase, IAdo {
             }
         }
 
-        public async Async.Task UpdateExisting(WorkItem item, string notificationInfo) {
+        public async Async.Task UpdateExisting(WorkItem item, Dictionary<string, string> notificationInfo) {
             if (_config.OnDuplicate.Comment != null) {
                 var comment = await Render(_config.OnDuplicate.Comment);
                 _ = await _client.AddCommentAsync(
@@ -203,9 +210,13 @@ public class Ado : NotificationsBase, IAdo {
 
             if (document.Any()) {
                 _ = await _client.UpdateWorkItemAsync(document, _project, (int)(item.Id!));
-                _logTracer.Event($"AdoUpdate {item.Id:Tag:WorkItemId} - {notificationInfo}");
+                var adoEventType = "AdoUpdate";
+                _logTracer.Event($"{adoEventType:Tag:AdoEventType} {item.Id:Tag:WorkItemId} {notificationInfo["notification_id"]:Tag:NotificationId} {notificationInfo["job_id"]:Tag:JobId} {notificationInfo["task_id"]:Tag:TaskId} {notificationInfo["ado_project"]:Tag:AdoProject} {notificationInfo["ado_url"]:Tag:AdoUrl}:Tag:AdoUrl {notificationInfo["container"]:Tag:Container} filename:{notificationInfo["filename"]:Tag:filename}");
+
             } else {
-                _logTracer.Event($"AdoNoUpdate {item.Id:Tag:WorkItemId} - {notificationInfo}");
+                var adoEventType = "AdoNoUpdate";
+                _logTracer.Event($"{adoEventType:Tag:AdoEventType} {item.Id:Tag:WorkItemId} {notificationInfo["notification_id"]:Tag:NotificationId} {notificationInfo["job_id"]:Tag:JobId} {notificationInfo["task_id"]:Tag:TaskId} {notificationInfo["ado_project"]:Tag:AdoProject} {notificationInfo["ado_url"]:Tag:AdoUrl}:Tag:AdoUrl {notificationInfo["container"]:Tag:Container} filename:{notificationInfo["filename"]:Tag:filename}");
+
             }
         }
 
@@ -259,7 +270,7 @@ public class Ado : NotificationsBase, IAdo {
             return (taskType, document);
         }
 
-        public async Async.Task Process(string notificationInfo) {
+        public async Async.Task Process(Dictionary<string, string> notificationInfo) {
             var seen = false;
             await foreach (var workItem in ExistingWorkItems()) {
                 await UpdateExisting(workItem, notificationInfo);
@@ -268,7 +279,9 @@ public class Ado : NotificationsBase, IAdo {
 
             if (!seen) {
                 var entry = await CreateNew();
-                _logTracer.Event($"AdoNewItem {entry.Id:Tag:EntryId} - {notificationInfo}");
+                var adoEventType = "AdoNotify";
+                _logTracer.Event($"{adoEventType:Tag:AdoEventType} {entry.Id:Tag:WorkItemId} {notificationInfo["notification_id"]:Tag:NotificationId} {notificationInfo["job_id"]:Tag:JobId} {notificationInfo["task_id"]:Tag:TaskId} {notificationInfo["ado_project"]:Tag:AdoProject} {notificationInfo["ado_url"]:Tag:AdoUrl}:Tag:AdoUrl {notificationInfo["container"]:Tag:Container} filename:{notificationInfo["filename"]:Tag:filename}");
+
             }
         }
     }
