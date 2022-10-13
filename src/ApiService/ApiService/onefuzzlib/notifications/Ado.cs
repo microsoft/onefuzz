@@ -26,7 +26,7 @@ public class Ado : NotificationsBase, IAdo {
         (string, string)[] notificationInfo = { ("notification_id", notificationId.ToString()), ("job_id", report.JobId.ToString()), ("task_id", report.TaskId.ToString()), ("ado_project", config.Project), ("ado_url", config.BaseUrl.ToString()), ("container", container.String), ("filename", filename) };
 
         var adoEventType = "AdoNotify";
-        _logTracer.WithTags(notificationInfo).Event($"{adoEventType:Tag:AdoEventType}");
+        _logTracer.WithTags(notificationInfo).Event($"{adoEventType}");
 
         try {
             var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
@@ -209,11 +209,11 @@ public class Ado : NotificationsBase, IAdo {
             if (document.Any()) {
                 _ = await _client.UpdateWorkItemAsync(document, _project, (int)(item.Id!));
                 var adoEventType = "AdoUpdate";
-                _logTracer.WithTags(notificationInfo).Event($"{adoEventType:Tag:AdoEventType} {item.Id:Tag:WorkItemId}");
+                _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {item.Id:Tag:WorkItemId}");
 
             } else {
                 var adoEventType = "AdoNoUpdate";
-                _logTracer.WithTags(notificationInfo).Event($"{adoEventType:Tag:AdoEventType} {item.Id:Tag:WorkItemId}");
+                _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {item.Id:Tag:WorkItemId}");
 
             }
         }
@@ -278,7 +278,7 @@ public class Ado : NotificationsBase, IAdo {
             if (!seen) {
                 var entry = await CreateNew();
                 var adoEventType = "AdoNewEvent";
-                _logTracer.WithTags(notificationInfo).Event($"{adoEventType:Tag:AdoEventType} {entry.Id:Tag:WorkItemId}");
+                _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {entry.Id:Tag:WorkItemId}");
 
             }
         }
