@@ -277,7 +277,7 @@ public class Ado : NotificationsBase, IAdo {
 
             if (!seen) {
                 var entry = await CreateNew();
-                var adoEventType = "AdoNewEvent";
+                var adoEventType = "AdoNewItem";
                 _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {entry.Id:Tag:WorkItemId}");
 
             }
