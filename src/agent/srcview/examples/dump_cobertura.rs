@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::io::{stdout, BufWriter};
 use std::path::Path;
 use std::{env, fs, process};
 
@@ -51,6 +52,8 @@ fn main() {
     let r = Report::new(&coverage, &srcview, Some(r"E:\\1f\\coverage\\example")).unwrap();
 
     // Format it as cobertura and display it
-    r.cobertura(Some(r"E:\\1f\\coverage\\"), &mut std::io::stdout())
+    // output is built incrementally so buffer it
+    let mut buffered_stdout = BufWriter::new(stdout().lock());
+    r.cobertura(Some(r"E:\\1f\\coverage\\"), &mut buffered_stdout)
         .unwrap();
 }
