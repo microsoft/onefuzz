@@ -76,6 +76,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
 
         private async Async.Task<List<Issue>> Existing() {
             var query = new List<string>() {
+                "is:issue",
                 await Render(_config.UniqueSearch.str),
                 $"repo:{_config.Organization}/{_config.Repository}"
             };
