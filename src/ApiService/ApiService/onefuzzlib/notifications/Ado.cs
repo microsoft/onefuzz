@@ -209,11 +209,11 @@ public class Ado : NotificationsBase, IAdo {
             if (document.Any()) {
                 _ = await _client.UpdateWorkItemAsync(document, _project, (int)(item.Id!));
                 var adoEventType = "AdoUpdate";
-                _logTracer.WithTags(notificationInfo).Event($"{adoEventType:Tag:AdoEventType}");
+                _logTracer.WithTags(notificationInfo).Event($"{adoEventType:Tag:AdoEventType} {item.Id:Tag:WorkItemId}");
 
             } else {
                 var adoEventType = "AdoNoUpdate";
-                _logTracer.WithTags(notificationInfo).Event($"{adoEventType:Tag:AdoEventType}");
+                _logTracer.WithTags(notificationInfo).Event($"{adoEventType:Tag:AdoEventType} {item.Id:Tag:WorkItemId}");
 
             }
         }
@@ -278,7 +278,7 @@ public class Ado : NotificationsBase, IAdo {
             if (!seen) {
                 var entry = await CreateNew();
                 var adoEventType = "AdoNewEvent";
-                _logTracer.Event($"{adoEventType:Tag:AdoEventType} {entry.Id:Tag:WorkItemId} {notificationInfo["notification_id"]:Tag:NotificationId} {notificationInfo["job_id"]:Tag:JobId} {notificationInfo["task_id"]:Tag:TaskId} {notificationInfo["ado_project"]:Tag:AdoProject} {notificationInfo["ado_url"]:Tag:AdoUrl} {notificationInfo["container"]:Tag:Container} {notificationInfo["filename"]:Tag:Filename}");
+                _logTracer.WithTags(notificationInfo).Event($"{adoEventType:Tag:AdoEventType} {entry.Id:Tag:WorkItemId}");
 
             }
         }
