@@ -24,8 +24,11 @@ impl PdbCache {
     pub fn new<P: AsRef<Path>>(pdb: P) -> Result<Self> {
         let mut offset_to_line: BTreeMap<usize, SrcLine> = BTreeMap::new();
         let mut symbol_to_lines: BTreeMap<String, Vec<SrcLine>> = BTreeMap::new();
-        let mut path_to_symbols: BTreeMap<PathBuf, Vec<String>> = BTreeMap::new();
-        let mut path_to_lines: BTreeMap<PathBuf, Vec<usize>> = BTreeMap::new();
+
+        // NOTE: We're using strings as the keys for now while we build the trees, since
+        // PathBuf comparisons are expensive.
+        let mut path_to_symbols: BTreeMap<String, Vec<String>> = BTreeMap::new();
+        let mut path_to_lines: BTreeMap<String, Vec<usize>> = BTreeMap::new();
 
         let pdbfile = File::open(pdb)?;
         let mut pdb = PDB::open(pdbfile)?;
@@ -49,7 +52,11 @@ impl PdbCache {
 
             while let Some(symbol) = symbols.next()? {
                 if let Ok(SymbolData::Procedure(proc)) = symbol.parse() {
+                    let proc_name = proc.name.to_string();
                     let mut lines = program.lines_at_offset(proc.offset);
+
+                    let symbol_to_lines = symbol_to_lines.entry(proc_name.to_string()).or_default();
+
                     while let Some(line_info) = lines.next()? {
                         let rva = line_info
                             .offset
@@ -58,21 +65,17 @@ impl PdbCache {
                         let file_info = program.get_file_info(line_info.file_index)?;
                         let file_name = file_info.name.to_string_lossy(&string_table)?;
 
-                        let sym = proc.name.to_string().to_owned().to_string(); // gross
-                        let path = PathBuf::from(file_name.into_owned());
+                        let path = file_name.into_owned();
                         let line = line_info.line_start as usize;
 
                         let srcloc = SrcLine::new(path.clone(), line);
 
                         offset_to_line.insert(rva.0 as usize, srcloc.clone());
-                        symbol_to_lines
-                            .entry(sym.clone())
-                            .or_default()
-                            .push(srcloc.clone());
                         path_to_symbols
                             .entry(path.clone())
                             .or_default()
-                            .push(sym.clone());
+                            .push(proc_name.to_string());
+                        symbol_to_lines.push(srcloc.clone());
                         path_to_lines.entry(path.clone()).or_default().push(line);
                     }
                 }
@@ -82,8 +85,14 @@ impl PdbCache {
         Ok(Self {
             offset_to_line,
             symbol_to_lines,
-            path_to_symbols,
-            path_to_lines,
+            path_to_symbols: path_to_symbols
+                .into_iter()
+                .map(|(p, s)| (PathBuf::from(p), s))
+                .collect(),
+            path_to_lines: path_to_lines
+                .into_iter()
+                .map(|(p, l)| (PathBuf::from(p), l))
+                .collect(),
         })
     }
 
