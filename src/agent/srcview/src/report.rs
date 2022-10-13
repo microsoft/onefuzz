@@ -343,12 +343,14 @@ impl Report {
     /// // in this case our repo is `coverage`, and has an `example` directory containing
     /// // our code files. Anything that matches this path shoudl be included.
     /// let r = Report::new(&coverage, &srcview, Some(r"E:\\1f\\coverage\\example")).unwrap();
-
+    ///
+    /// let mut xml = Vec::new();
+    ///
     /// // However when generating the report, we want to strip off only the repo name --
     /// // `example` is inside the repo so to make the paths line up we need to leave it.
-    /// let xml = r.cobertura(Some(r"E:\\1f\coverage\\")).unwrap();
+    /// r.cobertura(Some(r"E:\\1f\coverage\\"), &mut xml).unwrap();
     ///
-    /// println!("{}", xml);
+    /// println!("{}", std::str::from_utf8(&xml).unwrap());
     /// ```
     pub fn cobertura<W: Write>(&self, filter_regex: Option<&str>, output: &mut W) -> Result<()> {
         use quick_xml::{
