@@ -51,5 +51,6 @@ fn main() {
     let r = Report::new(&coverage, &srcview, Some(r"E:\\1f\\coverage\\example")).unwrap();
 
     // Format it as cobertura and display it
-    println!("{}", r.cobertura(Some(r"E:\\1f\\coverage\\")).unwrap());
+    r.cobertura(Some(r"E:\\1f\\coverage\\"), &mut std::io::stdout())
+        .unwrap();
 }
