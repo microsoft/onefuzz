@@ -160,7 +160,8 @@ fn cobertura(opts: CoberturaOpt) -> Result<()> {
         path => {
             let path = Path::new(path);
 
-            Box::new(BufWriter::new(
+            Box::new(BufWriter::with_capacity(
+                0x10_0000, // 1MB
                 OpenOptions::new()
                     .create(true)
                     .truncate(true)

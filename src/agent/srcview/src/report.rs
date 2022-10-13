@@ -10,7 +10,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::{format_err, Context, Result};
 use log::warn;
 use regex::Regex;
-use xml::writer::{EmitterConfig, XmlEvent};
 
 use crate::{SrcLine, SrcView};
 
@@ -352,11 +351,14 @@ impl Report {
     /// println!("{}", xml);
     /// ```
     pub fn cobertura<W: Write>(&self, filter_regex: Option<&str>, output: &mut W) -> Result<()> {
+        use quick_xml::{
+            events::{BytesEnd, BytesStart, BytesText, Event},
+            Writer,
+        };
+
         let filter = filter_regex.map(Regex::new).transpose()?;
 
-        let mut ew = EmitterConfig::new()
-            .perform_indent(true)
-            .create_writer(output);
+        let mut ew = Writer::new_with_indent(output, ' ' as u8, 4);
 
         // xml-rs does not support DTD entries yet, but thankfully ADO's parser is loose
 
@@ -365,30 +367,35 @@ impl Report {
             .context("system time before unix epoch")?
             .as_secs();
 
-        ew.write(
-            XmlEvent::start_element("coverage")
-                .attr("lines-valid", &format!("{}", self.overall.lines))
-                .attr("lines-covered", &format!("{}", self.overall.hits))
-                .attr(
+        ew.write_event(Event::Start(
+            BytesStart::new("coverage").with_attributes([
+                ("lines-valid", format!("{}", self.overall.lines).as_str()),
+                ("lines-covered", format!("{}", self.overall.hits).as_str()),
+                (
                     "line-rate",
-                    &format!(
+                    format!(
                         "{:.02}",
                         self.overall.hits as f32 / self.overall.lines as f32
-                    ),
-                )
-                .attr("branches-valid", "0")
-                .attr("branches-covered", "0")
-                .attr("branch-rate", "0")
-                .attr("timestamp", &format!("{}", unixtime))
-                .attr("complexity", "0")
-                .attr("version", "0.1"),
-        )?;
-        ew.write(XmlEvent::start_element("sources"))?;
-        ew.write(XmlEvent::start_element("source"))?;
-        ew.write(XmlEvent::characters(""))?;
-        ew.write(XmlEvent::end_element())?; // source
-        ew.write(XmlEvent::end_element())?; // sources
-        ew.write(XmlEvent::start_element("packages"))?;
+                    )
+                    .as_str(),
+                ),
+                ("branches-valid", "0"),
+                ("branches-covered", "0"),
+                ("branch-rate", "0"),
+                ("timestamp", format!("{}", unixtime).as_str()),
+                ("complexity", "0"),
+                ("version", "0.1"),
+            ]),
+        ))?;
+
+        ew.create_element("sources").write_inner_content(|ew| {
+            ew.create_element("source")
+                .write_text_content(BytesText::new(""))?;
+
+            Ok(())
+        })?;
+
+        ew.write_event(Event::Start(BytesStart::new("packages")))?;
 
         for dir in self.dirs() {
             if !self.dir_has_files(dir) {
@@ -397,8 +404,10 @@ impl Report {
 
             let display_dir = Self::filter_path(dir, &filter)?.display().to_string();
 
-            ew.write(XmlEvent::start_element("package").attr("name", &display_dir))?;
-            ew.write(XmlEvent::start_element("classes"))?;
+            ew.write_event(Event::Start(
+                BytesStart::new("package").with_attributes([("name", display_dir.as_str())]),
+            ))?;
+            ew.write_event(Event::Start(BytesStart::new("classes")))?;
 
             //
             // PER-FILE
@@ -426,25 +435,27 @@ impl Report {
                     .map(|line| SrcLine::new(path, *line))
                     .collect();
 
-                ew.write(
-                    XmlEvent::start_element("class")
-                        .attr("name", &display_path)
-                        .attr("filename", &display_path)
-                        .attr(
+                ew.write_event(Event::Start(
+                    BytesStart::new("class").with_attributes([
+                        ("name", display_path.as_str()),
+                        ("filename", display_path.as_str()),
+                        (
                             "line-rate",
-                            &format!(
+                            format!(
                                 "{:.02}",
                                 filecov.hits.len() as f32 / filecov.lines.len() as f32
-                            ),
-                        )
-                        .attr("branch-rate", "0"),
-                )?;
+                            )
+                            .as_str(),
+                        ),
+                        ("branch-rate", "0"),
+                    ]),
+                ))?;
 
                 //
                 // METHODS
                 //
 
-                ew.write(XmlEvent::start_element("methods"))?;
+                ew.write_event(Event::Start(BytesStart::new("methods")))?;
 
                 for (symbol, symbol_srclocs) in filecov.symbols.iter() {
                     let mut symbol_hits = 0;
@@ -454,20 +465,20 @@ impl Report {
                         }
                     }
 
-                    ew.write(
-                        XmlEvent::start_element("method")
-                            .attr("name", symbol)
-                            .attr("signature", "")
-                            .attr(
+                    ew.write_event(Event::Start(
+                        BytesStart::new("method").with_attributes([
+                            ("name", symbol.as_str()),
+                            ("signature", ""),
+                            (
                                 "line-rate",
-                                &format!(
-                                    "{:.02}",
-                                    symbol_hits as f32 / symbol_srclocs.len() as f32
-                                ),
-                            )
-                            .attr("branch-rate", "0"),
-                    )?;
-                    ew.write(XmlEvent::start_element("lines"))?;
+                                format!("{:.02}", symbol_hits as f32 / symbol_srclocs.len() as f32)
+                                    .as_str(),
+                            ),
+                            ("branch-rate", "0"),
+                        ]),
+                    ))?;
+
+                    ew.write_event(Event::Start(BytesStart::new("lines")))?;
 
                     for srcloc in symbol_srclocs {
                         let hits = if hit_srclocs.contains(srcloc) {
@@ -476,20 +487,21 @@ impl Report {
                             "0"
                         };
 
-                        ew.write(
-                            XmlEvent::start_element("line")
-                                .attr("number", &format!("{}", srcloc.line))
-                                .attr("hits", hits)
-                                .attr("branch", "false"),
-                        )?;
-                        ew.write(XmlEvent::end_element())?; // line
+                        ew.create_element("line")
+                            .with_attributes([
+                                ("number", format!("{}", srcloc.line).as_str()),
+                                ("hits", hits),
+                                ("branch", "false"),
+                            ])
+                            .write_empty()?;
                     }
 
-                    ew.write(XmlEvent::end_element())?; // lines
-                    ew.write(XmlEvent::end_element())?; // method
+                    ew.write_event(Event::End(BytesEnd::new("lines")))?;
+                    ew.write_event(Event::End(BytesEnd::new("method")))?;
                 }
-                ew.write(XmlEvent::end_element())?; // methods
-                ew.write(XmlEvent::start_element("lines"))?;
+                ew.write_event(Event::End(BytesEnd::new("methods")))?;
+
+                ew.write_event(Event::Start(BytesStart::new("lines")))?;
 
                 //
                 // LINES
@@ -501,22 +513,22 @@ impl Report {
                         "0"
                     };
 
-                    ew.write(
-                        XmlEvent::start_element("line")
-                            .attr("number", &format!("{}", srcloc.line))
-                            .attr("hits", hits)
-                            .attr("branch", "false"),
-                    )?;
-                    ew.write(XmlEvent::end_element())?; // line
+                    ew.create_element("line")
+                        .with_attributes([
+                            ("number", format!("{}", srcloc.line).as_str()),
+                            ("hits", hits),
+                            ("branch", "false"),
+                        ])
+                        .write_empty()?;
                 }
-                ew.write(XmlEvent::end_element())?; // lines
-                ew.write(XmlEvent::end_element())?; // class
+                ew.write_event(Event::End(BytesEnd::new("lines")))?;
+                ew.write_event(Event::End(BytesEnd::new("class")))?;
             }
-            ew.write(XmlEvent::end_element())?; // classes
-            ew.write(XmlEvent::end_element())?; // package
+            ew.write_event(Event::End(BytesEnd::new("classes")))?;
+            ew.write_event(Event::End(BytesEnd::new("package")))?;
         }
-        ew.write(XmlEvent::end_element())?; // packages
-        ew.write(XmlEvent::end_element())?; // coverage
+        ew.write_event(Event::End(BytesEnd::new("packages")))?;
+        ew.write_event(Event::End(BytesEnd::new("coverage")))?;
 
         Ok(())
     }
