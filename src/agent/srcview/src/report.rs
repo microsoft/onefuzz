@@ -3,6 +3,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -351,13 +352,12 @@ impl Report {
     ///
     /// println!("{}", xml);
     /// ```
-    pub fn cobertura(&self, filter_regex: Option<&str>) -> Result<String> {
+    pub fn cobertura<W: Write>(&self, filter_regex: Option<&str>, output: &mut W) -> Result<()> {
         let filter = filter_regex.map(Regex::new).transpose()?;
 
-        let mut backing: Vec<u8> = Vec::new();
         let mut ew = EmitterConfig::new()
             .perform_indent(true)
-            .create_writer(&mut backing);
+            .create_writer(output);
 
         // xml-rs does not support DTD entries yet, but thankfully ADO's parser is loose
 
@@ -519,6 +519,6 @@ impl Report {
         ew.write(XmlEvent::end_element())?; // packages
         ew.write(XmlEvent::end_element())?; // coverage
 
-        Ok(String::from_utf8(backing)?)
+        Ok(())
     }
 }

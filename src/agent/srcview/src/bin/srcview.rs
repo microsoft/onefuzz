@@ -3,8 +3,8 @@
 
 use anyhow::{format_err, Context, Result};
 use srcview::{ModOff, Report, SrcLine, SrcView};
-use std::fs;
-use std::io::{stdout, Write};
+use std::fs::{self, OpenOptions};
+use std::io::{stdout, BufWriter, Write};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
@@ -35,17 +35,22 @@ struct SrcLocOpt {
 /// Generate a Cobertura XML coverage report
 ///
 /// Example:
-///   srcview cobertura ./res/example.pdb res/example.txt
+///   srcview cobertura ./res/example.pdb res/example.txt -
 ///             --include-regex "E:\\\\1f\\\\coverage\\\\"
 ///             --filter-regex "E:\\\\1f\\\\coverage\\\\"
 ///             --module-name example.exe
 ///
 /// In this example, only files that live in E:\1f\coverage are included and
 /// E:\1f\coverage is removed from the filenames in the resulting XML report.
+///
+/// The XML report is written to either a file or stdout if the argument is
+/// a single dash.
 #[derive(StructOpt, Debug)]
 struct CoberturaOpt {
     pdb_path: PathBuf,
     modoff_path: PathBuf,
+    #[structopt(default_value = "-")]
+    output_path: String,
     #[structopt(long)]
     module_name: Option<String>,
 
@@ -150,6 +155,21 @@ fn cobertura(opts: CoberturaOpt) -> Result<()> {
     let modoff_data = fs::read_to_string(&opts.modoff_path)?;
     let modoffs = ModOff::parse(&modoff_data)?;
 
+    let mut output_writer = match opts.output_path.as_str() {
+        "-" => Box::new(BufWriter::new(stdout())) as Box<dyn Write>,
+        path => {
+            let path = Path::new(path);
+
+            Box::new(BufWriter::new(
+                OpenOptions::new()
+                    .create(true)
+                    .truncate(true)
+                    .write(true)
+                    .open(path)?,
+            )) as Box<dyn Write>
+        }
+    };
+
     // create our new SrcView and insert our only pdb into it
     // we don't know what the modoff module will be, so create a mapping from
     // all likely names to the pdb
@@ -171,8 +191,6 @@ fn cobertura(opts: CoberturaOpt) -> Result<()> {
     let r = Report::new(&coverage, &srcview, opts.include_regex.as_deref())?;
 
     // Format it as cobertura and display it
-    let formatted = r.cobertura(opts.filter_regex.as_deref())?;
-    println!("{}", formatted);
-
+    r.cobertura(opts.filter_regex.as_deref(), &mut output_writer)?;
     Ok(())
 }
