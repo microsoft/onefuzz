@@ -23,10 +23,10 @@ public class Ado : NotificationsBase, IAdo {
 
         var report = (Report)reportable;
 
-        var notificationInfo = new Dictionary<string, string>() { { "notification_id", notificationId.ToString() }, { "job_id", report.JobId.ToString() }, { "task_id", report.TaskId.ToString() }, { "ado_project", config.Project }, { "ado_url", config.BaseUrl.ToString() }, { "container", container.String }, { "filename", filename } };
+        (string, string)[] notificationInfo = { ("notification_id", notificationId.ToString()), ("job_id", report.JobId.ToString()), ("task_id", report.TaskId.ToString()), ("ado_project", config.Project), ("ado_url", config.BaseUrl.ToString()), ("container", container.String), ("filename", filename) };
 
         var adoEventType = "AdoNotify";
-        _logTracer.Event($"{adoEventType:Tag:AdoEventType} {notificationInfo["notification_id"]:Tag:NotificationId} {notificationInfo["job_id"]:Tag:JobId} {notificationInfo["task_id"]:Tag:TaskId} {notificationInfo["ado_project"]:Tag:AdoProject} {notificationInfo["ado_url"]:Tag:AdoUrl} {notificationInfo["container"]:Tag:Container} {notificationInfo["filename"]:Tag:Filename}");
+        _logTracer.WithTags(notificationInfo).Event($"{adoEventType:Tag:AdoEventType}");
 
         try {
             var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
@@ -42,6 +42,11 @@ public class Ado : NotificationsBase, IAdo {
             }
         }
     }
+
+    public static string CreateAdoEvent(Dictionary<string, string> notificationInfo) {
+        return $"{notificationInfo["notification_id"]:Tag:NotificationId} {notificationInfo["job_id"]:Tag:JobId} {notificationInfo["task_id"]:Tag:TaskId} {notificationInfo["ado_project"]:Tag:AdoProject} {notificationInfo["ado_url"]:Tag:AdoUrl} {notificationInfo["container"]:Tag:Container} {notificationInfo["filename"]:Tag:Filename}";
+    }
+
     private static bool IsTransient(Exception e) {
         var errorCodes = new List<string>()
         {
@@ -161,7 +166,7 @@ public class Ado : NotificationsBase, IAdo {
             }
         }
 
-        public async Async.Task UpdateExisting(WorkItem item, Dictionary<string, string> notificationInfo) {
+        public async Async.Task UpdateExisting(WorkItem item, (string, string)[] notificationInfo) {
             if (_config.OnDuplicate.Comment != null) {
                 var comment = await Render(_config.OnDuplicate.Comment);
                 _ = await _client.AddCommentAsync(
@@ -204,11 +209,11 @@ public class Ado : NotificationsBase, IAdo {
             if (document.Any()) {
                 _ = await _client.UpdateWorkItemAsync(document, _project, (int)(item.Id!));
                 var adoEventType = "AdoUpdate";
-                _logTracer.Event($"{adoEventType:Tag:AdoEventType} {item.Id:Tag:WorkItemId} {notificationInfo["notification_id"]:Tag:NotificationId} {notificationInfo["job_id"]:Tag:JobId} {notificationInfo["task_id"]:Tag:TaskId} {notificationInfo["ado_project"]:Tag:AdoProject} {notificationInfo["ado_url"]:Tag:AdoUrl} {notificationInfo["container"]:Tag:Container} {notificationInfo["filename"]:Tag:Filename}");
+                _logTracer.WithTags(notificationInfo).Event($"{adoEventType:Tag:AdoEventType}");
 
             } else {
                 var adoEventType = "AdoNoUpdate";
-                _logTracer.Event($"{adoEventType:Tag:AdoEventType} {item.Id:Tag:WorkItemId} {notificationInfo["notification_id"]:Tag:NotificationId} {notificationInfo["job_id"]:Tag:JobId} {notificationInfo["task_id"]:Tag:TaskId} {notificationInfo["ado_project"]:Tag:AdoProject} {notificationInfo["ado_url"]:Tag:AdoUrl} {notificationInfo["container"]:Tag:Container} {notificationInfo["filename"]:Tag:Filename}");
+                _logTracer.WithTags(notificationInfo).Event($"{adoEventType:Tag:AdoEventType}");
 
             }
         }
@@ -263,7 +268,7 @@ public class Ado : NotificationsBase, IAdo {
             return (taskType, document);
         }
 
-        public async Async.Task Process(Dictionary<string, string> notificationInfo) {
+        public async Async.Task Process((string, string)[] notificationInfo) {
             var seen = false;
             await foreach (var workItem in ExistingWorkItems()) {
                 await UpdateExisting(workItem, notificationInfo);
