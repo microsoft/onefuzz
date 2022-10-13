@@ -23,10 +23,10 @@ public class Ado : NotificationsBase, IAdo {
 
         var report = (Report)reportable;
 
-        var notificationInfo = @$"job_id:{report.JobId} task_id:{report.TaskId}
-container:{container} filename:{filename}";
+        (string, string)[] notificationInfo = { ("notification_id", notificationId.ToString()), ("job_id", report.JobId.ToString()), ("task_id", report.TaskId.ToString()), ("ado_project", config.Project), ("ado_url", config.BaseUrl.ToString()), ("container", container.String), ("filename", filename) };
 
-        _logTracer.Info($"notify ado: {report.JobId:Tag:JobId} {report.TaskId:Tag:TaskId} {container:Tag:Container} {filename:Tag:Filename}");
+        var adoEventType = "AdoNotify";
+        _logTracer.WithTags(notificationInfo).Event($"{adoEventType}");
 
         try {
             var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
@@ -162,7 +162,7 @@ container:{container} filename:{filename}";
             }
         }
 
-        public async Async.Task UpdateExisting(WorkItem item, string notificationInfo) {
+        public async Async.Task UpdateExisting(WorkItem item, (string, string)[] notificationInfo) {
             if (_config.OnDuplicate.Comment != null) {
                 var comment = await Render(_config.OnDuplicate.Comment);
                 _ = await _client.AddCommentAsync(
@@ -204,9 +204,13 @@ container:{container} filename:{filename}";
 
             if (document.Any()) {
                 _ = await _client.UpdateWorkItemAsync(document, _project, (int)(item.Id!));
-                _logTracer.Info($"notify ado: updated {item.Id:Tag:WorkItemId} - {notificationInfo}");
+                var adoEventType = "AdoUpdate";
+                _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {item.Id:Tag:WorkItemId}");
+
             } else {
-                _logTracer.Info($"notify ado: no update {item.Id:Tag:WorkItemId} - {notificationInfo}");
+                var adoEventType = "AdoNoUpdate";
+                _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {item.Id:Tag:WorkItemId}");
+
             }
         }
 
@@ -260,7 +264,7 @@ container:{container} filename:{filename}";
             return (taskType, document);
         }
 
-        public async Async.Task Process(string notificationInfo) {
+        public async Async.Task Process((string, string)[] notificationInfo) {
             var seen = false;
             await foreach (var workItem in ExistingWorkItems()) {
                 await UpdateExisting(workItem, notificationInfo);
@@ -269,7 +273,9 @@ container:{container} filename:{filename}";
 
             if (!seen) {
                 var entry = await CreateNew();
-                _logTracer.Info($"notify ado: created new work item {entry.Id:Tag:EntryId} - {notificationInfo}");
+                var adoEventType = "AdoNewItem";
+                _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {entry.Id:Tag:WorkItemId}");
+
             }
         }
     }
