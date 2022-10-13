@@ -42,12 +42,6 @@ public class Ado : NotificationsBase, IAdo {
             }
         }
     }
-
-    // public static string CreateAdoEvent(string eventType, string notificationId, string jobId, string taskId, string adoProject, string adoUrl, string ) 
-    // {
-    //     return @$"notification_id: {notificationId:Tag:NotificationId} job_id:{jobId} task_id:{taskId:Tag:TaskId}  AdoProject: {adoProject:Tag:AdoProject} AdoUrl: {adoUrl:Tag:AdoUrl} container:{container:Tag:Container} filename:{filename:Tag:filename}"
-    // }
-
     private static bool IsTransient(Exception e) {
         var errorCodes = new List<string>()
         {
