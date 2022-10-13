@@ -358,7 +358,15 @@ impl Report {
 
         let filter = filter_regex.map(Regex::new).transpose()?;
 
-        let mut ew = Writer::new_with_indent(output, ' ' as u8, 4);
+        // HACK(ish): Allocate a single XML start element and reuse it throughout.
+        //
+        // We do this since adding attributes to `BytesStart` will potentially cause its
+        // internal buffer to be expanded, which incurs a reallocation. Instead of doing
+        // this multiple hundreds or thousands of times, we can simply reuse a single
+        // buffer and clear it inbetween (which does not shrink the underlying buffer).
+        let mut el_start = BytesStart::new("");
+
+        let mut ew = Writer::new_with_indent(output, b' ', 2);
 
         // xml-rs does not support DTD entries yet, but thankfully ADO's parser is loose
 
@@ -405,7 +413,11 @@ impl Report {
             let display_dir = Self::filter_path(dir, &filter)?.display().to_string();
 
             ew.write_event(Event::Start(
-                BytesStart::new("package").with_attributes([("name", display_dir.as_str())]),
+                el_start
+                    .clear_attributes()
+                    .set_name(b"package")
+                    .extend_attributes([("name", display_dir.as_str())])
+                    .borrow(),
             ))?;
             ew.write_event(Event::Start(BytesStart::new("classes")))?;
 
@@ -436,19 +448,23 @@ impl Report {
                     .collect();
 
                 ew.write_event(Event::Start(
-                    BytesStart::new("class").with_attributes([
-                        ("name", display_path.as_str()),
-                        ("filename", display_path.as_str()),
-                        (
-                            "line-rate",
-                            format!(
-                                "{:.02}",
-                                filecov.hits.len() as f32 / filecov.lines.len() as f32
-                            )
-                            .as_str(),
-                        ),
-                        ("branch-rate", "0"),
-                    ]),
+                    el_start
+                        .clear_attributes()
+                        .set_name(b"class")
+                        .extend_attributes([
+                            ("name", display_path.as_str()),
+                            ("filename", display_path.as_str()),
+                            (
+                                "line-rate",
+                                format!(
+                                    "{:.02}",
+                                    filecov.hits.len() as f32 / filecov.lines.len() as f32
+                                )
+                                .as_str(),
+                            ),
+                            ("branch-rate", "0"),
+                        ])
+                        .borrow(),
                 ))?;
 
                 //
@@ -466,16 +482,23 @@ impl Report {
                     }
 
                     ew.write_event(Event::Start(
-                        BytesStart::new("method").with_attributes([
-                            ("name", symbol.as_str()),
-                            ("signature", ""),
-                            (
-                                "line-rate",
-                                format!("{:.02}", symbol_hits as f32 / symbol_srclocs.len() as f32)
+                        el_start
+                            .clear_attributes()
+                            .set_name(b"method")
+                            .extend_attributes([
+                                ("name", symbol.as_str()),
+                                ("signature", ""),
+                                (
+                                    "line-rate",
+                                    format!(
+                                        "{:.02}",
+                                        symbol_hits as f32 / symbol_srclocs.len() as f32
+                                    )
                                     .as_str(),
-                            ),
-                            ("branch-rate", "0"),
-                        ]),
+                                ),
+                                ("branch-rate", "0"),
+                            ])
+                            .borrow(),
                     ))?;
 
                     ew.write_event(Event::Start(BytesStart::new("lines")))?;
@@ -487,13 +510,17 @@ impl Report {
                             "0"
                         };
 
-                        ew.create_element("line")
-                            .with_attributes([
-                                ("number", format!("{}", srcloc.line).as_str()),
-                                ("hits", hits),
-                                ("branch", "false"),
-                            ])
-                            .write_empty()?;
+                        ew.write_event(Event::Empty(
+                            el_start
+                                .clear_attributes()
+                                .set_name(b"line")
+                                .extend_attributes([
+                                    ("number", format!("{}", srcloc.line).as_str()),
+                                    ("hits", hits),
+                                    ("branch", "false"),
+                                ])
+                                .borrow(),
+                        ))?;
                     }
 
                     ew.write_event(Event::End(BytesEnd::new("lines")))?;
@@ -513,13 +540,17 @@ impl Report {
                         "0"
                     };
 
-                    ew.create_element("line")
-                        .with_attributes([
-                            ("number", format!("{}", srcloc.line).as_str()),
-                            ("hits", hits),
-                            ("branch", "false"),
-                        ])
-                        .write_empty()?;
+                    ew.write_event(Event::Empty(
+                        el_start
+                            .clear_attributes()
+                            .set_name(b"line")
+                            .extend_attributes([
+                                ("number", format!("{}", srcloc.line).as_str()),
+                                ("hits", hits),
+                                ("branch", "false"),
+                            ])
+                            .borrow(),
+                    ))?;
                 }
                 ew.write_event(Event::End(BytesEnd::new("lines")))?;
                 ew.write_event(Event::End(BytesEnd::new("class")))?;
