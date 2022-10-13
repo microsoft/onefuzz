@@ -115,22 +115,21 @@ impl Report {
                 continue;
             }
 
-            let path_srclocs: Vec<SrcLine> = srcview
+            let path_srclocs = srcview
                 .path_lines(path)
                 .ok_or_else(|| {
                     format_err!("unable to find path lines in path: {}", path.display())
                 })?
-                .map(|line| SrcLine::new(path, line))
-                .collect();
+                .map(|line| SrcLine::new(path, line));
 
             let mut lines = vec![];
             let mut hits = vec![];
             let mut symbols = BTreeMap::new();
 
-            for srcloc in &path_srclocs {
+            for srcloc in path_srclocs {
                 lines.push(srcloc.line);
 
-                if uniq_cov.contains(srcloc) {
+                if uniq_cov.contains(&srcloc) {
                     hits.push(srcloc.line);
                 }
             }
