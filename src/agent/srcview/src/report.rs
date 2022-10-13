@@ -344,6 +344,8 @@ impl Report {
     /// // our code files. Anything that matches this path shoudl be included.
     /// let r = Report::new(&coverage, &srcview, Some(r"E:\\1f\\coverage\\example")).unwrap();
     ///
+    /// // NOTE: If you're writing out to a file, you'll almost certainly want to wrap it
+    /// // in a `BufWriter` before passing it into `cobertura()`.
     /// let mut xml = Vec::new();
     ///
     /// // However when generating the report, we want to strip off only the repo name --
