@@ -43,10 +43,6 @@ public class Ado : NotificationsBase, IAdo {
         }
     }
 
-    public static string CreateAdoEvent(Dictionary<string, string> notificationInfo) {
-        return $"{notificationInfo["notification_id"]:Tag:NotificationId} {notificationInfo["job_id"]:Tag:JobId} {notificationInfo["task_id"]:Tag:TaskId} {notificationInfo["ado_project"]:Tag:AdoProject} {notificationInfo["ado_url"]:Tag:AdoUrl} {notificationInfo["container"]:Tag:Container} {notificationInfo["filename"]:Tag:Filename}";
-    }
-
     private static bool IsTransient(Exception e) {
         var errorCodes = new List<string>()
         {
