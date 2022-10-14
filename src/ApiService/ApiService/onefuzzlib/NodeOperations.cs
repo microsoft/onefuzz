@@ -86,7 +86,11 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         if (node.ScalesetId is Guid scalesetId && await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
 
             _logTracer.Info($"Setting scale-in protection on node {node.MachineId:Tag:MachineId}");
-            return await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, node.MachineId, protectFromScaleIn: true);
+            var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, node.MachineId, protectFromScaleIn: true);
+            if (!r.IsOk) {
+                _logTracer.Error(r.ErrorV);
+            }
+            return r;
         }
 
         return OneFuzzResultVoid.Ok;
@@ -97,7 +101,11 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             node.ScalesetId is Guid scalesetId &&
             await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
             _logTracer.Info($"Removing scale-in protection on node {node.MachineId:Tag:MachineId}");
-            return await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, node.MachineId, protectFromScaleIn: false);
+            var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, node.MachineId, protectFromScaleIn: false);
+            if (!r.IsOk) {
+                _logTracer.Error(r.ErrorV);
+            }
+            return r;
         }
 
         return OneFuzzResultVoid.Ok;
