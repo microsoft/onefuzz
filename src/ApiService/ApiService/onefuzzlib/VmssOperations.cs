@@ -253,6 +253,7 @@ public class VmssOperations : IVmssOperations {
         var data = new VirtualMachineScaleSetVmData(scaleset.Region) {
             ProtectionPolicy = new VirtualMachineScaleSetVmProtectionPolicy {
                 ProtectFromScaleIn = protectFromScaleIn,
+                ProtectFromScaleSetActions = false,
             }
         };
         var vmCollection = GetVmssResource(scaleset.ScalesetId).GetVirtualMachineScaleSetVms();
