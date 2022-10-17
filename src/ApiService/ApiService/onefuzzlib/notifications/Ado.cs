@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.Common;
@@ -150,6 +152,8 @@ public class Ado : NotificationsBase, IAdo {
             foreach (var workItemReference in (await _client.QueryByWiqlAsync(wiql)).WorkItems) {
                 var item = await _client.GetWorkItemAsync(_project, workItemReference.Id, expand: WorkItemExpand.Fields);
 
+                // BUG: JsonSerializer.Serialize will serialize strings with quotes around them,
+                // which won’t match fields that come back from ADO?
                 var loweredFields = item.Fields.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => JsonSerializer.Serialize(kvp.Value));
                 if (postQueryFilter.Any() && !postQueryFilter.All(kvp => {
                     var lowerKey = kvp.Key.ToLowerInvariant();
@@ -163,14 +167,14 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         public async Async.Task UpdateExisting(WorkItem item, (string, string)[] notificationInfo) {
+            Debug.Assert(item.Id.HasValue); // checked in ResolveDuplicates
+
             if (_config.OnDuplicate.Comment != null) {
                 var comment = await Render(_config.OnDuplicate.Comment);
                 _ = await _client.AddCommentAsync(
-                    new CommentCreate() {
-                        Text = comment
-                    },
+                    new CommentCreate() { Text = comment },
                     _project,
-                    (int)(item.Id!));
+                    item.Id.Value);
             }
 
             var document = new JsonPatchDocument();
@@ -203,7 +207,7 @@ public class Ado : NotificationsBase, IAdo {
             }
 
             if (document.Any()) {
-                _ = await _client.UpdateWorkItemAsync(document, _project, (int)(item.Id!));
+                _ = await _client.UpdateWorkItemAsync(document, _project, item.Id.Value);
                 var adoEventType = "AdoUpdate";
                 _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {item.Id:Tag:WorkItemId}");
 
@@ -264,9 +268,38 @@ public class Ado : NotificationsBase, IAdo {
             return (taskType, document);
         }
 
+        private async Task<WorkItem> ResolveDuplicate(WorkItem workItem) {
+            if (workItem.Links.Links.TryGetValue("Duplicate Of", out var duplicate)) {
+                if (duplicate is WorkItemReference other) {
+                    return await ResolveDuplicate(await _client.GetWorkItemAsync(_project, other.Id));
+                } else {
+                    // unable to deref Duplicate Of?
+                }
+            }
+
+            return workItem;
+        }
+        
+        private async Task<IEnumerable<WorkItem>> ResolveDuplicates(IEnumerable<WorkItem> workItems) {
+            var results = new Dictionary<int, WorkItem>();
+            foreach (var workItem in workItems) {
+                var resolved = await ResolveDuplicate(workItem);
+                if (resolved.Id.HasValue) {
+                    results[resolved.Id.Value] = resolved;
+                } else {
+                    throw new InvalidOperationException("Found WorkItem with no ID");
+                }
+            }
+
+            return results.Values;
+        }
+
         public async Async.Task Process((string, string)[] notificationInfo) {
             var seen = false;
-            await foreach (var workItem in ExistingWorkItems()) {
+
+            var existing = await ExistingWorkItems().ToListAsync();
+            var resolvedExisting = await ResolveDuplicates(existing);
+            foreach (var workItem in resolvedExisting) {
                 await UpdateExisting(workItem, notificationInfo);
                 seen = true;
             }
