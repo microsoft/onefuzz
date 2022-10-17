@@ -252,8 +252,8 @@ public class VmssOperations : IVmssOperations {
         var instanceId = instanceIdResult.OkV;
         var data = new VirtualMachineScaleSetVmData(scaleset.Region) {
             ProtectionPolicy = new VirtualMachineScaleSetVmProtectionPolicy {
-                ProtectFromScaleIn = true,
-                ProtectFromScaleSetActions = true
+                ProtectFromScaleIn = protectFromScaleIn,
+                ProtectFromScaleSetActions = false,
             }
         };
         var vmCollection = GetVmssResource(scaleset.ScalesetId).GetVirtualMachineScaleSetVms();
