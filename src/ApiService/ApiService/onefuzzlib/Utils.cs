@@ -19,14 +19,19 @@ public static class ObjectExtention {
 public static class IAsyncEnumerableExtension {
     public static async IAsyncEnumerable<List<TSource>> Chunk<TSource>(this IAsyncEnumerable<TSource> source, int size) {
 
+        if (size <= 0) {
+            throw new ArgumentException("size must be greater than 0");
+        }
+
         var enumerator = source.GetAsyncEnumerator();
         List<TSource> result = new List<TSource>(size);
         while (await enumerator.MoveNextAsync()) {
+            result.Add(enumerator.Current);
+
             if (result.Count == size) {
                 yield return result;
                 result = new List<TSource>(size);
             }
-            result.Add(enumerator.Current);
         }
 
         if (result.Count > 0) {

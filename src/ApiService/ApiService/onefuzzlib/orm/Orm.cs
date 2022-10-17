@@ -172,12 +172,11 @@ namespace ApiService.OneFuzzLib.Orm {
 
             var requests = await pages
                 .Chunk(MAX_TRANSACTION_SIZE)
-                .Where(chunk => chunk.Count > 0)
-                .Select(chunk =>
-                    chunk.Select(e => new TableTransactionAction(TableTransactionActionType.Delete, e))
-                )
-                .Select(t => tableClient.SubmitTransactionAsync(t))
-                .ToArrayAsync();
+                .Select(chunk => {
+                    var transactions = chunk.Select(e => new TableTransactionAction(TableTransactionActionType.Delete, e));
+                    return tableClient.SubmitTransactionAsync(transactions);
+                })
+                .ToListAsync();
 
             var responses = await System.Threading.Tasks.Task.WhenAll(requests);
             var (successes, failures) = responses
