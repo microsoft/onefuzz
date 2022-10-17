@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::{Context, Result};
-use process_control::{self, ChildExt, Timeout};
+use process_control::{self, ChildExt, Control};
 use std::path::Path;
 use std::process::Command;
 use std::time::Duration;
@@ -127,9 +127,11 @@ pub async fn run_cmd<S: ::std::hash::BuildHasher>(
         let child = cmd
             .spawn()
             .with_context(|| format!("process failed to start: {}", program_name))?;
+
         child
-            .with_output_timeout(timeout)
-            .terminating()
+            .controlled_with_output()
+            .time_limit(timeout)
+            .terminate_for_timeout()
             .wait()?
             .ok_or_else(|| format_err!("process timed out"))
     });
