@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
-using Azure.ResourceManager.Compute;
+using Azure.ResourceManager.Compute.Models;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -10,7 +10,7 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 
     public IAsyncEnumerable<Repro> SearchStates(IEnumerable<VmState>? states);
 
-    public Async.Task<Repro> SetFailed(Repro repro, VirtualMachineData vmData);
+    public Async.Task<Repro> SetFailed(Repro repro, VirtualMachineInstanceView instanceView);
 
     public Async.Task<Repro> SetError(Repro repro, Error result);
 
@@ -131,7 +131,13 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var vmData = await _context.VmOperations.GetVm(vm.Name);
         if (vmData != null) {
             if (vmData.ProvisioningState == "Failed") {
-                return await _context.ReproOperations.SetFailed(repro, vmData);
+                var failedVmData = await _context.VmOperations.GetVmWithInstanceView(vm.Name);
+                if (failedVmData is null) {
+                    // this should exist since we just loaded the VM above
+                    throw new InvalidOperationException("Unable to fetch instance-view data for VM");
+                }
+
+                return await _context.ReproOperations.SetFailed(repro, failedVmData.InstanceView);
             } else {
                 var scriptResult = await BuildReproScript(repro);
                 if (!scriptResult.IsOk) {
@@ -181,7 +187,13 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         }
 
         if (vmData.ProvisioningState == "Failed") {
-            return await _context.ReproOperations.SetFailed(repro, vmData);
+            var failedVmData = await _context.VmOperations.GetVmWithInstanceView(vm.Name);
+            if (failedVmData is null) {
+                // this should exist since we loaded the VM above
+                throw new InvalidOperationException("Unable to find instance-view data fro VM");
+            }
+
+            return await _context.ReproOperations.SetFailed(repro, failedVmData.InstanceView);
         }
 
         if (string.IsNullOrEmpty(repro.Ip)) {
@@ -209,8 +221,8 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         return repro;
     }
 
-    public async Async.Task<Repro> SetFailed(Repro repro, VirtualMachineData vmData) {
-        var errors = vmData.InstanceView.Statuses
+    public async Async.Task<Repro> SetFailed(Repro repro, VirtualMachineInstanceView instanceView) {
+        var errors = instanceView.Statuses
             .Where(status => status.Level.HasValue && string.Equals(status.Level?.ToString(), "error", StringComparison.OrdinalIgnoreCase))
             .Select(status => $"{status.Code} {status.DisplayStatus} {status.Message}")
             .ToArray();

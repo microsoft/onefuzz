@@ -140,9 +140,9 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "azure_core"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6e66a6d993197d1b575cffd08bf725e04bc1414de6586baeb3537925e49b4ff"
+checksum = "a6424becb946de1b1eff7bf5fbc86fabf7457637c88b63dd967b219a712c322c"
 dependencies = [
  "async-trait",
  "base64",
@@ -158,6 +158,7 @@ dependencies = [
  "reqwest",
  "rustc_version",
  "serde",
+ "serde-xml-rs 0.6.0",
  "serde_json",
  "time",
  "url",
@@ -166,9 +167,9 @@ dependencies = [
 
 [[package]]
 name = "azure_storage"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55aa63fb0426c76b9cc909234e94e69764f5e777a62b7ed6411f3cc04aa94a16"
+checksum = "28d0de4ed66067ca1afa0a07d787a6fe001288a162409b8308c45909044552ca"
 dependencies = [
  "RustyXML",
  "async-trait",
@@ -180,7 +181,7 @@ dependencies = [
  "log",
  "once_cell",
  "serde",
- "serde-xml-rs",
+ "serde-xml-rs 0.6.0",
  "serde_derive",
  "serde_json",
  "sha2",
@@ -191,9 +192,9 @@ dependencies = [
 
 [[package]]
 name = "azure_storage_blobs"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33f953cedd7c240347ed0f6ed8a0bd7472b32579c38341ab9e117eaa6173e9ba"
+checksum = "a69ea7177f0b3c64196766fcd442ac9664658a194070d082ae8876406800040b"
 dependencies = [
  "RustyXML",
  "azure_core",
@@ -204,7 +205,7 @@ dependencies = [
  "log",
  "md5",
  "serde",
- "serde-xml-rs",
+ "serde-xml-rs 0.6.0",
  "serde_derive",
  "serde_json",
  "time",
@@ -1934,7 +1935,7 @@ dependencies = [
  "reqwest",
  "reqwest-retry",
  "serde",
- "serde-xml-rs",
+ "serde-xml-rs 0.5.1",
  "serde_json",
  "stacktrace-parser",
  "storage-queue",
@@ -2655,6 +2656,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-xml-rs"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb3aa78ecda1ebc9ec9847d5d3aba7d618823446a049ba2491940506da6e2782"
+dependencies = [
+ "log",
+ "serde",
+ "thiserror",
+ "xml-rs",
+]
+
+[[package]]
 name = "serde_derive"
 version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2834,7 +2847,7 @@ dependencies = [
 
 [[package]]
 name = "srcview"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "env_logger 0.9.0",
@@ -2890,7 +2903,7 @@ dependencies = [
  "reqwest",
  "reqwest-retry",
  "serde",
- "serde-xml-rs",
+ "serde-xml-rs 0.5.1",
  "serde_derive",
  "serde_json",
  "tokio",

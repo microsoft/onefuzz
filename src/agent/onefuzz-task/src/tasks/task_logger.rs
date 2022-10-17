@@ -5,9 +5,9 @@ use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use azure_core::error::HttpError;
 use azure_core::StatusCode;
-use azure_storage::prelude::StorageClient;
+use azure_storage::StorageCredentials;
+use azure_storage_blobs::container::operations::ListBlobsResponse;
 use azure_storage_blobs::prelude::*;
-use azure_storage_blobs::{container::operations::ListBlobsResponse, prelude::AsContainerClient};
 use futures::TryStreamExt;
 use onefuzz_telemetry::{LogTrace, LoggingEvent};
 use reqwest::Url;
@@ -68,17 +68,17 @@ impl BlobLogWriter {
     ) -> Result<Self> {
         let container_client = TaskLogger::create_container_client(&log_container)?;
         let prefix = format!("{}/{}", task_id, machine_id);
-        let blob_list: Vec<ListBlobsResponse> = container_client
+        let pages: Vec<ListBlobsResponse> = container_client
             .list_blobs()
             .prefix(prefix.clone())
             .into_stream()
             .try_collect()
             .await?;
 
-        let mut blob_ids: Vec<usize> = blob_list
-            .into_iter()
-            .flat_map(|lbr: ListBlobsResponse| lbr.blobs.blobs)
-            .filter_map(|b: Blob| {
+        let mut blob_ids: Vec<usize> = pages
+            .iter()
+            .flat_map(|p| p.blobs.blobs())
+            .filter_map(|b: &Blob| {
                 b.name
                     .strip_prefix(&prefix)
                     .map(PathBuf::from)
@@ -258,7 +258,8 @@ impl TaskLogger {
             .query()
             .ok_or(anyhow!("Invalid log container"))?;
 
-        let client = StorageClient::new_sas_token(account, sas_token)?;
+        let sas_credentials = StorageCredentials::sas_token(sas_token)?;
+        let client = BlobServiceClient::new(account, sas_credentials);
         Ok(client.container_client(container))
     }
 
@@ -484,15 +485,11 @@ mod tests {
 
         println!(
             "blob prefix {:?}",
-            responses
-                .first()
-                .expect("expected some blobs")
-                .blobs
-                .blob_prefix
+            responses.first().expect("expected some blobs").prefix
         );
 
         for response in responses {
-            for blob in response.blobs.blobs {
+            for blob in response.blobs.blobs() {
                 println!("{}", blob.name);
             }
         }
@@ -686,7 +683,7 @@ mod tests {
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 
-        let blobs: Vec<_> = pages.into_iter().flat_map(|p| p.blobs.blobs).collect();
+        let blobs: Vec<_> = pages.iter().flat_map(|p| p.blobs.blobs()).collect();
 
         // test initial blob creation
         assert_eq!(blobs.len(), 1, "expected exactly one blob");
@@ -732,9 +729,9 @@ mod tests {
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 
-        let blobs: Vec<_> = pages.into_iter().flat_map(|p| p.blobs.blobs).collect();
+        let blobs: Vec<_> = pages.iter().flat_map(|p| p.blobs.blobs()).collect();
 
-        assert_eq!(blobs.len(), 2, "expected exactly 2 blob");
+        assert_eq!(blobs.len(), 2, "expected exactly 2 blobs");
 
         assert!(
             blobs

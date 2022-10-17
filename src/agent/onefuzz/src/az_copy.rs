@@ -81,8 +81,6 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
         .arg(mode.to_string())
         .arg(&src)
         .arg(&dst)
-        .arg("--log-level")
-        .arg("ERROR")
         .args(args);
 
     let output = cmd
