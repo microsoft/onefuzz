@@ -1213,13 +1213,7 @@ class Pool(Endpoint):
         if pool.config is None:
             raise Exception("Missing AgentConfig in response")
 
-        config = pool.config
-        config.client_credentials = models.ClientCredentials(  # nosec - bandit consider this a hard coded password
-            client_id=pool.client_id,
-            client_secret="<client secret>",
-        )
-
-        return config
+        return pool.config
 
     def shutdown(self, name: str, *, now: bool = False) -> responses.BoolResult:
         expanded_name = self._disambiguate(
@@ -1249,19 +1243,6 @@ class Pool(Endpoint):
         self.logger.debug("list worker pools")
         return self._req_model_list(
             "GET", models.Pool, data=requests.PoolSearch(state=state)
-        )
-
-    def get_unamaged_config(self, name: str) -> models.AgentConfig:
-        self.logger.debug("get details on a specific pool")
-        expanded_name = self._disambiguate(
-            "pool name", name, lambda x: False, lambda: [x.name for x in self.list()]
-        )
-
-        return self._req_model(
-            "GET",
-            models.AgentConfig,
-            data=requests.PoolSearch(name=expanded_name),
-            alternate_endpoint="pool/getconfig",
         )
 
 
