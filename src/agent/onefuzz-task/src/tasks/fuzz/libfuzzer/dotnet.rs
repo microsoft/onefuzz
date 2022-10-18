@@ -105,7 +105,7 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
         cmd.stdout(std::process::Stdio::piped());
         cmd.stderr(std::process::Stdio::piped());
 
-        let mut child = cmd.spawn()?;
+        let child = cmd.spawn()?;
         let output = child.wait_with_output().await?;
 
         if !output.status.success() {
