@@ -404,7 +404,7 @@ class TestOnefuzz:
                     setup_dir=setup,
                     duration=duration,
                     vm_count=1,
-                    target_options=config.target_options,
+                    fuzzing_target_options=config.target_options,
                     target_class=config.target_class,
                     target_method=config.target_method,
                 )
