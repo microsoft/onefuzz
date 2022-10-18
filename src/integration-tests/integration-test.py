@@ -152,6 +152,15 @@ TARGETS: Dict[str, Integration] = {
         wait_for_files={ContainerType.inputs: 2, ContainerType.crashes: 1},
         test_repro=False,
     ),
+    "linux-libfuzzer-dotnet-dll": Integration(
+        template=TemplateType.libfuzzer_dotnet_dll,
+        os=OS.linux,
+        target_exe="GoodBad.dll",
+        setup_dir="GoodBadDotnet",
+        use_setup=True,
+        wait_for_files={ContainerType.inputs: 2, ContainerType.crashes: 1, ContainerType.coverage: 1},
+        test_repro=False,
+    ),
     "linux-libfuzzer-aarch64-crosscompile": Integration(
         template=TemplateType.libfuzzer_qemu_user,
         os=OS.linux,
@@ -219,6 +228,15 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.coverage: 1,
         },
         use_setup=True,
+    ),
+    "windows-libfuzzer-dotnet-dll": Integration(
+        template=TemplateType.libfuzzer_dotnet_dll,
+        os=OS.windows,
+        target_exe="GoodBad.dll",
+        setup_dir="GoodBadDotnet",
+        use_setup=True,
+        wait_for_files={ContainerType.inputs: 2, ContainerType.crashes: 1, ContainerType.coverage: 1},
+        test_repro=False,
     ),
     "windows-trivial-crash": Integration(
         template=TemplateType.radamsa,
