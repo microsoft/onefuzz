@@ -41,14 +41,7 @@ impl<'c> Recorder<'c> {
         let mut tracer = Ptracer::new();
         let mut child = tracer.spawn(cmd)?;
 
-        let timed_out = Arc::new(AtomicBool::new(false));
-
-        let timer_flag = timed_out.clone();
-        let timer = Timer::new(timeout, move || {
-            if child.kill().is_ok() {
-                timer_flag.store(true, Ordering::Relaxed);
-            }
-        });
+        let timer = Timer::new(timeout, move || child.kill());
 
         let recorder = Recorder {
             breakpoints: Breakpoints::default(),
@@ -61,9 +54,8 @@ impl<'c> Recorder<'c> {
         };
 
         let coverage = recorder.wait()?;
-        timer.cancel();
 
-        if timed_out.load(Ordering::Relaxed) {
+        if timer.timed_out() {
             Err(anyhow::format_err!(
                 "timed out creating recording after {}s",
                 timeout.as_secs_f64()
@@ -445,6 +437,7 @@ const MAX_POLL_PERIOD: Duration = Duration::from_millis(500);
 
 pub struct Timer {
     sender: mpsc::Sender<()>,
+    timed_out: Arc<AtomicBool>,
     _handle: thread::JoinHandle<()>,
 }
 
@@ -454,7 +447,9 @@ impl Timer {
         F: FnOnce() -> T + Send + 'static,
     {
         let (sender, receiver) = std::sync::mpsc::channel();
+        let timed_out = Arc::new(AtomicBool::new(false));
 
+        let set_timed_out = timed_out.clone();
         let _handle = thread::spawn(move || {
             let poll_period = Duration::min(timeout, MAX_POLL_PERIOD);
             let start = Instant::now();
@@ -471,11 +466,20 @@ impl Timer {
                 }
             }
 
+            set_timed_out.store(true, Ordering::SeqCst);
             // Timed out, so call back.
             on_timeout();
         });
 
-        Self { sender, _handle }
+        Self {
+            sender,
+            _handle,
+            timed_out,
+        }
+    }
+
+    pub fn timed_out(&self) -> bool {
+        self.timed_out.load(Ordering::SeqCst)
     }
 
     pub fn cancel(self) {
