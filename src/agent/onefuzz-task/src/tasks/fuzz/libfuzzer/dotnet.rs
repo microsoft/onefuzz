@@ -92,6 +92,8 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
     async fn extra_setup(config: &common::Config<Self>) -> Result<()> {
         // Download dotnet fuzzing tools.
         config.extra.tools.init_pull().await?;
+
+        // Ensure tools are executable.
         set_executable(&config.extra.tools.local_path).await?;
 
         // Use SharpFuzz to statically instrument the target assembly.
