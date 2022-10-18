@@ -46,7 +46,7 @@ impl<'c> Recorder<'c> {
         let timer_flag = timed_out.clone();
         let timer = Timer::new(timeout, move || {
             if child.kill().is_ok() {
-                timer_flag.as_ref().store(true, Ordering::Relaxed);
+                timer_flag.store(true, Ordering::Relaxed);
             }
         });
 
