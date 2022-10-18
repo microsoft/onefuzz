@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.16.0
+### Added
+* Documentation: Added OneFuzz logo to the README file. [#2340](https://github.com/microsoft/onefuzz/pull/2340)
+* Agent: Added try_insert function when building code coverage maps. [#2510](https://github.com/microsoft/onefuzz/pull/2510)
+### Changed
+* Documentation: Described the importance of using the right runtime identifier (RID) when building .NET binaries. [#2490](https://github.com/microsoft/onefuzz/pull/2490)
+* Service: Downgraded logging statement from `error` to `warn` and also included the http result code. [#2484](https://github.com/microsoft/onefuzz/pull/2484)
+* Service/CLI: Updated python dependencies. [#2470](https://github.com/microsoft/onefuzz/pull/2470)
+* Service: Updated the verbosity of `azcopy` logging to assist in debugging copy failures. [#2598](https://github.com/microsoft/onefuzz/pull/2498)
+* Agent/Supervisor/Proxy: Updated third-party Rust dependencies.[#2500](https://github.com/microsoft/onefuzz/pull/2500)
+* Service: Update the logic for checking if a blob exists before uploading to reduce contention during uploads. [#2503](https://github.com/microsoft/onefuzz/pull/2503)
+* Service: Changed the way we update the `scaleInProtection` on a scaleset node to minimize throttling. [#2505](https://github.com/microsoft/onefuzz/pull/2505)
+### Fixed
+* Service: Only fetch InstanceView data when required. This will reduce throttling by Azure.[#2506](https://github.com/microsoft/onefuzz/pull/2506)
+* Service: Fixed github notification queries in the C# implementation (currently not turned on). [#2513](https://github.com/microsoft/onefuzz/pull/2513), [#2514](https://github.com/microsoft/onefuzz/pull/2514)
+
 ## 5.15.1
 ### Added
 * Service: Added support for Jinja template migration to Scriban. [#2486](https://github.com/microsoft/onefuzz/pull/2486)
@@ -15,7 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Service: Use `InterpolatedStringHandler` to move values to `CustomDimensions` Tags [#2450](https://github.com/microsoft/onefuzz/pull/2450)
 * Service: C# Can create ADO notifications [#2456](https://github.com/microsoft/onefuzz/pull/2456), [#2458](https://github.com/microsoft/onefuzz/pull/2458)
-* ```
 * Service: C# Cache VMSS VM InstanceID lookups [#2464](https://github.com/microsoft/onefuzz/pull/2464)
 * CLI: Retry on connection reset [#2468](https://github.com/microsoft/onefuzz/pull/2468)
 * Agent: Enable backtraces for agent errors [#2437](https://github.com/microsoft/onefuzz/pull/2437)
