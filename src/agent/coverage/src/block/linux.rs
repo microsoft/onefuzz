@@ -5,7 +5,8 @@ use std::collections::BTreeMap;
 use std::convert::TryInto;
 use std::ffi::OsStr;
 use std::process::Command;
-use std::sync::mpsc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -40,7 +41,14 @@ impl<'c> Recorder<'c> {
         let mut tracer = Ptracer::new();
         let mut child = tracer.spawn(cmd)?;
 
-        let _timer = Timer::new(timeout, move || child.kill());
+        let timed_out = Arc::new(AtomicBool::new(false));
+
+        let timer_flag = timed_out.clone();
+        let timer = Timer::new(timeout, move || {
+            if child.kill().is_ok() {
+                timer_flag.as_ref().store(true, Ordering::Relaxed);
+            }
+        });
 
         let recorder = Recorder {
             breakpoints: Breakpoints::default(),
@@ -53,8 +61,16 @@ impl<'c> Recorder<'c> {
         };
 
         let coverage = recorder.wait()?;
+        timer.cancel();
 
-        Ok(coverage)
+        if timed_out.load(Ordering::Relaxed) {
+            Err(anyhow::format_err!(
+                "timed out creating recording after {}s",
+                timeout.as_secs_f64()
+            ))
+        } else {
+            Ok(coverage)
+        }
     }
 
     fn wait(mut self) -> Result<CommandBlockCov> {
