@@ -37,6 +37,15 @@ public class AgentRegistration {
 
         var machineId = request.OkV.MachineId;
 
+        if (machineId == Guid.Empty) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                new Error(
+                    ErrorCode.INVALID_REQUEST,
+                    new string[] { "'machine_id' query parameter must be provided" }),
+                "agent registration");
+        }
+
         var agentNode = await _context.NodeOperations.GetByMachineId(machineId);
         if (agentNode is null) {
             return await _context.RequestHandling.NotOk(

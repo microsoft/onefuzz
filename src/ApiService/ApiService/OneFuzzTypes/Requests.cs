@@ -301,7 +301,7 @@ public record AgentRegistrationPost(
     [property: Required] PoolName PoolName,
     [property: Required] Guid ScalesetId,
     [property: Required] Guid MachineId,
-    [property: Required] string Version,
-    Os? Os
+    Os? Os,
+    [property: Required] string Version = "1.0.0"
 ) : BaseRequest;
 
