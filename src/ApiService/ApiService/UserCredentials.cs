@@ -94,11 +94,11 @@ public class UserCredentials : IUserCredentials {
                 } else {
                     var tenantsStr = allowedTenants.OkV is null ? "null" : String.Join(';', allowedTenants.OkV!);
                     _log.Error($"issuer not from allowed tenant. issuer: {token.Issuer:Tag:Issuer} - tenants: {tenantsStr:Tag:Tenants}");
-                    return OneFuzzResult<UserInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unauthorized AAD issuer" });
+                    return OneFuzzResult<UserAuthInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unauthorized AAD issuer" });
                 }
             } else {
                 _log.Error($"Failed to get allowed tenants due to {allowedTenants.ErrorV:Tag:Error}");
-                return OneFuzzResult<UserInfo>.Error(allowedTenants.ErrorV);
+                return OneFuzzResult<UserAuthInfo>.Error(allowedTenants.ErrorV);
             }
         }
     }

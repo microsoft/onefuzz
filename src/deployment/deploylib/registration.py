@@ -313,22 +313,22 @@ def create_application_registration(
     return registered_app
 
 
-def authorize_and_assign_role(
-    onfuzz_app_id: UUID, registered_app_id: UUID, role: OnefuzzAppRole
-) -> None:
-    def try_authorize_application(data: Any) -> None:
-        authorize_application(
-            UUID(registered_app_id),
-            UUID(onfuzz_app_id),
-            subscription_id=subscription_id,
-        )
+# def authorize_and_assign_role(
+#     onfuzz_app_id: UUID, registered_app_id: UUID, role: OnefuzzAppRole, subscription_id:Optional[str]
+# ) -> None:
+#     def try_authorize_application(data: Any) -> None:
+#         authorize_application(
+#             registered_app_id,
+#             onfuzz_app_id,
+#             subscription_id=subscription_id,
+#         )
 
-    retry(try_authorize_application, "authorize application")
+#     retry(try_authorize_application, "authorize application")
 
-    def try_assign_instance_role(data: Any) -> None:
-        assign_instance_app_role(onefuzz_instance_name, name, subscription_id, role)
+#     def try_assign_instance_role(data: Any) -> None:
+#         assign_instance_app_role(onefuzz_instance_name, name, subscription_id, role)
 
-    retry(try_assign_instance_role, "assingn role")
+#     retry(try_assign_instance_role, "assingn role")
 
 
 def add_application_password(
