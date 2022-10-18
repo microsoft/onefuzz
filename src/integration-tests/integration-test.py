@@ -155,8 +155,10 @@ TARGETS: Dict[str, Integration] = {
     "linux-libfuzzer-dotnet-dll": Integration(
         template=TemplateType.libfuzzer_dotnet_dll,
         os=OS.linux,
-        target_exe="GoodBad.dll",
         setup_dir="GoodBadDotnet",
+        target_exe="GoodBad.dll",
+        target_class="GoodBad.Fuzzer",
+        target_method="TestInput",
         use_setup=True,
         wait_for_files={ContainerType.inputs: 2, ContainerType.crashes: 1, ContainerType.coverage: 1},
         test_repro=False,
@@ -232,8 +234,10 @@ TARGETS: Dict[str, Integration] = {
     "windows-libfuzzer-dotnet-dll": Integration(
         template=TemplateType.libfuzzer_dotnet_dll,
         os=OS.windows,
-        target_exe="GoodBad.dll",
         setup_dir="GoodBadDotnet",
+        target_exe="GoodBad.dll",
+        target_class="GoodBad.Fuzzer",
+        target_method="TestInput",
         use_setup=True,
         wait_for_files={ContainerType.inputs: 2, ContainerType.crashes: 1, ContainerType.coverage: 1},
         test_repro=False,
