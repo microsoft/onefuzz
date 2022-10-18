@@ -28,27 +28,9 @@ else
     fi
 fi
 
-function get_output_dir() {
-    platform=$(uname)
-    if [ "$platform" = "Linux" ]; then
-        # Linux builds are specific to distro/version, due to 
-        # dynamic linkage of OpenSSL (this is for compliance reasons)
-        distro=$(lsb_release --id --short)
-        version=$(lsb_release --release --short)
-        output_dir="artifacts/agent-Linux/$distro-$version"
-        mkdir -p "$output_dir"
-    else 
-        # Windows builds are shared
-        output_dir="artifacts/agent-$platform"
-    fi
-
-    mkdir -p "$output_dir"
-
-    # return absolute path
-    realpath "$output_dir"
-}
-
-output_dir=$(get_output_dir)
+platform=$(uname)
+output_dir=$(realpath "artifacts/agent-$platform")
+mkdir -p "$output_dir"
 
 cd src/agent
 
