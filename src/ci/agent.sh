@@ -29,8 +29,9 @@ else
 fi
 
 platform=$(uname)
-output_dir=$(realpath "artifacts/agent-$platform")
-mkdir -p "$output_dir"
+rel_output_dir="artifacts/agent-$platform"
+mkdir -p "$rel_output_dir"
+output_dir=$(realpath "$rel_output_dir")
 
 cd src/agent
 
