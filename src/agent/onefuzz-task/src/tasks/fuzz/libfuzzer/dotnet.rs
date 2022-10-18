@@ -102,14 +102,17 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
         let target_assembly = config.target_assembly().await?;
         cmd.arg(target_assembly);
 
-        let mut child = cmd.spawn()?;
-        let status = child.wait().await?;
+        cmd.stdout(std::process::Stdio::piped());
+        cmd.stderr(std::process::Stdio::piped());
 
-        if !status.success() {
+        let mut child = cmd.spawn()?;
+        let output = child.wait_with_output().await?;
+
+        if !output.status.success() {
             anyhow::bail!(
-                "error instrumenting assembly `{}`: {}",
+                "error instrumenting assembly `{}`: {:?}",
                 config.extra.target_assembly,
-                status,
+                output,
             );
         }
 
