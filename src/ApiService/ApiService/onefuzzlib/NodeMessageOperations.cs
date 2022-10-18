@@ -31,11 +31,10 @@ public class NodeMessageOperations : Orm<NodeMessage>, INodeMessageOperations {
     public async Async.Task ClearMessages(Guid machineId) {
         _logTracer.Info($"clearing messages for node {machineId:Tag:MachineId}");
 
-        await foreach (var message in GetMessage(machineId)) {
-            var r = await Delete(message);
-            if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete message for node {machineId:Tag:MachineId}");
-            }
+        var result = await DeleteAll(new (string?, string?)[] { (machineId.ToString(), null) });
+
+        if (result.FailureCount > 0) {
+            _logTracer.Error($"failed to delete {result.FailureCount:Tag:FailedDeleteMessageCount} messages for node {machineId:Tag:MachineId}");
         }
     }
 
