@@ -265,18 +265,58 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         public async Async.Task Process((string, string)[] notificationInfo) {
-            var seen = false;
-            await foreach (var workItem in ExistingWorkItems()) {
-                await UpdateExisting(workItem, notificationInfo);
-                seen = true;
-            }
+            var matchingWorkItems = ExistingWorkItems();
 
-            if (!seen) {
+            var nonDuplicate = matchingWorkItems
+                .Where(wi => !IsDuplicate(wi));
+
+            var numNonDuplicate = await nonDuplicate.CountAsync();
+
+            if (numNonDuplicate > 1) {
+                var extraTags = new[] {
+                    ("WorkItemIds", JsonSerializer.Serialize(nonDuplicate.Select(wi => wi.Id)))
+                };
+                extraTags = extraTags.AddRange(notificationInfo);
+
+                _logTracer.WithTags(extraTags).Info($"Found more than 1 matching, non-duplicate work item");
+                await foreach (var workItem in nonDuplicate) {
+                    await UpdateExisting(workItem, notificationInfo);
+                }
+            }
+            else if (numNonDuplicate == 1) {
+                await UpdateExisting(await nonDuplicate.SingleAsync(), notificationInfo);
+            }
+            // We have matching work items but all are duplicates
+            else if (await matchingWorkItems.AnyAsync()) {
+                _logTracer.WithTags(notificationInfo).Info($"All matching work items were duplicates, re-opening the oldest one");
+                var oldestWorkItem = await matchingWorkItems.OrderBy(wi => wi.Id).FirstAsync();
+                await UpdateExisting(oldestWorkItem, notificationInfo);
+
+                _ = await _client.AddCommentAsync(
+                    new CommentCreate() {
+                        Text = "This work item was re-opened because OneFuzz could only find related work items that have `Reason=Duplicate`."
+                    },
+                    _project,
+                    (int)oldestWorkItem.Id!);
+            }
+            // We never saw a work item like this before, it must be new
+            else {
                 var entry = await CreateNew();
                 var adoEventType = "AdoNewItem";
                 _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {entry.Id:Tag:WorkItemId}");
-
             }
+        }
+
+        private static bool IsDuplicate(WorkItem wi) {
+            // A work item could have System.State == Resolve && System.Reason == Duplicate
+            // OR it could have System.State == Closed && System.Reason == Duplicate
+            // I haven't found any other combinations where System.Reason could be duplicate but just to be safe
+            // we're explicitly _not_ checking the state of the work item to determine if it's duplicate
+            return string.Equals(wi.Fields["System.Reason"].ToString(), "Duplicate")
+            // Alternatively, the work item can also specify a 'relation' to another work item.
+            // This is typically used to create parent/child relationships between work items but can also
+            // Be used to mark duplicates so we should check this as well
+            || wi.Relations.Any(relation => relation.Rel.Contains("Duplicate"));
         }
     }
 }
