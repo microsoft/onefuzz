@@ -37,7 +37,7 @@ clickable, make it a link.
 
 # Example Config
 
-```json
+```jsonc
 {
   "config": {
     "base_url": "https://dev.azure.com/org_name",
