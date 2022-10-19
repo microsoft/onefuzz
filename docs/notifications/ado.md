@@ -57,7 +57,8 @@ clickable, make it a link.
       "comment": "Another <a href='{{ input_url }}'>POC</a> was found in <a href='{{ target_url }}'>target</a>. <br> <pre>{{ repro_cmd }}</pre>",
       "set_state": { "Resolved": "Active" },
       "ado_fields": {
-        "System.IterationPath": "Iteration\\Path\\Here2"
+        // set any fields that should be created or updated when a duplicate is detected,
+        // in the same format as the top-level ado_fields above
       },
       "increment": ["Microsoft.VSTS.Scheduling.StoryPoints"]
     }
