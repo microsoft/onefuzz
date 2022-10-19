@@ -262,6 +262,18 @@ public class Config : IConfig {
             }
         }
 
+        if (definition.Features.Contains(TaskFeature.TargetAssembly)) {
+            config.TargetAssembly = task.Config.Task.TargetAssembly;
+        }
+
+        if (definition.Features.Contains(TaskFeature.TargetClass)) {
+            config.TargetClass = task.Config.Task.TargetClass;
+        }
+
+        if (definition.Features.Contains(TaskFeature.TargetMethod)) {
+            config.TargetMethod = task.Config.Task.TargetMethod;
+        }
+
         return config;
     }
 
