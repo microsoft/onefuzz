@@ -4,8 +4,8 @@
 $SHARPFUZZ_REPO = 'https://github.com/Metalnem/sharpfuzz'
 $SHARPFUZZ_COMMIT = 'v2.0.0'
 
-$LIBFUZZER_DOTNET_REPO = 'https://github.com/Metalnem/libfuzzer-dotnet'
-$LIBFUZZER_DOTNET_COMMIT = '0c604829cf03bab89d7cd7c6a7fb226eb7256983'
+$LIBFUZZER_DOTNET_REPO = 'https://github.com/ranweiler/libfuzzer-dotnet'
+$LIBFUZZER_DOTNET_COMMIT = 'f534929c8535dd37156da2362004d28bb0e846d2'
 
 # Script below assumes an absolute path.
 $ARTIFACTS = "${env:GITHUB_WORKSPACE}/artifacts/third-party/dotnet-fuzzing-windows"
