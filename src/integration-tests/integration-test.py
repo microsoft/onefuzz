@@ -161,7 +161,12 @@ TARGETS: Dict[str, Integration] = {
         target_class="GoodBad.Fuzzer",
         target_method="TestInput",
         use_setup=True,
-        wait_for_files={ContainerType.inputs: 2, ContainerType.crashes: 1, ContainerType.coverage: 1},
+        wait_for_files={
+            ContainerType.inputs: 2,
+            ContainerType.coverage: 1,
+            ContainerType.crashes: 1,
+            ContainerType.unique_reports: 1,
+        },
         test_repro=False,
     ),
     "linux-libfuzzer-aarch64-crosscompile": Integration(
@@ -241,7 +246,12 @@ TARGETS: Dict[str, Integration] = {
         target_class="GoodBad.Fuzzer",
         target_method="TestInput",
         use_setup=True,
-        wait_for_files={ContainerType.inputs: 2, ContainerType.crashes: 1, ContainerType.coverage: 1},
+        wait_for_files={
+            ContainerType.inputs: 2,
+            ContainerType.coverage: 1,
+            ContainerType.crashes: 1,
+            ContainerType.unique_reports: 1,
+        },
         test_repro=False,
     ),
     "windows-trivial-crash": Integration(
