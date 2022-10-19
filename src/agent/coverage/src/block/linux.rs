@@ -5,7 +5,8 @@ use std::collections::BTreeMap;
 use std::convert::TryInto;
 use std::ffi::OsStr;
 use std::process::Command;
-use std::sync::mpsc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -40,7 +41,7 @@ impl<'c> Recorder<'c> {
         let mut tracer = Ptracer::new();
         let mut child = tracer.spawn(cmd)?;
 
-        let _timer = Timer::new(timeout, move || child.kill());
+        let timer = Timer::new(timeout, move || child.kill());
 
         let recorder = Recorder {
             breakpoints: Breakpoints::default(),
@@ -54,7 +55,14 @@ impl<'c> Recorder<'c> {
 
         let coverage = recorder.wait()?;
 
-        Ok(coverage)
+        if timer.timed_out() {
+            Err(anyhow::format_err!(
+                "timed out creating recording after {}s",
+                timeout.as_secs_f64()
+            ))
+        } else {
+            Ok(coverage)
+        }
     }
 
     fn wait(mut self) -> Result<CommandBlockCov> {
@@ -429,6 +437,7 @@ const MAX_POLL_PERIOD: Duration = Duration::from_millis(500);
 
 pub struct Timer {
     sender: mpsc::Sender<()>,
+    timed_out: Arc<AtomicBool>,
     _handle: thread::JoinHandle<()>,
 }
 
@@ -438,7 +447,9 @@ impl Timer {
         F: FnOnce() -> T + Send + 'static,
     {
         let (sender, receiver) = std::sync::mpsc::channel();
+        let timed_out = Arc::new(AtomicBool::new(false));
 
+        let set_timed_out = timed_out.clone();
         let _handle = thread::spawn(move || {
             let poll_period = Duration::min(timeout, MAX_POLL_PERIOD);
             let start = Instant::now();
@@ -455,11 +466,20 @@ impl Timer {
                 }
             }
 
+            set_timed_out.store(true, Ordering::SeqCst);
             // Timed out, so call back.
             on_timeout();
         });
 
-        Self { sender, _handle }
+        Self {
+            sender,
+            _handle,
+            timed_out,
+        }
+    }
+
+    pub fn timed_out(&self) -> bool {
+        self.timed_out.load(Ordering::SeqCst)
     }
 
     pub fn cancel(self) {
