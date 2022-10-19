@@ -188,7 +188,7 @@ public class Ado : NotificationsBase, IAdo {
                 var fieldValue = await Render(_config.OnDuplicate.AdoFields[field.Key]);
                 document.Add(new JsonPatchOperation() {
                     Operation = VisualStudio.Services.WebApi.Patch.Operation.Replace,
-                    Path = $"/fields/{field}",
+                    Path = $"/fields/{field.Key}",
                     Value = fieldValue
                 });
             }
