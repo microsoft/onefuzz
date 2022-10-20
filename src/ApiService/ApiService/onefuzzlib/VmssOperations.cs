@@ -413,16 +413,9 @@ public class VmssOperations : IVmssOperations {
 
     public IAsyncEnumerable<string> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter) {
         try {
-            var vmssId =
-                VirtualMachineScaleSetResource.CreateResourceIdentifier(
-                    _creds.GetSubscription(),
-                    _creds.GetBaseResourceGroup(),
-                    name.ToString());
-
             // have to assign to a typed variable so that the Where call can be disambiguated
             IAsyncEnumerable<VirtualMachineScaleSetVmResource> vms =
-                _creds.ArmClient.GetVirtualMachineScaleSetResource(vmssId)
-                .GetVirtualMachineScaleSetVms();
+                GetVmssResource(name).GetVirtualMachineScaleSetVms();
 
             return vms
                 .Where(vm => filter == null || filter(vm))
