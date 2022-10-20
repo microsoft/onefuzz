@@ -267,13 +267,13 @@ public class Ado : NotificationsBase, IAdo {
         public async Async.Task Process((string, string)[] notificationInfo) {
             var matchingWorkItems = ExistingWorkItems();
 
-            var nonDuplicate = matchingWorkItems
-                .Where(wi => !IsDuplicate(wi));
+            var nonDuplicateWorkItems = matchingWorkItems
+                .Where(wi => !IsADODuplicateWorkItem(wi));
 
-            var numNonDuplicate = await nonDuplicate.CountAsync();
+            var numNonDuplicateWorkItems = await nonDuplicateWorkItems.CountAsync();
 
-            if (numNonDuplicate > 1) {
-                var nonDuplicateWorkItemIds = nonDuplicate
+            if (numNonDuplicateWorkItems > 1) {
+                var nonDuplicateWorkItemIds = nonDuplicateWorkItems
                     .Select(wi => wi.Id)
                     .ToEnumerable();
 
@@ -288,11 +288,11 @@ public class Ado : NotificationsBase, IAdo {
                 extraTags.AddRange(notificationInfo);
 
                 _logTracer.WithTags(extraTags).Info($"Found more than 1 matching, non-duplicate work item");
-                await foreach (var workItem in nonDuplicate) {
+                await foreach (var workItem in nonDuplicateWorkItems) {
                     await UpdateExisting(workItem, notificationInfo);
                 }
-            } else if (numNonDuplicate == 1) {
-                await UpdateExisting(await nonDuplicate.SingleAsync(), notificationInfo);
+            } else if (numNonDuplicateWorkItems == 1) {
+                await UpdateExisting(await nonDuplicateWorkItems.SingleAsync(), notificationInfo);
             }
               // We have matching work items but all are duplicates
               else if (await matchingWorkItems.AnyAsync()) {
@@ -315,7 +315,7 @@ public class Ado : NotificationsBase, IAdo {
             }
         }
 
-        private static bool IsDuplicate(WorkItem wi) {
+        private static bool IsADODuplicateWorkItem(WorkItem wi) {
             // A work item could have System.State == Resolve && System.Reason == Duplicate
             // OR it could have System.State == Closed && System.Reason == Duplicate
             // I haven't found any other combinations where System.Reason could be duplicate but just to be safe
