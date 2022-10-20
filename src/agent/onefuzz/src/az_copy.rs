@@ -52,7 +52,6 @@ async fn read_azcopy_log_file(path: &Path) -> Result<String> {
     // There should 2 files in azcopy_log dir, one is the log file,
     // the other is scanning log file (added in 10.9.0)
     while let Some(file) = entries.next_entry().await? {
-        // There should 2 files in azcopy_log dir, one is the log file, the other is scanning log file (added in 10.9.0)
         if file.path().to_string_lossy().contains("scanning") {
             continue;
         }
