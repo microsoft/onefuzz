@@ -3,7 +3,7 @@
 
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
-use std::process::Output;
+use std::process::{Output, Stdio};
 
 use anyhow::Result;
 use tokio::fs;
@@ -14,6 +14,7 @@ pub async fn collect_exception_info(
     args: &[impl AsRef<OsStr>],
     env: impl IntoIterator<Item = (impl AsRef<OsStr>, impl AsRef<OsStr>)>,
 ) -> Result<Option<DotnetExceptionInfo>> {
+    // Create temp dir cooperatively.
     let tmp_dir = spawn_blocking(tempfile::tempdir).await??;
 
     let dump_path = tmp_dir.path().join(DUMP_FILE_NAME);
@@ -21,13 +22,14 @@ pub async fn collect_exception_info(
     let dump = match collect_dump(args, env, &dump_path).await? {
         Some(dump) => dump,
         None => {
+            warn!("no minidump found, expected at {}", dump_path.display());
             return Ok(None);
         }
     };
 
     let exception = dump.exception().await?;
 
-    // Remove temp dir without blocking.
+    // Remove temp dir cooperatively.
     spawn_blocking(move || tmp_dir).await?;
 
     Ok(exception)
@@ -35,15 +37,13 @@ pub async fn collect_exception_info(
 
 const DUMP_FILE_NAME: &str = "tmp.dmp";
 
-// Assumes `dotnet` >= 6.0.
-//
 // See: https://docs.microsoft.com/en-us/dotnet/core/diagnostics/dumps
-const ENABLE_MINIDUMP_VAR: &str = "DOTNET_DbgEnableMiniDump";
-const MINIDUMP_TYPE_VAR: &str = "DOTNET_DbgMiniDumpType";
-const MINIDUMP_NAME_VAR: &str = "DOTNET_DbgMiniDumpName";
+const ENABLE_MINIDUMP_VAR: &str = "COMPlus_DbgEnableMiniDump";
+const MINIDUMP_TYPE_VAR: &str = "COMPlus_DbgMiniDumpType";
+const MINIDUMP_NAME_VAR: &str = "COMPlus_DbgMiniDumpName";
 
 const MINIDUMP_ENABLE: &str = "1";
-const MINIDUMP_TYPE_NORMAL: &str = "1";
+const MINIDUMP_TYPE_HEAP: &str = "2";
 
 // Invoke target with .NET runtime environment vars set to create minidumps.
 //
@@ -55,14 +55,16 @@ async fn collect_dump(
 ) -> Result<Option<DotnetDumpFile>> {
     let dump_path = dump_path.as_ref();
 
-    let mut cmd = Command::new("dotnet");
+    let dotnet = dotnet_path()?;
+    let mut cmd = Command::new(dotnet);
     cmd.arg("exec");
     cmd.args(args);
 
     cmd.envs(env);
 
+    // Set `dotnet` environment vars to enable saving minidumps on crash.
     cmd.env(ENABLE_MINIDUMP_VAR, MINIDUMP_ENABLE);
-    cmd.env(MINIDUMP_TYPE_VAR, MINIDUMP_TYPE_NORMAL);
+    cmd.env(MINIDUMP_TYPE_VAR, MINIDUMP_TYPE_HEAP);
     cmd.env(MINIDUMP_NAME_VAR, dump_path);
 
     let mut child = cmd.spawn()?;
@@ -80,6 +82,8 @@ async fn collect_dump(
 
         Ok(Some(dump))
     } else {
+        warn!("target exited nonzero, but no dump file found");
+
         Ok(None)
     }
 }
@@ -102,12 +106,17 @@ impl DotnetDumpFile {
     }
 
     async fn exec_sos_command(&self, sos_cmd: &str) -> Result<Output> {
-        let mut cmd = Command::new("dotnet");
+        let dotnet_dump = dotnet_dump_path()?;
+        let mut cmd = Command::new(&dotnet_dump);
 
-        // Run `dotnet-analyze` with a single SOS command on startup, then exit
-        // the otherwise-interactive SOS session.
+        // Run `dotnet-dump analyze` with a single SOS command on startup, then
+        // exit the otherwise-interactive SOS session.
         let dump_path = self.path.display().to_string();
-        cmd.args(["dump", "analyze", &dump_path, "-c", sos_cmd, "-c", SOS_EXIT]);
+        let args = ["analyze", &dump_path, "-c", sos_cmd, "-c", SOS_EXIT];
+        cmd.args(args);
+
+        cmd.stderr(Stdio::piped());
+        cmd.stdout(Stdio::piped());
 
         let output = cmd.spawn()?.wait_with_output().await?;
 
@@ -227,6 +236,34 @@ pub fn parse_sos_print_exception_output(text: &str) -> Result<DotnetExceptionInf
 // https://docs.microsoft.com/en-us/dotnet/core/diagnostics/dotnet-dump#analyze-sos-commands
 const SOS_EXIT: &str = "exit";
 const SOS_PRINT_EXCEPTION: &str = "printexception -lines";
+
+fn dotnet_path() -> Result<PathBuf> {
+    let dotnet_root_dir = std::env::var("DOTNET_ROOT")?;
+
+    #[cfg(target_os = "windows")]
+    let exe_name = "dotnet.exe";
+
+    #[cfg(not(target_os = "windows"))]
+    let exe_name = "dotnet";
+
+    let exe_path = Path::new(&dotnet_root_dir).join(exe_name);
+
+    Ok(exe_path)
+}
+
+fn dotnet_dump_path() -> Result<PathBuf> {
+    let tools_dir = std::env::var("ONEFUZZ_TOOLS")?;
+
+    #[cfg(target_os = "windows")]
+    let exe_name = "dotnet-dump.exe";
+
+    #[cfg(not(target_os = "windows"))]
+    let exe_name = "dotnet-dump";
+
+    let exe_path = Path::new(&tools_dir).join(exe_name);
+
+    Ok(exe_path)
+}
 
 #[cfg(test)]
 mod tests;
