@@ -871,7 +871,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                     scaleset.ScalesetId,
                     (vmResource) => vmResource?.Data?.ProtectionPolicy?.ProtectFromScaleIn != null
                         && vmResource.Data.ProtectionPolicy.ProtectFromScaleIn.Value
-                ).ToListAsync();
+                );
 
                 _logTracer.Info($"{JsonSerializer.Serialize(vmsWithProtection):Tag:VMsWithProtection}");
                 if (vmsWithProtection != null) {
