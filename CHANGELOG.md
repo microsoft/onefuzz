@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Service: Produce an error if coverage recording failed due to a timeout. [#2529](https://github.com/microsoft/onefuzz/pull/2529)
 * Service: Fixed errors in ADO notifications to reduce duplicate bug-filing. [#2534](https://github.com/microsoft/onefuzz/pull/2534)
+* Service: Handle null values better in `ScalesetOperations` and `VmssOperations` when a scaleset is in shutdown state. [#2538](https://github.com/microsoft/onefuzz/pull/2538)
 
 ## 5.16.0
 ### Added
