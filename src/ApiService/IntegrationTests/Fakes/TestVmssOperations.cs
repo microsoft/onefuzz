@@ -48,7 +48,7 @@ sealed class TestVmssOperations : IVmssOperations {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<string> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter) {
+    public Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter) {
         throw new NotImplementedException();
     }
 
