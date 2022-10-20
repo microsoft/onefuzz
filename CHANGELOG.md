@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.17.0
+### Added
+Service: Add a `DeleteAll` operation to ORM that speeds up the deletion of multiple entities. [#2519](https://github.com/microsoft/onefuzz/pull/2519)
+### Changed
+Documentation: Remove suggestion to reset `IterationPath` upon duplicate. [#2533](https://github.com/microsoft/onefuzz/pull/2533)
+### Fixed
+Service: Produce an error if coverage recording failed due to a timeout. [#2529](https://github.com/microsoft/onefuzz/pull/2529)
+Service: Fixed errors in ADO notifications to reduce duplicate bug-filing. [#2534](https://github.com/microsoft/onefuzz/pull/2534)
+
 ## 5.16.0
 ### Added
 * Documentation: Added OneFuzz logo to the README file. [#2340](https://github.com/microsoft/onefuzz/pull/2340)
@@ -48,7 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Lowercase webhooks digest header value [#2471](https://github.com/microsoft/onefuzz/pull/2471)
 * Service: Fix C# Node state machine. [#2476](https://github.com/microsoft/onefuzz/pull/2476)
 * Service: Adding missing caching from python code [#2467](https://github.com/microsoft/onefuzz/pull/2467)
-
 
 ## 5.14.0
 ### Added
