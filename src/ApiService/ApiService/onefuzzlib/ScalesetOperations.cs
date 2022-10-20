@@ -874,7 +874,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 );
 
                 _logTracer.Info($"{JsonSerializer.Serialize(vmsWithProtection):Tag:VMsWithProtection}");
-                if (vmsWithProtection != null && vmsWithProtection.Any()) {
+                if (vmsWithProtection != null) {
                     var numVmsWithProtection = vmsWithProtection.Count;
                     profile.Capacity.Minimum = numVmsWithProtection.ToString();
                     profile.Capacity.Default = numVmsWithProtection.ToString();
