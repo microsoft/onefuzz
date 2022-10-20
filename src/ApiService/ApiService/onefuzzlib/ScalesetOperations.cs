@@ -866,10 +866,10 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 //   the scale set will have 0 instances,
                 //   and once the scale set is empty, we will delete it.
                 _logTracer.Info($"Getting nodes with scale in protection");
+                
                 var vmsWithProtection = await _context.VmssOperations.ListVmss(
                     scaleset.ScalesetId,
-                    (vmResource) => vmResource.Data.ProtectionPolicy.ProtectFromScaleIn != null
-                        && vmResource.Data.ProtectionPolicy.ProtectFromScaleIn.HasValue
+                    (vmResource) => vmResource?.Data?.ProtectionPolicy?.ProtectFromScaleIn != null
                         && vmResource.Data.ProtectionPolicy.ProtectFromScaleIn.Value
                 );
 
