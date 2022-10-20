@@ -28,14 +28,18 @@ jobs:
         os:
         - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-windows-2019" ]
         - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-18.04" ] 
+        #- [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-20.04" ] 
+        #- [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-22.04" ] 
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v2
     - name: Install specific Rust version
+      uses: actions-rs/toolchain@v1
       # note: keep this in sync with .devcontainer/Dockerfile
-      run: |
-        rustup default 1.64 
-        rustup component add clippy rustfmt llvm-tools-preview
+      with:
+        toolchain: 1.64
+        default: true
+        components: clippy, rustfmt, llvm-tools-preview
     - name: Get Rust version & build version
       shell: bash
       run: |
@@ -56,6 +60,11 @@ jobs:
         path: artifacts
         key: agent-artifacts|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/**/*') }}|${{hashFiles('src/ci/agent.sh')}}
         # note: also including the ACTIONS_CACHE_KEY_DATE to rebuild if the Prereq Cache is invalidated
+    - name: Linux Prereqs
+      if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
+      run: |
+        sudo apt-get -y update
+        sudo apt-get -y install libssl-dev libunwind-dev build-essential pkg-config
     - name: Rust Prereq Cache
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       uses: actions/cache@v2
@@ -80,18 +89,13 @@ jobs:
         key: agent|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/Cargo.lock') }}
         restore-keys: |
           agent|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|
-    - name: Linux Prereqs
-      if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
-      run: |
-        sudo apt-get -y update
-        sudo apt-get -y install libssl1.0-dev libunwind-dev
     - run: src/ci/agent.sh
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
       shell: bash
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        files: artifacts/lcov.info
+        directory: artifacts
     - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts
@@ -488,6 +492,7 @@ jobs:
           cp artifacts/agent-MINGW*/onefuzz_task.pdb src/deployment/tools/win64/
           cp artifacts/agent-Linux/onefuzz-agent src/deployment/tools/linux/
           cp artifacts/agent-Linux/onefuzz-task src/deployment/tools/linux/
+
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment
           cp artifacts/service-net/api-service-net.zip src/deployment
