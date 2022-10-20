@@ -417,7 +417,9 @@ public class VmssOperations : IVmssOperations {
     public async Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter) {
         try {
             var vmss = await _creds.GetResourceGroupResource().GetVirtualMachineScaleSetAsync(name.ToString());
-            return vmss.Value.GetVirtualMachineScaleSetVms().ToEnumerable()
+            return vmss.Value.GetVirtualMachineScaleSetVms()
+                .SelectAwait(async vm => vm.HasData ? vm : await vm.GetAsync())
+                .ToEnumerable()
                 .Where(vm => filter == null || filter(vm))
                 .Select(vm => vm.Data.InstanceId)
                 .ToList();
