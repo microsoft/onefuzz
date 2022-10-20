@@ -56,7 +56,7 @@ class TestScaleset(unittest.TestCase):
             Scaleset(
                 pool_name=PoolName("test-pool"),
                 vm_sku="Standard_D2ds_v4",
-                image="Canonical:UbuntuServer:18.04-LTS:latest",
+                image="Canonical:UbCanonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
                 region=Region("westus2"),
                 size=-1,
                 spot_instances=False,
@@ -65,7 +65,7 @@ class TestScaleset(unittest.TestCase):
         scaleset = Scaleset(
             pool_name=PoolName("test-pool"),
             vm_sku="Standard_D2ds_v4",
-            image="Canonical:UbuntuServer:18.04-LTS:latest",
+            image="Canonical:UbCanonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
             region=Region("westus2"),
             size=0,
             spot_instances=False,
@@ -75,7 +75,7 @@ class TestScaleset(unittest.TestCase):
         scaleset = Scaleset(
             pool_name=PoolName("test-pool"),
             vm_sku="Standard_D2ds_v4",
-            image="Canonical:UbuntuServer:18.04-LTS:latest",
+            image="Canonical:UbCanonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
             region=Region("westus2"),
             size=80,
             spot_instances=False,

@@ -682,7 +682,7 @@ If webhook is set to have Event Grid message format then the payload will look a
         "allowed_aad_tenants": [
             "00000000-0000-0000-0000-000000000000"
         ],
-        "default_linux_vm_image": "Canonical:UbuntuServer:18.04-LTS:latest",
+        "default_linux_vm_image": "Canonical:UbCanonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
         "default_windows_vm_image": "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
         "network_config": {
             "address_space": "10.0.0.0/8",
@@ -825,7 +825,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "object"
                 },
                 "default_linux_vm_image": {
-                    "default": "Canonical:UbuntuServer:18.04-LTS:latest",
+                    "default": "Canonical:UbCanonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
                     "title": "Default Linux Vm Image",
                     "type": "string"
                 },
@@ -2534,7 +2534,7 @@ If webhook is set to have Event Grid message format then the payload will look a
 
 ```json
 {
-    "image": "Canonical:UbuntuServer:18.04-LTS:latest",
+    "image": "Canonical:UbCanonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
     "pool_name": "example",
     "region": "eastus",
     "scaleset_id": "00000000-0000-0000-0000-000000000000",
@@ -6059,7 +6059,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "object"
                 },
                 "default_linux_vm_image": {
-                    "default": "Canonical:UbuntuServer:18.04-LTS:latest",
+                    "default": "Canonical:UbCanonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
                     "title": "Default Linux Vm Image",
                     "type": "string"
                 },
