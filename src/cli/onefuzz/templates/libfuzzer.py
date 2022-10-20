@@ -18,6 +18,12 @@ from . import JobHelper
 
 LIBFUZZER_MAGIC_STRING = b"ERROR: libFuzzer"
 
+# The loader DLL is managed, but links platform-specific code. Task VMs must pull the
+# tools container that matches their platform (which will contain the correct DLL).
+LIBFUZZER_DOTNET_LOADER_PATH = (
+    "{tools_dir}/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.dll"
+)
+
 
 class QemuArch(Enum):
     aarch64 = "aarch64"
@@ -536,7 +542,7 @@ class Libfuzzer(Command):
 
         pool = self.onefuzz.pools.get(pool_name)
         if pool.os != OS.linux:
-            raise Exception("libfuzzer-dotnet jobs are only compatable on linux")
+            raise Exception("libfuzzer-dotnet jobs are only compatible on linux")
 
         target_exe = File(os.path.join(setup_dir, harness))
         if not os.path.exists(target_exe):
@@ -544,7 +550,7 @@ class Libfuzzer(Command):
 
         assembly_path = os.path.join(setup_dir, target_harness)
         if not os.path.exists(assembly_path):
-            raise Exception(f"missing assembly: {assembly_path}")
+            raise Exception(f"missing assembly: {target_harness}")
 
         self._check_is_libfuzzer(target_exe)
         if target_options is None:
@@ -616,6 +622,207 @@ class Libfuzzer(Command):
             ensemble_sync_delay=ensemble_sync_delay,
             check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
+        )
+
+        self.logger.info("done creating tasks")
+        helper.wait()
+        return helper.job
+
+    def dotnet_dll(
+        self,
+        project: str,
+        name: str,
+        build: str,
+        pool_name: PoolName,
+        *,
+        setup_dir: Directory,
+        target_dll: File,
+        target_class: str,
+        target_method: str,
+        vm_count: int = 1,
+        inputs: Optional[Directory] = None,
+        reboot_after_setup: bool = False,
+        duration: int = 24,
+        target_workers: Optional[int] = None,
+        fuzzing_target_options: Optional[List[str]] = None,
+        target_env: Optional[Dict[str, str]] = None,
+        target_timeout: Optional[int] = None,
+        check_retry_count: Optional[int] = None,
+        tags: Optional[Dict[str, str]] = None,
+        wait_for_running: bool = False,
+        wait_for_files: Optional[List[ContainerType]] = None,
+        existing_inputs: Optional[Container] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
+        ensemble_sync_delay: Optional[int] = None,
+        colocate_all_tasks: bool = False,
+        colocate_secondary_tasks: bool = True,
+        expect_crash_on_failure: bool = False,
+    ) -> Optional[Job]:
+        pool = self.onefuzz.pools.get(pool_name)
+
+        # We _must_ proactively specify the OS based on pool.
+        #
+        # This is because managed DLLs are always (Windows-native) PE files, so the job
+        # helper's platform guess (based on the file type of `target_exe`) will always
+        # evaluate to `OS.windows`. In the case of true Linux `libfuzzer dotnet_dll` jobs,
+        # this leads to a client- side validation error when the helper checks the nominal
+        # target OS against the pool OS.
+        platform = pool.os
+
+        helper = JobHelper(
+            self.onefuzz,
+            self.logger,
+            project,
+            name,
+            build,
+            duration,
+            pool_name=pool_name,
+            target_exe=target_dll,
+            platform=platform,
+        )
+
+        target_dll_blob_name = helper.setup_relative_blob_name(target_dll, setup_dir)
+
+        target_env = target_env or {}
+
+        # Set target environment variables for `LibFuzzerDotnetLoader`.
+        target_env["LIBFUZZER_DOTNET_TARGET_ASSEMBLY"] = (
+            "{setup_dir}/" + target_dll_blob_name
+        )
+        target_env["LIBFUZZER_DOTNET_TARGET_CLASS"] = target_class
+        target_env["LIBFUZZER_DOTNET_TARGET_METHOD"] = target_method
+
+        helper.add_tags(tags)
+        helper.define_containers(
+            ContainerType.setup,
+            ContainerType.inputs,
+            ContainerType.crashes,
+            ContainerType.coverage,
+            ContainerType.reports,
+            ContainerType.unique_reports,
+            ContainerType.no_repro,
+        )
+
+        containers = helper.containers
+
+        if existing_inputs:
+            self.onefuzz.containers.get(existing_inputs)
+            helper.containers[ContainerType.inputs] = existing_inputs
+        else:
+            helper.define_containers(ContainerType.inputs)
+
+        # Assumes that `libfuzzer-dotnet` and supporting tools were uploaded upon deployment.
+        fuzzer_tools_container = Container(
+            "dotnet-fuzzing-linux" if platform == OS.linux else "dotnet-fuzzing-windows"
+        )
+
+        fuzzer_containers = [
+            (ContainerType.setup, containers[ContainerType.setup]),
+            (ContainerType.crashes, containers[ContainerType.crashes]),
+            (ContainerType.inputs, containers[ContainerType.inputs]),
+            (ContainerType.tools, fuzzer_tools_container),
+        ]
+
+        helper.create_containers()
+
+        helper.upload_setup(setup_dir, target_dll)
+
+        if inputs:
+            helper.upload_inputs(inputs)
+
+        helper.wait_on(wait_for_files, wait_for_running)
+
+        fuzzer_task = self.onefuzz.tasks.create(
+            helper.job.job_id,
+            TaskType.libfuzzer_dotnet_fuzz,
+            target_dll_blob_name,  # Not used
+            fuzzer_containers,
+            pool_name=pool_name,
+            reboot_after_setup=reboot_after_setup,
+            duration=duration,
+            vm_count=vm_count,
+            target_options=fuzzing_target_options,
+            target_env=target_env,
+            target_assembly=target_dll_blob_name,
+            target_class=target_class,
+            target_method=target_method,
+            target_workers=target_workers,
+            tags=tags,
+            debug=debug,
+            ensemble_sync_delay=ensemble_sync_delay,
+            expect_crash_on_failure=expect_crash_on_failure,
+            check_fuzzer_help=False,
+        )
+
+        # Ensure the fuzzing task starts before we schedule the coverage and
+        # crash reporting tasks (which are useless without it).
+        prereq_tasks = [fuzzer_task.task_id]
+
+        # Target options for the .NET harness produced by SharpFuzz, when _not_
+        # invoked as a child process of `libfuzzer-dotnet`. This harness has a
+        # `main()` function with one argument: the path to an input test case.
+        sharpfuzz_harness_target_options = ["{input}"]
+
+        # Set the path to the `LibFuzzerDotnetLoader` DLL.
+        #
+        # This provides a `main()` function that dynamically loads a target DLL
+        # passed via environment variables. This is assumed to be installed on
+        # the VMs.
+        libfuzzer_dotnet_loader_dll = LIBFUZZER_DOTNET_LOADER_PATH
+
+        coverage_containers = [
+            (ContainerType.setup, containers[ContainerType.setup]),
+            (ContainerType.coverage, containers[ContainerType.coverage]),
+            (ContainerType.readonly_inputs, containers[ContainerType.inputs]),
+            (ContainerType.tools, fuzzer_tools_container),
+        ]
+
+        self.logger.info("creating `dotnet_coverage` task")
+        self.onefuzz.tasks.create(
+            helper.job.job_id,
+            TaskType.dotnet_coverage,
+            libfuzzer_dotnet_loader_dll,
+            coverage_containers,
+            pool_name=pool_name,
+            duration=duration,
+            vm_count=1,
+            reboot_after_setup=reboot_after_setup,
+            target_options=sharpfuzz_harness_target_options,
+            target_env=target_env,
+            target_timeout=target_timeout,
+            tags=tags,
+            prereq_tasks=prereq_tasks,
+            debug=debug,
+            colocate=colocate_all_tasks or colocate_secondary_tasks,
+        )
+
+        report_containers = [
+            (ContainerType.setup, containers[ContainerType.setup]),
+            (ContainerType.crashes, containers[ContainerType.crashes]),
+            (ContainerType.reports, containers[ContainerType.reports]),
+            (ContainerType.unique_reports, containers[ContainerType.unique_reports]),
+            (ContainerType.no_repro, containers[ContainerType.no_repro]),
+            (ContainerType.tools, fuzzer_tools_container),
+        ]
+
+        self.logger.info("creating `dotnet_crash_report` task")
+        self.onefuzz.tasks.create(
+            helper.job.job_id,
+            TaskType.dotnet_crash_report,
+            libfuzzer_dotnet_loader_dll,
+            report_containers,
+            pool_name=pool_name,
+            duration=duration,
+            vm_count=1,
+            reboot_after_setup=reboot_after_setup,
+            target_options=sharpfuzz_harness_target_options,
+            target_env=target_env,
+            tags=tags,
+            prereq_tasks=prereq_tasks,
+            target_timeout=target_timeout,
+            check_retry_count=check_retry_count,
+            debug=debug,
+            colocate=colocate_all_tasks or colocate_secondary_tasks,
         )
 
         self.logger.info("done creating tasks")

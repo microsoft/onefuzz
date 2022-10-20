@@ -29,8 +29,6 @@ pub const CHECK_RETRY_COUNT: &str = "check_retry_count";
 pub const DISABLE_CHECK_QUEUE: &str = "disable_check_queue";
 pub const UNIQUE_REPORTS_DIR: &str = "unique_reports_dir";
 pub const COVERAGE_DIR: &str = "coverage_dir";
-#[cfg(any(target_os = "linux", target_os = "windows"))]
-pub const DOTNET_COVERAGE_DIR: &str = "dotnet_coverage_dir";
 pub const READONLY_INPUTS: &str = "readonly_inputs_dir";
 pub const CHECK_ASAN_LOG: &str = "check_asan_log";
 pub const TOOLS_DIR: &str = "tools_dir";
