@@ -868,7 +868,9 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 _logTracer.Info($"Getting nodes with scale in protection");
                 var vmsWithProtection = await _context.VmssOperations.ListVmss(
                     scaleset.ScalesetId,
-                    (vmResource) => vmResource.Data.ProtectionPolicy.ProtectFromScaleIn.HasValue && vmResource.Data.ProtectionPolicy.ProtectFromScaleIn.Value
+                    (vmResource) => vmResource.Data.ProtectionPolicy.ProtectFromScaleIn != null
+                        && vmResource.Data.ProtectionPolicy.ProtectFromScaleIn.HasValue
+                        && vmResource.Data.ProtectionPolicy.ProtectFromScaleIn.Value
                 );
 
                 _logTracer.Info($"{JsonSerializer.Serialize(vmsWithProtection):Tag:VMsWithProtection}");
