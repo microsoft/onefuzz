@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Documentation: Remove suggestion to reset `IterationPath` upon duplicate. [#2533](https://github.com/microsoft/onefuzz/pull/2533)
 * Service: Ignoring the scanning log file when reporting an issue with azcopy. [#2536](https://github.com/microsoft/onefuzz/pull/2536)
 ### Fixed
+* Deployment: Fix the OneFuzz web address that is used to generate the `input_url` for bug reporting. [#2543](https://github.com/microsoft/onefuzz/pull/2543)
 * Service: Produce an error if coverage recording failed due to a timeout. [#2529](https://github.com/microsoft/onefuzz/pull/2529)
 * Service: Fixed errors in ADO notifications to reduce duplicate bug-filing. [#2534](https://github.com/microsoft/onefuzz/pull/2534)
 * Service: Handle null values better in `ScalesetOperations` and `VmssOperations` when a scaleset is in shutdown state. [#2538](https://github.com/microsoft/onefuzz/pull/2538)
