@@ -515,7 +515,7 @@ public class VmssOperations : IVmssOperations {
     public async Async.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
         var result = await CheckCanUpdate(scalesetId);
         if (!result.IsOk) {
-            throw new Exception($"cannot delete nodes from scaleset {scalesetId:Tag:ScalesetId}: {result.ErrorV:Tag:Error}");
+            throw new Exception($"cannot delete nodes from scaleset {scalesetId} : {result.ErrorV}");
         }
 
         var instanceIds = new HashSet<string>();
