@@ -333,7 +333,7 @@ public record InstanceConfig
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
     string DefaultWindowsVmImage = "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
-    string DefaultLinuxVmImage = "Canonical:UbCanonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
+    string DefaultLinuxVmImage = "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
     string ProxyVmSku = "Standard_B2s",
     bool RequireAdminPrivileges = false,
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
@@ -349,7 +349,7 @@ public record InstanceConfig
         new NetworkSecurityGroupConfig(),
         null,
         "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
-        "Canonical:UbCanonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
+        "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
         "Standard_B2s",
         false
         ) { }

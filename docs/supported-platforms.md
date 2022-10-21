@@ -16,7 +16,7 @@ supporting tasks).  OneFuzz permits arbitrary choice of VM SKU and OS Image,
 including custom images.  We continuously test on Window 10 Pro x64 (using the 
 Azure OS image URN `MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest`)
 and Ubuntu 20.04 LTS x64 (using the Azure OS image URN 
-`Canonical:UbCanonical:0001-com-ubuntu-server-focal:20_04-lts:latest`).
+`Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest`).
 
 ### LibFuzzer Compilation
 

@@ -95,7 +95,7 @@ belongs to the pool:
 ```console
 $ onefuzz scalesets create my-pool $VM_COUNT
 {
-    "image": "Canonical:UbCanonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
+    "image": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
     "pool_name": "my-pool",
     "region": "eastus",
     "scaleset_id": "eb1e9602-4acf-40b8-9216-a5d598d27195",
