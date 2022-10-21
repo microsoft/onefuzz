@@ -417,7 +417,9 @@ public class VmssOperations : IVmssOperations {
     public async Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter) {
         try {
             var vmss = await _creds.GetResourceGroupResource().GetVirtualMachineScaleSetAsync(name.ToString());
-            return vmss.Value.GetVirtualMachineScaleSetVms().ToEnumerable()
+            return vmss.Value.GetVirtualMachineScaleSetVms()
+                .SelectAwait(async vm => vm.HasData ? vm : await vm.GetAsync())
+                .ToEnumerable()
                 .Where(vm => filter == null || filter(vm))
                 .Select(vm => vm.Data.InstanceId)
                 .ToList();
@@ -513,7 +515,7 @@ public class VmssOperations : IVmssOperations {
     public async Async.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
         var result = await CheckCanUpdate(scalesetId);
         if (!result.IsOk) {
-            throw new Exception($"cannot delete nodes from scaleset {scalesetId:Tag:ScalesetId}: {result.ErrorV:Tag:Error}");
+            throw new Exception($"cannot delete nodes from scaleset {scalesetId} : {result.ErrorV}");
         }
 
         var instanceIds = new HashSet<string>();
