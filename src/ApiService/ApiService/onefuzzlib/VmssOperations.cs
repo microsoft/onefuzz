@@ -262,6 +262,8 @@ public class VmssOperations : IVmssOperations {
             return OneFuzzResultVoid.Ok;
         } catch (RequestFailedException ex) when (ex.Status == 409 && ex.Message.StartsWith("The request failed due to conflict with a concurrent request")) {
             return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"protection policy update is already in progress: {vmId}:{instanceId} in vmss {scaleset.ScalesetId}");
+        } catch (RequestFailedException ex) when (ex.Status == 400 && ex.Message.Contains("The provided instanceId") && ex.Message.Contains("not an active Virtual Machine Scale Set VM instanceId.")) {
+            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"The node with instanceId {instanceId} no longer exists in scaleset {scaleset.ScalesetId}");
         } catch (Exception ex) {
             _log.Exception(ex, $"unable to set protection policy on: {vmId:Tag:MachineId}:{instanceId:Tag:InstanceId} in vmss {scaleset.ScalesetId:Tag:ScalesetId}");
             return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"unable to set protection policy on: {vmId}:{instanceId} in vmss {scaleset.ScalesetId}");
