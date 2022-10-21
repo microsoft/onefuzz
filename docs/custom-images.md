@@ -13,7 +13,7 @@ If you have a custom Windows VHD, you should follow the
 [Guide to prepare a VHD for Azure](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/prepare-for-upload-vhd-image).
 
 From there, rather than using Image SKUs such as
-`Canonical:UbCanonical:0001-com-ubuntu-server-focal:20_04-lts:latest`, use the full resource ID to the
+`Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest`, use the full resource ID to the
 shared image, such as
 `/subscriptions/MYSUBSCRIPTION/resourceGroups/MYGROUP/providers/Microsoft.Compute/galleries/MYGALLERY/images/MYDEFINITION/versions/MYVERSION`
 
