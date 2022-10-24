@@ -110,7 +110,7 @@ public class AgentRegistration {
         var version = uri["version"] ?? "1.0.0";
 
         var computerName = uri["computer_name"];
-        long? instanceId = null;
+        string? instanceId = null;
         if (computerName is not null) {
             instanceId = InstanceIds.InstanceIdFromComputerName(computerName);
         }
