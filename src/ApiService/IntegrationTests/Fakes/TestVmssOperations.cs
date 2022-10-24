@@ -64,7 +64,7 @@ sealed class TestVmssOperations : IVmssOperations {
         throw new NotImplementedException();
     }
 
-    public Task<OneFuzzResultVoid> UpdateScaleInProtection(Scaleset scaleset, Guid vmId, bool protectFromScaleIn) {
+    public Task<OneFuzzResultVoid> UpdateScaleInProtection(Scaleset scaleset, string instanceId, bool protectFromScaleIn) {
         throw new NotImplementedException();
     }
 }

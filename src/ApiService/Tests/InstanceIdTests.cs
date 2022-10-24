@@ -1,4 +1,4 @@
-using Microsoft.OneFuzz.Service;
+﻿using Microsoft.OneFuzz.Service;
 using Xunit;
 
 namespace Tests;
