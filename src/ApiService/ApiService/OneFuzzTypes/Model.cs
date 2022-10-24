@@ -100,8 +100,12 @@ public record Node
     DateTimeOffset? InitializedAt = null,
     NodeState State = NodeState.Init,
 
+    // InstanceId is always numeric, but the APIs
+    // deal with it as a string, so we keep it as
+    // a string internally.
+    string? InstanceId = null,
+
     Guid? ScalesetId = null,
-    long? InstanceId = null,
 
     bool ReimageRequested = false,
     bool DeleteRequested = false,

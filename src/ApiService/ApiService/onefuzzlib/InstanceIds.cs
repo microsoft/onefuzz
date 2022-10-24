@@ -14,14 +14,15 @@ public static class InstanceIds {
     // and instance ID 85 will have computer name "nsgvmss00002D".
     // https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-instance-ids#scale-set-vm-computer-name
     private static readonly Regex _instanceIdSuffix = new(@"[0-9a-zA-Z]{6}\z");
-    public static long? InstanceIdFromComputerName(string computerName) {
+    public static string? InstanceIdFromComputerName(string computerName) {
         var match = _instanceIdSuffix.Match(computerName);
         if (!match.Success) {
             return null;
         }
 
         try {
-            return ReadNumberInBase(match.ValueSpan, Base36);
+            var id = ReadNumberInBase(match.ValueSpan, Base36);
+            return id.ToString();
         } catch (FormatException) {
             return null;
         }
