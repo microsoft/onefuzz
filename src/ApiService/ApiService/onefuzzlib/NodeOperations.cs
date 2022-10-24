@@ -11,7 +11,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
 
     Task<bool> CanProcessNewWork(Node node);
 
-    Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node);
+    Task<OneFuzzResult<Node>> AcquireScaleInProtection(Node node);
     Task<OneFuzzResultVoid> ReleaseScaleInProtection(Node node);
 
     bool IsOutdated(Node node);
@@ -82,11 +82,12 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         : base(log, context) {
     }
 
-    public async Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node) {
-        if (node.ScalesetId is Guid scalesetId && await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
+    public async Task<OneFuzzResult<Node>> AcquireScaleInProtection(Node node) {
+        if (node.ScalesetId is Guid scalesetId &&
+            await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
+
             _logTracer.Info($"Setting scale-in protection on node {node.MachineId:Tag:MachineId}");
 
-            // try to use stored value, if present
             var instanceId = node.InstanceId;
             if (instanceId is null) {
                 var instanceIdResult = await _context.VmssOperations.GetInstanceId(scalesetId, node.MachineId);
@@ -95,26 +96,28 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
                 }
 
                 instanceId = instanceIdResult.OkV;
+
+                // update stored value so it will be present later
+                node = node with { InstanceId = instanceId };
+                _ = await Update(node); // result ignored: this is best-effort
             }
 
             var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, instanceId, protectFromScaleIn: true);
             if (!r.IsOk) {
                 _logTracer.Error(r.ErrorV);
             }
-
-            return r;
         }
 
-        return OneFuzzResultVoid.Ok;
+        return OneFuzzResult.Ok(node);
     }
 
     public async Task<OneFuzzResultVoid> ReleaseScaleInProtection(Node node) {
         if (!node.DebugKeepNode &&
             node.ScalesetId is Guid scalesetId &&
             await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
+
             _logTracer.Info($"Removing scale-in protection on node {node.MachineId:Tag:MachineId}");
 
-            // try to use stored value, if present
             var instanceId = node.InstanceId;
             if (instanceId is null) {
                 var instanceIdResult = await _context.VmssOperations.GetInstanceId(scalesetId, node.MachineId);
