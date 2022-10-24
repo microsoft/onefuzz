@@ -84,12 +84,24 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
     public async Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node) {
         if (node.ScalesetId is Guid scalesetId && await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
-
             _logTracer.Info($"Setting scale-in protection on node {node.MachineId:Tag:MachineId}");
-            var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, node.MachineId, protectFromScaleIn: true);
+
+            // try to use stored value, if present
+            var instanceId = node.InstanceId;
+            if (instanceId is null) {
+                var instanceIdResult = await _context.VmssOperations.GetInstanceId(scalesetId, node.MachineId);
+                if (!instanceIdResult.IsOk) {
+                    return instanceIdResult.ErrorV;
+                }
+
+                instanceId = instanceIdResult.OkV;
+            }
+
+            var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, instanceId, protectFromScaleIn: true);
             if (!r.IsOk) {
                 _logTracer.Error(r.ErrorV);
             }
+
             return r;
         }
 
@@ -101,7 +113,19 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             node.ScalesetId is Guid scalesetId &&
             await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
             _logTracer.Info($"Removing scale-in protection on node {node.MachineId:Tag:MachineId}");
-            var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, node.MachineId, protectFromScaleIn: false);
+
+            // try to use stored value, if present
+            var instanceId = node.InstanceId;
+            if (instanceId is null) {
+                var instanceIdResult = await _context.VmssOperations.GetInstanceId(scalesetId, node.MachineId);
+                if (!instanceIdResult.IsOk) {
+                    return instanceIdResult.ErrorV;
+                }
+
+                instanceId = instanceIdResult.OkV;
+            }
+
+            var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, instanceId, protectFromScaleIn: false);
             if (!r.IsOk) {
                 _logTracer.Error(r.ErrorV);
             }
@@ -123,12 +147,18 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             return null;
         }
 
-        var instanceId = await _context.VmssOperations.GetInstanceId(scalesetResult.OkV.ScalesetId, node.MachineId);
-        if (!instanceId.IsOk) {
-            return null;
+        // try to use stored value, if present
+        var instanceId = node.InstanceId;
+        if (instanceId is null) {
+            var instanceIdResult = await _context.VmssOperations.GetInstanceId(scalesetResult.OkV.ScalesetId, node.MachineId);
+            if (!instanceIdResult.IsOk) {
+                return null;
+            }
+
+            instanceId = instanceIdResult.OkV;
         }
 
-        return new NodeInfo(node, scalesetResult.OkV, instanceId.OkV);
+        return new NodeInfo(node, scalesetResult.OkV, instanceId);
     }
 
     public async Task<bool> CanProcessNewWork(Node node) {
