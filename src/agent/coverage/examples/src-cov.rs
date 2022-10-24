@@ -22,7 +22,7 @@ struct Opt {
     #[structopt(min_values = 2)]
     cmd: Vec<String>,
 
-    #[structopt(short, long, long_help = "Timeout in ms", default_value = "5000")]
+    #[structopt(short, long, long_help = "Timeout in ms", default_value = "120000")]
     timeout: u64,
 
     #[structopt(short = "x", long)]
