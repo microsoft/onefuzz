@@ -206,13 +206,14 @@ const REGISTRATION_RETRY_PERIOD: Duration = Duration::from_secs(60);
 impl Registration {
     pub async fn create(config: StaticConfig, managed: bool, timeout: Duration) -> Result<Self> {
         let token = config.credentials.access_token().await?;
-
+        let computer_name = onefuzz::machine_id::get_computer_name()?;
         let machine_id = onefuzz::machine_id::get_machine_id().await?;
 
         let mut url = config.register_url();
         url.query_pairs_mut()
             .append_pair("machine_id", &machine_id.to_string())
             .append_pair("pool_name", &config.pool_name)
+            .append_pair("computer_name", &computer_name)
             .append_pair("version", env!("ONEFUZZ_VERSION"));
 
         if managed {
@@ -245,7 +246,6 @@ impl Registration {
 
             match response.error_for_status_with_body().await {
                 Ok(response) => {
-                    let computer_name = onefuzz::machine_id::get_computer_name()?;
                     let dynamic_config: DynamicConfig = response.json().await?;
                     dynamic_config.save().await?;
                     return Ok(Self {

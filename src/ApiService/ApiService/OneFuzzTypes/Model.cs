@@ -101,6 +101,8 @@ public record Node
     NodeState State = NodeState.Init,
 
     Guid? ScalesetId = null,
+    long? InstanceId = null,
+
     bool ReimageRequested = false,
     bool DeleteRequested = false,
     bool DebugKeepNode = false
