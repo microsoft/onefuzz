@@ -3,16 +3,20 @@
 
 use std::{
     collections::HashMap,
+    env,
     path::{Path, PathBuf},
     sync::Arc,
 };
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
+use onefuzz::expand::Expand;
+use onefuzz::fs::set_executable;
 use onefuzz::{blob::BlobUrl, sha256, syncdir::SyncedDir};
 use reqwest::Url;
 use serde::Deserialize;
 use storage_queue::{Message, QueueClient};
+use tokio::fs;
 
 use crate::tasks::report::crash_report::*;
 use crate::tasks::report::dotnet::common::collect_exception_info;
@@ -37,6 +41,7 @@ pub struct Config {
     pub reports: Option<SyncedDir>,
     pub unique_reports: Option<SyncedDir>,
     pub no_repro: Option<SyncedDir>,
+    pub tools: SyncedDir,
 
     #[serde(default = "default_bool_true")]
     pub check_fuzzer_help: bool,
@@ -70,12 +75,22 @@ impl DotnetCrashReportTask {
     pub async fn run(&mut self) -> Result<()> {
         info!("starting dotnet crash report task");
 
+        self.config.tools.init_pull().await?;
+
+        set_executable(&self.config.tools.local_path).await?;
+
+        if let Some(crashes) = &self.config.crashes {
+            crashes.init().await?;
+        }
+
         if let Some(unique_reports) = &self.config.unique_reports {
             unique_reports.init().await?;
         }
+
         if let Some(reports) = &self.config.reports {
             reports.init().await?;
         }
+
         if let Some(no_repro) = &self.config.no_repro {
             no_repro.init().await?;
         }
@@ -111,6 +126,36 @@ impl AsanProcessor {
         })
     }
 
+    async fn target_exe(&self) -> Result<String> {
+        let tools_dir = self.config.tools.local_path.to_string_lossy().into_owned();
+
+        // Try to expand `target_exe` with support for `{tools_dir}`.
+        //
+        // Allows using `LibFuzzerDotnetLoader.exe` from a shared tools container.
+        let expand = Expand::new().tools_dir(tools_dir);
+        let expanded = expand.evaluate_value(&self.config.target_exe.to_string_lossy())?;
+        let expanded_path = Path::new(&expanded);
+
+        // Check if `target_exe` was resolved to an absolute path and an existing file.
+        // If so, then the user specified a `target_exe` under the `tools` dir.
+        let is_absolute = expanded_path.is_absolute();
+        let file_exists = fs::metadata(&expanded).await.is_ok();
+
+        if is_absolute && file_exists {
+            // We have found `target_exe`, so skip `setup`-relative expansion.
+            return Ok(expanded);
+        }
+
+        // We haven't yet resolved a local path for `target_exe`. Try the usual
+        // `setup`-relative interpretation of the configured value of `target_exe`.
+        let resolved = try_resolve_setup_relative_path(&self.config.common.setup_dir, expanded)
+            .await?
+            .to_string_lossy()
+            .into_owned();
+
+        Ok(resolved)
+    }
+
     pub async fn test_input(
         &self,
         input: &Path,
@@ -128,56 +173,71 @@ impl AsanProcessor {
 
         let job_id = self.config.common.task_id;
         let task_id = self.config.common.task_id;
-        let executable =
-            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
-                .await?;
 
-        let mut args = vec!["dotnet".to_owned(), executable.display().to_string()];
+        let target_exe = self.target_exe().await?;
+        let executable = PathBuf::from(&target_exe);
+
+        let mut args = vec![target_exe];
         args.extend(self.config.target_options.clone());
 
-        let env = self.config.target_env.clone();
+        let expand = Expand::new()
+            .input_path(input)
+            .setup_dir(&self.config.common.setup_dir);
+        let expanded_args = expand.evaluate(&args)?;
 
-        let crash_test_result = if let Some(exception) = collect_exception_info(&args, env).await? {
-            let call_stack_sha256 = stacktrace_parser::digest_iter(&exception.call_stack, None);
+        let env = {
+            let mut new = HashMap::new();
 
-            let crash_report = CrashReport {
-                input_sha256,
-                input_blob,
-                executable,
-                crash_type: exception.exception,
-                crash_site: exception.call_stack[0].clone(),
-                call_stack: exception.call_stack,
-                call_stack_sha256,
-                minimized_stack: None,
-                minimized_stack_sha256: None,
-                minimized_stack_function_names: None,
-                minimized_stack_function_names_sha256: None,
-                minimized_stack_function_lines: None,
-                minimized_stack_function_lines_sha256: None,
-                asan_log: None,
-                task_id,
-                job_id,
-                scariness_score: None,
-                scariness_description: None,
-                onefuzz_version: Some(env!("ONEFUZZ_VERSION").to_owned()),
-                tool_name: Some(DOTNET_DUMP_TOOL_NAME.to_owned()),
-                tool_version: None,
-            };
+            for (k, v) in &self.config.target_env {
+                let ev = expand.evaluate_value(v)?;
+                new.insert(k, ev);
+            }
 
-            crash_report.into()
-        } else {
-            let no_repro = NoCrash {
-                input_sha256,
-                input_blob,
-                executable,
-                job_id,
-                task_id,
-                tries: 1,
-                error: None,
-            };
-
-            no_repro.into()
+            new
         };
+
+        let crash_test_result =
+            if let Some(exception) = collect_exception_info(&expanded_args, env).await? {
+                let call_stack_sha256 = stacktrace_parser::digest_iter(&exception.call_stack, None);
+
+                let crash_report = CrashReport {
+                    input_sha256,
+                    input_blob,
+                    executable,
+                    crash_type: exception.exception,
+                    crash_site: exception.call_stack[0].clone(),
+                    call_stack: exception.call_stack,
+                    call_stack_sha256,
+                    minimized_stack: None,
+                    minimized_stack_sha256: None,
+                    minimized_stack_function_names: None,
+                    minimized_stack_function_names_sha256: None,
+                    minimized_stack_function_lines: None,
+                    minimized_stack_function_lines_sha256: None,
+                    asan_log: None,
+                    task_id,
+                    job_id,
+                    scariness_score: None,
+                    scariness_description: None,
+                    onefuzz_version: Some(env!("ONEFUZZ_VERSION").to_owned()),
+                    tool_name: Some(DOTNET_DUMP_TOOL_NAME.to_owned()),
+                    tool_version: None,
+                };
+
+                crash_report.into()
+            } else {
+                let no_repro = NoCrash {
+                    input_sha256,
+                    input_blob,
+                    executable,
+                    job_id,
+                    task_id,
+                    tries: 1,
+                    error: None,
+                };
+
+                no_repro.into()
+            };
 
         Ok(crash_test_result)
     }

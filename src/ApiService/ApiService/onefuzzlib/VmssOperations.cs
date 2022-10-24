@@ -262,6 +262,8 @@ public class VmssOperations : IVmssOperations {
             return OneFuzzResultVoid.Ok;
         } catch (RequestFailedException ex) when (ex.Status == 409 && ex.Message.StartsWith("The request failed due to conflict with a concurrent request")) {
             return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"protection policy update is already in progress: {vmId}:{instanceId} in vmss {scaleset.ScalesetId}");
+        } catch (RequestFailedException ex) when (ex.Status == 400 && ex.Message.Contains("The provided instanceId") && ex.Message.Contains("not an active Virtual Machine Scale Set VM instanceId.")) {
+            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"The node with instanceId {instanceId} no longer exists in scaleset {scaleset.ScalesetId}");
         } catch (Exception ex) {
             _log.Exception(ex, $"unable to set protection policy on: {vmId:Tag:MachineId}:{instanceId:Tag:InstanceId} in vmss {scaleset.ScalesetId:Tag:ScalesetId}");
             return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"unable to set protection policy on: {vmId}:{instanceId} in vmss {scaleset.ScalesetId}");
@@ -417,7 +419,9 @@ public class VmssOperations : IVmssOperations {
     public async Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter) {
         try {
             var vmss = await _creds.GetResourceGroupResource().GetVirtualMachineScaleSetAsync(name.ToString());
-            return vmss.Value.GetVirtualMachineScaleSetVms().ToEnumerable()
+            return vmss.Value.GetVirtualMachineScaleSetVms()
+                .SelectAwait(async vm => vm.HasData ? vm : await vm.GetAsync())
+                .ToEnumerable()
                 .Where(vm => filter == null || filter(vm))
                 .Select(vm => vm.Data.InstanceId)
                 .ToList();
@@ -513,7 +517,7 @@ public class VmssOperations : IVmssOperations {
     public async Async.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
         var result = await CheckCanUpdate(scalesetId);
         if (!result.IsOk) {
-            throw new Exception($"cannot delete nodes from scaleset {scalesetId:Tag:ScalesetId}: {result.ErrorV:Tag:Error}");
+            throw new Exception($"cannot delete nodes from scaleset {scalesetId} : {result.ErrorV}");
         }
 
         var instanceIds = new HashSet<string>();

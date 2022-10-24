@@ -70,7 +70,7 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       AzureSignalRConnectionString: signal_r_connection_string
       AzureSignalRServiceTransportType: 'Transient'
       ONEFUZZ_INSTANCE_NAME: instance_name
-      ONEFUZZ_INSTANCE: 'https://${name}.azurewebsites.net'
+      ONEFUZZ_INSTANCE: 'https://${instance_name}.azurewebsites.net'
       ONEFUZZ_RESOURCE_GROUP: resourceGroup().id
       ONEFUZZ_DATA_STORAGE: fuzz_storage_resource_id
       ONEFUZZ_FUNC_STORAGE: func_storage_resource_id

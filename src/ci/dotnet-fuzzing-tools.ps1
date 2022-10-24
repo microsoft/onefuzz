@@ -5,7 +5,7 @@ $SHARPFUZZ_REPO = 'https://github.com/Metalnem/sharpfuzz'
 $SHARPFUZZ_COMMIT = 'v2.0.0'
 
 $LIBFUZZER_DOTNET_REPO = 'https://github.com/Metalnem/libfuzzer-dotnet'
-$LIBFUZZER_DOTNET_COMMIT = '55d84f84b3540c864371e855c2a5ecb728865d97'
+$LIBFUZZER_DOTNET_COMMIT = 'ed148633f8df078cb2b0ba0ca30166aa72f1de90'
 
 # Script below assumes an absolute path.
 $ARTIFACTS = "${env:GITHUB_WORKSPACE}/artifacts/third-party/dotnet-fuzzing-windows"
@@ -20,12 +20,12 @@ mkdir $ARTIFACTS/sharpfuzz
 git clone $SHARPFUZZ_REPO sharpfuzz
 pushd sharpfuzz
 git checkout $SHARPFUZZ_COMMIT
-dotnet publish src/SharpFuzz.CommandLine -f net6.0 -c Release -o $ARTIFACTS/sharpfuzz --sc -r win10-x64
+dotnet publish src/SharpFuzz.CommandLine -f net6.0 -c Release -o $ARTIFACTS/sharpfuzz --self-contained -r win10-x64
 popd
 
 # Build SharpFuzz and our dynamic loader harness for `libfuzzer-dotnet`.
 pushd src/agent/LibFuzzerDotnetLoader
-dotnet publish . -c Release -o $ARTIFACTS/LibFuzzerDotnetLoader --sc -r win10-x64 -p:PublishSingleFile=true
+dotnet publish . -c Release -o $ARTIFACTS/LibFuzzerDotnetLoader --sc -r win10-x64
 popd
 
 # Build `libfuzzer-dotnet`.
