@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IAdo {
-    public Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool failTaskOnTransientError, Guid notificationId);
+    public Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool isLastRetryAttempt, Guid notificationId);
 
 }
 
@@ -15,7 +15,7 @@ public class Ado : NotificationsBase, IAdo {
     public Ado(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
 
-    public async Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool failTaskOnTransientError, Guid notificationId) {
+    public async Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool isLastRetryAttempt, Guid notificationId) {
         if (reportable is RegressionReport) {
             _logTracer.Info($"ado integration does not support regression report. container:{container:Tag:Container} filename:{filename:Tag:Filename}");
             return;
@@ -33,7 +33,7 @@ public class Ado : NotificationsBase, IAdo {
             await ado.Process(notificationInfo);
         } catch (Exception e)
               when (e is VssAuthenticationException || e is VssServiceException) {
-            if (!failTaskOnTransientError && IsTransient(e)) {
+            if (!isLastRetryAttempt && IsTransient(e)) {
                 _logTracer.Error($"transient ADO notification failure {report.JobId:Tag:JobId} {report.TaskId:Tag:TaskId} {container:Tag:Container} {filename:Tag:Filename}");
                 throw;
             } else {

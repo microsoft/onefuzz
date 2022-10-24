@@ -28,9 +28,9 @@ namespace ApiService.TestHooks {
 
             var container = query["container"];
             var fileName = query["fileName"];
-            var failTaskOnTransientError = UriExtension.GetBool("failTaskOnTransientError", query, true);
+            var isLastRetryAttempt = UriExtension.GetBool("isLastRetryAttempt", query, true);
 
-            await _notificationOps.NewFiles(Container.Parse(container), fileName, failTaskOnTransientError);
+            await _notificationOps.NewFiles(Container.Parse(container), fileName, isLastRetryAttempt);
             var resp = req.CreateResponse(HttpStatusCode.OK);
             return resp;
         }

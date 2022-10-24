@@ -47,7 +47,7 @@ public class QueueFileChanges {
         await FileAdded(_log, fileChangeEvent, lastTry);
     }
 
-    private async Async.Task FileAdded(ILogTracer log, JsonDocument fileChangeEvent, bool failTaskOnTransientError) {
+    private async Async.Task FileAdded(ILogTracer log, JsonDocument fileChangeEvent, bool isLastRetryAttempt) {
         var data = fileChangeEvent.RootElement.GetProperty("data");
         var url = data.GetProperty("url").GetString()!;
         var parts = url.Split("/").Skip(3).ToList();
@@ -56,6 +56,6 @@ public class QueueFileChanges {
         var path = string.Join('/', parts.Skip(1));
 
         log.Info($"file added : {container:Tag:Container} - {path:Tag:Path}");
-        await _notificationOperations.NewFiles(Container.Parse(container), path, failTaskOnTransientError);
+        await _notificationOperations.NewFiles(Container.Parse(container), path, isLastRetryAttempt);
     }
 }
