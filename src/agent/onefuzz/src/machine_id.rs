@@ -43,6 +43,14 @@ pub async fn get_ims_id() -> Result<Uuid> {
     Ok(value)
 }
 
+// Here we use the "computer name" terminology from the VMSS documentation: https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-instance-ids#scale-set-vm-computer-name
+// this is the hostname of the compute node.
+pub fn get_computer_name() -> Result<String> {
+    let hostname = hostname::get().context("getting hostname")?;
+    // we expect that Azure VM names should always be ASCII-only
+    Ok(hostname.to_string_lossy().into_owned())
+}
+
 pub async fn get_machine_name() -> Result<String> {
     let path = onefuzz_etc()?.join("machine_name");
     let body = match fs::read_to_string(&path).await {

@@ -197,6 +197,7 @@ pub struct Registration {
     pub config: StaticConfig,
     pub dynamic_config: DynamicConfig,
     pub machine_id: Uuid,
+    pub computer_name: String,
 }
 
 const DEFAULT_REGISTRATION_CREATE_TIMEOUT: Duration = Duration::from_secs(60 * 20);
@@ -244,12 +245,14 @@ impl Registration {
 
             match response.error_for_status_with_body().await {
                 Ok(response) => {
+                    let computer_name = onefuzz::machine_id::get_computer_name()?;
                     let dynamic_config: DynamicConfig = response.json().await?;
                     dynamic_config.save().await?;
                     return Ok(Self {
                         config,
                         dynamic_config,
                         machine_id,
+                        computer_name,
                     });
                 }
                 Err(err) if is_auth_error_code(status_code) => {
@@ -270,10 +273,12 @@ impl Registration {
     pub async fn load_existing(config: StaticConfig) -> Result<Self> {
         let dynamic_config = DynamicConfig::load().await?;
         let machine_id = onefuzz::machine_id::get_machine_id().await?;
+        let computer_name = onefuzz::machine_id::get_computer_name()?;
         let mut registration = Self {
             config,
             dynamic_config,
             machine_id,
+            computer_name,
         };
         registration.renew().await?;
         Ok(registration)

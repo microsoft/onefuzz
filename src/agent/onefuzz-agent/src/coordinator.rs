@@ -123,6 +123,7 @@ pub enum TaskState {
 pub struct CanScheduleRequest {
     machine_id: Uuid,
     task_id: Uuid,
+    computer_name: String,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -262,6 +263,7 @@ impl Coordinator {
         let envelope = CanScheduleRequest {
             machine_id: self.registration.machine_id,
             task_id,
+            computer_name: self.registration.computer_name.clone(),
         };
 
         debug!("checking if able to schedule task ID = {}", task_id);
