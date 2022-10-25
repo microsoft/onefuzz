@@ -41,7 +41,8 @@ from .azcopy import azcopy_copy, azcopy_sync
 
 _ACCESSTOKENCACHE_UMASK = 0o077
 
-ONEFUZZ_BASE_PATH = os.path.join("~", ".cache", "onefuzz")
+HOME_PATH = os.environ.get("VIRTUAL_ENV") if os.environ.get("VIRTUAL_ENV") else "~"
+ONEFUZZ_BASE_PATH = os.path.join(HOME_PATH, ".cache", "onefuzz")
 DEFAULT_CONFIG_PATH = os.path.join(ONEFUZZ_BASE_PATH, "config.json")
 DEFAULT_TOKEN_PATH = os.path.join(ONEFUZZ_BASE_PATH, "access_token.json")
 REQUEST_CONNECT_TIMEOUT = 30.0
