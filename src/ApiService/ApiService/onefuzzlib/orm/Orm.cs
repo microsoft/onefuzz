@@ -72,9 +72,8 @@ namespace ApiService.OneFuzzLib.Orm {
             if (response.IsError) {
                 return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
             } else {
-                // update ETag
+                // update ETag on success
                 entity.ETag = response.Headers.ETag;
-
                 return ResultVoid<(HttpStatusCode, string)>.Ok();
             }
         }
@@ -86,6 +85,8 @@ namespace ApiService.OneFuzzLib.Orm {
             if (response.IsError) {
                 return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
             } else {
+                // update ETag on success
+                entity.ETag = response.Headers.ETag;
                 return ResultVoid<(HttpStatusCode, string)>.Ok();
             }
         }
@@ -102,6 +103,8 @@ namespace ApiService.OneFuzzLib.Orm {
             if (response.IsError) {
                 return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
             } else {
+                // update ETag on success
+                entity.ETag = response.Headers.ETag;
                 return ResultVoid<(HttpStatusCode, string)>.Ok();
             }
         }
