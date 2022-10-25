@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using Azure;
@@ -14,10 +15,10 @@ namespace ApiService.OneFuzzLib.Orm {
         IAsyncEnumerable<T> QueryAsync(string? filter = null);
 
         Task<T> GetEntityAsync(string partitionKey, string rowKey);
-        Task<ResultVoid<(int, string)>> Insert(T entity);
-        Task<ResultVoid<(int, string)>> Replace(T entity);
-        Task<ResultVoid<(int, string)>> Update(T entity);
-        Task<ResultVoid<(int, string)>> Delete(T entity);
+        Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(T entity);
+        Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Replace(T entity);
+        Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Update(T entity);
+        Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Delete(T entity);
 
         Task<DeleteAllResult> DeleteAll(IEnumerable<(string?, string?)> keys);
 
@@ -62,34 +63,34 @@ namespace ApiService.OneFuzzLib.Orm {
 
         /// Inserts the entity into table storage.
         /// If successful, updates the ETag of the passed-in entity.
-        public async Task<ResultVoid<(int, string)>> Insert(T entity) {
+        public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(T entity) {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
             var response = await tableClient.AddEntityAsync(tableEntity);
 
 
             if (response.IsError) {
-                return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
+                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
             } else {
                 // update ETag
                 entity.ETag = response.Headers.ETag;
 
-                return ResultVoid<(int, string)>.Ok();
+                return ResultVoid<(HttpStatusCode, string)>.Ok();
             }
         }
 
-        public async Task<ResultVoid<(int, string)>> Replace(T entity) {
+        public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Replace(T entity) {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
             var response = await tableClient.UpsertEntityAsync(tableEntity, TableUpdateMode.Replace);
             if (response.IsError) {
-                return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
+                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
             } else {
-                return ResultVoid<(int, string)>.Ok();
+                return ResultVoid<(HttpStatusCode, string)>.Ok();
             }
         }
 
-        public async Task<ResultVoid<(int, string)>> Update(T entity) {
+        public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Update(T entity) {
             if (entity.ETag is null) {
                 throw new ArgumentException("ETag must be set when updating an entity", nameof(entity));
             }
@@ -99,9 +100,9 @@ namespace ApiService.OneFuzzLib.Orm {
 
             var response = await tableClient.UpdateEntityAsync(tableEntity, entity.ETag.Value);
             if (response.IsError) {
-                return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
+                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
             } else {
-                return ResultVoid<(int, string)>.Ok();
+                return ResultVoid<(HttpStatusCode, string)>.Ok();
             }
         }
 
@@ -118,14 +119,14 @@ namespace ApiService.OneFuzzLib.Orm {
             return tableClient.GetTableClient(tableName);
         }
 
-        public async Task<ResultVoid<(int, string)>> Delete(T entity) {
+        public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Delete(T entity) {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
             var response = await tableClient.DeleteEntityAsync(tableEntity.PartitionKey, tableEntity.RowKey);
             if (response.IsError) {
-                return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
+                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
             } else {
-                return ResultVoid<(int, string)>.Ok();
+                return ResultVoid<(HttpStatusCode, string)>.Ok();
             }
         }
 

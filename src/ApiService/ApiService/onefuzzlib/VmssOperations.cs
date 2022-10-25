@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Net;
+using System.Threading.Tasks;
 using Azure;
 using Azure.Core;
 using Azure.Data.Tables;
@@ -69,7 +70,7 @@ public class VmssOperations : IVmssOperations {
         var result = await r.DeleteAsync(WaitUntil.Started, forceDeletion: forceDeletion);
         var raw = result.GetRawResponse();
         if (raw.IsError) {
-            _log.WithHttpStatus((raw.Status, raw.ReasonPhrase)).Error($"Failed to delete vmss: {name:Tag:VmssName}");
+            _log.WithHttpStatus(((HttpStatusCode)raw.Status, raw.ReasonPhrase)).Error($"Failed to delete vmss: {name:Tag:VmssName}");
             return false;
         } else {
             return true;
