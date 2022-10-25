@@ -109,10 +109,10 @@ public class AgentRegistration {
 
         var version = uri["version"] ?? "1.0.0";
 
-        var computerName = uri["computer_name"];
+        var machineName = uri["machine_name"];
         string? instanceId = null;
-        if (computerName is not null) {
-            instanceId = InstanceIds.InstanceIdFromComputerName(computerName);
+        if (machineName is not null) {
+            instanceId = InstanceIds.InstanceIdFromMachineName(machineName);
         }
 
         _log.Info($"registration request: {machineId:Tag:MachineId} {poolName:Tag:PoolName} {scalesetId:Tag:ScalesetId} {version:Tag:Version}");
