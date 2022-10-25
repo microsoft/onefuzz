@@ -15,6 +15,12 @@ public class InstanceIdTests {
     }
 
     [Fact]
+    public void CanExtractInstanceIdFromComputerName() {
+        // pulled from actual example
+        Assert.Equal("1244", InstanceIds.InstanceIdFromComputerName("node0000YK"));
+    }
+
+    [Fact]
     public void Base36HasCorrectNumberOfEntries() {
         Assert.Equal(36, InstanceIds.Base36.Length);
     }
