@@ -24,7 +24,7 @@ public abstract class NotificationsBase {
         return setupFileName;
     }
 
-    protected class Renderer {
+    public class Renderer {
         private readonly Report _report;
         private readonly Container _container;
         private readonly string _filename;
@@ -96,8 +96,11 @@ public abstract class NotificationsBase {
         // TODO: This function is fallible but the python
         // implementation doesn't have that so I'm trying to match it.
         // We should probably propagate any errors up 
-        public async Async.Task<string> Render(string templateString, Uri instanceUrl) {
-            templateString = JinjaTemplateAdapter.IsJinjaTemplate(templateString) ? JinjaTemplateAdapter.AdaptForScriban(templateString) : templateString;
+        public async Async.Task<string> Render(string templateString, Uri instanceUrl, bool enableJinjaAdapter = true) {
+            // This would be a great starting point for feature flags 👀
+            if (enableJinjaAdapter) {
+                templateString = JinjaTemplateAdapter.IsJinjaTemplate(templateString) ? JinjaTemplateAdapter.AdaptForScriban(templateString) : templateString;
+            }
             var template = Template.Parse(templateString);
             if (template != null) {
                 return await template.RenderAsync(new {
