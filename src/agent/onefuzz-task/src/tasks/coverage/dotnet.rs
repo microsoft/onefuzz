@@ -30,7 +30,7 @@ use crate::tasks::{
 };
 
 const MAX_COVERAGE_RECORDING_ATTEMPTS: usize = 2;
-const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(600);
+const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(120);
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
