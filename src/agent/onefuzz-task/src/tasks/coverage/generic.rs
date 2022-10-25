@@ -300,7 +300,12 @@ impl<'a> TaskContext<'a> {
 
         let mut cmd = Command::new(&target_exe);
 
-        let target_options = expand.evaluate(&self.config.target_options)?;
+        let mut target_options = expand.evaluate(&self.config.target_options)?;
+
+        // HACK: if -runs=X is set for libfuzzer,
+        // override it to -runs=1 for coverage recording.
+        override_libfuzzer_runs_parameter(&mut target_options);
+
         cmd.args(target_options);
 
         for (k, v) in &self.config.target_env {
@@ -438,6 +443,12 @@ impl<'a> Processor for TaskContext<'a> {
     }
 }
 
+fn override_libfuzzer_runs_parameter(args: &mut Vec<String>) {
+    for runs_arg in args.iter_mut().filter(|arg| arg.starts_with("-runs=")) {
+        *runs_arg = "-runs=1".to_string();
+    }
+}
+
 #[derive(Default)]
 struct CoverageStats {
     covered: u64,
@@ -464,5 +475,24 @@ impl CoverageStats {
         }
 
         stats
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn runs_arg_is_overridden() {
+        let mut args = "-arg=other -runs=100 -arg=other -runs=100"
+            .split_ascii_whitespace()
+            .map(|s| s.to_string())
+            .collect();
+
+        override_libfuzzer_runs_parameter(&mut args);
+
+        let expected = "-arg=other -runs=1 -arg=other -runs=1";
+
+        assert_eq!(expected, args.join(" "));
     }
 }
