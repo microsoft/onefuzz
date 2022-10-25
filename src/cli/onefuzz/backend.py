@@ -41,7 +41,8 @@ from .azcopy import azcopy_copy, azcopy_sync
 
 _ACCESSTOKENCACHE_UMASK = 0o077
 
-HOME_PATH: str = os.environ.get("VIRTUAL_ENV") if os.environ.get("VIRTUAL_ENV") else "~"
+VIRTUAL_ENV = os.environ.get("VIRTUAL_ENV")
+HOME_PATH = VIRTUAL_ENV if VIRTUAL_ENV else "~"
 ONEFUZZ_CACHE = os.path.join(".onefuzz", "cache")
 ONEFUZZ_BASE_PATH = os.path.join(HOME_PATH, ONEFUZZ_CACHE)
 DEFAULT_CONFIG_PATH = os.path.join(ONEFUZZ_BASE_PATH, "config.json")
