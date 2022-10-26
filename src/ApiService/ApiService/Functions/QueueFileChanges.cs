@@ -12,6 +12,7 @@ public class QueueFileChanges {
     const int MAX_DEQUEUE_COUNT = 5;
 
     private const string QueueFileChangesPoisonQueueName = "file-changes-poison";
+    private const string QueueFileChangesQueueName = "file-changes";
 
     private readonly ILogTracer _log;
 
@@ -30,33 +31,10 @@ public class QueueFileChanges {
 
     [Function("QueueFileChanges")]
     public async Async.Task Run(
-        [QueueTrigger("file-changes", Connection = "AzureWebJobsStorage")] string msg,
+        [QueueTrigger(QueueFileChangesQueueName, Connection = "AzureWebJobsStorage")] string msg,
         int dequeueCount) {
         var fileChangeEvent = JsonSerializer.Deserialize<JsonDocument>(msg, EntityConverter.GetJsonSerializerOptions());
         var lastTry = dequeueCount == MAX_DEQUEUE_COUNT;
-
-        _ = fileChangeEvent ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
-
-        // check type first before calling Azure APIs
-        const string eventType = "eventType";
-        if (!fileChangeEvent.RootElement.TryGetProperty(eventType, out var eventTypeElement)
-            || eventTypeElement.GetString() != "Microsoft.Storage.BlobCreated") {
-            return;
-        }
-
-        const string topic = "topic";
-        if (!fileChangeEvent.RootElement.TryGetProperty(topic, out var topicElement)
-            || !_storage.CorpusAccounts().Contains(new ResourceIdentifier(topicElement.GetString()!))) {
-            return;
-        }
-
-        await FileAdded(_log, fileChangeEvent, lastTry);
-    }
-
-    [Function("QueueFileChangesPoison")]
-    public async Async.Task Poison(
-        [QueueTrigger(QueueFileChangesPoisonQueueName, Connection = "AzureWebJobsStorage")] string msg) {
-        var fileChangeEvent = JsonSerializer.Deserialize<JsonDocument>(msg, EntityConverter.GetJsonSerializerOptions());
 
         _ = fileChangeEvent ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
 
@@ -81,7 +59,8 @@ public class QueueFileChanges {
             // for queue based functions.
             await FileAdded(_log, fileChangeEvent, false);
         } catch {
-            await RequeueMessage(msg);
+            var queueLocation = lastTry ? QueueFileChangesPoisonQueueName : QueueFileChangesQueueName;
+            await RequeueMessage(msg, queueLocation);
         }
     }
 
@@ -97,7 +76,7 @@ public class QueueFileChanges {
         await _notificationOperations.NewFiles(Container.Parse(container), path, isLastRetryAttempt);
     }
 
-    private async Async.Task RequeueMessage(string msg) {
+    private async Async.Task RequeueMessage(string msg, string queueName) {
         var json = JsonNode.Parse(msg);
 
         // Messages that are 'manually' requeued by us as opposed to being requeued by the azure functions runtime
@@ -115,7 +94,7 @@ public class QueueFileChanges {
         }
 
         await _context.Queue.QueueObject(
-            QueueFileChangesPoisonQueueName,
+            queueName,
             json,
             StorageType.Config,
             CalculateExponentialBackoff(newCustomDequeueCount))
