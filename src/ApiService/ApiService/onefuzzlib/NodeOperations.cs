@@ -385,7 +385,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
         var node = new Node(poolName, machineId, poolId, version, ScalesetId: scaleSetId);
 
-        ResultVoid<(int, string)> r;
+        ResultVoid<(HttpStatusCode Status, string Reason)> r;
         if (isNew) {
             try {
                 r = await Insert(node);
