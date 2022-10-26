@@ -417,7 +417,10 @@ public class VmssOperations : IVmssOperations {
             IAsyncEnumerable<VirtualMachineScaleSetVmResource> vms =
                 GetVmssResource(name).GetVirtualMachineScaleSetVms();
 
-            return await vms.Where(vm => filter == null || filter(vm)).Select(vm => vm.Data.InstanceId).ToListAsync();
+            return await vms
+                .SelectAwait(async vm => vm.HasData ? vm : await vm.GetAsync())
+                .Where(vm => filter == null || filter(vm))
+                .Select(vm => vm.Data.InstanceId).ToListAsync();
         } catch (RequestFailedException ex) {
             _log.Exception(ex, $"cloud error listing vmss: {name:Tag:VmssName}");
             return null;
