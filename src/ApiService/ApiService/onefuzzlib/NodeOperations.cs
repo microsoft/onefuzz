@@ -11,7 +11,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
 
     Task<bool> CanProcessNewWork(Node node);
 
-    Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node);
+    Task<OneFuzzResult<Node>> AcquireScaleInProtection(Node node);
     Task<OneFuzzResultVoid> ReleaseScaleInProtection(Node node);
 
     bool IsOutdated(Node node);
@@ -82,26 +82,53 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         : base(log, context) {
     }
 
-    public async Task<OneFuzzResultVoid> AcquireScaleInProtection(Node node) {
-        if (node.ScalesetId is Guid scalesetId && await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
+    public async Task<OneFuzzResult<Node>> AcquireScaleInProtection(Node node) {
+        if (node.ScalesetId is Guid scalesetId &&
+            await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
 
             _logTracer.Info($"Setting scale-in protection on node {node.MachineId:Tag:MachineId}");
-            var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, node.MachineId, protectFromScaleIn: true);
+
+            var instanceId = node.InstanceId;
+            if (instanceId is null) {
+                var instanceIdResult = await _context.VmssOperations.GetInstanceId(scalesetId, node.MachineId);
+                if (!instanceIdResult.IsOk) {
+                    return instanceIdResult.ErrorV;
+                }
+
+                instanceId = instanceIdResult.OkV;
+
+                // update stored value so it will be present later
+                node = node with { InstanceId = instanceId };
+                _ = await Update(node); // result ignored: this is best-effort
+            }
+
+            var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, instanceId, protectFromScaleIn: true);
             if (!r.IsOk) {
                 _logTracer.Error(r.ErrorV);
             }
-            return r;
         }
 
-        return OneFuzzResultVoid.Ok;
+        return OneFuzzResult.Ok(node);
     }
 
     public async Task<OneFuzzResultVoid> ReleaseScaleInProtection(Node node) {
         if (!node.DebugKeepNode &&
             node.ScalesetId is Guid scalesetId &&
             await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
+
             _logTracer.Info($"Removing scale-in protection on node {node.MachineId:Tag:MachineId}");
-            var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, node.MachineId, protectFromScaleIn: false);
+
+            var instanceId = node.InstanceId;
+            if (instanceId is null) {
+                var instanceIdResult = await _context.VmssOperations.GetInstanceId(scalesetId, node.MachineId);
+                if (!instanceIdResult.IsOk) {
+                    return instanceIdResult.ErrorV;
+                }
+
+                instanceId = instanceIdResult.OkV;
+            }
+
+            var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, instanceId, protectFromScaleIn: false);
             if (!r.IsOk) {
                 _logTracer.Error(r.ErrorV);
             }
@@ -123,12 +150,18 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             return null;
         }
 
-        var instanceId = await _context.VmssOperations.GetInstanceId(scalesetResult.OkV.ScalesetId, node.MachineId);
-        if (!instanceId.IsOk) {
-            return null;
+        // try to use stored value, if present
+        var instanceId = node.InstanceId;
+        if (instanceId is null) {
+            var instanceIdResult = await _context.VmssOperations.GetInstanceId(scalesetResult.OkV.ScalesetId, node.MachineId);
+            if (!instanceIdResult.IsOk) {
+                return null;
+            }
+
+            instanceId = instanceIdResult.OkV;
         }
 
-        return new NodeInfo(node, scalesetResult.OkV, instanceId.OkV);
+        return new NodeInfo(node, scalesetResult.OkV, instanceId);
     }
 
     public async Task<bool> CanProcessNewWork(Node node) {

@@ -59,6 +59,9 @@ public class AgentCanSchedule {
             if (!scp.IsOk) {
                 _log.Warning($"Failed to acquire scale in protection for: {node.MachineId:Tag:MachineId} in: {node.PoolName:Tag:PoolName} due to {scp.ErrorV:Tag:Error}");
             }
+
+            _ = scp.OkV; // node could be updated but we don't use it after this
+
             allowed = scp.IsOk;
         }
 
