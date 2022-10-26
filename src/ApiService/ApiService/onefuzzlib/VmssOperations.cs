@@ -41,7 +41,7 @@ public interface IVmssOperations {
         string sshPublicKey,
         IDictionary<string, string> tags);
 
-    Async.Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter);
+    IAsyncEnumerable<VirtualMachineScaleSetVmResource> ListVmss(Guid name);
     Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
     Async.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
 }
@@ -411,22 +411,10 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    public async Async.Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter) {
-        try {
-            // have to assign to a typed variable so that the Where call can be disambiguated
-            IAsyncEnumerable<VirtualMachineScaleSetVmResource> vms =
-                GetVmssResource(name).GetVirtualMachineScaleSetVms();
-
-            return await vms
-                .SelectAwait(async vm => vm.HasData ? vm : await vm.GetAsync())
-                .Where(vm => filter == null || filter(vm))
-                .Select(vm => vm.Data.InstanceId)
-                .ToListAsync();
-        } catch (RequestFailedException ex) {
-            _log.Exception(ex, $"cloud error listing vmss: {name:Tag:VmssName}");
-            return null;
-        }
-    }
+    public IAsyncEnumerable<VirtualMachineScaleSetVmResource> ListVmss(Guid name)
+        => GetVmssResource(name)
+            .GetVirtualMachineScaleSetVms()
+            .SelectAwait(async vm => vm.HasData ? vm : await vm.GetAsync());
 
     public Async.Task<IReadOnlyList<string>> ListAvailableSkus(Region region)
         => _cache.GetOrCreateAsync<IReadOnlyList<string>>($"compute-skus-{region}", async entry => {
