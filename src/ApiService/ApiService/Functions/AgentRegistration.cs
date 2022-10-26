@@ -109,6 +109,12 @@ public class AgentRegistration {
 
         var version = uri["version"] ?? "1.0.0";
 
+        var machineName = uri["machine_name"];
+        string? instanceId = null;
+        if (machineName is not null) {
+            instanceId = InstanceIds.InstanceIdFromMachineName(machineName);
+        }
+
         _log.Info($"registration request: {machineId:Tag:MachineId} {poolName:Tag:PoolName} {scalesetId:Tag:ScalesetId} {version:Tag:Version}");
         var poolResult = await _context.PoolOperations.GetByName(poolName);
         if (!poolResult.IsOk) {
@@ -132,6 +138,7 @@ public class AgentRegistration {
             PoolId: pool.PoolId,
             MachineId: machineId,
             ScalesetId: scalesetId,
+            InstanceId: instanceId,
             Version: version);
 
         var r = await _context.NodeOperations.Replace(node);
