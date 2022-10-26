@@ -43,7 +43,7 @@ _ACCESSTOKENCACHE_UMASK = 0o077
 
 VIRTUAL_ENV = os.environ.get("VIRTUAL_ENV")
 HOME_PATH = VIRTUAL_ENV if VIRTUAL_ENV else "~"
-ONEFUZZ_CACHE = os.path.join(".onefuzz", "cache")
+ONEFUZZ_CACHE = os.path.join(".cache", "onefuzz")
 ONEFUZZ_BASE_PATH = os.path.join(HOME_PATH, ONEFUZZ_CACHE)
 DEFAULT_CONFIG_PATH = os.path.join(ONEFUZZ_BASE_PATH, "config.json")
 DEFAULT_TOKEN_PATH = os.path.join("~", ONEFUZZ_CACHE, "access_token.json")
