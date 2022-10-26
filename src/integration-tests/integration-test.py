@@ -76,6 +76,7 @@ class Integration(BaseModel):
     reboot_after_setup: Optional[bool] = Field(default=False)
     test_repro: Optional[bool] = Field(default=True)
     target_options: Optional[List[str]]
+    fuzzing_target_options: Optional[List[str]]
     inject_fake_regression: bool = Field(default=False)
     target_class: Optional[str]
     target_method: Optional[str]
@@ -114,7 +115,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.inputs: 2,
         },
         reboot_after_setup=True,
-        target_options=["-runs=10000000"],
+        fuzzing_target_options=["-runs=10000000"],
     ),
     "linux-libfuzzer-dlopen": Integration(
         template=TemplateType.libfuzzer,
@@ -382,6 +383,7 @@ class TestOnefuzz:
                     vm_count=1,
                     reboot_after_setup=config.reboot_after_setup or False,
                     target_options=config.target_options,
+                    fuzzing_target_options=config.fuzzing_target_options,
                 )
             elif config.template == TemplateType.libfuzzer_dotnet:
                 if setup is None:
