@@ -36,7 +36,7 @@ const COVERAGE_FILE: &str = "coverage.json";
 const SOURCE_COVERAGE_FILE: &str = "source-coverage.json";
 const MODULE_CACHE_FILE: &str = "module-cache.json";
 
-const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(5);
+const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(120);
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
