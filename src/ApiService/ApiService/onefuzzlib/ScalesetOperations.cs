@@ -636,20 +636,20 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             return;
         }
 
-        var machineIds = new HashSet<Guid>();
+        var nodesToReimage = new List<Node>();
         foreach (var node in nodes) {
             if (node.State != NodeState.Done) {
                 continue;
             }
 
             if (node.DebugKeepNode) {
-                _log.Warning($"not reimaging manually overriden node {node.MachineId:Tag:MachineId} in scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
+                _log.Warning($"not reimaging manually overridden node {node.MachineId:Tag:MachineId} in scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
             } else {
-                _ = machineIds.Add(node.MachineId);
+                nodesToReimage.Add(node);
             }
         }
 
-        if (!machineIds.Any()) {
+        if (!nodesToReimage.Any()) {
             _log.Info($"no nodes to reimage {scaleset.ScalesetId:Tag:ScalesetId}");
             return;
         }
@@ -657,18 +657,16 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         switch (disposalStrategy) {
             case NodeDisposalStrategy.Decommission:
                 _log.Info($"decommissioning nodes");
-                await Async.Task.WhenAll(nodes
-                    .Where(node => machineIds.Contains(node.MachineId))
+                await Async.Task.WhenAll(nodesToReimage
                     .Select(async node => {
                         await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
                     }));
                 return;
 
             case NodeDisposalStrategy.ScaleIn:
-                var r = await _context.VmssOperations.ReimageNodes(scaleset.ScalesetId, machineIds);
+                var r = await _context.VmssOperations.ReimageNodes(scaleset.ScalesetId, nodesToReimage);
                 if (r.IsOk) {
-                    await Async.Task.WhenAll(nodes
-                        .Where(node => machineIds.Contains(node.MachineId))
+                    await Async.Task.WhenAll(nodesToReimage
                         .Select(async node => {
                             var r = await _context.NodeOperations.ReleaseScaleInProtection(node);
                             if (r.IsOk) {
@@ -697,33 +695,32 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             return;
         }
 
-        HashSet<Guid> machineIds = new();
+        var nodesToDelete = new List<Node>();
         foreach (var node in nodes) {
             if (node.DebugKeepNode) {
-                _log.Warning($"not deleting manually overriden node {node.MachineId:Tag:MachineId} in scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
+                _log.Warning($"not deleting manually overridden node {node.MachineId:Tag:MachineId} in scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
             } else {
-                _ = machineIds.Add(node.MachineId);
+                nodesToDelete.Add(node);
             }
         }
 
         switch (disposalStrategy) {
             case NodeDisposalStrategy.Decommission:
                 _log.Info($"decommissioning nodes");
-                await Async.Task.WhenAll(nodes
-                    .Where(node => machineIds.Contains(node.MachineId))
+                await Async.Task.WhenAll(nodesToDelete
                     .Select(async node => {
                         await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
                     }));
                 return;
 
             case NodeDisposalStrategy.ScaleIn:
-                _log.Info($"deleting nodes {scaleset.ScalesetId:Tag:ScalesetId} {string.Join(", ", machineIds):Tag:MachineIds}");
-                await _context.VmssOperations.DeleteNodes(scaleset.ScalesetId, machineIds);
-                await Async.Task.WhenAll(nodes
-                    .Where(node => machineIds.Contains(node.MachineId))
+                _log.Info($"deleting nodes {scaleset.ScalesetId:Tag:ScalesetId} {string.Join(", ", nodesToDelete.Select(n => n.MachineId)):Tag:MachineIds}");
+                await _context.VmssOperations.DeleteNodes(scaleset.ScalesetId, nodesToDelete);
+                await Async.Task.WhenAll(nodesToDelete
                     .Select(async node => {
                         await _context.NodeOperations.Delete(node);
-                        await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
+                        // REMOVE?: don't need to release scale-in protection if we have deleted the node
+                        // await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
                     }));
                 return;
         }

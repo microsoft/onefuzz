@@ -42,8 +42,8 @@ public interface IVmssOperations {
         IDictionary<string, string> tags);
 
     IAsyncEnumerable<VirtualMachineScaleSetVmResource> ListVmss(Guid name);
-    Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
-    Async.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
+    Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IEnumerable<Node> nodes);
+    Async.Task DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes);
 }
 
 public class VmssOperations : IVmssOperations {
@@ -428,28 +428,43 @@ public class VmssOperations : IVmssOperations {
             return skuNames;
         });
 
-    public async Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
+    private async Async.Task<HashSet<string>> ResolveInstanceIds(Guid scalesetId, IEnumerable<Node> nodes) {
+
+        // only initialize this if we find a missing InstanceId
+        var machineToInstanceLazy = new Lazy<Task<IDictionary<Guid, string>>>(async () => {
+            var machineToInstance = await ListInstanceIds(scalesetId);
+            if (machineToInstance is null) {
+                throw new Exception($"cannot find nodes in scaleset {scalesetId}: scaleset does not exist");
+            }
+
+            return machineToInstance;
+        });
+
+        var instanceIds = new HashSet<string>();
+        foreach (var node in nodes) {
+            if (node.InstanceId is not null) {
+                _ = instanceIds.Add(node.InstanceId);
+                continue;
+            }
+            
+            var lookup = await machineToInstanceLazy.Value;
+            if (lookup.TryGetValue(node.MachineId, out var foundId)) {
+                _ = instanceIds.Add(foundId);
+            } else {
+                _log.Info($"unable to find instance ID for {scalesetId:Tag:ScalesetId} - {node.MachineId:Tag:VmId}");
+            }
+        }
+
+        return instanceIds;
+    }
+
+    public async Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IEnumerable<Node> nodes) {
         var result = await CheckCanUpdate(scalesetId);
         if (!result.IsOk) {
             return OneFuzzResultVoid.Error(result.ErrorV);
         }
 
-        var machineToInstance = await ListInstanceIds(scalesetId);
-        if (machineToInstance is null) {
-            return OneFuzzResultVoid.Error(
-                ErrorCode.UNABLE_TO_FIND,
-                new string[] { $"unable to find scaleset ${scalesetId}" });
-        }
-
-        var instanceIds = new HashSet<string>();
-        foreach (var machineId in machineIds) {
-            if (machineToInstance.TryGetValue(machineId, out var instanceId)) {
-                _ = instanceIds.Add(instanceId);
-            } else {
-                _log.Info($"unable to find instance ID for {scalesetId:Tag:ScalesetId} - {machineId:Tag:MachineId}");
-            }
-        }
-
+        var instanceIds = await ResolveInstanceIds(scalesetId, nodes);
         if (!instanceIds.Any()) {
             return OneFuzzResultVoid.Ok;
         }
@@ -489,26 +504,13 @@ public class VmssOperations : IVmssOperations {
         return OneFuzzResultVoid.Ok;
     }
 
-    public async Async.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
+    public async Async.Task DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes) {
         var result = await CheckCanUpdate(scalesetId);
         if (!result.IsOk) {
             throw new Exception($"cannot delete nodes from scaleset {scalesetId} : {result.ErrorV}");
         }
 
-        var machineToInstance = await ListInstanceIds(scalesetId);
-        if (machineToInstance is null) {
-            throw new Exception($"cannot delete nodes from scaleset {scalesetId} : scaleset does not exist");
-        }
-
-        var instanceIds = new HashSet<string>();
-        foreach (var machineId in machineIds) {
-            if (machineToInstance.TryGetValue(machineId, out var instanceId)) {
-                _ = instanceIds.Add(instanceId);
-            } else {
-                _log.Info($"unable to find instance ID for {scalesetId:Tag:ScalesetId} - {machineId:Tag:VmId}");
-            }
-        }
-
+        var instanceIds = await ResolveInstanceIds(scalesetId, nodes);
         if (!instanceIds.Any()) {
             return;
         }
