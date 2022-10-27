@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.ResourceManager.Compute;
+using Azure.ResourceManager.Monitor;
 using Azure.ResourceManager.Monitor.Models;
 namespace Microsoft.OneFuzz.Service;
 
@@ -840,8 +841,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         _logTracer.Info($"checking for existing auto scale settings {scaleset.ScalesetId:Tag:ScalesetId}");
 
         var autoScalePolicy = _context.AutoScaleOperations.GetAutoscaleSettings(scaleset.ScalesetId);
-        if (autoScalePolicy.IsOk && autoScalePolicy.OkV != null) {
-            foreach (var profile in autoScalePolicy.OkV.Data.Profiles) {
+        if (autoScalePolicy.IsOk && autoScalePolicy.OkV is AutoscaleSettingResource autoscaleSetting) {
+            foreach (var profile in autoscaleSetting.Data.Profiles) {
                 var queueUri = profile.Rules.First().MetricTrigger.MetricResourceId;
 
                 // Overwrite any existing scaling rules with one that will
@@ -867,23 +868,22 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 //   and once the scale set is empty, we will delete it.
                 _logTracer.Info($"Getting nodes with scale in protection");
 
-                var vmsWithProtection = await _context.VmssOperations.ListVmss(
-                    scaleset.ScalesetId,
-                    (vmResource) => vmResource?.Data?.ProtectionPolicy?.ProtectFromScaleIn != null
-                        && vmResource.Data.ProtectionPolicy.ProtectFromScaleIn.Value
-                );
+                try {
+                    var vmsWithProtection = await _context.VmssOperations
+                        .ListVmss(scaleset.ScalesetId)
+                        .Where(vmResource => vmResource.Data?.ProtectionPolicy?.ProtectFromScaleIn is true)
+                        .ToListAsync();
 
-                _logTracer.Info($"{JsonSerializer.Serialize(vmsWithProtection):Tag:VMsWithProtection}");
-                if (vmsWithProtection != null) {
+                    _logTracer.Info($"{JsonSerializer.Serialize(vmsWithProtection):Tag:VMsWithProtection}");
                     var numVmsWithProtection = vmsWithProtection.Count;
                     profile.Capacity.Minimum = numVmsWithProtection.ToString();
                     profile.Capacity.Default = numVmsWithProtection.ToString();
-                } else {
-                    _logTracer.Error($"Failed to list vmss for scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
+                } catch (Exception ex) {
+                    _logTracer.Exception(ex, $"Failed to list vmss for scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
                 }
             }
 
-            var updatedAutoScale = await _context.AutoScaleOperations.UpdateAutoscale(autoScalePolicy.OkV.Data);
+            var updatedAutoScale = await _context.AutoScaleOperations.UpdateAutoscale(autoscaleSetting.Data);
             if (!updatedAutoScale.IsOk) {
                 _logTracer.Error($"Failed to update auto scale {updatedAutoScale.ErrorV:Tag:Error}");
             }
