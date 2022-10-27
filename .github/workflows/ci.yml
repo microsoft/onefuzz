@@ -96,7 +96,7 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         directory: artifacts
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -105,7 +105,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: src/ci/azcopy.sh
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -155,7 +155,7 @@ jobs:
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/sdk/
         cp dist/*.tar.gz dist/*.whl ${GITHUB_WORKSPACE}/artifacts/sdk/
         cp dist/onefuzz.exe ${GITHUB_WORKSPACE}/artifacts/windows-cli/
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -218,7 +218,7 @@ jobs:
       with:
         python-version: 3.7
     - run: src/ci/onefuzztypes.sh
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -250,7 +250,7 @@ jobs:
           proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-
           proxy-${{ runner.os }}-
     - run: src/ci/proxy.sh
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -278,7 +278,7 @@ jobs:
         zip -r api-service.zip .
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/service
         cp api-service.zip ${GITHUB_WORKSPACE}/artifacts/service
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -363,7 +363,7 @@ jobs:
         zip -r api-service-net.zip .
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
         cp api-service-net.zip ${GITHUB_WORKSPACE}/artifacts/service-net
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -372,7 +372,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: src/ci/afl.sh
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -382,7 +382,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: src/ci/aflpp.sh
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -392,7 +392,7 @@ jobs:
     - uses: actions/checkout@v3
     - run: src/ci/dotnet-fuzzing-tools.sh
       shell: bash
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -402,7 +402,7 @@ jobs:
     - uses: actions/checkout@v3
     - run: src/ci/dotnet-fuzzing-tools.ps1
       shell: pwsh
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -419,7 +419,7 @@ jobs:
         path: artifacts
     - run: src/ci/radamsa-linux.sh
       if: steps.cache-radamsa-build-linux.outputs.cache-hit != 'true'
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -436,7 +436,7 @@ jobs:
         path: artifacts
     - run: c:\msys64\usr\bin\bash src/ci/radamsa-windows.sh
       if: steps.cache-radamsa-build-windows.outputs.cache-hit != 'true'
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -504,7 +504,7 @@ jobs:
           cp src/deployment/onefuzz-deployment*zip release-artifacts
           cp -r artifacts/sdk release-artifacts
           cp -r artifacts/windows-cli/onefuzz.exe release-artifacts/onefuzz-cli-$(./src/ci/get-version.sh).exe
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: release-artifacts
         path: release-artifacts
@@ -570,7 +570,7 @@ jobs:
           (cd GoodBad; dotnet publish -c Release -o out)
           mv GoodBad/out artifacts/GoodBadDotnet
 
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: integration-test-artifacts
         path: src/integration-tests/artifacts
@@ -645,7 +645,7 @@ jobs:
           make CFLAGS='-fsanitize=address -fno-omit-frame-pointer'
           cp fuzz.exe,fuzz.pdb,seeds ../artifacts/windows-trivial-crash-asan -Recurse
       shell: powershell
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: integration-test-artifacts
         path: src/integration-tests/artifacts
