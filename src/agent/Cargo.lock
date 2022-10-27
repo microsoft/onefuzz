@@ -52,8 +52,9 @@ dependencies = [
 
 [[package]]
 name = "appinsights"
-version = "0.2.2"
-source = "git+https://github.com/Porges/appinsights-rs?rev=8264e0236c7a2729c4af4a2ba0017ca0270d7d0e#8264e0236c7a2729c4af4a2ba0017ca0270d7d0e"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5b3773fc94205a9e8510d18d92d62ab78d7512363f6be1e17dfac35f017f808a"
 dependencies = [
  "async-trait",
  "chrono",
@@ -69,7 +70,7 @@ dependencies = [
  "serde_json",
  "sm",
  "tokio",
- "uuid 0.8.2",
+ "uuid 1.2.1",
 ]
 
 [[package]]
@@ -162,7 +163,7 @@ dependencies = [
  "serde_json",
  "time",
  "url",
- "uuid 1.1.2",
+ "uuid 1.2.1",
 ]
 
 [[package]]
@@ -187,7 +188,7 @@ dependencies = [
  "sha2",
  "time",
  "url",
- "uuid 1.1.2",
+ "uuid 1.2.1",
 ]
 
 [[package]]
@@ -210,7 +211,7 @@ dependencies = [
  "serde_json",
  "time",
  "url",
- "uuid 1.1.2",
+ "uuid 1.2.1",
 ]
 
 [[package]]
@@ -3525,9 +3526,9 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.1.2"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd6469f4314d5f1ffec476e05f17cc9a78bc7a27a6a857842170bdf8d6f98d2f"
+checksum = "feb41e78f93363bb2df8b0e86a2ca30eed7806ea16ea0c790d757cf93f79be83"
 dependencies = [
  "getrandom 0.2.3",
 ]
