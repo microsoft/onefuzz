@@ -32,7 +32,7 @@ jobs:
         #- [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-22.04" ] 
     runs-on: "${{ matrix.os }}"
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Install specific Rust version
       uses: actions-rs/toolchain@v1
       # note: keep this in sync with .devcontainer/Dockerfile
@@ -103,7 +103,7 @@ jobs:
   azcopy:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/azcopy.sh
     - uses: actions/upload-artifact@v2.2.2
       with:
@@ -112,7 +112,7 @@ jobs:
   check-pr:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/setup-python@v2
       with:
         python-version: 3.7
@@ -124,7 +124,7 @@ jobs:
     - onefuzztypes
     runs-on: windows-2019
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/set-versions.sh
       shell: bash
     - uses: actions/setup-python@v2
@@ -179,7 +179,7 @@ jobs:
   contrib-webhook-teams-service:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/setup-python@v2
       with:
         python-version: 3.8
@@ -197,7 +197,7 @@ jobs:
   deploy-onefuzz-via-azure-devops:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/setup-python@v2
       with:
         python-version: 3.8
@@ -212,7 +212,7 @@ jobs:
   onefuzztypes:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/set-versions.sh
     - uses: actions/setup-python@v2
       with:
@@ -225,7 +225,7 @@ jobs:
   proxy:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Rust Prereq Cache
       uses: actions/cache@v2
       id: cache-rust-prereqs
@@ -259,7 +259,7 @@ jobs:
     - onefuzztypes
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/set-versions.sh
     - uses: actions/setup-python@v2
       with:
@@ -305,7 +305,7 @@ jobs:
   service-net:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v2
       with:
@@ -370,7 +370,7 @@ jobs:
   afl:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/afl.sh
     - uses: actions/upload-artifact@v2.2.2
       with:
@@ -380,7 +380,7 @@ jobs:
   aflpp:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/aflpp.sh
     - uses: actions/upload-artifact@v2.2.2
       with:
@@ -389,7 +389,7 @@ jobs:
   dotnet-fuzzing-tools-linux:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/dotnet-fuzzing-tools.sh
       shell: bash
     - uses: actions/upload-artifact@v2.2.2
@@ -399,7 +399,7 @@ jobs:
   dotnet-fuzzing-tools-windows:
     runs-on: windows-2022
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/dotnet-fuzzing-tools.ps1
       shell: pwsh
     - uses: actions/upload-artifact@v2.2.2
@@ -409,7 +409,7 @@ jobs:
   radamsa-linux:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/cache@v3
       id: cache-radamsa-build-linux
       with:
@@ -426,7 +426,7 @@ jobs:
   radamsa-win64:
     runs-on: windows-2019
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/cache@v3
       id: cache-radamsa-build-windows
       with:
@@ -454,7 +454,7 @@ jobs:
     - radamsa-win64
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/download-artifact@v3
       with:
         name: build-artifacts
@@ -511,7 +511,7 @@ jobs:
   build-integration-tests-linux:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: |
           set -ex
           cd src/integration-tests
@@ -577,7 +577,7 @@ jobs:
   build-integration-tests-windows:
     runs-on: windows-2019
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
           $ProgressPreference = 'SilentlyContinue'
@@ -669,7 +669,7 @@ jobs:
       - radamsa-linux
       - radamsa-win64
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
           name: build-artifacts
