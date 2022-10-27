@@ -514,6 +514,11 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         //ground truth of existing nodes
         var azureNodes = await _context.VmssOperations.ListInstanceIds(scaleSet.ScalesetId);
+        if (azureNodes is null) {
+            // didn't find scaleset
+            return (false, scaleSet);
+        }
+
         var nodes = _context.NodeOperations.SearchStates(scalesetId: scaleSet.ScalesetId);
 
         //# Nodes do not exists in scalesets but in table due to unknown failure
@@ -615,7 +620,6 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
 
     public async Async.Task ReimageNodes(Scaleset scaleset, IEnumerable<Node> nodes, NodeDisposalStrategy disposalStrategy) {
-
         if (nodes is null || !nodes.Any()) {
             _log.Info($"no nodes to reimage: {scaleset.ScalesetId:Tag:ScalesetId}");
             return;

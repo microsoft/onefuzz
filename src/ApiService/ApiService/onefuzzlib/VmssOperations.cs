@@ -21,7 +21,7 @@ public interface IVmssOperations {
 
     Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null);
 
-    Async.Task<IDictionary<Guid, string>> ListInstanceIds(Guid name);
+    Async.Task<IDictionary<Guid, string>?> ListInstanceIds(Guid name);
 
     Async.Task<long?> GetVmssSize(Guid name);
 
@@ -51,7 +51,6 @@ public class VmssOperations : IVmssOperations {
     private readonly ICreds _creds;
     private readonly IImageOperations _imageOps;
     private readonly IServiceConfig _serviceConfig;
-    private readonly IOnefuzzContext _context;
     private readonly IMemoryCache _cache;
 
 
@@ -60,9 +59,7 @@ public class VmssOperations : IVmssOperations {
         _creds = context.Creds;
         _imageOps = context.ImageOperations;
         _serviceConfig = context.ServiceConfiguration;
-        _context = context;
         _cache = cache;
-
     }
 
     public async Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null) {
@@ -161,37 +158,24 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    public async Async.Task<IDictionary<Guid, string>> ListInstanceIds(Guid name) {
+    public async Async.Task<IDictionary<Guid, string>?> ListInstanceIds(Guid name) {
         _log.Verbose($"get instance IDs for scaleset {name:Tag:VmssName}");
-        var results = new Dictionary<Guid, string>();
-        VirtualMachineScaleSetResource res;
         try {
-            var r = await GetVmssResource(name).GetAsync();
-            res = r.Value;
-        } catch (Exception ex) when (ex is RequestFailedException) {
-            _log.Verbose($"vm does not exist {name:Tag:VmssName}");
-            return results;
-        }
-
-        if (res is null) {
-            _log.Verbose($"vm does not exist {name:Tag:VmssName}");
-            return results;
-        } else {
-            try {
-                await foreach (var instance in res.GetVirtualMachineScaleSetVms()) {
-                    if (instance is not null) {
-                        if (Guid.TryParse(instance.Data.VmId, out var key)) {
-                            results[key] = instance.Data.InstanceId;
-                        } else {
-                            _log.Error($"failed to convert vmId {instance.Data.VmId:Tag:VmId} to Guid in {name:Tag:VmssName}");
-                        }
+            var results = new Dictionary<Guid, string>();
+            await foreach (var instance in GetVmssResource(name).GetVirtualMachineScaleSetVms()) {
+                if (instance is not null) {
+                    if (Guid.TryParse(instance.Data.VmId, out var machineId)) {
+                        results[machineId] = instance.Data.InstanceId;
+                    } else {
+                        _log.Error($"failed to convert vmId {instance.Data.VmId:Tag:VmId} to Guid in {name:Tag:VmssName}");
                     }
                 }
-            } catch (Exception ex) when (ex is RequestFailedException || ex is CloudException) {
-                _log.Exception(ex, $"vm does not exist {name:Tag:VmssName}");
             }
+            return results;
+        } catch (RequestFailedException ex) when (ex.Status == 404) {
+            _log.Exception(ex, $"scaleset does not exist {name:Tag:VmssName}");
+            return null;
         }
-        return results;
     }
 
     private record InstanceIdKey(Guid Scaleset, Guid VmId);
@@ -450,8 +434,14 @@ public class VmssOperations : IVmssOperations {
             return OneFuzzResultVoid.Error(result.ErrorV);
         }
 
-        var instanceIds = new HashSet<string>();
         var machineToInstance = await ListInstanceIds(scalesetId);
+        if (machineToInstance is null) {
+            return OneFuzzResultVoid.Error(
+                ErrorCode.UNABLE_TO_FIND,
+                new string[] { $"unable to find scaleset ${scalesetId}" });
+        }
+
+        var instanceIds = new HashSet<string>();
         foreach (var machineId in machineIds) {
             if (machineToInstance.TryGetValue(machineId, out var instanceId)) {
                 _ = instanceIds.Add(instanceId);
@@ -505,8 +495,12 @@ public class VmssOperations : IVmssOperations {
             throw new Exception($"cannot delete nodes from scaleset {scalesetId} : {result.ErrorV}");
         }
 
-        var instanceIds = new HashSet<string>();
         var machineToInstance = await ListInstanceIds(scalesetId);
+        if (machineToInstance is null) {
+            throw new Exception($"cannot delete nodes from scaleset {scalesetId} : scaleset does not exist");
+        }
+
+        var instanceIds = new HashSet<string>();
         foreach (var machineId in machineIds) {
             if (machineToInstance.TryGetValue(machineId, out var instanceId)) {
                 _ = instanceIds.Add(instanceId);
