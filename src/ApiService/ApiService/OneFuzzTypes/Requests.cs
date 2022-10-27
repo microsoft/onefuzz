@@ -290,3 +290,19 @@ public record WebhookUpdate(
 public record InstanceConfigUpdate(
     [property: Required] InstanceConfig config
 ) : BaseRequest;
+
+
+public record AgentRegistrationGet(
+    [property: Required] Guid MachineId
+) : BaseRequest;
+
+
+public record AgentRegistrationPost(
+    [property: Required] PoolName PoolName,
+    Guid? ScalesetId,
+    [property: Required] Guid MachineId,
+    Os? Os,
+    string? MachineName,
+    [property: Required] string Version = "1.0.0"
+) : BaseRequest;
+
