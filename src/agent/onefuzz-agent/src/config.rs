@@ -205,12 +205,13 @@ const REGISTRATION_RETRY_PERIOD: Duration = Duration::from_secs(60);
 impl Registration {
     pub async fn create(config: StaticConfig, managed: bool, timeout: Duration) -> Result<Self> {
         let token = config.credentials.access_token().await?;
-
+        let machine_name = onefuzz::machine_id::get_machine_name().await?;
         let machine_id = onefuzz::machine_id::get_machine_id().await?;
 
         let mut url = config.register_url();
         url.query_pairs_mut()
             .append_pair("machine_id", &machine_id.to_string())
+            .append_pair("machine_name", &machine_name)
             .append_pair("pool_name", &config.pool_name)
             .append_pair("version", env!("ONEFUZZ_VERSION"))
             .append_pair("os", std::env::consts::OS);

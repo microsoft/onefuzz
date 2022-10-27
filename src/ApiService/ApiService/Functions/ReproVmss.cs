@@ -114,7 +114,7 @@ public class ReproVmss {
         var updatedRepro = vm with { State = VmState.Stopping };
         var r = await _context.ReproOperations.Replace(updatedRepro);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV!).Error($"Failed to replace repro {updatedRepro.VmId:Tag:VmId}");
+            _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace repro {updatedRepro.VmId:Tag:VmId}");
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);

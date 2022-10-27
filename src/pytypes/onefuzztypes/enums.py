@@ -82,6 +82,9 @@ class TaskFeature(Enum):
     minimized_stack_depth = "minimized_stack_depth"
     coverage_filter = "coverage_filter"
     target_must_use_input = "target_must_use_input"
+    target_assembly = "target_assembly"
+    target_class = "target_class"
+    target_method = "target_method"
 
 
 # Permissions for an Azure Blob Storage Container.
@@ -150,6 +153,9 @@ class TaskState(Enum):
 
 class TaskType(Enum):
     coverage = "coverage"
+    dotnet_coverage = "dotnet_coverage"
+    dotnet_crash_report = "dotnet_crash_report"
+    libfuzzer_dotnet_fuzz = "libfuzzer_dotnet_fuzz"
     libfuzzer_fuzz = "libfuzzer_fuzz"
 
     # Deprecated, kept for deserialization of old task data.
@@ -164,8 +170,6 @@ class TaskType(Enum):
     generic_generator = "generic_generator"
     generic_crash_report = "generic_crash_report"
     generic_regression = "generic_regression"
-
-    dotnet_coverage = "dotnet_coverage"
 
 
 class VmState(Enum):

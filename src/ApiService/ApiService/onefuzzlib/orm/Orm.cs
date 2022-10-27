@@ -1,10 +1,13 @@
 ﻿using System.Collections.Concurrent;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
+using Azure;
 using Azure.Core;
 using Azure.Data.Tables;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+
 
 namespace ApiService.OneFuzzLib.Orm {
     public interface IOrm<T> where T : EntityBase {
@@ -12,10 +15,12 @@ namespace ApiService.OneFuzzLib.Orm {
         IAsyncEnumerable<T> QueryAsync(string? filter = null);
 
         Task<T> GetEntityAsync(string partitionKey, string rowKey);
-        Task<ResultVoid<(int, string)>> Insert(T entity);
-        Task<ResultVoid<(int, string)>> Replace(T entity);
-        Task<ResultVoid<(int, string)>> Update(T entity);
-        Task<ResultVoid<(int, string)>> Delete(T entity);
+        Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(T entity);
+        Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Replace(T entity);
+        Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Update(T entity);
+        Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Delete(T entity);
+
+        Task<DeleteAllResult> DeleteAll(IEnumerable<(string?, string?)> keys);
 
         IAsyncEnumerable<T> SearchAll();
         IAsyncEnumerable<T> SearchByPartitionKeys(IEnumerable<string> partitionKeys);
@@ -27,6 +32,7 @@ namespace ApiService.OneFuzzLib.Orm {
             => SearchByTimeRange(range.min, range.max);
     }
 
+    public record DeleteAllResult(int SuccessCount, int FailureCount);
 
     public abstract class Orm<T> : IOrm<T> where T : EntityBase {
 #pragma warning disable CA1051 // permit visible instance fields
@@ -35,6 +41,7 @@ namespace ApiService.OneFuzzLib.Orm {
         protected readonly ILogTracer _logTracer;
 #pragma warning restore CA1051
 
+        const int MAX_TRANSACTION_SIZE = 100;
 
         public Orm(ILogTracer logTracer, IOnefuzzContext context) {
             _context = context;
@@ -56,33 +63,35 @@ namespace ApiService.OneFuzzLib.Orm {
 
         /// Inserts the entity into table storage.
         /// If successful, updates the ETag of the passed-in entity.
-        public async Task<ResultVoid<(int, string)>> Insert(T entity) {
+        public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(T entity) {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
             var response = await tableClient.AddEntityAsync(tableEntity);
 
-            if (response.IsError) {
-                return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
-            } else {
-                // update ETag
-                entity.ETag = response.Headers.ETag;
 
-                return ResultVoid<(int, string)>.Ok();
+            if (response.IsError) {
+                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
+            } else {
+                // update ETag on success
+                entity.ETag = response.Headers.ETag;
+                return ResultVoid<(HttpStatusCode, string)>.Ok();
             }
         }
 
-        public async Task<ResultVoid<(int, string)>> Replace(T entity) {
+        public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Replace(T entity) {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
             var response = await tableClient.UpsertEntityAsync(tableEntity, TableUpdateMode.Replace);
             if (response.IsError) {
-                return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
+                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
             } else {
-                return ResultVoid<(int, string)>.Ok();
+                // update ETag on success
+                entity.ETag = response.Headers.ETag;
+                return ResultVoid<(HttpStatusCode, string)>.Ok();
             }
         }
 
-        public async Task<ResultVoid<(int, string)>> Update(T entity) {
+        public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Update(T entity) {
             if (entity.ETag is null) {
                 throw new ArgumentException("ETag must be set when updating an entity", nameof(entity));
             }
@@ -92,9 +101,11 @@ namespace ApiService.OneFuzzLib.Orm {
 
             var response = await tableClient.UpdateEntityAsync(tableEntity, entity.ETag.Value);
             if (response.IsError) {
-                return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
+                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
             } else {
-                return ResultVoid<(int, string)>.Ok();
+                // update ETag on success
+                entity.ETag = response.Headers.ETag;
+                return ResultVoid<(HttpStatusCode, string)>.Ok();
             }
         }
 
@@ -111,14 +122,14 @@ namespace ApiService.OneFuzzLib.Orm {
             return tableClient.GetTableClient(tableName);
         }
 
-        public async Task<ResultVoid<(int, string)>> Delete(T entity) {
+        public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Delete(T entity) {
             var tableClient = await GetTableClient(typeof(T).Name);
             var tableEntity = _entityConverter.ToTableEntity(entity);
             var response = await tableClient.DeleteEntityAsync(tableEntity.PartitionKey, tableEntity.RowKey);
             if (response.IsError) {
-                return ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase));
+                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
             } else {
-                return ResultVoid<(int, string)>.Ok();
+                return ResultVoid<(HttpStatusCode, string)>.Ok();
             }
         }
 
@@ -133,6 +144,56 @@ namespace ApiService.OneFuzzLib.Orm {
 
         public IAsyncEnumerable<T> SearchByTimeRange(DateTimeOffset min, DateTimeOffset max) {
             return QueryAsync(Query.TimeRange(min, max));
+        }
+
+        public async Task<List<ResultVoid<(int, string)>>> BatchOperation(IAsyncEnumerable<T> entities, TableTransactionActionType actionType) {
+            var tableClient = await GetTableClient(typeof(T).Name);
+            var transactions = await entities.Select(e => new TableTransactionAction(actionType, _entityConverter.ToTableEntity(e))).ToListAsync();
+            var responses = await tableClient.SubmitTransactionAsync(transactions);
+            return responses.Value.Select(response =>
+                response.IsError ? ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase)) : ResultVoid<(int, string)>.Ok()
+            ).ToList();
+        }
+
+
+        public async Task<DeleteAllResult> DeleteAll(IEnumerable<(string?, string?)> keys) {
+            var query = Query.Or(
+                keys.Select(key =>
+                    key switch {
+                        (null, null) => throw new ArgumentException("partitionKey and rowKey cannot both be null"),
+                        (string partitionKey, null) => Query.PartitionKey(partitionKey),
+                        (null, string rowKey) => Query.RowKey(rowKey),
+                        (string partitionKey, string rowKey) => Query.And(
+                            Query.PartitionKey(partitionKey),
+                            Query.RowKey(rowKey)
+                        ),
+                    }
+                )
+            );
+
+            var tableClient = await GetTableClient(typeof(T).Name);
+            var pages = tableClient.QueryAsync<TableEntity>(query, select: new[] { "PartitionKey, RowKey" });
+
+            var requests = await pages
+                .Chunk(MAX_TRANSACTION_SIZE)
+                .Select(chunk => {
+                    var transactions = chunk.Select(e => new TableTransactionAction(TableTransactionActionType.Delete, e));
+                    return tableClient.SubmitTransactionAsync(transactions);
+                })
+                .ToListAsync();
+
+            var responses = await System.Threading.Tasks.Task.WhenAll(requests);
+            var (successes, failures) = responses
+                .SelectMany(x => x.Value)
+                .Aggregate(
+                    (0, 0),
+                    ((int Successes, int Failures) acc, Response current) =>
+                        current.IsError
+                        ? (acc.Successes, acc.Failures + 1)
+                        : (acc.Successes + 1, acc.Failures)
+            );
+
+            return new DeleteAllResult(successes, failures);
         }
     }
 

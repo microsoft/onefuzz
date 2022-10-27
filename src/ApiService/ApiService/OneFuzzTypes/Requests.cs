@@ -299,9 +299,10 @@ public record AgentRegistrationGet(
 
 public record AgentRegistrationPost(
     [property: Required] PoolName PoolName,
-    [property: Required] Guid ScalesetId,
+    Guid? ScalesetId,
     [property: Required] Guid MachineId,
     Os? Os,
+    string? MachineName,
     [property: Required] string Version = "1.0.0"
 ) : BaseRequest;
 

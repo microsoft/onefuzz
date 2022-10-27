@@ -52,6 +52,7 @@ class TaskTestState(Enum):
 class TemplateType(Enum):
     libfuzzer = "libfuzzer"
     libfuzzer_dotnet = "libfuzzer_dotnet"
+    libfuzzer_dotnet_dll = "libfuzzer_dotnet_dll"
     libfuzzer_qemu_user = "libfuzzer_qemu_user"
     afl = "afl"
     radamsa = "radamsa"
@@ -75,7 +76,11 @@ class Integration(BaseModel):
     reboot_after_setup: Optional[bool] = Field(default=False)
     test_repro: Optional[bool] = Field(default=True)
     target_options: Optional[List[str]]
+    fuzzing_target_options: Optional[List[str]]
     inject_fake_regression: bool = Field(default=False)
+    target_class: Optional[str]
+    target_method: Optional[str]
+    setup_dir: Optional[str]
 
 
 TARGETS: Dict[str, Integration] = {
@@ -110,7 +115,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.inputs: 2,
         },
         reboot_after_setup=True,
-        target_options=["-runs=10000000"],
+        fuzzing_target_options=["-runs=10000000"],
     ),
     "linux-libfuzzer-dlopen": Integration(
         template=TemplateType.libfuzzer,
@@ -146,6 +151,23 @@ TARGETS: Dict[str, Integration] = {
         inputs="inputs",
         use_setup=True,
         wait_for_files={ContainerType.inputs: 2, ContainerType.crashes: 1},
+        test_repro=False,
+    ),
+    "linux-libfuzzer-dotnet-dll": Integration(
+        template=TemplateType.libfuzzer_dotnet_dll,
+        os=OS.linux,
+        setup_dir="GoodBadDotnet",
+        target_exe="GoodBadDotnet/GoodBad.dll",
+        target_options=["-max_len=4", "-only_ascii=1", "-seed=1"],
+        target_class="GoodBad.Fuzzer",
+        target_method="TestInput",
+        use_setup=True,
+        wait_for_files={
+            ContainerType.inputs: 2,
+            ContainerType.coverage: 1,
+            ContainerType.crashes: 1,
+            ContainerType.unique_reports: 1,
+        },
         test_repro=False,
     ),
     "linux-libfuzzer-aarch64-crosscompile": Integration(
@@ -215,6 +237,23 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.coverage: 1,
         },
         use_setup=True,
+    ),
+    "windows-libfuzzer-dotnet-dll": Integration(
+        template=TemplateType.libfuzzer_dotnet_dll,
+        os=OS.windows,
+        setup_dir="GoodBadDotnet",
+        target_exe="GoodBadDotnet/GoodBad.dll",
+        target_options=["-max_len=4", "-only_ascii=1", "-seed=1"],
+        target_class="GoodBad.Fuzzer",
+        target_method="TestInput",
+        use_setup=True,
+        wait_for_files={
+            ContainerType.inputs: 2,
+            ContainerType.coverage: 1,
+            ContainerType.crashes: 1,
+            ContainerType.unique_reports: 1,
+        },
+        test_repro=False,
     ),
     "windows-trivial-crash": Integration(
         template=TemplateType.radamsa,
@@ -315,7 +354,11 @@ class TestOnefuzz:
 
             self.logger.info("launching: %s", target)
 
-            setup = Directory(os.path.join(path, target)) if config.use_setup else None
+            if config.setup_dir is None:
+                setup = Directory(os.path.join(path, target)) if config.use_setup else None
+            else:
+                setup = config.setup_dir
+
             target_exe = File(os.path.join(path, target, config.target_exe))
             inputs = (
                 Directory(os.path.join(path, target, config.inputs))
@@ -340,6 +383,7 @@ class TestOnefuzz:
                     vm_count=1,
                     reboot_after_setup=config.reboot_after_setup or False,
                     target_options=config.target_options,
+                    fuzzing_target_options=config.fuzzing_target_options,
                 )
             elif config.template == TemplateType.libfuzzer_dotnet:
                 if setup is None:
@@ -355,6 +399,28 @@ class TestOnefuzz:
                     duration=duration,
                     vm_count=1,
                     target_options=config.target_options,
+                )
+            elif config.template == TemplateType.libfuzzer_dotnet_dll:
+                if setup is None:
+                    raise Exception("setup required for libfuzzer_dotnet_dll")
+                if config.target_class is None:
+                    raise Exception("target_class required for libfuzzer_dotnet_dll")
+                if config.target_method is None:
+                    raise Exception("target_method required for libfuzzer_dotnet_dll")
+
+                job = self.of.template.libfuzzer.dotnet_dll(
+                    self.project,
+                    target,
+                    BUILD,
+                    pools[config.os].name,
+                    target_dll=config.target_exe,
+                    inputs=inputs,
+                    setup_dir=setup,
+                    duration=duration,
+                    vm_count=1,
+                    fuzzing_target_options=config.target_options,
+                    target_class=config.target_class,
+                    target_method=config.target_method,
                 )
             elif config.template == TemplateType.libfuzzer_qemu_user:
                 job = self.of.template.libfuzzer.qemu_user(
