@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using Microsoft.OneFuzz.Service;
 using Xunit.Abstractions;
 
@@ -48,7 +49,7 @@ sealed class TestLogTracer : ILogTracer {
         _output.WriteLine($"[Warning] {message.ToString()}");
     }
 
-    public ILogTracer WithHttpStatus((int, string) status) {
+    public ILogTracer WithHttpStatus((HttpStatusCode Status, string Reason) result) {
         return this; // TODO?
     }
 

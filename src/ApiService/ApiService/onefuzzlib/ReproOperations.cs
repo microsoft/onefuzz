@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Net;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.ResourceManager.Compute.Models;
@@ -111,9 +112,10 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         // BUG?: why are we updating repro and then deleting it and returning a new value
         repro = repro with { State = VmState.Stopped };
         var r = await Delete(repro);
-        if (!r.IsOk) {
+        if (!r.IsOk && r.ErrorV.Status != HttpStatusCode.NotFound) {
             _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete repro {repro.VmId:Tag:VmId} marked as stopped");
         }
+
         return repro;
     }
 
