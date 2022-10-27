@@ -446,7 +446,7 @@ public class VmssOperations : IVmssOperations {
                 _ = instanceIds.Add(node.InstanceId);
                 continue;
             }
-            
+
             var lookup = await machineToInstanceLazy.Value;
             if (lookup.TryGetValue(node.MachineId, out var foundId)) {
                 _ = instanceIds.Add(foundId);
