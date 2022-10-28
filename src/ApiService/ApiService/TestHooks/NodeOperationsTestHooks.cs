@@ -222,7 +222,7 @@ namespace ApiService.TestHooks {
 
             bool isNew = UriExtension.GetBool("isNew", query, false);
 
-            var node = await _nodeOps.Create(poolId, poolName, machineId, scaleSetId, version, isNew);
+            var node = await _nodeOps.Create(poolId, poolName, machineId, null, scaleSetId, version, isNew);
 
             var resp = req.CreateResponse(HttpStatusCode.OK);
             await resp.WriteAsJsonAsync(JsonSerializer.Serialize(node, EntityConverter.GetJsonSerializerOptions()));
