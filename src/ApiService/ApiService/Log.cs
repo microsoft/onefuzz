@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.ApplicationInsights;
@@ -188,7 +189,7 @@ public interface ILogTracer {
 
     ILogTracer WithTag(string k, string v);
     ILogTracer WithTags(IEnumerable<(string, string)>? tags);
-    ILogTracer WithHttpStatus((int, string) status);
+    ILogTracer WithHttpStatus((HttpStatusCode Status, string Reason) result);
 }
 
 internal interface ILogTracerInternal : ILogTracer {
@@ -252,8 +253,12 @@ public class LogTracer : ILogTracerInternal {
         return WithTags(new[] { (k, v) });
     }
 
-    public ILogTracer WithHttpStatus((int, string) status) {
-        (string, string)[] tags = { ("StatusCode", status.Item1.ToString()), ("ReasonPhrase", status.Item2) };
+    public ILogTracer WithHttpStatus((HttpStatusCode Status, string Reason) result) {
+        (string, string)[] tags = {
+            ("StatusCode", ((int)result.Status).ToString()),
+            ("ReasonPhrase", result.Reason),
+        };
+
         return WithTags(tags);
     }
 
