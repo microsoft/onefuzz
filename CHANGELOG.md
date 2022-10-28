@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.17.0
+### Added
+* Service: Add a `DeleteAll` operation to ORM that speeds up the deletion of multiple entities. [#2519](https://github.com/microsoft/onefuzz/pull/2519)
+### Changed
+* Documentation: Remove suggestion to reset `IterationPath` upon duplicate. [#2533](https://github.com/microsoft/onefuzz/pull/2533)
+* Service: Ignoring the scanning log file when reporting an issue with azcopy. [#2536](https://github.com/microsoft/onefuzz/pull/2536)
+### Fixed
+* CLI: Fixed failures in command `$ onefuzz status pool <pool_name>`. [#2551](https://github.com/microsoft/onefuzz/pull/2551)
+* Deployment: Fix the OneFuzz web address that is used to generate the `input_url` for bug reporting. [#2543](https://github.com/microsoft/onefuzz/pull/2543)
+* Service: Produce an error if coverage recording failed due to a timeout. [#2529](https://github.com/microsoft/onefuzz/pull/2529)
+* Service: Increased the default timeout for coverage recording from 5 seconds to 120 to prevent premature errors while parsing symbols and executables. [#2556](https://github.com/microsoft/onefuzz/pull/2556)
+* Service: Fixed errors in ADO notifications to reduce duplicate bug-filing. [#2534](https://github.com/microsoft/onefuzz/pull/2534)
+* Service: Handle null values better in `ScalesetOperations` and `VmssOperations` when a scaleset is in shutdown state. [#2538](https://github.com/microsoft/onefuzz/pull/2538)
+* Service: Fix exception message formatting in `VmssOperations`. [#2546](https://github.com/microsoft/onefuzz/pull/2546)
+* Service: Downgrade instance not found exception. [#2549](https://github.com/microsoft/onefuzz/pull/2549)
+* Service: Lower log level on symbol region overlap findings during coverage recording. [#2559](https://github.com/microsoft/onefuzz/pull/2559)
+
 ## 5.16.0
 ### Added
 * Documentation: Added OneFuzz logo to the README file. [#2340](https://github.com/microsoft/onefuzz/pull/2340)
@@ -48,7 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Lowercase webhooks digest header value [#2471](https://github.com/microsoft/onefuzz/pull/2471)
 * Service: Fix C# Node state machine. [#2476](https://github.com/microsoft/onefuzz/pull/2476)
 * Service: Adding missing caching from python code [#2467](https://github.com/microsoft/onefuzz/pull/2467)
-
 
 ## 5.14.0
 ### Added
