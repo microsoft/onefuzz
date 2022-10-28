@@ -18,7 +18,7 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
-  ACTIONS_CACHE_KEY_DATE: 2022-09-15-02
+  ACTIONS_CACHE_KEY_DATE: 2022-10-28-01
   CI: true
 
 jobs:
@@ -27,27 +27,24 @@ jobs:
       matrix:
         os:
         - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-windows-2019" ]
-        - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-18.04" ] 
-        #- [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-20.04" ] 
-        #- [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-22.04" ] 
+        - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-20.04" ] 
     runs-on: "${{ matrix.os }}"
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Install specific Rust version
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@55c7845fad90d0ae8b2e83715cb900e5e861e8cb # pinned latest master as of 2022-10-08
       # note: keep this in sync with .devcontainer/Dockerfile
       with:
         toolchain: 1.64
-        default: true
         components: clippy, rustfmt, llvm-tools-preview
     - name: Get Rust version & build version
       shell: bash
       run: |
-        echo "::set-output name=RUST_VERSION::$(rustc --version)"
+        echo "RUST_VERSION=$(rustc --version)" >> $GITHUB_OUTPUT
         VERSION=$(src/ci/get-version.sh)
         # it's a release build if version doesn't have a hyphen in it
         IS_RELEASE_BUILD=$(if [[ "$VERSION" =~ '-' ]]; then echo 'false'; else echo 'true'; fi)
-        echo "::set-output name=RELEASE_BUILD::$IS_RELEASE_BUILD"
+        echo "RELEASE_BUILD=$IS_RELEASE_BUILD" >> $GITHUB_OUTPUT
       id: rust-version
     - name: Rust artifact cache
       id: cache-agent-artifacts
@@ -67,7 +64,7 @@ jobs:
         sudo apt-get -y install libssl-dev libunwind-dev build-essential pkg-config
     - name: Rust Prereq Cache
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       id: cache-rust-prereqs
       with:
         path: |
@@ -81,7 +78,7 @@ jobs:
       run: src/ci/rust-prereqs.sh
     - name: Rust Compile Cache
       if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           sccache
@@ -96,24 +93,24 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         directory: artifacts
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
   azcopy:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/azcopy.sh
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
   check-pr:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.7
     - name: lint
@@ -124,10 +121,10 @@ jobs:
     - onefuzztypes
     runs-on: windows-2019
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/set-versions.sh
       shell: bash
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.7
     - uses: actions/download-artifact@v3
@@ -155,7 +152,7 @@ jobs:
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/sdk/
         cp dist/*.tar.gz dist/*.whl ${GITHUB_WORKSPACE}/artifacts/sdk/
         cp dist/onefuzz.exe ${GITHUB_WORKSPACE}/artifacts/windows-cli/
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -177,10 +174,10 @@ jobs:
         # set a minimum confidence to ignore known false positives
         vulture --min-confidence 61 onefuzz
   contrib-webhook-teams-service:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - name: lint
@@ -195,10 +192,10 @@ jobs:
         isort --profile black webhook
         flake8 webhook
   deploy-onefuzz-via-azure-devops:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - name: lint
@@ -210,24 +207,24 @@ jobs:
         python -m pip install tox pipenv
         tox
   onefuzztypes:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/set-versions.sh
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.7
     - run: src/ci/onefuzztypes.sh
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
   proxy:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Rust Prereq Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       id: cache-rust-prereqs
       with:
         path: |
@@ -240,7 +237,7 @@ jobs:
       shell: bash
       run: src/ci/rust-prereqs.sh
     - name: Rust Compile Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           sccache
@@ -250,18 +247,18 @@ jobs:
           proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-
           proxy-${{ runner.os }}-
     - run: src/ci/proxy.sh
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
   service:
     needs:
     - onefuzztypes
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/set-versions.sh
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - uses: actions/download-artifact@v3
@@ -278,7 +275,7 @@ jobs:
         zip -r api-service.zip .
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/service
         cp api-service.zip ${GITHUB_WORKSPACE}/artifacts/service
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -305,7 +302,7 @@ jobs:
   service-net:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v2
       with:
@@ -363,53 +360,53 @@ jobs:
         zip -r api-service-net.zip .
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
         cp api-service-net.zip ${GITHUB_WORKSPACE}/artifacts/service-net
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
   afl:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/afl.sh
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
 
   aflpp:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/aflpp.sh
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
   dotnet-fuzzing-tools-linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/dotnet-fuzzing-tools.sh
       shell: bash
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
   dotnet-fuzzing-tools-windows:
     runs-on: windows-2022
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: src/ci/dotnet-fuzzing-tools.ps1
       shell: pwsh
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
   radamsa-linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/cache@v3
       id: cache-radamsa-build-linux
       with:
@@ -419,14 +416,14 @@ jobs:
         path: artifacts
     - run: src/ci/radamsa-linux.sh
       if: steps.cache-radamsa-build-linux.outputs.cache-hit != 'true'
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
   radamsa-win64:
     runs-on: windows-2019
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/cache@v3
       id: cache-radamsa-build-windows
       with:
@@ -436,7 +433,7 @@ jobs:
         path: artifacts
     - run: c:\msys64\usr\bin\bash src/ci/radamsa-windows.sh
       if: steps.cache-radamsa-build-windows.outputs.cache-hit != 'true'
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
@@ -452,14 +449,14 @@ jobs:
     - aflpp
     - radamsa-linux
     - radamsa-win64
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/download-artifact@v3
       with:
         name: build-artifacts
         path: artifacts
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.7
     - name: Lint
@@ -504,14 +501,14 @@ jobs:
           cp src/deployment/onefuzz-deployment*zip release-artifacts
           cp -r artifacts/sdk release-artifacts
           cp -r artifacts/windows-cli/onefuzz.exe release-artifacts/onefuzz-cli-$(./src/ci/get-version.sh).exe
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: release-artifacts
         path: release-artifacts
   build-integration-tests-linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: |
           set -ex
           cd src/integration-tests
@@ -570,14 +567,14 @@ jobs:
           (cd GoodBad; dotnet publish -c Release -o out)
           mv GoodBad/out artifacts/GoodBadDotnet
 
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: integration-test-artifacts
         path: src/integration-tests/artifacts
   build-integration-tests-windows:
     runs-on: windows-2019
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
           $ProgressPreference = 'SilentlyContinue'
@@ -645,12 +642,12 @@ jobs:
           make CFLAGS='-fsanitize=address -fno-omit-frame-pointer'
           cp fuzz.exe,fuzz.pdb,seeds ../artifacts/windows-trivial-crash-asan -Recurse
       shell: powershell
-    - uses: actions/upload-artifact@v2.2.2
+    - uses: actions/upload-artifact@v3
       with:
         name: integration-test-artifacts
         path: src/integration-tests/artifacts
   integration-tests-linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs:
       - build-integration-tests-linux
       - dotnet-fuzzing-tools-linux
@@ -669,7 +666,7 @@ jobs:
       - radamsa-linux
       - radamsa-win64
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
           name: build-artifacts
