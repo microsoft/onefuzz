@@ -277,7 +277,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 return await SetFailed(scaleset, result.ErrorV);
             }
 
-            //TODO : why are we saving scaleset here ? 
+            //TODO : why are we saving scaleset here ?
             var r = await Update(scaleset);
             if (!r.IsOk) {
                 _logTracer.Error($"Failed to save scaleset {scaleset.ScalesetId:Tag:ScalesetId} due to {r.ErrorV:Tag:Error}");
@@ -721,8 +721,6 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 await Async.Task.WhenAll(nodesToDelete
                     .Select(async node => {
                         await _context.NodeOperations.Delete(node);
-                        // REMOVE?: don't need to release scale-in protection if we have deleted the node
-                        // await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
                     }));
                 return;
         }
