@@ -1,5 +1,4 @@
-﻿using System.Net;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -70,9 +69,17 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         var client = new Request(httpClient);
         _logTracer.Info($"{messageLog.WebhookId:Tag:WebhookId} - {data}");
         using var response = await client.Post(url: webhook.Url, json: data, headers: headers);
-        if (response.StatusCode == HttpStatusCode.Accepted) {
+        if (response.IsSuccessStatusCode) {
+            _logTracer.Info($"Successfully sent webhook: {messageLog.WebhookId:Tag:WebhookId}");
             return true;
         }
+
+        _logTracer
+            .WithTags(new List<(string, string)> {
+                ("StatusCode", response.StatusCode.ToString()),
+                ("Content", await response.Content.ReadAsStringAsync())
+            })
+            .Info($"Webhook not successful");
 
         return false;
     }

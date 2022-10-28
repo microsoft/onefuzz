@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Net;
+using System.Threading.Tasks;
 using Azure;
 using Azure.Core;
 using Azure.Data.Tables;
@@ -11,7 +12,7 @@ using Microsoft.Rest.Azure;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IVmssOperations {
-    Async.Task<OneFuzzResultVoid> UpdateScaleInProtection(Scaleset scaleset, Guid vmId, bool protectFromScaleIn);
+    Async.Task<OneFuzzResultVoid> UpdateScaleInProtection(Scaleset scaleset, string instanceId, bool protectFromScaleIn);
     Async.Task<OneFuzzResult<string>> GetInstanceId(Guid name, Guid vmId);
     Async.Task<OneFuzzResultVoid> UpdateExtensions(Guid name, IList<VirtualMachineScaleSetExtensionData> extensions);
     Async.Task<VirtualMachineScaleSetData?> GetVmss(Guid name);
@@ -40,7 +41,7 @@ public interface IVmssOperations {
         string sshPublicKey,
         IDictionary<string, string> tags);
 
-    Async.Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter);
+    IAsyncEnumerable<VirtualMachineScaleSetVmResource> ListVmss(Guid name);
     Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
     Async.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds);
 }
@@ -69,7 +70,7 @@ public class VmssOperations : IVmssOperations {
         var result = await r.DeleteAsync(WaitUntil.Started, forceDeletion: forceDeletion);
         var raw = result.GetRawResponse();
         if (raw.IsError) {
-            _log.WithHttpStatus((raw.Status, raw.ReasonPhrase)).Error($"Failed to delete vmss: {name:Tag:VmssName}");
+            _log.WithHttpStatus(((HttpStatusCode)raw.Status, raw.ReasonPhrase)).Error($"Failed to delete vmss: {name:Tag:VmssName}");
             return false;
         } else {
             return true;
@@ -177,10 +178,9 @@ public class VmssOperations : IVmssOperations {
             return results;
         } else {
             try {
-                await foreach (var instance in res!.GetVirtualMachineScaleSetVms().AsAsyncEnumerable()) {
+                await foreach (var instance in res.GetVirtualMachineScaleSetVms()) {
                     if (instance is not null) {
-                        Guid key;
-                        if (Guid.TryParse(instance.Data.VmId, out key)) {
+                        if (Guid.TryParse(instance.Data.VmId, out var key)) {
                             results[key] = instance.Data.InstanceId;
                         } else {
                             _log.Error($"failed to convert vmId {instance.Data.VmId:Tag:VmId} to Guid in {name:Tag:VmssName}");
@@ -199,16 +199,16 @@ public class VmssOperations : IVmssOperations {
         => _cache.GetOrCreateAsync(new InstanceIdKey(scaleset, vmId), async entry => {
             var scalesetResource = GetVmssResource(scaleset);
             var vmIdString = vmId.ToString();
-            await foreach (var vm in scalesetResource.GetVirtualMachineScaleSetVms().AsAsyncEnumerable()) {
-                var response = await vm.GetAsync();
-                var instanceId = response.Value.Data.InstanceId;
-                if (response.Value.Data.VmId == vmIdString) {
+            await foreach (var vm in scalesetResource.GetVirtualMachineScaleSetVms()) {
+                var vmInfo = vm.HasData ? vm : await vm.GetAsync();
+                var instanceId = vmInfo.Data.InstanceId;
+                if (vmInfo.Data.VmId == vmIdString) {
                     // we found the VM we are looking for
                     entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
                     return instanceId;
                 } else {
                     // if we find any other VMs, put them in the cache
-                    if (Guid.TryParse(response.Value.Data.VmId, out var vmId)) {
+                    if (Guid.TryParse(vmInfo.Data.VmId, out var vmId)) {
                         using var e = _cache.CreateEntry(new InstanceIdKey(scaleset, vmId));
                         _ = e.SetValue(instanceId);
                         e.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
@@ -244,12 +244,7 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    public async Async.Task<OneFuzzResultVoid> UpdateScaleInProtection(Scaleset scaleset, Guid vmId, bool protectFromScaleIn) {
-        var instanceIdResult = await GetInstanceId(scaleset.ScalesetId, vmId);
-        if (!instanceIdResult.IsOk) {
-            return instanceIdResult.ErrorV;
-        }
-        var instanceId = instanceIdResult.OkV;
+    public async Async.Task<OneFuzzResultVoid> UpdateScaleInProtection(Scaleset scaleset, string instanceId, bool protectFromScaleIn) {
         var data = new VirtualMachineScaleSetVmData(scaleset.Region) {
             ProtectionPolicy = new VirtualMachineScaleSetVmProtectionPolicy {
                 ProtectFromScaleIn = protectFromScaleIn,
@@ -261,12 +256,12 @@ public class VmssOperations : IVmssOperations {
             _ = await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceId, data);
             return OneFuzzResultVoid.Ok;
         } catch (RequestFailedException ex) when (ex.Status == 409 && ex.Message.StartsWith("The request failed due to conflict with a concurrent request")) {
-            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"protection policy update is already in progress: {vmId}:{instanceId} in vmss {scaleset.ScalesetId}");
+            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"protection policy update is already in progress: {instanceId} in vmss {scaleset.ScalesetId}");
         } catch (RequestFailedException ex) when (ex.Status == 400 && ex.Message.Contains("The provided instanceId") && ex.Message.Contains("not an active Virtual Machine Scale Set VM instanceId.")) {
             return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"The node with instanceId {instanceId} no longer exists in scaleset {scaleset.ScalesetId}");
         } catch (Exception ex) {
-            _log.Exception(ex, $"unable to set protection policy on: {vmId:Tag:MachineId}:{instanceId:Tag:InstanceId} in vmss {scaleset.ScalesetId:Tag:ScalesetId}");
-            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"unable to set protection policy on: {vmId}:{instanceId} in vmss {scaleset.ScalesetId}");
+            _log.Exception(ex, $"unable to set protection policy on: {instanceId:Tag:InstanceId} in vmss {scaleset.ScalesetId:Tag:ScalesetId}");
+            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"unable to set protection policy on: {instanceId} in vmss {scaleset.ScalesetId}");
         }
 
     }
@@ -416,20 +411,10 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    public async Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter) {
-        try {
-            var vmss = await _creds.GetResourceGroupResource().GetVirtualMachineScaleSetAsync(name.ToString());
-            return vmss.Value.GetVirtualMachineScaleSetVms()
-                .SelectAwait(async vm => vm.HasData ? vm : await vm.GetAsync())
-                .ToEnumerable()
-                .Where(vm => filter == null || filter(vm))
-                .Select(vm => vm.Data.InstanceId)
-                .ToList();
-        } catch (RequestFailedException ex) {
-            _log.Exception(ex, $"cloud error listing vmss: {name:Tag:VmssName}");
-        }
-        return null;
-    }
+    public IAsyncEnumerable<VirtualMachineScaleSetVmResource> ListVmss(Guid name)
+        => GetVmssResource(name)
+            .GetVirtualMachineScaleSetVms()
+            .SelectAwait(async vm => vm.HasData ? vm : await vm.GetAsync());
 
     public Async.Task<IReadOnlyList<string>> ListAvailableSkus(Region region)
         => _cache.GetOrCreateAsync<IReadOnlyList<string>>($"compute-skus-{region}", async entry => {

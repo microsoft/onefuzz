@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Net;
+using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -32,7 +33,7 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
 
     public async Async.Task Save(InstanceConfig config, bool isNew = false, bool requireEtag = false) {
         var newConfig = config with { InstanceName = _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set") };
-        ResultVoid<(int, string)> r;
+        ResultVoid<(HttpStatusCode Status, string Reason)> r;
         if (isNew) {
             r = await Insert(newConfig);
             if (!r.IsOk) {
