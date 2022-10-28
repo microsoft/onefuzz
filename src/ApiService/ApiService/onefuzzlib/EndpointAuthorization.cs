@@ -6,6 +6,7 @@ using Microsoft.Graph;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IEndpointAuthorization {
+
     Async.Task<HttpResponseData> CallIfAgent(
         HttpRequestData req,
         Func<HttpRequestData, Async.Task<HttpResponseData>> method)
@@ -43,7 +44,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
             return await _context.RequestHandling.NotOk(req, tokenResult.ErrorV, "token verification", HttpStatusCode.Unauthorized);
         }
 
-        var token = tokenResult.OkV;
+        var token = tokenResult.OkV.UserInfo;
         if (await IsUser(token)) {
             if (!allowUser) {
                 return await Reject(req, token);
@@ -94,7 +95,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
                 Errors: new string[] { "no instance configuration found " });
         }
 
-        return CheckRequireAdminsImpl(config, tokenResult.OkV);
+        return CheckRequireAdminsImpl(config, tokenResult.OkV.UserInfo);
     }
 
     private static OneFuzzResultVoid CheckRequireAdminsImpl(InstanceConfig config, UserInfo userInfo) {
@@ -185,6 +186,9 @@ public class EndpointAuthorization : IEndpointAuthorization {
     }
 
     public async Async.Task<bool> IsAgent(UserInfo tokenData) {
+        // todo: handle unmanaged node here
+        // check if the request is comming from a geristered app with apprile agent
+
         if (tokenData.ObjectId != null) {
             var scalesets = _context.ScalesetOperations.GetByObjectId(tokenData.ObjectId.Value);
             if (await scalesets.AnyAsync()) {
@@ -203,6 +207,10 @@ public class EndpointAuthorization : IEndpointAuthorization {
         if (await pools.AnyAsync()) {
             return true;
         }
+
+        // if (tokenData.Roles.Contains("unmanagedNode")) {
+        //     return true;
+        // }
 
         return false;
     }
