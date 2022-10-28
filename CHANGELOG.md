@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Service: Use records to unpack the request parameters in `AgentRegistration`. [#2570](https://github.com/microsoft/onefuzz/pull/2570)
 * Service: Convert ADO traces to `customEvents` and update `notificationInfo`. [#2508](https://github.com/microsoft/onefuzz/pull/2508)
-* Agent: Include computer name in `AgentRegistration` & decode Instance ID from it. [#2557](https://github.com/microsoft/onefuzz/pull/2557)
+* Agent: Include computer name in `AgentRegistration` & decode Instance ID from it. This will reduce the amount of calls to Azure minimizing throttling errors. [#2557](https://github.com/microsoft/onefuzz/pull/2557)
 ### Changed
 * Service: Improve webhook logging and accept more HTTP success codes. [#2568](https://github.com/microsoft/onefuzz/pull/2568)
 * CLI: Use the virtual env folder to store the config if it exists. [#2561](https://github.com/microsoft/onefuzz/pull/2561), [#2567](https://github.com/microsoft/onefuzz/pull/2567)
