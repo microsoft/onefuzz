@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Improve webhook logging and accept more HTTP success codes. [#2568](https://github.com/microsoft/onefuzz/pull/2568)
 * CLI: Use the virtual env folder to store the config if it exists. [#2561](https://github.com/microsoft/onefuzz/pull/2561), [#2567](https://github.com/microsoft/onefuzz/pull/2567)
 ### Fixed
-* Service: Reduce number of ARM calls in `ListVmss`. [#2539](https://github.com/microsoft/onefuzz/pull/2539)
+* Service: Reduce number of ARM calls in `ListVmss` reducing calls to Azure to prevent throttling. [#2539](https://github.com/microsoft/onefuzz/pull/2539)
 * Service: ETag updated in `Update` and `Replace`. [#2562](https://github.com/microsoft/onefuzz/pull/2562)
 * Service: Don't log an error if we delete a Repro and it is already missing. [#2563](https://github.com/microsoft/onefuzz/pull/2563)
 
