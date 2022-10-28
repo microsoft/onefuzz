@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 5.17.0
 ### Added
+* Service: Added exponential backoff for failed notifications. Many of the failures are a result of ADO throttling. [#2555](https://github.com/microsoft/onefuzz/pull/2555)
 * Service: Add a `DeleteAll` operation to ORM that speeds up the deletion of multiple entities. [#2519](https://github.com/microsoft/onefuzz/pull/2519)
 ### Changed
 * Documentation: Remove suggestion to reset `IterationPath` upon duplicate. [#2533](https://github.com/microsoft/onefuzz/pull/2533)
