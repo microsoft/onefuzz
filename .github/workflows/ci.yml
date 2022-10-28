@@ -27,9 +27,7 @@ jobs:
       matrix:
         os:
         - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-windows-2019" ]
-        - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-18.04" ] 
-        #- [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-20.04" ] 
-        #- [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-22.04" ] 
+        - [ self-hosted, "1ES.Pool=onefuzz-ci", "1ES.ImageOverride=github-runner-image-ubuntu-20.04" ] 
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v3
@@ -100,7 +98,7 @@ jobs:
         name: build-artifacts
         path: artifacts
   azcopy:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
     - run: src/ci/azcopy.sh
@@ -109,7 +107,7 @@ jobs:
         name: build-artifacts
         path: artifacts
   check-pr:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
@@ -176,7 +174,7 @@ jobs:
         # set a minimum confidence to ignore known false positives
         vulture --min-confidence 61 onefuzz
   contrib-webhook-teams-service:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
@@ -194,7 +192,7 @@ jobs:
         isort --profile black webhook
         flake8 webhook
   deploy-onefuzz-via-azure-devops:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
@@ -209,7 +207,7 @@ jobs:
         python -m pip install tox pipenv
         tox
   onefuzztypes:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
     - run: src/ci/set-versions.sh
@@ -222,7 +220,7 @@ jobs:
         name: build-artifacts
         path: artifacts
   proxy:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
     - name: Rust Prereq Cache
@@ -256,7 +254,7 @@ jobs:
   service:
     needs:
     - onefuzztypes
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
     - run: src/ci/set-versions.sh
@@ -367,7 +365,7 @@ jobs:
         name: build-artifacts
         path: artifacts
   afl:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
     - run: src/ci/afl.sh
@@ -377,7 +375,7 @@ jobs:
         path: artifacts
 
   aflpp:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
     - run: src/ci/aflpp.sh
@@ -386,7 +384,7 @@ jobs:
         name: build-artifacts
         path: artifacts
   dotnet-fuzzing-tools-linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
     - run: src/ci/dotnet-fuzzing-tools.sh
@@ -406,7 +404,7 @@ jobs:
         name: build-artifacts
         path: artifacts
   radamsa-linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
     - uses: actions/cache@v3
@@ -451,7 +449,7 @@ jobs:
     - aflpp
     - radamsa-linux
     - radamsa-win64
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
     - uses: actions/download-artifact@v3
@@ -508,7 +506,7 @@ jobs:
         name: release-artifacts
         path: release-artifacts
   build-integration-tests-linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
     - run: |
@@ -649,7 +647,7 @@ jobs:
         name: integration-test-artifacts
         path: src/integration-tests/artifacts
   integration-tests-linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs:
       - build-integration-tests-linux
       - dotnet-fuzzing-tools-linux
