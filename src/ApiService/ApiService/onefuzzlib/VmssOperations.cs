@@ -173,7 +173,7 @@ public class VmssOperations : IVmssOperations {
             }
             return results;
         } catch (RequestFailedException ex) when (ex.Status == 404) {
-            _log.Exception(ex, $"scaleset does not exist {name:Tag:VmssName}");
+            _log.Verbose($"scaleset does not exist {name:Tag:VmssName}");
             return null;
         }
     }
