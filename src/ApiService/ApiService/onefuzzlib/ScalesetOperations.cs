@@ -541,6 +541,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         foreach (var azureNode in azureNodes) {
             var machineId = azureNode.Key;
+            var instanceId = azureNode.Value;
             if (nodeMachineIds.Contains(machineId)) {
                 continue;
             }
@@ -555,6 +556,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 pool.OkV.PoolId,
                 scaleSet.PoolName,
                 machineId,
+                instanceId,
                 scaleSet.ScalesetId,
                 _context.ServiceConfiguration.OneFuzzVersion,
                 isNew: true);
