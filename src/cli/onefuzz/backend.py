@@ -133,6 +133,7 @@ class Backend:
             self.config = BackendConfig.parse_obj(data)
 
     def save_config(self) -> None:
+        os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
         with open(self.config_path, "w") as handle:
             handle.write(self.config.json(indent=4, exclude_none=True))
 
