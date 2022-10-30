@@ -6,10 +6,12 @@ global
 using System.Linq;
 global
 using Async = System.Threading.Tasks;
+using System.Reflection;
 using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Core.Serialization;
 using Azure.Identity;
+using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Worker;
@@ -115,6 +117,7 @@ public class Program {
                     var config = provider.GetRequiredService<IServiceConfig>();
                     return new() {
                         ConnectionString = $"InstrumentationKey={config.ApplicationInsightsInstrumentationKey}",
+                        TelemetryInitializers = { new VersionTelemetryInitializer() },
                     };
                 })
                 .AddSingleton<GraphServiceClient>(new GraphServiceClient(new DefaultAzureCredential()))
@@ -142,6 +145,15 @@ public class Program {
             host.Services.GetRequiredService<IServiceConfig>());
 
         await host.RunAsync();
+    }
+
+    // Adds the current application version to AppInsights telemetry:
+    sealed class VersionTelemetryInitializer : ITelemetryInitializer {
+        private static readonly string? _version = Assembly.GetExecutingAssembly().GetName().Version?.ToString();
+
+        public void Initialize(ITelemetry telemetry) {
+            telemetry.Context.Component.Version = _version;
+        }
     }
 
     public static async Async.Task SetupStorage(IStorage storage, IServiceConfig serviceConfig) {
