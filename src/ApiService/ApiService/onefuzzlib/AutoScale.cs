@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Net;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure;
@@ -10,7 +11,7 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface IAutoScaleOperations {
 
-    public Async.Task<ResultVoid<(int, string)>> Insert(AutoScale autoScale);
+    public Async.Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(AutoScale autoScale);
 
     public Async.Task<AutoScale?> GetSettingsForScaleset(Guid scalesetId);
 

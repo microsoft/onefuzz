@@ -41,9 +41,12 @@ from .azcopy import azcopy_copy, azcopy_sync
 
 _ACCESSTOKENCACHE_UMASK = 0o077
 
-ONEFUZZ_BASE_PATH = os.path.join("~", ".cache", "onefuzz")
+VIRTUAL_ENV = os.environ.get("VIRTUAL_ENV")
+HOME_PATH = VIRTUAL_ENV if VIRTUAL_ENV else "~"
+ONEFUZZ_CACHE = os.path.join(".cache", "onefuzz")
+ONEFUZZ_BASE_PATH = os.path.join(HOME_PATH, ONEFUZZ_CACHE)
 DEFAULT_CONFIG_PATH = os.path.join(ONEFUZZ_BASE_PATH, "config.json")
-DEFAULT_TOKEN_PATH = os.path.join(ONEFUZZ_BASE_PATH, "access_token.json")
+DEFAULT_TOKEN_PATH = os.path.join("~", ONEFUZZ_CACHE, "access_token.json")
 REQUEST_CONNECT_TIMEOUT = 30.0
 REQUEST_READ_TIMEOUT = 120.0
 
@@ -130,6 +133,7 @@ class Backend:
             self.config = BackendConfig.parse_obj(data)
 
     def save_config(self) -> None:
+        os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
         with open(self.config_path, "w") as handle:
             handle.write(self.config.json(indent=4, exclude_none=True))
 

@@ -1,5 +1,4 @@
-﻿using System.Web;
-using Azure.Storage.Sas;
+﻿using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
@@ -31,9 +30,14 @@ public class AgentRegistration {
             });
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
-        var uri = HttpUtility.ParseQueryString(req.Url.Query);
-        var rawMachineId = uri["machine_id"];
-        if (rawMachineId is null || !Guid.TryParse(rawMachineId, out var machineId)) {
+        var request = await RequestHandling.ParseUri<AgentRegistrationGet>(req);
+        if (!request.IsOk) {
+            return await _context.RequestHandling.NotOk(req, request.ErrorV, "agent registration");
+        }
+
+        var machineId = request.OkV.MachineId;
+
+        if (machineId == Guid.Empty) {
             return await _context.RequestHandling.NotOk(
                 req,
                 new Error(
@@ -83,9 +87,19 @@ public class AgentRegistration {
     }
 
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
-        var uri = HttpUtility.ParseQueryString(req.Url.Query);
-        var rawMachineId = uri["machine_id"];
-        if (rawMachineId is null || !Guid.TryParse(rawMachineId, out var machineId)) {
+        var request = await RequestHandling.ParseUri<AgentRegistrationPost>(req);
+        if (!request.IsOk) {
+            return await _context.RequestHandling.NotOk(req, request.ErrorV, "agent registration");
+        }
+
+        var machineId = request.OkV.MachineId;
+        var poolName = request.OkV.PoolName;
+        var scalesetId = request.OkV.ScalesetId;
+        var version = request.OkV.Version;
+        var os = request.OkV.Os;
+        var machineName = request.OkV.MachineName;
+
+        if (machineId == Guid.Empty) {
             return await _context.RequestHandling.NotOk(
                 req,
                 new Error(
@@ -94,8 +108,7 @@ public class AgentRegistration {
                 "agent registration");
         }
 
-        var rawPoolName = uri["pool_name"];
-        if (rawPoolName is null || !PoolName.TryParse(rawPoolName, out var poolName)) {
+        if (poolName is null) {
             return await _context.RequestHandling.NotOk(
                 req,
                 new Error(
@@ -104,10 +117,8 @@ public class AgentRegistration {
                 "agent registration");
         }
 
-        var rawScalesetId = uri["scaleset_id"];
-        var scalesetId = rawScalesetId is null ? (Guid?)null : Guid.Parse(rawScalesetId);
+        var instanceId = machineName is not null ? InstanceIds.InstanceIdFromMachineName(machineName) : null;
 
-        var version = uri["version"] ?? "1.0.0";
 
         _log.Info($"registration request: {machineId:Tag:MachineId} {poolName:Tag:PoolName} {scalesetId:Tag:ScalesetId} {version:Tag:Version}");
         var poolResult = await _context.PoolOperations.GetByName(poolName);
@@ -127,12 +138,23 @@ public class AgentRegistration {
             await _context.NodeOperations.Delete(existingNode);
         }
 
+        if (os != null && pool.Os != os) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                new Error(
+                    Code: ErrorCode.INVALID_REQUEST,
+                    Errors: new[] { $"OS mismatch: pool '{poolName}' is configured for '{pool.Os}', but agent is running '{os}'" }),
+                "agent registration");
+        }
+
         var node = new Service.Node(
             PoolName: poolName,
             PoolId: pool.PoolId,
             MachineId: machineId,
             ScalesetId: scalesetId,
-            Version: version);
+            InstanceId: instanceId,
+            Version: version
+            );
 
         var r = await _context.NodeOperations.Replace(node);
         if (!r.IsOk) {

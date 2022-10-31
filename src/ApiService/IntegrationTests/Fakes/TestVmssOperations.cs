@@ -23,10 +23,6 @@ sealed class TestVmssOperations : IVmssOperations {
         throw new NotImplementedException();
     }
 
-    public System.Threading.Tasks.Task DeleteNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
-        throw new NotImplementedException();
-    }
-
     public Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null) {
         throw new NotImplementedException();
     }
@@ -44,15 +40,11 @@ sealed class TestVmssOperations : IVmssOperations {
     }
 
 
-    public Task<IDictionary<Guid, string>> ListInstanceIds(Guid name) {
+    public Task<IDictionary<Guid, string>?> ListInstanceIds(Guid name) {
         throw new NotImplementedException();
     }
 
-    public Task<List<string>?> ListVmss(Guid name, Func<VirtualMachineScaleSetVmResource, bool>? filter) {
-        throw new NotImplementedException();
-    }
-
-    public Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IReadOnlySet<Guid> machineIds) {
+    public IAsyncEnumerable<VirtualMachineScaleSetVmResource> ListVmss(Guid name) {
         throw new NotImplementedException();
     }
 
@@ -64,7 +56,15 @@ sealed class TestVmssOperations : IVmssOperations {
         throw new NotImplementedException();
     }
 
-    public Task<OneFuzzResultVoid> UpdateScaleInProtection(Scaleset scaleset, Guid vmId, bool protectFromScaleIn) {
+    public Task<OneFuzzResultVoid> UpdateScaleInProtection(Scaleset scaleset, string instanceId, bool protectFromScaleIn) {
+        throw new NotImplementedException();
+    }
+
+    public Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IEnumerable<Node> nodes) {
+        throw new NotImplementedException();
+    }
+
+    public Async.Task DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes) {
         throw new NotImplementedException();
     }
 }
