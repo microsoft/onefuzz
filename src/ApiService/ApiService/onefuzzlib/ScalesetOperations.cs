@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.ResourceManager.Compute;
+using Azure.ResourceManager.Monitor;
 using Azure.ResourceManager.Monitor.Models;
 namespace Microsoft.OneFuzz.Service;
 
@@ -276,7 +277,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 return await SetFailed(scaleset, result.ErrorV);
             }
 
-            //TODO : why are we saving scaleset here ? 
+            //TODO : why are we saving scaleset here ?
             var r = await Update(scaleset);
             if (!r.IsOk) {
                 _logTracer.Error($"Failed to save scaleset {scaleset.ScalesetId:Tag:ScalesetId} due to {r.ErrorV:Tag:Error}");
@@ -513,6 +514,11 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         //ground truth of existing nodes
         var azureNodes = await _context.VmssOperations.ListInstanceIds(scaleSet.ScalesetId);
+        if (azureNodes is null) {
+            // didn't find scaleset
+            return (false, scaleSet);
+        }
+
         var nodes = _context.NodeOperations.SearchStates(scalesetId: scaleSet.ScalesetId);
 
         //# Nodes do not exists in scalesets but in table due to unknown failure
@@ -535,6 +541,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         foreach (var azureNode in azureNodes) {
             var machineId = azureNode.Key;
+            var instanceId = azureNode.Value;
             if (nodeMachineIds.Contains(machineId)) {
                 continue;
             }
@@ -549,6 +556,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 pool.OkV.PoolId,
                 scaleSet.PoolName,
                 machineId,
+                instanceId,
                 scaleSet.ScalesetId,
                 _context.ServiceConfiguration.OneFuzzVersion,
                 isNew: true);
@@ -614,7 +622,6 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
 
     public async Async.Task ReimageNodes(Scaleset scaleset, IEnumerable<Node> nodes, NodeDisposalStrategy disposalStrategy) {
-
         if (nodes is null || !nodes.Any()) {
             _log.Info($"no nodes to reimage: {scaleset.ScalesetId:Tag:ScalesetId}");
             return;
@@ -631,20 +638,20 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             return;
         }
 
-        var machineIds = new HashSet<Guid>();
+        var nodesToReimage = new List<Node>();
         foreach (var node in nodes) {
             if (node.State != NodeState.Done) {
                 continue;
             }
 
             if (node.DebugKeepNode) {
-                _log.Warning($"not reimaging manually overriden node {node.MachineId:Tag:MachineId} in scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
+                _log.Warning($"not reimaging manually overridden node {node.MachineId:Tag:MachineId} in scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
             } else {
-                _ = machineIds.Add(node.MachineId);
+                nodesToReimage.Add(node);
             }
         }
 
-        if (!machineIds.Any()) {
+        if (!nodesToReimage.Any()) {
             _log.Info($"no nodes to reimage {scaleset.ScalesetId:Tag:ScalesetId}");
             return;
         }
@@ -652,18 +659,16 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         switch (disposalStrategy) {
             case NodeDisposalStrategy.Decommission:
                 _log.Info($"decommissioning nodes");
-                await Async.Task.WhenAll(nodes
-                    .Where(node => machineIds.Contains(node.MachineId))
+                await Async.Task.WhenAll(nodesToReimage
                     .Select(async node => {
                         await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
                     }));
                 return;
 
             case NodeDisposalStrategy.ScaleIn:
-                var r = await _context.VmssOperations.ReimageNodes(scaleset.ScalesetId, machineIds);
+                var r = await _context.VmssOperations.ReimageNodes(scaleset.ScalesetId, nodesToReimage);
                 if (r.IsOk) {
-                    await Async.Task.WhenAll(nodes
-                        .Where(node => machineIds.Contains(node.MachineId))
+                    await Async.Task.WhenAll(nodesToReimage
                         .Select(async node => {
                             var r = await _context.NodeOperations.ReleaseScaleInProtection(node);
                             if (r.IsOk) {
@@ -692,33 +697,30 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             return;
         }
 
-        HashSet<Guid> machineIds = new();
+        var nodesToDelete = new List<Node>();
         foreach (var node in nodes) {
             if (node.DebugKeepNode) {
-                _log.Warning($"not deleting manually overriden node {node.MachineId:Tag:MachineId} in scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
+                _log.Warning($"not deleting manually overridden node {node.MachineId:Tag:MachineId} in scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
             } else {
-                _ = machineIds.Add(node.MachineId);
+                nodesToDelete.Add(node);
             }
         }
 
         switch (disposalStrategy) {
             case NodeDisposalStrategy.Decommission:
                 _log.Info($"decommissioning nodes");
-                await Async.Task.WhenAll(nodes
-                    .Where(node => machineIds.Contains(node.MachineId))
+                await Async.Task.WhenAll(nodesToDelete
                     .Select(async node => {
                         await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
                     }));
                 return;
 
             case NodeDisposalStrategy.ScaleIn:
-                _log.Info($"deleting nodes {scaleset.ScalesetId:Tag:ScalesetId} {string.Join(", ", machineIds):Tag:MachineIds}");
-                await _context.VmssOperations.DeleteNodes(scaleset.ScalesetId, machineIds);
-                await Async.Task.WhenAll(nodes
-                    .Where(node => machineIds.Contains(node.MachineId))
+                _log.Info($"deleting nodes {scaleset.ScalesetId:Tag:ScalesetId} {string.Join(", ", nodesToDelete.Select(n => n.MachineId)):Tag:MachineIds}");
+                await _context.VmssOperations.DeleteNodes(scaleset.ScalesetId, nodesToDelete);
+                await Async.Task.WhenAll(nodesToDelete
                     .Select(async node => {
                         await _context.NodeOperations.Delete(node);
-                        await _context.NodeOperations.ReleaseScaleInProtection(node).IgnoreResult();
                     }));
                 return;
         }
@@ -840,8 +842,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         _logTracer.Info($"checking for existing auto scale settings {scaleset.ScalesetId:Tag:ScalesetId}");
 
         var autoScalePolicy = _context.AutoScaleOperations.GetAutoscaleSettings(scaleset.ScalesetId);
-        if (autoScalePolicy.IsOk && autoScalePolicy.OkV != null) {
-            foreach (var profile in autoScalePolicy.OkV.Data.Profiles) {
+        if (autoScalePolicy.IsOk && autoScalePolicy.OkV is AutoscaleSettingResource autoscaleSetting) {
+            foreach (var profile in autoscaleSetting.Data.Profiles) {
                 var queueUri = profile.Rules.First().MetricTrigger.MetricResourceId;
 
                 // Overwrite any existing scaling rules with one that will
@@ -867,23 +869,22 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 //   and once the scale set is empty, we will delete it.
                 _logTracer.Info($"Getting nodes with scale in protection");
 
-                var vmsWithProtection = await _context.VmssOperations.ListVmss(
-                    scaleset.ScalesetId,
-                    (vmResource) => vmResource?.Data?.ProtectionPolicy?.ProtectFromScaleIn != null
-                        && vmResource.Data.ProtectionPolicy.ProtectFromScaleIn.Value
-                );
+                try {
+                    var vmsWithProtection = await _context.VmssOperations
+                        .ListVmss(scaleset.ScalesetId)
+                        .Where(vmResource => vmResource.Data?.ProtectionPolicy?.ProtectFromScaleIn is true)
+                        .ToListAsync();
 
-                _logTracer.Info($"{JsonSerializer.Serialize(vmsWithProtection):Tag:VMsWithProtection}");
-                if (vmsWithProtection != null) {
+                    _logTracer.Info($"{JsonSerializer.Serialize(vmsWithProtection):Tag:VMsWithProtection}");
                     var numVmsWithProtection = vmsWithProtection.Count;
                     profile.Capacity.Minimum = numVmsWithProtection.ToString();
                     profile.Capacity.Default = numVmsWithProtection.ToString();
-                } else {
-                    _logTracer.Error($"Failed to list vmss for scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
+                } catch (Exception ex) {
+                    _logTracer.Exception(ex, $"Failed to list vmss for scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
                 }
             }
 
-            var updatedAutoScale = await _context.AutoScaleOperations.UpdateAutoscale(autoScalePolicy.OkV.Data);
+            var updatedAutoScale = await _context.AutoScaleOperations.UpdateAutoscale(autoscaleSetting.Data);
             if (!updatedAutoScale.IsOk) {
                 _logTracer.Error($"Failed to update auto scale {updatedAutoScale.ErrorV:Tag:Error}");
             }
