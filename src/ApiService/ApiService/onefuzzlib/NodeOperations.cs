@@ -232,9 +232,27 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             return false;
         }
 
+        if (!await IsOnLatestModel(node)) {
+            _logTracer.Info($"can_process_new_work node not on latest model, forcing reimage {node.MachineId:Tag:MachineId}");
+            _ = await Stop(node, done: true);
+            return false;
+        }
+
         return true;
     }
 
+    private async Task<bool> IsOnLatestModel(Node node) {
+        if (!node.ScalesetId.HasValue || node.InstanceId is null) {
+            return true;
+        }
+
+        var vm = await _context.VmssOperations.GetVmssVm(node.ScalesetId.Value, node.InstanceId);
+        if (vm is null) {
+            return true;
+        }
+
+        return vm.LatestModelApplied ?? true;
+    }
 
     /// Mark any excessively long lived node to be re-imaged.
     /// This helps keep nodes on scalesets that use `latest` OS image SKUs

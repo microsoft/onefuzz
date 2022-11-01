@@ -7,7 +7,6 @@ using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
 using Azure.ResourceManager.Models;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Rest.Azure;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -16,6 +15,7 @@ public interface IVmssOperations {
     Async.Task<OneFuzzResult<string>> GetInstanceId(Guid name, Guid vmId);
     Async.Task<OneFuzzResultVoid> UpdateExtensions(Guid name, IList<VirtualMachineScaleSetExtensionData> extensions);
     Async.Task<VirtualMachineScaleSetData?> GetVmss(Guid name);
+    Async.Task<VirtualMachineScaleSetVmData?> GetVmssVm(Guid scaleset, string instanceId);
 
     Async.Task<IReadOnlyList<string>> ListAvailableSkus(Region region);
 
@@ -207,20 +207,14 @@ public class VmssOperations : IVmssOperations {
             }
         });
 
-    public async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(Guid name, Guid vmId) {
-        _log.Info($"get instance ID for scaleset node: {name:Tag:VmssName}:{vmId:Tag:VmId}");
-        var instanceId = await GetInstanceId(name, vmId);
-        if (!instanceId.IsOk) {
-            return instanceId.ErrorV;
-        }
-
-        var resource = GetVmssVmResource(name, instanceId.OkV);
+    public async Async.Task<VirtualMachineScaleSetVmData?> GetVmssVm(Guid scaleset, string instanceId) {
+        var resource = GetVmssVmResource(scaleset, instanceId);
         try {
             var response = await resource.GetAsync();
-            return OneFuzzResult.Ok(response.Value);
-        } catch (Exception ex) when (ex is RequestFailedException || ex is CloudException) {
-            _log.Exception(ex, $"unable to find vm instance: {name:Tag:VmssName}:{vmId:Tag:VmId}");
-            return OneFuzzResult<VirtualMachineScaleSetVmResource>.Error(ErrorCode.UNABLE_TO_FIND, $"unable to find vm instance: {name}:{instanceId}");
+            return response.Value.Data;
+        } catch (RequestFailedException ex) when (ex.Status == 404) {
+            _log.Exception(ex, $"unable to find vm instance: {scaleset:Tag:VmssName}:{instanceId:Tag:InstanceId}");
+            return null;
         }
     }
 
