@@ -48,6 +48,7 @@ stages:
             workingDirectory: "$(ONEFUZZ_DEPLOY_LOC)"
             script: |
               set -ex
+              python -m pip install -U wheel
               python -m pip install pipenv tox
               pipenv install
               artifact="artifact"
