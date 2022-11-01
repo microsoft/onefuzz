@@ -203,7 +203,7 @@ jobs:
       run: |
         set -ex
         cd contrib/deploy-onefuzz-via-azure-devops
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip wheel
         python -m pip install tox pipenv
         tox
   onefuzztypes:
