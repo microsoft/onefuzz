@@ -47,14 +47,12 @@ public class Program {
 
         using var host =
             new HostBuilder()
-            .ConfigureFunctionsWorkerDefaults(
-                builder => {
-                    builder.UseMiddleware<LoggingMiddleware>();
-                    builder.AddApplicationInsights(options => {
-                        options.ConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
-                    });
-                }
-            )
+            .ConfigureFunctionsWorkerDefaults(builder => {
+                builder.UseMiddleware<LoggingMiddleware>();
+                builder.AddApplicationInsights(options => {
+                    options.ConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
+                });
+            })
             .ConfigureServices((context, services) => {
                 services.Configure<JsonSerializerOptions>(options => {
                     options = EntityConverter.GetJsonSerializerOptions();
