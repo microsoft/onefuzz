@@ -15,7 +15,7 @@ from onefuzztypes.requests import (
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.notifications.main import Notification
-from ..onefuzzlib.request import not_ok, ok, parse_request, parse_uri
+from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
