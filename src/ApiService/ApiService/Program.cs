@@ -50,6 +50,9 @@ public class Program {
             .ConfigureFunctionsWorkerDefaults(
                 builder => {
                     builder.UseMiddleware<LoggingMiddleware>();
+                    builder.AddApplicationInsights(options => {
+                        options.ConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
+                    });
                 }
             )
             .ConfigureServices((context, services) => {
@@ -111,9 +114,6 @@ public class Program {
                 .AddScoped<INodeMessageOperations, NodeMessageOperations>()
                 .AddScoped<ISubnet, Subnet>()
                 .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
-                .AddApplicationInsightsTelemetry(options => {
-                    options.ConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
-                })
                 .AddSingleton<GraphServiceClient>(new GraphServiceClient(new DefaultAzureCredential()))
                 .AddSingleton<DependencyTrackingTelemetryModule>()
                 .AddSingleton<ICreds, Creds>()
