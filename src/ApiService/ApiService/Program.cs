@@ -44,6 +44,8 @@ public class Program {
     //Move out expensive resources into separate class, and add those as Singleton
     // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
     public static async Async.Task Main() {
+        var configuration = new ServiceConfiguration();
+
         using var host =
             new HostBuilder()
             .ConfigureFunctionsWorkerDefaults(
@@ -110,31 +112,20 @@ public class Program {
                 .AddScoped<INodeMessageOperations, NodeMessageOperations>()
                 .AddScoped<ISubnet, Subnet>()
                 .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
-
-                .AddSingleton<TelemetryConfiguration>(provider => {
-                    var config = provider.GetRequiredService<IServiceConfig>();
-                    return new() {
-                        ConnectionString = $"InstrumentationKey={config.ApplicationInsightsInstrumentationKey}",
-                    };
+                .AddApplicationInsightsTelemetry(options => {
+                    options.ConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
                 })
                 .AddSingleton<GraphServiceClient>(new GraphServiceClient(new DefaultAzureCredential()))
                 .AddSingleton<DependencyTrackingTelemetryModule>()
                 .AddSingleton<ICreds, Creds>()
                 .AddSingleton<EntityConverter>()
-                .AddSingleton<IServiceConfig, ServiceConfiguration>()
+                .AddSingleton<IServiceConfig>(configuration)
                 .AddSingleton<IStorage, Storage>()
                 .AddSingleton<ILogSinks, LogSinks>()
                 .AddHttpClient()
                 .AddMemoryCache();
             })
             .Build();
-
-        // Set up Application Insights dependency tracking:
-        {
-            var telemetryConfig = host.Services.GetRequiredService<TelemetryConfiguration>();
-            var module = host.Services.GetRequiredService<DependencyTrackingTelemetryModule>();
-            module.Initialize(telemetryConfig);
-        }
 
         // Initialize expected Storage tables:
         await SetupStorage(

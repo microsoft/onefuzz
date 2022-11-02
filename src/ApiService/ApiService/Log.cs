@@ -65,8 +65,8 @@ public interface ILog {
 class AppInsights : ILog {
     private readonly TelemetryClient _telemetryClient;
 
-    public AppInsights(TelemetryConfiguration config) {
-        _telemetryClient = new TelemetryClient(config);
+    public AppInsights(TelemetryClient client) {
+        _telemetryClient = client;
     }
 
     public void Log(Guid correlationId, LogStringHandler message, SeverityLevel level, IReadOnlyDictionary<string, string> tags, string? caller) {
@@ -366,12 +366,12 @@ public interface ILogSinks {
 public class LogSinks : ILogSinks {
     private readonly List<ILog> _loggers;
 
-    public LogSinks(IServiceConfig config, TelemetryConfiguration telemetryConfiguration) {
+    public LogSinks(IServiceConfig config, TelemetryClient telemetryClient) {
         _loggers = new List<ILog>();
         foreach (var dest in config.LogDestinations) {
             _loggers.Add(
                 dest switch {
-                    LogDestination.AppInsights => new AppInsights(telemetryConfiguration),
+                    LogDestination.AppInsights => new AppInsights(telemetryClient),
                     LogDestination.Console => new Console(),
                     _ => throw new Exception($"Unhandled Log Destination type: {dest}"),
                 }
