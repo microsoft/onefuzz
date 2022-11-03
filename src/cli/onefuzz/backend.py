@@ -32,6 +32,7 @@ import msal
 import requests
 from azure.storage.blob import ContainerClient
 from pydantic import BaseModel, Field
+from requests import Response
 from tenacity import RetryCallState, retry
 from tenacity.retry import retry_if_exception_type
 from tenacity.stop import stop_after_attempt
@@ -285,7 +286,7 @@ class Backend:
         json_data: Optional[Any] = None,
         params: Optional[Any] = None,
         _retry_on_auth_failure: bool = True,
-    ) -> Any:
+    ) -> Response:
         if self.config.dotnet_functions and path in self.config.dotnet_functions:
             endpoint = self.config.dotnet_endpoint
         else:
@@ -349,7 +350,7 @@ class Backend:
                 "request did not succeed: HTTP %s - %s"
                 % (response.status_code, error_text)
             )
-        return response.json()
+        return response
 
 
 def before_sleep(retry_state: RetryCallState) -> None:
