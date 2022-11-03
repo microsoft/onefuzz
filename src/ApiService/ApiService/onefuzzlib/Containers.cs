@@ -212,17 +212,17 @@ public class Containers : IContainers {
     }
 
     public async Task<Dictionary<Container, IDictionary<string, string>>> GetContainers(StorageType corpus) {
-        var accounts = _storage.GetAccounts(corpus);
-        IEnumerable<IEnumerable<KeyValuePair<Container, IDictionary<string, string>>>> data =
-         await Async.Task.WhenAll(accounts.Select(async acc => {
-             var service = await _storage.GetBlobServiceClientForAccount(acc);
-             return await service
-                .GetBlobContainersAsync(BlobContainerTraits.Metadata)
-                .Select(container => KeyValuePair.Create(Container.Parse(container.Name), container.Properties.Metadata))
-                .ToListAsync();
-         }));
+        var result = new Dictionary<Container, IDictionary<string, string>>();
 
-        return new(data.SelectMany(x => x));
+        // same container name can exist in multiple accounts; here the last one wins
+        foreach (var account in _storage.GetAccounts(corpus)) {
+            var service = await _storage.GetBlobServiceClientForAccount(account);
+            await foreach (var container in service.GetBlobContainersAsync(BlobContainerTraits.Metadata)) {
+                result[Container.Parse(container.Name)] = container.Properties.Metadata;
+            }
+        }
+
+        return result;
     }
 
     public string AuthDownloadUrl(Container container, string filename) {
