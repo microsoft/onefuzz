@@ -183,13 +183,14 @@ public class VmssOperations : IVmssOperations {
         => _cache.GetOrCreateAsync(new InstanceIdKey(scaleset, vmId), async entry => {
             var scalesetResource = GetVmssResource(scaleset);
             var vmIdString = vmId.ToString();
+            string? foundInstanceId = null;
             await foreach (var vm in scalesetResource.GetVirtualMachineScaleSetVms()) {
                 var vmInfo = vm.HasData ? vm : await vm.GetAsync();
                 var instanceId = vmInfo.Data.InstanceId;
                 if (vmInfo.Data.VmId == vmIdString) {
                     // we found the VM we are looking for
                     entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
-                    return instanceId;
+                    foundInstanceId = instanceId;
                 } else {
                     // if we find any other VMs, put them in the cache
                     if (Guid.TryParse(vmInfo.Data.VmId, out var vmId)) {
@@ -199,8 +200,11 @@ public class VmssOperations : IVmssOperations {
                     }
                 }
             }
-
-            throw new Exception($"unable to find instance ID for scaleset vm {scaleset}:{vmId}");
+            if (foundInstanceId is null) {
+                throw new Exception($"unable to find instance ID for scaleset vm {scaleset}:{vmId}");
+            } else {
+                return foundInstanceId;
+            }
         });
 
     public async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(Guid name, Guid vmId) {
