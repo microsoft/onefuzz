@@ -17,7 +17,7 @@ public class Notifications {
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         _log.WithTag("HttpRequest", "GET").Info($"Notification search");
-        var request = await RequestHandling.ParseUri<NotificationSearch>(req);
+        var request = await RequestHandling.ParseRequest<NotificationSearch>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "notification search");
         }
