@@ -46,10 +46,10 @@ public class EndpointAuthorization : IEndpointAuthorization {
             return await _context.RequestHandling.NotOk(req, tokenResult.ErrorV, "token verification", HttpStatusCode.Unauthorized);
         }
 
-        var token = tokenResult.OkV.UserInfo;
+        var token = tokenResult.OkV;
         if (await IsUser(token)) {
             if (!allowUser) {
-                return await Reject(req, token);
+                return await Reject(req, tokenResult.OkV.UserInfo);
             }
 
             var access = await CheckAccess(req);
@@ -59,7 +59,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
         }
 
         if (await IsAgent(token) && !allowAgent) {
-            return await Reject(req, token);
+            return await Reject(req, tokenResult.OkV.UserInfo);
         }
 
         return await method(req);
