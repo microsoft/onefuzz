@@ -11,7 +11,6 @@ using ApiService.OneFuzzLib.Orm;
 using Azure.Core.Serialization;
 using Azure.Identity;
 using Microsoft.ApplicationInsights.DependencyCollector;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,13 +43,16 @@ public class Program {
     //Move out expensive resources into separate class, and add those as Singleton
     // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
     public static async Async.Task Main() {
+        var configuration = new ServiceConfiguration();
+
         using var host =
             new HostBuilder()
-            .ConfigureFunctionsWorkerDefaults(
-                builder => {
-                    builder.UseMiddleware<LoggingMiddleware>();
-                }
-            )
+            .ConfigureFunctionsWorkerDefaults(builder => {
+                builder.UseMiddleware<LoggingMiddleware>();
+                builder.AddApplicationInsights(options => {
+                    options.ConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
+                });
+            })
             .ConfigureServices((context, services) => {
                 services.Configure<JsonSerializerOptions>(options => {
                     options = EntityConverter.GetJsonSerializerOptions();
@@ -109,31 +111,17 @@ public class Program {
                 .AddScoped<INodeMessageOperations, NodeMessageOperations>()
                 .AddScoped<ISubnet, Subnet>()
                 .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
-
-                .AddSingleton<TelemetryConfiguration>(provider => {
-                    var config = provider.GetRequiredService<IServiceConfig>();
-                    return new() {
-                        ConnectionString = $"InstrumentationKey={config.ApplicationInsightsInstrumentationKey}",
-                    };
-                })
                 .AddSingleton<GraphServiceClient>(new GraphServiceClient(new DefaultAzureCredential()))
                 .AddSingleton<DependencyTrackingTelemetryModule>()
                 .AddSingleton<ICreds, Creds>()
                 .AddSingleton<EntityConverter>()
-                .AddSingleton<IServiceConfig, ServiceConfiguration>()
+                .AddSingleton<IServiceConfig>(configuration)
                 .AddSingleton<IStorage, Storage>()
                 .AddSingleton<ILogSinks, LogSinks>()
                 .AddHttpClient()
                 .AddMemoryCache();
             })
             .Build();
-
-        // Set up Application Insights dependency tracking:
-        {
-            var telemetryConfig = host.Services.GetRequiredService<TelemetryConfiguration>();
-            var module = host.Services.GetRequiredService<DependencyTrackingTelemetryModule>();
-            module.Initialize(telemetryConfig);
-        }
 
         // Initialize expected Storage tables:
         await SetupStorage(

@@ -49,14 +49,19 @@ impl fmt::Display for Mode {
 // caller, rather than the default AZCOPY log location.
 async fn read_azcopy_log_file(path: &Path) -> Result<String> {
     let mut entries = fs::read_dir(path).await?;
-    // there should be only up to one file in azcopy_log dir
-    if let Some(file) = entries.next_entry().await? {
-        fs::read_to_string(file.path())
+    // There should 2 files in azcopy_log dir, one is the log file,
+    // the other is scanning log file (added in 10.9.0)
+    while let Some(file) = entries.next_entry().await? {
+        if file.path().to_string_lossy().contains("scanning") {
+            continue;
+        }
+
+        return fs::read_to_string(file.path())
             .await
-            .with_context(|| format!("unable to read file: {}", file.path().display()))
-    } else {
-        bail!("no log file in path: {}", path.display());
+            .with_context(|| format!("unable to read file: {}", file.path().display()));
     }
+
+    bail!("no log file in path: {}", path.display());
 }
 
 // attempt to redact an azcopy argument if it could possibly be a SAS URL
@@ -81,8 +86,6 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
         .arg(mode.to_string())
         .arg(&src)
         .arg(&dst)
-        .arg("--log-level")
-        .arg("ERROR")
         .args(args);
 
     let output = cmd

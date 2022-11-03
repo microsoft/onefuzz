@@ -5,7 +5,7 @@ using Azure.Storage.Sas;
 namespace Microsoft.OneFuzz.Service;
 
 public interface INotificationOperations : IOrm<Notification> {
-    Async.Task NewFiles(Container container, string filename, bool failTaskOnTransientError);
+    Async.Task NewFiles(Container container, string filename, bool isLastRetryAttempt);
     IAsyncEnumerable<Notification> GetNotifications(Container container);
     IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks();
     Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting);
@@ -17,7 +17,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         : base(log, context) {
 
     }
-    public async Async.Task NewFiles(Container container, string filename, bool failTaskOnTransientError) {
+    public async Async.Task NewFiles(Container container, string filename, bool isLastRetryAttempt) {
         var notifications = GetNotifications(container);
         var hasNotifications = await notifications.AnyAsync();
 
@@ -43,7 +43,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             }
 
             if (notification.Config is AdoTemplate adoTemplate) {
-                await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, failTaskOnTransientError, notification.NotificationId);
+                await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, isLastRetryAttempt, notification.NotificationId);
             }
 
             if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {

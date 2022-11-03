@@ -19,8 +19,3 @@ members = [
 
 [profile.release]
 lto = "thin"
-
-[patch.crates-io]
-# TODO: remove once PR is merged upstream https://github.com/dmolokanov/appinsights-rs/pull/280
-# this rev is on the branch 'audit-fixes'
-appinsights = { git = "https://github.com/Porges/appinsights-rs", rev="8264e0236c7a2729c4af4a2ba0017ca0270d7d0e" }

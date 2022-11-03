@@ -53,7 +53,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
 
         public GithubConnnector(GithubIssuesTemplate config, Container container, string filename, Renderer renderer, Uri instanceUrl, GithubAuth auth, ILogTracer logTracer) {
             _config = config;
-            _gh = new GitHubClient(new ProductHeaderValue("microsoft/OneFuzz")) {
+            _gh = new GitHubClient(new ProductHeaderValue("OneFuzz")) {
                 Credentials = new Credentials(auth.User, auth.PersonalAccessToken)
             };
             _renderer = renderer;
@@ -76,6 +76,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
 
         private async Async.Task<List<Issue>> Existing() {
             var query = new List<string>() {
+                "is:issue",
                 await Render(_config.UniqueSearch.str),
                 $"repo:{_config.Organization}/{_config.Repository}"
             };

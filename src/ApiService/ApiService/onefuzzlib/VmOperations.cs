@@ -13,6 +13,8 @@ public interface IVmOperations {
 
     Task<VirtualMachineData?> GetVm(string name);
 
+    Task<VirtualMachineData?> GetVmWithInstanceView(string name);
+
     Async.Task<bool> Delete(Vm vm);
 
     Async.Task<OneFuzzResultVoid> Create(Vm vm);
@@ -65,22 +67,31 @@ public class VmOperations : IVmOperations {
     }
 
     public async Task<VirtualMachineData?> GetVm(string name) {
-        // _logTracer.Debug($"getting vm: {name}");
         try {
-            var result = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(name, InstanceViewTypes.InstanceView);
-            if (result == null) {
+            var result = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(name);
+            if (result is null || !result.Value.HasData) {
                 return null;
             }
-            if (result.Value.HasData) {
-                return result.Value.Data;
-            }
 
+            return result.Value.Data;
         } catch (RequestFailedException) {
-            // _logTracer.Debug($"vm does not exist {ex});
+            // TODO: we shouldn't hide this error, only if it doesn't exist
             return null;
         }
+    }
 
-        return null;
+    public async Task<VirtualMachineData?> GetVmWithInstanceView(string name) {
+        try {
+            var result = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(name, InstanceViewTypes.InstanceView);
+            if (result is null || !result.Value.HasData) {
+                return null;
+            }
+
+            return result.Value.Data;
+        } catch (RequestFailedException) {
+            // TODO: we shouldn't hide this error, only if it doesn't exist
+            return null;
+        }
     }
 
     public async Async.Task<bool> Delete(Vm vm) {

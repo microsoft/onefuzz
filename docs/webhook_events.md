@@ -488,6 +488,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -497,6 +505,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -555,6 +567,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -565,8 +580,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression",
-                "dotnet_coverage"
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -682,7 +696,7 @@ If webhook is set to have Event Grid message format then the payload will look a
         "allowed_aad_tenants": [
             "00000000-0000-0000-0000-000000000000"
         ],
-        "default_linux_vm_image": "Canonical:UbuntuServer:18.04-LTS:latest",
+        "default_linux_vm_image": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
         "default_windows_vm_image": "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
         "network_config": {
             "address_space": "10.0.0.0/8",
@@ -825,7 +839,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "object"
                 },
                 "default_linux_vm_image": {
-                    "default": "Canonical:UbuntuServer:18.04-LTS:latest",
+                    "default": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
                     "title": "Default Linux Vm Image",
                     "type": "string"
                 },
@@ -1207,6 +1221,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -1217,8 +1234,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression",
-                "dotnet_coverage"
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -2381,6 +2397,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -2390,6 +2414,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -2448,6 +2476,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -2458,8 +2489,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression",
-                "dotnet_coverage"
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -2534,7 +2564,7 @@ If webhook is set to have Event Grid message format then the payload will look a
 
 ```json
 {
-    "image": "Canonical:UbuntuServer:18.04-LTS:latest",
+    "image": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
     "pool_name": "example",
     "region": "eastus",
     "scaleset_id": "00000000-0000-0000-0000-000000000000",
@@ -3097,6 +3127,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -3106,6 +3144,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -3164,6 +3206,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -3174,8 +3219,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression",
-                "dotnet_coverage"
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -3604,6 +3648,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -3613,6 +3665,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -3671,6 +3727,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -3681,8 +3740,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression",
-                "dotnet_coverage"
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -4054,6 +4112,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -4063,6 +4129,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -4121,6 +4191,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -4131,8 +4204,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression",
-                "dotnet_coverage"
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -4478,6 +4550,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -4487,6 +4567,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -4559,6 +4643,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -4569,8 +4656,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression",
-                "dotnet_coverage"
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -4929,6 +5015,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -4938,6 +5032,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -4996,6 +5094,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -5006,8 +5107,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression",
-                "dotnet_coverage"
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -6059,7 +6159,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "object"
                 },
                 "default_linux_vm_image": {
-                    "default": "Canonical:UbuntuServer:18.04-LTS:latest",
+                    "default": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
                     "title": "Default Linux Vm Image",
                     "type": "string"
                 },
@@ -6664,6 +6764,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -6673,6 +6781,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -6745,6 +6857,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -6755,8 +6870,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression",
-                "dotnet_coverage"
+                "generic_regression"
             ],
             "title": "TaskType"
         },

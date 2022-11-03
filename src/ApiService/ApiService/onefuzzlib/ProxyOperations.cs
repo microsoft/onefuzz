@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Data.Tables;
-using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
 using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
@@ -175,7 +174,13 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
         if (vmData != null) {
             if (vmData.ProvisioningState == "Failed") {
-                return await SetProvisionFailed(proxy, vmData);
+                var failedVmData = await _context.VmOperations.GetVmWithInstanceView(vm.Name);
+                if (failedVmData is null) {
+                    // this should exist since we just loaded the VM above
+                    throw new InvalidOperationException("Unable to load instance-view data for VM");
+                }
+
+                return await SetProvisionFailed(proxy, failedVmData.InstanceView);
             } else {
                 await SaveProxyConfig(proxy);
                 return await SetState(proxy, VmState.ExtensionsLaunch);
@@ -207,8 +212,8 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         }
     }
 
-    private async System.Threading.Tasks.Task<Proxy> SetProvisionFailed(Proxy proxy, VirtualMachineData vmData) {
-        var errors = GetErrors(proxy, vmData).ToArray();
+    private async System.Threading.Tasks.Task<Proxy> SetProvisionFailed(Proxy proxy, VirtualMachineInstanceView? instanceView) {
+        var errors = GetErrors(proxy, instanceView).ToArray();
         return await SetFailed(proxy, new Error(ErrorCode.PROXY_FAILED, errors));
     }
 
@@ -223,8 +228,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
     }
 
 
-    private static IEnumerable<string> GetErrors(Proxy proxy, VirtualMachineData vmData) {
-        var instanceView = vmData.InstanceView;
+    private static IEnumerable<string> GetErrors(Proxy proxy, VirtualMachineInstanceView? instanceView) {
         yield return "provisioning failed";
         if (instanceView is null) {
             yield break;
@@ -255,13 +259,18 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         var config = await _context.ConfigOperations.Fetch();
         var vm = GetVm(proxy, config);
         var vmData = await _context.VmOperations.GetVm(vm.Name);
-
         if (vmData is null) {
             return await SetFailed(proxy, new Error(ErrorCode.PROXY_FAILED, new[] { "azure not able to find vm" }));
         }
 
         if (vmData.ProvisioningState == "Failed") {
-            return await SetProvisionFailed(proxy, vmData);
+            var failedVmData = await _context.VmOperations.GetVmWithInstanceView(vm.Name);
+            if (failedVmData is null) {
+                // this should exist since we just loaded the VM above
+                throw new InvalidOperationException("Unable to load instance-view data for VM");
+            }
+
+            return await SetProvisionFailed(proxy, failedVmData.InstanceView);
         }
 
         var ip = await _context.IpOperations.GetPublicIp(vmData.NetworkProfile.NetworkInterfaces[0].Id);

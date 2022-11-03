@@ -14,8 +14,8 @@ for
 Azure](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/prepare-for-upload-vhd-image).
 
 From there, rather than using Image SKUs such as
-`Canonical:UbuntuServer:18.04-LTS:latest`, use the full resource ID. Supported
-ID formats are:
+`Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest`, use the full resource ID for the
+shared image. Supported ID formats are:
 
 - VM image:<br/>
   `/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/images/{image}`

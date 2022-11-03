@@ -440,6 +440,15 @@ def build_task_config(job: Job, task: Task) -> TaskUnitConfig:
         if coverage_filter is not None:
             config.coverage_filter = coverage_filter
 
+    if TaskFeature.target_assembly in definition.features:
+        config.target_assembly = task_config.task.target_assembly
+
+    if TaskFeature.target_class in definition.features:
+        config.target_class = task_config.task.target_class
+
+    if TaskFeature.target_method in definition.features:
+        config.target_method = task_config.task.target_method
+
     return config
 
 

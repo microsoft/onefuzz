@@ -163,6 +163,9 @@ class TaskDetails(BaseModel):
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
     coverage_filter: Optional[str]
+    target_assembly: Optional[str]
+    target_class: Optional[str]
+    target_method: Optional[str]
 
 
 class TaskPool(BaseModel):
@@ -378,6 +381,9 @@ class TaskUnitConfig(BaseModel):
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
     coverage_filter: Optional[str]
+    target_assembly: Optional[str]
+    target_class: Optional[str]
+    target_method: Optional[str]
 
     # from here forwards are Container definitions.  These need to be inline
     # with TaskDefinitions and ContainerTypes
@@ -884,7 +890,7 @@ class InstanceConfig(BaseModel):
         default="MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest"
     )
     default_linux_vm_image: str = Field(
-        default="Canonical:UbuntuServer:18.04-LTS:latest"
+        default="Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest"
     )
     proxy_vm_sku: str = Field(default="Standard_B2s")
     api_access_rules: Optional[Dict[Endpoint, ApiAccessRule]] = None
