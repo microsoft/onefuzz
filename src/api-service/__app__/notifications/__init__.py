@@ -15,12 +15,12 @@ from onefuzztypes.requests import (
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.notifications.main import Notification
-from ..onefuzzlib.request import not_ok, ok, parse_request, parse_uri
+from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("notification search")
-    request = parse_uri(NotificationSearch, req)
+    request = parse_request(NotificationSearch, req)
     if isinstance(request, Error):
         return not_ok(request, context="notification search")
 
