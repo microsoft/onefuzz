@@ -5,7 +5,7 @@ ARG VARIANT="ubuntu-22.04"
 FROM mcr.microsoft.com/vscode/devcontainers/base:0-${VARIANT}
 
 # note: keep this in sync with .github/workflows/ci.yml
-ARG RUSTVERSION="1.64"
+ARG RUSTVERSION="1.65"
 
 # Install packages required for build:
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
