@@ -347,7 +347,7 @@ impl<'a> Expand<'a> {
         match ev {
             ExpandedValue::Path(v) => {
                 let path = String::from(
-                    dunce::canonicalize(&v)
+                    dunce::canonicalize(v)
                         .with_context(|| {
                             format!("unable to canonicalize path during extension: {}", v)
                         })?

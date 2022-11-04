@@ -19,7 +19,7 @@ fn main() {
     let modoff_path = Path::new(&args[2]);
 
     // read our modoff file and parse it to a vector
-    let modoff_data = fs::read_to_string(&modoff_path).unwrap();
+    let modoff_data = fs::read_to_string(modoff_path).unwrap();
     let modoffs = ModOff::parse(&modoff_data).unwrap();
 
     // create all the likely module base names -- do we care about mixed case

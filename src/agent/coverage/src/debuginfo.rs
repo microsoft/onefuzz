@@ -84,7 +84,7 @@ impl ModuleDebugInfo {
     fn load(module: &Path) -> Result<Option<Self>> {
         // Used when `cfg(windows)`.
         #[allow(unused_mut)]
-        let mut data = fs::read(&module)?.into_boxed_slice();
+        let mut data = fs::read(module)?.into_boxed_slice();
 
         // Conditional so we can use `dbghelp`.
         #[cfg(windows)]

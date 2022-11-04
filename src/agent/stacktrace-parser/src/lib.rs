@@ -351,7 +351,7 @@ mod tests {
                 );
             }
 
-            let mut expected_path = expected_dir.join(&file_name);
+            let mut expected_path = expected_dir.join(file_name);
             expected_path.set_extension("json");
             if !expected_path.is_file() {
                 eprintln!(

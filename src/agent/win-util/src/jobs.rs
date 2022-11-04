@@ -60,7 +60,7 @@ impl JobObject {
         let handle = unsafe {
             CreateJobObjectW(
                 ptr::null_mut() as LPSECURITY_ATTRIBUTES,
-                string::to_wstring(&name).as_ptr(),
+                string::to_wstring(name).as_ptr(),
             )
         };
 

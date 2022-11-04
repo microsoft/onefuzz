@@ -66,7 +66,7 @@ impl Fixture {
 
     pub fn setup_url(&self) -> BlobContainerUrl {
         let url = "https://contoso.com/my-setup-container";
-        BlobContainerUrl::parse(&url).unwrap()
+        BlobContainerUrl::parse(url).unwrap()
     }
 
     pub fn work_unit(&self) -> WorkUnit {
