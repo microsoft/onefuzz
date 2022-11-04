@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Switch to using the package provided by Azure Functions to set up Application Insights and improve its reporting of OneFuzz transactions. [#2597](https://github.com/microsoft/onefuzz/pull/2597)
 ### Fixed
 * Service: Fix handling duplicate containers across accounts in C# functions. [#2596](https://github.com/microsoft/onefuzz/pull/2596)
-* Service: Fix the notification get request on C# endpoints. [#2591](https://github.com/microsoft/onefuzz/pull/2591)
+* Service: Fix the notification GET request on C# endpoints. [#2591](https://github.com/microsoft/onefuzz/pull/2591)
 
 ## 5.18.0
 ### Added
