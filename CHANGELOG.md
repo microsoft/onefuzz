@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 5.19.0
 
 ### Changed
-* Service: Delete nodes on once they're done with tasks instead of releasing scale-in protection. [#2586](https://github.com/microsoft/onefuzz/pull/2586)
+* Service: Delete nodes once they're done with tasks instead of releasing scale-in protection. [#2586](https://github.com/microsoft/onefuzz/pull/2586)
 * Service: Switch to using the package provided by Azure Functions to set up Application Insights and improve its reporting of OneFuzz transactions. [#2597](https://github.com/microsoft/onefuzz/pull/2597)
 ### Fixed
 * Service: Fix handling duplicate containers across accounts in C# functions. [#2596](https://github.com/microsoft/onefuzz/pull/2596)
