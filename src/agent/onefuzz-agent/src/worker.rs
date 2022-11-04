@@ -276,7 +276,7 @@ impl SuspendableChild for Child {
     fn suspend(&mut self) -> Result<()> {
         // DebugActiveProcess suspends all threads in the process.
         // https://docs.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-debugactiveprocess#remarks
-        let result = unsafe { winapi::um::debugapi::DebugActiveProcess(self.id() as u32) };
+        let result = unsafe { winapi::um::debugapi::DebugActiveProcess(self.id()) };
         if result == 0 {
             bail!("unable to suspend child process");
         }

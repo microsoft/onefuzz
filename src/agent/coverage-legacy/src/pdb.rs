@@ -46,7 +46,7 @@ pub fn find_pdb_path(
     let cv_filename = Path::new(cv_filename);
 
     // If the PE-specified PDB file exists on disk, use that.
-    if let Ok(metadata) = fs::metadata(&cv_filename) {
+    if let Ok(metadata) = fs::metadata(cv_filename) {
         if metadata.is_file() {
             return Ok(Some(cv_filename.to_owned()));
         }

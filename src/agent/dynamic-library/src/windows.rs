@@ -170,7 +170,7 @@ impl ImageGlobalFlags {
 
         let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
         let (key, _key_disposition) =
-            hklm.create_subkey(&key_name)
+            hklm.create_subkey(key_name)
                 .map_err(|source| ImageGlobalFlagsError::CreateKey {
                     source,
                     image: self.image.clone(),

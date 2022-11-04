@@ -73,11 +73,11 @@ pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
 
             let stdout = String::from_utf8_lossy(&result.stdout).to_string();
 
-            if stdout.contains(&admins) {
+            if stdout.contains(admins) {
                 let result = Command::new("icacls.exe")
                     .arg(&admin_auth_keys_path)
                     .arg("/remove")
-                    .arg(&admins)
+                    .arg(admins)
                     .stdin(Stdio::null())
                     .stdout(Stdio::piped())
                     .stderr(Stdio::piped())

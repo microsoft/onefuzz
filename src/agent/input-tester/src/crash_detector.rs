@@ -76,7 +76,7 @@ impl DebuggerResult {
     }
 
     pub fn write_markdown_summary(&self, summary_path: &Path) -> Result<()> {
-        let mut file = fs::File::create(&summary_path)?;
+        let mut file = fs::File::create(summary_path)?;
         writeln!(file, "# Test Results")?;
         writeln!(file)?;
         writeln!(file, "## Output")?;
