@@ -124,7 +124,6 @@ class Endpoint:
     ) -> A:
         response = self._req_base(
             method,
-            model,
             data=data,
             as_params=as_params,
             alternate_endpoint=alternate_endpoint,
