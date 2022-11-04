@@ -13,8 +13,9 @@ import time
 import uuid
 from enum import Enum
 from shutil import which
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
+from requests import Response
 
 import semver
 from memoization import cached
@@ -101,15 +102,13 @@ class Endpoint:
         data: Optional[BaseModel] = None,
         as_params: bool = False,
         alternate_endpoint: Optional[str] = None,
-    ) -> Any:
+    ) -> Response:
         endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
 
         if as_params:
             response = self.onefuzz._backend.request(method, endpoint, params=data)
         else:
             response = self.onefuzz._backend.request(method, endpoint, json_data=data)
-
-        print(f"***** {response.headers}")
 
         return response
 
