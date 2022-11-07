@@ -25,7 +25,7 @@ public class Tools {
         return sr.ReadToEnd().Trim();
     }
 
-    private async Async.Task<HttpResponseData> GetResponse(HttpRequestData req) {
+    public async Async.Task<HttpResponseData> GetResponse(HttpRequestData req) {
         //Note: streaming response are not currently supported by in isolated functions
         // https://github.com/Azure/azure-functions-dotnet-worker/issues/958
         var response = req.CreateResponse(HttpStatusCode.OK);
