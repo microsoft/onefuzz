@@ -15,7 +15,6 @@ from enum import Enum
 from shutil import which
 from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
-from requests import Response
 
 import semver
 from memoization import cached
@@ -30,6 +29,7 @@ from onefuzztypes import (
 )
 from onefuzztypes.enums import TaskType
 from pydantic import BaseModel
+from requests import Response
 from six.moves import input  # workaround for static analysis
 
 from .__version__ import __version__
