@@ -29,6 +29,7 @@ public enum ErrorCode {
     PROXY_FAILED = 472,
     INVALID_CONFIGURATION = 473,
     UNABLE_TO_CREATE_CONTAINER = 474,
+    UNABLE_TO_DOWNLOAD_FILE = 475,
 }
 
 public enum VmState {
