@@ -1,6 +1,4 @@
-﻿using System.IO;
-using System.Net;
-using System.Reflection;
+﻿using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
