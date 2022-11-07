@@ -15,16 +15,6 @@ public class Tools {
         _auth = auth;
     }
 
-    private static string ReadResource(Assembly asm, string resourceName) {
-        using var r = asm.GetManifestResourceStream(resourceName);
-        if (r is null) {
-            return "unknown";
-        }
-
-        using var sr = new StreamReader(r);
-        return sr.ReadToEnd().Trim();
-    }
-
     public async Async.Task<HttpResponseData> GetResponse(HttpRequestData req) {
         //Note: streaming response are not currently supported by in isolated functions
         // https://github.com/Azure/azure-functions-dotnet-worker/issues/958
