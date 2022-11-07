@@ -33,9 +33,6 @@ public class Tools {
         if (!downloadResult.IsOk) {
             return await _context.RequestHandling.NotOk(req, downloadResult.ErrorV, "download tools");
         }
-        // response.Headers.Add("Content-Type", "application/zip");
-        // response.Headers.Add("Content-Length", response.Body.Position.ToString());
-        // response.Body.Position=0;
         return response;
     }
 
