@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -14,10 +15,10 @@ public class Negotiate {
     [Function("Negotiate")]
     public Task<HttpResponseData> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "POST")] HttpRequestData req,
-        [SignalRConnectionInfoInput(HubName = "dashboard")] SignalRConnectionInfo info)
+        [SignalRConnectionInfoInput(HubName = "dashboard")] string info)
         => _auth.CallIfUser(req, r => r.Method switch {
             "POST" => Post(r, info),
-            var m => throw new InvalidOperationException("Unsupported HTTP method {m}"),
+            var m => throw new InvalidOperationException($"Unsupported HTTP method {m}"),
         });
 
     // This endpoint handles the signalr negotation
@@ -27,11 +28,10 @@ public class Negotiate {
     // For more info:
     // https://docs.microsoft.com/en-us/azure/azure-signalr/signalr-concept-internals
 
-    private static async Task<HttpResponseData> Post(
-        HttpRequestData req,
-        SignalRConnectionInfo info) {
+    private static async Task<HttpResponseData> Post(HttpRequestData req, string info) {
         var resp = req.CreateResponse(HttpStatusCode.OK);
-        await resp.WriteAsJsonAsync(info);
+        resp.Headers.Add("Content-Type", "application/json");
+        await resp.WriteStringAsync(info);
         return resp;
     }
 }
