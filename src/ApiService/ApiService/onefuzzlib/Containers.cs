@@ -1,8 +1,11 @@
-﻿using System.Threading;
+﻿using System.IO;
+using System.IO.Compression;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
 
 namespace Microsoft.OneFuzz.Service;
@@ -31,6 +34,7 @@ public interface IContainers {
     public Async.Task<Dictionary<Container, IDictionary<string, string>>> GetContainers(StorageType corpus);
 
     public string AuthDownloadUrl(Container container, string filename);
+    public Async.Task<OneFuzzResultVoid> DownloadAsZip(Container container, StorageType storageType, Stream stream, string? prefix = null);
 }
 
 public class Containers : IContainers {
@@ -233,5 +237,22 @@ public class Containers : IContainers {
         queryString.Add("filename", filename);
 
         return $"{instance}/api/download?{queryString}";
+    }
+
+    public async Async.Task<OneFuzzResultVoid> DownloadAsZip(Container container, StorageType storageType, Stream stream, string? prefix = null) {
+        var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container} - {storageType}");
+        var blobs = client.GetBlobs(prefix: prefix);
+
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Create, true);
+        await foreach (var b in blobs.ToAsyncEnumerable()) {
+            var entry = archive.CreateEntry(b.Name);
+            await using var entryStream = entry.Open();
+            var blobClient = client.GetBlockBlobClient(b.Name);
+            var downloadResult = await blobClient.DownloadToAsync(entryStream);
+            if (downloadResult.IsError) {
+                return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_DOWNLOAD_FILE, $"Error while downloading blob {b.Name}");
+            }
+        }
+        return OneFuzzResultVoid.Ok;
     }
 }
