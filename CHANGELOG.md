@@ -4,8 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.18.0
+### Added
+* Service: Use records to unpack the request parameters in `AgentRegistration`. [#2570](https://github.com/microsoft/onefuzz/pull/2570)
+* Service: Convert ADO traces to `customEvents` and update `notificationInfo`. [#2508](https://github.com/microsoft/onefuzz/pull/2508)
+* Agent: Include computer name in `AgentRegistration` & decode Instance ID from it. This will reduce the amount of calls to Azure minimizing throttling errors. [#2557](https://github.com/microsoft/onefuzz/pull/2557)
+### Changed
+* Service: Improve webhook logging and accept more HTTP success codes. [#2568](https://github.com/microsoft/onefuzz/pull/2568)
+* Service: Reduce fetches to VMSS [#2577](https://github.com/microsoft/onefuzz/pull/2577)
+* CLI: Use the virtual env folder to store the config if it exists. [#2561](https://github.com/microsoft/onefuzz/pull/2561), [#2567](https://github.com/microsoft/onefuzz/pull/2567), [#2583](https://github.com/microsoft/onefuzz/pull/2583)
+### Fixed
+* Service: Reduce number of ARM calls in `ListVmss` reducing calls to Azure to prevent throttling. [#2539](https://github.com/microsoft/onefuzz/pull/2539)
+* Service: ETag updated in `Update` and `Replace`. [#2562](https://github.com/microsoft/onefuzz/pull/2562)
+* Service: Don't log an error if we delete a Repro and it is already missing. [#2563](https://github.com/microsoft/onefuzz/pull/2563)
+
 ## 5.17.0
 ### Added
+* Service: Added exponential backoff for failed notifications. Many of the failures are a result of ADO throttling. [#2555](https://github.com/microsoft/onefuzz/pull/2555)
 * Service: Add a `DeleteAll` operation to ORM that speeds up the deletion of multiple entities. [#2519](https://github.com/microsoft/onefuzz/pull/2519)
 ### Changed
 * Documentation: Remove suggestion to reset `IterationPath` upon duplicate. [#2533](https://github.com/microsoft/onefuzz/pull/2533)
