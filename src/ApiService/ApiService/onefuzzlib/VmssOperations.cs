@@ -500,7 +500,7 @@ public class VmssOperations : IVmssOperations {
                 WaitUntil.Started,
                 new VirtualMachineScaleSetVmInstanceRequiredIds(instanceIds));
             if (r.GetRawResponse().IsError) {
-                _log.Error($"failed to start update instance for scaleset {scalesetId:Tag:ScalesetId} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
+                _log.Error($"failed to start upgrade instance for scaleset {scalesetId:Tag:ScalesetId} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
             }
         } catch (RequestFailedException ex) {
             _log.Exception(ex, $"failed to upgrade scaleset instances");
