@@ -85,12 +85,17 @@ public class VmssOperations : IVmssOperations {
     public async Async.Task<OneFuzzResultVoid> ResizeVmss(Guid name, long capacity) {
         var canUpdate = await CheckCanUpdate(name);
         if (canUpdate.IsOk) {
-            _log.Info($"updating VM count {name:Tag:VmssName} - {capacity:Tag:Count}");
             var scalesetResource = GetVmssResource(name);
             var patch = new VirtualMachineScaleSetPatch();
             patch.Sku.Capacity = capacity;
-            _ = await scalesetResource.UpdateAsync(WaitUntil.Started, patch);
-            return OneFuzzResultVoid.Ok;
+            try {
+                _log.Info($"updating VM count {name:Tag:VmssName} - {capacity:Tag:Count}");
+                _ = await scalesetResource.UpdateAsync(WaitUntil.Started, patch);
+                return OneFuzzResultVoid.Ok;
+            } catch (RequestFailedException ex) {
+                _log.Exception(ex, $"failed to update VM counts");
+                return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_RESIZE, "vmss resize failed");
+            }
         } else {
             return OneFuzzResultVoid.Error(canUpdate.ErrorV);
         }
@@ -139,7 +144,6 @@ public class VmssOperations : IVmssOperations {
     public async Async.Task<OneFuzzResultVoid> UpdateExtensions(Guid name, IList<VirtualMachineScaleSetExtensionData> extensions) {
         var canUpdate = await CheckCanUpdate(name);
         if (canUpdate.IsOk) {
-            _log.Info($"updating VM extensions: {name:Tag:VmssName}");
             var res = GetVmssResource(name);
             var patch = new VirtualMachineScaleSetPatch() {
                 VirtualMachineProfile =
@@ -149,10 +153,15 @@ public class VmssOperations : IVmssOperations {
             foreach (var ext in extensions) {
                 patch.VirtualMachineProfile.ExtensionProfile.Extensions.Add(ext);
             }
-            _ = await res.UpdateAsync(WaitUntil.Started, patch);
-            _log.Info($"VM extensions updated: {name:Tag:VmssName}");
-            return OneFuzzResultVoid.Ok;
-
+            try {
+                _log.Info($"updating extensions of scaleset: {name:Tag:VmssName}");
+                _ = await res.UpdateAsync(WaitUntil.Started, patch);
+                _log.Info($"VM extensions updated: {name:Tag:VmssName}");
+                return OneFuzzResultVoid.Ok;
+            } catch (RequestFailedException ex) {
+                _log.Exception(ex, $"failed to update scaleset extensions");
+                return OneFuzzResultVoid.Error(ErrorCode.VM_UPDATE_FAILED, "vmss patch failed");
+            }
         } else {
             return OneFuzzResultVoid.Error(canUpdate.ErrorV);
         }
@@ -247,6 +256,8 @@ public class VmssOperations : IVmssOperations {
             return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"protection policy update is already in progress: {instanceId} in vmss {scaleset.ScalesetId}");
         } catch (RequestFailedException ex) when (ex.Status == 400 && ex.Message.Contains("The provided instanceId") && ex.Message.Contains("not an active Virtual Machine Scale Set VM instanceId.")) {
             return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"The node with instanceId {instanceId} no longer exists in scaleset {scaleset.ScalesetId}");
+        } catch (RequestFailedException ex) when (ex.Status == 400 && ex.Message.Contains("reached its limit") && ex.Message.Contains("Upgrade the VMs to the latest model")) {
+            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"VMSS has reached model limit. Could not update scaling protection for scaleset {scaleset.ScalesetId}.");
         } catch (Exception ex) {
             _log.Exception(ex, $"unable to set protection policy on: {instanceId:Tag:InstanceId} in vmss {scaleset.ScalesetId:Tag:ScalesetId}");
             return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"unable to set protection policy on: {instanceId} in vmss {scaleset.ScalesetId}");
@@ -485,26 +496,33 @@ public class VmssOperations : IVmssOperations {
         // the instance is up-to-date with the VMSS model.
         // The expectation is that these requests are queued and handled subsequently.
         // The VMSS Team confirmed this expectation and testing supports it, as well.
-        _log.Info($"upgrading VMSS nodes - name: {scalesetId:Tag:ScalesetId} ids: {string.Join(", ", instanceIds):Tag:InstanceIds}");
-        var r = await vmssResource.UpdateInstancesAsync(
-            WaitUntil.Started,
-            new VirtualMachineScaleSetVmInstanceRequiredIds(instanceIds));
-        if (r.GetRawResponse().IsError) {
-            _log.Error($"failed to start update instance for scaleset {scalesetId:Tag:ScalesetId} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
+        try {
+            _log.Info($"upgrading VMSS nodes - name: {scalesetId:Tag:ScalesetId} ids: {string.Join(", ", instanceIds):Tag:InstanceIds}");
+            var r = await vmssResource.UpdateInstancesAsync(
+                WaitUntil.Started,
+                new VirtualMachineScaleSetVmInstanceRequiredIds(instanceIds));
+            if (r.GetRawResponse().IsError) {
+                _log.Error($"failed to start upgrade instance for scaleset {scalesetId:Tag:ScalesetId} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
+            }
+        } catch (RequestFailedException ex) {
+            _log.Exception(ex, $"failed to upgrade scaleset instances");
         }
-
-        _log.Info($"reimaging VMSS nodes: {scalesetId:Tag:ScalesetId} - {string.Join(", ", instanceIds):Tag:InstanceIds}");
 
         // very weird API here…
         var reqInstanceIds = new VirtualMachineScaleSetVmInstanceIds();
         foreach (var instanceId in instanceIds) {
             reqInstanceIds.InstanceIds.Add(instanceId);
         }
-
-        r = await vmssResource.ReimageAllAsync(WaitUntil.Started, reqInstanceIds);
-        if (r.GetRawResponse().IsError) {
-            _log.Error($"failed to start reimage all for scaleset {scalesetId:Tag:ScalesetId} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
+        try {
+            _log.Info($"reimaging VMSS nodes: {scalesetId:Tag:ScalesetId} - {string.Join(", ", instanceIds):Tag:InstanceIds}");
+            var r = await vmssResource.ReimageAllAsync(WaitUntil.Started, reqInstanceIds);
+            if (r.GetRawResponse().IsError) {
+                _log.Error($"failed to start reimage all for scaleset {scalesetId:Tag:ScalesetId} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
+            }
+        } catch (RequestFailedException ex) {
+            _log.Exception(ex, $"failed to reimage scaleset instances");
         }
+
         return OneFuzzResultVoid.Ok;
     }
 
