@@ -52,7 +52,6 @@ public class UserCredentials : IUserCredentials {
         }
     }
 
-
     async Task<OneFuzzResult<string[]>> GetAllowedTenants() {
         var r = await _instanceConfig.Fetch();
         var allowedAddTenantsQuery =
@@ -73,8 +72,9 @@ public class UserCredentials : IUserCredentials {
             var allowedTenants = await GetAllowedTenants();
             if (allowedTenants.IsOk) {
                 if (allowedTenants.OkV is not null && allowedTenants.OkV.Contains(token.Issuer)) {
-                    var userInfo =
-                        token.Payload.Claims.Aggregate(new UserAuthInfo(new UserInfo(null, null, null), new List<string>()), (acc, claim) => {
+                    var userAuthInfo = new UserAuthInfo(new UserInfo(null, null, null), new List<string>());
+                    var userInfo =  
+                        token.Payload.Claims.Aggregate(userAuthInfo, (acc, claim) => {
                             switch (claim.Type) {
                                 case "oid":
                                     return acc with { UserInfo = acc.UserInfo with { ObjectId = Guid.Parse(claim.Value) } };

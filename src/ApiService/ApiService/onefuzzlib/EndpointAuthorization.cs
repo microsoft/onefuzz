@@ -212,9 +212,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
         if (await pools.AnyAsync()) {
             return true;
         }
-
-
-
+        
         return false;
     }
 }
