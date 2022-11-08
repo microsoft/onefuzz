@@ -29,6 +29,7 @@ from onefuzztypes import (
 )
 from onefuzztypes.enums import TaskType
 from pydantic import BaseModel
+from requests import Response
 from six.moves import input  # workaround for static analysis
 
 from .__version__ import __version__
@@ -94,6 +95,23 @@ class Endpoint:
         self.onefuzz = onefuzz
         self.logger = onefuzz.logger
 
+    def _req_base(
+        self,
+        method: str,
+        *,
+        data: Optional[BaseModel] = None,
+        as_params: bool = False,
+        alternate_endpoint: Optional[str] = None,
+    ) -> Response:
+        endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
+
+        if as_params:
+            response = self.onefuzz._backend.request(method, endpoint, params=data)
+        else:
+            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
+
+        return response
+
     def _req_model(
         self,
         method: str,
@@ -103,12 +121,12 @@ class Endpoint:
         as_params: bool = False,
         alternate_endpoint: Optional[str] = None,
     ) -> A:
-        endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
-
-        if as_params:
-            response = self.onefuzz._backend.request(method, endpoint, params=data)
-        else:
-            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
+        response = self._req_base(
+            method,
+            data=data,
+            as_params=as_params,
+            alternate_endpoint=alternate_endpoint,
+        ).json()
 
         return model.parse_obj(response)
 
@@ -124,9 +142,13 @@ class Endpoint:
         endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
 
         if as_params:
-            response = self.onefuzz._backend.request(method, endpoint, params=data)
+            response = self.onefuzz._backend.request(
+                method, endpoint, params=data
+            ).json()
         else:
-            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
+            response = self.onefuzz._backend.request(
+                method, endpoint, json_data=data
+            ).json()
 
         return [model.parse_obj(x) for x in response]
 
@@ -1115,6 +1137,22 @@ class JobTasks(Endpoint):
         return self.onefuzz.tasks.list(job_id=job_id, state=[])
 
 
+class Tools(Endpoint):
+    """Interact with tasks within a job"""
+
+    endpoint = "tools"
+
+    def get(self, destination: str) -> str:
+        """Download a zip file containing the agent binaries"""
+        self.logger.debug("get tools")
+
+        response = self._req_base("GET")
+        path = os.path.join(destination, "tools.zip")
+        open(path, "wb").write(response.content)
+
+        return path
+
+
 class Jobs(Endpoint):
     """Interact with Jobs"""
 
@@ -1720,6 +1758,7 @@ class Onefuzz:
         self.scalesets = Scaleset(self)
         self.nodes = Node(self)
         self.webhooks = Webhooks(self)
+        self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
