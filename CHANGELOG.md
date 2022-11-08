@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.19.0
+
+### Changed
+* Service: Delete nodes once they're done with tasks instead of releasing scale-in protection. [#2586](https://github.com/microsoft/onefuzz/pull/2586)
+* Service: Switch to using the package provided by Azure Functions to set up Application Insights and improve its reporting of OneFuzz transactions. [#2597](https://github.com/microsoft/onefuzz/pull/2597)
+### Fixed
+* Service: Fix handling duplicate containers across accounts in C# functions. [#2596](https://github.com/microsoft/onefuzz/pull/2596)
+* Service: Fix the notification GET request on C# endpoints. [#2591](https://github.com/microsoft/onefuzz/pull/2591)
+
 ## 5.18.0
 ### Added
 * Service: Use records to unpack the request parameters in `AgentRegistration`. [#2570](https://github.com/microsoft/onefuzz/pull/2570)
