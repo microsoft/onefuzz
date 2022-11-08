@@ -30,6 +30,7 @@ public enum ErrorCode {
     INVALID_CONFIGURATION = 473,
     UNABLE_TO_CREATE_CONTAINER = 474,
     UNABLE_TO_DOWNLOAD_FILE = 475,
+    VM_UPDATE_FAILED = 476,
 }
 
 public enum VmState {

@@ -85,12 +85,17 @@ public class VmssOperations : IVmssOperations {
     public async Async.Task<OneFuzzResultVoid> ResizeVmss(Guid name, long capacity) {
         var canUpdate = await CheckCanUpdate(name);
         if (canUpdate.IsOk) {
-            _log.Info($"updating VM count {name:Tag:VmssName} - {capacity:Tag:Count}");
             var scalesetResource = GetVmssResource(name);
             var patch = new VirtualMachineScaleSetPatch();
             patch.Sku.Capacity = capacity;
-            _ = await scalesetResource.UpdateAsync(WaitUntil.Started, patch);
-            return OneFuzzResultVoid.Ok;
+            try {
+                _log.Info($"updating VM count {name:Tag:VmssName} - {capacity:Tag:Count}");
+                _ = await scalesetResource.UpdateAsync(WaitUntil.Started, patch);
+                return OneFuzzResultVoid.Ok;                
+            } catch (Exception ex) {
+                _log.Exception(ex, $"failed to update VM counts");
+                return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_RESIZE, "vmss resize failed");
+            }
         } else {
             return OneFuzzResultVoid.Error(canUpdate.ErrorV);
         }
@@ -139,7 +144,6 @@ public class VmssOperations : IVmssOperations {
     public async Async.Task<OneFuzzResultVoid> UpdateExtensions(Guid name, IList<VirtualMachineScaleSetExtensionData> extensions) {
         var canUpdate = await CheckCanUpdate(name);
         if (canUpdate.IsOk) {
-            _log.Info($"updating VM extensions: {name:Tag:VmssName}");
             var res = GetVmssResource(name);
             var patch = new VirtualMachineScaleSetPatch() {
                 VirtualMachineProfile =
@@ -149,10 +153,15 @@ public class VmssOperations : IVmssOperations {
             foreach (var ext in extensions) {
                 patch.VirtualMachineProfile.ExtensionProfile.Extensions.Add(ext);
             }
-            _ = await res.UpdateAsync(WaitUntil.Started, patch);
-            _log.Info($"VM extensions updated: {name:Tag:VmssName}");
-            return OneFuzzResultVoid.Ok;
-
+            try {
+                _log.Info($"updating extensions of scaleset: {name:Tag:VmssName}");
+                _ = await res.UpdateAsync(WaitUntil.Started, patch);
+                _log.Info($"VM extensions updated: {name:Tag:VmssName}");
+                return OneFuzzResultVoid.Ok;                
+            } catch (Exception ex) {
+                _log.Exception(ex, $"failed to update scaleset extensions");
+                return OneFuzzResultVoid.Error(ErrorCode.VM_UPDATE_FAILED, "vmss patch failed");
+            }
         } else {
             return OneFuzzResultVoid.Error(canUpdate.ErrorV);
         }
