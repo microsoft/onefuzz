@@ -519,7 +519,7 @@ dependencies = [
  "log",
  "memmap2",
  "msvc-demangler",
- "pdb",
+ "pdb 0.7.0",
  "pete",
  "procfs",
  "regex",
@@ -1613,9 +1613,9 @@ checksum = "490cc448043f947bae3cbee9c203358d62dbee0db12107a74be5c30ccfd09771"
 
 [[package]]
 name = "memchr"
-version = "2.4.1"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
+checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
 
 [[package]]
 name = "memmap2"
@@ -2186,6 +2186,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "pdb"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "82040a392923abe6279c00ab4aff62d5250d1c8555dc780e4b02783a7aa74863"
+dependencies = [
+ "fallible-iterator",
+ "scroll 0.11.0",
+ "uuid 1.1.2",
+]
+
+[[package]]
 name = "peeking_take_while"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2375,6 +2386,15 @@ checksum = "240795b0fd7276a25d4997139513f009a6fac9fcfb664722d45de7c42051d0cf"
 dependencies = [
  "bytes",
  "snafu",
+]
+
+[[package]]
+name = "quick-xml"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58e21a144a0ffb5fad7b464babcdab934a325ad69b7c0373bcfef5cbd9799ca9"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]
@@ -2931,17 +2951,17 @@ dependencies = [
 
 [[package]]
 name = "srcview"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "env_logger 0.9.0",
  "log",
  "nom 7.1.0",
- "pdb",
+ "pdb 0.8.0",
+ "quick-xml",
  "regex",
  "serde",
  "structopt",
- "xml-rs",
 ]
 
 [[package]]
@@ -3111,7 +3131,7 @@ dependencies = [
  "nom 7.1.0",
  "nom-supreme",
  "parking_lot 0.12.1",
- "pdb",
+ "pdb 0.7.0",
  "regex",
  "scroll 0.11.0",
  "serde",
