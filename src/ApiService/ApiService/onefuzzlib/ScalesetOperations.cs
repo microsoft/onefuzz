@@ -658,7 +658,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         switch (disposalStrategy) {
             case NodeDisposalStrategy.Decommission:
-                _log.Info($"Skipping reimage, deleting nodes: {string.Join(", ", nodesToReimage.Select(n => n.MachineId)):Tag:MachineIds}");
+                _log.Info($"Skipping reimage of nodes in scaleset: {scaleset.ScalesetId:Tag:ScalesetId}, deleting nodes: {string.Join(", ", nodesToReimage.Select(n => n.MachineId)):Tag:MachineIds} {string.Join(", ", nodesToReimage.Select(n => n.InstanceId)):Tag:InstanceIds}");
                 await _context.VmssOperations.DeleteNodes(scaleset.ScalesetId, nodesToReimage);
                 await Async.Task.WhenAll(nodesToReimage
                     .Select(async node => {
