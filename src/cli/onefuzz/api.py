@@ -628,9 +628,9 @@ class Repro(Endpoint):
         retry_count = 0
         bind_all = which("wslpath") is not None and repro.os == enums.OS.windows
         proxy = "*:" + REPRO_SSH_FORWARD if bind_all else REPRO_SSH_FORWARD
-        with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
-            dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
-            while (retry_limit is None) or ++retry_count > retry_limit:
+        while (retry_limit is None) or ++retry_count > retry_limit:
+            with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
+                dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
                 if debug_command:
                     dbg_script = [debug_command, "qq"]
                     with temp_file(
@@ -745,7 +745,7 @@ class Repro(Endpoint):
         duration: int = 24,
         delete_after_use: bool = False,
         debug_command: Optional[str] = None,
-        retry_limit: Optional[int] = 10,
+        retry_limit: Optional[int] = None,
     ) -> Optional[str]:
         """Create and connect to a Reproduction VM"""
         repro = self.create(container, path, duration=duration)
