@@ -11,7 +11,7 @@ ARG RUSTVERSION="1.64"
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
     libunwind-dev clang build-essential libssl-dev pkg-config lldb \
-    bash-completion npm dotnet6 \
+    bash-completion npm dotnet7 \
     python-is-python3 direnv uuid-runtime python3-distutils python3-pip python3-venv
 
 # Install Rust:
