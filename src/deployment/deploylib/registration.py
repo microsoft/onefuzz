@@ -258,7 +258,10 @@ def create_application_registration(
         "isDeviceOnlyAuthSupported": True,
         "displayName": name,
         "publicClient": {
-            "redirectUris": ["https://%s.azurewebsites.net" % onefuzz_instance_name]
+            "redirectUris": [
+                "https://%s.azurewebsites.net" % onefuzz_instance_name,
+                "http://localhost",  # required for browser auth
+            ]
         },
         "isFallbackPublicClient": True,
         "requiredResourceAccess": (

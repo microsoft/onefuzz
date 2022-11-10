@@ -235,7 +235,7 @@ class Backend:
                 self.config.client_id,
                 authority=self.config.authority,
                 token_cache=self.token_cache,
-                allow_broker=True
+                allow_broker=True,
             )
 
         access_token = None
@@ -254,7 +254,9 @@ class Backend:
                 access_token = self.app.acquire_token_interactive(scopes=[scope])
                 check_msal_error(access_token, ["access_token"])
             except KeyboardInterrupt:
-                result = input("\nInteractive login cancelled. Use device login (Y/n)? ")
+                result = input(
+                    "\nInteractive login cancelled. Use device login (Y/n)? "
+                )
                 if result == "" or result.startswith("y") or result.startswith("Y"):
                     print("Falling back to device flow, please sign in:", flush=True)
                     flow = self.app.initiate_device_flow(scopes=[scope])
