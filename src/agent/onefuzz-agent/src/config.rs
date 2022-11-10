@@ -110,7 +110,7 @@ impl StaticConfig {
         let multi_tenant_domain = std::env::var("ONEFUZZ_MULTI_TENANT_DOMAIN").ok();
         let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
         let pool_name = std::env::var("ONEFUZZ_POOL")?;
-        let is_unmanaged =  std::env::var("ONEFUZZ_IS_UNMANAGED").is_ok();
+        let is_unmanaged = std::env::var("ONEFUZZ_IS_UNMANAGED").is_ok();
 
         let heartbeat_queue = if let Ok(key) = std::env::var("ONEFUZZ_HEARTBEAT") {
             Some(Url::parse(&key)?)
@@ -150,7 +150,7 @@ impl StaticConfig {
             microsoft_telemetry_key,
             heartbeat_queue,
             instance_id,
-            is_unmanaged
+            is_unmanaged,
         })
     }
 
