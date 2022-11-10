@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Added endpoint to download agent binaries to support the unmanaged node scenario. [#2600](https://github.com/microsoft/onefuzz/pull/2600)
 * Service: Added additional error handling when updating VMSS nodes. [#2607](https://github.com/microsoft/onefuzz/pull/2607)
 ### Changed
-* Service: Added additional logging when using the `decommision` node policy. [#2605](https://github.com/microsoft/onefuzz/pull/2605)
-* Agent/Supervisor/Proxy: Updated third-party Rust dependencies.[#2608](https://github.com/microsoft/onefuzz/pull/2608)
+* Service: Added additional logging when using the `decommission` node policy. [#2605](https://github.com/microsoft/onefuzz/pull/2605)
+* Agent/Supervisor/Proxy: Updated third-party Rust dependencies. [#2608](https://github.com/microsoft/onefuzz/pull/2608)
 * Service: Added optional `retry_limit` when connecting to the repro machine. [#2609](https://github.com/microsoft/onefuzz/pull/2609)
 ### Fixed
 * Service: Fixed `status top` in C# implementation. [#2604](https://github.com/microsoft/onefuzz/pull/2604)
