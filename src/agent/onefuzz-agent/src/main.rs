@@ -277,12 +277,10 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
     let registration = match config::Registration::load_existing(config.clone()).await {
         Ok(registration) => registration,
         Err(_) => {
-            if scaleset.is_some() {
-                // todo: We are assuming here tht if we run in scaleset we are autamtivally managed.
-                // but an unmanaged node can run an external scaleset
-                config::Registration::create_managed(config.clone()).await?
-            } else {
+            if config.is_unmanaged {
                 config::Registration::create_unmanaged(config.clone()).await?
+            } else {
+                config::Registration::create_managed(config.clone()).await?
             }
         }
     };
