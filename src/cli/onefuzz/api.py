@@ -614,6 +614,7 @@ class Repro(Endpoint):
         self,
         repro: models.Repro,
         debug_command: Optional[str],
+        retry_limit: Optional[int],
     ) -> Optional[str]:
         """Setup an SSH tunnel, then connect via CDB over SSH tunnel"""
 
@@ -624,13 +625,14 @@ class Repro(Endpoint):
         ):
             raise Exception("vm setup failed: %s" % repro.state)
 
-        NUM_RETRIES = 10
+        retry_count = 0
         bind_all = which("wslpath") is not None and repro.os == enums.OS.windows
         proxy = "*:" + REPRO_SSH_FORWARD if bind_all else REPRO_SSH_FORWARD
-        with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
-            dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
-            while NUM_RETRIES > 0:
-                NUM_RETRIES = NUM_RETRIES - 1
+        while retry_limit is None or retry_count <= retry_limit:
+            if retry_limit:
+                retry_count = retry_count + 1
+            with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
+                dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
                 if debug_command:
                     dbg_script = [debug_command, "qq"]
                     with temp_file(
@@ -663,7 +665,7 @@ class Repro(Endpoint):
                     # server, which is trusted in this context.
                     try:
                         subprocess.check_call(dbg)  # nosec
-                        break
+                        return None
                     except subprocess.CalledProcessError as err:
                         if err.returncode == 0x8007274D:
                             self.logger.info(
@@ -671,7 +673,13 @@ class Repro(Endpoint):
                             )
                             time.sleep(10.0)
                         else:
-                            break
+                            return None
+
+        if retry_limit is not None:
+            self.logger.info(
+                f"failed to connect to debug-server after {retry_limit} attempts. Please try again later "
+                + f"with onefuzz debug connect {repro.vm_id}"
+            )
         return None
 
     def connect(
@@ -679,6 +687,7 @@ class Repro(Endpoint):
         vm_id: UUID_EXPANSION,
         delete_after_use: bool = False,
         debug_command: Optional[str] = None,
+        retry_limit: Optional[int] = None,
     ) -> Optional[str]:
         """Connect to an existing Reproduction VM"""
 
@@ -720,7 +729,7 @@ class Repro(Endpoint):
         time.sleep(30.0)
         result: Optional[str] = None
         if repro.os == enums.OS.windows:
-            result = self._dbg_windows(repro, debug_command)
+            result = self._dbg_windows(repro, debug_command, retry_limit)
         elif repro.os == enums.OS.linux:
             result = self._dbg_linux(repro, debug_command)
         else:
@@ -739,11 +748,15 @@ class Repro(Endpoint):
         duration: int = 24,
         delete_after_use: bool = False,
         debug_command: Optional[str] = None,
+        retry_limit: Optional[int] = None,
     ) -> Optional[str]:
         """Create and connect to a Reproduction VM"""
         repro = self.create(container, path, duration=duration)
         return self.connect(
-            repro.vm_id, delete_after_use=delete_after_use, debug_command=debug_command
+            repro.vm_id,
+            delete_after_use=delete_after_use,
+            debug_command=debug_command,
+            retry_limit=retry_limit,
         )
 
 
