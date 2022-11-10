@@ -235,6 +235,7 @@ class Backend:
                 self.config.client_id,
                 authority=self.config.authority,
                 token_cache=self.token_cache,
+                allow_broker=True
             )
 
         access_token = None
