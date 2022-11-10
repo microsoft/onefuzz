@@ -133,7 +133,8 @@ public class Pool {
                     HeartbeatQueue: queueSas,
                     InstanceId: instanceId,
                     ClientCredentials: null,
-                    MultiTenantDomain: _context.ServiceConfiguration.MultiTenantDomain)
+                    MultiTenantDomain: _context.ServiceConfiguration.MultiTenantDomain,
+                    IsUnamanaged: !p.Managed)
         };
     }
 }

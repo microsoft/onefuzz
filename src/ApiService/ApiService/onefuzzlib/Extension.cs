@@ -232,7 +232,8 @@ public class Extensions : IExtensions {
             InstanceTelemetryKey: _context.ServiceConfiguration.ApplicationInsightsInstrumentationKey,
             MicrosoftTelemetryKey: _context.ServiceConfiguration.OneFuzzTelemetry,
             MultiTenantDomain: _context.ServiceConfiguration.MultiTenantDomain,
-            InstanceId: instanceId
+            InstanceId: instanceId,
+            IsUnamanaged: !pool.Managed
         );
         return config;
     }
