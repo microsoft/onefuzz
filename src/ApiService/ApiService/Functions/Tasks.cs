@@ -139,7 +139,7 @@ public class Tasks {
             }
         }
 
-        var task = await _context.TaskOperations.Create(cfg, cfg.JobId, userInfo.OkV);
+        var task = await _context.TaskOperations.Create(cfg, cfg.JobId, userInfo.OkV.UserInfo);
 
         if (!task.IsOk) {
             return await _context.RequestHandling.NotOk(
