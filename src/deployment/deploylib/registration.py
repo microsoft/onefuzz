@@ -323,7 +323,6 @@ def create_application_registration(
     registered_app_id = registered_app["appId"]
     app_id = app["appId"]
 
-
     authorize_and_assign_role(app_id, registered_app_id, approle, subscription_id)
     return registered_app
 
