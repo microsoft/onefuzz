@@ -628,7 +628,9 @@ class Repro(Endpoint):
         retry_count = 0
         bind_all = which("wslpath") is not None and repro.os == enums.OS.windows
         proxy = "*:" + REPRO_SSH_FORWARD if bind_all else REPRO_SSH_FORWARD
-        while (retry_limit is None) or ++retry_count > retry_limit:
+        while retry_limit is None or retry_count <= retry_limit:
+            if retry_limit:
+                retry_count = retry_count + 1
             with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
                 dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
                 if debug_command:
@@ -675,7 +677,8 @@ class Repro(Endpoint):
 
         if retry_limit is not None:
             self.logger.info(
-                f"failed to connect to debug-server after {retry_limit} attempts. Please try again later"
+                f"failed to connect to debug-server after {retry_limit} attempts. Please try again later "
+                + f"with onefuzz debug connect {repro.vm_id}"
             )
         return None
 
