@@ -37,6 +37,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
         Guid poolId,
         PoolName poolName,
         Guid machineId,
+        string? instanceId,
         Guid? scaleSetId,
         string version,
         bool isNew = false);
@@ -379,11 +380,18 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         Guid poolId,
         PoolName poolName,
         Guid machineId,
+        string? instanceId,
         Guid? scaleSetId,
         string version,
         bool isNew = false) {
 
-        var node = new Node(poolName, machineId, poolId, version, ScalesetId: scaleSetId);
+        var node = new Node(
+            poolName,
+            machineId,
+            poolId,
+            version,
+            InstanceId: instanceId,
+            ScalesetId: scaleSetId);
 
         ResultVoid<(HttpStatusCode Status, string Reason)> r;
         if (isNew) {

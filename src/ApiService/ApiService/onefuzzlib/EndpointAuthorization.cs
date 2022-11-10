@@ -31,6 +31,8 @@ public class EndpointAuthorization : IEndpointAuthorization {
     private readonly ILogTracer _log;
     private readonly GraphServiceClient _graphClient;
 
+    private static readonly HashSet<string> AgentRoles = new HashSet<string> { "UnmamagedNode", "ManagedNode" };
+
     public EndpointAuthorization(IOnefuzzContext context, ILogTracer log, GraphServiceClient graphClient) {
         _context = context;
         _log = log;
@@ -45,9 +47,9 @@ public class EndpointAuthorization : IEndpointAuthorization {
         }
 
         var token = tokenResult.OkV.UserInfo;
-        if (await IsUser(token)) {
+        if (await IsUser(tokenResult.OkV)) {
             if (!allowUser) {
-                return await Reject(req, token);
+                return await Reject(req, tokenResult.OkV.UserInfo);
             }
 
             var access = await CheckAccess(req);
@@ -56,14 +58,14 @@ public class EndpointAuthorization : IEndpointAuthorization {
             }
         }
 
-        if (await IsAgent(token) && !allowAgent) {
-            return await Reject(req, token);
+        if (await IsAgent(tokenResult.OkV) && !allowAgent) {
+            return await Reject(req, tokenResult.OkV.UserInfo);
         }
 
         return await method(req);
     }
 
-    public async Async.Task<bool> IsUser(UserInfo tokenData) {
+    public async Async.Task<bool> IsUser(UserAuthInfo tokenData) {
         return !await IsAgent(tokenData);
     }
 
@@ -185,9 +187,13 @@ public class EndpointAuthorization : IEndpointAuthorization {
         return null;
     }
 
-    public async Async.Task<bool> IsAgent(UserInfo tokenData) {
-        // todo: handle unmanaged node here
-        // check if the request is comming from a geristered app with apprile agent
+
+    public async Async.Task<bool> IsAgent(UserAuthInfo authInfo) {
+        if (!AgentRoles.Overlaps(authInfo.Roles)) {
+            return false;
+        }
+
+        var tokenData = authInfo.UserInfo;
 
         if (tokenData.ObjectId != null) {
             var scalesets = _context.ScalesetOperations.GetByObjectId(tokenData.ObjectId.Value);

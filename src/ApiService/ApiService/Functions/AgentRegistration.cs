@@ -118,7 +118,8 @@ public class AgentRegistration {
                 "agent registration");
         }
 
-        var instanceId = machineName is not null ?  InstanceIds.InstanceIdFromMachineName(machineName): null;
+
+        var instanceId = machineName is not null ? InstanceIds.InstanceIdFromMachineName(machineName) : null;
 
 
         _log.Info($"registration request: {machineId:Tag:MachineId} {poolName:Tag:PoolName} {scalesetId:Tag:ScalesetId} {version:Tag:Version}");
@@ -156,6 +157,7 @@ public class AgentRegistration {
             InstanceId: instanceId,
             Version: version,
             Os: os ?? pool.Os
+
             );
 
         var r = await _context.NodeOperations.Replace(node);

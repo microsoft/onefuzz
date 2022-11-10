@@ -4,6 +4,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.19.0
+
+### Changed
+* Service: Delete nodes once they're done with tasks instead of releasing scale-in protection. [#2586](https://github.com/microsoft/onefuzz/pull/2586)
+* Service: Switch to using the package provided by Azure Functions to set up Application Insights and improve its reporting of OneFuzz transactions. [#2597](https://github.com/microsoft/onefuzz/pull/2597)
+### Fixed
+* Service: Fix handling duplicate containers across accounts in C# functions. [#2596](https://github.com/microsoft/onefuzz/pull/2596)
+* Service: Fix the notification GET request on C# endpoints. [#2591](https://github.com/microsoft/onefuzz/pull/2591)
+
+## 5.18.0
+### Added
+* Service: Use records to unpack the request parameters in `AgentRegistration`. [#2570](https://github.com/microsoft/onefuzz/pull/2570)
+* Service: Convert ADO traces to `customEvents` and update `notificationInfo`. [#2508](https://github.com/microsoft/onefuzz/pull/2508)
+* Agent: Include computer name in `AgentRegistration` & decode Instance ID from it. This will reduce the amount of calls to Azure minimizing throttling errors. [#2557](https://github.com/microsoft/onefuzz/pull/2557)
+### Changed
+* Service: Improve webhook logging and accept more HTTP success codes. [#2568](https://github.com/microsoft/onefuzz/pull/2568)
+* Service: Reduce fetches to VMSS [#2577](https://github.com/microsoft/onefuzz/pull/2577)
+* CLI: Use the virtual env folder to store the config if it exists. [#2561](https://github.com/microsoft/onefuzz/pull/2561), [#2567](https://github.com/microsoft/onefuzz/pull/2567), [#2583](https://github.com/microsoft/onefuzz/pull/2583)
+### Fixed
+* Service: Reduce number of ARM calls in `ListVmss` reducing calls to Azure to prevent throttling. [#2539](https://github.com/microsoft/onefuzz/pull/2539)
+* Service: ETag updated in `Update` and `Replace`. [#2562](https://github.com/microsoft/onefuzz/pull/2562)
+* Service: Don't log an error if we delete a Repro and it is already missing. [#2563](https://github.com/microsoft/onefuzz/pull/2563)
+
+## 5.17.0
+### Added
+* Service: Added exponential backoff for failed notifications. Many of the failures are a result of ADO throttling. [#2555](https://github.com/microsoft/onefuzz/pull/2555)
+* Service: Add a `DeleteAll` operation to ORM that speeds up the deletion of multiple entities. [#2519](https://github.com/microsoft/onefuzz/pull/2519)
+### Changed
+* Documentation: Remove suggestion to reset `IterationPath` upon duplicate. [#2533](https://github.com/microsoft/onefuzz/pull/2533)
+* Service: Ignoring the scanning log file when reporting an issue with azcopy. [#2536](https://github.com/microsoft/onefuzz/pull/2536)
+### Fixed
+* CLI: Fixed failures in command `$ onefuzz status pool <pool_name>`. [#2551](https://github.com/microsoft/onefuzz/pull/2551)
+* Deployment: Fix the OneFuzz web address that is used to generate the `input_url` for bug reporting. [#2543](https://github.com/microsoft/onefuzz/pull/2543)
+* Service: Produce an error if coverage recording failed due to a timeout. [#2529](https://github.com/microsoft/onefuzz/pull/2529)
+* Service: Increased the default timeout for coverage recording from 5 seconds to 120 to prevent premature errors while parsing symbols and executables. [#2556](https://github.com/microsoft/onefuzz/pull/2556)
+* Service: Fixed errors in ADO notifications to reduce duplicate bug-filing. [#2534](https://github.com/microsoft/onefuzz/pull/2534)
+* Service: Handle null values better in `ScalesetOperations` and `VmssOperations` when a scaleset is in shutdown state. [#2538](https://github.com/microsoft/onefuzz/pull/2538)
+* Service: Fix exception message formatting in `VmssOperations`. [#2546](https://github.com/microsoft/onefuzz/pull/2546)
+* Service: Downgrade instance not found exception. [#2549](https://github.com/microsoft/onefuzz/pull/2549)
+* Service: Lower log level on symbol region overlap findings during coverage recording. [#2559](https://github.com/microsoft/onefuzz/pull/2559)
+
 ## 5.16.0
 ### Added
 * Documentation: Added OneFuzz logo to the README file. [#2340](https://github.com/microsoft/onefuzz/pull/2340)
@@ -48,7 +89,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Lowercase webhooks digest header value [#2471](https://github.com/microsoft/onefuzz/pull/2471)
 * Service: Fix C# Node state machine. [#2476](https://github.com/microsoft/onefuzz/pull/2476)
 * Service: Adding missing caching from python code [#2467](https://github.com/microsoft/onefuzz/pull/2467)
-
 
 ## 5.14.0
 ### Added

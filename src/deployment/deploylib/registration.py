@@ -10,7 +10,17 @@ import time
 import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+)
 from uuid import UUID
 
 import requests
@@ -23,6 +33,8 @@ logger = logging.getLogger("deploy")
 ## https://docs.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0
 GRAPH_RESOURCE = "https://graph.microsoft.com"
 GRAPH_RESOURCE_ENDPOINT = "https://graph.microsoft.com/v1.0"
+
+NameOrAppId = Union[str, UUID]
 
 
 class GraphQueryError(Exception):
@@ -117,6 +129,7 @@ def retry(
     data: Any = None,
 ) -> OperationResult:
     count = 0
+    error = None
     while True:
         try:
             return operation(data)
@@ -310,7 +323,32 @@ def create_application_registration(
     registered_app_id = registered_app["appId"]
     app_id = app["appId"]
 
+
+    authorize_and_assign_role(app_id, registered_app_id, approle, subscription_id)
     return registered_app
+
+
+def authorize_and_assign_role(
+    onfuzz_app_id: UUID,
+    registered_app_id: UUID,
+    role: OnefuzzAppRole,
+    subscription_id: str,
+) -> None:
+    def try_authorize_application(data: Any) -> None:
+        authorize_application(
+            registered_app_id,
+            onfuzz_app_id,
+            subscription_id=subscription_id,
+        )
+
+    retry(try_authorize_application, "authorize application")
+
+    def try_assign_instance_role(data: Any) -> None:
+        assign_instance_app_role(
+            onfuzz_app_id, registered_app_id, subscription_id, role
+        )
+
+    retry(try_assign_instance_role, "assingn role")
 
 
 # def authorize_and_assign_role(
@@ -427,6 +465,10 @@ def authorize_application(
     permissions: List[str] = ["user_impersonation"],
     subscription_id: Optional[str] = None,
 ) -> None:
+    logger.info(
+        f"authorizing registration {registration_app_id} to access application {onefuzz_app_id} with the permissions '{', '.join(permissions)}'"
+    )
+
     onefuzz_app = get_application(
         app_id=onefuzz_app_id, subscription_id=subscription_id
     )
@@ -580,8 +622,8 @@ def assign_app_role(
 
 
 def assign_instance_app_role(
-    onefuzz_instance_name: str,
-    application_name: str,
+    onefuzz_instance: NameOrAppId,
+    application_name: NameOrAppId,
     subscription_id: str,
     app_role: OnefuzzAppRole,
 ) -> None:
@@ -590,18 +632,25 @@ def assign_instance_app_role(
     their managed identity to the provided App Role
     """
 
-    onefuzz_service_appIds = query_microsoft_graph_list(
-        method="GET",
-        resource="applications",
-        params={
-            "$filter": "displayName eq '%s'" % onefuzz_instance_name,
-            "$select": "appId",
-        },
-        subscription=subscription_id,
+    logger.info(
+        f"Assigning app role {app_role} from {onefuzz_instance} to {application_name}"
     )
-    if len(onefuzz_service_appIds) == 0:
-        raise Exception("onefuzz app registration not found")
-    appId = onefuzz_service_appIds[0]["appId"]
+    if isinstance(onefuzz_instance, str):
+        onefuzz_service_appIds = query_microsoft_graph_list(
+            method="GET",
+            resource="applications",
+            params={
+                "$filter": "displayName eq '%s'" % onefuzz_instance,
+                "$select": "appId",
+            },
+            subscription=subscription_id,
+        )
+        if len(onefuzz_service_appIds) == 0:
+            raise Exception("onefuzz app registration not found")
+        appId = onefuzz_service_appIds[0]["appId"]
+    else:
+        appId = onefuzz_instance
+
     onefuzz_service_principals = query_microsoft_graph_list(
         method="GET",
         resource="servicePrincipals",
@@ -612,15 +661,27 @@ def assign_instance_app_role(
     if len(onefuzz_service_principals) == 0:
         raise Exception("onefuzz app service principal not found")
     onefuzz_service_principal = onefuzz_service_principals[0]
-    application_service_principals = query_microsoft_graph_list(
-        method="GET",
-        resource="servicePrincipals",
-        params={"$filter": "displayName eq '%s'" % application_name},
-        subscription=subscription_id,
-    )
+
+    if isinstance(application_name, str):
+        application_service_principals = query_microsoft_graph_list(
+            method="GET",
+            resource="servicePrincipals",
+            params={"$filter": "displayName eq '%s'" % application_name},
+            subscription=subscription_id,
+        )
+    else:
+        application_service_principals = query_microsoft_graph_list(
+            method="GET",
+            resource="servicePrincipals",
+            params={"$filter": "appId eq '%s'" % application_name},
+            subscription=subscription_id,
+        )
+
     if len(application_service_principals) == 0:
         raise Exception(f"application '{application_name}' service principal not found")
+
     application_service_principal = application_service_principals[0]
+
     managed_node_role = (
         seq(onefuzz_service_principal["appRoles"])
         .filter(lambda x: x["value"] == app_role.value)
@@ -807,7 +868,8 @@ def main() -> None:
     register_app_parser = subparsers.add_parser("register_app", parents=[parent_parser])
     register_app_parser.add_argument("--app_id", help="the application id to register")
     register_app_parser.add_argument(
-        "--role", help="the role of the application to register"
+        "--role",
+        help=f"the role of the application to register.  Valid values: {', '.join([member.value for member in OnefuzzAppRole])}",
     )
 
     args = parser.parse_args()
@@ -832,15 +894,15 @@ def main() -> None:
             display_secret=True,
         )
     elif args.command == "register_app":
-        registration_name = args.registration_name or (
-            "%s_unmanaged" % onefuzz_instance_name
-        )
-        create_and_display_registration(
-            onefuzz_instance_name,
-            registration_name,
-            OnefuzzAppRole.UnmanagedNode,
+        onefuzz_app_id = get_application(display_name=onefuzz_instance_name)
+        if not onefuzz_app_id:
+            raise Exception("could not find onefuzz application")
+
+        authorize_and_assign_role(
+            UUID(onefuzz_app_id["appId"]),
+            UUID(args.app_id),
+            OnefuzzAppRole(args.role),
             args.subscription_id,
-            display_secret=True,
         )
     elif args.command == "assign_scaleset_role":
         assign_instance_app_role(
