@@ -614,7 +614,7 @@ class Repro(Endpoint):
         self,
         repro: models.Repro,
         debug_command: Optional[str],
-        retry_limit: Optional[int] = 10,
+        retry_limit: Optional[int],
     ) -> Optional[str]:
         """Setup an SSH tunnel, then connect via CDB over SSH tunnel"""
 
@@ -687,7 +687,7 @@ class Repro(Endpoint):
         vm_id: UUID_EXPANSION,
         delete_after_use: bool = False,
         debug_command: Optional[str] = None,
-        retry_limit: Optional[int] = 10,
+        retry_limit: Optional[int] = None,
     ) -> Optional[str]:
         """Connect to an existing Reproduction VM"""
 
