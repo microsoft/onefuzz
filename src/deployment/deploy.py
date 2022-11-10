@@ -17,7 +17,7 @@ import time
 import uuid
 import zipfile
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from uuid import UUID
 
 from azure.common.credentials import get_cli_profile
@@ -102,17 +102,6 @@ DOTNET_AGENT_FUNCTIONS = [
     "agent_registration",
 ]
 logger = logging.getLogger("deploy")
-
-T = TypeVar("T")
-
-
-def union_lists(list1: List[T], list2: List[T]) -> List[T]:
-    # this doesn’t use the set() type since we need
-    # to support values that are not hashable
-    result = []
-    result.extend(list1)
-    result.extend([x for x in list2 if x not in result])
-    return result
 
 
 def gen_guid() -> str:
@@ -525,8 +514,8 @@ class Client:
 
         # find any identifier URIs that need updating
         identifier_uris: List[str] = app["identifierUris"]
-        updated_identifier_uris = union_lists(
-            identifier_uris, self.get_identifier_urls()
+        updated_identifier_uris = list(
+            set(identifier_uris) | set(self.get_identifier_urls())
         )
         if len(updated_identifier_uris) > len(identifier_uris):
             update_properties["identifierUris"] = updated_identifier_uris
