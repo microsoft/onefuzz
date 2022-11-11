@@ -484,15 +484,22 @@ class Client:
             if "redirectUris" not in onefuzz_cli_app["publicClient"]:
                 onefuzz_cli_app["publicClient"]["redirectUris"] = []
 
-            replyUrl = "http://localhost"  # required for browser-based auth
+            requiredRedirectUris = [
+                "http://localhost",  # required for browser-based auth
+                "ms-appx-web://Microsoft.AAD.BrokerPlugin/3b5603df-3ddc-464c-a1ea-6a186bdee389",  # required for broker auth
+            ]
 
             redirectUris: List[str] = onefuzz_cli_app["publicClient"]["redirectUris"]
-            if replyUrl not in redirectUris:
-                logger.info("Updating replyUrls for CLI app")
+            updatedRedirectUris = list(
+                set(requiredRedirectUris) | set(redirectUris)
+            )
+
+            if len(updatedRedirectUris) > len(redirectUris):
+                logger.info("Updating redirectUris for CLI app")
                 query_microsoft_graph(
                     method="PATCH",
                     resource=f"applications/{onefuzz_cli_app['id']}",
-                    body={"publicClient": {"redirectUris": redirectUris + [replyUrl]}},
+                    body={"publicClient": {"redirectUris": updatedRedirectUris}},
                     subscription=self.get_subscription_id(),
                 )
 

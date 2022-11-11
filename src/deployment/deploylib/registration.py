@@ -261,6 +261,7 @@ def create_application_registration(
             "redirectUris": [
                 "https://%s.azurewebsites.net" % onefuzz_instance_name,
                 "http://localhost",  # required for browser auth
+                "ms-appx-web://Microsoft.AAD.BrokerPlugin/3b5603df-3ddc-464c-a1ea-6a186bdee389",  # required for broker auth
             ]
         },
         "isFallbackPublicClient": True,
