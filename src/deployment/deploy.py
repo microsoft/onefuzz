@@ -490,9 +490,7 @@ class Client:
             ]
 
             redirectUris: List[str] = onefuzz_cli_app["publicClient"]["redirectUris"]
-            updatedRedirectUris = list(
-                set(requiredRedirectUris) | set(redirectUris)
-            )
+            updatedRedirectUris = list(set(requiredRedirectUris) | set(redirectUris))
 
             if len(updatedRedirectUris) > len(redirectUris):
                 logger.info("Updating redirectUris for CLI app")
