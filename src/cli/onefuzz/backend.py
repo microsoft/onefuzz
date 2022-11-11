@@ -236,7 +236,6 @@ class Backend:
                 authority=self.config.authority,
                 token_cache=self.token_cache,
                 allow_broker=True,
-                parent_window_handle=msal.PublicClientApplication.CONSOLE_WINDOW_HANDLE,
             )
 
         access_token = None
@@ -252,7 +251,10 @@ class Backend:
         for scope in scopes:
             LOGGER.info("Attempting interactive device login")
             try:
-                access_token = self.app.acquire_token_interactive(scopes=[scope])
+                access_token = self.app.acquire_token_interactive(
+                    scopes=[scope],
+                    parent_window_handle=msal.PublicClientApplication.CONSOLE_WINDOW_HANDLE,
+                )
                 check_msal_error(access_token, ["access_token"])
             except KeyboardInterrupt:
                 result = input(
