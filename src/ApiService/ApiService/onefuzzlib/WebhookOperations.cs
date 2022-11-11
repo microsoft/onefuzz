@@ -1,5 +1,6 @@
 ﻿using System.Net.Http;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
@@ -106,10 +107,9 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         }
 
         string? digest = null;
-        var hmac = HMAC.Create("HMACSHA512");
-        if (secretToken != null && hmac != null) {
-            hmac.Key = System.Text.Encoding.UTF8.GetBytes(secretToken);
-            digest = Convert.ToHexString(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(data)));
+        if (secretToken is not null) {
+            using var hmac = new HMACSHA512(Encoding.UTF8.GetBytes(secretToken));
+            digest = Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(data)));
         }
         return new Tuple<string, string?>(data, digest);
 

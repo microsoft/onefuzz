@@ -355,8 +355,8 @@ jobs:
       run: |
         ./src/ci/get-version.sh > src/deployment/VERSION
         cd src/ApiService/ApiService/
-        mv az-local.settings.json bin/Release/net6.0/local.settings.json
-        cd bin/Release/net6.0/
+        mv az-local.settings.json bin/Release/net*/local.settings.json
+        cd bin/Release/net*/
         zip -r api-service-net.zip .
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
         cp api-service-net.zip ${GITHUB_WORKSPACE}/artifacts/service-net
@@ -563,7 +563,7 @@ jobs:
           cp -r libfuzzer-aarch64-crosscompile/fuzz.exe libfuzzer-aarch64-crosscompile/inputs artifacts/linux-libfuzzer-aarch64-crosscompile
 
           # C# target.
-          sudo apt-get install -y dotnet-sdk-6.0
+          sudo apt-get install -y dotnet-sdk-7.0
           (cd GoodBad; dotnet publish -c Release -o out)
           mv GoodBad/out artifacts/GoodBadDotnet
 

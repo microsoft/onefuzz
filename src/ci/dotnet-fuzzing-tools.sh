@@ -23,13 +23,13 @@ mkdir -p $ARTIFACTS/sharpfuzz
 sudo apt-get install -y llvm-10 llvm-10-dev clang-10
 
 # Install `SharpFuzz` and `LibFuzzerDotnetLoader` pre-reqs.
-sudo apt-get install -y dotnet-sdk-6.0
+sudo apt-get install -y dotnet-sdk-7.0
 
 # Build SharpFuzz instrumentor.
 git clone $SHARPFUZZ_REPO sharpfuzz
 pushd sharpfuzz
 git checkout $SHARPFUZZ_COMMIT
-dotnet publish src/SharpFuzz.CommandLine -f net6.0 -c Release -o $ARTIFACTS/sharpfuzz --self-contained -r linux-x64
+dotnet publish src/SharpFuzz.CommandLine -f net7.0 -c Release -o $ARTIFACTS/sharpfuzz --self-contained -r linux-x64
 popd
 
 # Build SharpFuzz and our dynamic loader harness for `libfuzzer-dotnet`.

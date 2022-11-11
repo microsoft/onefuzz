@@ -114,19 +114,19 @@ clang -g -O2 -fsanitize=fuzzer libfuzzer-dotnet-windows.cc -o libfuzzer-dotnet.e
 
 ### Build `LibFuzzerDotnetLoader`
 
-Next, using .NET 6, you need to [publish](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish) a self-contained
+Next, using .NET 7, you need to [publish](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish) a self-contained
 build of the loader.
 
 Note: this depends on SharpFuzz 2.0.0 or greater.
 
 #### Linux
 ```
-dotnet publish src/SharpFuzz.CommandLine -f net6.0 -c Release --sc -r linux-x64
+dotnet publish src/SharpFuzz.CommandLine -f net7.0 -c Release --sc -r linux-x64
 ```
 
 #### Windows 10
 ```
-dotnet publish src\SharpFuzz.CommandLine -f net6.0 -c Release --sc -r win10-x64
+dotnet publish src\SharpFuzz.CommandLine -f net7.0 -c Release --sc -r win10-x64
 ```
 
 In the end, you should have two binaries for your platform: `libfuzzer-dotnet`(`.exe`) and `LibFuzzerDotnetLoader`(.`exe`).
