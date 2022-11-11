@@ -236,7 +236,7 @@ class Backend:
                 authority=self.config.authority,
                 token_cache=self.token_cache,
                 allow_broker=True,
-                parent_window_handle=msal.PublicClientApplication.CONSOLE_WINDOW_HANDLE
+                parent_window_handle=msal.PublicClientApplication.CONSOLE_WINDOW_HANDLE,
             )
 
         access_token = None
