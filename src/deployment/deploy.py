@@ -486,7 +486,7 @@ class Client:
 
             requiredRedirectUris = [
                 "http://localhost",  # required for browser-based auth
-                "ms-appx-web://Microsoft.AAD.BrokerPlugin/3b5603df-3ddc-464c-a1ea-6a186bdee389",  # required for broker auth
+                f"ms-appx-web://Microsoft.AAD.BrokerPlugin/{onefuzz_cli_app['appId']}",  # required for broker auth
             ]
 
             redirectUris: List[str] = onefuzz_cli_app["publicClient"]["redirectUris"]

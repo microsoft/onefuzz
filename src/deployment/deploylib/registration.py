@@ -257,13 +257,6 @@ def create_application_registration(
     params = {
         "isDeviceOnlyAuthSupported": True,
         "displayName": name,
-        "publicClient": {
-            "redirectUris": [
-                "https://%s.azurewebsites.net" % onefuzz_instance_name,
-                "http://localhost",  # required for browser auth
-                "ms-appx-web://Microsoft.AAD.BrokerPlugin/3b5603df-3ddc-464c-a1ea-6a186bdee389",  # required for broker auth
-            ]
-        },
         "isFallbackPublicClient": True,
         "requiredResourceAccess": (
             [
@@ -281,6 +274,23 @@ def create_application_registration(
         method="POST",
         resource="applications",
         body=params,
+        subscription=subscription_id,
+    )
+
+    # next patch the redirect URIs; we must do this
+    # separately because we need the AppID to include
+    query_microsoft_graph(
+        method="PATCH",
+        resource=f"applications/{registered_app['id']}",
+        body={
+            "publicClient": {
+                "redirectUris": [
+                    "https://%s.azurewebsites.net" % onefuzz_instance_name,
+                    "http://localhost",  # required for browser auth
+                    f"ms-appx-web://Microsoft.AAD.BrokerPlugin/{app['appId']}",  # required for broker auth
+                ]
+            },
+        },
         subscription=subscription_id,
     )
 
