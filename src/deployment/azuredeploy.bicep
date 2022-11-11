@@ -253,6 +253,13 @@ resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10
   ]
 }
 
+module featureFlags 'bicep-templates/feature-flags.bicep' = {
+  name: 'featureFlags'
+  params: {
+    location: location
+  }
+}
+
 
 module pythonFunction 'bicep-templates/function.bicep' = {
   name: 'pythonFunction'
@@ -316,6 +323,7 @@ module pythonFunctionSettings 'bicep-templates/function-settings.bicep' = {
     multi_tenant_domain: multi_tenant_domain
     functions_disabled: python_functions_disabled
     use_dotnet_agent_functions: use_dotnet_agent_functions
+    app_config_connection_string: featureFlags.outputs.AppConfigurationConnectionString
     enable_profiler: false
     all_function_names: [
       'agent_can_schedule'    //0
@@ -383,6 +391,7 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     functions_disabled: dotnet_functions_disabled
     use_dotnet_agent_functions: false // this doesn’t do anything on the .NET service
     enable_profiler: enable_profiler
+    app_config_connection_string: featureFlags.outputs.AppConfigurationConnectionString
     all_function_names: [
       'AgentCanSchedule'      //0
       'AgentCommands'         //1

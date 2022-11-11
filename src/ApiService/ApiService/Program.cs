@@ -13,6 +13,7 @@ using Azure.Identity;
 using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Graph;
@@ -47,13 +48,22 @@ public class Program {
 
         using var host =
             new HostBuilder()
+            .ConfigureAppConfiguration(builder => {
+                var _ = builder.AddAzureAppConfiguration(options => {
+                    var _ =  options.Connect(configuration.AppConfigurationConnectionString)
+                        .ConfigureRefresh(refreshOptions =>
+                            refreshOptions.SetCacheExpiration(TimeSpan.FromMinutes(1)));
+                });
+            })
             .ConfigureFunctionsWorkerDefaults(builder => {
                 builder.UseMiddleware<LoggingMiddleware>();
                 builder.AddApplicationInsights(options => {
                     options.ConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
                 });
+                builder.UseAzureAppConfiguration();
             })
             .ConfigureServices((context, services) => {
+                services.AddAzureAppConfiguration();
                 services.Configure<JsonSerializerOptions>(options => {
                     options = EntityConverter.GetJsonSerializerOptions();
                 });

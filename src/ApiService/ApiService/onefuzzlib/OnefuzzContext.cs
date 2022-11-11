@@ -95,4 +95,7 @@ public class OnefuzzContext : IOnefuzzContext {
     public ITeams Teams => _serviceProvider.GetRequiredService<ITeams>();
     public IGithubIssues GithubIssues => _serviceProvider.GetRequiredService<IGithubIssues>();
     public IAdo Ado => _serviceProvider.GetRequiredService<IAdo>();
+
+    // TODO: Make an interface for app configuration, this is going to make it easier to test
+    // and use in the existing functions because IOnefuzzContext is already there
 }
