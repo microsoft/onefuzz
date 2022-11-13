@@ -1,11 +1,11 @@
 param owner string
 param location string
 param signedExpiry string
+param cosmosDBName string
 
 var suffix = uniqueString(resourceGroup().id)
 var storageAccountNameFuzz = 'fuzz${suffix}'
 var storageAccountNameFunc = 'func${suffix}'
-
 
 var storage_account_sas = {
   signedExpiry: signedExpiry
@@ -13,7 +13,6 @@ var storage_account_sas = {
   signedResourceTypes: 'sco'
   signedServices: 'bfqt'
 }
-
 
 var storageAccountFuncContainersParams = [
   'vm-scripts'
@@ -88,6 +87,60 @@ resource storageAccountFunc 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   }
 }
 
+resource cosmosFuncAccount 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
+  name: cosmosDBName
+  kind: 'GlobalDocumentDB'
+  location: location
+  properties: {
+    databaseAccountOfferType: 'Standard'
+    enableAutomaticFailover: true
+    locations: [
+      {
+        failoverPriority: 0
+        locationName: location
+        isZoneRedundant: true
+      }
+    ]
+  }
+  identity: {
+    type: 'SystemAssigned'
+  }
+  tags: {
+    OWNER: owner
+  }
+}
+
+resource cosmosFuncDB 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-08-15' = {
+  name: '${cosmosFuncAccount.name}/onefuzz'
+  location: location
+  properties: {
+    resource: {
+      id: 'onefuzz'
+    }
+    options: {
+      autoscaleSettings: {
+        maxThroughput: 4000
+      }
+    }
+  }
+}
+
+resource cosmosFuncContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2022-08-15' = {
+  name: '${cosmosFuncDB.name}/pools'
+  location: location
+  properties: {
+    resource: {
+      id: 'pools'
+      partitionKey: {
+        kind: 'Hash'
+        paths: [
+          '/id'
+        ]
+      }
+    }
+  }
+}
+
 resource storageAccountFuncQueues 'Microsoft.Storage/storageAccounts/queueServices/queues@2021-08-01' = [for q in storageAccountFuncQueuesParams: {
   name: '${storageAccountNameFunc}/default/${q}'
   dependsOn: [
@@ -107,6 +160,9 @@ output FuncName string = storageAccountNameFunc
 
 output FuzzId string = storageAccountFuzz.id
 output FuncId string = storageAccountFunc.id
+
+output CosmosDBAccountName string = cosmosFuncAccount.name
+output CosmosDBAccountID string = cosmosFuncAccount.id
 
 output FileChangesQueueName string = storageAccountFuncQueuesParams[fileChangesQueueIndex]
 

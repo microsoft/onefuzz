@@ -10,7 +10,6 @@ using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Core.Serialization;
 using Azure.Identity;
-using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,6 +51,7 @@ public class Program {
                 builder.AddApplicationInsights(options => {
                     options.ConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
                 });
+                builder.AddApplicationInsightsLogger();
             })
             .ConfigureServices((context, services) => {
                 services.Configure<JsonSerializerOptions>(options => {
@@ -112,13 +112,13 @@ public class Program {
                 .AddScoped<INodeMessageOperations, NodeMessageOperations>()
                 .AddScoped<ISubnet, Subnet>()
                 .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
-                .AddSingleton<GraphServiceClient>(new GraphServiceClient(new DefaultAzureCredential()))
-                .AddSingleton<DependencyTrackingTelemetryModule>()
+                .AddSingleton(new GraphServiceClient(new DefaultAzureCredential()))
                 .AddSingleton<ICreds, Creds>()
                 .AddSingleton<EntityConverter>()
                 .AddSingleton<IServiceConfig>(configuration)
                 .AddSingleton<IStorage, Storage>()
                 .AddSingleton<ILogSinks, LogSinks>()
+                // .AddSingleton(new CosmosClient("COSMOS_CONNECTION_STRING", new DefaultAzureCredential()))
                 .AddHttpClient()
                 .AddMemoryCache();
             })

@@ -298,9 +298,10 @@ class Client:
                     )
 
         if unsupported:
-            print("The following resources required by onefuzz are not supported:")
+            print(
+                "Warning: the following resources required by onefuzz are not supported:"
+            )
             print("\n".join(["* " + x for x in unsupported]))
-            sys.exit(1)
 
     def create_password(self, object_id: UUID) -> Tuple[str, str]:
         return add_application_password(

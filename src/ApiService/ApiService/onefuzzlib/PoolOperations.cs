@@ -1,5 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
+using Azure.Core;
+using Azure.Data.Tables;
+using Microsoft.Azure.Cosmos;
+
 namespace Microsoft.OneFuzz.Service;
 
 public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {
@@ -23,6 +29,194 @@ public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {
     Async.Task<Pool> Halt(Pool pool);
 
     public static string PoolQueueNamePrefix => "pool-";
+}
+
+public class CosmosPoolOperations : IPoolOperations {
+    private readonly Database _db;
+
+    public CosmosPoolOperations(Database db) {
+        _db = db;
+    }
+
+    public Task<Pool> Create(PoolName name, Os os, Architecture architecture, bool managed, Guid? clientId = null) {
+        throw new NotImplementedException();
+    }
+
+    public Async.Task Delete(Pool pool) {
+        throw new NotImplementedException();
+    }
+
+    public Task<DeleteAllResult> DeleteAll(IEnumerable<(string?, string?)> keys) {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<Pool> GetByClientId(Guid clientId) {
+        throw new NotImplementedException();
+    }
+
+    public Task<OneFuzzResult<Pool>> GetById(Guid poolId) {
+        throw new NotImplementedException();
+    }
+
+    public Task<OneFuzzResult<Pool>> GetByName(PoolName poolName) {
+        throw new NotImplementedException();
+    }
+
+    public Task<Pool> GetEntityAsync(string partitionKey, string rowKey) {
+        throw new NotImplementedException();
+    }
+
+    public string GetPoolQueue(Guid poolId) {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name) {
+        throw new NotImplementedException();
+    }
+
+    public Task<TableClient> GetTableClient(string table, ResourceIdentifier? accountId = null) {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<WorkSetSummary>> GetWorkQueue(Guid poolId, PoolState state) {
+        throw new NotImplementedException();
+    }
+
+    public Task<Pool> Halt(Pool pool) {
+        throw new NotImplementedException();
+    }
+
+    public Task<Pool> Init(Pool pool) {
+        throw new NotImplementedException();
+    }
+
+    public Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(Pool entity) {
+        throw new NotImplementedException();
+    }
+
+    public Task<Pool> ProcessStateUpdate(Pool entity) {
+        throw new NotImplementedException();
+    }
+
+    public Task<Pool?> ProcessStateUpdates(Pool entity, int MaxUpdates = 5) {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<Pool> QueryAsync(string? filter = null) {
+        throw new NotImplementedException();
+    }
+
+    public Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Replace(Pool entity) {
+        throw new NotImplementedException();
+    }
+
+    public Task<Pool> Running(Pool pool) {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> ScheduleWorkset(Pool pool, WorkSet workSet) {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<Pool> SearchAll() {
+        var q = new QueryDefinition("select * from Pool p");
+        return _db.GetContainer("pools").GetItemQueryAsyncEnumerable<Pool>(q);
+    }
+
+    public IAsyncEnumerable<Pool> SearchByPartitionKeys(IEnumerable<string> partitionKeys) {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<Pool> SearchByRowKeys(IEnumerable<string> rowKeys) {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<Pool> SearchByTimeRange(DateTimeOffset min, DateTimeOffset max) {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> states) {
+        throw new NotImplementedException();
+    }
+
+    public Task<Pool> SetShutdown(Pool pool, bool Now) {
+        throw new NotImplementedException();
+    }
+
+    public Task<Pool> Shutdown(Pool pool) {
+        throw new NotImplementedException();
+    }
+
+    public Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Update(Pool entity) {
+        throw new NotImplementedException();
+    }
+
+    Task<ResultVoid<(HttpStatusCode Status, string Reason)>> IOrm<Pool>.Delete(Pool entity) {
+        throw new NotImplementedException();
+    }
+}
+
+static class CosmosExtensions {
+    public static IAsyncEnumerable<T> GetItemQueryAsyncEnumerable<T>(this Azure.Cosmos.Container c, QueryDefinition q)
+        => new QueryAsyncEnumerable<T>(c, q);
+}
+
+// helper to adapt Cosmos results to IAsyncEnumerable; use 
+// … container.GetItemQueryAsyncEnumerable<T>(query);
+sealed class QueryAsyncEnumerable<T> : IAsyncEnumerable<T> {
+    private readonly Azure.Cosmos.Container _container;
+    private readonly QueryDefinition _query;
+
+    public QueryAsyncEnumerable(Azure.Cosmos.Container container, QueryDefinition query) {
+        _container = container;
+        _query = query;
+    }
+
+    public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        => new Enumerator(_container.GetItemQueryIterator<T>(_query));
+
+    sealed class Enumerator : IAsyncEnumerator<T> {
+        private readonly FeedIterator<T> _iterator;
+        private IEnumerator<T>? _currentPage;
+
+        public Enumerator(FeedIterator<T> iterator) {
+            _iterator = iterator;
+        }
+
+        public T Current { get; private set; } = default!;
+
+        public ValueTask DisposeAsync() {
+            _currentPage?.Dispose();
+            _iterator.Dispose();
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask<bool> MoveNextAsync() {
+            if (_currentPage?.MoveNext() == true) {
+                Current = _currentPage.Current;
+                return ValueTask.FromResult(true);
+            }
+
+            return FetchNextPage();
+        }
+
+        private async ValueTask<bool> FetchNextPage() {
+            if (_currentPage is not null) {
+                _currentPage.Dispose();
+                _currentPage = null;
+            }
+
+            if (_iterator.HasMoreResults) {
+                _currentPage = (await _iterator.ReadNextAsync()).GetEnumerator();
+                if (_currentPage.MoveNext()) {
+                    Current = _currentPage.Current;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
 }
 
 public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoolOperations {

@@ -1,4 +1,6 @@
-﻿using Microsoft.Azure.Functions.Worker;
+﻿using System.Text.Json;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.DurableTask;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
@@ -38,19 +40,22 @@ public class TimerWorkers {
 
 
     [Function("TimerWorkers")]
-    public async Async.Task Run([TimerTrigger("00:01:30")] TimerInfo t) {
+    public async Async.Task Run(
+        [TimerTrigger("00:01:30")] TimerInfo t,
+        [DurableClient] DurableClientContext durableClient) {
         // NOTE: Update pools first, such that scalesets impacted by pool updates
         // (such as shutdown or resize) happen during this iteration `timer_worker`
         // rather than the following iteration.
 
         var pools = _poolOps.SearchStates(states: PoolStateHelper.NeedsWork);
         await foreach (var pool in pools) {
+            var instanceId = $"{pool.Name}-{pool.PoolId}";
             try {
-                _log.Info($"updating pool: {pool.PoolId:Tag:PoolId} ({pool.Name:Tag:PoolName}) - state: {pool.State:Tag:PoolState}");
-                var newPool = await _poolOps.ProcessStateUpdate(pool);
-                _log.Info($"completed updating pool: {pool.PoolId:Tag:PoolId} ({pool.Name:Tag:PoolName}) - now in state {newPool.State:Tag:PoolState}");
+                _ = await durableClient.Client.ScheduleNewPoolStateOrchestratorInstanceAsync(
+                    instanceId,
+                    JsonSerializer.SerializeToElement(new PoolKey(pool.Name.ToString(), pool.PoolId.ToString())));
             } catch (Exception ex) {
-                _log.Exception(ex, $"failed to process pool");
+                _log.Exception(ex, $"Error triggering pool-state processing for ${instanceId}");
             }
         }
 

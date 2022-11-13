@@ -35,6 +35,7 @@ var python_functions_disabled = '0'
 var dotnet_functions_disabled = '1'
 
 var scaleset_identity = '${name}-scalesetid'
+var cosmosDBName = 'cosmos${uniqueString(resourceGroup().id)}'
 
 var StorageBlobDataReader = '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
 
@@ -45,23 +46,31 @@ var roleAssignmentsParams = [
   }
   {
     suffix: '-storage'
-    role:'17d1049b-9a84-46fb-8f53-869881c3d3ab' //StorageAccountContributor
+    role: '17d1049b-9a84-46fb-8f53-869881c3d3ab' //StorageAccountContributor
+  }
+  {
+    suffix: '-cosmosdb'
+    role: '5bd9cd88-fe45-4216-938b-f97437e15450' //DocumentDB Account Contributor
+  }
+  {
+    suffix: '-cosmosreader'
+    role: 'fbdf93bf-df7d-467e-a4d2-9458aa1360c8' //DocumentDB Account Reader
   }
   {
     suffix: '-network'
-    role: '4d97b98b-1d4f-4787-a291-c67834d212e7'//NetworkContributor
+    role: '4d97b98b-1d4f-4787-a291-c67834d212e7' //NetworkContributor
   }
   {
     suffix: '-logs'
-    role: '92aaf0da-9dab-42b6-94a3-d43ce8d16293'//LogAnalyticsContributor
+    role: '92aaf0da-9dab-42b6-94a3-d43ce8d16293' //LogAnalyticsContributor
   }
   {
     suffix: '-user_managed_identity'
-    role: 'f1a07417-d97a-45cb-824c-7a7467783830'//ManagedIdentityOperator
+    role: 'f1a07417-d97a-45cb-824c-7a7467783830' //ManagedIdentityOperator
   }
   {
     suffix: '-contributor'
-    role: 'b24988ac-6180-42a0-ab88-20f7382dd24c'//Contributor
+    role: 'b24988ac-6180-42a0-ab88-20f7382dd24c' //Contributor
   }
 ]
 resource scalesetIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
@@ -101,7 +110,6 @@ module dotNetServerFarm 'bicep-templates/server-farms.bicep' = {
     create: enable_remote_debugging
   }
 }
-
 
 var keyVaultName = 'of-kv-${uniqueString(resourceGroup().id)}'
 resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
@@ -161,6 +169,7 @@ module storage 'bicep-templates/storageAccounts.bicep' = {
   params: {
     location: location
     owner: owner
+    cosmosDBName: cosmosDBName
     signedExpiry: signedExpiry
   }
 }
@@ -173,7 +182,7 @@ module autoscaleSettings 'bicep-templates/autoscale-settings.bicep' = {
     owner: owner
     workspaceId: operationalInsights.outputs.workspaceId
     logRetention: log_retention
-    autoscale_name: 'onefuzz-autoscale-${uniqueString(resourceGroup().id)}' 
+    autoscale_name: 'onefuzz-autoscale-${uniqueString(resourceGroup().id)}'
     create_new: true
     function_diagnostics_settings_name: 'functionDiagnosticSettings'
   }
@@ -198,7 +207,7 @@ module autoscaleSettingsNet 'bicep-templates/autoscale-settings.bicep' = {
 
 module eventGrid 'bicep-templates/event-grid.bicep' = {
   name: 'event-grid'
-  params:{
+  params: {
     location: location
     storageFuzzId: storage.outputs.FuzzId
     storageFuncId: storage.outputs.FuncId
@@ -237,6 +246,37 @@ resource roleAssigmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-p
   ]
 }]
 
+var cosmosRoleDefinitionId = guid('role-definition-', cosmosDBName)
+var cosmosRoleAssignmentId = guid('role-assignment-', cosmosDBName)
+resource cosmosRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2022-08-15' = {
+  name: '${cosmosDBName}/${cosmosRoleDefinitionId}'
+  properties: {
+    roleName: 'Function R/W Role'
+    type: 'CustomRole'
+    assignableScopes: [
+      storage.outputs.CosmosDBAccountID
+    ]
+    permissions: [
+      {
+        dataActions: [
+          'Microsoft.DocumentDB/databaseAccounts/readMetadata'
+          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*'
+        ]
+      }
+    ]
+  }
+  dependsOn: [ storage ]
+}
+
+resource cosmosRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2022-08-15' = {
+  name: '${cosmosDBName}/${cosmosRoleAssignmentId}'
+  properties: {
+    roleDefinitionId: cosmosRoleDefinition.id
+    principalId: netFunction.outputs.principalId
+    scope: storage.outputs.CosmosDBAccountID
+  }
+  dependsOn: [ storage ]
+}
 
 // try to make role assignments to deploy as late as possible in order to have principalId ready
 resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
@@ -252,7 +292,6 @@ resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10
     dotNetServerFarm
   ]
 }
-
 
 module pythonFunction 'bicep-templates/function.bicep' = {
   name: 'pythonFunction'
@@ -318,49 +357,48 @@ module pythonFunctionSettings 'bicep-templates/function-settings.bicep' = {
     use_dotnet_agent_functions: use_dotnet_agent_functions
     enable_profiler: false
     all_function_names: [
-      'agent_can_schedule'    //0
-      'agent_commands'        //1
-      'agent_events'          //2
-      'agent_registration'    //3
-      'containers'            //4
-      'download'              //5
-      'info'                  //6
-      'instance_config'       //7
-      'jobs'                  //8
-      'job_templates'         //9
-      'job_templates_manage'  //10
-      'negotiate'             //11
-      'node'                  //12
-      'node_add_ssh_key'      //13
-      'notifications'         //14
-      'pool'                  //15
-      'proxy'                 //16
-      'queue_file_changes'    //17
-      'queue_node_heartbeat'  //18
-      'queue_proxy_update'    //19
-      'queue_signalr_events'  //20
-      'queue_task_heartbeat'  //21
-      'queue_updates'         //22
-      'queue_webhooks'        //23
-      'repro_vms'             //24
-      'scaleset'              //25
-      'tasks'                 //26
-      'timer_daily'           //27
-      'timer_proxy'           //28
-      'timer_repro'           //29
-      'timer_retention'       //30
-      'timer_tasks'           //31
-      'timer_workers'         //32
-      'webhooks'              //33
-      'webhooks_logs'         //34
-      'webhooks_ping'         //35
+      'agent_can_schedule' //0
+      'agent_commands' //1
+      'agent_events' //2
+      'agent_registration' //3
+      'containers' //4
+      'download' //5
+      'info' //6
+      'instance_config' //7
+      'jobs' //8
+      'job_templates' //9
+      'job_templates_manage' //10
+      'negotiate' //11
+      'node' //12
+      'node_add_ssh_key' //13
+      'notifications' //14
+      'pool' //15
+      'proxy' //16
+      'queue_file_changes' //17
+      'queue_node_heartbeat' //18
+      'queue_proxy_update' //19
+      'queue_signalr_events' //20
+      'queue_task_heartbeat' //21
+      'queue_updates' //22
+      'queue_webhooks' //23
+      'repro_vms' //24
+      'scaleset' //25
+      'tasks' //26
+      'timer_daily' //27
+      'timer_proxy' //28
+      'timer_repro' //29
+      'timer_retention' //30
+      'timer_tasks' //31
+      'timer_workers' //32
+      'webhooks' //33
+      'webhooks_logs' //34
+      'webhooks_ping' //35
     ]
   }
   dependsOn: [
     pythonFunction
   ]
 }
-
 
 module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
   name: 'netFunctionSettings'
@@ -384,42 +422,42 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     use_dotnet_agent_functions: false // this doesn’t do anything on the .NET service
     enable_profiler: enable_profiler
     all_function_names: [
-      'AgentCanSchedule'      //0
-      'AgentCommands'         //1
-      'AgentEvents'           //2
-      'AgentRegistration'     //3
-      'Containers'            //4
-      'Download'              //5
-      'Info'                  //6
-      'InstanceConfig'        //7
-      'Jobs'                  //8
-      'JobTemplates'          //9
-      'JobTemplatesManage'    //10
-      'Negotiate'             //11
-      'Node'                  //12
-      'NodeAddSshKey'         //13
-      'Notifications'         //14
-      'Pool'                  //15
-      'Proxy'                 //16
-      'QueueFileChanges'      //17
-      'QueueNodeHeartbeat'    //18
-      'QueueProxyUpdate'   //19
-      'QueueSignalrEvents'    //20
-      'QueueTaskHeartbeat'    //21
-      'QueueUpdates'          //22
-      'QueueWebhooks'         //23
-      'ReproVms'              //24
-      'Scaleset'              //25
-      'Tasks'                 //26
-      'TimerDaily'            //27
-      'TimerProxy'            //28
-      'TimerRepro'            //29
-      'TimerRetention'        //30
-      'TimerTasks'            //31
-      'TimerWorkers'          //32
-      'Webhooks'              //33
-      'WebhooksLogs'          //34
-      'WebhooksPing'          //35    
+      'AgentCanSchedule' //0
+      'AgentCommands' //1
+      'AgentEvents' //2
+      'AgentRegistration' //3
+      'Containers' //4
+      'Download' //5
+      'Info' //6
+      'InstanceConfig' //7
+      'Jobs' //8
+      'JobTemplates' //9
+      'JobTemplatesManage' //10
+      'Negotiate' //11
+      'Node' //12
+      'NodeAddSshKey' //13
+      'Notifications' //14
+      'Pool' //15
+      'Proxy' //16
+      'QueueFileChanges' //17
+      'QueueNodeHeartbeat' //18
+      'QueueProxyUpdate' //19
+      'QueueSignalrEvents' //20
+      'QueueTaskHeartbeat' //21
+      'QueueUpdates' //22
+      'QueueWebhooks' //23
+      'ReproVms' //24
+      'Scaleset' //25
+      'Tasks' //26
+      'TimerDaily' //27
+      'TimerProxy' //28
+      'TimerRepro' //29
+      'TimerRetention' //30
+      'TimerTasks' //31
+      'TimerWorkers' //32
+      'Webhooks' //33
+      'WebhooksLogs' //34
+      'WebhooksPing' //35    
     ]
   }
   dependsOn: [
