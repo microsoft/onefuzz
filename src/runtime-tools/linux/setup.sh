@@ -130,7 +130,7 @@ if type apt > /dev/null 2> /dev/null; then
         done
 
         # If specifying symbolizer, exe name must be a "known symbolizer".
-        # Using `llvm-symbolizer` works for clang 8 .. 10.
+        # Using `llvm-symbolizer` works for clang 8 .. 12.
         sudo ln -f -s $(which llvm-symbolizer-12) $LLVM_SYMBOLIZER_PATH
     fi
 
