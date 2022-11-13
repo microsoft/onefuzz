@@ -124,14 +124,14 @@ if type apt > /dev/null 2> /dev/null; then
     done
 
     if ! [ -f ${LLVM_SYMBOLIZER_PATH} ]; then
-        until sudo apt install -y llvm-10; do
+        until sudo apt install -y llvm-14; do
             echo "apt failed, sleeping 10s then retrying"
             sleep 10
         done
 
         # If specifying symbolizer, exe name must be a "known symbolizer".
         # Using `llvm-symbolizer` works for clang 8 .. 10.
-        sudo ln -f -s $(which llvm-symbolizer-10) $LLVM_SYMBOLIZER_PATH
+        sudo ln -f -s $(which llvm-symbolizer-14) $LLVM_SYMBOLIZER_PATH
     fi
 
     # Install dotnet
