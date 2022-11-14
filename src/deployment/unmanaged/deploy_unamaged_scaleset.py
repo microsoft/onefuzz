@@ -77,8 +77,7 @@ class Deployer:
             self.subscription_id = cast(str, profile.get_subscription_id())
 
         pass
-
-    def deploy(self):
+    def deploy(self) -> None:
         logger.info("deploying")
         template = get_template(self.arm_template)
         logger.info("deploying 2")
@@ -142,7 +141,7 @@ class Deployer:
         ).result()
 
         if result.properties.provisioning_state != "Succeeded":
-            logging.Logger.error(
+            logger.error(
                 "error deploying: %s",
                 json.dumps(result.as_dict(), indent=4, sort_keys=True),
             )
