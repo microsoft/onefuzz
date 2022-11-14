@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Added optional `retry_limit` when connecting to the repro machine. [#2609](https://github.com/microsoft/onefuzz/pull/2609)
 ### Fixed
 * Service: Fixed `status top` in C# implementation. [#2604](https://github.com/microsoft/onefuzz/pull/2604)
+* Service: Only add "re-opened" comments to a bug if it was actually reopened. [#2623](https://github.com/microsoft/onefuzz/pull/2623)
 
 ## 5.19.0
 ### Changed
