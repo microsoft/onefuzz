@@ -146,9 +146,8 @@ public record ProxyConfig
     Guid? ProxyId,
     List<Forward> Forwards,
     string InstanceTelemetryKey,
-    string MicrosoftTelemetryKey,
+    string? MicrosoftTelemetryKey,
     Guid InstanceId
-
 );
 
 public record Proxy
