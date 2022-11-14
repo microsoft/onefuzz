@@ -1,4 +1,6 @@
-﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -46,6 +48,8 @@ public interface IOnefuzzContext {
     ITeams Teams { get; }
     IGithubIssues GithubIssues { get; }
     IAdo Ado { get; }
+
+    IConfiguration AppConfiguration { get; }
 }
 
 public class OnefuzzContext : IOnefuzzContext {
@@ -95,6 +99,8 @@ public class OnefuzzContext : IOnefuzzContext {
     public ITeams Teams => _serviceProvider.GetRequiredService<ITeams>();
     public IGithubIssues GithubIssues => _serviceProvider.GetRequiredService<IGithubIssues>();
     public IAdo Ado => _serviceProvider.GetRequiredService<IAdo>();
+
+    public IConfiguration AppConfiguration => _serviceProvider.GetRequiredService<IConfiguration>();
 
     // TODO: Make an interface for app configuration, this is going to make it easier to test
     // and use in the existing functions because IOnefuzzContext is already there

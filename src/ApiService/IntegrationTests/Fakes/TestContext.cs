@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
@@ -120,6 +121,6 @@ public sealed class TestContext : IOnefuzzContext {
     public ITeams Teams => throw new NotImplementedException();
     public IGithubIssues GithubIssues => throw new NotImplementedException();
     public IAdo Ado => throw new NotImplementedException();
-
+    public IConfiguration AppConfiguration => throw new NotImplementedException();
 
 }

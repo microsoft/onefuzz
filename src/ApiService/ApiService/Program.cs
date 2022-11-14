@@ -50,7 +50,7 @@ public class Program {
             new HostBuilder()
             .ConfigureAppConfiguration(builder => {
                 var _ = builder.AddAzureAppConfiguration(options => {
-                    var _ =  options.Connect(configuration.AppConfigurationConnectionString)
+                    var _ = options.Connect(configuration.AppConfigurationConnectionString)
                         .ConfigureRefresh(refreshOptions =>
                             refreshOptions.SetCacheExpiration(TimeSpan.FromMinutes(1)));
                 });

@@ -8,6 +8,7 @@ public class AgentCanSchedule {
     private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
+
     public AgentCanSchedule(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _auth = auth;
