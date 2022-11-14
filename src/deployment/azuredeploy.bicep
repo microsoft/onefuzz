@@ -63,6 +63,10 @@ var roleAssignmentsParams = [
     suffix: '-contributor'
     role: 'b24988ac-6180-42a0-ab88-20f7382dd24c'//Contributor
   }
+  {
+    suffix: '-app_config_reader'
+    role: '516239f1-63e1-4d78-a4de-a74fb236a071' //App Configuration Data Reader
+  }
 ]
 resource scalesetIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: scaleset_identity
@@ -220,6 +224,7 @@ resource roleAssigmentsPy 'Microsoft.Authorization/roleAssignments@2020-10-01-pr
     eventGrid
     keyVault
     linuxServerFarm
+    featureFlags
   ]
 }]
 
@@ -234,6 +239,7 @@ resource roleAssigmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-p
     eventGrid
     keyVault
     dotNetServerFarm
+    featureFlags
   ]
 }]
 
@@ -250,6 +256,7 @@ resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10
     keyVault
     linuxServerFarm
     dotNetServerFarm
+    featureFlags
   ]
 }
 
@@ -323,7 +330,7 @@ module pythonFunctionSettings 'bicep-templates/function-settings.bicep' = {
     multi_tenant_domain: multi_tenant_domain
     functions_disabled: python_functions_disabled
     use_dotnet_agent_functions: use_dotnet_agent_functions
-    app_config_connection_string: featureFlags.outputs.AppConfigurationConnectionString
+    app_config_endpoint: featureFlags.outputs.AppConfigEndpoint
     enable_profiler: false
     all_function_names: [
       'agent_can_schedule'    //0
@@ -391,7 +398,7 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     functions_disabled: dotnet_functions_disabled
     use_dotnet_agent_functions: false // this doesn’t do anything on the .NET service
     enable_profiler: enable_profiler
-    app_config_connection_string: featureFlags.outputs.AppConfigurationConnectionString
+    app_config_endpoint: featureFlags.outputs.AppConfigEndpoint
     all_function_names: [
       'AgentCanSchedule'      //0
       'AgentCommands'         //1

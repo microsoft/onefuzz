@@ -87,6 +87,16 @@
           "System.Threading.Tasks.Extensions": "4.5.4"
         }
       },
+      "Azure.Data.AppConfiguration": {
+        "type": "Transitive",
+        "resolved": "1.2.0",
+        "contentHash": "KA1dAM9TuDsq0CRFd+3cJTYUAzA2z9N8t9/xKdDbP9URuReq/NDFcKYr7GW2W9xzVGDtCHlD5j5am/+zLLBdSg==",
+        "dependencies": {
+          "Azure.Core": "1.20.0",
+          "Microsoft.Bcl.AsyncInterfaces": "1.0.0",
+          "System.Text.Json": "4.6.0"
+        }
+      },
       "Azure.Data.Tables": {
         "type": "Transitive",
         "resolved": "12.5.0",
@@ -414,6 +424,15 @@
         "resolved": "5.0.8",
         "contentHash": "ZI9S2NGjuOKXN3PxJcF8EKVwd1cqpWyUSqiVoH8gqq5tlHaXULwPmoR0DBOFON4sEFETRWI69f5RQ3tJWw205A=="
       },
+      "Microsoft.Azure.AppConfiguration.Functions.Worker": {
+        "type": "Transitive",
+        "resolved": "5.1.0",
+        "contentHash": "80TryM3UKI/uwWM1wpUY7oSj/arQgwijevmJ41AQZmmRmiMjWGweHVSVDRz9jxDz/uVyvxrrYXEGL2qTQXT1xw==",
+        "dependencies": {
+          "Microsoft.Azure.Functions.Worker": "1.6.0",
+          "Microsoft.Extensions.Configuration.AzureAppConfiguration": "5.1.0"
+        }
+      },
       "Microsoft.Azure.Functions.Worker": {
         "type": "Transitive",
         "resolved": "1.10.0",
@@ -645,6 +664,20 @@
         "contentHash": "ETjSBHMp3OAZ4HxGQYpwyGsD8Sw5FegQXphi0rpoGMT74S4+I2mm7XJEswwn59XAaKOzC15oDSOWEE8SzDCd6Q==",
         "dependencies": {
           "Microsoft.Extensions.Primitives": "5.0.0"
+        }
+      },
+      "Microsoft.Extensions.Configuration.AzureAppConfiguration": {
+        "type": "Transitive",
+        "resolved": "5.1.0",
+        "contentHash": "FoAfgvT/rjL/+c7BP7q0LrJIdc4Hu6SH56BTIUbwCwVjHoUw4dpgGtLQULi5GmMjdbdAxyLQSnbwpOEWuBy+RA==",
+        "dependencies": {
+          "Azure.Data.AppConfiguration": "1.2.0",
+          "Azure.Messaging.EventGrid": "4.7.0",
+          "Azure.Security.KeyVault.Secrets": "4.0.1",
+          "Microsoft.Extensions.Configuration": "3.1.18",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "3.1.18",
+          "Microsoft.Extensions.Logging": "3.1.18",
+          "System.Text.Json": "4.6.0"
         }
       },
       "Microsoft.Extensions.Configuration.Binder": {
@@ -2546,6 +2579,7 @@
           "Azure.Storage.Blobs": "12.13.0",
           "Azure.Storage.Queues": "12.11.0",
           "Faithlife.Utility": "0.12.2",
+          "Microsoft.Azure.AppConfiguration.Functions.Worker": "5.1.0",
           "Microsoft.Azure.Functions.Worker": "1.10.0",
           "Microsoft.Azure.Functions.Worker.ApplicationInsights": "1.0.0-preview3",
           "Microsoft.Azure.Functions.Worker.Extensions.EventGrid": "2.1.0",

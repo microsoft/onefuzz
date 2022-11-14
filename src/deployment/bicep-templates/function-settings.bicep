@@ -13,8 +13,7 @@ param multi_tenant_domain string
 @secure()
 param signal_r_connection_string string
 
-@secure()
-param app_config_connection_string string
+param app_config_endpoint string
 
 param func_storage_resource_id string
 param fuzz_storage_resource_id string
@@ -72,7 +71,7 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       AzureWebJobsDisableHomepage: 'true'
       AzureSignalRConnectionString: signal_r_connection_string
       AzureSignalRServiceTransportType: 'Transient'
-      APPCONFIGURATION_CONNECTION_STRING: app_config_connection_string
+      APPCONFIGURATION_ENDPOINT: app_config_endpoint
       ONEFUZZ_INSTANCE_NAME: instance_name
       ONEFUZZ_INSTANCE: 'https://${instance_name}.azurewebsites.net'
       ONEFUZZ_RESOURCE_GROUP: resourceGroup().id

@@ -11,10 +11,4 @@ resource featureFlags 'Microsoft.AppConfiguration/configurationStores@2022-05-01
   }
 }
 
-// Gets the primary readonly connection string
-// 0 - Primary Connection String
-// 1 - Secondary Connection String
-// 2 - Primary Readonly Connection String
-// 3 - Secondary Readonly Connection String
-var AppConfigurationConnectionString = featureFlags.listKeys().value[2].connectionString
-output AppConfigurationConnectionString string = AppConfigurationConnectionString
+output AppConfigEndpoint string = 'https://${appConfigName}.azconfig.io'

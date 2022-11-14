@@ -101,7 +101,4 @@ public class OnefuzzContext : IOnefuzzContext {
     public IAdo Ado => _serviceProvider.GetRequiredService<IAdo>();
 
     public IConfiguration AppConfiguration => _serviceProvider.GetRequiredService<IConfiguration>();
-
-    // TODO: Make an interface for app configuration, this is going to make it easier to test
-    // and use in the existing functions because IOnefuzzContext is already there
 }
