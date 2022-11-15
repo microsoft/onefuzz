@@ -1,10 +1,10 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 
 namespace Microsoft.OneFuzz.Service;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.FeatureManagement;
 
 public interface IOnefuzzContext {
     IAutoScaleOperations AutoScaleOperations { get; }
@@ -49,7 +49,7 @@ public interface IOnefuzzContext {
     IGithubIssues GithubIssues { get; }
     IAdo Ado { get; }
 
-    IConfiguration AppConfiguration { get; }
+    IFeatureManagerSnapshot FeatureManagerSnapshot { get; }
 }
 
 public class OnefuzzContext : IOnefuzzContext {
@@ -100,5 +100,5 @@ public class OnefuzzContext : IOnefuzzContext {
     public IGithubIssues GithubIssues => _serviceProvider.GetRequiredService<IGithubIssues>();
     public IAdo Ado => _serviceProvider.GetRequiredService<IAdo>();
 
-    public IConfiguration AppConfiguration => _serviceProvider.GetRequiredService<IConfiguration>();
+    public IFeatureManagerSnapshot FeatureManagerSnapshot => _serviceProvider.GetRequiredService<IFeatureManagerSnapshot>();
 }
