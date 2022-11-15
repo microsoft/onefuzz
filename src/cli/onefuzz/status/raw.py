@@ -6,10 +6,10 @@
 import logging
 import time
 from typing import Any, List
-from ..api import Onefuzz
 
 from six.moves import input  # workaround for static analysis
 
+from ..api import Onefuzz
 from .signalr import Stream
 
 SIGNALR_CONNECT_TIMEOUT_SECONDS = 0.1
