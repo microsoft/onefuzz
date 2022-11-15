@@ -20,7 +20,8 @@ mkdir $ARTIFACTS/sharpfuzz
 git clone $SHARPFUZZ_REPO sharpfuzz
 pushd sharpfuzz
 git checkout $SHARPFUZZ_COMMIT
-dotnet publish src/SharpFuzz.CommandLine -f net7.0 -c Release -o $ARTIFACTS/sharpfuzz --self-contained -r win10-x64
+# TODO(dotnet): Update dotnet framework to 7.0 when SharpFuzz supports it
+dotnet publish src/SharpFuzz.CommandLine -f net6.0 -c Release -o $ARTIFACTS/sharpfuzz --self-contained -r win10-x64
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish exited with $LASTEXITCODE" }
 popd
 
