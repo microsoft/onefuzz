@@ -4,8 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 5.19.0
+## 5.20.0
+### Added
+* Service: Added endpoint to download agent binaries to support the unmanaged node scenario. [#2600](https://github.com/microsoft/onefuzz/pull/2600)
+* Service: Added additional error handling when updating VMSS nodes. [#2607](https://github.com/microsoft/onefuzz/pull/2607)
+### Changed
+* Service: Added additional logging when using the `decommission` node policy. [#2605](https://github.com/microsoft/onefuzz/pull/2605)
+* Agent/Supervisor/Proxy: Updated third-party Rust dependencies. [#2608](https://github.com/microsoft/onefuzz/pull/2608)
+* Service: Added optional `retry_limit` when connecting to the repro machine. [#2609](https://github.com/microsoft/onefuzz/pull/2609)
+### Fixed
+* Service: Fixed `status top` in C# implementation. [#2604](https://github.com/microsoft/onefuzz/pull/2604)
+* Service: Only add "re-opened" comments to a bug if it was actually reopened. [#2623](https://github.com/microsoft/onefuzz/pull/2623)
 
+## 5.19.0
 ### Changed
 * Service: Delete nodes once they're done with tasks instead of releasing scale-in protection. [#2586](https://github.com/microsoft/onefuzz/pull/2586)
 * Service: Switch to using the package provided by Azure Functions to set up Application Insights and improve its reporting of OneFuzz transactions. [#2597](https://github.com/microsoft/onefuzz/pull/2597)
