@@ -20,6 +20,7 @@ env:
   SCCACHE_CACHE_SIZE: 1G
   ACTIONS_CACHE_KEY_DATE: 2022-10-28-01
   CI: true
+  DOTNET_VERSION: 7.0.x
 
 jobs:
   agent:
@@ -306,7 +307,7 @@ jobs:
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '7.0.x'
+        dotnet-version: ${{env.DOTNET_VERSION}}
         dotnet-quality: 'ga'
     - name: Install dependencies
       run: |
@@ -388,6 +389,11 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{env.DOTNET_VERSION}}
+        dotnet-quality: 'ga'
     - run: src/ci/dotnet-fuzzing-tools.sh
       shell: bash
     - uses: actions/upload-artifact@v3
@@ -398,6 +404,11 @@ jobs:
     runs-on: windows-2022
     steps:
     - uses: actions/checkout@v3
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{env.DOTNET_VERSION}}
+        dotnet-quality: 'ga'
     - run: src/ci/dotnet-fuzzing-tools.ps1
       shell: pwsh
     - uses: actions/upload-artifact@v3
