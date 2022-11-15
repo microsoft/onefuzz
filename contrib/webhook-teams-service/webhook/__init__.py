@@ -45,7 +45,8 @@ async def send_message(req: func.HttpRequest) -> None:
         async with client.post(teams_url, json=message) as response:
             if not response.ok:
                 raise RuntimeError(
-                    f"Teams endpoint failed to consume message: {response}")
+                    f"Teams endpoint failed to consume message: {response}"
+                )
 
 
 def verify(req: func.HttpRequest) -> bool:
