@@ -3,10 +3,11 @@ use crate::source::SourceFileCoverage;
 use anyhow::Context;
 use anyhow::Error;
 use anyhow::Result;
+use quick_xml::writer::Writer;
+use std::io::Cursor;
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
-use xml::writer::{EmitterConfig, XmlEvent};
 
 pub struct LineValues {
     pub valid_lines: u64,
@@ -77,11 +78,9 @@ pub fn get_parent_path(path_slash: &str) -> PathBuf {
     };
     parent_path.to_path_buf()
 }
+
 pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
-    let mut backing: Vec<u8> = Vec::new();
-    let mut emitter = EmitterConfig::new()
-        .perform_indent(true)
-        .create_writer(&mut backing);
+    let mut writer = Writer::new_with_indent(Cursor::new(Vec::new()), b' ', 4);
 
     let unixtime = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -89,82 +88,107 @@ pub fn cobertura(source_coverage: SourceCoverage) -> Result<String, Error> {
         .as_secs();
 
     let coverage_line_values = compute_line_values_coverage(&source_coverage.files);
-
-    emitter.write(
-        XmlEvent::start_element("coverage")
-            .attr(
+    writer
+        .create_element("coverage")
+        .with_attributes([
+            (
                 "line-rate",
-                &format!("{:.02}", coverage_line_values.line_rate),
-            )
-            .attr("branch-rate", "0")
-            .attr(
+                format!("{:.02}", coverage_line_values.line_rate).as_str(),
+            ),
+            ("branch-rate", "0"),
+            (
                 "lines-covered",
-                &format!("{}", coverage_line_values.hit_lines),
-            )
-            .attr(
+                coverage_line_values.hit_lines.to_string().as_str(),
+            ),
+            (
                 "lines-valid",
-                &format!("{}", coverage_line_values.valid_lines),
-            )
-            .attr("branches-covered", "0")
-            .attr("branches-valid", "0")
-            .attr("complexity", "0")
-            .attr("version", "0.1")
-            .attr("timestamp", &format!("{}", unixtime)),
-    )?;
+                coverage_line_values.valid_lines.to_string().as_str(),
+            ),
+            ("branches-covered", "0"),
+            ("branches-valid", "0"),
+            ("complexity", "0"),
+            ("version", "0.1"),
+            ("timestamp", unixtime.to_string().as_str()),
+        ])
+        .write_inner_content(|writer| {
+            writer
+                .create_element("packages")
+                .write_inner_content(|writer| {
+                    // path (excluding file name) is package name for better results with ReportGenerator
+                    // class name is only file name (no path)
+                    for file in &source_coverage.files {
+                        write_file(writer, file)?;
+                    }
 
-    emitter.write(XmlEvent::start_element("packages"))?;
-    // path (excluding file name) is package name for better results with ReportGenerator
-    // class name is only file name (no path)
-    for file in &source_coverage.files {
-        let path = convert_path(file);
-        let parent_path = get_parent_path(&path);
-        let package_line_values = compute_line_values_package(file);
-        let class_name = get_file_name(&path);
+                    Ok(())
+                })?;
 
-        emitter.write(
-            XmlEvent::start_element("package")
-                .attr("name", &(parent_path.display().to_string()))
-                .attr(
-                    "line-rate",
-                    &format!("{:.02}", package_line_values.line_rate),
-                )
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-        emitter.write(XmlEvent::start_element("classes"))?;
-        emitter.write(
-            XmlEvent::start_element("class")
-                .attr("name", &class_name)
-                .attr("filename", &path)
-                .attr(
-                    "line-rate",
-                    &format!("{:.02}", package_line_values.line_rate),
-                )
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-        emitter.write(XmlEvent::start_element("lines"))?;
-        let line_locations = &file.locations;
-        for location in line_locations {
-            emitter.write(
-                XmlEvent::start_element("line")
-                    .attr("number", &location.line.to_string())
-                    .attr("hits", &location.count.to_string())
-                    .attr("branch", "false"),
-            )?;
-            emitter.write(XmlEvent::end_element())?; // line
-        }
-        emitter.write(XmlEvent::end_element())?; // lines
-        emitter.write(XmlEvent::end_element())?; // class
+            Ok(())
+        })?;
 
-        emitter.write(XmlEvent::end_element())?; // classes
-        emitter.write(XmlEvent::end_element())?; // package
-    }
+    Ok(String::from_utf8(writer.into_inner().into_inner())?)
+}
 
-    emitter.write(XmlEvent::end_element())?; // packages
-    emitter.write(XmlEvent::end_element())?; // coverage
+fn write_file(
+    writer: &mut Writer<Cursor<Vec<u8>>>,
+    file: &SourceFileCoverage,
+) -> quick_xml::Result<()> {
+    let path = convert_path(file);
+    let parent_path = get_parent_path(&path);
+    let package_line_values = compute_line_values_package(file);
+    let class_name = get_file_name(&path);
 
-    Ok(String::from_utf8(backing)?)
+    writer
+        .create_element("package")
+        .with_attributes([
+            ("name", parent_path.display().to_string().as_str()),
+            (
+                "line-rate",
+                format!("{:.02}", package_line_values.line_rate).as_str(),
+            ),
+            ("branch-rate", "0"),
+            ("complexity", "0"),
+        ])
+        .write_inner_content(|writer| {
+            writer
+                .create_element("classes")
+                .write_inner_content(|writer| {
+                    writer
+                        .create_element("class")
+                        .with_attributes([
+                            ("name", class_name.as_str()),
+                            ("filename", path.as_str()),
+                            (
+                                "line-rate",
+                                format!("{:.02}", package_line_values.line_rate).as_str(),
+                            ),
+                            ("branch-rate", "0"),
+                            ("complexity", "0"),
+                        ])
+                        .write_inner_content(|writer| {
+                            writer
+                                .create_element("lines")
+                                .write_inner_content(|writer| {
+                                    let line_locations = &file.locations;
+                                    for location in line_locations {
+                                        writer
+                                            .create_element("line")
+                                            .with_attributes([
+                                                ("number", location.line.to_string().as_str()),
+                                                ("hits", location.count.to_string().as_str()),
+                                                ("branch", "false"),
+                                            ])
+                                            .write_empty()?;
+                                    }
+                                    Ok(())
+                                })?;
+                            Ok(())
+                        })?;
+                    Ok(())
+                })?;
+            Ok(())
+        })?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -173,6 +197,7 @@ mod tests {
     use super::*;
     use crate::source::SourceCoverageLocation;
     use anyhow::Result;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_cobertura_conversion_windows_to_posix_path() {
@@ -381,177 +406,56 @@ mod tests {
             files: file_coverage_vec1,
         });
 
-        let mut backing_test: Vec<u8> = Vec::new();
-        let mut _emitter_test = EmitterConfig::new()
-            .perform_indent(true)
-            .create_writer(&mut backing_test);
-
         let unixtime = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .context("system time before unix epoch")?
             .as_secs();
 
-        _emitter_test.write(
-            XmlEvent::start_element("coverage")
-                .attr("line-rate", "0.40")
-                .attr("branch-rate", "0")
-                .attr("lines-covered", "2")
-                .attr("lines-valid", "5")
-                .attr("branches-covered", "0")
-                .attr("branches-valid", "0")
-                .attr("complexity", "0")
-                .attr("version", "0.1")
-                .attr("timestamp", &format!("{}", unixtime)),
-        )?;
+        let expected = format!(
+            r#"<coverage line-rate="0.40" branch-rate="0" lines-covered="2" lines-valid="5" branches-covered="0" branches-valid="0" complexity="0" version="0.1" timestamp="{unixtime}">
+    <packages>
+        <package name="c:/users" line-rate="0.50" branch-rate="0" complexity="0">
+            <classes>
+                <class name="file1.txt" filename="c:/users/file1.txt" line-rate="0.50" branch-rate="0" complexity="0">
+                    <lines>
+                        <line number="5" hits="3" branch="false"/>
+                        <line number="10" hits="0" branch="false"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+        <package name="c:/users" line-rate="0.00" branch-rate="0" complexity="0">
+            <classes>
+                <class name="file2.txt" filename="c:/users/file2.txt" line-rate="0.00" branch-rate="0" complexity="0">
+                    <lines>
+                        <line number="1" hits="0" branch="false"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+        <package name="Invalid file format: c:/users/file/.." line-rate="1.00" branch-rate="0" complexity="0">
+            <classes>
+                <class name=".." filename="c:/users/file/.." line-rate="1.00" branch-rate="0" complexity="0">
+                    <lines>
+                        <line number="1" hits="1" branch="false"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+        <package name="Invalid file format: c:/users/file/.." line-rate="0.00" branch-rate="0" complexity="0">
+            <classes>
+                <class name=".." filename="c:/users/file/.." line-rate="0.00" branch-rate="0" complexity="0">
+                    <lines>
+                        <line number="1" hits="0" branch="false"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+    </packages>
+</coverage>"#
+        );
 
-        _emitter_test.write(XmlEvent::start_element("packages"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("package")
-                .attr("name", "c:/users")
-                .attr("line-rate", "0.50")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("classes"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("class")
-                .attr("name", "file1.txt")
-                .attr("filename", "c:/users/file1.txt")
-                .attr("line-rate", "0.50")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-        _emitter_test.write(XmlEvent::start_element("lines"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "5")
-                .attr("hits", "3")
-                .attr("branch", "false"),
-        )?;
-        _emitter_test.write(XmlEvent::end_element())?; // line
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "10")
-                .attr("hits", "0")
-                .attr("branch", "false"),
-        )?;
-
-        _emitter_test.write(XmlEvent::end_element())?; // line
-        _emitter_test.write(XmlEvent::end_element())?; // lines
-        _emitter_test.write(XmlEvent::end_element())?; // class
-        _emitter_test.write(XmlEvent::end_element())?; // classes
-        _emitter_test.write(XmlEvent::end_element())?; // package
-
-        _emitter_test.write(
-            XmlEvent::start_element("package")
-                .attr("name", "c:/users")
-                .attr("line-rate", "0.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("classes"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("class")
-                .attr("name", "file2.txt")
-                .attr("filename", "c:/users/file2.txt")
-                .attr("line-rate", "0.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("lines"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "1")
-                .attr("hits", "0")
-                .attr("branch", "false"),
-        )?;
-
-        _emitter_test.write(XmlEvent::end_element())?; // line
-        _emitter_test.write(XmlEvent::end_element())?; // lines
-        _emitter_test.write(XmlEvent::end_element())?; // class
-        _emitter_test.write(XmlEvent::end_element())?; // classes
-        _emitter_test.write(XmlEvent::end_element())?; // package
-
-        _emitter_test.write(
-            XmlEvent::start_element("package")
-                .attr("name", "Invalid file format: c:/users/file/..")
-                .attr("line-rate", "1.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("classes"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("class")
-                .attr("name", "..")
-                .attr("filename", "c:/users/file/..")
-                .attr("line-rate", "1.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("lines"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "1")
-                .attr("hits", "1")
-                .attr("branch", "false"),
-        )?;
-
-        _emitter_test.write(XmlEvent::end_element())?; // line
-        _emitter_test.write(XmlEvent::end_element())?; // lines
-        _emitter_test.write(XmlEvent::end_element())?; // class
-        _emitter_test.write(XmlEvent::end_element())?; // classes
-        _emitter_test.write(XmlEvent::end_element())?; // package
-
-        _emitter_test.write(
-            XmlEvent::start_element("package")
-                .attr("name", "Invalid file format: c:/users/file/..")
-                .attr("line-rate", "0.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("classes"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("class")
-                .attr("name", "..")
-                .attr("filename", "c:/users/file/..")
-                .attr("line-rate", "0.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("lines"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "1")
-                .attr("hits", "0")
-                .attr("branch", "false"),
-        )?;
-
-        _emitter_test.write(XmlEvent::end_element())?; // line
-        _emitter_test.write(XmlEvent::end_element())?; // lines
-        _emitter_test.write(XmlEvent::end_element())?; // class
-        _emitter_test.write(XmlEvent::end_element())?; // classes
-        _emitter_test.write(XmlEvent::end_element())?; // package
-        _emitter_test.write(XmlEvent::end_element())?; // packages
-        _emitter_test.write(XmlEvent::end_element())?; // coverage
-
-        assert_eq!(source_coverage_result?, String::from_utf8(backing_test)?);
+        assert_eq!(source_coverage_result?, expected);
         Ok(())
     }
 
@@ -611,177 +515,56 @@ mod tests {
             files: file_coverage_vec1,
         });
 
-        let mut backing_test: Vec<u8> = Vec::new();
-        let mut _emitter_test = EmitterConfig::new()
-            .perform_indent(true)
-            .create_writer(&mut backing_test);
-
         let unixtime = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .context("system time before unix epoch")?
             .as_secs();
 
-        _emitter_test.write(
-            XmlEvent::start_element("coverage")
-                .attr("line-rate", "0.40")
-                .attr("branch-rate", "0")
-                .attr("lines-covered", "2")
-                .attr("lines-valid", "5")
-                .attr("branches-covered", "0")
-                .attr("branches-valid", "0")
-                .attr("complexity", "0")
-                .attr("version", "0.1")
-                .attr("timestamp", &format!("{}", unixtime)),
-        )?;
+        let expected = format!(
+            r#"<coverage line-rate="0.40" branch-rate="0" lines-covered="2" lines-valid="5" branches-covered="0" branches-valid="0" complexity="0" version="0.1" timestamp="{unixtime}">
+    <packages>
+        <package name="c:/users" line-rate="0.50" branch-rate="0" complexity="0">
+            <classes>
+                <class name="file1.txt" filename="c:/users/file1.txt" line-rate="0.50" branch-rate="0" complexity="0">
+                    <lines>
+                        <line number="5" hits="3" branch="false"/>
+                        <line number="10" hits="0" branch="false"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+        <package name="c:/users" line-rate="0.00" branch-rate="0" complexity="0">
+            <classes>
+                <class name="file2.txt" filename="c:/users/file2.txt" line-rate="0.00" branch-rate="0" complexity="0">
+                    <lines>
+                        <line number="1" hits="0" branch="false"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+        <package name="Invalid file format: c:/users/file/.." line-rate="1.00" branch-rate="0" complexity="0">
+            <classes>
+                <class name=".." filename="c:/users/file/.." line-rate="1.00" branch-rate="0" complexity="0">
+                    <lines>
+                        <line number="1" hits="1" branch="false"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+        <package name="Invalid file format: c:/users/file/.." line-rate="0.00" branch-rate="0" complexity="0">
+            <classes>
+                <class name=".." filename="c:/users/file/.." line-rate="0.00" branch-rate="0" complexity="0">
+                    <lines>
+                        <line number="1" hits="0" branch="false"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+    </packages>
+</coverage>"#
+        );
 
-        _emitter_test.write(XmlEvent::start_element("packages"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("package")
-                .attr("name", "c:/users")
-                .attr("line-rate", "0.50")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("classes"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("class")
-                .attr("name", "file1.txt")
-                .attr("filename", "c:/users/file1.txt")
-                .attr("line-rate", "0.50")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-        _emitter_test.write(XmlEvent::start_element("lines"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "5")
-                .attr("hits", "3")
-                .attr("branch", "false"),
-        )?;
-        _emitter_test.write(XmlEvent::end_element())?; // line
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "10")
-                .attr("hits", "0")
-                .attr("branch", "false"),
-        )?;
-
-        _emitter_test.write(XmlEvent::end_element())?; // line
-        _emitter_test.write(XmlEvent::end_element())?; // lines
-        _emitter_test.write(XmlEvent::end_element())?; // class
-        _emitter_test.write(XmlEvent::end_element())?; // classes
-        _emitter_test.write(XmlEvent::end_element())?; // package
-
-        _emitter_test.write(
-            XmlEvent::start_element("package")
-                .attr("name", "c:/users")
-                .attr("line-rate", "0.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("classes"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("class")
-                .attr("name", "file2.txt")
-                .attr("filename", "c:/users/file2.txt")
-                .attr("line-rate", "0.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("lines"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "1")
-                .attr("hits", "0")
-                .attr("branch", "false"),
-        )?;
-
-        _emitter_test.write(XmlEvent::end_element())?; // line
-        _emitter_test.write(XmlEvent::end_element())?; // lines
-        _emitter_test.write(XmlEvent::end_element())?; // class
-        _emitter_test.write(XmlEvent::end_element())?; // classes
-        _emitter_test.write(XmlEvent::end_element())?; // package
-
-        _emitter_test.write(
-            XmlEvent::start_element("package")
-                .attr("name", "Invalid file format: c:/users/file/..")
-                .attr("line-rate", "1.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("classes"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("class")
-                .attr("name", "..")
-                .attr("filename", "c:/users/file/..")
-                .attr("line-rate", "1.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("lines"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "1")
-                .attr("hits", "1")
-                .attr("branch", "false"),
-        )?;
-
-        _emitter_test.write(XmlEvent::end_element())?; // line
-        _emitter_test.write(XmlEvent::end_element())?; // lines
-        _emitter_test.write(XmlEvent::end_element())?; // class
-        _emitter_test.write(XmlEvent::end_element())?; // classes
-        _emitter_test.write(XmlEvent::end_element())?; // package
-
-        _emitter_test.write(
-            XmlEvent::start_element("package")
-                .attr("name", "Invalid file format: c:/users/file/..")
-                .attr("line-rate", "0.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("classes"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("class")
-                .attr("name", "..")
-                .attr("filename", "c:/users/file/..")
-                .attr("line-rate", "0.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("lines"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "1")
-                .attr("hits", "0")
-                .attr("branch", "false"),
-        )?;
-
-        _emitter_test.write(XmlEvent::end_element())?; // line
-        _emitter_test.write(XmlEvent::end_element())?; // lines
-        _emitter_test.write(XmlEvent::end_element())?; // class
-        _emitter_test.write(XmlEvent::end_element())?; // classes
-        _emitter_test.write(XmlEvent::end_element())?; // package
-        _emitter_test.write(XmlEvent::end_element())?; // packages
-        _emitter_test.write(XmlEvent::end_element())?; // coverage
-
-        assert_eq!(source_coverage_result?, String::from_utf8(backing_test)?);
+        assert_eq!(source_coverage_result?, expected);
         Ok(())
     }
 
@@ -840,177 +623,57 @@ mod tests {
         let source_coverage_result = cobertura(SourceCoverage {
             files: file_coverage_vec1,
         });
-        let mut backing_test: Vec<u8> = Vec::new();
-        let mut _emitter_test = EmitterConfig::new()
-            .perform_indent(true)
-            .create_writer(&mut backing_test);
 
         let unixtime = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .context("system time before unix epoch")?
             .as_secs();
 
-        _emitter_test.write(
-            XmlEvent::start_element("coverage")
-                .attr("line-rate", "0.40")
-                .attr("branch-rate", "0")
-                .attr("lines-covered", "2")
-                .attr("lines-valid", "5")
-                .attr("branches-covered", "0")
-                .attr("branches-valid", "0")
-                .attr("complexity", "0")
-                .attr("version", "0.1")
-                .attr("timestamp", &format!("{}", unixtime)),
-        )?;
+        let expected = format!(
+            r#"<coverage line-rate="0.40" branch-rate="0" lines-covered="2" lines-valid="5" branches-covered="0" branches-valid="0" complexity="0" version="0.1" timestamp="{unixtime}">
+    <packages>
+        <package name="c:/users" line-rate="0.50" branch-rate="0" complexity="0">
+            <classes>
+                <class name="file1.txt" filename="c:/users/file1.txt" line-rate="0.50" branch-rate="0" complexity="0">
+                    <lines>
+                        <line number="5" hits="3" branch="false"/>
+                        <line number="10" hits="0" branch="false"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+        <package name="c:/users" line-rate="0.00" branch-rate="0" complexity="0">
+            <classes>
+                <class name="file2.txt" filename="c:/users/file2.txt" line-rate="0.00" branch-rate="0" complexity="0">
+                    <lines>
+                        <line number="1" hits="0" branch="false"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+        <package name="Invalid file format: c:/users/file/.." line-rate="1.00" branch-rate="0" complexity="0">
+            <classes>
+                <class name=".." filename="c:/users/file/.." line-rate="1.00" branch-rate="0" complexity="0">
+                    <lines>
+                        <line number="1" hits="1" branch="false"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+        <package name="Invalid file format: c:/users/file/.." line-rate="0.00" branch-rate="0" complexity="0">
+            <classes>
+                <class name=".." filename="c:/users/file/.." line-rate="0.00" branch-rate="0" complexity="0">
+                    <lines>
+                        <line number="1" hits="0" branch="false"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+    </packages>
+</coverage>"#
+        );
 
-        _emitter_test.write(XmlEvent::start_element("packages"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("package")
-                .attr("name", "c:/users")
-                .attr("line-rate", "0.50")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("classes"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("class")
-                .attr("name", "file1.txt")
-                .attr("filename", "c:/users/file1.txt")
-                .attr("line-rate", "0.50")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-        _emitter_test.write(XmlEvent::start_element("lines"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "5")
-                .attr("hits", "3")
-                .attr("branch", "false"),
-        )?;
-        _emitter_test.write(XmlEvent::end_element())?; // line
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "10")
-                .attr("hits", "0")
-                .attr("branch", "false"),
-        )?;
-
-        _emitter_test.write(XmlEvent::end_element())?; // line
-        _emitter_test.write(XmlEvent::end_element())?; // lines
-        _emitter_test.write(XmlEvent::end_element())?; // class
-        _emitter_test.write(XmlEvent::end_element())?; // classes
-        _emitter_test.write(XmlEvent::end_element())?; // package
-
-        _emitter_test.write(
-            XmlEvent::start_element("package")
-                .attr("name", "c:/users")
-                .attr("line-rate", "0.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("classes"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("class")
-                .attr("name", "file2.txt")
-                .attr("filename", "c:/users/file2.txt")
-                .attr("line-rate", "0.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("lines"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "1")
-                .attr("hits", "0")
-                .attr("branch", "false"),
-        )?;
-
-        _emitter_test.write(XmlEvent::end_element())?; // line
-        _emitter_test.write(XmlEvent::end_element())?; // lines
-        _emitter_test.write(XmlEvent::end_element())?; // class
-        _emitter_test.write(XmlEvent::end_element())?; // classes
-        _emitter_test.write(XmlEvent::end_element())?; // package
-
-        _emitter_test.write(
-            XmlEvent::start_element("package")
-                .attr("name", "Invalid file format: c:/users/file/..")
-                .attr("line-rate", "1.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("classes"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("class")
-                .attr("name", "..")
-                .attr("filename", "c:/users/file/..")
-                .attr("line-rate", "1.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("lines"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "1")
-                .attr("hits", "1")
-                .attr("branch", "false"),
-        )?;
-
-        _emitter_test.write(XmlEvent::end_element())?; // line
-        _emitter_test.write(XmlEvent::end_element())?; // lines
-        _emitter_test.write(XmlEvent::end_element())?; // class
-        _emitter_test.write(XmlEvent::end_element())?; // classes
-        _emitter_test.write(XmlEvent::end_element())?; // package
-
-        _emitter_test.write(
-            XmlEvent::start_element("package")
-                .attr("name", "Invalid file format: c:/users/file/..")
-                .attr("line-rate", "0.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("classes"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("class")
-                .attr("name", "..")
-                .attr("filename", "c:/users/file/..")
-                .attr("line-rate", "0.00")
-                .attr("branch-rate", "0")
-                .attr("complexity", "0"),
-        )?;
-
-        _emitter_test.write(XmlEvent::start_element("lines"))?;
-
-        _emitter_test.write(
-            XmlEvent::start_element("line")
-                .attr("number", "1")
-                .attr("hits", "0")
-                .attr("branch", "false"),
-        )?;
-
-        _emitter_test.write(XmlEvent::end_element())?; // line
-        _emitter_test.write(XmlEvent::end_element())?; // lines
-        _emitter_test.write(XmlEvent::end_element())?; // class
-        _emitter_test.write(XmlEvent::end_element())?; // classes
-        _emitter_test.write(XmlEvent::end_element())?; // package
-        _emitter_test.write(XmlEvent::end_element())?; // packages
-        _emitter_test.write(XmlEvent::end_element())?; // coverage
-
-        assert_eq!(source_coverage_result?, String::from_utf8(backing_test)?);
+        assert_eq!(source_coverage_result?, expected);
         Ok(())
     }
 }

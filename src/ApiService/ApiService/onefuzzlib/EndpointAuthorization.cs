@@ -6,6 +6,7 @@ using Microsoft.Graph;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IEndpointAuthorization {
+
     Async.Task<HttpResponseData> CallIfAgent(
         HttpRequestData req,
         Func<HttpRequestData, Async.Task<HttpResponseData>> method)
@@ -30,6 +31,8 @@ public class EndpointAuthorization : IEndpointAuthorization {
     private readonly ILogTracer _log;
     private readonly GraphServiceClient _graphClient;
 
+    private static readonly HashSet<string> AgentRoles = new HashSet<string> { "UnmamagedNode", "ManagedNode" };
+
     public EndpointAuthorization(IOnefuzzContext context, ILogTracer log, GraphServiceClient graphClient) {
         _context = context;
         _log = log;
@@ -46,7 +49,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
         var token = tokenResult.OkV;
         if (await IsUser(token)) {
             if (!allowUser) {
-                return await Reject(req, token);
+                return await Reject(req, tokenResult.OkV.UserInfo);
             }
 
             var access = await CheckAccess(req);
@@ -56,13 +59,13 @@ public class EndpointAuthorization : IEndpointAuthorization {
         }
 
         if (await IsAgent(token) && !allowAgent) {
-            return await Reject(req, token);
+            return await Reject(req, tokenResult.OkV.UserInfo);
         }
 
         return await method(req);
     }
 
-    public async Async.Task<bool> IsUser(UserInfo tokenData) {
+    public async Async.Task<bool> IsUser(UserAuthInfo tokenData) {
         return !await IsAgent(tokenData);
     }
 
@@ -94,7 +97,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
                 Errors: new string[] { "no instance configuration found " });
         }
 
-        return CheckRequireAdminsImpl(config, tokenResult.OkV);
+        return CheckRequireAdminsImpl(config, tokenResult.OkV.UserInfo);
     }
 
     private static OneFuzzResultVoid CheckRequireAdminsImpl(InstanceConfig config, UserInfo userInfo) {
@@ -184,7 +187,13 @@ public class EndpointAuthorization : IEndpointAuthorization {
         return null;
     }
 
-    public async Async.Task<bool> IsAgent(UserInfo tokenData) {
+    public async Async.Task<bool> IsAgent(UserAuthInfo authInfo) {
+        if (!AgentRoles.Overlaps(authInfo.Roles)) {
+            return false;
+        }
+
+        var tokenData = authInfo.UserInfo;
+
         if (tokenData.ObjectId != null) {
             var scalesets = _context.ScalesetOperations.GetByObjectId(tokenData.ObjectId.Value);
             if (await scalesets.AnyAsync()) {
