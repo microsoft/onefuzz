@@ -26,7 +26,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         try {
             await Process(config, container, filename, report);
         } catch (ApiException e) {
-            LogFailedNotification(report, e, notificationId);
+            await LogFailedNotification(report, e, notificationId);
         }
     }
 
