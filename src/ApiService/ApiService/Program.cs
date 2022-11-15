@@ -51,7 +51,8 @@ public class Program {
             new HostBuilder()
             .ConfigureAppConfiguration(builder => {
                 var _ = builder.AddAzureAppConfiguration(options => {
-                    var _ = options.Connect(new Uri(configuration.AppConfigurationEndpoint!), new ManagedIdentityCredential())
+                    var _ = options
+                        .Connect(new Uri(configuration.AppConfigurationEndpoint!), new DefaultAzureCredential())
                         .UseFeatureFlags(ffOptions => ffOptions.CacheExpirationInterval = TimeSpan.FromMinutes(1));
                 });
             })

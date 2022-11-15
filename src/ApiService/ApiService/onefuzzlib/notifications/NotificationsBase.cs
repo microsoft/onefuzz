@@ -65,6 +65,7 @@ public abstract class NotificationsBase {
                 inputUrl = new Uri(context.Containers.AuthDownloadUrl(report.InputBlob.Container, report.InputBlob.Name));
             }
 
+            await context.ConfigurationRefresher.TryRefreshAsync().IgnoreResult();
             var convertJinja = await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableJinjaConvert);
 
             return new Renderer(
