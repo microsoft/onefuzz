@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Microsoft.OneFuzz.Service;
@@ -123,4 +124,5 @@ public sealed class TestContext : IOnefuzzContext {
     public IAdo Ado => throw new NotImplementedException();
     public IFeatureManagerSnapshot FeatureManagerSnapshot => throw new NotImplementedException();
 
+    public IConfigurationRefresher ConfigurationRefresher => throw new NotImplementedException();
 }
