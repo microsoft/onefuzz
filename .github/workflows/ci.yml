@@ -357,8 +357,8 @@ jobs:
       run: |
         ./src/ci/get-version.sh > src/deployment/VERSION
         cd src/ApiService/ApiService/
-        mv az-local.settings.json bin/Release/net*/local.settings.json
-        cd bin/Release/net*/
+        mv az-local.settings.json bin/Release/net7.0/local.settings.json
+        cd bin/Release/net7.0/
         zip -r api-service-net.zip .
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
         cp api-service-net.zip ${GITHUB_WORKSPACE}/artifacts/service-net
