@@ -99,6 +99,7 @@ public record Node
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? InitializedAt = null,
     NodeState State = NodeState.Init,
+    Os? Os = null,
 
     // InstanceId is always numeric, but the APIs
     // deal with it as a string, so we keep it as
@@ -145,9 +146,8 @@ public record ProxyConfig
     Guid? ProxyId,
     List<Forward> Forwards,
     string InstanceTelemetryKey,
-    string MicrosoftTelemetryKey,
+    string? MicrosoftTelemetryKey,
     Guid InstanceId
-
 );
 
 public record Proxy
@@ -171,7 +171,8 @@ public record Error(ErrorCode Code, string[]? Errors = null) {
     }
 };
 
-public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
+public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn) {
+}
 
 public record TaskDetails(
     TaskType Type,

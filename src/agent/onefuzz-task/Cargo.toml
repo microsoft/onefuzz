@@ -29,7 +29,7 @@ regex = "1.6.0"
 reqwest = { version = "0.11", features = ["json", "stream", "native-tls-vendored"], default-features=false }
 serde = "1.0"
 serde_json = "1.0"
-serde-xml-rs = "0.5.1"
+serde-xml-rs = "0.6"
 onefuzz = { path = "../onefuzz" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 path-absolutize = "3.0"
