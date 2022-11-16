@@ -341,6 +341,7 @@ class AgentConfig(BaseModel):
     instance_id: UUID
     is_unmanaged: Optional[bool]
 
+
 class TaskUnitConfig(BaseModel):
     instance_id: UUID
     logs: Optional[str]
