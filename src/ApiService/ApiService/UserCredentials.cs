@@ -78,7 +78,7 @@ public class UserCredentials : IUserCredentials {
                             switch (claim.Type) {
                                 case "oid":
                                     return acc with { UserInfo = acc.UserInfo with { ObjectId = Guid.Parse(claim.Value) } };
-                                case "appId":
+                                case "appid":
                                     return acc with { UserInfo = acc.UserInfo with { ApplicationId = Guid.Parse(claim.Value) } };
                                 case "upn":
                                     return acc with { UserInfo = acc.UserInfo with { Upn = claim.Value } };

@@ -31,7 +31,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
     private readonly ILogTracer _log;
     private readonly GraphServiceClient _graphClient;
 
-    private static readonly HashSet<string> AgentRoles = new HashSet<string> { "UnmamagedNode", "ManagedNode" };
+    private static readonly HashSet<string> AgentRoles = new HashSet<string> { "UnmanagedNode", "ManagedNode" };
 
     public EndpointAuthorization(IOnefuzzContext context, ILogTracer log, GraphServiceClient graphClient) {
         _context = context;
@@ -202,7 +202,9 @@ public class EndpointAuthorization : IEndpointAuthorization {
             }
 
             var principalId = await _context.Creds.GetScalesetPrincipalId();
-            return principalId == tokenData.ObjectId;
+            if (principalId == tokenData.ObjectId) {
+                return true;
+            }
         }
 
         if (!tokenData.ApplicationId.HasValue) {
