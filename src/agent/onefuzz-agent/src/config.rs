@@ -34,12 +34,15 @@ pub struct StaticConfig {
     pub heartbeat_queue: Option<Url>,
 
     pub instance_id: Uuid,
+
+    #[serde(default)]
+    pub is_unmanaged: bool,
 }
 
 // Temporary shim type to bridge the current service-provided config.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 struct RawStaticConfig {
-    pub credentials: Option<ClientCredentials>,
+    pub client_credentials: Option<ClientCredentials>,
 
     pub pool_name: String,
 
@@ -54,13 +57,16 @@ struct RawStaticConfig {
     pub heartbeat_queue: Option<Url>,
 
     pub instance_id: Uuid,
+
+    #[serde(default)]
+    pub is_unmanaged: bool,
 }
 
 impl StaticConfig {
     pub fn new(data: &[u8]) -> Result<Self> {
         let config: RawStaticConfig = serde_json::from_slice(data)?;
 
-        let credentials = match config.credentials {
+        let credentials = match config.client_credentials {
             Some(client) => client.into(),
             None => {
                 // Remove trailing `/`, which is treated as a distinct resource.
@@ -83,6 +89,7 @@ impl StaticConfig {
             instance_telemetry_key: config.instance_telemetry_key,
             heartbeat_queue: config.heartbeat_queue,
             instance_id: config.instance_id,
+            is_unmanaged: config.is_unmanaged,
         };
 
         Ok(config)
@@ -103,6 +110,7 @@ impl StaticConfig {
         let multi_tenant_domain = std::env::var("ONEFUZZ_MULTI_TENANT_DOMAIN").ok();
         let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
         let pool_name = std::env::var("ONEFUZZ_POOL")?;
+        let is_unmanaged = std::env::var("ONEFUZZ_IS_UNMANAGED").is_ok();
 
         let heartbeat_queue = if let Ok(key) = std::env::var("ONEFUZZ_HEARTBEAT") {
             Some(Url::parse(&key)?)
@@ -142,6 +150,7 @@ impl StaticConfig {
             microsoft_telemetry_key,
             heartbeat_queue,
             instance_id,
+            is_unmanaged,
         })
     }
 
@@ -213,7 +222,8 @@ impl Registration {
             .append_pair("machine_id", &machine_id.to_string())
             .append_pair("machine_name", &machine_name)
             .append_pair("pool_name", &config.pool_name)
-            .append_pair("version", env!("ONEFUZZ_VERSION"));
+            .append_pair("version", env!("ONEFUZZ_VERSION"))
+            .append_pair("os", std::env::consts::OS);
 
         if managed {
             let scaleset = onefuzz::machine_id::get_scaleset_name().await?;

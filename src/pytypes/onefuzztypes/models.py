@@ -339,6 +339,7 @@ class AgentConfig(BaseModel):
     microsoft_telemetry_key: Optional[str]
     multi_tenant_domain: Optional[str]
     instance_id: UUID
+    is_unmanaged: Optional[bool]
 
 
 class TaskUnitConfig(BaseModel):
