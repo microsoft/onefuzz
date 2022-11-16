@@ -5,9 +5,25 @@ param adminUsername string = 'onefuzz'
 param capacity int = 1
 param vmSize string = 'Standard_D2s_v3'
 param tier string = 'Standard'
-param fileUris array = []
+param storageAccountName string
+
 @secure()
 param adminPassword string
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' existing = {
+  name: 'storageAccountName'
+}
+
+var StorageBlobDataReader = '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
+
+var fileUris = [
+  // 'https://${storageAccountName}.blob.${environment().suffixes.storage}/vm-scripts/managed.ps1'
+  // 'https://${storageAccountName}.blob.${environment().suffixes.storage}/vm-scripts/managed.ps1'
+  'https://${storageAccountName}.blob.${environment().suffixes.storage}/tools/config.json'
+  'https://${storageAccountName}.blob.${environment().suffixes.storage}/tools/win64/azcopy.exe'
+  'https://${storageAccountName}.blob.${environment().suffixes.storage}/tools/win64/setup.ps1'
+  'https://${storageAccountName}.blob.${environment().suffixes.storage}/tools/win64/onefuzz.ps1'
+]
 
 resource scaleset 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
   name: scaleset_name
@@ -87,68 +103,67 @@ resource scaleset 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
       }
       extensionProfile: {
         extensions: [
-          {
-            name: 'OMSExtension'
-            properties: {
-              autoUpgradeMinorVersion: true
-              enableAutomaticUpgrade: false
-              publisher: 'Microsoft.EnterpriseCloud.Monitoring'
-              type: 'MicrosoftMonitoringAgent'
-              typeHandlerVersion: '1.0'
-              settings: {
-                workspaceId: '77da01e8-838a-41d9-a6d0-c8b180f68904'
-              }
-            }
-          }
-          {
-            name: 'DependencyAgentWindows'
-            properties: {
-              autoUpgradeMinorVersion: true
-              publisher: 'Microsoft.Azure.Monitoring.DependencyAgent'
-              type: 'DependencyAgentWindows'
-              typeHandlerVersion: '9.5'
-              settings: {
-              }
-            }
-          }
-          {
-            name: 'Microsoft.Azure.Geneva.GenevaMonitoring'
-            properties: {
-              autoUpgradeMinorVersion: true
-              enableAutomaticUpgrade: true
-              publisher: 'Microsoft.Azure.Geneva'
-              type: 'GenevaMonitoring'
-              typeHandlerVersion: '2.0'
-              settings: {
-              }
-            }
-          }
+          // {
+          //   name: 'OMSExtension'
+          //   properties: {
+          //     autoUpgradeMinorVersion: true
+          //     enableAutomaticUpgrade: false
+          //     publisher: 'Microsoft.EnterpriseCloud.Monitoring'
+          //     type: 'MicrosoftMonitoringAgent'
+          //     typeHandlerVersion: '1.0'
+          //     settings: {
+          //       workspaceId: '77da01e8-838a-41d9-a6d0-c8b180f68904'
+          //     }
+          //   }
+          // }
+          // {
+          //   name: 'DependencyAgentWindows'
+          //   properties: {
+          //     autoUpgradeMinorVersion: true
+          //     publisher: 'Microsoft.Azure.Monitoring.DependencyAgent'
+          //     type: 'DependencyAgentWindows'
+          //     typeHandlerVersion: '9.5'
+          //     settings: {
+          //     }
+          //   }
+          // }
+          // {
+          //   name: 'Microsoft.Azure.Geneva.GenevaMonitoring'
+          //   properties: {
+          //     autoUpgradeMinorVersion: true
+          //     enableAutomaticUpgrade: true
+          //     publisher: 'Microsoft.Azure.Geneva'
+          //     type: 'GenevaMonitoring'
+          //     typeHandlerVersion: '2.0'
+          //     settings: {
+          //     }
+          //   }
+          // }
           {
             name: 'CustomScriptExtension'
             properties: {
               autoUpgradeMinorVersion: true
-              forceUpdateTag: 'e2dc833a-58d2-4f96-a462-4e079f5fc1e0'
               publisher: 'Microsoft.Compute'
               type: 'CustomScriptExtension'
-              typeHandlerVersion: '1.9'
+              typeHandlerVersion: '1.10'
               settings: {
                 commandToExecute: 'powershell -ExecutionPolicy Unrestricted -File win64/setup.ps1 -mode fuzz'
                 fileUris: fileUris
               }
             }
           }
-          {
-            name: 'Microsoft.Azure.Security.AntimalwareSignature.AntimalwareConfiguration'
-            properties: {
-              autoUpgradeMinorVersion: true
-              enableAutomaticUpgrade: true
-              publisher: 'Microsoft.Azure.Security.AntimalwareSignature'
-              type: 'AntimalwareConfiguration'
-              typeHandlerVersion: '2.0'
-              settings: {
-              }
-            }
-          }
+          // {
+          //   name: 'Microsoft.Azure.Security.AntimalwareSignature.AntimalwareConfiguration'
+          //   properties: {
+          //     autoUpgradeMinorVersion: true
+          //     enableAutomaticUpgrade: true
+          //     publisher: 'Microsoft.Azure.Security.AntimalwareSignature'
+          //     type: 'AntimalwareConfiguration'
+          //     typeHandlerVersion: '2.0'
+          //     settings: {
+          //     }
+          //   }
+          // }
         ]
       }
       priority: 'Regular'
@@ -157,6 +172,19 @@ resource scaleset 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
     doNotRunExtensionsOnOverprovisionedVMs: false
   }
 }
+// try to make role assignments to deploy as late as possible in order to have principalId ready
+resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+  name: guid('${resourceGroup().id}-user_managed_idenity_read_blob')
+  properties: {
+    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${StorageBlobDataReader}'
+    principalId: scaleset.identity.principalId
+    // reference(scalesetIdentity.id, scalesetIdentity.apiVersion, 'Full').properties.principalId
+  }
+  dependsOn: [
+    storageAccount
+  ]
+}
+
 
 // resource scaleset_CustomScriptExtension 'Microsoft.Compute/virtualMachineScaleSets/extensions@2022-03-01' = {
 //   parent: scaleset
