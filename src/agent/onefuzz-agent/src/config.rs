@@ -42,7 +42,7 @@ pub struct StaticConfig {
 // Temporary shim type to bridge the current service-provided config.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 struct RawStaticConfig {
-    pub credentials: Option<ClientCredentials>,
+    pub client_credentials: Option<ClientCredentials>,
 
     pub pool_name: String,
 
@@ -66,7 +66,7 @@ impl StaticConfig {
     pub fn new(data: &[u8]) -> Result<Self> {
         let config: RawStaticConfig = serde_json::from_slice(data)?;
 
-        let credentials = match config.credentials {
+        let credentials = match config.client_credentials {
             Some(client) => client.into(),
             None => {
                 // Remove trailing `/`, which is treated as a distinct resource.
