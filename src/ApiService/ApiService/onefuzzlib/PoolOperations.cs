@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
-using Azure.Data.Tables;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {

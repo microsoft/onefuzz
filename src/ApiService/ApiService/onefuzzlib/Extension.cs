@@ -220,7 +220,8 @@ public class Extensions : IExtensions {
             InstanceTelemetryKey: _context.ServiceConfiguration.ApplicationInsightsInstrumentationKey,
             MicrosoftTelemetryKey: _context.ServiceConfiguration.OneFuzzTelemetry,
             MultiTenantDomain: _context.ServiceConfiguration.MultiTenantDomain,
-            InstanceId: instanceId
+            InstanceId: instanceId,
+            IsUnmanaged: !pool.Managed
             );
 
         var fileName = $"{pool.Name}/config.json";
