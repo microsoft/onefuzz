@@ -1061,9 +1061,7 @@ class JobContainers(Endpoint):
     def list(
         self,
         job_id: UUID_EXPANSION,
-        container_type: Optional[
-            enums.ContainerType
-        ] = enums.ContainerType.unique_reports,
+        container_type: enums.ContainerType,
     ) -> Dict[str, List[str]]:
         """
         List the files for all of the containers of a given container type
