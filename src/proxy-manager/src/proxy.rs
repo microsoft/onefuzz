@@ -90,7 +90,7 @@ pub async fn update(data: &ConfigData) -> Result<()> {
         }
 
         let file_name = path.file_name().unwrap().to_string_lossy().to_string();
-        if !file_name.starts_with(&PROXY_PREFIX) {
+        if !file_name.starts_with(PROXY_PREFIX) {
             continue;
         }
 
