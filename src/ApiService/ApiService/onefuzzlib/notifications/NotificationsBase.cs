@@ -97,7 +97,7 @@ public abstract class NotificationsBase {
             _reportUrl = reportUrl;
             _targetUrl = targetUrl;
             _inputUrl = inputUrl;
-            _shouldConvertJinja = shouldConvertJinja;
+            _shouldConvertJinja = shouldConvertJinja || true;
         }
 
         // TODO: This function is fallible but the python
