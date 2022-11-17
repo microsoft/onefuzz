@@ -14,6 +14,7 @@ param multi_tenant_domain string
 param signal_r_connection_string string
 
 param func_storage_resource_id string
+param func_cosmos_name string
 param fuzz_storage_resource_id string
 
 param keyvault_name string
@@ -43,14 +44,14 @@ resource function 'Microsoft.Web/sites@2021-02-01' existing = {
 
 module disabledFunctions 'function-settings-disabled-apps.bicep' = {
   name: disabledFunctionName
-  params:{
+  params: {
     functions_disabled_setting: functions_disabled
     allFunctions: all_function_names
   }
 }
 
 var enable_profilers = enable_profiler ? {
-  APPINSIGHTS_PROFILERFEATURE_VERSION : '1.0.0'
+  APPINSIGHTS_PROFILERFEATURE_VERSION: '1.0.0'
   DiagnosticServices_EXTENSION_VERSION: '~3'
 } : {}
 
@@ -73,11 +74,12 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       ONEFUZZ_INSTANCE: 'https://${instance_name}.azurewebsites.net'
       ONEFUZZ_RESOURCE_GROUP: resourceGroup().id
       ONEFUZZ_DATA_STORAGE: fuzz_storage_resource_id
+      ONEFUZZ_FUNC_COSMOS_NAME: func_cosmos_name
       ONEFUZZ_FUNC_STORAGE: func_storage_resource_id
       ONEFUZZ_MONITOR: monitor_account_name
       ONEFUZZ_KEYVAULT: keyvault_name
       ONEFUZZ_OWNER: owner
       ONEFUZZ_CLIENT_SECRET: client_secret
       ONEFUZZ_USE_DOTNET_AGENT_FUNCTIONS: use_dotnet_agent_functions ? '1' : '0'
-  }, disabledFunctions.outputs.appSettings, enable_profilers)
+    }, disabledFunctions.outputs.appSettings, enable_profilers)
 }

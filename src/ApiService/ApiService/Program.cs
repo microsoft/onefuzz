@@ -10,6 +10,7 @@ using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Core.Serialization;
 using Azure.Identity;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.DependencyInjection;
@@ -118,7 +119,7 @@ public class Program {
                 .AddSingleton<IServiceConfig>(configuration)
                 .AddSingleton<IStorage, Storage>()
                 .AddSingleton<ILogSinks, LogSinks>()
-                // .AddSingleton(new CosmosClient("COSMOS_CONNECTION_STRING", new DefaultAzureCredential()))
+                .AddSingleton(new CosmosClient($"https://{configuration.OneFuzzFuncCosmosName}.documents.azure.com", new DefaultAzureCredential()))
                 .AddHttpClient()
                 .AddMemoryCache();
             })

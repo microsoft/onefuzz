@@ -102,9 +102,6 @@ resource cosmosFuncAccount 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = 
       }
     ]
   }
-  identity: {
-    type: 'SystemAssigned'
-  }
   tags: {
     OWNER: owner
   }

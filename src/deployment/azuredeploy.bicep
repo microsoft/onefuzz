@@ -349,6 +349,7 @@ module pythonFunctionSettings 'bicep-templates/function-settings.bicep' = {
     signal_r_connection_string: signalR.outputs.connectionString
     func_sas_url: storage.outputs.FuncSasUrl
     func_storage_resource_id: storage.outputs.FuncId
+    func_cosmos_name: '' // not used for Python
     fuzz_storage_resource_id: storage.outputs.FuzzId
     keyvault_name: keyVaultName
     monitor_account_name: operationalInsights.outputs.monitorAccountName
@@ -414,6 +415,7 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     client_secret: clientSecret
     func_sas_url: storage.outputs.FuncSasUrl
     func_storage_resource_id: storage.outputs.FuncId
+    func_cosmos_name: storage.outputs.CosmosDBAccountName
     fuzz_storage_resource_id: storage.outputs.FuzzId
     keyvault_name: keyVaultName
     monitor_account_name: operationalInsights.outputs.monitorAccountName
