@@ -1,4 +1,4 @@
-msal==1.18.0b1
+msal==1.20.0
 requests~=2.27.1
 jmespath~=0.10.0
 semver~=2.13.0
@@ -12,7 +12,7 @@ azure-applicationinsights==0.1.0
 tenacity==8.0.1
 docstring_parser==0.8.1
 azure-identity==1.10.0
-azure-cli-core==2.40.0
+azure-cli-core==2.42.0
 # packaging is required but not specified by azure-cli-core
 packaging==21.3
 # urllib3[secure] needs to be specifically stated for azure-cli-core

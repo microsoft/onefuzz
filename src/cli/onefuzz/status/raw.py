@@ -9,17 +9,18 @@ from typing import Any, List
 
 from six.moves import input  # workaround for static analysis
 
+from ..api import Onefuzz
 from .signalr import Stream
 
 SIGNALR_CONNECT_TIMEOUT_SECONDS = 0.1
 
 
-def log_entry(onefuzz: Any, entries: List[Any]) -> None:
+def log_entry(onefuzz: Onefuzz, entries: List[Any]) -> None:
     for entry in entries:
         onefuzz.logger.info("%s", entry)
 
 
-def raw(onefuzz: Any, logger: logging.Logger) -> None:
+def raw(onefuzz: Onefuzz, logger: logging.Logger) -> None:
     client = Stream(onefuzz, logger)
     client.setup(lambda x: log_entry(onefuzz, x))
 
