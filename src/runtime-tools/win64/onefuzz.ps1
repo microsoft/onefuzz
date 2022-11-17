@@ -6,7 +6,7 @@ $env:ONEFUZZ_ROOT = "C:\onefuzz"
 $env:ONEFUZZ_TOOLS = "C:\onefuzz\tools"
 $env:LLVM_SYMBOLIZER_PATH = "llvm-symbolizer"
 $env:RUST_LOG = "info"
-$env:DOTNET_VERSION = "6.0.300"
+$env:DOTNET_VERSION = "7.0.100"
 # Set a session and machine scoped env var
 $env:DOTNET_ROOT = "c:\onefuzz\tools\dotnet"
 [Environment]::SetEnvironmentVariable("DOTNET_ROOT", $env:DOTNET_ROOT, "Machine")

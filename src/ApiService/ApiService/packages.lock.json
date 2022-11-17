@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    "net6.0": {
+    "net7.0": {
       "Azure.Core": {
         "type": "Direct",
         "requested": "[1.25.0, )",
