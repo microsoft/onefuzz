@@ -110,7 +110,14 @@ fi
 chmod -R a+rx /onefuzz/tools/linux
 
 if type apt > /dev/null 2> /dev/null; then
+    
+    # Install updated Microsoft Open Management Infrastructure - github.com/microsoft/omi
+    curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc 2>&1 | logger -s -i -t 'onefuzz-OMI-add-MS-repo-key'
+    sudo apt-add-repository https://packages.microsoft.com/ubuntu/20.04/prod 2>&1 | logger -s -i -t 'onefuzz-OMI-add-MS-repo'
     sudo apt update
+    sleep 10
+    sudo apt-get install -y omi=1.6.10.2 2>&1 | logger -s -i -t 'onefuzz-OMI-install'
+
     until sudo apt install -y gdb gdbserver; do
         echo "apt failed.  sleep 10s, then retrying"
         sleep 10

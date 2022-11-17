@@ -21,7 +21,7 @@ def code_block(data: str) -> str:
     return "\n```\n%s\n```\n" % data
 
 
-async def send_message(req: func.HttpRequest) -> bool:
+async def send_message(req: func.HttpRequest) -> None:
     data = req.get_json()
     teams_url = os.environ.get("TEAMS_URL")
     if teams_url is None:
@@ -43,7 +43,10 @@ async def send_message(req: func.HttpRequest) -> bool:
     }
     async with aiohttp.ClientSession() as client:
         async with client.post(teams_url, json=message) as response:
-            return response.ok
+            if not response.ok:
+                raise RuntimeError(
+                    f"Teams endpoint failed to consume message: {response}"
+                )
 
 
 def verify(req: func.HttpRequest) -> bool:
@@ -67,9 +70,11 @@ def verify(req: func.HttpRequest) -> bool:
 
 async def main(req: func.HttpRequest) -> func.HttpResponse:
     if not verify(req):
-        return func.HttpResponse("no thanks")
+        return func.HttpResponse("no thanks", status_code=400)
 
-    if await send_message(req):
-        return func.HttpResponse("unable to send message")
+    try:
+        await send_message(req)
+    except Exception:
+        return func.HttpResponse("unable to send message", status_code=500)
 
     return func.HttpResponse("thanks")

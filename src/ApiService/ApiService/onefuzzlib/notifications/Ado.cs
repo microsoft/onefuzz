@@ -162,7 +162,8 @@ public class Ado : NotificationsBase, IAdo {
             }
         }
 
-        public async Async.Task UpdateExisting(WorkItem item, (string, string)[] notificationInfo) {
+        /// <returns>true if the state of the item was modified</returns>
+        public async Async.Task<bool> UpdateExisting(WorkItem item, (string, string)[] notificationInfo) {
             if (_config.OnDuplicate.Comment != null) {
                 var comment = await Render(_config.OnDuplicate.Comment);
                 _ = await _client.AddCommentAsync(
@@ -194,12 +195,15 @@ public class Ado : NotificationsBase, IAdo {
             }
 
             var systemState = JsonSerializer.Serialize(item.Fields["System.State"]);
+            var stateUpdated = false;
             if (_config.OnDuplicate.SetState.ContainsKey(systemState)) {
                 document.Add(new JsonPatchOperation() {
                     Operation = VisualStudio.Services.WebApi.Patch.Operation.Replace,
                     Path = "/fields/System.State",
                     Value = _config.OnDuplicate.SetState[systemState]
                 });
+
+                stateUpdated = true;
             }
 
             if (document.Any()) {
@@ -210,8 +214,9 @@ public class Ado : NotificationsBase, IAdo {
             } else {
                 var adoEventType = "AdoNoUpdate";
                 _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {item.Id:Tag:WorkItemId}");
-
             }
+
+            return stateUpdated;
         }
 
         private async Async.Task<List<string>> GetValidFields(string? project) {
@@ -265,21 +270,15 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         public async Async.Task Process((string, string)[] notificationInfo) {
-            var matchingWorkItems = ExistingWorkItems();
+            var matchingWorkItems = await ExistingWorkItems().ToListAsync();
 
             var nonDuplicateWorkItems = matchingWorkItems
-                .Where(wi => !IsADODuplicateWorkItem(wi));
+                .Where(wi => !IsADODuplicateWorkItem(wi))
+                .ToList();
 
-            var numNonDuplicateWorkItems = await nonDuplicateWorkItems.CountAsync();
-
-            if (numNonDuplicateWorkItems > 1) {
-                var nonDuplicateWorkItemIds = nonDuplicateWorkItems
-                    .Select(wi => wi.Id)
-                    .ToEnumerable();
-
-                var matchingWorkItemIds = matchingWorkItems
-                    .Select(wi => wi.Id)
-                    .ToEnumerable();
+            if (nonDuplicateWorkItems.Count > 1) {
+                var nonDuplicateWorkItemIds = nonDuplicateWorkItems.Select(wi => wi.Id);
+                var matchingWorkItemIds = matchingWorkItems.Select(wi => wi.Id);
 
                 var extraTags = new List<(string, string)> {
                     ("NonDuplicateWorkItemIds", JsonSerializer.Serialize(nonDuplicateWorkItemIds)),
@@ -288,27 +287,27 @@ public class Ado : NotificationsBase, IAdo {
                 extraTags.AddRange(notificationInfo);
 
                 _logTracer.WithTags(extraTags).Info($"Found more than 1 matching, non-duplicate work item");
-                await foreach (var workItem in nonDuplicateWorkItems) {
-                    await UpdateExisting(workItem, notificationInfo);
+                foreach (var workItem in nonDuplicateWorkItems) {
+                    _ = await UpdateExisting(workItem, notificationInfo);
                 }
-            } else if (numNonDuplicateWorkItems == 1) {
-                await UpdateExisting(await nonDuplicateWorkItems.SingleAsync(), notificationInfo);
-            }
-              // We have matching work items but all are duplicates
-              else if (await matchingWorkItems.AnyAsync()) {
+            } else if (nonDuplicateWorkItems.Count == 1) {
+                _ = await UpdateExisting(nonDuplicateWorkItems.Single(), notificationInfo);
+            } else if (matchingWorkItems.Any()) {
+                // We have matching work items but all are duplicates
                 _logTracer.WithTags(notificationInfo).Info($"All matching work items were duplicates, re-opening the oldest one");
-                var oldestWorkItem = await matchingWorkItems.OrderBy(wi => wi.Id).FirstAsync();
-                await UpdateExisting(oldestWorkItem, notificationInfo);
-
-                _ = await _client.AddCommentAsync(
-                    new CommentCreate() {
-                        Text = "This work item was re-opened because OneFuzz could only find related work items that are marked as duplicate."
-                    },
-                    _project,
-                    (int)oldestWorkItem.Id!);
-            }
-              // We never saw a work item like this before, it must be new
-              else {
+                var oldestWorkItem = matchingWorkItems.OrderBy(wi => wi.Id).First();
+                var stateChanged = await UpdateExisting(oldestWorkItem, notificationInfo);
+                if (stateChanged) {
+                    // add a comment if we re-opened the bug
+                    _ = await _client.AddCommentAsync(
+                        new CommentCreate() {
+                            Text = "This work item was re-opened because OneFuzz could only find related work items that are marked as duplicate."
+                        },
+                        _project,
+                        (int)oldestWorkItem.Id!);
+                }
+            } else {
+                // We never saw a work item like this before, it must be new
                 var entry = await CreateNew();
                 var adoEventType = "AdoNewItem";
                 _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {entry.Id:Tag:WorkItemId}");
