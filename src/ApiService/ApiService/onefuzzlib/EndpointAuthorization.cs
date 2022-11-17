@@ -48,7 +48,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
         var token = tokenResult.OkV.UserInfo;
         if (await IsUser(tokenResult.OkV)) {
             if (!allowUser) {
-                return await Reject(req, tokenResult.OkV.UserInfo);
+                return await Reject(req, token);
             }
 
             var access = await CheckAccess(req);
@@ -58,7 +58,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
         }
 
         if (await IsAgent(tokenResult.OkV) && !allowAgent) {
-            return await Reject(req, tokenResult.OkV.UserInfo);
+            return await Reject(req, token);
         }
 
         return await method(req);
