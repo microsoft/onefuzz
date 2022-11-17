@@ -221,7 +221,7 @@ public class Extensions : IExtensions {
             MicrosoftTelemetryKey: _context.ServiceConfiguration.OneFuzzTelemetry,
             MultiTenantDomain: _context.ServiceConfiguration.MultiTenantDomain,
             InstanceId: instanceId,
-            IsUnmanaged: !pool.Managed
+            Managed: pool.Managed
             );
 
         var fileName = $"{pool.Name}/config.json";

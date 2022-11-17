@@ -35,8 +35,12 @@ pub struct StaticConfig {
 
     pub instance_id: Uuid,
 
-    #[serde(default)]
-    pub is_unmanaged: bool,
+    #[serde(default = "default_as_true")]
+    pub managed: bool,
+}
+
+fn default_as_true() -> bool {
+    true
 }
 
 // Temporary shim type to bridge the current service-provided config.
@@ -58,8 +62,8 @@ struct RawStaticConfig {
 
     pub instance_id: Uuid,
 
-    #[serde(default)]
-    pub is_unmanaged: bool,
+    #[serde(default = "default_as_true")]
+    pub managed: bool,
 }
 
 impl StaticConfig {
@@ -89,7 +93,7 @@ impl StaticConfig {
             instance_telemetry_key: config.instance_telemetry_key,
             heartbeat_queue: config.heartbeat_queue,
             instance_id: config.instance_id,
-            is_unmanaged: config.is_unmanaged,
+            managed: config.managed,
         };
 
         Ok(config)
@@ -150,7 +154,7 @@ impl StaticConfig {
             microsoft_telemetry_key,
             heartbeat_queue,
             instance_id,
-            is_unmanaged,
+            managed: !is_unmanaged,
         })
     }
 
