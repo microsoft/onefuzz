@@ -30,7 +30,6 @@ public class EndpointAuthorization : IEndpointAuthorization {
     private readonly IOnefuzzContext _context;
     private readonly ILogTracer _log;
     private readonly GraphServiceClient _graphClient;
-
     private static readonly HashSet<string> AgentRoles = new HashSet<string> { "UnmanagedNode", "ManagedNode" };
 
     public EndpointAuthorization(IOnefuzzContext context, ILogTracer log, GraphServiceClient graphClient) {

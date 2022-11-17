@@ -277,10 +277,10 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
     let registration = match config::Registration::load_existing(config.clone()).await {
         Ok(registration) => registration,
         Err(_) => {
-            if config.is_unmanaged {
-                config::Registration::create_unmanaged(config.clone()).await?
-            } else {
+            if config.managed {
                 config::Registration::create_managed(config.clone()).await?
+            } else {
+                config::Registration::create_unmanaged(config.clone()).await?
             }
         }
     };

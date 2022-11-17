@@ -233,9 +233,13 @@ public class Extensions : IExtensions {
             MicrosoftTelemetryKey: _context.ServiceConfiguration.OneFuzzTelemetry,
             MultiTenantDomain: _context.ServiceConfiguration.MultiTenantDomain,
             InstanceId: instanceId,
-            IsUnmanaged: !pool.Managed
+            Managed: pool.Managed
         );
-        return config;
+
+        var fileName = $"{pool.Name}/config.json";
+        var configJson = JsonSerializer.Serialize(config, EntityConverter.GetJsonSerializerOptions());
+        await _context.Containers.SaveBlob(WellKnownContainers.VmScripts, fileName, configJson, StorageType.Config);
+        return await ConfigUrl(WellKnownContainers.VmScripts, fileName, false);
     }
 
 

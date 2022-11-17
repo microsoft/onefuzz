@@ -134,7 +134,7 @@ public class Pool {
                     InstanceId: instanceId,
                     ClientCredentials: null,
                     MultiTenantDomain: _context.ServiceConfiguration.MultiTenantDomain,
-                    IsUnmanaged: !p.Managed)
+                    Managed: p.Managed)
         };
     }
 }

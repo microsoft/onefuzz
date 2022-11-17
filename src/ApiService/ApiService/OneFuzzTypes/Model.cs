@@ -679,7 +679,7 @@ public record AgentConfig(
     string? MicrosoftTelemetryKey,
     string? MultiTenantDomain,
     Guid InstanceId,
-    bool? IsUnmanaged
+    bool? Managed = true
 );
 
 

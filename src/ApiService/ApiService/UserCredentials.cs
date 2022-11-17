@@ -89,7 +89,6 @@ public class UserCredentials : IUserCredentials {
                                     return acc;
                             }
                         });
-
                     return OneFuzzResult<UserAuthInfo>.Ok(userInfo);
                 } else {
                     var tenantsStr = allowedTenants.OkV is null ? "null" : String.Join(';', allowedTenants.OkV!);
