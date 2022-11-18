@@ -37,19 +37,16 @@ class PoolState_Update : TaskActivityBase<string, bool> {
     protected override async Task<bool> OnRunAsync(
         TaskActivityContext context,
         string? json) {
-        _log.Info($"inner got json: {json}");
         var input = JsonSerializer.Deserialize<PoolKey>(json!);
-        _log.Info($"getting pool: {input.PoolId:Tag:PoolId} ({input.PoolName:Tag:PoolName})");
-        var poolResult = await _poolOps.GetById(Guid.Parse(input.PoolId));
-        if (poolResult.IsOk) {
-            var pool = poolResult.OkV;
-            // var pool = await _poolOps.GetEntityAsync(input.PoolName, input.PoolId);
+        var pool = await _poolOps.GetEntityAsync(input.PoolName, input.PoolId);
+        if (pool is not null) {
             _log.Info($"updating pool: {input.PoolId:Tag:PoolId} ({input.PoolName:Tag:PoolName}) - state: {pool.State:Tag:PoolState}");
             _ = await _poolOps.ProcessStateUpdate(pool);
             _log.Info($"finished updating pool: {input.PoolId:Tag:PoolId} ({input.PoolName:Tag:PoolName}) - state: {pool.State:Tag:PoolState}");
             return true;
+        } else {
+            _log.Info($"pool not found: {input.PoolId:Tag:PoolId} ({input.PoolName:Tag:PoolName})");
+            return false;
         }
-
-        return false;
     }
 }
