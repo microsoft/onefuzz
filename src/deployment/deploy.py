@@ -1253,7 +1253,7 @@ def main() -> None:
     parser.add_argument(
         "--app-zip",
         type=arg_file,
-        default="api-service-net.zip",
+        default="api-service.zip",
         help="(default: %(default)s)",
     )
     parser.add_argument(

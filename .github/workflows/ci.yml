@@ -272,9 +272,9 @@ jobs:
         echo ${GITHUB_SHA} | tee onefuzzlib/git.version
         python -m pip install --upgrade pip
         pip install --target="./.python_packages/lib/site-packages" -r ./requirements.txt ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
-        zip -r api-service.zip .
+        zip -r api-service-py.zip .
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/service
-        cp api-service.zip ${GITHUB_WORKSPACE}/artifacts/service
+        cp api-service-py.zip ${GITHUB_WORKSPACE}/artifacts/service
     - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
@@ -357,9 +357,9 @@ jobs:
         cd src/ApiService/ApiService/
         mv az-local.settings.json bin/Release/net6.0/local.settings.json
         cd bin/Release/net6.0/
-        zip -r api-service-net.zip .
+        zip -r api-service.zip .
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
-        cp api-service-net.zip ${GITHUB_WORKSPACE}/artifacts/service-net
+        cp api-service.zip ${GITHUB_WORKSPACE}/artifacts/service-net
     - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
@@ -491,8 +491,8 @@ jobs:
           cp artifacts/agent-Linux/onefuzz-task src/deployment/tools/linux/
 
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
-          cp artifacts/service/api-service.zip src/deployment
-          cp artifacts/service-net/api-service-net.zip src/deployment
+          cp artifacts/service/api-service-py.zip src/deployment
+          cp artifacts/service-net/api-service.zip src/deployment
           cp -r artifacts/third-party src/deployment
           echo $GITHUB_RUN_ID | tee src/deployment/.build.id
           echo $GITHUB_SHA | tee src/deployment/.sha
