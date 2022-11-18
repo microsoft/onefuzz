@@ -156,8 +156,8 @@ public class AgentRegistration {
             ScalesetId: scalesetId,
             InstanceId: instanceId,
             Version: version,
-            Os: os ?? pool.Os
-
+            Os: os ?? pool.Os,
+            Managed: pool.Managed
             );
 
         var r = await _context.NodeOperations.Replace(node);

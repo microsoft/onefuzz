@@ -110,7 +110,8 @@ public record Node
 
     bool ReimageRequested = false,
     bool DeleteRequested = false,
-    bool DebugKeepNode = false
+    bool DebugKeepNode = false,
+    bool Managed = true
 ) : StatefulEntityBase<NodeState>(State) {
 
     public List<NodeTasks>? Tasks { get; set; }
