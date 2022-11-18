@@ -2,7 +2,7 @@
     <PropertyGroup>
 
         <!-- set overall target framework -->
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
 
         <!-- build in Invariant mode: https://github.com/dotnet/runtime/blob/main/docs/design/features/globalization-invariant-mode.md -->
         <!--
@@ -19,7 +19,7 @@
 
         <!-- enable code analysis -->
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
-        <AnalysisLevel>6.0-Recommended</AnalysisLevel>
+        <AnalysisLevel>7.0-Recommended</AnalysisLevel>
 
         <!-- check nullable types -->
         <Nullable>enable</Nullable>
