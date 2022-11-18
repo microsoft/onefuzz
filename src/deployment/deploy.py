@@ -1149,6 +1149,8 @@ class Client:
                                 "publish",
                                 self.application_name + DOTNET_APPLICATION_SUFFIX,
                                 "--no-build",
+                                "--dotnet-version",
+                                "7.0",
                             ],
                             env=dict(os.environ, CLI_DEBUG="1"),
                             cwd=tmpdirname,

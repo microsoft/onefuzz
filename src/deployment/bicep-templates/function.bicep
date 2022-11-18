@@ -41,7 +41,7 @@ var commonSiteConfig = {
 }
 
 var extraProperties = (use_windows && enable_remote_debugging) ? {
-  netFrameworkVersion: 'v6.0'
+  netFrameworkVersion: 'v7.0'
   remoteDebuggingEnabled: true
   remoteDebuggingVersion: 'VS2022'
 } : {}

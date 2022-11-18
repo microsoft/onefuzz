@@ -1268,13 +1268,7 @@ class Pool(Endpoint):
         if pool.config is None:
             raise Exception("Missing AgentConfig in response")
 
-        config = pool.config
-        config.client_credentials = models.ClientCredentials(  # nosec - bandit consider this a hard coded password
-            client_id=pool.client_id,
-            client_secret="<client secret>",
-        )
-
-        return config
+        return pool.config
 
     def shutdown(self, name: str, *, now: bool = False) -> responses.BoolResult:
         expanded_name = self._disambiguate(

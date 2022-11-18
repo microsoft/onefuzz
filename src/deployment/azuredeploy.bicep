@@ -241,7 +241,7 @@ module function 'bicep-templates/function.bicep' = {
 module netFunction 'bicep-templates/function.bicep' = {
   name: 'netFunction'
   params: {
-    linux_fx_version: 'DOTNET-ISOLATED|6.0'
+    linux_fx_version: 'DOTNET-ISOLATED|7.0'
     name: '${name}-net'
 
     app_logs_sas_url: storage.outputs.FuncSasUrlBlobAppLogs
