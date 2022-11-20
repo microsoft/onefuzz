@@ -51,6 +51,7 @@ cargo fmt -- --check
 # RUSTSEC-2022-0048: xml-rs is unmaintained
 # RUSTSEC-2021-0139: ansi_term is unmaintained
 cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2022-0048 --ignore RUSTSEC-2021-0139
+cargo deny -L error check
 cargo license -j > data/licenses.json
 cargo build --release --locked
 cargo clippy --release --locked --all-targets -- -D warnings

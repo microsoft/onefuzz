@@ -1,0 +1,20 @@
+[licenses]
+allow = [
+    "Apache-2.0 WITH LLVM-exception",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "CC0-1.0",
+    "ISC",
+    "MIT",
+    "Zlib",
+]
+
+[bans]
+
+# disallow rustls; we must use OpenSSL
+[[bans.deny]]
+name = "rustls"
+
+# disallow ring; unapproved crypto
+[[bans.deny]]
+name = "ring"

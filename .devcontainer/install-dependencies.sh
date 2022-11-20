@@ -5,7 +5,7 @@ set -eux
 # Note that this script runs as user 'vscode' during devcontainer setup.
 
 # Rust global tools, needed to run CI scripts
-"$HOME/.cargo/bin/cargo" install cargo-audit cargo-license@0.4.2 cargo-llvm-cov
+"$HOME/.cargo/bin/cargo" install cargo-audit cargo-license@0.4.2 cargo-llvm-cov cargo-deny
 "$HOME/.cargo/bin/rustup" component add llvm-tools-preview
 
 # NPM global tools
