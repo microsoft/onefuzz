@@ -9,6 +9,16 @@ allow = [
     "Zlib",
 ]
 
+[advisories]
+vulnerability = "deny"
+unmaintained = "deny"
+unsound = "deny"
+yanked = "deny"
+ignore = [
+    "RUSTSEC-2022-0048", # xml-rs is unmaintained
+    "RUSTSEC-2021-0139", # ansi_term is unmaintained
+]
+
 [bans]
 
 # disallow rustls; we must use OpenSSL
