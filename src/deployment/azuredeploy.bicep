@@ -221,7 +221,7 @@ module function 'bicep-templates/function.bicep' = {
   name: 'function'
   params: {
     name: name
-    linux_fx_version: 'DOTNET-ISOLATED|6.0'
+    linux_fx_version: 'DOTNET-ISOLATED|7.0'
 
     app_logs_sas_url: storage.outputs.FuncSasUrlBlobAppLogs
     app_func_audiences: app_func_audiences
@@ -264,8 +264,8 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
   params: {
     name: name
     owner: owner
-    functions_worker_runtime: 'python'
-    functions_extension_version: '~3'
+    functions_worker_runtime: 'dotnet-isolated'
+    functions_extension_version: '~4'
     instance_name: name
     app_insights_app_id: operationalInsights.outputs.appInsightsAppId
     app_insights_key: operationalInsights.outputs.appInsightsInstrumentationKey
@@ -277,7 +277,7 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
     keyvault_name: keyVaultName
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
-    enable_profiler: false
+    enable_profiler: enable_profiler
   }
   dependsOn: [
     function
@@ -290,13 +290,13 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
   params: {
     owner: owner
     name: '${name}-net'
-    signal_r_connection_string: signalR.outputs.connectionString
-    app_insights_app_id: operationalInsights.outputs.appInsightsAppId
-    app_insights_key: operationalInsights.outputs.appInsightsInstrumentationKey
     functions_worker_runtime: 'dotnet-isolated'
     functions_extension_version: '~4'
     instance_name: name
+    app_insights_app_id: operationalInsights.outputs.appInsightsAppId
+    app_insights_key: operationalInsights.outputs.appInsightsInstrumentationKey
     client_secret: clientSecret
+    signal_r_connection_string: signalR.outputs.connectionString
     func_sas_url: storage.outputs.FuncSasUrl
     func_storage_resource_id: storage.outputs.FuncId
     fuzz_storage_resource_id: storage.outputs.FuzzId
