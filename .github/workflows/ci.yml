@@ -300,7 +300,7 @@ jobs:
 
   #       ../ci/disable-py-cache.sh
   #       mypy __app__ ./tests
-  service-net:
+  service:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
@@ -360,8 +360,8 @@ jobs:
         mv az-local.settings.json bin/Release/net7.0/local.settings.json
         cd bin/Release/net7.0/
         zip -r api-service.zip .
-        mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
-        cp api-service.zip ${GITHUB_WORKSPACE}/artifacts/service-net
+        mkdir -p ${GITHUB_WORKSPACE}/artifacts/service
+        cp api-service.zip ${GITHUB_WORKSPACE}/artifacts/service
     - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
@@ -503,7 +503,7 @@ jobs:
           cp artifacts/agent-Linux/onefuzz-task src/deployment/tools/linux/
 
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
-          cp artifacts/service-net/api-service.zip src/deployment
+          cp artifacts/service/api-service.zip src/deployment
           cp -r artifacts/third-party src/deployment
           echo $GITHUB_RUN_ID | tee src/deployment/.build.id
           echo $GITHUB_SHA | tee src/deployment/.sha
