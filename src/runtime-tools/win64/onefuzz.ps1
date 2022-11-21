@@ -6,7 +6,7 @@ $env:ONEFUZZ_ROOT = "C:\onefuzz"
 $env:ONEFUZZ_TOOLS = "C:\onefuzz\tools"
 $env:LLVM_SYMBOLIZER_PATH = "llvm-symbolizer"
 $env:RUST_LOG = "info"
-$env:DOTNET_VERSION = "7.0.100"
+$env:DOTNET_VERSIONS = "7.0.100;6.0.403"
 # Set a session and machine scoped env var
 $env:DOTNET_ROOT = "c:\onefuzz\tools\dotnet"
 [Environment]::SetEnvironmentVariable("DOTNET_ROOT", $env:DOTNET_ROOT, "Machine")
@@ -173,12 +173,16 @@ function Install-VCRedist {
   log "installing VC Redist: done"
 }
 
-function Install-Dotnet([string]$Version, [string]$InstallDir, [string]$ToolsDir) {
-  log "Installing dotnet to ${InstallDir}"
-  Invoke-WebRequest 'https://dot.net/v1/dotnet-install.ps1' -OutFile 'dotnet-install.ps1'
-  ./dotnet-install.ps1 -Version $Version -InstallDir $InstallDir
-  Remove-Item ./dotnet-install.ps1
-  log "Installing dotnet: done"
+function Install-Dotnet([string]$Versions, [string]$InstallDir, [string]$ToolsDir) {
+  $Versions -Split ';' | ForEach-Object {
+    $Version = $_
+    log "Installing dotnet $Version to ${InstallDir}"
+    Invoke-WebRequest 'https://dot.net/v1/dotnet-install.ps1' -OutFile 'dotnet-install.ps1'
+    ./dotnet-install.ps1 -Version $Version -InstallDir $InstallDir
+    Remove-Item ./dotnet-install.ps1
+    log "Installing dotnet $Version: done"
+  }
+
   log "Installing dotnet tools to ${ToolsDir}"
   Push-Location $InstallDir
   ./dotnet.exe tool install dotnet-dump --version 6.0.328102 --tool-path $ToolsDir
