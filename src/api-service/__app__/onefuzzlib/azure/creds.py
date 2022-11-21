@@ -80,6 +80,7 @@ def get_instance_name() -> str:
 def get_instance_url() -> str:
     return "https://%s.azurewebsites.net" % get_instance_name()
 
+
 @cached
 def get_agent_instance_url() -> str:
     return get_instance_url()
