@@ -1039,9 +1039,6 @@ class Run(Command):
         if test_id is None:
             test_id = uuid4()
         self.logger.info("launching test_id: %s", test_id)
-        self.logger.info(
-            "dotnet configuration: %s, %s", dotnet_endpoint, dotnet_functions
-        )
 
         def try_setup(data: Any) -> None:
             self.onefuzz.__setup__(
@@ -1049,8 +1046,6 @@ class Run(Command):
                 client_id=client_id,
                 client_secret=client_secret,
                 authority=authority,
-                _dotnet_endpoint=dotnet_endpoint,
-                _dotnet_functions=dotnet_functions,
             )
 
         retry(self.logger, try_setup, "trying to configure")
@@ -1081,8 +1076,6 @@ class Run(Command):
                 client_id=client_id,
                 client_secret=client_secret,
                 authority=authority,
-                _dotnet_endpoint=dotnet_endpoint,
-                _dotnet_functions=dotnet_functions,
             )
 
         retry(self.logger, try_setup, "trying to configure")
@@ -1153,8 +1146,6 @@ class Run(Command):
             poll=True,
             stop_on_complete_check=True,
             job_ids=job_ids,
-            dotnet_endpoint=dotnet_endpoint,
-            dotnet_functions=dotnet_functions,
         )
 
         if skip_repro:
@@ -1167,8 +1158,6 @@ class Run(Command):
                 client_id=client_id,
                 client_secret=client_secret,
                 job_ids=job_ids,
-                dotnet_endpoint=dotnet_endpoint,
-                dotnet_functions=dotnet_functions,
             )
 
     def test(
@@ -1198,8 +1187,6 @@ class Run(Command):
                     client_id=client_id,
                     client_secret=client_secret,
                     authority=authority,
-                    _dotnet_endpoint=dotnet_endpoint,
-                    _dotnet_functions=dotnet_functions,
                 )
 
             retry(self.logger, try_setup, "trying to configure")
@@ -1234,8 +1221,6 @@ class Run(Command):
                 client_id=client_id,
                 client_secret=client_secret,
                 authority=authority,
-                dotnet_endpoint=dotnet_endpoint,
-                dotnet_functions=dotnet_functions,
             )
         except Exception as e:
             self.logger.error("testing failed: %s", repr(e))
