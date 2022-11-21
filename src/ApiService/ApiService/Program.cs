@@ -64,7 +64,7 @@ public class Program {
             })
             .ConfigureServices((context, services) => {
                 services.AddAzureAppConfiguration();
-                var _ = services.AddFeatureManagement();
+                _ = services.AddFeatureManagement();
                 services.Configure<JsonSerializerOptions>(options => {
                     options = EntityConverter.GetJsonSerializerOptions();
                 });
