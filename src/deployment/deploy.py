@@ -689,7 +689,6 @@ class Client:
             "signedExpiry": {"value": expiry},
             "multi_tenant_domain": multi_tenant_domain,
             "workbookData": {"value": self.workbook_data},
-            "use_dotnet_agent_functions": {"value": self.use_dotnet_agent_functions},
             "enable_remote_debugging": {"value": self.host_dotnet_on_windows},
             "enable_profiler": {"value": self.enable_profiler},
         }
@@ -1149,8 +1148,6 @@ class Client:
                                 "publish",
                                 self.application_name + DOTNET_APPLICATION_SUFFIX,
                                 "--no-build",
-                                "--dotnet-version",
-                                "7.0",
                             ],
                             env=dict(os.environ, CLI_DEBUG="1"),
                             cwd=tmpdirname,
@@ -1255,7 +1252,7 @@ def main() -> None:
     parser.add_argument(
         "--app-zip",
         type=arg_file,
-        default="api-service.zip",
+        default="api-service-net.zip",
         help="(default: %(default)s)",
     )
     parser.add_argument(
