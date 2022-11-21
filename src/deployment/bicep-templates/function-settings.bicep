@@ -63,6 +63,5 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       ONEFUZZ_KEYVAULT: keyvault_name
       ONEFUZZ_OWNER: owner
       ONEFUZZ_CLIENT_SECRET: client_secret
-      ONEFUZZ_USE_DOTNET_AGENT_FUNCTIONS: '1'
   }, enable_profilers)
 }
