@@ -4,7 +4,6 @@
 # Licensed under the MIT License.
 
 import argparse
-import itertools
 import json
 import logging
 import os
