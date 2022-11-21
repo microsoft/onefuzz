@@ -301,6 +301,8 @@ jobs:
   #       ../ci/disable-py-cache.sh
   #       mypy __app__ ./tests
   service:
+    needs:
+    - onefuzztypes
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
