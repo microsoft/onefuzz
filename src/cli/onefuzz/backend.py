@@ -1,4 +1,4 @@
-f#!/usr/bin/env python
+#!/usr/bin/env python
 #
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
