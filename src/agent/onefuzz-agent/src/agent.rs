@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#![allow(clippy::too_many_arguments)]
 use anyhow::{Error, Result};
 use tokio::time;
 

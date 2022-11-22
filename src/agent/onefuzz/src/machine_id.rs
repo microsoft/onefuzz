@@ -28,9 +28,6 @@ const VM_NAME_URL: &str =
 const VM_SCALESET_NAME: &str =
 "http://169.254.169.254/metadata/instance/compute/vmScaleSetName?api-version=2020-06-01&format=text";
 
-const COMPUTE_METADATA_URL: &str =
-    "http://169.254.169.254/metadata/instance/compute?api-version=2020-06-01";
-
 impl MachineIdentity {
     pub async fn from_metadata() -> Result<Self> {
         let machine_id = Self::get_machine_id().await?;
