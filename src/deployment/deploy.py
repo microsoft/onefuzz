@@ -1237,7 +1237,7 @@ class Client:
                             "--name",
                             self.application_name,
                             "--resource-group",
-                            self.application_name,
+                            self.resource_group,
                             "--settings",
                         ]
                         + python_settings,
@@ -1254,7 +1254,7 @@ class Client:
                             "--name",
                             self.application_name + DOTNET_APPLICATION_SUFFIX,
                             "--resource-group",
-                            self.application_name,
+                            self.resource_group,
                             "--settings",
                         ]
                         + dotnet_settings,
