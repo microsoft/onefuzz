@@ -19,10 +19,10 @@ function log ($message) {
 }
 
 function Setup-Silent-Notification {
-   # https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/registry-entries-for-silent-process-exit
-   log "installing registry key for silent termination notification of onefuzz-agent"
-   reg import c:\onefuzz\tools\win64\onefuzz-silent-exit.reg
-   log "done importing registry key"
+  # https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/registry-entries-for-silent-process-exit
+  log "installing registry key for silent termination notification of onefuzz-agent"
+  reg import c:\onefuzz\tools\win64\onefuzz-silent-exit.reg
+  log "done importing registry key"
 }
 
 function Uninstall-OneDrive {
@@ -31,13 +31,13 @@ function Uninstall-OneDrive {
   Unregister-ScheduledTask -TaskName *OneDrive* -Confirm:$false
 
   if (Test-Path $env:windir\SysWOW64\OneDriveSetup.exe) {
-     log "uninstalling onedrive from syswow64"
-     Start-Process -FilePath $env:windir\SysWOW64\OneDriveSetup.exe -ArgumentList /uninstall
+    log "uninstalling onedrive from syswow64"
+    Start-Process -FilePath $env:windir\SysWOW64\OneDriveSetup.exe -ArgumentList /uninstall
   }
 
   if (Test-Path $env:windir\System32\OneDriveSetup.exe) {
-     log "uninstalling onedrive from system32"
-     Start-Process -FilePath $env:windir\System32\OneDriveSetup.exe -ArgumentList /uninstall
+    log "uninstalling onedrive from system32"
+    Start-Process -FilePath $env:windir\System32\OneDriveSetup.exe -ArgumentList /uninstall
   }
 }
 
@@ -185,9 +185,9 @@ function Install-Dotnet([string]$Versions, [string]$InstallDir, [string]$ToolsDi
 
   log "Installing dotnet tools to ${ToolsDir}"
   Push-Location $InstallDir
-  ./dotnet.exe tool install dotnet-dump --version 6.0.328102 --tool-path $ToolsDir
-  ./dotnet.exe tool install dotnet-coverage --version 17.3.6 --tool-path $ToolsDir
-  ./dotnet.exe tool install dotnet-sos --version 6.0.328102 --tool-path $ToolsDir
+  ./dotnet.exe tool install dotnet-dump --version 6.0.351802 --tool-path $ToolsDir
+  ./dotnet.exe tool install dotnet-coverage --version 17.5.0 --tool-path $ToolsDir
+  ./dotnet.exe tool install dotnet-sos --version 6.0.351802 --tool-path $ToolsDir
   Pop-Location
   log "Installing dotnet tools: done"
 }
