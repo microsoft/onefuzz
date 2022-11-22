@@ -253,8 +253,6 @@ jobs:
         name: build-artifacts
         path: artifacts
   service:
-    needs:
-    - onefuzztypes
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
