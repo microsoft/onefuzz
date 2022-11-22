@@ -42,29 +42,30 @@ public class AgentCanSchedule {
                 canScheduleRequest.MachineId.ToString());
         }
 
-        var allowed = true;
-        if (!await _context.NodeOperations.CanProcessNewWork(node)) {
-            allowed = false;
-        }
+
+        var canProcessNewWork = await _context.NodeOperations.CanProcessNewWork(node);
+        var allowed = canProcessNewWork.IsAllowed;
+        var reason = canProcessNewWork.Reason;
 
         var task = await _context.TaskOperations.GetByTaskId(canScheduleRequest.TaskId);
         var workStopped = task == null || task.State.ShuttingDown();
+        if (!allowed) {
+            _log.Info($"Node cannot process new work {node.PoolName:Tag:PoolName} {node.ScalesetId:Tag:ScalesetId} - {node.MachineId:Tag:MachineId} ");
+            return await RequestHandling.Ok(req, new CanSchedule(Allowed: allowed, WorkStopped: workStopped, Reason: reason));
+        }
+
         if (workStopped) {
             _log.Info($"Work stopped for: {canScheduleRequest.MachineId:Tag:MachineId} and {canScheduleRequest.TaskId:Tag:TaskId}");
             allowed = false;
+            reason = "Work stopped";
         }
 
-        if (allowed) {
-            var scp = await _context.NodeOperations.AcquireScaleInProtection(node);
-            if (!scp.IsOk) {
-                _log.Warning($"Failed to acquire scale in protection for: {node.MachineId:Tag:MachineId} in: {node.PoolName:Tag:PoolName} due to {scp.ErrorV:Tag:Error}");
-            }
-
-            _ = scp.OkV; // node could be updated but we don't use it after this
-
-            allowed = scp.IsOk;
+        var scp = await _context.NodeOperations.AcquireScaleInProtection(node);
+        if (!scp.IsOk) {
+            _log.Warning($"Failed to acquire scale in protection for: {node.MachineId:Tag:MachineId} in: {node.PoolName:Tag:PoolName} due to {scp.ErrorV:Tag:Error}");
         }
-
-        return await RequestHandling.Ok(req, new CanSchedule(Allowed: allowed, WorkStopped: workStopped));
+        _ = scp.OkV; // node could be updated but we don't use it after this
+        allowed = scp.IsOk;
+        return await RequestHandling.Ok(req, new CanSchedule(Allowed: allowed, WorkStopped: workStopped, Reason: reason));
     }
 }
