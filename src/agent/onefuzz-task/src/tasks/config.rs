@@ -10,7 +10,7 @@ use crate::tasks::{
     merge, regression, report,
 };
 use anyhow::Result;
-use onefuzz::machine_id::{get_machine_id, get_scaleset_name};
+use onefuzz::machine_id::MachineIdentity;
 use onefuzz_telemetry::{
     self as telemetry, Event::task_start, EventData, InstanceTelemetryKey, MicrosoftTelemetryKey,
     Role,
@@ -58,6 +58,8 @@ pub struct CommonConfig {
     /// Can be disabled by setting to 0.
     #[serde(default = "default_min_available_memory_mb")]
     pub min_available_memory_mb: u64,
+
+    pub machine_identity: MachineIdentity,
 }
 
 impl CommonConfig {
@@ -67,8 +69,15 @@ impl CommonConfig {
     ) -> Result<Option<TaskHeartbeatClient>> {
         match &self.heartbeat_queue {
             Some(url) => {
-                let hb = init_task_heartbeat(url.clone(), self.task_id, self.job_id, initial_delay)
-                    .await?;
+                let hb = init_task_heartbeat(
+                    url.clone(),
+                    self.task_id,
+                    self.job_id,
+                    initial_delay,
+                    self.machine_identity.machine_id,
+                    self.machine_identity.machine_name.clone(),
+                )
+                .await?;
                 Ok(Some(hb))
             }
             None => Ok(None),
@@ -215,13 +224,14 @@ impl Config {
     pub async fn run(self) -> Result<()> {
         telemetry::set_property(EventData::JobId(self.common().job_id));
         telemetry::set_property(EventData::TaskId(self.common().task_id));
-        telemetry::set_property(EventData::MachineId(get_machine_id().await?));
+        telemetry::set_property(EventData::MachineId(
+            self.common().machine_identity.machine_id,
+        ));
         telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
         telemetry::set_property(EventData::InstanceId(self.common().instance_id));
         telemetry::set_property(EventData::Role(Role::Agent));
 
-        let scaleset = get_scaleset_name().await?;
-        if let Some(scaleset_name) = &scaleset {
+        if let Some(scaleset_name) = &self.common().machine_identity.scaleset_name {
             telemetry::set_property(EventData::ScalesetId(scaleset_name.to_string()));
         }
 
