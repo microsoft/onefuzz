@@ -18,8 +18,9 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
-  ACTIONS_CACHE_KEY_DATE: 2022-10-28-01
+  ACTIONS_CACHE_KEY_DATE: 2022-11-21-02
   CI: true
+  DOTNET_VERSION: 7.0.x
 
 jobs:
   agent:
@@ -304,9 +305,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET Core SDK
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '6.0.300'
+        dotnet-version: ${{env.DOTNET_VERSION}}
+        dotnet-quality: 'ga'
     - name: Install dependencies
       run: |
         cd src/ApiService/
@@ -355,8 +357,8 @@ jobs:
       run: |
         ./src/ci/get-version.sh > src/deployment/VERSION
         cd src/ApiService/ApiService/
-        mv az-local.settings.json bin/Release/net6.0/local.settings.json
-        cd bin/Release/net6.0/
+        mv az-local.settings.json bin/Release/net7.0/local.settings.json
+        cd bin/Release/net7.0/
         zip -r api-service-net.zip .
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
         cp api-service-net.zip ${GITHUB_WORKSPACE}/artifacts/service-net
@@ -387,6 +389,11 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{env.DOTNET_VERSION}}
+        dotnet-quality: 'ga'
     - run: src/ci/dotnet-fuzzing-tools.sh
       shell: bash
     - uses: actions/upload-artifact@v3
@@ -397,6 +404,11 @@ jobs:
     runs-on: windows-2022
     steps:
     - uses: actions/checkout@v3
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{env.DOTNET_VERSION}}
+        dotnet-quality: 'ga'
     - run: src/ci/dotnet-fuzzing-tools.ps1
       shell: pwsh
     - uses: actions/upload-artifact@v3
@@ -563,7 +575,7 @@ jobs:
           cp -r libfuzzer-aarch64-crosscompile/fuzz.exe libfuzzer-aarch64-crosscompile/inputs artifacts/linux-libfuzzer-aarch64-crosscompile
 
           # C# target.
-          sudo apt-get install -y dotnet-sdk-6.0
+          sudo apt-get install -y dotnet-sdk-7.0
           (cd GoodBad; dotnet publish -c Release -o out)
           mv GoodBad/out artifacts/GoodBadDotnet
 
