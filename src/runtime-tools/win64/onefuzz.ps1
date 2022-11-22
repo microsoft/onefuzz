@@ -176,11 +176,11 @@ function Install-VCRedist {
 function Install-Dotnet([string]$Versions, [string]$InstallDir, [string]$ToolsDir) {
   $Versions -Split ';' | ForEach-Object {
     $Version = $_
-    log "Installing dotnet $Version to ${InstallDir}"
+    log "Installing dotnet ${Version} to ${InstallDir}"
     Invoke-WebRequest 'https://dot.net/v1/dotnet-install.ps1' -OutFile 'dotnet-install.ps1'
     ./dotnet-install.ps1 -Version $Version -InstallDir $InstallDir
     Remove-Item ./dotnet-install.ps1
-    log "Installing dotnet $Version: done"
+    log "Installing dotnet ${Version}: done"
   }
 
   log "Installing dotnet tools to ${ToolsDir}"
