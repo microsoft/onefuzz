@@ -1061,9 +1061,7 @@ class JobContainers(Endpoint):
     def list(
         self,
         job_id: UUID_EXPANSION,
-        container_type: Optional[
-            enums.ContainerType
-        ] = enums.ContainerType.unique_reports,
+        container_type: enums.ContainerType,
     ) -> Dict[str, List[str]]:
         """
         List the files for all of the containers of a given container type
@@ -1270,13 +1268,7 @@ class Pool(Endpoint):
         if pool.config is None:
             raise Exception("Missing AgentConfig in response")
 
-        config = pool.config
-        config.client_credentials = models.ClientCredentials(  # nosec - bandit consider this a hard coded password
-            client_id=pool.client_id,
-            client_secret="<client secret>",
-        )
-
-        return config
+        return pool.config
 
     def shutdown(self, name: str, *, now: bool = False) -> responses.BoolResult:
         expanded_name = self._disambiguate(

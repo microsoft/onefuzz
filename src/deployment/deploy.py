@@ -1161,6 +1161,8 @@ class Client:
                                 "publish",
                                 self.application_name + DOTNET_APPLICATION_SUFFIX,
                                 "--no-build",
+                                "--dotnet-version",
+                                "7.0",
                             ],
                             env=dict(os.environ, CLI_DEBUG="1"),
                             cwd=tmpdirname,
@@ -1235,7 +1237,7 @@ class Client:
                             "--name",
                             self.application_name,
                             "--resource-group",
-                            self.application_name,
+                            self.resource_group,
                             "--settings",
                         ]
                         + python_settings,
@@ -1252,7 +1254,7 @@ class Client:
                             "--name",
                             self.application_name + DOTNET_APPLICATION_SUFFIX,
                             "--resource-group",
-                            self.application_name,
+                            self.resource_group,
                             "--settings",
                         ]
                         + dotnet_settings,
