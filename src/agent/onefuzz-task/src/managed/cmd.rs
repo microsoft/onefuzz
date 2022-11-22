@@ -4,7 +4,6 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use onefuzz::machine_id::get_machine_id;
 use std::time::Duration;
 
 use crate::tasks::{
@@ -28,7 +27,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let check_oom = out_of_memory(min_available_memory_bytes);
 
     let common = config.common().clone();
-    let machine_id = get_machine_id().await?;
+    let machine_id = common.machine_identity.machine_id;
     let task_logger = if let Some(logs) = common.logs.clone() {
         let rx = onefuzz_telemetry::subscribe_to_events()?;
 

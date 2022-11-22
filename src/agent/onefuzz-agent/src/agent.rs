@@ -26,6 +26,7 @@ pub struct Agent {
     heartbeat: Option<AgentHeartbeatClient>,
     previous_state: NodeState,
     last_poll_command: Result<Option<NodeCommand>, PollCommandError>,
+    managed: bool,
 }
 
 impl Agent {
@@ -37,6 +38,7 @@ impl Agent {
         work_queue: Box<dyn IWorkQueue>,
         worker_runner: Box<dyn IWorkerRunner>,
         heartbeat: Option<AgentHeartbeatClient>,
+        managed: bool,
     ) -> Self {
         let scheduler = Some(scheduler);
         let previous_state = NodeState::Init;
@@ -52,6 +54,7 @@ impl Agent {
             heartbeat,
             previous_state,
             last_poll_command,
+            managed,
         }
     }
 
@@ -286,7 +289,8 @@ impl Agent {
             Ok(None) => {}
             Ok(Some(cmd)) => {
                 info!("agent received node command: {:?}", cmd);
-                self.scheduler()?.execute_command(cmd).await?;
+                let managed = self.managed;
+                self.scheduler()?.execute_command(cmd, managed).await?;
             }
             Err(PollCommandError::RequestFailed(err)) => {
                 // If we failed to request commands, this could be the service

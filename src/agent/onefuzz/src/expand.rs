@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::{machine_id::get_machine_id, sha256::digest_file_blocking};
+use crate::{machine_id::MachineIdentity, sha256::digest_file_blocking};
 use anyhow::{format_err, Context, Result};
 use onefuzz_telemetry::{InstanceTelemetryKey, MicrosoftTelemetryKey};
 use std::path::{Path, PathBuf};
@@ -89,16 +89,11 @@ impl PlaceHolder {
 
 pub struct Expand<'a> {
     values: HashMap<String, ExpandedValue<'a>>,
-}
-
-impl Default for Expand<'_> {
-    fn default() -> Self {
-        Self::new()
-    }
+    machine_identity: &'a MachineIdentity,
 }
 
 impl<'a> Expand<'a> {
-    pub fn new() -> Self {
+    pub fn new(machine_identity: &'a MachineIdentity) -> Self {
         let mut values = HashMap::new();
         values.insert(
             PlaceHolder::InputFileNameNoExt.get_string(),
@@ -113,12 +108,15 @@ impl<'a> Expand<'a> {
             ExpandedValue::Mapping(Box::new(Expand::input_file_sha256)),
         );
 
-        Self { values }
+        Self {
+            values,
+            machine_identity,
+        }
     }
 
     // Must be manually called to enable the use of async library code.
     pub async fn machine_id(self) -> Result<Expand<'a>> {
-        let id = get_machine_id().await?;
+        let id = self.machine_identity.machine_id;
         let value = id.to_string();
         Ok(self.set_value(PlaceHolder::MachineId, ExpandedValue::Scalar(value)))
     }
@@ -171,7 +169,10 @@ impl<'a> Expand<'a> {
     pub fn set_value(self, name: PlaceHolder, value: ExpandedValue<'a>) -> Self {
         let mut values = self.values;
         values.insert(name.get_string(), value);
-        Self { values }
+        Self {
+            values,
+            machine_identity: self.machine_identity,
+        }
     }
 
     pub fn set_optional_ref<'l, T: 'l>(
@@ -412,6 +413,8 @@ impl<'a> Expand<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::machine_id::MachineIdentity;
+
     use super::Expand;
     use anyhow::{Context, Result};
     use std::path::Path;
@@ -421,7 +424,7 @@ mod tests {
     fn test_expand_nested() -> Result<()> {
         let supervisor_options = vec!["{target_options}".to_string()];
         let target_options: Vec<_> = vec!["a", "b", "c"].iter().map(|p| p.to_string()).collect();
-        let result = Expand::new()
+        let result = Expand::new(&MachineIdentity::default())
             .target_options(&target_options)
             .evaluate(&supervisor_options)?;
         let expected = vec!["a b c"];
@@ -464,7 +467,7 @@ mod tests {
         let input_corpus_dir = "src";
         let generated_inputs_dir = "src";
 
-        let result = Expand::new()
+        let result = Expand::new(&MachineIdentity::default())
             .input_corpus(Path::new(input_corpus_dir))
             .generated_inputs(Path::new(generated_inputs_dir))
             .target_options(&my_options)
@@ -498,14 +501,16 @@ mod tests {
             ]
         );
 
-        assert!(Expand::new().evaluate(&my_args).is_err());
+        assert!(Expand::new(&MachineIdentity::default())
+            .evaluate(&my_args)
+            .is_err());
 
         Ok(())
     }
 
     #[test]
     fn test_expand_in_string() -> Result<()> {
-        let result = Expand::new()
+        let result = Expand::new(&MachineIdentity::default())
             .input_path("src/lib.rs")
             .evaluate_value("a {input} b")?;
         assert!(result.contains("lib.rs"));
@@ -514,10 +519,17 @@ mod tests {
 
     #[tokio::test]
     async fn test_expand_machine_id() -> Result<()> {
-        let expand = Expand::new().machine_id().await?;
+        let machine_id = Uuid::new_v4();
+        let expand = Expand::new(&MachineIdentity {
+            machine_id: machine_id,
+            ..Default::default()
+        })
+        .machine_id()
+        .await?;
         let expanded = expand.evaluate_value("{machine_id}")?;
         // Check that "{machine_id}" expands to a valid UUID, but don't worry about the actual value.
-        Uuid::parse_str(&expanded)?;
+        let expanded_machine_id = Uuid::parse_str(&expanded)?;
+        assert_eq!(expanded_machine_id, machine_id);
         Ok(())
     }
 }
