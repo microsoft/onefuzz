@@ -125,7 +125,7 @@ pub struct CanScheduleRequest {
     task_id: Uuid,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CanSchedule {
     /// If true, then the receiving node can schedule the work.
     /// Otherwise, the receiver should inspect `work_stopped`.
@@ -137,6 +137,9 @@ pub struct CanSchedule {
     /// No node in the pool may schedule the work, so the receiving node should
     /// claim (delete) and drop the work set.
     pub work_stopped: bool,
+
+    /// contains the reason why the work was stopped or not allowed.
+    pub reason: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]

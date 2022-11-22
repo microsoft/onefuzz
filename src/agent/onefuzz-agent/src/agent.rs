@@ -159,10 +159,14 @@ impl Agent {
                     }
                 }
             } else {
+                let reason = can_schedule.reason.map_or("".to_string(), |r| r);
                 // We cannot schedule the work set. Depending on why, we want to either drop the work
                 // (because it is no longer valid for anyone) or do nothing (because our version is out
                 // of date, and we want another node to pick it up).
-                warn!("unable to schedule work set: {:?}", msg.work_set);
+                warn!(
+                    "unable to schedule work set: {:?}, Reason {}",
+                    msg.work_set, reason
+                );
 
                 // If `work_stopped`, the work set is not valid for any node, and we should drop it for the
                 // entire pool by claiming but not executing it.
