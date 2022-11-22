@@ -174,8 +174,8 @@ module eventGrid 'bicep-templates/event-grid.bicep' = {
 }
 
 // try to make role assignments to deploy as late as possible in order to have principalId ready
-resource roleAssigmentsPy 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
-  name: guid('${resourceGroup().id}${r.suffix}-cs')
+resource roleAssignments 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
+  name: guid('${resourceGroup().id}${r.suffix}-onefuzz')
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${r.role}'
     principalId: function.outputs.principalId
@@ -188,8 +188,8 @@ resource roleAssigmentsPy 'Microsoft.Authorization/roleAssignments@2020-10-01-pr
 }]
 
 // try to make role assignments to deploy as late as possible in order to have principalId ready
-resource roleAssigmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
-  name: guid('${resourceGroup().id}${r.suffix}-net')
+resource roleAssignmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
+  name: guid('${resourceGroup().id}${r.suffix}-onefuzz-net')
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${r.role}'
     principalId: netFunction.outputs.principalId
@@ -204,7 +204,7 @@ resource roleAssigmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-p
 
 // try to make role assignments to deploy as late as possible in order to have principalId ready
 resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
-  name: guid('${resourceGroup().id}-user_managed_idenity_read_blob-cs')
+  name: guid('${resourceGroup().id}-user_managed_idenity_read_blob')
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${StorageBlobDataReader}'
     principalId: reference(scalesetIdentity.id, scalesetIdentity.apiVersion, 'Full').properties.principalId
