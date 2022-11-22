@@ -59,7 +59,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
 
         if (await IsAgent(tokenResult.OkV) && !allowAgent) {
 
-        return await Reject(req, token);
+            return await Reject(req, token);
         }
 
         return await method(req);
