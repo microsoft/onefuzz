@@ -252,54 +252,6 @@ jobs:
       with:
         name: build-artifacts
         path: artifacts
-  # service:
-  #   needs:
-  #   - onefuzztypes
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #   - uses: actions/checkout@v3
-  #   - run: src/ci/set-versions.sh
-  #   - uses: actions/setup-python@v4
-  #     with:
-  #       python-version: 3.8
-  #   - uses: actions/download-artifact@v3
-  #     with:
-  #       name: build-artifacts
-  #       path: artifacts
-  #   - name: Build Service
-  #     run: |
-  #       cd src/api-service/__app__
-  #       echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
-  #       echo ${GITHUB_SHA} | tee onefuzzlib/git.version
-  #       python -m pip install --upgrade pip
-  #       pip install --target="./.python_packages/lib/site-packages" -r ./requirements.txt ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
-  #       zip -r api-service-py.zip .
-  #       mkdir -p ${GITHUB_WORKSPACE}/artifacts/service
-  #       cp api-service-py.zip ${GITHUB_WORKSPACE}/artifacts/service
-  #   - uses: actions/upload-artifact@v3
-  #     with:
-  #       name: build-artifacts
-  #       path: artifacts
-  #   - name: lint
-  #     run: |
-  #       cd src/api-service
-  #       rm -rf __app__/.python_packages
-  #       python -m pip install --upgrade pip
-  #       pip install ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
-  #       pip install -r __app__/requirements.txt
-  #       pip install -r requirements-dev.txt
-  #       pytest tests
-  #       flake8 .
-  #       bandit -r ./__app__/
-  #       black ./__app__/ ./tests --check
-  #       isort --profile black ./__app__/ ./tests --check
-  #       mypy __app__ ./tests
-
-  #       # set a minimum confidence to ignore known false positives
-  #       vulture --min-confidence 61 __app__
-
-  #       ../ci/disable-py-cache.sh
-  #       mypy __app__ ./tests
   service:
     needs:
     - onefuzztypes
