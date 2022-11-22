@@ -53,7 +53,13 @@ async fn main() -> Result<()> {
     }
 
     let env = Default::default();
-    let tester = Tester::new(&setup_dir, &opt.exe, &target_options, &env, MachineIdentity::default());
+    let tester = Tester::new(
+        &setup_dir,
+        &opt.exe,
+        &target_options,
+        &env,
+        MachineIdentity::default(),
+    );
 
     let check_debugger = !opt.no_check_debugger;
     let tester = tester
