@@ -27,12 +27,18 @@ pub async fn collect_exception_info(
         }
     };
 
-    let exception = dump.exception().await?;
+    let exception = dump.exception().await;
 
     // Remove temp dir cooperatively.
     spawn_blocking(move || tmp_dir).await?;
 
-    Ok(exception)
+    match exception {
+        Ok(r) => Ok(Some(r)),
+        Err(e) => {
+            error!("unable to extract exception info: {}", e);
+            Ok(None)
+        }
+    }
 }
 
 const DUMP_FILE_NAME: &str = "tmp.dmp";
@@ -97,12 +103,10 @@ impl DotnetDumpFile {
         Self { path }
     }
 
-    pub async fn exception(&self) -> Result<Option<DotnetExceptionInfo>> {
+    pub async fn exception(&self) -> Result<DotnetExceptionInfo> {
         let output = self.exec_sos_command(SOS_PRINT_EXCEPTION).await?;
         let text = String::from_utf8_lossy(&output.stdout);
-        let exception = parse_sos_print_exception_output(&text).ok();
-
-        Ok(exception)
+        parse_sos_print_exception_output(&text)
     }
 
     async fn exec_sos_command(&self, sos_cmd: &str) -> Result<Output> {
