@@ -205,7 +205,7 @@ jobs:
         set -ex
         cd contrib/deploy-onefuzz-via-azure-devops
         python -m pip install --upgrade pip
-        python -m pip install tox pipenv==2022.11.11
+        python -m pip install tox pipenv==2022.11.5
         tox
   onefuzztypes:
     runs-on: ubuntu-20.04
