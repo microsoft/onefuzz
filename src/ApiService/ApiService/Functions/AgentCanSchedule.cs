@@ -56,8 +56,7 @@ public class AgentCanSchedule {
 
         if (workStopped) {
             _log.Info($"Work stopped for: {canScheduleRequest.MachineId:Tag:MachineId} and {canScheduleRequest.TaskId:Tag:TaskId}");
-            allowed = false;
-            reason = "Work stopped";
+            return await RequestHandling.Ok(req, new CanSchedule(Allowed: false, WorkStopped: workStopped, Reason: "Work stopped"));
         }
 
         var scp = await _context.NodeOperations.AcquireScaleInProtection(node);
