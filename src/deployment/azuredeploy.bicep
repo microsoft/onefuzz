@@ -233,7 +233,7 @@ module function 'bicep-templates/function.bicep' = {
     owner: owner
     server_farm_id: serverFarm.outputs.id
 
-    use_windows: enable_remote_debugging
+    use_windows: true
     enable_remote_debugging: enable_remote_debugging
   }
 }
@@ -254,7 +254,7 @@ module netFunction 'bicep-templates/function.bicep' = {
     owner: owner
     server_farm_id: serverFarm.outputs.id
 
-    use_windows: enable_remote_debugging
+    use_windows: true
     enable_remote_debugging: enable_remote_debugging
   }
 }
