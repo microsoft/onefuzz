@@ -81,7 +81,7 @@ module serverFarm 'bicep-templates/server-farms.bicep' = {
     server_farm_name: name
     owner: owner
     location: location
-    use_windows: enable_remote_debugging
+    use_windows: true
   }
 }
 
