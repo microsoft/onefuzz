@@ -192,7 +192,7 @@ jobs:
         black webhook --check
         isort --profile black webhook
         flake8 webhook
-  deploy-onefuzz-via-azure-devops:
+  python-safety:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
