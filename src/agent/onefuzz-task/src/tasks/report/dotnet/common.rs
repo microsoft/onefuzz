@@ -212,7 +212,8 @@ pub fn parse_sos_print_exception_output(text: &str) -> Result<DotnetExceptionInf
         }
     }
 
-    let exception = exception.ok_or_else(|| format_err!("missing exception type"))?;
+    let exception =
+        exception.ok_or_else(|| format_err!("missing exception type, output was:\n{}", text))?;
     let message = message.ok_or_else(|| format_err!("missing exception message"))?;
 
     let inner_exception = inner_exception.ok_or_else(|| format_err!("missing inner exception"))?;
