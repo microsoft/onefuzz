@@ -171,7 +171,7 @@ impl AsanProcessor {
             format_err!("unable to sha256 digest input file: {}", input.display())
         })?;
 
-        let job_id = self.config.common.task_id;
+        let job_id = self.config.common.job_id;
         let task_id = self.config.common.task_id;
 
         let target_exe = self.target_exe().await?;
