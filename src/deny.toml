@@ -17,6 +17,8 @@ yanked = "deny"
 ignore = [
     "RUSTSEC-2022-0048", # xml-rs is unmaintained
     "RUSTSEC-2021-0139", # ansi_term is unmaintained
+    "RUSTSEC-2021-0145", # atty bug: we are unaffected (no custom allocator)
+]
 ]
 
 [bans]
