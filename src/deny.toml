@@ -19,7 +19,6 @@ ignore = [
     "RUSTSEC-2021-0139", # ansi_term is unmaintained
     "RUSTSEC-2021-0145", # atty bug: we are unaffected (no custom allocator)
 ]
-]
 
 [bans]
 

@@ -445,6 +445,7 @@ mod tests {
             options.clone(),
             env.clone(),
             &temp_setup_dir.path(),
+            MachineIdentity::default(),
         );
 
         // verify catching bad exits with -help=1
@@ -473,6 +474,7 @@ mod tests {
             options.clone(),
             env.clone(),
             &temp_setup_dir.path(),
+            MachineIdentity::default(),
         );
         // verify good exits with -help=1
         assert!(
