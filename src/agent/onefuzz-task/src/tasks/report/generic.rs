@@ -10,7 +10,9 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use onefuzz::{blob::BlobUrl, input_tester::Tester, sha256, syncdir::SyncedDir};
+use onefuzz::{
+    blob::BlobUrl, input_tester::Tester, machine_id::MachineIdentity, sha256, syncdir::SyncedDir,
+};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -118,6 +120,7 @@ pub struct TestInputArgs<'a> {
     pub check_asan_log: bool,
     pub check_debugger: bool,
     pub minimized_stack_depth: Option<usize>,
+    pub machine_identity: MachineIdentity,
 }
 
 pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
@@ -126,6 +129,7 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
         args.target_exe,
         args.target_options,
         args.target_env,
+        args.machine_identity.clone(),
     )
     .check_asan_log(args.check_asan_log)
     .check_debugger(args.check_debugger)
@@ -211,6 +215,7 @@ impl<'a> GenericReportProcessor<'a> {
             check_asan_log: self.config.check_asan_log,
             check_debugger: self.config.check_debugger,
             minimized_stack_depth: self.config.minimized_stack_depth,
+            machine_identity: self.config.common.machine_identity.clone(),
         };
         test_input(args).await.context("test input failed")
     }
