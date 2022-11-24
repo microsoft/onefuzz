@@ -30,8 +30,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
     private readonly IOnefuzzContext _context;
     private readonly ILogTracer _log;
     private readonly GraphServiceClient _graphClient;
-
-    private static readonly HashSet<string> AgentRoles = new HashSet<string> { "UnmamagedNode", "ManagedNode" };
+    private static readonly HashSet<string> AgentRoles = new HashSet<string> { "UnmanagedNode", "ManagedNode" };
 
     public EndpointAuthorization(IOnefuzzContext context, ILogTracer log, GraphServiceClient graphClient) {
         _context = context;
@@ -46,10 +45,10 @@ public class EndpointAuthorization : IEndpointAuthorization {
             return await _context.RequestHandling.NotOk(req, tokenResult.ErrorV, "token verification", HttpStatusCode.Unauthorized);
         }
 
-        var token = tokenResult.OkV;
-        if (await IsUser(token)) {
+        var token = tokenResult.OkV.UserInfo;
+        if (await IsUser(tokenResult.OkV)) {
             if (!allowUser) {
-                return await Reject(req, tokenResult.OkV.UserInfo);
+                return await Reject(req, token);
             }
 
             var access = await CheckAccess(req);
@@ -58,8 +57,8 @@ public class EndpointAuthorization : IEndpointAuthorization {
             }
         }
 
-        if (await IsAgent(token) && !allowAgent) {
-            return await Reject(req, tokenResult.OkV.UserInfo);
+        if (await IsAgent(tokenResult.OkV) && !allowAgent) {
+            return await Reject(req, token);
         }
 
         return await method(req);
@@ -201,7 +200,9 @@ public class EndpointAuthorization : IEndpointAuthorization {
             }
 
             var principalId = await _context.Creds.GetScalesetPrincipalId();
-            return principalId == tokenData.ObjectId;
+            if (principalId == tokenData.ObjectId) {
+                return true;
+            }
         }
 
         if (!tokenData.ApplicationId.HasValue) {

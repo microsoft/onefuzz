@@ -2,11 +2,10 @@ param server_farm_name string
 param owner string
 param location string
 param use_windows bool
-param create bool
 
 var kind = (use_windows) ? 'app' : 'linux'
 
-resource serverFarms 'Microsoft.Web/serverfarms@2022-03-01' = if (create) {
+resource serverFarms 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: server_farm_name
   location: location
   kind: kind

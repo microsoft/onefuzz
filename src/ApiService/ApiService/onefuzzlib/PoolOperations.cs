@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
-using Azure.Data.Tables;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {
@@ -89,7 +88,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
     }
 
     public IAsyncEnumerable<Pool> GetByClientId(Guid clientId) {
-        return QueryAsync(filter: TableClient.CreateQueryFilter($"client_id eq {clientId}"));
+        return QueryAsync(filter: $"client_id eq '{clientId}'");
     }
 
     public string GetPoolQueue(Guid poolId)

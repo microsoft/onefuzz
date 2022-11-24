@@ -146,9 +146,8 @@ public record ProxyConfig
     Guid? ProxyId,
     List<Forward> Forwards,
     string InstanceTelemetryKey,
-    string MicrosoftTelemetryKey,
+    string? MicrosoftTelemetryKey,
     Guid InstanceId
-
 );
 
 public record Proxy
@@ -679,10 +678,9 @@ public record AgentConfig(
     string? InstanceTelemetryKey,
     string? MicrosoftTelemetryKey,
     string? MultiTenantDomain,
-    Guid InstanceId
+    Guid InstanceId,
+    bool? Managed = true
 );
-
-
 
 
 public record Vm(

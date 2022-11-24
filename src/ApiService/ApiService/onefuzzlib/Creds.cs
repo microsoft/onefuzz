@@ -106,8 +106,7 @@ public sealed class Creds : ICreds {
     }
 
     public Uri GetInstanceUrl()
-        // TODO: remove -net when promoted to main version
-        => new($"https://{GetInstanceName()}-net.azurewebsites.net");
+        => new($"https://{GetInstanceName()}.azurewebsites.net");
 
     public record ScaleSetIdentity(string principalId);
 

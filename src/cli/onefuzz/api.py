@@ -1061,9 +1061,7 @@ class JobContainers(Endpoint):
     def list(
         self,
         job_id: UUID_EXPANSION,
-        container_type: Optional[
-            enums.ContainerType
-        ] = enums.ContainerType.unique_reports,
+        container_type: enums.ContainerType,
     ) -> Dict[str, List[str]]:
         """
         List the files for all of the containers of a given container type
@@ -1270,13 +1268,7 @@ class Pool(Endpoint):
         if pool.config is None:
             raise Exception("Missing AgentConfig in response")
 
-        config = pool.config
-        config.client_credentials = models.ClientCredentials(  # nosec - bandit consider this a hard coded password
-            client_id=pool.client_id,
-            client_secret="<client secret>",
-        )
-
-        return config
+        return pool.config
 
     def shutdown(self, name: str, *, now: bool = False) -> responses.BoolResult:
         expanded_name = self._disambiguate(
@@ -1798,8 +1790,6 @@ class Onefuzz:
         client_secret: Optional[str] = None,
         authority: Optional[str] = None,
         tenant_domain: Optional[str] = None,
-        _dotnet_endpoint: Optional[str] = None,
-        _dotnet_functions: Optional[List[str]] = None,
     ) -> None:
 
         if endpoint:
@@ -1812,10 +1802,6 @@ class Onefuzz:
             self._backend.client_secret = client_secret
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
-        if _dotnet_endpoint is not None:
-            self._backend.config.dotnet_endpoint = _dotnet_endpoint
-        if _dotnet_functions is not None:
-            self._backend.config.dotnet_functions = _dotnet_functions
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates._load_cache()
@@ -1859,8 +1845,6 @@ class Onefuzz:
         client_id: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
         tenant_domain: Optional[str] = None,
-        _dotnet_endpoint: Optional[str] = None,
-        _dotnet_functions: Optional[List[str]] = None,
         reset: Optional[bool] = None,
     ) -> BackendConfig:
         """Configure onefuzz CLI"""
@@ -1891,10 +1875,6 @@ class Onefuzz:
             self._backend.enable_feature(enable_feature.name)
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
-        if _dotnet_endpoint is not None:
-            self._backend.config.dotnet_endpoint = _dotnet_endpoint
-        if _dotnet_functions is not None:
-            self._backend.config.dotnet_functions = _dotnet_functions
         self._backend.app = None
         self._backend.save_config()
 
