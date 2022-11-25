@@ -99,23 +99,24 @@ public abstract class NotificationsBase {
         // implementation doesn't have that so I'm trying to match it.
         // We should probably propagate any errors up 
         public async Async.Task<string> Render(string templateString, Uri instanceUrl, bool enableJinjaAdapter = true) {
-            // This would be a great starting point for feature flags 👀
             if (enableJinjaAdapter) {
                 templateString = JinjaTemplateAdapter.IsJinjaTemplate(templateString) ? JinjaTemplateAdapter.AdaptForScriban(templateString) : templateString;
             }
+
             var template = Template.Parse(templateString);
             if (template != null) {
-                return await template.RenderAsync(new {
-                    Report = this._report,
-                    Task = this._taskConfig,
-                    Job = this._jobConfig,
-                    ReportUrl = this._reportUrl,
-                    InputUrl = _inputUrl,
-                    TargetUrl = _targetUrl,
-                    ReportContainer = _container,
-                    ReportFilename = _filename,
-                    ReproCmd = $"onefuzz --endpoint {instanceUrl} repro create_and_connect {_container} {_filename}"
-                });
+                return await template.RenderAsync(new TemplateRenderContext
+                (
+                    this._report,
+                    this._taskConfig,
+                    this._jobConfig,
+                    this._reportUrl,
+                    _inputUrl,
+                    _targetUrl,
+                    _container,
+                    _filename,
+                    $"onefuzz --endpoint {instanceUrl} repro create_and_connect {_container} {_filename}"
+                ));
             }
             return string.Empty;
         }

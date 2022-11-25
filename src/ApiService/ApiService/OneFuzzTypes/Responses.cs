@@ -183,3 +183,8 @@ public record ProxyInfo(
 public record ProxyList(
     List<ProxyInfo> Proxies
 );
+
+public record TemplateValidationResponse(
+    string RenderedTemplate,
+    TemplateRenderContext AvailableContext
+) : BaseResponse();

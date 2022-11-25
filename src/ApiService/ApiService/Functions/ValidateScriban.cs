@@ -1,5 +1,4 @@
-using System.Net;
-using Microsoft.Azure.Functions.Worker;
+﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
 namespace Microsoft.OneFuzz.Service.Functions;
@@ -13,9 +12,43 @@ public class ValidateScriban {
     }
 
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
-        var targetUrl = "https://example.com/targetUrl";
-        var inputUrl = "https://example.com/inputUrl";
-        var reportUrl = "https://example.com/reportUrl";
+        var request = await RequestHandling.ParseRequest<TemplateValidationPost>(req);
+        if (!request.IsOk) {
+            return await _context.RequestHandling.NotOk(req, request.ErrorV, "ValidateTemplate");
+        }
+
+        var instanceUrl = _context.ServiceConfiguration.OneFuzzInstance!;
+
+        var (renderer, templateRenderContext) = await GenerateTemplateRenderContext(request.OkV.Context);
+
+        var renderedTemaplate = await renderer.Render(request.OkV.Template, new Uri(instanceUrl), enableJinjaAdapter: false);
+
+        var response = new TemplateValidationResponse(
+            renderedTemaplate,
+            templateRenderContext
+        );
+
+        return await RequestHandling.Ok(req, response);
+    }
+
+    [Function("ValidateScriban")]
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "POST")] HttpRequestData req) {
+        return req.Method switch {
+            "POST" => Post(req),
+            _ => throw new InvalidOperationException("Unsupported HTTP method"),
+        };
+    }
+
+    private async Async.Task<(NotificationsBase.Renderer, TemplateRenderContext)> GenerateTemplateRenderContext(TemplateRenderContext? templateRenderContext) {
+        if (templateRenderContext != null) {
+            _log.Info($"Using the request's TemplateRenderContext");
+        } else {
+            _log.Info($"Generating TemplateRenderContext");
+        }
+
+        var targetUrl = templateRenderContext?.TargetUrl ?? new Uri("https://example.com/targetUrl");
+        var inputUrl = templateRenderContext?.InputUrl ?? new Uri("https://example.com/inputUrl");
+        var reportUrl = templateRenderContext?.ReportUrl ?? new Uri("https://example.com/reportUrl");
         var executable = "target.exe";
         var crashType = "some crash type";
         var crashSite = "some crash site";
@@ -29,16 +62,18 @@ public class ValidateScriban {
         var taskId = Guid.NewGuid();
         var jobId = Guid.NewGuid();
         var taskState = TaskState.Running;
+        var jobState = JobState.Enabled;
         var os = Os.Linux;
         var taskType = TaskType.LibfuzzerFuzz;
         var duration = 100;
-
-        var renderer = await NotificationsBase.Renderer.ConstructRenderer(
-            _context,
-            Container.Parse("exampleContainerName"),
-            "example file name",
-            new Report(
-                inputUrl,
+        var project = "some project";
+        var jobName = "job name";
+        var buildName = "build name";
+        var reportContainer = templateRenderContext?.ReportContainer ?? Container.Parse("example-container-name");
+        var reportFileName = templateRenderContext?.ReportFilename ?? "example file name";
+        var reproCmd = templateRenderContext?.ReproCmd ?? "onefuzz command to create a repro";
+        var report = templateRenderContext?.Report ?? new Report(
+                inputUrl.ToString(),
                 null,
                 executable,
                 crashType,
@@ -57,34 +92,59 @@ public class ValidateScriban {
                 null,
                 null,
                 null
-            ),
-            new Task(
+            );
+
+        var task = new Task(
                 jobId,
                 taskId,
                 taskState,
                 os,
-                new TaskConfig(
+                templateRenderContext?.Task ?? new TaskConfig(
                     jobId,
                     null,
-                    new TaskDetails()
+                    new TaskDetails(
+                        taskType,
+                        duration
+                    )
                 )
-            ),
-            new Job(
-                ...
-            ),
-            new Uri(targetUrl),
-            new Uri(inputUrl),
-            new Uri(reportUrl)
+            );
+
+        var job = new Job(
+                jobId,
+                jobState,
+                templateRenderContext?.Job ?? new JobConfig(
+                    project,
+                    jobName,
+                    buildName,
+                    duration,
+                    null
+                )
+            );
+
+        var renderer = await NotificationsBase.Renderer.ConstructRenderer(
+            _context,
+            reportContainer,
+            reportFileName,
+            report,
+            task,
+            job,
+            targetUrl,
+            inputUrl,
+            reportUrl
         );
 
-        // return await renderer.Render()
-    }
+        templateRenderContext ??= new TemplateRenderContext(
+            report,
+            task.Config,
+            job.Config,
+            reportUrl,
+            inputUrl,
+            targetUrl,
+            reportContainer,
+            reportFileName,
+            reproCmd
+        );
 
-    [Function("ValidateScriban")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "POST")] HttpRequestData req) {
-        return req.Method switch {
-            "POST" => Post(req),
-            _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        };
+        return (renderer, templateRenderContext);
     }
 }

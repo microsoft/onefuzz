@@ -306,3 +306,7 @@ public record AgentRegistrationPost(
     [property: Required] string Version = "1.0.0"
 ) : BaseRequest;
 
+public record TemplateValidationPost(
+    [property: Required] string Template,
+    TemplateRenderContext? Context
+) : BaseRequest;
