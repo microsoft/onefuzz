@@ -1,6 +1,6 @@
-﻿using System.Net;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
@@ -70,9 +70,17 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         var client = new Request(httpClient);
         _logTracer.Info($"{messageLog.WebhookId:Tag:WebhookId} - {data}");
         using var response = await client.Post(url: webhook.Url, json: data, headers: headers);
-        if (response.StatusCode == HttpStatusCode.Accepted) {
+        if (response.IsSuccessStatusCode) {
+            _logTracer.Info($"Successfully sent webhook: {messageLog.WebhookId:Tag:WebhookId}");
             return true;
         }
+
+        _logTracer
+            .WithTags(new List<(string, string)> {
+                ("StatusCode", response.StatusCode.ToString()),
+                ("Content", await response.Content.ReadAsStringAsync())
+            })
+            .Info($"Webhook not successful");
 
         return false;
     }
@@ -99,10 +107,9 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         }
 
         string? digest = null;
-        var hmac = HMAC.Create("HMACSHA512");
-        if (secretToken != null && hmac != null) {
-            hmac.Key = System.Text.Encoding.UTF8.GetBytes(secretToken);
-            digest = Convert.ToHexString(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(data)));
+        if (secretToken is not null) {
+            using var hmac = new HMACSHA512(Encoding.UTF8.GetBytes(secretToken));
+            digest = Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(data)));
         }
         return new Tuple<string, string?>(data, digest);
 

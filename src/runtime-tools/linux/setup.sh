@@ -12,7 +12,7 @@ USER_SETUP="/onefuzz/setup/setup.sh"
 TASK_SETUP="/onefuzz/bin/task-setup.sh"
 MANAGED_SETUP="/onefuzz/bin/managed.sh"
 SCALESET_SETUP="/onefuzz/bin/scaleset-setup.sh"
-DOTNET_VERSION="6.0.300"
+DOTNET_VERSION="7.0.100"
 export DOTNET_ROOT=/onefuzz/tools/dotnet
 export DOTNET_CLI_HOME="$DOTNET_ROOT"
 export ONEFUZZ_ROOT=/onefuzz
@@ -110,7 +110,14 @@ fi
 chmod -R a+rx /onefuzz/tools/linux
 
 if type apt > /dev/null 2> /dev/null; then
+    
+    # Install updated Microsoft Open Management Infrastructure - github.com/microsoft/omi
+    curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc 2>&1 | logger -s -i -t 'onefuzz-OMI-add-MS-repo-key'
+    sudo apt-add-repository https://packages.microsoft.com/ubuntu/20.04/prod 2>&1 | logger -s -i -t 'onefuzz-OMI-add-MS-repo'
     sudo apt update
+    sleep 10
+    sudo apt-get install -y omi=1.6.10.2 2>&1 | logger -s -i -t 'onefuzz-OMI-install'
+
     until sudo apt install -y gdb gdbserver; do
         echo "apt failed.  sleep 10s, then retrying"
         sleep 10

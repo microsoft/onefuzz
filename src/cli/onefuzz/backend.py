@@ -32,6 +32,7 @@ import msal
 import requests
 from azure.storage.blob import ContainerClient
 from pydantic import BaseModel, Field
+from requests import Response
 from tenacity import RetryCallState, retry
 from tenacity.retry import retry_if_exception_type
 from tenacity.stop import stop_after_attempt
@@ -41,9 +42,12 @@ from .azcopy import azcopy_copy, azcopy_sync
 
 _ACCESSTOKENCACHE_UMASK = 0o077
 
-ONEFUZZ_BASE_PATH = os.path.join("~", ".cache", "onefuzz")
+VIRTUAL_ENV = os.environ.get("VIRTUAL_ENV")
+HOME_PATH = VIRTUAL_ENV if VIRTUAL_ENV else "~"
+ONEFUZZ_CACHE = os.path.join(".cache", "onefuzz")
+ONEFUZZ_BASE_PATH = os.path.join(HOME_PATH, ONEFUZZ_CACHE)
 DEFAULT_CONFIG_PATH = os.path.join(ONEFUZZ_BASE_PATH, "config.json")
-DEFAULT_TOKEN_PATH = os.path.join(ONEFUZZ_BASE_PATH, "access_token.json")
+DEFAULT_TOKEN_PATH = os.path.join("~", ONEFUZZ_CACHE, "access_token.json")
 REQUEST_CONNECT_TIMEOUT = 30.0
 REQUEST_READ_TIMEOUT = 120.0
 
@@ -92,8 +96,6 @@ class BackendConfig(BaseModel):
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
     tenant_domain: Optional[str]
-    dotnet_endpoint: Optional[str]
-    dotnet_functions: Optional[List[str]]
 
 
 class Backend:
@@ -110,7 +112,7 @@ class Backend:
         self.config = config
         self.token_cache: Optional[msal.SerializableTokenCache] = None
         self.init_cache()
-        self.app: Optional[Any] = None
+        self.app: Optional[msal.ClientApplication] = None
         self.token_expires = 0
         self.load_config()
         self.session = requests.Session()
@@ -130,6 +132,7 @@ class Backend:
             self.config = BackendConfig.parse_obj(data)
 
     def save_config(self) -> None:
+        os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
         with open(self.config_path, "w") as handle:
             handle.write(self.config.json(indent=4, exclude_none=True))
 
@@ -192,7 +195,7 @@ class Backend:
         if self.client_secret:
             return self.access_token_from_client_secret(scopes)
 
-        return self.device_login(scopes)
+        return self.do_login(scopes)
 
     def access_token_from_client_secret(self, scopes: List[str]) -> Any:
         if not self.app:
@@ -224,14 +227,16 @@ class Backend:
             )
         return result
 
-    def device_login(self, scopes: List[str]) -> Any:
+    def do_login(self, scopes: List[str]) -> Any:
         if not self.app:
             self.app = msal.PublicClientApplication(
                 self.config.client_id,
                 authority=self.config.authority,
                 token_cache=self.token_cache,
+                allow_broker=True,
             )
 
+        access_token = None
         for scope in scopes:
             accounts = self.app.get_accounts()
             if accounts:
@@ -243,26 +248,38 @@ class Backend:
 
         for scope in scopes:
             LOGGER.info("Attempting interactive device login")
-            print("Please login", flush=True)
+            try:
+                access_token = self.app.acquire_token_interactive(
+                    scopes=[scope],
+                    parent_window_handle=msal.PublicClientApplication.CONSOLE_WINDOW_HANDLE,
+                )
+                check_msal_error(access_token, ["access_token"])
+            except KeyboardInterrupt:
+                result = input(
+                    "\nInteractive login cancelled. Use device login (Y/n)? "
+                )
+                if result == "" or result.startswith("y") or result.startswith("Y"):
+                    print("Falling back to device flow, please sign in:", flush=True)
+                    flow = self.app.initiate_device_flow(scopes=[scope])
 
-            flow = self.app.initiate_device_flow(scopes=[scope])
+                    check_msal_error(flow, ["user_code", "message"])
+                    # setting the expiration time to allow us to retry the interactive login with a new scope
+                    flow["expires_at"] = int(time.time()) + 90  # 90 seconds from now
+                    print(flow["message"], flush=True)
 
-            check_msal_error(flow, ["user_code", "message"])
-            # setting the expiration time to allow us to retry the interactive login with a new scope
-            flow["expires_at"] = int(time.time()) + 90  # 90 seconds from now
-            print(flow["message"], flush=True)
-
-            access_token = self.app.acquire_token_by_device_flow(flow)
-            # AADSTS70016: OAuth 2.0 device flow error. Authorization is pending
-            # this happens when the intractive login request times out. This heppens when the login
-            # fails because of a scope mismatch.
-            if (
-                "error" in access_token
-                and "AADSTS70016" in access_token["error_description"]
-            ):
-                LOGGER.warning(f"failed to get access token with scope {scope}")
-                continue
-            check_msal_error(access_token, ["access_token"])
+                    access_token = self.app.acquire_token_by_device_flow(flow)
+                    # AADSTS70016: OAuth 2.0 device flow error. Authorization is pending
+                    # this happens when the intractive login request times out. This heppens when the login
+                    # fails because of a scope mismatch.
+                    if (
+                        "error" in access_token
+                        and "AADSTS70016" in access_token["error_description"]
+                    ):
+                        LOGGER.warning(f"failed to get access token with scope {scope}")
+                        continue
+                    check_msal_error(access_token, ["access_token"])
+                else:
+                    continue
 
             LOGGER.info("Interactive device authentication succeeded")
             print("Login succeeded", flush=True)
@@ -281,11 +298,8 @@ class Backend:
         json_data: Optional[Any] = None,
         params: Optional[Any] = None,
         _retry_on_auth_failure: bool = True,
-    ) -> Any:
-        if self.config.dotnet_functions and path in self.config.dotnet_functions:
-            endpoint = self.config.dotnet_endpoint
-        else:
-            endpoint = self.config.endpoint
+    ) -> Response:
+        endpoint = self.config.endpoint
 
         if not endpoint:
             raise Exception("endpoint not configured")
@@ -345,7 +359,7 @@ class Backend:
                 "request did not succeed: HTTP %s - %s"
                 % (response.status_code, error_text)
             )
-        return response.json()
+        return response
 
 
 def before_sleep(retry_state: RetryCallState) -> None:

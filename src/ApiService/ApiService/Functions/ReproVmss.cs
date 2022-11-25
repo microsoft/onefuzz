@@ -73,7 +73,7 @@ public class ReproVmss {
             Path: create.Path,
             Duration: create.Duration);
 
-        var vm = await _context.ReproOperations.Create(cfg, userInfo.OkV);
+        var vm = await _context.ReproOperations.Create(cfg, userInfo.OkV.UserInfo);
         if (!vm.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
@@ -114,7 +114,7 @@ public class ReproVmss {
         var updatedRepro = vm with { State = VmState.Stopping };
         var r = await _context.ReproOperations.Replace(updatedRepro);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV!).Error($"Failed to replace repro {updatedRepro.VmId:Tag:VmId}");
+            _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace repro {updatedRepro.VmId:Tag:VmId}");
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);

@@ -99,8 +99,15 @@ public record Node
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? InitializedAt = null,
     NodeState State = NodeState.Init,
+    Os? Os = null,
+
+    // InstanceId is always numeric, but the APIs
+    // deal with it as a string, so we keep it as
+    // a string internally.
+    string? InstanceId = null,
 
     Guid? ScalesetId = null,
+
     bool ReimageRequested = false,
     bool DeleteRequested = false,
     bool DebugKeepNode = false
@@ -139,9 +146,8 @@ public record ProxyConfig
     Guid? ProxyId,
     List<Forward> Forwards,
     string InstanceTelemetryKey,
-    string MicrosoftTelemetryKey,
+    string? MicrosoftTelemetryKey,
     Guid InstanceId
-
 );
 
 public record Proxy
@@ -165,7 +171,8 @@ public record Error(ErrorCode Code, string[]? Errors = null) {
     }
 };
 
-public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn);
+public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn) {
+}
 
 public record TaskDetails(
     TaskType Type,
@@ -333,7 +340,7 @@ public record InstanceConfig
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions,
     string DefaultWindowsVmImage = "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
-    string DefaultLinuxVmImage = "Canonical:UbuntuServer:18.04-LTS:latest",
+    string DefaultLinuxVmImage = "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
     string ProxyVmSku = "Standard_B2s",
     bool RequireAdminPrivileges = false,
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
@@ -349,7 +356,7 @@ public record InstanceConfig
         new NetworkSecurityGroupConfig(),
         null,
         "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
-        "Canonical:UbuntuServer:18.04-LTS:latest",
+        "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
         "Standard_B2s",
         false
         ) { }
@@ -671,10 +678,9 @@ public record AgentConfig(
     string? InstanceTelemetryKey,
     string? MicrosoftTelemetryKey,
     string? MultiTenantDomain,
-    Guid InstanceId
+    Guid InstanceId,
+    bool? Managed = true
 );
-
-
 
 
 public record Vm(

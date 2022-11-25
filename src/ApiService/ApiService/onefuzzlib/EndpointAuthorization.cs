@@ -6,6 +6,7 @@ using Microsoft.Graph;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IEndpointAuthorization {
+
     Async.Task<HttpResponseData> CallIfAgent(
         HttpRequestData req,
         Func<HttpRequestData, Async.Task<HttpResponseData>> method)
@@ -29,6 +30,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
     private readonly IOnefuzzContext _context;
     private readonly ILogTracer _log;
     private readonly GraphServiceClient _graphClient;
+    private static readonly HashSet<string> AgentRoles = new HashSet<string> { "UnmanagedNode", "ManagedNode" };
 
     public EndpointAuthorization(IOnefuzzContext context, ILogTracer log, GraphServiceClient graphClient) {
         _context = context;
@@ -43,8 +45,8 @@ public class EndpointAuthorization : IEndpointAuthorization {
             return await _context.RequestHandling.NotOk(req, tokenResult.ErrorV, "token verification", HttpStatusCode.Unauthorized);
         }
 
-        var token = tokenResult.OkV;
-        if (await IsUser(token)) {
+        var token = tokenResult.OkV.UserInfo;
+        if (await IsUser(tokenResult.OkV)) {
             if (!allowUser) {
                 return await Reject(req, token);
             }
@@ -55,14 +57,14 @@ public class EndpointAuthorization : IEndpointAuthorization {
             }
         }
 
-        if (await IsAgent(token) && !allowAgent) {
+        if (await IsAgent(tokenResult.OkV) && !allowAgent) {
             return await Reject(req, token);
         }
 
         return await method(req);
     }
 
-    public async Async.Task<bool> IsUser(UserInfo tokenData) {
+    public async Async.Task<bool> IsUser(UserAuthInfo tokenData) {
         return !await IsAgent(tokenData);
     }
 
@@ -94,7 +96,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
                 Errors: new string[] { "no instance configuration found " });
         }
 
-        return CheckRequireAdminsImpl(config, tokenResult.OkV);
+        return CheckRequireAdminsImpl(config, tokenResult.OkV.UserInfo);
     }
 
     private static OneFuzzResultVoid CheckRequireAdminsImpl(InstanceConfig config, UserInfo userInfo) {
@@ -184,7 +186,13 @@ public class EndpointAuthorization : IEndpointAuthorization {
         return null;
     }
 
-    public async Async.Task<bool> IsAgent(UserInfo tokenData) {
+    public async Async.Task<bool> IsAgent(UserAuthInfo authInfo) {
+        if (!AgentRoles.Overlaps(authInfo.Roles)) {
+            return false;
+        }
+
+        var tokenData = authInfo.UserInfo;
+
         if (tokenData.ObjectId != null) {
             var scalesets = _context.ScalesetOperations.GetByObjectId(tokenData.ObjectId.Value);
             if (await scalesets.AnyAsync()) {
@@ -192,7 +200,9 @@ public class EndpointAuthorization : IEndpointAuthorization {
             }
 
             var principalId = await _context.Creds.GetScalesetPrincipalId();
-            return principalId == tokenData.ObjectId;
+            if (principalId == tokenData.ObjectId) {
+                return true;
+            }
         }
 
         if (!tokenData.ApplicationId.HasValue) {

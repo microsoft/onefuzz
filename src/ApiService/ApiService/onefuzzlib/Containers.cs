@@ -1,8 +1,11 @@
-﻿using System.Threading;
+﻿using System.IO;
+using System.IO.Compression;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
 
 namespace Microsoft.OneFuzz.Service;
@@ -31,6 +34,7 @@ public interface IContainers {
     public Async.Task<Dictionary<Container, IDictionary<string, string>>> GetContainers(StorageType corpus);
 
     public string AuthDownloadUrl(Container container, string filename);
+    public Async.Task<OneFuzzResultVoid> DownloadAsZip(Container container, StorageType storageType, Stream stream, string? prefix = null);
 }
 
 public class Containers : IContainers {
@@ -212,17 +216,17 @@ public class Containers : IContainers {
     }
 
     public async Task<Dictionary<Container, IDictionary<string, string>>> GetContainers(StorageType corpus) {
-        var accounts = _storage.GetAccounts(corpus);
-        IEnumerable<IEnumerable<KeyValuePair<Container, IDictionary<string, string>>>> data =
-         await Async.Task.WhenAll(accounts.Select(async acc => {
-             var service = await _storage.GetBlobServiceClientForAccount(acc);
-             return await service
-                .GetBlobContainersAsync(BlobContainerTraits.Metadata)
-                .Select(container => KeyValuePair.Create(Container.Parse(container.Name), container.Properties.Metadata))
-                .ToListAsync();
-         }));
+        var result = new Dictionary<Container, IDictionary<string, string>>();
 
-        return new(data.SelectMany(x => x));
+        // same container name can exist in multiple accounts; here the last one wins
+        foreach (var account in _storage.GetAccounts(corpus)) {
+            var service = await _storage.GetBlobServiceClientForAccount(account);
+            await foreach (var container in service.GetBlobContainersAsync(BlobContainerTraits.Metadata)) {
+                result[Container.Parse(container.Name)] = container.Properties.Metadata;
+            }
+        }
+
+        return result;
     }
 
     public string AuthDownloadUrl(Container container, string filename) {
@@ -233,5 +237,22 @@ public class Containers : IContainers {
         queryString.Add("filename", filename);
 
         return $"{instance}/api/download?{queryString}";
+    }
+
+    public async Async.Task<OneFuzzResultVoid> DownloadAsZip(Container container, StorageType storageType, Stream stream, string? prefix = null) {
+        var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container} - {storageType}");
+        var blobs = client.GetBlobs(prefix: prefix);
+
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Create, true);
+        await foreach (var b in blobs.ToAsyncEnumerable()) {
+            var entry = archive.CreateEntry(b.Name);
+            await using var entryStream = entry.Open();
+            var blobClient = client.GetBlockBlobClient(b.Name);
+            var downloadResult = await blobClient.DownloadToAsync(entryStream);
+            if (downloadResult.IsError) {
+                return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_DOWNLOAD_FILE, $"Error while downloading blob {b.Name}");
+            }
+        }
+        return OneFuzzResultVoid.Ok;
     }
 }

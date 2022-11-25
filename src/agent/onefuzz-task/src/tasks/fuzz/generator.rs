@@ -102,6 +102,7 @@ impl GeneratorTask {
             &target_exe,
             &self.config.target_options,
             &self.config.target_env,
+            self.config.common.machine_identity.clone(),
         )
         .check_asan_log(self.config.check_asan_log)
         .check_debugger(self.config.check_debugger)
@@ -163,7 +164,7 @@ impl GeneratorTask {
     ) -> Result<()> {
         utils::reset_tmp_dir(&output_dir).await?;
         let (mut generator, generator_path) = {
-            let expand = Expand::new()
+            let expand = Expand::new(&self.config.common.machine_identity)
                 .machine_id()
                 .await?
                 .setup_dir(&self.config.common.setup_dir)

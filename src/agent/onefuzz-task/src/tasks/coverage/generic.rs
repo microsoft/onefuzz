@@ -36,7 +36,7 @@ const COVERAGE_FILE: &str = "coverage.json";
 const SOURCE_COVERAGE_FILE: &str = "source-coverage.json";
 const MODULE_CACHE_FILE: &str = "module-cache.json";
 
-const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(5);
+const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(120);
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -288,7 +288,7 @@ impl<'a> TaskContext<'a> {
             try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
                 .await?;
 
-        let expand = Expand::new()
+        let expand = Expand::new(&self.config.common.machine_identity)
             .machine_id()
             .await?
             .input_path(input)

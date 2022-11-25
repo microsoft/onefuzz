@@ -339,6 +339,7 @@ class AgentConfig(BaseModel):
     microsoft_telemetry_key: Optional[str]
     multi_tenant_domain: Optional[str]
     instance_id: UUID
+    managed: Optional[bool] = Field(default=True)
 
 
 class TaskUnitConfig(BaseModel):
@@ -890,7 +891,7 @@ class InstanceConfig(BaseModel):
         default="MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest"
     )
     default_linux_vm_image: str = Field(
-        default="Canonical:UbuntuServer:18.04-LTS:latest"
+        default="Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest"
     )
     proxy_vm_sku: str = Field(default="Standard_B2s")
     api_access_rules: Optional[Dict[Endpoint, ApiAccessRule]] = None

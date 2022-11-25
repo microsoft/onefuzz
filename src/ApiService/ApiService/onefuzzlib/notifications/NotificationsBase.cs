@@ -1,4 +1,5 @@
-﻿using Scriban;
+﻿using System.IO;
+using Scriban;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -53,7 +54,8 @@ public abstract class NotificationsBase {
 
             if (targetUrl == null) {
                 var setupContainer = Scheduler.GetSetupContainer(checkedTask.Config);
-                targetUrl = new Uri(context.Containers.AuthDownloadUrl(setupContainer, ReplaceFirstSetup(report.Executable)));
+                var exeName = Path.GetFileName(ReplaceFirstSetup(report.Executable));
+                targetUrl = new Uri(context.Containers.AuthDownloadUrl(setupContainer, exeName));
             }
 
             if (reportUrl == null) {

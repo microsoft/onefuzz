@@ -86,6 +86,7 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
             options,
             env,
             &config.common.setup_dir,
+            config.common.machine_identity.clone(),
         ))
     }
 

@@ -66,7 +66,7 @@ where
     /// entry. Returns `true` if inserted, `false` otherwise.
     pub fn insert(&mut self, region: R) -> bool {
         if let Some(existing) = self.find(region.base()) {
-            log::error!(
+            log::debug!(
                 "existing region contains start of new region: {:x?}",
                 existing
             );
@@ -74,7 +74,7 @@ where
         }
 
         if let Some(existing) = self.find(region.last()) {
-            log::error!(
+            log::debug!(
                 "existing region contains end of new region: {:x?}",
                 existing
             );

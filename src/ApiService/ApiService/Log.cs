@@ -1,9 +1,9 @@
 ﻿using System.Diagnostics;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Extensibility;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -64,58 +64,61 @@ public interface ILog {
 class AppInsights : ILog {
     private readonly TelemetryClient _telemetryClient;
 
-    public AppInsights(TelemetryConfiguration config) {
-        _telemetryClient = new TelemetryClient(config);
+    public AppInsights(TelemetryClient client) {
+        _telemetryClient = client;
+    }
+
+    private static void Copy<K, V>(IDictionary<K, V> target, IReadOnlyDictionary<K, V>? source) {
+        if (source is not null) {
+            foreach (var kvp in source) {
+                target[kvp.Key] = kvp.Value;
+            }
+        }
     }
 
     public void Log(Guid correlationId, LogStringHandler message, SeverityLevel level, IReadOnlyDictionary<string, string> tags, string? caller) {
-        Dictionary<string, string> copyTags = new(tags);
-        copyTags["CorrelationId"] = correlationId.ToString();
-        if (message.Tags is not null) {
-            foreach (var kv in message.Tags) {
-                copyTags[kv.Key] = kv.Value;
-            }
-        }
+        var telemetry = new TraceTelemetry(message.ToString(), level);
 
-        if (caller is not null) copyTags["CalledBy"] = caller;
-        _telemetryClient.TrackTrace(message.ToString(), level, copyTags);
+        // copy properties
+        Copy(telemetry.Properties, tags);
+        telemetry.Properties["CorrelationId"] = correlationId.ToString();
+        if (caller is not null) telemetry.Properties["CalledBy"] = caller;
+        Copy(telemetry.Properties, message.Tags);
+
+        _telemetryClient.TrackTrace(telemetry);
     }
 
     public void LogEvent(Guid correlationId, LogStringHandler evt, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller) {
-        Dictionary<string, string> copyTags = new(tags);
-        copyTags["CorrelationId"] = correlationId.ToString();
-        if (caller is not null) copyTags["CalledBy"] = caller;
+        var telemetry = new EventTelemetry(evt.ToString());
 
-        if (evt.Tags is not null) {
-            foreach (var kv in evt.Tags) {
-                copyTags[kv.Key] = kv.Value;
-            }
-        }
+        // copy properties
+        Copy(telemetry.Properties, tags);
+        telemetry.Properties["CorrelationId"] = correlationId.ToString();
+        if (caller is not null) telemetry.Properties["CalledBy"] = caller;
+        Copy(telemetry.Properties, evt.Tags);
 
-        Dictionary<string, double>? copyMetrics = null;
-        if (metrics is not null) {
-            copyMetrics = new(metrics);
-        }
+        // copy metrics
+        Copy(telemetry.Metrics, metrics);
 
-        _telemetryClient.TrackEvent(evt.ToString(), properties: copyTags, metrics: copyMetrics);
+        _telemetryClient.TrackEvent(telemetry);
     }
 
     public void LogException(Guid correlationId, Exception ex, LogStringHandler message, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller) {
-        Dictionary<string, string> copyTags = new(tags);
-        copyTags["CorrelationId"] = correlationId.ToString();
-        if (caller is not null) copyTags["CalledBy"] = caller;
+        {
+            var telemetry = new ExceptionTelemetry(ex);
 
-        if (message.Tags is not null) {
-            foreach (var kv in message.Tags) {
-                copyTags[kv.Key] = kv.Value;
-            }
+            // copy properties
+            Copy(telemetry.Properties, tags);
+            telemetry.Properties["CorrelationId"] = correlationId.ToString();
+            if (caller is not null) telemetry.Properties["CalledBy"] = caller;
+            Copy(telemetry.Properties, message.Tags);
+
+            // copy metrics
+            Copy(telemetry.Metrics, metrics);
+
+            _telemetryClient.TrackException(telemetry);
         }
 
-        Dictionary<string, double>? copyMetrics = null;
-        if (metrics is not null) {
-            copyMetrics = new(metrics);
-        }
-        _telemetryClient.TrackException(ex, copyTags, copyMetrics);
         Log(correlationId, $"[{message}] {ex.Message}", SeverityLevel.Error, tags, caller);
     }
 
@@ -188,7 +191,7 @@ public interface ILogTracer {
 
     ILogTracer WithTag(string k, string v);
     ILogTracer WithTags(IEnumerable<(string, string)>? tags);
-    ILogTracer WithHttpStatus((int, string) status);
+    ILogTracer WithHttpStatus((HttpStatusCode Status, string Reason) result);
 }
 
 internal interface ILogTracerInternal : ILogTracer {
@@ -252,8 +255,12 @@ public class LogTracer : ILogTracerInternal {
         return WithTags(new[] { (k, v) });
     }
 
-    public ILogTracer WithHttpStatus((int, string) status) {
-        (string, string)[] tags = { ("StatusCode", status.Item1.ToString()), ("ReasonPhrase", status.Item2) };
+    public ILogTracer WithHttpStatus((HttpStatusCode Status, string Reason) result) {
+        (string, string)[] tags = {
+            ("StatusCode", ((int)result.Status).ToString()),
+            ("ReasonPhrase", result.Reason),
+        };
+
         return WithTags(tags);
     }
 
@@ -361,12 +368,12 @@ public interface ILogSinks {
 public class LogSinks : ILogSinks {
     private readonly List<ILog> _loggers;
 
-    public LogSinks(IServiceConfig config, TelemetryConfiguration telemetryConfiguration) {
+    public LogSinks(IServiceConfig config, TelemetryClient telemetryClient) {
         _loggers = new List<ILog>();
         foreach (var dest in config.LogDestinations) {
             _loggers.Add(
                 dest switch {
-                    LogDestination.AppInsights => new AppInsights(telemetryConfiguration),
+                    LogDestination.AppInsights => new AppInsights(telemetryClient),
                     LogDestination.Console => new Console(),
                     _ => throw new Exception($"Unhandled Log Destination type: {dest}"),
                 }

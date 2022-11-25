@@ -20,12 +20,15 @@ mkdir $ARTIFACTS/sharpfuzz
 git clone $SHARPFUZZ_REPO sharpfuzz
 pushd sharpfuzz
 git checkout $SHARPFUZZ_COMMIT
+# TODO(dotnet): Update dotnet framework to 7.0 when SharpFuzz supports it
 dotnet publish src/SharpFuzz.CommandLine -f net6.0 -c Release -o $ARTIFACTS/sharpfuzz --self-contained -r win10-x64
+if ($LASTEXITCODE -ne 0) { throw "dotnet publish exited with $LASTEXITCODE" }
 popd
 
 # Build SharpFuzz and our dynamic loader harness for `libfuzzer-dotnet`.
 pushd src/agent/LibFuzzerDotnetLoader
 dotnet publish . -c Release -o $ARTIFACTS/LibFuzzerDotnetLoader --sc -r win10-x64
+if ($LASTEXITCODE -ne 0) { throw "dotnet publish exited with $LASTEXITCODE" }
 popd
 
 # Build `libfuzzer-dotnet`.
@@ -33,6 +36,7 @@ git clone $LIBFUZZER_DOTNET_REPO
 pushd libfuzzer-dotnet
 git checkout $LIBFUZZER_DOTNET_COMMIT
 clang -g -O2 -fsanitize=fuzzer libfuzzer-dotnet-windows.cc -o libfuzzer-dotnet.exe
+if ($LASTEXITCODE -ne 0) { throw "clang exited with $LASTEXITCODE" }
 cp libfuzzer-dotnet.exe $ARTIFACTS/libfuzzer-dotnet
 cp libfuzzer-dotnet.pdb $ARTIFACTS/libfuzzer-dotnet
 popd
