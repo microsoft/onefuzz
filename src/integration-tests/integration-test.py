@@ -988,16 +988,12 @@ class Run(Command):
         poll: bool = False,
         stop_on_complete_check: bool = False,
         job_ids: List[UUID] = [],
-        dotnet_endpoint: Optional[str] = None,
-        dotnet_functions: Optional[List[str]] = None,
     ) -> None:
         self.onefuzz.__setup__(
             endpoint=endpoint,
             client_id=client_id,
             client_secret=client_secret,
             authority=authority,
-            _dotnet_endpoint=dotnet_endpoint,
-            _dotnet_functions=dotnet_functions,
         )
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
         result = tester.check_jobs(
@@ -1015,16 +1011,12 @@ class Run(Command):
         client_secret: Optional[str],
         authority: Optional[str] = None,
         job_ids: List[UUID] = [],
-        dotnet_endpoint: Optional[str] = None,
-        dotnet_functions: Optional[List[str]] = None,
     ) -> None:
         self.onefuzz.__setup__(
             endpoint=endpoint,
             client_id=client_id,
             client_secret=client_secret,
             authority=authority,
-            _dotnet_endpoint=dotnet_endpoint,
-            _dotnet_functions=dotnet_functions,
         )
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
         launch_result, repros = tester.launch_repro(job_ids=job_ids)
@@ -1043,15 +1035,10 @@ class Run(Command):
         region: Optional[Region] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
         test_id: Optional[UUID] = None,
-        dotnet_endpoint: Optional[str] = None,
-        dotnet_functions: Optional[List[str]] = None,
     ) -> None:
         if test_id is None:
             test_id = uuid4()
         self.logger.info("launching test_id: %s", test_id)
-        self.logger.info(
-            "dotnet configuration: %s, %s", dotnet_endpoint, dotnet_functions
-        )
 
         def try_setup(data: Any) -> None:
             self.onefuzz.__setup__(
@@ -1059,8 +1046,6 @@ class Run(Command):
                 client_id=client_id,
                 client_secret=client_secret,
                 authority=authority,
-                _dotnet_endpoint=dotnet_endpoint,
-                _dotnet_functions=dotnet_functions,
             )
 
         retry(self.logger, try_setup, "trying to configure")
@@ -1080,8 +1065,6 @@ class Run(Command):
         targets: List[str] = list(TARGETS.keys()),
         test_id: Optional[UUID] = None,
         duration: int = 1,
-        dotnet_endpoint: Optional[str] = None,
-        dotnet_functions: Optional[List[str]] = None,
     ) -> None:
         if test_id is None:
             test_id = uuid4()
@@ -1093,8 +1076,6 @@ class Run(Command):
                 client_id=client_id,
                 client_secret=client_secret,
                 authority=authority,
-                _dotnet_endpoint=dotnet_endpoint,
-                _dotnet_functions=dotnet_functions,
             )
 
         retry(self.logger, try_setup, "trying to configure")
@@ -1116,16 +1097,12 @@ class Run(Command):
         authority: Optional[str],
         client_id: Optional[str],
         client_secret: Optional[str],
-        dotnet_endpoint: Optional[str] = None,
-        dotnet_functions: Optional[List[str]] = None,
     ) -> None:
         self.onefuzz.__setup__(
             endpoint=endpoint,
             client_id=client_id,
             client_secret=client_secret,
             authority=authority,
-            _dotnet_endpoint=dotnet_endpoint,
-            _dotnet_functions=dotnet_functions,
         )
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id=test_id)
         tester.cleanup()
@@ -1138,16 +1115,12 @@ class Run(Command):
         authority: Optional[str] = None,
         client_id: Optional[str],
         client_secret: Optional[str],
-        dotnet_endpoint: Optional[str] = None,
-        dotnet_functions: Optional[List[str]] = None,
     ) -> None:
         self.onefuzz.__setup__(
             endpoint=endpoint,
             client_id=client_id,
             client_secret=client_secret,
             authority=authority,
-            _dotnet_endpoint=dotnet_endpoint,
-            _dotnet_functions=dotnet_functions,
         )
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id=test_id)
         tester.check_logs_for_errors()
@@ -1162,8 +1135,6 @@ class Run(Command):
         skip_repro: bool = False,
         test_id: UUID,
         job_ids: List[UUID] = [],
-        dotnet_endpoint: Optional[str] = None,
-        dotnet_functions: Optional[List[str]] = None,
     ) -> None:
 
         self.check_jobs(
@@ -1175,8 +1146,6 @@ class Run(Command):
             poll=True,
             stop_on_complete_check=True,
             job_ids=job_ids,
-            dotnet_endpoint=dotnet_endpoint,
-            dotnet_functions=dotnet_functions,
         )
 
         if skip_repro:
@@ -1189,8 +1158,6 @@ class Run(Command):
                 client_id=client_id,
                 client_secret=client_secret,
                 job_ids=job_ids,
-                dotnet_endpoint=dotnet_endpoint,
-                dotnet_functions=dotnet_functions,
             )
 
     def test(
@@ -1207,8 +1174,6 @@ class Run(Command):
         targets: List[str] = list(TARGETS.keys()),
         skip_repro: bool = False,
         duration: int = 1,
-        dotnet_endpoint: Optional[str] = None,
-        dotnet_functions: Optional[List[str]] = None,
     ) -> None:
         success = True
 
@@ -1222,8 +1187,6 @@ class Run(Command):
                     client_id=client_id,
                     client_secret=client_secret,
                     authority=authority,
-                    _dotnet_endpoint=dotnet_endpoint,
-                    _dotnet_functions=dotnet_functions,
                 )
 
             retry(self.logger, try_setup, "trying to configure")
@@ -1258,8 +1221,6 @@ class Run(Command):
                 client_id=client_id,
                 client_secret=client_secret,
                 authority=authority,
-                dotnet_endpoint=dotnet_endpoint,
-                dotnet_functions=dotnet_functions,
             )
         except Exception as e:
             self.logger.error("testing failed: %s", repr(e))

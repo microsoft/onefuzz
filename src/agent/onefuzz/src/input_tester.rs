@@ -7,6 +7,7 @@ use crate::{
     asan::{add_asan_log_env, check_asan_path, check_asan_string},
     env::{get_path_with_directory, update_path, LD_LIBRARY_PATH, PATH},
     expand::Expand,
+    machine_id::MachineIdentity,
     process::run_cmd,
 };
 use anyhow::{Context, Error, Result};
@@ -36,6 +37,7 @@ pub struct Tester<'a> {
     check_retry_count: u64,
     add_setup_to_ld_library_path: bool,
     add_setup_to_path: bool,
+    machine_identity: MachineIdentity,
 }
 
 #[derive(Debug)]
@@ -57,6 +59,7 @@ impl<'a> Tester<'a> {
         exe_path: &'a Path,
         arguments: &'a [String],
         environ: &'a HashMap<String, String>,
+        machine_identity: MachineIdentity,
     ) -> Self {
         Self {
             setup_dir,
@@ -70,6 +73,7 @@ impl<'a> Tester<'a> {
             check_retry_count: 0,
             add_setup_to_ld_library_path: false,
             add_setup_to_path: false,
+            machine_identity,
         }
     }
 
@@ -289,7 +293,7 @@ impl<'a> Tester<'a> {
         };
 
         let (argv, env) = {
-            let expand = Expand::new()
+            let expand = Expand::new(&self.machine_identity)
                 .machine_id()
                 .await?
                 .input_path(input_file)
