@@ -51,9 +51,14 @@ public class TimerWorkers {
         await foreach (var pool in pools) {
             var instanceId = $"{pool.Name}-{pool.PoolId}";
             try {
-                _ = await durableClient.Client.ScheduleNewPoolStateOrchestratorInstanceAsync(
-                    instanceId,
-                    JsonSerializer.SerializeToElement(new PoolKey(pool.Name.ToString(), pool.PoolId.ToString())));
+                var existing = await durableClient.Client.GetInstanceMetadataAsync(instanceId, getInputsAndOutputs: false);
+                if (existing is null
+                || (existing.RuntimeStatus != OrchestrationRuntimeStatus.Running
+                    && existing.RuntimeStatus != OrchestrationRuntimeStatus.Pending)) {
+                    _ = await durableClient.Client.ScheduleNewPoolStateOrchestratorInstanceAsync(
+                        instanceId,
+                        JsonSerializer.SerializeToElement(new PoolKey(pool.Name.ToString(), pool.PoolId.ToString())));
+                }
             } catch (Exception ex) {
                 _log.Exception(ex, $"Error triggering pool-state processing for ${instanceId}");
             }
