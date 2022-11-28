@@ -32,7 +32,7 @@ Version 6.0 will convert jinja templates on-the-fly for a short period of time. 
 * CLI: Make the `--container_type` parameter required when using the `containers` command. [#2631](https://github.com/microsoft/onefuzz/pull/2631)
 * Service: Improve logging around notification failures. [#2653](https://github.com/microsoft/onefuzz/pull/2653)
 ### Fixed
-* Service: Notification Template `targetUrl` parameter fix. [#2625](https://github.com/microsoft/onefuzz/pull/2625)
+* Service: Notification Template `targetUrl` parameter fix. Only use the filename instead of the absolute path in the URL. The makes the links created in ADO bugs work as expected. [#2625](https://github.com/microsoft/onefuzz/pull/2625)
 * CLI: Fixed SignalR client code not reading responses correctly. [#2626](https://github.com/microsoft/onefuzz/pull/2626)
 * Service: Fix a logic bug in the notification hook. [#2627](https://github.com/microsoft/onefuzz/pull/2627)
 * Service: Bug fixes related to the unmanaged nodes. [#2632](https://github.com/microsoft/onefuzz/pull/2632)
