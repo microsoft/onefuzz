@@ -6,7 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 6.0.0
 ### NOTICE 
-SERVICE: Deployment enables refactored C# App Function. [#2650](https://github.com/microsoft/onefuzz/pull/2650)
 
 SERVICE ENGINEERS: If you currently run an instance of OneFuzz you will need to follow the below instructions to manually upgrade. 
 1. BEFORE running the deployment script over your existing instance, DELETE BOTH Azure App Functions AND the Azure App Service Plan. 
