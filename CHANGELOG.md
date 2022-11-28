@@ -21,7 +21,6 @@ With this release we are moving from jinja templates to [scriban](https://github
 
 Version 6.0 will convert jinja templates on-the-fly for a short period of time. We do **_not_** guarantee that this will be successful for all jinja template options. These on-the-fly conversions are not persisted in the notifications table in this release. They will be in a following release. This will allow time for conversions of templates that are not handled by the current automatic conversion process. 
 
-2. Once they are deleted, run the deployment scripts. This will deploy TWO DOTNET Azure App Functions. This will allow existing OneFuzz Agents (& jobs) to continue without failure. A subsequent release will remove the old `-net` App Function. 
 
 ### Added
 * Agent: Making machine identity a parameter of the agent config. [#2649](https://github.com/microsoft/onefuzz/pull/2649)
