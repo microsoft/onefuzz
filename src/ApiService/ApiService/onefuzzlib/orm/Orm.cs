@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Net;
+﻿using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using Azure;
@@ -182,7 +181,7 @@ namespace ApiService.OneFuzzLib.Orm {
                 })
                 .ToListAsync();
 
-            var responses = await System.Threading.Tasks.Task.WhenAll(requests);
+            var responses = await Async.Task.WhenAll(requests);
             var (successes, failures) = responses
                 .SelectMany(x => x.Value)
                 .Aggregate(
@@ -206,9 +205,8 @@ namespace ApiService.OneFuzzLib.Orm {
 
 
     public abstract class StatefulOrm<T, TState, TSelf> : Orm<T>, IStatefulOrm<T, TState> where T : StatefulEntityBase<TState> where TState : Enum {
-        static Func<T, object?>? _partitionKeyGetter;
-        static Func<T, object?>? _rowKeyGetter;
-        static ConcurrentDictionary<string, Func<T, Async.Task<T>>?> _stateFuncs = new ConcurrentDictionary<string, Func<T, Async.Task<T>>?>();
+        static readonly Func<T, object?>? _partitionKeyGetter;
+        static readonly Func<T, object?>? _rowKeyGetter;
 
         delegate Async.Task<T> StateTransition(T entity);
 

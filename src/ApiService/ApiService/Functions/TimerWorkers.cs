@@ -83,7 +83,7 @@ public class TimerWorkers {
             try {
                 var existingOrchestration = await durableClient.Client.GetInstanceMetadataAsync(instanceId, getInputsAndOutputs: false);
                 if (ShouldStartStateMachineOrchestration(existingOrchestration)) {
-                    _ = await durableClient.Client.ScheduleNewPoolStateOrchestratorInstanceAsync(
+                    _ = await durableClient.Client.ScheduleNewNodeStateProcessorInstanceAsync(
                         instanceId,
                         JsonSerializer.SerializeToElement(new NodeKey(node.PoolName, node.MachineId)));
                 }
