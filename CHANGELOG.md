@@ -19,7 +19,7 @@ SERVICE ENGINEERS: If you currently run an instance of OneFuzz you will need to 
 * Service: Update to .NET 7. [#2615](https://github.com/microsoft/onefuzz/pull/2615)
 * Service: Make Proxy `TelemetryKey` optional. [#2619](https://github.com/microsoft/onefuzz/pull/2619)
 * Service: Update OMI to 1.6.10.2 on Ubuntu VMs. [#2629](https://github.com/microsoft/onefuzz/pull/2629)
-* Service: Make the `--container_type` parameter required. [#2631](https://github.com/microsoft/onefuzz/pull/2631)
+* CLI: Make the `--container_type` parameter required. [#2631](https://github.com/microsoft/onefuzz/pull/2631)
 * Service: Improve logging around notification failures. [#2653](https://github.com/microsoft/onefuzz/pull/2653)
 ### Fixed
 * Service: Notification Template `targetUrl` parameter fix. [#2625](https://github.com/microsoft/onefuzz/pull/2625)
