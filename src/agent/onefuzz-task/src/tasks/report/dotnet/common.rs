@@ -27,12 +27,18 @@ pub async fn collect_exception_info(
         }
     };
 
-    let exception = dump.exception().await?;
+    let exception = dump.exception().await;
 
     // Remove temp dir cooperatively.
     spawn_blocking(move || tmp_dir).await?;
 
-    Ok(exception)
+    match exception {
+        Ok(r) => Ok(Some(r)),
+        Err(e) => {
+            error!("unable to extract exception info: {}", e);
+            Ok(None)
+        }
+    }
 }
 
 const DUMP_FILE_NAME: &str = "tmp.dmp";
@@ -43,7 +49,7 @@ const MINIDUMP_TYPE_VAR: &str = "COMPlus_DbgMiniDumpType";
 const MINIDUMP_NAME_VAR: &str = "COMPlus_DbgMiniDumpName";
 
 const MINIDUMP_ENABLE: &str = "1";
-const MINIDUMP_TYPE_HEAP: &str = "2";
+const MINIDUMP_TYPE_FULL: &str = "4";
 
 // Invoke target with .NET runtime environment vars set to create minidumps.
 //
@@ -64,7 +70,7 @@ async fn collect_dump(
 
     // Set `dotnet` environment vars to enable saving minidumps on crash.
     cmd.env(ENABLE_MINIDUMP_VAR, MINIDUMP_ENABLE);
-    cmd.env(MINIDUMP_TYPE_VAR, MINIDUMP_TYPE_HEAP);
+    cmd.env(MINIDUMP_TYPE_VAR, MINIDUMP_TYPE_FULL);
     cmd.env(MINIDUMP_NAME_VAR, dump_path);
 
     let mut child = cmd.spawn()?;
@@ -97,12 +103,10 @@ impl DotnetDumpFile {
         Self { path }
     }
 
-    pub async fn exception(&self) -> Result<Option<DotnetExceptionInfo>> {
+    pub async fn exception(&self) -> Result<DotnetExceptionInfo> {
         let output = self.exec_sos_command(SOS_PRINT_EXCEPTION).await?;
         let text = String::from_utf8_lossy(&output.stdout);
-        let exception = parse_sos_print_exception_output(&text).ok();
-
-        Ok(exception)
+        parse_sos_print_exception_output(&text)
     }
 
     async fn exec_sos_command(&self, sos_cmd: &str) -> Result<Output> {
@@ -209,7 +213,8 @@ pub fn parse_sos_print_exception_output(text: &str) -> Result<DotnetExceptionInf
         }
     }
 
-    let exception = exception.ok_or_else(|| format_err!("missing exception type"))?;
+    let exception =
+        exception.ok_or_else(|| format_err!("missing exception type, output was:\n{}", text))?;
     let message = message.ok_or_else(|| format_err!("missing exception message"))?;
 
     let inner_exception = inner_exception.ok_or_else(|| format_err!("missing inner exception"))?;
