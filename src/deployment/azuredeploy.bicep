@@ -318,6 +318,7 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
     keyvault_name: keyVaultName
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
+    enable_profiler: enable_profiler
   }
   dependsOn: [
     function
