@@ -35,6 +35,7 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
         check_retry_count,
         setup_dir: &context.common_config.setup_dir,
         minimized_stack_depth: None,
+        machine_identity: context.common_config.machine_identity,
     };
 
     let result = test_input(config).await?;

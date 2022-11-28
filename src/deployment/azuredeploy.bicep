@@ -26,13 +26,8 @@ param workbookData object
 ])
 param diagnosticsLogLevel string = 'Verbose'
 
-param use_dotnet_agent_functions bool
-
 var log_retention = 30
 var tenantId = subscription().tenantId
-
-var python_functions_disabled = '0'
-var dotnet_functions_disabled = '1'
 
 var scaleset_identity = '${name}-scalesetid'
 var cosmosDBName = 'cosmos${uniqueString(resourceGroup().id)}'
@@ -89,25 +84,13 @@ module operationalInsights 'bicep-templates/operational-insights.bicep' = {
   }
 }
 
-module linuxServerFarm 'bicep-templates/server-farms.bicep' = {
-  name: 'linux-server-farm'
+module serverFarm 'bicep-templates/server-farms.bicep' = {
+  name: 'server-farm'
   params: {
     server_farm_name: name
     owner: owner
     location: location
-    use_windows: false
-    create: true
-  }
-}
-
-module dotNetServerFarm 'bicep-templates/server-farms.bicep' = {
-  name: (enable_remote_debugging) ? 'windows-server-farm' : 'same-linux-server-farm'
-  params: {
-    server_farm_name: (enable_remote_debugging) ? '${name}-net' : name
-    owner: owner
-    location: location
-    use_windows: enable_remote_debugging
-    create: enable_remote_debugging
+    use_windows: true
   }
 }
 
@@ -128,7 +111,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
     }
     accessPolicies: [
       {
-        objectId: pythonFunction.outputs.principalId
+        objectId: function.outputs.principalId
         tenantId: tenantId
         permissions: {
           secrets: [
@@ -178,31 +161,13 @@ module autoscaleSettings 'bicep-templates/autoscale-settings.bicep' = {
   name: 'autoscaleSettings'
   params: {
     location: location
-    server_farm_id: linuxServerFarm.outputs.id
+    server_farm_id: serverFarm.outputs.id
     owner: owner
     workspaceId: operationalInsights.outputs.workspaceId
     logRetention: log_retention
     autoscale_name: 'onefuzz-autoscale-${uniqueString(resourceGroup().id)}'
-    create_new: true
     function_diagnostics_settings_name: 'functionDiagnosticSettings'
   }
-}
-
-module autoscaleSettingsNet 'bicep-templates/autoscale-settings.bicep' = {
-  name: 'autoscaleSettingsNet'
-  params: {
-    location: location
-    server_farm_id: dotNetServerFarm.outputs.id
-    owner: owner
-    workspaceId: operationalInsights.outputs.workspaceId
-    logRetention: log_retention
-    autoscale_name: (enable_remote_debugging) ? 'onefuzz-autoscale-${uniqueString(resourceGroup().id)}-net' : 'onefuzz-autoscale-${uniqueString(resourceGroup().id)}'
-    create_new: enable_remote_debugging
-    function_diagnostics_settings_name: (enable_remote_debugging) ? 'functionDiagnosticSettings' : 'functionDiagnosticsSettingsNet'
-  }
-  dependsOn: [
-    autoscaleSettings
-  ]
 }
 
 module eventGrid 'bicep-templates/event-grid.bicep' = {
@@ -219,22 +184,22 @@ module eventGrid 'bicep-templates/event-grid.bicep' = {
 }
 
 // try to make role assignments to deploy as late as possible in order to have principalId ready
-resource roleAssigmentsPy 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
-  name: guid('${resourceGroup().id}${r.suffix}-python')
+resource roleAssignments 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
+  name: guid('${resourceGroup().id}${r.suffix}-1f')
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${r.role}'
-    principalId: pythonFunction.outputs.principalId
+    principalId: function.outputs.principalId
   }
   dependsOn: [
     eventGrid
     keyVault
-    linuxServerFarm
+    serverFarm
   ]
 }]
 
 // try to make role assignments to deploy as late as possible in order to have principalId ready
-resource roleAssigmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
-  name: guid('${resourceGroup().id}${r.suffix}-net')
+resource roleAssignmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
+  name: guid('${resourceGroup().id}${r.suffix}-1f-net')
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${r.role}'
     principalId: netFunction.outputs.principalId
@@ -242,7 +207,7 @@ resource roleAssigmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-p
   dependsOn: [
     eventGrid
     keyVault
-    dotNetServerFarm
+    serverFarm
   ]
 }]
 
@@ -288,29 +253,28 @@ resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10
   dependsOn: [
     eventGrid
     keyVault
-    linuxServerFarm
-    dotNetServerFarm
+    serverFarm
   ]
 }
 
-module pythonFunction 'bicep-templates/function.bicep' = {
-  name: 'pythonFunction'
+module function 'bicep-templates/function.bicep' = {
+  name: 'function'
   params: {
     name: name
-    linux_fx_version: 'Python|3.8'
+    linux_fx_version: 'DOTNET-ISOLATED|7.0'
 
     app_logs_sas_url: storage.outputs.FuncSasUrlBlobAppLogs
     app_func_audiences: app_func_audiences
     app_func_issuer: app_func_issuer
-
+    client_id: clientId
     diagnostics_log_level: diagnosticsLogLevel
     location: location
     log_retention: log_retention
     owner: owner
-    server_farm_id: linuxServerFarm.outputs.id
-    client_id: clientId
-    use_windows: false
-    enable_remote_debugging: false
+    server_farm_id: serverFarm.outputs.id
+
+    use_windows: true
+    enable_remote_debugging: enable_remote_debugging
   }
 }
 
@@ -328,20 +292,20 @@ module netFunction 'bicep-templates/function.bicep' = {
     location: location
     log_retention: log_retention
     owner: owner
-    server_farm_id: dotNetServerFarm.outputs.id
+    server_farm_id: serverFarm.outputs.id
 
-    use_windows: enable_remote_debugging
+    use_windows: true
     enable_remote_debugging: enable_remote_debugging
   }
 }
 
-module pythonFunctionSettings 'bicep-templates/function-settings.bicep' = {
-  name: 'pythonFunctionSettings'
+module functionSettings 'bicep-templates/function-settings.bicep' = {
+  name: 'functionSettings'
   params: {
     name: name
     owner: owner
-    functions_worker_runtime: 'python'
-    functions_extension_version: '~3'
+    functions_worker_runtime: 'dotnet-isolated'
+    functions_extension_version: '~4'
     instance_name: name
     app_insights_app_id: operationalInsights.outputs.appInsightsAppId
     app_insights_key: operationalInsights.outputs.appInsightsInstrumentationKey
@@ -354,50 +318,9 @@ module pythonFunctionSettings 'bicep-templates/function-settings.bicep' = {
     keyvault_name: keyVaultName
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
-    functions_disabled: python_functions_disabled
-    use_dotnet_agent_functions: use_dotnet_agent_functions
-    enable_profiler: false
-    all_function_names: [
-      'agent_can_schedule' //0
-      'agent_commands' //1
-      'agent_events' //2
-      'agent_registration' //3
-      'containers' //4
-      'download' //5
-      'info' //6
-      'instance_config' //7
-      'jobs' //8
-      'job_templates' //9
-      'job_templates_manage' //10
-      'negotiate' //11
-      'node' //12
-      'node_add_ssh_key' //13
-      'notifications' //14
-      'pool' //15
-      'proxy' //16
-      'queue_file_changes' //17
-      'queue_node_heartbeat' //18
-      'queue_proxy_update' //19
-      'queue_signalr_events' //20
-      'queue_task_heartbeat' //21
-      'queue_updates' //22
-      'queue_webhooks' //23
-      'repro_vms' //24
-      'scaleset' //25
-      'tasks' //26
-      'timer_daily' //27
-      'timer_proxy' //28
-      'timer_repro' //29
-      'timer_retention' //30
-      'timer_tasks' //31
-      'timer_workers' //32
-      'webhooks' //33
-      'webhooks_logs' //34
-      'webhooks_ping' //35
-    ]
   }
   dependsOn: [
-    pythonFunction
+    function
   ]
 }
 
@@ -406,13 +329,13 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
   params: {
     owner: owner
     name: '${name}-net'
-    signal_r_connection_string: signalR.outputs.connectionString
-    app_insights_app_id: operationalInsights.outputs.appInsightsAppId
-    app_insights_key: operationalInsights.outputs.appInsightsInstrumentationKey
     functions_worker_runtime: 'dotnet-isolated'
     functions_extension_version: '~4'
     instance_name: name
+    app_insights_app_id: operationalInsights.outputs.appInsightsAppId
+    app_insights_key: operationalInsights.outputs.appInsightsInstrumentationKey
     client_secret: clientSecret
+    signal_r_connection_string: signalR.outputs.connectionString
     func_sas_url: storage.outputs.FuncSasUrl
     func_storage_resource_id: storage.outputs.FuncId
     func_cosmos_name: storage.outputs.CosmosDBAccountName
@@ -420,47 +343,7 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     keyvault_name: keyVaultName
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
-    functions_disabled: dotnet_functions_disabled
-    use_dotnet_agent_functions: false // this doesn’t do anything on the .NET service
     enable_profiler: enable_profiler
-    all_function_names: [
-      'AgentCanSchedule' //0
-      'AgentCommands' //1
-      'AgentEvents' //2
-      'AgentRegistration' //3
-      'Containers' //4
-      'Download' //5
-      'Info' //6
-      'InstanceConfig' //7
-      'Jobs' //8
-      'JobTemplates' //9
-      'JobTemplatesManage' //10
-      'Negotiate' //11
-      'Node' //12
-      'NodeAddSshKey' //13
-      'Notifications' //14
-      'Pool' //15
-      'Proxy' //16
-      'QueueFileChanges' //17
-      'QueueNodeHeartbeat' //18
-      'QueueProxyUpdate' //19
-      'QueueSignalrEvents' //20
-      'QueueTaskHeartbeat' //21
-      'QueueUpdates' //22
-      'QueueWebhooks' //23
-      'ReproVms' //24
-      'Scaleset' //25
-      'Tasks' //26
-      'TimerDaily' //27
-      'TimerProxy' //28
-      'TimerRepro' //29
-      'TimerRetention' //30
-      'TimerTasks' //31
-      'TimerWorkers' //32
-      'Webhooks' //33
-      'WebhooksLogs' //34
-      'WebhooksPing' //35    
-    ]
   }
   dependsOn: [
     netFunction

@@ -35,6 +35,7 @@ impl Fixture {
             work_queue,
             worker_runner,
             None,
+            true,
         )
     }
 

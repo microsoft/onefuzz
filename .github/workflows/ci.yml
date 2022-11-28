@@ -18,7 +18,7 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
-  ACTIONS_CACHE_KEY_DATE: 2022-10-28-01
+  ACTIONS_CACHE_KEY_DATE: 2022-11-21-02
   CI: true
   DOTNET_VERSION: 7.0.x
 
@@ -192,7 +192,7 @@ jobs:
         black webhook --check
         isort --profile black webhook
         flake8 webhook
-  deploy-onefuzz-via-azure-devops:
+  python-safety:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
@@ -205,7 +205,7 @@ jobs:
         set -ex
         cd contrib/deploy-onefuzz-via-azure-devops
         python -m pip install --upgrade pip
-        python -m pip install tox pipenv
+        python -m pip install tox pipenv==2022.11.11
         tox
   onefuzztypes:
     runs-on: ubuntu-20.04
@@ -253,54 +253,6 @@ jobs:
         name: build-artifacts
         path: artifacts
   service:
-    needs:
-    - onefuzztypes
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v3
-    - run: src/ci/set-versions.sh
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.8
-    - uses: actions/download-artifact@v3
-      with:
-        name: build-artifacts
-        path: artifacts
-    - name: Build Service
-      run: |
-        cd src/api-service/__app__
-        echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
-        echo ${GITHUB_SHA} | tee onefuzzlib/git.version
-        python -m pip install --upgrade pip
-        pip install --target="./.python_packages/lib/site-packages" -r ./requirements.txt ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
-        zip -r api-service.zip .
-        mkdir -p ${GITHUB_WORKSPACE}/artifacts/service
-        cp api-service.zip ${GITHUB_WORKSPACE}/artifacts/service
-    - uses: actions/upload-artifact@v3
-      with:
-        name: build-artifacts
-        path: artifacts
-    - name: lint
-      run: |
-        cd src/api-service
-        rm -rf __app__/.python_packages
-        python -m pip install --upgrade pip
-        pip install ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
-        pip install -r __app__/requirements.txt
-        pip install -r requirements-dev.txt
-        pytest tests
-        flake8 .
-        bandit -r ./__app__/
-        black ./__app__/ ./tests --check
-        isort --profile black ./__app__/ ./tests --check
-        mypy __app__ ./tests
-
-        # set a minimum confidence to ignore known false positives
-        vulture --min-confidence 61 __app__
-
-        ../ci/disable-py-cache.sh
-        mypy __app__ ./tests
-  service-net:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
@@ -359,9 +311,9 @@ jobs:
         cd src/ApiService/ApiService/
         mv az-local.settings.json bin/Release/net7.0/local.settings.json
         cd bin/Release/net7.0/
-        zip -r api-service-net.zip .
-        mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
-        cp api-service-net.zip ${GITHUB_WORKSPACE}/artifacts/service-net
+        zip -r api-service.zip .
+        mkdir -p ${GITHUB_WORKSPACE}/artifacts/service
+        cp api-service.zip ${GITHUB_WORKSPACE}/artifacts/service
     - uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
@@ -504,7 +456,6 @@ jobs:
 
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment
-          cp artifacts/service-net/api-service-net.zip src/deployment
           cp -r artifacts/third-party src/deployment
           echo $GITHUB_RUN_ID | tee src/deployment/.build.id
           echo $GITHUB_SHA | tee src/deployment/.sha
