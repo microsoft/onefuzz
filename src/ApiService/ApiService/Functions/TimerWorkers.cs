@@ -38,6 +38,12 @@ public class TimerWorkers {
         return await _scaleSetOps.ProcessStateUpdate(scaleset);
     }
 
+    private static bool ShouldStartStateMachineOrchestration(OrchestrationMetadata? meta)
+        => meta is null
+        || meta.RuntimeStatus == OrchestrationRuntimeStatus.Completed
+        || meta.RuntimeStatus == OrchestrationRuntimeStatus.Failed
+        || meta.RuntimeStatus == OrchestrationRuntimeStatus.Terminated;
+
 
     [Function("TimerWorkers")]
     public async Async.Task Run(
@@ -52,12 +58,10 @@ public class TimerWorkers {
             var instanceId = $"{pool.Name}-{pool.PoolId}";
             try {
                 var existing = await durableClient.Client.GetInstanceMetadataAsync(instanceId, getInputsAndOutputs: false);
-                if (existing is null
-                || (existing.RuntimeStatus != OrchestrationRuntimeStatus.Running
-                    && existing.RuntimeStatus != OrchestrationRuntimeStatus.Pending)) {
+                if (ShouldStartStateMachineOrchestration(existing)) {
                     _ = await durableClient.Client.ScheduleNewPoolStateOrchestratorInstanceAsync(
                         instanceId,
-                        JsonSerializer.SerializeToElement(new PoolKey(pool.Name.ToString(), pool.PoolId.ToString())));
+                        JsonSerializer.SerializeToElement(new PoolKey(pool.Name, pool.PoolId)));
                 }
             } catch (Exception ex) {
                 _log.Exception(ex, $"Error triggering pool-state processing for ${instanceId}");

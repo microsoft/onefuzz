@@ -5,8 +5,8 @@ using Microsoft.DurableTask;
 namespace Microsoft.OneFuzz.Service;
 
 public record struct PoolKey(
-    string PoolName,
-    string PoolId
+    PoolName PoolName,
+    Guid PoolId
 );
 
 [DurableTask]
@@ -38,7 +38,7 @@ class PoolState_Update : TaskActivityBase<string, bool> {
         TaskActivityContext context,
         string? json) {
         var input = JsonSerializer.Deserialize<PoolKey>(json!);
-        var pool = await _poolOps.GetEntityAsync(input.PoolName, input.PoolId);
+        var pool = await _poolOps.GetEntityAsync(input.PoolName.ToString(), input.PoolId.ToString());
         if (pool is not null) {
             _log.Info($"updating pool: {input.PoolId:Tag:PoolId} ({input.PoolName:Tag:PoolName}) - state: {pool.State:Tag:PoolState}");
             _ = await _poolOps.ProcessStateUpdate(pool);
