@@ -2,8 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
-using Azure.Core;
-using Azure.Data.Tables;
 using Microsoft.Azure.Cosmos;
 
 namespace Microsoft.OneFuzz.Service;
@@ -31,130 +29,255 @@ public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {
     public static string PoolQueueNamePrefix => "pool-";
 }
 
+/*
+
 public class CosmosPoolOperations : IPoolOperations {
-    private readonly Database _db;
+    private readonly Azure.Cosmos.Container _container;
+    private readonly ILogTracer _logTracer;
+    private readonly OnefuzzContext _context;
 
-    public CosmosPoolOperations(Database db) {
-        _db = db;
+    public CosmosPoolOperations(Azure.Cosmos.Container container, ILogTracer logTracer, OnefuzzContext context) {
+        _container = container;
+        _logTracer = logTracer;
+        _context = context;
     }
 
-    public Task<Pool> Create(PoolName name, Os os, Architecture architecture, bool managed, Guid? clientId = null) {
-        throw new NotImplementedException();
+    public async Async.Task<Pool> Create(PoolName name, Os os, Architecture architecture, bool managed, Guid? clientId = null) {
+        var newPool = new Pool(
+            PoolId: Guid.NewGuid(),
+            State: PoolState.Init,
+            Name: name,
+            Os: os,
+            Managed: managed,
+            Arch: architecture,
+            ClientId: clientId);
+
+        try {
+            _ = await _container.CreateItemAsync(newPool);
+            await _context.Events.SendEvent(new EventPoolCreated(PoolName: newPool.Name, Os: newPool.Os, Arch: newPool.Arch, Managed: newPool.Managed));
+            return newPool;
+        } catch (CosmosException ex) {
+            _logTracer.WithHttpStatus(ex).Error($"Failed to save new pool. {newPool.Name:Tag:PoolName} - {newPool.PoolId:Tag:PoolId}");
+            throw;
+        }
     }
 
-    public Async.Task Delete(Pool pool) {
-        throw new NotImplementedException();
+    public async Async.Task<OneFuzzResult<Pool>> GetByName(PoolName poolName) {
+        var q = new QueryDefinition("select * from ROOT p where p.name = @poolName")
+            .WithParameter("@poolName", poolName);
+
+        var result = await _container.GetItemQueryAsyncEnumerable<Pool>(q).FirstOrDefaultAsync();
+        if (result is not null) {
+            return OneFuzzResult.Ok(result);
+        }
+
+        return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, $"unable to find pool with name {poolName.String}");
     }
 
-    public Task<DeleteAllResult> DeleteAll(IEnumerable<(string?, string?)> keys) {
-        throw new NotImplementedException();
+    public async Async.Task<OneFuzzResult<Pool>> GetById(Guid poolId) {
+        var q = new QueryDefinition("select * from ROOT p where p.poolId = @poolId")
+            .WithParameter("@poolId", poolId);
+
+        var result = await _container.GetItemQueryAsyncEnumerable<Pool>(q).FirstOrDefaultAsync();
+        if (result is not null) {
+            return OneFuzzResult.Ok(result);
+        }
+
+        return OneFuzzResult<Pool>.Error(ErrorCode.INVALID_REQUEST, $"unable to find pool with id {poolId}");
+    }
+
+    public async Task<bool> ScheduleWorkset(Pool pool, WorkSet workSet) {
+        if (pool.State == PoolState.Shutdown || pool.State == PoolState.Halt) {
+            return false;
+        }
+
+        return await _context.Queue.QueueObject(GetPoolQueue(pool.PoolId), workSet, StorageType.Corpus);
     }
 
     public IAsyncEnumerable<Pool> GetByClientId(Guid clientId) {
-        throw new NotImplementedException();
+        var q = new QueryDefinition("select * from ROOT p where p.clientId = @clientId")
+            .WithParameter("@clientId", clientId);
+        return _container.GetItemQueryAsyncEnumerable<Pool>(q);
     }
 
-    public Task<OneFuzzResult<Pool>> GetById(Guid poolId) {
-        throw new NotImplementedException();
+    public string GetPoolQueue(Guid poolId)
+        => $"{IPoolOperations.PoolQueueNamePrefix}{poolId:N}";
+
+    public async Async.Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name)
+        => await _context.ScalesetOperations.SearchByPool(name)
+            .Select(x => new ScalesetSummary(ScalesetId: x.ScalesetId, State: x.State))
+            .ToListAsync();
+
+    public async Async.Task<List<WorkSetSummary>> GetWorkQueue(Guid poolId, PoolState state) {
+        var result = new List<WorkSetSummary>();
+
+        // Only populate the work queue summaries if the pool is initialized. We
+        // can then be sure that the queue is available in the operations below.
+        if (state == PoolState.Init) {
+            return result;
+        }
+
+        var workSets = await PeekWorkQueue(poolId);
+        foreach (var workSet in workSets) {
+            if (!workSet.WorkUnits.Any()) {
+                continue;
+            }
+
+            var workUnits = workSet.WorkUnits
+                .Select(x => new WorkUnitSummary(
+                    JobId: x.JobId,
+                    TaskId: x.TaskId,
+                    TaskType: x.TaskType))
+                .ToList();
+
+            result.Add(new WorkSetSummary(workUnits));
+        }
+
+        return result;
     }
 
-    public Task<OneFuzzResult<Pool>> GetByName(PoolName poolName) {
-        throw new NotImplementedException();
+    private Async.Task<IList<WorkSet>> PeekWorkQueue(Guid poolId)
+        => _context.Queue.PeekQueue<WorkSet>(GetPoolQueue(poolId), StorageType.Corpus);
+
+    public IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> states) {
+        var q = new QueryDefinition("select * from ROOT p where p.state IN @states")
+            .WithParameter("@states", states);
+
+        return _container.GetItemQueryAsyncEnumerable<Pool>(q);
     }
 
-    public Task<Pool> GetEntityAsync(string partitionKey, string rowKey) {
-        throw new NotImplementedException();
+    public Async.Task<Pool> SetShutdown(Pool pool, bool Now)
+        => SetState(pool, Now ? PoolState.Halt : PoolState.Shutdown);
+
+    public async Async.Task<Pool> SetState(Pool pool, PoolState state) {
+        if (pool.State == state) {
+            return pool;
+        }
+
+        _logTracer.WithTag("PoolName", pool.Name.ToString()).Event($"SetState Pool {pool.PoolId:Tag:PoolId} {pool.State:Tag:From} - {state:Tag:To}");
+        // scalesets should never leave the `halt` state
+        // it is terminal
+        if (pool.State == PoolState.Halt) {
+            return pool;
+        }
+
+        var result = await _container.PatchItemAsync<Pool>(
+            pool.PoolId.ToString(),
+            new PartitionKey(pool.Name.ToString()),
+            new[] {
+                PatchOperation.Replace("/state", state)
+            });
+
+        return result.Resource;
     }
 
-    public string GetPoolQueue(Guid poolId) {
-        throw new NotImplementedException();
+    public async Async.Task<Pool> Init(Pool pool) {
+        await _context.Queue.CreateQueue(GetPoolQueue(pool.PoolId), StorageType.Corpus);
+        var shrinkQueue = new ShrinkQueue(pool.PoolId, _context.Queue, _logTracer);
+        await shrinkQueue.Create();
+        return await SetState(pool, PoolState.Running);
     }
 
-    public Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name) {
-        throw new NotImplementedException();
+    public async Async.Task Delete(Pool pool) {
+        _ = await _container.DeleteItemAsync<Pool>(
+            pool.PoolId.ToString(),
+            new PartitionKey(pool.Name.ToString()));
+
+        var poolQueue = GetPoolQueue(pool.PoolId);
+        await _context.Queue.DeleteQueue(poolQueue, StorageType.Corpus);
+
+        var shrinkQueue = new ShrinkQueue(pool.PoolId, _context.Queue, _logTracer);
+        await shrinkQueue.Delete();
+
+        await _context.Events.SendEvent(new EventPoolDeleted(PoolName: pool.Name));
     }
 
-    public Task<TableClient> GetTableClient(string table, ResourceIdentifier? accountId = null) {
-        throw new NotImplementedException();
+    public async Async.Task<Pool> Shutdown(Pool pool) {
+        var scalesets = await _context.ScalesetOperations.SearchByPool(pool.Name).ToListAsync();
+        var nodes = await _context.NodeOperations.SearchByPoolName(pool.Name).ToListAsync();
+
+        if (!scalesets.Any() && !nodes.Any()) {
+            _logTracer.Info($"pool stopped, deleting {pool.Name:Tag:PoolName}");
+            await Delete(pool);
+            return pool;
+        }
+
+        foreach (var scaleset in scalesets) {
+            _ = await _context.ScalesetOperations.SetShutdown(scaleset, now: true);
+        }
+
+        foreach (var node in nodes) {
+            // ignoring updated result - nodes not returned
+            _ = await _context.NodeOperations.SetShutdown(node);
+        }
+
+        return pool;
     }
 
-    public Task<List<WorkSetSummary>> GetWorkQueue(Guid poolId, PoolState state) {
-        throw new NotImplementedException();
-    }
+    public async Async.Task<Pool> Halt(Pool pool) {
+        //halt the pool immediately
+        var scalesets = await _context.ScalesetOperations.SearchByPool(pool.Name).ToListAsync();
+        var nodes = await _context.NodeOperations.SearchByPoolName(pool.Name).ToListAsync();
 
-    public Task<Pool> Halt(Pool pool) {
-        throw new NotImplementedException();
-    }
+        if (!scalesets.Any() && !nodes.Any()) {
+            _logTracer.Info($"pool stopped, deleting: {pool.Name:Tag:PoolName}");
+            await Delete(pool);
+            return pool;
+        }
 
-    public Task<Pool> Init(Pool pool) {
-        throw new NotImplementedException();
-    }
+        foreach (var scaleset in scalesets) {
+            if (scaleset is not null) {
+                _ = await _context.ScalesetOperations.SetState(scaleset, ScalesetState.Halt);
+            }
+        }
 
-    public Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(Pool entity) {
-        throw new NotImplementedException();
-    }
+        foreach (var node in nodes) {
+            // updated value ignored: 'nodes' is not returned
+            _ = await _context.NodeOperations.SetHalt(node);
+        }
 
-    public Task<Pool> ProcessStateUpdate(Pool entity) {
-        throw new NotImplementedException();
-    }
-
-    public Task<Pool?> ProcessStateUpdates(Pool entity, int MaxUpdates = 5) {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<Pool> QueryAsync(string? filter = null) {
-        throw new NotImplementedException();
-    }
-
-    public Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Replace(Pool entity) {
-        throw new NotImplementedException();
+        return pool;
     }
 
     public Task<Pool> Running(Pool pool) {
-        throw new NotImplementedException();
+        // nothing to do
+        return Async.Task.FromResult(pool);
     }
 
-    public Task<bool> ScheduleWorkset(Pool pool, WorkSet workSet) {
-        throw new NotImplementedException();
+    // copied in, below
+
+    delegate Async.Task<Pool> StateTransition(Pool entity);
+    public async Async.Task<Pool> ProcessStateUpdate(Pool entity) {
+        var state = entity.State;
+        var func = GetType().GetMethod(state.ToString()) switch {
+            null => null,
+            MethodInfo info => info.CreateDelegate<StateTransition>(this)
+        };
+
+        if (func != null) {
+            return await func(entity);
+        } else {
+            throw new ArgumentException($"State function for state: '{state}' not found on type {typeof(Pool)}");
+        }
     }
 
-    public IAsyncEnumerable<Pool> SearchAll() {
-        var q = new QueryDefinition("select * from Pool p");
-        return _db.GetContainer("pools").GetItemQueryAsyncEnumerable<Pool>(q);
-    }
+    public async Async.Task<Pool?> ProcessStateUpdates(Pool entity, int MaxUpdates = 5) {
+        for (int i = 0; i < MaxUpdates; i++) {
+            var state = entity.State;
+            var newEntity = await ProcessStateUpdate(entity);
 
-    public IAsyncEnumerable<Pool> SearchByPartitionKeys(IEnumerable<string> partitionKeys) {
-        throw new NotImplementedException();
-    }
+            if (newEntity == null)
+                return null;
 
-    public IAsyncEnumerable<Pool> SearchByRowKeys(IEnumerable<string> rowKeys) {
-        throw new NotImplementedException();
-    }
+            if (newEntity.State.Equals(state)) {
+                return newEntity;
+            }
+        }
 
-    public IAsyncEnumerable<Pool> SearchByTimeRange(DateTimeOffset min, DateTimeOffset max) {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> states) {
-        throw new NotImplementedException();
-    }
-
-    public Task<Pool> SetShutdown(Pool pool, bool Now) {
-        throw new NotImplementedException();
-    }
-
-    public Task<Pool> Shutdown(Pool pool) {
-        throw new NotImplementedException();
-    }
-
-    public Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Update(Pool entity) {
-        throw new NotImplementedException();
-    }
-
-    Task<ResultVoid<(HttpStatusCode Status, string Reason)>> IOrm<Pool>.Delete(Pool entity) {
-        throw new NotImplementedException();
+        return null;
     }
 }
+*/
 
 static class CosmosExtensions {
     public static IAsyncEnumerable<T> GetItemQueryAsyncEnumerable<T>(this Azure.Cosmos.Container c, QueryDefinition q)
@@ -430,4 +553,9 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         // nothing to do
         return Async.Task.FromResult(pool);
     }
+}
+
+public static class StatusCodeExtensions {
+    public static bool RepresentsSuccess(this HttpStatusCode code)
+        => ((int)code) is >= 200 and < 300;
 }

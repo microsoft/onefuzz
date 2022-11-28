@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.Azure.Cosmos;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -192,6 +193,7 @@ public interface ILogTracer {
     ILogTracer WithTag(string k, string v);
     ILogTracer WithTags(IEnumerable<(string, string)>? tags);
     ILogTracer WithHttpStatus((HttpStatusCode Status, string Reason) result);
+    ILogTracer WithHttpStatus(CosmosException ex) => WithHttpStatus((ex.StatusCode, ex.Message));
 }
 
 internal interface ILogTracerInternal : ILogTracer {

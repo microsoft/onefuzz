@@ -92,6 +92,11 @@ resource cosmosFuncAccount 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = 
   kind: 'GlobalDocumentDB'
   location: location
   properties: {
+    capabilities: [
+      {
+        name: 'EnableTable'
+      }
+    ]
     databaseAccountOfferType: 'Standard'
     enableAutomaticFailover: true
     locations: [
@@ -131,7 +136,7 @@ resource cosmosFuncContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases
       partitionKey: {
         kind: 'Hash'
         paths: [
-          '/id'
+          '/name'
         ]
       }
     }
@@ -153,10 +158,10 @@ resource storageAccountFunBlobContainers 'Microsoft.Storage/storageAccounts/blob
 }]
 
 output FuzzName string = storageAccountNameFuzz
-output FuncName string = storageAccountNameFunc
+output FuncName string = cosmosFuncAccount.name // storageAccountNameFunc
 
 output FuzzId string = storageAccountFuzz.id
-output FuncId string = storageAccountFunc.id
+output FuncId string = cosmosFuncAccount.id // storageAccountFunc.id
 
 output CosmosDBAccountName string = cosmosFuncAccount.name
 output CosmosDBAccountID string = cosmosFuncAccount.id
