@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 6.0.0
 ### NOTICE 
 
-SERVICE ENGINEERS: If you currently run an instance of OneFuzz you will need to follow the below instructions to manually upgrade. 
+## BREAKING CHANGES
+
+### Manual Deployment Step
+When upgrading from version 5.20 a manual step is required. Before deploying 6.0 delete both Azure App Functions and the Azure App Service plan before upgrading. This is required because we have migrated the service from `python` to `C#`. 
+
+After deployment, there will be two App Functions deployed, one with the name of the deployment and a second one with the same name and a `-net` suffix. This is a temporary situation and the `-net` app function will be removed in a following release. 
+
+If you have not used the deployment parameters to deploy C# functions in 5.20, you can manually delete the `-net` app function immediately. Deploying the C# functions was not a default action in 5.20, for most deployments deleting the `-net` app function immediately is ok. 
+
+### Deprecation of jinja templates
+With this release we are moving from jinja templates to [scriban](https://github.com/scriban/scriban) templates. See the documentation for [scriban here](https://github.com/scriban/scriban/tree/master/doc). 
+
+Version 6.0 will convert jinja templates on-the-fly for a short period of time. We do **_not_** guarantee that this will be successful for all jinja template options. These on-the-fly conversions are not persisted in the notifications table in this release. They will be in a following release. This will allow time for conversions of templates that are not handled by the current automatic conversion process. 
+
 1. BEFORE running the deployment script over your existing instance, DELETE BOTH Azure App Functions AND the Azure App Service Plan. 
 2. Once they are deleted, run the deployment scripts. This will deploy TWO DOTNET Azure App Functions. This will allow existing OneFuzz Agents (& jobs) to continue without failure. A subsequent release will remove the old `-net` App Function. 
 
