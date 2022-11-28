@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
+using Azure;
 using Microsoft.DurableTask;
 
 namespace Microsoft.OneFuzz.Service;
@@ -39,15 +40,17 @@ class NodeStateTransition : TaskActivityBase<string, bool> {
         string? json) {
 
         var input = JsonSerializer.Deserialize<NodeKey>(json!);
-        var node = await _nodeOps.GetEntityAsync(input.PoolName.ToString(), input.MachineId.ToString());
-        if (node is not null) {
-            _log.Info($"updating node: {input.PoolName:Tag:PoolName} {input.MachineId:Tag:MachineId} - state: {node.State:Tag:NodeState}");
-            node = await _nodeOps.ProcessStateUpdate(node);
-            _log.Info($"finished updating node: {input.PoolName:Tag:PoolName} {input.MachineId:Tag:MachineId} - state: {node.State:Tag:NodeState}");
-            return true;
-        } else {
+        Node node;
+        try {
+            node = await _nodeOps.GetEntityAsync(input.PoolName.ToString(), input.MachineId.ToString());
+        } catch (RequestFailedException ex) when (ex.Status == 404) {
             _log.Info($"node not found: {input.PoolName:Tag:PoolName} {input.MachineId:Tag:MachineId}");
-            return false;
+            return false; // nothing to be done
         }
+
+        _log.Info($"updating node: {input.PoolName:Tag:PoolName} {input.MachineId:Tag:MachineId} - state: {node.State:Tag:NodeState}");
+        node = await _nodeOps.ProcessStateUpdate(node);
+        _log.Info($"finished updating node: {input.PoolName:Tag:PoolName} {input.MachineId:Tag:MachineId} - state: {node.State:Tag:NodeState}");
+        return true;
     }
 }
