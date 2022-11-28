@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 6.0.0
+### NOTICE 
+SERVICE: Deployment enables refactored C# App Function. [#2650](https://github.com/microsoft/onefuzz/pull/2650)
+SERVICE ENGINEERS: If you currently run an instance of OneFuzz you will need to follow the below instructions to manually upgrade. 
+1. BEFORE running the deployment script over your existing instance, DELETE BOTH Azure App Functions AND the Azure App Service Plan. 
+2. Once they are deleted, run the deployment scripts. This will deploy TWO DOTNET Azure App Functions. This will allow existing OneFuzz Agents (& jobs) to continue without failure. A subsequent release will remove the old `-net` App Function. 
+
+### Added
+* Agent: Making machine identity a parameter of the agent config. [#2649](https://github.com/microsoft/onefuzz/pull/2649)
+### Changed
+* CLI: Use broker or browser login instead of device flow. [#2612](https://github.com/microsoft/onefuzz/pull/2612)
+* Service: Update to .NET 7. [#2615](https://github.com/microsoft/onefuzz/pull/2615)
+* Service: Make Proxy `TelemetryKey` optional. [#2619](https://github.com/microsoft/onefuzz/pull/2619)
+* Service: Update OMI to 1.6.10.2 on Ubuntu VMs. [#2629](https://github.com/microsoft/onefuzz/pull/2629)
+* Service: Make the `--container_type` parameter required. [#2631](https://github.com/microsoft/onefuzz/pull/2631)
+* Service: Improve logging around notification failures. [#2653](https://github.com/microsoft/onefuzz/pull/2653)
+### Fixed
+* Service: Notification Template `targetUrl` parameter fix. [#2625](https://github.com/microsoft/onefuzz/pull/2625)
+* CLI: Fixed SignalR client code not reading responses correctly. [#2626](https://github.com/microsoft/onefuzz/pull/2626)
+* Service: Fix a logic bug in the notification hook. [#2627](https://github.com/microsoft/onefuzz/pull/2627)
+* Service: Bug fixes related to the unmanaged nodes. [#2632](https://github.com/microsoft/onefuzz/pull/2632)
+* Service: Fix invocation of functionapp in the deployment script. [#2645](https://github.com/microsoft/onefuzz/pull/2645)
+
 ## 5.20.0
 ### Added
 * Service: Added endpoint to download agent binaries to support the unmanaged node scenario. [#2600](https://github.com/microsoft/onefuzz/pull/2600)
