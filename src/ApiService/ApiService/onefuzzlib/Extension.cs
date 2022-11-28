@@ -303,7 +303,7 @@ public class Extensions : IExtensions {
             urlsUpdated.Add(toolsAzCopy);
             urlsUpdated.Add(toolsSetup);
 
-            var toExecuteCmd = $"sh setup.sh {mode.ToString().ToLowerInvariant()}";
+            var toExecuteCmd = $"bash setup.sh {mode.ToString().ToLowerInvariant()}";
             var extensionSettings = JsonSerializer.Serialize(new { CommandToExecute = toExecuteCmd, FileUris = urlsUpdated }, _extensionSerializerOptions);
 
             var extension = new VMExtensionWrapper {
