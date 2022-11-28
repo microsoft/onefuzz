@@ -82,16 +82,8 @@ def get_instance_url() -> str:
 
 
 @cached
-def use_dotnet_agent_functions() -> bool:
-    return os.environ.get("ONEFUZZ_USE_DOTNET_AGENT_FUNCTIONS") == "1"
-
-
-@cached
 def get_agent_instance_url() -> str:
-    if use_dotnet_agent_functions():
-        return "https://%s-net.azurewebsites.net" % get_instance_name()
-    else:
-        return get_instance_url()
+    return get_instance_url()
 
 
 @cached

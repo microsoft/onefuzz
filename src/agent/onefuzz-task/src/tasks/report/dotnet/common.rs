@@ -137,6 +137,7 @@ impl DotnetDumpFile {
     }
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub struct DotnetExceptionInfo {
     pub exception: String,
     pub message: String,
@@ -271,4 +272,54 @@ fn dotnet_dump_path() -> Result<PathBuf> {
 }
 
 #[cfg(test)]
-mod tests;
+mod tests {
+    use super::{parse_sos_print_exception_output, DotnetExceptionInfo};
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn parse_works_as_expected() {
+        let text = r#"Exception object: 000001d9cba32740
+Exception type:   System.IndexOutOfRangeException
+Message:          Index was outside the bounds of the array.
+InnerException:   <none>
+StackTrace (generated):
+    SP               IP               Function
+    0000000674D7B860 00007FFD85A660F6 System.Private.CoreLib!System.ThrowHelper.ThrowIndexOutOfRangeException()+0x36 [/_/src/libraries/System.Private.CoreLib/src/System/ThrowHelper.cs @ 68]
+    0000000674D7B8A0 00007FFDE4D23B59 System.Private.CoreLib!System.ReadOnlySpan`1[[System.Byte, System.Private.CoreLib]].get_Item(Int32)+0x19 [/_/src/libraries/System.Private.CoreLib/src/System/ReadOnlySpan.cs @ 148]
+    0000000674D7B8D0 00007FFD85A660A5 GoodBad!GoodBad.BinaryParser.ProcessInput(System.ReadOnlySpan`1<Byte>)+0xb5 [/home/runner/work/onefuzz/onefuzz/src/integration-tests/GoodBad/GoodBad.cs @ 22]
+    0000000674D7B900 00007FFD85A65F81 GoodBad!GoodBad.Fuzzer.TestInput(System.ReadOnlySpan`1<Byte>)+0x61 [/home/runner/work/onefuzz/onefuzz/src/integration-tests/GoodBad/GoodBad.cs @ 31]
+    0000000674D7B950 00007FFD85A65AB2 SharpFuzz!SharpFuzz.Fuzzer+LibFuzzer.RunWithoutLibFuzzer(SharpFuzz.ReadOnlySpanAction)+0x152
+    0000000674D7B9F0 00007FFD85A656B2 SharpFuzz!SharpFuzz.Fuzzer+LibFuzzer.Run(SharpFuzz.ReadOnlySpanAction)+0x2b2
+    0000000674D7E6D0 00007FFD85A652FC LibFuzzerDotnetLoader!LibFuzzerDotnetLoader.Program.TryTestOne[[System.__Canon, System.Private.CoreLib]](System.Reflection.MethodInfo, System.Func`2<System.__Canon,SharpFuzz.ReadOnlySpanAction>)+0x29c [D:\a\onefuzz\onefuzz\src\agent\LibFuzzerDotnetLoader\Program.cs @ 117]
+    0000000674D7E7E0 00007FFD85A64F99 LibFuzzerDotnetLoader!LibFuzzerDotnetLoader.Program.TryTestOneSpan(System.Reflection.MethodInfo)+0xf9 [D:\a\onefuzz\onefuzz\src\agent\LibFuzzerDotnetLoader\Program.cs @ 123]
+    0000000674D7E840 00007FFD85A61122 LibFuzzerDotnetLoader!LibFuzzerDotnetLoader.Program.TryMain()+0x2b2 [D:\a\onefuzz\onefuzz\src\agent\LibFuzzerDotnetLoader\Program.cs @ 82]
+    0000000674D7E9D0 00007FFD85A44016 LibFuzzerDotnetLoader!LibFuzzerDotnetLoader.Program.Main(System.String[])+0x46 [D:\a\onefuzz\onefuzz\src\agent\LibFuzzerDotnetLoader\Program.cs @ 57]
+
+StackTraceString: <none>
+HResult: 80131508
+There are nested exceptions on this thread. Run with -nested for details"#;
+
+        let result = parse_sos_print_exception_output(text);
+        let expected = DotnetExceptionInfo {
+            exception: "System.IndexOutOfRangeException".to_string(),
+            message: "Index was outside the bounds of the array.".to_string(),
+            inner_exception: None,
+            call_stack: [
+                "System.Private.CoreLib!System.ThrowHelper.ThrowIndexOutOfRangeException()+0x36 [/_/src/libraries/System.Private.CoreLib/src/System/ThrowHelper.cs @ 68]",
+                "System.Private.CoreLib!System.ReadOnlySpan`1[[System.Byte, System.Private.CoreLib]].get_Item(Int32)+0x19 [/_/src/libraries/System.Private.CoreLib/src/System/ReadOnlySpan.cs @ 148]",
+                "GoodBad!GoodBad.BinaryParser.ProcessInput(System.ReadOnlySpan`1<Byte>)+0xb5 [/home/runner/work/onefuzz/onefuzz/src/integration-tests/GoodBad/GoodBad.cs @ 22]",
+                "GoodBad!GoodBad.Fuzzer.TestInput(System.ReadOnlySpan`1<Byte>)+0x61 [/home/runner/work/onefuzz/onefuzz/src/integration-tests/GoodBad/GoodBad.cs @ 31]",
+                "SharpFuzz!SharpFuzz.Fuzzer+LibFuzzer.RunWithoutLibFuzzer(SharpFuzz.ReadOnlySpanAction)+0x152",
+                "SharpFuzz!SharpFuzz.Fuzzer+LibFuzzer.Run(SharpFuzz.ReadOnlySpanAction)+0x2b2",
+                "LibFuzzerDotnetLoader!LibFuzzerDotnetLoader.Program.TryTestOne[[System.__Canon, System.Private.CoreLib]](System.Reflection.MethodInfo, System.Func`2<System.__Canon,SharpFuzz.ReadOnlySpanAction>)+0x29c [D:\\a\\onefuzz\\onefuzz\\src\\agent\\LibFuzzerDotnetLoader\\Program.cs @ 117]",
+                "LibFuzzerDotnetLoader!LibFuzzerDotnetLoader.Program.TryTestOneSpan(System.Reflection.MethodInfo)+0xf9 [D:\\a\\onefuzz\\onefuzz\\src\\agent\\LibFuzzerDotnetLoader\\Program.cs @ 123]",
+                "LibFuzzerDotnetLoader!LibFuzzerDotnetLoader.Program.TryMain()+0x2b2 [D:\\a\\onefuzz\\onefuzz\\src\\agent\\LibFuzzerDotnetLoader\\Program.cs @ 82]",
+                "LibFuzzerDotnetLoader!LibFuzzerDotnetLoader.Program.Main(System.String[])+0x46 [D:\\a\\onefuzz\\onefuzz\\src\\agent\\LibFuzzerDotnetLoader\\Program.cs @ 57]",
+            ].iter().map(|x| x.to_string()).collect(),
+            hresult: "80131508".to_string(),
+        };
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), expected);
+    }
+}

@@ -40,6 +40,7 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
         minimized_stack_depth: None,
         check_asan_log,
         check_debugger,
+        machine_identity: context.common_config.machine_identity.clone(),
     };
 
     let result = test_input(config).await?;

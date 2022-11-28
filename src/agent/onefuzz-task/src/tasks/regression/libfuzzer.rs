@@ -71,6 +71,7 @@ impl RegressionHandler for LibFuzzerRegressionTask {
             target_timeout: self.config.target_timeout,
             check_retry_count: self.config.check_retry_count,
             minimized_stack_depth: self.config.minimized_stack_depth,
+            machine_identity: self.config.common.machine_identity.clone(),
         };
         libfuzzer_report::test_input(args).await
     }
