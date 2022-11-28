@@ -35,8 +35,8 @@ Version 6.0 will convert jinja templates on-the-fly for a short period of time. 
 * Service: Notification Template `targetUrl` parameter fix. Only use the filename instead of the absolute path in the URL. The makes the links created in ADO bugs work as expected. [#2625](https://github.com/microsoft/onefuzz/pull/2625)
 * CLI: Fixed SignalR client code not reading responses correctly. [#2626](https://github.com/microsoft/onefuzz/pull/2626)
 * Service: Fix a logic bug in the notification hook. [#2627](https://github.com/microsoft/onefuzz/pull/2627)
-* Service: Bug fixes related to the unmanaged nodes. [#2632](https://github.com/microsoft/onefuzz/pull/2632)
-* Service: Fix invocation of functionapp in the deployment script. [#2645](https://github.com/microsoft/onefuzz/pull/2645)
+* Service: Bug fixes related to the unmanaged nodes (an unreleased feature). [#2632](https://github.com/microsoft/onefuzz/pull/2632)
+* Service: Fix invocation of `functionapp` in the deployment script. Where the wrong value/parameter pair were used. [#2645](https://github.com/microsoft/onefuzz/pull/2645)
 * Service: Fixing .NET crash report no-repro. [#2642](https://github.com/microsoft/onefuzz/pull/2642)
 
 ## 5.20.0
