@@ -3,7 +3,7 @@
 
 use anyhow::{Context, Result};
 use onefuzz::{
-    auth::{ClientCredentials, Credentials, ManagedIdentityCredentials},
+    auth::{ClientCredentials, Credentials, ManagedIdentityCredentials, Secret},
     http::{is_auth_error_code, ResponseExt},
     jitter::delay_with_jitter,
     machine_id::MachineIdentity,
@@ -46,10 +46,18 @@ fn default_as_true() -> bool {
     true
 }
 
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct RawClientCredentials {
+    client_id: Uuid,
+    client_secret: Secret<String>,
+    tenant: String,
+    multi_tenant_domain: Option<String>,
+}
+
 // Temporary shim type to bridge the current service-provided config.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 struct RawStaticConfig {
-    pub client_credentials: Option<ClientCredentials>,
+    pub client_credentials: Option<RawClientCredentials>,
 
     pub pool_name: String,
 
@@ -76,7 +84,14 @@ impl StaticConfig {
         let config: RawStaticConfig = serde_json::from_slice(data)?;
 
         let credentials = match config.client_credentials {
-            Some(client) => client.into(),
+            Some(client) => ClientCredentials::new(
+                client.client_id,
+                client.client_secret,
+                config.onefuzz_url.to_string(),
+                client.tenant,
+                client.multi_tenant_domain,
+            )
+            .into(),
             None => {
                 // Remove trailing `/`, which is treated as a distinct resource.
                 let resource = config
@@ -150,7 +165,7 @@ impl StaticConfig {
 
         let credentials = ClientCredentials::new(
             client_id,
-            client_secret,
+            client_secret.into(),
             onefuzz_url.to_string(),
             tenant,
             multi_tenant_domain.clone(),

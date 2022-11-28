@@ -21,6 +21,7 @@ use std::process::{Command, Stdio};
 
 use anyhow::{Context, Result};
 use clap::Parser;
+use onefuzz::machine_id::MachineIdentity;
 use onefuzz::process::ExitStatus;
 use onefuzz_telemetry::{self as telemetry, EventData, Role};
 use std::io::{self, Write};
@@ -59,6 +60,12 @@ struct RunOpt {
     /// the specified directory
     #[clap(short, long = "--redirect-output", parse(from_os_str))]
     redirect_output: Option<PathBuf>,
+
+    #[clap(long = "--machine_id")]
+    machine_id: Option<Uuid>,
+
+    #[clap(long = "--machine_name")]
+    machine_name: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -171,6 +178,8 @@ fn run(opt: RunOpt) -> Result<()> {
 
     // We can't send telemetry if this fails.
     let rt = tokio::runtime::Runtime::new()?;
+    let opt_machine_id = opt.machine_id.clone();
+    let opt_machine_name = opt.machine_name.clone();
     let config = rt.block_on(load_config(opt));
 
     // We can't send telemetry, because we couldn't get a telemetry key from the config.
@@ -180,6 +189,15 @@ fn run(opt: RunOpt) -> Result<()> {
     }
 
     let config = config?;
+
+    let config = StaticConfig {
+        machine_identity: MachineIdentity {
+            machine_id: opt_machine_id.unwrap_or(config.machine_identity.machine_id),
+            machine_name: opt_machine_name.unwrap_or(config.machine_identity.machine_name),
+            ..config.machine_identity
+        },
+        ..config
+    };
 
     let result = rt.block_on(run_agent(config));
 

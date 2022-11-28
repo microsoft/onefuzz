@@ -94,13 +94,11 @@ pub struct ClientCredentials {
 impl ClientCredentials {
     pub fn new(
         client_id: Uuid,
-        client_secret: String,
+        client_secret: Secret<String>,
         resource: String,
         tenant: String,
         multi_tenant_domain: Option<String>,
     ) -> Self {
-        let client_secret = client_secret.into();
-
         Self {
             client_id,
             client_secret,
@@ -113,9 +111,12 @@ impl ClientCredentials {
     pub async fn access_token(&self) -> Result<AccessToken> {
         let (authority, scope) = {
             let url = Url::parse(&self.resource.clone())?;
-            let host = url.host_str().ok_or_else(|| {
-                anyhow::format_err!("resource URL does not have a host string: {}", url)
-            })?;
+            let host = match (url.host_str(), url.port()) {
+                (Some(host), Some(port)) => format!("{}:{}", host, port),
+                (Some(host), None) => host.to_string(),
+                (None, _) => anyhow::bail!("resource URL does not have a host string: {}", url),
+            };
+
             if let Some(domain) = &self.multi_tenant_domain {
                 let instance: Vec<&str> = host.split('.').collect();
                 (
