@@ -61,13 +61,14 @@ public class QueueFileChanges {
             // requeuing ourselves because azure functions doesn't support retry policies
             // for queue based functions.
 
-            await FileAdded(_log, fileChangeEvent, isLastRetryAttempt: false);
-        } catch {
+            await FileAdded(fileChangeEvent, isLastRetryAttempt: false);
+        } catch (Exception e) {
+            _log.Exception(e);
             await RequeueMessage(msg);
         }
     }
 
-    private async Async.Task FileAdded(ILogTracer log, JsonDocument fileChangeEvent, bool isLastRetryAttempt) {
+    private async Async.Task FileAdded(JsonDocument fileChangeEvent, bool isLastRetryAttempt) {
         var data = fileChangeEvent.RootElement.GetProperty("data");
         var url = data.GetProperty("url").GetString()!;
         var parts = url.Split("/").Skip(3).ToList();
@@ -75,7 +76,7 @@ public class QueueFileChanges {
         var container = parts[0];
         var path = string.Join('/', parts.Skip(1));
 
-        log.Info($"file added : {container:Tag:Container} - {path:Tag:Path}");
+        _log.Info($"file added : {container:Tag:Container} - {path:Tag:Path}");
         await _notificationOperations.NewFiles(Container.Parse(container), path, isLastRetryAttempt);
     }
 

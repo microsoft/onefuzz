@@ -4,7 +4,6 @@
 # Licensed under the MIT License.
 
 import argparse
-import itertools
 import json
 import logging
 import os
@@ -95,12 +94,7 @@ FUNC_TOOLS_ERROR = (
 )
 
 DOTNET_APPLICATION_SUFFIX = "-net"
-DOTNET_AGENT_FUNCTIONS = [
-    "agent_can_schedule",
-    "agent_commands",
-    "agent_events",
-    "agent_registration",
-]
+
 logger = logging.getLogger("deploy")
 
 
@@ -145,7 +139,6 @@ class Client:
         client_id: Optional[str],
         client_secret: Optional[str],
         app_zip: str,
-        app_net_zip: str,
         tools: str,
         instance_specific: str,
         third_party: str,
@@ -159,8 +152,6 @@ class Client:
         subscription_id: Optional[str],
         admins: List[UUID],
         allowed_aad_tenants: List[UUID],
-        enable_dotnet: List[str],
-        use_dotnet_agent_functions: bool,
         cli_app_id: str,
         auto_create_cli_app: bool,
         host_dotnet_on_windows: bool,
@@ -173,7 +164,6 @@ class Client:
         self.owner = owner
         self.nsg_config = nsg_config
         self.app_zip = app_zip
-        self.app_net_zip = app_net_zip
         self.tools = tools
         self.instance_specific = instance_specific
         self.third_party = third_party
@@ -195,8 +185,6 @@ class Client:
 
         self.arm_template = bicep_to_arm(bicep_template)
 
-        self.enable_dotnet = enable_dotnet
-        self.use_dotnet_agent_functions = use_dotnet_agent_functions
         self.cli_app_id = cli_app_id
         self.auto_create_cli_app = auto_create_cli_app
         self.host_dotnet_on_windows = host_dotnet_on_windows
@@ -700,7 +688,6 @@ class Client:
             "signedExpiry": {"value": expiry},
             "multi_tenant_domain": multi_tenant_domain,
             "workbookData": {"value": self.workbook_data},
-            "use_dotnet_agent_functions": {"value": self.use_dotnet_agent_functions},
             "enable_remote_debugging": {"value": self.host_dotnet_on_windows},
             "enable_profiler": {"value": self.enable_profiler},
         }
@@ -1122,8 +1109,9 @@ class Client:
                                 "functionapp",
                                 "publish",
                                 self.application_name,
-                                "--python",
                                 "--no-build",
+                                "--dotnet-version",
+                                "7.0",
                             ],
                             env=dict(os.environ, CLI_DEBUG="1"),
                             cwd=tmpdirname,
@@ -1142,9 +1130,9 @@ class Client:
                     raise error
 
     def deploy_dotnet_app(self) -> None:
-        logger.info("deploying function app %s ", self.app_net_zip)
+        logger.info("deploying function app %s ", self.app_zip)
         with tempfile.TemporaryDirectory() as tmpdirname:
-            with zipfile.ZipFile(self.app_net_zip, "r") as zip_ref:
+            with zipfile.ZipFile(self.app_zip, "r") as zip_ref:
                 func = shutil.which("func")
                 assert func is not None
 
@@ -1179,99 +1167,6 @@ class Client:
                             time.sleep(60)
                 if error is not None:
                     raise error
-
-    def enable_dotnet_func(self) -> None:
-        if self.enable_dotnet:
-
-            def expand_agent(f: str) -> List[str]:
-                # 'agent' is permitted as a shortcut for the agent functions
-                if f == "agent":
-                    return DOTNET_AGENT_FUNCTIONS
-                else:
-                    return [f]
-
-            enable_dotnet = itertools.chain.from_iterable(
-                map(expand_agent, self.enable_dotnet)
-            )
-
-            python_settings = []
-            dotnet_settings = []
-
-            for function_name in enable_dotnet:
-                format_name = function_name.split("_")
-                dotnet_name = "".join(x.title() for x in format_name)
-                # keep the python versions of http function to allow the service to be backward compatible
-                # with older version of the CLI and the agents
-                if function_name.startswith("queue_") or function_name.startswith(
-                    "timer_"
-                ):
-                    logger.info(f"disabling PYTHON function: {function_name}")
-                    disable_python = "1"
-                else:
-                    logger.info(f"enabling PYTHON function: {function_name}")
-                    disable_python = "0"
-
-                python_settings.append(
-                    f"AzureWebJobs.{function_name}.Disabled={disable_python}"
-                )
-
-                # enable dotnet function
-                logger.info(f"enabling DOTNET function: {dotnet_name}")
-                dotnet_settings.append(f"AzureWebJobs.{dotnet_name}.Disabled=0")
-
-            func = shutil.which("az")
-            assert func is not None
-
-            max_tries = 5
-            error: Optional[subprocess.CalledProcessError] = None
-            for i in range(max_tries):
-                try:
-                    logger.info("updating Python settings")
-                    subprocess.check_output(
-                        [
-                            func,
-                            "functionapp",
-                            "config",
-                            "appsettings",
-                            "set",
-                            "--name",
-                            self.application_name,
-                            "--resource-group",
-                            self.resource_group,
-                            "--settings",
-                        ]
-                        + python_settings,
-                        env=dict(os.environ, CLI_DEBUG="1"),
-                    )
-                    logger.info("updating .NET settings")
-                    subprocess.check_output(
-                        [
-                            func,
-                            "functionapp",
-                            "config",
-                            "appsettings",
-                            "set",
-                            "--name",
-                            self.application_name + DOTNET_APPLICATION_SUFFIX,
-                            "--resource-group",
-                            self.resource_group,
-                            "--settings",
-                        ]
-                        + dotnet_settings,
-                        env=dict(os.environ, CLI_DEBUG="1"),
-                    )
-                    break
-                except subprocess.CalledProcessError as err:
-                    error = err
-                    if i + 1 < max_tries:
-                        logger.debug("func failure error: %s", err)
-                        logger.warning(
-                            "unable to update settings, waiting 60 seconds and trying again"
-                        )
-                        time.sleep(60)
-
-            if error is not None:
-                raise error
 
     def update_registration(self) -> None:
         if not self.create_registration:
@@ -1336,7 +1231,6 @@ def main() -> None:
         ("dotnet-api", Client.deploy_dotnet_app),
         ("export_appinsights", Client.add_log_export),
         ("update_registration", Client.update_registration),
-        ("enable_dotnet", Client.enable_dotnet_func),
     ]
 
     formatter = argparse.ArgumentDefaultsHelpFormatter
@@ -1362,12 +1256,6 @@ def main() -> None:
         "--app-zip",
         type=arg_file,
         default="api-service.zip",
-        help="(default: %(default)s)",
-    )
-    parser.add_argument(
-        "--app-net-zip",
-        type=arg_file,
-        default="api-service-net.zip",
         help="(default: %(default)s)",
     )
     parser.add_argument(
@@ -1448,20 +1336,6 @@ def main() -> None:
         help="Set additional AAD tenants beyond the tenant the app is deployed in",
     )
     parser.add_argument(
-        "--enable_dotnet",
-        type=str,
-        nargs="+",
-        default=[],
-        help="Provide a space-seperated list of python function names to disable "
-        "their functions and enable corresponding dotnet functions in the Azure "
-        "Function App deployment",
-    )
-    parser.add_argument(
-        "--use_dotnet_agent_functions",
-        action="store_true",
-        help="Tell the OneFuzz agent to use the dotnet endpoint",
-    )
-    parser.add_argument(
         "--cli_app_id",
         type=str,
         default="72f1562a-8c0c-41ea-beb9-fa2b71c80134",
@@ -1499,7 +1373,6 @@ def main() -> None:
         client_id=args.client_id,
         client_secret=args.client_secret,
         app_zip=args.app_zip,
-        app_net_zip=args.app_net_zip,
         tools=args.tools,
         instance_specific=args.instance_specific,
         third_party=args.third_party,
@@ -1513,8 +1386,6 @@ def main() -> None:
         subscription_id=args.subscription_id,
         admins=args.set_admins,
         allowed_aad_tenants=args.allowed_aad_tenants or [],
-        enable_dotnet=args.enable_dotnet,
-        use_dotnet_agent_functions=args.use_dotnet_agent_functions,
         cli_app_id=args.cli_app_id,
         auto_create_cli_app=args.auto_create_cli_app,
         host_dotnet_on_windows=args.host_dotnet_on_windows,
@@ -1528,17 +1399,6 @@ def main() -> None:
     logging.basicConfig(level=level)
 
     logging.getLogger("deploy").setLevel(logging.INFO)
-
-    if args.use_dotnet_agent_functions:
-        # validate that the agent functions are actually enabled
-        if not (
-            "agent" in args.enable_dotnet
-            or all(map(lambda f: f in args.enable_dotnet, DOTNET_AGENT_FUNCTIONS))
-        ):
-            logger.error(
-                "If --use_dotnet_agent_functions is set, all agent functions must be enabled (--enable_dotnet agent)."
-            )
-            sys.exit(1)
 
     if args.rbac_only:
         logger.warning(
