@@ -14,6 +14,7 @@ SERVICE ENGINEERS: If you currently run an instance of OneFuzz you will need to 
 ### Added
 * Agent: Making machine identity a parameter of the agent config. [#2649](https://github.com/microsoft/onefuzz/pull/2649)
 ### Changed
+* Service: Deployment enables refactored C# App Function. [#2650](https://github.com/microsoft/onefuzz/pull/2650)
 * CLI: Use broker or browser login instead of device flow. [#2612](https://github.com/microsoft/onefuzz/pull/2612)
 * Service: Update to .NET 7. [#2615](https://github.com/microsoft/onefuzz/pull/2615)
 * Service: Make Proxy `TelemetryKey` optional. [#2619](https://github.com/microsoft/onefuzz/pull/2619)
