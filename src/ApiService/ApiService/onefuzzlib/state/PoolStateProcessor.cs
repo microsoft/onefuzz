@@ -15,7 +15,7 @@ class PoolStateOrchestrator : TaskOrchestratorBase<JsonElement, bool> {
         TaskOrchestrationContext context,
         JsonElement json) {
 
-        _ = await context.CallPoolState_UpdateAsync(
+        _ = await context.CallPoolStateTransitionAsync(
             json.ToString(),
             options: TaskOptions.FromRetryPolicy(
                 new RetryPolicy(1000, TimeSpan.FromSeconds(1))));
@@ -25,11 +25,11 @@ class PoolStateOrchestrator : TaskOrchestratorBase<JsonElement, bool> {
 }
 
 [DurableTask]
-class PoolState_Update : TaskActivityBase<string, bool> {
+class PoolStateTransition : TaskActivityBase<string, bool> {
     private readonly IPoolOperations _poolOps;
     private readonly ILogTracer _log;
 
-    public PoolState_Update(IPoolOperations poolOps, ILogTracer log) {
+    public PoolStateTransition(IPoolOperations poolOps, ILogTracer log) {
         _poolOps = poolOps;
         _log = log;
     }
@@ -41,7 +41,7 @@ class PoolState_Update : TaskActivityBase<string, bool> {
         var pool = await _poolOps.GetEntityAsync(input.PoolName.ToString(), input.PoolId.ToString());
         if (pool is not null) {
             _log.Info($"updating pool: {input.PoolId:Tag:PoolId} ({input.PoolName:Tag:PoolName}) - state: {pool.State:Tag:PoolState}");
-            _ = await _poolOps.ProcessStateUpdate(pool);
+            pool = await _poolOps.ProcessStateUpdate(pool);
             _log.Info($"finished updating pool: {input.PoolId:Tag:PoolId} ({input.PoolName:Tag:PoolName}) - state: {pool.State:Tag:PoolState}");
             return true;
         } else {

@@ -55,10 +55,10 @@ public class TimerWorkers {
 
         var pools = _poolOps.SearchStates(states: PoolStateHelper.NeedsWork);
         await foreach (var pool in pools) {
-            var instanceId = $"{pool.Name}-{pool.PoolId}";
+            var instanceId = $"PoolStateOrchestrator-{pool.Name}-{pool.PoolId}";
             try {
-                var existing = await durableClient.Client.GetInstanceMetadataAsync(instanceId, getInputsAndOutputs: false);
-                if (ShouldStartStateMachineOrchestration(existing)) {
+                var existingOrchestration = await durableClient.Client.GetInstanceMetadataAsync(instanceId, getInputsAndOutputs: false);
+                if (ShouldStartStateMachineOrchestration(existingOrchestration)) {
                     _ = await durableClient.Client.ScheduleNewPoolStateOrchestratorInstanceAsync(
                         instanceId,
                         JsonSerializer.SerializeToElement(new PoolKey(pool.Name, pool.PoolId)));
@@ -79,12 +79,16 @@ public class TimerWorkers {
 
         var nodes = _nodeOps.SearchStates(states: NodeStateHelper.NeedsWorkStates);
         await foreach (var node in nodes) {
+            var instanceId = $"NodeStateOrchestrator-{node.PoolName}-{node.MachineId}";
             try {
-                _log.Info($"updating node: {node.MachineId:Tag:MachineId} - state: {node.State:Tag:NodeState}");
-                var newNode = await _nodeOps.ProcessStateUpdate(node);
-                _log.Info($"completed updating node: {node.MachineId:Tag:MachineId} - now in state {newNode.State:Tag:NodeState}");
+                var existingOrchestration = await durableClient.Client.GetInstanceMetadataAsync(instanceId, getInputsAndOutputs: false);
+                if (ShouldStartStateMachineOrchestration(existingOrchestration)) {
+                    _ = await durableClient.Client.ScheduleNewPoolStateOrchestratorInstanceAsync(
+                        instanceId,
+                        JsonSerializer.SerializeToElement(new NodeKey(node.PoolName, node.MachineId)));
+                }
             } catch (Exception ex) {
-                _log.Exception(ex, $"failed to process node");
+                _log.Exception(ex, $"Error triggering node-state processing for ${instanceId}");
             }
         }
 
