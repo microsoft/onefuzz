@@ -20,6 +20,8 @@ With this release we are moving from jinja templates to [scriban](https://github
 
 Version 6.0 will convert jinja templates on-the-fly for a short period of time. We do **_not_** guarantee that this will be successful for all jinja template options. These on-the-fly conversions are not persisted in the notifications table in this release. They will be in a following release. This will allow time for conversions of templates that are not handled by the current automatic conversion process. 
 
+### CLI
+The default value for the `--container_type` parameter to the `container` command has been removed. The `container_type` parameter is still required for the command. This change removes the ambiguity of the container information being returned. 
 
 ### Added
 * Agent: Making machine identity a parameter of the agent config. [#2649](https://github.com/microsoft/onefuzz/pull/2649)
