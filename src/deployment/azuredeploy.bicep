@@ -278,6 +278,7 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
     enable_profiler: enable_profiler
+    agent_function_names: []
   }
   dependsOn: [
     function
@@ -304,6 +305,12 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
     enable_profiler: enable_profiler
+    agent_function_names: [
+      'AgentCanSchedule'      //0
+      'AgentCommands'         //1
+      'AgentEvents'           //2
+      'AgentRegistration'     //3
+    ]
   }
   dependsOn: [
     netFunction
