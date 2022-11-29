@@ -1981,6 +1981,7 @@ dependencies = [
  "onefuzz",
  "onefuzz-telemetry",
  "path-absolutize",
+ "pretty_assertions",
  "regex",
  "reqwest",
  "reqwest-retry",
