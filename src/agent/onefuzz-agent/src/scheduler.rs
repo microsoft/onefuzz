@@ -13,6 +13,7 @@ use crate::setup::ISetupRunner;
 use crate::work::*;
 use crate::worker::*;
 
+#[derive(Debug)]
 pub enum Scheduler {
     Free(State<Free>),
     SettingUp(State<SettingUp>),
@@ -97,24 +98,30 @@ impl Default for Scheduler {
     }
 }
 
+#[derive(Debug)]
 pub struct Free;
 
+#[derive(Debug)]
 pub struct SettingUp {
     work_set: WorkSet,
 }
 
+#[derive(Debug)]
 pub struct PendingReboot {
     work_set: WorkSet,
 }
 
+#[derive(Debug)]
 pub struct Ready {
     work_set: WorkSet,
 }
 
+#[derive(Debug)]
 pub struct Busy {
     workers: Vec<Option<Worker>>,
 }
 
+#[derive(Debug)]
 pub struct Done {
     cause: DoneCause,
 }
@@ -138,6 +145,7 @@ impl Context for Ready {}
 impl Context for Busy {}
 impl Context for Done {}
 
+#[derive(Debug)]
 pub struct State<C: Context> {
     ctx: C,
 }
@@ -201,7 +209,7 @@ impl State<SettingUp> {
                 // No script was executed.
             }
             Err(err) => {
-                let error = err.to_string();
+                let error = format!("{:?}", err.to_string());
                 warn!("{}", error);
                 let cause = DoneCause::SetupError {
                     error,

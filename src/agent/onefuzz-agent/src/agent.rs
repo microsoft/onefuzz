@@ -28,6 +28,7 @@ pub struct Agent {
     previous_state: NodeState,
     last_poll_command: Result<Option<NodeCommand>, PollCommandError>,
     managed: bool,
+    machine_id: uuid::Uuid,
 }
 
 impl Agent {
@@ -40,6 +41,7 @@ impl Agent {
         worker_runner: Box<dyn IWorkerRunner>,
         heartbeat: Option<AgentHeartbeatClient>,
         managed: bool,
+        machine_id: uuid::Uuid,
     ) -> Self {
         let scheduler = Some(scheduler);
         let previous_state = NodeState::Init;
@@ -56,6 +58,7 @@ impl Agent {
             previous_state,
             last_poll_command,
             managed,
+            machine_id,
         }
     }
 
@@ -266,7 +269,7 @@ impl Agent {
 
     async fn done(&mut self, state: State<Done>) -> Result<Scheduler> {
         debug!("agent done");
-        set_done_lock().await?;
+        set_done_lock(self.machine_id).await?;
 
         let event = match state.cause() {
             DoneCause::SetupError {

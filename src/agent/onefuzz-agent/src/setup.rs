@@ -11,6 +11,7 @@ use onefuzz::az_copy;
 use onefuzz::process::Output;
 use tokio::fs;
 use tokio::process::Command;
+use uuid::Uuid;
 
 use crate::work::*;
 
@@ -36,24 +37,22 @@ impl ISetupRunner for SetupRunner {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct SetupRunner;
+pub struct SetupRunner {
+    pub machine_id: Uuid,
+}
 
 impl SetupRunner {
     pub async fn run(&mut self, work_set: &WorkSet) -> Result<SetupOutput> {
         info!("running setup for work set");
-
-        work_set.save_context().await?;
-
+        work_set.save_context(self.machine_id).await?;
         // Download the setup container.
         let setup_url = work_set.setup_url.url()?;
         let setup_dir = work_set.setup_dir()?;
-
         // `azcopy sync` requires the local dir to exist.
         fs::create_dir_all(&setup_dir).await.with_context(|| {
             format!("unable to create setup container: {}", setup_dir.display())
         })?;
         az_copy::sync(setup_url.to_string(), &setup_dir, false).await?;
-
         debug!(
             "synced setup container from {} to {}",
             setup_url,
@@ -110,12 +109,19 @@ async fn create_setup_symlink(setup_dir: &Path, work_unit: &WorkUnit) -> Result<
 
     let working_dir = work_unit.working_dir()?;
 
-    fs::create_dir(&working_dir).await.with_context(|| {
+    let create_work_dir = fs::create_dir(&working_dir).await.with_context(|| {
         format!(
             "unable to create working directory: {}",
             working_dir.display()
         )
-    })?;
+    });
+
+    if let Err(err) = create_work_dir {
+        if !working_dir.exists()  {
+            return Err(err);
+        }
+    }
+
     let task_setup_dir = working_dir.join("setup");
 
     // Tokio does not ship async versions of the `std::fs::os` symlink

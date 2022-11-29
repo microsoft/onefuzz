@@ -227,7 +227,10 @@ where
         let crash_dir = self.create_local_temp_dir().await?;
         let run_id = Uuid::new_v4();
 
-        debug!("starting fuzzer run, run_id = {}", run_id);
+        debug!(
+            "starting fuzzer run, run_id = {}, worker_id = {}",
+            run_id, worker_id
+        );
 
         let mut inputs = vec![&self.config.inputs.local_path];
         if let Some(readonly_inputs) = &self.config.readonly_inputs {

@@ -208,6 +208,10 @@ pub struct DynamicConfig {
 impl DynamicConfig {
     pub async fn save(&self) -> Result<()> {
         let path = Self::save_path()?;
+        let dir = path
+            .parent()
+            .ok_or(anyhow!("invalid dynamic config path"))?;
+        fs::create_dir_all(dir).await?;
         let data = serde_json::to_vec(&self)?;
         fs::write(&path, &data)
             .await

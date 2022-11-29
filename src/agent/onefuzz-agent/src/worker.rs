@@ -37,6 +37,7 @@ pub enum WorkerEvent {
     },
 }
 
+#[derive(Debug)]
 pub enum Worker {
     Ready(State<Ready>),
     Running(State<Running>),
@@ -94,14 +95,17 @@ impl Worker {
     }
 }
 
+#[derive(Debug)]
 pub struct Ready {
     setup_dir: PathBuf,
 }
 
+#[derive(Debug)]
 pub struct Running {
     child: Box<dyn IWorkerChild>,
 }
 
+#[derive(Debug)]
 pub struct Done {
     output: Output,
 }
@@ -112,6 +116,7 @@ impl Context for Ready {}
 impl Context for Running {}
 impl Context for Done {}
 
+#[derive(Debug)]
 pub struct State<C: Context> {
     ctx: C,
     work: WorkUnit,
@@ -189,7 +194,7 @@ pub trait IWorkerRunner: Downcast {
 
 impl_downcast!(IWorkerRunner);
 
-pub trait IWorkerChild: Downcast {
+pub trait IWorkerChild: Downcast + std::fmt::Debug {
     fn try_wait(&mut self) -> Result<Option<Output>>;
 
     fn kill(&mut self) -> Result<()>;
@@ -197,6 +202,7 @@ pub trait IWorkerChild: Downcast {
 
 impl_downcast!(IWorkerChild);
 
+#[derive(Debug)]
 pub struct WorkerRunner;
 
 #[async_trait]
@@ -284,6 +290,7 @@ impl SuspendableChild for Child {
 }
 
 /// Child process with redirected output streams, tailed by two worker threads.
+#[derive(Debug)]
 struct RedirectedChild {
     /// The child process.
     child: Child,
@@ -310,6 +317,7 @@ impl RedirectedChild {
 }
 
 /// Worker threads that tail the redirected output streams of a running child process.
+#[derive(Debug)]
 struct StreamReaderThreads {
     stderr: JoinHandle<TailBuffer>,
     stdout: JoinHandle<TailBuffer>,
