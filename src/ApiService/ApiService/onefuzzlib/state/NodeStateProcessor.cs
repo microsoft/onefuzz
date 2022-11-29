@@ -12,14 +12,19 @@ public record struct NodeKey(
 
 [DurableTask]
 class NodeStateProcessor : TaskOrchestratorBase<JsonElement, bool> {
+    static readonly RetryPolicy _persistentRetryPolicy
+        = new(
+            maxNumberOfAttempts: 1000,
+            firstRetryInterval: TimeSpan.FromSeconds(1),
+            backoffCoefficient: 1.2);
+
     protected override async Async.Task<bool> OnRunAsync(
         TaskOrchestrationContext context,
         JsonElement json) {
 
         _ = await context.CallNodeStateTransitionAsync(
             json.ToString(),
-            options: TaskOptions.FromRetryPolicy(
-                new RetryPolicy(1000, TimeSpan.FromSeconds(1))));
+            options: TaskOptions.FromRetryPolicy(_persistentRetryPolicy));
 
         return true;
     }
