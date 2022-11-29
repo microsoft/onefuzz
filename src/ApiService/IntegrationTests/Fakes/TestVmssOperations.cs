@@ -67,4 +67,8 @@ sealed class TestVmssOperations : IVmssOperations {
     public Async.Task DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes) {
         throw new NotImplementedException();
     }
+
+    public Task<VirtualMachineScaleSetVmData?> GetVmssVm(Guid scaleset, string instanceId) {
+        throw new NotImplementedException();
+    }
 }
