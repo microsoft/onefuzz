@@ -420,11 +420,19 @@ mod tests {
     use std::path::Path;
     use uuid::Uuid;
 
+    fn test_machine_identity() -> MachineIdentity {
+        MachineIdentity {
+            machine_id: Uuid::new_v4(),
+            machine_name: "test-machine".to_string(),
+            scaleset_name: None,
+        }
+    }
+
     #[test]
     fn test_expand_nested() -> Result<()> {
         let supervisor_options = vec!["{target_options}".to_string()];
         let target_options: Vec<_> = vec!["a", "b", "c"].iter().map(|p| p.to_string()).collect();
-        let result = Expand::new(&MachineIdentity::default())
+        let result = Expand::new(&test_machine_identity())
             .target_options(&target_options)
             .evaluate(&supervisor_options)?;
         let expected = vec!["a b c"];
@@ -467,7 +475,7 @@ mod tests {
         let input_corpus_dir = "src";
         let generated_inputs_dir = "src";
 
-        let result = Expand::new(&MachineIdentity::default())
+        let result = Expand::new(&test_machine_identity())
             .input_corpus(Path::new(input_corpus_dir))
             .generated_inputs(Path::new(generated_inputs_dir))
             .target_options(&my_options)
@@ -501,7 +509,7 @@ mod tests {
             ]
         );
 
-        assert!(Expand::new(&MachineIdentity::default())
+        assert!(Expand::new(&test_machine_identity())
             .evaluate(&my_args)
             .is_err());
 
@@ -510,7 +518,7 @@ mod tests {
 
     #[test]
     fn test_expand_in_string() -> Result<()> {
-        let result = Expand::new(&MachineIdentity::default())
+        let result = Expand::new(&test_machine_identity())
             .input_path("src/lib.rs")
             .evaluate_value("a {input} b")?;
         assert!(result.contains("lib.rs"));
@@ -520,10 +528,7 @@ mod tests {
     #[tokio::test]
     async fn test_expand_machine_id() -> Result<()> {
         let machine_id = Uuid::new_v4();
-        let machine_identity = MachineIdentity {
-            machine_id,
-            ..Default::default()
-        };
+        let machine_identity = &test_machine_identity();
         let expand = Expand::new(&machine_identity).machine_id().await?;
         let expanded = expand.evaluate_value("{machine_id}")?;
         // Check that "{machine_id}" expands to a valid UUID, but don't worry about the actual value.
