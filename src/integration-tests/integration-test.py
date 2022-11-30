@@ -765,12 +765,14 @@ class TestOnefuzz:
                             self.logger.info("repro succeeded: %s", job.config.name)
                         else:
                             clear()
+                            selflogger.error("Failing in else")
                             self.logger.error(
                                 "repro failed: %s - %s", job.config.name, result
                             )
                             self.success = False
                     except Exception as err:
                         clear()
+                        self.logger.error("failing in except")
                         self.logger.error("repro failed: %s - %s", job.config.name, err)
                         self.success = False
                     del repros[job.job_id]
