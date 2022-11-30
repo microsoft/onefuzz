@@ -279,7 +279,7 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
     multi_tenant_domain: multi_tenant_domain
     enable_profiler: enable_profiler
     functions_disabled: 0
-    all_function_names: [
+    agent_function_names: [
       'AgentCanSchedule'      //0
       'AgentCommands'         //1
       'AgentEvents'           //2
@@ -344,7 +344,7 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     multi_tenant_domain: multi_tenant_domain
     enable_profiler: enable_profiler
     functions_disabled: 1
-    all_function_names: [
+    agent_function_names: [
       'AgentCanSchedule'      //0
       'AgentCommands'         //1
       'AgentEvents'           //2
