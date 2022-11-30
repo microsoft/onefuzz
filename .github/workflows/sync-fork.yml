@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: tgymnich/fork-sync@v1.6.3
         with:
+          token: ${{ secrets.SYNC_FORK_TOKEN }}
           owner: microsoft
           base: main
           head: main
