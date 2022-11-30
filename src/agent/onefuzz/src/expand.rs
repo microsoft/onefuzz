@@ -529,7 +529,7 @@ mod tests {
     async fn test_expand_machine_id() -> Result<()> {
         let machine_id = Uuid::new_v4();
         let machine_identity = &test_machine_identity();
-        let expand = Expand::new(&machine_identity).machine_id().await?;
+        let expand = Expand::new(machine_identity).machine_id().await?;
         let expanded = expand.evaluate_value("{machine_id}")?;
         // Check that "{machine_id}" expands to a valid UUID, but don't worry about the actual value.
         let expanded_machine_id = Uuid::parse_str(&expanded)?;
