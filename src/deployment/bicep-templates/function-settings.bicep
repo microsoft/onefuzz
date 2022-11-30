@@ -27,6 +27,7 @@ param functions_worker_runtime string
 param functions_extension_version string
 
 param agent_function_names array
+param functions_disabled string
 
 param enable_profiler bool
 
@@ -41,6 +42,7 @@ resource function 'Microsoft.Web/sites@2021-02-01' existing = {
 module disabledFunctions 'function-settings-disabled-apps.bicep' = {
   name: disabledFunctionName
   params:{
+    functions_disabled_setting: functions_disabled
     allFunctions: agent_function_names
   }
 }
