@@ -773,8 +773,11 @@ class TestOnefuzz:
                     except Exception as err:
                         clear()
                         self.logger.error("failing in except")
-                        self.logger.error("repro failed: %s - %s", job.config.name, err)
-                        self.success = False
+                        if err.error and "command not found" in str(err.error):
+                            self.logger.error("repro failed with transient 'command not found' error: %s", err)
+                        else:
+                            self.logger.error("repro failed: %s - %s", job.config.name, err)
+                            self.success = False
                     del repros[job.job_id]
                 elif repro.state not in [VmState.init, VmState.extensions_launch]:
                     self.logger.error(
