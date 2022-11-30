@@ -299,7 +299,7 @@ mod tests {
                 logs: Default::default(),
                 setup_dir: Default::default(),
                 min_available_memory_mb: Default::default(),
-                machine_identity: MachineIdentity {
+                machine_identity: onefuzz::machine_id::MachineIdentity {
                     machine_id: uuid::Uuid::new_v4(),
                     machine_name: "test".to_string(),
                     scaleset_name: None,
