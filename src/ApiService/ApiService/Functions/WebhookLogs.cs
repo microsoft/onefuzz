@@ -17,7 +17,7 @@ public class WebhookLogs {
 
     [Function("WebhookLogs")]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "webhooks/logs")] HttpRequestData req) {
+        [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "webhooks_logs")] HttpRequestData req) {
         return _auth.CallIfUser(req, r => r.Method switch {
             "POST" => Post(r),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
