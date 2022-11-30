@@ -150,7 +150,7 @@ impl StaticConfig {
 
         let credentials = ClientCredentials::new(
             client_id,
-            client_secret,
+            client_secret.into(),
             onefuzz_url.to_string(),
             tenant,
             multi_tenant_domain.clone(),

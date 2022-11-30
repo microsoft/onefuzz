@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::Parser;
 use onefuzz::blob::BlobContainerUrl;
+use onefuzz::machine_id::MachineIdentity;
 use onefuzz::process::ExitStatus;
 use url::Url;
 use uuid::Uuid;
@@ -188,7 +189,12 @@ async fn run_worker(mut work_set: WorkSet) -> Result<Vec<WorkerEvent>> {
 
     let mut worker = Worker::new(&setup_dir, work_unit);
     while !worker.is_done() {
-        worker = worker.update(&mut events, &mut WorkerRunner).await?;
+        worker = worker
+            .update(
+                &mut events,
+                &mut WorkerRunner::new(MachineIdentity::default()),
+            )
+            .await?;
     }
 
     Ok(events)
