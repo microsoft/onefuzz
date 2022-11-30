@@ -15,7 +15,7 @@ public class ReproVmss {
         _context = context;
     }
 
-    [Function("repro_vms")]
+    [Function("ReproVmss")]
     public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req) {
         return _auth.CallIfUser(req, r => r.Method switch {
             "GET" => Get(r),

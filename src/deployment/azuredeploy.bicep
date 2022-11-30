@@ -313,9 +313,10 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
       'TimerRetention'        //30
       'TimerTasks'            //31
       'TimerWorkers'          //32
-      'Webhooks'              //33
-      'WebhooksLogs'          //34
-      'WebhooksPing'          //35    
+      'Tools'                 //33
+      'Webhooks'              //34
+      'WebhooksLogs'          //35
+      'WebhooksPing'          //36    
     ]
   }
   dependsOn: [
@@ -378,9 +379,10 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
       'TimerRetention'        //30
       'TimerTasks'            //31
       'TimerWorkers'          //32
-      'Webhooks'              //33
-      'WebhooksLogs'          //34
-      'WebhooksPing'          //35    
+      'Tools'                 //33
+      'Webhooks'              //34
+      'WebhooksLogs'          //35
+      'WebhooksPing'          //36   
     ]
   }
   dependsOn: [
