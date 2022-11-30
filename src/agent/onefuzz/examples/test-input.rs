@@ -58,10 +58,10 @@ async fn main() -> Result<()> {
         &opt.exe,
         &target_options,
         &env,
-        MachineIdentity{
+        MachineIdentity {
             machine_id: uuid::Uuid::new_v4(),
             machine_name: "test-input".into(),
-            scaleset_name: None
+            scaleset_name: None,
         },
     );
 

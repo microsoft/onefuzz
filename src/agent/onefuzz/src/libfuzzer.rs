@@ -445,10 +445,10 @@ mod tests {
             options.clone(),
             env.clone(),
             &temp_setup_dir.path(),
-            MachineIdentity{
+            MachineIdentity {
                 machine_id: uuid::Uuid::new_v4(),
                 machine_name: "test-input".into(),
-                scaleset_name: None
+                scaleset_name: None,
             },
         );
 
@@ -478,10 +478,10 @@ mod tests {
             options.clone(),
             env.clone(),
             &temp_setup_dir.path(),
-            MachineIdentity{
+            MachineIdentity {
                 machine_id: uuid::Uuid::new_v4(),
                 machine_name: "test-input".into(),
-                scaleset_name: None
+                scaleset_name: None,
             },
         );
         // verify good exits with -help=1
