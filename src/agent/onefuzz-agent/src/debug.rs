@@ -192,7 +192,11 @@ async fn run_worker(mut work_set: WorkSet) -> Result<Vec<WorkerEvent>> {
         worker = worker
             .update(
                 &mut events,
-                &mut WorkerRunner::new(MachineIdentity::default()),
+                &mut WorkerRunner::new(MachineIdentity {
+                    machine_id: Uuid::new_v4(),
+                    machine_name: "debug".into(),
+                    scaleset_name: None,
+                }),
             )
             .await?;
     }
