@@ -236,8 +236,8 @@ public class EntityConverter {
             } else if (ef.type == typeof(long)) {
                 return long.Parse(stringValue);
             } else if (ef.type.IsClass) {
-                if (ef.type.IsAssignableTo(typeof(ValidatedString))) {
-                    return ef.type.GetMethod("Parse")!.Invoke(null, new[] { stringValue });
+                if (ef.type.GetMethod("Parse", BindingFlags.Static | BindingFlags.Public) is MethodInfo mi) {
+                    return mi.Invoke(null, new[] { stringValue });
                 }
 
                 return Activator.CreateInstance(ef.type, new[] { stringValue });
