@@ -1031,7 +1031,7 @@ class Run(Command):
         authority: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
-        pool_size: int = 10,
+        pool_size: int = 20,
         region: Optional[Region] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
         test_id: Optional[UUID] = None,

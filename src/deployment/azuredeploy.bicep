@@ -381,8 +381,8 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
       'TimerWorkers'          //32
       'Tools'                 //33
       'Webhooks'              //34
-      'WebhookLogs'          //35
-      'WebhookPing'          //36   
+      'WebhookLogs'           //35
+      'WebhookPing'           //36   
     ]
   }
   dependsOn: [
