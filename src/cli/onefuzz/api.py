@@ -614,8 +614,8 @@ class Repro(Endpoint):
 
                         if debug_command:
                             return result
-                        else: 
-                            retry_count = retry_limit + 1
+
+                        break
 
                     except subprocess.CalledProcessError as err:
                         self.logger.info(
