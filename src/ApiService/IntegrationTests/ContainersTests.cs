@@ -187,6 +187,6 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
         var details = BodyAs<ProblemDetails>(result);
         Assert.Equal(ErrorCode.INVALID_REQUEST.ToString(), details.Title);
-        Assert.StartsWith("unable to parse 'AbCd' as a Container: Container name must", details.Detail);
+        Assert.StartsWith("Unable to parse 'AbCd' as a Container: Container name must", details.Detail);
     }
 }
