@@ -351,7 +351,7 @@ class Backend:
         if response is None:
             raise Exception("request failed: %s %s" % (method, url))
 
-        if response.status_code / 100 != 2:
+        if response.status_code // 100 != 2:
             try:
                 json = response.json()
             except requests.exceptions.JSONDecodeError:
