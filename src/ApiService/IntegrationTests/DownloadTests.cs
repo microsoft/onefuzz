@@ -34,8 +34,8 @@ public abstract class DownloadTestBase : FunctionTestBase {
         var result = await func.Run(TestHttpRequestData.Empty("GET"));
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
 
-        var err = BodyAs<Error>(result);
-        Assert.Equal(ErrorCode.UNAUTHORIZED, err.Code);
+        var err = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.UNAUTHORIZED.ToString(), err.Title);
     }
 
     [Fact]
@@ -49,8 +49,8 @@ public abstract class DownloadTestBase : FunctionTestBase {
         var result = await func.Run(req);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
-        var err = BodyAs<Error>(result);
-        Assert.Equal(ErrorCode.INVALID_REQUEST, err.Code);
+        var err = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.INVALID_REQUEST.ToString(), err.Title);
     }
 
     [Fact]
@@ -65,8 +65,8 @@ public abstract class DownloadTestBase : FunctionTestBase {
         var result = await func.Run(req);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
-        var err = BodyAs<Error>(result);
-        Assert.Equal(ErrorCode.INVALID_REQUEST, err.Code);
+        var err = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.INVALID_REQUEST.ToString(), err.Title);
     }
 
     [Fact]

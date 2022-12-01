@@ -41,8 +41,8 @@ public abstract class ContainersTestBase : FunctionTestBase {
         var result = await func.Run(TestHttpRequestData.Empty(method));
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
 
-        var err = BodyAs<Error>(result);
-        Assert.Equal(ErrorCode.UNAUTHORIZED, err.Code);
+        var err = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.UNAUTHORIZED.ToString(), err.Title);
     }
 
 

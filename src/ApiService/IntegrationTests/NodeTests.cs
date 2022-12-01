@@ -171,9 +171,9 @@ public abstract class NodeTestBase : FunctionTestBase {
         var result = await func.Run(TestHttpRequestData.FromJson(method, req));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
-        var err = BodyAs<Error>(result);
-        Assert.Equal(ErrorCode.UNAUTHORIZED, err.Code);
-        Assert.Contains("pool modification disabled", err.Errors?.Single());
+        var err = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.UNAUTHORIZED.ToString(), err.Title);
+        Assert.Contains("pool modification disabled", err.Detail);
     }
 
     [Theory]
@@ -201,7 +201,7 @@ public abstract class NodeTestBase : FunctionTestBase {
         // we will fail with BadRequest but due to not being able to find the Node,
         // not because of UNAUTHORIZED
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
-        Assert.Equal(ErrorCode.UNABLE_TO_FIND, BodyAs<Error>(result).Code);
+        Assert.Equal(ErrorCode.UNABLE_TO_FIND.ToString(), BodyAs<ProblemDetails>(result).Title);
     }
 
     [Theory]
@@ -231,7 +231,7 @@ public abstract class NodeTestBase : FunctionTestBase {
         // we will fail with BadRequest but due to not being able to find the Node,
         // not because of UNAUTHORIZED
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
-        Assert.Equal(ErrorCode.UNABLE_TO_FIND, BodyAs<Error>(result).Code);
+        Assert.Equal(ErrorCode.UNABLE_TO_FIND.ToString(), BodyAs<ProblemDetails>(result).Title);
     }
 
     [Theory]
@@ -260,9 +260,9 @@ public abstract class NodeTestBase : FunctionTestBase {
         var result = await func.Run(TestHttpRequestData.FromJson(method, req));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
-        var err = BodyAs<Error>(result);
-        Assert.Equal(ErrorCode.UNAUTHORIZED, err.Code);
-        Assert.Contains("not authorized to manage instance", err.Errors?.Single());
+        var err = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.UNAUTHORIZED.ToString(), err.Title);
+        Assert.Contains("not authorized to manage instance", err.Detail);
     }
 
     [Theory]

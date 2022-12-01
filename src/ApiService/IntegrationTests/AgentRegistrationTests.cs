@@ -69,9 +69,9 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         var result = await func.Run(req);
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
-        var body = BodyAs<Error>(result);
-        Assert.Equal(ErrorCode.INVALID_REQUEST, body.Code);
-        Assert.Equal("'machine_id' query parameter must be provided", body.Errors?.Single());
+        var body = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.INVALID_REQUEST.ToString(), body.Title);
+        Assert.Equal("'machine_id' query parameter must be provided", body.Detail);
     }
 
     [Fact]
@@ -85,9 +85,9 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         var result = await func.Run(req);
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
-        var body = BodyAs<Error>(result);
-        Assert.Equal(ErrorCode.INVALID_REQUEST, body.Code);
-        Assert.Contains("unable to find a registration", body.Errors?.Single());
+        var body = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.INVALID_REQUEST.ToString(), body.Title);
+        Assert.Contains("unable to find a registration", body.Detail);
     }
 
     [Fact]
@@ -104,9 +104,9 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         var result = await func.Run(req);
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
-        var body = BodyAs<Error>(result);
-        Assert.Equal(ErrorCode.INVALID_REQUEST, body.Code);
-        Assert.Contains("unable to find a pool", body.Errors?.Single());
+        var body = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.INVALID_REQUEST.ToString(), body.Title);
+        Assert.Contains("unable to find a pool", body.Detail);
     }
 
     [Fact]
@@ -220,8 +220,8 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         var result = await func.Run(req);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
-        var err = BodyAs<Error>(result);
-        Assert.Equal(ErrorCode.INVALID_REQUEST, err.Code);
-        Assert.Equal($"'{parameterToSkip}' query parameter must be provided", err.Errors?.Single());
+        var err = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.INVALID_REQUEST.ToString(), err.Title);
+        Assert.Equal($"'{parameterToSkip}' query parameter must be provided", err.Detail);
     }
 }

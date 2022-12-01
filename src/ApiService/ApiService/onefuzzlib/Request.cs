@@ -2,6 +2,7 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using Faithlife.Utility;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
@@ -14,6 +15,13 @@ public interface IRequestHandling {
 
 // See: https://www.rfc-editor.org/rfc/rfc7807#section-3
 public sealed class ProblemDetails {
+    [JsonConstructor]
+    public ProblemDetails(int status, string title, string detail) {
+        Status = status;
+        Title = title;
+        Detail = detail;
+    }
+
     public ProblemDetails(HttpStatusCode code, Error error) {
         Status = (int)code;
         Title = error.Code.ToString();
