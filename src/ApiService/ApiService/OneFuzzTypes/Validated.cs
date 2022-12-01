@@ -66,13 +66,13 @@ public sealed class ValidatedStringConverter<T> : JsonConverter<T> where T : IVa
     public sealed override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         var value = reader.GetString();
         if (value is null) {
-            throw new JsonException("expected a string");
+            throw new JsonException("Expected a string");
         }
 
         if (ValidatedStringBase<T>.TryParse(value, out var result)) {
             return result;
         } else {
-            throw new JsonException($"unable to parse '{value}' as a {typeof(T).Name}: {T.Requirements}");
+            throw new JsonException($"Unable to parse '{value}' as a {typeof(T).Name}: {T.Requirements}");
         }
     }
 
@@ -107,5 +107,5 @@ public sealed record Container : ValidatedStringBase<Container>, IValidatedStrin
     private Container(string value) : base(value) { }
     public static Container Parse(string input) => new(input);
     public static bool IsValid(string input) => Check.IsStorageDnsLabel(input);
-    public static string Requirements => "Container name must be 3-63 lowercase letters, numbers, or hyphens";
+    public static string Requirements => "Container name must be 3-63 lowercase letters, numbers, or non-consecutive hyphens (see: https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftstorage)";
 }
