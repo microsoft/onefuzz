@@ -38,7 +38,7 @@ public abstract record ValidatedStringBase<T> where T : IValidatedString<T> {
     }
     public string String { get; }
 
-    public override string ToString() => String;
+    public sealed override string ToString() => String;
 
     public static bool TryParse(string input, [NotNullWhen(returnValue: true)] out T? result) {
         try {
