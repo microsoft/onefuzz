@@ -594,48 +594,37 @@ class Repro(Endpoint):
                     gdb_script += [debug_command, "quit"]
 
                 with temp_file("gdb.script", "\n".join(gdb_script)) as gdb_script_path:
-                    dbg = ["gdb", "--silent", "--command", gdb_script_path]
+                    dbg = ["gdb", "--silent", "--batch", "--command", gdb_script_path]
 
-                    if debug_command:
-                        dbg += ["--batch"]
+                    try:
 
-                        try:
-                            # security note: dbg is built from content coming from
-                            # the server, which is trusted in this context.
-                            result = subprocess.run(  # nosec
-                                dbg,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                            ).stdout.decode(errors="ignore")
-                            if "command not found" in result:
-                                self.logger.info(
-                                    "debug caught exception - failed with transient 'command not found' error"
-                                )
-                                time.sleep(30)
-                            else:
-                                return result
-                        except subprocess.CalledProcessError as err:
-                            self.logger.info(
-                                "debug failed: %s",
-                                err.output.decode(errors="ignore"),
-                            )
-                            raise err
-                    else:
-                        # security note: dbg is built from content coming from the
-                        # server, which is trusted in this context.
-                        dbg += ["--batch"]
+                        # security note: dbg is built from content coming from
+                        # the server, which is trusted in this context.
                         result = subprocess.run(  # nosec
                             dbg,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
                         ).stdout.decode(errors="ignore")
                         if "command not found" in result:
-                            self.logger.error(
-                                "repro test caught exception - failed with transient 'command not found' error"
+                            self.logger.info(
+                                "debug caught exception - failed with transient 'command not found' error. retrying."
                             )
                             time.sleep(30)
-                        else:
+                            continue
+                        if debug_command:
+                            self.logger.info("Exiting")
                             return result
+
+                    except subprocess.CalledProcessError as err:
+                        self.logger.info(
+                            "debug failed: %s",
+                            err.output.decode(errors="ignore"),
+                        )
+                        raise err
+
+                    dbg = ["gdb", "--silent", "--command", gdb_script_path]
+                    subprocess.run(dbg)
+
         if retry_limit is not None:
             self.logger.info(
                 f"failed to connect to debug-server after {retry_limit} attempts. Please try again later "
