@@ -87,6 +87,14 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
             event_sender.clone(),
         )?;
 
+        let mut target_options = coverage_config.target_options.clone();
+        target_options.push("{input}".to_string());
+
+        let coverage_config = crate::tasks::coverage::generic::Config {
+            target_options,
+            ..coverage_config
+        };
+
         let mut coverage = CoverageTask::new(coverage_config);
         let coverage_task = spawn(async move { coverage.run().await });
 

@@ -106,12 +106,14 @@ pub struct WorkUnit {
 }
 
 impl WorkUnit {
-    pub fn working_dir(&self) -> Result<PathBuf> {
-        Ok(onefuzz::fs::onefuzz_root()?.join(self.task_id.to_string()))
+    pub fn working_dir(&self, machine_id: Uuid) -> Result<PathBuf> {
+        Ok(onefuzz::fs::onefuzz_root()?
+            .join(format!("{}", machine_id))
+            .join(self.task_id.to_string()))
     }
 
-    pub fn config_path(&self) -> Result<PathBuf> {
-        Ok(self.working_dir()?.join("config.json"))
+    pub fn config_path(&self, machine_id: Uuid) -> Result<PathBuf> {
+        Ok(self.working_dir(machine_id)?.join("config.json"))
     }
 }
 

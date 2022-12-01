@@ -215,7 +215,7 @@ impl WorkerRunner {
 #[async_trait]
 impl IWorkerRunner for WorkerRunner {
     async fn run(&mut self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
-        let working_dir = work.working_dir()?;
+        let working_dir = work.working_dir(self.machine_identity.machine_id)?;
 
         debug!("worker working dir = {}", working_dir.display());
 
@@ -237,7 +237,7 @@ impl IWorkerRunner for WorkerRunner {
             serde_json::to_value(&self.machine_identity)?,
         );
 
-        let config_path = work.config_path()?;
+        let config_path = work.config_path(self.machine_identity.machine_id)?;
 
         fs::write(&config_path, serde_json::to_string(&config)?.as_bytes())
             .await

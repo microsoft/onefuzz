@@ -209,7 +209,7 @@ impl State<SettingUp> {
                 // No script was executed.
             }
             Err(err) => {
-                let error = format!("{:?}", err.to_string());
+                let error = format!("{:?}", err);
                 warn!("{}", error);
                 let cause = DoneCause::SetupError {
                     error,

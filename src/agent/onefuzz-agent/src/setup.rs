@@ -64,7 +64,7 @@ impl SetupRunner {
 
         // Create setup container directory symlinks for tasks.
         for work_unit in &work_set.work_units {
-            create_setup_symlink(&setup_dir, work_unit).await?;
+            create_setup_symlink(&setup_dir, work_unit, self.machine_id).await?;
         }
 
         // Run setup script, if any.
@@ -103,13 +103,17 @@ impl SetupRunner {
 }
 
 #[cfg(target_family = "windows")]
-async fn create_setup_symlink(setup_dir: &Path, work_unit: &WorkUnit) -> Result<()> {
+async fn create_setup_symlink(
+    setup_dir: &Path,
+    work_unit: &WorkUnit,
+    machine_id: Uuid,
+) -> Result<()> {
     use std::os::windows::fs::symlink_dir;
     use tokio::task::spawn_blocking;
 
-    let working_dir = work_unit.working_dir()?;
+    let working_dir = work_unit.working_dir(machine_id)?;
 
-    let create_work_dir = fs::create_dir(&working_dir).await.with_context(|| {
+    let create_work_dir = fs::create_dir_all(&working_dir).await.with_context(|| {
         format!(
             "unable to create working directory: {}",
             working_dir.display()
