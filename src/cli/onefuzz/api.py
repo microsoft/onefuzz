@@ -578,22 +578,23 @@ class Repro(Endpoint):
         ):
             raise Exception("vm setup failed: %s" % repro.state)
 
-        retry_count = 0
-        while retry_limit is None or retry_count <= retry_limit:
+        with build_ssh_command(
+            repro.ip, repro.auth.private_key, command="-T"
+        ) as ssh_cmd:
+            gdb_script = [
+                "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
+                % " ".join(ssh_cmd)
+            ]
+            # if debug_command:
+            #     gdb_script += [debug_command, "quit"]
 
-            retry_count = retry_count + 1
+            with temp_file("gdb.script", "\n".join(gdb_script)) as gdb_script_path:
 
-            with build_ssh_command(
-                repro.ip, repro.auth.private_key, command="-T"
-            ) as ssh_cmd:
-                gdb_script = [
-                    "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
-                    % " ".join(ssh_cmd)
-                ]
-                if debug_command:
-                    gdb_script += [debug_command, "quit"]
+                retry_count = 0
+                while retry_limit is None or retry_count <= retry_limit:
 
-                with temp_file("gdb.script", "\n".join(gdb_script)) as gdb_script_path:
+                    retry_count = retry_count + 1
+
                     dbg = ["gdb", "--silent", "--batch", "--command", gdb_script_path]
 
                     try:
@@ -624,8 +625,8 @@ class Repro(Endpoint):
                         )
                         raise err
 
-        dbg = ["gdb", "--silent", "--command", gdb_script_path]
-        subprocess.run(dbg)
+                dbg = ["gdb", "--silent", "--command", gdb_script_path]
+                subprocess.run(dbg)
 
         if retry_limit is not None:
             self.logger.info(
