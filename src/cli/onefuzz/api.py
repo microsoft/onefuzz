@@ -607,7 +607,7 @@ class Repro(Endpoint):
                         ).stdout.decode(errors="ignore")
                         if "command not found" in result:
                             self.logger.info(
-                                "debug caught exception - failed with transient 'command not found' error. retrying."
+                                "debug caught exception - failed with transient error. retrying."
                             )
                             time.sleep(30)
                             continue
