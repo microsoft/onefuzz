@@ -5,13 +5,11 @@ using Xunit.Abstractions;
 namespace FunctionalTests;
 
 public class Notification : IFromJsonElement<Notification> {
-    JsonElement _e;
-
-    public Notification() { }
+    readonly JsonElement _e;
 
     public Notification(JsonElement e) => _e = e;
 
-    public Notification Convert(JsonElement e) => new Notification(e);
+    public static Notification Convert(JsonElement e) => new(e);
 
     public Guid NotificationId => _e.GetGuidProperty("notification_id");
 
