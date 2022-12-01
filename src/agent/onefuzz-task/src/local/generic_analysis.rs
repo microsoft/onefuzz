@@ -70,7 +70,7 @@ pub fn build_analysis_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
-    let context = build_local_context(args, true, event_sender.clone())?;
+    let context = build_local_context(args, true, event_sender.clone()).await?;
     let config = build_analysis_config(args, None, context.common_config.clone(), event_sender)?;
     run_analysis(config).await
 }

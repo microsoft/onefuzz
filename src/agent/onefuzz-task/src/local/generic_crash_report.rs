@@ -79,7 +79,7 @@ pub fn build_report_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
-    let context = build_local_context(args, true, event_sender.clone())?;
+    let context = build_local_context(args, true, event_sender.clone()).await?;
     let config = build_report_config(args, None, context.common_config.clone(), event_sender)?;
     ReportTask::new(config).managed_run().await
 }
