@@ -156,6 +156,14 @@ public class RequestHandling : IRequestHandling {
     }
 
     public static Error ConvertError(Exception exception) {
+        if (exception is AggregateException agg) {
+            var flattened = agg.Flatten();
+            if (flattened.InnerExceptions.Count == 1) {
+                // if we only have one inner exception, remove wrapping
+                return ConvertError(flattened.InnerExceptions[0]);
+            }
+        }
+
         return new Error(
             ErrorCode.INVALID_REQUEST,
             new string[] {
