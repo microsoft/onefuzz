@@ -583,54 +583,61 @@ class Repro(Endpoint):
 
             retry_count = retry_count + 1
 
-            try:
-                with build_ssh_command(
-                    repro.ip, repro.auth.private_key, command="-T"
-                ) as ssh_cmd:
+            with build_ssh_command(
+                repro.ip, repro.auth.private_key, command="-T"
+            ) as ssh_cmd:
+                gdb_script = [
+                    "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
+                    % " ".join(ssh_cmd)
+                ]
+                if debug_command:
+                    gdb_script += [debug_command, "quit"]
 
-                    gdb_script = [
-                        "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
-                        % " ".join(ssh_cmd)
-                    ]
+                with temp_file(
+                    "gdb.script", "\n".join(gdb_script)
+                ) as gdb_script_path:
+                    dbg = ["gdb", "--silent", "--command", gdb_script_path]
 
                     if debug_command:
-                        gdb_script += [debug_command, "quit"]
+                        dbg += ["--batch"]
 
-                    with temp_file(
-                        "gdb.script", "\n".join(gdb_script)
-                    ) as gdb_script_path:
-                        dbg = ["gdb", "--silent", "--command", gdb_script_path]
-
-                        if debug_command:
-                            dbg += ["--batch"]
-
-                            try:
-                                # security note: dbg is built from content coming from
-                                # the server, which is trusted in this context.
-                                return subprocess.run(  # nosec
-                                    dbg,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT,
-                                ).stdout.decode(errors="ignore")
-                            except subprocess.CalledProcessError as err:
-                                self.logger.error(
-                                    "debug failed: %s",
-                                    err.output.decode(errors="ignore"),
-                                )
-                                raise err
-                        else:
-                            # security note: dbg is built from content coming from the
-                            # server, which is trusted in this context.
-                            subprocess.call(dbg)  # nosec
-            except Exception as err:
-                self.logger.error("failing in except")
-                if "command not found" in str(err):
-                    self.logger.error(
-                        "repro test caught exception - failed with transient 'command not found' error: %s",
-                        err,
-                    )
-                else:
-                    raise err
+                        try:
+                            # security note: dbg is built from content coming from
+                            # the server, which is trusted in this context.
+                            result =  subprocess.run(  # nosec
+                                dbg,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                            ).stdout.decode(errors="ignore")
+                            if "command not found" in result: 
+                                self.logger.info(
+                                        "debug caught exception - failed with transient 'command not found' error"
+                                    )
+                                time.sleep(30)
+                            else: 
+                                return result
+                        except subprocess.CalledProcessError as err:
+                            self.logger.info(
+                                "debug failed: %s",
+                                err.output.decode(errors="ignore"),
+                            )
+                            raise err
+                    else:
+                        # security note: dbg is built from content coming from the
+                        # server, which is trusted in this context.
+                        dbg += ["--batch"]
+                        result = subprocess.run(  # nosec
+                                dbg,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                            ).stdout.decode(errors="ignore")
+                        if "command not found" in result: 
+                            self.logger.error(
+                                        "repro test caught exception - failed with transient 'command not found' error"
+                                    )
+                            time.sleep(30)
+                        else: 
+                            return result
         if retry_limit is not None:
             self.logger.info(
                 f"failed to connect to debug-server after {retry_limit} attempts. Please try again later "

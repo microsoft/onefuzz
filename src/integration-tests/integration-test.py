@@ -767,30 +767,16 @@ class TestOnefuzz:
                             self.logger.info("repro succeeded: %s", job.config.name)
                         else:
                             clear()
-                            self.logger.error("Failing in else")
-                            if "command not found" in str(result):
-                                self.logger.error(
-                                    "repro failed with transient 'command not found' result: %s",
-                                    result,
-                                )
-                            else:
-                                self.logger.error(
-                                    "repro failed: %s - %s", job.config.name, result
-                                )
-                                self.success = False
-                    except Exception as err:
-                        clear()
-                        self.logger.error("failing in except")
-                        if "command not found" in str(err):
                             self.logger.error(
-                                "repro test caught exception - failed with transient 'command not found' error: %s",
-                                err,
-                            )
-                        else:
-                            self.logger.error(
-                                "repro failed: %s - %s", job.config.name, err
+                                "repro failed: %s - %s", job.config.name, result
                             )
                             self.success = False
+                    except Exception as err:
+                        clear()
+                        self.logger.error(
+                            "repro failed: %s - %s", job.config.name, err
+                        )
+                        self.success = False
                     del repros[job.job_id]
                 elif repro.state not in [VmState.init, VmState.extensions_launch]:
                     self.logger.error(
