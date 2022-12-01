@@ -586,6 +586,9 @@ class Repro(Endpoint):
                 % " ".join(ssh_cmd)
             ]
 
+            if debug_command:
+                gdb_script += [debug_command, "quit"]
+
             with temp_file("gdb.script", "\n".join(gdb_script)) as gdb_script_path:
 
                 retry_count = 0
