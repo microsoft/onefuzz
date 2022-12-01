@@ -624,7 +624,9 @@ class Repro(Endpoint):
                         raise err
 
                 dbg = ["gdb", "--silent", "--command", gdb_script_path]
-                subprocess.call(dbg)
+                # security note: dbg is built from content coming from the
+                # server, which is trusted in this context.
+                subprocess.call(dbg)  # nosec
 
         if retry_limit is not None:
             self.logger.info(
