@@ -82,9 +82,9 @@ def check_application_error(response: requests.Response) -> None:
     if response.status_code == 401:
         try:
             as_json = json.loads(response.content)
-            if isinstance(as_json, dict) and "code" in as_json and "errors" in as_json:
+            if isinstance(as_json, dict) and "title" in as_json and "detail" in as_json:
                 raise Exception(
-                    f"request failed: application error - {as_json['code']} {as_json['errors']}"
+                    f"request failed: application error (401: {as_json['title']}): {as_json['detail']}"
                 )
         except json.decoder.JSONDecodeError:
             pass

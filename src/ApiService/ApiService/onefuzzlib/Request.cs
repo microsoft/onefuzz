@@ -25,7 +25,7 @@ public sealed class ProblemDetails {
     public ProblemDetails(HttpStatusCode code, Error error) {
         Status = (int)code;
         Title = error.Code.ToString();
-        Detail = error.Errors?.Join("\n");
+        Detail = error.Errors?.Join("\n") ?? "";
     }
 
     // We do not yet use the type/instance properties:
@@ -52,7 +52,7 @@ public sealed class ProblemDetails {
     public int Status { get; set; }
 
     //  A human-readable explanation specific to this occurrence of the problem.
-    public string? Detail { get; set; }
+    public string Detail { get; set; }
 }
 
 public class RequestHandling : IRequestHandling {
