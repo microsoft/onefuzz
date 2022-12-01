@@ -355,7 +355,9 @@ class TestOnefuzz:
             self.logger.info("launching: %s", target)
 
             if config.setup_dir is None:
-                setup = Directory(os.path.join(path, target)) if config.use_setup else None
+                setup = (
+                    Directory(os.path.join(path, target)) if config.use_setup else None
+                )
             else:
                 setup = config.setup_dir
 
@@ -765,18 +767,29 @@ class TestOnefuzz:
                             self.logger.info("repro succeeded: %s", job.config.name)
                         else:
                             clear()
-                            selflogger.error("Failing in else")
-                            self.logger.error(
-                                "repro failed: %s - %s", job.config.name, result
-                            )
-                            self.success = False
+                            self.logger.error("Failing in else")
+                            if "command not found" in str(err):
+                                self.logger.error(
+                                    "repro failed with transient 'command not found' result: %s",
+                                    result,
+                                )
+                            else:
+                                self.logger.error(
+                                    "repro failed: %s - %s", job.config.name, result
+                                )
+                                self.success = False
                     except Exception as err:
                         clear()
                         self.logger.error("failing in except")
-                        if err.error and "command not found" in str(err.error):
-                            self.logger.error("repro failed with transient 'command not found' error: %s", err)
+                        if "command not found" in str(err):
+                            self.logger.error(
+                                "repro test caught exception - failed with transient 'command not found' error: %s",
+                                err,
+                            )
                         else:
-                            self.logger.error("repro failed: %s - %s", job.config.name, err)
+                            self.logger.error(
+                                "repro failed: %s - %s", job.config.name, err
+                            )
                             self.success = False
                     del repros[job.job_id]
                 elif repro.state not in [VmState.init, VmState.extensions_launch]:
@@ -940,10 +953,7 @@ class TestOnefuzz:
 
             # ignore warnings coming from the rust code, only be concerned
             # about errors
-            if (
-                entry.get("severityLevel") == 2
-                and "rust" in entry.get("sdkVersion")
-            ):
+            if entry.get("severityLevel") == 2 and "rust" in entry.get("sdkVersion"):
                 continue
 
             # ignore resource not found warnings from azure-functions layer,
