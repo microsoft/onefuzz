@@ -256,7 +256,7 @@ pub async fn build_local_context(
         heartbeat_queue: None,
         microsoft_telemetry_key: None,
         logs: None,
-        min_available_memory_mb: u64::default(),
+        min_available_memory_mb: 0,
     };
     let current_dir = current_dir()?;
     let job_path = current_dir.join(format!("{}", job_id));
