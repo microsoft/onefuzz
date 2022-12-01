@@ -768,7 +768,7 @@ class TestOnefuzz:
                         else:
                             clear()
                             self.logger.error("Failing in else")
-                            if "command not found" in str(err):
+                            if "command not found" in str(result):
                                 self.logger.error(
                                     "repro failed with transient 'command not found' result: %s",
                                     result,
