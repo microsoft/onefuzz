@@ -611,9 +611,11 @@ class Repro(Endpoint):
                             )
                             time.sleep(30)
                             continue
-                        if debug_command:
-                            self.logger.info("Exiting")
-                            return result
+
+                        if not debug_command:
+                            retry_count = retry_limit + 1
+
+                        return result
 
                     except subprocess.CalledProcessError as err:
                         self.logger.info(
@@ -622,8 +624,8 @@ class Repro(Endpoint):
                         )
                         raise err
 
-                    dbg = ["gdb", "--silent", "--command", gdb_script_path]
-                    subprocess.run(dbg)
+        dbg = ["gdb", "--silent", "--command", gdb_script_path]
+        subprocess.run(dbg)
 
         if retry_limit is not None:
             self.logger.info(
