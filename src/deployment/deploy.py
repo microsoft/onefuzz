@@ -1249,8 +1249,8 @@ def main() -> None:
     formatter = argparse.ArgumentDefaultsHelpFormatter
     parser = argparse.ArgumentParser(formatter_class=formatter)
     parser.add_argument("location")
-    parser.add_argument("resource_group",type=lower_case)
-    parser.add_argument("application_name",type=lower_case)
+    parser.add_argument("resource_group", type=lower_case)
+    parser.add_argument("application_name", type=lower_case)
     parser.add_argument("owner")
     parser.add_argument("nsg_config")
     parser.add_argument(
