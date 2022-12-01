@@ -81,7 +81,6 @@ public class RequestHandling : IRequestHandling {
 
     public static async Async.Task<OneFuzzResult<T>> ParseRequest<T>(HttpRequestData req)
         where T : BaseRequest {
-        Exception? exception = null;
         try {
             var t = await req.ReadFromJsonAsync<T>();
             if (t != null) {
@@ -120,17 +119,8 @@ public class RequestHandling : IRequestHandling {
                     $"Failed to deserialize message into type: {typeof(T)} - null");
             }
         } catch (Exception e) {
-            exception = e;
+            return OneFuzzResult<T>.Error(ConvertError(e));
         }
-
-        if (exception != null) {
-            return OneFuzzResult<T>.Error(ConvertError(exception));
-        }
-
-        return OneFuzzResult<T>.Error(
-            ErrorCode.INVALID_REQUEST,
-            $"Failed to deserialize message into type: {typeof(T)} - {await req.ReadAsStringAsync()}"
-        );
     }
 
     public static async Async.Task<OneFuzzResult<T>> ParseUri<T>(HttpRequestData req) {
