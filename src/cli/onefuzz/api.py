@@ -564,7 +564,10 @@ class Repro(Endpoint):
         return self._req_model_list("GET", models.Repro, data=requests.ReproGet())
 
     def _dbg_linux(
-        self, repro: models.Repro, debug_command: Optional[str], retry_limit: int
+        self,
+        repro: models.Repro,
+        debug_command: Optional[str],
+        retry_limit: Optional[int],
     ) -> Optional[str]:
         """Launch gdb with GDB script that includes 'target remote | ssh ...'"""
 
@@ -576,7 +579,7 @@ class Repro(Endpoint):
             raise Exception("vm setup failed: %s" % repro.state)
 
         retry_count = 0
-        while retry_count <= retry_limit:
+        while retry_limit is None or retry_count <= retry_limit:
 
             retry_count = retry_count + 1
 
@@ -619,7 +622,6 @@ class Repro(Endpoint):
                             # security note: dbg is built from content coming from the
                             # server, which is trusted in this context.
                             subprocess.call(dbg)  # nosec
-                return None
             except Exception as err:
                 self.logger.error("failing in except")
                 if "command not found" in str(err):
@@ -629,12 +631,18 @@ class Repro(Endpoint):
                     )
                 else:
                     raise err
+        if retry_limit is not None:
+            self.logger.info(
+                f"failed to connect to debug-server after {retry_limit} attempts. Please try again later "
+                + f"with onefuzz debug connect {repro.vm_id}"
+            )
+        return None
 
     def _dbg_windows(
         self,
         repro: models.Repro,
         debug_command: Optional[str],
-        retry_limit: int,
+        retry_limit: Optional[int],
     ) -> Optional[str]:
         """Setup an SSH tunnel, then connect via CDB over SSH tunnel"""
 
@@ -648,7 +656,7 @@ class Repro(Endpoint):
         retry_count = 0
         bind_all = which("wslpath") is not None and repro.os == enums.OS.windows
         proxy = "*:" + REPRO_SSH_FORWARD if bind_all else REPRO_SSH_FORWARD
-        while retry_count <= retry_limit:
+        while retry_limit is None or retry_count <= retry_limit:
             retry_count = retry_count + 1
             with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
                 dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
