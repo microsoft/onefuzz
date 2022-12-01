@@ -1215,11 +1215,13 @@ def arg_file(arg: str) -> str:
         raise argparse.ArgumentTypeError("not a file: %s" % arg)
     return arg
 
+
 def lower_case(arg: str) -> str:
     uppercase_check = any(i.isupper() for i in arg)
     if uppercase_check:
         raise Exception(UPPERCASE_NAME_ERROR)
     return arg
+
 
 def main() -> None:
     rbac_only_states = [
@@ -1247,14 +1249,8 @@ def main() -> None:
     formatter = argparse.ArgumentDefaultsHelpFormatter
     parser = argparse.ArgumentParser(formatter_class=formatter)
     parser.add_argument("location")
-    parser.add_argument(
-        "resource_group",
-        type=lower_case
-    )
-    parser.add_argument(
-        "application_name",
-        type=lower_case
-    )
+    parser.add_argument("resource_group",type=lower_case)
+    parser.add_argument("application_name",type=lower_case)
     parser.add_argument("owner")
     parser.add_argument("nsg_config")
     parser.add_argument(
