@@ -585,8 +585,6 @@ class Repro(Endpoint):
                 "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
                 % " ".join(ssh_cmd)
             ]
-            # if debug_command:
-            #     gdb_script += [debug_command, "quit"]
 
             with temp_file("gdb.script", "\n".join(gdb_script)) as gdb_script_path:
 
