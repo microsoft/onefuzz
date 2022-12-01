@@ -564,7 +564,7 @@ class Repro(Endpoint):
         return self._req_model_list("GET", models.Repro, data=requests.ReproGet())
 
     def _dbg_linux(
-        self, repro: models.Repro, debug_command: Optional[str]
+        self, repro: models.Repro, debug_command: Optional[str], retry_limit: int
     ) -> Optional[str]:
         """Launch gdb with GDB script that includes 'target remote | ssh ...'"""
 
@@ -575,46 +575,66 @@ class Repro(Endpoint):
         ):
             raise Exception("vm setup failed: %s" % repro.state)
 
-        with build_ssh_command(
-            repro.ip, repro.auth.private_key, command="-T"
-        ) as ssh_cmd:
+        retry_count = 0
+        while retry_count <= retry_limit:
 
-            gdb_script = [
-                "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
-                % " ".join(ssh_cmd)
-            ]
+            retry_count = retry_count + 1
 
-            if debug_command:
-                gdb_script += [debug_command, "quit"]
+            try:
+                with build_ssh_command(
+                    repro.ip, repro.auth.private_key, command="-T"
+                ) as ssh_cmd:
 
-            with temp_file("gdb.script", "\n".join(gdb_script)) as gdb_script_path:
-                dbg = ["gdb", "--silent", "--command", gdb_script_path]
+                    gdb_script = [
+                        "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
+                        % " ".join(ssh_cmd)
+                    ]
 
-                if debug_command:
-                    dbg += ["--batch"]
+                    if debug_command:
+                        gdb_script += [debug_command, "quit"]
 
-                    try:
-                        # security note: dbg is built from content coming from
-                        # the server, which is trusted in this context.
-                        return subprocess.run(  # nosec
-                            dbg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-                        ).stdout.decode(errors="ignore")
-                    except subprocess.CalledProcessError as err:
-                        self.logger.error(
-                            "debug failed: %s", err.output.decode(errors="ignore")
-                        )
-                        raise err
+                    with temp_file(
+                        "gdb.script", "\n".join(gdb_script)
+                    ) as gdb_script_path:
+                        dbg = ["gdb", "--silent", "--command", gdb_script_path]
+
+                        if debug_command:
+                            dbg += ["--batch"]
+
+                            try:
+                                # security note: dbg is built from content coming from
+                                # the server, which is trusted in this context.
+                                return subprocess.run(  # nosec
+                                    dbg,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT,
+                                ).stdout.decode(errors="ignore")
+                            except subprocess.CalledProcessError as err:
+                                self.logger.error(
+                                    "debug failed: %s",
+                                    err.output.decode(errors="ignore"),
+                                )
+                                raise err
+                        else:
+                            # security note: dbg is built from content coming from the
+                            # server, which is trusted in this context.
+                            subprocess.call(dbg)  # nosec
+                return None
+            except Exception as err:
+                self.logger.error("failing in except")
+                if "command not found" in str(err):
+                    self.logger.error(
+                        "repro test caught exception - failed with transient 'command not found' error: %s",
+                        err,
+                    )
                 else:
-                    # security note: dbg is built from content coming from the
-                    # server, which is trusted in this context.
-                    subprocess.call(dbg)  # nosec
-        return None
+                    raise err
 
     def _dbg_windows(
         self,
         repro: models.Repro,
         debug_command: Optional[str],
-        retry_limit: Optional[int],
+        retry_limit: int,
     ) -> Optional[str]:
         """Setup an SSH tunnel, then connect via CDB over SSH tunnel"""
 
@@ -628,9 +648,8 @@ class Repro(Endpoint):
         retry_count = 0
         bind_all = which("wslpath") is not None and repro.os == enums.OS.windows
         proxy = "*:" + REPRO_SSH_FORWARD if bind_all else REPRO_SSH_FORWARD
-        while retry_limit is None or retry_count <= retry_limit:
-            if retry_limit:
-                retry_count = retry_count + 1
+        while retry_count <= retry_limit:
+            retry_count = retry_count + 1
             with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
                 dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
                 if debug_command:
@@ -720,7 +739,7 @@ class Repro(Endpoint):
                 repro.auth is not None
                 and repro.ip is not None
                 and state not in [enums.VmState.init, enums.VmState.extensions_launch],
-                "launching reproducing vm.  current state: %s" % state,
+                "launching reproduction vm.  current state: %s" % state,
                 repro,
             )
 
@@ -731,7 +750,7 @@ class Repro(Endpoint):
         if repro.os == enums.OS.windows:
             result = self._dbg_windows(repro, debug_command, retry_limit)
         elif repro.os == enums.OS.linux:
-            result = self._dbg_linux(repro, debug_command)
+            result = self._dbg_linux(repro, debug_command, retry_limit)
         else:
             raise NotImplementedError
 
