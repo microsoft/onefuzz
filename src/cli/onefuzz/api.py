@@ -612,10 +612,10 @@ class Repro(Endpoint):
                             time.sleep(30)
                             continue
 
-                        if not debug_command:
-                            retry_count = retry_limit + 1
-                        else: 
+                        if debug_command:
                             return result
+                        else: 
+                            retry_count = retry_limit + 1
 
                     except subprocess.CalledProcessError as err:
                         self.logger.info(
