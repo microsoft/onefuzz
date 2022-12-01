@@ -19,6 +19,16 @@ static partial class Check {
     [GeneratedRegex("\\A[._a-zA-Z0-9\\-]{1,64}\\z")]
     private static partial Regex IsNameLikeRegex();
     public static bool IsNameLike(string input) => IsNameLikeRegex().IsMatch(input);
+
+    // This regex is based upon DNS labels but more restricted.
+    // It is used for many different Storage resources.
+    // See: https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftstorage
+    // - 3-63
+    // - Lowercase letters, numbers, and hyphens.
+    // - Start with lowercase letter or number. Can't use consecutive hyphens.
+    [GeneratedRegex(@"\A(?!-)(?!.*--)[a-z0-9\-]{3,63}\z")]
+    private static partial Regex StorageDnsLabelRegex();
+    public static bool IsStorageDnsLabel(string input) => StorageDnsLabelRegex().IsMatch(input);
 }
 
 public interface IValidatedString<T> where T : IValidatedString<T> {
@@ -62,7 +72,7 @@ public sealed class ValidatedStringConverter<T> : JsonConverter<T> where T : IVa
         if (ValidatedStringBase<T>.TryParse(value, out var result)) {
             return result;
         } else {
-            throw new JsonException($"unable to parse input as a {typeof(T).Name}: {T.Requirements}");
+            throw new JsonException($"unable to parse '{value}' as a {typeof(T).Name}: {T.Requirements}");
         }
     }
 
@@ -96,12 +106,6 @@ public sealed record Region : ValidatedStringBase<Region>, IValidatedString<Regi
 public sealed record Container : ValidatedStringBase<Container>, IValidatedString<Container> {
     private Container(string value) : base(value) { }
     public static Container Parse(string input) => new(input);
-
-    // See: https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftstorage
-    // - 3-63
-    // - Lowercase letters, numbers, and hyphens.
-    // - Start with lowercase letter or number. Can't use consecutive hyphens.
-    private static readonly Regex _containerRegex = new(@"\A(?!-)(?!.*--)[a-z0-9\-]{3,63}\z", RegexOptions.Compiled);
-    public static bool IsValid(string input) => _containerRegex.IsMatch(input);
+    public static bool IsValid(string input) => Check.IsStorageDnsLabel(input);
     public static string Requirements => "Container name must be 3-63 lowercase letters, numbers, or hyphens";
 }
