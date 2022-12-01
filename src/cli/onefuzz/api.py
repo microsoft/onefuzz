@@ -624,7 +624,7 @@ class Repro(Endpoint):
                         raise err
 
                 dbg = ["gdb", "--silent", "--command", gdb_script_path]
-                subprocess.run(dbg)
+                subprocess.call(dbg)
 
         if retry_limit is not None:
             self.logger.info(
