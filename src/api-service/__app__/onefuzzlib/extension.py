@@ -380,7 +380,7 @@ def agent_config(
                 with_sas,
             ),
         ]
-        to_execute_cmd = "sh setup.sh %s" % (mode.name)
+        to_execute_cmd = "bash setup.sh %s" % (mode.name)
 
         extension = {
             "name": "CustomScript",

@@ -117,7 +117,7 @@ async fn create_setup_symlink(setup_dir: &Path, work_unit: &WorkUnit) -> Result<
     });
 
     if let Err(err) = create_work_dir {
-        if !working_dir.exists()  {
+        if !working_dir.exists() {
             return Err(err);
         }
     }

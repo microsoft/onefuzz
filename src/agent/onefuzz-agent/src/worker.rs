@@ -202,8 +202,15 @@ pub trait IWorkerChild: Downcast + std::fmt::Debug {
 
 impl_downcast!(IWorkerChild);
 
-#[derive(Debug)]
-pub struct WorkerRunner;
+pub struct WorkerRunner {
+    machine_identity: MachineIdentity,
+}
+
+impl WorkerRunner {
+    pub fn new(machine_identity: MachineIdentity) -> Self {
+        Self { machine_identity }
+    }
+}
 
 #[async_trait]
 impl IWorkerRunner for WorkerRunner {
@@ -227,7 +234,7 @@ impl IWorkerRunner for WorkerRunner {
 
         config.insert(
             "machine_identity".to_string(),
-            serde_json::to_value(MachineIdentity::default())?,
+            serde_json::to_value(&self.machine_identity)?,
         );
 
         let config_path = work.config_path()?;

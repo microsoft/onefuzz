@@ -74,7 +74,7 @@ pub fn build_regression_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
-    let context = build_local_context(args, true, event_sender.clone())?;
+    let context = build_local_context(args, true, event_sender.clone()).await?;
     let config = build_regression_config(args, context.common_config.clone(), event_sender)?;
     LibFuzzerRegressionTask::new(config).run().await
 }

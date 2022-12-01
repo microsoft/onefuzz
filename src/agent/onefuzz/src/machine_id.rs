@@ -10,7 +10,7 @@ use std::time::Duration;
 use tokio::fs;
 use uuid::Uuid;
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Default, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct MachineIdentity {
     pub machine_id: Uuid,
     pub machine_name: String,

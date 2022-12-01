@@ -327,7 +327,7 @@ async fn run_agent(config: StaticConfig, reset_node: bool) -> Result<()> {
             init_agent_heartbeat(
                 url,
                 config.machine_identity.machine_id,
-                config.machine_identity.machine_name,
+                config.machine_identity.machine_name.clone(),
             )
             .await?,
         ),
@@ -341,7 +341,7 @@ async fn run_agent(config: StaticConfig, reset_node: bool) -> Result<()> {
             machine_id: config.machine_identity.machine_id,
         }),
         Box::new(work_queue),
-        Box::new(worker::WorkerRunner),
+        Box::new(worker::WorkerRunner::new(config.machine_identity.clone())),
         agent_heartbeat,
         config.managed,
         config.machine_identity.machine_id,

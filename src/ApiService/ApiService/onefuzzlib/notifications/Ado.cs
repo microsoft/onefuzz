@@ -34,10 +34,10 @@ public class Ado : NotificationsBase, IAdo {
         } catch (Exception e)
               when (e is VssAuthenticationException || e is VssServiceException) {
             if (!isLastRetryAttempt && IsTransient(e)) {
-                _logTracer.Error($"transient ADO notification failure {report.JobId:Tag:JobId} {report.TaskId:Tag:TaskId} {container:Tag:Container} {filename:Tag:Filename}");
+                _logTracer.WithTags(notificationInfo).Error($"transient ADO notification failure {report.JobId:Tag:JobId} {report.TaskId:Tag:TaskId} {container:Tag:Container} {filename:Tag:Filename}");
                 throw;
             } else {
-                _logTracer.Exception(e, $"Failed to process ado notification");
+                _logTracer.WithTags(notificationInfo).Exception(e, $"Failed to process ado notification");
                 LogFailedNotification(report, e, notificationId);
             }
         }
