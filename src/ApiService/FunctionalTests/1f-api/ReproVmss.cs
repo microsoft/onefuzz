@@ -5,12 +5,11 @@ using Xunit.Abstractions;
 namespace FunctionalTests;
 
 public class ReproConfig : IFromJsonElement<ReproConfig> {
-    JsonElement _e;
+    readonly JsonElement _e;
 
-    public ReproConfig() { }
     public ReproConfig(JsonElement e) => _e = e;
 
-    public ReproConfig Convert(JsonElement e) => new ReproConfig(e);
+    public static ReproConfig Convert(JsonElement e) => new(e);
 
     public string Container => _e.GetStringProperty("container");
     public string Path => _e.GetStringProperty("path");
@@ -20,12 +19,11 @@ public class ReproConfig : IFromJsonElement<ReproConfig> {
 
 public class Repro : IFromJsonElement<Repro> {
 
-    JsonElement _e;
+    readonly JsonElement _e;
 
-    public Repro() { }
     public Repro(JsonElement e) => _e = e;
 
-    public Repro Convert(JsonElement e) => new Repro(e);
+    public static Repro Convert(JsonElement e) => new(e);
 
     public Guid VmId => _e.GetGuidProperty("vm_id");
 

@@ -3,9 +3,8 @@
 namespace FunctionalTests;
 
 public class Authentication : IFromJsonElement<Authentication> {
-    JsonElement _e;
+    readonly JsonElement _e;
 
-    public Authentication() { }
     public Authentication(JsonElement e) => _e = e;
 
     public string Password => _e.GetStringProperty("password");
@@ -13,6 +12,5 @@ public class Authentication : IFromJsonElement<Authentication> {
     public string PublicKey => _e.GetStringProperty("public_key");
     public string PrivateKey => _e.GetStringProperty("private_key");
 
-    public Authentication Convert(JsonElement e) => new Authentication(e);
-
+    public static Authentication Convert(JsonElement e) => new(e);
 }

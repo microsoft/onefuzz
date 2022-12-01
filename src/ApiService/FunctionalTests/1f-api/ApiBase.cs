@@ -75,12 +75,12 @@ public static class JsonElementExt {
         return e.GetProperty(property).GetBoolean();
     }
 
-    public static T GetObjectProperty<T>(this JsonElement e, string property) where T : IFromJsonElement<T>, new() {
-        return new T().Convert(e.GetProperty(property)!);
+    public static T GetObjectProperty<T>(this JsonElement e, string property) where T : IFromJsonElement<T> {
+        return T.Convert(e.GetProperty(property));
     }
 
-    public static T? GetNullableObjectProperty<T>(this JsonElement e, string property) where T : IFromJsonElement<T>, new() {
-        return e.GetProperty(property).ValueKind == JsonValueKind.Null ? default(T) : new T().Convert(e.GetProperty(property)!);
+    public static T? GetNullableObjectProperty<T>(this JsonElement e, string property) where T : IFromJsonElement<T> {
+        return e.GetProperty(property).ValueKind == JsonValueKind.Null ? default : T.Convert(e.GetProperty(property));
     }
 
     public static IDictionary<string, string>? GetNullableStringDictProperty(this JsonElement e, string property) {
@@ -91,10 +91,10 @@ public static class JsonElementExt {
         return e.GetProperty(property).Deserialize<IDictionary<string, string>>()!;
     }
 
-    public static IDictionary<string, T> GetDictProperty<T>(this JsonElement e, string property) where T : IFromJsonElement<T>, new() {
+    public static IDictionary<string, T> GetDictProperty<T>(this JsonElement e, string property) where T : IFromJsonElement<T> {
         return new Dictionary<string, T>(
             e.GetProperty(property)!.Deserialize<IDictionary<string, JsonElement>>()!.Select(
-                kv => KeyValuePair.Create(kv.Key, new T().Convert(kv.Value))
+                kv => KeyValuePair.Create(kv.Key, T.Convert(kv.Value))
             )
         );
     }
@@ -116,36 +116,36 @@ public static class JsonElementExt {
     }
 
 
-    public static IEnumerable<T> GetEnumerableProperty<T>(this JsonElement e, string property) where T : IFromJsonElement<T>, new() {
-        return e.GetProperty(property).EnumerateArray().Select(e => new T().Convert(e)!);
+    public static IEnumerable<T> GetEnumerableProperty<T>(this JsonElement e, string property) where T : IFromJsonElement<T> {
+        return e.GetProperty(property).EnumerateArray().Select(T.Convert);
     }
 
-    public static IEnumerable<T>? GetEnumerableNullableProperty<T>(this JsonElement e, string property) where T : IFromJsonElement<T>, new() {
+    public static IEnumerable<T>? GetEnumerableNullableProperty<T>(this JsonElement e, string property) where T : IFromJsonElement<T> {
         if (e.GetProperty(property).ValueKind == JsonValueKind.Null)
             return null;
         else
-            return e.GetProperty(property).EnumerateArray().Select(e => new T().Convert(e)!);
+            return e.GetProperty(property).EnumerateArray().Select(T.Convert);
     }
 
 }
 
 
 public interface IFromJsonElement<T> {
-    T Convert(JsonElement e);
+    static abstract T Convert(JsonElement e);
 }
 
 public class BooleanResult : IFromJsonElement<BooleanResult> {
-    JsonElement _e;
-    public BooleanResult() { }
+    readonly JsonElement _e;
+
     public BooleanResult(JsonElement e) => _e = e;
 
     public bool IsError => Error.IsError(_e);
 
-    public Error? Error => new Error(_e);
+    public Error? Error => new(_e);
 
     public bool Result => _e.GetProperty("result").GetBoolean();
 
-    public BooleanResult Convert(JsonElement e) => new BooleanResult(e);
+    public static BooleanResult Convert(JsonElement e) => new(e);
 }
 
 public abstract class ApiBase {
@@ -200,12 +200,12 @@ public abstract class ApiBase {
         return (await JsonDocument.ParseAsync(r.Content.ReadAsStream())).RootElement;
     }
 
-    public static Result<IEnumerable<T>, Error> IEnumerableResult<T>(JsonElement res) where T : IFromJsonElement<T>, new() {
+    public static Result<IEnumerable<T>, Error> IEnumerableResult<T>(JsonElement res) where T : IFromJsonElement<T> {
         if (Error.IsError(res)) {
             return Result<IEnumerable<T>, Error>.Error(new Error(res));
         } else {
             if (res.ValueKind == JsonValueKind.Array)
-                return Result<IEnumerable<T>, Error>.Ok(res.EnumerateArray().Select(e => (new T()).Convert(e)));
+                return Result<IEnumerable<T>, Error>.Ok(res.EnumerateArray().Select(T.Convert));
             else {
                 var r = Result<T>(res);
                 if (r.IsOk)
@@ -215,17 +215,17 @@ public abstract class ApiBase {
             }
         }
     }
-    public static Result<T, Error> Result<T>(JsonElement res) where T : IFromJsonElement<T>, new() {
+    public static Result<T, Error> Result<T>(JsonElement res) where T : IFromJsonElement<T> {
         if (Error.IsError(res)) {
             return Result<T, Error>.Error(new Error(res));
         } else {
             Assert.True(res.ValueKind != JsonValueKind.Array);
-            return Result<T, Error>.Ok((new T()).Convert(res));
+            return Result<T, Error>.Ok(T.Convert(res));
         }
     }
 
-    public static T Return<T>(JsonElement res) where T : IFromJsonElement<T>, new() {
-        return (new T()).Convert(res);
+    public static T Return<T>(JsonElement res) where T : IFromJsonElement<T> {
+        return T.Convert(res);
     }
 
 }

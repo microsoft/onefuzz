@@ -6,12 +6,11 @@ using Xunit.Abstractions;
 namespace FunctionalTests;
 
 public class ScalesetNodeState : IFromJsonElement<ScalesetNodeState> {
-    JsonElement _e;
+    readonly JsonElement _e;
 
-    public ScalesetNodeState() { }
     public ScalesetNodeState(JsonElement e) => _e = e;
 
-    public ScalesetNodeState Convert(JsonElement e) => new ScalesetNodeState(e);
+    public static ScalesetNodeState Convert(JsonElement e) => new(e);
 
     public Guid MachineId => _e.GetGuidProperty("machine_id");
     public string InstanceId => _e.GetStringProperty("instance_id");
@@ -20,10 +19,9 @@ public class ScalesetNodeState : IFromJsonElement<ScalesetNodeState> {
 }
 
 public class Scaleset : IFromJsonElement<Scaleset> {
-    JsonElement _e;
-    public Scaleset() { }
+    readonly JsonElement _e;
     public Scaleset(JsonElement e) => _e = e;
-    public Scaleset Convert(JsonElement e) => new Scaleset(e);
+    public static Scaleset Convert(JsonElement e) => new(e);
 
     public Guid ScalesetId => _e.GetGuidProperty("scaleset_id");
     public string PoolName => _e.GetStringProperty("pool_name");
