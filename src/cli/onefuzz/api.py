@@ -593,9 +593,7 @@ class Repro(Endpoint):
                 if debug_command:
                     gdb_script += [debug_command, "quit"]
 
-                with temp_file(
-                    "gdb.script", "\n".join(gdb_script)
-                ) as gdb_script_path:
+                with temp_file("gdb.script", "\n".join(gdb_script)) as gdb_script_path:
                     dbg = ["gdb", "--silent", "--command", gdb_script_path]
 
                     if debug_command:
@@ -604,17 +602,17 @@ class Repro(Endpoint):
                         try:
                             # security note: dbg is built from content coming from
                             # the server, which is trusted in this context.
-                            result =  subprocess.run(  # nosec
+                            result = subprocess.run(  # nosec
                                 dbg,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT,
                             ).stdout.decode(errors="ignore")
-                            if "command not found" in result: 
+                            if "command not found" in result:
                                 self.logger.info(
-                                        "debug caught exception - failed with transient 'command not found' error"
-                                    )
+                                    "debug caught exception - failed with transient 'command not found' error"
+                                )
                                 time.sleep(30)
-                            else: 
+                            else:
                                 return result
                         except subprocess.CalledProcessError as err:
                             self.logger.info(
@@ -627,16 +625,16 @@ class Repro(Endpoint):
                         # server, which is trusted in this context.
                         dbg += ["--batch"]
                         result = subprocess.run(  # nosec
-                                dbg,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                            ).stdout.decode(errors="ignore")
-                        if "command not found" in result: 
+                            dbg,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                        ).stdout.decode(errors="ignore")
+                        if "command not found" in result:
                             self.logger.error(
-                                        "repro test caught exception - failed with transient 'command not found' error"
-                                    )
+                                "repro test caught exception - failed with transient 'command not found' error"
+                            )
                             time.sleep(30)
-                        else: 
+                        else:
                             return result
         if retry_limit is not None:
             self.logger.info(

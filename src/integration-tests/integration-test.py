@@ -773,9 +773,7 @@ class TestOnefuzz:
                             self.success = False
                     except Exception as err:
                         clear()
-                        self.logger.error(
-                            "repro failed: %s - %s", job.config.name, err
-                        )
+                        self.logger.error("repro failed: %s - %s", job.config.name, err)
                         self.success = False
                     del repros[job.job_id]
                 elif repro.state not in [VmState.init, VmState.extensions_launch]:
