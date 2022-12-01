@@ -352,6 +352,19 @@ class Backend:
             raise Exception("request failed: %s %s" % (method, url))
 
         if response.status_code / 100 != 2:
+            try:
+                json = response.json()
+            except requests.exceptions.JSONDecodeError:
+                pass
+
+            # attempt to read as https://www.rfc-editor.org/rfc/rfc7807
+            if isinstance(json, Dict):
+                title = json.get("title")
+                details = json.get("detail")
+                raise Exception(
+                    f"request did not succeed ({response.status_code}: {title}): {details}"
+                )
+
             error_text = str(
                 response.content, encoding="utf-8", errors="backslashreplace"
             )
@@ -359,6 +372,7 @@ class Backend:
                 "request did not succeed: HTTP %s - %s"
                 % (response.status_code, error_text)
             )
+
         return response
 
 
