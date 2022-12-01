@@ -587,7 +587,9 @@ class Repro(Endpoint):
             ]
 
             with temp_file("gdb.script", "\n".join(gdb_script)) as gdb_script_path:
-
+                
+                # Temporary solution that solves failing create_and_connect command
+                # Remove when create new solution
                 retry_count = 0
                 while retry_limit is None or retry_count <= retry_limit:
 
