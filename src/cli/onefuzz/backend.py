@@ -221,7 +221,7 @@ class Backend:
 
     def acquire_token_for_scope(
         self, app: msal.ConfidentialClientApplication, scope: str
-    ) -> Tuple[bool, dict | Any]:
+    ) -> Tuple[bool, Any]:
         # retry in the face of any connection errors
         # e.g. connection reset by peer, due to connection timeout
         retriesLeft = 5
