@@ -5,10 +5,10 @@ param allFunctions array
 var disabledFunctions = [for f in allFunctions: 'AzureWebJobs.${f}.Disabled' ]
 
 var disabledFunctionsAppSettings = {
-  '${disabledFunctions[0]}' : functions_disabled_setting
-  '${disabledFunctions[1]}' : functions_disabled_setting
-  '${disabledFunctions[2]}' : functions_disabled_setting
-  '${disabledFunctions[3]}' : functions_disabled_setting
+  '${disabledFunctions[0]}' : 0
+  '${disabledFunctions[1]}' : 0
+  '${disabledFunctions[2]}' : 0
+  '${disabledFunctions[3]}' : 0
   '${disabledFunctions[4]}' : functions_disabled_setting
 
   '${disabledFunctions[5]}' : functions_disabled_setting
