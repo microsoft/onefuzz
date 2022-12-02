@@ -45,8 +45,8 @@ public abstract class TasksTestBase : FunctionTestBase {
         var testData = new TestHttpRequestData("POST", new BinaryData(JsonSerializer.SerializeToUtf8Bytes(serialized, EntityConverter.GetJsonSerializerOptions())));
         var result = await func.Run(testData);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
-        var err = BodyAs<Error>(result);
-        Assert.Equal(new[] { "Unexpected property: \"vm\"" }, err.Errors);
+        var err = BodyAs<ProblemDetails>(result);
+        Assert.Equal("Unexpected property: \"vm\"", err.Detail);
     }
 
     [Fact]
@@ -66,8 +66,8 @@ public abstract class TasksTestBase : FunctionTestBase {
 
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
-        var err = BodyAs<Error>(result);
-        Assert.Equal(new[] { "The Pool field is required." }, err.Errors);
+        var err = BodyAs<ProblemDetails>(result);
+        Assert.Equal("The Pool field is required.", err.Detail);
     }
 
     [Fact]

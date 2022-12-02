@@ -6,8 +6,7 @@ namespace FunctionalTests;
 
 
 public class TaskDetails {
-    JsonElement _e;
-    public TaskDetails() { }
+    readonly JsonElement _e;
     public TaskDetails(JsonElement e) => _e = e;
 
     public string Type => _e.GetStringProperty("type");
@@ -77,22 +76,20 @@ public class TaskDetails {
 
 
 public class TaskConfig : IFromJsonElement<TaskConfig> {
-    JsonElement _e;
-    public TaskConfig() { }
+    readonly JsonElement _e;
     public TaskConfig(JsonElement e) => _e = e;
-    public TaskConfig Convert(JsonElement e) => new TaskConfig(e);
+    public static TaskConfig Convert(JsonElement e) => new(e);
 
     public Guid JobId => _e.GetGuidProperty("job_id");
     public IEnumerable<Guid>? PrereqTasks => _e.GetEnumerableGuidProperty("prereq_tasks");
 }
 
 public class OneFuzzTask : IFromJsonElement<OneFuzzTask> {
-    JsonElement _e;
+    readonly JsonElement _e;
 
-    public OneFuzzTask() { }
     public OneFuzzTask(JsonElement e) => _e = e;
 
-    public OneFuzzTask Convert(JsonElement e) => new OneFuzzTask(e);
+    public static OneFuzzTask Convert(JsonElement e) => new(e);
 
     public Guid JobId => _e.GetGuidProperty("job_id");
     public Guid TaskId => _e.GetGuidProperty("task_id");

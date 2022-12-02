@@ -280,24 +280,34 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             return await SetProvisionFailed(proxy, failedVmData.InstanceView);
         }
 
-        var ip = await _context.IpOperations.GetPublicIp(vmData.NetworkProfile.NetworkInterfaces[0].Id);
-        if (ip is null) {
-            return proxy;
+        if (proxy.Ip is null) {
+            // fetch and store IP
+            var ip = await _context.IpOperations.GetPublicIp(vmData.NetworkProfile.NetworkInterfaces[0].Id);
+            if (ip is null) {
+                return proxy;
+            }
+
+            proxy = proxy with { Ip = ip };
+            _ = await Update(proxy);
         }
 
-        var newProxy = proxy with { Ip = ip };
-
-        var extensions = await _context.Extensions.ProxyManagerExtensions(newProxy.Region, newProxy.ProxyId);
+        var extensions = await _context.Extensions.ProxyManagerExtensions(proxy.Region, proxy.ProxyId);
         var result = await _context.VmOperations.AddExtensions(vm,
             extensions
                 .Select(e => e.GetAsVirtualMachineExtension())
                 .ToDictionary(x => x.Item1, x => x.Item2));
 
         if (!result.IsOk) {
-            return await SetFailed(newProxy, result.ErrorV);
+            return await SetFailed(proxy, result.ErrorV);
         }
 
-        return await SetState(newProxy, VmState.Running);
+        if (result.OkV) {
+            // this means extensions are all ready - transition to Running state
+            return await SetState(proxy, VmState.Running);
+        }
+
+        // not yet ready - do not transition state
+        return proxy;
     }
 
     public async Task<Proxy> Stopping(Proxy proxy) {
