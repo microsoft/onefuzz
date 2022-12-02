@@ -355,9 +355,7 @@ class TestOnefuzz:
             self.logger.info("launching: %s", target)
 
             if config.setup_dir is None:
-                setup = (
-                    Directory(os.path.join(path, target)) if config.use_setup else None
-                )
+                setup = Directory(os.path.join(path, target)) if config.use_setup else None
             else:
                 setup = config.setup_dir
 
@@ -937,7 +935,10 @@ class TestOnefuzz:
 
             # ignore warnings coming from the rust code, only be concerned
             # about errors
-            if entry.get("severityLevel") == 2 and "rust" in entry.get("sdkVersion"):
+            if (
+                entry.get("severityLevel") == 2
+                and "rust" in entry.get("sdkVersion")
+            ):
                 continue
 
             # ignore resource not found warnings from azure-functions layer,
@@ -1030,7 +1031,7 @@ class Run(Command):
         authority: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
-        pool_size: int = 20,
+        pool_size: int = 10,
         region: Optional[Region] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
         test_id: Optional[UUID] = None,

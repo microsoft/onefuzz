@@ -564,10 +564,7 @@ class Repro(Endpoint):
         return self._req_model_list("GET", models.Repro, data=requests.ReproGet())
 
     def _dbg_linux(
-        self,
-        repro: models.Repro,
-        debug_command: Optional[str],
-        retry_limit: Optional[int],
+        self, repro: models.Repro, debug_command: Optional[str]
     ) -> Optional[str]:
         """Launch gdb with GDB script that includes 'target remote | ssh ...'"""
 
@@ -581,58 +578,36 @@ class Repro(Endpoint):
         with build_ssh_command(
             repro.ip, repro.auth.private_key, command="-T"
         ) as ssh_cmd:
+
             gdb_script = [
                 "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
                 % " ".join(ssh_cmd)
             ]
 
+            if debug_command:
+                gdb_script += [debug_command, "quit"]
+
             with temp_file("gdb.script", "\n".join(gdb_script)) as gdb_script_path:
-                
-                # Temporary solution that solves failing create_and_connect command
-                # Remove when create new solution
-                retry_count = 0
-                while retry_limit is None or retry_count <= retry_limit:
+                dbg = ["gdb", "--silent", "--command", gdb_script_path]
 
-                    retry_count = retry_count + 1
-
-                    dbg = ["gdb", "--silent", "--batch", "--command", gdb_script_path]
+                if debug_command:
+                    dbg += ["--batch"]
 
                     try:
-
                         # security note: dbg is built from content coming from
                         # the server, which is trusted in this context.
-                        result = subprocess.run(  # nosec
-                            dbg,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT,
+                        return subprocess.run(  # nosec
+                            dbg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
                         ).stdout.decode(errors="ignore")
-                        if "command not found" in result:
-                            self.logger.info(
-                                "debug caught exception - failed with transient error. retrying."
-                            )
-                            time.sleep(30)
-                            continue
-
-                        if debug_command:
-                            return result
-
-                        break
-
                     except subprocess.CalledProcessError as err:
-                        self.logger.info(
-                            "debug failed: %s",
-                            err.output.decode(errors="ignore"),
+                        self.logger.error(
+                            "debug failed: %s", err.output.decode(errors="ignore")
                         )
                         raise err
-
-                dbg = ["gdb", "--silent", "--command", gdb_script_path]
-                subprocess.run(dbg)
-
-        if retry_limit is not None:
-            self.logger.info(
-                f"failed to connect to debug-server after {retry_limit} attempts. Please try again later "
-                + f"with onefuzz debug connect {repro.vm_id}"
-            )
+                else:
+                    # security note: dbg is built from content coming from the
+                    # server, which is trusted in this context.
+                    subprocess.call(dbg)  # nosec
         return None
 
     def _dbg_windows(
@@ -654,7 +629,8 @@ class Repro(Endpoint):
         bind_all = which("wslpath") is not None and repro.os == enums.OS.windows
         proxy = "*:" + REPRO_SSH_FORWARD if bind_all else REPRO_SSH_FORWARD
         while retry_limit is None or retry_count <= retry_limit:
-            retry_count = retry_count + 1
+            if retry_limit:
+                retry_count = retry_count + 1
             with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
                 dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
                 if debug_command:
@@ -744,7 +720,7 @@ class Repro(Endpoint):
                 repro.auth is not None
                 and repro.ip is not None
                 and state not in [enums.VmState.init, enums.VmState.extensions_launch],
-                "launching reproduction vm.  current state: %s" % state,
+                "launching reproducing vm.  current state: %s" % state,
                 repro,
             )
 
@@ -755,7 +731,7 @@ class Repro(Endpoint):
         if repro.os == enums.OS.windows:
             result = self._dbg_windows(repro, debug_command, retry_limit)
         elif repro.os == enums.OS.linux:
-            result = self._dbg_linux(repro, debug_command, retry_limit)
+            result = self._dbg_linux(repro, debug_command)
         else:
             raise NotImplementedError
 
