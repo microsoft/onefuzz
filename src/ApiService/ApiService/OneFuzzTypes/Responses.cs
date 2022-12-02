@@ -11,7 +11,8 @@ public abstract record BaseResponse() {
 
 public record CanSchedule(
     bool Allowed,
-    bool WorkStopped
+    bool WorkStopped,
+    string? Reason
 ) : BaseResponse();
 
 public record PendingNodeCommand(

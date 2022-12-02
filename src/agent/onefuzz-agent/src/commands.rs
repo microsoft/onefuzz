@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::{Context, Result};
-use onefuzz::{auth::Secret, machine_id::get_scaleset_name};
+use onefuzz::auth::Secret;
 use std::process::Stdio;
 use tokio::{fs, io::AsyncWriteExt, process::Command};
 
@@ -32,11 +32,6 @@ pub struct SshKeyInfo {
 
 #[cfg(target_family = "windows")]
 pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
-    if get_scaleset_name().await?.is_none() {
-        warn!("adding ssh keys only supported on managed nodes");
-        return Ok(());
-    }
-
     let mut ssh_path =
         PathBuf::from(env::var("ProgramData").unwrap_or_else(|_| "c:\\programdata".to_string()));
     ssh_path.push("ssh");
@@ -160,11 +155,6 @@ pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
 
 #[cfg(target_family = "unix")]
 pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
-    if get_scaleset_name().await?.is_none() {
-        warn!("adding ssh keys only supported on managed nodes");
-        return Ok(());
-    }
-
     let user =
         get_user_by_name(ONEFUZZ_SERVICE_USER).ok_or_else(|| format_err!("unable to find user"))?;
     info!("adding ssh key:{:?} to user:{:?}", key_info, user);

@@ -1,26 +1,26 @@
 ﻿using System.Text.Json;
-using Xunit;
 
 namespace FunctionalTests;
 
 public class Error : IComparable<Error>, IFromJsonElement<Error> {
-    JsonElement _e;
-
-    public Error() { }
+    private readonly JsonElement _e;
 
     public Error(JsonElement e) {
         _e = e;
-        Assert.True(_e.EnumerateObject().Count() == 2);
     }
 
-    public int Code => _e.GetIntProperty("code");
+    public int StatusCode => _e.GetIntProperty("status");
 
-    public IEnumerable<string> Errors => _e.GetEnumerableStringProperty("errors");
+    public string Title => _e.GetStringProperty("title");
 
-    public Error Convert(JsonElement e) => new Error(e);
+    public string Detail => _e.GetStringProperty("detail");
+
+    public static Error Convert(JsonElement e) => new(e);
 
     public static bool IsError(JsonElement res) {
-        return res.ValueKind == JsonValueKind.Object && res.TryGetProperty("code", out _) && res.TryGetProperty("errors", out _);
+        return res.ValueKind == JsonValueKind.Object
+            && res.TryGetProperty("title", out _)
+            && res.TryGetProperty("detail", out _);
     }
 
     public int CompareTo(Error? other) {
@@ -28,16 +28,22 @@ public class Error : IComparable<Error>, IFromJsonElement<Error> {
             return -1;
         }
 
-        var sameErrorMessages = Errors.Count() == other.Errors.Count();
-        foreach (var s in other.Errors) {
-            if (!sameErrorMessages) break;
-            sameErrorMessages = Errors.Contains(s);
+        var statusCompare = StatusCode.CompareTo(other.StatusCode);
+        if (statusCompare != 0) {
+            return statusCompare;
         }
 
-        if (other.Code == this.Code && sameErrorMessages) {
-            return 0;
-        } else
-            return 1;
+        var titleCompare = Title.CompareTo(other.Title);
+        if (titleCompare != 0) {
+            return titleCompare;
+        }
+
+        var detailCompare = Detail.CompareTo(other.Detail);
+        if (detailCompare != 0) {
+            return detailCompare;
+        }
+
+        return 0;
     }
 
     public override string ToString() {
@@ -45,15 +51,15 @@ public class Error : IComparable<Error>, IFromJsonElement<Error> {
     }
 
     public bool IsWrongSizeError =>
-        Code == 450 && Errors.First() == "The field Size must be between 1 and 9.223372036854776E+18.";
+        Title == "INVALID_REQUEST" && Detail.Contains("The field Size must be between 1 and 9.223372036854776E+18.");
 
-    public bool UnableToFindPoolError => Code == 450 && Errors.First() == "unable to find pool";
+    public bool UnableToFindPoolError => Title == "INVALID_REQUEST" && Detail.Contains("unable to find pool");
 
-    public bool UnableToFindScalesetError => Code == 450 && Errors.First() == "unable to find scaleset";
+    public bool UnableToFindScalesetError => Title == "INVALID_REQUEST" && Detail.Contains("unable to find scaleset");
 
-    public bool UnableToFindNode => Code == 467 && Errors.First() == "unable to find node";
+    public bool UnableToFindNode => Title == "UNABLE_TO_FIND" && Detail.Contains("unable to find node");
 
-    public bool ShouldBeProvided(string p) => Code == 450 && Errors.First() == $"'{p}' query parameter must be provided";
+    public bool ShouldBeProvided(string p) => Title == "INVALID_REQUEST" && Detail.Contains($"'{p}' query parameter must be provided");
 
-    public bool UnableToFindTask => Code == 450 && Errors.First() == "unable to find task";
+    public bool UnableToFindTask => Title == "INVALID_REQUEST" && Detail.Contains("unable to find task");
 }

@@ -15,7 +15,7 @@ use flume::Sender;
 use std::path::PathBuf;
 
 pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
-    let context = build_local_context(args, false, event_sender)?;
+    let context = build_local_context(args, false, event_sender).await?;
 
     let target_exe = value_t!(args, TARGET_EXE, PathBuf)?;
     let target_env = get_cmd_env(CmdType::Target, args)?;
@@ -40,6 +40,7 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
         minimized_stack_depth: None,
         check_asan_log,
         check_debugger,
+        machine_identity: context.common_config.machine_identity.clone(),
     };
 
     let result = test_input(config).await?;

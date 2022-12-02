@@ -102,6 +102,7 @@ impl GeneratorTask {
             &target_exe,
             &self.config.target_options,
             &self.config.target_env,
+            self.config.common.machine_identity.clone(),
         )
         .check_asan_log(self.config.check_asan_log)
         .check_debugger(self.config.check_debugger)
@@ -163,7 +164,7 @@ impl GeneratorTask {
     ) -> Result<()> {
         utils::reset_tmp_dir(&output_dir).await?;
         let (mut generator, generator_path) = {
-            let expand = Expand::new()
+            let expand = Expand::new(&self.config.common.machine_identity)
                 .machine_id()
                 .await?
                 .setup_dir(&self.config.common.setup_dir)
@@ -288,7 +289,22 @@ mod tests {
             ensemble_sync_delay: None,
             generator_env: HashMap::default(),
             check_retry_count: 0,
-            common: CommonConfig::default(),
+            common: CommonConfig {
+                job_id: Default::default(),
+                task_id: Default::default(),
+                instance_id: Default::default(),
+                heartbeat_queue: Default::default(),
+                instance_telemetry_key: Default::default(),
+                microsoft_telemetry_key: Default::default(),
+                logs: Default::default(),
+                setup_dir: Default::default(),
+                min_available_memory_mb: Default::default(),
+                machine_identity: onefuzz::machine_id::MachineIdentity {
+                    machine_id: uuid::Uuid::new_v4(),
+                    machine_name: "test".to_string(),
+                    scaleset_name: None,
+                },
+            },
         };
         let task = GeneratorTask::new(config);
 

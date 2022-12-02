@@ -54,10 +54,14 @@ impl Scheduler {
         Self::default()
     }
 
-    pub async fn execute_command(&mut self, cmd: &NodeCommand) -> Result<()> {
+    pub async fn execute_command(&mut self, cmd: &NodeCommand, managed: bool) -> Result<()> {
         match cmd {
             NodeCommand::AddSshKey(ssh_key_info) => {
-                add_ssh_key(ssh_key_info).await?;
+                if managed {
+                    add_ssh_key(ssh_key_info).await?;
+                } else {
+                    warn!("adding ssh keys only supported on managed nodes");
+                }
             }
             NodeCommand::StopTask(stop_task) => {
                 if let Scheduler::Busy(state) = self {

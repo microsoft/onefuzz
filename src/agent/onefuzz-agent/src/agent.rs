@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#![allow(clippy::too_many_arguments)]
 use anyhow::{Error, Result};
 use tokio::time;
 
@@ -26,6 +27,7 @@ pub struct Agent {
     heartbeat: Option<AgentHeartbeatClient>,
     previous_state: NodeState,
     last_poll_command: Result<Option<NodeCommand>, PollCommandError>,
+    managed: bool,
 }
 
 impl Agent {
@@ -37,6 +39,7 @@ impl Agent {
         work_queue: Box<dyn IWorkQueue>,
         worker_runner: Box<dyn IWorkerRunner>,
         heartbeat: Option<AgentHeartbeatClient>,
+        managed: bool,
     ) -> Self {
         let scheduler = Some(scheduler);
         let previous_state = NodeState::Init;
@@ -52,6 +55,7 @@ impl Agent {
             heartbeat,
             previous_state,
             last_poll_command,
+            managed,
         }
     }
 
@@ -159,10 +163,14 @@ impl Agent {
                     }
                 }
             } else {
+                let reason = can_schedule.reason.map_or("".to_string(), |r| r);
                 // We cannot schedule the work set. Depending on why, we want to either drop the work
                 // (because it is no longer valid for anyone) or do nothing (because our version is out
                 // of date, and we want another node to pick it up).
-                warn!("unable to schedule work set: {:?}", msg.work_set);
+                warn!(
+                    "unable to schedule work set: {:?}, Reason {}",
+                    msg.work_set, reason
+                );
 
                 // If `work_stopped`, the work set is not valid for any node, and we should drop it for the
                 // entire pool by claiming but not executing it.
@@ -286,7 +294,8 @@ impl Agent {
             Ok(None) => {}
             Ok(Some(cmd)) => {
                 info!("agent received node command: {:?}", cmd);
-                self.scheduler()?.execute_command(cmd).await?;
+                let managed = self.managed;
+                self.scheduler()?.execute_command(cmd, managed).await?;
             }
             Err(PollCommandError::RequestFailed(err)) => {
                 // If we failed to request commands, this could be the service

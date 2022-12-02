@@ -103,7 +103,6 @@ impl BlobLogWriter {
                 let blob_client = container_client.blob_client(format!("{}/1.log", prefix));
                 blob_client
                     .put_append_blob()
-                    .into_future()
                     .await
                     .map_err(|e| anyhow!(e.to_string()))?;
                 1
@@ -154,7 +153,6 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
         let result = blob_client
             .append_block(data_stream)
             .condition_max_size(self.max_log_size)
-            .into_future()
             .await;
 
         match result {
@@ -191,7 +189,6 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
 
         blob_client
             .put_append_blob()
-            .into_future()
             .await
             .map_err(|e| anyhow!(e.to_string()))?;
 

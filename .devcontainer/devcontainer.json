@@ -13,11 +13,16 @@
 		},
 		"rust-analyzer.checkOnSave.command": "clippy",
 		"rust-analyzer.linkedProjects": [
-			"/workspaces/onefuzz/src/agent/Cargo.toml"
+			"/workspaces/onefuzz/src/agent/Cargo.toml",
+			"/workspaces/onefuzz/src/proxy-manager/Cargo.toml"
 		],
 		"python.defaultInterpreterPath": "/workspaces/onefuzz/src/venv/bin/python",
+		"python.formatting.provider": "black",
+		"python.linting.flake8Enabled": true,
+		"python.linting.mypyEnabled": true,
 		"omnisharp.enableRoslynAnalyzers": true,
-		"omnisharp.enableEditorConfigSupport": true
+		"omnisharp.enableEditorConfigSupport": true,
+		"editor.formatOnSave": true
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
@@ -30,7 +35,8 @@
 		"ms-python.python",
 		"ms-azuretools.vscode-bicep",
 		"formulahendry.dotnet-test-explorer",
-		"ms-azuretools.vscode-azurefunctions"
+		"ms-azuretools.vscode-azurefunctions",
+		"redhat.vscode-yaml"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
