@@ -24,7 +24,7 @@ Version 6.0 will convert jinja templates on-the-fly for a short period of time. 
 The default value for the `--container_type` parameter to the `container` command has been removed. The `container_type` parameter is still required for the command. This change removes the ambiguity of the container information being returned. 
 
 ### Added
-* Agent: Making machine identity a parameter of the agent config. [#2649](https://github.com/microsoft/onefuzz/pull/2649)
+* Agent: Added `machine_id` a parameter of the agent config. [#2649](https://github.com/microsoft/onefuzz/pull/2649)
 * Agent: Pass the `machine_id` from the Agent to the Task. [#2662](https://github.com/microsoft/onefuzz/pull/2662)
 ### Changed
 * Service: Deployment enables refactored C# App Function. [#2650](https://github.com/microsoft/onefuzz/pull/2650)
@@ -35,7 +35,7 @@ The default value for the `--container_type` parameter to the `container` comman
 * CLI: Make the `--container_type` parameter required when using the `containers` command. [#2631](https://github.com/microsoft/onefuzz/pull/2631)
 * Service: Improve logging around notification failures. [#2653](https://github.com/microsoft/onefuzz/pull/2653)
 * Service: Standardize HTTP Error Results. Better Rejection Message When Parsing Validated Strings. [#2663](https://github.com/microsoft/onefuzz/pull/2663)
-* CLI: Retry on Connection Errors when acquiring autj token. [#2668](https://github.com/microsoft/onefuzz/pull/2668)
+* CLI: Retry on Connection Errors when acquiring auth token. [#2668](https://github.com/microsoft/onefuzz/pull/2668)
 ### Fixed
 * Service: Notification Template `targetUrl` parameter fix. Only use the filename instead of the absolute path in the URL. The makes the links created in ADO bugs work as expected. [#2625](https://github.com/microsoft/onefuzz/pull/2625)
 * CLI: Fixed SignalR client code not reading responses correctly. [#2626](https://github.com/microsoft/onefuzz/pull/2626)
