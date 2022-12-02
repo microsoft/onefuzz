@@ -24,6 +24,7 @@ impl ICoordinator for CoordinatorDouble {
         Ok(CanSchedule {
             allowed: true,
             work_stopped: true,
+            reason: None,
         })
     }
 }
