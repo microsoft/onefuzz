@@ -27,7 +27,7 @@ The default value for the `--container_type` parameter to the `container` comman
 * Agent: Making machine identity a parameter of the agent config. [#2649](https://github.com/microsoft/onefuzz/pull/2649)
 ### Changed
 * Service: Deployment enables refactored C# App Function. [#2650](https://github.com/microsoft/onefuzz/pull/2650)
-* CLI: Attempt to use broker or browser login instead of device flow. Canceling the attempt with `Ctrl-C` attempt authentication with the device flow. [#2612](https://github.com/microsoft/onefuzz/pull/2612)
+* CLI: Attempt to use broker or browser login instead of device flow for authentication. Canceling the attempt with `Ctrl-C` will fall back to using the device flow. [#2612](https://github.com/microsoft/onefuzz/pull/2612)
 * Service: Update to .NET 7. [#2615](https://github.com/microsoft/onefuzz/pull/2615)
 * Service: Make Proxy `TelemetryKey` optional. [#2619](https://github.com/microsoft/onefuzz/pull/2619)
 * Service: Update OMI to 1.6.10.2 on Ubuntu VMs. [#2629](https://github.com/microsoft/onefuzz/pull/2629)
