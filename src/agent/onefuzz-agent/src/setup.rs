@@ -145,10 +145,14 @@ async fn create_setup_symlink(
 }
 
 #[cfg(target_family = "unix")]
-async fn create_setup_symlink(setup_dir: &Path, work_unit: &WorkUnit) -> Result<()> {
+async fn create_setup_symlink(
+    setup_dir: &Path,
+    work_unit: &WorkUnit,
+    machine_id: Uuid,
+) -> Result<()> {
     use tokio::fs::symlink;
 
-    let working_dir = work_unit.working_dir()?;
+    let working_dir = work_unit.working_dir(machine_id)?;
 
     tokio::fs::create_dir_all(&working_dir)
         .await
