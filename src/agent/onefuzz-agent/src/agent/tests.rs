@@ -187,6 +187,8 @@ async fn test_emitted_state() {
 
 #[tokio::test]
 async fn test_emitted_state_failed_setup() {
+    // to prevent anyhow to caprture the stack trace
+    std::env::set_var("RUST_BACKTRACE", "0");
     let error_message = "Failed setup";
     let mut agent = Agent {
         setup_runner: Box::new(SetupRunnerDouble {
@@ -221,6 +223,21 @@ async fn test_emitted_state_failed_setup() {
     ];
     let coordinator: &CoordinatorDouble = agent.coordinator.downcast_ref().unwrap();
     let events = &coordinator.events;
+    // assert_eq!(events.len(), expected_events.len());
+
+    // for (actual,expected) in  events.iter().zip(&expected_events) {
+    //     match (actual, expected) {
+    //         (NodeEvent::StateUpdate(StateUpdateEvent::Done { error: Some(actual_error), .. }), NodeEvent::StateUpdate(StateUpdateEvent::Done { error: Some(expected_error), .. })) => {
+    //             assert!(actual_error.contains(expected_error));
+    //         },
+    //         (actual, expected) => {
+    //             assert_eq!(actual, expected);
+    //         }
+    //     }
+
+    //     }
+    // }
+
     assert_eq!(events, &expected_events);
 
     // TODO: at some point, the underlying tests should be updated to not write
