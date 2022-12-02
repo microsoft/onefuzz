@@ -278,6 +278,46 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
     enable_profiler: enable_profiler
+    functions_disabled: '0'
+    agent_function_names: [
+      'AgentCanSchedule'      //0
+      'AgentCommands'         //1
+      'AgentEvents'           //2
+      'AgentRegistration'     //3
+      'Containers'            //4
+      'Download'              //5
+      'Info'                  //6
+      'InstanceConfig'        //7
+      'Jobs'                  //8
+      'JobTemplates'          //9
+      'JobTemplatesManage'    //10
+      'Negotiate'             //11
+      'Node'                  //12
+      'NodeAddSshKey'         //13
+      'Notifications'         //14
+      'Pool'                  //15
+      'Proxy'                 //16
+      'QueueFileChanges'      //17
+      'QueueNodeHeartbeat'    //18
+      'QueueProxyUpdate'   //19
+      'QueueSignalrEvents'    //20
+      'QueueTaskHeartbeat'    //21
+      'QueueUpdates'          //22
+      'QueueWebhooks'         //23
+      'ReproVms'              //24
+      'Scaleset'              //25
+      'Tasks'                 //26
+      'TimerDaily'            //27
+      'TimerProxy'            //28
+      'TimerRepro'            //29
+      'TimerRetention'        //30
+      'TimerTasks'            //31
+      'TimerWorkers'          //32
+      'Tools'                 //33
+      'Webhooks'              //34
+      'WebhooksLogs'          //35
+      'WebhooksPing'          //36    
+    ]
   }
   dependsOn: [
     function
@@ -304,6 +344,46 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
     enable_profiler: enable_profiler
+    functions_disabled: '1'
+    agent_function_names: [
+      'AgentCanSchedule'      //0
+      'AgentCommands'         //1
+      'AgentEvents'           //2
+      'AgentRegistration'     //3
+      'Containers'            //4
+      'Download'              //5
+      'Info'                  //6
+      'InstanceConfig'        //7
+      'Jobs'                  //8
+      'JobTemplates'          //9
+      'JobTemplatesManage'    //10
+      'Negotiate'             //11
+      'Node'                  //12
+      'NodeAddSshKey'         //13
+      'Notifications'         //14
+      'Pool'                  //15
+      'Proxy'                 //16
+      'QueueFileChanges'      //17
+      'QueueNodeHeartbeat'    //18
+      'QueueProxyUpdate'   //19
+      'QueueSignalrEvents'    //20
+      'QueueTaskHeartbeat'    //21
+      'QueueUpdates'          //22
+      'QueueWebhooks'         //23
+      'ReproVms'              //24
+      'Scaleset'              //25
+      'Tasks'                 //26
+      'TimerDaily'            //27
+      'TimerProxy'            //28
+      'TimerRepro'            //29
+      'TimerRetention'        //30
+      'TimerTasks'            //31
+      'TimerWorkers'          //32
+      'Tools'                 //33
+      'Webhooks'              //34
+      'WebhookLogs'           //35
+      'WebhookPing'           //36   
+    ]
   }
   dependsOn: [
     netFunction
