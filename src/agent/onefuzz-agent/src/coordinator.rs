@@ -183,7 +183,7 @@ pub enum PollCommandError {
 
 pub struct Coordinator {
     client: Client,
-    registration: Registration,
+    pub registration: Registration,
     token: AccessToken,
 }
 
