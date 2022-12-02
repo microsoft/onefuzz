@@ -215,11 +215,14 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var result = await _context.VmOperations.AddExtensions(vm, extensions);
         if (!result.IsOk) {
             return await SetError(repro, result.ErrorV);
-        } else {
-            repro = repro with { State = VmState.Running };
         }
 
-        await Replace(repro).IgnoreResult();
+        if (result.OkV) {
+            // this means extensions are all completed - transition to Running state
+            repro = repro with { State = VmState.Running };
+            await Replace(repro).IgnoreResult();
+        }
+
         return repro;
     }
 

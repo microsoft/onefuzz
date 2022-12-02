@@ -15,7 +15,7 @@ public class WebhookPing {
         _context = context;
     }
 
-    [Function("Webhook_ping")]
+    [Function("WebhookPing")]
     public Async.Task<HttpResponseData> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "webhooks/ping")] HttpRequestData req) {
         return _auth.CallIfUser(req, r => r.Method switch {
