@@ -25,6 +25,7 @@ The default value for the `--container_type` parameter to the `container` comman
 
 ### Added
 * Agent: Making machine identity a parameter of the agent config. [#2649](https://github.com/microsoft/onefuzz/pull/2649)
+* Agent: Pass the `machine_id` from the Agent to the Task. [#2662](https://github.com/microsoft/onefuzz/pull/2662)
 ### Changed
 * Service: Deployment enables refactored C# App Function. [#2650](https://github.com/microsoft/onefuzz/pull/2650)
 * CLI: Attempt to use broker or browser login instead of device flow for authentication. Canceling the attempt with `Ctrl-C` will fall back to using the device flow. [#2612](https://github.com/microsoft/onefuzz/pull/2612)
@@ -33,6 +34,8 @@ The default value for the `--container_type` parameter to the `container` comman
 * Service: Update OMI to 1.6.10.2 on Ubuntu VMs. [#2629](https://github.com/microsoft/onefuzz/pull/2629)
 * CLI: Make the `--container_type` parameter required when using the `containers` command. [#2631](https://github.com/microsoft/onefuzz/pull/2631)
 * Service: Improve logging around notification failures. [#2653](https://github.com/microsoft/onefuzz/pull/2653)
+* Service: Standardize HTTP Error Results. Better Rejection Message When Parsing Validated Strings. [#2663](https://github.com/microsoft/onefuzz/pull/2663)
+* CLI: Retry on Connection Errors when acquiring autj token. [#2668](https://github.com/microsoft/onefuzz/pull/2668)
 ### Fixed
 * Service: Notification Template `targetUrl` parameter fix. Only use the filename instead of the absolute path in the URL. The makes the links created in ADO bugs work as expected. [#2625](https://github.com/microsoft/onefuzz/pull/2625)
 * CLI: Fixed SignalR client code not reading responses correctly. [#2626](https://github.com/microsoft/onefuzz/pull/2626)
@@ -40,6 +43,7 @@ The default value for the `--container_type` parameter to the `container` comman
 * Service: Bug fixes related to the unmanaged nodes (an unreleased feature). [#2632](https://github.com/microsoft/onefuzz/pull/2632)
 * Service: Fix invocation of `functionapp` in the deployment script. Where the wrong value/parameter pair were used. [#2645](https://github.com/microsoft/onefuzz/pull/2645)
 * Service: Fixing .NET crash report no-repro. [#2642](https://github.com/microsoft/onefuzz/pull/2642)
+* Service: Check Extensions Status Before Transitioning to `running` state during VM setup. [#2667](https://github.com/microsoft/onefuzz/pull/2667)
 
 ## 5.20.0
 ### Added
