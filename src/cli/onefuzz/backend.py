@@ -208,16 +208,8 @@ class Backend:
 
         # try each scope until we successfully get an access token
         for scope in scopes:
-            result = self.app.acquire_token_for_client(scopes=[scope])
-            if "error" not in result:
-                break
-
-            # AADSTS500011: The resource principal named ... was not found in the tenant named ...
-            # This error is caused by a by mismatch between the identifierUr and the scope provided in the request.
-            if "AADSTS500011" in result["error_description"]:
-                LOGGER.warning(f"failed to get access token with scope {scope}")
-            else:
-                # unexpected error
+            done, result = self.acquire_token_for_scope(self.app, scope)
+            if done:
                 break
 
         if "error" in result:
@@ -226,6 +218,31 @@ class Backend:
                 % (result.get("error"), result.get("error_description"))
             )
         return result
+
+    def acquire_token_for_scope(
+        self, app: msal.ConfidentialClientApplication, scope: str
+    ) -> Tuple[bool, dict | Any]:
+        # retry in the face of any connection errors
+        # e.g. connection reset by peer, due to connection timeout
+        retriesLeft = 5
+        while True:
+            try:
+                result = app.acquire_token_for_client(scopes=[scope])
+                if "error" not in result:
+                    return (True, result)
+
+                # AADSTS500011: The resource principal named ... was not found in the tenant named ...
+                # This error is caused by a by mismatch between the identifierUrl and the scope provided in the request.
+                if "AADSTS500011" in result["error_description"]:
+                    LOGGER.warning(f"failed to get access token with scope {scope}")
+                    return (False, result)
+                else:
+                    # unexpected error
+                    return (True, result)
+            except requests.exceptions.ConnectionError:
+                retriesLeft -= 1
+                if retriesLeft == 0:
+                    raise
 
     def do_login(self, scopes: List[str]) -> Any:
         if not self.app:
