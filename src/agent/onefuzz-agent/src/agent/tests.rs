@@ -6,7 +6,6 @@ use uuid::Uuid;
 
 use crate::coordinator::double::*;
 use crate::reboot::double::*;
-use crate::scheduler::*;
 use crate::setup::double::*;
 use crate::work::double::*;
 use crate::work::*;
@@ -36,6 +35,7 @@ impl Fixture {
             worker_runner,
             None,
             true,
+            Uuid::new_v4(),
         )
     }
 
@@ -196,6 +196,7 @@ async fn test_emitted_state_failed_setup() {
         ..Fixture.agent()
     };
 
+
     agent
         .work_queue
         .downcast_mut::<WorkQueueDouble>()
@@ -225,7 +226,7 @@ async fn test_emitted_state_failed_setup() {
 
     // TODO: at some point, the underlying tests should be updated to not write
     // this file in the first place.
-    tokio::fs::remove_file(crate::done::done_path().unwrap())
+    tokio::fs::remove_file(crate::done::done_path(agent.machine_id).unwrap())
         .await
         .unwrap();
 }
