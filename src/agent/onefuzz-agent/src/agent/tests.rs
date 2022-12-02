@@ -196,7 +196,6 @@ async fn test_emitted_state_failed_setup() {
         ..Fixture.agent()
     };
 
-
     agent
         .work_queue
         .downcast_mut::<WorkQueueDouble>()

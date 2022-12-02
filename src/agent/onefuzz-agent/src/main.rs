@@ -170,7 +170,7 @@ fn run(opt: RunOpt) -> Result<()> {
     if opt.redirect_output.is_some() {
         return redirect(opt);
     }
-    let opt_machine_id = opt.machine_id.clone();
+    let opt_machine_id = opt.machine_id;
     let opt_machine_name = opt.machine_name.clone();
     let rt = tokio::runtime::Runtime::new()?;
     let reset_lock = opt.reset_node_lock;
