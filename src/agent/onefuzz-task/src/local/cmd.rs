@@ -48,7 +48,7 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
         .ok_or_else(|| anyhow!("missing subcommand arguments"))?
         .to_owned();
 
-    let terminal = if std::io::stdout().is_tty() {
+    let terminal = if !std::io::stdout().is_tty() {
         Some(TerminalUi::init()?)
     } else {
         env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
