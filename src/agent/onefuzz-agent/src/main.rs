@@ -235,7 +235,7 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
     // that is the case, mark each of the work units within the workset as
     // failed, then exit as a failure.
 
-    if let Some(work) = WorkSet::load_from_fs_context(coordinator.registration.machine_id).await? {
+    if let Some(work) = WorkSet::load_from_fs_context(coordinator.get_machine_id()).await? {
         warn!("onefuzz-agent unexpectedly identified an existing workset on start");
         let failure = match failure::read_failure() {
             Ok(value) => format!("onefuzz-agent failed: {}", value),
@@ -273,10 +273,11 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
 
         // force set done semaphore, as to not prevent the supervisor continuing
         // to report the workset as failed.
-        done::set_done_lock(coordinator.registration.machine_id).await?;
+        let machine_id = coordinator.get_machine_id();
+        done::set_done_lock(machine_id).await?;
         anyhow::bail!(
             "failed to start due to pre-existing workset config: {}",
-            WorkSet::context_path(coordinator.registration.machine_id)?.display()
+            WorkSet::context_path(machine_id)?.display()
         );
     }
 

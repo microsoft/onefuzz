@@ -183,7 +183,7 @@ pub enum PollCommandError {
 
 pub struct Coordinator {
     client: Client,
-    pub registration: Registration,
+    registration: Registration,
     token: AccessToken,
 }
 
@@ -325,6 +325,10 @@ impl Coordinator {
             .context("Coordinator.send status body")?;
 
         Ok(response)
+    }
+
+    pub fn get_machine_id(&self) -> Uuid {
+        self.registration.machine_id
     }
 }
 
