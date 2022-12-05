@@ -68,6 +68,16 @@
           "System.Threading.Tasks.Extensions": "4.5.4"
         }
       },
+      "Azure.Data.AppConfiguration": {
+        "type": "Transitive",
+        "resolved": "1.2.0",
+        "contentHash": "KA1dAM9TuDsq0CRFd+3cJTYUAzA2z9N8t9/xKdDbP9URuReq/NDFcKYr7GW2W9xzVGDtCHlD5j5am/+zLLBdSg==",
+        "dependencies": {
+          "Azure.Core": "1.20.0",
+          "Microsoft.Bcl.AsyncInterfaces": "1.0.0",
+          "System.Text.Json": "4.6.0"
+        }
+      },
       "Azure.Data.Tables": {
         "type": "Transitive",
         "resolved": "12.5.0",
@@ -365,6 +375,15 @@
         "resolved": "5.0.8",
         "contentHash": "ZI9S2NGjuOKXN3PxJcF8EKVwd1cqpWyUSqiVoH8gqq5tlHaXULwPmoR0DBOFON4sEFETRWI69f5RQ3tJWw205A=="
       },
+      "Microsoft.Azure.Functions.Extensions": {
+        "type": "Transitive",
+        "resolved": "1.1.0",
+        "contentHash": "zYKtQQoS1fdzufxFApuMFiFtoi9QAGH6McXxntpylwLKgKjmCMWdgUd1dcekzTKNR9DPSDPRLiulvukqXnpWrQ==",
+        "dependencies": {
+          "Microsoft.Azure.WebJobs": "3.0.18",
+          "Microsoft.Extensions.DependencyInjection": "2.1.0"
+        }
+      },
       "Microsoft.Azure.Functions.Worker": {
         "type": "Transitive",
         "resolved": "1.10.0",
@@ -519,6 +538,33 @@
           "System.Net.Http": "4.3.0"
         }
       },
+      "Microsoft.Azure.WebJobs": {
+        "type": "Transitive",
+        "resolved": "3.0.18",
+        "contentHash": "aYJ76yjPkIpsafqFp1Xz1sA06RvhUwqJnk4AqX4I0teuRjPyig9Sv7LTzxUMAppKXc4JyR/Asos2At/LMiblqg==",
+        "dependencies": {
+          "Microsoft.Azure.WebJobs.Core": "3.0.18",
+          "Microsoft.Extensions.Configuration": "2.1.0",
+          "Microsoft.Extensions.Configuration.Abstractions": "2.1.0",
+          "Microsoft.Extensions.Configuration.EnvironmentVariables": "2.1.0",
+          "Microsoft.Extensions.Configuration.Json": "2.1.0",
+          "Microsoft.Extensions.Hosting": "2.1.0",
+          "Microsoft.Extensions.Logging": "2.1.0",
+          "Microsoft.Extensions.Logging.Abstractions": "2.1.0",
+          "Microsoft.Extensions.Logging.Configuration": "2.1.0",
+          "Newtonsoft.Json": "11.0.2",
+          "System.Threading.Tasks.Dataflow": "4.8.0"
+        }
+      },
+      "Microsoft.Azure.WebJobs.Core": {
+        "type": "Transitive",
+        "resolved": "3.0.18",
+        "contentHash": "ajYI8pPzPn4qq7FL8C2tz9WmFEG5PorUlkw8W9CF5M+5egnFJaF7yH48WYC+zBoQIzv2vHmFq0zhQpnv+O8v5Q==",
+        "dependencies": {
+          "System.ComponentModel.Annotations": "4.4.0",
+          "System.Diagnostics.TraceSource": "4.3.0"
+        }
+      },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
         "resolved": "6.0.0",
@@ -596,6 +642,20 @@
         "contentHash": "ETjSBHMp3OAZ4HxGQYpwyGsD8Sw5FegQXphi0rpoGMT74S4+I2mm7XJEswwn59XAaKOzC15oDSOWEE8SzDCd6Q==",
         "dependencies": {
           "Microsoft.Extensions.Primitives": "5.0.0"
+        }
+      },
+      "Microsoft.Extensions.Configuration.AzureAppConfiguration": {
+        "type": "Transitive",
+        "resolved": "5.1.0",
+        "contentHash": "FoAfgvT/rjL/+c7BP7q0LrJIdc4Hu6SH56BTIUbwCwVjHoUw4dpgGtLQULi5GmMjdbdAxyLQSnbwpOEWuBy+RA==",
+        "dependencies": {
+          "Azure.Data.AppConfiguration": "1.2.0",
+          "Azure.Messaging.EventGrid": "4.7.0",
+          "Azure.Security.KeyVault.Secrets": "4.0.1",
+          "Microsoft.Extensions.Configuration": "3.1.18",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "3.1.18",
+          "Microsoft.Extensions.Logging": "3.1.18",
+          "System.Text.Json": "4.6.0"
         }
       },
       "Microsoft.Extensions.Configuration.Binder": {
@@ -855,6 +915,15 @@
         "type": "Transitive",
         "resolved": "5.0.1",
         "contentHash": "5WPSmL4YeP7eW+Vc8XZ4DwjYWBAiSwDV9Hm63JJWcz1Ie3Xjv4KuJXzgCstj48LkLfVCYa7mLcx7y+q6yqVvtw=="
+      },
+      "Microsoft.FeatureManagement": {
+        "type": "Transitive",
+        "resolved": "2.5.1",
+        "contentHash": "ERbRjk0etZs4d5Pv17unfogO4iBwV2c/HoBt4jqIJmfbKbmTLV+GbjBPYzidIg2RgYIFi8yA+EoEapSAIOp19g==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration.Binder": "2.1.10",
+          "Microsoft.Extensions.Logging": "2.1.1"
+        }
       },
       "Microsoft.Graph": {
         "type": "Transitive",
@@ -2238,6 +2307,11 @@
           "System.Runtime": "4.3.0"
         }
       },
+      "System.Threading.Tasks.Dataflow": {
+        "type": "Transitive",
+        "resolved": "4.8.0",
+        "contentHash": "PSIdcgbyNv7FZvZ1I9Mqy6XZOwstYYMdZiXuHvIyc0gDyPjEhrrP9OvTGDHp+LAHp1RNSLjPYssyqox9+Kt9Ug=="
+      },
       "System.Threading.Tasks.Extensions": {
         "type": "Transitive",
         "resolved": "4.5.4",
@@ -2419,6 +2493,7 @@
           "Azure.Storage.Blobs": "[12.13.0, )",
           "Azure.Storage.Queues": "[12.11.0, )",
           "Faithlife.Utility": "[0.12.2, )",
+          "Microsoft.Azure.Functions.Extensions": "[1.1.0, )",
           "Microsoft.Azure.Functions.Worker": "[1.10.0, )",
           "Microsoft.Azure.Functions.Worker.ApplicationInsights": "[1.0.0-preview3, )",
           "Microsoft.Azure.Functions.Worker.Extensions.EventGrid": "[2.1.0, )",
@@ -2429,6 +2504,8 @@
           "Microsoft.Azure.Functions.Worker.Sdk": "[1.7.0, )",
           "Microsoft.Azure.Management.Monitor": "[0.28.0-preview, )",
           "Microsoft.Azure.Management.OperationalInsights": "[0.24.0-preview, )",
+          "Microsoft.Extensions.Configuration.AzureAppConfiguration": "[5.1.0, )",
+          "Microsoft.FeatureManagement": "[2.5.1, )",
           "Microsoft.Graph": "[4.37.0, )",
           "Microsoft.Identity.Client": "[4.46.2, )",
           "Microsoft.Identity.Web.TokenCache": "[1.23.1, )",
