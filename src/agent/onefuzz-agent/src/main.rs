@@ -20,7 +20,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 use anyhow::{Context, Result};
-use clap::{ArgAction, Args, Parser};
+use clap::{ArgAction, Parser};
 use onefuzz::machine_id::MachineIdentity;
 use onefuzz::process::ExitStatus;
 use onefuzz_telemetry::{self as telemetry, EventData, Role};
