@@ -21,10 +21,7 @@ use std::process::{Command, Stdio};
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use onefuzz::{
-    machine_id::{get_machine_id, get_scaleset_name},
-    process::ExitStatus,
-};
+use onefuzz::process::ExitStatus;
 use onefuzz_telemetry::{self as telemetry, EventData, Role};
 use std::io::{self, Write};
 use uuid::Uuid;
@@ -202,7 +199,7 @@ async fn load_config(opt: RunOpt) -> Result<StaticConfig> {
     info!("loading supervisor agent config");
 
     let config = match &opt.config_path {
-        Some(config_path) => StaticConfig::from_file(config_path)?,
+        Some(config_path) => StaticConfig::from_file(config_path).await?,
         None => StaticConfig::from_env()?,
     };
 
@@ -266,18 +263,18 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
 
 async fn run_agent(config: StaticConfig) -> Result<()> {
     telemetry::set_property(EventData::InstanceId(config.instance_id));
-    telemetry::set_property(EventData::MachineId(get_machine_id().await?));
+    telemetry::set_property(EventData::MachineId(config.machine_identity.machine_id));
     telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
     telemetry::set_property(EventData::Role(Role::Supervisor));
-    let scaleset = get_scaleset_name().await?;
-    if let Some(scaleset_name) = &scaleset {
+
+    if let Some(scaleset_name) = &config.machine_identity.scaleset_name {
         telemetry::set_property(EventData::ScalesetId(scaleset_name.to_string()));
     }
 
     let registration = match config::Registration::load_existing(config.clone()).await {
         Ok(registration) => registration,
         Err(_) => {
-            if scaleset.is_some() {
+            if config.managed {
                 config::Registration::create_managed(config.clone()).await?
             } else {
                 config::Registration::create_unmanaged(config.clone()).await?
@@ -300,7 +297,14 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
     let work_queue = work::WorkQueue::new(registration.clone())?;
 
     let agent_heartbeat = match config.heartbeat_queue {
-        Some(url) => Some(init_agent_heartbeat(url).await?),
+        Some(url) => Some(
+            init_agent_heartbeat(
+                url,
+                config.machine_identity.machine_id,
+                config.machine_identity.machine_name.clone(),
+            )
+            .await?,
+        ),
         None => None,
     };
     let mut agent = agent::Agent::new(
@@ -309,8 +313,9 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
         scheduler,
         Box::new(setup::SetupRunner),
         Box::new(work_queue),
-        Box::new(worker::WorkerRunner),
+        Box::new(worker::WorkerRunner::new(config.machine_identity)),
         agent_heartbeat,
+        config.managed,
     );
 
     info!("running agent");

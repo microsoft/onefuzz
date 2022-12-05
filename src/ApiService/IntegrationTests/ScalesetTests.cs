@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
@@ -51,8 +50,8 @@ public abstract class ScalesetTestBase : FunctionTestBase {
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
-        var err = BodyAs<Error>(result);
-        Assert.Equal("unable to find scaleset", err.Errors?.Single());
+        var err = BodyAs<ProblemDetails>(result);
+        Assert.Equal("unable to find scaleset", err.Detail);
     }
 
     [Fact]

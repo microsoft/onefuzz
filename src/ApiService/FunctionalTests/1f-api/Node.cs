@@ -6,9 +6,7 @@ using Xunit.Abstractions;
 namespace FunctionalTests;
 
 public class Node : IFromJsonElement<Node> {
-    JsonElement _e;
-
-    public Node() { }
+    readonly JsonElement _e;
 
     public Node(JsonElement e) => _e = e;
 
@@ -31,7 +29,7 @@ public class Node : IFromJsonElement<Node> {
     public bool DeleteRequested => _e.GetBoolProperty("delete_requested");
     public bool DebugKeepNode => _e.GetBoolProperty("debug_keep_node");
 
-    public Node Convert(JsonElement e) => new Node(e);
+    public static Node Convert(JsonElement e) => new(e);
 }
 
 

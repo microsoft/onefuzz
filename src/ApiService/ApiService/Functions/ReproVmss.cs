@@ -15,8 +15,8 @@ public class ReproVmss {
         _context = context;
     }
 
-    [Function("repro_vms")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req) {
+    [Function("ReproVms")]
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE", Route = "repro_vms")] HttpRequestData req) {
         return _auth.CallIfUser(req, r => r.Method switch {
             "GET" => Get(r),
             "POST" => Post(r),
@@ -73,7 +73,7 @@ public class ReproVmss {
             Path: create.Path,
             Duration: create.Duration);
 
-        var vm = await _context.ReproOperations.Create(cfg, userInfo.OkV);
+        var vm = await _context.ReproOperations.Create(cfg, userInfo.OkV.UserInfo);
         if (!vm.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,

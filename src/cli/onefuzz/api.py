@@ -29,6 +29,7 @@ from onefuzztypes import (
 )
 from onefuzztypes.enums import TaskType
 from pydantic import BaseModel
+from requests import Response
 from six.moves import input  # workaround for static analysis
 
 from .__version__ import __version__
@@ -94,6 +95,23 @@ class Endpoint:
         self.onefuzz = onefuzz
         self.logger = onefuzz.logger
 
+    def _req_base(
+        self,
+        method: str,
+        *,
+        data: Optional[BaseModel] = None,
+        as_params: bool = False,
+        alternate_endpoint: Optional[str] = None,
+    ) -> Response:
+        endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
+
+        if as_params:
+            response = self.onefuzz._backend.request(method, endpoint, params=data)
+        else:
+            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
+
+        return response
+
     def _req_model(
         self,
         method: str,
@@ -103,12 +121,12 @@ class Endpoint:
         as_params: bool = False,
         alternate_endpoint: Optional[str] = None,
     ) -> A:
-        endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
-
-        if as_params:
-            response = self.onefuzz._backend.request(method, endpoint, params=data)
-        else:
-            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
+        response = self._req_base(
+            method,
+            data=data,
+            as_params=as_params,
+            alternate_endpoint=alternate_endpoint,
+        ).json()
 
         return model.parse_obj(response)
 
@@ -124,9 +142,13 @@ class Endpoint:
         endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
 
         if as_params:
-            response = self.onefuzz._backend.request(method, endpoint, params=data)
+            response = self.onefuzz._backend.request(
+                method, endpoint, params=data
+            ).json()
         else:
-            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
+            response = self.onefuzz._backend.request(
+                method, endpoint, json_data=data
+            ).json()
 
         return [model.parse_obj(x) for x in response]
 
@@ -592,6 +614,7 @@ class Repro(Endpoint):
         self,
         repro: models.Repro,
         debug_command: Optional[str],
+        retry_limit: Optional[int],
     ) -> Optional[str]:
         """Setup an SSH tunnel, then connect via CDB over SSH tunnel"""
 
@@ -602,13 +625,14 @@ class Repro(Endpoint):
         ):
             raise Exception("vm setup failed: %s" % repro.state)
 
-        NUM_RETRIES = 10
+        retry_count = 0
         bind_all = which("wslpath") is not None and repro.os == enums.OS.windows
         proxy = "*:" + REPRO_SSH_FORWARD if bind_all else REPRO_SSH_FORWARD
-        with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
-            dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
-            while NUM_RETRIES > 0:
-                NUM_RETRIES = NUM_RETRIES - 1
+        while retry_limit is None or retry_count <= retry_limit:
+            if retry_limit:
+                retry_count = retry_count + 1
+            with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
+                dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
                 if debug_command:
                     dbg_script = [debug_command, "qq"]
                     with temp_file(
@@ -641,7 +665,7 @@ class Repro(Endpoint):
                     # server, which is trusted in this context.
                     try:
                         subprocess.check_call(dbg)  # nosec
-                        break
+                        return None
                     except subprocess.CalledProcessError as err:
                         if err.returncode == 0x8007274D:
                             self.logger.info(
@@ -649,7 +673,13 @@ class Repro(Endpoint):
                             )
                             time.sleep(10.0)
                         else:
-                            break
+                            return None
+
+        if retry_limit is not None:
+            self.logger.info(
+                f"failed to connect to debug-server after {retry_limit} attempts. Please try again later "
+                + f"with onefuzz debug connect {repro.vm_id}"
+            )
         return None
 
     def connect(
@@ -657,6 +687,7 @@ class Repro(Endpoint):
         vm_id: UUID_EXPANSION,
         delete_after_use: bool = False,
         debug_command: Optional[str] = None,
+        retry_limit: Optional[int] = None,
     ) -> Optional[str]:
         """Connect to an existing Reproduction VM"""
 
@@ -698,7 +729,7 @@ class Repro(Endpoint):
         time.sleep(30.0)
         result: Optional[str] = None
         if repro.os == enums.OS.windows:
-            result = self._dbg_windows(repro, debug_command)
+            result = self._dbg_windows(repro, debug_command, retry_limit)
         elif repro.os == enums.OS.linux:
             result = self._dbg_linux(repro, debug_command)
         else:
@@ -717,11 +748,15 @@ class Repro(Endpoint):
         duration: int = 24,
         delete_after_use: bool = False,
         debug_command: Optional[str] = None,
+        retry_limit: Optional[int] = None,
     ) -> Optional[str]:
         """Create and connect to a Reproduction VM"""
         repro = self.create(container, path, duration=duration)
         return self.connect(
-            repro.vm_id, delete_after_use=delete_after_use, debug_command=debug_command
+            repro.vm_id,
+            delete_after_use=delete_after_use,
+            debug_command=debug_command,
+            retry_limit=retry_limit,
         )
 
 
@@ -1026,9 +1061,7 @@ class JobContainers(Endpoint):
     def list(
         self,
         job_id: UUID_EXPANSION,
-        container_type: Optional[
-            enums.ContainerType
-        ] = enums.ContainerType.unique_reports,
+        container_type: enums.ContainerType,
     ) -> Dict[str, List[str]]:
         """
         List the files for all of the containers of a given container type
@@ -1113,6 +1146,22 @@ class JobTasks(Endpoint):
     def list(self, job_id: UUID_EXPANSION) -> List[models.Task]:
         """List all of the tasks for a given job"""
         return self.onefuzz.tasks.list(job_id=job_id, state=[])
+
+
+class Tools(Endpoint):
+    """Interact with tasks within a job"""
+
+    endpoint = "tools"
+
+    def get(self, destination: str) -> str:
+        """Download a zip file containing the agent binaries"""
+        self.logger.debug("get tools")
+
+        response = self._req_base("GET")
+        path = os.path.join(destination, "tools.zip")
+        open(path, "wb").write(response.content)
+
+        return path
 
 
 class Jobs(Endpoint):
@@ -1219,13 +1268,7 @@ class Pool(Endpoint):
         if pool.config is None:
             raise Exception("Missing AgentConfig in response")
 
-        config = pool.config
-        config.client_credentials = models.ClientCredentials(  # nosec - bandit consider this a hard coded password
-            client_id=pool.client_id,
-            client_secret="<client secret>",
-        )
-
-        return config
+        return pool.config
 
     def shutdown(self, name: str, *, now: bool = False) -> responses.BoolResult:
         expanded_name = self._disambiguate(
@@ -1720,6 +1763,7 @@ class Onefuzz:
         self.scalesets = Scaleset(self)
         self.nodes = Node(self)
         self.webhooks = Webhooks(self)
+        self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
@@ -1746,8 +1790,6 @@ class Onefuzz:
         client_secret: Optional[str] = None,
         authority: Optional[str] = None,
         tenant_domain: Optional[str] = None,
-        _dotnet_endpoint: Optional[str] = None,
-        _dotnet_functions: Optional[List[str]] = None,
     ) -> None:
 
         if endpoint:
@@ -1760,10 +1802,6 @@ class Onefuzz:
             self._backend.client_secret = client_secret
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
-        if _dotnet_endpoint is not None:
-            self._backend.config.dotnet_endpoint = _dotnet_endpoint
-        if _dotnet_functions is not None:
-            self._backend.config.dotnet_functions = _dotnet_functions
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates._load_cache()
@@ -1807,8 +1845,6 @@ class Onefuzz:
         client_id: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
         tenant_domain: Optional[str] = None,
-        _dotnet_endpoint: Optional[str] = None,
-        _dotnet_functions: Optional[List[str]] = None,
         reset: Optional[bool] = None,
     ) -> BackendConfig:
         """Configure onefuzz CLI"""
@@ -1839,10 +1875,6 @@ class Onefuzz:
             self._backend.enable_feature(enable_feature.name)
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
-        if _dotnet_endpoint is not None:
-            self._backend.config.dotnet_endpoint = _dotnet_endpoint
-        if _dotnet_functions is not None:
-            self._backend.config.dotnet_functions = _dotnet_functions
         self._backend.app = None
         self._backend.save_config()
 

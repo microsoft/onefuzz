@@ -10,7 +10,9 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use onefuzz::{blob::BlobUrl, libfuzzer::LibFuzzer, sha256, syncdir::SyncedDir};
+use onefuzz::{
+    blob::BlobUrl, libfuzzer::LibFuzzer, machine_id::MachineIdentity, sha256, syncdir::SyncedDir,
+};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -74,6 +76,7 @@ impl ReportTask {
             self.config.target_options.clone(),
             self.config.target_env.clone(),
             &self.config.common.setup_dir,
+            self.config.common.machine_identity.clone(),
         );
         fuzzer.verify(self.config.check_fuzzer_help, None).await
     }
@@ -120,6 +123,7 @@ pub struct TestInputArgs<'a> {
     pub target_timeout: Option<u64>,
     pub check_retry_count: u64,
     pub minimized_stack_depth: Option<usize>,
+    pub machine_identity: MachineIdentity,
 }
 
 pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
@@ -128,6 +132,7 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
         args.target_options.to_vec(),
         args.target_env.clone(),
         args.setup_dir,
+        args.machine_identity,
     );
 
     let task_id = args.task_id;
@@ -215,6 +220,7 @@ impl AsanProcessor {
             target_timeout: self.config.target_timeout,
             check_retry_count: self.config.check_retry_count,
             minimized_stack_depth: self.config.minimized_stack_depth,
+            machine_identity: self.config.common.machine_identity.clone(),
         };
         let result = test_input(args).await?;
 

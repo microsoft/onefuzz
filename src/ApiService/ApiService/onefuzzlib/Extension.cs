@@ -220,7 +220,8 @@ public class Extensions : IExtensions {
             InstanceTelemetryKey: _context.ServiceConfiguration.ApplicationInsightsInstrumentationKey,
             MicrosoftTelemetryKey: _context.ServiceConfiguration.OneFuzzTelemetry,
             MultiTenantDomain: _context.ServiceConfiguration.MultiTenantDomain,
-            InstanceId: instanceId
+            InstanceId: instanceId,
+            Managed: pool.Managed
             );
 
         var fileName = $"{pool.Name}/config.json";
@@ -302,7 +303,7 @@ public class Extensions : IExtensions {
             urlsUpdated.Add(toolsAzCopy);
             urlsUpdated.Add(toolsSetup);
 
-            var toExecuteCmd = $"sh setup.sh {mode.ToString().ToLowerInvariant()}";
+            var toExecuteCmd = $"bash setup.sh {mode.ToString().ToLowerInvariant()}";
             var extensionSettings = JsonSerializer.Serialize(new { CommandToExecute = toExecuteCmd, FileUris = urlsUpdated }, _extensionSerializerOptions);
 
             var extension = new VMExtensionWrapper {

@@ -15,7 +15,7 @@ public class WebhookLogs {
         _context = context;
     }
 
-    [Function("Webhook_logs")]
+    [Function("WebhookLogs")]
     public Async.Task<HttpResponseData> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "webhooks/logs")] HttpRequestData req) {
         return _auth.CallIfUser(req, r => r.Method switch {

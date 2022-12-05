@@ -4,8 +4,84 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 6.0.0
+
+## BREAKING CHANGES
+
+### Manual Deployment Step
+When upgrading from version 5.20 a manual step is required. Before deploying 6.0 delete both Azure App Functions and the Azure App Service plan before upgrading. This is required because we have migrated the service from `python` to `C#`. 
+
+After deployment, there will be two App Functions deployed, one with the name of the deployment and a second one with the same name and a `-net` suffix. This is a temporary situation and the `-net` app function will be removed in a following release. 
+
+If you have not used the deployment parameters to deploy C# functions in 5.20, you can manually delete the `-net` app function immediately. Deploying the C# functions was not a default action in 5.20, for most deployments deleting the `-net` app function immediately is ok. 
+
+### Deprecation of jinja templates
+With this release we are moving from jinja templates to [scriban](https://github.com/scriban/scriban) templates. See the documentation for [scriban here](https://github.com/scriban/scriban/tree/master/doc). 
+
+Version 6.0 will convert jinja templates on-the-fly for a short period of time. We do **_not_** guarantee that this will be successful for all jinja template options. These on-the-fly conversions are not persisted in the notifications table in this release. They will be in a following release. This will allow time for conversions of templates that are not handled by the current automatic conversion process. 
+
+### CLI
+The default value for the `--container_type` parameter to the `container` command has been removed. The `container_type` parameter is still required for the command. This change removes the ambiguity of the container information being returned. 
+
+### Added
+* Agent: Added `machine_id` a parameter of the agent config. [#2649](https://github.com/microsoft/onefuzz/pull/2649)
+* Agent: Pass the `machine_id` from the Agent to the Task. [#2662](https://github.com/microsoft/onefuzz/pull/2662)
+### Changed
+* Service: Deployment enables refactored C# App Function. [#2650](https://github.com/microsoft/onefuzz/pull/2650)
+* CLI: Attempt to use broker or browser login instead of device flow for authentication. Canceling the attempt with `Ctrl-C` will fall back to using the device flow. [#2612](https://github.com/microsoft/onefuzz/pull/2612)
+* Service: Update to .NET 7. [#2615](https://github.com/microsoft/onefuzz/pull/2615)
+* Service: Make Proxy `TelemetryKey` optional. [#2619](https://github.com/microsoft/onefuzz/pull/2619)
+* Service: Update OMI to 1.6.10.2 on Ubuntu VMs. [#2629](https://github.com/microsoft/onefuzz/pull/2629)
+* CLI: Make the `--container_type` parameter required when using the `containers` command. [#2631](https://github.com/microsoft/onefuzz/pull/2631)
+* Service: Improve logging around notification failures. [#2653](https://github.com/microsoft/onefuzz/pull/2653)
+* Service: Standardize HTTP Error Results. Better Rejection Message When Parsing Validated Strings. [#2663](https://github.com/microsoft/onefuzz/pull/2663)
+* CLI: Retry on Connection Errors when acquiring auth token. [#2668](https://github.com/microsoft/onefuzz/pull/2668)
+### Fixed
+* Service: Notification Template `targetUrl` parameter fix. Only use the filename instead of the absolute path in the URL. The makes the links created in ADO bugs work as expected. [#2625](https://github.com/microsoft/onefuzz/pull/2625)
+* CLI: Fixed SignalR client code not reading responses correctly. [#2626](https://github.com/microsoft/onefuzz/pull/2626)
+* Service: Fix a logic bug in the notification hook. [#2627](https://github.com/microsoft/onefuzz/pull/2627)
+* Service: Bug fixes related to the unmanaged nodes (an unreleased feature). [#2632](https://github.com/microsoft/onefuzz/pull/2632)
+* Service: Fix invocation of `functionapp` in the deployment script. Where the wrong value/parameter pair were used. [#2645](https://github.com/microsoft/onefuzz/pull/2645)
+* Service: Fixing .NET crash report no-repro. [#2642](https://github.com/microsoft/onefuzz/pull/2642)
+* Service: Check Extensions Status Before Transitioning to `running` state during VM setup. [#2667](https://github.com/microsoft/onefuzz/pull/2667)
+
+## 5.20.0
+### Added
+* Service: Added endpoint to download agent binaries to support the unmanaged node scenario. [#2600](https://github.com/microsoft/onefuzz/pull/2600)
+* Service: Added additional error handling when updating VMSS nodes. [#2607](https://github.com/microsoft/onefuzz/pull/2607)
+### Changed
+* Service: Added additional logging when using the `decommission` node policy. [#2605](https://github.com/microsoft/onefuzz/pull/2605)
+* Agent/Supervisor/Proxy: Updated third-party Rust dependencies. [#2608](https://github.com/microsoft/onefuzz/pull/2608)
+* Service: Added optional `retry_limit` when connecting to the repro machine. [#2609](https://github.com/microsoft/onefuzz/pull/2609)
+### Fixed
+* Service: Fixed `status top` in C# implementation. [#2604](https://github.com/microsoft/onefuzz/pull/2604)
+* Service: Only add "re-opened" comments to a bug if it was actually reopened. [#2623](https://github.com/microsoft/onefuzz/pull/2623)
+
+## 5.19.0
+### Changed
+* Service: Delete nodes once they're done with tasks instead of releasing scale-in protection. [#2586](https://github.com/microsoft/onefuzz/pull/2586)
+* Service: Switch to using the package provided by Azure Functions to set up Application Insights and improve its reporting of OneFuzz transactions. [#2597](https://github.com/microsoft/onefuzz/pull/2597)
+### Fixed
+* Service: Fix handling duplicate containers across accounts in C# functions. [#2596](https://github.com/microsoft/onefuzz/pull/2596)
+* Service: Fix the notification GET request on C# endpoints. [#2591](https://github.com/microsoft/onefuzz/pull/2591)
+
+## 5.18.0
+### Added
+* Service: Use records to unpack the request parameters in `AgentRegistration`. [#2570](https://github.com/microsoft/onefuzz/pull/2570)
+* Service: Convert ADO traces to `customEvents` and update `notificationInfo`. [#2508](https://github.com/microsoft/onefuzz/pull/2508)
+* Agent: Include computer name in `AgentRegistration` & decode Instance ID from it. This will reduce the amount of calls to Azure minimizing throttling errors. [#2557](https://github.com/microsoft/onefuzz/pull/2557)
+### Changed
+* Service: Improve webhook logging and accept more HTTP success codes. [#2568](https://github.com/microsoft/onefuzz/pull/2568)
+* Service: Reduce fetches to VMSS [#2577](https://github.com/microsoft/onefuzz/pull/2577)
+* CLI: Use the virtual env folder to store the config if it exists. [#2561](https://github.com/microsoft/onefuzz/pull/2561), [#2567](https://github.com/microsoft/onefuzz/pull/2567), [#2583](https://github.com/microsoft/onefuzz/pull/2583)
+### Fixed
+* Service: Reduce number of ARM calls in `ListVmss` reducing calls to Azure to prevent throttling. [#2539](https://github.com/microsoft/onefuzz/pull/2539)
+* Service: ETag updated in `Update` and `Replace`. [#2562](https://github.com/microsoft/onefuzz/pull/2562)
+* Service: Don't log an error if we delete a Repro and it is already missing. [#2563](https://github.com/microsoft/onefuzz/pull/2563)
+
 ## 5.17.0
 ### Added
+* Service: Added exponential backoff for failed notifications. Many of the failures are a result of ADO throttling. [#2555](https://github.com/microsoft/onefuzz/pull/2555)
 * Service: Add a `DeleteAll` operation to ORM that speeds up the deletion of multiple entities. [#2519](https://github.com/microsoft/onefuzz/pull/2519)
 ### Changed
 * Documentation: Remove suggestion to reset `IterationPath` upon duplicate. [#2533](https://github.com/microsoft/onefuzz/pull/2533)

@@ -141,9 +141,9 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "azure_core"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6424becb946de1b1eff7bf5fbc86fabf7457637c88b63dd967b219a712c322c"
+checksum = "e691a99e962919e047217367613b3dd39d7510ef1cebbe1e04980117d8fab42f"
 dependencies = [
  "async-trait",
  "base64",
@@ -159,7 +159,7 @@ dependencies = [
  "reqwest",
  "rustc_version",
  "serde",
- "serde-xml-rs 0.6.0",
+ "serde-xml-rs",
  "serde_json",
  "time",
  "url",
@@ -168,9 +168,9 @@ dependencies = [
 
 [[package]]
 name = "azure_storage"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28d0de4ed66067ca1afa0a07d787a6fe001288a162409b8308c45909044552ca"
+checksum = "8f53f36301c968007aa54f40a39cf95bb710f47b3fe2ed360fc82d8080854621"
 dependencies = [
  "RustyXML",
  "async-trait",
@@ -182,7 +182,7 @@ dependencies = [
  "log",
  "once_cell",
  "serde",
- "serde-xml-rs 0.6.0",
+ "serde-xml-rs",
  "serde_derive",
  "serde_json",
  "sha2",
@@ -193,9 +193,9 @@ dependencies = [
 
 [[package]]
 name = "azure_storage_blobs"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a69ea7177f0b3c64196766fcd442ac9664658a194070d082ae8876406800040b"
+checksum = "7d965285e7d3ebe8c34d921149bb2f1972ccba71ac5588cb82cfe9252a9578b5"
 dependencies = [
  "RustyXML",
  "azure_core",
@@ -206,7 +206,7 @@ dependencies = [
  "log",
  "md5",
  "serde",
- "serde-xml-rs 0.6.0",
+ "serde-xml-rs",
  "serde_derive",
  "serde_json",
  "time",
@@ -521,7 +521,9 @@ dependencies = [
  "msvc-demangler",
  "pdb 0.7.0",
  "pete",
+ "pretty_assertions",
  "procfs",
+ "quick-xml",
  "regex",
  "rustc-demangle",
  "serde",
@@ -531,7 +533,6 @@ dependencies = [
  "uuid 0.8.2",
  "win-util",
  "winapi",
- "xml-rs",
 ]
 
 [[package]]
@@ -545,9 +546,9 @@ dependencies = [
 
 [[package]]
 name = "cpufeatures"
-version = "0.2.1"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95059428f66df56b63431fdb4e1947ed2190586af5c5a8a8b71122bdf5a7f469"
+checksum = "28d997bd5e24a5928dd43e46dc529867e207907fe0b239c3477d924f7f2ca320"
 dependencies = [
  "libc",
 ]
@@ -1980,11 +1981,12 @@ dependencies = [
  "onefuzz",
  "onefuzz-telemetry",
  "path-absolutize",
+ "pretty_assertions",
  "regex",
  "reqwest",
  "reqwest-retry",
  "serde",
- "serde-xml-rs 0.5.1",
+ "serde-xml-rs",
  "serde_json",
  "stacktrace-parser",
  "storage-queue",
@@ -2193,7 +2195,7 @@ checksum = "82040a392923abe6279c00ab4aff62d5250d1c8555dc780e4b02783a7aa74863"
 dependencies = [
  "fallible-iterator",
  "scroll 0.11.0",
- "uuid 1.1.2",
+ "uuid 1.2.1",
 ]
 
 [[package]]
@@ -2390,9 +2392,9 @@ dependencies = [
 
 [[package]]
 name = "quick-xml"
-version = "0.25.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58e21a144a0ffb5fad7b464babcdab934a325ad69b7c0373bcfef5cbd9799ca9"
+checksum = "7f50b1c63b38611e7d4d7f68b82d3ad0cc71a2ad2e7f61fc10f1328d917c93cd"
 dependencies = [
  "memchr",
 ]
@@ -2755,18 +2757,6 @@ dependencies = [
 
 [[package]]
 name = "serde-xml-rs"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65162e9059be2f6a3421ebbb4fef3e74b7d9e7c60c50a0e292c6239f19f1edfa"
-dependencies = [
- "log",
- "serde",
- "thiserror",
- "xml-rs",
-]
-
-[[package]]
-name = "serde-xml-rs"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fb3aa78ecda1ebc9ec9847d5d3aba7d618823446a049ba2491940506da6e2782"
@@ -3007,7 +2997,7 @@ dependencies = [
  "reqwest",
  "reqwest-retry",
  "serde",
- "serde-xml-rs 0.5.1",
+ "serde-xml-rs",
  "serde_derive",
  "serde_json",
  "tokio",

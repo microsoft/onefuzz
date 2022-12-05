@@ -32,6 +32,7 @@ import msal
 import requests
 from azure.storage.blob import ContainerClient
 from pydantic import BaseModel, Field
+from requests import Response
 from tenacity import RetryCallState, retry
 from tenacity.retry import retry_if_exception_type
 from tenacity.stop import stop_after_attempt
@@ -81,9 +82,9 @@ def check_application_error(response: requests.Response) -> None:
     if response.status_code == 401:
         try:
             as_json = json.loads(response.content)
-            if isinstance(as_json, dict) and "code" in as_json and "errors" in as_json:
+            if isinstance(as_json, dict) and "title" in as_json and "detail" in as_json:
                 raise Exception(
-                    f"request failed: application error - {as_json['code']} {as_json['errors']}"
+                    f"request failed: application error (401: {as_json['title']}): {as_json['detail']}"
                 )
         except json.decoder.JSONDecodeError:
             pass
@@ -95,8 +96,6 @@ class BackendConfig(BaseModel):
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
     tenant_domain: Optional[str]
-    dotnet_endpoint: Optional[str]
-    dotnet_functions: Optional[List[str]]
 
 
 class Backend:
@@ -113,7 +112,7 @@ class Backend:
         self.config = config
         self.token_cache: Optional[msal.SerializableTokenCache] = None
         self.init_cache()
-        self.app: Optional[Any] = None
+        self.app: Optional[msal.ClientApplication] = None
         self.token_expires = 0
         self.load_config()
         self.session = requests.Session()
@@ -196,7 +195,7 @@ class Backend:
         if self.client_secret:
             return self.access_token_from_client_secret(scopes)
 
-        return self.device_login(scopes)
+        return self.do_login(scopes)
 
     def access_token_from_client_secret(self, scopes: List[str]) -> Any:
         if not self.app:
@@ -209,16 +208,8 @@ class Backend:
 
         # try each scope until we successfully get an access token
         for scope in scopes:
-            result = self.app.acquire_token_for_client(scopes=[scope])
-            if "error" not in result:
-                break
-
-            # AADSTS500011: The resource principal named ... was not found in the tenant named ...
-            # This error is caused by a by mismatch between the identifierUr and the scope provided in the request.
-            if "AADSTS500011" in result["error_description"]:
-                LOGGER.warning(f"failed to get access token with scope {scope}")
-            else:
-                # unexpected error
+            done, result = self.acquire_token_for_scope(self.app, scope)
+            if done:
                 break
 
         if "error" in result:
@@ -228,14 +219,41 @@ class Backend:
             )
         return result
 
-    def device_login(self, scopes: List[str]) -> Any:
+    def acquire_token_for_scope(
+        self, app: msal.ConfidentialClientApplication, scope: str
+    ) -> Tuple[bool, Any]:
+        # retry in the face of any connection errors
+        # e.g. connection reset by peer, due to connection timeout
+        retriesLeft = 5
+        while True:
+            try:
+                result = app.acquire_token_for_client(scopes=[scope])
+                if "error" not in result:
+                    return (True, result)
+
+                # AADSTS500011: The resource principal named ... was not found in the tenant named ...
+                # This error is caused by a by mismatch between the identifierUrl and the scope provided in the request.
+                if "AADSTS500011" in result["error_description"]:
+                    LOGGER.warning(f"failed to get access token with scope {scope}")
+                    return (False, result)
+                else:
+                    # unexpected error
+                    return (True, result)
+            except requests.exceptions.ConnectionError:
+                retriesLeft -= 1
+                if retriesLeft == 0:
+                    raise
+
+    def do_login(self, scopes: List[str]) -> Any:
         if not self.app:
             self.app = msal.PublicClientApplication(
                 self.config.client_id,
                 authority=self.config.authority,
                 token_cache=self.token_cache,
+                allow_broker=True,
             )
 
+        access_token = None
         for scope in scopes:
             accounts = self.app.get_accounts()
             if accounts:
@@ -247,26 +265,38 @@ class Backend:
 
         for scope in scopes:
             LOGGER.info("Attempting interactive device login")
-            print("Please login", flush=True)
+            try:
+                access_token = self.app.acquire_token_interactive(
+                    scopes=[scope],
+                    parent_window_handle=msal.PublicClientApplication.CONSOLE_WINDOW_HANDLE,
+                )
+                check_msal_error(access_token, ["access_token"])
+            except KeyboardInterrupt:
+                result = input(
+                    "\nInteractive login cancelled. Use device login (Y/n)? "
+                )
+                if result == "" or result.startswith("y") or result.startswith("Y"):
+                    print("Falling back to device flow, please sign in:", flush=True)
+                    flow = self.app.initiate_device_flow(scopes=[scope])
 
-            flow = self.app.initiate_device_flow(scopes=[scope])
+                    check_msal_error(flow, ["user_code", "message"])
+                    # setting the expiration time to allow us to retry the interactive login with a new scope
+                    flow["expires_at"] = int(time.time()) + 90  # 90 seconds from now
+                    print(flow["message"], flush=True)
 
-            check_msal_error(flow, ["user_code", "message"])
-            # setting the expiration time to allow us to retry the interactive login with a new scope
-            flow["expires_at"] = int(time.time()) + 90  # 90 seconds from now
-            print(flow["message"], flush=True)
-
-            access_token = self.app.acquire_token_by_device_flow(flow)
-            # AADSTS70016: OAuth 2.0 device flow error. Authorization is pending
-            # this happens when the intractive login request times out. This heppens when the login
-            # fails because of a scope mismatch.
-            if (
-                "error" in access_token
-                and "AADSTS70016" in access_token["error_description"]
-            ):
-                LOGGER.warning(f"failed to get access token with scope {scope}")
-                continue
-            check_msal_error(access_token, ["access_token"])
+                    access_token = self.app.acquire_token_by_device_flow(flow)
+                    # AADSTS70016: OAuth 2.0 device flow error. Authorization is pending
+                    # this happens when the intractive login request times out. This heppens when the login
+                    # fails because of a scope mismatch.
+                    if (
+                        "error" in access_token
+                        and "AADSTS70016" in access_token["error_description"]
+                    ):
+                        LOGGER.warning(f"failed to get access token with scope {scope}")
+                        continue
+                    check_msal_error(access_token, ["access_token"])
+                else:
+                    continue
 
             LOGGER.info("Interactive device authentication succeeded")
             print("Login succeeded", flush=True)
@@ -285,11 +315,8 @@ class Backend:
         json_data: Optional[Any] = None,
         params: Optional[Any] = None,
         _retry_on_auth_failure: bool = True,
-    ) -> Any:
-        if self.config.dotnet_functions and path in self.config.dotnet_functions:
-            endpoint = self.config.dotnet_endpoint
-        else:
-            endpoint = self.config.endpoint
+    ) -> Response:
+        endpoint = self.config.endpoint
 
         if not endpoint:
             raise Exception("endpoint not configured")
@@ -341,7 +368,20 @@ class Backend:
         if response is None:
             raise Exception("request failed: %s %s" % (method, url))
 
-        if response.status_code / 100 != 2:
+        if response.status_code // 100 != 2:
+            try:
+                json = response.json()
+            except requests.exceptions.JSONDecodeError:
+                pass
+
+            # attempt to read as https://www.rfc-editor.org/rfc/rfc7807
+            if isinstance(json, Dict):
+                title = json.get("title")
+                details = json.get("detail")
+                raise Exception(
+                    f"request did not succeed ({response.status_code}: {title}): {details}"
+                )
+
             error_text = str(
                 response.content, encoding="utf-8", errors="backslashreplace"
             )
@@ -349,7 +389,8 @@ class Backend:
                 "request did not succeed: HTTP %s - %s"
                 % (response.status_code, error_text)
             )
-        return response.json()
+
+        return response
 
 
 def before_sleep(retry_state: RetryCallState) -> None:

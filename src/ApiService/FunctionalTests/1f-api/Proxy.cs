@@ -4,8 +4,7 @@ using Xunit.Abstractions;
 
 namespace FunctionalTests;
 public class Proxy : IFromJsonElement<Proxy> {
-
-    JsonElement _e;
+    readonly JsonElement _e;
     public Proxy() { }
     public Proxy(JsonElement e) => _e = e;
 
@@ -14,11 +13,11 @@ public class Proxy : IFromJsonElement<Proxy> {
 
     public string VmState => _e.GetStringProperty("state");
 
-    public Proxy Convert(JsonElement e) => new Proxy(e);
+    public static Proxy Convert(JsonElement e) => new(e);
 }
 
 public class Forward : IFromJsonElement<Forward>, IComparable<Forward> {
-    JsonElement _e;
+    readonly JsonElement _e;
     public Forward() { }
     public Forward(JsonElement e) => _e = e;
 
@@ -27,7 +26,7 @@ public class Forward : IFromJsonElement<Forward>, IComparable<Forward> {
 
     public string DstIp => _e.GetStringProperty("dst_ip");
 
-    public Forward Convert(JsonElement e) => new Forward(e);
+    public static Forward Convert(JsonElement e) => new(e);
 
     public int CompareTo(Forward? other) {
         if (other == null) return 1;
@@ -41,7 +40,7 @@ public class Forward : IFromJsonElement<Forward>, IComparable<Forward> {
 }
 
 public class ProxyGetResult : IFromJsonElement<ProxyGetResult>, IComparable<ProxyGetResult> {
-    JsonElement _e;
+    readonly JsonElement _e;
 
     public ProxyGetResult() { }
 
@@ -62,9 +61,9 @@ public class ProxyGetResult : IFromJsonElement<ProxyGetResult>, IComparable<Prox
         }
     }
 
-    public Forward Forward => new Forward(_e.GetProperty("forward"));
+    public Forward Forward => new(_e.GetProperty("forward"));
 
-    public ProxyGetResult Convert(JsonElement e) => new ProxyGetResult(e);
+    public static ProxyGetResult Convert(JsonElement e) => new(e);
 
     public int CompareTo(ProxyGetResult? other) {
 

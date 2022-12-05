@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 use std::{
+    collections::HashMap,
     path::{Path, PathBuf},
     process::{Child, ChildStderr, ChildStdout, Command, Stdio},
     thread::{self, JoinHandle},
@@ -8,11 +9,16 @@ use std::{
 
 use anyhow::{format_err, Context as AnyhowContext, Result};
 use downcast_rs::Downcast;
-use onefuzz::process::{ExitStatus, Output};
+use onefuzz::{
+    machine_id::MachineIdentity,
+    process::{ExitStatus, Output},
+};
 use tokio::fs;
 
 use crate::buffer::TailBuffer;
 use crate::work::*;
+
+use serde_json::Value;
 
 // Max length of captured output streams from worker child processes.
 const MAX_TAIL_LEN: usize = 40960;
@@ -191,7 +197,15 @@ pub trait IWorkerChild: Downcast {
 
 impl_downcast!(IWorkerChild);
 
-pub struct WorkerRunner;
+pub struct WorkerRunner {
+    machine_identity: MachineIdentity,
+}
+
+impl WorkerRunner {
+    pub fn new(machine_identity: MachineIdentity) -> Self {
+        Self { machine_identity }
+    }
+}
 
 #[async_trait]
 impl IWorkerRunner for WorkerRunner {
@@ -209,9 +223,18 @@ impl IWorkerRunner for WorkerRunner {
 
         debug!("created worker working dir: {}", working_dir.display());
 
+        // inject the machine_identity in the config file
+        let work_config = work.config.expose_ref();
+        let mut config: HashMap<String, Value> = serde_json::from_str(work_config.as_str())?;
+
+        config.insert(
+            "machine_identity".to_string(),
+            serde_json::to_value(&self.machine_identity)?,
+        );
+
         let config_path = work.config_path()?;
 
-        fs::write(&config_path, work.config.expose_ref())
+        fs::write(&config_path, serde_json::to_string(&config)?.as_bytes())
             .await
             .with_context(|| format!("unable to save task config: {}", config_path.display()))?;
 

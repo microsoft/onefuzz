@@ -27,7 +27,7 @@ serde = { version = "1.0", features = ["derive"] }
 symbolic = { version = "8.8", features = ["debuginfo", "demangle", "symcache"] }
 uuid = { version = "0.8", features = ["guid"] }
 win-util = { path = "../win-util" }
-xml-rs = "0.8"
+quick-xml = "0.26"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 pdb = "0.7"
@@ -43,3 +43,4 @@ procfs = { version = "0.12", default-features = false, features=["flate2"] }
 env_logger = "0.9"
 serde_json = { version = "1.0", features = ["preserve_order"] }
 structopt = "0.3"
+pretty_assertions ="1.3"

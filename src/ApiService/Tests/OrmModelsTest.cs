@@ -88,12 +88,12 @@ namespace Tests {
 
         public static Gen<PoolName> PoolNameGen { get; }
             = from name in Arb.Generate<NonEmptyString>()
-              where PoolName.TryParse(name.Get, out _)
+              where PoolName.IsValid(name.Get)
               select PoolName.Parse(name.Get);
 
         public static Gen<Region> RegionGen { get; }
             = from name in Arb.Generate<NonEmptyString>()
-              where Region.TryParse(name.Get, out _)
+              where Region.IsValid(name.Get)
               select Region.Parse(name.Get);
 
         public static Gen<Node> Node { get; }
@@ -373,7 +373,7 @@ namespace Tests {
             from len in Gen.Choose(3, 63)
             from name in Gen.ArrayOf(len, Gen.Elements<char>("abcdefghijklmnopqrstuvwxyz0123456789-"))
             let nameString = new string(name)
-            where Container.TryParse(nameString, out var _)
+            where Container.IsValid(nameString)
             select Container.Parse(nameString);
 
         public static Gen<ADODuplicateTemplate> AdoDuplicateTemplate() {
