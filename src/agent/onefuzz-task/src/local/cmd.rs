@@ -10,7 +10,6 @@ use crate::local::{
 };
 use anyhow::{Context, Result};
 use clap::{App, Arg, SubCommand};
-use crossterm::tty::IsTty;
 use std::str::FromStr;
 use std::time::Duration;
 use strum::IntoEnumIterator;
@@ -36,9 +35,11 @@ enum Commands {
 }
 
 const TIMEOUT: &str = "timeout";
+const TUI: &str = "tui";
 
 pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
     let running_duration = value_t!(args, TIMEOUT, u64).ok();
+    let start_ui = args.is_present(TUI);
 
     let (cmd, sub_args) = args.subcommand();
     let command =
@@ -48,7 +49,7 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
         .ok_or_else(|| anyhow!("missing subcommand arguments"))?
         .to_owned();
 
-    let terminal = if std::io::stdout().is_tty() {
+    let terminal = if start_ui {
         Some(TerminalUi::init()?)
     } else {
         env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
@@ -111,6 +112,12 @@ pub fn args(name: &str) -> App<'static, 'static> {
                 .long(TIMEOUT)
                 .help("The maximum running time in seconds")
                 .takes_value(true),
+        )
+        .arg(
+            Arg::with_name(TUI)
+                .long(TUI)
+                .help("Enable the terminal UI")
+                .takes_value(false),
         );
 
     for subcommand in Commands::iter() {

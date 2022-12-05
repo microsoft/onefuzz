@@ -251,7 +251,11 @@ pub async fn build_local_context(
         task_id,
         instance_id,
         setup_dir,
-        machine_identity: MachineIdentity::from_metadata().await?,
+        machine_identity: MachineIdentity {
+            machine_id: Uuid::nil(),
+            machine_name: "local".to_string(),
+            scaleset_name: None,
+        },
         instance_telemetry_key: None,
         heartbeat_queue: None,
         microsoft_telemetry_key: None,
