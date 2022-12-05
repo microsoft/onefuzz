@@ -95,8 +95,8 @@ FUNC_TOOLS_ERROR = (
 
 UPPERCASE_NAME_ERROR = (
     "OneFuzz deployments do not support uppercase characters in "
-    "resource group names or application names. Please adjust the "
-    "values you are specifying for these arguments and retry."
+    "application names. Please adjust the value you are "
+    "specifying for this argument and retry."
 )
 
 DOTNET_APPLICATION_SUFFIX = "-net"
