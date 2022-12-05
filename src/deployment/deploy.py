@@ -93,6 +93,12 @@ FUNC_TOOLS_ERROR = (
     "https://github.com/Azure/azure-functions-core-tools#installing"
 )
 
+UPPERCASE_NAME_ERROR = (
+    "OneFuzz deployments do not support uppercase characters in "
+    "application names. Please adjust the value you are "
+    "specifying for this argument and retry."
+)
+
 DOTNET_APPLICATION_SUFFIX = "-net"
 
 logger = logging.getLogger("deploy")
@@ -1210,6 +1216,13 @@ def arg_file(arg: str) -> str:
     return arg
 
 
+def lower_case(arg: str) -> str:
+    uppercase_check = any(i.isupper() for i in arg)
+    if uppercase_check:
+        raise Exception(UPPERCASE_NAME_ERROR)
+    return arg
+
+
 def main() -> None:
     rbac_only_states = [
         ("check_region", Client.check_region),
@@ -1237,7 +1250,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(formatter_class=formatter)
     parser.add_argument("location")
     parser.add_argument("resource_group")
-    parser.add_argument("application_name")
+    parser.add_argument("application_name", type=lower_case)
     parser.add_argument("owner")
     parser.add_argument("nsg_config")
     parser.add_argument(
