@@ -34,7 +34,7 @@ public abstract class NotificationsBase {
         private readonly Uri _targetUrl;
         private readonly Uri _inputUrl;
         private readonly Uri _reportUrl;
-        private readonly bool _shouldConvertJinja;
+        private readonly bool _scribanOnly;
 
         public static async Async.Task<Renderer> ConstructRenderer(
             IOnefuzzContext context,
@@ -68,7 +68,7 @@ public abstract class NotificationsBase {
             }
 
             await context.ConfigurationRefresher.TryRefreshAsync().IgnoreResult();
-            var convertJinja = await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableJinjaConvert);
+            var scribanOnly = await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly);
 
             return new Renderer(
                 container,
@@ -79,7 +79,7 @@ public abstract class NotificationsBase {
                 targetUrl,
                 inputUrl!, // TODO: incorrect
                 reportUrl,
-                convertJinja);
+                scribanOnly);
         }
         public Renderer(
             Container container,
@@ -90,7 +90,7 @@ public abstract class NotificationsBase {
             Uri targetUrl,
             Uri inputUrl,
             Uri reportUrl,
-            bool shouldConvertJinja) {
+            bool scribanOnly) {
             _report = report;
             _container = container;
             _filename = filename;
@@ -99,15 +99,17 @@ public abstract class NotificationsBase {
             _reportUrl = reportUrl;
             _targetUrl = targetUrl;
             _inputUrl = inputUrl;
-            _shouldConvertJinja = shouldConvertJinja || true;
+            _scribanOnly = scribanOnly;
         }
 
         // TODO: This function is fallible but the python
         // implementation doesn't have that so I'm trying to match it.
         // We should probably propagate any errors up 
         public async Async.Task<string> Render(string templateString, Uri instanceUrl) {
-            templateString = _shouldConvertJinja && JinjaTemplateAdapter.IsJinjaTemplate(templateString)
-                ? JinjaTemplateAdapter.AdaptForScriban(templateString) : templateString;
+            if (!_scribanOnly && JinjaTemplateAdapter.IsJinjaTemplate(templateString)) {
+                templateString = JinjaTemplateAdapter.AdaptForScriban(templateString);
+            }
+
             var template = Template.Parse(templateString);
             if (template != null) {
                 return await template.RenderAsync(new {
