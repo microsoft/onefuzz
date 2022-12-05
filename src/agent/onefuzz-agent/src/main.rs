@@ -20,7 +20,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 use anyhow::{Context, Result};
-use clap::Parser;
+use clap::{ArgAction, Args, Parser};
 use onefuzz::machine_id::MachineIdentity;
 use onefuzz::process::ExitStatus;
 use onefuzz_telemetry::{self as telemetry, EventData, Role};
@@ -67,7 +67,7 @@ struct RunOpt {
     #[clap(long = "--machine_name")]
     machine_name: Option<String>,
 
-    #[clap(long = "--reset_lock", default_value = "false", takes_value = false)]
+    #[clap(long = "--reset_lock", takes_value = false, action = ArgAction::SetTrue )]
     reset_node_lock: bool,
 }
 
