@@ -40,23 +40,27 @@ var roleAssignmentsParams = [
   }
   {
     suffix: '-storage'
-    role:'17d1049b-9a84-46fb-8f53-869881c3d3ab' //StorageAccountContributor
+    role: '17d1049b-9a84-46fb-8f53-869881c3d3ab' //StorageAccountContributor
   }
   {
     suffix: '-network'
-    role: '4d97b98b-1d4f-4787-a291-c67834d212e7'//NetworkContributor
+    role: '4d97b98b-1d4f-4787-a291-c67834d212e7' //NetworkContributor
   }
   {
     suffix: '-logs'
-    role: '92aaf0da-9dab-42b6-94a3-d43ce8d16293'//LogAnalyticsContributor
+    role: '92aaf0da-9dab-42b6-94a3-d43ce8d16293' //LogAnalyticsContributor
   }
   {
     suffix: '-user_managed_identity'
-    role: 'f1a07417-d97a-45cb-824c-7a7467783830'//ManagedIdentityOperator
+    role: 'f1a07417-d97a-45cb-824c-7a7467783830' //ManagedIdentityOperator
   }
   {
     suffix: '-contributor'
-    role: 'b24988ac-6180-42a0-ab88-20f7382dd24c'//Contributor
+    role: 'b24988ac-6180-42a0-ab88-20f7382dd24c' //Contributor
+  }
+  {
+    suffix: '-app_config_reader'
+    role: '516239f1-63e1-4d78-a4de-a74fb236a071' //App Configuration Data Reader
   }
 ]
 resource scalesetIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
@@ -162,7 +166,7 @@ module autoscaleSettings 'bicep-templates/autoscale-settings.bicep' = {
 
 module eventGrid 'bicep-templates/event-grid.bicep' = {
   name: 'event-grid'
-  params:{
+  params: {
     location: location
     storageFuzzId: storage.outputs.FuzzId
     storageFuncId: storage.outputs.FuncId
@@ -184,6 +188,7 @@ resource roleAssignments 'Microsoft.Authorization/roleAssignments@2020-10-01-pre
     eventGrid
     keyVault
     serverFarm
+    featureFlags
   ]
 }]
 
@@ -198,9 +203,9 @@ resource roleAssignmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-
     eventGrid
     keyVault
     serverFarm
+    featureFlags
   ]
 }]
-
 
 // try to make role assignments to deploy as late as possible in order to have principalId ready
 resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
@@ -213,9 +218,16 @@ resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10
     eventGrid
     keyVault
     serverFarm
-    ]
+    featureFlags
+  ]
 }
 
+module featureFlags 'bicep-templates/feature-flags.bicep' = {
+  name: 'featureFlags'
+  params: {
+    location: location
+  }
+}
 
 module function 'bicep-templates/function.bicep' = {
   name: 'function'
@@ -278,12 +290,52 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
     enable_profiler: enable_profiler
+    app_config_endpoint: featureFlags.outputs.AppConfigEndpoint
+    functions_disabled: '0'
+    agent_function_names: [
+      'AgentCanSchedule' //0
+      'AgentCommands' //1
+      'AgentEvents' //2
+      'AgentRegistration' //3
+      'Containers' //4
+      'Download' //5
+      'Info' //6
+      'InstanceConfig' //7
+      'Jobs' //8
+      'JobTemplates' //9
+      'JobTemplatesManage' //10
+      'Negotiate' //11
+      'Node' //12
+      'NodeAddSshKey' //13
+      'Notifications' //14
+      'Pool' //15
+      'Proxy' //16
+      'QueueFileChanges' //17
+      'QueueNodeHeartbeat' //18
+      'QueueProxyUpdate' //19
+      'QueueSignalrEvents' //20
+      'QueueTaskHeartbeat' //21
+      'QueueUpdates' //22
+      'QueueWebhooks' //23
+      'ReproVms' //24
+      'Scaleset' //25
+      'Tasks' //26
+      'TimerDaily' //27
+      'TimerProxy' //28
+      'TimerRepro' //29
+      'TimerRetention' //30
+      'TimerTasks' //31
+      'TimerWorkers' //32
+      'Tools' //33
+      'Webhooks' //34
+      'WebhooksLogs' //35
+      'WebhooksPing' //36    
+    ]
   }
   dependsOn: [
     function
   ]
 }
-
 
 module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
   name: 'netFunctionSettings'
@@ -304,6 +356,47 @@ module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
     monitor_account_name: operationalInsights.outputs.monitorAccountName
     multi_tenant_domain: multi_tenant_domain
     enable_profiler: enable_profiler
+    app_config_endpoint: featureFlags.outputs.AppConfigEndpoint
+    functions_disabled: '1'
+    agent_function_names: [
+      'AgentCanSchedule' //0
+      'AgentCommands' //1
+      'AgentEvents' //2
+      'AgentRegistration' //3
+      'Containers' //4
+      'Download' //5
+      'Info' //6
+      'InstanceConfig' //7
+      'Jobs' //8
+      'JobTemplates' //9
+      'JobTemplatesManage' //10
+      'Negotiate' //11
+      'Node' //12
+      'NodeAddSshKey' //13
+      'Notifications' //14
+      'Pool' //15
+      'Proxy' //16
+      'QueueFileChanges' //17
+      'QueueNodeHeartbeat' //18
+      'QueueProxyUpdate' //19
+      'QueueSignalrEvents' //20
+      'QueueTaskHeartbeat' //21
+      'QueueUpdates' //22
+      'QueueWebhooks' //23
+      'ReproVms' //24
+      'Scaleset' //25
+      'Tasks' //26
+      'TimerDaily' //27
+      'TimerProxy' //28
+      'TimerRepro' //29
+      'TimerRetention' //30
+      'TimerTasks' //31
+      'TimerWorkers' //32
+      'Tools' //33
+      'Webhooks' //34
+      'WebhookLogs' //35
+      'WebhookPing' //36   
+    ]
   }
   dependsOn: [
     netFunction

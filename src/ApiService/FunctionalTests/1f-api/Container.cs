@@ -5,10 +5,9 @@ using Xunit.Abstractions;
 namespace FunctionalTests {
 
     public class ContainerInfo : IFromJsonElement<ContainerInfo> {
-        JsonElement _e;
-        public ContainerInfo() { }
+        readonly JsonElement _e;
         public ContainerInfo(JsonElement e) => _e = e;
-        public ContainerInfo Convert(JsonElement e) => new ContainerInfo(e);
+        public static ContainerInfo Convert(JsonElement e) => new(e);
         public string Name => _e.GetStringProperty("name");
         public IDictionary<string, string>? Metadata => _e.GetNullableStringDictProperty("metadata");
         public Uri SasUrl => new Uri(_e.GetStringProperty("sas_url"));

@@ -64,3 +64,6 @@ azure_storage = { version = "0.7", default-features = false, features = [
 azure_storage_blobs = { version = "0.7", default-features = false, features = [
     "enable_reqwest",
 ] }
+
+[dev-dependencies]
+pretty_assertions = "1.3"

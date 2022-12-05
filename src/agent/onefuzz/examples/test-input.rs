@@ -58,7 +58,11 @@ async fn main() -> Result<()> {
         &opt.exe,
         &target_options,
         &env,
-        MachineIdentity::default(),
+        MachineIdentity {
+            machine_id: uuid::Uuid::new_v4(),
+            machine_name: "test-input".into(),
+            scaleset_name: None,
+        },
     );
 
     let check_debugger = !opt.no_check_debugger;

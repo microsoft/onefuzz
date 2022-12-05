@@ -82,9 +82,9 @@ def check_application_error(response: requests.Response) -> None:
     if response.status_code == 401:
         try:
             as_json = json.loads(response.content)
-            if isinstance(as_json, dict) and "code" in as_json and "errors" in as_json:
+            if isinstance(as_json, dict) and "title" in as_json and "detail" in as_json:
                 raise Exception(
-                    f"request failed: application error - {as_json['code']} {as_json['errors']}"
+                    f"request failed: application error (401: {as_json['title']}): {as_json['detail']}"
                 )
         except json.decoder.JSONDecodeError:
             pass
@@ -208,16 +208,8 @@ class Backend:
 
         # try each scope until we successfully get an access token
         for scope in scopes:
-            result = self.app.acquire_token_for_client(scopes=[scope])
-            if "error" not in result:
-                break
-
-            # AADSTS500011: The resource principal named ... was not found in the tenant named ...
-            # This error is caused by a by mismatch between the identifierUr and the scope provided in the request.
-            if "AADSTS500011" in result["error_description"]:
-                LOGGER.warning(f"failed to get access token with scope {scope}")
-            else:
-                # unexpected error
+            done, result = self.acquire_token_for_scope(self.app, scope)
+            if done:
                 break
 
         if "error" in result:
@@ -226,6 +218,31 @@ class Backend:
                 % (result.get("error"), result.get("error_description"))
             )
         return result
+
+    def acquire_token_for_scope(
+        self, app: msal.ConfidentialClientApplication, scope: str
+    ) -> Tuple[bool, Any]:
+        # retry in the face of any connection errors
+        # e.g. connection reset by peer, due to connection timeout
+        retriesLeft = 5
+        while True:
+            try:
+                result = app.acquire_token_for_client(scopes=[scope])
+                if "error" not in result:
+                    return (True, result)
+
+                # AADSTS500011: The resource principal named ... was not found in the tenant named ...
+                # This error is caused by a by mismatch between the identifierUrl and the scope provided in the request.
+                if "AADSTS500011" in result["error_description"]:
+                    LOGGER.warning(f"failed to get access token with scope {scope}")
+                    return (False, result)
+                else:
+                    # unexpected error
+                    return (True, result)
+            except requests.exceptions.ConnectionError:
+                retriesLeft -= 1
+                if retriesLeft == 0:
+                    raise
 
     def do_login(self, scopes: List[str]) -> Any:
         if not self.app:
@@ -351,7 +368,20 @@ class Backend:
         if response is None:
             raise Exception("request failed: %s %s" % (method, url))
 
-        if response.status_code / 100 != 2:
+        if response.status_code // 100 != 2:
+            try:
+                json = response.json()
+            except requests.exceptions.JSONDecodeError:
+                pass
+
+            # attempt to read as https://www.rfc-editor.org/rfc/rfc7807
+            if isinstance(json, Dict):
+                title = json.get("title")
+                details = json.get("detail")
+                raise Exception(
+                    f"request did not succeed ({response.status_code}: {title}): {details}"
+                )
+
             error_text = str(
                 response.content, encoding="utf-8", errors="backslashreplace"
             )
@@ -359,6 +389,7 @@ class Backend:
                 "request did not succeed: HTTP %s - %s"
                 % (response.status_code, error_text)
             )
+
         return response
 
 
