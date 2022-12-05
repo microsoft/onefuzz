@@ -32,7 +32,7 @@ pub enum ContainerType {
     Inputs,
 }
 
-#[derive(Debug, Deserialize, Clone, Default)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct CommonConfig {
     pub job_id: Uuid,
 

@@ -1,8 +1,11 @@
 ﻿using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
+
 namespace Microsoft.OneFuzz.Service;
 
+using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.FeatureManagement;
 
 public interface IOnefuzzContext {
     IAutoScaleOperations AutoScaleOperations { get; }
@@ -46,6 +49,9 @@ public interface IOnefuzzContext {
     ITeams Teams { get; }
     IGithubIssues GithubIssues { get; }
     IAdo Ado { get; }
+
+    IFeatureManagerSnapshot FeatureManagerSnapshot { get; }
+    IConfigurationRefresher ConfigurationRefresher { get; }
 }
 
 public class OnefuzzContext : IOnefuzzContext {
@@ -95,4 +101,8 @@ public class OnefuzzContext : IOnefuzzContext {
     public ITeams Teams => _serviceProvider.GetRequiredService<ITeams>();
     public IGithubIssues GithubIssues => _serviceProvider.GetRequiredService<IGithubIssues>();
     public IAdo Ado => _serviceProvider.GetRequiredService<IAdo>();
+
+    public IFeatureManagerSnapshot FeatureManagerSnapshot => _serviceProvider.GetRequiredService<IFeatureManagerSnapshot>();
+
+    public IConfigurationRefresher ConfigurationRefresher => _serviceProvider.GetRequiredService<IConfigurationRefresherProvider>().Refreshers.First();
 }

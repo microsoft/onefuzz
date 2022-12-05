@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Async = System.Threading.Tasks;
@@ -120,6 +122,7 @@ public sealed class TestContext : IOnefuzzContext {
     public ITeams Teams => throw new NotImplementedException();
     public IGithubIssues GithubIssues => throw new NotImplementedException();
     public IAdo Ado => throw new NotImplementedException();
+    public IFeatureManagerSnapshot FeatureManagerSnapshot => throw new NotImplementedException();
 
-
+    public IConfigurationRefresher ConfigurationRefresher => throw new NotImplementedException();
 }

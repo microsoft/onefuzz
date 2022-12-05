@@ -445,7 +445,11 @@ mod tests {
             options.clone(),
             env.clone(),
             &temp_setup_dir.path(),
-            MachineIdentity::default(),
+            MachineIdentity {
+                machine_id: uuid::Uuid::new_v4(),
+                machine_name: "test-input".into(),
+                scaleset_name: None,
+            },
         );
 
         // verify catching bad exits with -help=1
@@ -474,7 +478,11 @@ mod tests {
             options.clone(),
             env.clone(),
             &temp_setup_dir.path(),
-            MachineIdentity::default(),
+            MachineIdentity {
+                machine_id: uuid::Uuid::new_v4(),
+                machine_name: "test-input".into(),
+                scaleset_name: None,
+            },
         );
         // verify good exits with -help=1
         assert!(
