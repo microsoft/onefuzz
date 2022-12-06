@@ -20,7 +20,7 @@ mkdir -p $ARTIFACTS/LibFuzzerDotnetLoader
 mkdir -p $ARTIFACTS/sharpfuzz
 
 # Install `libfuzzer-dotnet` pre-reqs.
-sudo apt-get install -y llvm-10 llvm-10-dev clang-10
+sudo apt-get install -y llvm-12 llvm-12-dev clang-12
 
 # Note that dotnet pre-reqs are presumed to be installed
 # by the ci.yml setup (`setup-dotnet` action).

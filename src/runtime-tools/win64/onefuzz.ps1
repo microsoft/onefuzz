@@ -126,7 +126,7 @@ function Install-LLVM {
   log "installing llvm"
   $ProgressPreference = 'SilentlyContinue'
   $exe_path = "llvm-setup.exe"
-  Invoke-WebRequest -uri https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/LLVM-10.0.0-win64.exe -OutFile $exe_path
+  Invoke-WebRequest -uri https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.1/LLVM-12.0.1-win64.exe -OutFile $exe_path
   cmd /c start /wait $exe_path /S
   $env:Path += ";$env:ProgramFiles\LLVM\bin"
   log "installing llvm: done"
