@@ -46,9 +46,12 @@ public class EndpointAuthorization : IEndpointAuthorization {
         }
 
         var token = tokenResult.OkV.UserInfo;
-        if (await IsUser(tokenResult.OkV)) {
+
+        var (isAgent, reason) = await IsAgent(tokenResult.OkV);
+
+        if (!isAgent) {
             if (!allowUser) {
-                return await Reject(req, token);
+                return await Reject(req, token, "endpoint not allowed for users");
             }
 
             var access = await CheckAccess(req);
@@ -57,21 +60,18 @@ public class EndpointAuthorization : IEndpointAuthorization {
             }
         }
 
-        if (await IsAgent(tokenResult.OkV) && !allowAgent) {
+        if (isAgent && !allowAgent) {
 
-            return await Reject(req, token);
+            return await Reject(req, token, reason);
         }
 
         return await method(req);
     }
 
-    public async Async.Task<bool> IsUser(UserAuthInfo tokenData) {
-        return !await IsAgent(tokenData);
-    }
 
-    public async Async.Task<HttpResponseData> Reject(HttpRequestData req, UserInfo token) {
+    public async Async.Task<HttpResponseData> Reject(HttpRequestData req, UserInfo token, String? reason = null) {
         var body = await req.ReadAsStringAsync();
-        _log.Error($"reject token. url:{req.Url:Tag:Url} token:{token:Tag:Token} body:{body:Tag:Body}");
+        _log.Error($"reject token. reason:{reason} url:{req.Url:Tag:Url} token:{token:Tag:Token} body:{body:Tag:Body}");
 
         return await _context.RequestHandling.NotOk(
             req,
@@ -188,9 +188,9 @@ public class EndpointAuthorization : IEndpointAuthorization {
     }
 
 
-    public async Async.Task<bool> IsAgent(UserAuthInfo authInfo) {
+    public async Async.Task<(bool, string)> IsAgent(UserAuthInfo authInfo) {
         if (!AgentRoles.Overlaps(authInfo.Roles)) {
-            return false;
+            return (false, "no agent role");
         }
 
         var tokenData = authInfo.UserInfo;
@@ -198,28 +198,24 @@ public class EndpointAuthorization : IEndpointAuthorization {
         if (tokenData.ObjectId != null) {
             var scalesets = _context.ScalesetOperations.GetByObjectId(tokenData.ObjectId.Value);
             if (await scalesets.AnyAsync()) {
-                return true;
+                return (true, string.Empty);
             }
 
             var principalId = await _context.Creds.GetScalesetPrincipalId();
             if (principalId == tokenData.ObjectId) {
-                return true;
+                return (true, string.Empty);
             }
         }
 
-        if (!tokenData.ApplicationId.HasValue) {
-            return false;
+        if (!tokenData.ObjectId.HasValue) {
+            return (false, "no object id in token");
         }
 
-        var pools = _context.PoolOperations.GetByClientId(tokenData.ApplicationId.Value);
+        var pools = _context.PoolOperations.GetByObjectId(tokenData.ObjectId.Value);
         if (await pools.AnyAsync()) {
-            return true;
+            return (true, string.Empty);
         }
 
-        // if (tokenData.Roles.Contains("unmanagedNode")) {
-        //     return true;
-        // }
-
-        return false;
+        return (false, "no matching scaleset or pool");
     }
 }

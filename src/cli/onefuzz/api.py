@@ -1239,7 +1239,7 @@ class Pool(Endpoint):
         self,
         name: str,
         os: enums.OS,
-        client_id: Optional[UUID] = None,
+        object_id: Optional[UUID] = None,
         *,
         unmanaged: bool = False,
         arch: enums.Architecture = enums.Architecture.x86_64,
@@ -1256,7 +1256,7 @@ class Pool(Endpoint):
             "POST",
             models.Pool,
             data=requests.PoolCreate(
-                name=name, os=os, arch=arch, managed=managed, client_id=client_id
+                name=name, os=os, arch=arch, managed=managed, object_id=object_id
             ),
         )
 
