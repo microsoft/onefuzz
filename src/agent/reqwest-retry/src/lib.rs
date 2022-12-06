@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use async_trait::async_trait;
 use backoff::{self, future::retry_notify, ExponentialBackoff};
 use onefuzz_telemetry::debug;
@@ -74,27 +74,28 @@ where
                     match result {
                         RetryCheck::Succeed => Ok(x),
                         RetryCheck::Fail => {
-                            match x.error_for_status().with_context(|| {
-                                format!("request attempt {} failed", attempt_count + 1)
-                            }) {
-                                // the is_success check earlier should have taken care of this already.
-                                Ok(x) => Ok(x),
-                                Err(as_err) => Err(backoff::Error::Permanent(Err(as_err))),
-                            }
+                            let content = x.text().await.unwrap_or_else(|_| "".to_string());
+                            let e = anyhow!(
+                                "request attempt {} failed with status code {} and content {}",
+                                attempt_count + 1,
+                                status,
+                                content
+                            );
+                            Err(backoff::Error::Permanent(Err(e)))
                         }
                         RetryCheck::Retry => {
-                            match x.error_for_status().with_context(|| {
-                                format!("request attempt {} failed", attempt_count + 1)
-                            }) {
-                                // the is_success check earlier should have taken care of this already.
-                                Ok(x) => Ok(x),
-                                Err(as_err) => {
-                                    if attempt_count >= max_retry {
-                                        Err(backoff::Error::Permanent(Err(as_err)))
-                                    } else {
-                                        Err(backoff::Error::transient(Err(as_err)))
-                                    }
-                                }
+                            let content = x.text().await.unwrap_or_else(|_| "".to_string());
+                            let e = anyhow!(
+                                "request attempt {} failed with status code {} and content {}",
+                                attempt_count + 1,
+                                status,
+                                content
+                            );
+
+                            if attempt_count >= max_retry {
+                                Err(backoff::Error::Permanent(Err(e)))
+                            } else {
+                                Err(backoff::Error::transient(Err(e)))
                             }
                         }
                     }
