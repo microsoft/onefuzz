@@ -62,13 +62,6 @@ pub async fn reset_tmp_dir(tmp_dir: impl AsRef<Path>) -> Result<()> {
     Ok(())
 }
 
-pub fn parse_url_data(data: &[u8]) -> Result<Url> {
-    let text = std::str::from_utf8(data)?;
-    let url = Url::parse(text)?;
-
-    Ok(url)
-}
-
 #[async_trait]
 pub trait CheckNotify {
     async fn is_notified(&self, delay: Duration) -> bool;
