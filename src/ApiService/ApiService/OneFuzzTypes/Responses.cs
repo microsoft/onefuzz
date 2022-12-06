@@ -114,7 +114,7 @@ public record PoolGetResult(
     bool Managed,
     Architecture Arch,
     PoolState State,
-    Guid? ClientId,
+    Guid? ObjectId,
     List<Node>? Nodes,
     AgentConfig? Config,
     List<WorkSetSummary>? WorkQueue,
