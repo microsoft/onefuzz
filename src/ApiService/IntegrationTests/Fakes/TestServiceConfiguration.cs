@@ -64,4 +64,5 @@ public sealed class TestServiceConfiguration : IServiceConfig {
 
     public string? OneFuzzAllowOutdatedAgent => throw new NotImplementedException();
     public string? AppConfigurationEndpoint => throw new NotImplementedException();
+    public string? AppConfigurationConnectionString => throw new NotImplementedException();
 }

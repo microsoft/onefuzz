@@ -21,7 +21,7 @@ public class ValidateScriban {
 
         var (renderer, templateRenderContext) = await GenerateTemplateRenderContext(request.OkV.Context);
 
-        var renderedTemaplate = await renderer.Render(request.OkV.Template, new Uri(instanceUrl), enableJinjaAdapter: false);
+        var renderedTemaplate = await renderer.Render(request.OkV.Template, new Uri(instanceUrl));
 
         var response = new TemplateValidationResponse(
             renderedTemaplate,
@@ -130,7 +130,8 @@ public class ValidateScriban {
             job,
             targetUrl,
             inputUrl,
-            reportUrl
+            reportUrl,
+            scribanOnlyOverride: true
         );
 
         templateRenderContext ??= new TemplateRenderContext(

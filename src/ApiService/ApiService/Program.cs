@@ -50,11 +50,20 @@ public class Program {
         using var host =
             new HostBuilder()
             .ConfigureAppConfiguration(builder => {
-                var _ = builder.AddAzureAppConfiguration(options => {
-                    var _ = options
-                        .Connect(new Uri(configuration.AppConfigurationEndpoint!), new DefaultAzureCredential())
-                        .UseFeatureFlags(ffOptions => ffOptions.CacheExpirationInterval = TimeSpan.FromMinutes(1));
-                });
+                // Using a connection string in dev allows us to run the functions locally.
+                if (!string.IsNullOrEmpty(configuration.AppConfigurationConnectionString)) {
+                    var _ = builder.AddAzureAppConfiguration(options => {
+                        var _ = options
+                            .Connect(configuration.AppConfigurationConnectionString)
+                            .UseFeatureFlags(ffOptions => ffOptions.CacheExpirationInterval = TimeSpan.FromSeconds(30));
+                    });
+                } else {
+                    var _ = builder.AddAzureAppConfiguration(options => {
+                        var _ = options
+                            .Connect(new Uri(configuration.AppConfigurationEndpoint!), new DefaultAzureCredential())
+                            .UseFeatureFlags(ffOptions => ffOptions.CacheExpirationInterval = TimeSpan.FromMinutes(1));
+                    });
+                }
             })
             .ConfigureFunctionsWorkerDefaults(builder => {
                 builder.UseMiddleware<LoggingMiddleware>();

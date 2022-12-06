@@ -45,7 +45,8 @@ public abstract class NotificationsBase {
             Job? job = null,
             Uri? targetUrl = null,
             Uri? inputUrl = null,
-            Uri? reportUrl = null) {
+            Uri? reportUrl = null,
+            bool? scribanOnlyOverride = null) {
 
             task ??= await context.TaskOperations.GetByJobIdAndTaskId(report.JobId, report.TaskId);
             var checkedTask = task.EnsureNotNull($"invalid task {report.TaskId}");
@@ -68,7 +69,7 @@ public abstract class NotificationsBase {
             }
 
             await context.ConfigurationRefresher.TryRefreshAsync().IgnoreResult();
-            var scribanOnly = await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly);
+            var scribanOnly = scribanOnlyOverride ?? await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly);
 
             return new Renderer(
                 container,
