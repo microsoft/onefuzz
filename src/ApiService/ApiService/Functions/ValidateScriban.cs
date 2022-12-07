@@ -19,16 +19,25 @@ public class ValidateScriban {
 
         var instanceUrl = _context.ServiceConfiguration.OneFuzzInstance!;
 
-        var (renderer, templateRenderContext) = await GenerateTemplateRenderContext(request.OkV.Context);
+        try {
+            var (renderer, templateRenderContext) = await GenerateTemplateRenderContext(request.OkV.Context);
 
-        var renderedTemaplate = await renderer.Render(request.OkV.Template, new Uri(instanceUrl));
+            var renderedTemaplate = await renderer.Render(request.OkV.Template, new Uri(instanceUrl), strictRendering: true);
 
-        var response = new TemplateValidationResponse(
-            renderedTemaplate,
-            templateRenderContext
-        );
+            var response = new TemplateValidationResponse(
+                renderedTemaplate,
+                templateRenderContext
+            );
 
-        return await RequestHandling.Ok(req, response);
+            return await RequestHandling.Ok(req, response);
+        } catch (Exception e) {
+            return await new RequestHandling(_log).NotOk(
+                req,
+                RequestHandling.ConvertError(e),
+                $"Template failed to render due to: `{e.Message}`"
+            );
+        }
+
     }
 
     [Function("ValidateScriban")]

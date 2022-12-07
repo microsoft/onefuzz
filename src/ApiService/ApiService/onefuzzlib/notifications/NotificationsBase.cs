@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Scriban;
+using Scriban.Runtime;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -106,25 +107,39 @@ public abstract class NotificationsBase {
         // TODO: This function is fallible but the python
         // implementation doesn't have that so I'm trying to match it.
         // We should probably propagate any errors up 
-        public async Async.Task<string> Render(string templateString, Uri instanceUrl) {
+        public async Async.Task<string> Render(string templateString, Uri instanceUrl, bool strictRendering = false) {
             if (!_scribanOnly && JinjaTemplateAdapter.IsJinjaTemplate(templateString)) {
                 templateString = JinjaTemplateAdapter.AdaptForScriban(templateString);
             }
 
+            var scriptObject = new ScriptObject();
+            scriptObject.Import(new TemplateRenderContext(
+                this._report,
+                this._taskConfig,
+                this._jobConfig,
+                this._reportUrl,
+                _inputUrl,
+                _targetUrl,
+                _container,
+                _filename,
+                $"onefuzz --endpoint {instanceUrl} repro create_and_connect {_container} {_filename}"
+            ));
+
+            var context = strictRendering switch {
+                true => new TemplateContext {
+                    EnableRelaxedFunctionAccess = false,
+                    EnableRelaxedIndexerAccess = false,
+                    EnableRelaxedMemberAccess = false,
+                    EnableRelaxedTargetAccess = false
+                },
+                _ => new TemplateContext()
+            };
+
+            context.PushGlobal(scriptObject);
+
             var template = Template.Parse(templateString);
             if (template != null) {
-                return await template.RenderAsync(new TemplateRenderContext
-                (
-                    this._report,
-                    this._taskConfig,
-                    this._jobConfig,
-                    this._reportUrl,
-                    _inputUrl,
-                    _targetUrl,
-                    _container,
-                    _filename,
-                    $"onefuzz --endpoint {instanceUrl} repro create_and_connect {_container} {_filename}"
-                ));
+                return await template.RenderAsync(context);
             }
             return string.Empty;
         }
