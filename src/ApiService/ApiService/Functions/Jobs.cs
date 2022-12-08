@@ -71,6 +71,13 @@ public class Jobs {
         var r = await _context.JobOperations.Insert(job);
         if (!r.IsOk) {
             _logTracer.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"failed to insert job {job.JobId:Tag:JobId}");
+            return await _context.RequestHandling.NotOk(
+                req,
+                new Error(
+                    Code: ErrorCode.UNABLE_TO_CREATE_CONTAINER,
+                    Errors: new string[] { "unable to create job " }
+                ),
+                "job");
         }
         await _context.Events.SendEvent(new EventJobCreated(job.JobId, job.Config, job.UserInfo));
 
