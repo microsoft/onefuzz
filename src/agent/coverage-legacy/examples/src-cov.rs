@@ -6,9 +6,9 @@ use std::time::Duration;
 use std::{process::Command, process::Stdio};
 
 use anyhow::Result;
-use coverage::block::CommandBlockCov as Coverage;
-use coverage::cache::ModuleCache;
-use coverage::code::CmdFilter;
+use coverage_legacy::block::CommandBlockCov as Coverage;
+use coverage_legacy::cache::ModuleCache;
+use coverage_legacy::code::CmdFilter;
 use structopt::StructOpt;
 
 #[derive(Debug, PartialEq, Eq, StructOpt)]
@@ -59,11 +59,11 @@ fn main() -> Result<()> {
         total.merge_max(&coverage);
     }
 
-    let mut debug_info = coverage::debuginfo::DebugInfo::default();
+    let mut debug_info = coverage_legacy::debuginfo::DebugInfo::default();
     let src_coverage = total.source_coverage(&mut debug_info)?;
 
     if opt.cobertura_xml {
-        let cobertura = coverage::cobertura::cobertura(src_coverage)?;
+        let cobertura = coverage_legacy::cobertura::cobertura(src_coverage)?;
         println!("{}", cobertura);
     } else {
         for file_coverage in src_coverage.files {
@@ -108,7 +108,7 @@ fn record(
     cmd: Command,
     timeout: Duration,
 ) -> Result<Coverage> {
-    use coverage::block::linux::Recorder;
+    use coverage_legacy::block::linux::Recorder;
 
     let now = std::time::Instant::now();
 
@@ -127,7 +127,7 @@ fn record(
     cmd: Command,
     timeout: Duration,
 ) -> Result<Coverage> {
-    use coverage::block::windows::{Recorder, RecorderEventHandler};
+    use coverage_legacy::block::windows::{Recorder, RecorderEventHandler};
 
     let mut recorder = Recorder::new(cache, filter);
     let mut handler = RecorderEventHandler::new(&mut recorder, timeout);

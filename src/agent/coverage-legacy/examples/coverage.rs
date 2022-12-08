@@ -6,9 +6,9 @@ use std::time::Duration;
 use std::{process::Command, process::Stdio};
 
 use anyhow::Result;
-use coverage::block::CommandBlockCov as Coverage;
-use coverage::cache::ModuleCache;
-use coverage::code::{CmdFilter, CmdFilterDef};
+use coverage_legacy::block::CommandBlockCov as Coverage;
+use coverage_legacy::cache::ModuleCache;
+use coverage_legacy::code::{CmdFilter, CmdFilterDef};
 use structopt::StructOpt;
 
 #[derive(Debug, PartialEq, Eq, StructOpt)]
@@ -101,7 +101,7 @@ fn record(
     cmd: Command,
     timeout: Duration,
 ) -> Result<Coverage> {
-    use coverage::block::linux::Recorder;
+    use coverage_legacy::block::linux::Recorder;
 
     let now = std::time::Instant::now();
 
@@ -120,7 +120,7 @@ fn record(
     cmd: Command,
     timeout: Duration,
 ) -> Result<Coverage> {
-    use coverage::block::windows::{Recorder, RecorderEventHandler};
+    use coverage_legacy::block::windows::{Recorder, RecorderEventHandler};
 
     let mut recorder = Recorder::new(cache, filter);
     let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
