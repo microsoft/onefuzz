@@ -74,7 +74,7 @@ public class Jobs {
             return await _context.RequestHandling.NotOk(
                 req,
                 new Error(
-                    Code: ErrorCode.UNABLE_TO_CREATE_CONTAINER,
+                    Code: ErrorCode.UNABLE_TO_CREATE,
                     Errors: new string[] { "unable to create job " }
                 ),
                 "job");
