@@ -952,3 +952,15 @@ public record NodeCommandEnvelope(
     NodeCommand Command,
     string MessageId
 );
+
+public record TemplateRenderContext(
+    Report Report,
+    TaskConfig Task,
+    JobConfig Job,
+    Uri ReportUrl,
+    Uri InputUrl,
+    Uri TargetUrl,
+    Container ReportContainer,
+    string ReportFilename,
+    string ReproCmd
+);
