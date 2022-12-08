@@ -365,7 +365,6 @@ mod tests {
                 &HashMap::default(),
                 $timeout,
                 /*ignore first chance exceptions*/ true,
-                None,
             )
             .unwrap()
         }};
