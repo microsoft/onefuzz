@@ -36,6 +36,8 @@ public sealed class TestContext : IOnefuzzContext {
         ConfigOperations = new ConfigOperations(logTracer, this, cache);
         PoolOperations = new PoolOperations(logTracer, this);
         ScalesetOperations = new ScalesetOperations(logTracer, this);
+        ReproOperations = new ReproOperations(logTracer, this);
+        Reports = new Reports(logTracer, Containers);
         UserCredentials = new UserCredentials(logTracer, ConfigOperations);
     }
 
@@ -49,6 +51,7 @@ public sealed class TestContext : IOnefuzzContext {
                 Node n => NodeOperations.Insert(n),
                 Pool p => PoolOperations.Insert(p),
                 Job j => JobOperations.Insert(j),
+                Repro r => ReproOperations.Insert(r),
                 NodeTasks nt => NodeTasksOperations.Insert(nt),
                 InstanceConfig ic => ConfigOperations.Insert(ic),
                 _ => throw new NotSupportedException($"You will need to add an TestContext.InsertAll case for {x.GetType()} entities"),
@@ -78,6 +81,8 @@ public sealed class TestContext : IOnefuzzContext {
     public IPoolOperations PoolOperations { get; }
     public IScalesetOperations ScalesetOperations { get; }
     public IVmssOperations VmssOperations { get; }
+    public IReproOperations ReproOperations { get; }
+    public IReports Reports { get; }
     public EntityConverter EntityConverter { get; }
 
     // -- Remainder not implemented --
@@ -100,9 +105,6 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IProxyOperations ProxyOperations => throw new System.NotImplementedException();
 
-    public IReports Reports => throw new System.NotImplementedException();
-
-    public IReproOperations ReproOperations => throw new System.NotImplementedException();
 
     public IScheduler Scheduler => throw new System.NotImplementedException();
 

@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Scriban;
+using Scriban.Runtime;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -25,7 +26,7 @@ public abstract class NotificationsBase {
         return setupFileName;
     }
 
-    protected class Renderer {
+    public class Renderer {
         private readonly Report _report;
         private readonly Container _container;
         private readonly string _filename;
@@ -45,7 +46,8 @@ public abstract class NotificationsBase {
             Job? job = null,
             Uri? targetUrl = null,
             Uri? inputUrl = null,
-            Uri? reportUrl = null) {
+            Uri? reportUrl = null,
+            bool? scribanOnlyOverride = null) {
 
             task ??= await context.TaskOperations.GetByJobIdAndTaskId(report.JobId, report.TaskId);
             var checkedTask = task.EnsureNotNull($"invalid task {report.TaskId}");
@@ -68,7 +70,7 @@ public abstract class NotificationsBase {
             }
 
             await context.ConfigurationRefresher.TryRefreshAsync().IgnoreResult();
-            var scribanOnly = await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly);
+            var scribanOnly = scribanOnlyOverride ?? await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly);
 
             return new Renderer(
                 container,
@@ -105,24 +107,39 @@ public abstract class NotificationsBase {
         // TODO: This function is fallible but the python
         // implementation doesn't have that so I'm trying to match it.
         // We should probably propagate any errors up 
-        public async Async.Task<string> Render(string templateString, Uri instanceUrl) {
+        public async Async.Task<string> Render(string templateString, Uri instanceUrl, bool strictRendering = false) {
             if (!_scribanOnly && JinjaTemplateAdapter.IsJinjaTemplate(templateString)) {
                 templateString = JinjaTemplateAdapter.AdaptForScriban(templateString);
             }
 
+            var scriptObject = new ScriptObject();
+            scriptObject.Import(new TemplateRenderContext(
+                this._report,
+                this._taskConfig,
+                this._jobConfig,
+                this._reportUrl,
+                _inputUrl,
+                _targetUrl,
+                _container,
+                _filename,
+                $"onefuzz --endpoint {instanceUrl} repro create_and_connect {_container} {_filename}"
+            ));
+
+            var context = strictRendering switch {
+                true => new TemplateContext {
+                    EnableRelaxedFunctionAccess = false,
+                    EnableRelaxedIndexerAccess = false,
+                    EnableRelaxedMemberAccess = false,
+                    EnableRelaxedTargetAccess = false
+                },
+                _ => new TemplateContext()
+            };
+
+            context.PushGlobal(scriptObject);
+
             var template = Template.Parse(templateString);
             if (template != null) {
-                return await template.RenderAsync(new {
-                    Report = this._report,
-                    Task = this._taskConfig,
-                    Job = this._jobConfig,
-                    ReportUrl = this._reportUrl,
-                    InputUrl = _inputUrl,
-                    TargetUrl = _targetUrl,
-                    ReportContainer = _container,
-                    ReportFilename = _filename,
-                    ReproCmd = $"onefuzz --endpoint {instanceUrl} repro create_and_connect {_container} {_filename}"
-                });
+                return await template.RenderAsync(context);
             }
             return string.Empty;
         }

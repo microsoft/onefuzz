@@ -17,6 +17,7 @@ public interface IServiceConfig {
     public string? ApplicationInsightsAppId { get; }
     public string? ApplicationInsightsInstrumentationKey { get; }
     public string? AppConfigurationEndpoint { get; }
+    public string? AppConfigurationConnectionString { get; }
     public string? AzureSignalRConnectionString { get; }
     public string? AzureSignalRServiceTransportType { get; }
 
@@ -84,6 +85,8 @@ public class ServiceConfiguration : IServiceConfig {
     public string? ApplicationInsightsInstrumentationKey => GetEnv("APPINSIGHTS_INSTRUMENTATIONKEY");
 
     public string? AppConfigurationEndpoint => GetEnv("APPCONFIGURATION_ENDPOINT");
+
+    public string? AppConfigurationConnectionString => GetEnv("APPCONFIGURATION_CONNECTION_STRING");
 
     public string? AzureSignalRConnectionString => GetEnv("AzureSignalRConnectionString");
     public string? AzureSignalRServiceTransportType => GetEnv("AzureSignalRServiceTransportType");
