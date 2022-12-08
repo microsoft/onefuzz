@@ -72,6 +72,8 @@ public class Jobs {
         if (!r.IsOk) {
             _logTracer.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"failed to insert job {job.JobId:Tag:JobId}");
         }
+        await _context.Events.SendEvent(new EventJobCreated(job.JobId, job.Config, job.UserInfo));
+
         return await RequestHandling.Ok(req, JobResponse.ForJob(job));
     }
 
