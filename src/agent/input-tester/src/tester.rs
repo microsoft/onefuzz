@@ -14,12 +14,11 @@ use std::{
     fs,
     io::Write,
     path::{Path, PathBuf},
-    sync::{Arc, RwLock},
+    sync::Arc,
     time::Duration,
 };
 
 use anyhow::{Context, Result};
-use coverage::cache::ModuleCache;
 use log::{error, info, trace, warn};
 use num_cpus;
 use rayon::{prelude::*, ThreadPoolBuilder};
@@ -71,7 +70,6 @@ pub struct Tester {
     ignore_first_chance_exceptions: bool,
     appverif_controller: Option<AppVerifierController>,
     bugs_found_dir: PathBuf,
-    module_cache: RwLock<ModuleCache>,
 }
 
 impl Tester {
@@ -83,7 +81,6 @@ impl Tester {
         max_run_s: u64,
         ignore_first_chance_exceptions: bool,
         app_verifier_tests: Option<Vec<String>>,
-        module_cache: ModuleCache,
     ) -> Result<Arc<Self>> {
         let mut bugs_found_dir = output_dir.to_path_buf();
         bugs_found_dir.push("bugs_found");
@@ -118,7 +115,6 @@ impl Tester {
             max_run_s,
             ignore_first_chance_exceptions,
             bugs_found_dir,
-            module_cache: RwLock::new(module_cache),
         }))
     }
 
@@ -126,18 +122,12 @@ impl Tester {
     pub fn test_application(&self, input_path: impl AsRef<Path>) -> Result<InputTestResult> {
         let app_args = args_with_input_file_applied(&self.driver_args, &input_path)?;
 
-        let mut module_cache = self
-            .module_cache
-            .write()
-            .map_err(|err| anyhow::format_err!("{:?}", err))?;
-
         crash_detector::test_process(
             &self.driver,
             &app_args,
             &self.driver_env,
             Duration::from_secs(self.max_run_s),
             self.ignore_first_chance_exceptions,
-            Some(&mut *module_cache),
         )
         .and_then(|result| {
             let result = InputTestResult::new(result, PathBuf::from(input_path.as_ref()));

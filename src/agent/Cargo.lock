@@ -1432,7 +1432,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "atexit",
- "coverage",
  "debugger",
  "fnv",
  "hex",
@@ -2988,6 +2987,7 @@ dependencies = [
  "async-trait",
  "backoff",
  "base64",
+ "bincode",
  "bytes",
  "derivative",
  "flume",
