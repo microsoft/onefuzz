@@ -2617,6 +2617,7 @@ dependencies = [
  "log",
  "onefuzz-telemetry",
  "reqwest",
+ "thiserror",
  "tokio",
  "wiremock",
 ]
