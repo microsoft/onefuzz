@@ -86,7 +86,12 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         public async Async.Task<string> Render(string template) {
-            return await _renderer.Render(template, _instanceUrl);
+            try {
+                return await _renderer.Render(template, _instanceUrl, strictRendering: true);
+            } catch {
+                _logTracer.Warning($"Failed to render template in strict mode. Falling back to relaxed mode. {template:Template}");
+                return await _renderer.Render(template, _instanceUrl, strictRendering: false);
+            }
         }
 
         public async IAsyncEnumerable<WorkItem> ExistingWorkItems() {
@@ -101,7 +106,7 @@ public class Ado : NotificationsBase, IAdo {
                 filters.Add(key.ToLowerInvariant(), filter);
             }
 
-            var project = filters.ContainsKey("system.teamproject") ? filters["system.teamproject"] : null;
+            var project = filters.TryGetValue("system.teamproject", out var value) ? value : null;
             var validFields = await GetValidFields(project);
 
             var postQueryFilter = new Dictionary<string, string>();
