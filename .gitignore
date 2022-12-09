@@ -18,3 +18,5 @@ lcov.info
 
 /src/ApiService/ApiService/Properties/PublishProfiles/*
 /src/ApiService/ApiService/Properties/ServiceDependencies/*
+
+.vs
