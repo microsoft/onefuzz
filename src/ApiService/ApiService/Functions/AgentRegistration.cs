@@ -72,7 +72,6 @@ public class AgentRegistration {
     private async Async.Task<AgentRegistrationResponse> CreateRegistrationResponse(Service.Pool pool) {
 
 
-```suggestion 
     var baseAddress = _context.Creds.GetInstanceUrl();
     var eventsUrl = new Uri(baseAddress, "/api/agents/events");
     var commandsUrl = new Uri(baseAddress, "/api/agents/commands");
