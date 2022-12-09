@@ -72,8 +72,10 @@ public class AgentRegistration {
     private async Async.Task<AgentRegistrationResponse> CreateRegistrationResponse(Service.Pool pool) {
 
 
-        var eventsUrl = new Uri(_context.ServiceConfiguration.OneFuzzBaseAddress, "/api/agents/events");
-        var commandsUrl = new Uri(_context.ServiceConfiguration.OneFuzzBaseAddress, "/api/agents/commands");
+```suggestion 
+    var baseAddress = _context.Creds.GetInstanceUrl();
+    var eventsUrl = new Uri(baseAddress, "/api/agents/events");
+    var commandsUrl = new Uri(baseAddress, "/api/agents/commands");
 
         var workQueue = await _context.Queue.GetQueueSas(
             _context.PoolOperations.GetPoolQueue(pool.PoolId),
