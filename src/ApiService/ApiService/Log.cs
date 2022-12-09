@@ -187,6 +187,7 @@ public interface ILogTracer {
     void ForceFlush();
     void Info(LogStringHandler message);
     void Warning(LogStringHandler message);
+    void Warning(Error error);
     void Verbose(LogStringHandler message);
 
     ILogTracer WithTag(string k, string v);
@@ -341,6 +342,10 @@ public class LogTracer : ILogTracerInternal {
 
     public void Error(Error error) {
         Error($"{error:Tag:Error}");
+    }
+
+    public void Warning(Error error) {
+        Warning($"{error:Tag:Error}");
     }
 }
 
