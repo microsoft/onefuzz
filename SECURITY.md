@@ -38,4 +38,67 @@ We prefer all communications to be in English.
 
 Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https://www.microsoft.com/en-us/msrc/cvd).
 
+Git--fast-version-control
+Search entire site...
+About
+Documentation
+Downloads
+GUI Clients
+Logos
+Community
+The entire Pro Git book written by Scott Chacon and Ben Straub is available to read online for free. Dead tree versions are available on Amazon.com.
+
+Downloads
+macOS	Windows
+Linux/Unix
+Older releases are available and the Git source repository is on GitHub.
+
+Latest source Release
+2.38.1
+Release Notes (2022-10-07)
+Download for Linux
+GUI Clients
+Git comes with built-in GUI tools (git-gui, gitk), but there are several third-party tools for users looking for a platform-specific experience.
+
+View GUI Clients →
+
+Logos
+Various Git logos in PNG (bitmap) and EPS (vector) formats are available for use in online and print projects.
+
+View Logos →
+
+Git via Git
+If you already have Git installed, you can get the latest development version via Git itself:
+
+git clone https://github.com/git/git
+You can also always browse the current contents of the git repository using the web interface.
+
+About this site
+Patches, suggestions, and comments are welcome.Git is a member of Software Freedom Conservancy
+
+ame: GitHub Actions CI
+on:
+  push:
+    branches: master
+  pull_request: []
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Git repository
+      uses: actions/checkout@v3
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        bundler-cache: true
+
+    - name: Set up Node
+      uses: actions/setup-node@v3
+
+    - name: Bootstrap
+      run: script/bootstrap
+
+    - name: Tests
+      run: script/test
 <!-- END MICROSOFT SECURITY.MD BLOCK -->
