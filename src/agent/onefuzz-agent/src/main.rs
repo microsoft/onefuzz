@@ -20,7 +20,8 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 use anyhow::{Context, Result};
-use clap::Parser;
+use clap::{ArgAction, Parser};
+use onefuzz::machine_id::MachineIdentity;
 use onefuzz::process::ExitStatus;
 use onefuzz_telemetry::{self as telemetry, EventData, Role};
 use std::io::{self, Write};
@@ -59,6 +60,15 @@ struct RunOpt {
     /// the specified directory
     #[clap(short, long = "--redirect-output", parse(from_os_str))]
     redirect_output: Option<PathBuf>,
+
+    #[clap(long = "--machine_id")]
+    machine_id: Option<Uuid>,
+
+    #[clap(long = "--machine_name")]
+    machine_name: Option<String>,
+
+    #[clap(long = "--reset_lock", takes_value = false, action = ArgAction::SetTrue )]
+    reset_node_lock: bool,
 }
 
 fn main() -> Result<()> {
@@ -160,17 +170,10 @@ fn run(opt: RunOpt) -> Result<()> {
     if opt.redirect_output.is_some() {
         return redirect(opt);
     }
-
-    if done::is_agent_done()? {
-        debug!(
-            "agent is done, remove lock ({}) to continue",
-            done::done_path()?.display()
-        );
-        return Ok(());
-    }
-
-    // We can't send telemetry if this fails.
+    let opt_machine_id = opt.machine_id;
+    let opt_machine_name = opt.machine_name.clone();
     let rt = tokio::runtime::Runtime::new()?;
+    let reset_lock = opt.reset_node_lock;
     let config = rt.block_on(load_config(opt));
 
     // We can't send telemetry, because we couldn't get a telemetry key from the config.
@@ -181,7 +184,26 @@ fn run(opt: RunOpt) -> Result<()> {
 
     let config = config?;
 
-    let result = rt.block_on(run_agent(config));
+    let config = StaticConfig {
+        machine_identity: MachineIdentity {
+            machine_id: opt_machine_id.unwrap_or(config.machine_identity.machine_id),
+            machine_name: opt_machine_name.unwrap_or(config.machine_identity.machine_name),
+            ..config.machine_identity
+        },
+        ..config
+    };
+
+    if reset_lock {
+        done::remove_done_lock(config.machine_identity.machine_id)?;
+    } else if done::is_agent_done(config.machine_identity.machine_id)? {
+        debug!(
+            "agent is done, remove lock ({}) to continue",
+            done::done_path(config.machine_identity.machine_id)?.display()
+        );
+        return Ok(());
+    }
+
+    let result = rt.block_on(run_agent(config, reset_lock));
 
     if let Err(err) = &result {
         error!("error running supervisor agent: {:?}", err);
@@ -213,7 +235,7 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
     // that is the case, mark each of the work units within the workset as
     // failed, then exit as a failure.
 
-    if let Some(work) = WorkSet::load_from_fs_context().await? {
+    if let Some(work) = WorkSet::load_from_fs_context(coordinator.get_machine_id()).await? {
         warn!("onefuzz-agent unexpectedly identified an existing workset on start");
         let failure = match failure::read_failure() {
             Ok(value) => format!("onefuzz-agent failed: {}", value),
@@ -251,17 +273,18 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
 
         // force set done semaphore, as to not prevent the supervisor continuing
         // to report the workset as failed.
-        done::set_done_lock().await?;
+        let machine_id = coordinator.get_machine_id();
+        done::set_done_lock(machine_id).await?;
         anyhow::bail!(
             "failed to start due to pre-existing workset config: {}",
-            WorkSet::context_path()?.display()
+            WorkSet::context_path(machine_id)?.display()
         );
     }
 
     Ok(())
 }
 
-async fn run_agent(config: StaticConfig) -> Result<()> {
+async fn run_agent(config: StaticConfig, reset_node: bool) -> Result<()> {
     telemetry::set_property(EventData::InstanceId(config.instance_id));
     telemetry::set_property(EventData::MachineId(config.machine_identity.machine_id));
     telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
@@ -288,6 +311,10 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
 
     let mut reboot = reboot::Reboot;
     let reboot_context = reboot.load_context().await?;
+    if reset_node {
+        WorkSet::remove_context(config.machine_identity.machine_id).await?;
+    }
+
     if reboot_context.is_none() {
         check_existing_worksets(&mut coordinator).await?;
     }
@@ -311,11 +338,14 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
         Box::new(coordinator),
         Box::new(reboot),
         scheduler,
-        Box::new(setup::SetupRunner),
+        Box::new(setup::SetupRunner {
+            machine_id: config.machine_identity.machine_id,
+        }),
         Box::new(work_queue),
-        Box::new(worker::WorkerRunner::new(config.machine_identity)),
+        Box::new(worker::WorkerRunner::new(config.machine_identity.clone())),
         agent_heartbeat,
         config.managed,
+        config.machine_identity.machine_id,
     );
 
     info!("running agent");
