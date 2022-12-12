@@ -150,8 +150,8 @@ where
     .await;
 
     match result {
-        Ok(response)  => Ok(response),
-        Err(error) => Err(error.into())
+        Ok(response) => Ok(response),
+        Err(error) => Err(error.into()),
     }
 }
 
@@ -203,24 +203,15 @@ impl SendRetry for reqwest::RequestBuilder {
 pub fn is_auth_failure(response: &Result<Response>) -> bool {
     // Check both cases to support `error_for_status()`.
     match response {
-        Ok(response) => {
-            response.status() == StatusCode::UNAUTHORIZED
-        }
-        Err(error) => {
-
-            match error.downcast_ref::<ReqwestRetryError>() {
-                Some(ReqwestRetryError::Response {
-                    status_code,
-                    url: _,
-                    source: _,
-                }) => {
-                    status_code == &StatusCode::UNAUTHORIZED
-                }
-                _ => {
-                    false
-                }
-            }
-        }
+        Ok(response) => response.status() == StatusCode::UNAUTHORIZED,
+        Err(error) => match error.downcast_ref::<ReqwestRetryError>() {
+            Some(ReqwestRetryError::Response {
+                status_code,
+                url: _,
+                source: _,
+            }) => status_code == &StatusCode::UNAUTHORIZED,
+            _ => false,
+        },
     }
 }
 
