@@ -46,10 +46,18 @@ fn default_as_true() -> bool {
     true
 }
 
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct RawClientCredentials {
+    client_id: Uuid,
+    client_secret: String,
+    tenant: String,
+    multi_tenant_domain: Option<String>,
+}
+
 // Temporary shim type to bridge the current service-provided config.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 struct RawStaticConfig {
-    pub client_credentials: Option<ClientCredentials>,
+    pub client_credentials: Option<RawClientCredentials>,
 
     pub pool_name: String,
 
@@ -76,7 +84,14 @@ impl StaticConfig {
         let config: RawStaticConfig = serde_json::from_slice(data)?;
 
         let credentials = match config.client_credentials {
-            Some(client) => client.into(),
+            Some(client) => ClientCredentials::new(
+                client.client_id,
+                client.client_secret,
+                config.onefuzz_url.to_string(),
+                client.tenant,
+                client.multi_tenant_domain,
+            )
+            .into(),
             None => {
                 // Remove trailing `/`, which is treated as a distinct resource.
                 let resource = config
@@ -193,6 +208,10 @@ pub struct DynamicConfig {
 impl DynamicConfig {
     pub async fn save(&self) -> Result<()> {
         let path = Self::save_path()?;
+        let dir = path
+            .parent()
+            .ok_or(anyhow!("invalid dynamic config path"))?;
+        fs::create_dir_all(dir).await?;
         let data = serde_json::to_vec(&self)?;
         fs::write(&path, &data)
             .await
