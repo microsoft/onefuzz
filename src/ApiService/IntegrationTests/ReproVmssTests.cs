@@ -187,7 +187,11 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
                 null,
                 null,
                 null,
-                null);
+                null,
+                null,
+                null,
+                null
+                );
 
             JsonSerializer.Serialize(ms, emptyReport, EntityConverter.GetJsonSerializerOptions());
             _ = ms.Seek(0, SeekOrigin.Begin);
