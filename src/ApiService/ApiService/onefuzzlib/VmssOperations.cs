@@ -21,7 +21,7 @@ public interface IVmssOperations {
 
     Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null);
 
-    Async.Task<IDictionary<Guid, string>?> ListInstanceIds(Guid name);
+    Async.Task<IDictionary<Guid, string>> ListInstanceIds(Guid name);
 
     Async.Task<long?> GetVmssSize(Guid name);
 
@@ -167,7 +167,7 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    public async Async.Task<IDictionary<Guid, string>?> ListInstanceIds(Guid name) {
+    public async Async.Task<IDictionary<Guid, string>> ListInstanceIds(Guid name) {
         _log.Verbose($"get instance IDs for scaleset {name:Tag:VmssName}");
         try {
             var results = new Dictionary<Guid, string>();
@@ -183,7 +183,7 @@ public class VmssOperations : IVmssOperations {
             return results;
         } catch (RequestFailedException ex) when (ex.Status == 404) {
             _log.Verbose($"scaleset does not exist {name:Tag:VmssName}");
-            return null;
+            return new Dictionary<Guid, string>();
         }
     }
 
@@ -448,7 +448,7 @@ public class VmssOperations : IVmssOperations {
         // only initialize this if we find a missing InstanceId
         var machineToInstanceLazy = new Lazy<Task<IDictionary<Guid, string>>>(async () => {
             var machineToInstance = await ListInstanceIds(scalesetId);
-            if (machineToInstance is null) {
+            if (!machineToInstance.Any()) {
                 throw new Exception($"cannot find nodes in scaleset {scalesetId}: scaleset does not exist");
             }
 
