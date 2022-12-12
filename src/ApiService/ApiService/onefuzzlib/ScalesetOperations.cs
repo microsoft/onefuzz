@@ -514,7 +514,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         //ground truth of existing nodes
         var azureNodes = await _context.VmssOperations.ListInstanceIds(scaleSet.ScalesetId);
-        if (azureNodes is null) {
+        if (!azureNodes.Any()) {
             // didn't find scaleset
             return (false, scaleSet);
         }

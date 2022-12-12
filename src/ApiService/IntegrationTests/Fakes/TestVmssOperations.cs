@@ -40,7 +40,7 @@ sealed class TestVmssOperations : IVmssOperations {
     }
 
 
-    public Task<IDictionary<Guid, string>?> ListInstanceIds(Guid name) {
+    public Task<IDictionary<Guid, string>> ListInstanceIds(Guid name) {
         throw new NotImplementedException();
     }
 
