@@ -23,7 +23,7 @@ fn main() -> Result<()> {
 
 #[cfg(target_os = "linux")]
 fn main() -> Result<()> {
-    use coverage::elf::{ElfContext, ElfSancovBasicBlockProvider};
+    use coverage_legacy::elf::{ElfContext, ElfSancovBasicBlockProvider};
     use goblin::elf::Elf;
 
     let opt = Opt::from_args();

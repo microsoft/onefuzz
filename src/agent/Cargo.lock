@@ -504,7 +504,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc"
 
 [[package]]
-name = "coverage"
+name = "coverage-legacy"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1432,7 +1432,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "atexit",
- "coverage",
  "debugger",
  "fnv",
  "hex",
@@ -1969,7 +1968,7 @@ dependencies = [
  "backoff",
  "chrono",
  "clap 2.34.0",
- "coverage",
+ "coverage-legacy",
  "crossterm 0.22.1",
  "env_logger 0.9.0",
  "flume",
