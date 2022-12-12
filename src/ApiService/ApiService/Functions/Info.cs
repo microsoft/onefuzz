@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -33,11 +34,16 @@ public class Info {
             var buildId = ReadResource(asm, "ApiService.onefuzzlib.build.id");
             var versionString = context.ServiceConfiguration.OneFuzzVersion;
 
+            var dotnetVersionString = $"{RuntimeInformation.FrameworkDescription} ({RuntimeInformation.RuntimeIdentifier})";
+
             return new InfoResponse(
                 ResourceGroup: resourceGroup,
                 Subscription: subscription,
                 Region: region,
-                Versions: new Dictionary<string, InfoVersion> { { "onefuzz", new(gitVersion, buildId, versionString) } },
+                Versions: new Dictionary<string, InfoVersion> {
+                    { "onefuzz", new(gitVersion, buildId, versionString) },
+                    { "dotnet", new(null, null, dotnetVersionString) },
+                },
                 InstanceId: await _context.Containers.GetInstanceId(),
                 InsightsAppid: config.ApplicationInsightsAppId,
                 InsightsInstrumentationKey: config.ApplicationInsightsInstrumentationKey);
