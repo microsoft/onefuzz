@@ -43,7 +43,7 @@ public interface IVmssOperations {
 
     IAsyncEnumerable<VirtualMachineScaleSetVmResource> ListVmss(Guid name);
     Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IEnumerable<Node> nodes);
-    Async.Task DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes);
+    Async.Task<OneFuzzResultVoid> DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes);
 }
 
 public class VmssOperations : IVmssOperations {
@@ -526,15 +526,16 @@ public class VmssOperations : IVmssOperations {
         return OneFuzzResultVoid.Ok;
     }
 
-    public async Async.Task DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes) {
+    public async Async.Task<OneFuzzResultVoid> DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes) {
         var result = await CheckCanUpdate(scalesetId);
         if (!result.IsOk) {
-            throw new Exception($"cannot delete nodes from scaleset {scalesetId} : {result.ErrorV}");
+            _log.Warning($"cannot delete nodes from scaleset {scalesetId} : {result.ErrorV}");
+            return OneFuzzResultVoid.Error(result.ErrorV);
         }
 
         var instanceIds = await ResolveInstanceIds(scalesetId, nodes);
         if (!instanceIds.Any()) {
-            return;
+            return OneFuzzResultVoid.Ok;
         }
 
         var subscription = _creds.GetSubscription();
@@ -553,6 +554,6 @@ public class VmssOperations : IVmssOperations {
         if (r.GetRawResponse().IsError) {
             _log.Error($"failed to start deletion of scaleset {scalesetId:Tag:ScalesetId} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
         }
-        return;
+        return OneFuzzResultVoid.Ok;
     }
 }
