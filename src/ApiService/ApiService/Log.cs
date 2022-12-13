@@ -61,7 +61,7 @@ public interface ILog {
     void Flush();
 }
 
-class AppInsights : ILog {
+sealed class AppInsights : ILog {
     private readonly TelemetryClient _telemetryClient;
 
     public AppInsights(TelemetryClient client) {
@@ -128,7 +128,7 @@ class AppInsights : ILog {
 }
 
 //TODO: Should we write errors and Exception to std err ? 
-class Console : ILog {
+sealed class Console : ILog {
 
     private static string DictToString<T>(IReadOnlyDictionary<string, T>? d) {
         if (d is null) {

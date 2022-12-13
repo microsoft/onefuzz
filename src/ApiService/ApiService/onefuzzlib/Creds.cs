@@ -161,7 +161,7 @@ public sealed class Creds : ICreds {
 }
 
 
-class GraphQueryException : Exception {
+sealed class GraphQueryException : Exception {
     public GraphQueryException(string? message) : base(message) {
     }
 }

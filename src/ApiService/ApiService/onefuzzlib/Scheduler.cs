@@ -118,9 +118,9 @@ public class Scheduler : IScheduler {
     }
 
 
-    record BucketConfig(long count, bool reboot, Container setupContainer, string? setupScript, Pool pool);
+    sealed record BucketConfig(long count, bool reboot, Container setupContainer, string? setupScript, Pool pool);
 
-    record PoolKey(
+    sealed record PoolKey(
         PoolName? poolName = null,
         (string sku, string image)? vm = null);
 
