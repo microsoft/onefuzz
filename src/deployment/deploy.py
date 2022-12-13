@@ -299,7 +299,7 @@ class Client:
             "cli_password", object_id, self.get_subscription_id()
         )
 
-    def get_instance_urls(self) -> List[str]:
+    def get_instance_url(self) -> str:
         # The url to access the instance
         # This also represents the legacy identifier_uris of the application
         # registration
@@ -308,7 +308,7 @@ class Client:
         else:
             return "https://%s.azurewebsites.net" % self.application_name
 
-    def get_identifier_urls(self) -> List[str]:
+    def get_identifier_url(self) -> str:
         # This is used to identify the application registration via the
         # identifier_uris field.  Depending on the environment this value needs
         # to be from an approved domain The format of this value is derived
@@ -488,7 +488,7 @@ class Client:
         # find any identifier URIs that need updating
         identifier_uris: List[str] = app["identifierUris"]
         updated_identifier_uris = list(
-            set(identifier_uris) | set(self.get_identifier_urls())
+            set(identifier_uris) | set(self.get_identifier_url())
         )
         if len(updated_identifier_uris) > len(identifier_uris):
             update_properties["identifierUris"] = updated_identifier_uris
@@ -535,7 +535,7 @@ class Client:
 
         params = {
             "displayName": self.application_name,
-            "identifierUris": self.get_identifier_urls(),
+            "identifierUris": self.get_identifier_url(),
             "signInAudience": self.get_signin_audience(),
             "appRoles": app_roles,
             "api": {
@@ -559,7 +559,7 @@ class Client:
                 },
                 "redirectUris": [
                     f"{url}/.auth/login/aad/callback"
-                    for url in self.get_instance_urls()
+                    for url in self.get_instance_url()
                 ],
             },
             "requiredResourceAccess": [
@@ -636,8 +636,8 @@ class Client:
             "%Y-%m-%dT%H:%M:%SZ"
         )
 
-        app_func_audiences = self.get_identifier_urls().copy()
-        app_func_audiences.extend(self.get_instance_urls())
+        app_func_audiences = self.get_identifier_url().copy()
+        app_func_audiences.extend(self.get_instance_url())
 
         if self.multi_tenant_domain:
             # clear the value in the Issuer Url field:
