@@ -636,7 +636,7 @@ class Client:
             "%Y-%m-%dT%H:%M:%SZ"
         )
 
-        app_func_audiences = self.get_identifier_url().copy()
+        app_func_audiences = self.get_identifier_url()
         app_func_audiences.extend(self.get_instance_url())
 
         if self.multi_tenant_domain:
