@@ -77,7 +77,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
             req,
             new Error(
                 ErrorCode.UNAUTHORIZED,
-                new string[] { "Unrecognized agent" }
+                new string[] { reason ?? "Unrecognized agent" }
             ),
             "token verification",
             HttpStatusCode.Unauthorized
