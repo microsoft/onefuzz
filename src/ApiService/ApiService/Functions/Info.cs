@@ -42,7 +42,7 @@ public class Info {
                 Region: region,
                 Versions: new Dictionary<string, InfoVersion> {
                     { "onefuzz", new(gitVersion, buildId, versionString) },
-                    { "dotnet", new(null, null, dotnetVersionString) },
+                    { "dotnet", new("", "", dotnetVersionString) },
                 },
                 InstanceId: await _context.Containers.GetInstanceId(),
                 InsightsAppid: config.ApplicationInsightsAppId,

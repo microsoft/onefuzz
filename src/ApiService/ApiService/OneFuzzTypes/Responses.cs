@@ -66,8 +66,8 @@ public record InfoResponse(
 ) : BaseResponse();
 
 public record InfoVersion(
-    string? Git,
-    string? Build,
+    string Git,
+    string Build,
     string Version);
 
 public record AgentRegistrationResponse(
