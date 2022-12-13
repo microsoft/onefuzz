@@ -10,11 +10,11 @@ import pkgutil
 import re
 import subprocess  # nosec
 import time
-from urllib.parse import urlparse
 import uuid
 from enum import Enum
 from shutil import which
 from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from urllib.parse import urlparse
 from uuid import UUID
 
 import semver
@@ -1271,7 +1271,7 @@ class Pool(Endpoint):
 
         config = pool.config
         if not pool.managed:
-            config.client_credentials = models.ClientCredentials(
+            config.client_credentials = models.ClientCredentials(  # nosec
                 client_id=uuid.UUID(int=0),
                 client_secret="<client_secret>",
                 resource=self.onefuzz._backend.config.endpoint,
