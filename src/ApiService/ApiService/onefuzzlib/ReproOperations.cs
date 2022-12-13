@@ -281,7 +281,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
                 var linuxCmd = $"while :; do {string.Format(CultureInfo.InvariantCulture, gdbFmt, "localhost:1337", task.Config.Task.TargetExe, report?.InputBlob?.Name)}; done";
                 files.Add("repro.sh", linuxCmd);
 
-                var linuxCmdStdOut = $"#!/bin/bash\n{string.Format(CultureInfo.InvariantCulture, gdbFmt, "-", task.Config.Task.TargetExe, report?.InputBlob?.Name)}";
+                var linuxCmdStdOut = $"#!/bin/bash\n{string.Format(CultureInfo.InvariantCulture, gdbFmt, "-", task.Config.Task.TargetExe, report?.InputBlob?.Name)}\nsleep 10";
                 files.Add("repro-stdout.sh", linuxCmdStdOut);
                 break;
             default: throw new NotSupportedException($"invalid task os: {task.Os}");
