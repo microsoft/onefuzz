@@ -162,9 +162,10 @@ namespace ApiService.TestHooks {
             Guid? scaleSetId = UriExtension.GetGuid("scaleSetId", query);
 
             List<NodeState>? states = default;
-            if (query.ContainsKey("states")) {
-                states = query["states"].Split('-').Select(s => Enum.Parse<NodeState>(s)).ToList();
+            if (query.TryGetValue("states", out var queryStates)) {
+                states = queryStates.Split('-').Select(s => Enum.Parse<NodeState>(s)).ToList();
             }
+
             string? poolNameString = UriExtension.GetString("poolName", query);
 
             PoolName? poolName = poolNameString is null ? null : PoolName.Parse(poolNameString);
@@ -214,8 +215,8 @@ namespace ApiService.TestHooks {
             Guid machineId = Guid.Parse(query["machineId"]);
 
             Guid? scaleSetId = default;
-            if (query.ContainsKey("scaleSetId")) {
-                scaleSetId = Guid.Parse(query["scaleSetId"]);
+            if (query.TryGetValue("scaleSetId", out var id)) {
+                scaleSetId = Guid.Parse(id);
             }
 
             string version = query["version"];

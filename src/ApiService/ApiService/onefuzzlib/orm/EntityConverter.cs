@@ -79,14 +79,16 @@ public record EntityProperty(
         DefaultValueAttribute? defaultValue,
         ParameterInfo parameterInfo
     );
-public record EntityInfo(Type type, ILookup<string, EntityProperty> properties, Func<object?[], object> constructor);
 
-class OnefuzzNamingPolicy : JsonNamingPolicy {
+public sealed record EntityInfo(Type type, ILookup<string, EntityProperty> properties, Func<object?[], object> constructor);
+
+sealed class OnefuzzNamingPolicy : JsonNamingPolicy {
     public override string ConvertName(string name) {
         return CaseConverter.PascalToSnake(name);
     }
 }
-public class EntityConverter {
+
+public sealed class EntityConverter {
 
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
     private static readonly JsonSerializerOptions _options = new() {

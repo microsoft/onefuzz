@@ -505,7 +505,7 @@ public class Config : IConfig {
     }
 
     private static ResultVoid<TaskConfigError> CheckContainer(Compare compare, long expected, ContainerType containerType, Dictionary<ContainerType, List<Container>> containers) {
-        var actual = containers.ContainsKey(containerType) ? containers[containerType].Count : 0;
+        var actual = containers.TryGetValue(containerType, out var container) ? container.Count : 0;
 
         if (!CheckVal(compare, expected, actual)) {
             return ResultVoid<TaskConfigError>.Error(

@@ -122,14 +122,14 @@ public record EventTaskFailed(
 
 
 [EventType(EventType.JobCreated)]
-record EventJobCreated(
+sealed record EventJobCreated(
    Guid JobId,
    JobConfig Config,
    UserInfo? UserInfo
    ) : BaseEvent();
 
 
-public record JobTaskStopped(
+public sealed record JobTaskStopped(
     Guid TaskId,
     TaskType TaskType,
     Error? Error
@@ -137,7 +137,7 @@ public record JobTaskStopped(
 
 
 [EventType(EventType.JobStopped)]
-public record EventJobStopped(
+public sealed record EventJobStopped(
     Guid JobId,
     JobConfig Config,
     UserInfo? UserInfo,

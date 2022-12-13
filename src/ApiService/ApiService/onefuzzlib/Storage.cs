@@ -187,7 +187,7 @@ public sealed class Storage : IStorage {
     // According to guidance these should be reused as they manage HttpClients,
     // so we cache them all by account:
 
-    record BlobClientKey(string AccountName);
+    sealed record BlobClientKey(string AccountName);
     public Task<BlobServiceClient> GetBlobServiceClientForAccountName(string accountName) {
         return _cache.GetOrCreate(new BlobClientKey(accountName), async cacheEntry => {
             cacheEntry.Priority = CacheItemPriority.NeverRemove;
@@ -197,7 +197,7 @@ public sealed class Storage : IStorage {
         });
     }
 
-    record TableClientKey(string AccountName);
+    sealed record TableClientKey(string AccountName);
     public Task<TableServiceClient> GetTableServiceClientForAccountName(string accountName)
         => _cache.GetOrCreate(new TableClientKey(accountName), async cacheEntry => {
             cacheEntry.Priority = CacheItemPriority.NeverRemove;
@@ -206,7 +206,7 @@ public sealed class Storage : IStorage {
             return new TableServiceClient(GetTableEndpoint(accountName), skc);
         });
 
-    record QueueClientKey(string AccountName);
+    sealed record QueueClientKey(string AccountName);
     private static readonly QueueClientOptions _queueClientOptions = new() { MessageEncoding = QueueMessageEncoding.Base64 };
     public Task<QueueServiceClient> GetQueueServiceClientForAccountName(string accountName)
         => _cache.GetOrCreateAsync(new QueueClientKey(accountName), async cacheEntry => {
