@@ -92,7 +92,7 @@ class PoolCreate(BaseRequest):
     os: OS
     arch: Architecture
     managed: bool
-    client_id: Optional[UUID]
+    object_id: Optional[UUID]
     autoscale: Optional[AutoScaleConfig]
 
 

@@ -6,14 +6,14 @@ public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {
     Async.Task<OneFuzzResult<Pool>> GetByName(PoolName poolName);
     Async.Task<OneFuzzResult<Pool>> GetById(Guid poolId);
     Task<bool> ScheduleWorkset(Pool pool, WorkSet workSet);
-    IAsyncEnumerable<Pool> GetByClientId(Guid clientId);
+    IAsyncEnumerable<Pool> GetByObjectId(Guid objectId);
     string GetPoolQueue(Guid poolId);
     Async.Task<List<ScalesetSummary>> GetScalesetSummary(PoolName name);
     Async.Task<List<WorkSetSummary>> GetWorkQueue(Guid poolId, PoolState state);
     IAsyncEnumerable<Pool> SearchStates(IEnumerable<PoolState> states);
     Async.Task<Pool> SetShutdown(Pool pool, bool Now);
 
-    Async.Task<Pool> Create(PoolName name, Os os, Architecture architecture, bool managed, Guid? clientId = null);
+    Async.Task<Pool> Create(PoolName name, Os os, Architecture architecture, bool managed, Guid? objectId = null);
     new Async.Task Delete(Pool pool);
 
     // state transitions:
@@ -32,7 +32,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
     }
 
-    public async Async.Task<Pool> Create(PoolName name, Os os, Architecture architecture, bool managed, Guid? clientId = null) {
+    public async Async.Task<Pool> Create(PoolName name, Os os, Architecture architecture, bool managed, Guid? objectId = null) {
         var newPool = new Service.Pool(
         PoolId: Guid.NewGuid(),
         State: PoolState.Init,
@@ -40,7 +40,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         Os: os,
         Managed: managed,
         Arch: architecture,
-        ClientId: clientId);
+        ObjectId: objectId);
 
         var r = await Insert(newPool);
         if (!r.IsOk) {
@@ -87,8 +87,8 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         return await _context.Queue.QueueObject(GetPoolQueue(pool.PoolId), workSet, StorageType.Corpus);
     }
 
-    public IAsyncEnumerable<Pool> GetByClientId(Guid clientId) {
-        return QueryAsync(filter: $"client_id eq '{clientId}'");
+    public IAsyncEnumerable<Pool> GetByObjectId(Guid objectId) {
+        return QueryAsync(filter: $"object_id eq '{objectId}'");
     }
 
     public string GetPoolQueue(Guid poolId)

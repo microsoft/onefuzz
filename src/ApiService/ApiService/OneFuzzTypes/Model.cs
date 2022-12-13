@@ -645,7 +645,7 @@ public record Pool(
     bool Managed,
     Architecture Arch,
     PoolState State,
-    Guid? ClientId = null
+    Guid? ObjectId = null
 ) : StatefulEntityBase<PoolState>(State) {
     public List<Node>? Nodes { get; set; }
     public AgentConfig? Config { get; set; }
