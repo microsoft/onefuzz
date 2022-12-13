@@ -10,6 +10,7 @@ import pkgutil
 import re
 import subprocess  # nosec
 import time
+from urllib.parse import urlparse
 import uuid
 from enum import Enum
 from shutil import which
@@ -1267,6 +1268,16 @@ class Pool(Endpoint):
 
         if pool.config is None:
             raise Exception("Missing AgentConfig in response")
+
+        config = pool.config
+        if not pool.managed:
+            config.client_credentials = models.ClientCredentials(
+                client_id=uuid.UUID(int=0),
+                client_secret="<client_secret>",
+                resource=self.onefuzz._backend.config.endpoint,
+                tenant= urlparse(self.onefuzz._backend.config.authority).path.strip("/") ,
+                multi_tenant_domain=self.onefuzz._backend.config.tenant_domain,
+            )
 
         return pool.config
 

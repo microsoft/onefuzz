@@ -28,6 +28,8 @@ public sealed class TestServiceConfiguration : IServiceConfig {
     public string? MultiTenantDomain => null;
 
     public string? OneFuzzInstanceName => "UnitTestInstance";
+    
+    public string? OneFuzzEndpoint => throw new System.NotImplementedException();
 
     // -- Remainder not implemented --
 

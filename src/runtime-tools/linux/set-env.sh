@@ -1,0 +1,11 @@
+INSTANCE_OS_SETUP="/onefuzz/instance-specific-setup/linux/setup.sh"
+INSTANCE_SETUP="/onefuzz/instance-specific-setup/setup.sh"
+USER_SETUP="/onefuzz/setup/setup.sh"
+TASK_SETUP="/onefuzz/bin/task-setup.sh"
+MANAGED_SETUP="/onefuzz/bin/managed.sh"
+SCALESET_SETUP="/onefuzz/bin/scaleset-setup.sh"
+DOTNET_VERSIONS=('7.0.100' '6.0.403')
+export DOTNET_ROOT=/onefuzz/tools/dotnet
+export DOTNET_CLI_HOME="$DOTNET_ROOT"
+export ONEFUZZ_ROOT=/onefuzz
+export LLVM_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer

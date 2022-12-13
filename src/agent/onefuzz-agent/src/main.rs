@@ -170,8 +170,6 @@ fn run(opt: RunOpt) -> Result<()> {
     if opt.redirect_output.is_some() {
         return redirect(opt);
     }
-    let opt_machine_id = opt.machine_id;
-    let opt_machine_name = opt.machine_name.clone();
     let rt = tokio::runtime::Runtime::new()?;
     let reset_lock = opt.reset_node_lock;
     let config = rt.block_on(load_config(opt));
@@ -183,15 +181,6 @@ fn run(opt: RunOpt) -> Result<()> {
     }
 
     let config = config?;
-
-    let config = StaticConfig {
-        machine_identity: MachineIdentity {
-            machine_id: opt_machine_id.unwrap_or(config.machine_identity.machine_id),
-            machine_name: opt_machine_name.unwrap_or(config.machine_identity.machine_name),
-            ..config.machine_identity
-        },
-        ..config
-    };
 
     if reset_lock {
         done::remove_done_lock(config.machine_identity.machine_id)?;
@@ -218,10 +207,18 @@ fn run(opt: RunOpt) -> Result<()> {
 }
 
 async fn load_config(opt: RunOpt) -> Result<StaticConfig> {
-    info!("loading supervisor agent config");
+    info!("loading supervisor agent config: {:?}", opt);
+    let opt_machine_id = opt.machine_id;
+    let opt_machine_name = opt.machine_name.clone();
+
+    let machine_identity = opt_machine_id.map(|machine_id| MachineIdentity {
+        machine_id,
+        machine_name: opt_machine_name.unwrap_or(format!("{}", machine_id)),
+        scaleset_name: None,
+    });
 
     let config = match &opt.config_path {
-        Some(config_path) => StaticConfig::from_file(config_path).await?,
+        Some(config_path) => StaticConfig::from_file(config_path, machine_identity).await?,
         None => StaticConfig::from_env()?,
     };
 

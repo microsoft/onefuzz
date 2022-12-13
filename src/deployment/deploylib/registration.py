@@ -861,11 +861,11 @@ def main() -> None:
         "--registration_name", help="the name of the cli registration"
     )
     register_app_parser = subparsers.add_parser("register_app", parents=[parent_parser])
-    register_app_parser.add_argument("--app_id", help="the application id to register")
+    register_app_parser.add_argument("--app_id", help="the application id to register", required=True)
     register_app_parser.add_argument(
         "--role",
         help=f"the role of the application to register.  Valid values: {', '.join([member.value for member in OnefuzzAppRole])}",
-    )
+        required=True,
 
     args = parser.parse_args()
     if args.verbose:
