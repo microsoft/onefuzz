@@ -589,7 +589,7 @@ class Repro(Endpoint):
                 gdb_script += [debug_command, "quit"]
 
             with temp_file("gdb.script", "\n".join(gdb_script)) as gdb_script_path:
-                dbg = ["gdb", "--silent", "--command", gdb_script_path]
+                dbg = ["gdb", "--silent", "-v", "--command", gdb_script_path]
 
                 if debug_command:
                     dbg += ["--batch"]
