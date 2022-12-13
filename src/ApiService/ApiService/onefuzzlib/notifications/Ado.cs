@@ -56,7 +56,7 @@ public class Ado : NotificationsBase, IAdo {
         return errorCodes.Any(code => errorStr.Contains(code));
     }
 
-    class AdoConnector {
+    sealed class AdoConnector {
         private readonly AdoTemplate _config;
         private readonly Renderer _renderer;
         private readonly string _project;
@@ -187,7 +187,7 @@ public class Ado : NotificationsBase, IAdo {
 
             var document = new JsonPatchDocument();
             foreach (var field in _config.OnDuplicate.Increment) {
-                var value = item.Fields.ContainsKey(field) ? int.Parse(JsonSerializer.Serialize(item.Fields[field])) : 0;
+                var value = item.Fields.TryGetValue(field, out var fieldValue) ? int.Parse(JsonSerializer.Serialize(fieldValue)) : 0;
                 value++;
                 document.Add(new JsonPatchOperation() {
                     Operation = VisualStudio.Services.WebApi.Patch.Operation.Replace,
@@ -207,11 +207,11 @@ public class Ado : NotificationsBase, IAdo {
 
             var systemState = JsonSerializer.Serialize(item.Fields["System.State"]);
             var stateUpdated = false;
-            if (_config.OnDuplicate.SetState.ContainsKey(systemState)) {
+            if (_config.OnDuplicate.SetState.TryGetValue(systemState, out var v)) {
                 document.Add(new JsonPatchOperation() {
                     Operation = VisualStudio.Services.WebApi.Patch.Operation.Replace,
                     Path = "/fields/System.State",
-                    Value = _config.OnDuplicate.SetState[systemState]
+                    Value = v
                 });
 
                 stateUpdated = true;

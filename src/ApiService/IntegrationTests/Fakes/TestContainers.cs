@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service;
 
 // TestContainers class allows use of InstanceID without having to set it up in blob storage
-class TestContainers : Containers {
+sealed class TestContainers : Containers {
     public TestContainers(ILogTracer log, IStorage storage, IServiceConfig config)
         : base(log, storage, config) { }
 

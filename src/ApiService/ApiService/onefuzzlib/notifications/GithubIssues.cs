@@ -35,7 +35,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         var handler = await GithubConnnector.GithubConnnectorCreator(config, container, filename, renderer, _context.Creds.GetInstanceUrl(), _context, _logTracer);
         await handler.Process();
     }
-    class GithubConnnector {
+    sealed class GithubConnnector {
         private readonly GitHubClient _gh;
         private readonly GithubIssuesTemplate _config;
         private readonly Renderer _renderer;

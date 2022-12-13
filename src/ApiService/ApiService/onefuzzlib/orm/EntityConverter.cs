@@ -81,7 +81,7 @@ public record EntityProperty(
     );
 public record EntityInfo(Type type, ILookup<string, EntityProperty> properties, Func<object?[], object> constructor);
 
-class OnefuzzNamingPolicy : JsonNamingPolicy {
+sealed class OnefuzzNamingPolicy : JsonNamingPolicy {
     public override string ConvertName(string name) {
         return CaseConverter.PascalToSnake(name);
     }
