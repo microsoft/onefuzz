@@ -315,19 +315,9 @@ class Client:
         # from the default value proposed by azure when creating an application
         # registration api://{guid}/...
         if self.multi_tenant_domain:
-            return [
-                "api://%s/%s" % (self.multi_tenant_domain, name)
-                for name in [
-                    self.application_name,
-                ]
-            ]
+            return "https://%s/%s" % (self.multi_tenant_domain, self.application_name)
         else:
-            return [
-                "api://%s.azurewebsites.net" % name
-                for name in [
-                    self.application_name,
-                ]
-            ]
+            return "https://%s.azurewebsites.net" % self.application_name
 
     def get_signin_audience(self) -> str:
         # https://docs.microsoft.com/en-us/azure/active-directory/develop/supported-accounts-validation
