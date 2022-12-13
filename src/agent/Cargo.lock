@@ -2988,6 +2988,7 @@ dependencies = [
  "async-trait",
  "backoff",
  "base64",
+ "bincode",
  "bytes",
  "derivative",
  "flume",

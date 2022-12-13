@@ -304,19 +304,9 @@ class Client:
         # This also represents the legacy identifier_uris of the application
         # registration
         if self.multi_tenant_domain:
-            return [
-                "https://%s/%s" % (self.multi_tenant_domain, name)
-                for name in [
-                    self.application_name,
-                ]
-            ]
+            return "https://%s/%s" % (self.multi_tenant_domain, self.application_name)
         else:
-            return [
-                "https://%s.azurewebsites.net" % name
-                for name in [
-                    self.application_name,
-                ]
-            ]
+            return "https://%s.azurewebsites.net" % self.application_name
 
     def get_identifier_urls(self) -> List[str]:
         # This is used to identify the application registration via the
