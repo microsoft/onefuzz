@@ -313,7 +313,10 @@ class Client:
         else:
             return [
                 "https://%s.azurewebsites.net" % name
-                for name in [
+        if self.multi_tenant_domain:
+            return "https://%s/%s" % (self.multi_tenant_domain, self.application_name)
+        else:
+            return "https://%s.azurewebsites.net" % self.application_name
                     self.application_name,
                 ]
             ]
