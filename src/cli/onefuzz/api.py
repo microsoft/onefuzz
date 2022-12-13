@@ -581,7 +581,8 @@ class Repro(Endpoint):
 
             gdb_script = [
                 "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
-                % " ".join(ssh_cmd)
+                % " ".join(ssh_cmd),
+                "shell sleep 5",  # give gdbserver some time to start up
             ]
 
             if debug_command:
