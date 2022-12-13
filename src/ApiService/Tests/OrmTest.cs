@@ -10,7 +10,7 @@ using Xunit;
 namespace Tests {
     public class OrmTest {
 
-        class TestObject {
+        sealed class TestObject {
             public String? TheName { get; set; }
             public TestEnum TheEnum { get; set; }
             public TestFlagEnum TheFlag { get; set; }
@@ -34,7 +34,7 @@ namespace Tests {
             Two = 2
         }
 
-        record Entity1(
+        sealed record Entity1(
             [PartitionKey] Guid Id,
             [RowKey] string TheName,
             DateTimeOffset TheDate,
@@ -241,7 +241,7 @@ namespace Tests {
         }
 
 
-        record Entity2(
+        sealed record Entity2(
             [PartitionKey] int Id,
             [RowKey] string TheName
             ) : EntityBase();
@@ -257,7 +257,7 @@ namespace Tests {
             Assert.Equal(expected.TheName, actual.TheName);
         }
 
-        record Entity3(
+        sealed record Entity3(
             [PartitionKey] int Id,
             [RowKey] string TheName,
             Container Container
@@ -292,7 +292,7 @@ namespace Tests {
         }
 
 
-        record Entity4(
+        sealed record Entity4(
                 [RowKey][PartitionKey] int Id,
                 string TheName,
                 Container Container
@@ -315,7 +315,7 @@ namespace Tests {
         }
 
 
-        record TestEnumObject(TestEnumValue TheEnumValue);
+        sealed record TestEnumObject(TestEnumValue TheEnumValue);
 
         [Fact]
         public void TestSerializeEnumValue() {
@@ -331,7 +331,7 @@ namespace Tests {
         }
 
 
-        record TestNullField(int? Id, string? Name, TestObject? Obj) : EntityBase();
+        sealed record TestNullField(int? Id, string? Name, TestObject? Obj) : EntityBase();
 
         [Fact]
         public void TestNullValue() {
@@ -361,7 +361,7 @@ namespace Tests {
             Test_2 = 1 << 1,
             TEST3 = 1 << 2,
         }
-        record TestEntity3(DoNotRename Enum, DoNotRenameFlag flag) : EntityBase();
+        sealed record TestEntity3(DoNotRename Enum, DoNotRenameFlag flag) : EntityBase();
 
 
         [Fact]
@@ -380,13 +380,13 @@ namespace Tests {
         }
 
 
-        class TestClass {
+        sealed class TestClass {
             public string Name { get; }
             public TestClass() {
                 Name = "testName";
             }
         }
-        record TestIinit([DefaultValue(InitMethod.DefaultConstructor)] TestClass testClass, string test = "default_test") : EntityBase();
+        sealed record TestIinit([DefaultValue(InitMethod.DefaultConstructor)] TestClass testClass, string test = "default_test") : EntityBase();
 
         [Fact]
         public void TestInitValue() {
@@ -399,7 +399,7 @@ namespace Tests {
         }
 
 
-        record TestKeyGetter([PartitionKey] Guid PartitionKey, [RowKey] Guid RowKey);
+        sealed record TestKeyGetter([PartitionKey] Guid PartitionKey, [RowKey] Guid RowKey);
         [Fact]
         public void TestKeyGetters() {
             var test = new TestKeyGetter(Guid.NewGuid(), Guid.NewGuid());
