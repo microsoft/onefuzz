@@ -6,7 +6,7 @@ namespace Tests;
 
 public class ValidatedStringTests {
 
-    record ThingContainingPoolName(PoolName PoolName);
+    sealed record ThingContainingPoolName(PoolName PoolName);
 
     [Fact]
     public void PoolNameDeserializesFromString() {

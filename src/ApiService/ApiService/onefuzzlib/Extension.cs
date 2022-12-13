@@ -130,7 +130,7 @@ public class Extensions : IExtensions {
         };
     }
 
-    private class Settings {
+    private sealed class Settings {
         [JsonPropertyName("GCS_AUTO_CONFIG")]
         public bool GCS_AUTO_CONFIG { get; set; } = true;
     }
