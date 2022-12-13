@@ -187,6 +187,9 @@ public class TemplateTests {
             null,
             null,
             null,
+            null,
+            null,
+            null,
             null
         );
     }

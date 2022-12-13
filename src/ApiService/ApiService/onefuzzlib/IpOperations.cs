@@ -232,16 +232,16 @@ public class IpOperations : IIpOperations {
     /// the api does not seems to support this :
     /// https://github.com/Azure/azure-sdk-for-net/issues/30253#issuecomment-1202447362
     /// </summary>
-    class NetworkInterfaceQuery {
-        record IpConfigurationsProperties(string privateIPAddress);
+    sealed class NetworkInterfaceQuery {
+        sealed record IpConfigurationsProperties(string privateIPAddress);
 
-        record IpConfigurations(IpConfigurationsProperties properties);
+        sealed record IpConfigurations(IpConfigurationsProperties properties);
 
-        record NetworkInterfaceProperties(List<IpConfigurations> ipConfigurations);
+        sealed record NetworkInterfaceProperties(List<IpConfigurations> ipConfigurations);
 
-        record NetworkInterface(NetworkInterfaceProperties properties);
+        sealed record NetworkInterface(NetworkInterfaceProperties properties);
 
-        record ValueList<T>(List<T> value);
+        sealed record ValueList<T>(List<T> value);
 
         private readonly IOnefuzzContext _context;
 
