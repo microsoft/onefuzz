@@ -315,9 +315,9 @@ class Client:
         # from the default value proposed by azure when creating an application
         # registration api://{guid}/...
         if self.multi_tenant_domain:
-            return "https://%s/%s" % (self.multi_tenant_domain, self.application_name)
+            return "api://%s/%s" % (self.multi_tenant_domain, self.application_name)
         else:
-            return "https://%s.azurewebsites.net" % self.application_name
+            return "api://%s.azurewebsites.net" % self.application_name
 
     def get_signin_audience(self) -> str:
         # https://docs.microsoft.com/en-us/azure/active-directory/develop/supported-accounts-validation
@@ -635,9 +635,9 @@ class Client:
         expiry = (datetime.now(TZ_UTC) + timedelta(days=365)).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
-
-        app_func_audiences = self.get_identifier_url()
-        app_func_audiences.extend(self.get_instance_url())
+        
+        app_func_audiences = [self.get_identifier_url()]
+        app_func_audiences.extend([self.get_instance_url()])
 
         if self.multi_tenant_domain:
             # clear the value in the Issuer Url field:
