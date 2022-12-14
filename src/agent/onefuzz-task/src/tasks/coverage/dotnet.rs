@@ -267,7 +267,7 @@ impl<'a> TaskContext<'a> {
         //
         // Allows using `LibFuzzerDotnetLoader.exe` from a shared tools container.
         let expand = Expand::new().tools_dir(tools_dir);
-        let expanded = expand.evaluate_value(&self.config.target_exe.to_string_lossy())?;
+        let expanded = expand.evaluate_value(self.config.target_exe.to_string_lossy())?;
         let expanded_path = Path::new(&expanded);
 
         // Check if `target_exe` was resolved to an absolute path and an existing file.

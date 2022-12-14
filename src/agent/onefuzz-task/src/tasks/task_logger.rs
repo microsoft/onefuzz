@@ -525,7 +525,7 @@ mod tests {
     impl LogWriter<TestLogWriter> for TestLogWriter {
         async fn write_logs(&self, logs: &[LoggingEvent]) -> Result<WriteLogResponse> {
             let mut events = self.events.write().unwrap();
-            let entry = &mut *events.entry(self.id).or_insert(Vec::new());
+            let entry = &mut *events.entry(self.id).or_default();
             if entry.len() >= self.max_size {
                 Ok(WriteLogResponse::MaxSizeReached)
             } else if logs.len() > 1 {

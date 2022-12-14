@@ -352,9 +352,9 @@ mod tests {
     async fn test_parse_fake_crash_report_old() -> Result<()> {
         let path = std::path::PathBuf::from("data/fake-crash-report-old.json");
         if let CrashTestResult::CrashReport(report) = parse_report_file(path).await? {
-            assert!(report.onefuzz_version == None);
-            assert!(report.tool_name == None);
-            assert!(report.tool_version == None);
+            assert!(report.onefuzz_version.is_none());
+            assert!(report.tool_name.is_none());
+            assert!(report.tool_version.is_none());
         } else {
             panic!("expected CrashReport");
         }
