@@ -62,7 +62,6 @@ pub fn find_coverage_sites<'data>(
 
     let mut offsets = BTreeSet::new();
 
-    // If we wanted to apply an allowlist to function names, this is where we'd do it.
     for function in debuginfo.functions() {
         if !allowlist.functions.is_allowed(&function.name) {
             continue;
