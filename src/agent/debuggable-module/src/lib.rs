@@ -5,7 +5,6 @@
 extern crate log;
 
 use std::fmt;
-use std::io::Cursor;
 use std::ops::Range;
 
 use anyhow::{anyhow as error, Result};
