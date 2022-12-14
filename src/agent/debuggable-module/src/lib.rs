@@ -21,6 +21,9 @@ pub mod windows;
 use crate::debuginfo::DebugInfo;
 use crate::path::FilePath;
 
+/// Executable code module, with debuginfo.
+///
+/// The debuginfo may be inline, or split into a separate file.
 pub trait Module<'data> {
     /// Path to the executable module file.
     fn executable_path(&self) -> &FilePath;
@@ -31,6 +34,9 @@ pub trait Module<'data> {
     fn debuginfo_path(&self) -> &FilePath;
 
     /// Read `size` bytes of data from the module-relative virtual offset `offset`.
+    ///
+    /// Will return an error if the requested region is outside of the range of the
+    /// module's image.
     fn read(&self, offset: Offset, size: u64) -> Result<&'data [u8]>;
 
     /// Nominal base load address of the module image.
@@ -48,10 +54,25 @@ pub trait Module<'data> {
     fn debuginfo(&self) -> Result<DebugInfo>;
 }
 
+/// Virtual address.
+///
+/// May be used to represent an internal fiction of debuginfo, or real address image. In
+/// any case, the virtual address is absolute, not module-relative.
+///
+/// No validity assumption can be made about the address value. For example, it may be:
+/// - Zero
+/// - In either userspace or kernelspace
+/// - Non-canonical for x86-64
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Address(pub u64);
 
 impl Address {
+    /// Returns the address located `offset` bytes above `self`.
+    ///
+    /// Can be used to convert a module-relative offset to a virtual address by adding it
+    /// to a module's base virtual address.
+    ///
+    /// Fails if the new address is not representable by a `u64`.
     pub fn offset_by(&self, offset: Offset) -> Result<Address> {
         let addr = self
             .0
@@ -61,6 +82,12 @@ impl Address {
         Ok(Address(addr))
     }
 
+    /// Returns `self` as an `addr`-relative `offset`.
+    ///
+    /// Can be used to convert a virtual address to a module-relative offset by
+    /// subtracting the module's base virtual address.
+    ///
+    /// Fails if `self` < `addr`.
     pub fn offset_from(&self, addr: Address) -> Result<Offset> {
         let offset = self
             .0
@@ -77,6 +104,9 @@ impl fmt::LowerHex for Address {
     }
 }
 
+/// Positive byte offset from some byte location.
+///
+/// May be relative to a virtual address, another virtual offset, or a file position.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Offset(pub u64);
 
