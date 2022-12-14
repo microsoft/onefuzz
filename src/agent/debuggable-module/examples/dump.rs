@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+#![allow(clippy::all)]
 
 use std::rc::Rc;
 
