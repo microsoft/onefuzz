@@ -123,15 +123,3 @@ impl fmt::LowerHex for Offset {
         write!(f, "{:x}", self.0)
     }
 }
-
-pub fn is_linux_module(data: &[u8]) -> Result<bool> {
-    let mut cursor = Cursor::new(data);
-    let hint = goblin::peek(&mut cursor)?;
-    Ok(matches!(hint, goblin::Hint::Elf(..)))
-}
-
-pub fn is_windows_module(data: &[u8]) -> Result<bool> {
-    let mut cursor = Cursor::new(data);
-    let hint = goblin::peek(&mut cursor)?;
-    Ok(matches!(hint, goblin::Hint::PE))
-}
