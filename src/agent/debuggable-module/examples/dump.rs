@@ -3,16 +3,15 @@
 
 use std::rc::Rc;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use clap::Parser;
 
 use debuggable_module::{
     block,
     debuginfo::{DebugInfo, Function},
-    linux::LinuxModule,
+    load_module::LoadModule,
     loader::Loader,
     path::FilePath,
-    windows::WindowsModule,
     {Module, Offset},
 };
 use iced_x86::{Decoder, Formatter, Instruction, NasmFormatter, SymbolResolver, SymbolResult};
@@ -32,7 +31,7 @@ fn main() -> Result<()> {
 
     let loader = Loader::new();
     let path = FilePath::new(&args.module)?;
-    let module = load_module(&loader, path)?;
+    let module = Box::<dyn Module>::load(&loader, path)?;
     let debuginfo = Rc::new(module.debuginfo()?);
 
     let glob = args.function.unwrap_or(".*".to_owned());
@@ -58,24 +57,6 @@ fn glob_to_regex(expr: &str) -> Result<Regex> {
     let expr = format!("^{expr}");
 
     Ok(Regex::new(&expr)?)
-}
-
-fn load_module(loader: &Loader, exe_path: FilePath) -> Result<Box<dyn Module + '_>> {
-    let exe_data = loader.load(&exe_path)?;
-
-    if debuggable_module::is_linux_module(exe_data)? {
-        let module = LinuxModule::new(exe_path, exe_data)?;
-        return Ok(Box::new(module));
-    }
-
-    if debuggable_module::is_windows_module(exe_data)? {
-        let dbg_path = exe_path.with_extension("pdb");
-        let dbg_data = loader.load(&dbg_path)?;
-        let module = WindowsModule::new(exe_path, exe_data, dbg_path, dbg_data)?;
-        return Ok(Box::new(module));
-    }
-
-    bail!("unknown module file format");
 }
 
 fn dump_function(module: &dyn Module, debuginfo: Rc<DebugInfo>, function: &Function) -> Result<()> {
