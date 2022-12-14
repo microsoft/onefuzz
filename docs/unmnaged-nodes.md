@@ -65,7 +65,7 @@ Navigate to the folder corresponding to your OS.
 Set the necessary environment variable by running the script `set-env.ps1` (for Windows) or `set-env.sh` (for Linux).
 Run the agent with the following command. If you need more nodes use a different `machine_guid` for each one:
 ```cmd
-onefuzz-agent run --machine_id <machine_guid> -c <path_to_config_file>
+onefuzz-agent run --machine_id <machine_guid> -c <path_to_config_file> --reset_lock
 ```
 
 ### Verify that the agent is registered to OneFuzz
@@ -76,5 +76,5 @@ Using the OneFuzz CLI run the following command:
 onefuzz nodes get <machine_guid>
 ```
 
-This should return one entry. Verify that the `pool_name` matched the pool name created earlier. 
+This should return one entry. Verify that the `pool_name` matched the pool name created earlier.
 From here you will be able to schedule jobs on that pool and they will be running.
