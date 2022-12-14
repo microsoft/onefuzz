@@ -74,7 +74,7 @@ pub fn find_coverage_sites<'data>(
 
                 if allowlist.source_files.is_allowed(&path) {
                     let blocks =
-                        block::sweep_region(&*module, &debuginfo, function.offset, function.size)?;
+                        block::sweep_region(module, &debuginfo, function.offset, function.size)?;
                     offsets.extend(blocks.iter().map(|b| b.offset));
                 }
             }

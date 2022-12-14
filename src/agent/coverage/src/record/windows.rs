@@ -111,7 +111,7 @@ impl<'data> WindowsRecorder<'data> {
             return Ok(());
         }
 
-        let module = if let Ok(m) = WindowsModule::load(&self.loader, path.clone()) {
+        let module = if let Ok(m) = WindowsModule::load(self.loader, path.clone()) {
             m
         } else {
             debug!("skipping undebuggable module: {path}");
@@ -127,7 +127,7 @@ impl<'data> WindowsRecorder<'data> {
 
         self.coverage.modules.insert(path.clone(), coverage);
 
-        self.modules.insert(path.clone(), module);
+        self.modules.insert(path, module);
 
         Ok(())
     }

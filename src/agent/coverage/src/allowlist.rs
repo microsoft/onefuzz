@@ -146,10 +146,11 @@ impl AllowListLine {
 
         // Try to interpret as allow rule.
         let re = glob_to_regex(line)?;
-        return Ok(Self::Allow(re));
+        Ok(Self::Allow(re))
     }
 }
 
+#[allow(clippy::single_char_pattern)]
 fn glob_to_regex(expr: &str) -> Result<Regex> {
     // Don't make users escape Windows path separators.
     let expr = expr.replace(r"\", r"\\");

@@ -88,12 +88,12 @@ impl<'data> LinuxRecorder<'data> {
 
         let path = image.path();
 
-        if !self.allowlist.modules.is_allowed(&path) {
+        if !self.allowlist.modules.is_allowed(path) {
             debug!("not inserting denylisted module: {path}");
             return Ok(());
         }
 
-        let module = if let Ok(module) = LinuxModule::load(&self.loader, path.clone()) {
+        let module = if let Ok(module) = LinuxModule::load(self.loader, path.clone()) {
             module
         } else {
             debug!("skipping undebuggable module: {path}");

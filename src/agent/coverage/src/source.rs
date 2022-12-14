@@ -6,9 +6,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use anyhow::{bail, Result};
 
 use debuggable_module::block::{sweep_region, Block, Blocks};
-use debuggable_module::path::FilePath;
 use debuggable_module::load_module::LoadModule;
 use debuggable_module::loader::Loader;
+use debuggable_module::path::FilePath;
 use debuggable_module::{Module, Offset};
 
 use crate::binary::BinaryCoverage;
@@ -78,9 +78,9 @@ pub fn binary_to_source_coverage(binary: &BinaryCoverage) -> Result<SourceCovera
         let mut blocks = Blocks::new();
 
         for function in debuginfo.functions() {
-            for (offset, _) in coverage.as_ref() {
+            for offset in coverage.as_ref().keys() {
                 // Recover function blocks if it contains any coverage offset.
-                if function.contains(&offset) {
+                if function.contains(offset) {
                     let function_blocks =
                         sweep_region(&*module, &debuginfo, function.offset, function.size)?;
                     blocks.extend(&function_blocks);
@@ -91,7 +91,7 @@ pub fn binary_to_source_coverage(binary: &BinaryCoverage) -> Result<SourceCovera
 
         for (offset, count) in coverage.as_ref() {
             // Inflate blocks.
-            if let Some(block) = blocks.find(&offset) {
+            if let Some(block) = blocks.find(offset) {
                 let block_offsets = instruction_offsets(&*module, block)?;
 
                 for offset in block_offsets {

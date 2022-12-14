@@ -151,6 +151,7 @@ pub struct DebuggerContext {
 }
 
 impl DebuggerContext {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let breakpoints = Breakpoints::default();
         let images = None;
@@ -243,7 +244,7 @@ impl ModuleImage {
             bail!("no mapping for module image");
         }
 
-        if maps.iter().find(|m| m.perms.contains('x')).is_none() {
+        if !maps.iter().any(|m| m.perms.contains('x')) {
             bail!("no executable mapping for module image");
         }
 
