@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
+use std::path::Path;
 use regex::Regex;
 
 #[derive(Clone, Debug, Default)]
@@ -31,6 +32,50 @@ pub struct AllowList {
 }
 
 impl AllowList {
+    pub fn load(path: impl AsRef<Path>) -> Result<Self> {
+        use std::fs::File;
+        use std::io::{BufRead, BufReader};
+
+        let path = path.as_ref();
+
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+
+        let mut allowlist = AllowList::default();
+
+        // We could just collect and pass to the `RegexSet` ctor.
+        //
+        // Instead, check each rule individually for diagnostic purposes.
+        for (index, line) in reader.lines().enumerate() {
+            let line = line?;
+
+            match AllowListLine::parse(&line) {
+                Ok(valid) => {
+                    use AllowListLine::*;
+
+                    match valid {
+                        Blank | Comment => {
+                            // Ignore.
+                        }
+                        Allow(re) => {
+                            allowlist.allow.push(re);
+                        }
+                        Deny(re) => {
+                            allowlist.deny.push(re);
+                        }
+                    }
+                }
+                Err(err) => {
+                    // Ignore invalid lines, but warn.
+                    let line_number = index + 1;
+                    warn!("error at line {}: {}", line_number, err);
+                }
+            }
+        }
+
+        Ok(allowlist)
+    }
+
     pub fn is_allowed(&self, path: impl AsRef<str>) -> bool {
         let path = path.as_ref();
 
@@ -72,48 +117,6 @@ impl AllowList {
         }
 
         false
-    }
-
-    pub fn load(path: &str) -> Result<Self> {
-        use std::fs::File;
-        use std::io::{BufRead, BufReader};
-
-        let file = File::open(path)?;
-        let reader = BufReader::new(file);
-
-        let mut allowlist = AllowList::default();
-
-        // We could just collect and pass to the `RegexSet` ctor.
-        //
-        // Instead, check each rule individually for diagnostic purposes.
-        for (index, line) in reader.lines().enumerate() {
-            let line = line?;
-
-            match AllowListLine::parse(&line) {
-                Ok(valid) => {
-                    use AllowListLine::*;
-
-                    match valid {
-                        Blank | Comment => {
-                            // Ignore.
-                        }
-                        Allow(re) => {
-                            allowlist.allow.push(re);
-                        }
-                        Deny(re) => {
-                            allowlist.deny.push(re);
-                        }
-                    }
-                }
-                Err(err) => {
-                    // Ignore invalid lines, but warn.
-                    let line_number = index + 1;
-                    warn!("error at line {}: {}", line_number, err);
-                }
-            }
-        }
-
-        Ok(allowlist)
     }
 }
 
