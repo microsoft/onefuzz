@@ -6,7 +6,6 @@ use uuid::Uuid;
 
 use crate::coordinator::double::*;
 use crate::reboot::double::*;
-use crate::scheduler::*;
 use crate::setup::double::*;
 use crate::work::double::*;
 use crate::work::*;
@@ -36,6 +35,7 @@ impl Fixture {
             worker_runner,
             None,
             true,
+            Uuid::new_v4(),
         )
     }
 
@@ -187,6 +187,9 @@ async fn test_emitted_state() {
 
 #[tokio::test]
 async fn test_emitted_state_failed_setup() {
+    // to prevent anyhow from capturing the stack trace when
+    // SetupRunnerDouble bails
+    std::env::set_var("RUST_BACKTRACE", "0");
     let error_message = "Failed setup";
     let mut agent = Agent {
         setup_runner: Box::new(SetupRunnerDouble {
@@ -225,7 +228,7 @@ async fn test_emitted_state_failed_setup() {
 
     // TODO: at some point, the underlying tests should be updated to not write
     // this file in the first place.
-    tokio::fs::remove_file(crate::done::done_path().unwrap())
+    tokio::fs::remove_file(crate::done::done_path(agent.machine_id).unwrap())
         .await
         .unwrap();
 }

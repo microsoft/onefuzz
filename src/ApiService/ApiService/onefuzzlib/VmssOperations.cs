@@ -21,7 +21,7 @@ public interface IVmssOperations {
 
     Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null);
 
-    Async.Task<IDictionary<Guid, string>?> ListInstanceIds(Guid name);
+    Async.Task<IDictionary<Guid, string>> ListInstanceIds(Guid name);
 
     Async.Task<long?> GetVmssSize(Guid name);
 
@@ -43,7 +43,7 @@ public interface IVmssOperations {
 
     IAsyncEnumerable<VirtualMachineScaleSetVmResource> ListVmss(Guid name);
     Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IEnumerable<Node> nodes);
-    Async.Task DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes);
+    Async.Task<OneFuzzResultVoid> DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes);
 }
 
 public class VmssOperations : IVmssOperations {
@@ -167,7 +167,7 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    public async Async.Task<IDictionary<Guid, string>?> ListInstanceIds(Guid name) {
+    public async Async.Task<IDictionary<Guid, string>> ListInstanceIds(Guid name) {
         _log.Verbose($"get instance IDs for scaleset {name:Tag:VmssName}");
         try {
             var results = new Dictionary<Guid, string>();
@@ -183,11 +183,11 @@ public class VmssOperations : IVmssOperations {
             return results;
         } catch (RequestFailedException ex) when (ex.Status == 404) {
             _log.Verbose($"scaleset does not exist {name:Tag:VmssName}");
-            return null;
+            return new Dictionary<Guid, string>();
         }
     }
 
-    private record InstanceIdKey(Guid Scaleset, Guid VmId);
+    private sealed record InstanceIdKey(Guid Scaleset, Guid VmId);
     private Task<string> GetInstanceIdForVmId(Guid scaleset, Guid vmId)
         => _cache.GetOrCreateAsync(new InstanceIdKey(scaleset, vmId), async entry => {
             var scalesetResource = GetVmssResource(scaleset);
@@ -448,7 +448,7 @@ public class VmssOperations : IVmssOperations {
         // only initialize this if we find a missing InstanceId
         var machineToInstanceLazy = new Lazy<Task<IDictionary<Guid, string>>>(async () => {
             var machineToInstance = await ListInstanceIds(scalesetId);
-            if (machineToInstance is null) {
+            if (!machineToInstance.Any()) {
                 throw new Exception($"cannot find nodes in scaleset {scalesetId}: scaleset does not exist");
             }
 
@@ -526,15 +526,16 @@ public class VmssOperations : IVmssOperations {
         return OneFuzzResultVoid.Ok;
     }
 
-    public async Async.Task DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes) {
+    public async Async.Task<OneFuzzResultVoid> DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes) {
         var result = await CheckCanUpdate(scalesetId);
         if (!result.IsOk) {
-            throw new Exception($"cannot delete nodes from scaleset {scalesetId} : {result.ErrorV}");
+            _log.Warning($"cannot delete nodes from scaleset {scalesetId} : {result.ErrorV}");
+            return OneFuzzResultVoid.Error(result.ErrorV);
         }
 
         var instanceIds = await ResolveInstanceIds(scalesetId, nodes);
         if (!instanceIds.Any()) {
-            return;
+            return OneFuzzResultVoid.Ok;
         }
 
         var subscription = _creds.GetSubscription();
@@ -553,6 +554,6 @@ public class VmssOperations : IVmssOperations {
         if (r.GetRawResponse().IsError) {
             _log.Error($"failed to start deletion of scaleset {scalesetId:Tag:ScalesetId} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
         }
-        return;
+        return OneFuzzResultVoid.Ok;
     }
 }

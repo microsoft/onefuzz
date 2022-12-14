@@ -7,7 +7,7 @@ public class RequestAccess {
     private readonly Node _root = new();
 
     public record Rules(IReadOnlyList<Guid> AllowedGroupsIds);
-    record Node(
+    sealed record Node(
         // HTTP Method -> Rules
         Dictionary<HttpMethod, Rules> Rules,
         // Path Segment -> Node
