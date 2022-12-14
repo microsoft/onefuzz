@@ -2,8 +2,8 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
+use regex::{Regex, RegexSet};
 use std::path::Path;
-use regex::Regex;
 
 #[derive(Clone, Debug, Default)]
 pub struct TargetAllowList {
@@ -27,11 +27,18 @@ impl TargetAllowList {
 
 #[derive(Clone, Debug, Default)]
 pub struct AllowList {
-    allow: Vec<Regex>,
-    deny: Vec<Regex>,
+    allow: Option<RegexSet>,
+    deny: Option<RegexSet>,
 }
 
 impl AllowList {
+    pub fn new(allow: impl Into<Option<RegexSet>>, deny: impl Into<Option<RegexSet>>) -> Self {
+        let allow = allow.into();
+        let deny = deny.into();
+
+        Self { allow, deny }
+    }
+
     pub fn load(path: impl AsRef<Path>) -> Result<Self> {
         use std::fs::File;
         use std::io::{BufRead, BufReader};
@@ -41,7 +48,8 @@ impl AllowList {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
 
-        let mut allowlist = AllowList::default();
+        let mut allow = vec![];
+        let mut deny = vec![];
 
         // We could just collect and pass to the `RegexSet` ctor.
         //
@@ -58,10 +66,10 @@ impl AllowList {
                             // Ignore.
                         }
                         Allow(re) => {
-                            allowlist.allow.push(re);
+                            allow.push(re);
                         }
                         Deny(re) => {
-                            allowlist.deny.push(re);
+                            deny.push(re);
                         }
                     }
                 }
@@ -73,50 +81,31 @@ impl AllowList {
             }
         }
 
+        let allow = RegexSet::new(allow.iter().map(|re| re.as_str()))?;
+        let deny = RegexSet::new(deny.iter().map(|re| re.as_str()))?;
+        let allowlist = AllowList::new(allow, deny);
+
         Ok(allowlist)
     }
 
     pub fn is_allowed(&self, path: impl AsRef<str>) -> bool {
         let path = path.as_ref();
 
-        match (self.allow.is_empty(), self.deny.is_empty()) {
-            (false, false) => {
-                // Allow only if rule-allowed but not also rule-denied.
-                self.has_allow_match(path) && !self.has_deny_match(path)
-            }
-            (false, true) => {
+        match (&self.allow, &self.deny) {
+            (Some(allow), Some(deny)) => allow.is_match(path) && !deny.is_match(path),
+            (Some(allow), None) => {
                 // Deny unless rule-allowed.
-                self.has_allow_match(path)
+                allow.is_match(path)
             }
-            (true, false) => {
+            (None, Some(deny)) => {
                 // Allow unless rule-denied.
-                !self.has_deny_match(path)
+                !deny.is_match(path)
             }
-            (true, true) => {
+            (None, None) => {
                 // Allow all.
                 true
             }
         }
-    }
-
-    fn has_allow_match(&self, path: &str) -> bool {
-        for re in &self.allow {
-            if re.is_match(path) {
-                return true;
-            }
-        }
-
-        false
-    }
-
-    fn has_deny_match(&self, path: &str) -> bool {
-        for re in &self.deny {
-            if re.is_match(path) {
-                return true;
-            }
-        }
-
-        false
     }
 }
 
