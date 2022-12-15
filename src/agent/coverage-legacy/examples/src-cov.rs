@@ -6,67 +6,74 @@ use std::time::Duration;
 use std::{process::Command, process::Stdio};
 
 use anyhow::Result;
-use coverage::block::CommandBlockCov as Coverage;
-use coverage::cache::ModuleCache;
-use coverage::code::{CmdFilter, CmdFilterDef};
+use coverage_legacy::block::CommandBlockCov as Coverage;
+use coverage_legacy::cache::ModuleCache;
+use coverage_legacy::code::CmdFilter;
 use structopt::StructOpt;
 
 #[derive(Debug, PartialEq, Eq, StructOpt)]
 struct Opt {
-    #[structopt(short, long)]
-    filter: Option<PathBuf>,
-
     #[structopt(short, long, min_values = 1)]
     inputs: Vec<PathBuf>,
+
+    #[structopt(short, long)]
+    dir: Option<PathBuf>,
 
     #[structopt(min_values = 2)]
     cmd: Vec<String>,
 
-    #[structopt(short, long, long_help = "Timeout in ms", default_value = "5000")]
+    #[structopt(short, long, long_help = "Timeout in ms", default_value = "120000")]
     timeout: u64,
 
-    #[structopt(long)]
-    modoff: bool,
-}
-
-impl Opt {
-    pub fn load_filter_or_default(&self) -> Result<CmdFilter> {
-        if let Some(path) = &self.filter {
-            let data = std::fs::read(path)?;
-            let def: CmdFilterDef = serde_json::from_slice(&data)?;
-            CmdFilter::new(def)
-        } else {
-            Ok(CmdFilter::default())
-        }
-    }
+    #[structopt(short = "x", long)]
+    cobertura_xml: bool,
 }
 
 fn main() -> Result<()> {
     let opt = Opt::from_args();
-    let filter = opt.load_filter_or_default()?;
-
-    env_logger::init();
+    let filter = CmdFilter::default();
 
     let mut cache = ModuleCache::default();
     let mut total = Coverage::default();
     let timeout = Duration::from_millis(opt.timeout);
 
+    if let Some(dir) = &opt.dir {
+        for entry in std::fs::read_dir(dir)? {
+            let input = entry?.path();
+
+            eprintln!("testing input: {}", input.display());
+
+            let cmd = input_command(&opt.cmd, &input);
+            let coverage = record(&mut cache, filter.clone(), cmd, timeout)?;
+
+            total.merge_max(&coverage);
+        }
+    }
+
     for input in &opt.inputs {
+        eprintln!("testing input: {}", input.display());
+
         let cmd = input_command(&opt.cmd, input);
         let coverage = record(&mut cache, filter.clone(), cmd, timeout)?;
-
-        log::info!("input = {}", input.display());
-        if !opt.modoff {
-            print_stats(&coverage);
-        }
 
         total.merge_max(&coverage);
     }
 
-    if opt.modoff {
-        print_modoff(&total);
+    let mut debug_info = coverage_legacy::debuginfo::DebugInfo::default();
+    let src_coverage = total.source_coverage(&mut debug_info)?;
+
+    if opt.cobertura_xml {
+        let cobertura = coverage_legacy::cobertura::cobertura(src_coverage)?;
+        println!("{}", cobertura);
     } else {
-        print_stats(&total);
+        for file_coverage in src_coverage.files {
+            for location in &file_coverage.locations {
+                println!(
+                    "{} {}:{}",
+                    location.count, file_coverage.file, location.line
+                );
+            }
+        }
     }
 
     Ok(())
@@ -101,7 +108,7 @@ fn record(
     cmd: Command,
     timeout: Duration,
 ) -> Result<Coverage> {
-    use coverage::block::linux::Recorder;
+    use coverage_legacy::block::linux::Recorder;
 
     let now = std::time::Instant::now();
 
@@ -120,7 +127,7 @@ fn record(
     cmd: Command,
     timeout: Duration,
 ) -> Result<Coverage> {
-    use coverage::block::windows::{Recorder, RecorderEventHandler};
+    use coverage_legacy::block::windows::{Recorder, RecorderEventHandler};
 
     let mut recorder = Recorder::new(cache, filter);
     let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
@@ -133,29 +140,4 @@ fn record(
     log::info!("recorded in {:?}", elapsed);
 
     Ok(recorder.into_coverage())
-}
-
-fn print_stats(coverage: &Coverage) {
-    for (m, c) in coverage.iter() {
-        let covered = c.covered_blocks();
-        let known = c.known_blocks();
-        let percent = 100.0 * (covered as f64) / (known as f64);
-        log::info!(
-            "{} = {} / {} ({:.2}%)",
-            m.name_lossy(),
-            covered,
-            known,
-            percent
-        );
-    }
-}
-
-fn print_modoff(coverage: &Coverage) {
-    for (m, c) in coverage.iter() {
-        for b in c.blocks.values() {
-            if b.count > 0 {
-                println!("{}+{:x}", m.name_lossy(), b.offset);
-            }
-        }
-    }
 }

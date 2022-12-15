@@ -56,7 +56,7 @@ public class Ado : NotificationsBase, IAdo {
         return errorCodes.Any(code => errorStr.Contains(code));
     }
 
-    class AdoConnector {
+    sealed class AdoConnector {
         private readonly AdoTemplate _config;
         private readonly Renderer _renderer;
         private readonly string _project;
@@ -86,7 +86,12 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         public async Async.Task<string> Render(string template) {
-            return await _renderer.Render(template, _instanceUrl);
+            try {
+                return await _renderer.Render(template, _instanceUrl, strictRendering: true);
+            } catch {
+                _logTracer.Warning($"Failed to render template in strict mode. Falling back to relaxed mode. {template:Template}");
+                return await _renderer.Render(template, _instanceUrl, strictRendering: false);
+            }
         }
 
         public async IAsyncEnumerable<WorkItem> ExistingWorkItems() {
@@ -101,7 +106,7 @@ public class Ado : NotificationsBase, IAdo {
                 filters.Add(key.ToLowerInvariant(), filter);
             }
 
-            var project = filters.ContainsKey("system.teamproject") ? filters["system.teamproject"] : null;
+            var project = filters.TryGetValue("system.teamproject", out var value) ? value : null;
             var validFields = await GetValidFields(project);
 
             var postQueryFilter = new Dictionary<string, string>();
@@ -117,25 +122,31 @@ public class Ado : NotificationsBase, IAdo {
             var parts = new List<string>();
             foreach (var key in filters.Keys) {
                 //# Only add pre-system approved fields to the query
-                if (!validFields.Contains(key)) {
+                if (!validFields.ContainsKey(key)) {
                     postQueryFilter.Add(key, filters[key]);
                     continue;
                 }
 
-                /*
-                # WIQL supports wrapping values in ' or " and escaping ' by doubling it
-                #
-                # For this System.Title: hi'there
-                # use this query fragment: [System.Title] = 'hi''there'
-                #
-                # For this System.Title: hi"there
-                # use this query fragment: [System.Title] = 'hi"there'
-                #
-                # For this System.Title: hi'"there
-                # use this query fragment: [System.Title] = 'hi''"there'
-                */
-                var single = "'";
-                parts.Add($"[{key}] = '{filters[key].Replace(single, single + single)}'");
+                var field = validFields[key];
+                var operation = GetSupportedOperation(field);
+                if (operation.IsOk) {
+                    /*
+                    # WIQL supports wrapping values in ' or " and escaping ' by doubling it
+                    #
+                    # For this System.Title: hi'there
+                    # use this query fragment: [System.Title] = 'hi''there'
+                    #
+                    # For this System.Title: hi"there
+                    # use this query fragment: [System.Title] = 'hi"there'
+                    #
+                    # For this System.Title: hi'"there
+                    # use this query fragment: [System.Title] = 'hi''"there'
+                    */
+                    var single = "'";
+                    parts.Add($"[{key}] {operation.OkV} '{filters[key].Replace(single, single + single)}'");
+                } else {
+                    _logTracer.Warning(operation.ErrorV);
+                }
             }
 
             var query = "select [System.Id] from WorkItems";
@@ -171,12 +182,12 @@ public class Ado : NotificationsBase, IAdo {
                         Text = comment
                     },
                     _project,
-                    (int)(item.Id!));
+                    (int)item.Id!);
             }
 
             var document = new JsonPatchDocument();
             foreach (var field in _config.OnDuplicate.Increment) {
-                var value = item.Fields.ContainsKey(field) ? int.Parse(JsonSerializer.Serialize(item.Fields[field])) : 0;
+                var value = item.Fields.TryGetValue(field, out var fieldValue) ? int.Parse(JsonSerializer.Serialize(fieldValue)) : 0;
                 value++;
                 document.Add(new JsonPatchOperation() {
                     Operation = VisualStudio.Services.WebApi.Patch.Operation.Replace,
@@ -196,18 +207,18 @@ public class Ado : NotificationsBase, IAdo {
 
             var systemState = JsonSerializer.Serialize(item.Fields["System.State"]);
             var stateUpdated = false;
-            if (_config.OnDuplicate.SetState.ContainsKey(systemState)) {
+            if (_config.OnDuplicate.SetState.TryGetValue(systemState, out var v)) {
                 document.Add(new JsonPatchOperation() {
                     Operation = VisualStudio.Services.WebApi.Patch.Operation.Replace,
                     Path = "/fields/System.State",
-                    Value = _config.OnDuplicate.SetState[systemState]
+                    Value = v
                 });
 
                 stateUpdated = true;
             }
 
             if (document.Any()) {
-                _ = await _client.UpdateWorkItemAsync(document, _project, (int)(item.Id!));
+                _ = await _client.UpdateWorkItemAsync(document, _project, (int)item.Id!);
                 var adoEventType = "AdoUpdate";
                 _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {item.Id:Tag:WorkItemId}");
 
@@ -219,10 +230,9 @@ public class Ado : NotificationsBase, IAdo {
             return stateUpdated;
         }
 
-        private async Async.Task<List<string>> GetValidFields(string? project) {
+        private async Async.Task<Dictionary<string, WorkItemField>> GetValidFields(string? project) {
             return (await _client.GetFieldsAsync(project, expand: GetFieldsExpand.ExtensionFields))
-                .Select(field => field.ReferenceName.ToLowerInvariant())
-                .ToList();
+                .ToDictionary(field => field.ReferenceName.ToLowerInvariant());
         }
 
         private async Async.Task<WorkItem> CreateNew() {
@@ -236,7 +246,7 @@ public class Ado : NotificationsBase, IAdo {
                         Text = comment,
                     },
                     _project,
-                    (int)(entry.Id!));
+                    (int)entry.Id!);
             }
             return entry;
         }
@@ -319,7 +329,7 @@ public class Ado : NotificationsBase, IAdo {
             // OR it could have System.State == Closed && System.Reason == Duplicate
             // I haven't found any other combinations where System.Reason could be duplicate but just to be safe
             // we're explicitly _not_ checking the state of the work item to determine if it's duplicate
-            return (wi.Fields.ContainsKey("System.Reason") && string.Equals(wi.Fields["System.Reason"].ToString(), "Duplicate"))
+            return wi.Fields.ContainsKey("System.Reason") && string.Equals(wi.Fields["System.Reason"].ToString(), "Duplicate")
             // Alternatively, the work item can also specify a 'relation' to another work item.
             // This is typically used to create parent/child relationships between work items but can also
             // Be used to mark duplicates so we should check this as well.
@@ -329,7 +339,15 @@ public class Ado : NotificationsBase, IAdo {
             // "Duplicate Of" are the duplicates. That is why we search for the relation type "Duplicate Of".
             // "Duplicate Of" has the relation type: "System.LinkTypes.Duplicate-Forward"
             // Source: https://learn.microsoft.com/en-us/azure/devops/boards/queries/link-type-reference?view=azure-devops#work-link-types
-            || (wi.Relations != null && wi.Relations.Any(relation => string.Equals(relation.Rel, "System.LinkTypes.Duplicate-Forward")));
+            || wi.Relations != null && wi.Relations.Any(relation => string.Equals(relation.Rel, "System.LinkTypes.Duplicate-Forward"));
+        }
+
+        private static OneFuzzResult<string> GetSupportedOperation(WorkItemField field) {
+            return field.SupportedOperations switch {
+                var supportedOps when supportedOps.Any(op => op.ReferenceName == "SupportedOperations.Equals") => OneFuzzResult.Ok("="),
+                var supportedOps when supportedOps.Any(op => op.ReferenceName == "SupportedOperations.ContainsWords") => OneFuzzResult.Ok("Contains Words"),
+                _ => OneFuzzResult<string>.Error(ErrorCode.UNSUPPORTED_FIELD_OPERATION, $"OneFuzz only support operations ['Equals', 'ContainsWords']. Field {field.ReferenceName} only support operations: {string.Join(',', field.SupportedOperations.Select(op => op.ReferenceName))}"),
+            };
         }
     }
 }

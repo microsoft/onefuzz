@@ -41,7 +41,7 @@ sealed class TestVmssOperations : IVmssOperations {
     }
 
 
-    public Task<IDictionary<Guid, string>?> ListInstanceIds(Guid name) {
+    public Task<IDictionary<Guid, string>> ListInstanceIds(Guid name) {
         throw new NotImplementedException();
     }
 
@@ -65,7 +65,7 @@ sealed class TestVmssOperations : IVmssOperations {
         throw new NotImplementedException();
     }
 
-    public Async.Task DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes) {
+    public Async.Task<OneFuzzResultVoid> DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes) {
         throw new NotImplementedException();
     }
 }

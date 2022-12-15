@@ -63,4 +63,7 @@ public sealed class TestServiceConfiguration : IServiceConfig {
     public string? OneFuzzResourceGroup => throw new NotImplementedException();
 
     public string? OneFuzzAllowOutdatedAgent => throw new NotImplementedException();
+    public string? AppConfigurationEndpoint => throw new NotImplementedException();
+    public Uri OneFuzzBaseAddress { get => new Uri("http://test"); }
+    public string? AppConfigurationConnectionString => throw new NotImplementedException();
 }

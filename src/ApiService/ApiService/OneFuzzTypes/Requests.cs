@@ -263,7 +263,7 @@ public record PoolCreate(
     [property: Required] Os Os,
     [property: Required] Architecture Arch,
     [property: Required] bool Managed,
-    Guid? ClientId = null
+    Guid? ObjectId = null
 ) : BaseRequest;
 
 public record WebhookCreate(
@@ -306,3 +306,7 @@ public record AgentRegistrationPost(
     [property: Required] string Version = "1.0.0"
 ) : BaseRequest;
 
+public record TemplateValidationPost(
+    [property: Required] string Template,
+    TemplateRenderContext? Context
+) : BaseRequest;

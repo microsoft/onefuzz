@@ -157,7 +157,8 @@ async fn poll_inputs(
             heartbeat.alive();
             if let Some(message) = input_queue.pop().await? {
                 let input_url = message
-                    .parse(|data| BlobUrl::parse(str::from_utf8(data)?))
+                    .get::<reqwest::Url>()
+                    .and_then(BlobUrl::parse)
                     .with_context(|| format!("unable to parse URL from queue: {:?}", message))?;
                 if !already_checked(config, &input_url).await? {
                     let destination_path = _copy(input_url, &tmp_dir).await?;

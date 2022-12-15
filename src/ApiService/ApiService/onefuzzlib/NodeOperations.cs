@@ -144,7 +144,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         return OneFuzzResultVoid.Ok;
     }
 
-    record NodeInfo(Node Node, Scaleset Scaleset, string InstanceId);
+    sealed record NodeInfo(Node Node, Scaleset Scaleset, string InstanceId);
     private async Async.Task<NodeInfo?> TryGetNodeInfo(Node node) {
         var scalesetId = node.ScalesetId;
         if (scalesetId is null) {

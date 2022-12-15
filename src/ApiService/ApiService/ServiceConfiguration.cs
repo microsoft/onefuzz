@@ -16,6 +16,8 @@ public interface IServiceConfig {
 
     public string? ApplicationInsightsAppId { get; }
     public string? ApplicationInsightsInstrumentationKey { get; }
+    public string? AppConfigurationEndpoint { get; }
+    public string? AppConfigurationConnectionString { get; }
     public string? AzureSignalRConnectionString { get; }
     public string? AzureSignalRServiceTransportType { get; }
 
@@ -48,6 +50,8 @@ public interface IServiceConfig {
     // multiple instances to run against the same storage account, which
     // is useful for things like integration testing.
     public string OneFuzzStoragePrefix { get; }
+
+    public Uri OneFuzzBaseAddress { get; }
 }
 
 public class ServiceConfiguration : IServiceConfig {
@@ -81,6 +85,10 @@ public class ServiceConfiguration : IServiceConfig {
 
     public string? ApplicationInsightsAppId => GetEnv("APPINSIGHTS_APPID");
     public string? ApplicationInsightsInstrumentationKey => GetEnv("APPINSIGHTS_INSTRUMENTATIONKEY");
+
+    public string? AppConfigurationEndpoint => GetEnv("APPCONFIGURATION_ENDPOINT");
+
+    public string? AppConfigurationConnectionString => GetEnv("APPCONFIGURATION_CONNECTION_STRING");
 
     public string? AzureSignalRConnectionString => GetEnv("AzureSignalRConnectionString");
     public string? AzureSignalRServiceTransportType => GetEnv("AzureSignalRServiceTransportType");
@@ -128,4 +136,12 @@ public class ServiceConfiguration : IServiceConfig {
 
     public string OneFuzzNodeDisposalStrategy { get => GetEnv("ONEFUZZ_NODE_DISPOSAL_STRATEGY") ?? "scale_in"; }
     public string OneFuzzStoragePrefix => ""; // in production we never prefix the tables
+
+    public Uri OneFuzzBaseAddress {
+        get {
+            var hostName = Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME");
+            var scheme = Environment.GetEnvironmentVariable("HTTPS") != null ? "https" : "http";
+            return new Uri($"{scheme}://{hostName}");
+        }
+    }
 }

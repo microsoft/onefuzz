@@ -64,4 +64,8 @@ sealed class TestLogTracer : ILogTracer {
     public void Error(Error error) {
         Error($"{error}");
     }
+
+    public void Warning(Error error) {
+        Warning($"{error}");
+    }
 }

@@ -114,7 +114,7 @@ public record PoolGetResult(
     bool Managed,
     Architecture Arch,
     PoolState State,
-    Guid? ClientId,
+    Guid? ObjectId,
     List<Node>? Nodes,
     AgentConfig? Config,
     List<WorkSetSummary>? WorkQueue,
@@ -184,3 +184,8 @@ public record ProxyInfo(
 public record ProxyList(
     List<ProxyInfo> Proxies
 );
+
+public record TemplateValidationResponse(
+    string RenderedTemplate,
+    TemplateRenderContext AvailableContext
+) : BaseResponse();
