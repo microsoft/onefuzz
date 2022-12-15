@@ -1,7 +1,0 @@
-{
-    "IsEncrypted": false,
-    "Values": {
-      "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-      "linux_fx_version": "DOTNET-ISOLATED|7.0"
-    }
-}

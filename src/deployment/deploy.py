@@ -487,9 +487,7 @@ class Client:
 
         # find any identifier URIs that need updating
         identifier_uris: List[str] = app["identifierUris"]
-        updated_identifier_uris = list(
-            set(identifier_uris) | set(self.get_identifier_url())
-        )
+        updated_identifier_uris = list(set(identifier_uris) | self.get_identifier_url())
         if len(updated_identifier_uris) > len(identifier_uris):
             update_properties["identifierUris"] = updated_identifier_uris
 
@@ -535,7 +533,7 @@ class Client:
 
         params = {
             "displayName": self.application_name,
-            "identifierUris": self.get_identifier_url(),
+            "identifierUris": [self.get_identifier_url()],
             "signInAudience": self.get_signin_audience(),
             "appRoles": app_roles,
             "api": {
@@ -557,10 +555,7 @@ class Client:
                     "enableAccessTokenIssuance": False,
                     "enableIdTokenIssuance": True,
                 },
-                "redirectUris": [
-                    f"{url}/.auth/login/aad/callback"
-                    for url in self.get_instance_url()
-                ],
+                "redirectUris": [f"{self.get_instance_url()}/.auth/login/aad/callback"],
             },
             "requiredResourceAccess": [
                 {
@@ -635,7 +630,7 @@ class Client:
         expiry = (datetime.now(TZ_UTC) + timedelta(days=365)).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
-        
+
         app_func_audiences = [self.get_identifier_url()]
         app_func_audiences.extend([self.get_instance_url()])
 
