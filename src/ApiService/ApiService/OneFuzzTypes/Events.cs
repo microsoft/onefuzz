@@ -129,8 +129,7 @@ public record EventJobCreated(
    ) : BaseEvent();
 
 
-[EventType(EventType.JobTaskStopped)]
-public record EventJobTaskStopped(
+public record JobTaskStopped(
     Guid TaskId,
     TaskType TaskType,
     Error? Error
