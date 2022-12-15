@@ -122,14 +122,15 @@ public record EventTaskFailed(
 
 
 [EventType(EventType.JobCreated)]
-record EventJobCreated(
+public record EventJobCreated(
    Guid JobId,
    JobConfig Config,
    UserInfo? UserInfo
    ) : BaseEvent();
 
 
-public record JobTaskStopped(
+[EventType(EventType.JobTaskStopped)]
+public record EventJobTaskStopped(
     Guid TaskId,
     TaskType TaskType,
     Error? Error
@@ -146,7 +147,7 @@ public record EventJobStopped(
 
 
 [EventType(EventType.TaskCreated)]
-record EventTaskCreated(
+public record EventTaskCreated(
     Guid JobId,
     Guid TaskId,
     TaskConfig Config,
@@ -177,7 +178,7 @@ public record EventPing(
 
 
 [EventType(EventType.ScalesetCreated)]
-record EventScalesetCreated(
+public record EventScalesetCreated(
    Guid ScalesetId,
    PoolName PoolName,
    string VmSku,
@@ -195,7 +196,7 @@ public record EventScalesetFailed(
 
 
 [EventType(EventType.ScalesetDeleted)]
-record EventScalesetDeleted(
+public record EventScalesetDeleted(
    Guid ScalesetId,
    PoolName PoolName
 
@@ -211,13 +212,13 @@ public record EventScalesetResizeScheduled(
 
 
 [EventType(EventType.PoolDeleted)]
-record EventPoolDeleted(
+public record EventPoolDeleted(
    PoolName PoolName
    ) : BaseEvent();
 
 
 [EventType(EventType.PoolCreated)]
-record EventPoolCreated(
+public record EventPoolCreated(
    PoolName PoolName,
    Os Os,
    Architecture Arch,
@@ -289,7 +290,7 @@ public record EventScalesetStateUpdated(
 ) : BaseEvent();
 
 [EventType(EventType.NodeStateUpdated)]
-record EventNodeStateUpdated(
+public record EventNodeStateUpdated(
     Guid MachineId,
     Guid? ScalesetId,
     PoolName PoolName,
