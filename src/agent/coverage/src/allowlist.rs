@@ -25,28 +25,27 @@ impl TargetAllowList {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct AllowList {
-    allow: Option<RegexSet>,
-    deny: Option<RegexSet>,
+    allow: RegexSet,
+    deny: RegexSet,
 }
 
 impl AllowList {
-    pub fn new(allow: impl Into<Option<RegexSet>>, deny: impl Into<Option<RegexSet>>) -> Self {
-        let allow = allow.into();
-        let deny = deny.into();
-
+    pub fn new(allow: RegexSet, deny: RegexSet) -> Self {
         Self { allow, deny }
     }
 
     pub fn load(path: impl AsRef<Path>) -> Result<Self> {
-        use std::fs::File;
+        let path = path.as_ref();
+        let text = std::fs::read_to_string(path)?;
+        Self::parse(&text)
+    }
+
+    pub fn parse(text: &str) -> Result<Self> {
         use std::io::{BufRead, BufReader};
 
-        let path = path.as_ref();
-
-        let file = File::open(path)?;
-        let reader = BufReader::new(file);
+        let reader = BufReader::new(text.as_bytes());
 
         let mut allow = vec![];
         let mut deny = vec![];
@@ -91,21 +90,18 @@ impl AllowList {
     pub fn is_allowed(&self, path: impl AsRef<str>) -> bool {
         let path = path.as_ref();
 
-        match (&self.allow, &self.deny) {
-            (Some(allow), Some(deny)) => allow.is_match(path) && !deny.is_match(path),
-            (Some(allow), None) => {
-                // Deny unless rule-allowed.
-                allow.is_match(path)
-            }
-            (None, Some(deny)) => {
-                // Allow unless rule-denied.
-                !deny.is_match(path)
-            }
-            (None, None) => {
-                // Allow all.
-                true
-            }
-        }
+        // Allowed if rule-allowed but not excluded by a negative (deny) rule.
+        self.allow.is_match(path) && !self.deny.is_match(path)
+    }
+}
+
+impl Default for AllowList {
+    fn default() -> Self {
+        // Unwrap-safe due to valid constant expr.
+        let allow = RegexSet::new([".*"]).unwrap();
+        let deny = RegexSet::empty();
+
+        AllowList::new(allow, deny)
     }
 }
 
@@ -150,8 +146,11 @@ fn glob_to_regex(expr: &str) -> Result<Regex> {
     // Translate glob wildcards into quantified regexes.
     let expr = expr.replace("*", ".*");
 
-    // Anchor to line start.
-    let expr = format!("^{expr}");
+    // Anchor to line start and end.
+    let expr = format!("^{expr}$");
 
     Ok(Regex::new(&expr)?)
 }
+
+#[cfg(test)]
+mod tests;
