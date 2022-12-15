@@ -487,7 +487,9 @@ class Client:
 
         # find any identifier URIs that need updating
         identifier_uris: List[str] = app["identifierUris"]
-        updated_identifier_uris = list(set(identifier_uris) | self.get_identifier_url())
+        updated_identifier_uris = list(
+            set(identifier_uris) | set([self.get_identifier_url()])
+        )
         if len(updated_identifier_uris) > len(identifier_uris):
             update_properties["identifierUris"] = updated_identifier_uris
 
