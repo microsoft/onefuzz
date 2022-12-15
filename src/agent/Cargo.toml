@@ -2,6 +2,7 @@
 members = [
     "atexit",
     "coverage-legacy",
+    "debuggable-module",
     "debugger",
     "dynamic-library",
     "input-tester",
