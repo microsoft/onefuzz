@@ -13,7 +13,7 @@ namespace Microsoft.OneFuzz.Service;
 
 public static class DefaultImages {
     public static readonly ImageReference Windows = ImageReference.MustParse("MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest");
-    public static readonly ImageReference Linux = ImageReference.MustParse("Canonical:UbuntuServer:18.04-LTS:latest");
+    public static readonly ImageReference Linux = ImageReference.MustParse("Canonical:0000-com-ubuntu-server-focal:20_04-lts:latest");
 }
 
 [JsonConverter(typeof(Converter<ImageReference>))]
