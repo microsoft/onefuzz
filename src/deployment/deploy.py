@@ -558,8 +558,7 @@ class Client:
                     "enableIdTokenIssuance": True,
                 },
                 "redirectUris": [
-                    f"{url}/.auth/login/aad/callback"
-                    for url in self.get_instance_url()
+                    f"{url}/.auth/login/aad/callback" for url in self.get_instance_url()
                 ],
             },
             "requiredResourceAccess": [
@@ -635,7 +634,7 @@ class Client:
         expiry = (datetime.now(TZ_UTC) + timedelta(days=365)).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
-        
+
         app_func_audiences = [self.get_identifier_url()]
         app_func_audiences.extend([self.get_instance_url()])
 
