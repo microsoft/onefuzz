@@ -188,7 +188,7 @@ public record EventScalesetCreated(
 
 
 [EventType(EventType.ScalesetFailed)]
-public record EventScalesetFailed(
+public sealed record EventScalesetFailed(
     Guid ScalesetId,
     PoolName PoolName,
     Error Error

@@ -1,5 +1,5 @@
 [package]
-name = "coverage"
+name = "coverage-legacy"
 version = "0.1.0"
 authors = ["fuzzing@microsoft.com"]
 license = "MIT"

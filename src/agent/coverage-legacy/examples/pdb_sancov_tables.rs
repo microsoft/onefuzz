@@ -15,7 +15,7 @@ struct Opt {
 
 #[cfg(target_os = "windows")]
 fn main() -> Result<()> {
-    use coverage::block::pe_provider::PeSancovBasicBlockProvider;
+    use coverage_legacy::block::pe_provider::PeSancovBasicBlockProvider;
     use goblin::pe::PE;
     use pdb::PDB;
 

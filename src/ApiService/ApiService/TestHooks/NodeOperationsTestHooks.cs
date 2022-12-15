@@ -10,7 +10,7 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 #if DEBUG
 namespace ApiService.TestHooks {
 
-    record MarkTasks(Node node, Error? error);
+    sealed record MarkTasks(Node node, Error? error);
 
     public class NodeOperationsTestHooks {
         private readonly ILogTracer _log;
@@ -162,8 +162,8 @@ namespace ApiService.TestHooks {
             Guid? scaleSetId = UriExtension.GetGuid("scaleSetId", query);
 
             List<NodeState>? states = default;
-            if (query.ContainsKey("states")) {
-                states = query["states"].Split('-').Select(s => Enum.Parse<NodeState>(s)).ToList();
+            if (query.TryGetValue("states", out var value)) {
+                states = value.Split('-').Select(s => Enum.Parse<NodeState>(s)).ToList();
             }
             string? poolNameString = UriExtension.GetString("poolName", query);
 
@@ -214,8 +214,8 @@ namespace ApiService.TestHooks {
             Guid machineId = Guid.Parse(query["machineId"]);
 
             Guid? scaleSetId = default;
-            if (query.ContainsKey("scaleSetId")) {
-                scaleSetId = Guid.Parse(query["scaleSetId"]);
+            if (query.TryGetValue("scaleSetId", out var value)) {
+                scaleSetId = Guid.Parse(value);
             }
 
             string version = query["version"];

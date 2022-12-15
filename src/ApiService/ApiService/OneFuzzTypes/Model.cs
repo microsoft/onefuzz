@@ -453,7 +453,10 @@ public record Report(
     List<string>? MinimizedStackFunctionNames,
     string? MinimizedStackFunctionNamesSha256,
     List<string>? MinimizedStackFunctionLines,
-    string? MinimizedStackFunctionLinesSha256
+    string? MinimizedStackFunctionLinesSha256,
+    string? ToolName,
+    string? ToolVersion,
+    string? OnefuzzVersion
 ) : IReport;
 
 public record NoReproReport(
@@ -642,7 +645,7 @@ public record Pool(
     bool Managed,
     Architecture Arch,
     PoolState State,
-    Guid? ClientId = null
+    Guid? ObjectId = null
 ) : StatefulEntityBase<PoolState>(State) {
     public List<Node>? Nodes { get; set; }
     public AgentConfig? Config { get; set; }

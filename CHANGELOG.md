@@ -4,8 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 6.0.0
+## 6.1.0
+### Added
+* Service: Added support for feature flags which allows us to deploy new code in parts and turn it on when it's ready. [#2620](https://github.com/microsoft/onefuzz/pull/2620)
+* Service: Added a validation endpoint for the notification template. [#2655](https://github.com/microsoft/onefuzz/pull/2655)
+### Changed
+* Service: Update LLVM from v10 to v12 now that we are supporting Ubuntu 20.04 as our default image. [#2617](https://github.com/microsoft/onefuzz/pull/2617)
+* Agent: Remove unused coverage recorder from `input-tester`. [#2681](https://github.com/microsoft/onefuzz/pull/2681)
+* Agent: Rename `coverage` to `coverage-legacy`. [#2685](https://github.com/microsoft/onefuzz/pull/2685)
+### Fixed
+* CLI: Return an error when uppercase application names are specified when using deploy.py. [#2665](https://github.com/microsoft/onefuzz/pull/2665)
+* Agent: Fix local fuzzing mode. [#2669](https://github.com/microsoft/onefuzz/pull/2669)
+* Service: Post the JobCreated event when a job is created. [#2677](https://github.com/microsoft/onefuzz/pull/2677)
+* Service: The repro `Create` command will now fail if insert fails. Also add additional tests. [#2678](https://github.com/microsoft/onefuzz/pull/2678)
+* Service: Added support for `Contains Words` in WIQL [#2686](https://github.com/microsoft/onefuzz/pull/2686)
 
+## 6.0.0
 ## BREAKING CHANGES
 
 ### Manual Deployment Step

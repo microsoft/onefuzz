@@ -326,6 +326,10 @@ impl Coordinator {
 
         Ok(response)
     }
+
+    pub fn get_machine_id(&self) -> Uuid {
+        self.registration.machine_id
+    }
 }
 
 #[cfg(test)]
