@@ -99,8 +99,6 @@ UPPERCASE_NAME_ERROR = (
     "specifying for this argument and retry."
 )
 
-DOTNET_APPLICATION_SUFFIX = "-net"
-
 logger = logging.getLogger("deploy")
 
 
@@ -301,49 +299,25 @@ class Client:
             "cli_password", object_id, self.get_subscription_id()
         )
 
-    def get_instance_urls(self) -> List[str]:
+    def get_instance_url(self) -> str:
         # The url to access the instance
         # This also represents the legacy identifier_uris of the application
         # registration
         if self.multi_tenant_domain:
-            return [
-                "https://%s/%s" % (self.multi_tenant_domain, name)
-                for name in [
-                    self.application_name,
-                    self.application_name + DOTNET_APPLICATION_SUFFIX,
-                ]
-            ]
+            return "https://%s/%s" % (self.multi_tenant_domain, self.application_name)
         else:
-            return [
-                "https://%s.azurewebsites.net" % name
-                for name in [
-                    self.application_name,
-                    self.application_name + DOTNET_APPLICATION_SUFFIX,
-                ]
-            ]
+            return "https://%s.azurewebsites.net" % self.application_name
 
-    def get_identifier_urls(self) -> List[str]:
+    def get_identifier_url(self) -> str:
         # This is used to identify the application registration via the
         # identifier_uris field.  Depending on the environment this value needs
         # to be from an approved domain The format of this value is derived
         # from the default value proposed by azure when creating an application
         # registration api://{guid}/...
         if self.multi_tenant_domain:
-            return [
-                "api://%s/%s" % (self.multi_tenant_domain, name)
-                for name in [
-                    self.application_name,
-                    self.application_name + DOTNET_APPLICATION_SUFFIX,
-                ]
-            ]
+            return "api://%s/%s" % (self.multi_tenant_domain, self.application_name)
         else:
-            return [
-                "api://%s.azurewebsites.net" % name
-                for name in [
-                    self.application_name,
-                    self.application_name + DOTNET_APPLICATION_SUFFIX,
-                ]
-            ]
+            return "api://%s.azurewebsites.net" % self.application_name
 
     def get_signin_audience(self) -> str:
         # https://docs.microsoft.com/en-us/azure/active-directory/develop/supported-accounts-validation
@@ -514,7 +488,7 @@ class Client:
         # find any identifier URIs that need updating
         identifier_uris: List[str] = app["identifierUris"]
         updated_identifier_uris = list(
-            set(identifier_uris) | set(self.get_identifier_urls())
+            set(identifier_uris) | set([self.get_identifier_url()])
         )
         if len(updated_identifier_uris) > len(identifier_uris):
             update_properties["identifierUris"] = updated_identifier_uris
@@ -561,7 +535,7 @@ class Client:
 
         params = {
             "displayName": self.application_name,
-            "identifierUris": self.get_identifier_urls(),
+            "identifierUris": [self.get_identifier_url()],
             "signInAudience": self.get_signin_audience(),
             "appRoles": app_roles,
             "api": {
@@ -583,10 +557,7 @@ class Client:
                     "enableAccessTokenIssuance": False,
                     "enableIdTokenIssuance": True,
                 },
-                "redirectUris": [
-                    f"{url}/.auth/login/aad/callback"
-                    for url in self.get_instance_urls()
-                ],
+                "redirectUris": [f"{self.get_instance_url()}/.auth/login/aad/callback"],
             },
             "requiredResourceAccess": [
                 {
@@ -662,8 +633,8 @@ class Client:
             "%Y-%m-%dT%H:%M:%SZ"
         )
 
-        app_func_audiences = self.get_identifier_urls().copy()
-        app_func_audiences.extend(self.get_instance_urls())
+        app_func_audiences = [self.get_identifier_url()]
+        app_func_audiences.extend([self.get_instance_url()])
 
         if self.multi_tenant_domain:
             # clear the value in the Issuer Url field:
@@ -1135,45 +1106,6 @@ class Client:
                 if error is not None:
                     raise error
 
-    def deploy_dotnet_app(self) -> None:
-        logger.info("deploying function app %s ", self.app_zip)
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            with zipfile.ZipFile(self.app_zip, "r") as zip_ref:
-                func = shutil.which("func")
-                assert func is not None
-
-                zip_ref.extractall(tmpdirname)
-                error: Optional[subprocess.CalledProcessError] = None
-                max_tries = 5
-                for i in range(max_tries):
-                    try:
-                        subprocess.check_output(
-                            [
-                                func,
-                                "azure",
-                                "functionapp",
-                                "publish",
-                                self.application_name + DOTNET_APPLICATION_SUFFIX,
-                                "--no-build",
-                                "--dotnet-version",
-                                "7.0",
-                            ],
-                            env=dict(os.environ, CLI_DEBUG="1"),
-                            cwd=tmpdirname,
-                        )
-                        return
-                    except subprocess.CalledProcessError as err:
-                        error = err
-                        if i + 1 < max_tries:
-                            logger.debug("func failure error: %s", err)
-                            logger.warning(
-                                "function failed to deploy, waiting 60 "
-                                "seconds and trying again"
-                            )
-                            time.sleep(60)
-                if error is not None:
-                    raise error
-
     def update_registration(self) -> None:
         if not self.create_registration:
             return
@@ -1241,7 +1173,6 @@ def main() -> None:
         ("instance-specific-setup", Client.upload_instance_setup),
         ("third-party", Client.upload_third_party),
         ("api", Client.deploy_app),
-        ("dotnet-api", Client.deploy_dotnet_app),
         ("export_appinsights", Client.add_log_export),
         ("update_registration", Client.update_registration),
     ]
