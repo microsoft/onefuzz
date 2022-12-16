@@ -1,14 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::io::ErrorKind;
 use std::path::PathBuf;
+use std::{io::ErrorKind, sync::Arc};
 
 use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use onefuzz::{auth::Secret, blob::BlobContainerUrl, http::is_auth_error};
 use storage_queue::{Message as QueueMessage, QueueClient};
 use tokio::fs;
+use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::config::Registration;
@@ -145,7 +146,7 @@ pub struct Message {
 
 pub struct WorkQueue {
     queue: QueueClient,
-    registration: Registration,
+    registration: Arc<RwLock<Registration>>,
 }
 
 impl WorkQueue {
@@ -155,16 +156,17 @@ impl WorkQueue {
 
         Ok(Self {
             queue,
-            registration,
+            registration: Arc::new(RwLock::new(registration)),
         })
     }
 
     async fn renew(&mut self) -> Result<()> {
-        self.registration
+        let mut registration = self.registration.write().await;
+        *registration = registration
             .renew()
             .await
             .context("unable to renew registration in workqueue")?;
-        let url = self.registration.dynamic_config.work_queue.clone();
+        let url = registration.dynamic_config.work_queue.clone();
         self.queue = QueueClient::new(url)?;
         Ok(())
     }
@@ -207,7 +209,13 @@ impl WorkQueue {
                 Err(err) => {
                     if is_auth_error(&err) {
                         self.renew().await.context("unable to renew registration")?;
-                        let url = self.registration.dynamic_config.work_queue.clone();
+                        let url = self
+                            .registration
+                            .read()
+                            .await
+                            .dynamic_config
+                            .work_queue
+                            .clone();
                         queue_message
                             .update_url(url)
                             .delete()

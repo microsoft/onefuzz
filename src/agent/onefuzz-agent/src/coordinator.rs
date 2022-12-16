@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::sync::Arc;
+
 use anyhow::{Context, Error, Result};
 use downcast_rs::Downcast;
 use onefuzz::{auth::AccessToken, http::ResponseExt, process::Output};
@@ -9,6 +11,7 @@ use reqwest_retry::{
     is_auth_failure, RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS,
 };
 use serde::Serialize;
+use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::commands::SshKeyInfo;
@@ -16,12 +19,12 @@ use crate::config::Registration;
 use crate::work::{TaskId, WorkSet};
 use crate::worker::WorkerEvent;
 
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
 pub struct StopTask {
     pub task_id: TaskId,
 }
 
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum NodeCommand {
     AddSshKey(SshKeyInfo),
@@ -153,9 +156,9 @@ pub struct TaskInfo {
 pub trait ICoordinator: Downcast {
     async fn poll_commands(&mut self) -> Result<Option<NodeCommand>, PollCommandError>;
 
-    async fn emit_event(&mut self, event: NodeEvent) -> Result<()>;
+    async fn emit_event(&self, event: NodeEvent) -> Result<()>;
 
-    async fn can_schedule(&mut self, work: &WorkSet) -> Result<CanSchedule>;
+    async fn can_schedule(&self, work: &WorkSet) -> Result<CanSchedule>;
 }
 
 impl_downcast!(ICoordinator);
@@ -166,11 +169,11 @@ impl ICoordinator for Coordinator {
         self.poll_commands().await
     }
 
-    async fn emit_event(&mut self, event: NodeEvent) -> Result<()> {
+    async fn emit_event(&self, event: NodeEvent) -> Result<()> {
         self.emit_event(event).await
     }
 
-    async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<CanSchedule> {
+    async fn can_schedule(&self, work_set: &WorkSet) -> Result<CanSchedule> {
         self.can_schedule(work_set).await
     }
 }
@@ -184,7 +187,7 @@ pub enum PollCommandError {
 pub struct Coordinator {
     client: Client,
     registration: Registration,
-    token: AccessToken,
+    token: Arc<RwLock<AccessToken>>,
 }
 
 impl Coordinator {
@@ -195,7 +198,7 @@ impl Coordinator {
         Ok(Self {
             client,
             registration,
-            token,
+            token: Arc::new(RwLock::new(token)),
         })
     }
 
@@ -203,7 +206,7 @@ impl Coordinator {
     ///
     /// If the request fails due to an expired access token, we will retry once
     /// with a fresh one.
-    pub async fn poll_commands(&mut self) -> Result<Option<NodeCommand>, PollCommandError> {
+    pub async fn poll_commands(&self) -> Result<Option<NodeCommand>, PollCommandError> {
         let request = PollCommandsRequest {
             machine_id: self.registration.machine_id,
         };
@@ -241,7 +244,7 @@ impl Coordinator {
         }
     }
 
-    pub async fn emit_event(&mut self, event: NodeEvent) -> Result<()> {
+    pub async fn emit_event(&self, event: NodeEvent) -> Result<()> {
         let envelope = NodeEventEnvelope {
             event,
             machine_id: self.registration.machine_id,
@@ -255,7 +258,7 @@ impl Coordinator {
         Ok(())
     }
 
-    async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<CanSchedule> {
+    async fn can_schedule(&self, work_set: &WorkSet) -> Result<CanSchedule> {
         // Temporary: assume one work unit per work set.
         //
         // In the future, we will probably want the same behavior, but we will
@@ -283,11 +286,23 @@ impl Coordinator {
         Ok(can_schedule)
     }
 
-    async fn send_request(&mut self, request: RequestBuilder) -> Result<Response> {
+    async fn get_token(&self) -> Result<AccessToken> {
+        let token = self.token.read().await;
+        Ok(token.clone())
+    }
+
+    async fn refresh_token(&self) -> Result<AccessToken> {
+        let mut token = self.token.write().await;
+        *token = self.registration.config.credentials.access_token().await?;
+        Ok(token.clone())
+    }
+
+    async fn send_request(&self, request: RequestBuilder) -> Result<Response> {
+        let token = self.get_token().await?;
         let mut response = request
             .try_clone()
             .ok_or_else(|| anyhow!("unable to clone request"))?
-            .bearer_auth(self.token.secret().expose_ref())
+            .bearer_auth(token.secret().expose_ref())
             .send_retry(
                 |code| match code {
                     StatusCode::UNAUTHORIZED => RetryCheck::Fail,
@@ -303,13 +318,13 @@ impl Coordinator {
             debug!("access token expired, renewing");
 
             // If we didn't succeed due to authorization, refresh our token,
-            self.token = self.registration.config.credentials.access_token().await?;
+            let token = self.refresh_token().await?;
 
             debug!("retrying request after refreshing access token");
 
             // And try one more time.
             response = request
-                .bearer_auth(self.token.secret().expose_ref())
+                .bearer_auth(token.secret().expose_ref())
                 .send_retry_default()
                 .await
                 .context("Coordinator.send after refreshing access token");

@@ -83,12 +83,12 @@ impl Fixture {
 
 #[tokio::test]
 async fn test_update_free_no_work() {
-    let mut agent = Fixture.agent();
+    let agent = Fixture.agent();
 
-    let done = agent.update().await.unwrap();
+    let (agent, done) = agent.update().await.unwrap();
     assert!(!done);
 
-    assert!(matches!(agent.scheduler().unwrap(), Scheduler::Free(..)));
+    assert!(matches!(agent.scheduler.unwrap(), Scheduler::Free(..)));
 
     let double: &WorkQueueDouble = agent.work_queue.downcast_ref().unwrap();
     let claimed_worksets = double
@@ -109,13 +109,10 @@ async fn test_update_free_has_work() {
         .available
         .push(Fixture.message());
 
-    let done = agent.update().await.unwrap();
+    let (agent, done) = agent.update().await.unwrap();
     assert!(!done);
-
-    assert!(matches!(
-        agent.scheduler().unwrap(),
-        Scheduler::SettingUp(..)
-    ));
+    let (agent, _done) = agent.update().await.unwrap();
+    assert!(matches!(agent.scheduler.unwrap(), Scheduler::SettingUp(..)));
 
     let double: &WorkQueueDouble = agent.work_queue.downcast_ref().unwrap();
     let claimed_worksets = double
@@ -150,7 +147,9 @@ async fn test_emitted_state() {
         .push(Fixture.message());
 
     for _i in 0..10 {
-        if agent.update().await.unwrap() {
+        let (new_agent, done) = agent.update().await.unwrap();
+        agent = new_agent;
+        if done {
             break;
         }
     }
@@ -181,8 +180,8 @@ async fn test_emitted_state() {
         }),
     ];
     let coordinator: &CoordinatorDouble = agent.coordinator.downcast_ref().unwrap();
-    let events = &coordinator.events;
-    assert_eq!(events, &expected_events);
+    let events = &coordinator.events.read().await;
+    assert_eq!(&events.to_vec(), &expected_events);
 }
 
 #[tokio::test]
@@ -207,7 +206,9 @@ async fn test_emitted_state_failed_setup() {
         .push(Fixture.message());
 
     for _i in 0..10 {
-        if agent.update().await.unwrap() {
+        let (new_agent, done) = agent.update().await.unwrap();
+        agent = new_agent;
+        if done {
             break;
         }
     }
@@ -223,7 +224,7 @@ async fn test_emitted_state_failed_setup() {
         }),
     ];
     let coordinator: &CoordinatorDouble = agent.coordinator.downcast_ref().unwrap();
-    let events = &coordinator.events;
+    let events = &coordinator.events.read().await.to_vec();
     assert_eq!(events, &expected_events);
 
     // TODO: at some point, the underlying tests should be updated to not write
