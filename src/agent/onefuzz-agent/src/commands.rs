@@ -118,7 +118,7 @@ pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
 
             debug!("copying ACL from ssh_host_dsa_key");
             let result = Command::new("powershell.exe")
-                .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
+                .args(["-ExecutionPolicy", "Unrestricted", "-Command"])
                 .arg(format!(
                     "Get-Acl \"{}\" | Set-Acl \"{}\"",
                     host_key_path.display(),
