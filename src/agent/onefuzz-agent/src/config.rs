@@ -80,7 +80,7 @@ struct RawStaticConfig {
 }
 
 impl StaticConfig {
-    pub async fn new(data: &[u8]) -> Result<Self> {
+    pub async fn new(data: &[u8], machine_identity: Option<MachineIdentity>) -> Result<Self> {
         let config: RawStaticConfig = serde_json::from_slice(data)?;
 
         let credentials = match config.client_credentials {
@@ -104,7 +104,7 @@ impl StaticConfig {
                 managed.into()
             }
         };
-        let machine_identity = match config.machine_identity {
+        let machine_identity = match machine_identity.or(config.machine_identity) {
             Some(machine_identity) => machine_identity,
             None => MachineIdentity::from_metadata().await?,
         };
@@ -125,11 +125,14 @@ impl StaticConfig {
         Ok(config)
     }
 
-    pub async fn from_file(config_path: impl AsRef<Path>) -> Result<Self> {
+    pub async fn from_file(
+        config_path: impl AsRef<Path>,
+        machine_identity: Option<MachineIdentity>,
+    ) -> Result<Self> {
         let config_path = config_path.as_ref();
         let data = std::fs::read(config_path)
             .with_context(|| format!("unable to read config file: {}", config_path.display()))?;
-        Self::new(&data).await
+        Self::new(&data, machine_identity).await
     }
 
     pub fn from_env() -> Result<Self> {
