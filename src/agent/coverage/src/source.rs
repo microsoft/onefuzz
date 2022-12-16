@@ -1,0 +1,157 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+use std::collections::{BTreeMap, BTreeSet};
+
+use anyhow::{bail, Result};
+
+use debuggable_module::block::{sweep_region, Block, Blocks};
+use debuggable_module::load_module::LoadModule;
+use debuggable_module::loader::Loader;
+use debuggable_module::path::FilePath;
+use debuggable_module::{Module, Offset};
+
+use crate::binary::BinaryCoverage;
+
+pub use crate::binary::Count;
+
+#[derive(Clone, Debug, Default)]
+pub struct SourceCoverage {
+    pub files: BTreeMap<FilePath, FileCoverage>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct FileCoverage {
+    pub lines: BTreeMap<Line, Count>,
+}
+
+// Must be nonzero.
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub struct Line(u32);
+
+impl Line {
+    pub fn new(number: u32) -> Result<Self> {
+        if number == 0 {
+            bail!("line numbers must be nonzero");
+        }
+
+        Ok(Line(number))
+    }
+
+    pub fn number(&self) -> u32 {
+        self.0
+    }
+}
+
+impl From<Line> for u32 {
+    fn from(line: Line) -> Self {
+        line.number()
+    }
+}
+
+pub fn binary_to_source_coverage(binary: &BinaryCoverage) -> Result<SourceCoverage> {
+    use std::collections::btree_map::Entry;
+
+    use symbolic::debuginfo::Object;
+    use symbolic::symcache::{SymCache, SymCacheConverter};
+
+    let loader = Loader::new();
+
+    let mut source = SourceCoverage::default();
+
+    for (exe_path, coverage) in &binary.modules {
+        let module: Box<dyn Module> = Box::load(&loader, exe_path.clone())?;
+        let debuginfo = module.debuginfo()?;
+
+        let mut symcache = vec![];
+        let mut converter = SymCacheConverter::new();
+
+        let exe = Object::parse(module.executable_data())?;
+        converter.process_object(&exe)?;
+
+        let di = Object::parse(module.debuginfo_data())?;
+        converter.process_object(&di)?;
+
+        converter.serialize(&mut std::io::Cursor::new(&mut symcache))?;
+        let symcache = SymCache::parse(&symcache)?;
+
+        let mut blocks = Blocks::new();
+
+        for function in debuginfo.functions() {
+            for offset in coverage.as_ref().keys() {
+                // Recover function blocks if it contains any coverage offset.
+                if function.contains(offset) {
+                    let function_blocks =
+                        sweep_region(&*module, &debuginfo, function.offset, function.size)?;
+                    blocks.extend(&function_blocks);
+                    break;
+                }
+            }
+        }
+
+        for (offset, count) in coverage.as_ref() {
+            // Inflate blocks.
+            if let Some(block) = blocks.find(offset) {
+                let block_offsets = instruction_offsets(&*module, block)?;
+
+                for offset in block_offsets {
+                    for location in symcache.lookup(offset.0) {
+                        let line_number = location.line();
+
+                        if line_number == 0 {
+                            continue;
+                        }
+
+                        if let Some(file) = location.file() {
+                            let file_path = FilePath::new(file.full_path())?;
+
+                            // We have a hit.
+                            let file_coverage = source.files.entry(file_path).or_default();
+                            let line = Line(line_number);
+
+                            match file_coverage.lines.entry(line) {
+                                Entry::Occupied(occupied) => {
+                                    let old = occupied.into_mut();
+
+                                    // If we miss any part of a line, count it as missed.
+                                    let new = u32::max(old.0, count.0);
+
+                                    *old = Count(new);
+                                }
+                                Entry::Vacant(vacant) => {
+                                    vacant.insert(*count);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(source)
+}
+
+fn instruction_offsets(module: &dyn Module, block: &Block) -> Result<BTreeSet<Offset>> {
+    use iced_x86::Decoder;
+    let data = module.read(block.offset, block.size)?;
+
+    let mut offsets: BTreeSet<Offset> = BTreeSet::default();
+
+    let mut pc = block.offset.0;
+    let mut decoder = Decoder::new(64, data, 0);
+    decoder.set_ip(pc);
+
+    while decoder.can_decode() {
+        let inst = decoder.decode();
+
+        if inst.is_invalid() {
+            break;
+        }
+
+        offsets.insert(Offset(pc));
+        pc = inst.ip();
+    }
+
+    Ok(offsets)
+}
