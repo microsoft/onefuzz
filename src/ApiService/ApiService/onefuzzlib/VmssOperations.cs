@@ -187,7 +187,7 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    private record InstanceIdKey(Guid Scaleset, Guid VmId);
+    private sealed record InstanceIdKey(Guid Scaleset, Guid VmId);
     private Task<string> GetInstanceIdForVmId(Guid scaleset, Guid vmId)
         => _cache.GetOrCreateAsync(new InstanceIdKey(scaleset, vmId), async entry => {
             var scalesetResource = GetVmssResource(scaleset);
