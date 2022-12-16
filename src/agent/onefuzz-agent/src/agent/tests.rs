@@ -145,9 +145,9 @@ async fn test_emitted_state() {
         .available
         .push(Fixture.message());
 
+    let mut done;
     for _i in 0..10 {
-        let (new_agent, done) = agent.update().await.unwrap();
-        agent = new_agent;
+        (agent, done) = agent.update().await.unwrap();
         if done {
             break;
         }
@@ -204,9 +204,9 @@ async fn test_emitted_state_failed_setup() {
         .available
         .push(Fixture.message());
 
+    let mut done;
     for _i in 0..10 {
-        let (new_agent, done) = agent.update().await.unwrap();
-        agent = new_agent;
+        (agent, done) = agent.update().await.unwrap();
         if done {
             break;
         }
