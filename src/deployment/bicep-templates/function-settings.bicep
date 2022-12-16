@@ -28,25 +28,12 @@ param monitor_account_name string
 param functions_worker_runtime string
 param functions_extension_version string
 
-param agent_function_names array
-param functions_disabled string
-
 param enable_profiler bool
-
-var disabledFunctionName = 'disabledFunctions-${name}'
 
 var telemetry = 'd7a73cf4-5a1a-4030-85e1-e5b25867e45a'
 
 resource function 'Microsoft.Web/sites@2021-02-01' existing = {
   name: name
-}
-
-module disabledFunctions 'function-settings-disabled-apps.bicep' = {
-  name: disabledFunctionName
-  params:{
-    functions_disabled_setting: functions_disabled
-    allFunctions: agent_function_names
-  }
 }
 
 var enable_profilers = enable_profiler ? {
@@ -79,5 +66,5 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       ONEFUZZ_KEYVAULT: keyvault_name
       ONEFUZZ_OWNER: owner
       ONEFUZZ_CLIENT_SECRET: client_secret
-  }, disabledFunctions.outputs.appSettings, enable_profilers)
+  }, enable_profilers)
 }
