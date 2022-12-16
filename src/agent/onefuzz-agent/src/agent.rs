@@ -79,23 +79,18 @@ impl Agent {
             self.coordinator.emit_event(event).await?;
         }
         let mut state = self;
-        loop {
+        let mut done = false;
+        while !done {
             state.heartbeat.alive();
             if instant.elapsed() >= PENDING_COMMANDS_DELAY {
                 state = state.execute_pending_commands().await?;
                 instant = time::Instant::now();
             }
 
-            let (new_state, done) = state.update().await?;
-
-            if done {
-                debug!("agent done, exiting loop");
-                break;
-            }
-
-            state = new_state;
+            (state, done) = state.update().await?;
         }
 
+        debug!("agent done, exiting loop");
         Ok(())
     }
 
@@ -227,7 +222,6 @@ impl Agent {
             SetupDone::Done(s) => s.into(),
         };
 
-        //Ok(scheduler)
         Ok(Self {
             previous_state: previous,
             scheduler: Some(scheduler),
@@ -255,7 +249,6 @@ impl Agent {
         debug!("agent ready");
         self.emit_state_update_if_changed(StateUpdateEvent::Ready)
             .await?;
-        //Ok(state.run().await?.into())
         Ok(Self {
             previous_state: previous,
             scheduler: Some(state.run().await?.into()),
@@ -284,7 +277,6 @@ impl Agent {
             self.coordinator.emit_event(event.into()).await?;
         }
 
-        //Ok(updated.into())
         Ok(Self {
             previous_state: previous,
             scheduler: Some(updated.into()),
@@ -312,7 +304,6 @@ impl Agent {
 
         self.emit_state_update_if_changed(event).await?;
         // `Done` is a final state.
-        //Ok(state.into())
         Ok(Self {
             previous_state: previous,
             scheduler: Some(state.into()),
@@ -371,11 +362,6 @@ impl Agent {
                 })
             }
         }
-
-        // Ok(Self{
-        //     last_poll_command: result,
-        //     ..self
-        // })
     }
 
     async fn sleep(&self) {

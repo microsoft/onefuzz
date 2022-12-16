@@ -111,7 +111,6 @@ async fn test_update_free_has_work() {
 
     let (agent, done) = agent.update().await.unwrap();
     assert!(!done);
-    let (agent, _done) = agent.update().await.unwrap();
     assert!(matches!(agent.scheduler.unwrap(), Scheduler::SettingUp(..)));
 
     let double: &WorkQueueDouble = agent.work_queue.downcast_ref().unwrap();
