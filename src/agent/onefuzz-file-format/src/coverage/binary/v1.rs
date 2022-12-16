@@ -45,7 +45,7 @@ impl TryFrom<BinaryCoverageJson> for BinaryCoverage {
             let mut coverage = ModuleBinaryCoverage::default();
 
             for (hex, count) in offsets {
-                let offset = Offset(u64::from(hex.0));
+                let offset = Offset(hex.0);
                 coverage.offsets.insert(offset, Count(count));
             }
 

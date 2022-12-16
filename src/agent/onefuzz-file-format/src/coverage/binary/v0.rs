@@ -37,7 +37,7 @@ impl TryFrom<BinaryCoverage> for BinaryCoverageJson {
 
             for (offset, count) in offsets.as_ref() {
                 let offset = u32::try_from(offset.0)?;
-                let count = u32::from(count.0);
+                let count = count.0;
                 let block = BinaryBlockCoverageJson { offset, count };
                 blocks.push(block);
             }

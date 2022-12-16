@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+#![allow(clippy::field_reassign_with_default)]
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::{Cursor, Write};
@@ -456,7 +457,7 @@ impl From<SourceCoverage> for CoberturaCoverage {
                 let mut lines = vec![];
 
                 // Can't panic, by construction.
-                let file_coverage = &source.files[&file_path];
+                let file_coverage = &source.files[file_path];
 
                 for (line, count) in &file_coverage.lines {
                     let number = u64::from(line.number());
