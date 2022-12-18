@@ -341,7 +341,7 @@ impl Agent {
                 })
             }
             Err(PollCommandError::RequestParseFailed(err)) => {
-                bail!("poll commands failed: {:?}", err);
+                error!("received unexpected command, ignoring: {:?}", err);
             }
             Err(PollCommandError::ClaimFailed(err)) => {
                 // If we failed to claim two commands in a row, it means the
