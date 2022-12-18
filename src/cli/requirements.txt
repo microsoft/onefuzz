@@ -8,11 +8,11 @@ pydantic~=1.8.1 --no-binary=pydantic
 memoization~=0.4.0
 msrestazure==0.6.4
 azure-storage-blob~=12.8
-azure-applicationinsights==0.1.0
+azure-applicationinsights==0.1.1
 tenacity==8.0.1
 docstring_parser==0.8.1
-azure-identity==1.10.0
-azure-cli-core==2.42.0
+azure-identity==1.12.0
+azure-cli-core==2.43.0
 # packaging is required but not specified by azure-cli-core
 packaging==21.3
 # urllib3[secure] needs to be specifically stated for azure-cli-core
