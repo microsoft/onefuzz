@@ -109,7 +109,7 @@ fn add_common_extensions(srcview: &mut SrcView, pdb_path: &Path) -> Result<()> {
         .to_string_lossy();
 
     // add module without extension
-    srcview.insert(&stem, &pdb_path)?;
+    srcview.insert(&stem, pdb_path)?;
     // add common module extensions
     for ext in ["sys", "exe", "dll"] {
         srcview.insert(&format!("{}.{}", stem, ext), pdb_path)?;
@@ -142,7 +142,7 @@ fn srcloc(opts: SrcLocOpt) -> Result<()> {
 
 fn pdb_paths(opts: PdbPathsOpt) -> Result<()> {
     let mut srcview = SrcView::new();
-    srcview.insert(&*opts.pdb_path.to_string_lossy(), &opts.pdb_path)?;
+    srcview.insert(&opts.pdb_path.to_string_lossy(), &opts.pdb_path)?;
 
     for path in srcview.paths() {
         println!("{}", path.display());

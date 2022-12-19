@@ -84,7 +84,7 @@ impl ModuleDebugInfo {
     fn load(module: &Path) -> Result<Option<Self>> {
         // Used when `cfg(windows)`.
         #[allow(unused_mut)]
-        let mut data = fs::read(&module)?.into_boxed_slice();
+        let mut data = fs::read(module)?.into_boxed_slice();
 
         // Conditional so we can use `dbghelp`.
         #[cfg(windows)]
@@ -98,7 +98,7 @@ impl ModuleDebugInfo {
 
                 // Search the symbol path for a PDB for this PE, which we'll use instead.
                 if let Some(pdb) = crate::pdb::find_pdb_path(module, &pe, None)? {
-                    data = fs::read(&pdb)?.into_boxed_slice();
+                    data = fs::read(pdb)?.into_boxed_slice();
                 }
             }
         }

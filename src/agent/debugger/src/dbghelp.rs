@@ -372,7 +372,7 @@ impl FrameContext {
 
             AH | BH | CH | DH => (full_register_value & 0x0000_ff00) >> 8,
 
-            _ => full_register_value as u64,
+            _ => full_register_value,
         }
     }
 
