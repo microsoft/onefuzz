@@ -339,7 +339,7 @@ public record InstanceConfig
     string[] AllowedAadTenants,
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkConfig NetworkConfig,
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
-    AzureVmExtensionConfig? Extensions,
+    AzureVmExtensionConfig? Extensions = null,
     ImageReference? DefaultWindowsVmImage = null,
     ImageReference? DefaultLinuxVmImage = null,
     string ProxyVmSku = "Standard_B2s",
@@ -351,19 +351,11 @@ public record InstanceConfig
 ) : EntityBase() {
 
     public InstanceConfig(string instanceName) : this(
-        instanceName,
-        null,
-        Array.Empty<string>(),
-        new NetworkConfig(),
-        new NetworkSecurityGroupConfig(),
-        null,
-        null,
-        null,
-        null,
-        null,
-        "Standard_B2s",
-        false
-        ) { }
+        InstanceName: instanceName,
+        Admins: null,
+        AllowedAadTenants: Array.Empty<string>(),
+        NetworkConfig: new NetworkConfig(),
+        ProxyNsgConfig: new NetworkSecurityGroupConfig()) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {
         if (value is not null && value.Count == 0) {

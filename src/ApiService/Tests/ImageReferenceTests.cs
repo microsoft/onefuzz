@@ -105,7 +105,7 @@ public class ImageReferenceTests {
   ""sharedGalleryId"": ""/subscriptions/{Guid.Empty}/providers/Microsoft.Compute/locations/location/sharedGalleries/gallery/images/imageName/versions/latest""
 }}";
 
-    private record Holder(
+    private sealed record Holder(
         ImageReference latestGalleryId,
         ImageReference imageId,
         ImageReference marketplaceId,
