@@ -328,6 +328,9 @@ CONTAINER_DEF = Optional[Union[SyncedDir, List[SyncedDir]]]
 class ClientCredentials(BaseModel):
     client_id: UUID
     client_secret: str
+    resource: str
+    tenant: str
+    multi_tenant_domain: Optional[str]
 
 
 class AgentConfig(BaseModel):

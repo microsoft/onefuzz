@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "atexit",
+    "coverage",
     "coverage-legacy",
     "debuggable-module",
     "debugger",
@@ -9,6 +10,7 @@ members = [
     "onefuzz",
     "onefuzz-task",
     "onefuzz-agent",
+    "onefuzz-file-format",
     "onefuzz-telemetry",
     "reqwest-retry",
     "srcview",

@@ -84,7 +84,7 @@ impl<'a> ModuleDisassembler<'a> {
                     if decoder.can_decode() {
                         // We decoded the current instruction, so the decoder offset is
                         // set to the next instruction.
-                        let next = decoder.ip() as u64;
+                        let next = decoder.ip();
                         let next_offset =
                             if let Some(offset) = next.checked_sub(self.module.base_va) {
                                 offset.try_into().context("ELF offset overflowed `u32`")?

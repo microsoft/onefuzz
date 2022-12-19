@@ -347,7 +347,7 @@ impl Debugger {
             }
 
             DebugEventInfo::Exception(info) => {
-                continue_status = match self.dispatch_exception_event(*info, callbacks) {
+                continue_status = match self.dispatch_exception_event(info, callbacks) {
                     Ok(status) => status,
                     Err(e) => {
                         error!("Error processing exception: {}", e);

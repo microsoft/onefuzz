@@ -117,19 +117,6 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
           ]
         }
       }
-      {
-        objectId: netFunction.outputs.principalId
-        tenantId: tenantId
-        permissions: {
-          secrets: [
-            'get'
-            'list'
-            'set'
-            'delete'
-          ]
-        }
-      }
-
     ]
     tenantId: tenantId
   }
@@ -193,21 +180,6 @@ resource roleAssignments 'Microsoft.Authorization/roleAssignments@2020-10-01-pre
 }]
 
 // try to make role assignments to deploy as late as possible in order to have principalId ready
-resource roleAssignmentsNet 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
-  name: guid('${resourceGroup().id}${r.suffix}-1f-net')
-  properties: {
-    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${r.role}'
-    principalId: netFunction.outputs.principalId
-  }
-  dependsOn: [
-    eventGrid
-    keyVault
-    serverFarm
-    featureFlags
-  ]
-}]
-
-// try to make role assignments to deploy as late as possible in order to have principalId ready
 resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
   name: guid('${resourceGroup().id}-user_managed_idenity_read_blob')
   properties: {
@@ -250,27 +222,6 @@ module function 'bicep-templates/function.bicep' = {
   }
 }
 
-module netFunction 'bicep-templates/function.bicep' = {
-  name: 'netFunction'
-  params: {
-    linux_fx_version: 'DOTNET-ISOLATED|7.0'
-    name: '${name}-net'
-
-    app_logs_sas_url: storage.outputs.FuncSasUrlBlobAppLogs
-    app_func_audiences: app_func_audiences
-    app_func_issuer: app_func_issuer
-    client_id: clientId
-    diagnostics_log_level: diagnosticsLogLevel
-    location: location
-    log_retention: log_retention
-    owner: owner
-    server_farm_id: serverFarm.outputs.id
-
-    use_windows: true
-    enable_remote_debugging: enable_remote_debugging
-  }
-}
-
 module functionSettings 'bicep-templates/function-settings.bicep' = {
   name: 'functionSettings'
   params: {
@@ -291,115 +242,9 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
     multi_tenant_domain: multi_tenant_domain
     enable_profiler: enable_profiler
     app_config_endpoint: featureFlags.outputs.AppConfigEndpoint
-    functions_disabled: '0'
-    agent_function_names: [
-      'AgentCanSchedule' //0
-      'AgentCommands' //1
-      'AgentEvents' //2
-      'AgentRegistration' //3
-      'Containers' //4
-      'Download' //5
-      'Info' //6
-      'InstanceConfig' //7
-      'Jobs' //8
-      'JobTemplates' //9
-      'JobTemplatesManage' //10
-      'Negotiate' //11
-      'Node' //12
-      'NodeAddSshKey' //13
-      'Notifications' //14
-      'Pool' //15
-      'Proxy' //16
-      'QueueFileChanges' //17
-      'QueueNodeHeartbeat' //18
-      'QueueProxyUpdate' //19
-      'QueueSignalrEvents' //20
-      'QueueTaskHeartbeat' //21
-      'QueueUpdates' //22
-      'QueueWebhooks' //23
-      'ReproVms' //24
-      'Scaleset' //25
-      'Tasks' //26
-      'TimerDaily' //27
-      'TimerProxy' //28
-      'TimerRepro' //29
-      'TimerRetention' //30
-      'TimerTasks' //31
-      'TimerWorkers' //32
-      'Tools' //33
-      'Webhooks' //34
-      'WebhooksLogs' //35
-      'WebhooksPing' //36    
-    ]
   }
   dependsOn: [
     function
-  ]
-}
-
-module netFunctionSettings 'bicep-templates/function-settings.bicep' = {
-  name: 'netFunctionSettings'
-  params: {
-    owner: owner
-    name: '${name}-net'
-    functions_worker_runtime: 'dotnet-isolated'
-    functions_extension_version: '~4'
-    instance_name: name
-    app_insights_app_id: operationalInsights.outputs.appInsightsAppId
-    app_insights_key: operationalInsights.outputs.appInsightsInstrumentationKey
-    client_secret: clientSecret
-    signal_r_connection_string: signalR.outputs.connectionString
-    func_sas_url: storage.outputs.FuncSasUrl
-    func_storage_resource_id: storage.outputs.FuncId
-    fuzz_storage_resource_id: storage.outputs.FuzzId
-    keyvault_name: keyVaultName
-    monitor_account_name: operationalInsights.outputs.monitorAccountName
-    multi_tenant_domain: multi_tenant_domain
-    enable_profiler: enable_profiler
-    app_config_endpoint: featureFlags.outputs.AppConfigEndpoint
-    functions_disabled: '1'
-    agent_function_names: [
-      'AgentCanSchedule' //0
-      'AgentCommands' //1
-      'AgentEvents' //2
-      'AgentRegistration' //3
-      'Containers' //4
-      'Download' //5
-      'Info' //6
-      'InstanceConfig' //7
-      'Jobs' //8
-      'JobTemplates' //9
-      'JobTemplatesManage' //10
-      'Negotiate' //11
-      'Node' //12
-      'NodeAddSshKey' //13
-      'Notifications' //14
-      'Pool' //15
-      'Proxy' //16
-      'QueueFileChanges' //17
-      'QueueNodeHeartbeat' //18
-      'QueueProxyUpdate' //19
-      'QueueSignalrEvents' //20
-      'QueueTaskHeartbeat' //21
-      'QueueUpdates' //22
-      'QueueWebhooks' //23
-      'ReproVms' //24
-      'Scaleset' //25
-      'Tasks' //26
-      'TimerDaily' //27
-      'TimerProxy' //28
-      'TimerRepro' //29
-      'TimerRetention' //30
-      'TimerTasks' //31
-      'TimerWorkers' //32
-      'Tools' //33
-      'Webhooks' //34
-      'WebhookLogs' //35
-      'WebhookPing' //36   
-    ]
-  }
-  dependsOn: [
-    netFunction
   ]
 }
 

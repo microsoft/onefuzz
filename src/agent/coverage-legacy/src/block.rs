@@ -126,7 +126,7 @@ impl CommandBlockCov {
                 continue;
             }
 
-            let mod_info = debuginfo.get(&module.path());
+            let mod_info = debuginfo.get(module.path());
 
             if let Some(mod_info) = mod_info {
                 for (offset, block) in &coverage.blocks {

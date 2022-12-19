@@ -337,6 +337,10 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public async Async.Task<Node> ToReimage(Node node, bool done = false) {
+        if (!node.Managed) {
+            _logTracer.Info($"skip reimage for unmanaged node: {node.MachineId:Tag:MachineId}");
+            return node;
+        }
 
         var nodeState = node.State;
         if (done) {

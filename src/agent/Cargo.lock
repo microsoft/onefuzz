@@ -556,6 +556,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc"
 
 [[package]]
+name = "coverage"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap 4.0.26",
+ "debuggable-module",
+ "debugger",
+ "iced-x86",
+ "log",
+ "pete",
+ "procfs",
+ "regex",
+ "symbolic 10.1.4",
+ "thiserror",
+]
+
+[[package]]
 name = "coverage-legacy"
 version = "0.1.0"
 dependencies = [
@@ -2108,6 +2125,19 @@ dependencies = [
  "users",
  "uuid 0.8.2",
  "winapi",
+]
+
+[[package]]
+name = "onefuzz-file-format"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "coverage",
+ "debuggable-module",
+ "pretty_assertions",
+ "quick-xml",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

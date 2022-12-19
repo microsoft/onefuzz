@@ -296,9 +296,9 @@ impl<'a> Tester<'a> {
                 .machine_id()
                 .await?
                 .input_path(input_file)
-                .target_exe(&self.exe_path)
+                .target_exe(self.exe_path)
                 .target_options(self.arguments)
-                .setup_dir(&self.setup_dir);
+                .setup_dir(self.setup_dir);
 
             let argv = expand.evaluate(self.arguments)?;
             let mut env: HashMap<String, String> = HashMap::new();
