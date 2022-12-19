@@ -44,7 +44,7 @@ jobs:
         uses: dtolnay/rust-toolchain@55c7845fad90d0ae8b2e83715cb900e5e861e8cb # pinned latest master as of 2022-10-08
         # note: keep this in sync with .devcontainer/Dockerfile
         with:
-          toolchain: 1.64
+          toolchain: 1.66
           components: clippy, rustfmt, llvm-tools-preview
       - name: Get Rust version & build version
         shell: bash

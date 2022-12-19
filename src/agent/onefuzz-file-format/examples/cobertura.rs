@@ -28,7 +28,7 @@ fn main() -> Result<()> {
         let mut file = FileCoverage::default();
 
         for line in lines {
-            let count = if line % 3 == 0 { 1 } else { 0 };
+            let count = u32::from(line % 3 == 0);
             file.lines.insert(Line::new(line)?, Count(count));
         }
 

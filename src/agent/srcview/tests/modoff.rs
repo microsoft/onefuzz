@@ -11,7 +11,7 @@ fn parse_modoff() {
     let root = env::var("CARGO_MANIFEST_DIR").unwrap();
     let path: PathBuf = [&root, "res", "example.txt"].iter().collect();
 
-    let modoff = fs::read_to_string(&path).unwrap();
+    let modoff = fs::read_to_string(path).unwrap();
     let modoffs = ModOff::parse(&modoff).unwrap();
 
     assert_eq!(
