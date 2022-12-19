@@ -73,11 +73,11 @@ pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
 
             let stdout = String::from_utf8_lossy(&result.stdout).to_string();
 
-            if stdout.contains(&admins) {
+            if stdout.contains(admins) {
                 let result = Command::new("icacls.exe")
                     .arg(&admin_auth_keys_path)
                     .arg("/remove")
-                    .arg(&admins)
+                    .arg(admins)
                     .stdin(Stdio::null())
                     .stdout(Stdio::piped())
                     .stderr(Stdio::piped())
@@ -118,7 +118,7 @@ pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
 
             debug!("copying ACL from ssh_host_dsa_key");
             let result = Command::new("powershell.exe")
-                .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
+                .args(["-ExecutionPolicy", "Unrestricted", "-Command"])
                 .arg(format!(
                     "Get-Acl \"{}\" | Set-Acl \"{}\"",
                     host_key_path.display(),

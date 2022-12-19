@@ -248,7 +248,7 @@ pub fn process_module(
 }
 
 fn process_pdb(data: &[u8], pe: &PE, functions_only: bool, pdb_path: &Path) -> Result<FixedBitSet> {
-    let pdb_file = File::open(&pdb_path).context("opening PDB")?;
+    let pdb_file = File::open(pdb_path).context("opening PDB")?;
     let mut pdb = PDB::open(pdb_file).context("parsing PDB")?;
 
     let address_map = pdb.address_map()?;

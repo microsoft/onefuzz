@@ -937,9 +937,9 @@ impl AppVerifierController {
             .arg("-with")
             .arg("ErrorReport=0x41");
 
-        let disable_logfile_args = ArgsBuilder::from_args(&["-logtofile", "disable"]);
+        let disable_logfile_args = ArgsBuilder::from_args(["-logtofile", "disable"]);
 
-        let mut disable_args = ArgsBuilder::from_args(&["-disable", "*", "-for"]);
+        let mut disable_args = ArgsBuilder::from_args(["-disable", "*", "-for"]);
         disable_args.arg(exe_name);
 
         // We disable appverifier file logging while fuzzing.
@@ -953,7 +953,7 @@ impl AppVerifierController {
         //
         // but this setting is not officially documented. We take the conservative approach and assume
         // the user never changes this setting.
-        let enable_logfile_args = ArgsBuilder::from_args(&["-logtofile", "enable"]);
+        let enable_logfile_args = ArgsBuilder::from_args(["-logtofile", "enable"]);
 
         let appverif_path = {
             let mut buf =

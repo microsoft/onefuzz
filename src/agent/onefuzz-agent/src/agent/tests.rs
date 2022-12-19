@@ -19,12 +19,12 @@ struct Fixture;
 
 impl Fixture {
     pub fn agent(&self) -> Agent {
-        let coordinator = Box::new(CoordinatorDouble::default());
-        let reboot = Box::new(RebootDouble::default());
+        let coordinator = Box::<CoordinatorDouble>::default();
+        let reboot = Box::<RebootDouble>::default();
         let scheduler = Scheduler::new();
-        let setup_runner = Box::new(SetupRunnerDouble::default());
-        let work_queue = Box::new(WorkQueueDouble::default());
-        let worker_runner = Box::new(WorkerRunnerDouble::default());
+        let setup_runner = Box::<SetupRunnerDouble>::default();
+        let work_queue = Box::<WorkQueueDouble>::default();
+        let worker_runner = Box::<WorkerRunnerDouble>::default();
 
         Agent::new(
             coordinator,
@@ -67,7 +67,7 @@ impl Fixture {
 
     pub fn setup_url(&self) -> BlobContainerUrl {
         let url = "https://contoso.com/my-setup-container";
-        BlobContainerUrl::parse(&url).unwrap()
+        BlobContainerUrl::parse(url).unwrap()
     }
 
     pub fn work_unit(&self) -> WorkUnit {
