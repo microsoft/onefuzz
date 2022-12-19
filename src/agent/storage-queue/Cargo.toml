@@ -13,7 +13,7 @@ base64 = "0.13"
 bytes = { version = "1.2", features = ["serde"] }
 derivative = "2.2"
 flume = "0.10"
-num_cpus = "1.13"
+num_cpus = "1.14"
 regex = "1.6.0"
 reqwest = { version = "0.11", features = ["json", "stream", "native-tls-vendored"], default-features=false }
 reqwest-retry = { path = "../reqwest-retry" }
