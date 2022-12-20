@@ -166,15 +166,15 @@ impl_downcast!(ICoordinator);
 #[async_trait]
 impl ICoordinator for Coordinator {
     async fn poll_commands(&mut self) -> Result<Option<NodeCommand>, PollCommandError> {
-        self.poll_commands().await
+        Coordinator::poll_commands(self).await
     }
 
     async fn emit_event(&self, event: NodeEvent) -> Result<()> {
-        self.emit_event(event).await
+        Coordinator::emit_event(self, event).await
     }
 
     async fn can_schedule(&self, work_set: &WorkSet) -> Result<CanSchedule> {
-        self.can_schedule(work_set).await
+        Coordinator::can_schedule(self, work_set).await
     }
 }
 
