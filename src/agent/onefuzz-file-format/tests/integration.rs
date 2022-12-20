@@ -32,12 +32,12 @@ fn test_binary_coverage_formats() -> Result<()> {
     let expected = expected_binary_coverage()?;
 
     let v0_text = include_str!("files/binary-coverage.v0.json");
-    let v0_json: v0::BinaryCoverageJson = serde_json::from_str(&v0_text)?;
+    let v0_json: v0::BinaryCoverageJson = serde_json::from_str(v0_text)?;
     let from_v0 = BinaryCoverage::try_from(v0_json)?;
     assert_eq!(from_v0, expected);
 
     let v1_text = include_str!("files/binary-coverage.v1.json");
-    let v1_json: v1::BinaryCoverageJson = serde_json::from_str(&v1_text)?;
+    let v1_json: v1::BinaryCoverageJson = serde_json::from_str(v1_text)?;
     let from_v1 = BinaryCoverage::try_from(v1_json)?;
     assert_eq!(from_v1, expected);
 
