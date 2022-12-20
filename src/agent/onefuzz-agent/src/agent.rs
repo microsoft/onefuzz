@@ -90,7 +90,7 @@ impl Agent {
             (state, done) = state.update().await?;
         }
 
-        debug!("agent done, exiting loop");
+        info!("agent done, exiting loop");
         Ok(())
     }
 
@@ -187,7 +187,7 @@ impl Agent {
                     // Otherwise, the work was not stopped, but we still should not execute it. This is likely
                     // our because agent version is out of date. Do nothing, so another node can see the work.
                     // The service will eventually send us a stop command and reimage our node, if appropriate.
-                    debug!(
+                    info!(
                         "not scheduling active work set, not dropping: {:?}",
                         msg.work_set
                     );
@@ -210,7 +210,7 @@ impl Agent {
     }
 
     async fn setting_up(mut self, state: State<SettingUp>, previous: NodeState) -> Result<Self> {
-        debug!("agent setting up");
+        info!("agent setting up");
 
         let tasks = state.work_set().task_ids();
         self.emit_state_update_if_changed(StateUpdateEvent::SettingUp { tasks })
@@ -234,7 +234,7 @@ impl Agent {
         state: State<PendingReboot>,
         _previous: NodeState,
     ) -> Result<Self> {
-        debug!("agent pending reboot");
+        info!("agent pending reboot");
         self.emit_state_update_if_changed(StateUpdateEvent::Rebooting)
             .await?;
 
@@ -246,7 +246,7 @@ impl Agent {
     }
 
     async fn ready(self, state: State<Ready>, previous: NodeState) -> Result<Self> {
-        debug!("agent ready");
+        info!("agent ready");
         self.emit_state_update_if_changed(StateUpdateEvent::Ready)
             .await?;
         Ok(Self {
@@ -285,7 +285,7 @@ impl Agent {
     }
 
     async fn done(self, state: State<Done>, previous: NodeState) -> Result<Self> {
-        debug!("agent done");
+        info!("agent done");
         set_done_lock(self.machine_id).await?;
 
         let event = match state.cause() {
