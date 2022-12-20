@@ -4,8 +4,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::{bail, Result};
-pub use debuggable_module::{block, path::FilePath, Offset};
 use debuggable_module::Module;
+pub use debuggable_module::{block, path::FilePath, Offset};
 use symbolic::debuginfo::Object;
 use symbolic::symcache::{SymCache, SymCacheConverter};
 
