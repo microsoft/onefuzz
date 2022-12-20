@@ -4,18 +4,19 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::{bail, Result};
-use debuggable_module::{block, path::FilePath, Module, Offset};
+pub use debuggable_module::{block, path::FilePath, Offset};
+use debuggable_module::Module;
 use symbolic::debuginfo::Object;
 use symbolic::symcache::{SymCache, SymCacheConverter};
 
 use crate::allowlist::TargetAllowList;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct BinaryCoverage {
     pub modules: BTreeMap<FilePath, ModuleBinaryCoverage>,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ModuleBinaryCoverage {
     pub offsets: BTreeMap<Offset, Count>,
 }
