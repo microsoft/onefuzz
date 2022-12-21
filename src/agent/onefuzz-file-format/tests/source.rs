@@ -6,7 +6,7 @@ use pretty_assertions::assert_eq;
 use anyhow::Result;
 use coverage::source::{Count, Line, SourceCoverage};
 use debuggable_module::path::FilePath;
-use onefuzz_file_format::coverage::source::{v0, v1, SourceCoverageJson};
+use onefuzz_file_format::coverage::source::SourceCoverageJson;
 
 fn expected_source_coverage() -> Result<SourceCoverage> {
     let main_path = FilePath::new("src/bin/main.c")?;
