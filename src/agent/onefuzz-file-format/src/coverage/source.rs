@@ -8,13 +8,27 @@ pub mod v0;
 pub mod v1;
 
 #[derive(Serialize, Deserialize)]
-#[serde(tag = "version")]
+#[serde(tag = "version", content = "coverage")]
 pub enum SourceCoverageJson {
-    #[serde(rename = "0")]
+    #[serde(rename = "0.1")]
     V0(v0::SourceCoverageJson),
 
-    #[serde(rename = "1")]
+    #[serde(rename = "1.0")]
     V1(v1::SourceCoverageJson),
+}
+
+impl SourceCoverageJson {
+    pub fn deserialize(text: &str) -> Result<Self> {
+        // Try unversioned legacy format.
+        let v0 = serde_json::from_str::<v0::SourceCoverageJson>(text);
+
+        if let Ok(v0) = v0 {
+            return Ok(Self::V0(v0));
+        }
+
+        // Try versioned formats.
+        Ok(serde_json::from_str(text)?)
+    }
 }
 
 impl TryFrom<SourceCoverageJson> for SourceCoverage {
