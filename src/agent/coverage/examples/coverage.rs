@@ -5,6 +5,8 @@ use anyhow::Result;
 use clap::Parser;
 use coverage::allowlist::{AllowList, TargetAllowList};
 use coverage::binary::BinaryCoverage;
+use coverage::record::CoverageRecorder;
+use debuggable_module::loader::Loader;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -45,14 +47,19 @@ fn main() -> Result<()> {
         allowlist.source_files = AllowList::load(path)?;
     }
 
-    let coverage = coverage::record::record(cmd, timeout, allowlist)?;
+    let loader = Loader::new();
+    let recorded = CoverageRecorder::new(cmd)
+        .allowlist(allowlist)
+        .loader(loader)
+        .timeout(timeout)
+        .record()?;
 
-    dump_modoff(coverage)?;
+    dump_modoff(&recorded.coverage)?;
 
     Ok(())
 }
 
-fn dump_modoff(coverage: BinaryCoverage) -> Result<()> {
+fn dump_modoff(coverage: &BinaryCoverage) -> Result<()> {
     for (module, coverage) in &coverage.modules {
         for (offset, count) in coverage.as_ref() {
             if count.reached() {
