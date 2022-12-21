@@ -12,26 +12,26 @@ use crate::work::*;
 
 #[async_trait]
 pub trait IReboot: Downcast {
-    async fn save_context(&mut self, ctx: RebootContext) -> Result<()>;
+    async fn save_context(&self, ctx: RebootContext) -> Result<()>;
 
-    async fn load_context(&mut self) -> Result<Option<RebootContext>>;
+    async fn load_context(&self) -> Result<Option<RebootContext>>;
 
-    fn invoke(&mut self) -> Result<()>;
+    fn invoke(&self) -> Result<()>;
 }
 
 impl_downcast!(IReboot);
 
 #[async_trait]
 impl IReboot for Reboot {
-    async fn save_context(&mut self, ctx: RebootContext) -> Result<()> {
+    async fn save_context(&self, ctx: RebootContext) -> Result<()> {
         self.save_context(ctx).await
     }
 
-    async fn load_context(&mut self) -> Result<Option<RebootContext>> {
+    async fn load_context(&self) -> Result<Option<RebootContext>> {
         self.load_context().await
     }
 
-    fn invoke(&mut self) -> Result<()> {
+    fn invoke(&self) -> Result<()> {
         self.invoke()
     }
 }
@@ -39,7 +39,7 @@ impl IReboot for Reboot {
 pub struct Reboot;
 
 impl Reboot {
-    pub async fn save_context(&mut self, ctx: RebootContext) -> Result<()> {
+    pub async fn save_context(&self, ctx: RebootContext) -> Result<()> {
         let path = reboot_context_path()?;
 
         info!("saving reboot context to: {}", path.display());
@@ -54,7 +54,7 @@ impl Reboot {
         Ok(())
     }
 
-    pub async fn load_context(&mut self) -> Result<Option<RebootContext>> {
+    pub async fn load_context(&self) -> Result<Option<RebootContext>> {
         use std::io::ErrorKind;
         let path = reboot_context_path()?;
 
@@ -82,7 +82,7 @@ impl Reboot {
     }
 
     #[cfg(target_family = "unix")]
-    pub fn invoke(&mut self) -> Result<()> {
+    pub fn invoke(&self) -> Result<()> {
         info!("invoking local reboot command");
 
         Command::new("reboot").arg("-f").status()?;
@@ -91,7 +91,7 @@ impl Reboot {
     }
 
     #[cfg(target_family = "windows")]
-    pub fn invoke(&mut self) -> Result<()> {
+    pub fn invoke(&self) -> Result<()> {
         info!("invoking local reboot command");
 
         Command::new("powershell.exe")

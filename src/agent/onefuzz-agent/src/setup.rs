@@ -24,14 +24,14 @@ pub type SetupOutput = Option<Output>;
 
 #[async_trait]
 pub trait ISetupRunner: Downcast {
-    async fn run(&mut self, work_set: &WorkSet) -> Result<SetupOutput>;
+    async fn run(&self, work_set: &WorkSet) -> Result<SetupOutput>;
 }
 
 impl_downcast!(ISetupRunner);
 
 #[async_trait]
 impl ISetupRunner for SetupRunner {
-    async fn run(&mut self, work_set: &WorkSet) -> Result<SetupOutput> {
+    async fn run(&self, work_set: &WorkSet) -> Result<SetupOutput> {
         self.run(work_set).await
     }
 }
@@ -42,7 +42,7 @@ pub struct SetupRunner {
 }
 
 impl SetupRunner {
-    pub async fn run(&mut self, work_set: &WorkSet) -> Result<SetupOutput> {
+    pub async fn run(&self, work_set: &WorkSet) -> Result<SetupOutput> {
         info!("running setup for work set");
         work_set.save_context(self.machine_id).await?;
         // Download the setup container.
