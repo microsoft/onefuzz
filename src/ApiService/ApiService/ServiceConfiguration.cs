@@ -38,8 +38,6 @@ public interface IServiceConfig {
     public string? OneFuzzMonitor { get; }
     public string? OneFuzzOwner { get; }
 
-    public string OneFuzzNodeDisposalStrategy { get; }
-
     public string? OneFuzzResourceGroup { get; }
     public string? OneFuzzTelemetry { get; }
 
@@ -135,8 +133,6 @@ public class ServiceConfiguration : IServiceConfig {
     }
 
     public string? OneFuzzAllowOutdatedAgent => GetEnv("ONEFUZZ_ALLOW_OUTDATED_AGENT");
-
-    public string OneFuzzNodeDisposalStrategy { get => GetEnv("ONEFUZZ_NODE_DISPOSAL_STRATEGY") ?? "scale_in"; }
     public string OneFuzzStoragePrefix => ""; // in production we never prefix the tables
 
     public Uri OneFuzzBaseAddress {
