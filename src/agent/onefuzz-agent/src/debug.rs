@@ -180,7 +180,7 @@ fn debug_run_worker(opt: RunWorkerOpt) -> Result<()> {
 
 async fn run_worker(mut work_set: WorkSet) -> Result<Vec<WorkerEvent>> {
     use crate::setup::SetupRunner;
-    let mut setup_runner = SetupRunner {
+    let setup_runner = SetupRunner {
         machine_id: Uuid::new_v4(),
     };
     setup_runner.run(&work_set).await?;
