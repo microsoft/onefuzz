@@ -1,13 +1,16 @@
 [workspace]
 members = [
     "atexit",
+    "coverage",
     "coverage-legacy",
+    "debuggable-module",
     "debugger",
     "dynamic-library",
     "input-tester",
     "onefuzz",
     "onefuzz-task",
     "onefuzz-agent",
+    "onefuzz-file-format",
     "onefuzz-telemetry",
     "reqwest-retry",
     "srcview",

@@ -189,7 +189,7 @@ impl Report {
 
                 // get every file that matches this directory and total it
                 for file in self.filter_files(dir) {
-                    if let Some(cov) = self.file(&file) {
+                    if let Some(cov) = self.file(file) {
                         hits += cov.hits.len();
                         lines += cov.lines.len();
                     }

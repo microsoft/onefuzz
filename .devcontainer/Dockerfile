@@ -5,7 +5,7 @@ ARG VARIANT="ubuntu-22.04"
 FROM mcr.microsoft.com/vscode/devcontainers/base:0-${VARIANT}
 
 # note: keep this in sync with .github/workflows/ci.yml
-ARG RUSTVERSION="1.64"
+ARG RUSTVERSION="1.66"
 
 # Needed for dotnet7; remove when available in Ubuntu
 RUN wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \

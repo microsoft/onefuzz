@@ -32,6 +32,7 @@ public interface IServiceConfig {
     public ResourceIdentifier? OneFuzzFuncStorage { get; }
     public string? OneFuzzInstance { get; }
     public string? OneFuzzInstanceName { get; }
+    public string? OneFuzzEndpoint { get; }
     public string? OneFuzzKeyvault { get; }
 
     public string? OneFuzzMonitor { get; }
@@ -115,6 +116,7 @@ public class ServiceConfiguration : IServiceConfig {
 
     public string? OneFuzzInstance { get => GetEnv("ONEFUZZ_INSTANCE"); }
     public string? OneFuzzInstanceName { get => GetEnv("ONEFUZZ_INSTANCE_NAME"); }
+    public string? OneFuzzEndpoint { get => GetEnv("ONEFUZZ_ENDPOINT"); }
     public string? OneFuzzKeyvault { get => GetEnv("ONEFUZZ_KEYVAULT"); }
     public string? OneFuzzMonitor { get => GetEnv("ONEFUZZ_MONITOR"); }
     public string? OneFuzzOwner { get => GetEnv("ONEFUZZ_OWNER"); }

@@ -171,7 +171,7 @@ impl Tester {
         Ok(threadpool.scope(|_s| {
             let results: Vec<InputTestResult> = files_to_test
                 .par_iter()
-                .map(move |input_path| self_clone.test_application(&input_path))
+                .map(move |input_path| self_clone.test_application(input_path))
                 .filter_map(|result| match result {
                     Ok(result) => Some(result),
                     Err(err) => {
@@ -236,7 +236,7 @@ impl Tester {
         deduped_input_path: &Path,
     ) -> Result<()> {
         // Make a directory for our logs.
-        ensure_directory_exists(&log_dir).context("Creating log directory for crash/timeout.")?;
+        ensure_directory_exists(log_dir).context("Creating log directory for crash/timeout.")?;
 
         // Create a markdown file in our log directory.
         let stem = match result.input_path.file_stem() {
@@ -265,7 +265,7 @@ impl Tester {
         deduped_input_path: &Path,
     ) -> Result<()> {
         let repro_bat_path = log_dir.join("repro.bat");
-        let mut repro_bat = fs::File::create(&repro_bat_path)?;
+        let mut repro_bat = fs::File::create(repro_bat_path)?;
 
         writecrlf!(repro_bat, "@echo off")?;
 
@@ -283,7 +283,7 @@ impl Tester {
             "@rem Original input file tested was: {}",
             orig_input_path.display()
         )?;
-        let app_args = args_with_input_file_applied(&self.driver_args, &deduped_input_path)?;
+        let app_args = args_with_input_file_applied(&self.driver_args, deduped_input_path)?;
         writecrlf!(
             repro_bat,
             "{}",
@@ -439,7 +439,7 @@ fn most_serious_exception(result: &DebuggerResult) -> &Exception {
 /// Returns the digest of the hash as a string in lowercase hex.
 fn hash_file_contents(file: impl AsRef<Path>) -> Result<String> {
     let data = fs::read(file.as_ref())?;
-    let digest = Sha256::digest(&data);
+    let digest = Sha256::digest(data);
     Ok(hex::encode(&digest[..]))
 }
 
@@ -520,6 +520,6 @@ pub fn ensure_directory_exists(path: impl AsRef<Path>) -> Result<()> {
 
     // Either directory does not exist, or maybe it's a file, either way,
     // we'll try to create the directory and using that result for the error if any.
-    fs::create_dir_all(&path).with_context(|| format!("Creating directory {}", path.display()))?;
+    fs::create_dir_all(path).with_context(|| format!("Creating directory {}", path.display()))?;
     Ok(())
 }

@@ -105,8 +105,10 @@ public sealed class Creds : ICreds {
         });
     }
 
-    public Uri GetInstanceUrl()
-        => new($"https://{GetInstanceName()}.azurewebsites.net");
+    public Uri GetInstanceUrl() {
+        var onefuzzEndpoint = _config.OneFuzzEndpoint;
+        return onefuzzEndpoint != null ? new Uri(onefuzzEndpoint) : new($"https://{GetInstanceName()}.azurewebsites.net");
+    }
 
     public record ScaleSetIdentity(string principalId);
 
@@ -159,7 +161,7 @@ public sealed class Creds : ICreds {
 }
 
 
-class GraphQueryException : Exception {
+sealed class GraphQueryException : Exception {
     public GraphQueryException(string? message) : base(message) {
     }
 }

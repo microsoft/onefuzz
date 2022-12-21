@@ -31,6 +31,8 @@ public sealed class TestServiceConfiguration : IServiceConfig {
 
     // -- Remainder not implemented --
 
+    public string? OneFuzzEndpoint => throw new System.NotImplementedException();
+
     public LogDestination[] LogDestinations { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
 
     public SeverityLevel LogSeverityLevel => throw new System.NotImplementedException();

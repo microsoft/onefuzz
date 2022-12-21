@@ -108,10 +108,8 @@ impl LibFuzzer {
             .target_exe(&self.exe)
             .target_options(&self.options)
             .setup_dir(&self.setup_dir)
-            .set_optional(corpus_dir, |tester, corpus_dir| {
-                tester.input_corpus(&corpus_dir)
-            })
-            .set_optional(fault_dir, |tester, fault_dir| tester.crashes(&fault_dir));
+            .set_optional(corpus_dir, |e, corpus_dir| e.input_corpus(corpus_dir))
+            .set_optional(fault_dir, |e, fault_dir| e.crashes(fault_dir));
 
         for (k, v) in &self.env {
             cmd.env(k, expand.evaluate_value(v)?);
@@ -204,7 +202,7 @@ impl LibFuzzer {
         // command used by the `fuzz()` method will still receive the iteration limit.
         cmd.arg("-runs=1");
 
-        cmd.arg(&input);
+        cmd.arg(input);
 
         let result = cmd
             .spawn()
@@ -444,7 +442,7 @@ mod tests {
             bad_bin,
             options.clone(),
             env.clone(),
-            &temp_setup_dir.path(),
+            temp_setup_dir.path(),
             MachineIdentity {
                 machine_id: uuid::Uuid::new_v4(),
                 machine_name: "test-input".into(),
@@ -477,7 +475,7 @@ mod tests {
             good_bin,
             options.clone(),
             env.clone(),
-            &temp_setup_dir.path(),
+            temp_setup_dir.path(),
             MachineIdentity {
                 machine_id: uuid::Uuid::new_v4(),
                 machine_name: "test-input".into(),

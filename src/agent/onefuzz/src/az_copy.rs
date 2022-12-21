@@ -84,8 +84,8 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
         .env("AZCOPY_LOG_LOCATION", temp_dir.path())
         .env("AZCOPY_CONCURRENCY_VALUE", "32")
         .arg(mode.to_string())
-        .arg(&src)
-        .arg(&dst)
+        .arg(src)
+        .arg(dst)
         .args(args);
 
     let output = cmd

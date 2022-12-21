@@ -30,7 +30,7 @@ namespace FunctionalTests {
     }
 
 
-    class InfoApi : ApiBase {
+    sealed class InfoApi : ApiBase {
 
         public InfoApi(Uri endpoint, Microsoft.OneFuzz.Service.Request request, ITestOutputHelper output) :
             base(endpoint, "/api/Info", request, output) {
