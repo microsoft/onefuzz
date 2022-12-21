@@ -160,6 +160,7 @@ class Client:
         auto_create_cli_app: bool,
         host_dotnet_on_windows: bool,
         enable_profiler: bool,
+        custom_domain: Optional[str],
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -173,6 +174,7 @@ class Client:
         self.third_party = third_party
         self.create_registration = create_registration
         self.multi_tenant_domain = multi_tenant_domain
+        self.custom_domain = custom_domain
         self.upgrade = upgrade
         self.results: Dict = {
             "client_id": client_id,
@@ -635,6 +637,21 @@ class Client:
 
         app_func_audiences = [self.get_identifier_url()]
         app_func_audiences.extend([self.get_instance_url()])
+
+        # Add --custom_domain value to Allowed token audiences setting
+        if self.custom_domain:
+
+            if self.multi_tenant_domain:
+                root_domain = self.multi_tenant_domain
+            else:
+                root_domain = "%s.azurewebsites.net" % self.application_name
+
+            custom_domains = [
+                "api://%s/%s" % (root_domain, self.custom_domain.split(".")[0]),
+                "https://%s/%s" % (root_domain, self.custom_domain.split(".")[0]),
+            ]
+
+            app_func_audiences.extend(custom_domains)
 
         if self.multi_tenant_domain:
             # clear the value in the Issuer Url field:
@@ -1302,6 +1319,13 @@ def main() -> None:
         action="store_true",
         help="Enable CPU and memory profiler in dotnet Azure Function",
     )
+
+    parser.add_argument(
+        "--custom_domain",
+        type=str,
+        help="Use a custom domain name for your Azure Function and CLI endpoint",
+    )
+
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -1334,6 +1358,7 @@ def main() -> None:
         auto_create_cli_app=args.auto_create_cli_app,
         host_dotnet_on_windows=args.host_dotnet_on_windows,
         enable_profiler=args.enable_profiler,
+        custom_domain=args.custom_domain,
     )
     if args.verbose:
         level = logging.DEBUG
