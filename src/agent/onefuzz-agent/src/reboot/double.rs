@@ -1,27 +1,45 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::sync::{
+    atomic::{self, AtomicBool},
+    Arc,
+};
+
+use tokio::sync::RwLock;
+
 use super::*;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct RebootDouble {
-    pub saved: Vec<RebootContext>,
-    pub invoked: bool,
+    pub saved: Arc<RwLock<Vec<RebootContext>>>,
+    pub invoked: AtomicBool,
+}
+
+impl Clone for RebootDouble {
+    fn clone(&self) -> Self {
+        Self {
+            saved: self.saved.clone(),
+            invoked: AtomicBool::new(self.invoked.load(atomic::Ordering::SeqCst)),
+        }
+    }
 }
 
 #[async_trait]
 impl IReboot for RebootDouble {
-    async fn save_context(&mut self, ctx: RebootContext) -> Result<()> {
-        self.saved.push(ctx);
+    async fn save_context(&self, ctx: RebootContext) -> Result<()> {
+        let mut saved = self.saved.write().await;
+        saved.push(ctx);
         Ok(())
     }
 
-    async fn load_context(&mut self) -> Result<Option<RebootContext>> {
-        Ok(self.saved.pop())
+    async fn load_context(&self) -> Result<Option<RebootContext>> {
+        let mut saved = self.saved.write().await;
+        Ok(saved.pop())
     }
 
-    fn invoke(&mut self) -> Result<()> {
-        self.invoked = true;
+    fn invoke(&self) -> Result<()> {
+        self.invoked.swap(true, atomic::Ordering::SeqCst);
         Ok(())
     }
 }
