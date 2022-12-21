@@ -14,4 +14,4 @@ mod timer;
 pub use allowlist::{AllowList, TargetAllowList};
 
 #[doc(inline)]
-pub use record::{Recorded, Recorder};
+pub use record::{Recorded, CoverageRecorder};

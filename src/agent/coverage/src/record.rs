@@ -24,7 +24,7 @@ pub struct CoverageRecorder {
     timeout: Duration,
 }
 
-impl Recorder {
+impl CoverageRecorder {
     pub fn new(mut cmd: Command) -> Self {
         cmd.stdout(Stdio::piped());
         cmd.stderr(Stdio::piped());
