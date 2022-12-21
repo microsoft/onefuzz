@@ -66,6 +66,6 @@ mod line_number {
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        u32::from_str_radix(&s, 10).map_err(serde::de::Error::custom)
+        s.parse().map_err(serde::de::Error::custom)
     }
 }
