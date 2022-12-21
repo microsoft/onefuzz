@@ -6,7 +6,7 @@ use pretty_assertions::assert_eq;
 use anyhow::Result;
 use coverage::source::{Count, Line, SourceCoverage};
 use debuggable_module::path::FilePath;
-use onefuzz_file_format::coverage::source::{v0, v1};
+use onefuzz_file_format::coverage::source::SourceCoverageJson;
 
 fn expected_source_coverage() -> Result<SourceCoverage> {
     let main_path = FilePath::new("src/bin/main.c")?;
@@ -31,12 +31,12 @@ fn test_source_coverage_formats() -> Result<()> {
     let expected = expected_source_coverage()?;
 
     let v0_text = include_str!("files/source-coverage.v0.json");
-    let v0_json: v0::SourceCoverageJson = serde_json::from_str(v0_text)?;
+    let v0_json = SourceCoverageJson::deserialize(v0_text)?;
     let from_v0 = SourceCoverage::try_from(v0_json)?;
     assert_eq!(from_v0, expected);
 
     let v1_text = include_str!("files/source-coverage.v1.json");
-    let v1_json: v1::SourceCoverageJson = serde_json::from_str(v1_text)?;
+    let v1_json = SourceCoverageJson::deserialize(v1_text)?;
     let from_v1 = SourceCoverage::try_from(v1_json)?;
     assert_eq!(from_v1, expected);
 
