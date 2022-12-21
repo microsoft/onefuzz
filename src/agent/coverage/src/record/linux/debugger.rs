@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use std::collections::BTreeMap;
-use std::process::Command;
+use std::process::{Command, Output};
 
 use anyhow::{bail, format_err, Result};
 use debuggable_module::path::FilePath;
@@ -36,7 +36,7 @@ impl<'eh> Debugger<'eh> {
         }
     }
 
-    pub fn run(mut self, cmd: Command) -> Result<()> {
+    pub fn run(mut self, cmd: Command) -> Result<Output> {
         let mut child = self.context.tracer.spawn(cmd)?;
 
         if let Err(err) = self.wait_on_stops() {
@@ -46,7 +46,9 @@ impl<'eh> Debugger<'eh> {
             return Err(err);
         }
 
-        Ok(())
+        let output = child.wait_with_output()?;
+
+        Ok(output)
     }
 
     fn wait_on_stops(mut self) -> Result<()> {
