@@ -9,13 +9,18 @@ use debuggable_module::path::FilePath;
 use serde::{Deserialize, Serialize};
 
 pub type SourceFile = String;
-pub type LineNumber = u32;
 pub type HitCount = u32;
+pub use line_number::LineNumber;
 
 #[derive(Deserialize, Serialize)]
 pub struct SourceCoverageJson {
     #[serde(flatten)]
-    pub modules: BTreeMap<SourceFile, BTreeMap<LineNumber, HitCount>>,
+    pub files: BTreeMap<SourceFile, FileCoverageJson>,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct FileCoverageJson {
+    pub lines: BTreeMap<LineNumber, HitCount>,
 }
 
 impl TryFrom<SourceCoverageJson> for SourceCoverage {
@@ -24,13 +29,13 @@ impl TryFrom<SourceCoverageJson> for SourceCoverage {
     fn try_from(json: SourceCoverageJson) -> Result<Self> {
         let mut source = SourceCoverage::default();
 
-        for (file_path, lines) in json.modules {
+        for (file_path, file_json) in json.files {
             let file_path = FilePath::new(file_path)?;
 
             let mut file = FileCoverage::default();
 
-            for (line, count) in lines {
-                let line = Line::new(line)?;
+            for (line_number, count) in file_json.lines {
+                let line = Line::new(line_number.0)?;
                 let count = Count(count);
                 file.lines.insert(line, count);
             }
@@ -39,5 +44,28 @@ impl TryFrom<SourceCoverageJson> for SourceCoverage {
         }
 
         Ok(source)
+    }
+}
+
+mod line_number {
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    #[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+    pub struct LineNumber(#[serde(with = "self")] pub u32);
+
+    pub fn serialize<S>(val: &u32, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let s = format!("{}", val);
+        serializer.serialize_str(&s)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<u32, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        s.parse().map_err(serde::de::Error::custom)
     }
 }
