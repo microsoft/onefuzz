@@ -5,7 +5,7 @@ use anyhow::Result;
 use clap::Parser;
 use coverage::allowlist::{AllowList, TargetAllowList};
 use coverage::binary::BinaryCoverage;
-use coverage::record::Recorder;
+use coverage::record::CoverageRecorder;
 use debuggable_module::loader::Loader;
 
 #[derive(Parser, Debug)]
