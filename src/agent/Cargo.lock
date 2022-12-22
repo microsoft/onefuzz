@@ -566,6 +566,7 @@ dependencies = [
  "iced-x86",
  "log",
  "pete",
+ "pretty_assertions",
  "procfs",
  "regex",
  "symbolic 10.1.4",

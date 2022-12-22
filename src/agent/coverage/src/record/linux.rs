@@ -48,7 +48,7 @@ impl<'data> LinuxRecorder<'data> {
         if let Some(image) = context.find_image_for_addr(addr) {
             if let Some(coverage) = self.coverage.modules.get_mut(image.path()) {
                 let offset = addr.offset_from(image.base())?;
-                coverage.increment(offset)?;
+                coverage.increment(offset);
             } else {
                 bail!("coverage not initialized for module {}", image.path());
             }
