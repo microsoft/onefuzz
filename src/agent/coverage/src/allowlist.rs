@@ -140,6 +140,11 @@ impl AllowListLine {
 
 #[allow(clippy::single_char_pattern)]
 fn glob_to_regex(expr: &str) -> Result<Regex> {
+    // Treat `.` as literal, not match-any.
+    //
+    // Use character class syntax to avoid double-escaping.
+    let expr = expr.replace(".", r"[.]");
+
     // Don't make users escape Windows path separators.
     let expr = expr.replace(r"\", r"\\");
 
