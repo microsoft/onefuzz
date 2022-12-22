@@ -44,25 +44,34 @@ fn test_module_increment() -> Result<()> {
 
     module.increment(Offset(2));
 
-    assert_eq!(module, module! {
-        1 => 1,
-        2 => 1,
-    });
+    assert_eq!(
+        module,
+        module! {
+            1 => 1,
+            2 => 1,
+        }
+    );
 
     module.increment(Offset(2));
 
-    assert_eq!(module, module! {
-        1 => 1,
-        2 => 2,
-    });
+    assert_eq!(
+        module,
+        module! {
+            1 => 1,
+            2 => 2,
+        }
+    );
 
     module.increment(Offset(3));
 
-    assert_eq!(module, module! {
-        1 => 1,
-        2 => 2,
-        3 => 1,
-    });
+    assert_eq!(
+        module,
+        module! {
+            1 => 1,
+            2 => 2,
+            3 => 1,
+        }
+    );
 
     Ok(())
 }
@@ -92,21 +101,24 @@ fn test_coverage_add() -> Result<()> {
         },
     });
 
-    assert_eq!(coverage, coverage! {
-        "main.exe" => {
-            1 => 2,
-            2 => 1,
-            3 => 1,
-            4 => 0,
-            5 => 1,
-        },
-        "old.dll" => {
-            1 => 0,
-        },
-        "new.dll" => {
-            1 => 1,
-        },
-    });
+    assert_eq!(
+        coverage,
+        coverage! {
+            "main.exe" => {
+                1 => 2,
+                2 => 1,
+                3 => 1,
+                4 => 0,
+                5 => 1,
+            },
+            "old.dll" => {
+                1 => 0,
+            },
+            "new.dll" => {
+                1 => 1,
+            },
+        }
+    );
 
     Ok(())
 }
@@ -136,21 +148,24 @@ fn test_coverage_merge() -> Result<()> {
         },
     });
 
-    assert_eq!(coverage, coverage! {
-        "main.exe" => {
-            1 => 1,
-            2 => 1,
-            3 => 1,
-            4 => 0,
-            5 => 1,
-        },
-        "old.dll" => {
-            1 => 0,
-        },
-        "new.dll" => {
-            1 => 1,
-        },
-    });
+    assert_eq!(
+        coverage,
+        coverage! {
+            "main.exe" => {
+                1 => 1,
+                2 => 1,
+                3 => 1,
+                4 => 0,
+                5 => 1,
+            },
+            "old.dll" => {
+                1 => 0,
+            },
+            "new.dll" => {
+                1 => 1,
+            },
+        }
+    );
 
     Ok(())
 }

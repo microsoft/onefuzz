@@ -83,7 +83,7 @@ impl Count {
         self.0 > 0
     }
 
-    pub fn add(self, other: Self)  -> Self {
+    pub fn add(self, other: Self) -> Self {
         Count(self.0.saturating_add(other.0))
     }
 
