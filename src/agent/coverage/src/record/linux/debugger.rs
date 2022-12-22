@@ -2,13 +2,16 @@
 // Licensed under the MIT License.
 
 use std::collections::BTreeMap;
-use std::process::{Command, Output};
+use std::io::Read;
+use std::process::Command;
 
 use anyhow::{bail, format_err, Result};
 use debuggable_module::path::FilePath;
 use debuggable_module::Address;
 use pete::{Ptracer, Restart, Signal, Stop, Tracee};
 use procfs::process::{MMapPath, MemoryMap, Process};
+
+use crate::record::Output;
 
 pub trait DebugEventHandler {
     fn on_breakpoint(&mut self, dbg: &mut DebuggerContext, tracee: &mut Tracee) -> Result<()>;
@@ -46,7 +49,30 @@ impl<'eh> Debugger<'eh> {
             return Err(err);
         }
 
-        let output = child.wait_with_output()?;
+        // Currently unavailable on Linux.
+        let status = None;
+
+        let stdout = if let Some(mut pipe) = child.stdout {
+            let mut stdout = Vec::new();
+            pipe.read_to_end(&mut stdout)?;
+            String::from_utf8_lossy(&stdout).into_owned()
+        } else {
+            "".into()
+        };
+
+        let stderr = if let Some(mut pipe) = child.stderr {
+            let mut stderr = Vec::new();
+            pipe.read_to_end(&mut stderr)?;
+            String::from_utf8_lossy(&stderr).into_owned()
+        } else {
+            "".into()
+        };
+
+        let output = Output {
+            status,
+            stderr,
+            stdout,
+        };
 
         Ok(output)
     }

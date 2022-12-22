@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::process::{Command, Output, Stdio};
+use std::process::{Command, ExitStatus, Stdio};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -85,7 +85,7 @@ impl CoverageRecorder {
             let (mut dbg, child) = Debugger::init(self.cmd, &mut recorder)?;
             dbg.run(&mut recorder)?;
 
-            let output = child.wait_with_output()?;
+            let output = child.wait_with_output()?.into();
             let coverage = recorder.coverage;
 
             Ok(Recorded { coverage, output })
@@ -97,4 +97,25 @@ impl CoverageRecorder {
 pub struct Recorded {
     pub coverage: BinaryCoverage,
     pub output: Output,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Output {
+    pub status: Option<ExitStatus>,
+    pub stderr: String,
+    pub stdout: String,
+}
+
+impl From<std::process::Output> for Output {
+    fn from(output: std::process::Output) -> Self {
+        let status = Some(output.status);
+        let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
+
+        Self {
+            status,
+            stdout,
+            stderr,
+        }
+    }
 }
