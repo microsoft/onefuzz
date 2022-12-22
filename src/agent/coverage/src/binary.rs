@@ -17,17 +17,17 @@ pub struct BinaryCoverage {
 }
 
 impl BinaryCoverage {
-    pub fn add(&mut self, other: &Self) {
-        for (path, other_module) in &other.modules {
+    pub fn add(&mut self, rhs: &Self) {
+        for (path, rhs_module) in &rhs.modules {
             let module = self.modules.entry(path.clone()).or_default();
-            module.add(other_module);
+            module.add(rhs_module);
         }
     }
 
-    pub fn merge(&mut self, other: &Self) {
-        for (path, other_module) in &other.modules {
+    pub fn merge(&mut self, rhs: &Self) {
+        for (path, rhs_module) in &rhs.modules {
             let module = self.modules.entry(path.clone()).or_default();
-            module.merge(other_module);
+            module.merge(rhs_module);
         }
     }
 }
@@ -43,17 +43,17 @@ impl ModuleBinaryCoverage {
         count.increment();
     }
 
-    pub fn add(&mut self, other: &Self) {
-        for (&offset, &other_count) in &other.offsets {
+    pub fn add(&mut self, rhs: &Self) {
+        for (&offset, &rhs_count) in &rhs.offsets {
             let count = self.offsets.entry(offset).or_default();
-            *count = Count::add(*count, other_count);
+            *count += rhs_count;
         }
     }
 
-    pub fn merge(&mut self, other: &Self) {
-        for (&offset, &other_count) in &other.offsets {
+    pub fn merge(&mut self, rhs: &Self) {
+        for (&offset, &rhs_count) in &rhs.offsets {
             let count = self.offsets.entry(offset).or_default();
-            *count = Count::max(*count, other_count)
+            *count = Count::max(*count, rhs_count)
         }
     }
 }
@@ -83,12 +83,22 @@ impl Count {
         self.0 > 0
     }
 
-    pub fn add(self, other: Self) -> Self {
-        Count(self.0.saturating_add(other.0))
+    pub fn max(self, rhs: Self) -> Self {
+        Count(u32::max(self.0, rhs.0))
     }
+}
 
-    pub fn max(self, other: Self) -> Self {
-        Count(u32::max(self.0, other.0))
+impl std::ops::Add for Count {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        Count(self.0.saturating_add(rhs.0))
+    }
+}
+
+impl std::ops::AddAssign for Count {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs;
     }
 }
 
