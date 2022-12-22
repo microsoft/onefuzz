@@ -112,6 +112,10 @@ impl From<std::process::Output> for Output {
         let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
         let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
 
-        Self { status, stdout, stderr }
+        Self {
+            status,
+            stdout,
+            stderr,
+        }
     }
 }
