@@ -30,13 +30,13 @@ impl From<SourceCoverage> for SourceCoverageJson {
         for (path, file) in source.files {
             let mut file_json = FileCoverageJson::default();
 
-            for (line, count) in file {
+            for (line, count) in file.lines {
                 let line_number = LineNumber(line.number());
-                let hit_count = Count.0;
+                let hit_count = count.0;
                 file_json.lines.insert(line_number, hit_count);
             }
 
-            json.insert(path.to_string(), file_json);
+            json.files.insert(path.to_string(), file_json);
         }
 
         json
