@@ -4,7 +4,7 @@
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
-        get_synced_dirs, CmdType, CHECK_FUZZER_HELP, COVERAGE_DIR, COVERAGE_FILTER, INPUTS_DIR,
+        get_synced_dirs, CmdType, CHECK_FUZZER_HELP, COVERAGE_DIR, INPUTS_DIR,
         READONLY_INPUTS, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
     },
     tasks::{
@@ -30,7 +30,6 @@ pub fn build_coverage_config(
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let mut target_options = get_cmd_arg(CmdType::Target, args);
     let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
-    let coverage_filter = value_t!(args, TARGET_TIMEOUT, String).ok();
 
     let readonly_inputs = if local_job {
         vec![
@@ -56,7 +55,9 @@ pub fn build_coverage_config(
         target_env,
         target_options,
         target_timeout,
-        coverage_filter,
+        function_allowlist: None,
+        module_allowlist: None,
+        source_allowlist: None,
         input_queue,
         readonly_inputs,
         coverage,
@@ -99,9 +100,6 @@ pub fn build_shared_args(local_job: bool) -> Vec<Arg<'static, 'static>> {
         Arg::with_name(TARGET_TIMEOUT)
             .takes_value(true)
             .long(TARGET_TIMEOUT),
-        Arg::with_name(COVERAGE_FILTER)
-            .takes_value(true)
-            .long(COVERAGE_FILTER),
         Arg::with_name(COVERAGE_DIR)
             .takes_value(true)
             .required(!local_job)

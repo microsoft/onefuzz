@@ -16,7 +16,7 @@ async-trait = "0.1"
 atexit = { path = "../atexit" }
 backoff = { version = "0.4", features = ["tokio"] }
 clap = "2.34"
-coverage = { package = "coverage-legacy", path = "../coverage-legacy" }
+coverage = { path = "../coverage" }
 crossterm = "0.22"
 env_logger = "0.9"
 flume = "0.10"
@@ -25,6 +25,7 @@ hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 num_cpus = "1.13"
+onefuzz-file-format = { path = "../onefuzz-file-format" }
 regex = "1.6.0"
 reqwest = { version = "0.11", features = [
     "json",

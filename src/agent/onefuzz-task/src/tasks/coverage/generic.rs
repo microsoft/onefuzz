@@ -2,22 +2,25 @@
 // Licensed under the MIT License.
 
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use coverage::block::CommandBlockCov;
-use coverage::cache::ModuleCache;
-use coverage::cobertura::cobertura;
-use coverage::code::{CmdFilter, CmdFilterDef};
-use coverage::debuginfo::DebugInfo;
+use coverage::allowlist::{AllowList, TargetAllowList};
+use coverage::binary::BinaryCoverage;
+use coverage::record::CoverageRecorder;
+use coverage::source::{binary_to_source_coverage, SourceCoverage};
 use onefuzz::expand::{Expand, PlaceHolder};
 use onefuzz::syncdir::SyncedDir;
+use onefuzz_file_format::coverage::{
+    binary::{v1::BinaryCoverageJson as BinaryCoverageJsonV1, BinaryCoverageJson},
+    cobertura::CoberturaCoverage,
+    source::{v1::SourceCoverageJson as SourceCoverageJsonV1, SourceCoverageJson},
+};
 use onefuzz_telemetry::{warn, Event::coverage_data, EventData};
-use serde::de::DeserializeOwned;
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
 use tokio::task::spawn_blocking;
@@ -27,14 +30,13 @@ use url::Url;
 use crate::tasks::config::CommonConfig;
 use crate::tasks::generic::input_poller::{CallbackImpl, InputPoller, Processor};
 use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
-use crate::tasks::utils::{resolve_setup_relative_path, try_resolve_setup_relative_path};
+use crate::tasks::utils::try_resolve_setup_relative_path;
 
 use super::COBERTURA_COVERAGE_FILE;
 
 const MAX_COVERAGE_RECORDING_ATTEMPTS: usize = 2;
 const COVERAGE_FILE: &str = "coverage.json";
 const SOURCE_COVERAGE_FILE: &str = "source-coverage.json";
-const MODULE_CACHE_FILE: &str = "module-cache.json";
 
 const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(120);
 
@@ -45,7 +47,9 @@ pub struct Config {
     pub target_options: Vec<String>,
     pub target_timeout: Option<u64>,
 
-    pub coverage_filter: Option<String>,
+    pub function_allowlist: Option<String>,
+    pub module_allowlist: Option<String>,
+    pub source_allowlist: Option<String>,
 
     pub input_queue: Option<QueueClient>,
     pub readonly_inputs: Vec<SyncedDir>,
@@ -79,14 +83,20 @@ impl CoverageTask {
 
         self.config.coverage.init_pull().await?;
 
-        let cache = deserialize_or_default(MODULE_CACHE_FILE).await?;
-
         let coverage_file = self.config.coverage.local_path.join(COVERAGE_FILE);
-        let coverage = deserialize_or_default(coverage_file).await?;
 
-        let filter = self.load_filter().await?;
+        let coverage = {
+            if let Ok(text) = fs::read_to_string(&coverage_file).await {
+                let json = BinaryCoverageJson::deserialize(&text)?;
+                BinaryCoverage::try_from(json)?
+            } else {
+                BinaryCoverage::default()
+            }
+        };
+
+        let allowlist = self.load_target_allowlist().await?;
         let heartbeat = self.config.common.init_heartbeat(None).await?;
-        let mut context = TaskContext::new(cache, &self.config, coverage, filter, heartbeat);
+        let mut context = TaskContext::new(&self.config, coverage, allowlist, heartbeat);
 
         if !context.uses_input() {
             bail!("input is not specified on the command line or arguments for the target");
@@ -132,78 +142,49 @@ impl CoverageTask {
         Ok(())
     }
 
-    async fn load_filter(&self) -> Result<CmdFilter> {
-        let raw_filter_path = if let Some(raw_path) = &self.config.coverage_filter {
-            raw_path
-        } else {
-            return Ok(CmdFilter::default());
-        };
+    async fn load_target_allowlist(&self) -> Result<TargetAllowList> {
+        let mut allowlist = TargetAllowList::default();
 
-        let resolved =
-            resolve_setup_relative_path(&self.config.common.setup_dir, raw_filter_path).await?;
-        let filter_path = if let Some(path) = resolved {
-            path
-        } else {
-            error!(
-                "unable to resolve setup-relative coverage filter path: {}",
-                raw_filter_path
-            );
-            return Ok(CmdFilter::default());
-        };
-
-        let data = fs::read(&filter_path).await?;
-        let def: CmdFilterDef = serde_json::from_slice(&data)?;
-        let filter = CmdFilter::new(def)?;
-
-        Ok(filter)
-    }
-}
-
-async fn deserialize_or_default<T>(path: impl AsRef<Path>) -> Result<T>
-where
-    T: Default + DeserializeOwned,
-{
-    use tokio::io::ErrorKind::NotFound;
-
-    let data = fs::read(path).await;
-
-    if let Err(err) = &data {
-        if err.kind() == NotFound {
-            return Ok(T::default());
+        if let Some(functions) = &self.config.function_allowlist {
+            allowlist.functions = self.load_allowlist(functions).await?;
         }
+
+        if let Some(modules) = &self.config.module_allowlist {
+            allowlist.modules = self.load_allowlist(modules).await?;
+        }
+
+        if let Some(source_files) = &self.config.source_allowlist {
+            allowlist.source_files = self.load_allowlist(source_files).await?;
+        }
+
+        Ok(allowlist)
     }
 
-    let data = data?;
-
-    Ok(serde_json::from_slice(&data)?)
+    async fn load_allowlist(&self, path: &str) -> Result<AllowList> {
+        let resolved = try_resolve_setup_relative_path(&self.config.common.setup_dir, path).await?;
+        let text = fs::read_to_string(&resolved).await?;
+        AllowList::parse(&text)
+    }
 }
 
 struct TaskContext<'a> {
-    cache: Arc<Mutex<ModuleCache>>,
     config: &'a Config,
-    coverage: CommandBlockCov,
-    debuginfo: Mutex<DebugInfo>,
-    filter: CmdFilter,
+    coverage: BinaryCoverage,
+    allowlist: TargetAllowList,
     heartbeat: Option<TaskHeartbeatClient>,
 }
 
 impl<'a> TaskContext<'a> {
     pub fn new(
-        cache: ModuleCache,
         config: &'a Config,
-        coverage: CommandBlockCov,
-        filter: CmdFilter,
+        coverage: BinaryCoverage,
+        allowlist: TargetAllowList,
         heartbeat: Option<TaskHeartbeatClient>,
     ) -> Self {
-        let cache = Arc::new(Mutex::new(cache));
-        let debuginfo = Mutex::new(DebugInfo::default());
-
         Self {
-            cache,
             config,
             coverage,
-            debuginfo,
-            filter,
+            allowlist,
             heartbeat,
         }
     }
@@ -245,22 +226,22 @@ impl<'a> TaskContext<'a> {
 
     async fn try_record_input(&mut self, input: &Path) -> Result<()> {
         let coverage = self.record_impl(input).await?;
-        self.coverage.merge_max(&coverage);
+        self.coverage.merge(&coverage);
 
         Ok(())
     }
 
-    async fn record_impl(&mut self, input: &Path) -> Result<CommandBlockCov> {
-        let cache = Arc::clone(&self.cache);
-        let filter = self.filter.clone();
+    async fn record_impl(&mut self, input: &Path) -> Result<BinaryCoverage> {
+        let allowlist = self.allowlist.clone();
         let cmd = self.command_for_input(input).await?;
         let timeout = self.config.timeout();
-        let coverage = spawn_blocking(move || {
-            let mut cache = cache
-                .lock()
-                .map_err(|_| format_err!("module cache mutex lock was poisoned"))?;
-            record_os_impl(cmd, timeout, &mut cache, filter)
-        })
+        let coverage = spawn_blocking(move ||
+            CoverageRecorder::new(cmd)
+                .allowlist(allowlist)
+                .timeout(timeout)
+                .record()
+                .map(|r| r.coverage)
+        )
         .await??;
 
         Ok(coverage)
@@ -359,32 +340,33 @@ impl<'a> TaskContext<'a> {
     }
 
     pub async fn save_and_sync_coverage(&self) -> Result<()> {
+        // JSON binary coverage.
+        let binary = self.coverage.clone();
+        let json = BinaryCoverageJson::V1(BinaryCoverageJsonV1::from(binary));
+        let text = serde_json::to_string(&json).context("serializing binary coverage")?;
         let path = self.config.coverage.local_path.join(COVERAGE_FILE);
-        let text = serde_json::to_string(&self.coverage).context("serializing block coverage")?;
         fs::write(&path, &text)
             .await
             .with_context(|| format!("writing coverage to {}", path.display()))?;
 
+        // JSON source coverage.
+        let source = self.source_coverage().await?;
+        let json = SourceCoverageJson::V1(SourceCoverageJsonV1::from(source.clone()));
+        let text = serde_json::to_string(&json).context("serializing source coverage")?;
         let path = self.config.coverage.local_path.join(SOURCE_COVERAGE_FILE);
-        let src_coverage = {
-            let mut debuginfo = self
-                .debuginfo
-                .lock()
-                .map_err(|e| anyhow::format_err!("{}", e))?;
-            self.coverage.source_coverage(&mut debuginfo)?
-        };
-        let text = serde_json::to_string(&src_coverage).context("serializing source coverage")?;
         fs::write(&path, &text)
             .await
             .with_context(|| format!("writing source coverage to {}", path.display()))?;
 
+        // Cobertura XML source coverage.
+        let cobertura = CoberturaCoverage::from(source.clone());
+        let text = cobertura.to_string()?;
         let path = self
             .config
             .coverage
             .local_path
             .join(COBERTURA_COVERAGE_FILE);
-        let cobertura_source_coverage = cobertura(src_coverage)?;
-        fs::write(&path, &cobertura_source_coverage)
+        fs::write(&path, &text)
             .await
             .with_context(|| format!("writing cobertura source coverage to {}", path.display()))?;
 
@@ -392,37 +374,14 @@ impl<'a> TaskContext<'a> {
 
         Ok(())
     }
-}
 
-#[cfg(target_os = "linux")]
-fn record_os_impl(
-    cmd: Command,
-    timeout: Duration,
-    cache: &mut ModuleCache,
-    filter: CmdFilter,
-) -> Result<CommandBlockCov> {
-    use coverage::block::linux::Recorder;
+    async fn source_coverage(&self) -> Result<SourceCoverage> {
+        // Must be owned due to `spawn_blocking()` lifetimes.
+        let binary = self.coverage.clone();
 
-    let coverage = Recorder::record(cmd, timeout, cache, filter)?;
-
-    Ok(coverage)
-}
-
-#[cfg(target_os = "windows")]
-fn record_os_impl(
-    cmd: Command,
-    timeout: Duration,
-    cache: &mut ModuleCache,
-    filter: CmdFilter,
-) -> Result<CommandBlockCov> {
-    use coverage::block::windows::{Recorder, RecorderEventHandler};
-
-    let mut recorder = Recorder::new(cache, filter);
-    let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
-    handler.run(cmd)?;
-    let coverage = recorder.into_coverage();
-
-    Ok(coverage)
+        // Conversion to source coverage heavy on blocking I/O.
+        spawn_blocking(move || binary_to_source_coverage(&binary)).await?
+    }
 }
 
 #[async_trait]
@@ -446,14 +405,14 @@ struct CoverageStats {
 }
 
 impl CoverageStats {
-    pub fn new(coverage: &CommandBlockCov) -> Self {
+    pub fn new(coverage: &BinaryCoverage) -> Self {
         let mut stats = CoverageStats::default();
 
-        for (_, module) in coverage.iter() {
-            for block in module.blocks.values() {
+        for (_, module) in coverage.modules.iter() {
+            for count in module.offsets.values() {
                 stats.features += 1;
 
-                if block.count > 0 {
+                if count.reached() {
                     stats.covered += 1;
                 }
             }
