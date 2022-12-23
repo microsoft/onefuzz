@@ -12,15 +12,35 @@ pub type SourceFile = String;
 pub type HitCount = u32;
 pub use line_number::LineNumber;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Default, Deserialize, Serialize)]
 pub struct SourceCoverageJson {
     #[serde(flatten)]
     pub files: BTreeMap<SourceFile, FileCoverageJson>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Default, Deserialize, Serialize)]
 pub struct FileCoverageJson {
     pub lines: BTreeMap<LineNumber, HitCount>,
+}
+
+impl From<SourceCoverage> for SourceCoverageJson {
+    fn from(source: SourceCoverage) -> Self {
+        let mut json = SourceCoverageJson::default();
+
+        for (path, file) in source.files {
+            let mut file_json = FileCoverageJson::default();
+
+            for (line, count) in file {
+                let line_number = LineNumber(line.number());
+                let hit_count = Count.0;
+                file_json.lines.insert(line_number, hit_count);
+            }
+
+            json.insert(path.to_string(), file_json);
+        }
+
+        json
+    }
 }
 
 impl TryFrom<SourceCoverageJson> for SourceCoverage {
