@@ -18,16 +18,19 @@ from zipfile import ZipFile
 
 from azure.cli.core import get_default_cli
 from azure.common.credentials import get_cli_profile
-from azure.core.exceptions import HttpResponseError, ResourceNotFoundError, ResourceExistsError
+from azure.core.exceptions import (
+    HttpResponseError,
+    ResourceExistsError,
+    ResourceNotFoundError,
+)
 from azure.identity import AzureCliCredential
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
-from azure.mgmt.resource.resources.models import (Deployment, DeploymentMode,
-                                                  DeploymentProperties)
+from azure.mgmt.resource.resources.models import (
+    Deployment,
+    DeploymentMode,
+    DeploymentProperties,
+)
 from azure.mgmt.storage import StorageManagementClient
-from azure.storage.blob import (BlobServiceClient, ContainerSasPermissions,
-                                generate_container_sas)
-from onefuzz.api import Onefuzz
-
 from azure.mgmt.storage.models import (
     AccessTier,
     Kind,
@@ -35,34 +38,43 @@ from azure.mgmt.storage.models import (
     SkuName,
     StorageAccountCreateParameters,
 )
+from azure.storage.blob import (
+    BlobServiceClient,
+    ContainerSasPermissions,
+    generate_container_sas,
+)
+from onefuzz.api import Onefuzz  # type: ignore
 
 logger = logging.getLogger("deploy")
-def bicep_to_arm(bicep_template: str, output_path: str = "azuredeploy-bicep.json") -> str:
-    return subprocess.check_output(  # nosec
-            [   "az",
-                "bicep",
-                "build",
-                "--file",
-                bicep_template,
-                "--stdout"
-            ], shell=True
-            )
+
+
+def bicep_to_arm(
+    bicep_template: str, output_path: str = "azuredeploy-bicep.json"
+) -> str:
+    bicep = subprocess.check_output(  # nosec
+        ["az", "bicep", "build", "--file", bicep_template, "--stdout"], shell=True
+    )
+    return str(bicep)
 
 
 class Deployer:
     arm_template = "scaleset_template_windows.bicep"
-    def __init__(self,
+
+    def __init__(
+        self,
         resource_group: str,
         location: str,
         subscription_id: Optional[str],
-        arm_template: str = "scaleset_template_windows.bicep" ,
+        arm_template: str = "scaleset_template_windows.bicep",
         scaleset_size: int = 1,
-        ):
+    ):
         self.arm_template = arm_template
         self.resource_group = resource_group
         self.location = location
         self.scaleset_size = scaleset_size
-        self.storage_account = f"{self.resource_group}sa".replace("-", "").replace("_", "")
+        self.storage_account = f"{self.resource_group}sa".replace("-", "").replace(
+            "_", ""
+        )
 
         if subscription_id:
             self.subscription_id = subscription_id
@@ -70,14 +82,14 @@ class Deployer:
             profile = get_cli_profile()
             self.subscription_id = cast(str, profile.get_subscription_id())
 
-
         pass
 
-    def get_template(path: str) -> Any:
+    @classmethod
+    def get_template(cls, path: str) -> Any:
         output = bicep_to_arm(path)
         return json.loads(output)
 
-    def deploy(self):
+    def deploy(self) -> None:
         logger.info("deploying")
         template = Deployer.get_template(self.arm_template)
         logger.info("deploying 2")
@@ -89,10 +101,14 @@ class Deployer:
 
         # client.resource_groups.get(self.resource_group)
 
-        storageClient = StorageManagementClient(credential, subscription_id=self.subscription_id)
+        storageClient = StorageManagementClient(
+            credential, subscription_id=self.subscription_id
+        )
         try:
             logger.info("checking for storage account")
-            prop = storageClient.storage_accounts.get_properties(self.resource_group, self.storage_account)
+            prop = storageClient.storage_accounts.get_properties(
+                self.resource_group, self.storage_account
+            )
             logger.info("storage account exists")
         except HttpResponseError as e:
             logger.info("storage account does not exist creating a new one")
@@ -104,9 +120,10 @@ class Deployer:
                 allow_blob_public_access=False,
                 minimum_tls_version="TLS1_2",
             )
-            r = storageClient.storage_accounts.begin_create(self.resource_group, self.storage_account, params).result()
+            r = storageClient.storage_accounts.begin_create(
+                self.resource_group, self.storage_account, params
+            ).result()
             logger.info("storage account created")
-
 
         file_uris = self.upload_tools(storageClient)
 
@@ -115,21 +132,21 @@ class Deployer:
             self.resource_group, {"location": self.location}
         )
 
-        params = {
-            "scaleset_name" : { "value": self.resource_group },
-            "location" : { "value": self.location },
-            "networkSecurityGroups_name" : { "value": "nsg" },
-            "adminUsername" : { "value": "onefuzz" },
-            "capacity" : { "value": self.scaleset_size },
-            "adminPassword": { "value": str(uuid.uuid4()) },
-            "file_uris": { "value": file_uris },
-
-
+        deploy_params = {
+            "scaleset_name": {"value": self.resource_group},
+            "location": {"value": self.location},
+            "networkSecurityGroups_name": {"value": "nsg"},
+            "adminUsername": {"value": "onefuzz"},
+            "capacity": {"value": self.scaleset_size},
+            "adminPassword": {"value": str(uuid.uuid4())},
+            "file_uris": {"value": file_uris},
         }
 
         deployment = Deployment(
             properties=DeploymentProperties(
-                mode=DeploymentMode.incremental, template=template, parameters=params
+                mode=DeploymentMode.incremental,
+                template=template,
+                parameters=deploy_params,
             )
         )
 
@@ -138,7 +155,7 @@ class Deployer:
         ).result()
 
         if result.properties.provisioning_state != "Succeeded":
-            logging.Logger.error(
+            logger.error(
                 "error deploying: %s",
                 json.dumps(result.as_dict(), indent=4, sort_keys=True),
             )
@@ -153,30 +170,42 @@ class Deployer:
             extracted_path = os.path.join(tmpDir, "tools")
             onefuzz.tools.get(zip_path)
             # extract zip
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
                 zip_ref.extractall(extracted_path)
 
-            blob_client: BlobServiceClient = BlobServiceClient.from_connection_string(storageClient.storage_accounts.list_keys(self.resource_group, self.storage_account).keys[0].value)
+            blob_service_client: BlobServiceClient = (
+                BlobServiceClient.from_connection_string(
+                    storageClient.storage_accounts.list_keys(
+                        self.resource_group, self.storage_account
+                    )
+                    .keys[0]
+                    .value
+                )
+            )
             try:
-                container_client = blob_client.create_container("tools")
+                container_client = blob_service_client.create_container("tools")
             except ResourceExistsError:
-                container_client = blob_client.get_container_client("tools")
+                container_client = blob_service_client.get_container_client("tools")
                 pass
 
             logger.info("uploading files")
 
             for file in os.listdir(extracted_path):
                 logger.debug(f"uploading {file}")
-                blob_client = container_client.upload_blob(file, os.path.join(extracted_path, file))
-                print (f"uploaded {blob_client.url}")
+                blob_client = container_client.upload_blob(
+                    file, os.path.join(extracted_path, file)
+                )
+                print(f"uploaded {blob_client.url}")
                 uris.append(blob_client.url)
 
         return uris
+
 
 def arg_file(arg: str) -> str:
     if not os.path.isfile(arg):
         raise argparse.ArgumentTypeError("not a file: %s" % arg)
     return arg
+
 
 def main() -> None:
 
@@ -206,7 +235,9 @@ def main() -> None:
     logging.basicConfig(level=level)
     logging.getLogger("deploy").setLevel(logging.INFO)
 
-    deployer = Deployer(args.resource_group, args.location, args.subscription_id, args.bicep_template)
+    deployer = Deployer(
+        args.resource_group, args.location, args.subscription_id, args.bicep_template
+    )
     deployer.deploy()
 
 
