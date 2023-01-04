@@ -31,6 +31,24 @@ impl SourceCoverageJson {
     }
 }
 
+// Convert into the latest format.
+impl From<SourceCoverage> for SourceCoverageJson {
+    fn from(source: SourceCoverage) -> Self {
+        v1::SourceCoverageJson::from(source).into()
+    }
+}
+
+impl From<v0::SourceCoverageJson> for SourceCoverageJson {
+    fn from(v0: v0::SourceCoverageJson) -> Self {
+        Self::V0(v0)
+    }
+}
+impl From<v1::SourceCoverageJson> for SourceCoverageJson {
+    fn from(v1: v1::SourceCoverageJson) -> Self {
+        Self::V1(v1)
+    }
+}
+
 impl TryFrom<SourceCoverageJson> for SourceCoverage {
     type Error = anyhow::Error;
 
