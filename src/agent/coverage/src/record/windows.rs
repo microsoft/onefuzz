@@ -75,7 +75,7 @@ impl<'data> WindowsRecorder<'data> {
             .get_mut(&breakpoint.module)
             .ok_or_else(|| anyhow!("coverage not initialized for module: {}", breakpoint.module))?;
 
-        coverage.increment(breakpoint.offset)?;
+        coverage.increment(breakpoint.offset);
 
         Ok(())
     }
