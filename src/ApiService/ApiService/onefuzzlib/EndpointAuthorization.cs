@@ -51,7 +51,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
 
         if (!isAgent) {
             if (!allowUser) {
-                return await Reject(req, token, "endpoint not allowed for users");
+                return await Reject(req, token, $"endpoint not allowed for users : {reason}");
             }
 
             var access = await CheckAccess(req);
@@ -62,7 +62,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
 
 
         if (isAgent && !allowAgent) {
-            return await Reject(req, token, reason);
+            return await Reject(req, token, $"endpoint not allowed for agents");
         }
 
         return await method(req);

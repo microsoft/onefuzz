@@ -15,6 +15,8 @@ RUN cp c:\temp\tools\win64\* c:\onefuzz
 RUN . c:\onefuzz\set-env.ps1
 
 FROM base_onefuzz
-COPY config.json c:\onefuzz
+COPY config.json "c:\\onefuzz"
 
-ENTRYPOINT onefuzz/run.sh
+WORKDIR "c:\\onefuzz"
+
+ENTRYPOINT ["onefuzz-agent.exe", "run", "-c", "config.json"]
