@@ -15,7 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Added documentation for unmanaged node deployment [#2694](https://github.com/microsoft/onefuzz/pull/2694)
 ### Changed
 * Agent: Use a custom `Output` type when recording coverage [#2723](https://github.com/microsoft/onefuzz/pull/2723)
-* Agent: Bump Rust version from `1.64` to `1.66` and updated Rust dependencies [#2704](https://github.com/microsoft/onefuzz/pull/2704), [#2690](https://github.com/microsoft/onefuzz/pull/2690)
 * Agent: Reduce mutation in the agent state machine [#2710](https://github.com/microsoft/onefuzz/pull/2710)
 * Service: Include dotnet version in `info` response [#2693](https://github.com/microsoft/onefuzz/pull/2693)
 * Service: Use feature flags to get the node disposal strategy [#2713](https://github.com/microsoft/onefuzz/pull/2713)
