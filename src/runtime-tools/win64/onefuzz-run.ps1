@@ -25,7 +25,7 @@ while ($true) {
     switch ($config.mode) {
         "fuzz" {
             log "onefuzz: fuzzing"
-            $arglist = "run --config config.json --redirect-output c:\onefuzz\logs\"
+            $arglist = "run --config config.json --redirect-output c:\onefuzz\logs\ $args"
 
             Start-Process "c:\onefuzz\tools\win64\onefuzz-agent.exe" -ArgumentList $arglist -WindowStyle Hidden -Wait
         }

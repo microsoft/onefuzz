@@ -14,12 +14,26 @@ export LLVM_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 
 logger "onefuzz: starting up onefuzz"
 
-# use core files, not external crash handler
-echo core | sudo tee /proc/sys/kernel/core_pattern
-# disable ASLR
-echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
-# set core dumping to default behavior
-echo 1 | sudo tee /proc/sys/fs/suid_dumpable
+#check if we are running in docker
+if [ -f /.dockerenv ]
+then
+    echo "Running in docker:
+    to optimize the experience make sure the host os is stup propery. with the follwing command
+    # use core files, not external crash handler
+    echo core | sudo tee /proc/sys/kernel/core_pattern
+    # disable ASLR
+    echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+    # set core dumping to default behavior
+    echo 1 | sudo tee /proc/sys/fs/suid_dumpable"
+
+else
+    # use core files, not external crash handler
+    echo core | sudo tee /proc/sys/kernel/core_pattern
+    # disable ASLR
+    echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+    # set core dumping to default behavior
+    echo 1 | sudo tee /proc/sys/fs/suid_dumpable
+fi
 
 cd /onefuzz
 MODE=$(cat /onefuzz/etc/mode)
@@ -32,7 +46,7 @@ case ${MODE} in
     "fuzz")
         logger "onefuzz: starting fuzzing"
         echo fuzzing
-        onefuzz-agent run --config /onefuzz/config.json --redirect-output /onefuzz/logs/
+        ./onefuzz-agent run --config /onefuzz/config.json --redirect-output /onefuzz/logs/ "$@"
     ;;
     "repro")
         logger "onefuzz: starting repro"
