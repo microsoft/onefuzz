@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Added more into-JSON coverage conversions [#2725](https://github.com/microsoft/onefuzz/pull/2725)
 * Agent: Added binary coverage merging measurements [#2724](https://github.com/microsoft/onefuzz/pull/2724)
 * Agent: Added deserialization compatibility functions [#2719](https://github.com/microsoft/onefuzz/pull/2719)
-* Agent: Added `lines` key to v1 source coverage JSON [#2718](https://github.com/microsoft/onefuzz/pull/2718)
 * Agent: Added sub-key for `block` coverage, tests [#2715](https://github.com/microsoft/onefuzz/pull/2715)
 * Agent: Added OS-generic `CoverageRecord` builder, capture output of target child process, and allow `Loader` reuse in coverage recording [#2716](https://github.com/microsoft/onefuzz/pull/2716)
 * Agent: Improve source coverage of HTML reports [#2700](https://github.com/microsoft/onefuzz/pull/2700), [#2701](https://github.com/microsoft/onefuzz/pull/2701), [#2706](https://github.com/microsoft/onefuzz/pull/2706)
