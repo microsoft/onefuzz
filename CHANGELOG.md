@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Added OS-generic `CoverageRecord` builder to capture output of target child process and allow `Loader` reuse in coverage recording [#2716](https://github.com/microsoft/onefuzz/pull/2716)
 * Agent: Improve source coverage of HTML reports [#2700](https://github.com/microsoft/onefuzz/pull/2700), [#2701](https://github.com/microsoft/onefuzz/pull/2701), [#2706](https://github.com/microsoft/onefuzz/pull/2706)
 * Deployment: Added support for custom domain names used as OneFuzz endpoints [#2720](https://github.com/microsoft/onefuzz/pull/2720)
-* Service: Added documentation for the unmanaged nodes deployment [#2694](https://github.com/microsoft/onefuzz/pull/2694)
+* Service: Added documentation for unmanaged node deployment [#2694](https://github.com/microsoft/onefuzz/pull/2694)
 ### Changed
 * Agent: Use a custom `Output` type when recording coverage [#2723](https://github.com/microsoft/onefuzz/pull/2723)
 * Agent: Bump Rust version from `1.64` to `1.66` and updated Rust dependencies [#2704](https://github.com/microsoft/onefuzz/pull/2704), [#2690](https://github.com/microsoft/onefuzz/pull/2690)
