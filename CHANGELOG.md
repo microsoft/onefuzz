@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Fix NullRef exception when getting a scaleset that does not exist [#2692](https://github.com/microsoft/onefuzz/pull/2692)
 * Service: Downgrade error on _"cannot delete nodes from scaleset"_ to a warning [#2691](https://github.com/microsoft/onefuzz/pull/2691)
 * Service: Fixed build issue related to dotnet version `7.0.101` [#2698](https://github.com/microsoft/onefuzz/pull/2698)
-* Service: Adding Public identifier to `Events` to restore missing events [#2705](https://github.com/microsoft/onefuzz/pull/2705)
+* Service: Adding `public` identifier to `Events` to restore missing events [#2705](https://github.com/microsoft/onefuzz/pull/2705)
 
 ## 6.1.0
 ### Added
