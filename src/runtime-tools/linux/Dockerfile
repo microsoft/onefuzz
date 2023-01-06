@@ -5,7 +5,8 @@ FROM mcr.microsoft.com/oss/mirror/docker.io/library/ubuntu:20.04
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
-    libunwind-dev clang build-essential libssl-dev pkg-config lldb
+    libunwind-dev clang build-essential libssl-dev \
+    pkg-config lldb ca-certificates curl
 
 # creating a dummy sudo command
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
