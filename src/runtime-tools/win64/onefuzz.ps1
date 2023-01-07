@@ -118,7 +118,7 @@ function Enable-SSHTrafic {
 
 function Install-OnBoot {
   log "adding onboot: starting"
-  schtasks /create /sc onstart /tn onefuzz /tr "powershell.exe -ExecutionPolicy Unrestricted -File c:\onefuzz\tools\win64\onefuzz-run.ps1 -WindowStyle Hidden" /ru SYSTEM
+  schtasks /create /sc onstart /tn onefuzz /tr "powershell.exe -ExecutionPolicy Unrestricted -WindowStyle Hidden -File c:\onefuzz\tools\win64\onefuzz-run.ps1" /ru SYSTEM
   log "adding onboot: done"
 }
 
