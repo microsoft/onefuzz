@@ -46,7 +46,12 @@ case ${MODE} in
     "fuzz")
         logger "onefuzz: starting fuzzing"
         echo fuzzing
-        onefuzz-agent run --config /onefuzz/config.json --redirect-output /onefuzz/logs/ "$@"
+        onefuzz-agent run --config /onefuzz/config.json --redirect-output /onefuzz/logs/
+    ;;
+    "fuzz-no-redirect")
+        logger "onefuzz: starting fuzzing"
+        echo fuzzing
+        onefuzz-agent run --config /onefuzz/config.json "$@"
     ;;
     "repro")
         logger "onefuzz: starting repro"
@@ -54,5 +59,5 @@ case ${MODE} in
         export ASAN_OPTIONS=abort_on_error=1
         repro.sh
     ;;
-    *) logger "onefuzz: unknown command $1"; exit 1 ;;
+    *) logger "onefuzz: unknown command $MODE"; exit 1 ;;
 esac

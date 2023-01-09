@@ -4,11 +4,14 @@
 
 FROM mcr.microsoft.com/windows:ltsc2019 as base_onefuzz
 
-SHELL ["powershell.exe", "-ExecutionPolicy", "RemoteSigned", "-Command"]
+SHELL ["powershell.exe", "-ExecutionPolicy", "Unrestricted", "-Command"]
 
 RUN dir
-RUN mkdir c:\onefuzz
-COPY . c:\onefuzz
+
+COPY . c:\onefuzz\tools\win64\
+COPY . c:\downloads\
+RUN New-LocalUser -Name 'onefuzz' -Description 'onefuzz account' -NoPassword
+RUN cd c:\downloads; & .\setup.ps1 -mode fuzz-no-redirect -docker
 
 WORKDIR "c:\onefuzz"
 

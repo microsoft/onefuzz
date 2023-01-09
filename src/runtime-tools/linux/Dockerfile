@@ -2,20 +2,17 @@
 # Licensed under the MIT License.
 
 FROM mcr.microsoft.com/oss/mirror/docker.io/library/ubuntu:20.04
-
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends \
-    libunwind-dev clang build-essential libssl-dev \
-    pkg-config lldb ca-certificates curl
-
-# creating a dummy sudo command
+# creating a dummy sudo command to allow the setup script to run
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 RUN mkdir /onefuzz
 COPY . /onefuzz
-RUN chmod +x /onefuzz/run.sh
-
-RUN mkdir /onefuzz/etc && echo 'fuzz' > /onefuzz/etc/mode && mkdir /onefuzz/logs
+RUN export DEBIAN_FRONTEND=noninteractive && export DOCKER_BUILD=1 && cd /onefuzz && ./setup.sh fuzz-no-redirect
+RUN export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends \
+    libunwind-dev build-essential libssl-dev \
+    pkg-config lldb ca-certificates
+RUN mkdir -p /onefuzz/tools/linux \
+    && mv /onefuzz/downloaded/* /onefuzz/tools/linux
 WORKDIR /onefuzz
 
-
-ENTRYPOINT ["./run.sh"]
+ENTRYPOINT ["./tools/linux/run.sh"]
