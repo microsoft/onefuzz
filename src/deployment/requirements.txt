@@ -4,7 +4,7 @@ azure-identity==1.10.0
 azure-cosmosdb-table==1.0.6
 azure-mgmt-eventgrid==10.2.0b2
 azure-mgmt-resource==21.1.0b1
-azure-mgmt-storage==21.1.0
+azure-mgmt-storage==21.0.0
 azure-storage-blob==12.13.1
 pyfunctional==1.4.3
 pyopenssl==22.0.0
