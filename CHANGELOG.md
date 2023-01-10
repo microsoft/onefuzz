@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 6.2.0
+### Added
+* Agent: Added more into-JSON coverage conversions [#2725](https://github.com/microsoft/onefuzz/pull/2725)
+* Agent: Added binary coverage merging measurements [#2724](https://github.com/microsoft/onefuzz/pull/2724)
+* Agent: Added deserialization compatibility functions [#2719](https://github.com/microsoft/onefuzz/pull/2719)
+* Agent: Added OS-generic `CoverageRecord` builder to capture output of target child process and allow `Loader` reuse in coverage recording [#2716](https://github.com/microsoft/onefuzz/pull/2716)
+* Agent: Improve source coverage of HTML reports [#2700](https://github.com/microsoft/onefuzz/pull/2700), [#2701](https://github.com/microsoft/onefuzz/pull/2701), [#2706](https://github.com/microsoft/onefuzz/pull/2706)
+* Deployment: Added support for custom domain names used as OneFuzz endpoints [#2720](https://github.com/microsoft/onefuzz/pull/2720)
+* Service: Added documentation for unmanaged node deployment [#2694](https://github.com/microsoft/onefuzz/pull/2694)
+### Changed
+* Agent: Use a custom `Output` type when recording coverage [#2723](https://github.com/microsoft/onefuzz/pull/2723)
+* Agent: Reduce mutation in the agent state machine [#2710](https://github.com/microsoft/onefuzz/pull/2710)
+* Service: Include dotnet version in `info` response [#2693](https://github.com/microsoft/onefuzz/pull/2693)
+* Service: Use feature flags to get the node disposal strategy [#2713](https://github.com/microsoft/onefuzz/pull/2713)
+### Fixed
+* Agent: Escape periods when converting globs [#2721](https://github.com/microsoft/onefuzz/pull/2721)
+* Agent: Ignore benign recv hangup in agent timer functions [#2722](https://github.com/microsoft/onefuzz/pull/2722)
+* Agent: Fix NullRef exception when getting a scaleset that does not exist [#2692](https://github.com/microsoft/onefuzz/pull/2692)
+* Service: Downgrade error on _"cannot delete nodes from scaleset"_ to a warning [#2691](https://github.com/microsoft/onefuzz/pull/2691)
+* Service: Fixed build issue related to dotnet version `7.0.101` [#2698](https://github.com/microsoft/onefuzz/pull/2698)
+* Service: Adding `public` identifier to `Events` to restore missing events [#2705](https://github.com/microsoft/onefuzz/pull/2705)
+
 ## 6.1.0
 ### Added
 * Service: Added support for feature flags which allows us to deploy new code in parts and turn it on when it's ready. [#2620](https://github.com/microsoft/onefuzz/pull/2620)
