@@ -1686,6 +1686,17 @@ class InstanceConfigCmd(Endpoint):
         )
 
 
+class Config(Endpoint):
+    """Retrieve OneFuzz Config Parameters"""
+
+    endpoint = "config"
+
+    def get(self) -> responses.Config:
+        """Get endpoint config information for OneFuzz Instance"""
+        self.logger.debug("getting endpoint config params")
+        return self._req_model("GET", responses.Config)
+
+
 class Command:
     def __init__(self, onefuzz: "Onefuzz", logger: logging.Logger):
         self.onefuzz = onefuzz
@@ -1776,6 +1787,7 @@ class Onefuzz:
         self.webhooks = Webhooks(self)
         self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
+        # self.config = Config(self)
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates = JobTemplates(self)
@@ -1861,6 +1873,14 @@ class Onefuzz:
         """Configure onefuzz CLI"""
         self.logger.debug("set config")
 
+        config_call = Config(self)
+
+        endpoint_params = config_call.get()
+
+        authority = endpoint_params.authority
+        client_id = endpoint_params.client_id
+        tenant_domain = endpoint_params.tenant_domain
+        
         if reset:
             self._backend.config = BackendConfig(authority="", client_id="")
 

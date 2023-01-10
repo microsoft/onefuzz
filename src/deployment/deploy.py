@@ -788,7 +788,7 @@ class Client:
         config_client = InstanceConfigClient(table_service, self.application_name)
 
         if self.nsg_config:
-            logger.info("deploying arm template: %s", self.nsg_config)
+            logger.info("setting instance config: %s", self.nsg_config)
 
             with open(self.nsg_config, "r") as template_handle:
                 config_template = json.load(template_handle)

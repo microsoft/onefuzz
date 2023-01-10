@@ -52,6 +52,12 @@ class Info(BaseResponse):
     insights_instrumentation_key: Optional[str]
 
 
+class Config(BaseResponse):
+    authority: Optional[str]
+    client_id: Optional[str]
+    tenant_domain: Optional[str]
+
+
 class ContainerInfoBase(BaseResponse):
     name: str
     metadata: Optional[Dict[str, str]]
