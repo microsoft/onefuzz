@@ -1880,7 +1880,7 @@ class Onefuzz:
         authority = endpoint_params.authority
         client_id = endpoint_params.client_id
         tenant_domain = endpoint_params.tenant_domain
-        
+
         if reset:
             self._backend.config = BackendConfig(authority="", client_id="")
 
