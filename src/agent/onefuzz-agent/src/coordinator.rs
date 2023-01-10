@@ -257,7 +257,10 @@ impl Coordinator {
                     message_id,
                     command: AnyNodeCommand::Unknown(command),
                 } => {
-                    error!("unknown node command (ID: {}), ignoring: {:?}", message_id, command);
+                    error!(
+                        "unknown node command (ID: {}), ignoring: {:?}",
+                        message_id, command
+                    );
                     Ok(None)
                 }
             }
