@@ -1,6 +1,11 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+param([switch]$docker,
+    [Parameter(Position = 0, ValueFromRemainingArguments = $true)]
+    [string] $onefuzzArgs=""
+)
+
 $env:RUST_BACKTRACE = "full"
 
 Start-Transcript -Append -Path c:\onefuzz-run.log
@@ -18,22 +23,30 @@ log "onefuzz: starting"
 
 
 Set-Location C:\onefuzz
-Enable-SSH
+if (!$docker){
+    Enable-SSH
+}
 $config = Get-OnefuzzConfig
 
 while ($true) {
     switch ($config.mode) {
         "fuzz" {
             log "onefuzz: fuzzing"
-            $arglist = "run --config config.json --redirect-output c:\onefuzz\logs\"
 
-            Start-Process "c:\onefuzz\tools\win64\onefuzz-agent.exe" -ArgumentList $arglist -WindowStyle Hidden -Wait
-        }
-        "fuzz-no-redirect" {
-            log "onefuzz: fuzzing"
-            $arglist = "run --config c:\onefuzz\logs\ $args"
+            if ($docker){
+                $arglist = "run --config c:\onefuzz\logs\ $onefuzzArgs"
+                try{
+                    Invoke-Expression "c:\onefuzz\tools\win64\onefuzz-agent.exe $arglist"
+                } catch {
+                    "Error while running onefuzz agent"
+                }
+            }
+            else {
+                $arglist = "run --config config.json --redirect-output c:\onefuzz\logs\"
+                Start-Process "c:\onefuzz\tools\win64\onefuzz-agent.exe" -ArgumentList $arglist -WindowStyle Hidden -Wait
+            }
 
-            Start-Process "c:\onefuzz\tools\win64\onefuzz-agent.exe" -ArgumentList $arglist -WindowStyle Hidden -Wait
+
         }
         "repro" {
             log "onefuzz: starting repro"

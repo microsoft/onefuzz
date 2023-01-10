@@ -46,12 +46,12 @@ case ${MODE} in
     "fuzz")
         logger "onefuzz: starting fuzzing"
         echo fuzzing
-        onefuzz-agent run --config /onefuzz/config.json --redirect-output /onefuzz/logs/
-    ;;
-    "fuzz-no-redirect")
-        logger "onefuzz: starting fuzzing"
-        echo fuzzing
-        onefuzz-agent run --config /onefuzz/config.json "$@"
+        if [ -f /.dockerenv ]
+        then
+            onefuzz-agent run --config /onefuzz/config.json "$@"
+        else
+            onefuzz-agent run --config /onefuzz/config.json --redirect-output /onefuzz/logs/
+        fi
     ;;
     "repro")
         logger "onefuzz: starting repro"

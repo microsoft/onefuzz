@@ -68,6 +68,16 @@ Run the agent with the following command. If you need more nodes use a different
 onefuzz-agent run --machine_id <machine_guid> -c <path_to_config_file> --reset_lock
 ```
 
+Alternatively, the agent folder contains a Dockerfile which provide the configuration of a docker container.
+you can use it by first building the container
+```cmd
+docker build --t <container_name> .
+```
+Then start the agent inside the container
+```cmd
+docker run  <container_name> --machine_id <machine_id> --reset_lock
+```
+
 ### Verify that the agent is registered to OneFuzz
 
 Using the OneFuzz CLI run the following command:

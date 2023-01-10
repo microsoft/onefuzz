@@ -11,8 +11,8 @@ RUN dir
 COPY . c:\onefuzz\tools\win64\
 COPY . c:\downloads\
 RUN New-LocalUser -Name 'onefuzz' -Description 'onefuzz account' -NoPassword
-RUN cd c:\downloads; & .\setup.ps1 -mode fuzz-no-redirect -docker
+RUN cd c:\downloads; & .\setup.ps1 -docker
 
 WORKDIR "c:\onefuzz"
 
-ENTRYPOINT & .\onefuzz-run.ps1
+ENTRYPOINT & .\onefuzz-run.ps1 -docker

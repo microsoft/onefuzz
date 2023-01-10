@@ -66,7 +66,6 @@ function Install-OnefuzzSetup {
   }
   Install-Debugger
   Install-LLVM
-
   Install-VCRedist
   Install-Dotnet -Version $env:DOTNET_VERSIONS -InstallDir $env:DOTNET_ROOT -ToolsDir $env:ONEFUZZ_TOOLS
 
