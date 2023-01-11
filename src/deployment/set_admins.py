@@ -9,7 +9,6 @@ from uuid import UUID
 from azure.cosmosdb.table.tableservice import TableService
 from azure.identity import AzureCliCredential
 from azure.mgmt.storage import StorageManagementClient
-
 from deploylib.configuration import (
     InstanceConfigClient,
     update_admins,
