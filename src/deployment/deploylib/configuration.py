@@ -239,7 +239,7 @@ def update_endpoint_params(
             {
                 "PartitionKey": config_client.resource_group,
                 "RowKey": config_client.resource_group,
-                "authortiy": json.dumps(authority),
+                "authority": json.dumps(authority),
             },
         )
     if client_id != "":
