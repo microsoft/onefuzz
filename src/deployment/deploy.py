@@ -808,7 +808,7 @@ class Client:
             update_endpoint_params(
                 config_client,
                 self.authority,
-                self.results["client_secret"],
+                self.results["client_id"],
                 self.tenant_domain,
             )
 
