@@ -26,7 +26,7 @@ pub struct StaticConfig {
 
     pub onefuzz_url: Url,
 
-    pub multi_tenant_domain: Option<String>,
+    pub tenant_domain: Option<String>,
 
     pub instance_telemetry_key: Option<InstanceTelemetryKey>,
 
@@ -51,7 +51,7 @@ pub struct RawClientCredentials {
     client_id: Uuid,
     client_secret: String,
     tenant: String,
-    multi_tenant_domain: Option<String>,
+    tenant_domain: Option<String>,
 }
 
 // Temporary shim type to bridge the current service-provided config.
@@ -63,7 +63,7 @@ struct RawStaticConfig {
 
     pub onefuzz_url: Url,
 
-    pub multi_tenant_domain: Option<String>,
+    pub tenant_domain: Option<String>,
 
     pub instance_telemetry_key: Option<InstanceTelemetryKey>,
 
@@ -89,7 +89,7 @@ impl StaticConfig {
                 client.client_secret,
                 config.onefuzz_url.to_string(),
                 client.tenant,
-                client.multi_tenant_domain,
+                client.tenant_domain,
             )
             .into(),
             None => {
@@ -100,7 +100,7 @@ impl StaticConfig {
                     .trim_end_matches('/')
                     .to_owned();
                 let managed =
-                    ManagedIdentityCredentials::new(resource, config.multi_tenant_domain.clone())?;
+                    ManagedIdentityCredentials::new(resource, config.tenant_domain.clone())?;
                 managed.into()
             }
         };
@@ -113,7 +113,7 @@ impl StaticConfig {
             credentials,
             pool_name: config.pool_name,
             onefuzz_url: config.onefuzz_url,
-            multi_tenant_domain: config.multi_tenant_domain,
+            tenant_domain: config.tenant_domain,
             microsoft_telemetry_key: config.microsoft_telemetry_key,
             instance_telemetry_key: config.instance_telemetry_key,
             heartbeat_queue: config.heartbeat_queue,
@@ -140,7 +140,7 @@ impl StaticConfig {
         let client_id = Uuid::parse_str(&std::env::var("ONEFUZZ_CLIENT_ID")?)?;
         let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?;
         let tenant = std::env::var("ONEFUZZ_TENANT")?;
-        let multi_tenant_domain = std::env::var("ONEFUZZ_MULTI_TENANT_DOMAIN").ok();
+        let tenant_domain = std::env::var("ONEFUZZ_TENANT_DOMAIN").ok();
         let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
         let pool_name = std::env::var("ONEFUZZ_POOL")?;
         let is_unmanaged = std::env::var("ONEFUZZ_IS_UNMANAGED").is_ok();
@@ -171,7 +171,7 @@ impl StaticConfig {
             client_secret,
             onefuzz_url.to_string(),
             tenant,
-            multi_tenant_domain.clone(),
+            tenant_domain.clone(),
         )
         .into();
 
@@ -179,7 +179,7 @@ impl StaticConfig {
             credentials,
             pool_name,
             onefuzz_url,
-            multi_tenant_domain,
+            tenant_domain,
             instance_telemetry_key,
             microsoft_telemetry_key,
             heartbeat_queue,

@@ -98,7 +98,7 @@ public class ServiceConfiguration : IServiceConfig {
     public string? DiagnosticsAzureBlobContainerSasUrl { get => GetEnv("DIAGNOSTICS_AZUREBLOBCONTAINERSASURL"); }
     public string? DiagnosticsAzureBlobRetentionDays { get => GetEnv("DIAGNOSTICS_AZUREBLOBRETENTIONINDAYS"); }
 
-    public string? MultiTenantDomain { get => GetEnv("MULTI_TENANT_DOMAIN"); }
+    public string? MultiTenantDomain { get => GetEnv("TENANT_DOMAIN"); }
 
     public ResourceIdentifier? OneFuzzDataStorage {
         get {

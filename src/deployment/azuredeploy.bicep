@@ -8,7 +8,7 @@ param clientSecret string
 param signedExpiry string
 param app_func_issuer string
 param app_func_audiences array
-param multi_tenant_domain string
+param tenant_domain string
 param enable_remote_debugging bool = false
 param enable_profiler bool = false
 
@@ -239,7 +239,7 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
     fuzz_storage_resource_id: storage.outputs.FuzzId
     keyvault_name: keyVaultName
     monitor_account_name: operationalInsights.outputs.monitorAccountName
-    multi_tenant_domain: multi_tenant_domain
+    tenant_domain: tenant_domain
     enable_profiler: enable_profiler
     app_config_endpoint: featureFlags.outputs.AppConfigEndpoint
   }

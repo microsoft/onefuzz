@@ -1276,7 +1276,7 @@ class Pool(Endpoint):
                 client_secret="<client_secret>",
                 resource=self.onefuzz._backend.config.endpoint,
                 tenant=urlparse(self.onefuzz._backend.config.authority).path.strip("/"),
-                multi_tenant_domain=self.onefuzz._backend.config.tenant_domain,
+                tenant_domain=self.onefuzz._backend.config.tenant_domain,
             )
 
         return pool.config

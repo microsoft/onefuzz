@@ -330,7 +330,7 @@ class ClientCredentials(BaseModel):
     client_secret: str
     resource: str
     tenant: str
-    multi_tenant_domain: Optional[str]
+    tenant_domain: Optional[str]
 
 
 class AgentConfig(BaseModel):
@@ -340,7 +340,7 @@ class AgentConfig(BaseModel):
     heartbeat_queue: Optional[str]
     instance_telemetry_key: Optional[str]
     microsoft_telemetry_key: Optional[str]
-    multi_tenant_domain: Optional[str]
+    tenant_domain: Optional[str]
     instance_id: UUID
     managed: Optional[bool] = Field(default=True)
 

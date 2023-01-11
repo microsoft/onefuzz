@@ -37,7 +37,7 @@ resource function 'Microsoft.Web/sites@2021-02-01' existing = {
 }
 
 var enable_profilers = enable_profiler ? {
-  APPINSIGHTS_PROFILERFEATURE_VERSION : '1.0.0'
+  APPINSIGHTS_PROFILERFEATURE_VERSION: '1.0.0'
   DiagnosticServices_EXTENSION_VERSION: '~3'
 } : {}
 
@@ -52,7 +52,7 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       APPINSIGHTS_APPID: app_insights_app_id
       ONEFUZZ_TELEMETRY: telemetry
       AzureWebJobsStorage: func_sas_url
-      MULTI_TENANT_DOMAIN: multi_tenant_domain
+      TENANT_DOMAIN: multi_tenant_domain
       AzureWebJobsDisableHomepage: 'true'
       AzureSignalRConnectionString: signal_r_connection_string
       AzureSignalRServiceTransportType: 'Transient'
@@ -66,5 +66,5 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       ONEFUZZ_KEYVAULT: keyvault_name
       ONEFUZZ_OWNER: owner
       ONEFUZZ_CLIENT_SECRET: client_secret
-  }, enable_profilers)
+    }, enable_profilers)
 }

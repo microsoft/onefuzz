@@ -40,9 +40,9 @@ def set_config(pool: Pool) -> Pool:
         instance_id=get_instance_id(),
     )
 
-    multi_tenant_domain = os.environ.get("MULTI_TENANT_DOMAIN")
-    if multi_tenant_domain:
-        pool.config.multi_tenant_domain = multi_tenant_domain
+    tenant_domain = os.environ.get("TENANT_DOMAIN")
+    if tenant_domain:
+        pool.config.tenant_domain = tenant_domain
 
     return pool
 
