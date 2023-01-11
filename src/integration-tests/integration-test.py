@@ -311,6 +311,7 @@ class TestOnefuzz:
         polling_period=30,
         unmanaged_client_id: Optional[UUID] = None,
         unmanaged_client_secret: Optional[str] = None,
+        unmanaged_principal_id: Optional[str] = None,
     ) -> None:
         self.of = onefuzz
         self.logger = logger
@@ -322,6 +323,7 @@ class TestOnefuzz:
         self.tools_dir = tempfile.TemporaryDirectory()
         self.unmanaged_client_id = unmanaged_client_id
         self.unmanaged_client_secret = unmanaged_client_secret
+        self.unmanaged_principal_id = unmanaged_principal_id
 
     def __exit__(self) -> None:
         self.tools_dir.cleanup()
@@ -346,7 +348,9 @@ class TestOnefuzz:
         for entry in os_list:
             name = PoolName(f"testpool-{entry.name}-{self.test_id}")
             self.logger.info("creating pool: %s:%s", entry.name, name)
-            self.of.pools.create(name, entry, unmanaged=unmanaged)
+            self.of.pools.create(
+                name, entry, unmanaged=unmanaged, object_id=self.unmanaged_principal_id
+            )
             if unmanaged:
                 self.logger.info("creating scaleset for pool: %s", name)
                 self.of.scalesets.create(
