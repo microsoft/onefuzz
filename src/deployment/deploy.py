@@ -182,7 +182,13 @@ class Client:
             "client_id": client_id,
             "client_secret": client_secret,
         }
-        self.authority = authority
+        if authority:
+            authority = self.authority
+        elif self.multi_tenant_domain:
+            authority = COMMON_AUTHORITY
+        else:
+            authority = ONEFUZZ_CLI_AUTHORITY
+
         self.migrations = migrations
         self.export_appinsights = export_appinsights
         self.admins = admins
