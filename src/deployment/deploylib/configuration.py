@@ -104,8 +104,8 @@ class Config:
                 "allowed_ips and allowed_service_tags are not a list of strings. Please Provide Valid Config."
             )
 
-        self.authority = config["authority"]
-        self.client_id = config["client_id"]
+        self.allowed_ips = proxy_config["allowed_ips"]
+        self.allowed_service_tags = proxy_config["allowed_service_tags"]
 
 
 class NsgRule:
