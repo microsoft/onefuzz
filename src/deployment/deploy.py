@@ -153,6 +153,7 @@ class Client:
         migrations: List[str],
         export_appinsights: bool,
         tenant_domain: str,
+        authority: str,
         upgrade: bool,
         subscription_id: Optional[str],
         admins: List[UUID],
@@ -181,10 +182,7 @@ class Client:
             "client_id": client_id,
             "client_secret": client_secret,
         }
-        if self.tenant_domain:
-            self.authority = COMMON_AUTHORITY
-        else:
-            self.authority = ONEFUZZ_CLI_AUTHORITY
+        self.authority = authority
         self.migrations = migrations
         self.export_appinsights = export_appinsights
         self.admins = admins
@@ -1277,7 +1275,13 @@ def main() -> None:
         "--tenant_domain",
         type=str,
         default=None,
-        help="enable multi-tenant authentication with this tenant domain",
+        help="specify tenant domain to authenticate to",
+    )
+    parser.add_argument(
+        "--authority",
+        type=str,
+        default=None,
+        help="specify authority",
     )
     parser.add_argument(
         "--subscription_id",
@@ -1354,6 +1358,7 @@ def main() -> None:
         migrations=args.apply_migrations,
         export_appinsights=args.export_appinsights,
         tenant_domain=args.tenant_domain,
+        authority=args.authority,
         upgrade=args.upgrade,
         subscription_id=args.subscription_id,
         admins=args.set_admins,
