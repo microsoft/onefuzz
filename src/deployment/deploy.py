@@ -184,7 +184,7 @@ class Client:
         }
         if authority:
             authority = self.authority
-        elif self.multi_tenant_domain:
+        elif self.tenant_domain:
             authority = COMMON_AUTHORITY
         else:
             authority = ONEFUZZ_CLI_AUTHORITY
