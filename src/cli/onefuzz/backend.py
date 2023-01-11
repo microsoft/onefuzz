@@ -322,7 +322,7 @@ class Backend:
             raise Exception("endpoint not configured")
 
         url = endpoint + "/api/" + path
-        headers = self.headers()
+        # headers = self.headers()
         json_data = serialize(json_data)
 
         # 401 errors with IDX10501: Signature validation failed occur
@@ -342,7 +342,6 @@ class Backend:
                 response = self.session.request(
                     method,
                     url,
-                    headers=headers,
                     json=json_data,
                     params=params,
                     timeout=(REQUEST_CONNECT_TIMEOUT, REQUEST_READ_TIMEOUT),
