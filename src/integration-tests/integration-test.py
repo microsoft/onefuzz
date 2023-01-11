@@ -1118,6 +1118,9 @@ class Run(Command):
         region: Optional[Region] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
         test_id: Optional[UUID] = None,
+        unmanaged: bool = False,
+        unmanaged_client_id: Optional[UUID] = None,
+        unmanaged_client_secret: Optional[str] = None,
     ) -> None:
         if test_id is None:
             test_id = uuid4()
@@ -1134,7 +1137,14 @@ class Run(Command):
         retry(self.logger, try_setup, "trying to configure")
 
         with TestOnefuzz(self.onefuzz, self.logger, test_id) as tester:
-            tester.setup(region=region, pool_size=pool_size, os_list=os_list)
+            tester.setup(
+                region=region,
+                pool_size=pool_size,
+                os_list=os_list,
+                unmanaged=unmanaged,
+                unmanaged_client_id=unmanaged_client_id,
+                unmanaged_client_secret=unmanaged_client_secret,
+            )
 
     def launch(
         self,
