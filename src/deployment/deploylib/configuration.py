@@ -239,7 +239,7 @@ def update_endpoint_params(
             {
                 "PartitionKey": config_client.resource_group,
                 "RowKey": config_client.resource_group,
-                "admins": json.dumps(authority),
+                "authortiy": json.dumps(authority),
             },
         )
     if client_id != "":
@@ -248,7 +248,7 @@ def update_endpoint_params(
             {
                 "PartitionKey": config_client.resource_group,
                 "RowKey": config_client.resource_group,
-                "admins": json.dumps(client_id),
+                "client_id": json.dumps(client_id),
             },
         )
     if tenant_domain != "":
@@ -257,6 +257,6 @@ def update_endpoint_params(
             {
                 "PartitionKey": config_client.resource_group,
                 "RowKey": config_client.resource_group,
-                "admins": json.dumps(tenant_domain),
+                "tenant_domain": json.dumps(tenant_domain),
             },
         )
