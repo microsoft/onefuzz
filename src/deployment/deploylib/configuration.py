@@ -48,7 +48,7 @@ class InstanceConfigClient:
             self.enable_storage_client_logging()
 
 
-class NetworkSecurityConfig:
+class Config:
     allowed_ips: List[str]
     allowed_service_tags: List[str]
 
@@ -104,8 +104,8 @@ class NetworkSecurityConfig:
                 "allowed_ips and allowed_service_tags are not a list of strings. Please Provide Valid Config."
             )
 
-        self.allowed_ips = proxy_config["allowed_ips"]
-        self.allowed_service_tags = proxy_config["allowed_service_tags"]
+        self.authority = config["authority"]
+        self.client_id = config["client_id"]
 
 
 class NsgRule:
@@ -175,7 +175,7 @@ def update_admins(config_client: InstanceConfigClient, admins: List[UUID]) -> No
     )
 
 
-def parse_rules(proxy_config: NetworkSecurityConfig) -> List[NsgRule]:
+def parse_rules(proxy_config: Config) -> List[NsgRule]:
 
     allowed_ips = proxy_config.allowed_ips
     allowed_service_tags = proxy_config.allowed_service_tags
@@ -225,3 +225,38 @@ def update_nsg(
             "proxy_nsg_config": json.dumps(nsg_config),
         },
     )
+
+
+def update_endpoint_params(
+    config_client: InstanceConfigClient,
+    authority: str,
+    client_id: str,
+    tenant_domain: str,
+) -> None:
+    if authority != "":
+        config_client.table_service.insert_or_merge_entity(
+            TABLE_NAME,
+            {
+                "PartitionKey": config_client.resource_group,
+                "RowKey": config_client.resource_group,
+                "admins": json.dumps(authority),
+            },
+        )
+    if client_id != "":
+        config_client.table_service.insert_or_merge_entity(
+            TABLE_NAME,
+            {
+                "PartitionKey": config_client.resource_group,
+                "RowKey": config_client.resource_group,
+                "admins": json.dumps(client_id),
+            },
+        )
+    if tenant_domain != "":
+        config_client.table_service.insert_or_merge_entity(
+            TABLE_NAME,
+            {
+                "PartitionKey": config_client.resource_group,
+                "RowKey": config_client.resource_group,
+                "admins": json.dumps(tenant_domain),
+            },
+        )

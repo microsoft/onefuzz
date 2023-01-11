@@ -44,11 +44,12 @@ from msrest.serialization import TZ_UTC
 
 from deploylib.configuration import (
     InstanceConfigClient,
-    NetworkSecurityConfig,
+    Config,
     parse_rules,
     update_admins,
     update_allowed_aad_tenants,
     update_nsg,
+    update_endpoint_params,
 )
 from deploylib.data_migration import migrate
 from deploylib.registration import (
@@ -139,7 +140,7 @@ class Client:
         location: str,
         application_name: str,
         owner: str,
-        nsg_config: str,
+        config: str,
         client_id: Optional[str],
         client_secret: Optional[str],
         app_zip: str,
@@ -151,7 +152,7 @@ class Client:
         create_registration: bool,
         migrations: List[str],
         export_appinsights: bool,
-        multi_tenant_domain: str,
+        tenant_domain: str,
         upgrade: bool,
         subscription_id: Optional[str],
         admins: List[UUID],
@@ -167,23 +168,23 @@ class Client:
         self.location = location
         self.application_name = application_name
         self.owner = owner
-        self.nsg_config = nsg_config
+        self.config = config
         self.app_zip = app_zip
         self.tools = tools
         self.instance_specific = instance_specific
         self.third_party = third_party
         self.create_registration = create_registration
-        self.multi_tenant_domain = multi_tenant_domain
+        self.tenant_domain = tenant_domain
         self.custom_domain = custom_domain
         self.upgrade = upgrade
         self.results: Dict = {
             "client_id": client_id,
             "client_secret": client_secret,
         }
-        if self.multi_tenant_domain:
-            authority = COMMON_AUTHORITY
+        if self.tenant_domain:
+            self.authority = COMMON_AUTHORITY
         else:
-            authority = ONEFUZZ_CLI_AUTHORITY
+            self.authority = ONEFUZZ_CLI_AUTHORITY
         self.migrations = migrations
         self.export_appinsights = export_appinsights
         self.admins = admins
@@ -305,8 +306,8 @@ class Client:
         # The url to access the instance
         # This also represents the legacy identifier_uris of the application
         # registration
-        if self.multi_tenant_domain:
-            return "https://%s/%s" % (self.multi_tenant_domain, self.application_name)
+        if self.tenant_domain:
+            return "https://%s/%s" % (self.tenant_domain, self.application_name)
         else:
             return "https://%s.azurewebsites.net" % self.application_name
 
@@ -316,14 +317,14 @@ class Client:
         # to be from an approved domain The format of this value is derived
         # from the default value proposed by azure when creating an application
         # registration api://{guid}/...
-        if self.multi_tenant_domain:
-            return "api://%s/%s" % (self.multi_tenant_domain, self.application_name)
+        if self.tenant_domain:
+            return "api://%s/%s" % (self.tenant_domain, self.application_name)
         else:
             return "api://%s.azurewebsites.net" % self.application_name
 
     def get_signin_audience(self) -> str:
         # https://docs.microsoft.com/en-us/azure/active-directory/develop/supported-accounts-validation
-        if self.multi_tenant_domain:
+        if self.tenant_domain:
             return "AzureADMultipleOrgs"
         else:
             return "AzureADMyOrg"
@@ -382,16 +383,13 @@ class Client:
         else:
             self.update_existing_app_registration(app, app_roles)
 
-        if self.multi_tenant_domain and app["signInAudience"] == "AzureADMyOrg":
+        if self.tenant_domain and app["signInAudience"] == "AzureADMyOrg":
             set_app_audience(
                 app["id"],
                 "AzureADMultipleOrgs",
                 subscription_id=self.get_subscription_id(),
             )
-        elif (
-            not self.multi_tenant_domain
-            and app["signInAudience"] == "AzureADMultipleOrgs"
-        ):
+        elif not self.tenant_domain and app["signInAudience"] == "AzureADMultipleOrgs":
             set_app_audience(
                 app["id"],
                 "AzureADMyOrg",
@@ -419,7 +417,7 @@ class Client:
                     OnefuzzAppRole.CliClient,
                     self.get_subscription_id(),
                 )
-                if self.multi_tenant_domain:
+                if self.tenant_domain:
                     authority = COMMON_AUTHORITY
                 else:
                     authority = app_info.authority
@@ -437,7 +435,7 @@ class Client:
         else:
             onefuzz_cli_app = cli_app
             authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
-            if self.multi_tenant_domain:
+            if self.tenant_domain:
                 authority = COMMON_AUTHORITY
             else:
                 tenant_id = get_tenant_id(self.get_subscription_id())
@@ -641,8 +639,8 @@ class Client:
         # Add --custom_domain value to Allowed token audiences setting
         if self.custom_domain:
 
-            if self.multi_tenant_domain:
-                root_domain = self.multi_tenant_domain
+            if self.tenant_domain:
+                root_domain = self.tenant_domain
             else:
                 root_domain = "%s.azurewebsites.net" % self.application_name
 
@@ -653,15 +651,15 @@ class Client:
 
             app_func_audiences.extend(custom_domains)
 
-        if self.multi_tenant_domain:
+        if self.tenant_domain:
             # clear the value in the Issuer Url field:
             # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
             app_func_issuer = ""
-            multi_tenant_domain = {"value": self.multi_tenant_domain}
+            tenant_domain = {"value": self.tenant_domain}
         else:
             tenant_oid = str(self.cli_config["authority"]).split("/")[-1]
             app_func_issuer = "https://sts.windows.net/%s/" % tenant_oid
-            multi_tenant_domain = {"value": ""}
+            tenant_domain = {"value": ""}
 
         logger.info(
             "template parameter enable_remote_debugging is set to: %s",
@@ -680,7 +678,7 @@ class Client:
             "clientSecret": {"value": self.results["client_secret"]},
             "app_func_issuer": {"value": app_func_issuer},
             "signedExpiry": {"value": expiry},
-            "multi_tenant_domain": multi_tenant_domain,
+            "tenant_domain": tenant_domain,
             "workbookData": {"value": self.workbook_data},
             "enable_remote_debugging": {"value": self.host_dotnet_on_windows},
             "enable_profiler": {"value": self.enable_profiler},
@@ -787,26 +785,32 @@ class Client:
 
         config_client = InstanceConfigClient(table_service, self.application_name)
 
-        if self.nsg_config:
-            logger.info("setting instance config: %s", self.nsg_config)
+        if self.config:
+            logger.info("setting instance config: %s", self.config)
 
-            with open(self.nsg_config, "r") as template_handle:
+            with open(self.config, "r") as template_handle:
                 config_template = json.load(template_handle)
 
             try:
-                config = NetworkSecurityConfig(config_template)
+                config = Config(config_template)
                 rules = parse_rules(config)
             except Exception as ex:
                 logging.info(
-                    "An Exception was encountered while parsing nsg_config file: %s", ex
+                    "An Exception was encountered while parsing config file: %s", ex
                 )
                 raise Exception(
-                    "proxy_nsg_config and sub-values were not properly included in config."
+                    "config and sub-values were not properly included in config."
                     + "Please submit a configuration resembling"
-                    + " { 'proxy_nsg_config': { 'allowed_ips': [], 'allowed_service_tags': [] } }"
+                    + " { 'config': { 'allowed_ips': [], 'allowed_service_tags': [] } }"
                 )
 
             update_nsg(config_client, rules)
+            update_endpoint_params(
+                config_client,
+                self.authority,
+                self.results["client_secret"],
+                self.tenant_domain,
+            )
 
         if self.admins:
             update_admins(config_client, self.admins)
@@ -1145,8 +1149,8 @@ class Client:
         if "client_secret" in self.cli_config:
             cmd += ["--client_secret", "YOUR_CLIENT_SECRET_HERE"]
 
-        if self.multi_tenant_domain:
-            cmd += ["--tenant_domain", str(self.multi_tenant_domain)]
+        if self.tenant_domain:
+            cmd += ["--tenant_domain", str(self.tenant_domain)]
 
         as_str = " ".join(cmd)
 
@@ -1200,7 +1204,7 @@ def main() -> None:
     parser.add_argument("resource_group")
     parser.add_argument("application_name", type=lower_case)
     parser.add_argument("owner")
-    parser.add_argument("nsg_config")
+    parser.add_argument("config")
     parser.add_argument(
         "--bicep-template",
         type=arg_file,
@@ -1270,7 +1274,7 @@ def main() -> None:
         help="enable appinsight log export",
     )
     parser.add_argument(
-        "--multi_tenant_domain",
+        "--tenant_domain",
         type=str,
         default=None,
         help="enable multi-tenant authentication with this tenant domain",
@@ -1337,7 +1341,7 @@ def main() -> None:
         location=args.location,
         application_name=args.application_name,
         owner=args.owner,
-        nsg_config=args.nsg_config,
+        config=args.config,
         client_id=args.client_id,
         client_secret=args.client_secret,
         app_zip=args.app_zip,
@@ -1349,7 +1353,7 @@ def main() -> None:
         create_registration=args.create_pool_registration,
         migrations=args.apply_migrations,
         export_appinsights=args.export_appinsights,
-        multi_tenant_domain=args.multi_tenant_domain,
+        tenant_domain=args.tenant_domain,
         upgrade=args.upgrade,
         subscription_id=args.subscription_id,
         admins=args.set_admins,

@@ -53,9 +53,9 @@ class Info(BaseResponse):
 
 
 class Config(BaseResponse):
-    authority: Optional[str]
-    client_id: Optional[str]
-    tenant_domain: Optional[str]
+    authority: str
+    client_id: str
+    tenant_domain: str
 
 
 class ContainerInfoBase(BaseResponse):

@@ -1686,15 +1686,15 @@ class InstanceConfigCmd(Endpoint):
         )
 
 
-class Config(Endpoint):
-    """Retrieve OneFuzz Config Parameters"""
+# class Config(Endpoint):
+#     """Retrieve OneFuzz Config Parameters"""
 
-    endpoint = "config"
+#     endpoint = "config"
 
-    def get(self) -> responses.Config:
-        """Get endpoint config information for OneFuzz Instance"""
-        self.logger.debug("getting endpoint config params")
-        return self._req_model("GET", responses.Config)
+#     def get(self) -> responses.Config:
+#         """Get endpoint config information for OneFuzz Instance"""
+#         self.logger.debug("getting endpoint config params")
+#         return self._req_model("GET", responses.Config)
 
 
 class Command:
@@ -1873,16 +1873,14 @@ class Onefuzz:
         """Configure onefuzz CLI"""
         self.logger.debug("set config")
 
-        config_call = Config(self)
-
-        endpoint_params = config_call.get()
-
-        authority = endpoint_params.authority
-        client_id = endpoint_params.client_id
-        tenant_domain = endpoint_params.tenant_domain
-
         if reset:
             self._backend.config = BackendConfig(authority="", client_id="")
+
+        endpoint_params = responses.Config(
+            authority="",
+            client_id="",
+            tenant_domain="",
+        )
 
         if endpoint is not None:
             # The normal path for calling the API always uses the oauth2 workflow,
@@ -1898,14 +1896,28 @@ class Onefuzz:
                     "Missing HTTP Authentication"
                 )
             self._backend.config.endpoint = endpoint
+
+            response = self._backend.session.request(
+                "GET", self._backend.config.endpoint + "/api/config"
+            )
+
+            endpoint_params = responses.Config.parse_obj(response.json())
+
         if authority is not None:
             self._backend.config.authority = authority
+        else:
+            self._backend.config.authority = endpoint_params.authority
         if client_id is not None:
             self._backend.config.client_id = client_id
-        if enable_feature:
-            self._backend.enable_feature(enable_feature.name)
+        else:
+            self._backend.config.client_id = endpoint_params.client_id
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
+        else:
+            self._backend.config.tenant_domain = endpoint_params.tenant_domain
+
+        if enable_feature:
+            self._backend.enable_feature(enable_feature.name)
         self._backend.app = None
         self._backend.save_config()
 
