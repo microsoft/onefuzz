@@ -8,7 +8,7 @@ param app_insights_key string
 @secure()
 param func_sas_url string
 
-param multi_tenant_domain string
+param tenant_domain string
 
 @secure()
 param signal_r_connection_string string
@@ -52,7 +52,7 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       APPINSIGHTS_APPID: app_insights_app_id
       ONEFUZZ_TELEMETRY: telemetry
       AzureWebJobsStorage: func_sas_url
-      TENANT_DOMAIN: multi_tenant_domain
+      TENANT_DOMAIN: tenant_domain
       AzureWebJobsDisableHomepage: 'true'
       AzureSignalRConnectionString: signal_r_connection_string
       AzureSignalRServiceTransportType: 'Transient'
