@@ -199,7 +199,7 @@ class Client:
 
         self.cli_config: Dict[str, Union[str, UUID]] = {
             "client_id": self.cli_app_id,
-            "authority": authority,
+            "authority": self.authority,
         }
 
         machine = platform.machine()

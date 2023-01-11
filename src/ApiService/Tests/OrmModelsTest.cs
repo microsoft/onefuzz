@@ -523,7 +523,7 @@ namespace Tests {
             return Arb.From(OrmGenerators.NetworkConfig());
         }
 
-        public static Arbitrary<NetworkSecurityGroupConfig> NetworkSecurityConfig() {
+        public static Arbitrary<NetworkSecurityGroupConfig> Config() {
             return Arb.From(OrmGenerators.NetworkSecurityGroupConfig());
         }
 
