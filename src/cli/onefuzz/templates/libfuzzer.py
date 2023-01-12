@@ -216,9 +216,9 @@ class Libfuzzer(Command):
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             check_fuzzer_help=check_fuzzer_help,
-            function_allowlist,
-            module_allowlist,
-            source_allowlist,
+            function_allowlist=function_allowlist,
+            module_allowlist=module_allowlist,
+            source_allowlist=source_allowlist,
         )
 
         report_containers = [
