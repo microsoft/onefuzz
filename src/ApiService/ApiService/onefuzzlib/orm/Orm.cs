@@ -79,15 +79,19 @@ namespace ApiService.OneFuzzLib.Orm {
         }
 
         public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Replace(T entity) {
-            var tableClient = await GetTableClient(typeof(T).Name);
-            var tableEntity = _entityConverter.ToTableEntity(entity);
-            var response = await tableClient.UpsertEntityAsync(tableEntity, TableUpdateMode.Replace);
-            if (response.IsError) {
-                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
-            } else {
-                // update ETag on success
-                entity.ETag = response.Headers.ETag;
-                return ResultVoid<(HttpStatusCode, string)>.Ok();
+            try {
+                var tableClient = await GetTableClient(typeof(T).Name);
+                var tableEntity = _entityConverter.ToTableEntity(entity);
+                var response = await tableClient.UpsertEntityAsync(tableEntity, TableUpdateMode.Replace);
+                if (response.IsError) {
+                    return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
+                } else {
+                    // update ETag on success
+                    entity.ETag = response.Headers.ETag;
+                    return ResultVoid<(HttpStatusCode, string)>.Ok();
+                }
+            } catch (RequestFailedException ex) {
+                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)ex.Status, ex.Message));
             }
         }
 

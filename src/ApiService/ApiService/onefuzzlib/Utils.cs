@@ -39,3 +39,14 @@ public static class IAsyncEnumerableExtension {
         }
     }
 }
+
+public static class TruncateUtils {
+    public static List<string> TruncateList(List<string> data, int maxLength) {
+        int currentLength = 0;
+        return data.TakeWhile(curr => (currentLength += curr.Length) < maxLength).ToList();
+    }
+
+    public static List<string>? TruncateListNulllable(List<string>? data, int maxLength) {
+        return data != null ? TruncateList(data!, maxLength) : data;
+    }
+}

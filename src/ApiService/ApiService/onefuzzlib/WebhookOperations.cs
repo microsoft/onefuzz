@@ -34,6 +34,8 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
     }
 
     async private Async.Task AddEvent(Webhook webhook, EventMessage eventMessage) {
+        (string, string)[] tags = { ("WebhookId", webhook.WebhookId.ToString()), ("EventId", eventMessage.EventId.ToString()) };
+
         var message = new WebhookMessageLog(
              EventId: eventMessage.EventId,
              EventType: eventMessage.EventType,
@@ -46,8 +48,18 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
         var r = await _context.WebhookMessageLogOperations.Replace(message);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace webhook message log {webhook.WebhookId:Tag:WebhookId} - {eventMessage.EventId:Tag:EventId}");
+            if (r.ErrorV.Reason.Contains("The entity is larger than the maximum allowed size") && eventMessage.Event is ITruncatable<BaseEvent> truncatableEvent) {
+                _logTracer.WithTags(tags).Warning($"The WebhookMessageLog was too long. Truncating event data and trying again.");
+                var truncatedEventMessage = message with {
+                    Event = truncatableEvent.Truncate(1000)
+                };
+                r = await _context.WebhookMessageLogOperations.Replace(truncatedEventMessage);
+            }
+            if (!r.IsOk) {
+                _logTracer.WithHttpStatus(r.ErrorV).WithTags(tags).Error($"Failed to replace webhook message log {webhook.WebhookId:Tag:WebhookId} - {eventMessage.EventId:Tag:EventId}");
+            }
         }
+
         await _context.WebhookMessageLogOperations.QueueWebhook(message);
     }
 
@@ -57,7 +69,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
             throw new Exception($"Invalid Webhook. Webhook with WebhookId: {messageLog.WebhookId} Not Found");
         }
 
-        var (data, digest) = await BuildMessage(webhookId: webhook.WebhookId, eventId: messageLog.EventId, eventType: messageLog.EventType, webhookEvent: messageLog.Event, secretToken: webhook.SecretToken, messageFormat: webhook.MessageFormat);
+        var (data, digest) = await BuildMessage(webhookId: webhook.WebhookId, eventId: messageLog.EventId, eventType: messageLog.EventType, webhookEvent: messageLog.Event!, secretToken: webhook.SecretToken, messageFormat: webhook.MessageFormat);
 
         var headers = new Dictionary<string, string> { { "User-Agent", $"onefuzz-webhook {_context.ServiceConfiguration.OneFuzzVersion}" } };
 
@@ -87,9 +99,13 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
     public async Task<EventPing> Ping(Webhook webhook) {
         var ping = new EventPing(Guid.NewGuid());
+        var g = new EventFileAdded(
+            Container.Parse("somecontainer"),
+            string.Join(",", Enumerable.Repeat("99999999999", 128000))
+        );
         var instanceId = await _context.Containers.GetInstanceId();
         var instanceName = _context.Creds.GetInstanceName();
-        await AddEvent(webhook, new EventMessage(Guid.NewGuid(), EventType.Ping, ping, instanceId, instanceName));
+        await AddEvent(webhook, new EventMessage(Guid.NewGuid(), EventType.Ping, g, instanceId, instanceName));
         return ping;
     }
 

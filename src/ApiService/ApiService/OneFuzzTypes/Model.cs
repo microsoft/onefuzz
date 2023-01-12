@@ -457,8 +457,31 @@ public record Report(
     string? MinimizedStackFunctionLinesSha256,
     string? ToolName,
     string? ToolVersion,
-    string? OnefuzzVersion
-) : IReport;
+    string? OnefuzzVersion,
+    Uri? ReportUrl
+) : IReport, ITruncatable<Report> {
+    public Report Truncate(int maxLength) {
+        return this with {
+            Executable = Executable[..maxLength],
+            CrashType = CrashType[..maxLength],
+            CrashSite = CrashSite[..maxLength],
+            CallStack = TruncateUtils.TruncateList(CallStack, maxLength),
+            CallStackSha256 = CallStackSha256[..maxLength],
+            InputSha256 = InputSha256[..maxLength],
+            AsanLog = AsanLog?[..maxLength],
+            ScarinessDescription = ScarinessDescription?[..maxLength],
+            MinimizedStack = TruncateUtils.TruncateListNulllable(MinimizedStack, maxLength),
+            MinimizedStackSha256 = MinimizedStackSha256?[..maxLength],
+            MinimizedStackFunctionNames = TruncateUtils.TruncateListNulllable(MinimizedStackFunctionNames, maxLength),
+            MinimizedStackFunctionNamesSha256 = MinimizedStackFunctionNamesSha256?[..maxLength],
+            MinimizedStackFunctionLines = TruncateUtils.TruncateListNulllable(MinimizedStackFunctionLines, maxLength),
+            MinimizedStackFunctionLinesSha256 = MinimizedStackFunctionLinesSha256?[..maxLength],
+            ToolName = ToolName?[..maxLength],
+            ToolVersion = ToolVersion?[..maxLength],
+            OnefuzzVersion = OnefuzzVersion?[..maxLength],
+        };
+    }
+}
 
 public record NoReproReport(
     string InputSha,
@@ -468,18 +491,40 @@ public record NoReproReport(
     Guid JobId,
     long Tries,
     string? Error
-);
+) : ITruncatable<NoReproReport> {
+    public NoReproReport Truncate(int maxLength) {
+        return this with {
+            Executable = Executable?[..maxLength],
+            Error = Error?[..maxLength]
+        };
+    }
+}
 
 public record CrashTestResult(
     Report? CrashReport,
     NoReproReport? NoReproReport
-);
+) : ITruncatable<CrashTestResult> {
+    public CrashTestResult Truncate(int maxLength) {
+        return new CrashTestResult(
+            CrashReport?.Truncate(maxLength),
+            NoReproReport?.Truncate(maxLength)
+        );
+    }
+}
 
 public record RegressionReport(
     CrashTestResult CrashTestResult,
-    CrashTestResult? OriginalCrashTestResult
-) : IReport;
-
+    CrashTestResult? OriginalCrashTestResult,
+    Uri? ReportUrl
+) : IReport, ITruncatable<RegressionReport> {
+    public RegressionReport Truncate(int maxLength) {
+        return new RegressionReport(
+            CrashTestResult.Truncate(maxLength),
+            OriginalCrashTestResult?.Truncate(maxLength),
+            ReportUrl
+        );
+    }
+}
 
 [JsonConverter(typeof(NotificationTemplateConverter))]
 #pragma warning disable CA1715
@@ -968,3 +1013,7 @@ public record TemplateRenderContext(
     string ReportFilename,
     string ReproCmd
 );
+
+public interface ITruncatable<T> {
+    public T Truncate(int maxLength);
+}
