@@ -376,13 +376,11 @@ class Libfuzzer(Command):
         )
 
         if existing_inputs:
-            self.onefuzz.containers.get(existing_inputs)
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
 
         if readonly_inputs:
-            self.onefuzz.containers.get(readonly_inputs)
             helper.containers[ContainerType.readonly_inputs] = readonly_inputs
 
         if analyzer_exe is not None:
@@ -579,6 +577,7 @@ class Libfuzzer(Command):
         wait_for_running: bool = False,
         wait_for_files: Optional[List[ContainerType]] = None,
         existing_inputs: Optional[Container] = None,
+        readonly_inputs: Optional[Directory] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         check_fuzzer_help: bool = True,
@@ -587,6 +586,13 @@ class Libfuzzer(Command):
         """
         libfuzzer-dotnet task
         """
+
+        # ensure directories exist
+        if existing_inputs:
+            self.onefuzz.containers.get(existing_inputs)
+
+        if readonly_inputs:
+            self.onefuzz.containers.get(readonly_inputs)
 
         harness = "libfuzzer-dotnet"
 
@@ -628,10 +634,12 @@ class Libfuzzer(Command):
         )
 
         if existing_inputs:
-            self.onefuzz.containers.get(existing_inputs)
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
+
+        if readonly_inputs:
+            helper.containers[ContainerType.readonly_inputs] = readonly_inputs
 
         fuzzer_containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
