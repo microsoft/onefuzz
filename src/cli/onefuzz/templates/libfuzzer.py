@@ -286,9 +286,9 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
-        function_allowlist: Optional[str] = None,
-        module_allowlist: Optional[str] = None,
-        source_allowlist: Optional[str] = None,
+        function_allowlist: Optional[File] = None,
+        module_allowlist: Optional[File] = None,
+        source_allowlist: Optional[File] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
