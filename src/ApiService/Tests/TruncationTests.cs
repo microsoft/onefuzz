@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using FluentAssertions;
 using Microsoft.OneFuzz.Service;
 using Xunit;
-using FluentAssertions;
 
 namespace Tests;
 
@@ -11,9 +11,9 @@ public class TruncationTests {
     public static void ReportIsTruncatable() {
         var report = GenerateReport();
 
-        var truncatedReport = report.Truncate(3);
+        var truncatedReport = report.Truncate(5);
 
-        truncatedReport.Executable.Should().Be("SOM");
+        truncatedReport.Executable.Should().Be("SOMES");
         truncatedReport.CallStack.Count.Should().Be(0);
     }
 

@@ -45,8 +45,4 @@ public static class TruncateUtils {
         int currentLength = 0;
         return data.TakeWhile(curr => (currentLength += curr.Length) <= maxLength).ToList();
     }
-
-    public static List<string>? TruncateListNulllable(List<string>? data, int maxLength) {
-        return data != null ? TruncateList(data!, maxLength) : data;
-    }
 }
