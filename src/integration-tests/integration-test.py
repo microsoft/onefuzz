@@ -326,7 +326,6 @@ class TestOnefuzz:
         self.unmanaged_client_secret = unmanaged_client_secret
         self.unmanaged_principal_id = unmanaged_principal_id
 
-
     def setup(
         self,
         *,
@@ -401,7 +400,6 @@ class TestOnefuzz:
 
         with open(os.path.join(tools_path, "config.json"), "w") as f:
             f.write(config.json())
-
 
         subprocess.check_call(
             "docker compose up -d --force-recreate --build", shell=True, cwd=tools_path
@@ -1123,6 +1121,7 @@ class Run(Command):
         unmanaged: bool = False,
         unmanaged_client_id: Optional[UUID] = None,
         unmanaged_client_secret: Optional[str] = None,
+        unmanaged_principal_id: Optional[str] = None,
     ) -> None:
         if test_id is None:
             test_id = uuid4()
@@ -1138,7 +1137,14 @@ class Run(Command):
 
         retry(self.logger, try_setup, "trying to configure")
 
-        tester = TestOnefuzz(self.onefuzz, self.logger, test_id, unmanaged_client_id=unmanaged_client_id, unmanaged_client_secret=unmanaged_client_secret)
+        tester = TestOnefuzz(
+            self.onefuzz,
+            self.logger,
+            test_id,
+            unmanaged_client_id=unmanaged_client_id,
+            unmanaged_client_secret=unmanaged_client_secret,
+            unmanaged_principal_id=unmanaged_principal_id,
+        )
         tester.setup(
             region=region,
             pool_size=pool_size,
@@ -1298,9 +1304,7 @@ class Run(Command):
                 os_list=os_list,
                 unmanaged=unmanaged,
             )
-            tester.launch(
-                samples, os_list=os_list, targets=targets, duration=duration
-            )
+            tester.launch(samples, os_list=os_list, targets=targets, duration=duration)
             result = tester.check_jobs(poll=True, stop_on_complete_check=True)
             if not result:
                 raise Exception("jobs failed")

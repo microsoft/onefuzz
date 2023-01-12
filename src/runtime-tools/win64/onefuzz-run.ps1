@@ -34,7 +34,7 @@ while ($true) {
             log "onefuzz: fuzzing"
 
             if ($docker){
-                $arglist = "run --config c:\onefuzz\logs\ $onefuzzArgs"
+                $arglist = "run --config config.json $onefuzzArgs"
                 try{
                     Invoke-Expression "c:\onefuzz\tools\win64\onefuzz-agent.exe $arglist"
                 } catch {
