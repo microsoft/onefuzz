@@ -68,7 +68,9 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
-        coverage_filter: Optional[str] = None,
+        function_allowlist: Optional[str] = None,
+        module_allowlist: Optional[str] = None,
+        source_allowlist: Optional[str] = None,
     ) -> None:
         target_options = target_options or []
 
@@ -214,7 +216,9 @@ class Libfuzzer(Command):
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             check_fuzzer_help=check_fuzzer_help,
-            coverage_filter=coverage_filter,
+            function_allowlist,
+            module_allowlist,
+            source_allowlist,
         )
 
         report_containers = [
@@ -282,7 +286,9 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
-        coverage_filter: Optional[File] = None,
+        function_allowlist: Optional[str] = None,
+        module_allowlist: Optional[str] = None,
+        source_allowlist: Optional[str] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -350,12 +356,26 @@ class Libfuzzer(Command):
 
         target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
 
-        if coverage_filter:
-            coverage_filter_blob_name: Optional[str] = helper.setup_relative_blob_name(
-                coverage_filter, setup_dir
+        if function_allowlist:
+            function_allowlist_blob_name: Optional[str] = helper.setup_relative_blob_name(
+                function_allowlist, setup_dir
             )
         else:
-            coverage_filter_blob_name = None
+            function_allowlist_blob_name = None
+
+        if module_allowlist:
+            module_allowlist_blob_name: Optional[str] = helper.setup_relative_blob_name(
+                module_allowlist, setup_dir
+            )
+        else:
+            module_allowlist_blob_name = None
+
+        if source_allowlist:
+            source_allowlist_blob_name: Optional[str] = helper.setup_relative_blob_name(
+                source_allowlist, setup_dir
+            )
+        else:
+            source_allowlist_blob_name = None
 
         self._create_tasks(
             job=helper.job,
@@ -379,7 +399,9 @@ class Libfuzzer(Command):
             check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
             minimized_stack_depth=minimized_stack_depth,
-            coverage_filter=coverage_filter_blob_name,
+            function_allowlist=function_allowlist_blob_name,
+            module_allowlist=module_allowlist_blob_name,
+            source_allowlist=source_allowlist_blob_name,
         )
 
         self.logger.info("done creating tasks")
