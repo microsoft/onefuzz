@@ -11,6 +11,7 @@ public static class Defs {
                     TaskFeature.TargetOptions,
                     TaskFeature.TargetTimeout,
                     TaskFeature.TargetMustUseInput,
+                    TaskFeature.CoverageFilter,
                     TaskFeature.FunctionAllowlist,
                     TaskFeature.ModuleAllowlist,
                     TaskFeature.SourceAllowlist,
