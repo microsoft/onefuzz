@@ -22,6 +22,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -320,16 +321,11 @@ class TestOnefuzz:
         self.start_log_marker = f"integration-test-injection-error-start-{self.test_id}"
         self.stop_log_marker = f"integration-test-injection-error-stop-{self.test_id}"
         self.polling_period = polling_period
-        self.tools_dir = tempfile.TemporaryDirectory()
+        self.tools_dir = f"{self.test_id}/tools"
         self.unmanaged_client_id = unmanaged_client_id
         self.unmanaged_client_secret = unmanaged_client_secret
         self.unmanaged_principal_id = unmanaged_principal_id
 
-    def __exit__(self) -> None:
-        self.tools_dir.cleanup()
-
-    def __enter__(self) -> None:
-        pass
 
     def setup(
         self,
@@ -352,24 +348,24 @@ class TestOnefuzz:
                 name, entry, unmanaged=unmanaged, object_id=self.unmanaged_principal_id
             )
             if unmanaged:
+                self.start_unmanaged_pool(name, pool_size, entry)
+            else:
                 self.logger.info("creating scaleset for pool: %s", name)
                 self.of.scalesets.create(
                     name, pool_size, region=region, initial_size=pool_size
                 )
-            else:
-                self.start_unmanaged_pool(name, pool_size, entry)
 
-    def get_tools_path(self, os: OS):
-        if os == OS.linux:
+    def get_tools_path(self, the_os: OS):
+        if the_os == OS.linux:
             return os.path.join(self.tools_dir, "linux")
-        elif os == OS.windows:
+        elif the_os == OS.windows:
             return os.path.join(self.tools_dir, "win64")
         else:
-            raise Exception(f"unsupported os: {os}")
+            raise Exception(f"unsupported os: {the_os}")
 
     def start_unmanaged_pool(self, pool_name: PoolName, pool_size: int, the_os: OS):
-
-        self.logger("starting unmanaged pools docker containers")
+        os.makedirs(self.tools_dir, exist_ok=True)
+        self.logger.info("starting unmanaged pools docker containers")
         if self.unmanaged_client_id is None or self.unmanaged_client_secret is None:
             raise Exception(
                 "unmanaged_client_id and unmanaged_client_secret must be set to test the unmanaged scenario"
@@ -385,29 +381,30 @@ class TestOnefuzz:
         services = list(
             map(
                 lambda x: {
-                    f"agent{x+1}": {"build": ".", "command": f"-machine_id {uuid4()}"}
+                    f"agent{x+1}": {"build": ".", "command": f"--machine_id {uuid4()}"}
                 },
                 range(0, pool_size),
             )
         )
         # create docker compose file
-        compose = {"version": 3, "services": {}}
+        compose = {"version": "3", "services": {}}
         for service in services:
             key = next(iter(service.keys()))
             compose["services"][key] = service[key]
 
-        with open(tools_path, "docker-compose.yml", "w") as f:
+        with open(os.path.join(tools_path, "docker-compose.yml"), "w") as f:
             yaml.dump(compose, f)
 
         config = self.of.pools.get_config(pool_name)
         config.client_credentials.client_id = self.unmanaged_client_id
         config.client_credentials.client_secret = self.unmanaged_client_secret
 
-        with open(tools_path, "config.json", "w") as f:
-            json.dump(config, f)
+        with open(os.path.join(tools_path, "config.json"), "w") as f:
+            f.write(config.json())
+
 
         subprocess.check_call(
-            "docker compose up -d --force-recreate", shell=True, cwd=tools_path
+            "docker compose up -d --force-recreate --build", shell=True, cwd=tools_path
         )
 
     def stop_unmanaged_pool(self, pool: Pool):
@@ -923,11 +920,12 @@ class TestOnefuzz:
                 self.of.pools.shutdown(pool.name, now=True)
 
                 if not pool.managed:
-                    self.start_unmanaged_pool(pool)
+                    self.stop_unmanaged_pool(pool)
             except Exception as e:
                 self.logger.error("cleanup of pool failed: %s - %s", pool.name, e)
                 errors.append(e)
 
+        shutil.rmtree(self.tools_dir)
         container_names = set()
         for job in jobs:
             for task in self.of.tasks.list(job_id=job.job_id, state=None):
@@ -1080,14 +1078,14 @@ class Run(Command):
             client_secret=client_secret,
             authority=authority,
         )
-        with TestOnefuzz(self.onefuzz, self.logger, test_id) as tester:
-            result = tester.check_jobs(
-                poll=poll,
-                stop_on_complete_check=stop_on_complete_check,
-                job_ids=job_ids,
-            )
-            if not result:
-                raise Exception("jobs failed")
+        tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
+        result = tester.check_jobs(
+            poll=poll,
+            stop_on_complete_check=stop_on_complete_check,
+            job_ids=job_ids,
+        )
+        if not result:
+            raise Exception("jobs failed")
 
     def check_repros(
         self,
@@ -1105,11 +1103,11 @@ class Run(Command):
             client_secret=client_secret,
             authority=authority,
         )
-        with TestOnefuzz(self.onefuzz, self.logger, test_id) as tester:
-            launch_result, repros = tester.launch_repro(job_ids=job_ids)
-            result = tester.check_repro(repros)
-            if not (result and launch_result):
-                raise Exception("repros failed")
+        tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
+        launch_result, repros = tester.launch_repro(job_ids=job_ids)
+        result = tester.check_repro(repros)
+        if not (result and launch_result):
+            raise Exception("repros failed")
 
     def setup(
         self,
@@ -1140,15 +1138,13 @@ class Run(Command):
 
         retry(self.logger, try_setup, "trying to configure")
 
-        with TestOnefuzz(self.onefuzz, self.logger, test_id) as tester:
-            tester.setup(
-                region=region,
-                pool_size=pool_size,
-                os_list=os_list,
-                unmanaged=unmanaged,
-                unmanaged_client_id=unmanaged_client_id,
-                unmanaged_client_secret=unmanaged_client_secret,
-            )
+        tester = TestOnefuzz(self.onefuzz, self.logger, test_id, unmanaged_client_id=unmanaged_client_id, unmanaged_client_secret=unmanaged_client_secret)
+        tester.setup(
+            region=region,
+            pool_size=pool_size,
+            os_list=os_list,
+            unmanaged=unmanaged,
+        )
 
     def launch(
         self,
@@ -1177,13 +1173,13 @@ class Run(Command):
 
         retry(self.logger, try_setup, "trying to configure")
 
-        with TestOnefuzz(self.onefuzz, self.logger, test_id) as tester:
-            job_ids = tester.launch(
-                samples, os_list=os_list, targets=targets, duration=duration
-            )
-            launch_data = LaunchInfo(test_id=test_id, jobs=job_ids)
+        tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
+        job_ids = tester.launch(
+            samples, os_list=os_list, targets=targets, duration=duration
+        )
+        launch_data = LaunchInfo(test_id=test_id, jobs=job_ids)
 
-            print(f"launch info: {launch_data.json()}")
+        print(f"launch info: {launch_data.json()}")
 
     def cleanup(
         self,
@@ -1200,8 +1196,8 @@ class Run(Command):
             client_secret=client_secret,
             authority=authority,
         )
-        with TestOnefuzz(self.onefuzz, self.logger, test_id=test_id) as tester:
-            tester.cleanup()
+        tester = TestOnefuzz(self.onefuzz, self.logger, test_id=test_id)
+        tester.cleanup()
 
     def check_logs(
         self,
@@ -1218,8 +1214,8 @@ class Run(Command):
             client_secret=client_secret,
             authority=authority,
         )
-        with TestOnefuzz(self.onefuzz, self.logger, test_id=test_id) as tester:
-            tester.check_logs_for_errors()
+        tester = TestOnefuzz(self.onefuzz, self.logger, test_id=test_id)
+        tester.check_logs_for_errors()
 
     def check_results(
         self,
@@ -1289,34 +1285,34 @@ class Run(Command):
                 )
 
             retry(self.logger, try_setup, "trying to configure")
-            with TestOnefuzz(
+            tester = TestOnefuzz(
                 self.onefuzz,
                 self.logger,
                 test_id,
                 unmanaged_client_id=unmanaged_client_id,
                 unmanaged_client_secret=unmanaged_client_secret,
-            ) as tester:
-                tester.setup(
-                    region=region,
-                    pool_size=pool_size,
-                    os_list=os_list,
-                    unmanaged=unmanaged,
-                )
-                tester.launch(
-                    samples, os_list=os_list, targets=targets, duration=duration
-                )
-                result = tester.check_jobs(poll=True, stop_on_complete_check=True)
-                if not result:
-                    raise Exception("jobs failed")
-                if skip_repro:
-                    self.logger.warning("not testing crash repro")
-                else:
-                    launch_result, repros = tester.launch_repro()
-                    result = tester.check_repro(repros)
-                    if not (result and launch_result):
-                        raise Exception("repros failed")
+            )
+            tester.setup(
+                region=region,
+                pool_size=pool_size,
+                os_list=os_list,
+                unmanaged=unmanaged,
+            )
+            tester.launch(
+                samples, os_list=os_list, targets=targets, duration=duration
+            )
+            result = tester.check_jobs(poll=True, stop_on_complete_check=True)
+            if not result:
+                raise Exception("jobs failed")
+            if skip_repro:
+                self.logger.warning("not testing crash repro")
+            else:
+                launch_result, repros = tester.launch_repro()
+                result = tester.check_repro(repros)
+                if not (result and launch_result):
+                    raise Exception("repros failed")
 
-                tester.check_logs_for_errors()
+            tester.check_logs_for_errors()
 
         except Exception as e:
             self.logger.error("testing failed: %s", repr(e))
