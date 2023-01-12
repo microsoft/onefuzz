@@ -357,9 +357,9 @@ class Libfuzzer(Command):
         target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
 
         if function_allowlist:
-            function_allowlist_blob_name: Optional[str] = helper.setup_relative_blob_name(
-                function_allowlist, setup_dir
-            )
+            function_allowlist_blob_name: Optional[
+                str
+            ] = helper.setup_relative_blob_name(function_allowlist, setup_dir)
         else:
             function_allowlist_blob_name = None
 
