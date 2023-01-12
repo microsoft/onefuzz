@@ -577,7 +577,7 @@ class Libfuzzer(Command):
         wait_for_running: bool = False,
         wait_for_files: Optional[List[ContainerType]] = None,
         existing_inputs: Optional[Container] = None,
-        readonly_inputs: Optional[Directory] = None,
+        readonly_inputs: Optional[Container] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         check_fuzzer_help: bool = True,
