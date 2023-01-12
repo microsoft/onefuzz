@@ -209,6 +209,9 @@ public record TaskDetails(
     List<string>? ReportList = null,
     long? MinimizedStackDepth = null,
     string? CoverageFilter = null,
+    string? FunctionAllowlist = null,
+    string? ModuleAllowlist = null,
+    string? SourceAllowlist = null,
     string? TargetAssembly = null,
     string? TargetClass = null,
     string? TargetMethod = null
@@ -932,6 +935,9 @@ public record TaskUnitConfig(
     public List<string>? ReportList { get; set; }
     public long? MinimizedStackDepth { get; set; }
     public string? CoverageFilter { get; set; }
+    public string? FunctionAllowlist { get; set; }
+    public string? ModuleAllowlist { get; set; }
+    public string? SourceAllowlist { get; set; }
     public string? TargetAssembly { get; set; }
     public string? TargetClass { get; set; }
     public string? TargetMethod { get; set; }
