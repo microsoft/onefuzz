@@ -4,8 +4,8 @@
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
-        get_synced_dirs, CmdType, CHECK_FUZZER_HELP, COVERAGE_DIR, INPUTS_DIR,
-        READONLY_INPUTS, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
+        get_synced_dirs, CmdType, CHECK_FUZZER_HELP, COVERAGE_DIR, INPUTS_DIR, READONLY_INPUTS,
+        TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
     },
     tasks::{
         config::CommonConfig,

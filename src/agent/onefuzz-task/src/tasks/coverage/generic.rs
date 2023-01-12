@@ -235,13 +235,13 @@ impl<'a> TaskContext<'a> {
         let allowlist = self.allowlist.clone();
         let cmd = self.command_for_input(input).await?;
         let timeout = self.config.timeout();
-        let coverage = spawn_blocking(move ||
+        let coverage = spawn_blocking(move || {
             CoverageRecorder::new(cmd)
                 .allowlist(allowlist)
                 .timeout(timeout)
                 .record()
                 .map(|r| r.coverage)
-        )
+        })
         .await??;
 
         Ok(coverage)
