@@ -781,7 +781,6 @@ class Client:
         migrate(table_service, self.migrations)
 
     def set_instance_config(self) -> None:
-        logger.info("setting instance config")
         name = self.results["deploy"]["func_name"]["value"]
         key = self.results["deploy"]["func_key"]["value"]
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
