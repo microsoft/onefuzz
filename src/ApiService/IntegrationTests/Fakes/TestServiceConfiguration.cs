@@ -58,8 +58,6 @@ public sealed class TestServiceConfiguration : IServiceConfig {
 
     public string? OneFuzzOwner => throw new System.NotImplementedException();
 
-    public string OneFuzzNodeDisposalStrategy => throw new System.NotImplementedException();
-
     public ResourceIdentifier? OneFuzzDataStorage => throw new NotImplementedException();
 
     public string? OneFuzzResourceGroup => throw new NotImplementedException();

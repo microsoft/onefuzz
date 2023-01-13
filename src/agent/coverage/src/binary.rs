@@ -3,36 +3,75 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use anyhow::{bail, Result};
-use debuggable_module::{block, path::FilePath, Module, Offset};
+use anyhow::Result;
+use debuggable_module::Module;
+pub use debuggable_module::{block, path::FilePath, Offset};
 use symbolic::debuginfo::Object;
 use symbolic::symcache::{SymCache, SymCacheConverter};
 
 use crate::allowlist::TargetAllowList;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct BinaryCoverage {
     pub modules: BTreeMap<FilePath, ModuleBinaryCoverage>,
 }
 
-#[derive(Clone, Debug, Default)]
+impl BinaryCoverage {
+    pub fn add(&mut self, rhs: &Self) {
+        for (path, rhs_module) in &rhs.modules {
+            let module = self.modules.entry(path.clone()).or_default();
+            module.add(rhs_module);
+        }
+    }
+
+    pub fn merge(&mut self, rhs: &Self) {
+        for (path, rhs_module) in &rhs.modules {
+            let module = self.modules.entry(path.clone()).or_default();
+            module.merge(rhs_module);
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ModuleBinaryCoverage {
     pub offsets: BTreeMap<Offset, Count>,
 }
 
 impl ModuleBinaryCoverage {
-    pub fn increment(&mut self, offset: Offset) -> Result<()> {
-        if let Some(count) = self.offsets.get_mut(&offset) {
-            count.increment();
-        } else {
-            bail!("unknown coverage offset: {offset:x}");
-        };
+    pub fn increment(&mut self, offset: Offset) {
+        let count = self.offsets.entry(offset).or_default();
+        count.increment();
+    }
 
-        Ok(())
+    pub fn add(&mut self, rhs: &Self) {
+        for (&offset, &rhs_count) in &rhs.offsets {
+            let count = self.offsets.entry(offset).or_default();
+            *count += rhs_count;
+        }
+    }
+
+    pub fn merge(&mut self, rhs: &Self) {
+        for (&offset, &rhs_count) in &rhs.offsets {
+            let count = self.offsets.entry(offset).or_default();
+            *count = Count::max(*count, rhs_count)
+        }
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+impl<O> From<O> for ModuleBinaryCoverage
+where
+    O: IntoIterator<Item = Offset>,
+{
+    fn from(offsets: O) -> Self {
+        let offsets = offsets.into_iter().map(|o| (o, Count(0)));
+
+        let mut coverage = Self::default();
+        coverage.offsets.extend(offsets);
+        coverage
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Count(pub u32);
 
 impl Count {
@@ -42,6 +81,24 @@ impl Count {
 
     pub fn reached(&self) -> bool {
         self.0 > 0
+    }
+
+    pub fn max(self, rhs: Self) -> Self {
+        Count(u32::max(self.0, rhs.0))
+    }
+}
+
+impl std::ops::Add for Count {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        Count(self.0.saturating_add(rhs.0))
+    }
+}
+
+impl std::ops::AddAssign for Count {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs;
     }
 }
 
@@ -80,10 +137,7 @@ pub fn find_coverage_sites<'data>(
         }
     }
 
-    let mut coverage = ModuleBinaryCoverage::default();
-    coverage
-        .offsets
-        .extend(offsets.into_iter().map(|o| (o, Count(0))));
+    let coverage = ModuleBinaryCoverage::from(offsets.into_iter());
 
     Ok(coverage)
 }
@@ -93,3 +147,6 @@ impl AsRef<BTreeMap<Offset, Count>> for ModuleBinaryCoverage {
         &self.offsets
     }
 }
+
+#[cfg(test)]
+mod tests;

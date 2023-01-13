@@ -3,8 +3,6 @@
 
 use std::collections::BTreeMap;
 use std::path::Path;
-use std::process::Command;
-use std::time::Duration;
 
 use anyhow::{anyhow, Result};
 use debuggable_module::load_module::LoadModule;
@@ -17,27 +15,10 @@ use debugger::{BreakpointId, BreakpointType, DebugEventHandler, Debugger, Module
 use crate::allowlist::TargetAllowList;
 use crate::binary::{self, BinaryCoverage};
 
-pub fn record(
-    cmd: Command,
-    timeout: Duration,
-    allowlist: impl Into<Option<TargetAllowList>>,
-) -> Result<BinaryCoverage> {
-    let loader = Loader::new();
-    let allowlist = allowlist.into().unwrap_or_default();
-
-    crate::timer::timed(timeout, move || {
-        let mut recorder = WindowsRecorder::new(&loader, allowlist);
-        let (mut dbg, _child) = Debugger::init(cmd, &mut recorder)?;
-        dbg.run(&mut recorder)?;
-
-        Ok(recorder.coverage)
-    })?
-}
-
 pub struct WindowsRecorder<'data> {
     allowlist: TargetAllowList,
     breakpoints: Breakpoints,
-    coverage: BinaryCoverage,
+    pub coverage: BinaryCoverage,
     loader: &'data Loader,
     modules: BTreeMap<FilePath, WindowsModule<'data>>,
 }
@@ -94,7 +75,7 @@ impl<'data> WindowsRecorder<'data> {
             .get_mut(&breakpoint.module)
             .ok_or_else(|| anyhow!("coverage not initialized for module: {}", breakpoint.module))?;
 
-        coverage.increment(breakpoint.offset)?;
+        coverage.increment(breakpoint.offset);
 
         Ok(())
     }

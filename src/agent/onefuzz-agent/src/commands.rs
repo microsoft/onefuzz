@@ -25,7 +25,7 @@ const ONEFUZZ_SERVICE_USER: &str = "onefuzz";
 #[cfg(target_family = "windows")]
 static SET_PERMISSION_ONCE: OnceCell<()> = OnceCell::const_new();
 
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
 pub struct SshKeyInfo {
     pub public_key: Secret<String>,
 }

@@ -99,3 +99,20 @@ fn test_allow_glob_except_commented() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn test_allow_glob_extension() -> Result<()> {
+    let text = include_str!("test-data/allow-all-glob-extension.txt");
+    let allowlist = AllowList::parse(text)?;
+
+    assert!(allowlist.is_allowed("a.c"));
+    assert!(allowlist.is_allowed("a.h"));
+
+    assert!(!allowlist.is_allowed("ac"));
+    assert!(!allowlist.is_allowed("ah"));
+
+    assert!(!allowlist.is_allowed("axc"));
+    assert!(!allowlist.is_allowed("axh"));
+
+    Ok(())
+}

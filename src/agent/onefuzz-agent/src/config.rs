@@ -319,13 +319,12 @@ impl Registration {
     pub async fn load_existing(config: StaticConfig) -> Result<Self> {
         let dynamic_config = DynamicConfig::load().await?;
         let machine_id = config.machine_identity.machine_id;
-        let mut registration = Self {
+        let registration = Self {
             config,
             dynamic_config,
             machine_id,
         };
-        registration.renew().await?;
-        Ok(registration)
+        registration.renew().await
     }
 
     pub async fn create_managed(config: StaticConfig) -> Result<Self> {
@@ -336,7 +335,7 @@ impl Registration {
         Self::create(config, false, DEFAULT_REGISTRATION_CREATE_TIMEOUT).await
     }
 
-    pub async fn renew(&mut self) -> Result<()> {
+    pub async fn renew(&self) -> Result<Self> {
         info!("renewing registration");
         let token = self.config.credentials.access_token().await?;
 
@@ -355,9 +354,13 @@ impl Registration {
             .await
             .context("Registration.renew request body")?;
 
-        self.dynamic_config = response.json().await?;
-        self.dynamic_config.save().await?;
+        let dynamic_config: DynamicConfig = response.json().await?;
+        dynamic_config.save().await?;
 
-        Ok(())
+        Ok(Self {
+            dynamic_config,
+            config: self.config.clone(),
+            machine_id: self.machine_id,
+        })
     }
 }

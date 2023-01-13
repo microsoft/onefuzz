@@ -566,6 +566,7 @@ dependencies = [
  "iced-x86",
  "log",
  "pete",
+ "pretty_assertions",
  "procfs",
  "regex",
  "symbolic 10.1.4",
@@ -1832,9 +1833,9 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "0.8.2"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52da4364ffb0e4fe33a9841a98a3f3014fb964045ce4f7a45a398243c8d6b0c9"
+checksum = "e5d732bc30207a6423068df043e3d02e0735b155ad7ce1a6f76fe2baa5b158de"
 dependencies = [
  "libc",
  "log",
@@ -1982,7 +1983,7 @@ dependencies = [
  "inotify",
  "kqueue",
  "libc",
- "mio 0.8.2",
+ "mio 0.8.5",
  "walkdir",
  "winapi",
 ]

@@ -1,0 +1,18 @@
+{
+    "version": "1.0",
+    "coverage": {
+        "src/bin/main.c": {
+            "lines": {
+                "4": 1,
+                "9": 0,
+                "12": 5
+            }
+        },
+        "src/lib/common.c": {
+            "lines": {
+                "5": 1,
+                "8": 0
+            }
+        }
+    }
+}
