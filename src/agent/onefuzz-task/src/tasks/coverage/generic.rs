@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::Duration;
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use coverage::allowlist::{AllowList, TargetAllowList};
 use coverage::binary::BinaryCoverage;
@@ -47,6 +47,11 @@ pub struct Config {
     pub target_options: Vec<String>,
     pub target_timeout: Option<u64>,
 
+    // Deprecated.
+    //
+    // Retained only to informatively fail tasks that were qeueued pre-upgrade.
+    pub coverage_filter: Option<String>,
+
     pub function_allowlist: Option<String>,
     pub module_allowlist: Option<String>,
     pub source_allowlist: Option<String>,
@@ -80,6 +85,10 @@ impl CoverageTask {
 
     pub async fn run(&mut self) -> Result<()> {
         info!("starting coverage task");
+
+        if self.config.coverage_filter.is_some() {
+            bail!("the `coverage_filter` option for the `coverage` task is deprecated");
+        }
 
         self.config.coverage.init_pull().await?;
 

@@ -55,6 +55,7 @@ pub fn build_coverage_config(
         target_env,
         target_options,
         target_timeout,
+        coverage_filter: None,
         function_allowlist: None,
         module_allowlist: None,
         source_allowlist: None,
