@@ -37,7 +37,7 @@ public record WebhookMessageLog(
     EventType EventType,
     [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
     [property: JsonConverter(typeof(BaseEventConverter))]
-    BaseEvent? Event,
+    BaseEvent Event,
     Guid InstanceId,
     String InstanceName,
     [PartitionKey] Guid WebhookId,

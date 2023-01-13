@@ -99,13 +99,9 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
     public async Task<EventPing> Ping(Webhook webhook) {
         var ping = new EventPing(Guid.NewGuid());
-        var g = new EventFileAdded(
-            Container.Parse("somecontainer"),
-            string.Join(",", Enumerable.Repeat("99999999999", 128000))
-        );
         var instanceId = await _context.Containers.GetInstanceId();
         var instanceName = _context.Creds.GetInstanceName();
-        await AddEvent(webhook, new EventMessage(Guid.NewGuid(), EventType.Ping, g, instanceId, instanceName));
+        await AddEvent(webhook, new EventMessage(Guid.NewGuid(), EventType.Ping, ping, instanceId, instanceName));
         return ping;
     }
 
