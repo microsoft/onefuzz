@@ -306,7 +306,7 @@ async fn run_agent(config: StaticConfig, reset_node: bool) -> Result<()> {
     let mut coordinator = coordinator::Coordinator::new(registration.clone()).await?;
     debug!("initialized coordinator");
 
-    let mut reboot = reboot::Reboot;
+    let reboot = reboot::Reboot;
     let reboot_context = reboot.load_context().await?;
     if reset_node {
         WorkSet::remove_context(config.machine_identity.machine_id).await?;
@@ -331,7 +331,7 @@ async fn run_agent(config: StaticConfig, reset_node: bool) -> Result<()> {
         ),
         None => None,
     };
-    let mut agent = agent::Agent::new(
+    let agent = agent::Agent::new(
         Box::new(coordinator),
         Box::new(reboot),
         scheduler,

@@ -15,12 +15,12 @@ use crate::binary::BinaryCoverage;
 
 pub use crate::binary::Count;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct SourceCoverage {
     pub files: BTreeMap<FilePath, FileCoverage>,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct FileCoverage {
     pub lines: BTreeMap<Line, Count>,
 }
