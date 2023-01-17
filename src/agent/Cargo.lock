@@ -569,7 +569,7 @@ dependencies = [
  "pretty_assertions",
  "procfs",
  "regex",
- "symbolic 10.1.4",
+ "symbolic 10.2.0",
  "thiserror",
 ]
 
