@@ -251,13 +251,12 @@ class Libfuzzer(Command):
             minimized_stack_depth=minimized_stack_depth,
         )
 
-
         if analyzer_exe is not None:
             self.logger.info("creating custom analysis")
 
             analysis_containers = [
                 (ContainerType.setup, containers[ContainerType.setup]),
-                (ContainerType.tools, tools), # quick hack
+                (ContainerType.tools, tools),
                 (ContainerType.analysis, containers[ContainerType.analysis]),
                 (ContainerType.crashes, containers[ContainerType.crashes]),
             ]
@@ -282,6 +281,7 @@ class Libfuzzer(Command):
                 debug=debug,
                 target_timeout=target_timeout,
             )
+
     def basic(
         self,
         project: str,
