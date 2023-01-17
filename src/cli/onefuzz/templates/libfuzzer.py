@@ -258,6 +258,7 @@ class Libfuzzer(Command):
                 self.logger.error(
                     "tools container cannot be empty when specifying a custom analyzer"
                 )
+                return None
 
             analysis_containers = [
                 (ContainerType.setup, containers[ContainerType.setup]),
