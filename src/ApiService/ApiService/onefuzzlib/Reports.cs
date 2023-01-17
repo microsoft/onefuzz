@@ -44,10 +44,12 @@ public class Reports : IReports {
             return null;
         }
 
-        return ParseReportOrRegression(blob.ToString(), filePath, expectReports);
+        var reportUrl = await _containers.GetFileUrl(container, fileName, StorageType.Corpus);
+
+        return ParseReportOrRegression(blob.ToString(), filePath, reportUrl, expectReports);
     }
 
-    private IReport? ParseReportOrRegression(string content, string? filePath, bool expectReports = false) {
+    private IReport? ParseReportOrRegression(string content, string? filePath, Uri? reportUrl, bool expectReports = false) {
         var regressionReport = JsonSerializer.Deserialize<RegressionReport>(content, EntityConverter.GetJsonSerializerOptions());
         if (regressionReport == null || regressionReport.CrashTestResult == null) {
             var report = JsonSerializer.Deserialize<Report>(content, EntityConverter.GetJsonSerializerOptions());
@@ -55,10 +57,14 @@ public class Reports : IReports {
                 _log.Error($"unable to parse report ({filePath:Tag:FilePath}) as a report or regression");
                 return null;
             }
-            return report;
+            return report != null ? report with { ReportUrl = reportUrl } : report;
         }
-        return regressionReport;
+        return regressionReport != null ? regressionReport with { ReportUrl = reportUrl } : regressionReport;
     }
 }
 
-public interface IReport { };
+public interface IReport {
+    Uri? ReportUrl {
+        init;
+    }
+};
