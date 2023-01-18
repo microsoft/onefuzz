@@ -177,7 +177,7 @@ class Endpoint:
 
             endpoint_params = responses.Config.parse_obj(response.json())
 
-            if self.onefuzz._backend.config.client_id is not None:
+            if self.onefuzz._backend.config.client_id is "":
                 self.onefuzz._backend.config.client_id = endpoint_params.client_id
 
             self.onefuzz._backend.config.authority = endpoint_params.authority
