@@ -153,6 +153,7 @@ class Client:
         migrations: List[str],
         export_appinsights: bool,
         tenant_domain: str,
+        multi_tenant: bool,
         authority: str,
         upgrade: bool,
         subscription_id: Optional[str],
@@ -176,6 +177,7 @@ class Client:
         self.third_party = third_party
         self.create_registration = create_registration
         self.tenant_domain = tenant_domain
+        self.multi_tenant = multi_tenant
         self.custom_domain = custom_domain
         self.upgrade = upgrade
         self.results: Dict = {
@@ -184,7 +186,7 @@ class Client:
         }
         if authority:
             self.authority = authority
-        elif self.tenant_domain:
+        elif self.multi_tenant:
             self.authority = COMMON_AUTHORITY
         else:
             self.authority = ONEFUZZ_CLI_AUTHORITY
@@ -310,7 +312,7 @@ class Client:
         # The url to access the instance
         # This also represents the legacy identifier_uris of the application
         # registration
-        if self.tenant_domain:
+        if self.multi_tenant:
             return "https://%s/%s" % (self.tenant_domain, self.application_name)
         else:
             return "https://%s.azurewebsites.net" % self.application_name
@@ -321,14 +323,14 @@ class Client:
         # to be from an approved domain The format of this value is derived
         # from the default value proposed by azure when creating an application
         # registration api://{guid}/...
-        if self.tenant_domain:
+        if self.multi_tenant:
             return "api://%s/%s" % (self.tenant_domain, self.application_name)
         else:
             return "api://%s.azurewebsites.net" % self.application_name
 
     def get_signin_audience(self) -> str:
         # https://docs.microsoft.com/en-us/azure/active-directory/develop/supported-accounts-validation
-        if self.tenant_domain:
+        if self.multi_tenant:
             return "AzureADMultipleOrgs"
         else:
             return "AzureADMyOrg"
@@ -387,13 +389,13 @@ class Client:
         else:
             self.update_existing_app_registration(app, app_roles)
 
-        if self.tenant_domain and app["signInAudience"] == "AzureADMyOrg":
+        if self.multi_tenant and app["signInAudience"] == "AzureADMyOrg":
             set_app_audience(
                 app["id"],
                 "AzureADMultipleOrgs",
                 subscription_id=self.get_subscription_id(),
             )
-        elif not self.tenant_domain and app["signInAudience"] == "AzureADMultipleOrgs":
+        elif not self.multi_tenant and app["signInAudience"] == "AzureADMultipleOrgs":
             set_app_audience(
                 app["id"],
                 "AzureADMyOrg",
@@ -421,7 +423,7 @@ class Client:
                     OnefuzzAppRole.CliClient,
                     self.get_subscription_id(),
                 )
-                if self.tenant_domain:
+                if self.multi_tenant:
                     authority = COMMON_AUTHORITY
                 else:
                     authority = app_info.authority
@@ -439,7 +441,7 @@ class Client:
         else:
             onefuzz_cli_app = cli_app
             authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
-            if self.tenant_domain:
+            if self.multi_tenant:
                 authority = COMMON_AUTHORITY
             else:
                 tenant_id = get_tenant_id(self.get_subscription_id())
@@ -643,7 +645,7 @@ class Client:
         # Add --custom_domain value to Allowed token audiences setting
         if self.custom_domain:
 
-            if self.tenant_domain:
+            if self.multi_tenant:
                 root_domain = self.tenant_domain
             else:
                 root_domain = "%s.azurewebsites.net" % self.application_name
@@ -655,7 +657,7 @@ class Client:
 
             app_func_audiences.extend(custom_domains)
 
-        if self.tenant_domain:
+        if self.multi_tenant:
             # clear the value in the Issuer Url field:
             # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
             app_func_issuer = ""
@@ -1283,6 +1285,12 @@ def main() -> None:
         help="specify tenant domain to authenticate to",
     )
     parser.add_argument(
+        "--multi_tenant",
+        type=bool,
+        default=False,
+        help="specify if deployment is multi-tenant",
+    )
+    parser.add_argument(
         "--authority",
         type=str,
         default=None,
@@ -1363,6 +1371,7 @@ def main() -> None:
         migrations=args.apply_migrations,
         export_appinsights=args.export_appinsights,
         tenant_domain=args.tenant_domain,
+        multi_tenant=args.multi_tenant,
         authority=args.authority,
         upgrade=args.upgrade,
         subscription_id=args.subscription_id,

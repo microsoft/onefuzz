@@ -122,6 +122,10 @@ class Endpoint:
         as_params: bool = False,
         alternate_endpoint: Optional[str] = None,
     ) -> A:
+
+        # Retrieve Auth Parameters
+        self._req_config_params()
+
         response = self._req_base(
             method,
             data=data,
@@ -152,6 +156,30 @@ class Endpoint:
             ).json()
 
         return [model.parse_obj(x) for x in response]
+
+    def _req_config_params(
+        self,
+    ):
+
+        endpoint_params = responses.Config(
+            authority="",
+            client_id="",
+            tenant_domain="",
+        )
+
+        response = self.onefuzz._backend.session.request(
+            "GET", self.onefuzz._backend.config.endpoint + "/api/config"
+        )
+
+        endpoint_params = responses.Config.parse_obj(response.json())
+
+        if self.onefuzz._backend.config.client_id is not None:
+            self.onefuzz._backend.config.client_id = endpoint_params.client_id
+
+        self.onefuzz._backend.config.authority = endpoint_params.authority
+        self.onefuzz._backend.config.tenant_domain = endpoint_params.tenant_domain
+
+        self.onefuzz._backend.save_config()
 
     def _disambiguate(
         self,
@@ -1876,11 +1904,11 @@ class Onefuzz:
         if reset:
             self._backend.config = BackendConfig(authority="", client_id="")
 
-        endpoint_params = responses.Config(
-            authority="",
-            client_id="",
-            tenant_domain="",
-        )
+        # endpoint_params = responses.Config(
+        #     authority="",
+        #     client_id="",
+        #     tenant_domain="",
+        # )
 
         if endpoint is not None:
             # The normal path for calling the API always uses the oauth2 workflow,
@@ -1897,27 +1925,22 @@ class Onefuzz:
                 )
             self._backend.config.endpoint = endpoint
 
-            response = self._backend.session.request(
-                "GET", self._backend.config.endpoint + "/api/config"
-            )
+            # response = self._backend.session.request(
+            #     "GET", self._backend.config.endpoint + "/api/config"
+            # )
 
-            endpoint_params = responses.Config.parse_obj(response.json())
+            # endpoint_params = responses.Config.parse_obj(response.json())
 
         if authority is not None:
             self._backend.config.authority = authority
-        else:
-            self._backend.config.authority = endpoint_params.authority
         if client_id is not None:
             self._backend.config.client_id = client_id
-        else:
-            self._backend.config.client_id = endpoint_params.client_id
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
-        else:
-            self._backend.config.tenant_domain = endpoint_params.tenant_domain
 
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
+
         self._backend.app = None
         self._backend.save_config()
 
