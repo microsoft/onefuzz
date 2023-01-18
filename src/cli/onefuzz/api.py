@@ -159,7 +159,7 @@ class Endpoint:
 
     def _req_config_params(
         self,
-    ):
+    ) -> None:
 
         endpoint_params = responses.Config(
             authority="",
@@ -167,19 +167,25 @@ class Endpoint:
             tenant_domain="",
         )
 
-        response = self.onefuzz._backend.session.request(
-            "GET", self.onefuzz._backend.config.endpoint + "/api/config"
-        )
+        if self.onefuzz._backend.config.endpoint is not None:
 
-        endpoint_params = responses.Config.parse_obj(response.json())
+            endpoint = self.onefuzz._backend.config.endpoint
 
-        if self.onefuzz._backend.config.client_id is not None:
-            self.onefuzz._backend.config.client_id = endpoint_params.client_id
+            response = self.onefuzz._backend.session.request(
+                "GET", endpoint + "/api/config"
+            )
 
-        self.onefuzz._backend.config.authority = endpoint_params.authority
-        self.onefuzz._backend.config.tenant_domain = endpoint_params.tenant_domain
+            endpoint_params = responses.Config.parse_obj(response.json())
 
-        self.onefuzz._backend.save_config()
+            if self.onefuzz._backend.config.client_id is not None:
+                self.onefuzz._backend.config.client_id = endpoint_params.client_id
+
+            self.onefuzz._backend.config.authority = endpoint_params.authority
+            self.onefuzz._backend.config.tenant_domain = endpoint_params.tenant_domain
+
+            self.onefuzz._backend.save_config()
+        else:
+            raise Exception("Endpoint Not Configured")
 
     def _disambiguate(
         self,
