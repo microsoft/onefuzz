@@ -177,7 +177,7 @@ class Endpoint:
 
             endpoint_params = responses.Config.parse_obj(response.json())
 
-            if self.onefuzz._backend.config.client_id is "":
+            if self.onefuzz._backend.config.client_id == "":
                 self.onefuzz._backend.config.client_id = endpoint_params.client_id
 
             self.onefuzz._backend.config.authority = endpoint_params.authority
@@ -1720,17 +1720,6 @@ class InstanceConfigCmd(Endpoint):
         )
 
 
-# class Config(Endpoint):
-#     """Retrieve OneFuzz Config Parameters"""
-
-#     endpoint = "config"
-
-#     def get(self) -> responses.Config:
-#         """Get endpoint config information for OneFuzz Instance"""
-#         self.logger.debug("getting endpoint config params")
-#         return self._req_model("GET", responses.Config)
-
-
 class Command:
     def __init__(self, onefuzz: "Onefuzz", logger: logging.Logger):
         self.onefuzz = onefuzz
@@ -1821,8 +1810,6 @@ class Onefuzz:
         self.webhooks = Webhooks(self)
         self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
-        # self.config = Config(self)
-
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates = JobTemplates(self)
 
@@ -1910,12 +1897,6 @@ class Onefuzz:
         if reset:
             self._backend.config = BackendConfig(authority="", client_id="")
 
-        # endpoint_params = responses.Config(
-        #     authority="",
-        #     client_id="",
-        #     tenant_domain="",
-        # )
-
         if endpoint is not None:
             # The normal path for calling the API always uses the oauth2 workflow,
             # which the devicelogin can take upwards of 15 minutes to fail in
@@ -1930,12 +1911,6 @@ class Onefuzz:
                     "Missing HTTP Authentication"
                 )
             self._backend.config.endpoint = endpoint
-
-            # response = self._backend.session.request(
-            #     "GET", self._backend.config.endpoint + "/api/config"
-            # )
-
-            # endpoint_params = responses.Config.parse_obj(response.json())
 
         if authority is not None:
             self._backend.config.authority = authority
