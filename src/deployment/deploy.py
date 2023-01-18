@@ -141,7 +141,7 @@ class Client:
         application_name: str,
         owner: str,
         config: str,
-        client_id: Optional[str],
+        client_id: str,
         client_secret: Optional[str],
         app_zip: str,
         tools: str,
@@ -813,7 +813,7 @@ class Client:
             update_endpoint_params(
                 config_client,
                 self.authority,
-                self.results["client_id"],
+                self.cli_app_id,
                 self.tenant_domain,
             )
 
