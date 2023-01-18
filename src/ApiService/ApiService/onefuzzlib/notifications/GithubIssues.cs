@@ -35,7 +35,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         var handler = await GithubConnnector.GithubConnnectorCreator(config, container, filename, renderer, _context.Creds.GetInstanceUrl(), _context, _logTracer);
         await handler.Process();
     }
-    class GithubConnnector {
+    sealed class GithubConnnector {
         private readonly GitHubClient _gh;
         private readonly GithubIssuesTemplate _config;
         private readonly Renderer _renderer;
@@ -71,7 +71,12 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         }
 
         private async Async.Task<string> Render(string field) {
-            return await _renderer.Render(field, _instanceUrl);
+            try {
+                return await _renderer.Render(field, _instanceUrl, strictRendering: true);
+            } catch {
+                _logTracer.Warning($"Failed to render field in strict mode. Falling back to relaxed mode. {field:Field}");
+                return await _renderer.Render(field, _instanceUrl, strictRendering: false);
+            }
         }
 
         private async Async.Task<List<Issue>> Existing() {

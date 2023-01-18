@@ -41,8 +41,8 @@ public abstract class ContainersTestBase : FunctionTestBase {
         var result = await func.Run(TestHttpRequestData.Empty(method));
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
 
-        var err = BodyAs<Error>(result);
-        Assert.Equal(ErrorCode.UNAUTHORIZED, err.Code);
+        var err = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.UNAUTHORIZED.ToString(), err.Title);
     }
 
 
@@ -173,5 +173,20 @@ public abstract class ContainersTestBase : FunctionTestBase {
             Assert.Equal("content", await sr.ReadToEndAsync()); // read
         }
         using var r = await client.DeleteBlobAsync("blob"); // delete
+    }
+
+    [Fact]
+    public async Async.Task BadContainerNameProducesGoodErrorMessage() {
+        // use anonymous type so we can send an invalid name
+        var msg = TestHttpRequestData.FromJson("POST", new { Name = "AbCd" });
+
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new ContainersFunction(Logger, auth, Context);
+        var result = await func.Run(msg);
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        var details = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.INVALID_REQUEST.ToString(), details.Title);
+        Assert.StartsWith("Unable to parse 'AbCd' as a Container: Container name must", details.Detail);
     }
 }

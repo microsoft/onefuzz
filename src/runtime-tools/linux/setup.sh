@@ -12,7 +12,7 @@ USER_SETUP="/onefuzz/setup/setup.sh"
 TASK_SETUP="/onefuzz/bin/task-setup.sh"
 MANAGED_SETUP="/onefuzz/bin/managed.sh"
 SCALESET_SETUP="/onefuzz/bin/scaleset-setup.sh"
-DOTNET_VERSION="7.0.100"
+DOTNET_VERSIONS=('7.0.100' '6.0.403')
 export DOTNET_ROOT=/onefuzz/tools/dotnet
 export DOTNET_CLI_HOME="$DOTNET_ROOT"
 export ONEFUZZ_ROOT=/onefuzz
@@ -124,14 +124,14 @@ if type apt > /dev/null 2> /dev/null; then
     done
 
     if ! [ -f ${LLVM_SYMBOLIZER_PATH} ]; then
-        until sudo apt install -y llvm-10; do
+        until sudo apt install -y llvm-12; do
             echo "apt failed, sleeping 10s then retrying"
             sleep 10
         done
 
         # If specifying symbolizer, exe name must be a "known symbolizer".
-        # Using `llvm-symbolizer` works for clang 8 .. 10.
-        sudo ln -f -s $(which llvm-symbolizer-10) $LLVM_SYMBOLIZER_PATH
+        # Using `llvm-symbolizer` works for clang 8 .. 12.
+        sudo ln -f -s $(which llvm-symbolizer-12) $LLVM_SYMBOLIZER_PATH
     fi
 
     # Install dotnet
@@ -144,16 +144,18 @@ if type apt > /dev/null 2> /dev/null; then
     curl --retry 10 -sSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh 2>&1 | logger -s -i -t 'onefuzz-curl-dotnet-install'
     chmod +x dotnet-install.sh
 
-    logger "running dotnet install"
-    /bin/bash ./dotnet-install.sh --version "$DOTNET_VERSION" --install-dir "$DOTNET_ROOT" 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
+    for version in "${DOTNET_VERSIONS[@]}"; do
+        logger "running dotnet install $version"
+        /bin/bash ./dotnet-install.sh --version "$version" --install-dir "$DOTNET_ROOT" 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
+    done
     rm dotnet-install.sh
 
     logger "install dotnet tools"
     pushd "$DOTNET_ROOT"
     ls -lah 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    "$DOTNET_ROOT"/dotnet tool install dotnet-dump --version 6.0.328102 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    "$DOTNET_ROOT"/dotnet tool install dotnet-coverage --version 17.3.6 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    "$DOTNET_ROOT"/dotnet tool install dotnet-sos --version 6.0.328102 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+    "$DOTNET_ROOT"/dotnet tool install dotnet-dump --version 6.0.351802 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+    "$DOTNET_ROOT"/dotnet tool install dotnet-coverage --version 17.5 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+    "$DOTNET_ROOT"/dotnet tool install dotnet-sos --version 6.0.351802 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
     popd
 fi
 

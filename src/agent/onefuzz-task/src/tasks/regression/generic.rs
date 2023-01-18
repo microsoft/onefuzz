@@ -74,6 +74,7 @@ impl RegressionHandler for GenericRegressionTask {
             check_asan_log: self.config.check_asan_log,
             check_debugger: self.config.check_debugger,
             minimized_stack_depth: self.config.minimized_stack_depth,
+            machine_identity: self.config.common.machine_identity.clone(),
         };
         generic::test_input(args).await
     }

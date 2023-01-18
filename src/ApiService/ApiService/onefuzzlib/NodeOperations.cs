@@ -6,10 +6,15 @@ using Azure.Data.Tables;
 
 namespace Microsoft.OneFuzz.Service;
 
+public record CanProcessNewWorkResponse(bool IsAllowed, string? Reason) {
+    public static CanProcessNewWorkResponse Allowed() => new CanProcessNewWorkResponse(true, null);
+    public static CanProcessNewWorkResponse NotAllowed(string reason) => new CanProcessNewWorkResponse(false, reason);
+};
+
 public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Task<Node?> GetByMachineId(Guid machineId);
 
-    Task<bool> CanProcessNewWork(Node node);
+    Task<CanProcessNewWorkResponse> CanProcessNewWork(Node node);
 
     Task<OneFuzzResult<Node>> AcquireScaleInProtection(Node node);
     Task<OneFuzzResultVoid> ReleaseScaleInProtection(Node node);
@@ -139,7 +144,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         return OneFuzzResultVoid.Ok;
     }
 
-    record NodeInfo(Node Node, Scaleset Scaleset, string InstanceId);
+    sealed record NodeInfo(Node Node, Scaleset Scaleset, string InstanceId);
     private async Async.Task<NodeInfo?> TryGetNodeInfo(Node node) {
         var scalesetId = node.ScalesetId;
         if (scalesetId is null) {
@@ -165,74 +170,65 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         return new NodeInfo(node, scalesetResult.OkV, instanceId);
     }
 
-    public async Task<bool> CanProcessNewWork(Node node) {
+
+
+    public async Task<CanProcessNewWorkResponse> CanProcessNewWork(Node node) {
         if (IsOutdated(node) && _context.ServiceConfiguration.OneFuzzAllowOutdatedAgent != "true") {
-            _logTracer.Info($"can_process_new_work agent and service versions differ, stopping node. {node.MachineId:Tag:MachineId} {node.Version:Tag:AgentVersion} {_context.ServiceConfiguration.OneFuzzVersion:Tag:ServiceVersion}");
             _ = await Stop(node, done: true);
-            return false;
+            return CanProcessNewWorkResponse.NotAllowed("agent and service versions differ");
         }
 
         if (IsTooOld(node)) {
-            _logTracer.Info($"can_process_new_work node is too old {node.MachineId:Tag:MachineId}");
             _ = await Stop(node, done: true);
-            return false;
+            return CanProcessNewWorkResponse.NotAllowed("node is too old");
         }
 
         if (!node.State.CanProcessNewWork()) {
-            _logTracer.Info($"can_process_new_work node not in appropriate state for new work {node.MachineId:Tag:MachineId} {node.State:Tag:State}");
-            return false;
+            return CanProcessNewWorkResponse.NotAllowed("node not in appropriate state for new work");
         }
 
         if (node.State.ReadyForReset()) {
-            _logTracer.Info($"can_process_new_work node is set for reset {node.MachineId:Tag:MachineId}");
-            return false;
+            return CanProcessNewWorkResponse.NotAllowed("node is set for reset");
         }
 
         if (node.DeleteRequested) {
-            _logTracer.Info($"can_process_new_work is set to be deleted {node.MachineId:Tag:MachineId}");
             _ = await Stop(node, done: true);
-            return false;
+            return CanProcessNewWorkResponse.NotAllowed("node is set to be deleted");
         }
 
         if (node.ReimageRequested) {
-            _logTracer.Info($"can_process_new_work is set to be reimaged {node.MachineId:Tag:MachineId}");
             _ = await Stop(node, done: true);
-            return false;
+            return CanProcessNewWorkResponse.NotAllowed("node is set to be reimaged");
         }
 
         if (await CouldShrinkScaleset(node)) {
-            _logTracer.Info($"can_process_new_work node scheduled to shrink {node.MachineId:Tag:MachineId}");
             _ = await SetHalt(node);
-            return false;
+            return CanProcessNewWorkResponse.NotAllowed("node is scheduled to shrink");
         }
 
         if (node.ScalesetId != null) {
             var scalesetResult = await _context.ScalesetOperations.GetById(node.ScalesetId.Value);
             if (!scalesetResult.IsOk) {
-                _logTracer.Info($"can_process_new_work invalid scaleset {node.ScalesetId:Tag:ScalesetId} - {node.MachineId:Tag:MachineId}");
-                return false;
+                return CanProcessNewWorkResponse.NotAllowed("invalid scaleset");
             }
 
             var scaleset = scalesetResult.OkV;
             if (!scaleset.State.IsAvailable()) {
-                _logTracer.Info($"can_process_new_work scaleset not available for work {scaleset.ScalesetId:Tag:ScalesetId} - {node.MachineId:Tag:MachineId} {scaleset.State:Tag:State}");
-                return false;
+                return CanProcessNewWorkResponse.NotAllowed($"scaleset not available for work. Scaleset state '{scaleset.State}'"); ;
             }
         }
 
         var poolResult = await _context.PoolOperations.GetByName(node.PoolName);
         if (!poolResult.IsOk) {
-            _logTracer.Info($"can_schedule - invalid pool {node.PoolName:Tag:PoolName} - {node.MachineId:Tag:MachineId}");
-            return false;
+            return CanProcessNewWorkResponse.NotAllowed("invalid pool"); ;
         }
 
         var pool = poolResult.OkV;
         if (!PoolStateHelper.Available.Contains(pool.State)) {
-            _logTracer.Info($"can_schedule - pool is not available for work {node.PoolName:Tag:PoolName} - {node.MachineId:Tag:MachineId}");
-            return false;
+            return CanProcessNewWorkResponse.NotAllowed("pool is not available for work"); ;
         }
 
-        return true;
+        return CanProcessNewWorkResponse.Allowed();
     }
 
 
@@ -341,6 +337,10 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public async Async.Task<Node> ToReimage(Node node, bool done = false) {
+        if (!node.Managed) {
+            _logTracer.Info($"skip reimage for unmanaged node: {node.MachineId:Tag:MachineId}");
+            return node;
+        }
 
         var nodeState = node.State;
         if (done) {

@@ -46,6 +46,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
         config.target_options.clone(),
         config.target_env.clone(),
         &config.common.setup_dir,
+        config.common.machine_identity.clone(),
     );
     fuzzer.verify(config.check_fuzzer_help, None).await?;
 
@@ -84,10 +85,7 @@ async fn process_message(config: Arc<Config>, input_queue: QueueClient) -> Resul
     utils::reset_tmp_dir(tmp_dir).await?;
 
     if let Some(msg) = input_queue.pop().await? {
-        let input_url = msg.parse(|data| {
-            let data = std::str::from_utf8(data)?;
-            Ok(Url::parse(data)?)
-        });
+        let input_url = msg.get();
         let input_url: Url = match input_url {
             Ok(url) => url,
             Err(err) => {
@@ -159,6 +157,7 @@ pub async fn merge_inputs(
         config.target_options.clone(),
         config.target_env.clone(),
         &config.common.setup_dir,
+        config.common.machine_identity.clone(),
     );
     merger
         .merge(&config.unique_inputs.local_path, &candidates)

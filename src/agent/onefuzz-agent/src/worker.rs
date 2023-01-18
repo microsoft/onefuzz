@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 use std::{
+    collections::HashMap,
     path::{Path, PathBuf},
     process::{Child, ChildStderr, ChildStdout, Command, Stdio},
     thread::{self, JoinHandle},
@@ -8,11 +9,16 @@ use std::{
 
 use anyhow::{format_err, Context as AnyhowContext, Result};
 use downcast_rs::Downcast;
-use onefuzz::process::{ExitStatus, Output};
+use onefuzz::{
+    machine_id::MachineIdentity,
+    process::{ExitStatus, Output},
+};
 use tokio::fs;
 
 use crate::buffer::TailBuffer;
 use crate::work::*;
+
+use serde_json::Value;
 
 // Max length of captured output streams from worker child processes.
 const MAX_TAIL_LEN: usize = 40960;
@@ -31,6 +37,7 @@ pub enum WorkerEvent {
     },
 }
 
+#[derive(Debug)]
 pub enum Worker {
     Ready(State<Ready>),
     Running(State<Running>),
@@ -88,14 +95,17 @@ impl Worker {
     }
 }
 
+#[derive(Debug)]
 pub struct Ready {
     setup_dir: PathBuf,
 }
 
+#[derive(Debug)]
 pub struct Running {
     child: Box<dyn IWorkerChild>,
 }
 
+#[derive(Debug)]
 pub struct Done {
     output: Output,
 }
@@ -106,6 +116,7 @@ impl Context for Ready {}
 impl Context for Running {}
 impl Context for Done {}
 
+#[derive(Debug)]
 pub struct State<C: Context> {
     ctx: C,
     work: WorkUnit,
@@ -178,12 +189,12 @@ impl_from_state_for_worker!(Done);
 
 #[async_trait]
 pub trait IWorkerRunner: Downcast {
-    async fn run(&mut self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>>;
+    async fn run(&self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>>;
 }
 
 impl_downcast!(IWorkerRunner);
 
-pub trait IWorkerChild: Downcast {
+pub trait IWorkerChild: Downcast + std::fmt::Debug {
     fn try_wait(&mut self) -> Result<Option<Output>>;
 
     fn kill(&mut self) -> Result<()>;
@@ -191,12 +202,20 @@ pub trait IWorkerChild: Downcast {
 
 impl_downcast!(IWorkerChild);
 
-pub struct WorkerRunner;
+pub struct WorkerRunner {
+    machine_identity: MachineIdentity,
+}
+
+impl WorkerRunner {
+    pub fn new(machine_identity: MachineIdentity) -> Self {
+        Self { machine_identity }
+    }
+}
 
 #[async_trait]
 impl IWorkerRunner for WorkerRunner {
-    async fn run(&mut self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
-        let working_dir = work.working_dir()?;
+    async fn run(&self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
+        let working_dir = work.working_dir(self.machine_identity.machine_id)?;
 
         debug!("worker working dir = {}", working_dir.display());
 
@@ -209,9 +228,18 @@ impl IWorkerRunner for WorkerRunner {
 
         debug!("created worker working dir: {}", working_dir.display());
 
-        let config_path = work.config_path()?;
+        // inject the machine_identity in the config file
+        let work_config = work.config.expose_ref();
+        let mut config: HashMap<String, Value> = serde_json::from_str(work_config.as_str())?;
 
-        fs::write(&config_path, work.config.expose_ref())
+        config.insert(
+            "machine_identity".to_string(),
+            serde_json::to_value(&self.machine_identity)?,
+        );
+
+        let config_path = work.config_path(self.machine_identity.machine_id)?;
+
+        fs::write(&config_path, serde_json::to_string(&config)?.as_bytes())
             .await
             .with_context(|| format!("unable to save task config: {}", config_path.display()))?;
 
@@ -240,15 +268,15 @@ impl IWorkerRunner for WorkerRunner {
 }
 
 trait SuspendableChild {
-    fn suspend(&mut self) -> Result<()>;
+    fn suspend(&self) -> Result<()>;
 }
 
 #[cfg(target_os = "windows")]
 impl SuspendableChild for Child {
-    fn suspend(&mut self) -> Result<()> {
+    fn suspend(&self) -> Result<()> {
         // DebugActiveProcess suspends all threads in the process.
         // https://docs.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-debugactiveprocess#remarks
-        let result = unsafe { winapi::um::debugapi::DebugActiveProcess(self.id() as u32) };
+        let result = unsafe { winapi::um::debugapi::DebugActiveProcess(self.id()) };
         if result == 0 {
             bail!("unable to suspend child process");
         }
@@ -258,7 +286,7 @@ impl SuspendableChild for Child {
 
 #[cfg(target_os = "linux")]
 impl SuspendableChild for Child {
-    fn suspend(&mut self) -> Result<()> {
+    fn suspend(&self) -> Result<()> {
         use nix::sys::signal;
         signal::kill(
             nix::unistd::Pid::from_raw(self.id() as _),
@@ -269,6 +297,7 @@ impl SuspendableChild for Child {
 }
 
 /// Child process with redirected output streams, tailed by two worker threads.
+#[derive(Debug)]
 struct RedirectedChild {
     /// The child process.
     child: Child,
@@ -295,6 +324,7 @@ impl RedirectedChild {
 }
 
 /// Worker threads that tail the redirected output streams of a running child process.
+#[derive(Debug)]
 struct StreamReaderThreads {
     stderr: JoinHandle<TailBuffer>,
     stdout: JoinHandle<TailBuffer>,

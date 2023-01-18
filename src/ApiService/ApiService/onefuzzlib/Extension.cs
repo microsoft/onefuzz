@@ -130,7 +130,7 @@ public class Extensions : IExtensions {
         };
     }
 
-    private class Settings {
+    private sealed class Settings {
         [JsonPropertyName("GCS_AUTO_CONFIG")]
         public bool GCS_AUTO_CONFIG { get; set; } = true;
     }
@@ -303,7 +303,7 @@ public class Extensions : IExtensions {
             urlsUpdated.Add(toolsAzCopy);
             urlsUpdated.Add(toolsSetup);
 
-            var toExecuteCmd = $"sh setup.sh {mode.ToString().ToLowerInvariant()}";
+            var toExecuteCmd = $"bash setup.sh {mode.ToString().ToLowerInvariant()}";
             var extensionSettings = JsonSerializer.Serialize(new { CommandToExecute = toExecuteCmd, FileUris = urlsUpdated }, _extensionSerializerOptions);
 
             var extension = new VMExtensionWrapper {

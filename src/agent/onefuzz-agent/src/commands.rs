@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::{Context, Result};
-use onefuzz::{auth::Secret, machine_id::get_scaleset_name};
+use onefuzz::auth::Secret;
 use std::process::Stdio;
 use tokio::{fs, io::AsyncWriteExt, process::Command};
 
@@ -25,18 +25,13 @@ const ONEFUZZ_SERVICE_USER: &str = "onefuzz";
 #[cfg(target_family = "windows")]
 static SET_PERMISSION_ONCE: OnceCell<()> = OnceCell::const_new();
 
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
 pub struct SshKeyInfo {
     pub public_key: Secret<String>,
 }
 
 #[cfg(target_family = "windows")]
 pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
-    if get_scaleset_name().await?.is_none() {
-        warn!("adding ssh keys only supported on managed nodes");
-        return Ok(());
-    }
-
     let mut ssh_path =
         PathBuf::from(env::var("ProgramData").unwrap_or_else(|_| "c:\\programdata".to_string()));
     ssh_path.push("ssh");
@@ -78,11 +73,11 @@ pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
 
             let stdout = String::from_utf8_lossy(&result.stdout).to_string();
 
-            if stdout.contains(&admins) {
+            if stdout.contains(admins) {
                 let result = Command::new("icacls.exe")
                     .arg(&admin_auth_keys_path)
                     .arg("/remove")
-                    .arg(&admins)
+                    .arg(admins)
                     .stdin(Stdio::null())
                     .stdout(Stdio::piped())
                     .stderr(Stdio::piped())
@@ -123,7 +118,7 @@ pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
 
             debug!("copying ACL from ssh_host_dsa_key");
             let result = Command::new("powershell.exe")
-                .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
+                .args(["-ExecutionPolicy", "Unrestricted", "-Command"])
                 .arg(format!(
                     "Get-Acl \"{}\" | Set-Acl \"{}\"",
                     host_key_path.display(),
@@ -160,11 +155,6 @@ pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
 
 #[cfg(target_family = "unix")]
 pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
-    if get_scaleset_name().await?.is_none() {
-        warn!("adding ssh keys only supported on managed nodes");
-        return Ok(());
-    }
-
     let user =
         get_user_by_name(ONEFUZZ_SERVICE_USER).ok_or_else(|| format_err!("unable to find user"))?;
     info!("adding ssh key:{:?} to user:{:?}", key_info, user);

@@ -6,7 +6,6 @@ use uuid::Uuid;
 
 use crate::coordinator::double::*;
 use crate::reboot::double::*;
-use crate::scheduler::*;
 use crate::setup::double::*;
 use crate::work::double::*;
 use crate::work::*;
@@ -20,12 +19,12 @@ struct Fixture;
 
 impl Fixture {
     pub fn agent(&self) -> Agent {
-        let coordinator = Box::new(CoordinatorDouble::default());
-        let reboot = Box::new(RebootDouble::default());
+        let coordinator = Box::<CoordinatorDouble>::default();
+        let reboot = Box::<RebootDouble>::default();
         let scheduler = Scheduler::new();
-        let setup_runner = Box::new(SetupRunnerDouble::default());
-        let work_queue = Box::new(WorkQueueDouble::default());
-        let worker_runner = Box::new(WorkerRunnerDouble::default());
+        let setup_runner = Box::<SetupRunnerDouble>::default();
+        let work_queue = Box::<WorkQueueDouble>::default();
+        let worker_runner = Box::<WorkerRunnerDouble>::default();
 
         Agent::new(
             coordinator,
@@ -35,6 +34,8 @@ impl Fixture {
             work_queue,
             worker_runner,
             None,
+            true,
+            Uuid::new_v4(),
         )
     }
 
@@ -66,7 +67,7 @@ impl Fixture {
 
     pub fn setup_url(&self) -> BlobContainerUrl {
         let url = "https://contoso.com/my-setup-container";
-        BlobContainerUrl::parse(&url).unwrap()
+        BlobContainerUrl::parse(url).unwrap()
     }
 
     pub fn work_unit(&self) -> WorkUnit {
@@ -82,12 +83,12 @@ impl Fixture {
 
 #[tokio::test]
 async fn test_update_free_no_work() {
-    let mut agent = Fixture.agent();
+    let agent = Fixture.agent();
 
-    let done = agent.update().await.unwrap();
+    let (agent, done) = agent.update().await.unwrap();
     assert!(!done);
 
-    assert!(matches!(agent.scheduler().unwrap(), Scheduler::Free(..)));
+    assert!(matches!(agent.scheduler.unwrap(), Scheduler::Free(..)));
 
     let double: &WorkQueueDouble = agent.work_queue.downcast_ref().unwrap();
     let claimed_worksets = double
@@ -108,13 +109,9 @@ async fn test_update_free_has_work() {
         .available
         .push(Fixture.message());
 
-    let done = agent.update().await.unwrap();
+    let (agent, done) = agent.update().await.unwrap();
     assert!(!done);
-
-    assert!(matches!(
-        agent.scheduler().unwrap(),
-        Scheduler::SettingUp(..)
-    ));
+    assert!(matches!(agent.scheduler.unwrap(), Scheduler::SettingUp(..)));
 
     let double: &WorkQueueDouble = agent.work_queue.downcast_ref().unwrap();
     let claimed_worksets = double
@@ -148,8 +145,10 @@ async fn test_emitted_state() {
         .available
         .push(Fixture.message());
 
+    let mut done;
     for _i in 0..10 {
-        if agent.update().await.unwrap() {
+        (agent, done) = agent.update().await.unwrap();
+        if done {
             break;
         }
     }
@@ -180,12 +179,15 @@ async fn test_emitted_state() {
         }),
     ];
     let coordinator: &CoordinatorDouble = agent.coordinator.downcast_ref().unwrap();
-    let events = &coordinator.events;
-    assert_eq!(events, &expected_events);
+    let events = &coordinator.events.read().await;
+    assert_eq!(&events.to_vec(), &expected_events);
 }
 
 #[tokio::test]
 async fn test_emitted_state_failed_setup() {
+    // to prevent anyhow from capturing the stack trace when
+    // SetupRunnerDouble bails
+    std::env::set_var("RUST_BACKTRACE", "0");
     let error_message = "Failed setup";
     let mut agent = Agent {
         setup_runner: Box::new(SetupRunnerDouble {
@@ -202,8 +204,10 @@ async fn test_emitted_state_failed_setup() {
         .available
         .push(Fixture.message());
 
+    let mut done;
     for _i in 0..10 {
-        if agent.update().await.unwrap() {
+        (agent, done) = agent.update().await.unwrap();
+        if done {
             break;
         }
     }
@@ -219,12 +223,12 @@ async fn test_emitted_state_failed_setup() {
         }),
     ];
     let coordinator: &CoordinatorDouble = agent.coordinator.downcast_ref().unwrap();
-    let events = &coordinator.events;
+    let events = &coordinator.events.read().await.to_vec();
     assert_eq!(events, &expected_events);
 
     // TODO: at some point, the underlying tests should be updated to not write
     // this file in the first place.
-    tokio::fs::remove_file(crate::done::done_path().unwrap())
+    tokio::fs::remove_file(crate::done::done_path(agent.machine_id).unwrap())
         .await
         .unwrap();
 }

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#![allow(clippy::too_many_arguments)]
 use anyhow::{Error, Result};
 use tokio::time;
 
@@ -11,7 +12,7 @@ use crate::reboot::*;
 use crate::scheduler::*;
 use crate::setup::*;
 use crate::work::IWorkQueue;
-use crate::worker::IWorkerRunner;
+use crate::worker::{IWorkerRunner, WorkerEvent};
 
 const PENDING_COMMANDS_DELAY: time::Duration = time::Duration::from_secs(10);
 const BUSY_DELAY: time::Duration = time::Duration::from_secs(1);
@@ -26,6 +27,8 @@ pub struct Agent {
     heartbeat: Option<AgentHeartbeatClient>,
     previous_state: NodeState,
     last_poll_command: Result<Option<NodeCommand>, PollCommandError>,
+    managed: bool,
+    machine_id: uuid::Uuid,
 }
 
 impl Agent {
@@ -37,6 +40,8 @@ impl Agent {
         work_queue: Box<dyn IWorkQueue>,
         worker_runner: Box<dyn IWorkerRunner>,
         heartbeat: Option<AgentHeartbeatClient>,
+        managed: bool,
+        machine_id: uuid::Uuid,
     ) -> Self {
         let scheduler = Some(scheduler);
         let previous_state = NodeState::Init;
@@ -52,10 +57,12 @@ impl Agent {
             heartbeat,
             previous_state,
             last_poll_command,
+            managed,
+            machine_id,
         }
     }
 
-    pub async fn run(&mut self) -> Result<()> {
+    pub async fn run(self) -> Result<()> {
         let mut instant = time::Instant::now();
 
         // Tell the service that the agent has started.
@@ -71,42 +78,39 @@ impl Agent {
             let event = StateUpdateEvent::Init.into();
             self.coordinator.emit_event(event).await?;
         }
-
-        loop {
-            self.heartbeat.alive();
+        let mut state = self;
+        let mut done = false;
+        while !done {
+            state.heartbeat.alive();
             if instant.elapsed() >= PENDING_COMMANDS_DELAY {
-                self.execute_pending_commands().await?;
+                state = state.execute_pending_commands().await?;
                 instant = time::Instant::now();
             }
 
-            let done = self.update().await?;
-
-            if done {
-                debug!("agent done, exiting loop");
-                break;
-            }
+            (state, done) = state.update().await?;
         }
 
+        info!("agent done, exiting loop");
         Ok(())
     }
 
-    async fn update(&mut self) -> Result<bool> {
+    async fn update(mut self) -> Result<(Self, bool)> {
         let last = self.scheduler.take().ok_or_else(scheduler_error)?;
         let previous_state = NodeState::from(&last);
         let (next, done) = match last {
-            Scheduler::Free(s) => (self.free(s).await?, false),
-            Scheduler::SettingUp(s) => (self.setting_up(s).await?, false),
-            Scheduler::PendingReboot(s) => (self.pending_reboot(s).await?, false),
-            Scheduler::Ready(s) => (self.ready(s).await?, false),
-            Scheduler::Busy(s) => (self.busy(s).await?, false),
-            Scheduler::Done(s) => (self.done(s).await?, true),
+            Scheduler::Free(s) => (self.free(s, previous_state).await?, false),
+            Scheduler::SettingUp(s) => (self.setting_up(s, previous_state).await?, false),
+            Scheduler::PendingReboot(s) => (self.pending_reboot(s, previous_state).await?, false),
+            Scheduler::Ready(s) => (self.ready(s, previous_state).await?, false),
+            Scheduler::Busy(s) => (self.busy(s, previous_state).await?, false),
+            //todo: introduce  a new prameter to allow the agent to restart after this point
+            Scheduler::Done(s) => (self.done(s, previous_state).await?, true),
         };
-        self.previous_state = previous_state;
-        self.scheduler = Some(next);
-        Ok(done)
+
+        Ok((next, done))
     }
 
-    async fn emit_state_update_if_changed(&mut self, event: StateUpdateEvent) -> Result<()> {
+    async fn emit_state_update_if_changed(&self, event: StateUpdateEvent) -> Result<()> {
         match (&event, self.previous_state) {
             (StateUpdateEvent::Free, NodeState::Free)
             | (StateUpdateEvent::Busy, NodeState::Busy)
@@ -122,7 +126,7 @@ impl Agent {
         Ok(())
     }
 
-    async fn free(&mut self, state: State<Free>) -> Result<Scheduler> {
+    async fn free(mut self, state: State<Free>, previous: NodeState) -> Result<Self> {
         self.emit_state_update_if_changed(StateUpdateEvent::Free)
             .await?;
 
@@ -159,10 +163,14 @@ impl Agent {
                     }
                 }
             } else {
+                let reason = can_schedule.reason.map_or("".to_string(), |r| r);
                 // We cannot schedule the work set. Depending on why, we want to either drop the work
                 // (because it is no longer valid for anyone) or do nothing (because our version is out
                 // of date, and we want another node to pick it up).
-                warn!("unable to schedule work set: {:?}", msg.work_set);
+                warn!(
+                    "unable to schedule work set: {:?}, Reason {}",
+                    msg.work_set, reason
+                );
 
                 // If `work_stopped`, the work set is not valid for any node, and we should drop it for the
                 // entire pool by claiming but not executing it.
@@ -179,7 +187,7 @@ impl Agent {
                     // Otherwise, the work was not stopped, but we still should not execute it. This is likely
                     // our because agent version is out of date. Do nothing, so another node can see the work.
                     // The service will eventually send us a stop command and reimage our node, if appropriate.
-                    debug!(
+                    info!(
                         "not scheduling active work set, not dropping: {:?}",
                         msg.work_set
                     );
@@ -194,11 +202,15 @@ impl Agent {
             state.into()
         };
 
-        Ok(next)
+        Ok(Self {
+            previous_state: previous,
+            scheduler: Some(next),
+            ..self
+        })
     }
 
-    async fn setting_up(&mut self, state: State<SettingUp>) -> Result<Scheduler> {
-        debug!("agent setting up");
+    async fn setting_up(mut self, state: State<SettingUp>, previous: NodeState) -> Result<Self> {
+        info!("agent setting up");
 
         let tasks = state.work_set().task_ids();
         self.emit_state_update_if_changed(StateUpdateEvent::SettingUp { tasks })
@@ -210,11 +222,19 @@ impl Agent {
             SetupDone::Done(s) => s.into(),
         };
 
-        Ok(scheduler)
+        Ok(Self {
+            previous_state: previous,
+            scheduler: Some(scheduler),
+            ..self
+        })
     }
 
-    async fn pending_reboot(&mut self, state: State<PendingReboot>) -> Result<Scheduler> {
-        debug!("agent pending reboot");
+    async fn pending_reboot(
+        self,
+        state: State<PendingReboot>,
+        _previous: NodeState,
+    ) -> Result<Self> {
+        info!("agent pending reboot");
         self.emit_state_update_if_changed(StateUpdateEvent::Rebooting)
             .await?;
 
@@ -225,14 +245,18 @@ impl Agent {
         unreachable!()
     }
 
-    async fn ready(&mut self, state: State<Ready>) -> Result<Scheduler> {
-        debug!("agent ready");
+    async fn ready(self, state: State<Ready>, previous: NodeState) -> Result<Self> {
+        info!("agent ready");
         self.emit_state_update_if_changed(StateUpdateEvent::Ready)
             .await?;
-        Ok(state.run().await?.into())
+        Ok(Self {
+            previous_state: previous,
+            scheduler: Some(state.run().await?.into()),
+            ..self
+        })
     }
 
-    async fn busy(&mut self, state: State<Busy>) -> Result<Scheduler> {
+    async fn busy(mut self, state: State<Busy>, previous: NodeState) -> Result<Self> {
         self.emit_state_update_if_changed(StateUpdateEvent::Busy)
             .await?;
 
@@ -244,7 +268,7 @@ impl Agent {
         // that is done, this sleep should be removed.
         time::sleep(BUSY_DELAY).await;
 
-        let mut events = vec![];
+        let mut events: Vec<WorkerEvent> = vec![];
         let updated = state
             .update(&mut events, self.worker_runner.as_mut())
             .await?;
@@ -253,12 +277,16 @@ impl Agent {
             self.coordinator.emit_event(event.into()).await?;
         }
 
-        Ok(updated.into())
+        Ok(Self {
+            previous_state: previous,
+            scheduler: Some(updated.into()),
+            ..self
+        })
     }
 
-    async fn done(&mut self, state: State<Done>) -> Result<Scheduler> {
-        debug!("agent done");
-        set_done_lock().await?;
+    async fn done(self, state: State<Done>, previous: NodeState) -> Result<Self> {
+        info!("agent done");
+        set_done_lock(self.machine_id).await?;
 
         let event = match state.cause() {
             DoneCause::SetupError {
@@ -276,22 +304,41 @@ impl Agent {
 
         self.emit_state_update_if_changed(event).await?;
         // `Done` is a final state.
-        Ok(state.into())
+        Ok(Self {
+            previous_state: previous,
+            scheduler: Some(state.into()),
+            ..self
+        })
     }
 
-    async fn execute_pending_commands(&mut self) -> Result<()> {
+    async fn execute_pending_commands(mut self) -> Result<Self> {
         let result = self.coordinator.poll_commands().await;
 
         match &result {
-            Ok(None) => {}
+            Ok(None) => Ok(Self {
+                last_poll_command: result,
+                ..self
+            }),
             Ok(Some(cmd)) => {
                 info!("agent received node command: {:?}", cmd);
-                self.scheduler()?.execute_command(cmd).await?;
+                let managed = self.managed;
+                let scheduler = self.scheduler.take().ok_or_else(scheduler_error)?;
+                let new_scheduler = scheduler.execute_command(cmd.clone(), managed).await?;
+
+                Ok(Self {
+                    last_poll_command: result,
+                    scheduler: Some(new_scheduler),
+                    ..self
+                })
             }
             Err(PollCommandError::RequestFailed(err)) => {
                 // If we failed to request commands, this could be the service
                 // could be down.  Log it, but keep going.
                 error!("error polling the service for commands: {:?}", err);
+                Ok(Self {
+                    last_poll_command: result,
+                    ..self
+                })
             }
             Err(PollCommandError::RequestParseFailed(err)) => {
                 bail!("poll commands failed: {:?}", err);
@@ -309,21 +356,17 @@ impl Agent {
                     bail!("repeated command claim attempt failures: {:?}", err);
                 }
                 error!("error claiming command from the service: {:?}", err);
+                Ok(Self {
+                    last_poll_command: result,
+                    ..self
+                })
             }
         }
-
-        self.last_poll_command = result;
-
-        Ok(())
     }
 
-    async fn sleep(&mut self) {
+    async fn sleep(&self) {
         let delay = time::Duration::from_secs(30);
         time::sleep(delay).await;
-    }
-
-    fn scheduler(&mut self) -> Result<&mut Scheduler> {
-        self.scheduler.as_mut().ok_or_else(scheduler_error)
     }
 }
 

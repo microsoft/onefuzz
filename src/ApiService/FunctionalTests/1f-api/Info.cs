@@ -5,11 +5,10 @@ using Xunit.Abstractions;
 namespace FunctionalTests {
 
     public class InfoVersion : IFromJsonElement<InfoVersion> {
-        JsonElement _e;
+        readonly JsonElement _e;
 
-        public InfoVersion() { }
         public InfoVersion(JsonElement e) => _e = e;
-        public InfoVersion Convert(JsonElement e) => new InfoVersion(e);
+        public static InfoVersion Convert(JsonElement e) => new(e);
 
         public string Git => _e.GetProperty("git").GetString()!;
         public string Build => _e.GetProperty("build").GetString()!;
@@ -18,13 +17,11 @@ namespace FunctionalTests {
 
 
     public class InfoResponse : IFromJsonElement<InfoResponse> {
-        JsonElement _e;
-
-        public InfoResponse() { }
+        readonly JsonElement _e;
 
         public InfoResponse(JsonElement e) => _e = e;
 
-        public InfoResponse Convert(JsonElement e) => new InfoResponse(e);
+        public static InfoResponse Convert(JsonElement e) => new(e);
 
         public string ResourceGroup => _e.GetStringProperty("resource_group")!;
         public string Region => _e.GetStringProperty("region")!;
@@ -33,7 +30,7 @@ namespace FunctionalTests {
     }
 
 
-    class InfoApi : ApiBase {
+    sealed class InfoApi : ApiBase {
 
         public InfoApi(Uri endpoint, Microsoft.OneFuzz.Service.Request request, ITestOutputHelper output) :
             base(endpoint, "/api/Info", request, output) {

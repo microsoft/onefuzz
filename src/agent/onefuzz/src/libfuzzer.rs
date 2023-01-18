@@ -6,6 +6,7 @@ use crate::{
     expand::Expand,
     fs::{list_files, write_file},
     input_tester::{TestResult, Tester},
+    machine_id::MachineIdentity,
 };
 use anyhow::{Context, Result};
 use rand::seq::SliceRandom;
@@ -39,6 +40,7 @@ pub struct LibFuzzer {
     exe: PathBuf,
     options: Vec<String>,
     env: HashMap<String, String>,
+    machine_identity: MachineIdentity,
 }
 
 impl LibFuzzer {
@@ -47,12 +49,14 @@ impl LibFuzzer {
         options: Vec<String>,
         env: HashMap<String, String>,
         setup_dir: impl Into<PathBuf>,
+        machine_identity: MachineIdentity,
     ) -> Self {
         Self {
             exe: exe.into(),
             options,
             env,
             setup_dir: setup_dir.into(),
+            machine_identity,
         }
     }
 
@@ -98,16 +102,14 @@ impl LibFuzzer {
             );
         }
 
-        let expand = Expand::new()
+        let expand = Expand::new(&self.machine_identity)
             .machine_id()
             .await?
             .target_exe(&self.exe)
             .target_options(&self.options)
             .setup_dir(&self.setup_dir)
-            .set_optional(corpus_dir, |tester, corpus_dir| {
-                tester.input_corpus(&corpus_dir)
-            })
-            .set_optional(fault_dir, |tester, fault_dir| tester.crashes(&fault_dir));
+            .set_optional(corpus_dir, |e, corpus_dir| e.input_corpus(corpus_dir))
+            .set_optional(fault_dir, |e, fault_dir| e.crashes(fault_dir));
 
         for (k, v) in &self.env {
             cmd.env(k, expand.evaluate_value(v)?);
@@ -200,7 +202,7 @@ impl LibFuzzer {
         // command used by the `fuzz()` method will still receive the iteration limit.
         cmd.arg("-runs=1");
 
-        cmd.arg(&input);
+        cmd.arg(input);
 
         let result = cmd
             .spawn()
@@ -310,11 +312,17 @@ impl LibFuzzer {
         let mut options = self.options.clone();
         options.push("{input}".to_string());
 
-        let mut tester = Tester::new(&self.setup_dir, &self.exe, &options, &self.env)
-            .check_asan_stderr(true)
-            .check_retry_count(retry)
-            .add_setup_to_path(true)
-            .set_optional(timeout, |tester, timeout| tester.timeout(timeout));
+        let mut tester = Tester::new(
+            &self.setup_dir,
+            &self.exe,
+            &options,
+            &self.env,
+            self.machine_identity.clone(),
+        )
+        .check_asan_stderr(true)
+        .check_retry_count(retry)
+        .add_setup_to_path(true)
+        .set_optional(timeout, |tester, timeout| tester.timeout(timeout));
 
         if cfg!(target_family = "unix") {
             tester = tester.add_setup_to_ld_library_path(true);
@@ -434,7 +442,12 @@ mod tests {
             bad_bin,
             options.clone(),
             env.clone(),
-            &temp_setup_dir.path(),
+            temp_setup_dir.path(),
+            MachineIdentity {
+                machine_id: uuid::Uuid::new_v4(),
+                machine_name: "test-input".into(),
+                scaleset_name: None,
+            },
         );
 
         // verify catching bad exits with -help=1
@@ -462,7 +475,12 @@ mod tests {
             good_bin,
             options.clone(),
             env.clone(),
-            &temp_setup_dir.path(),
+            temp_setup_dir.path(),
+            MachineIdentity {
+                machine_id: uuid::Uuid::new_v4(),
+                machine_name: "test-input".into(),
+                scaleset_name: None,
+            },
         );
         // verify good exits with -help=1
         assert!(

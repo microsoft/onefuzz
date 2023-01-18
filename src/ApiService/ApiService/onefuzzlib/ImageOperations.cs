@@ -39,7 +39,7 @@ public class ImageOperations : IImageOperations {
         _cache = cache;
     }
 
-    record class GetOsKey(Region Region, string Image);
+    sealed record class GetOsKey(Region Region, string Image);
 
     public Task<OneFuzzResult<Os>> GetOs(Region region, string image)
         => _cache.GetOrCreateAsync<OneFuzzResult<Os>>(new GetOsKey(region, image), entry => GetOsInternal(region, image));

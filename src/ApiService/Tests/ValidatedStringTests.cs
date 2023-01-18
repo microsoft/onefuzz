@@ -6,7 +6,7 @@ namespace Tests;
 
 public class ValidatedStringTests {
 
-    record ThingContainingPoolName(PoolName PoolName);
+    sealed record ThingContainingPoolName(PoolName PoolName);
 
     [Fact]
     public void PoolNameDeserializesFromString() {
@@ -31,7 +31,7 @@ public class ValidatedStringTests {
     [InlineData("container-Name", false)] // can't have capitals
     [InlineData("container-name-09", true)] // can have numbers
     public void ContainerNames(string name, bool valid) {
-        Assert.Equal(valid, Container.TryParse(name, out var _));
+        Assert.Equal(valid, Container.IsValid(name));
     }
 
     [Theory(Skip = "Validation is disabled for now")]
@@ -40,6 +40,6 @@ public class ValidatedStringTests {
     [InlineData("Default-Ubuntu20.04-Standard_D2", true)]
     [InlineData("Default!", false)]
     public void PoolNames(string name, bool valid) {
-        Assert.Equal(valid, PoolName.TryParse(name, out var _));
+        Assert.Equal(valid, PoolName.IsValid(name));
     }
 }

@@ -252,7 +252,7 @@ public abstract class PoolTestBase : FunctionTestBase {
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
         // should get an error back
-        var returnedPool = BodyAs<Error>(result);
-        Assert.Contains(returnedPool.Errors, c => c == "pool with that name already exists");
+        var returnedPool = BodyAs<ProblemDetails>(result);
+        Assert.Contains("pool with that name already exists", returnedPool.Detail);
     }
 }

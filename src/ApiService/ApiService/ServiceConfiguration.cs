@@ -16,6 +16,8 @@ public interface IServiceConfig {
 
     public string? ApplicationInsightsAppId { get; }
     public string? ApplicationInsightsInstrumentationKey { get; }
+    public string? AppConfigurationEndpoint { get; }
+    public string? AppConfigurationConnectionString { get; }
     public string? AzureSignalRConnectionString { get; }
     public string? AzureSignalRServiceTransportType { get; }
 
@@ -30,12 +32,11 @@ public interface IServiceConfig {
     public ResourceIdentifier? OneFuzzFuncStorage { get; }
     public string? OneFuzzInstance { get; }
     public string? OneFuzzInstanceName { get; }
+    public string? OneFuzzEndpoint { get; }
     public string? OneFuzzKeyvault { get; }
 
     public string? OneFuzzMonitor { get; }
     public string? OneFuzzOwner { get; }
-
-    public string OneFuzzNodeDisposalStrategy { get; }
 
     public string? OneFuzzResourceGroup { get; }
     public string? OneFuzzTelemetry { get; }
@@ -48,6 +49,8 @@ public interface IServiceConfig {
     // multiple instances to run against the same storage account, which
     // is useful for things like integration testing.
     public string OneFuzzStoragePrefix { get; }
+
+    public Uri OneFuzzBaseAddress { get; }
 }
 
 public class ServiceConfiguration : IServiceConfig {
@@ -82,6 +85,10 @@ public class ServiceConfiguration : IServiceConfig {
     public string? ApplicationInsightsAppId => GetEnv("APPINSIGHTS_APPID");
     public string? ApplicationInsightsInstrumentationKey => GetEnv("APPINSIGHTS_INSTRUMENTATIONKEY");
 
+    public string? AppConfigurationEndpoint => GetEnv("APPCONFIGURATION_ENDPOINT");
+
+    public string? AppConfigurationConnectionString => GetEnv("APPCONFIGURATION_CONNECTION_STRING");
+
     public string? AzureSignalRConnectionString => GetEnv("AzureSignalRConnectionString");
     public string? AzureSignalRServiceTransportType => GetEnv("AzureSignalRServiceTransportType");
 
@@ -109,6 +116,7 @@ public class ServiceConfiguration : IServiceConfig {
 
     public string? OneFuzzInstance { get => GetEnv("ONEFUZZ_INSTANCE"); }
     public string? OneFuzzInstanceName { get => GetEnv("ONEFUZZ_INSTANCE_NAME"); }
+    public string? OneFuzzEndpoint { get => GetEnv("ONEFUZZ_ENDPOINT"); }
     public string? OneFuzzKeyvault { get => GetEnv("ONEFUZZ_KEYVAULT"); }
     public string? OneFuzzMonitor { get => GetEnv("ONEFUZZ_MONITOR"); }
     public string? OneFuzzOwner { get => GetEnv("ONEFUZZ_OWNER"); }
@@ -125,7 +133,13 @@ public class ServiceConfiguration : IServiceConfig {
     }
 
     public string? OneFuzzAllowOutdatedAgent => GetEnv("ONEFUZZ_ALLOW_OUTDATED_AGENT");
-
-    public string OneFuzzNodeDisposalStrategy { get => GetEnv("ONEFUZZ_NODE_DISPOSAL_STRATEGY") ?? "scale_in"; }
     public string OneFuzzStoragePrefix => ""; // in production we never prefix the tables
+
+    public Uri OneFuzzBaseAddress {
+        get {
+            var hostName = Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME");
+            var scheme = Environment.GetEnvironmentVariable("HTTPS") != null ? "https" : "http";
+            return new Uri($"{scheme}://{hostName}");
+        }
+    }
 }

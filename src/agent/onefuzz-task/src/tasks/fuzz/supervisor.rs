@@ -144,7 +144,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
     let monitor_path = if let Some(stats_file) = &config.stats_file {
         Some(
-            Expand::new()
+            Expand::new(&config.common.machine_identity)
                 .machine_id()
                 .await?
                 .runtime_dir(runtime_dir.path())
@@ -204,7 +204,7 @@ async fn start_supervisor(
         None
     };
 
-    let expand = Expand::new()
+    let expand = Expand::new(&config.common.machine_identity)
         .machine_id()
         .await?
         .supervisor_exe(&config.supervisor_exe)
@@ -279,6 +279,7 @@ mod tests {
     use super::*;
     use crate::tasks::stats::afl::read_stats;
     use onefuzz::blob::BlobContainerUrl;
+    use onefuzz::machine_id::MachineIdentity;
     use onefuzz::process::monitor_process;
     use onefuzz_telemetry::EventData;
     use reqwest::Url;
@@ -381,7 +382,22 @@ mod tests {
             unique_reports: None,
             no_repro: None,
             coverage: None,
-            common: CommonConfig::default(),
+            common: CommonConfig {
+                job_id: Default::default(),
+                task_id: Default::default(),
+                instance_id: Default::default(),
+                heartbeat_queue: Default::default(),
+                instance_telemetry_key: Default::default(),
+                microsoft_telemetry_key: Default::default(),
+                logs: Default::default(),
+                setup_dir: Default::default(),
+                min_available_memory_mb: Default::default(),
+                machine_identity: MachineIdentity {
+                    machine_id: uuid::Uuid::new_v4(),
+                    machine_name: "test".to_string(),
+                    scaleset_name: None,
+                },
+            },
         };
 
         let process = start_supervisor(runtime_dir, &config, &crashes, &corpus_dir, reports_dir)

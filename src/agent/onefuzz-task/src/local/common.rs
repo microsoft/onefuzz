@@ -9,7 +9,10 @@ use anyhow::Result;
 use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
 use flume::Sender;
-use onefuzz::{blob::url::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
+use onefuzz::{
+    blob::url::BlobContainerUrl, machine_id::MachineIdentity, monitor::DirectoryMonitor,
+    syncdir::SyncedDir,
+};
 use path_absolutize::Absolutize;
 use reqwest::Url;
 use storage_queue::{local_queue::ChannelQueueClient, QueueClient};
@@ -217,7 +220,7 @@ pub fn get_synced_dir(
 // fuzzing tasks from generating random task id to using UUID::nil(). This
 // enables making the one-shot crash report generation, which isn't really a task,
 // consistent across multiple runs.
-pub fn build_local_context(
+pub async fn build_local_context(
     args: &ArgMatches<'_>,
     generate_task_id: bool,
     event_sender: Option<Sender<UiEvent>>,
@@ -248,7 +251,16 @@ pub fn build_local_context(
         task_id,
         instance_id,
         setup_dir,
-        ..Default::default()
+        machine_identity: MachineIdentity {
+            machine_id: Uuid::nil(),
+            machine_name: "local".to_string(),
+            scaleset_name: None,
+        },
+        instance_telemetry_key: None,
+        heartbeat_queue: None,
+        microsoft_telemetry_key: None,
+        logs: None,
+        min_available_memory_mb: 0,
     };
     let current_dir = current_dir()?;
     let job_path = current_dir.join(format!("{}", job_id));

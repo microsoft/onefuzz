@@ -11,7 +11,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace IntegrationTests.Fakes;
 
-class TestCreds : ICreds {
+sealed class TestCreds : ICreds {
 
     private readonly Guid _subscriptionId;
     private readonly string _resourceGroup;

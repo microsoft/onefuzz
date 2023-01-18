@@ -31,6 +31,7 @@ public enum ErrorCode {
     UNABLE_TO_CREATE_CONTAINER = 474,
     UNABLE_TO_DOWNLOAD_FILE = 475,
     VM_UPDATE_FAILED = 476,
+    UNSUPPORTED_FIELD_OPERATION = 477,
 }
 
 public enum VmState {

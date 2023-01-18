@@ -55,7 +55,7 @@ struct RunnerDouble {
 
 #[async_trait]
 impl IWorkerRunner for RunnerDouble {
-    async fn run(&mut self, _setup_dir: &Path, _work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
+    async fn run(&self, _setup_dir: &Path, _work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
         Ok(Box::new(self.child.clone()))
     }
 }
@@ -247,7 +247,7 @@ sys.stdout.write('A' * 65536 + 'B' * 4000);\
 sys.stderr.write('C' * 65536 + 'D' * 4000)";
 
     let mut cmd = Command::new("python3");
-    cmd.args(&["-c", script]);
+    cmd.args(["-c", script]);
 
     let mut redirected = RedirectedChild::spawn(cmd).unwrap();
     redirected.child.wait().unwrap();
@@ -276,7 +276,7 @@ fn test_redirected_child() {
     let script = "Write-Output ('A' * 65536  + 'B' * 4000)";
 
     let mut cmd = Command::new("powershell.exe");
-    cmd.args(&[
+    cmd.args([
         "-NonInteractive",
         "-ExecutionPolicy",
         "Unrestricted",

@@ -110,7 +110,8 @@ public record Node
 
     bool ReimageRequested = false,
     bool DeleteRequested = false,
-    bool DebugKeepNode = false
+    bool DebugKeepNode = false,
+    bool Managed = true
 ) : StatefulEntityBase<NodeState>(State) {
 
     public List<NodeTasks>? Tasks { get; set; }
@@ -453,8 +454,34 @@ public record Report(
     List<string>? MinimizedStackFunctionNames,
     string? MinimizedStackFunctionNamesSha256,
     List<string>? MinimizedStackFunctionLines,
-    string? MinimizedStackFunctionLinesSha256
-) : IReport;
+    string? MinimizedStackFunctionLinesSha256,
+    string? ToolName,
+    string? ToolVersion,
+    string? OnefuzzVersion,
+    Uri? ReportUrl
+) : IReport, ITruncatable<Report> {
+    public Report Truncate(int maxLength) {
+        return this with {
+            Executable = Executable[..maxLength],
+            CrashType = CrashType[..Math.Min(maxLength, CrashType.Length)],
+            CrashSite = CrashSite[..Math.Min(maxLength, CrashSite.Length)],
+            CallStack = TruncateUtils.TruncateList(CallStack, maxLength),
+            CallStackSha256 = CallStackSha256[..Math.Min(maxLength, CallStackSha256.Length)],
+            InputSha256 = InputSha256[..Math.Min(maxLength, InputSha256.Length)],
+            AsanLog = AsanLog?[..Math.Min(maxLength, AsanLog.Length)],
+            ScarinessDescription = ScarinessDescription?[..Math.Min(maxLength, ScarinessDescription.Length)],
+            MinimizedStack = MinimizedStack != null ? TruncateUtils.TruncateList(MinimizedStack, maxLength) : MinimizedStack,
+            MinimizedStackSha256 = MinimizedStackSha256?[..Math.Min(maxLength, MinimizedStackSha256.Length)],
+            MinimizedStackFunctionNames = MinimizedStackFunctionNames != null ? TruncateUtils.TruncateList(MinimizedStackFunctionNames, maxLength) : MinimizedStackFunctionNames,
+            MinimizedStackFunctionNamesSha256 = MinimizedStackFunctionNamesSha256?[..Math.Min(maxLength, MinimizedStackFunctionNamesSha256.Length)],
+            MinimizedStackFunctionLines = MinimizedStackFunctionLines != null ? TruncateUtils.TruncateList(MinimizedStackFunctionLines, maxLength) : MinimizedStackFunctionLines,
+            MinimizedStackFunctionLinesSha256 = MinimizedStackFunctionLinesSha256?[..Math.Min(maxLength, MinimizedStackFunctionLinesSha256.Length)],
+            ToolName = ToolName?[..Math.Min(maxLength, ToolName.Length)],
+            ToolVersion = ToolVersion?[..Math.Min(maxLength, ToolVersion.Length)],
+            OnefuzzVersion = OnefuzzVersion?[..Math.Min(maxLength, OnefuzzVersion.Length)],
+        };
+    }
+}
 
 public record NoReproReport(
     string InputSha,
@@ -464,18 +491,40 @@ public record NoReproReport(
     Guid JobId,
     long Tries,
     string? Error
-);
+) : ITruncatable<NoReproReport> {
+    public NoReproReport Truncate(int maxLength) {
+        return this with {
+            Executable = Executable?[..maxLength],
+            Error = Error?[..maxLength]
+        };
+    }
+}
 
 public record CrashTestResult(
     Report? CrashReport,
     NoReproReport? NoReproReport
-);
+) : ITruncatable<CrashTestResult> {
+    public CrashTestResult Truncate(int maxLength) {
+        return new CrashTestResult(
+            CrashReport?.Truncate(maxLength),
+            NoReproReport?.Truncate(maxLength)
+        );
+    }
+}
 
 public record RegressionReport(
     CrashTestResult CrashTestResult,
-    CrashTestResult? OriginalCrashTestResult
-) : IReport;
-
+    CrashTestResult? OriginalCrashTestResult,
+    Uri? ReportUrl
+) : IReport, ITruncatable<RegressionReport> {
+    public RegressionReport Truncate(int maxLength) {
+        return new RegressionReport(
+            CrashTestResult.Truncate(maxLength),
+            OriginalCrashTestResult?.Truncate(maxLength),
+            ReportUrl
+        );
+    }
+}
 
 [JsonConverter(typeof(NotificationTemplateConverter))]
 #pragma warning disable CA1715
@@ -642,7 +691,7 @@ public record Pool(
     bool Managed,
     Architecture Arch,
     PoolState State,
-    Guid? ClientId = null
+    Guid? ObjectId = null
 ) : StatefulEntityBase<PoolState>(State) {
     public List<Node>? Nodes { get; set; }
     public AgentConfig? Config { get; set; }
@@ -952,3 +1001,19 @@ public record NodeCommandEnvelope(
     NodeCommand Command,
     string MessageId
 );
+
+public record TemplateRenderContext(
+    Report Report,
+    TaskConfig Task,
+    JobConfig Job,
+    Uri ReportUrl,
+    Uri InputUrl,
+    Uri TargetUrl,
+    Container ReportContainer,
+    string ReportFilename,
+    string ReproCmd
+);
+
+public interface ITruncatable<T> {
+    public T Truncate(int maxLength);
+}

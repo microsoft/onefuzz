@@ -7,11 +7,10 @@ namespace FunctionalTests;
 
 public class Pool : IFromJsonElement<Pool> {
 
-    JsonElement _e;
+    readonly JsonElement _e;
 
-    public Pool() { }
     public Pool(JsonElement e) => _e = e;
-    public Pool Convert(JsonElement e) => new Pool(e);
+    public static Pool Convert(JsonElement e) => new(e);
 
     public string Name => _e.GetStringProperty("name");
     public string PoolId => _e.GetStringProperty("pool_id");

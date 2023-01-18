@@ -88,12 +88,12 @@ namespace Tests {
 
         public static Gen<PoolName> PoolNameGen { get; }
             = from name in Arb.Generate<NonEmptyString>()
-              where PoolName.TryParse(name.Get, out _)
+              where PoolName.IsValid(name.Get)
               select PoolName.Parse(name.Get);
 
         public static Gen<Region> RegionGen { get; }
             = from name in Arb.Generate<NonEmptyString>()
-              where Region.TryParse(name.Get, out _)
+              where Region.IsValid(name.Get)
               select Region.Parse(name.Get);
 
         public static Gen<Node> Node { get; }
@@ -300,7 +300,7 @@ namespace Tests {
         }
 
         public static Gen<Report> Report() {
-            return Arb.Generate<Tuple<string, BlobRef, List<string>, Guid, int>>().Select(
+            return Arb.Generate<Tuple<string, BlobRef, List<string>, Guid, int, Uri?>>().Select(
                 arg =>
                     new Report(
                         InputUrl: arg.Item1,
@@ -321,7 +321,12 @@ namespace Tests {
                         MinimizedStackFunctionNames: arg.Item3,
                         MinimizedStackFunctionNamesSha256: arg.Item1,
                         MinimizedStackFunctionLines: arg.Item3,
-                        MinimizedStackFunctionLinesSha256: arg.Item1
+                        MinimizedStackFunctionLinesSha256: arg.Item1,
+                        ToolName: arg.Item1,
+                        ToolVersion: arg.Item1,
+                        OnefuzzVersion: arg.Item1,
+                        ReportUrl: arg.Item6
+
                     )
             );
         }
@@ -352,11 +357,12 @@ namespace Tests {
         }
 
         public static Gen<RegressionReport> RegressionReport() {
-            return Arb.Generate<Tuple<CrashTestResult, CrashTestResult?>>().Select(
+            return Arb.Generate<Tuple<CrashTestResult, CrashTestResult?, Uri?>>().Select(
                 arg =>
                     new RegressionReport(
                         arg.Item1,
-                        arg.Item2
+                        arg.Item2,
+                        arg.Item3
                     )
             );
         }
@@ -365,7 +371,7 @@ namespace Tests {
             from len in Gen.Choose(3, 63)
             from name in Gen.ArrayOf(len, Gen.Elements<char>("abcdefghijklmnopqrstuvwxyz0123456789-"))
             let nameString = new string(name)
-            where Container.TryParse(nameString, out var _)
+            where Container.IsValid(nameString)
             select Container.Parse(nameString);
 
         public static Gen<ADODuplicateTemplate> AdoDuplicateTemplate() {

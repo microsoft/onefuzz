@@ -4,9 +4,9 @@
 $env:Path += ";C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\;C:\onefuzz\win64;C:\onefuzz\tools\win64;C:\onefuzz\tools\win64\radamsa;$env:ProgramFiles\LLVM\bin"
 $env:ONEFUZZ_ROOT = "C:\onefuzz"
 $env:ONEFUZZ_TOOLS = "C:\onefuzz\tools"
-$env:LLVM_SYMBOLIZER_PATH = "llvm-symbolizer"
+$env:LLVM_SYMBOLIZER_PATH = "C:\Program Files\LLVM\bin\llvm-symbolizer.exe"
 $env:RUST_LOG = "info"
-$env:DOTNET_VERSION = "7.0.100"
+$env:DOTNET_VERSIONS = "7.0.100;6.0.403"
 # Set a session and machine scoped env var
 $env:DOTNET_ROOT = "c:\onefuzz\tools\dotnet"
 [Environment]::SetEnvironmentVariable("DOTNET_ROOT", $env:DOTNET_ROOT, "Machine")
@@ -19,10 +19,10 @@ function log ($message) {
 }
 
 function Setup-Silent-Notification {
-   # https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/registry-entries-for-silent-process-exit
-   log "installing registry key for silent termination notification of onefuzz-agent"
-   reg import c:\onefuzz\tools\win64\onefuzz-silent-exit.reg
-   log "done importing registry key"
+  # https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/registry-entries-for-silent-process-exit
+  log "installing registry key for silent termination notification of onefuzz-agent"
+  reg import c:\onefuzz\tools\win64\onefuzz-silent-exit.reg
+  log "done importing registry key"
 }
 
 function Uninstall-OneDrive {
@@ -31,13 +31,13 @@ function Uninstall-OneDrive {
   Unregister-ScheduledTask -TaskName *OneDrive* -Confirm:$false
 
   if (Test-Path $env:windir\SysWOW64\OneDriveSetup.exe) {
-     log "uninstalling onedrive from syswow64"
-     Start-Process -FilePath $env:windir\SysWOW64\OneDriveSetup.exe -ArgumentList /uninstall
+    log "uninstalling onedrive from syswow64"
+    Start-Process -FilePath $env:windir\SysWOW64\OneDriveSetup.exe -ArgumentList /uninstall
   }
 
   if (Test-Path $env:windir\System32\OneDriveSetup.exe) {
-     log "uninstalling onedrive from system32"
-     Start-Process -FilePath $env:windir\System32\OneDriveSetup.exe -ArgumentList /uninstall
+    log "uninstalling onedrive from system32"
+    Start-Process -FilePath $env:windir\System32\OneDriveSetup.exe -ArgumentList /uninstall
   }
 }
 
@@ -126,7 +126,7 @@ function Install-LLVM {
   log "installing llvm"
   $ProgressPreference = 'SilentlyContinue'
   $exe_path = "llvm-setup.exe"
-  Invoke-WebRequest -uri https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/LLVM-10.0.0-win64.exe -OutFile $exe_path
+  Invoke-WebRequest -uri https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.1/LLVM-12.0.1-win64.exe -OutFile $exe_path
   cmd /c start /wait $exe_path /S
   $env:Path += ";$env:ProgramFiles\LLVM\bin"
   log "installing llvm: done"
@@ -173,17 +173,21 @@ function Install-VCRedist {
   log "installing VC Redist: done"
 }
 
-function Install-Dotnet([string]$Version, [string]$InstallDir, [string]$ToolsDir) {
-  log "Installing dotnet to ${InstallDir}"
-  Invoke-WebRequest 'https://dot.net/v1/dotnet-install.ps1' -OutFile 'dotnet-install.ps1'
-  ./dotnet-install.ps1 -Version $Version -InstallDir $InstallDir
-  Remove-Item ./dotnet-install.ps1
-  log "Installing dotnet: done"
+function Install-Dotnet([string]$Versions, [string]$InstallDir, [string]$ToolsDir) {
+  $Versions -Split ';' | ForEach-Object {
+    $Version = $_
+    log "Installing dotnet ${Version} to ${InstallDir}"
+    Invoke-WebRequest 'https://dot.net/v1/dotnet-install.ps1' -OutFile 'dotnet-install.ps1'
+    ./dotnet-install.ps1 -Version $Version -InstallDir $InstallDir
+    Remove-Item ./dotnet-install.ps1
+    log "Installing dotnet ${Version}: done"
+  }
+
   log "Installing dotnet tools to ${ToolsDir}"
   Push-Location $InstallDir
-  ./dotnet.exe tool install dotnet-dump --version 6.0.328102 --tool-path $ToolsDir
-  ./dotnet.exe tool install dotnet-coverage --version 17.3.6 --tool-path $ToolsDir
-  ./dotnet.exe tool install dotnet-sos --version 6.0.328102 --tool-path $ToolsDir
+  ./dotnet.exe tool install dotnet-dump --version 6.0.351802 --tool-path $ToolsDir
+  ./dotnet.exe tool install dotnet-coverage --version 17.5.0 --tool-path $ToolsDir
+  ./dotnet.exe tool install dotnet-sos --version 6.0.351802 --tool-path $ToolsDir
   Pop-Location
   log "Installing dotnet tools: done"
 }

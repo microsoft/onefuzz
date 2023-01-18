@@ -55,7 +55,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
         config.unique_inputs.sync_pull().await?;
         let queue = QueueClient::new(config.input_queue.clone())?;
         if let Some(msg) = queue.pop().await? {
-            let input_url = msg.parse(utils::parse_url_data);
+            let input_url = msg.get();
             let input_url = match input_url {
                 Ok(url) => url,
                 Err(err) => {
@@ -130,7 +130,7 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
     let target_exe =
         try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
 
-    let expand = Expand::new()
+    let expand = Expand::new(&config.common.machine_identity)
         .machine_id()
         .await?
         .input_marker(&config.supervisor_input_marker)

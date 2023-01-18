@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use onefuzz::input_tester::Tester;
+use onefuzz::{input_tester::Tester, machine_id::MachineIdentity};
 use structopt::StructOpt;
 
 #[derive(Debug, PartialEq, Eq, StructOpt)]
@@ -53,7 +53,17 @@ async fn main() -> Result<()> {
     }
 
     let env = Default::default();
-    let tester = Tester::new(&setup_dir, &opt.exe, &target_options, &env);
+    let tester = Tester::new(
+        &setup_dir,
+        &opt.exe,
+        &target_options,
+        &env,
+        MachineIdentity {
+            machine_id: uuid::Uuid::new_v4(),
+            machine_name: "test-input".into(),
+            scaleset_name: None,
+        },
+    );
 
     let check_debugger = !opt.no_check_debugger;
     let tester = tester

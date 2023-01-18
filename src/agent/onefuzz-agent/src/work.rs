@@ -1,14 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::io::ErrorKind;
 use std::path::PathBuf;
+use std::{io::ErrorKind, sync::Arc};
 
 use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use onefuzz::{auth::Secret, blob::BlobContainerUrl, http::is_auth_error};
 use storage_queue::{Message as QueueMessage, QueueClient};
 use tokio::fs;
+use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::config::Registration;
@@ -30,12 +31,12 @@ impl WorkSet {
         self.work_units.iter().map(|w| w.task_id).collect()
     }
 
-    pub fn context_path() -> Result<PathBuf> {
-        Ok(onefuzz::fs::onefuzz_root()?.join("workset_context.json"))
+    pub fn context_path(machine_id: Uuid) -> Result<PathBuf> {
+        Ok(onefuzz::fs::onefuzz_root()?.join(format!("workset_context-{}.json", machine_id)))
     }
 
-    pub async fn load_from_fs_context() -> Result<Option<Self>> {
-        let path = Self::context_path()?;
+    pub async fn load_from_fs_context(machine_id: Uuid) -> Result<Option<Self>> {
+        let path = Self::context_path(machine_id)?;
 
         info!("checking for workset context: {}", path.display());
 
@@ -57,14 +58,27 @@ impl WorkSet {
         Ok(Some(ctx))
     }
 
-    pub async fn save_context(&self) -> Result<()> {
-        let path = Self::context_path()?;
+    pub async fn save_context(&self, machine_id: Uuid) -> Result<()> {
+        let path = Self::context_path(machine_id)?;
         info!("saving workset context: {}", path.display());
 
         let data = serde_json::to_vec(&self)?;
         fs::write(&path, &data)
             .await
             .with_context(|| format!("unable to save WorkSet context: {}", path.display()))?;
+
+        Ok(())
+    }
+
+    pub async fn remove_context(machine_id: Uuid) -> Result<()> {
+        let path = Self::context_path(machine_id)?;
+        info!("removing workset context: {}", path.display());
+
+        if path.exists() {
+            fs::remove_file(&path)
+                .await
+                .with_context(|| format!("unable to delete WorkSet context: {}", path.display()))?;
+        }
 
         Ok(())
     }
@@ -93,12 +107,14 @@ pub struct WorkUnit {
 }
 
 impl WorkUnit {
-    pub fn working_dir(&self) -> Result<PathBuf> {
-        Ok(onefuzz::fs::onefuzz_root()?.join(self.task_id.to_string()))
+    pub fn working_dir(&self, machine_id: Uuid) -> Result<PathBuf> {
+        Ok(onefuzz::fs::onefuzz_root()?
+            .join(format!("{}", machine_id))
+            .join(self.task_id.to_string()))
     }
 
-    pub fn config_path(&self) -> Result<PathBuf> {
-        Ok(self.working_dir()?.join("config.json"))
+    pub fn config_path(&self, machine_id: Uuid) -> Result<PathBuf> {
+        Ok(self.working_dir(machine_id)?.join("config.json"))
     }
 }
 
@@ -130,7 +146,7 @@ pub struct Message {
 
 pub struct WorkQueue {
     queue: QueueClient,
-    registration: Registration,
+    registration: Arc<RwLock<Registration>>,
 }
 
 impl WorkQueue {
@@ -140,16 +156,17 @@ impl WorkQueue {
 
         Ok(Self {
             queue,
-            registration,
+            registration: Arc::new(RwLock::new(registration)),
         })
     }
 
     async fn renew(&mut self) -> Result<()> {
-        self.registration
+        let mut registration = self.registration.write().await;
+        *registration = registration
             .renew()
             .await
             .context("unable to renew registration in workqueue")?;
-        let url = self.registration.dynamic_config.work_queue.clone();
+        let url = registration.dynamic_config.work_queue.clone();
         self.queue = QueueClient::new(url)?;
         Ok(())
     }
@@ -192,7 +209,13 @@ impl WorkQueue {
                 Err(err) => {
                     if is_auth_error(&err) {
                         self.renew().await.context("unable to renew registration")?;
-                        let url = self.registration.dynamic_config.work_queue.clone();
+                        let url = self
+                            .registration
+                            .read()
+                            .await
+                            .dynamic_config
+                            .work_queue
+                            .clone();
                         queue_message
                             .update_url(url)
                             .delete()

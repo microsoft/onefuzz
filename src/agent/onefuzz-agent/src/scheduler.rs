@@ -13,6 +13,7 @@ use crate::setup::ISetupRunner;
 use crate::work::*;
 use crate::worker::*;
 
+#[derive(Debug)]
 pub enum Scheduler {
     Free(State<Free>),
     SettingUp(State<SettingUp>),
@@ -54,14 +55,22 @@ impl Scheduler {
         Self::default()
     }
 
-    pub async fn execute_command(&mut self, cmd: &NodeCommand) -> Result<()> {
+    pub async fn execute_command(self, cmd: NodeCommand, managed: bool) -> Result<Self> {
         match cmd {
             NodeCommand::AddSshKey(ssh_key_info) => {
-                add_ssh_key(ssh_key_info).await?;
+                if managed {
+                    add_ssh_key(&ssh_key_info).await?;
+                } else {
+                    warn!("adding ssh keys only supported on managed nodes");
+                }
+                Ok(self)
             }
             NodeCommand::StopTask(stop_task) => {
                 if let Scheduler::Busy(state) = self {
-                    state.stop(stop_task.task_id)?;
+                    let state = state.stop(stop_task.task_id)?;
+                    Ok(state.into())
+                } else {
+                    Ok(self)
                 }
             }
             NodeCommand::Stop {} => {
@@ -69,7 +78,7 @@ impl Scheduler {
                 let state = State {
                     ctx: Done { cause },
                 };
-                *self = state.into();
+                Ok(state.into())
             }
             NodeCommand::StopIfFree {} => {
                 if let Scheduler::Free(_) = self {
@@ -77,12 +86,12 @@ impl Scheduler {
                     let state = State {
                         ctx: Done { cause },
                     };
-                    *self = state.into();
+                    Ok(state.into())
+                } else {
+                    Ok(self)
                 }
             }
         }
-
-        Ok(())
     }
 }
 
@@ -93,24 +102,30 @@ impl Default for Scheduler {
     }
 }
 
+#[derive(Debug)]
 pub struct Free;
 
+#[derive(Debug)]
 pub struct SettingUp {
     work_set: WorkSet,
 }
 
+#[derive(Debug)]
 pub struct PendingReboot {
     work_set: WorkSet,
 }
 
+#[derive(Debug)]
 pub struct Ready {
     work_set: WorkSet,
 }
 
+#[derive(Debug)]
 pub struct Busy {
     workers: Vec<Option<Worker>>,
 }
 
+#[derive(Debug)]
 pub struct Done {
     cause: DoneCause,
 }
@@ -134,6 +149,7 @@ impl Context for Ready {}
 impl Context for Busy {}
 impl Context for Done {}
 
+#[derive(Debug)]
 pub struct State<C: Context> {
     ctx: C,
 }
@@ -175,7 +191,7 @@ pub enum SetupDone {
 }
 
 impl State<SettingUp> {
-    pub async fn finish(self, runner: &mut dyn ISetupRunner) -> Result<SetupDone> {
+    pub async fn finish(self, runner: &dyn ISetupRunner) -> Result<SetupDone> {
         let work_set = self.ctx.work_set;
 
         let output = runner.run(&work_set).await;
@@ -197,7 +213,7 @@ impl State<SettingUp> {
                 // No script was executed.
             }
             Err(err) => {
-                let error = err.to_string();
+                let error = format!("{:?}", err);
                 warn!("{}", error);
                 let cause = DoneCause::SetupError {
                     error,
@@ -233,9 +249,9 @@ impl State<PendingReboot> {
 impl State<Ready> {
     pub async fn run(self) -> Result<State<Busy>> {
         let mut workers = vec![];
-        let setup_dir = self.ctx.work_set.setup_dir()?;
+        let setup_dir = &self.ctx.work_set.setup_dir()?;
         for work in self.ctx.work_set.work_units {
-            let worker = Some(Worker::new(&setup_dir, work));
+            let worker = Some(Worker::new(setup_dir, work));
             workers.push(worker);
         }
 
@@ -277,7 +293,7 @@ impl State<Busy> {
             .all(|worker| worker.as_ref().unwrap().is_done())
     }
 
-    pub fn stop(&mut self, task_id: TaskId) -> Result<()> {
+    pub fn stop(mut self, task_id: TaskId) -> Result<Self> {
         for worker in &mut self.ctx.workers {
             let worker = worker.as_mut().unwrap();
 
@@ -288,7 +304,7 @@ impl State<Busy> {
             }
         }
 
-        Ok(())
+        Ok(self)
     }
 }
 

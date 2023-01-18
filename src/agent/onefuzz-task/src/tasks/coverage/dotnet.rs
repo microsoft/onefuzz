@@ -266,8 +266,8 @@ impl<'a> TaskContext<'a> {
         // Try to expand `target_exe` with support for `{tools_dir}`.
         //
         // Allows using `LibFuzzerDotnetLoader.exe` from a shared tools container.
-        let expand = Expand::new().tools_dir(tools_dir);
-        let expanded = expand.evaluate_value(&self.config.target_exe.to_string_lossy())?;
+        let expand = Expand::new(&self.config.common.machine_identity).tools_dir(tools_dir);
+        let expanded = expand.evaluate_value(self.config.target_exe.to_string_lossy())?;
         let expanded_path = Path::new(&expanded);
 
         // Check if `target_exe` was resolved to an absolute path and an existing file.
@@ -293,7 +293,7 @@ impl<'a> TaskContext<'a> {
     async fn command_for_input(&self, input: &Path) -> Result<Command> {
         let target_exe = self.target_exe().await?;
 
-        let expand = Expand::new()
+        let expand = Expand::new(&self.config.common.machine_identity)
             .machine_id()
             .await?
             .input_path(input)

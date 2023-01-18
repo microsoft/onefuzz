@@ -24,10 +24,11 @@ impl common::LibFuzzerType for GenericLibFuzzer {
             try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
 
         Ok(LibFuzzer::new(
-            &target_exe,
+            target_exe,
             config.target_options.clone(),
             config.target_env.clone(),
             &config.common.setup_dir,
+            config.common.machine_identity.clone(),
         ))
     }
 }

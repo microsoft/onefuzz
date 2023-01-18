@@ -13,8 +13,10 @@ using Azure.Identity;
 using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.FeatureManagement;
 using Microsoft.Graph;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -47,6 +49,22 @@ public class Program {
 
         using var host =
             new HostBuilder()
+            .ConfigureAppConfiguration(builder => {
+                // Using a connection string in dev allows us to run the functions locally.
+                if (!string.IsNullOrEmpty(configuration.AppConfigurationConnectionString)) {
+                    var _ = builder.AddAzureAppConfiguration(options => {
+                        var _ = options
+                            .Connect(configuration.AppConfigurationConnectionString)
+                            .UseFeatureFlags(ffOptions => ffOptions.CacheExpirationInterval = TimeSpan.FromSeconds(30));
+                    });
+                } else {
+                    var _ = builder.AddAzureAppConfiguration(options => {
+                        var _ = options
+                            .Connect(new Uri(configuration.AppConfigurationEndpoint!), new DefaultAzureCredential())
+                            .UseFeatureFlags(ffOptions => ffOptions.CacheExpirationInterval = TimeSpan.FromMinutes(1));
+                    });
+                }
+            })
             .ConfigureFunctionsWorkerDefaults(builder => {
                 builder.UseMiddleware<LoggingMiddleware>();
                 builder.AddApplicationInsights(options => {
@@ -54,6 +72,8 @@ public class Program {
                 });
             })
             .ConfigureServices((context, services) => {
+                services.AddAzureAppConfiguration();
+                _ = services.AddFeatureManagement();
                 services.Configure<JsonSerializerOptions>(options => {
                     options = EntityConverter.GetJsonSerializerOptions();
                 });

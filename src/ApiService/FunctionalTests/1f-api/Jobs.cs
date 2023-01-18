@@ -5,13 +5,11 @@ using Xunit.Abstractions;
 namespace FunctionalTests;
 
 public class JobTaskInfo : IFromJsonElement<JobTaskInfo> {
-    JsonElement _e;
-
-    public JobTaskInfo() { }
+    readonly JsonElement _e;
 
     public JobTaskInfo(JsonElement e) => _e = e;
 
-    public JobTaskInfo Convert(JsonElement e) => new JobTaskInfo(e);
+    public static JobTaskInfo Convert(JsonElement e) => new(e);
 
     public Guid TaskId => _e.GetGuidProperty("task_id");
 
@@ -22,12 +20,11 @@ public class JobTaskInfo : IFromJsonElement<JobTaskInfo> {
 
 
 public class Job : IFromJsonElement<Job> {
-    JsonElement _e;
+    readonly JsonElement _e;
 
-    public Job() { }
     public Job(JsonElement e) => _e = e;
 
-    public Job Convert(JsonElement e) => new Job(e);
+    public static Job Convert(JsonElement e) => new(e);
 
     public Guid JobId => _e.GetGuidProperty("job_id");
 

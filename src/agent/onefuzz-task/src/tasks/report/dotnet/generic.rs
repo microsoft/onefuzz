@@ -132,8 +132,8 @@ impl AsanProcessor {
         // Try to expand `target_exe` with support for `{tools_dir}`.
         //
         // Allows using `LibFuzzerDotnetLoader.exe` from a shared tools container.
-        let expand = Expand::new().tools_dir(tools_dir);
-        let expanded = expand.evaluate_value(&self.config.target_exe.to_string_lossy())?;
+        let expand = Expand::new(&self.config.common.machine_identity).tools_dir(tools_dir);
+        let expanded = expand.evaluate_value(self.config.target_exe.to_string_lossy())?;
         let expanded_path = Path::new(&expanded);
 
         // Check if `target_exe` was resolved to an absolute path and an existing file.
@@ -171,7 +171,7 @@ impl AsanProcessor {
             format_err!("unable to sha256 digest input file: {}", input.display())
         })?;
 
-        let job_id = self.config.common.task_id;
+        let job_id = self.config.common.job_id;
         let task_id = self.config.common.task_id;
 
         let target_exe = self.target_exe().await?;
@@ -180,7 +180,7 @@ impl AsanProcessor {
         let mut args = vec![target_exe];
         args.extend(self.config.target_options.clone());
 
-        let expand = Expand::new()
+        let expand = Expand::new(&self.config.common.machine_identity)
             .input_path(input)
             .setup_dir(&self.config.common.setup_dir);
         let expanded_args = expand.evaluate(&args)?;

@@ -6,6 +6,7 @@ use onefuzz::{
     auth::{ClientCredentials, Credentials, ManagedIdentityCredentials},
     http::{is_auth_error_code, ResponseExt},
     jitter::delay_with_jitter,
+    machine_id::MachineIdentity,
 };
 use onefuzz_telemetry::{InstanceTelemetryKey, MicrosoftTelemetryKey};
 use reqwest_retry::SendRetry;
@@ -37,16 +38,26 @@ pub struct StaticConfig {
 
     #[serde(default = "default_as_true")]
     pub managed: bool,
+
+    pub machine_identity: MachineIdentity,
 }
 
 fn default_as_true() -> bool {
     true
 }
 
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct RawClientCredentials {
+    client_id: Uuid,
+    client_secret: String,
+    tenant: String,
+    multi_tenant_domain: Option<String>,
+}
+
 // Temporary shim type to bridge the current service-provided config.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 struct RawStaticConfig {
-    pub client_credentials: Option<ClientCredentials>,
+    pub client_credentials: Option<RawClientCredentials>,
 
     pub pool_name: String,
 
@@ -64,14 +75,23 @@ struct RawStaticConfig {
 
     #[serde(default = "default_as_true")]
     pub managed: bool,
+
+    pub machine_identity: Option<MachineIdentity>,
 }
 
 impl StaticConfig {
-    pub fn new(data: &[u8]) -> Result<Self> {
+    pub async fn new(data: &[u8], machine_identity: Option<MachineIdentity>) -> Result<Self> {
         let config: RawStaticConfig = serde_json::from_slice(data)?;
 
         let credentials = match config.client_credentials {
-            Some(client) => client.into(),
+            Some(client) => ClientCredentials::new(
+                client.client_id,
+                client.client_secret,
+                config.onefuzz_url.to_string(),
+                client.tenant,
+                client.multi_tenant_domain,
+            )
+            .into(),
             None => {
                 // Remove trailing `/`, which is treated as a distinct resource.
                 let resource = config
@@ -84,6 +104,11 @@ impl StaticConfig {
                 managed.into()
             }
         };
+        let machine_identity = match machine_identity.or(config.machine_identity) {
+            Some(machine_identity) => machine_identity,
+            None => MachineIdentity::from_metadata().await?,
+        };
+
         let config = StaticConfig {
             credentials,
             pool_name: config.pool_name,
@@ -94,16 +119,20 @@ impl StaticConfig {
             heartbeat_queue: config.heartbeat_queue,
             instance_id: config.instance_id,
             managed: config.managed,
+            machine_identity,
         };
 
         Ok(config)
     }
 
-    pub fn from_file(config_path: impl AsRef<Path>) -> Result<Self> {
+    pub async fn from_file(
+        config_path: impl AsRef<Path>,
+        machine_identity: Option<MachineIdentity>,
+    ) -> Result<Self> {
         let config_path = config_path.as_ref();
         let data = std::fs::read(config_path)
             .with_context(|| format!("unable to read config file: {}", config_path.display()))?;
-        Self::new(&data)
+        Self::new(&data, machine_identity).await
     }
 
     pub fn from_env() -> Result<Self> {
@@ -115,6 +144,7 @@ impl StaticConfig {
         let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
         let pool_name = std::env::var("ONEFUZZ_POOL")?;
         let is_unmanaged = std::env::var("ONEFUZZ_IS_UNMANAGED").is_ok();
+        let machine_identity = MachineIdentity::from_env()?;
 
         let heartbeat_queue = if let Ok(key) = std::env::var("ONEFUZZ_HEARTBEAT") {
             Some(Url::parse(&key)?)
@@ -155,6 +185,7 @@ impl StaticConfig {
             heartbeat_queue,
             instance_id,
             managed: !is_unmanaged,
+            machine_identity,
         })
     }
 
@@ -178,8 +209,12 @@ pub struct DynamicConfig {
 }
 
 impl DynamicConfig {
-    pub async fn save(&self) -> Result<()> {
-        let path = Self::save_path()?;
+    pub async fn save(&self, machine_id: Uuid) -> Result<()> {
+        let path = Self::save_path(machine_id)?;
+        let dir = path
+            .parent()
+            .ok_or(anyhow!("invalid dynamic config path"))?;
+        fs::create_dir_all(dir).await?;
         let data = serde_json::to_vec(&self)?;
         fs::write(&path, &data)
             .await
@@ -188,8 +223,8 @@ impl DynamicConfig {
         Ok(())
     }
 
-    pub async fn load() -> Result<Self> {
-        let path = Self::save_path()?;
+    pub async fn load(machine_id: Uuid) -> Result<Self> {
+        let path = Self::save_path(machine_id)?;
         let data = fs::read(&path)
             .await
             .with_context(|| format!("unable to load dynamic config: {}", path.display()))?;
@@ -198,10 +233,10 @@ impl DynamicConfig {
         Ok(ctx)
     }
 
-    fn save_path() -> Result<PathBuf> {
+    fn save_path(machine_id: Uuid) -> Result<PathBuf> {
         Ok(onefuzz::fs::onefuzz_root()?
             .join("etc")
-            .join("dynamic-config.json"))
+            .join(format!("dynamic-config-{}.json", machine_id)))
     }
 }
 
@@ -218,22 +253,21 @@ const REGISTRATION_RETRY_PERIOD: Duration = Duration::from_secs(60);
 impl Registration {
     pub async fn create(config: StaticConfig, managed: bool, timeout: Duration) -> Result<Self> {
         let token = config.credentials.access_token().await?;
-        let machine_name = onefuzz::machine_id::get_machine_name().await?;
-        let machine_id = onefuzz::machine_id::get_machine_id().await?;
+        let machine_name = &config.machine_identity.machine_name;
+        let machine_id = config.machine_identity.machine_id;
 
         let mut url = config.register_url();
         url.query_pairs_mut()
             .append_pair("machine_id", &machine_id.to_string())
-            .append_pair("machine_name", &machine_name)
+            .append_pair("machine_name", machine_name)
             .append_pair("pool_name", &config.pool_name)
             .append_pair("version", env!("ONEFUZZ_VERSION"))
             .append_pair("os", std::env::consts::OS);
 
         if managed {
-            let scaleset = onefuzz::machine_id::get_scaleset_name().await?;
-            match scaleset {
+            match &config.machine_identity.scaleset_name {
                 Some(scaleset) => {
-                    url.query_pairs_mut().append_pair("scaleset_id", &scaleset);
+                    url.query_pairs_mut().append_pair("scaleset_id", scaleset);
                 }
                 None => {
                     anyhow::bail!("managed instance without scaleset name");
@@ -260,7 +294,7 @@ impl Registration {
             match response.error_for_status_with_body().await {
                 Ok(response) => {
                     let dynamic_config: DynamicConfig = response.json().await?;
-                    dynamic_config.save().await?;
+                    dynamic_config.save(machine_id).await?;
                     return Ok(Self {
                         config,
                         dynamic_config,
@@ -283,15 +317,14 @@ impl Registration {
     }
 
     pub async fn load_existing(config: StaticConfig) -> Result<Self> {
-        let dynamic_config = DynamicConfig::load().await?;
-        let machine_id = onefuzz::machine_id::get_machine_id().await?;
-        let mut registration = Self {
+        let machine_id = config.machine_identity.machine_id;
+        let dynamic_config = DynamicConfig::load(machine_id).await?;
+        let registration = Self {
             config,
             dynamic_config,
             machine_id,
         };
-        registration.renew().await?;
-        Ok(registration)
+        registration.renew().await
     }
 
     pub async fn create_managed(config: StaticConfig) -> Result<Self> {
@@ -302,7 +335,7 @@ impl Registration {
         Self::create(config, false, DEFAULT_REGISTRATION_CREATE_TIMEOUT).await
     }
 
-    pub async fn renew(&mut self) -> Result<()> {
+    pub async fn renew(&self) -> Result<Self> {
         info!("renewing registration");
         let token = self.config.credentials.access_token().await?;
 
@@ -321,9 +354,13 @@ impl Registration {
             .await
             .context("Registration.renew request body")?;
 
-        self.dynamic_config = response.json().await?;
-        self.dynamic_config.save().await?;
+        let dynamic_config: DynamicConfig = response.json().await?;
+        dynamic_config.save(self.machine_id).await?;
 
-        Ok(())
+        Ok(Self {
+            dynamic_config,
+            config: self.config.clone(),
+            machine_id: self.machine_id,
+        })
     }
 }

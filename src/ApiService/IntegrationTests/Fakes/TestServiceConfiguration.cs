@@ -31,6 +31,8 @@ public sealed class TestServiceConfiguration : IServiceConfig {
 
     // -- Remainder not implemented --
 
+    public string? OneFuzzEndpoint => throw new System.NotImplementedException();
+
     public LogDestination[] LogDestinations { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
 
     public SeverityLevel LogSeverityLevel => throw new System.NotImplementedException();
@@ -56,11 +58,12 @@ public sealed class TestServiceConfiguration : IServiceConfig {
 
     public string? OneFuzzOwner => throw new System.NotImplementedException();
 
-    public string OneFuzzNodeDisposalStrategy => throw new System.NotImplementedException();
-
     public ResourceIdentifier? OneFuzzDataStorage => throw new NotImplementedException();
 
     public string? OneFuzzResourceGroup => throw new NotImplementedException();
 
     public string? OneFuzzAllowOutdatedAgent => throw new NotImplementedException();
+    public string? AppConfigurationEndpoint => throw new NotImplementedException();
+    public Uri OneFuzzBaseAddress { get => new Uri("http://test"); }
+    public string? AppConfigurationConnectionString => throw new NotImplementedException();
 }

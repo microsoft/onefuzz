@@ -14,6 +14,7 @@ import uuid
 from enum import Enum
 from shutil import which
 from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from urllib.parse import urlparse
 from uuid import UUID
 
 import semver
@@ -1239,7 +1240,7 @@ class Pool(Endpoint):
         self,
         name: str,
         os: enums.OS,
-        client_id: Optional[UUID] = None,
+        object_id: Optional[UUID] = None,
         *,
         unmanaged: bool = False,
         arch: enums.Architecture = enums.Architecture.x86_64,
@@ -1256,7 +1257,7 @@ class Pool(Endpoint):
             "POST",
             models.Pool,
             data=requests.PoolCreate(
-                name=name, os=os, arch=arch, managed=managed, client_id=client_id
+                name=name, os=os, arch=arch, managed=managed, object_id=object_id
             ),
         )
 
@@ -1267,6 +1268,16 @@ class Pool(Endpoint):
 
         if pool.config is None:
             raise Exception("Missing AgentConfig in response")
+
+        config = pool.config
+        if not pool.managed:
+            config.client_credentials = models.ClientCredentials(  # nosec
+                client_id=uuid.UUID(int=0),
+                client_secret="<client_secret>",
+                resource=self.onefuzz._backend.config.endpoint,
+                tenant=urlparse(self.onefuzz._backend.config.authority).path.strip("/"),
+                multi_tenant_domain=self.onefuzz._backend.config.tenant_domain,
+            )
 
         return pool.config
 
@@ -1790,8 +1801,6 @@ class Onefuzz:
         client_secret: Optional[str] = None,
         authority: Optional[str] = None,
         tenant_domain: Optional[str] = None,
-        _dotnet_endpoint: Optional[str] = None,
-        _dotnet_functions: Optional[List[str]] = None,
     ) -> None:
 
         if endpoint:
@@ -1804,10 +1813,6 @@ class Onefuzz:
             self._backend.client_secret = client_secret
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
-        if _dotnet_endpoint is not None:
-            self._backend.config.dotnet_endpoint = _dotnet_endpoint
-        if _dotnet_functions is not None:
-            self._backend.config.dotnet_functions = _dotnet_functions
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates._load_cache()
@@ -1851,8 +1856,6 @@ class Onefuzz:
         client_id: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
         tenant_domain: Optional[str] = None,
-        _dotnet_endpoint: Optional[str] = None,
-        _dotnet_functions: Optional[List[str]] = None,
         reset: Optional[bool] = None,
     ) -> BackendConfig:
         """Configure onefuzz CLI"""
@@ -1883,10 +1886,6 @@ class Onefuzz:
             self._backend.enable_feature(enable_feature.name)
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
-        if _dotnet_endpoint is not None:
-            self._backend.config.dotnet_endpoint = _dotnet_endpoint
-        if _dotnet_functions is not None:
-            self._backend.config.dotnet_functions = _dotnet_functions
         self._backend.app = None
         self._backend.save_config()
 

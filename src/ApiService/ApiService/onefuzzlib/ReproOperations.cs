@@ -215,11 +215,14 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var result = await _context.VmOperations.AddExtensions(vm, extensions);
         if (!result.IsOk) {
             return await SetError(repro, result.ErrorV);
-        } else {
-            repro = repro with { State = VmState.Running };
         }
 
-        await Replace(repro).IgnoreResult();
+        if (result.OkV) {
+            // this means extensions are all completed - transition to Running state
+            repro = repro with { State = VmState.Running };
+            await Replace(repro).IgnoreResult();
+        }
+
         return repro;
     }
 
@@ -324,30 +327,33 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
 
     public async Task<OneFuzzResult<Repro>> Create(ReproConfig config, UserInfo userInfo) {
         var reportOrRegression = await _context.Reports.GetReportOrRegression(config.Container, config.Path);
-        if (reportOrRegression is Report report) {
-            var task = await _context.TaskOperations.GetByTaskId(report.TaskId);
-            if (task == null) {
-                return OneFuzzResult<Repro>.Error(ErrorCode.INVALID_REQUEST, "unable to find task");
-            }
-
-            var vm = new Repro(
-                VmId: Guid.NewGuid(),
-                Config: config,
-                TaskId: task.TaskId,
-                Os: task.Os,
-                Auth: await Auth.BuildAuth(_logTracer),
-                EndTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(config.Duration),
-                UserInfo: userInfo
-            );
-
-            var r = await _context.ReproOperations.Insert(vm);
-            if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert repro record for {vm.VmId:Tag:VmId}");
-            }
-            return OneFuzzResult<Repro>.Ok(vm);
-        } else {
+        if (reportOrRegression is not Report report) {
             return OneFuzzResult<Repro>.Error(ErrorCode.UNABLE_TO_FIND, "unable to find report");
         }
+
+        var task = await _context.TaskOperations.GetByTaskId(report.TaskId);
+        if (task is null) {
+            return OneFuzzResult<Repro>.Error(ErrorCode.INVALID_REQUEST, "unable to find task");
+        }
+
+        var vm = new Repro(
+            VmId: Guid.NewGuid(),
+            Config: config,
+            TaskId: task.TaskId,
+            Os: task.Os,
+            Auth: await Auth.BuildAuth(_logTracer),
+            EndTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(config.Duration),
+            UserInfo: userInfo);
+
+        var r = await _context.ReproOperations.Insert(vm);
+        if (!r.IsOk) {
+            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert repro record for {vm.VmId:Tag:VmId}");
+            return OneFuzzResult<Repro>.Error(
+                ErrorCode.UNABLE_TO_CREATE,
+                new[] { "failed to insert repro record" });
+        }
+
+        return OneFuzzResult.Ok(vm);
     }
 
     public Task<Repro> ExtensionsFailed(Repro repro) {

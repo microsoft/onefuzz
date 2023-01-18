@@ -157,7 +157,8 @@ async fn poll_inputs(
             heartbeat.alive();
             if let Some(message) = input_queue.pop().await? {
                 let input_url = message
-                    .parse(|data| BlobUrl::parse(str::from_utf8(data)?))
+                    .get::<reqwest::Url>()
+                    .and_then(BlobUrl::parse)
                     .with_context(|| format!("unable to parse URL from queue: {:?}", message))?;
                 if !already_checked(config, &input_url).await? {
                     let destination_path = _copy(input_url, &tmp_dir).await?;
@@ -198,7 +199,7 @@ pub async fn run_tool(
     let target_exe =
         try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
 
-    let expand = Expand::new()
+    let expand = Expand::new(&config.common.machine_identity)
         .machine_id()
         .await?
         .input_path(&input)

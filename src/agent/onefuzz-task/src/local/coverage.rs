@@ -28,7 +28,7 @@ pub fn build_coverage_config(
 ) -> Result<Config> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
-    let target_options = get_cmd_arg(CmdType::Target, args);
+    let mut target_options = get_cmd_arg(CmdType::Target, args);
     let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
     let coverage_filter = value_t!(args, TARGET_TIMEOUT, String).ok();
 
@@ -47,6 +47,10 @@ pub fn build_coverage_config(
     let coverage = get_synced_dir(COVERAGE_DIR, common.job_id, common.task_id, args)?
         .monitor_count(&event_sender)?;
 
+    if target_options.is_empty() {
+        target_options.push("{input}".to_string());
+    }
+
     let config = Config {
         target_exe,
         target_env,
@@ -63,7 +67,7 @@ pub fn build_coverage_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
-    let context = build_local_context(args, true, event_sender.clone())?;
+    let context = build_local_context(args, true, event_sender.clone()).await?;
     let config = build_coverage_config(
         args,
         false,

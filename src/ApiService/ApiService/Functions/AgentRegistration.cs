@@ -73,7 +73,6 @@ public class AgentRegistration {
         var baseAddress = _context.Creds.GetInstanceUrl();
         var eventsUrl = new Uri(baseAddress, "/api/agents/events");
         var commandsUrl = new Uri(baseAddress, "/api/agents/commands");
-
         var workQueue = await _context.Queue.GetQueueSas(
             _context.PoolOperations.GetPoolQueue(pool.PoolId),
             StorageType.Corpus,
@@ -153,7 +152,9 @@ public class AgentRegistration {
             MachineId: machineId,
             ScalesetId: scalesetId,
             InstanceId: instanceId,
-            Version: version
+            Version: version,
+            Os: os ?? pool.Os,
+            Managed: pool.Managed
             );
 
         var r = await _context.NodeOperations.Replace(node);

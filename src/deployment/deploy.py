@@ -4,7 +4,6 @@
 # Licensed under the MIT License.
 
 import argparse
-import itertools
 import json
 import logging
 import os
@@ -94,13 +93,12 @@ FUNC_TOOLS_ERROR = (
     "https://github.com/Azure/azure-functions-core-tools#installing"
 )
 
-DOTNET_APPLICATION_SUFFIX = "-net"
-DOTNET_AGENT_FUNCTIONS = [
-    "agent_can_schedule",
-    "agent_commands",
-    "agent_events",
-    "agent_registration",
-]
+UPPERCASE_NAME_ERROR = (
+    "OneFuzz deployments do not support uppercase characters in "
+    "application names. Please adjust the value you are "
+    "specifying for this argument and retry."
+)
+
 logger = logging.getLogger("deploy")
 
 
@@ -145,7 +143,6 @@ class Client:
         client_id: Optional[str],
         client_secret: Optional[str],
         app_zip: str,
-        app_net_zip: str,
         tools: str,
         instance_specific: str,
         third_party: str,
@@ -159,12 +156,11 @@ class Client:
         subscription_id: Optional[str],
         admins: List[UUID],
         allowed_aad_tenants: List[UUID],
-        enable_dotnet: List[str],
-        use_dotnet_agent_functions: bool,
         cli_app_id: str,
         auto_create_cli_app: bool,
         host_dotnet_on_windows: bool,
         enable_profiler: bool,
+        custom_domain: Optional[str],
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -173,12 +169,12 @@ class Client:
         self.owner = owner
         self.nsg_config = nsg_config
         self.app_zip = app_zip
-        self.app_net_zip = app_net_zip
         self.tools = tools
         self.instance_specific = instance_specific
         self.third_party = third_party
         self.create_registration = create_registration
         self.multi_tenant_domain = multi_tenant_domain
+        self.custom_domain = custom_domain
         self.upgrade = upgrade
         self.results: Dict = {
             "client_id": client_id,
@@ -195,8 +191,6 @@ class Client:
 
         self.arm_template = bicep_to_arm(bicep_template)
 
-        self.enable_dotnet = enable_dotnet
-        self.use_dotnet_agent_functions = use_dotnet_agent_functions
         self.cli_app_id = cli_app_id
         self.auto_create_cli_app = auto_create_cli_app
         self.host_dotnet_on_windows = host_dotnet_on_windows
@@ -307,49 +301,25 @@ class Client:
             "cli_password", object_id, self.get_subscription_id()
         )
 
-    def get_instance_urls(self) -> List[str]:
+    def get_instance_url(self) -> str:
         # The url to access the instance
         # This also represents the legacy identifier_uris of the application
         # registration
         if self.multi_tenant_domain:
-            return [
-                "https://%s/%s" % (self.multi_tenant_domain, name)
-                for name in [
-                    self.application_name,
-                    self.application_name + DOTNET_APPLICATION_SUFFIX,
-                ]
-            ]
+            return "https://%s/%s" % (self.multi_tenant_domain, self.application_name)
         else:
-            return [
-                "https://%s.azurewebsites.net" % name
-                for name in [
-                    self.application_name,
-                    self.application_name + DOTNET_APPLICATION_SUFFIX,
-                ]
-            ]
+            return "https://%s.azurewebsites.net" % self.application_name
 
-    def get_identifier_urls(self) -> List[str]:
+    def get_identifier_url(self) -> str:
         # This is used to identify the application registration via the
         # identifier_uris field.  Depending on the environment this value needs
         # to be from an approved domain The format of this value is derived
         # from the default value proposed by azure when creating an application
         # registration api://{guid}/...
         if self.multi_tenant_domain:
-            return [
-                "api://%s/%s" % (self.multi_tenant_domain, name)
-                for name in [
-                    self.application_name,
-                    self.application_name + DOTNET_APPLICATION_SUFFIX,
-                ]
-            ]
+            return "api://%s/%s" % (self.multi_tenant_domain, self.application_name)
         else:
-            return [
-                "api://%s.azurewebsites.net" % name
-                for name in [
-                    self.application_name,
-                    self.application_name + DOTNET_APPLICATION_SUFFIX,
-                ]
-            ]
+            return "api://%s.azurewebsites.net" % self.application_name
 
     def get_signin_audience(self) -> str:
         # https://docs.microsoft.com/en-us/azure/active-directory/develop/supported-accounts-validation
@@ -520,7 +490,7 @@ class Client:
         # find any identifier URIs that need updating
         identifier_uris: List[str] = app["identifierUris"]
         updated_identifier_uris = list(
-            set(identifier_uris) | set(self.get_identifier_urls())
+            set(identifier_uris) | set([self.get_identifier_url()])
         )
         if len(updated_identifier_uris) > len(identifier_uris):
             update_properties["identifierUris"] = updated_identifier_uris
@@ -567,7 +537,7 @@ class Client:
 
         params = {
             "displayName": self.application_name,
-            "identifierUris": self.get_identifier_urls(),
+            "identifierUris": [self.get_identifier_url()],
             "signInAudience": self.get_signin_audience(),
             "appRoles": app_roles,
             "api": {
@@ -589,10 +559,7 @@ class Client:
                     "enableAccessTokenIssuance": False,
                     "enableIdTokenIssuance": True,
                 },
-                "redirectUris": [
-                    f"{url}/.auth/login/aad/callback"
-                    for url in self.get_instance_urls()
-                ],
+                "redirectUris": [f"{self.get_instance_url()}/.auth/login/aad/callback"],
             },
             "requiredResourceAccess": [
                 {
@@ -668,8 +635,23 @@ class Client:
             "%Y-%m-%dT%H:%M:%SZ"
         )
 
-        app_func_audiences = self.get_identifier_urls().copy()
-        app_func_audiences.extend(self.get_instance_urls())
+        app_func_audiences = [self.get_identifier_url()]
+        app_func_audiences.extend([self.get_instance_url()])
+
+        # Add --custom_domain value to Allowed token audiences setting
+        if self.custom_domain:
+
+            if self.multi_tenant_domain:
+                root_domain = self.multi_tenant_domain
+            else:
+                root_domain = "%s.azurewebsites.net" % self.application_name
+
+            custom_domains = [
+                "api://%s/%s" % (root_domain, self.custom_domain.split(".")[0]),
+                "https://%s/%s" % (root_domain, self.custom_domain.split(".")[0]),
+            ]
+
+            app_func_audiences.extend(custom_domains)
 
         if self.multi_tenant_domain:
             # clear the value in the Issuer Url field:
@@ -700,7 +682,6 @@ class Client:
             "signedExpiry": {"value": expiry},
             "multi_tenant_domain": multi_tenant_domain,
             "workbookData": {"value": self.workbook_data},
-            "use_dotnet_agent_functions": {"value": self.use_dotnet_agent_functions},
             "enable_remote_debugging": {"value": self.host_dotnet_on_windows},
             "enable_profiler": {"value": self.enable_profiler},
         }
@@ -1122,44 +1103,6 @@ class Client:
                                 "functionapp",
                                 "publish",
                                 self.application_name,
-                                "--python",
-                                "--no-build",
-                            ],
-                            env=dict(os.environ, CLI_DEBUG="1"),
-                            cwd=tmpdirname,
-                        )
-                        return
-                    except subprocess.CalledProcessError as err:
-                        error = err
-                        if i + 1 < max_tries:
-                            logger.debug("func failure error: %s", err)
-                            logger.warning(
-                                "function failed to deploy, waiting 60 "
-                                "seconds and trying again"
-                            )
-                            time.sleep(60)
-                if error is not None:
-                    raise error
-
-    def deploy_dotnet_app(self) -> None:
-        logger.info("deploying function app %s ", self.app_net_zip)
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            with zipfile.ZipFile(self.app_net_zip, "r") as zip_ref:
-                func = shutil.which("func")
-                assert func is not None
-
-                zip_ref.extractall(tmpdirname)
-                error: Optional[subprocess.CalledProcessError] = None
-                max_tries = 5
-                for i in range(max_tries):
-                    try:
-                        subprocess.check_output(
-                            [
-                                func,
-                                "azure",
-                                "functionapp",
-                                "publish",
-                                self.application_name + DOTNET_APPLICATION_SUFFIX,
                                 "--no-build",
                                 "--dotnet-version",
                                 "7.0",
@@ -1179,99 +1122,6 @@ class Client:
                             time.sleep(60)
                 if error is not None:
                     raise error
-
-    def enable_dotnet_func(self) -> None:
-        if self.enable_dotnet:
-
-            def expand_agent(f: str) -> List[str]:
-                # 'agent' is permitted as a shortcut for the agent functions
-                if f == "agent":
-                    return DOTNET_AGENT_FUNCTIONS
-                else:
-                    return [f]
-
-            enable_dotnet = itertools.chain.from_iterable(
-                map(expand_agent, self.enable_dotnet)
-            )
-
-            python_settings = []
-            dotnet_settings = []
-
-            for function_name in enable_dotnet:
-                format_name = function_name.split("_")
-                dotnet_name = "".join(x.title() for x in format_name)
-                # keep the python versions of http function to allow the service to be backward compatible
-                # with older version of the CLI and the agents
-                if function_name.startswith("queue_") or function_name.startswith(
-                    "timer_"
-                ):
-                    logger.info(f"disabling PYTHON function: {function_name}")
-                    disable_python = "1"
-                else:
-                    logger.info(f"enabling PYTHON function: {function_name}")
-                    disable_python = "0"
-
-                python_settings.append(
-                    f"AzureWebJobs.{function_name}.Disabled={disable_python}"
-                )
-
-                # enable dotnet function
-                logger.info(f"enabling DOTNET function: {dotnet_name}")
-                dotnet_settings.append(f"AzureWebJobs.{dotnet_name}.Disabled=0")
-
-            func = shutil.which("az")
-            assert func is not None
-
-            max_tries = 5
-            error: Optional[subprocess.CalledProcessError] = None
-            for i in range(max_tries):
-                try:
-                    logger.info("updating Python settings")
-                    subprocess.check_output(
-                        [
-                            func,
-                            "functionapp",
-                            "config",
-                            "appsettings",
-                            "set",
-                            "--name",
-                            self.application_name,
-                            "--resource-group",
-                            self.resource_group,
-                            "--settings",
-                        ]
-                        + python_settings,
-                        env=dict(os.environ, CLI_DEBUG="1"),
-                    )
-                    logger.info("updating .NET settings")
-                    subprocess.check_output(
-                        [
-                            func,
-                            "functionapp",
-                            "config",
-                            "appsettings",
-                            "set",
-                            "--name",
-                            self.application_name + DOTNET_APPLICATION_SUFFIX,
-                            "--resource-group",
-                            self.resource_group,
-                            "--settings",
-                        ]
-                        + dotnet_settings,
-                        env=dict(os.environ, CLI_DEBUG="1"),
-                    )
-                    break
-                except subprocess.CalledProcessError as err:
-                    error = err
-                    if i + 1 < max_tries:
-                        logger.debug("func failure error: %s", err)
-                        logger.warning(
-                            "unable to update settings, waiting 60 seconds and trying again"
-                        )
-                        time.sleep(60)
-
-            if error is not None:
-                raise error
 
     def update_registration(self) -> None:
         if not self.create_registration:
@@ -1315,6 +1165,13 @@ def arg_file(arg: str) -> str:
     return arg
 
 
+def lower_case(arg: str) -> str:
+    uppercase_check = any(i.isupper() for i in arg)
+    if uppercase_check:
+        raise Exception(UPPERCASE_NAME_ERROR)
+    return arg
+
+
 def main() -> None:
     rbac_only_states = [
         ("check_region", Client.check_region),
@@ -1333,17 +1190,15 @@ def main() -> None:
         ("instance-specific-setup", Client.upload_instance_setup),
         ("third-party", Client.upload_third_party),
         ("api", Client.deploy_app),
-        ("dotnet-api", Client.deploy_dotnet_app),
         ("export_appinsights", Client.add_log_export),
         ("update_registration", Client.update_registration),
-        ("enable_dotnet", Client.enable_dotnet_func),
     ]
 
     formatter = argparse.ArgumentDefaultsHelpFormatter
     parser = argparse.ArgumentParser(formatter_class=formatter)
     parser.add_argument("location")
     parser.add_argument("resource_group")
-    parser.add_argument("application_name")
+    parser.add_argument("application_name", type=lower_case)
     parser.add_argument("owner")
     parser.add_argument("nsg_config")
     parser.add_argument(
@@ -1362,12 +1217,6 @@ def main() -> None:
         "--app-zip",
         type=arg_file,
         default="api-service.zip",
-        help="(default: %(default)s)",
-    )
-    parser.add_argument(
-        "--app-net-zip",
-        type=arg_file,
-        default="api-service-net.zip",
         help="(default: %(default)s)",
     )
     parser.add_argument(
@@ -1448,20 +1297,6 @@ def main() -> None:
         help="Set additional AAD tenants beyond the tenant the app is deployed in",
     )
     parser.add_argument(
-        "--enable_dotnet",
-        type=str,
-        nargs="+",
-        default=[],
-        help="Provide a space-seperated list of python function names to disable "
-        "their functions and enable corresponding dotnet functions in the Azure "
-        "Function App deployment",
-    )
-    parser.add_argument(
-        "--use_dotnet_agent_functions",
-        action="store_true",
-        help="Tell the OneFuzz agent to use the dotnet endpoint",
-    )
-    parser.add_argument(
         "--cli_app_id",
         type=str,
         default="72f1562a-8c0c-41ea-beb9-fa2b71c80134",
@@ -1484,6 +1319,13 @@ def main() -> None:
         action="store_true",
         help="Enable CPU and memory profiler in dotnet Azure Function",
     )
+
+    parser.add_argument(
+        "--custom_domain",
+        type=str,
+        help="Use a custom domain name for your Azure Function and CLI endpoint",
+    )
+
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -1499,7 +1341,6 @@ def main() -> None:
         client_id=args.client_id,
         client_secret=args.client_secret,
         app_zip=args.app_zip,
-        app_net_zip=args.app_net_zip,
         tools=args.tools,
         instance_specific=args.instance_specific,
         third_party=args.third_party,
@@ -1513,12 +1354,11 @@ def main() -> None:
         subscription_id=args.subscription_id,
         admins=args.set_admins,
         allowed_aad_tenants=args.allowed_aad_tenants or [],
-        enable_dotnet=args.enable_dotnet,
-        use_dotnet_agent_functions=args.use_dotnet_agent_functions,
         cli_app_id=args.cli_app_id,
         auto_create_cli_app=args.auto_create_cli_app,
         host_dotnet_on_windows=args.host_dotnet_on_windows,
         enable_profiler=args.enable_profiler,
+        custom_domain=args.custom_domain,
     )
     if args.verbose:
         level = logging.DEBUG
@@ -1528,17 +1368,6 @@ def main() -> None:
     logging.basicConfig(level=level)
 
     logging.getLogger("deploy").setLevel(logging.INFO)
-
-    if args.use_dotnet_agent_functions:
-        # validate that the agent functions are actually enabled
-        if not (
-            "agent" in args.enable_dotnet
-            or all(map(lambda f: f in args.enable_dotnet, DOTNET_AGENT_FUNCTIONS))
-        ):
-            logger.error(
-                "If --use_dotnet_agent_functions is set, all agent functions must be enabled (--enable_dotnet agent)."
-            )
-            sys.exit(1)
 
     if args.rbac_only:
         logger.warning(

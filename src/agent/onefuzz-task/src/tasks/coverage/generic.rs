@@ -288,7 +288,7 @@ impl<'a> TaskContext<'a> {
             try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
                 .await?;
 
-        let expand = Expand::new()
+        let expand = Expand::new(&self.config.common.machine_identity)
             .machine_id()
             .await?
             .input_path(input)
@@ -371,7 +371,7 @@ impl<'a> TaskContext<'a> {
                 .debuginfo
                 .lock()
                 .map_err(|e| anyhow::format_err!("{}", e))?;
-            self.coverage.source_coverage(&mut *debuginfo)?
+            self.coverage.source_coverage(&mut debuginfo)?
         };
         let text = serde_json::to_string(&src_coverage).context("serializing source coverage")?;
         fs::write(&path, &text)
