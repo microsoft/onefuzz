@@ -7,6 +7,7 @@ use std::process::Command;
 use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use tokio::fs;
+use uuid::Uuid;
 
 use crate::work::*;
 
@@ -36,11 +37,17 @@ impl IReboot for Reboot {
     }
 }
 
-pub struct Reboot;
+pub struct Reboot {
+    machine_id: Uuid,
+}
 
 impl Reboot {
+    pub fn new(machine_id: Uuid) -> Self {
+        Self { machine_id }
+    }
+
     pub async fn save_context(&self, ctx: RebootContext) -> Result<()> {
-        let path = reboot_context_path()?;
+        let path = reboot_context_path(self.machine_id)?;
 
         info!("saving reboot context to: {}", path.display());
 
@@ -56,7 +63,7 @@ impl Reboot {
 
     pub async fn load_context(&self) -> Result<Option<RebootContext>> {
         use std::io::ErrorKind;
-        let path = reboot_context_path()?;
+        let path = reboot_context_path(self.machine_id)?;
 
         info!("checking for saved reboot context: {}", path.display());
 
@@ -127,8 +134,8 @@ impl RebootContext {
     }
 }
 
-fn reboot_context_path() -> Result<PathBuf> {
-    Ok(onefuzz::fs::onefuzz_root()?.join("reboot_context.json"))
+fn reboot_context_path(machine_id: Uuid) -> Result<PathBuf> {
+    Ok(onefuzz::fs::onefuzz_root()?.join(format!("reboot_context_{}.json", machine_id)))
 }
 
 #[cfg(test)]
