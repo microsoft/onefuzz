@@ -16,7 +16,7 @@
     },
     "applicationInsights": {
       "samplingSettings": {
-        "isEnabled": true,
+        "isEnabled": false,
         "InitialSamplingPercentage": 100,
         "maxTelemetryItemsPerSecond": 20,
         "excludedTypes": "Exception"
