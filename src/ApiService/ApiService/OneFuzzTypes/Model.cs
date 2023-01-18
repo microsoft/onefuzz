@@ -363,6 +363,7 @@ public record InstanceConfig
         "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
         "Standard_B2s",
         false
+        ) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {
         if (value is not null && value.Count == 0) {
