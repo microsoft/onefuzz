@@ -71,6 +71,10 @@ class Libfuzzer(Command):
         function_allowlist: Optional[str] = None,
         module_allowlist: Optional[str] = None,
         source_allowlist: Optional[str] = None,
+        analyzer_exe: Optional[str] = None,
+        analyzer_options: Optional[List[str]] = None,
+        analyzer_env: Optional[Dict[str, str]] = None,
+        tools: Optional[Container] = None,
     ) -> None:
         target_options = target_options or []
 
@@ -251,6 +255,43 @@ class Libfuzzer(Command):
             minimized_stack_depth=minimized_stack_depth,
         )
 
+        if analyzer_exe is not None:
+            self.logger.info("creating custom analysis")
+
+            if tools is None:
+                self.logger.error(
+                    "tools container cannot be empty when specifying a custom analyzer"
+                )
+                return None
+
+            analysis_containers = [
+                (ContainerType.setup, containers[ContainerType.setup]),
+                (ContainerType.tools, tools),
+                (ContainerType.analysis, containers[ContainerType.analysis]),
+                (ContainerType.crashes, containers[ContainerType.crashes]),
+            ]
+
+            self.onefuzz.tasks.create(
+                job.job_id,
+                TaskType.generic_analysis,
+                target_exe,
+                analysis_containers,
+                duration=duration,
+                pool_name=pool_name,
+                vm_count=vm_count,
+                reboot_after_setup=reboot_after_setup,
+                target_options=target_options,
+                target_env=target_env,
+                analyzer_exe=analyzer_exe,
+                analyzer_options=analyzer_options,
+                analyzer_env=analyzer_env,
+                tags=tags,
+                prereq_tasks=[fuzzer_task.task_id],
+                colocate=colocate_all_tasks or colocate_secondary_tasks,
+                debug=debug,
+                target_timeout=target_timeout,
+            )
+
     def basic(
         self,
         project: str,
@@ -289,6 +330,10 @@ class Libfuzzer(Command):
         function_allowlist: Optional[File] = None,
         module_allowlist: Optional[File] = None,
         source_allowlist: Optional[File] = None,
+        analyzer_exe: Optional[str] = "powershell.exe",
+        analyzer_options: Optional[List[str]] = None,
+        analyzer_env: Optional[Dict[str, str]] = None,
+        tools: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -346,6 +391,9 @@ class Libfuzzer(Command):
             self.onefuzz.containers.get(readonly_inputs)
             helper.containers[ContainerType.readonly_inputs] = readonly_inputs
 
+        if analyzer_exe is not None:
+            helper.define_containers(ContainerType.analysis)
+
         helper.create_containers()
         helper.setup_notifications(notification_config)
 
@@ -402,6 +450,10 @@ class Libfuzzer(Command):
             function_allowlist=function_allowlist_blob_name,
             module_allowlist=module_allowlist_blob_name,
             source_allowlist=source_allowlist_blob_name,
+            analyzer_exe=analyzer_exe,
+            analyzer_options=analyzer_options,
+            analyzer_env=analyzer_env,
+            tools=tools,
         )
 
         self.logger.info("done creating tasks")

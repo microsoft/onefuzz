@@ -209,8 +209,8 @@ pub struct DynamicConfig {
 }
 
 impl DynamicConfig {
-    pub async fn save(&self) -> Result<()> {
-        let path = Self::save_path()?;
+    pub async fn save(&self, machine_id: Uuid) -> Result<()> {
+        let path = Self::save_path(machine_id)?;
         let dir = path
             .parent()
             .ok_or(anyhow!("invalid dynamic config path"))?;
@@ -223,8 +223,8 @@ impl DynamicConfig {
         Ok(())
     }
 
-    pub async fn load() -> Result<Self> {
-        let path = Self::save_path()?;
+    pub async fn load(machine_id: Uuid) -> Result<Self> {
+        let path = Self::save_path(machine_id)?;
         let data = fs::read(&path)
             .await
             .with_context(|| format!("unable to load dynamic config: {}", path.display()))?;
@@ -233,10 +233,10 @@ impl DynamicConfig {
         Ok(ctx)
     }
 
-    fn save_path() -> Result<PathBuf> {
+    fn save_path(machine_id: Uuid) -> Result<PathBuf> {
         Ok(onefuzz::fs::onefuzz_root()?
             .join("etc")
-            .join("dynamic-config.json"))
+            .join(format!("dynamic-config-{}.json", machine_id)))
     }
 }
 
@@ -294,7 +294,7 @@ impl Registration {
             match response.error_for_status_with_body().await {
                 Ok(response) => {
                     let dynamic_config: DynamicConfig = response.json().await?;
-                    dynamic_config.save().await?;
+                    dynamic_config.save(machine_id).await?;
                     return Ok(Self {
                         config,
                         dynamic_config,
@@ -317,8 +317,8 @@ impl Registration {
     }
 
     pub async fn load_existing(config: StaticConfig) -> Result<Self> {
-        let dynamic_config = DynamicConfig::load().await?;
         let machine_id = config.machine_identity.machine_id;
+        let dynamic_config = DynamicConfig::load(machine_id).await?;
         let registration = Self {
             config,
             dynamic_config,
@@ -355,7 +355,7 @@ impl Registration {
             .context("Registration.renew request body")?;
 
         let dynamic_config: DynamicConfig = response.json().await?;
-        dynamic_config.save().await?;
+        dynamic_config.save(self.machine_id).await?;
 
         Ok(Self {
             dynamic_config,
