@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Service: Update Azure Cli [#2733](https://github.com/microsoft/onefuzz/pull/2733)
 * Service: Truncate Large Webhook Events [#2742](https://github.com/microsoft/onefuzz/pull/2742)
+* Service: Wrap fallible ORM functions in try/catch [#2745](https://github.com/microsoft/onefuzz/pull/2745)
 ### Fixed
 * Agent: Fixed Mulit-Agent Issue - Added `machine_id` to config_path and failure_path of the Agent [#2731](https://github.com/microsoft/onefuzz/pull/2731)
 * Service: Fixed Proxy Table Query [#2743](https://github.com/microsoft/onefuzz/pull/2743)
