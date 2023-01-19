@@ -4,7 +4,7 @@ use std::{panic, sync::Once};
 
 fn panic_hook(info: &panic::PanicInfo) {
     let err = anyhow!("supervisor panicked: {}\n{:?}", info, Backtrace::new());
-    if let Err(err) = save_failure(&err) {
+    if let Err(err) = save_failure(&err, uuid::Uuid::nil()) {
         error!("unable to write panic log: {:?}", err);
     }
 }
