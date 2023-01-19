@@ -64,17 +64,21 @@ namespace ApiService.OneFuzzLib.Orm {
         /// Inserts the entity into table storage.
         /// If successful, updates the ETag of the passed-in entity.
         public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(T entity) {
-            var tableClient = await GetTableClient(typeof(T).Name);
-            var tableEntity = _entityConverter.ToTableEntity(entity);
-            var response = await tableClient.AddEntityAsync(tableEntity);
+            try {
+                var tableClient = await GetTableClient(typeof(T).Name);
+                var tableEntity = _entityConverter.ToTableEntity(entity);
+                var response = await tableClient.AddEntityAsync(tableEntity);
 
 
-            if (response.IsError) {
-                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
-            } else {
-                // update ETag on success
-                entity.ETag = response.Headers.ETag;
-                return ResultVoid<(HttpStatusCode, string)>.Ok();
+                if (response.IsError) {
+                    return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
+                } else {
+                    // update ETag on success
+                    entity.ETag = response.Headers.ETag;
+                    return ResultVoid<(HttpStatusCode, string)>.Ok();
+                }
+            } catch (RequestFailedException ex) {
+                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)ex.Status, ex.Message));
             }
         }
 
@@ -100,16 +104,20 @@ namespace ApiService.OneFuzzLib.Orm {
                 throw new ArgumentException("ETag must be set when updating an entity", nameof(entity));
             }
 
-            var tableClient = await GetTableClient(typeof(T).Name);
-            var tableEntity = _entityConverter.ToTableEntity(entity);
+            try {
+                var tableClient = await GetTableClient(typeof(T).Name);
+                var tableEntity = _entityConverter.ToTableEntity(entity);
 
-            var response = await tableClient.UpdateEntityAsync(tableEntity, entity.ETag.Value);
-            if (response.IsError) {
-                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
-            } else {
-                // update ETag on success
-                entity.ETag = response.Headers.ETag;
-                return ResultVoid<(HttpStatusCode, string)>.Ok();
+                var response = await tableClient.UpdateEntityAsync(tableEntity, entity.ETag.Value);
+                if (response.IsError) {
+                    return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
+                } else {
+                    // update ETag on success
+                    entity.ETag = response.Headers.ETag;
+                    return ResultVoid<(HttpStatusCode, string)>.Ok();
+                }
+            } catch (RequestFailedException ex) {
+                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)ex.Status, ex.Message));
             }
         }
 
@@ -127,13 +135,17 @@ namespace ApiService.OneFuzzLib.Orm {
         }
 
         public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Delete(T entity) {
-            var tableClient = await GetTableClient(typeof(T).Name);
-            var tableEntity = _entityConverter.ToTableEntity(entity);
-            var response = await tableClient.DeleteEntityAsync(tableEntity.PartitionKey, tableEntity.RowKey);
-            if (response.IsError) {
-                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
-            } else {
-                return ResultVoid<(HttpStatusCode, string)>.Ok();
+            try {
+                var tableClient = await GetTableClient(typeof(T).Name);
+                var tableEntity = _entityConverter.ToTableEntity(entity);
+                var response = await tableClient.DeleteEntityAsync(tableEntity.PartitionKey, tableEntity.RowKey);
+                if (response.IsError) {
+                    return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
+                } else {
+                    return ResultVoid<(HttpStatusCode, string)>.Ok();
+                }
+            } catch (RequestFailedException ex) {
+                return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)ex.Status, ex.Message));
             }
         }
 
@@ -150,13 +162,32 @@ namespace ApiService.OneFuzzLib.Orm {
             return QueryAsync(Query.TimeRange(min, max));
         }
 
-        public async Task<List<ResultVoid<(int, string)>>> BatchOperation(IAsyncEnumerable<T> entities, TableTransactionActionType actionType) {
-            var tableClient = await GetTableClient(typeof(T).Name);
-            var transactions = await entities.Select(e => new TableTransactionAction(actionType, _entityConverter.ToTableEntity(e))).ToListAsync();
-            var responses = await tableClient.SubmitTransactionAsync(transactions);
-            return responses.Value.Select(response =>
-                response.IsError ? ResultVoid<(int, string)>.Error((response.Status, response.ReasonPhrase)) : ResultVoid<(int, string)>.Ok()
-            ).ToList();
+        public async Task<ResultVoid<(int statusCode, string reason, int? failedTransactionIndex)>> BatchOperation(IAsyncEnumerable<T> entities, TableTransactionActionType actionType) {
+            try {
+                var tableClient = await GetTableClient(typeof(T).Name);
+                var transactions = await entities.Select(e => new TableTransactionAction(actionType, _entityConverter.ToTableEntity(e))).ToListAsync();
+                var responses = await tableClient.SubmitTransactionAsync(transactions);
+                var wrappingResponse = responses.GetRawResponse();
+                if (wrappingResponse.IsError) {
+                    return ResultVoid<(int, string, int?)>.Error((wrappingResponse.Status, wrappingResponse.ReasonPhrase, null));
+                }
+
+                var subTransactionFailures = responses.Value.Where(response => response.IsError);
+                if (subTransactionFailures.Any()) {
+                    var failedTransaction = subTransactionFailures.First();
+                    var failedTransactionIndex = responses.Value.ToList().IndexOf(failedTransaction);
+                    return ResultVoid<(int, string, int?)>.Error((failedTransaction.Status, failedTransaction.ReasonPhrase, failedTransactionIndex));
+                }
+
+                return ResultVoid<(int, string, int?)>.Ok();
+            } catch (RequestFailedException ex) {
+                int? failedTransactionIndex = null;
+                if (ex is TableTransactionFailedException ttfex) {
+                    failedTransactionIndex = ttfex.FailedTransactionActionIndex;
+                }
+
+                return ResultVoid<(int, string, int?)>.Error((ex.Status, ex.Message, failedTransactionIndex));
+            }
         }
 
 
