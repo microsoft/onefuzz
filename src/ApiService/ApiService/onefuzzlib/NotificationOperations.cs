@@ -21,33 +21,31 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         var notifications = GetNotifications(container);
         var hasNotifications = await notifications.AnyAsync();
 
-        if (!hasNotifications) {
-            return;
-        }
+        if (hasNotifications) {
+            var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
+            var done = new List<NotificationTemplate>();
+            await foreach (var notification in notifications) {
+                if (done.Contains(notification.Config)) {
+                    continue;
+                }
 
-        var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
-        var done = new List<NotificationTemplate>();
-        await foreach (var notification in notifications) {
-            if (done.Contains(notification.Config)) {
-                continue;
-            }
+                done.Add(notification.Config);
 
-            done.Add(notification.Config);
+                if (notification.Config is TeamsTemplate teamsTemplate) {
+                    await _context.Teams.NotifyTeams(teamsTemplate, container, filename, reportOrRegression!, notification.NotificationId);
+                }
 
-            if (notification.Config is TeamsTemplate teamsTemplate) {
-                await _context.Teams.NotifyTeams(teamsTemplate, container, filename, reportOrRegression!, notification.NotificationId);
-            }
+                if (reportOrRegression == null) {
+                    continue;
+                }
 
-            if (reportOrRegression == null) {
-                continue;
-            }
+                if (notification.Config is AdoTemplate adoTemplate) {
+                    await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, isLastRetryAttempt, notification.NotificationId);
+                }
 
-            if (notification.Config is AdoTemplate adoTemplate) {
-                await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, isLastRetryAttempt, notification.NotificationId);
-            }
-
-            if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {
-                await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression, notification.NotificationId);
+                if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {
+                    await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression, notification.NotificationId);
+                }
             }
         }
 
