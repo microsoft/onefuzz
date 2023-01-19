@@ -20,9 +20,8 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     public async Async.Task NewFiles(Container container, string filename, bool isLastRetryAttempt) {
         var notifications = GetNotifications(container);
         var hasNotifications = await notifications.AnyAsync();
-
+        var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
         if (hasNotifications) {
-            var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
             var done = new List<NotificationTemplate>();
             await foreach (var notification in notifications) {
                 if (done.Contains(notification.Config)) {
