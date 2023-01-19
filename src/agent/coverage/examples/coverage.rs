@@ -30,6 +30,8 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
 fn main() -> Result<()> {
     let args = Args::parse();
 
+    env_logger::init();
+
     let timeout = args
         .timeout
         .map(Duration::from_millis)
