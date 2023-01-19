@@ -184,13 +184,13 @@ class Client:
             "client_id": client_id,
             "client_secret": client_secret,
         }
-        if authority:
-            self.authority = authority
-        elif self.multi_tenant:
-            self.authority = COMMON_AUTHORITY
-        else:
-            self.authority = ONEFUZZ_CLI_AUTHORITY
-
+        # if authority:
+        #     self.authority = authority
+        # elif self.multi_tenant:
+        #     self.authority = COMMON_AUTHORITY
+        # else:
+        #     self.authority = ONEFUZZ_CLI_AUTHORITY
+        self.authority = authority
         self.migrations = migrations
         self.export_appinsights = export_appinsights
         self.admins = admins
@@ -312,7 +312,7 @@ class Client:
         # The url to access the instance
         # This also represents the legacy identifier_uris of the application
         # registration
-        if self.multi_tenant:
+        if self.tenant_domain:
             return "https://%s/%s" % (self.tenant_domain, self.application_name)
         else:
             return "https://%s.azurewebsites.net" % self.application_name
@@ -323,7 +323,7 @@ class Client:
         # to be from an approved domain The format of this value is derived
         # from the default value proposed by azure when creating an application
         # registration api://{guid}/...
-        if self.multi_tenant:
+        if self.tenant_domain:
             return "api://%s/%s" % (self.tenant_domain, self.application_name)
         else:
             return "api://%s.azurewebsites.net" % self.application_name
@@ -645,7 +645,7 @@ class Client:
         # Add --custom_domain value to Allowed token audiences setting
         if self.custom_domain:
 
-            if self.multi_tenant:
+            if self.tenant_domain:
                 root_domain = self.tenant_domain
             else:
                 root_domain = "%s.azurewebsites.net" % self.application_name
@@ -657,7 +657,7 @@ class Client:
 
             app_func_audiences.extend(custom_domains)
 
-        if self.multi_tenant:
+        if self.tenant_domain:
             # clear the value in the Issuer Url field:
             # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
             app_func_issuer = ""
@@ -1210,6 +1210,8 @@ def main() -> None:
     parser.add_argument("application_name", type=lower_case)
     parser.add_argument("owner")
     parser.add_argument("config")
+    parser.add_argument("tenant_domain")
+    parser.add_argument("authority")
     parser.add_argument(
         "--bicep-template",
         type=arg_file,
@@ -1278,24 +1280,24 @@ def main() -> None:
         action="store_true",
         help="enable appinsight log export",
     )
-    parser.add_argument(
-        "--tenant_domain",
-        type=str,
-        default=None,
-        help="specify tenant domain to authenticate to",
-    )
+    # parser.add_argument(
+    #     "--tenant_domain",
+    #     type=str,
+    #     default=None,
+    #     help="specify tenant domain to authenticate to",
+    # )
     parser.add_argument(
         "--multi_tenant",
         type=bool,
         default=False,
         help="specify if deployment is multi-tenant",
     )
-    parser.add_argument(
-        "--authority",
-        type=str,
-        default=None,
-        help="specify authority",
-    )
+    # parser.add_argument(
+    #     "--authority",
+    #     type=str,
+    #     default=None,
+    #     help="specify authority",
+    # )
     parser.add_argument(
         "--subscription_id",
         type=str,

@@ -186,11 +186,11 @@ class Backend:
             scopes = [
                 f"api://{self.config.tenant_domain}/{endpoint}/.default",
             ]
-        else:
-            netloc = urlparse(self.config.endpoint).netloc
-            scopes = [
-                f"api://{netloc}/.default",
-            ]
+        # else:
+        #     netloc = urlparse(self.config.endpoint).netloc
+        #     scopes = [
+        #         f"api://{netloc}/.default",
+        #     ]
 
         if self.client_secret:
             return self.access_token_from_client_secret(scopes)
