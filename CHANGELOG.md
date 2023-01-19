@@ -6,14 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 6.3.0
 ### Added 
-* Adds Optional Analysis Task to Libfuzzer Template [#2748](https://github.com/microsoft/onefuzz/pull/2748)
+* Service: Add Optional Analysis Task to Libfuzzer Template [#2748](https://github.com/microsoft/onefuzz/pull/2748)
+* Agent: Use `elsa` for improved interface with `debuggable_module::Loader` [#2703](https://github.com/microsoft/onefuzz/pull/2703)
 ### Changed
 * Service: Update Azure Cli [#2733](https://github.com/microsoft/onefuzz/pull/2733)
 * Service: Truncate Large Webhook Events [#2742](https://github.com/microsoft/onefuzz/pull/2742)
 * Service: Wrap fallible ORM functions in try/catch [#2745](https://github.com/microsoft/onefuzz/pull/2745)
+* Agent/Supervisor/Proxy: Updated third-party Rust dependencies. [#2690](https://github.com/microsoft/onefuzz/pull/2690), [#2704](https://github.com/microsoft/onefuzz/pull/2704), [#2744](https://github.com/microsoft/onefuzz/pull/2744)
 ### Fixed
 * Agent: Fixed Mulit-Agent Issue - Added `machine_id` to config_path and failure_path of the Agent [#2731](https://github.com/microsoft/onefuzz/pull/2731)
 * Service: Fixed Proxy Table Query [#2743](https://github.com/microsoft/onefuzz/pull/2743)
+* Service: Fix Notification Logic [#2751](https://github.com/microsoft/onefuzz/pull/2751)
 
 ## 6.2.0
 ### Added
