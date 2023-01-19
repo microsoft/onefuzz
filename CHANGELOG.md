@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Agent: Fixed Mulit-Agent Issue - Added `machine_id` to config_path and failure_path of the Agent [#2731](https://github.com/microsoft/onefuzz/pull/2731)
 * Service: Fixed Proxy Table Query [#2743](https://github.com/microsoft/onefuzz/pull/2743)
+
 ## 6.2.0
 ### Added
 * Agent: Added more into-JSON coverage conversions [#2725](https://github.com/microsoft/onefuzz/pull/2725)
