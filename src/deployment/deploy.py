@@ -50,6 +50,7 @@ from deploylib.configuration import (
     update_allowed_aad_tenants,
     update_endpoint_params,
     update_nsg,
+    NsgRule,
 )
 from deploylib.data_migration import migrate
 from deploylib.registration import (
@@ -202,6 +203,8 @@ class Client:
             "authority": self.authority,
         }
 
+        self.rules: List[NsgRule] = []
+
         machine = platform.machine()
         system = platform.system()
 
@@ -306,10 +309,11 @@ class Client:
         # The url to access the instance
         # This also represents the legacy identifier_uris of the application
         # registration
-        if self.tenant_domain:
-            return "https://%s/%s" % (self.tenant_domain, self.application_name)
-        else:
-            return "https://%s.azurewebsites.net" % self.application_name
+
+        # if self.tenant_domain:
+        return "https://%s/%s" % (self.tenant_domain, self.application_name)
+        # else:
+        #     return "https://%s.azurewebsites.net" % self.application_name
 
     def get_identifier_url(self) -> str:
         # This is used to identify the application registration via the
@@ -317,10 +321,11 @@ class Client:
         # to be from an approved domain The format of this value is derived
         # from the default value proposed by azure when creating an application
         # registration api://{guid}/...
-        if self.tenant_domain:
-            return "api://%s/%s" % (self.tenant_domain, self.application_name)
-        else:
-            return "api://%s.azurewebsites.net" % self.application_name
+
+        # if self.tenant_domain:
+        return "api://%s/%s" % (self.tenant_domain, self.application_name)
+        # else:
+        #     return "api://%s.azurewebsites.net" % self.application_name
 
     def get_signin_audience(self) -> str:
         # https://docs.microsoft.com/en-us/azure/active-directory/develop/supported-accounts-validation
@@ -417,13 +422,16 @@ class Client:
                     OnefuzzAppRole.CliClient,
                     self.get_subscription_id(),
                 )
-                if self.multi_tenant:
-                    authority = COMMON_AUTHORITY
-                else:
-                    authority = app_info.authority
+
+                if self.authority == "":
+                    if self.multi_tenant:
+                        self.authority = COMMON_AUTHORITY
+                    else:
+                        self.authority = app_info.authority
+
                 self.cli_config = {
                     "client_id": app_info.client_id,
-                    "authority": authority,
+                    "authority": self.authority,
                 }
             else:
                 logger.error(
@@ -435,14 +443,16 @@ class Client:
         else:
             onefuzz_cli_app = cli_app
             authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
-            if self.multi_tenant:
-                authority = COMMON_AUTHORITY
-            else:
-                tenant_id = get_tenant_id(self.get_subscription_id())
-                authority = "https://login.microsoftonline.com/%s" % tenant_id
+            if self.authority == "":
+                if self.multi_tenant:
+                    self.authority = COMMON_AUTHORITY
+                else:
+                    tenant_id = get_tenant_id(self.get_subscription_id())
+                    self.authority = "https://login.microsoftonline.com/%s" % tenant_id
+
             self.cli_config = {
                 "client_id": onefuzz_cli_app["appId"],
-                "authority": authority,
+                "authority": self.authority,
             }
 
             # ensure replyURLs is set properly
@@ -776,13 +786,7 @@ class Client:
         table_service = TableService(account_name=name, account_key=key)
         migrate(table_service, self.migrations)
 
-    def set_instance_config(self) -> None:
-        name = self.results["deploy"]["func_name"]["value"]
-        key = self.results["deploy"]["func_key"]["value"]
-        tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
-        table_service = TableService(account_name=name, account_key=key)
-
-        config_client = InstanceConfigClient(table_service, self.application_name)
+    def parse_config(self) -> None:
 
         if self.config:
             logger.info("setting instance config: %s", self.config)
@@ -792,7 +796,7 @@ class Client:
 
             try:
                 config = Config(config_template)
-                rules = parse_rules(config)
+                self.rules = parse_rules(config)
             except Exception as ex:
                 logging.info(
                     "An Exception was encountered while parsing config file: %s", ex
@@ -803,21 +807,29 @@ class Client:
                     + " { 'config': { 'allowed_ips': [], 'allowed_service_tags': [] } }"
                 )
 
-            update_nsg(config_client, rules)
+        self.tenant_domain = (
+            self.tenant_domain if self.tenant_domain != "" else config.tenant_domain
+        )
+        self.cli_app_id = (
+            self.cli_app_id if self.cli_app_id != "" else config.cli_client_id
+        )
 
-            authority = self.authority if self.authority == "" else config.authority
-            tenant_domain = (
-                self.tenant_domain if self.tenant_domain == "" else config.tenant_domain
-            )
-            client_id = (
-                self.cli_app_id if self.cli_app_id == "" else config.cli_client_id
-            )
-            update_endpoint_params(
-                config_client,
-                authority,
-                tenant_domain,
-                client_id,
-            )
+    def set_instance_config(self) -> None:
+        name = self.results["deploy"]["func_name"]["value"]
+        key = self.results["deploy"]["func_key"]["value"]
+        tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
+        table_service = TableService(account_name=name, account_key=key)
+
+        config_client = InstanceConfigClient(table_service, self.application_name)
+
+        update_nsg(config_client, self.rules)
+
+        update_endpoint_params(
+            config_client,
+            self.authority,
+            self.tenant_domain,
+            self.cli_app_id,
+        )
 
         if self.admins:
             update_admins(config_client, self.admins)
@@ -1156,9 +1168,6 @@ class Client:
         if "client_secret" in self.cli_config:
             cmd += ["--client_secret", "YOUR_CLIENT_SECRET_HERE"]
 
-        if self.tenant_domain:
-            cmd += ["--tenant_domain", str(self.tenant_domain)]
-
         as_str = " ".join(cmd)
 
         logger.info(f"Update your CLI config via: {as_str}")
@@ -1186,7 +1195,10 @@ def lower_case(arg: str) -> str:
 def main() -> None:
     rbac_only_states = [
         ("check_region", Client.check_region),
-        ("rbac", Client.setup_rbac),
+        (
+            "parse_config",
+            Client.parse_config,
+        )("rbac", Client.setup_rbac),
         ("eventgrid", Client.remove_eventgrid),
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),

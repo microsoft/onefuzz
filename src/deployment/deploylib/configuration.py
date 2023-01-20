@@ -49,7 +49,7 @@ class InstanceConfigClient:
 
 
 class Config:
-    authority: str
+    # authority: str
     tenant_domain: str
     cli_client_id: str
     allowed_ips: List[str]
@@ -113,15 +113,15 @@ class Config:
 
     def parse_endpoint_params(self, config: Any) -> None:
 
-        if "authority" not in config:
-            raise Exception(
-                "Authority not provided as valid key. Please Provide Valid Config."
-            )
+        # if "authority" not in config:
+        #     raise Exception(
+        #         "Authority not provided as valid key. Please Provide Valid Config."
+        #     )
 
-        if not isinstance(config["authority"], str) or config["authority"] == "":
-            raise Exception(
-                "Authority is not a string. Please Provide Valid Authority."
-            )
+        # if not isinstance(config["authority"], str) or config["authority"] == "":
+        #     raise Exception(
+        #         "Authority is not a string. Please Provide Valid Authority."
+        #     )
 
         if "tenant_domain" not in config:
             raise Exception(
