@@ -149,7 +149,6 @@ class Config:
                 "Client Id is not a string. Please Provide Valid Client Id."
             )
 
-        self.authority = config["authority"]
         self.tenant_domain = config["tenant_domain"]
         self.cli_client_id = config["cli_client_id"]
 
