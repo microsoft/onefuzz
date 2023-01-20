@@ -190,6 +190,7 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
                 null,
                 null,
                 null,
+                null,
                 null
                 );
 
