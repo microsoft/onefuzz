@@ -1195,10 +1195,8 @@ def lower_case(arg: str) -> str:
 def main() -> None:
     rbac_only_states = [
         ("check_region", Client.check_region),
-        (
-            "parse_config",
-            Client.parse_config,
-        )("rbac", Client.setup_rbac),
+        ("parse_config", Client.parse_config),
+        ("rbac", Client.setup_rbac),
         ("eventgrid", Client.remove_eventgrid),
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
