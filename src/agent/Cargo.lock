@@ -14,7 +14,7 @@ version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9ecd88a8c8378ca913a680cd98f0f13ac67383d35993f86c90a70e3f137816b"
 dependencies = [
- "gimli",
+ "gimli 0.26.2",
 ]
 
 [[package]]
@@ -787,7 +787,7 @@ dependencies = [
  "anyhow",
  "clap 4.0.26",
  "elsa",
- "gimli",
+ "gimli 0.27.0",
  "goblin 0.6.0",
  "iced-x86",
  "log",
@@ -1302,6 +1302,16 @@ name = "gimli"
 version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22030e2c5a68ec659fde1e949a745124b48e6fa8b045b7ed5bd1fe4ccc5c4e5d"
+dependencies = [
+ "fallible-iterator",
+ "stable_deref_trait",
+]
+
+[[package]]
+name = "gimli"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dec7af912d60cdbd3677c1af9352ebae6fb8394d165568a2234df0fa00f87793"
 dependencies = [
  "fallible-iterator",
  "indexmap",
@@ -3412,7 +3422,7 @@ dependencies = [
  "elementtree 0.7.0",
  "fallible-iterator",
  "flate2",
- "gimli",
+ "gimli 0.26.2",
  "goblin 0.5.1",
  "lazy_static",
  "lazycell",
@@ -3443,7 +3453,7 @@ dependencies = [
  "elsa",
  "fallible-iterator",
  "flate2",
- "gimli",
+ "gimli 0.26.2",
  "goblin 0.6.0",
  "lazy_static",
  "lazycell",
