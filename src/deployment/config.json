@@ -1,4 +1,7 @@
 {
+    "authority": "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47",
+    "tenant_domain": "azurewebsites.net",
+    "cli_client_id": "72f1562a-8c0c-41ea-beb9-fa2b71c80134",
     "proxy_nsg_config": {
         "allowed_ips": [
             "*"

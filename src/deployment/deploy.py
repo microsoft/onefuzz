@@ -184,12 +184,6 @@ class Client:
             "client_id": client_id,
             "client_secret": client_secret,
         }
-        # if authority:
-        #     self.authority = authority
-        # elif self.multi_tenant:
-        #     self.authority = COMMON_AUTHORITY
-        # else:
-        #     self.authority = ONEFUZZ_CLI_AUTHORITY
         self.authority = authority
         self.migrations = migrations
         self.export_appinsights = export_appinsights
@@ -810,11 +804,19 @@ class Client:
                 )
 
             update_nsg(config_client, rules)
+
+            authority = self.authority if self.authority == "" else config.authority
+            tenant_domain = (
+                self.tenant_domain if self.tenant_domain == "" else config.tenant_domain
+            )
+            client_id = (
+                self.cli_app_id if self.cli_app_id == "" else config.cli_client_id
+            )
             update_endpoint_params(
                 config_client,
-                self.authority,
-                self.cli_app_id,
-                self.tenant_domain,
+                authority,
+                tenant_domain,
+                client_id,
             )
 
         if self.admins:
@@ -1210,8 +1212,6 @@ def main() -> None:
     parser.add_argument("application_name", type=lower_case)
     parser.add_argument("owner")
     parser.add_argument("config")
-    parser.add_argument("tenant_domain")
-    parser.add_argument("authority")
     parser.add_argument(
         "--bicep-template",
         type=arg_file,
@@ -1280,24 +1280,24 @@ def main() -> None:
         action="store_true",
         help="enable appinsight log export",
     )
-    # parser.add_argument(
-    #     "--tenant_domain",
-    #     type=str,
-    #     default=None,
-    #     help="specify tenant domain to authenticate to",
-    # )
+    parser.add_argument(
+        "--tenant_domain",
+        type=str,
+        default=None,
+        help="specify tenant domain to authenticate to",
+    )
     parser.add_argument(
         "--multi_tenant",
         type=bool,
         default=False,
         help="specify if deployment is multi-tenant",
     )
-    # parser.add_argument(
-    #     "--authority",
-    #     type=str,
-    #     default=None,
-    #     help="specify authority",
-    # )
+    parser.add_argument(
+        "--authority",
+        type=str,
+        default=None,
+        help="specify authority",
+    )
     parser.add_argument(
         "--subscription_id",
         type=str,

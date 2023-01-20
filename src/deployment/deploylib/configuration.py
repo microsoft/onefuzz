@@ -49,11 +49,15 @@ class InstanceConfigClient:
 
 
 class Config:
+    authority: str
+    tenant_domain: str
+    cli_client_id: str
     allowed_ips: List[str]
     allowed_service_tags: List[str]
 
     def __init__(self, config: Any):
         self.parse_nsg_json(config)
+        self.parse_endpoint_params(config)
 
     def parse_nsg_json(self, config: Any) -> None:
         if not isinstance(config, Dict):
@@ -106,6 +110,48 @@ class Config:
 
         self.allowed_ips = proxy_config["allowed_ips"]
         self.allowed_service_tags = proxy_config["allowed_service_tags"]
+
+    def parse_endpoint_params(self, config: Any) -> None:
+
+        if "authority" not in config:
+            raise Exception(
+                "Authority not provided as valid key. Please Provide Valid Config."
+            )
+
+        if not isinstance(config["authority"], str) or config["authority"] == "":
+            raise Exception(
+                "Authority is not a string. Please Provide Valid Authority."
+            )
+
+        if "tenant_domain" not in config:
+            raise Exception(
+                "Tenant Domain not provided as valid key. Please Provide Valid Config."
+            )
+
+        if (
+            not isinstance(config["tenant_domain"], str)
+            or config["tenant_domain"] == ""
+        ):
+            raise Exception(
+                "Tenant Domain is not a string. Please Provide Valid tenant_domain."
+            )
+
+        if "cli_client_id" not in config:
+            raise Exception(
+                "CLI Client Id not provided as valid key. Please Provide Valid Config."
+            )
+
+        if (
+            not isinstance(config["cli_client_id"], str)
+            or config["cli_client_id"] == ""
+        ):
+            raise Exception(
+                "Client Id is not a string. Please Provide Valid Client Id."
+            )
+
+        self.authority = config["authority"]
+        self.tenant_domain = config["tenant_domain"]
+        self.cli_client_id = config["cli_client_id"]
 
 
 class NsgRule:
@@ -233,30 +279,30 @@ def update_endpoint_params(
     client_id: str,
     tenant_domain: str,
 ) -> None:
-    if authority != "":
-        config_client.table_service.insert_or_merge_entity(
-            TABLE_NAME,
-            {
-                "PartitionKey": config_client.resource_group,
-                "RowKey": config_client.resource_group,
-                "authority": authority,
-            },
-        )
-    if client_id != "":
-        config_client.table_service.insert_or_merge_entity(
-            TABLE_NAME,
-            {
-                "PartitionKey": config_client.resource_group,
-                "RowKey": config_client.resource_group,
-                "client_id": client_id,
-            },
-        )
-    if tenant_domain != "":
-        config_client.table_service.insert_or_merge_entity(
-            TABLE_NAME,
-            {
-                "PartitionKey": config_client.resource_group,
-                "RowKey": config_client.resource_group,
-                "tenant_domain": tenant_domain,
-            },
-        )
+
+    config_client.table_service.insert_or_merge_entity(
+        TABLE_NAME,
+        {
+            "PartitionKey": config_client.resource_group,
+            "RowKey": config_client.resource_group,
+            "authority": authority,
+        },
+    )
+
+    config_client.table_service.insert_or_merge_entity(
+        TABLE_NAME,
+        {
+            "PartitionKey": config_client.resource_group,
+            "RowKey": config_client.resource_group,
+            "client_id": client_id,
+        },
+    )
+
+    config_client.table_service.insert_or_merge_entity(
+        TABLE_NAME,
+        {
+            "PartitionKey": config_client.resource_group,
+            "RowKey": config_client.resource_group,
+            "tenant_domain": tenant_domain,
+        },
+    )
