@@ -827,8 +827,8 @@ class Client:
         update_endpoint_params(
             config_client,
             self.authority,
-            self.tenant_domain,
             self.cli_app_id,
+            self.tenant_domain,
         )
 
         if self.admins:
