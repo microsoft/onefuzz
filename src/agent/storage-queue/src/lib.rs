@@ -114,6 +114,13 @@ impl Message {
         }
     }
 
+    pub fn parse<T>(&self, parser: impl FnOnce(&[u8]) -> Result<T>) -> Result<T> {
+        match self {
+            Message::QueueMessage(message) => message.parse(parser),
+            Message::LocalQueueMessage(message) => message.parse(parser),
+        }
+    }
+
     pub fn update_url(self, new_url: Url) -> Self {
         match self {
             Message::QueueMessage(message) => Message::QueueMessage(AzureQueueMessage {
