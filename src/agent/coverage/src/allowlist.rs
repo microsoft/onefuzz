@@ -24,6 +24,7 @@ impl TargetAllowList {
         }
     }
 
+    #[allow(clippy::field_reassign_with_default)]
     pub fn extend(&self, other: &Self) -> Self {
         let mut new = Self::default();
 
