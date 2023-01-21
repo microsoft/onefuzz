@@ -19,6 +19,9 @@ struct Args {
     #[arg(short, long)]
     timeout: Option<u64>,
 
+    #[arg(short, long)]
+    source: bool,
+
     command: Vec<String>,
 }
 
@@ -26,6 +29,8 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
 
 fn main() -> Result<()> {
     let args = Args::parse();
+
+    env_logger::init();
 
     let timeout = args
         .timeout
@@ -54,7 +59,11 @@ fn main() -> Result<()> {
         .timeout(timeout)
         .record()?;
 
-    dump_modoff(&recorded.coverage)?;
+    if args.source {
+        dump_source_line(&recorded.coverage)?;
+    } else {
+        dump_modoff(&recorded.coverage)?;
+    }
 
     Ok(())
 }
@@ -65,6 +74,18 @@ fn dump_modoff(coverage: &BinaryCoverage) -> Result<()> {
             if count.reached() {
                 println!("{}+{offset:x}", module.base_name());
             }
+        }
+    }
+
+    Ok(())
+}
+
+fn dump_source_line(binary: &BinaryCoverage) -> Result<()> {
+    let source = coverage::source::binary_to_source_coverage(binary)?;
+
+    for (path, file) in &source.files {
+        for (line, count) in &file.lines {
+            println!("{}:{} {}", path, line.number(), count.0);
         }
     }
 
