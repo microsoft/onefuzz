@@ -22,6 +22,9 @@ struct Args {
     #[arg(short, long)]
     source: bool,
 
+    #[arg(long)]
+    dump_stdio: bool,
+
     command: Vec<String>,
 }
 
@@ -58,6 +61,19 @@ fn main() -> Result<()> {
         .loader(loader)
         .timeout(timeout)
         .record()?;
+
+    if args.dump_stdio {
+        if let Some(status) = &recorded.output.status {
+            println!("status = {}", status);
+        } else {
+            println!("status = <unavailable>");
+        }
+        println!("stderr =========================================================================");
+        println!("{}", recorded.output.stderr);
+        println!("stdout =========================================================================");
+        println!("{}", recorded.output.stdout);
+        println!();
+    }
 
     if args.source {
         dump_source_line(&recorded.coverage)?;
