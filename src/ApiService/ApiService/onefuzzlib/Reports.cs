@@ -52,12 +52,15 @@ public class Reports : IReports {
     private IReport? ParseReportOrRegression(string content, string? filePath, Uri? reportUrl, bool expectReports = false) {
         var regressionReport = JsonSerializer.Deserialize<RegressionReport>(content, EntityConverter.GetJsonSerializerOptions());
         if (regressionReport == null || regressionReport.CrashTestResult == null) {
-            var report = JsonSerializer.Deserialize<Report>(content, EntityConverter.GetJsonSerializerOptions());
-            if (expectReports && report == null) {
-                _log.Error($"unable to parse report ({filePath:Tag:FilePath}) as a report or regression");
+            try {
+                var report = JsonSerializer.Deserialize<Report>(content, EntityConverter.GetJsonSerializerOptions());
+                return report != null ? report with { ReportUrl = reportUrl } : report;
+            } catch (JsonException e) {
+                if (expectReports) {
+                    _log.Error($"unable to parse report ({filePath:Tag:FilePath}) as a report or regression - {e}");
+                }
                 return null;
             }
-            return report != null ? report with { ReportUrl = reportUrl } : report;
         }
         return regressionReport != null ? regressionReport with { ReportUrl = reportUrl } : regressionReport;
     }
