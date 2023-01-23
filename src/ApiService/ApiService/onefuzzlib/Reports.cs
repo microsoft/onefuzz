@@ -49,20 +49,27 @@ public class Reports : IReports {
         return ParseReportOrRegression(blob.ToString(), filePath, reportUrl, expectReports);
     }
 
-    private IReport? ParseReportOrRegression(string content, string? filePath, Uri? reportUrl, bool expectReports = false) {
-        var regressionReport = JsonSerializer.Deserialize<RegressionReport>(content, EntityConverter.GetJsonSerializerOptions());
-        if (regressionReport == null || regressionReport.CrashTestResult == null) {
-            try {
-                var report = JsonSerializer.Deserialize<Report>(content, EntityConverter.GetJsonSerializerOptions());
-                return report != null ? report with { ReportUrl = reportUrl } : report;
-            } catch (JsonException e) {
-                if (expectReports) {
-                    _log.Error($"unable to parse report ({filePath:Tag:FilePath}) as a report or regression - {e}");
-                }
-                return null;
-            }
+    private static T? TryDeserialize<T>(string content) where T : class {
+        try {
+            return JsonSerializer.Deserialize<T>(content, EntityConverter.GetJsonSerializerOptions());
+        } catch (JsonException) {
+            return null;
         }
-        return regressionReport != null ? regressionReport with { ReportUrl = reportUrl } : regressionReport;
+    }
+
+    private IReport? ParseReportOrRegression(string content, string? filePath, Uri? reportUrl, bool expectReports = false) {
+        var regressionReport = TryDeserialize<RegressionReport>(content);
+        if (regressionReport != null && regressionReport.CrashTestResult != null) {
+            return regressionReport with { ReportUrl = reportUrl };
+        }
+        var report = TryDeserialize<Report>(content);
+        if (report != null) {
+            return report with { ReportUrl = reportUrl };
+        }
+        if (expectReports) {
+            _log.Error($"unable to parse report ({filePath:Tag:FilePath}) as a report or regression");
+        }
+        return null;
     }
 }
 
