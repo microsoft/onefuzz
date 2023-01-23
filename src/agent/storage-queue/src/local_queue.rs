@@ -27,6 +27,11 @@ impl LocalQueueMessage {
         let value = bincode::deserialize(&self.data)?;
         Ok(value)
     }
+
+    pub fn parse<T>(&self, parser: impl FnOnce(&[u8]) -> Result<T>) -> Result<T> {
+        let decoded = bincode::deserialize(&self.data)?;
+        parser(decoded)
+    }
 }
 
 impl std::fmt::Debug for LocalQueueMessage {
