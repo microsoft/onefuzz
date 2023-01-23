@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -46,10 +47,17 @@ public class Reports : IReports {
 
         var reportUrl = await _containers.GetFileUrl(container, fileName, StorageType.Corpus);
 
-        return ParseReportOrRegression(blob.ToString(), filePath, reportUrl, expectReports);
+        var reportOrRegression = ParseReportOrRegression(blob.ToString(), reportUrl);
+
+        if (reportOrRegression == null && expectReports) {
+            _log.Error($"unable to parse report ({filePath:Tag:FilePath}) as a report or regression");
+        }
+
+        return reportOrRegression;
     }
 
     private static T? TryDeserialize<T>(string content) where T : class {
+        
         try {
             return JsonSerializer.Deserialize<T>(content, EntityConverter.GetJsonSerializerOptions());
         } catch (JsonException) {
@@ -57,17 +65,14 @@ public class Reports : IReports {
         }
     }
 
-    private IReport? ParseReportOrRegression(string content, string? filePath, Uri? reportUrl, bool expectReports = false) {
+    public static IReport? ParseReportOrRegression(string content, Uri? reportUrl) {
         var regressionReport = TryDeserialize<RegressionReport>(content);
-        if (regressionReport != null && regressionReport.CrashTestResult != null) {
+        if (regressionReport is {CrashTestResult: { }}) {
             return regressionReport with { ReportUrl = reportUrl };
         }
         var report = TryDeserialize<Report>(content);
-        if (report != null) {
+        if (report is {CrashType: { }}) {
             return report with { ReportUrl = reportUrl };
-        }
-        if (expectReports) {
-            _log.Error($"unable to parse report ({filePath:Tag:FilePath}) as a report or regression");
         }
         return null;
     }
