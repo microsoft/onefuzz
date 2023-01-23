@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -57,7 +56,7 @@ public class Reports : IReports {
     }
 
     private static T? TryDeserialize<T>(string content) where T : class {
-        
+
         try {
             return JsonSerializer.Deserialize<T>(content, EntityConverter.GetJsonSerializerOptions());
         } catch (JsonException) {
@@ -67,11 +66,11 @@ public class Reports : IReports {
 
     public static IReport? ParseReportOrRegression(string content, Uri? reportUrl) {
         var regressionReport = TryDeserialize<RegressionReport>(content);
-        if (regressionReport is {CrashTestResult: { }}) {
+        if (regressionReport is { CrashTestResult: { } }) {
             return regressionReport with { ReportUrl = reportUrl };
         }
         var report = TryDeserialize<Report>(content);
-        if (report is {CrashType: { }}) {
+        if (report is { CrashType: { } }) {
             return report with { ReportUrl = reportUrl };
         }
         return null;
