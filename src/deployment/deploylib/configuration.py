@@ -57,7 +57,7 @@ class Config:
 
     def __init__(self, config: Any):
         self.parse_nsg_json(config)
-        self.parse_endpoint_params(config)
+        self.parse_endpoint_json(config)
 
     def parse_nsg_json(self, config: Any) -> None:
         if not isinstance(config, Dict):
@@ -111,7 +111,7 @@ class Config:
         self.allowed_ips = proxy_config["allowed_ips"]
         self.allowed_service_tags = proxy_config["allowed_service_tags"]
 
-    def parse_endpoint_params(self, config: Any) -> None:
+    def parse_endpoint_json(self, config: Any) -> None:
 
         # if "authority" not in config:
         #     raise Exception(

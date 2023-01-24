@@ -323,7 +323,7 @@ class Client:
         # registration api://{guid}/...
 
         # if self.tenant_domain:
-        return "api://%s/%s" % (self.tenant_domain, self.application_name)
+        return "api://%s/%s" % (self.application_name, self.tenant_domain)
         # else:
         #     return "api://%s.azurewebsites.net" % self.application_name
 
@@ -423,7 +423,7 @@ class Client:
                     self.get_subscription_id(),
                 )
 
-                if self.authority == "":
+                if self.authority == None:
                     if self.multi_tenant:
                         self.authority = COMMON_AUTHORITY
                     else:
@@ -443,7 +443,7 @@ class Client:
         else:
             onefuzz_cli_app = cli_app
             authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
-            if self.authority == "":
+            if self.authority == None:
                 if self.multi_tenant:
                     self.authority = COMMON_AUTHORITY
                 else:
@@ -649,10 +649,10 @@ class Client:
         # Add --custom_domain value to Allowed token audiences setting
         if self.custom_domain:
 
-            if self.tenant_domain:
-                root_domain = self.tenant_domain
-            else:
-                root_domain = "%s.azurewebsites.net" % self.application_name
+            root_domain = "https://%s/%s" % (
+                self.tenant_domain,
+                self.application_name,
+            )
 
             custom_domains = [
                 "api://%s/%s" % (root_domain, self.custom_domain.split(".")[0]),
@@ -661,15 +661,9 @@ class Client:
 
             app_func_audiences.extend(custom_domains)
 
-        if self.tenant_domain:
-            # clear the value in the Issuer Url field:
-            # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
-            app_func_issuer = ""
-            tenant_domain = {"value": self.tenant_domain}
-        else:
-            tenant_oid = str(self.cli_config["authority"]).split("/")[-1]
-            app_func_issuer = "https://sts.windows.net/%s/" % tenant_oid
-            tenant_domain = {"value": ""}
+        tenant_oid = str(self.cli_config["authority"]).split("/")[-1]
+        app_func_issuer = "https://sts.windows.net/%s/" % tenant_oid
+        tenant_domain = {"value": ""}
 
         logger.info(
             "template parameter enable_remote_debugging is set to: %s",
@@ -787,9 +781,8 @@ class Client:
         migrate(table_service, self.migrations)
 
     def parse_config(self) -> None:
-
+        logger.info("parsing config: %s", self.config)
         if self.config:
-            logger.info("setting instance config: %s", self.config)
 
             with open(self.config, "r") as template_handle:
                 config_template = json.load(template_handle)
@@ -797,6 +790,17 @@ class Client:
             try:
                 config = Config(config_template)
                 self.rules = parse_rules(config)
+
+                self.tenant_domain = (
+                    self.tenant_domain
+                    if self.tenant_domain is not None
+                    else config.tenant_domain
+                )
+                self.cli_app_id = (
+                    self.cli_app_id if self.cli_app_id != None else config.cli_client_id
+                )
+                logger.info(self.tenant_domain)
+                logger.info(config.cli_client_id)
             except Exception as ex:
                 logging.info(
                     "An Exception was encountered while parsing config file: %s", ex
@@ -807,22 +811,21 @@ class Client:
                     + " { 'config': { 'allowed_ips': [], 'allowed_service_tags': [] } }"
                 )
 
-        self.tenant_domain = (
-            self.tenant_domain if self.tenant_domain != "" else config.tenant_domain
-        )
-        self.cli_app_id = (
-            self.cli_app_id if self.cli_app_id != "" else config.cli_client_id
-        )
-
     def set_instance_config(self) -> None:
         name = self.results["deploy"]["func_name"]["value"]
         key = self.results["deploy"]["func_key"]["value"]
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
         table_service = TableService(account_name=name, account_key=key)
 
+        logger.info("setting instance config: %s", self.config)
+
         config_client = InstanceConfigClient(table_service, self.application_name)
 
         update_nsg(config_client, self.rules)
+
+        logger.info(self.authority)
+        logger.info(self.cli_app_id)
+        logger.info(self.tenant_domain)
 
         update_endpoint_params(
             config_client,
@@ -1158,11 +1161,6 @@ class Client:
             "onefuzz",
             "config",
             "--endpoint",
-            f"https://{self.application_name}.azurewebsites.net",
-            "--authority",
-            str(self.cli_config["authority"]),
-            "--client_id",
-            str(self.cli_config["client_id"]),
         ]
 
         if "client_secret" in self.cli_config:
