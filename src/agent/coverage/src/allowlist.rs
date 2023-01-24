@@ -23,6 +23,17 @@ impl TargetAllowList {
             source_files,
         }
     }
+
+    #[allow(clippy::field_reassign_with_default)]
+    pub fn extend(&self, other: &Self) -> Self {
+        let mut new = Self::default();
+
+        new.functions = self.functions.extend(&other.functions);
+        new.modules = self.modules.extend(&other.modules);
+        new.source_files = self.source_files.extend(&other.source_files);
+
+        new
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -93,6 +104,22 @@ impl AllowList {
         // Allowed if rule-allowed but not excluded by a negative (deny) rule.
         self.allow.is_match(path) && !self.deny.is_match(path)
     }
+
+    /// Build a new `Allowlist` that adds the allow and deny rules of `other` to `self`.
+    pub fn extend(&self, other: &Self) -> Self {
+        let allow = add_regexsets(&self.allow, &other.allow);
+        let deny = add_regexsets(&self.deny, &other.deny);
+
+        AllowList::new(allow, deny)
+    }
+}
+
+fn add_regexsets(lhs: &RegexSet, rhs: &RegexSet) -> RegexSet {
+    let mut patterns = lhs.patterns().to_vec();
+    patterns.extend(rhs.patterns().iter().map(|s| s.to_owned()));
+
+    // Can't panic: patterns were accepted by input `RegexSet` ctors.
+    RegexSet::new(patterns).unwrap()
 }
 
 impl Default for AllowList {
