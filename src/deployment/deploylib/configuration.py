@@ -48,12 +48,17 @@ class InstanceConfigClient:
             self.enable_storage_client_logging()
 
 
-class NetworkSecurityConfig:
+class Config:
+    cli_client_id: str
+    tenant_id: str
+    tenant_domain: str
+    multi_tenant_domain: str
     allowed_ips: List[str]
     allowed_service_tags: List[str]
 
     def __init__(self, config: Any):
         self.parse_nsg_json(config)
+        self.parse_endpoint_json(config)
 
     def parse_nsg_json(self, config: Any) -> None:
         if not isinstance(config, Dict):
@@ -106,6 +111,59 @@ class NetworkSecurityConfig:
 
         self.allowed_ips = proxy_config["allowed_ips"]
         self.allowed_service_tags = proxy_config["allowed_service_tags"]
+
+    def parse_endpoint_json(self, config: Any) -> None:
+
+        if "cli_client_id" not in config:
+            raise Exception(
+                "CLI client_id not provided as valid key. Please Provide Valid Config."
+            )
+
+        if (
+            not isinstance(config["cli_client_id"], str)
+            or config["cli_client_id"] == ""
+        ):
+            raise Exception(
+                "client_id is not a string. Please Provide Valid client_id."
+            )
+
+        if "tenant_id" not in config:
+            raise Exception(
+                "tenant_id not provided as valid key. Please Provide Valid Config."
+            )
+
+        if not isinstance(config["tenant_id"], str) or config["tenant_id"] == "":
+            raise Exception(
+                "tenant_id is not a string. Please Provide Valid tenant_id."
+            )
+
+        if "tenant_domain" not in config:
+            raise Exception(
+                "tenant_domain not provided as valid key. Please Provide Valid Config."
+            )
+
+        if (
+            not isinstance(config["tenant_domain"], str)
+            or config["tenant_domain"] == ""
+        ):
+            raise Exception(
+                "tenant_domain is not a string. Please Provide Valid tenant_domain."
+            )
+
+        if "multi_tenant_domain" not in config:
+            raise Exception(
+                "multi_tenant_domain not provided as valid key. Please Provide Valid Config."
+            )
+
+        if not isinstance(config["multi_tenant_domain"], str):
+            raise Exception(
+                "multi_tenant_domain is not a string. Please Provide Valid multi_tenant_domain. If the instance is not multi-tenant, please provide an empty string."
+            )
+
+        self.cli_client_id = config["cli_client_id"]
+        self.tenant_id = config["tenant_id"]
+        self.tenant_domain = config["tenant_domain"]
+        self.multi_tenant_domain = config["multi_tenant_domain"]
 
 
 class NsgRule:
@@ -175,7 +233,7 @@ def update_admins(config_client: InstanceConfigClient, admins: List[UUID]) -> No
     )
 
 
-def parse_rules(proxy_config: NetworkSecurityConfig) -> List[NsgRule]:
+def parse_rules(proxy_config: Config) -> List[NsgRule]:
 
     allowed_ips = proxy_config.allowed_ips
     allowed_service_tags = proxy_config.allowed_service_tags
@@ -223,5 +281,40 @@ def update_nsg(
             "PartitionKey": config_client.resource_group,
             "RowKey": config_client.resource_group,
             "proxy_nsg_config": json.dumps(nsg_config),
+        },
+    )
+
+
+def update_endpoint_params(
+    config_client: InstanceConfigClient,
+    authority: str,
+    client_id: str,
+    tenant_domain: str,
+) -> None:
+
+    config_client.table_service.insert_or_merge_entity(
+        TABLE_NAME,
+        {
+            "PartitionKey": config_client.resource_group,
+            "RowKey": config_client.resource_group,
+            "authority": authority,
+        },
+    )
+
+    config_client.table_service.insert_or_merge_entity(
+        TABLE_NAME,
+        {
+            "PartitionKey": config_client.resource_group,
+            "RowKey": config_client.resource_group,
+            "client_id": client_id,
+        },
+    )
+
+    config_client.table_service.insert_or_merge_entity(
+        TABLE_NAME,
+        {
+            "PartitionKey": config_client.resource_group,
+            "RowKey": config_client.resource_group,
+            "tenant_domain": tenant_domain,
         },
     )
