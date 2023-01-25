@@ -43,14 +43,14 @@ from azure.storage.blob import (
 from msrest.serialization import TZ_UTC
 
 from deploylib.configuration import (
-    InstanceConfigClient,
     Config,
+    InstanceConfigClient,
+    NsgRule,
     parse_rules,
     update_admins,
     update_allowed_aad_tenants,
     update_endpoint_params,
     update_nsg,
-    NsgRule,
 )
 from deploylib.data_migration import migrate
 from deploylib.registration import (
