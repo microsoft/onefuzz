@@ -177,9 +177,11 @@ class Endpoint:
 
             endpoint_params = responses.Config.parse_obj(response.json())
 
+            # Will override client id in storage w/ provided client_id for SP use
             if self.onefuzz._backend.config.client_id == "":
                 self.onefuzz._backend.config.client_id = endpoint_params.client_id
 
+            # Ignores provided auth and tenant_domain in favor of what's in storage
             self.onefuzz._backend.config.authority = endpoint_params.authority
             self.onefuzz._backend.config.tenant_domain = endpoint_params.tenant_domain
 
