@@ -85,7 +85,17 @@ impl CoverageRecorder {
             let (mut dbg, child) = Debugger::init(self.cmd, &mut recorder)?;
             dbg.run(&mut recorder)?;
 
+            // If the debugger callbacks fail, this may return with a spurious clean exit.
             let output = child.wait_with_output()?.into();
+
+            // Check if debugging was stopped due to a callback error.
+            //
+            // If so, the debugger terminated the target, and the recorded coverage and
+            // output are both invalid.
+            if let Some(err) = recorder.stop_error {
+                return Err(err);
+            }
+
             let coverage = recorder.coverage;
 
             Ok(Recorded { coverage, output })
