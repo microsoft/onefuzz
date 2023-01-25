@@ -75,10 +75,6 @@ from deploylib.registration import (
 USER_READ_PERMISSION = "e1fe6dd8-ba31-4d61-89e7-88639da4683d"
 MICROSOFT_GRAPH_APP_ID = "00000003-0000-0000-c000-000000000000"
 
-# ONEFUZZ_CLI_AUTHORITY = (
-#     "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47"
-# )
-# COMMON_AUTHORITY = "https://login.microsoftonline.com/common"
 TELEMETRY_NOTICE = (
     "Telemetry collection on stats and OneFuzz failures are sent to Microsoft. "
     "To disable, delete the ONEFUZZ_TELEMETRY application setting in the "

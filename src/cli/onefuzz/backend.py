@@ -177,7 +177,6 @@ class Backend:
             )
         return value
 
-    # Can this be generic?
     def get_access_token(self) -> Any:
         if not self.config.endpoint:
             raise Exception("endpoint not configured")
