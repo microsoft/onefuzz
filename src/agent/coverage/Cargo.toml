@@ -6,6 +6,7 @@ license = "MIT"
 
 [dependencies]
 anyhow = "1.0"
+cobertura = { path = "../cobertura" }
 debuggable-module = { path = "../debuggable-module" }
 iced-x86 = "1.17"
 log = "0.4.17"

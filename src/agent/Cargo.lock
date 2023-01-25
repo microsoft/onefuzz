@@ -524,8 +524,6 @@ name = "cobertura"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "coverage",
- "debuggable-module",
  "quick-xml",
 ]
 
@@ -571,6 +569,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap 4.0.26",
+ "cobertura",
  "debuggable-module",
  "debugger",
  "env_logger 0.10.0",
