@@ -783,10 +783,16 @@ class Client:
                 self.rules = parse_rules(config)
 
                 ## Override any input values in favor of config values
-                self.authority = "https://login.microsoftonline.com/" + config.tenant_id
-                self.tenant_domain = config.tenant_domain
-                self.multi_tenant_domain = config.multi_tenant_domain
-                self.cli_app_id = config.cli_client_id
+                if self.authority == "":
+                    self.authority = (
+                        "https://login.microsoftonline.com/" + config.tenant_id
+                    )
+                if self.tenant_domain == "":
+                    self.tenant_domain = config.tenant_domain
+                if self.multi_tenant_domain is None:
+                    self.multi_tenant_domain = config.multi_tenant_domain
+                if self.cli_app_id is None:
+                    self.cli_app_id = config.cli_client_id
 
             except Exception as ex:
                 logging.info(
