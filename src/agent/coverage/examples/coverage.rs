@@ -7,6 +7,7 @@ use coverage::allowlist::{AllowList, TargetAllowList};
 use coverage::binary::BinaryCoverage;
 use coverage::record::CoverageRecorder;
 use debuggable_module::loader::Loader;
+use onefuzz_file_format::coverage::cobertura::CoberturaCoverage;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -19,13 +20,20 @@ struct Args {
     #[arg(short, long)]
     timeout: Option<u64>,
 
-    #[arg(short, long)]
-    source: bool,
+    #[arg(short, long, value_enum, default_value_t = OutputFormat::ModOff)]
+    output: OutputFormat,
 
     #[arg(long)]
     dump_stdio: bool,
 
     command: Vec<String>,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, clap::ValueEnum)]
+enum OutputFormat {
+    ModOff,
+    Source,
+    Cobertura,
 }
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
@@ -79,10 +87,10 @@ fn main() -> Result<()> {
         println!();
     }
 
-    if args.source {
-        dump_source_line(&recorded.coverage)?;
-    } else {
-        dump_modoff(&recorded.coverage)?;
+    match args.output {
+        OutputFormat::ModOff => dump_modoff(&recorded.coverage)?,
+        OutputFormat::Source => dump_source_line(&recorded.coverage)?,
+        OutputFormat::Cobertura => dump_cobertura(&recorded.coverage)?,
     }
 
     Ok(())
@@ -108,6 +116,15 @@ fn dump_source_line(binary: &BinaryCoverage) -> Result<()> {
             println!("{}:{} {}", path, line.number(), count.0);
         }
     }
+
+    Ok(())
+}
+
+fn dump_cobertura(binary: &BinaryCoverage) -> Result<()> {
+    let source = coverage::source::binary_to_source_coverage(binary)?;
+    let cobertura: CoberturaCoverage = source.into();
+
+    println!("{}", cobertura.to_string()?);
 
     Ok(())
 }

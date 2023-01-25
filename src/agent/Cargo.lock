@@ -566,6 +566,7 @@ dependencies = [
  "env_logger 0.10.0",
  "iced-x86",
  "log",
+ "onefuzz-file-format",
  "pete",
  "pretty_assertions",
  "procfs",
