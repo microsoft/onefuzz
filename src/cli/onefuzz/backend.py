@@ -182,10 +182,7 @@ class Backend:
         if not self.config.endpoint:
             raise Exception("endpoint not configured")
 
-        if (
-            self.config.tenant_domain
-            and "azurewebsites" not in self.config.tenant_domain
-        ):
+        if self.config.tenant_domain == "common":
             endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
             scopes = [
                 f"api://{self.config.tenant_domain}/{endpoint}/.default",

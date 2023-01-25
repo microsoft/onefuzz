@@ -125,7 +125,7 @@ class Endpoint:
 
         # Retrieve Auth Parameters
         self._req_config_params()
-
+        logging.debug("in req model")
         response = self._req_base(
             method,
             data=data,
