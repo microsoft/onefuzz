@@ -4,7 +4,7 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Error, Result};
 use debuggable_module::load_module::LoadModule;
 use debuggable_module::loader::Loader;
 use debuggable_module::path::FilePath;
@@ -21,6 +21,7 @@ pub struct WindowsRecorder<'data> {
     pub coverage: BinaryCoverage,
     loader: &'data Loader,
     modules: BTreeMap<FilePath, WindowsModule<'data>>,
+    pub stop_error: Option<Error>,
 }
 
 impl<'data> WindowsRecorder<'data> {
@@ -28,6 +29,7 @@ impl<'data> WindowsRecorder<'data> {
         let breakpoints = Breakpoints::default();
         let coverage = BinaryCoverage::default();
         let modules = BTreeMap::new();
+        let stop_error = None;
 
         Self {
             allowlist,
@@ -35,6 +37,7 @@ impl<'data> WindowsRecorder<'data> {
             coverage,
             loader,
             modules,
+            stop_error,
         }
     }
 
@@ -80,7 +83,8 @@ impl<'data> WindowsRecorder<'data> {
         Ok(())
     }
 
-    fn stop(&self, dbg: &mut Debugger) {
+    fn stop(&mut self, dbg: &mut Debugger, stop_error: impl Into<Option<Error>>) {
+        self.stop_error = stop_error.into();
         dbg.quit_debugging();
     }
 
@@ -171,21 +175,21 @@ impl<'data> DebugEventHandler for WindowsRecorder<'data> {
     fn on_create_process(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) {
         if let Err(err) = self.try_on_create_process(dbg, module) {
             warn!("{err}");
-            self.stop(dbg);
+            self.stop(dbg, err);
         }
     }
 
     fn on_load_dll(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) {
         if let Err(err) = self.try_on_load_dll(dbg, module) {
             warn!("{err}");
-            self.stop(dbg);
+            self.stop(dbg, err);
         }
     }
 
     fn on_breakpoint(&mut self, dbg: &mut Debugger, bp: BreakpointId) {
         if let Err(err) = self.try_on_breakpoint(dbg, bp) {
             warn!("{err}");
-            self.stop(dbg);
+            self.stop(dbg, err);
         }
     }
 }
