@@ -29,13 +29,6 @@ echo "layout python3" >> .envrc
 direnv allow
 pip install -e .
 
-echo "Install api-service"
-cd /workspaces/onefuzz/src/api-service
-echo "layout python3" >> .envrc
-direnv allow
-pip install -r requirements-dev.txt
-cd __app__
-pip install -r requirements.txt
 
 cd /workspaces/onefuzz/src/utils
 chmod u+x lint.sh

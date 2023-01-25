@@ -3,4 +3,3 @@ paths:
   - src/agent
   - src/pytypes
   - src/deployment
-  - src/api-service/__app__
