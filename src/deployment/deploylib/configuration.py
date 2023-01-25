@@ -127,6 +127,13 @@ class Config:
                 "client_id is not a string. Please provide valid client_id."
             )
 
+        try:
+            UUID(config["cli_client_id"])
+        except ValueError:
+            raise Exception(
+                "client_id is not a valid UUID. Please provide valid client_id."
+            )
+
         if "tenant_id" not in config:
             raise Exception(
                 "tenant_id not provided as valid key. Please provide valid config."
