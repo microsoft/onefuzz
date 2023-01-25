@@ -7,9 +7,6 @@
         "allowed_ips": [
             "*"
         ],
-        "allowed_ips": [
-            "*"
-        ],
         "allowed_service_tags": []
     }
 }
