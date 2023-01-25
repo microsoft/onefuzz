@@ -182,7 +182,6 @@ class Client:
             "client_id": client_id,
             "client_secret": client_secret,
         }
-        self.authority = "https://login.microsoftonline.com/" + self.tenant_id
         self.migrations = migrations
         self.export_appinsights = export_appinsights
         self.admins = admins
