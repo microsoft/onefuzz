@@ -10,7 +10,11 @@ debuggable-module = { path = "../debuggable-module" }
 iced-x86 = "1.17"
 log = "0.4.17"
 regex = "1.0"
-symbolic = { version = "10.1", features = ["debuginfo", "demangle", "symcache"] }
+symbolic = { version = "10.1", features = [
+    "debuginfo",
+    "demangle",
+    "symcache",
+] }
 thiserror = "1.0"
 
 [target.'cfg(target_os = "windows")'.dependencies]
@@ -20,10 +24,10 @@ debugger = { path = "../debugger" }
 pete = "0.9"
 # For procfs, opt out of the `chrono` freature; it pulls in an old version
 # of `time`. We do not use the methods that the `chrono` feature enables.
-procfs = { version = "0.12", default-features = false, features=["flate2"] }
+procfs = { version = "0.12", default-features = false, features = ["flate2"] }
 
 [dev-dependencies]
 clap = { version = "4.0", features = ["derive"] }
 env_logger = "0.10.0"
 pretty_assertions = "1.3.0"
-onefuzz-file-format  = { path = "../onefuzz-file-format" }
+cobertura = { path = "../cobertura" }

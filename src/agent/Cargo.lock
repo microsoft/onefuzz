@@ -520,6 +520,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "cobertura"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "coverage",
+ "debuggable-module",
+ "quick-xml",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -561,12 +571,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap 4.0.26",
+ "cobertura",
  "debuggable-module",
  "debugger",
  "env_logger 0.10.0",
  "iced-x86",
  "log",
- "onefuzz-file-format",
  "pete",
  "pretty_assertions",
  "procfs",

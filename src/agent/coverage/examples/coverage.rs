@@ -3,11 +3,11 @@ use std::time::Duration;
 
 use anyhow::Result;
 use clap::Parser;
+use cobertura::CoberturaCoverage;
 use coverage::allowlist::{AllowList, TargetAllowList};
 use coverage::binary::BinaryCoverage;
 use coverage::record::CoverageRecorder;
 use debuggable_module::loader::Loader;
-use onefuzz_file_format::coverage::cobertura::CoberturaCoverage;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -29,7 +29,7 @@ struct Args {
     command: Vec<String>,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, clap::ValueEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, clap::ValueEnum)]
 enum OutputFormat {
     ModOff,
     Source,
