@@ -63,7 +63,6 @@ from deploylib.registration import (
     get_application,
     get_service_principal,
     get_signed_in_user,
-    get_tenant_id,
     query_microsoft_graph,
     register_application,
     set_app_audience,
