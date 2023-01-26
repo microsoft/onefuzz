@@ -49,7 +49,6 @@ from deploylib.configuration import (
     parse_rules,
     update_admins,
     update_allowed_aad_tenants,
-    update_endpoint_params,
     update_nsg,
 )
 from deploylib.data_migration import migrate
@@ -815,13 +814,6 @@ class Client:
         config_client = InstanceConfigClient(table_service, self.application_name)
 
         update_nsg(config_client, self.rules)
-
-        # update_endpoint_params(
-        #     config_client,
-        #     self.authority,
-        #     self.cli_app_id,
-        #     self.tenant_domain,
-        # )
 
         if self.admins:
             update_admins(config_client, self.admins)

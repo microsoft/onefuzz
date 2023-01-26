@@ -290,38 +290,3 @@ def update_nsg(
             "proxy_nsg_config": json.dumps(nsg_config),
         },
     )
-
-
-# def update_endpoint_params(
-#     config_client: InstanceConfigClient,
-#     authority: str,
-#     client_id: str,
-#     tenant_domain: str,
-# ) -> None:
-
-#     config_client.table_service.insert_or_merge_entity(
-#         TABLE_NAME,
-#         {
-#             "PartitionKey": config_client.resource_group,
-#             "RowKey": config_client.resource_group,
-#             "authority": authority,
-#         },
-#     )
-
-#     config_client.table_service.insert_or_merge_entity(
-#         TABLE_NAME,
-#         {
-#             "PartitionKey": config_client.resource_group,
-#             "RowKey": config_client.resource_group,
-#             "client_id": client_id,
-#         },
-#     )
-
-#     config_client.table_service.insert_or_merge_entity(
-#         TABLE_NAME,
-#         {
-#             "PartitionKey": config_client.resource_group,
-#             "RowKey": config_client.resource_group,
-#             "tenant_domain": tenant_domain,
-#         },
-#     )
