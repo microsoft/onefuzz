@@ -696,8 +696,6 @@ If webhook is set to have Event Grid message format then the payload will look a
         "allowed_aad_tenants": [
             "00000000-0000-0000-0000-000000000000"
         ],
-        "authority": "",
-        "client_id": "",
         "default_linux_vm_image": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
         "default_windows_vm_image": "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
         "network_config": {
@@ -709,8 +707,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             "allowed_service_tags": []
         },
         "proxy_vm_sku": "Standard_B2s",
-        "require_admin_privileges": false,
-        "tenant_domain": ""
+        "require_admin_privileges": false
     }
 }
 ```
@@ -841,16 +838,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Api Access Rules",
                     "type": "object"
                 },
-                "authority": {
-                    "default": "",
-                    "title": "Authority",
-                    "type": "string"
-                },
-                "client_id": {
-                    "default": "",
-                    "title": "Client Id",
-                    "type": "string"
-                },
                 "default_linux_vm_image": {
                     "default": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
                     "title": "Default Linux Vm Image",
@@ -890,11 +877,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "default": false,
                     "title": "Require Admin Privileges",
                     "type": "boolean"
-                },
-                "tenant_domain": {
-                    "default": "",
-                    "title": "Tenant Domain",
-                    "type": "string"
                 },
                 "vm_tags": {
                     "additionalProperties": {
@@ -6176,16 +6158,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Api Access Rules",
                     "type": "object"
                 },
-                "authority": {
-                    "default": "",
-                    "title": "Authority",
-                    "type": "string"
-                },
-                "client_id": {
-                    "default": "",
-                    "title": "Client Id",
-                    "type": "string"
-                },
                 "default_linux_vm_image": {
                     "default": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
                     "title": "Default Linux Vm Image",
@@ -6225,11 +6197,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "default": false,
                     "title": "Require Admin Privileges",
                     "type": "boolean"
-                },
-                "tenant_domain": {
-                    "default": "",
-                    "title": "Tenant Domain",
-                    "type": "string"
                 },
                 "vm_tags": {
                     "additionalProperties": {
