@@ -20,12 +20,11 @@ public class Config {
     }
     public async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         _log.Info($"getting endpoint config parameters");
-        var config = await _context.ConfigOperations.Fetch();
 
         var endpointParams = new ConfigResponse(
-                Authority: config.Authority,
-                ClientId: config.ClientId,
-                TenantDomain: config.TenantDomain);
+                Authority: _context.ServiceConfiguration.Authority,
+                ClientId: _context.ServiceConfiguration.CliAppId,
+                TenantDomain: _context.ServiceConfiguration.TenantDomain);
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(endpointParams);

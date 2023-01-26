@@ -672,6 +672,9 @@ class Client:
             "clientSecret": {"value": self.results["client_secret"]},
             "app_func_issuer": {"value": app_func_issuer},
             "signedExpiry": {"value": expiry},
+            "cli_app_id": {"value": self.cli_app_id},
+            "authority": {"value": self.authority},
+            "tenant_domain": {"value": self.tenant_domain},
             "multi_tenant_domain": multi_tenant_domain,
             "workbookData": {"value": self.workbook_data},
             "enable_remote_debugging": {"value": self.host_dotnet_on_windows},
@@ -813,12 +816,12 @@ class Client:
 
         update_nsg(config_client, self.rules)
 
-        update_endpoint_params(
-            config_client,
-            self.authority,
-            self.cli_app_id,
-            self.tenant_domain,
-        )
+        # update_endpoint_params(
+        #     config_client,
+        #     self.authority,
+        #     self.cli_app_id,
+        #     self.tenant_domain,
+        # )
 
         if self.admins:
             update_admins(config_client, self.admins)

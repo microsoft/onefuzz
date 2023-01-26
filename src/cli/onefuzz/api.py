@@ -177,6 +177,7 @@ class Endpoint:
 
             endpoint_params = responses.Config.parse_obj(response.json())
 
+            logging.debug(self.onefuzz._backend.config.authority)
             # Will override values in storage w/ provided values for SP use
             if self.onefuzz._backend.config.client_id == "":
                 self.onefuzz._backend.config.client_id = endpoint_params.client_id

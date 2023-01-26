@@ -26,7 +26,9 @@ public interface IServiceConfig {
 
     public string? DiagnosticsAzureBlobContainerSasUrl { get; }
     public string? DiagnosticsAzureBlobRetentionDays { get; }
-
+    public string? CliAppId { get; }
+    public string? Authority { get; }
+    public string? TenantDomain { get; }
     public string? MultiTenantDomain { get; }
     public ResourceIdentifier? OneFuzzDataStorage { get; }
     public ResourceIdentifier? OneFuzzFuncStorage { get; }
@@ -97,7 +99,9 @@ public class ServiceConfiguration : IServiceConfig {
 
     public string? DiagnosticsAzureBlobContainerSasUrl { get => GetEnv("DIAGNOSTICS_AZUREBLOBCONTAINERSASURL"); }
     public string? DiagnosticsAzureBlobRetentionDays { get => GetEnv("DIAGNOSTICS_AZUREBLOBRETENTIONINDAYS"); }
-
+    public string? CliAppId { get => GetEnv("CLI_APP_ID"); }
+    public string? Authority { get => GetEnv("AUTHORITY"); }
+    public string? TenantDomain { get => GetEnv("TenantDomain"); }
     public string? MultiTenantDomain { get => GetEnv("MULTI_TENANT_DOMAIN"); }
 
     public ResourceIdentifier? OneFuzzDataStorage {
