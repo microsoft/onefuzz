@@ -95,7 +95,7 @@ class BackendConfig(BaseModel):
     client_id: str
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
-    tenant_domain: Optional[str]
+    tenant_domain: str
 
 
 class Backend:

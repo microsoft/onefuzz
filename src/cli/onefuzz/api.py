@@ -183,7 +183,7 @@ class Endpoint:
                 self.onefuzz._backend.config.client_id = endpoint_params.client_id
             if self.onefuzz._backend.config.authority == "":
                 self.onefuzz._backend.config.authority = endpoint_params.authority
-            if not self.onefuzz._backend.config.tenant_domain:
+            if self.onefuzz._backend.config.tenant_domain == "":
                 self.onefuzz._backend.config.tenant_domain = (
                     endpoint_params.tenant_domain
                 )
@@ -1901,7 +1901,9 @@ class Onefuzz:
         self.logger.debug("set config")
 
         if reset:
-            self._backend.config = BackendConfig(authority="", client_id="")
+            self._backend.config = BackendConfig(
+                authority="", client_id="", tenant_domain=""
+            )
 
         if endpoint is not None:
             # The normal path for calling the API always uses the oauth2 workflow,
