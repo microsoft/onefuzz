@@ -56,7 +56,7 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       ONEFUZZ_TELEMETRY: telemetry
       AzureWebJobsStorage: func_sas_url
       CLI_APP_ID: cli_app_id
-      AUTHORIY: authority
+      AUTHORITY: authority
       TENANT_DOMAIN: tenant_domain
       MULTI_TENANT_DOMAIN: multi_tenant_domain
       AzureWebJobsDisableHomepage: 'true'
