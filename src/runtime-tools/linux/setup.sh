@@ -161,7 +161,7 @@ fi
 
 if  [[ ! -z DOCKER_BUILD ]]
 then
-    echo "buidling for docker docker"
+    echo "building for docker"
 elif [ -d /etc/systemd/system ]; then
     logger "onefuzz: setting up systemd"
     sudo chmod 644 /onefuzz/tools/linux/onefuzz.service

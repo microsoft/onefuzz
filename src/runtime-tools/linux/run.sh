@@ -18,7 +18,7 @@ logger "onefuzz: starting up onefuzz"
 if [ -f /.dockerenv ]
 then
     echo "Running in docker:
-    to optimize the experience make sure the host os is stup propery. with the follwing command
+    to optimize the experience make sure the host os is setup properly. with the following command
     # use core files, not external crash handler
     echo core | sudo tee /proc/sys/kernel/core_pattern
     # disable ASLR
