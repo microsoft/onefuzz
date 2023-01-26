@@ -41,8 +41,9 @@ from .ssh import build_ssh_command, ssh_connect, temp_file
 UUID_EXPANSION = TypeVar("UUID_EXPANSION", UUID, str)
 
 DEFAULT = BackendConfig(
-    authority="https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47",
-    client_id="72f1562a-8c0c-41ea-beb9-fa2b71c80134",
+    authority="",
+    client_id="",
+    tenatn_domain="",
 )
 
 # This was generated randomly and should be preserved moving forwards
