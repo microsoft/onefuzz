@@ -43,7 +43,7 @@ UUID_EXPANSION = TypeVar("UUID_EXPANSION", UUID, str)
 DEFAULT = BackendConfig(
     authority="",
     client_id="",
-    tenatn_domain="",
+    tenant_domain="",
 )
 
 # This was generated randomly and should be preserved moving forwards
