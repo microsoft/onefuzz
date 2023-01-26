@@ -792,9 +792,9 @@ class Client:
                     )
                 if self.tenant_domain == "":
                     self.tenant_domain = config.tenant_domain
-                if self.multi_tenant_domain is None:
+                if self.multi_tenant_domain == "":
                     self.multi_tenant_domain = config.multi_tenant_domain
-                if self.cli_app_id is None:
+                if self.cli_app_id == "":
                     self.cli_app_id = config.cli_client_id
 
             except Exception as ex:
@@ -1281,7 +1281,7 @@ def main() -> None:
     parser.add_argument(
         "--multi_tenant_domain",
         type=str,
-        default=None,
+        default="",
         help="enable multi-tenant authentication with this tenant domain",
     )
     parser.add_argument(
@@ -1308,7 +1308,7 @@ def main() -> None:
     parser.add_argument(
         "--cli_app_id",
         type=str,
-        default="72f1562a-8c0c-41ea-beb9-fa2b71c80134",
+        default="",
         help="CLI App Registration to be used during deployment.",
     )
     parser.add_argument(
