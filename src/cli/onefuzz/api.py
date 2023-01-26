@@ -182,8 +182,10 @@ class Endpoint:
                 self.onefuzz._backend.config.client_id = endpoint_params.client_id
             if self.onefuzz._backend.config.authority == "":
                 self.onefuzz._backend.config.authority = endpoint_params.authority
-            if self.onefuzz._backend.config.tenant_domain == "": 
-                self.onefuzz._backend.config.tenant_domain = endpoint_params.tenant_domain
+            if not self.onefuzz._backend.config.tenant_domain:
+                self.onefuzz._backend.config.tenant_domain = (
+                    endpoint_params.tenant_domain
+                )
 
             self.onefuzz._backend.save_config()
         else:

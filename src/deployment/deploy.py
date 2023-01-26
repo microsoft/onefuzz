@@ -782,7 +782,7 @@ class Client:
                 config = Config(config_template)
                 self.rules = parse_rules(config)
 
-                ## Override any input values in favor of config values
+                ## Values provided via the CLI will override what's in the config.json
                 if self.authority == "":
                     self.authority = (
                         "https://login.microsoftonline.com/" + config.tenant_id
