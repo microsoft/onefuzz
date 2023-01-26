@@ -101,7 +101,7 @@ public class ServiceConfiguration : IServiceConfig {
     public string? DiagnosticsAzureBlobRetentionDays { get => GetEnv("DIAGNOSTICS_AZUREBLOBRETENTIONINDAYS"); }
     public string? CliAppId { get => GetEnv("CLI_APP_ID"); }
     public string? Authority { get => GetEnv("AUTHORITY"); }
-    public string? TenantDomain { get => GetEnv("TenantDomain"); }
+    public string? TenantDomain { get => GetEnv("TENANT_DOMAIN"); }
     public string? MultiTenantDomain { get => GetEnv("MULTI_TENANT_DOMAIN"); }
 
     public ResourceIdentifier? OneFuzzDataStorage {

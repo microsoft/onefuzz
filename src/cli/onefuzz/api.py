@@ -176,6 +176,7 @@ class Endpoint:
                 "GET", endpoint + "/api/config"
             )
 
+            logging.debug(response.json())
             endpoint_params = responses.Config.parse_obj(response.json())
 
             logging.debug(self.onefuzz._backend.config.authority)
