@@ -321,6 +321,7 @@ class Backend:
         if not endpoint:
             raise Exception("endpoint not configured")
 
+        LOGGER.info(self.headers)
         url = endpoint + "/api/" + path
         headers = self.headers()
         json_data = serialize(json_data)
