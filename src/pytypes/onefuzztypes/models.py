@@ -901,9 +901,6 @@ class InstanceConfig(BaseModel):
     group_membership: Optional[Dict[PrincipalID, List[GroupId]]] = None
     vm_tags: Optional[Dict[str, str]] = None
     vmss_tags: Optional[Dict[str, str]] = None
-    # authority: Optional[str] = None
-    # client_id: Optional[str] = None
-    # tenant_domain: Optional[str] = None
 
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:
