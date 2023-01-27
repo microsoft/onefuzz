@@ -268,7 +268,7 @@ mod tests {
 
         for (data, expected) in test_cases {
             let parsed = parse_asan_call_stack(data)
-                .with_context(|| format!("parsing asan stack failed {}", data))?;
+                .with_context(|| format!("parsing asan stack failed {data}"))?;
             assert_eq!(expected, parsed);
         }
 

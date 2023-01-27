@@ -95,7 +95,7 @@ impl BlobClient {
         let file_stream = codec::FramedRead::new(reader, codec).map_ok(bytes::BytesMut::freeze);
 
         let body = reqwest::Body::wrap_stream(file_stream);
-        let content_length = format!("{}", file_len);
+        let content_length = format!("{file_len}");
 
         self.put(file_url)
             .header("Content-Length", &content_length)

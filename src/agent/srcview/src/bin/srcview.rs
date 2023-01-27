@@ -112,7 +112,7 @@ fn add_common_extensions(srcview: &mut SrcView, pdb_path: &Path) -> Result<()> {
     srcview.insert(&stem, pdb_path)?;
     // add common module extensions
     for ext in ["sys", "exe", "dll"] {
-        srcview.insert(&format!("{}.{}", stem, ext), pdb_path)?;
+        srcview.insert(&format!("{stem}.{ext}"), pdb_path)?;
     }
     Ok(())
 }
@@ -132,7 +132,7 @@ fn srcloc(opts: SrcLocOpt) -> Result<()> {
     for modoff in &modoffs {
         print!(" +{:04x} ", modoff.offset);
         match srcview.modoff(modoff) {
-            Some(srcloc) => println!("{}", srcloc),
+            Some(srcloc) => println!("{srcloc}"),
             None => println!(),
         }
     }

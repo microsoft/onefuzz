@@ -113,9 +113,9 @@ fn redirect(opt: RunOpt) -> Result<()> {
 
     let run_id = Uuid::new_v4();
 
-    let stdout_path = log_path.join(format!("{}-stdout.txt", run_id));
-    let stderr_path = log_path.join(format!("{}-stdout.txt", run_id));
-    let failure_path = log_path.join(format!("{}-failure.txt", run_id));
+    let stdout_path = log_path.join(format!("{run_id}-stdout.txt"));
+    let stderr_path = log_path.join(format!("{run_id}-stdout.txt"));
+    let failure_path = log_path.join(format!("{run_id}-failure.txt"));
 
     info!(
         "saving output to files: {} {} {}",
@@ -168,10 +168,7 @@ fn redirect(opt: RunOpt) -> Result<()> {
             .append(true)
             .open(failure_path)
             .context("unable to open log file")?;
-        log.write_fmt(format_args!(
-            "onefuzz-agent child failed: {:?}",
-            exit_status
-        ))?;
+        log.write_fmt(format_args!("onefuzz-agent child failed: {exit_status:?}"))?;
         bail!("onefuzz-agent child failed: {:?}", exit_status);
     }
 
@@ -226,7 +223,7 @@ async fn load_config(opt: RunOpt) -> Result<StaticConfig> {
 
     let machine_identity = opt_machine_id.map(|machine_id| MachineIdentity {
         machine_id,
-        machine_name: opt_machine_name.unwrap_or(format!("{}", machine_id)),
+        machine_name: opt_machine_name.unwrap_or(format!("{machine_id}")),
         scaleset_name: None,
     });
 
@@ -248,16 +245,13 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
     if let Some(work) = WorkSet::load_from_fs_context(coordinator.get_machine_id()).await? {
         warn!("onefuzz-agent unexpectedly identified an existing workset on start");
         let failure = match failure::read_failure(coordinator.get_machine_id()) {
-            Ok(value) => format!("onefuzz-agent failed: {}", value),
+            Ok(value) => format!("onefuzz-agent failed: {value}"),
             Err(failure_err) => {
                 warn!("unable to read failure: {:?}", failure_err);
                 let logs = failure::read_logs().unwrap_or_else(|logs_err| {
-                    format!(
-                        "unable to read failure message or logs: {:?} {:?}",
-                        failure_err, logs_err
-                    )
+                    format!("unable to read failure message or logs: {failure_err:?} {logs_err:?}")
                 });
-                format!("onefuzz-agent failed: {}", logs)
+                format!("onefuzz-agent failed: {logs}")
             }
         };
 
