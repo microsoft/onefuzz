@@ -101,7 +101,7 @@ impl Display for DebugStackFrame {
                     symbol.displacement(),
                 ),
                 _ => {
-                    write!(formatter, "{}+0x{:x}", module_name, module_offset)
+                    write!(formatter, "{module_name}+0x{module_offset:x}")
                 }
             },
             DebugStackFrame::CorruptFrame => formatter.write_str("<corrupt frame(s)>"),
@@ -114,7 +114,7 @@ impl Serialize for DebugStackFrame {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&format!("{}", self))
+        serializer.serialize_str(&format!("{self}"))
     }
 }
 
@@ -156,7 +156,7 @@ impl Display for DebugStack {
                 writeln!(formatter)?;
             }
             first = false;
-            write!(formatter, "{}", frame)?;
+            write!(formatter, "{frame}")?;
         }
         Ok(())
     }
