@@ -27,10 +27,10 @@ pub fn add_asan_log_env<S: BuildHasher>(env: &mut HashMap<String, String, S>, as
     let re = regex::Regex::new(r"^(?P<d>[a-zA-Z]):\\").expect("static regex parse failed");
     let network_path = re.replace(&asan_path_as_str, "\\\\127.0.0.1\\$d$\\");
     if let Some(v) = env.get_mut("ASAN_OPTIONS") {
-        let log_path = format!(":log_path={}", network_path);
+        let log_path = format!(":log_path={network_path}");
         v.push_str(&log_path);
     } else {
-        let log_path = format!("log_path={}", network_path);
+        let log_path = format!("log_path={network_path}");
         env.insert("ASAN_OPTIONS".to_string(), log_path);
     }
 }

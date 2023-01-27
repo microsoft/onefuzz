@@ -145,7 +145,7 @@ impl Tester {
     ) -> Result<(Summary, Vec<TestResult>)> {
         let threads = max_cores.unwrap_or_else(num_cpus::get);
         let threadpool = ThreadPoolBuilder::new()
-            .thread_name(|idx| format!("{}-{}", THREAD_POOL_NAME, idx))
+            .thread_name(|idx| format!("{THREAD_POOL_NAME}-{idx}"))
             .num_threads(threads)
             .build()?;
 
@@ -397,7 +397,7 @@ impl Tester {
         if let Some(appverif_controller) = &self.appverif_controller {
             appverif_controller
                 .set(state)
-                .with_context(|| format!("Setting appverifier to {:?}", state))?;
+                .with_context(|| format!("Setting appverifier to {state:?}"))?;
         }
 
         Ok(())
