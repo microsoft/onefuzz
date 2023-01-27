@@ -168,9 +168,7 @@ fn redirect(opt: RunOpt) -> Result<()> {
             .append(true)
             .open(failure_path)
             .context("unable to open log file")?;
-        log.write_fmt(format_args!(
-            "onefuzz-agent child failed: {exit_status:?}"
-        ))?;
+        log.write_fmt(format_args!("onefuzz-agent child failed: {exit_status:?}"))?;
         bail!("onefuzz-agent child failed: {:?}", exit_status);
     }
 
@@ -251,9 +249,7 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
             Err(failure_err) => {
                 warn!("unable to read failure: {:?}", failure_err);
                 let logs = failure::read_logs().unwrap_or_else(|logs_err| {
-                    format!(
-                        "unable to read failure message or logs: {failure_err:?} {logs_err:?}"
-                    )
+                    format!("unable to read failure message or logs: {failure_err:?} {logs_err:?}")
                 });
                 format!("onefuzz-agent failed: {logs}")
             }
