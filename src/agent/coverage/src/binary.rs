@@ -102,8 +102,8 @@ impl std::ops::AddAssign for Count {
     }
 }
 
-pub fn find_coverage_sites<'data>(
-    module: &dyn Module<'data>,
+pub fn find_coverage_sites(
+    module: &dyn Module,
     allowlist: &TargetAllowList,
 ) -> Result<ModuleBinaryCoverage> {
     let debuginfo = module.debuginfo()?;

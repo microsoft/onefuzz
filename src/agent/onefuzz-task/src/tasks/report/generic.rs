@@ -170,7 +170,7 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
             task_id,
             job_id,
             tries: 1 + args.check_retry_count,
-            error: test_report.error.map(|e| format!("{}", e)),
+            error: test_report.error.map(|e| format!("{e}")),
         };
 
         Ok(CrashTestResult::NoRepro(Box::new(no_repro)))

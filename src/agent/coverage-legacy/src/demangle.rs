@@ -52,7 +52,7 @@ impl RustcDemangler {
             .map_err(|_| format_err!("unable to demangle rustc name"))?;
 
         // Alternate formatter discards trailing hash.
-        Ok(format!("{:#}", name))
+        Ok(format!("{name:#}"))
     }
 }
 

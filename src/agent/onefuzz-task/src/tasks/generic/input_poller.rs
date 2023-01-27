@@ -81,7 +81,7 @@ impl<'a, M> fmt::Display for Event<'a, M> {
 
 impl<'a, M> fmt::Debug for Event<'a, M> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self)
+        write!(f, "{self}")
     }
 }
 

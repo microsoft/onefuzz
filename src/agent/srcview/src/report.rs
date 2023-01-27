@@ -394,7 +394,7 @@ impl Report {
                 ("branches-valid", "0"),
                 ("branches-covered", "0"),
                 ("branch-rate", "0"),
-                ("timestamp", format!("{}", unixtime).as_str()),
+                ("timestamp", format!("{unixtime}").as_str()),
                 ("complexity", "0"),
                 ("version", "0.1"),
             ]),

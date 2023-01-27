@@ -127,7 +127,7 @@ fn into_envelope(event: NodeEvent) -> NodeEventEnvelope {
 
 fn print_json(data: impl serde::Serialize) -> Result<()> {
     let json = serde_json::to_string_pretty(&data)?;
-    println!("{}", json);
+    println!("{json}");
 
     Ok(())
 }
@@ -172,7 +172,7 @@ fn debug_run_worker(opt: RunWorkerOpt) -> Result<()> {
     let events = rt.block_on(run_worker(work_set))?;
 
     for event in events {
-        println!("{:?}", event);
+        println!("{event:?}");
     }
 
     Ok(())

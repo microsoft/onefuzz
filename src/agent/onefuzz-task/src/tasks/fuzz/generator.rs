@@ -208,10 +208,10 @@ impl GeneratorTask {
         info!("Generating test cases with {:?}", generator);
         let output = generator
             .spawn()
-            .with_context(|| format!("generator failed to start: {}", generator_path))?;
+            .with_context(|| format!("generator failed to start: {generator_path}"))?;
         monitor_process(output, "generator".to_string(), true, None)
             .await
-            .with_context(|| format!("generator failed to run: {}", generator_path))?;
+            .with_context(|| format!("generator failed to run: {generator_path}"))?;
 
         Ok(())
     }
