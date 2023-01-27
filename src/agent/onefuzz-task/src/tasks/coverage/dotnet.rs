@@ -308,7 +308,7 @@ impl<'a> TaskContext<'a> {
         let id = Uuid::new_v4();
         let output_file_path =
             intermediate_coverage_files_path(self.config.coverage.local_path.as_path())?
-                .join(format!("{}.cobertura.xml", id));
+                .join(format!("{id}.cobertura.xml"));
 
         let target_options = expand.evaluate(&self.config.target_options)?;
 

@@ -249,7 +249,7 @@ impl<'a> Tester<'a> {
                     .iter()
                     .enumerate()
                     .map(|(idx, frame)| StackEntry {
-                        line: format!("#{} {}", idx, frame),
+                        line: format!("#{idx} {frame}"),
                         address: Some(frame.addr.0),
                         function_name: frame.function.as_ref().map(|x| x.name.clone()),
                         function_offset: frame.function.as_ref().map(|x| x.offset),

@@ -64,7 +64,7 @@ fn main() -> Result<()> {
 
     if opt.cobertura_xml {
         let cobertura = coverage_legacy::cobertura::cobertura(src_coverage)?;
-        println!("{}", cobertura);
+        println!("{cobertura}");
     } else {
         for file_coverage in src_coverage.files {
             for location in &file_coverage.locations {
