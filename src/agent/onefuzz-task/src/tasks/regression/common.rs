@@ -142,7 +142,7 @@ pub async fn handle_crash_reports(
 
             let original_crash_test_result = parse_report_file(file.path())
                 .await
-                .with_context(|| format!("unable to parse crash report: {}", file_name))?;
+                .with_context(|| format!("unable to parse crash report: {file_name}"))?;
 
             let input_blob = match &original_crash_test_result {
                 CrashTestResult::CrashReport(x) => x.input_blob.clone(),

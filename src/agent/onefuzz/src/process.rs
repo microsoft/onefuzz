@@ -126,7 +126,7 @@ pub async fn run_cmd<S: ::std::hash::BuildHasher>(
     let runner = tokio::task::spawn_blocking(move || {
         let child = cmd
             .spawn()
-            .with_context(|| format!("process failed to start: {}", program_name))?;
+            .with_context(|| format!("process failed to start: {program_name}"))?;
 
         child
             .controlled_with_output()
