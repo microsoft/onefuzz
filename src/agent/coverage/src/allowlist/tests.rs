@@ -161,3 +161,17 @@ bad/*
 
     Ok(())
 }
+
+#[test]
+fn test_allowlist_escape() -> Result<()> {
+    const GOOD: &str = "good (x[y]) {z}+ %#S";
+    const BAD: &str = "bad* a+b @!{ (x)[y]{z}";
+
+    let text = format!("{GOOD}\n! {BAD}");
+    let allowlist = AllowList::parse(&text)?;
+
+    assert!(allowlist.is_allowed(GOOD));
+    assert!(!allowlist.is_allowed(BAD));
+
+    Ok(())
+}
