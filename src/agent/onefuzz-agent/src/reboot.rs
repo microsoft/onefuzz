@@ -135,7 +135,7 @@ impl RebootContext {
 }
 
 fn reboot_context_path(machine_id: Uuid) -> Result<PathBuf> {
-    Ok(onefuzz::fs::onefuzz_root()?.join(format!("reboot_context_{}.json", machine_id)))
+    Ok(onefuzz::fs::onefuzz_root()?.join(format!("reboot_context_{machine_id}.json")))
 }
 
 #[cfg(test)]

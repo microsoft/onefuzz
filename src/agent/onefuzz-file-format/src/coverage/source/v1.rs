@@ -77,7 +77,7 @@ mod line_number {
     where
         S: Serializer,
     {
-        let s = format!("{}", val);
+        let s = format!("{val}");
         serializer.serialize_str(&s)
     }
 
