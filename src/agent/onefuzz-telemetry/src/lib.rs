@@ -552,7 +552,7 @@ pub fn format_events(events: &[EventData]) -> String {
     events
         .iter()
         .map(|x| x.as_values())
-        .map(|(x, y)| format!("{}:{}", x, y))
+        .map(|(x, y)| format!("{x}:{y}"))
         .collect::<Vec<String>>()
         .join(" ")
 }

@@ -138,7 +138,7 @@ impl LibFuzzer {
             .iter()
             .any(|o| o.starts_with("-max_total_time"))
         {
-            cmd.arg(format!("-max_total_time={}", DEFAULT_MAX_TOTAL_SECONDS));
+            cmd.arg(format!("-max_total_time={DEFAULT_MAX_TOTAL_SECONDS}"));
         }
 
         Ok(cmd)
@@ -171,7 +171,7 @@ impl LibFuzzer {
                         seen_inputs = true;
                     }
                 } else {
-                    println!("input dir doesn't exist: {:?}", input_dir);
+                    println!("input dir doesn't exist: {input_dir:?}");
                 }
             }
         }

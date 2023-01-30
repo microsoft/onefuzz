@@ -38,7 +38,7 @@ fn main() -> Result<()> {
     let blocks = provider.provide()?;
 
     println!("block count = {}", blocks.len());
-    println!("blocks = {:x?}", blocks);
+    println!("blocks = {blocks:x?}");
 
     Ok(())
 }

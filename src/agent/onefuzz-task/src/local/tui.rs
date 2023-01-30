@@ -378,7 +378,7 @@ impl TerminalUi {
                 ),
                 Span::raw(" "),
                 Span::styled(
-                    format!("{}", count),
+                    format!("{count}"),
                     Style::default().add_modifier(Modifier::BOLD),
                 ),
                 Span::raw(", "),
@@ -411,7 +411,7 @@ impl TerminalUi {
                 };
 
                 ListItem::new(Spans::from(vec![
-                    Span::styled(format!("{:<9}", level), style),
+                    Span::styled(format!("{level:<9}"), style),
                     Span::raw(" "),
                     Span::raw(log),
                 ]))
