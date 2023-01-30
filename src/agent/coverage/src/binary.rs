@@ -131,6 +131,7 @@ pub fn find_coverage_sites(
                 if let Some(file) = location.file() {
                     let path = file.full_path();
 
+                    // Apply allowlists per block to account for inlining.
                     if allowlist.source_files.is_allowed(&path) {
                         offsets.insert(block.offset);
                     }
