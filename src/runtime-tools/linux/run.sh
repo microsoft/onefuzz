@@ -15,8 +15,7 @@ export LLVM_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 logger "onefuzz: starting up onefuzz"
 
 #check if we are running in docker
-if [ -f /.dockerenv ]
-then
+if [ -f /.dockerenv ]; then
     echo "Running in docker:
     to optimize the experience make sure the host os is setup properly. with the following command
     # use core files, not external crash handler
@@ -25,7 +24,6 @@ then
     echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
     # set core dumping to default behavior
     echo 1 | sudo tee /proc/sys/fs/suid_dumpable"
-
 else
     # use core files, not external crash handler
     echo core | sudo tee /proc/sys/kernel/core_pattern
@@ -46,8 +44,7 @@ case ${MODE} in
     "fuzz")
         logger "onefuzz: starting fuzzing"
         echo fuzzing
-        if [ -f /.dockerenv ]
-        then
+        if [ -f /.dockerenv ]; then
             onefuzz-agent run --config /onefuzz/config.json "$@"
         else
             onefuzz-agent run --config /onefuzz/config.json --redirect-output /onefuzz/logs/
