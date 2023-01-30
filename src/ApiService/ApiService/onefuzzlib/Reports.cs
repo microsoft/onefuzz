@@ -46,20 +46,34 @@ public class Reports : IReports {
 
         var reportUrl = await _containers.GetFileUrl(container, fileName, StorageType.Corpus);
 
-        return ParseReportOrRegression(blob.ToString(), filePath, reportUrl, expectReports);
+        var reportOrRegression = ParseReportOrRegression(blob.ToString(), reportUrl);
+
+        if (reportOrRegression == null && expectReports) {
+            _log.Error($"unable to parse report ({filePath:Tag:FilePath}) as a report or regression");
+        }
+
+        return reportOrRegression;
     }
 
-    private IReport? ParseReportOrRegression(string content, string? filePath, Uri? reportUrl, bool expectReports = false) {
-        var regressionReport = JsonSerializer.Deserialize<RegressionReport>(content, EntityConverter.GetJsonSerializerOptions());
-        if (regressionReport == null || regressionReport.CrashTestResult == null) {
-            var report = JsonSerializer.Deserialize<Report>(content, EntityConverter.GetJsonSerializerOptions());
-            if (expectReports && report == null) {
-                _log.Error($"unable to parse report ({filePath:Tag:FilePath}) as a report or regression");
-                return null;
-            }
-            return report != null ? report with { ReportUrl = reportUrl } : report;
+    private static T? TryDeserialize<T>(string content) where T : class {
+
+        try {
+            return JsonSerializer.Deserialize<T>(content, EntityConverter.GetJsonSerializerOptions());
+        } catch (JsonException) {
+            return null;
         }
-        return regressionReport != null ? regressionReport with { ReportUrl = reportUrl } : regressionReport;
+    }
+
+    public static IReport? ParseReportOrRegression(string content, Uri? reportUrl) {
+        var regressionReport = TryDeserialize<RegressionReport>(content);
+        if (regressionReport is { CrashTestResult: { } }) {
+            return regressionReport with { ReportUrl = reportUrl };
+        }
+        var report = TryDeserialize<Report>(content);
+        if (report is { CrashType: { } }) {
+            return report with { ReportUrl = reportUrl };
+        }
+        return null;
     }
 }
 

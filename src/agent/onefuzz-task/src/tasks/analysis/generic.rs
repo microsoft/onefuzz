@@ -157,9 +157,8 @@ async fn poll_inputs(
             heartbeat.alive();
             if let Some(message) = input_queue.pop().await? {
                 let input_url = message
-                    .get::<reqwest::Url>()
-                    .and_then(BlobUrl::parse)
-                    .with_context(|| format!("unable to parse URL from queue: {:?}", message))?;
+                    .parse(|data| BlobUrl::parse(str::from_utf8(data)?))
+                    .with_context(|| format!("unable to parse URL from queue: {message:?}"))?;
                 if !already_checked(config, &input_url).await? {
                     let destination_path = _copy(input_url, &tmp_dir).await?;
 
@@ -253,10 +252,10 @@ pub async fn run_tool(
     info!("analyzing input with {:?}", cmd);
     let output = cmd
         .spawn()
-        .with_context(|| format!("analyzer failed to start: {}", analyzer_path))?;
+        .with_context(|| format!("analyzer failed to start: {analyzer_path}"))?;
 
     monitor_process(output, "analyzer".to_string(), true, None)
         .await
-        .with_context(|| format!("analyzer failed to run: {}", analyzer_path))?;
+        .with_context(|| format!("analyzer failed to run: {analyzer_path}"))?;
     Ok(())
 }

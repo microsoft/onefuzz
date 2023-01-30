@@ -28,8 +28,7 @@ impl BlobUrl {
     pub fn from_blob_info(account: &str, container: &str, name: &str) -> Result<Self> {
         // format https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-containers--blobs--and-metadata#resource-uri-syntax
         let url = Url::parse(&format!(
-            "https://{}.blob.core.windows.net/{}/{}",
-            account, container, name
+            "https://{account}.blob.core.windows.net/{container}/{name}"
         ))?;
         Self::new(url)
     }
@@ -202,9 +201,9 @@ impl fmt::Debug for BlobContainerUrl {
 impl fmt::Display for BlobContainerUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(file_path) = self.as_file_path() {
-            write!(f, "{:?}", file_path)
+            write!(f, "{file_path:?}")
         } else if let (Some(account), Some(container)) = (self.account(), self.container()) {
-            write!(f, "{}:{}", account, container)
+            write!(f, "{account}:{container}")
         } else {
             panic!("invalid blob url")
         }
@@ -426,7 +425,7 @@ mod tests {
     #[test]
     fn test_blob_url() {
         for url in invalid_blob_urls() {
-            println!("{:?}", url);
+            println!("{url:?}");
             assert!(BlobUrl::new(url).is_err());
         }
 

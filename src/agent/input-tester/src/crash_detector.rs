@@ -110,7 +110,7 @@ impl DebuggerResult {
         for exception in &self.exceptions {
             writeln!(file)?;
             writeln!(file, "```")?;
-            writeln!(file, "{}", exception)?;
+            writeln!(file, "{exception}")?;
             writeln!(file, "```")?;
         }
         writeln!(file)?;

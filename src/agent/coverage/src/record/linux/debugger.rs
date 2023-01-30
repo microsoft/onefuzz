@@ -223,7 +223,7 @@ impl Images {
 
         for map in proc.maps()? {
             if let Some(last) = group.last() {
-                if last.pathname == map.pathname {
+                if last.pathname != map.pathname {
                     // The current memory mapping is the start of a new group.
                     //
                     // Consume the current group, and track any new module image.

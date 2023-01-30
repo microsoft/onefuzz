@@ -50,10 +50,10 @@ impl StackEntry {
             source.push(source_file_name.clone());
         }
         if let Some(source_file_line) = self.source_file_line {
-            source.push(format!("{}", source_file_line));
+            source.push(format!("{source_file_line}"));
         }
         if let Some(function_offset) = self.function_offset {
-            source.push(format!("{}", function_offset));
+            source.push(format!("{function_offset}"));
         }
 
         if !source.is_empty() {
@@ -323,7 +323,7 @@ mod tests {
 
             let file_name = path.file_name().unwrap().to_str().unwrap();
             if skip_files.contains(&file_name) {
-                eprintln!("skipping file: {}", file_name);
+                eprintln!("skipping file: {file_name}");
                 continue;
             }
 

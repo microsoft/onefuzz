@@ -273,7 +273,7 @@ mod test {
                 anyhow::bail!("response should have failed: {:?}", result);
             }
             Err(err) => {
-                let as_text = format!("{:?}", err);
+                let as_text = format!("{err:?}");
                 assert!(as_text.contains("request attempt 4 failed"), "{}", as_text);
             }
         }
@@ -294,7 +294,7 @@ mod test {
                 anyhow::bail!("response should have failed: {:?}", result);
             }
             Err(err) => {
-                let as_text = format!("{:?}", err);
+                let as_text = format!("{err:?}");
                 assert!(as_text.contains("request attempt 4 failed"), "{}", as_text);
             }
         }
@@ -310,8 +310,8 @@ mod test {
             .send_retry(always_fail, Duration::from_millis(1), 3)
             .await;
 
-        assert!(resp.is_err(), "{:?}", resp);
-        let as_text = format!("{:?}", resp);
+        assert!(resp.is_err(), "{resp:?}");
+        let as_text = format!("{resp:?}");
         assert!(as_text.contains("request attempt 1 failed"), "{}", as_text);
         Ok(())
     }
@@ -336,8 +336,8 @@ mod test {
             .send_retry(succeed_400, Duration::from_millis(1), 3)
             .await;
 
-        assert!(resp.is_err(), "{:?}", resp);
-        let as_text = format!("{:?}", resp);
+        assert!(resp.is_err(), "{resp:?}");
+        let as_text = format!("{resp:?}");
         assert!(as_text.contains("request attempt 4 failed"), "{}", as_text);
         Ok(())
     }

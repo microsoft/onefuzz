@@ -1,3 +1,14 @@
+﻿namespace Tests;
+using System;
+using Microsoft.OneFuzz.Service;
+using Xunit;
+
+public class ReportTests {
+
+    [Fact]
+    void TestParseReport() {
+
+        var testReport = """
 {
     "call_stack_sha256": "972a371a291ed5668a77576368ead0c46c2bac9f9a16b7fa7c0b48aec5b059b1",
     "input_url": "https://fuzzxkbh6uhuuke4m.blob.core.windows.net/oft-asan-crashes/crash",
@@ -25,5 +36,58 @@
     },
     "tool_name": "libfuzzer",
     "tool_version": "1.2.3",
-	"onefuzz_version": "1.2.3"
+    "onefuzz_version": "1.2.3"
+}
+""";
+
+        var testRegresion = """
+{
+    "crash_test_result": {
+        "no_repro": {
+            "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "executable": "/onefuzz/blob-containers/fuzzdn52wmq2aaxny/fuzz.exe",
+            "task_id": "f032970b-3de2-4d52-897f-4c83715f840d",
+            "job_id": "f3d4821e-3fd8-47a1-aecb-97d2418555d5",
+            "tries": 1
+        }
+    },
+    "original_crash_test_result": {
+        "crash_report": {
+            "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "input_blob": {
+                "account": "fuzzdn52wmq2aaxny",
+                "container": "oft-crashes-cc3ebdad463e52c1a540b8efb631c1ed",
+                "name": "fake-crash-sample"
+            },
+            "executable": "fuzz.exe",
+            "crash_type": "fake crash report",
+            "crash_site": "fake crash site",
+            "call_stack": ["#0 fake", "#1 call", "#2 stack"],
+            "call_stack_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "minimized_stack": [],
+            "minimized_stack_function_names": [],
+            "asan_log": "fake asan log",
+            "task_id": "3e345aa4-8399-45fd-8e10-8d953f1802b0",
+            "job_id": "f3d4821e-3fd8-47a1-aecb-97d2418555d5",
+            "onefuzz_version": "1.2.3",
+            "tool_name": "libfuzzer",
+            "tool_version": "1.2.3"
+        }
+    }
+}
+""";
+
+        var report = Reports.ParseReportOrRegression(testReport, new Uri("http://test"));
+        _ = Assert.IsType<Report>(report);
+
+        var regression = Reports.ParseReportOrRegression(testRegresion, new Uri("http://test"));
+        _ = Assert.IsType<RegressionReport>(regression);
+
+        var noReport = Reports.ParseReportOrRegression("{}", new Uri("http://test"));
+        Assert.Null(noReport);
+
+
+
+    }
+
 }

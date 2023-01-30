@@ -130,7 +130,7 @@ mod tests {
 
         assert_eq!(vars["ASAN_SYMBOLIZER_PATH"], SYMBOLIZER_PATH);
 
-        let tsan_options = format!("external_symbolizer_path={}", SYMBOLIZER_PATH);
+        let tsan_options = format!("external_symbolizer_path={SYMBOLIZER_PATH}");
         assert_eq!(vars["TSAN_OPTIONS"], tsan_options);
 
         assert_eq!(vars.len(), 2);
