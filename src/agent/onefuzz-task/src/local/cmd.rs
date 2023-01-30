@@ -43,7 +43,7 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
 
     let (cmd, sub_args) = args.subcommand();
     let command =
-        Commands::from_str(cmd).with_context(|| format!("unexpected subcommand: {}", cmd))?;
+        Commands::from_str(cmd).with_context(|| format!("unexpected subcommand: {cmd}"))?;
 
     let sub_args = sub_args
         .ok_or_else(|| anyhow!("missing subcommand arguments"))?

@@ -32,7 +32,7 @@ impl WorkSet {
     }
 
     pub fn context_path(machine_id: Uuid) -> Result<PathBuf> {
-        Ok(onefuzz::fs::onefuzz_root()?.join(format!("workset_context-{}.json", machine_id)))
+        Ok(onefuzz::fs::onefuzz_root()?.join(format!("workset_context-{machine_id}.json")))
     }
 
     pub async fn load_from_fs_context(machine_id: Uuid) -> Result<Option<Self>> {
@@ -109,7 +109,7 @@ pub struct WorkUnit {
 impl WorkUnit {
     pub fn working_dir(&self, machine_id: Uuid) -> Result<PathBuf> {
         Ok(onefuzz::fs::onefuzz_root()?
-            .join(format!("{}", machine_id))
+            .join(format!("{machine_id}"))
             .join(self.task_id.to_string()))
     }
 

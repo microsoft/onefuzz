@@ -350,7 +350,7 @@ impl<'a> Expand<'a> {
                 let path = String::from(
                     dunce::canonicalize(v)
                         .with_context(|| {
-                            format!("unable to canonicalize path during extension: {}", v)
+                            format!("unable to canonicalize path during extension: {v}")
                         })?
                         .to_string_lossy(),
                 );
@@ -390,7 +390,7 @@ impl<'a> Expand<'a> {
                 (true, Some(ev)) => {
                     arg = self
                         .replace_value(fmtstr, arg.clone(), ev)
-                        .with_context(|| format!("replace_value failed: {} {}", fmtstr, arg))?
+                        .with_context(|| format!("replace_value failed: {fmtstr} {arg}"))?
                 }
                 (true, None) => bail!("missing argument {}", fmtstr),
                 (false, _) => (),
@@ -438,8 +438,7 @@ mod tests {
         let expected = vec!["a b c"];
         assert_eq!(
             result, expected,
-            "result: {:?} expected: {:?}",
-            result, expected
+            "result: {result:?} expected: {expected:?}"
         );
         Ok(())
     }
@@ -489,8 +488,7 @@ mod tests {
         let input_full_path = dunce::canonicalize(input_path).context("canonicalize failed")?;
         let expected_input = input_full_path.to_string_lossy();
         let expected_options = format!(
-            "inner {} then {} {}",
-            expected_input_corpus, expected_generated_inputs, expected_input
+            "inner {expected_input_corpus} then {expected_generated_inputs} {expected_input}"
         );
 
         assert_eq!(

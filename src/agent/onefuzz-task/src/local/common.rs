@@ -174,7 +174,7 @@ pub fn get_synced_dirs(
                 let remote_path = path.absolutize()?;
                 let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
                 let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
-                let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
+                let path = current_dir.join(format!("{job_id}/{task_id}/{name}_{index}"));
                 Ok(SyncedDir {
                     remote_path: Some(remote_blob_url),
                     local_path: path,
@@ -200,7 +200,7 @@ pub fn get_synced_dir(
         let remote_url =
             Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
         let remote_blob_url = BlobContainerUrl::new(remote_url)?;
-        let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
+        let path = std::env::current_dir()?.join(format!("{job_id}/{task_id}/{name}"));
         Ok(SyncedDir {
             remote_path: Some(remote_blob_url),
             local_path: path,
@@ -260,7 +260,7 @@ pub async fn build_local_context(
         min_available_memory_mb: 0,
     };
     let current_dir = current_dir()?;
-    let job_path = current_dir.join(format!("{}", job_id));
+    let job_path = current_dir.join(format!("{job_id}"));
     Ok(LocalContext {
         job_path,
         common_config,
