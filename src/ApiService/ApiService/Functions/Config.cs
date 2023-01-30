@@ -15,7 +15,7 @@ public class Config {
 
     [Function("Config")]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = "config")] HttpRequestData req) {
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req) {
         return Get(req);
     }
     public async Async.Task<HttpResponseData> Get(HttpRequestData req) {

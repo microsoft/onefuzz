@@ -162,37 +162,28 @@ class Endpoint:
         self,
     ) -> None:
 
-        endpoint_params = responses.Config(
-            authority="",
-            client_id="",
-            tenant_domain="",
+        if self.onefuzz._backend.config.endpoint is None:
+            raise Exception("Endpoint Not Configured")
+
+        endpoint = self.onefuzz._backend.config.endpoint
+
+        response = self.onefuzz._backend.session.request(
+            "GET", endpoint + "/api/config"
         )
 
-        if self.onefuzz._backend.config.endpoint is not None:
+        logging.debug(response.json())
+        endpoint_params = responses.Config.parse_obj(response.json())
 
-            endpoint = self.onefuzz._backend.config.endpoint
+        logging.debug(self.onefuzz._backend.config.authority)
+        # Will override values in storage w/ provided values for SP use
+        if self.onefuzz._backend.config.client_id == "":
+            self.onefuzz._backend.config.client_id = endpoint_params.client_id
+        if self.onefuzz._backend.config.authority == "":
+            self.onefuzz._backend.config.authority = endpoint_params.authority
+        if self.onefuzz._backend.config.tenant_domain == "":
+            self.onefuzz._backend.config.tenant_domain = endpoint_params.tenant_domain
 
-            response = self.onefuzz._backend.session.request(
-                "GET", endpoint + "/api/config"
-            )
-
-            logging.debug(response.json())
-            endpoint_params = responses.Config.parse_obj(response.json())
-
-            logging.debug(self.onefuzz._backend.config.authority)
-            # Will override values in storage w/ provided values for SP use
-            if self.onefuzz._backend.config.client_id == "":
-                self.onefuzz._backend.config.client_id = endpoint_params.client_id
-            if self.onefuzz._backend.config.authority == "":
-                self.onefuzz._backend.config.authority = endpoint_params.authority
-            if self.onefuzz._backend.config.tenant_domain == "":
-                self.onefuzz._backend.config.tenant_domain = (
-                    endpoint_params.tenant_domain
-                )
-
-            self.onefuzz._backend.save_config()
-        else:
-            raise Exception("Endpoint Not Configured")
+        self.onefuzz._backend.save_config()
 
     def _disambiguate(
         self,
