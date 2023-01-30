@@ -41,8 +41,8 @@ fn print_version(include_sha: bool, include_local: bool) -> Result<(), Box<dyn E
         }
     }
 
-    println!("cargo:rustc-env=GIT_VERSION={}", sha);
-    println!("cargo:rustc-env=ONEFUZZ_VERSION={}", version);
+    println!("cargo:rustc-env=GIT_VERSION={sha}");
+    println!("cargo:rustc-env=ONEFUZZ_VERSION={version}");
 
     Ok(())
 }

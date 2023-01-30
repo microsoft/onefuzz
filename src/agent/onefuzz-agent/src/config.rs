@@ -236,7 +236,7 @@ impl DynamicConfig {
     fn save_path(machine_id: Uuid) -> Result<PathBuf> {
         Ok(onefuzz::fs::onefuzz_root()?
             .join("etc")
-            .join(format!("dynamic-config-{}.json", machine_id)))
+            .join(format!("dynamic-config-{machine_id}.json")))
     }
 }
 

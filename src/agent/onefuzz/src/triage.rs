@@ -362,7 +362,7 @@ mod se {
         S: Serializer,
         T: std::fmt::LowerHex,
     {
-        s.serialize_str(&format!("0x{:x}", t))
+        s.serialize_str(&format!("0x{t:x}"))
     }
 }
 

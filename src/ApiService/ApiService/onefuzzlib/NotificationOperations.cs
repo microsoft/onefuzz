@@ -9,6 +9,7 @@ public interface INotificationOperations : IOrm<Notification> {
     IAsyncEnumerable<Notification> GetNotifications(Container container);
     IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks();
     Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting);
+    Async.Task<Notification> GetNotification(Guid notifificationId);
 }
 
 public class NotificationOperations : Orm<Notification>, INotificationOperations {
@@ -141,5 +142,9 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
         _logTracer.Error($"unable to find crash_report or no repro entry for report: {JsonSerializer.Serialize(report)}");
         return null;
+    }
+
+    public async Async.Task<Notification> GetNotification(Guid notifificationId) {
+        return await SearchByPartitionKeys(new[] { notifificationId.ToString() }).SingleAsync();
     }
 }

@@ -10,7 +10,7 @@ pub fn serialize<S>(val: &u64, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
-    let s = format!("{:x}", val);
+    let s = format!("{val:x}");
     serializer.serialize_str(&s)
 }
 

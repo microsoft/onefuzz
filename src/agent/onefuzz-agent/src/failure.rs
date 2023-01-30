@@ -7,13 +7,13 @@ use std::{
 use uuid::Uuid;
 
 pub fn failure_path(machine_id: Uuid) -> Result<PathBuf> {
-    Ok(onefuzz_root()?.join(format!("onefuzz-agent-failure-{}.txt", machine_id)))
+    Ok(onefuzz_root()?.join(format!("onefuzz-agent-failure-{machine_id}.txt")))
 }
 
 pub fn save_failure(err: &Error, machine_id: Uuid) -> Result<()> {
     error!("saving failure: {:?}", err);
     let path = failure_path(machine_id)?;
-    let message = format!("{:?}", err);
+    let message = format!("{err:?}");
     fs::write(&path, message)
         .with_context(|| format!("unable to write failure log: {}", path.display()))
 }
