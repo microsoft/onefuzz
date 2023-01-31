@@ -310,3 +310,7 @@ public record TemplateValidationPost(
     [property: Required] string Template,
     TemplateRenderContext? Context
 ) : BaseRequest;
+
+public record JinjaToScribanMigrationPost(
+    bool DryRun = false
+) : BaseRequest;
