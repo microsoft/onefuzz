@@ -2123,6 +2123,7 @@ dependencies = [
  "notify",
  "onefuzz-telemetry",
  "pete",
+ "pretty_assertions",
  "proc-maps",
  "process_control",
  "rand 0.8.4",

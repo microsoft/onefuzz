@@ -52,7 +52,7 @@ pub enum PlaceHolder {
 }
 
 impl PlaceHolder {
-    pub fn get_string(&self) -> String {
+    pub fn get_string(&self) -> &'static str {
         match self {
             Self::Input => "{input}",
             Self::Crashes => "{crashes}",
@@ -83,12 +83,11 @@ impl PlaceHolder {
             Self::InstanceTelemetryKey => "{instance_telemetry_key}",
             Self::InputFileSha256 => "{input_file_sha256}",
         }
-        .to_string()
     }
 }
 
 pub struct Expand<'a> {
-    values: HashMap<String, ExpandedValue<'a>>,
+    values: HashMap<&'static str, ExpandedValue<'a>>,
     machine_identity: &'a MachineIdentity,
 }
 
@@ -122,7 +121,7 @@ impl<'a> Expand<'a> {
     }
 
     fn input_file_sha256(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
-        let val = match self.values.get(&PlaceHolder::Input.get_string()) {
+        let val = match self.values.get(PlaceHolder::Input.get_string()) {
             Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
                 let hash = digest_file_blocking(file)?;
@@ -135,7 +134,7 @@ impl<'a> Expand<'a> {
     }
 
     fn extract_file_name_no_ext(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
-        let val = match self.values.get(&PlaceHolder::Input.get_string()) {
+        let val = match self.values.get(PlaceHolder::Input.get_string()) {
             Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
                 let stem = file
@@ -151,7 +150,7 @@ impl<'a> Expand<'a> {
     }
 
     fn extract_file_name(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
-        let val = match self.values.get(&PlaceHolder::Input.get_string()) {
+        let val = match self.values.get(PlaceHolder::Input.get_string()) {
             Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
                 let name = file
@@ -344,16 +343,17 @@ impl<'a> Expand<'a> {
         fmtstr: &str,
         mut arg: String,
         ev: &ExpandedValue<'a>,
+        eval_stack: &mut Vec<&str>,
     ) -> Result<String> {
         match ev {
             ExpandedValue::Path(v) => {
-                let path = String::from(
-                    dunce::canonicalize(v)
-                        .with_context(|| {
-                            format!("unable to canonicalize path during extension: {v}")
-                        })?
-                        .to_string_lossy(),
-                );
+                // evaluate the inner replacement first,
+                // since it may in turn have replacements to be performed
+                let evaluated = self.evaluate_value_checked(v, eval_stack)?;
+                let path = dunce::canonicalize(evaluated)
+                    .with_context(|| format!("unable to canonicalize path during extension: {v}"))?
+                    .to_string_lossy()
+                    .to_string();
                 arg = arg.replace(fmtstr, &path);
                 Ok(arg)
             }
@@ -362,14 +362,14 @@ impl<'a> Expand<'a> {
                 Ok(arg)
             }
             ExpandedValue::List(value) => {
-                let replaced = self.evaluate(value)?;
+                let replaced = self.evaluate_checked(value, eval_stack)?;
                 let replaced = replaced.join(" ");
                 arg = arg.replace(fmtstr, &replaced);
                 Ok(arg)
             }
             ExpandedValue::Mapping(func) => {
                 if let Some(value) = func(self, fmtstr)? {
-                    let arg = self.replace_value(fmtstr, arg, &value)?;
+                    let arg = self.replace_value(fmtstr, arg, &value, eval_stack)?;
                     Ok(arg)
                 } else {
                     Ok(arg)
@@ -378,36 +378,59 @@ impl<'a> Expand<'a> {
         }
     }
 
-    pub fn evaluate_value<T: AsRef<str>>(&self, arg: T) -> Result<String> {
+    fn evaluate_value_checked(
+        &self,
+        arg: impl AsRef<str>,
+        eval_stack: &mut Vec<&str>,
+    ) -> Result<String> {
         let mut arg = arg.as_ref().to_owned();
-
         for placeholder in PlaceHolder::iter() {
-            let fmtstr = &placeholder.get_string();
-            match (
-                arg.contains(fmtstr),
-                self.values.get(&placeholder.get_string()),
-            ) {
+            let fmtstr = placeholder.get_string();
+            match (arg.contains(fmtstr), self.values.get(fmtstr)) {
                 (true, Some(ev)) => {
+                    if eval_stack.contains(&fmtstr) {
+                        eval_stack.push(fmtstr);
+                        let path = eval_stack.join("->");
+                        bail!(
+                            "attempting to replace {fmtstr} with a value that contains itself (replacements {path})"
+                        );
+                    }
+
+                    eval_stack.push(fmtstr);
                     arg = self
-                        .replace_value(fmtstr, arg.clone(), ev)
-                        .with_context(|| format!("replace_value failed: {fmtstr} {arg}"))?
+                        .replace_value(fmtstr, arg.clone(), ev, eval_stack)
+                        .with_context(|| format!("replace_value failed: {fmtstr} {arg}"))?;
+                    eval_stack.pop();
                 }
                 (true, None) => bail!("missing argument {}", fmtstr),
                 (false, _) => (),
             }
         }
+
         Ok(arg)
     }
 
-    pub fn evaluate<T: AsRef<str>>(&self, args: &[T]) -> Result<Vec<String>> {
+    pub fn evaluate_value(&self, arg: impl AsRef<str>) -> Result<String> {
+        self.evaluate_value_checked(arg, &mut Vec::new())
+    }
+
+    fn evaluate_checked(
+        &self,
+        args: &[impl AsRef<str>],
+        eval_stack: &mut Vec<&str>,
+    ) -> Result<Vec<String>> {
         let mut result = Vec::new();
         for arg in args {
             let arg = self
-                .evaluate_value(arg)
+                .evaluate_value_checked(arg, eval_stack)
                 .with_context(|| format!("evaluating argument failed: {}", arg.as_ref()))?;
             result.push(arg);
         }
         Ok(result)
+    }
+
+    pub fn evaluate(&self, args: &[impl AsRef<str>]) -> Result<Vec<String>> {
+        self.evaluate_checked(args, &mut Vec::new())
     }
 }
 
@@ -417,6 +440,7 @@ mod tests {
 
     use super::Expand;
     use anyhow::{Context, Result};
+    use pretty_assertions::assert_eq;
     use std::path::Path;
     use uuid::Uuid;
 
@@ -429,18 +453,93 @@ mod tests {
     }
 
     #[test]
+    fn test_setup_dir_and_target_exe() -> Result<()> {
+        // use current exe name here, since path must exist:
+        let current_exe = std::env::current_exe()?;
+        let dir_part = current_exe.parent().unwrap();
+        let name_part = current_exe.file_name().unwrap().to_string_lossy();
+
+        let target_exe = Expand::new(&test_machine_identity())
+            .setup_dir(dir_part)
+            .target_exe(format!("{{setup_dir}}/{name_part}"))
+            .evaluate_value("{target_exe}")?;
+
+        assert_eq!(target_exe, current_exe.to_string_lossy());
+
+        Ok(())
+    }
+
+    #[test]
     fn test_expand_nested() -> Result<()> {
-        let supervisor_options = vec!["{target_options}".to_string()];
-        let target_options: Vec<_> = vec!["a", "b", "c"].iter().map(|p| p.to_string()).collect();
         let result = Expand::new(&test_machine_identity())
-            .target_options(&target_options)
-            .evaluate(&supervisor_options)?;
-        let expected = vec!["a b c"];
+            .target_options(&["a".to_string(), "b".to_string(), "c".to_string()])
+            .supervisor_options(&["{target_options}".to_string()])
+            .evaluate(&["{supervisor_options}"])?;
+        assert_eq!(result, vec!["a b c"]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_expand_nested_reverse() -> Result<()> {
+        let result = Expand::new(&test_machine_identity())
+            .supervisor_options(&["a".to_string(), "b".to_string(), "c".to_string()])
+            .target_options(&["{supervisor_options}".to_string()])
+            .evaluate(&["{target_options}"])?;
+        assert_eq!(result, vec!["a b c"]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_self_referential_list() -> Result<()> {
+        let result = Expand::new(&test_machine_identity())
+            .supervisor_options(&["{supervisor_options}".to_string()])
+            .evaluate(&["{supervisor_options}"]);
+
+        let e = result.err().unwrap();
         assert_eq!(
-            result, expected,
-            "result: {result:?} expected: {expected:?}"
+            format!("{e:#}"),
+            "evaluating argument failed: {supervisor_options}: \
+            replace_value failed: {supervisor_options} {supervisor_options}: \
+            evaluating argument failed: {supervisor_options}: \
+            attempting to replace {supervisor_options} with a value that contains itself \
+            (replacements {supervisor_options}->{supervisor_options})"
         );
         Ok(())
+    }
+
+    #[test]
+    fn test_self_referential_path() {
+        let result = Expand::new(&test_machine_identity())
+            .target_exe("{target_exe}")
+            .evaluate(&["{target_exe}"]);
+
+        let e = result.err().unwrap();
+        assert_eq!(
+            format!("{e:#}"),
+            "evaluating argument failed: {target_exe}: \
+            replace_value failed: {target_exe} {target_exe}: \
+            attempting to replace {target_exe} with a value that contains itself \
+            (replacements {target_exe}->{target_exe})"
+        );
+    }
+
+    #[test]
+    fn test_mutually_recursive() {
+        let result = Expand::new(&test_machine_identity())
+            .supervisor_options(&["{target_exe}".to_string()])
+            .target_exe("{supervisor_options}")
+            .evaluate(&["{target_exe}"]);
+
+        let e = result.err().unwrap();
+        assert_eq!(
+            format!("{e:#}"),
+            "evaluating argument failed: {target_exe}: \
+            replace_value failed: {target_exe} {target_exe}: \
+            replace_value failed: {supervisor_options} {supervisor_options}: \
+            evaluating argument failed: {target_exe}: \
+            attempting to replace {target_exe} with a value that contains itself \
+            (replacements {target_exe}->{supervisor_options}->{target_exe})"
+        );
     }
 
     #[test]
