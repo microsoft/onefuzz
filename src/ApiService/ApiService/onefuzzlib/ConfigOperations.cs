@@ -26,7 +26,7 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
     private static readonly InstanceConfigCacheKey _key = new(); // singleton key
     public Task<InstanceConfig> Fetch()
         => _cache.GetOrCreateAsync(_key, async entry => {
-            entry = entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10)); // cached for 10 minutes
+            entry = entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(1)); // cached for 1 minute
             var key = _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set");
             return await GetEntityAsync(key, key);
         });

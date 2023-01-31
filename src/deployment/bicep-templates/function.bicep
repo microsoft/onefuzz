@@ -23,7 +23,6 @@ param diagnostics_log_level string
 param log_retention int
 param linux_fx_version string
 
-
 var siteconfig = (use_windows) ? {
 } : {
   linuxFxVersion: linux_fx_version
@@ -57,17 +56,17 @@ resource function 'Microsoft.Web/sites@2021-03-01' = {
     type: 'SystemAssigned'
   }
   properties: union({
-    siteConfig: union(siteconfig, commonSiteConfig)
-    httpsOnly: true
-    serverFarmId: server_farm_id
-    clientAffinityEnabled: true
-  }, extraProperties)
+      siteConfig: union(siteconfig, commonSiteConfig)
+      httpsOnly: true
+      serverFarmId: server_farm_id
+      clientAffinityEnabled: true
+    }, extraProperties)
 }
 
 resource funcAuthSettings 'Microsoft.Web/sites/config@2021-03-01' = {
   name: 'authsettingsV2'
   properties: {
-    login:{
+    login: {
       tokenStore: {
         enabled: true
       }
@@ -75,6 +74,7 @@ resource funcAuthSettings 'Microsoft.Web/sites/config@2021-03-01' = {
     globalValidation: {
       unauthenticatedClientAction: 'RedirectToLoginPage'
       requireAuthentication: true
+      excludedPaths: [ '/api/config' ]
     }
     httpSettings: {
       requireHttps: true

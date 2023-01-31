@@ -43,8 +43,9 @@ from azure.storage.blob import (
 from msrest.serialization import TZ_UTC
 
 from deploylib.configuration import (
+    Config,
     InstanceConfigClient,
-    NetworkSecurityConfig,
+    NsgRule,
     parse_rules,
     update_admins,
     update_allowed_aad_tenants,
@@ -61,7 +62,6 @@ from deploylib.registration import (
     get_application,
     get_service_principal,
     get_signed_in_user,
-    get_tenant_id,
     query_microsoft_graph,
     register_application,
     set_app_audience,
@@ -74,10 +74,6 @@ from deploylib.registration import (
 USER_READ_PERMISSION = "e1fe6dd8-ba31-4d61-89e7-88639da4683d"
 MICROSOFT_GRAPH_APP_ID = "00000003-0000-0000-c000-000000000000"
 
-ONEFUZZ_CLI_AUTHORITY = (
-    "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47"
-)
-COMMON_AUTHORITY = "https://login.microsoftonline.com/common"
 TELEMETRY_NOTICE = (
     "Telemetry collection on stats and OneFuzz failures are sent to Microsoft. "
     "To disable, delete the ONEFUZZ_TELEMETRY application setting in the "
@@ -139,7 +135,7 @@ class Client:
         location: str,
         application_name: str,
         owner: str,
-        nsg_config: str,
+        config: str,
         client_id: Optional[str],
         client_secret: Optional[str],
         app_zip: str,
@@ -167,7 +163,7 @@ class Client:
         self.location = location
         self.application_name = application_name
         self.owner = owner
-        self.nsg_config = nsg_config
+        self.config = config
         self.app_zip = app_zip
         self.tools = tools
         self.instance_specific = instance_specific
@@ -180,10 +176,6 @@ class Client:
             "client_id": client_id,
             "client_secret": client_secret,
         }
-        if self.multi_tenant_domain:
-            authority = COMMON_AUTHORITY
-        else:
-            authority = ONEFUZZ_CLI_AUTHORITY
         self.migrations = migrations
         self.export_appinsights = export_appinsights
         self.admins = admins
@@ -196,9 +188,15 @@ class Client:
         self.host_dotnet_on_windows = host_dotnet_on_windows
         self.enable_profiler = enable_profiler
 
+        self.rules: List[NsgRule] = []
+
+        self.tenant_id = ""
+        self.tenant_domain = ""
+        self.authority = ""
+
         self.cli_config: Dict[str, Union[str, UUID]] = {
-            "client_id": self.cli_app_id,
-            "authority": authority,
+            "client_id": "",
+            "authority": "",
         }
 
         machine = platform.machine()
@@ -305,7 +303,7 @@ class Client:
         # The url to access the instance
         # This also represents the legacy identifier_uris of the application
         # registration
-        if self.multi_tenant_domain:
+        if self.multi_tenant_domain != "":
             return "https://%s/%s" % (self.multi_tenant_domain, self.application_name)
         else:
             return "https://%s.azurewebsites.net" % self.application_name
@@ -316,14 +314,14 @@ class Client:
         # to be from an approved domain The format of this value is derived
         # from the default value proposed by azure when creating an application
         # registration api://{guid}/...
-        if self.multi_tenant_domain:
+        if self.multi_tenant_domain != "":
             return "api://%s/%s" % (self.multi_tenant_domain, self.application_name)
         else:
             return "api://%s.azurewebsites.net" % self.application_name
 
     def get_signin_audience(self) -> str:
         # https://docs.microsoft.com/en-us/azure/active-directory/develop/supported-accounts-validation
-        if self.multi_tenant_domain:
+        if self.multi_tenant_domain != "":
             return "AzureADMultipleOrgs"
         else:
             return "AzureADMyOrg"
@@ -382,7 +380,7 @@ class Client:
         else:
             self.update_existing_app_registration(app, app_roles)
 
-        if self.multi_tenant_domain and app["signInAudience"] == "AzureADMyOrg":
+        if self.multi_tenant_domain != "" and app["signInAudience"] == "AzureADMyOrg":
             set_app_audience(
                 app["id"],
                 "AzureADMultipleOrgs",
@@ -419,13 +417,10 @@ class Client:
                     OnefuzzAppRole.CliClient,
                     self.get_subscription_id(),
                 )
-                if self.multi_tenant_domain:
-                    authority = COMMON_AUTHORITY
-                else:
-                    authority = app_info.authority
+
                 self.cli_config = {
                     "client_id": app_info.client_id,
-                    "authority": authority,
+                    "authority": self.authority,
                 }
             else:
                 logger.error(
@@ -437,14 +432,10 @@ class Client:
         else:
             onefuzz_cli_app = cli_app
             authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
-            if self.multi_tenant_domain:
-                authority = COMMON_AUTHORITY
-            else:
-                tenant_id = get_tenant_id(self.get_subscription_id())
-                authority = "https://login.microsoftonline.com/%s" % tenant_id
+
             self.cli_config = {
                 "client_id": onefuzz_cli_app["appId"],
-                "authority": authority,
+                "authority": self.authority,
             }
 
             # ensure replyURLs is set properly
@@ -641,7 +632,7 @@ class Client:
         # Add --custom_domain value to Allowed token audiences setting
         if self.custom_domain:
 
-            if self.multi_tenant_domain:
+            if self.multi_tenant_domain != "":
                 root_domain = self.multi_tenant_domain
             else:
                 root_domain = "%s.azurewebsites.net" % self.application_name
@@ -653,7 +644,7 @@ class Client:
 
             app_func_audiences.extend(custom_domains)
 
-        if self.multi_tenant_domain:
+        if self.multi_tenant_domain != "":
             # clear the value in the Issuer Url field:
             # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
             app_func_issuer = ""
@@ -680,6 +671,9 @@ class Client:
             "clientSecret": {"value": self.results["client_secret"]},
             "app_func_issuer": {"value": app_func_issuer},
             "signedExpiry": {"value": expiry},
+            "cli_app_id": {"value": self.cli_app_id},
+            "authority": {"value": self.authority},
+            "tenant_domain": {"value": self.tenant_domain},
             "multi_tenant_domain": multi_tenant_domain,
             "workbookData": {"value": self.workbook_data},
             "enable_remote_debugging": {"value": self.host_dotnet_on_windows},
@@ -778,6 +772,38 @@ class Client:
         table_service = TableService(account_name=name, account_key=key)
         migrate(table_service, self.migrations)
 
+    def parse_config(self) -> None:
+        logger.info("parsing config: %s", self.config)
+
+        if self.config:
+
+            with open(self.config, "r") as template_handle:
+                config_template = json.load(template_handle)
+
+            try:
+                config = Config(config_template)
+                self.rules = parse_rules(config)
+
+                ## Values provided via the CLI will override what's in the config.json
+                if self.authority == "":
+                    self.authority = (
+                        "https://login.microsoftonline.com/" + config.tenant_id
+                    )
+                if self.tenant_domain == "":
+                    self.tenant_domain = config.tenant_domain
+                if self.multi_tenant_domain == "":
+                    self.multi_tenant_domain = config.multi_tenant_domain
+                if self.cli_app_id == "":
+                    self.cli_app_id = config.cli_client_id
+
+            except Exception as ex:
+                logging.info(
+                    "An Exception was encountered while parsing config file: %s", ex
+                )
+                raise Exception(
+                    "config and sub-values were not properly included in config."
+                )
+
     def set_instance_config(self) -> None:
         logger.info("setting instance config")
         name = self.results["deploy"]["func_name"]["value"]
@@ -787,26 +813,7 @@ class Client:
 
         config_client = InstanceConfigClient(table_service, self.application_name)
 
-        if self.nsg_config:
-            logger.info("deploying arm template: %s", self.nsg_config)
-
-            with open(self.nsg_config, "r") as template_handle:
-                config_template = json.load(template_handle)
-
-            try:
-                config = NetworkSecurityConfig(config_template)
-                rules = parse_rules(config)
-            except Exception as ex:
-                logging.info(
-                    "An Exception was encountered while parsing nsg_config file: %s", ex
-                )
-                raise Exception(
-                    "proxy_nsg_config and sub-values were not properly included in config."
-                    + "Please submit a configuration resembling"
-                    + " { 'proxy_nsg_config': { 'allowed_ips': [], 'allowed_service_tags': [] } }"
-                )
-
-            update_nsg(config_client, rules)
+        update_nsg(config_client, self.rules)
 
         if self.admins:
             update_admins(config_client, self.admins)
@@ -1136,17 +1143,10 @@ class Client:
             "config",
             "--endpoint",
             f"https://{self.application_name}.azurewebsites.net",
-            "--authority",
-            str(self.cli_config["authority"]),
-            "--client_id",
-            str(self.cli_config["client_id"]),
         ]
 
         if "client_secret" in self.cli_config:
             cmd += ["--client_secret", "YOUR_CLIENT_SECRET_HERE"]
-
-        if self.multi_tenant_domain:
-            cmd += ["--tenant_domain", str(self.multi_tenant_domain)]
 
         as_str = " ".join(cmd)
 
@@ -1174,6 +1174,7 @@ def lower_case(arg: str) -> str:
 
 def main() -> None:
     rbac_only_states = [
+        ("parse_config", Client.parse_config),
         ("check_region", Client.check_region),
         ("rbac", Client.setup_rbac),
         ("eventgrid", Client.remove_eventgrid),
@@ -1200,7 +1201,7 @@ def main() -> None:
     parser.add_argument("resource_group")
     parser.add_argument("application_name", type=lower_case)
     parser.add_argument("owner")
-    parser.add_argument("nsg_config")
+    parser.add_argument("config")
     parser.add_argument(
         "--bicep-template",
         type=arg_file,
@@ -1272,7 +1273,7 @@ def main() -> None:
     parser.add_argument(
         "--multi_tenant_domain",
         type=str,
-        default=None,
+        default="",
         help="enable multi-tenant authentication with this tenant domain",
     )
     parser.add_argument(
@@ -1299,7 +1300,7 @@ def main() -> None:
     parser.add_argument(
         "--cli_app_id",
         type=str,
-        default="72f1562a-8c0c-41ea-beb9-fa2b71c80134",
+        default="",
         help="CLI App Registration to be used during deployment.",
     )
     parser.add_argument(
@@ -1337,7 +1338,7 @@ def main() -> None:
         location=args.location,
         application_name=args.application_name,
         owner=args.owner,
-        nsg_config=args.nsg_config,
+        config=args.config,
         client_id=args.client_id,
         client_secret=args.client_secret,
         app_zip=args.app_zip,
