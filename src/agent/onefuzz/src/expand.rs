@@ -692,26 +692,42 @@ mod tests {
 
     #[test]
     fn missing_input() {
-        let result = Expand::new(&test_machine_identity()).evaluate_value("{input_file_sha256}");
+        for mapping_fn in [
+            "{input_file_sha256}",
+            "{input_file_name}",
+            "{input_file_name_no_ext}",
+        ] {
+            let result = Expand::new(&test_machine_identity()).evaluate_value(mapping_fn);
 
-        assert_eq!(
-            format!("{:#}", result.err().unwrap()),
-            "unable to get value of {input_file_sha256}: \
-            no value found for {input}, unable to evaluate {input_file_sha256}"
-        );
+            assert_eq!(
+                format!("{:#}", result.err().unwrap()),
+                format!(
+                    "unable to get value of {mapping_fn}: \
+                    no value found for {{input}}, unable to evaluate {mapping_fn}"
+                )
+            );
+        }
     }
 
     #[test]
     fn wrong_input_type() {
-        let result = Expand::new(&test_machine_identity())
-            .input_marker("not a path") // this inserts {input} with a Scalar type
-            .evaluate_value("{input_file_sha256}");
+        for mapping_fn in [
+            "{input_file_sha256}",
+            "{input_file_name}",
+            "{input_file_name_no_ext}",
+        ] {
+            let result = Expand::new(&test_machine_identity())
+                .input_marker("not a path") // this inserts {input} with a Scalar type
+                .evaluate_value(mapping_fn);
 
-        assert_eq!(
-            format!("{:#}", result.err().unwrap()),
-            "unable to get value of {input_file_sha256}: \
-            {input_file_sha256} must be used with a path value for {input}"
-        );
+            assert_eq!(
+                format!("{:#}", result.err().unwrap()),
+                format!(
+                    "unable to get value of {mapping_fn}: \
+                    {mapping_fn} must be used with a path value for {{input}}"
+                )
+            );
+        }
     }
 
     #[tokio::test]
