@@ -110,7 +110,7 @@ fi
 chmod -R a+rx /onefuzz/tools/linux
 
 if type apt > /dev/null 2> /dev/null; then
-    
+
     # Install updated Microsoft Open Management Infrastructure - github.com/microsoft/omi
     curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc 2>&1 | logger -s -i -t 'onefuzz-OMI-add-MS-repo-key'
     sudo apt-add-repository https://packages.microsoft.com/ubuntu/20.04/prod 2>&1 | logger -s -i -t 'onefuzz-OMI-add-MS-repo'
@@ -159,7 +159,9 @@ if type apt > /dev/null 2> /dev/null; then
     popd
 fi
 
-if [ -d /etc/systemd/system ]; then
+if  [ -v DOCKER_BUILD ]; then
+    echo "building for docker"
+elif [ -d /etc/systemd/system ]; then
     logger "onefuzz: setting up systemd"
     sudo chmod 644 /onefuzz/tools/linux/onefuzz.service
     sudo chown root /onefuzz/tools/linux/onefuzz.service

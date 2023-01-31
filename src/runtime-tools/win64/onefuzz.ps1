@@ -5,7 +5,9 @@ $env:Path += ";C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\;C:\onefuzz\
 $env:ONEFUZZ_ROOT = "C:\onefuzz"
 $env:ONEFUZZ_TOOLS = "C:\onefuzz\tools"
 $env:LLVM_SYMBOLIZER_PATH = "C:\Program Files\LLVM\bin\llvm-symbolizer.exe"
-$env:RUST_LOG = "info"
+if (!$env:RUST_LOG){
+  $env:RUST_LOG = "info"
+}
 $env:DOTNET_VERSIONS = "7.0.100;6.0.403"
 # Set a session and machine scoped env var
 $env:DOTNET_ROOT = "c:\onefuzz\tools\dotnet"
@@ -118,7 +120,7 @@ function Enable-SSHTrafic {
 
 function Install-OnBoot {
   log "adding onboot: starting"
-  schtasks /create /sc onstart /tn onefuzz /tr "powershell.exe -ExecutionPolicy Unrestricted -File c:\onefuzz\tools\win64\onefuzz-run.ps1 -WindowStyle Hidden" /ru SYSTEM
+  schtasks /create /sc onstart /tn onefuzz /tr "powershell.exe -ExecutionPolicy Unrestricted -WindowStyle Hidden -File c:\onefuzz\tools\win64\onefuzz-run.ps1" /ru SYSTEM
   log "adding onboot: done"
 }
 
