@@ -4,6 +4,7 @@
 use crate::{machine_id::MachineIdentity, sha256::digest_file_blocking};
 use anyhow::{format_err, Context, Result};
 use onefuzz_telemetry::{InstanceTelemetryKey, MicrosoftTelemetryKey};
+use regex::Regex;
 use std::path::{Path, PathBuf};
 use std::{collections::HashMap, hash::Hash};
 use strum::IntoEnumIterator;
@@ -17,7 +18,7 @@ pub enum ExpandedValue<'a> {
     Mapping(MappingFn<'a>),
 }
 
-type MappingFn<'a> = Box<dyn Fn(&Expand<'a>, &str) -> Result<Option<ExpandedValue<'a>>> + Send>;
+type MappingFn<'a> = Box<dyn Fn(&Expand<'a>) -> Result<ExpandedValue<'a>> + Send>;
 
 #[derive(PartialEq, Eq, Hash, EnumIter)]
 pub enum PlaceHolder {
@@ -120,49 +121,73 @@ impl<'a> Expand<'a> {
         Ok(self.set_value(PlaceHolder::MachineId, ExpandedValue::Scalar(value)))
     }
 
-    fn input_file_sha256(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
-        let val = match self.values.get(PlaceHolder::Input.get_string()) {
-            Some(ExpandedValue::Path(fp)) => {
-                let file = PathBuf::from(fp);
-                let hash = digest_file_blocking(file)?;
-                Some(ExpandedValue::Scalar(hash))
-            }
-            _ => None,
+    fn input_file_sha256(&self) -> Result<ExpandedValue<'a>> {
+        let Some(val) = self.values.get(PlaceHolder::Input.get_string()) else {
+            bail!("no value found for {}", PlaceHolder::Input.get_string())
         };
 
-        Ok(val)
+        match val {
+            // inserted by input_path:
+            ExpandedValue::Path(fp) => {
+                let file = PathBuf::from(fp);
+                let hash = digest_file_blocking(file)?;
+                Ok(ExpandedValue::Scalar(hash))
+            }
+
+            // inserted by input_marker:
+            ExpandedValue::Scalar(val) => Ok(ExpandedValue::Scalar(val.clone())),
+
+            // no other options:
+            _ => unreachable!(),
+        }
     }
 
-    fn extract_file_name_no_ext(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
-        let val = match self.values.get(PlaceHolder::Input.get_string()) {
-            Some(ExpandedValue::Path(fp)) => {
+    fn extract_file_name_no_ext(&self) -> Result<ExpandedValue<'a>> {
+        let Some(val) = self.values.get(PlaceHolder::Input.get_string()) else {
+            bail!("no value found for {}", PlaceHolder::Input.get_string())
+        };
+
+        match val {
+            // inserted by input_path:
+            ExpandedValue::Path(fp) => {
                 let file = PathBuf::from(fp);
                 let stem = file
                     .file_stem()
                     .ok_or_else(|| format_err!("missing file stem: {}", file.display()))?;
                 let name_as_str = stem.to_string_lossy().to_string();
-                Some(ExpandedValue::Scalar(name_as_str))
+                Ok(ExpandedValue::Scalar(name_as_str))
             }
-            _ => None,
-        };
 
-        Ok(val)
+            // inserted by input_marker:
+            ExpandedValue::Scalar(s) => Ok(ExpandedValue::Scalar(s.clone())),
+
+            // no other options:
+            _ => unreachable!(),
+        }
     }
 
-    fn extract_file_name(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
-        let val = match self.values.get(PlaceHolder::Input.get_string()) {
-            Some(ExpandedValue::Path(fp)) => {
+    fn extract_file_name(&self) -> Result<ExpandedValue<'a>> {
+        let Some(val) = self.values.get(PlaceHolder::Input.get_string()) else {
+            bail!("no value found for {}", PlaceHolder::Input.get_string())
+        };
+
+        match val {
+            // inserted by input_path:
+            ExpandedValue::Path(fp) => {
                 let file = PathBuf::from(fp);
                 let name = file
                     .file_name()
                     .ok_or_else(|| format_err!("missing file name: {}", file.display()))?;
                 let name_as_str = name.to_string_lossy().to_string();
-                Some(ExpandedValue::Scalar(name_as_str))
+                Ok(ExpandedValue::Scalar(name_as_str))
             }
-            _ => None,
-        };
 
-        Ok(val)
+            // inserted by input_marker:
+            ExpandedValue::Scalar(s) => Ok(ExpandedValue::Scalar(s.clone())),
+
+            // no other options:
+            _ => unreachable!(),
+        }
     }
 
     pub fn set_value(self, name: PlaceHolder, value: ExpandedValue<'a>) -> Self {
@@ -338,12 +363,10 @@ impl<'a> Expand<'a> {
         )
     }
 
-    fn replace_value(
+    fn get_value(
         &self,
-        fmtstr: &str,
-        mut arg: String,
         ev: &ExpandedValue<'a>,
-        eval_stack: &mut Vec<&str>,
+        eval_stack: &mut Vec<&'static str>,
     ) -> Result<String> {
         match ev {
             ExpandedValue::Path(v) => {
@@ -354,60 +377,75 @@ impl<'a> Expand<'a> {
                     .with_context(|| format!("unable to canonicalize path during extension: {v}"))?
                     .to_string_lossy()
                     .to_string();
-                arg = arg.replace(fmtstr, &path);
-                Ok(arg)
+                Ok(path)
             }
-            ExpandedValue::Scalar(v) => {
-                arg = arg.replace(fmtstr, v);
-                Ok(arg)
-            }
+            ExpandedValue::Scalar(v) => Ok(v.clone()),
             ExpandedValue::List(value) => {
                 let replaced = self.evaluate_checked(value, eval_stack)?;
                 let replaced = replaced.join(" ");
-                arg = arg.replace(fmtstr, &replaced);
-                Ok(arg)
+                Ok(replaced)
             }
-            ExpandedValue::Mapping(func) => {
-                if let Some(value) = func(self, fmtstr)? {
-                    let arg = self.replace_value(fmtstr, arg, &value, eval_stack)?;
-                    Ok(arg)
-                } else {
-                    Ok(arg)
-                }
-            }
+            ExpandedValue::Mapping(func) => self.get_value(&func(self)?, eval_stack),
         }
     }
 
     fn evaluate_value_checked(
         &self,
         arg: impl AsRef<str>,
-        eval_stack: &mut Vec<&str>,
+        eval_stack: &mut Vec<&'static str>,
     ) -> Result<String> {
-        let mut arg = arg.as_ref().to_owned();
-        for placeholder in PlaceHolder::iter() {
-            let fmtstr = placeholder.get_string();
-            match (arg.contains(fmtstr), self.values.get(fmtstr)) {
-                (true, Some(ev)) => {
-                    if eval_stack.contains(&fmtstr) {
-                        eval_stack.push(fmtstr);
-                        let path = eval_stack.join("->");
-                        bail!(
-                            "attempting to replace {fmtstr} with a value that contains itself (replacements {path})"
-                        );
-                    }
-
-                    eval_stack.push(fmtstr);
-                    arg = self
-                        .replace_value(fmtstr, arg.clone(), ev, eval_stack)
-                        .with_context(|| format!("replace_value failed: {fmtstr} {arg}"))?;
-                    eval_stack.pop();
-                }
-                (true, None) => bail!("missing argument {}", fmtstr),
-                (false, _) => (),
-            }
+        lazy_static::lazy_static! {
+            static ref VAR_RE: Regex = Regex::new(r"\{[^}]+?\}").unwrap();
         }
 
-        Ok(arg)
+        let arg = arg.as_ref().to_owned();
+        let mut errors = Vec::new();
+
+        let result = VAR_RE.replace_all(&arg, |captures: &regex::Captures| -> String {
+            let matched = captures.get(0).unwrap().as_str(); // capture 0 must always be present here
+            match self.values.get_key_value(matched) {
+                Some((placeholder, ev)) => {
+                    if eval_stack.contains(placeholder) {
+                        eval_stack.push(placeholder);
+                        let path = eval_stack.join("->");
+                        errors.push(format!(
+                            "attempting to replace {placeholder} with a value that contains itself (replacements {path})"
+                        ));
+                        eval_stack.pop();
+                        String::new()
+                    } else {
+                        eval_stack.push(placeholder);
+                        let result = self.get_value(ev, eval_stack)
+                            .with_context(|| format!("replace_value failed: {placeholder} {arg}"));
+                        eval_stack.pop();
+
+                        match result {
+                            Ok(v) => v,
+                            Err(e) => {
+                                errors.push(format!("{e:#}"));
+                                String::new()
+                            }
+                        }
+                    }
+                }
+                None => {
+                    if PlaceHolder::iter().any(|v| v.get_string() == matched) {
+                        // this is a known replacement but no value is defined:
+                        errors.push(format!("replacement {matched} is not available"))
+                    } else {
+                        // probably a typo, we don't know this placeholder:
+                        errors.push(format!("unknown variable replacement {matched}"))
+                    }
+                    String::new()
+                }
+            }
+        });
+
+        if errors.is_empty() {
+            Ok(result.into_owned())
+        } else {
+            bail!(errors.join("; "));
+        }
     }
 
     pub fn evaluate_value(&self, arg: impl AsRef<str>) -> Result<String> {
@@ -417,7 +455,7 @@ impl<'a> Expand<'a> {
     fn evaluate_checked(
         &self,
         args: &[impl AsRef<str>],
-        eval_stack: &mut Vec<&str>,
+        eval_stack: &mut Vec<&'static str>,
     ) -> Result<Vec<String>> {
         let mut result = Vec::new();
         for arg in args {
@@ -620,6 +658,36 @@ mod tests {
             .evaluate_value("a {input} b")?;
         assert!(result.contains("lib.rs"));
         Ok(())
+    }
+
+    #[test]
+    fn missing_replacement() {
+        let result = Expand::new(&test_machine_identity()).evaluate_value("a {input} b");
+        assert_eq!(
+            format!("{:#}", result.err().unwrap()),
+            "replacement {input} is not available"
+        );
+    }
+
+    #[test]
+    fn typoed_variable() {
+        let result = Expand::new(&test_machine_identity())
+            .input_path("src/lib.rs")
+            .evaluate_value("a {input_paht} b");
+        assert_eq!(
+            format!("{:#}", result.err().unwrap()),
+            "unknown variable replacement {input_paht}"
+        );
+    }
+
+    #[test]
+    fn multiple_errors() {
+        let result =
+            Expand::new(&test_machine_identity()).evaluate_value("a {input_paht} {input} b");
+        assert_eq!(
+            format!("{:#}", result.err().unwrap()),
+            "unknown variable replacement {input_paht}; replacement {input} is not available"
+        );
     }
 
     #[tokio::test]
