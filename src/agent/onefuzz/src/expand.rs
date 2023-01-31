@@ -123,71 +123,71 @@ impl<'a> Expand<'a> {
 
     fn input_file_sha256(&self) -> Result<ExpandedValue<'a>> {
         let Some(val) = self.values.get(PlaceHolder::Input.get_string()) else {
-            bail!("no value found for {}", PlaceHolder::Input.get_string())
+            bail!("no value found for {}, unable to evaluate {}",
+                PlaceHolder::Input.get_string(),
+                PlaceHolder::InputFileSha256.get_string(),
+            )
         };
 
-        match val {
-            // inserted by input_path:
-            ExpandedValue::Path(fp) => {
-                let file = PathBuf::from(fp);
-                let hash = digest_file_blocking(file)?;
-                Ok(ExpandedValue::Scalar(hash))
-            }
+        let ExpandedValue::Path(fp) = val else {
+            bail!(
+                "{} must be used with a path value for {}",
+                PlaceHolder::InputFileSha256.get_string(),
+                PlaceHolder::Input.get_string()
+            )
+        };
 
-            // inserted by input_marker:
-            ExpandedValue::Scalar(val) => Ok(ExpandedValue::Scalar(val.clone())),
-
-            // no other options:
-            _ => unreachable!(),
-        }
+        let file = PathBuf::from(fp);
+        let hash = digest_file_blocking(file)?;
+        Ok(ExpandedValue::Scalar(hash))
     }
 
     fn extract_file_name_no_ext(&self) -> Result<ExpandedValue<'a>> {
         let Some(val) = self.values.get(PlaceHolder::Input.get_string()) else {
-            bail!("no value found for {}", PlaceHolder::Input.get_string())
+            bail!("no value found for {}, unable to evaluate {}",
+                PlaceHolder::Input.get_string(),
+                PlaceHolder::InputFileNameNoExt.get_string(),
+            )
         };
 
-        match val {
-            // inserted by input_path:
-            ExpandedValue::Path(fp) => {
-                let file = PathBuf::from(fp);
-                let stem = file
-                    .file_stem()
-                    .ok_or_else(|| format_err!("missing file stem: {}", file.display()))?;
-                let name_as_str = stem.to_string_lossy().to_string();
-                Ok(ExpandedValue::Scalar(name_as_str))
-            }
+        let ExpandedValue::Path(fp) = val else {
+            bail!(
+                "{} must be used with a path value for {}",
+                PlaceHolder::InputFileNameNoExt.get_string(),
+                PlaceHolder::Input.get_string()
+            )
+        };
 
-            // inserted by input_marker:
-            ExpandedValue::Scalar(s) => Ok(ExpandedValue::Scalar(s.clone())),
-
-            // no other options:
-            _ => unreachable!(),
-        }
+        let file = PathBuf::from(fp);
+        let stem = file
+            .file_stem()
+            .ok_or_else(|| format_err!("missing file stem: {}", file.display()))?;
+        let name_as_str = stem.to_string_lossy().to_string();
+        Ok(ExpandedValue::Scalar(name_as_str))
     }
 
     fn extract_file_name(&self) -> Result<ExpandedValue<'a>> {
         let Some(val) = self.values.get(PlaceHolder::Input.get_string()) else {
-            bail!("no value found for {}", PlaceHolder::Input.get_string())
+            bail!("no value found for {}, unable to evaluate {}",
+                PlaceHolder::Input.get_string(),
+                PlaceHolder::InputFileName.get_string(),
+            )
         };
 
-        match val {
-            // inserted by input_path:
-            ExpandedValue::Path(fp) => {
-                let file = PathBuf::from(fp);
-                let name = file
-                    .file_name()
-                    .ok_or_else(|| format_err!("missing file name: {}", file.display()))?;
-                let name_as_str = name.to_string_lossy().to_string();
-                Ok(ExpandedValue::Scalar(name_as_str))
-            }
+        let ExpandedValue::Path(fp) = val else {
+            bail!(
+                "{} must be used with a path value for {}",
+                PlaceHolder::InputFileName.get_string(),
+                PlaceHolder::Input.get_string()
+            )
+        };
 
-            // inserted by input_marker:
-            ExpandedValue::Scalar(s) => Ok(ExpandedValue::Scalar(s.clone())),
-
-            // no other options:
-            _ => unreachable!(),
-        }
+        let file = PathBuf::from(fp);
+        let name = file
+            .file_name()
+            .ok_or_else(|| format_err!("missing file name: {}", file.display()))?;
+        let name_as_str = name.to_string_lossy().to_string();
+        Ok(ExpandedValue::Scalar(name_as_str))
     }
 
     pub fn set_value(self, name: PlaceHolder, value: ExpandedValue<'a>) -> Self {
@@ -416,7 +416,7 @@ impl<'a> Expand<'a> {
                     } else {
                         eval_stack.push(placeholder);
                         let result = self.get_value(ev, eval_stack)
-                            .with_context(|| format!("replace_value failed: {placeholder} {arg}"));
+                            .with_context(|| format!("unable to get value of {placeholder}"));
                         eval_stack.pop();
 
                         match result {
@@ -537,7 +537,7 @@ mod tests {
         assert_eq!(
             format!("{e:#}"),
             "evaluating argument failed: {supervisor_options}: \
-            replace_value failed: {supervisor_options} {supervisor_options}: \
+            unable to get value of {supervisor_options}: \
             evaluating argument failed: {supervisor_options}: \
             attempting to replace {supervisor_options} with a value that contains itself \
             (replacements {supervisor_options}->{supervisor_options})"
@@ -555,7 +555,7 @@ mod tests {
         assert_eq!(
             format!("{e:#}"),
             "evaluating argument failed: {target_exe}: \
-            replace_value failed: {target_exe} {target_exe}: \
+            unable to get value of {target_exe}: \
             attempting to replace {target_exe} with a value that contains itself \
             (replacements {target_exe}->{target_exe})"
         );
@@ -572,8 +572,8 @@ mod tests {
         assert_eq!(
             format!("{e:#}"),
             "evaluating argument failed: {target_exe}: \
-            replace_value failed: {target_exe} {target_exe}: \
-            replace_value failed: {supervisor_options} {supervisor_options}: \
+            unable to get value of {target_exe}: \
+            unable to get value of {supervisor_options}: \
             evaluating argument failed: {target_exe}: \
             attempting to replace {target_exe} with a value that contains itself \
             (replacements {target_exe}->{supervisor_options}->{target_exe})"
@@ -687,6 +687,30 @@ mod tests {
         assert_eq!(
             format!("{:#}", result.err().unwrap()),
             "unknown variable replacement {input_paht}; replacement {input} is not available"
+        );
+    }
+
+    #[test]
+    fn missing_input() {
+        let result = Expand::new(&test_machine_identity()).evaluate_value("{input_file_sha256}");
+
+        assert_eq!(
+            format!("{:#}", result.err().unwrap()),
+            "unable to get value of {input_file_sha256}: \
+            no value found for {input}, unable to evaluate {input_file_sha256}"
+        );
+    }
+
+    #[test]
+    fn wrong_input_type() {
+        let result = Expand::new(&test_machine_identity())
+            .input_marker("not a path") // this inserts {input} with a Scalar type
+            .evaluate_value("{input_file_sha256}");
+
+        assert_eq!(
+            format!("{:#}", result.err().unwrap()),
+            "unable to get value of {input_file_sha256}: \
+            {input_file_sha256} must be used with a path value for {input}"
         );
     }
 
