@@ -40,6 +40,8 @@ const SOURCE_COVERAGE_FILE: &str = "source-coverage.json";
 
 const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(120);
 
+const WINDOWS_INTERCEPTOR_DENYLIST: &str = include_str!("generic/windows-interceptor.list");
+
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub target_exe: PathBuf,
@@ -152,6 +154,10 @@ impl CoverageTask {
     }
 
     async fn load_target_allowlist(&self) -> Result<TargetAllowList> {
+        // By default, all items are allowed.
+        //
+        // We will check for user allowlists for each item type. On Windows, we must ensure some
+        // source files are excluded.
         let mut allowlist = TargetAllowList::default();
 
         if let Some(functions) = &self.config.function_allowlist {
@@ -164,6 +170,14 @@ impl CoverageTask {
 
         if let Some(source_files) = &self.config.source_allowlist {
             allowlist.source_files = self.load_allowlist(source_files).await?;
+        }
+
+        if cfg!(target_os = "windows") {
+            // If on Windows, add a base denylist which excludes sanitizer-intercepted CRT and
+            // process startup functions. Setting software breakpoints in these functions breaks
+            // interceptor init, and causes test case execution to diverge.
+            let interceptor_denylist = AllowList::parse(WINDOWS_INTERCEPTOR_DENYLIST)?;
+            allowlist.source_files.extend(&interceptor_denylist);
         }
 
         Ok(allowlist)
