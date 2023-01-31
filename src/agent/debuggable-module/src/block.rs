@@ -8,7 +8,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::debuginfo::DebugInfo;
 use crate::{Module, Offset};
 
-pub fn sweep_module<'data>(module: &dyn Module<'data>, debuginfo: &DebugInfo) -> Result<Blocks> {
+pub fn sweep_module(module: &dyn Module, debuginfo: &DebugInfo) -> Result<Blocks> {
     let mut blocks = Blocks::default();
 
     for function in debuginfo.functions() {
@@ -19,8 +19,8 @@ pub fn sweep_module<'data>(module: &dyn Module<'data>, debuginfo: &DebugInfo) ->
     Ok(blocks)
 }
 
-pub fn sweep_region<'data>(
-    module: &dyn Module<'data>,
+pub fn sweep_region(
+    module: &dyn Module,
     debuginfo: &DebugInfo,
     offset: Offset,
     size: u64,

@@ -904,7 +904,7 @@ impl AppVerifierController {
         enable_args.arg("-enable");
         configure_args.arg("-configure");
         for test in app_verifier_tests.iter() {
-            enable_args.arg(format!("{}", test));
+            enable_args.arg(format!("{test}"));
 
             for stop_code in stop_codes(AppVerifierTest::from_str(test)?) {
                 configure_args.arg(format!("0x{:x}", *stop_code));

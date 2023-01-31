@@ -32,5 +32,5 @@ pub fn is_agent_done(machine_id: Uuid) -> Result<bool> {
 }
 
 pub fn done_path(machine_id: Uuid) -> Result<PathBuf> {
-    Ok(onefuzz_root()?.join(format!("supervisor-is-done-{}", machine_id)))
+    Ok(onefuzz_root()?.join(format!("supervisor-is-done-{machine_id}")))
 }

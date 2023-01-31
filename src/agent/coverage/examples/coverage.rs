@@ -64,7 +64,7 @@ fn main() -> Result<()> {
 
     if args.dump_stdio {
         if let Some(status) = &recorded.output.status {
-            println!("status = {}", status);
+            println!("status = {status}");
         } else {
             println!("status = <unavailable>");
         }

@@ -159,9 +159,8 @@ if type apt > /dev/null 2> /dev/null; then
     popd
 fi
 
-if  [[ ! -z DOCKER_BUILD ]]
-then
-    echo "buidling for docker docker"
+if  [ -v DOCKER_BUILD ]; then
+    echo "building for docker"
 elif [ -d /etc/systemd/system ]; then
     logger "onefuzz: setting up systemd"
     sudo chmod 644 /onefuzz/tools/linux/onefuzz.service

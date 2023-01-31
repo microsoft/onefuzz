@@ -60,7 +60,7 @@ impl SyncedDir {
                     })?
                 };
                 BlobContainerUrl::new(url.clone())
-                    .with_context(|| format!("unable to create BlobContainerUrl: {}", url))?
+                    .with_context(|| format!("unable to create BlobContainerUrl: {url}"))?
             }
         };
         Ok(url)
@@ -258,8 +258,7 @@ impl SyncedDir {
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
                     let error_message = format!(
-                        "Couldn't upload file.  path:{:?} dir:{:?} err:{:?}",
-                        item, destination, err
+                        "Couldn't upload file.  path:{item:?} dir:{destination:?} err:{err:?}"
                     );
 
                     if !item.exists() {

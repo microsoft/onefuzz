@@ -104,7 +104,7 @@ fn fixture() -> InputPoller<Msg> {
 }
 
 fn url_fixture(msg: Msg) -> Url {
-    Url::parse(&format!("https://azure.com/c/{}", msg)).unwrap()
+    Url::parse(&format!("https://azure.com/c/{msg}")).unwrap()
 }
 
 fn input_fixture(dir: &Path, msg: Msg) -> PathBuf {
