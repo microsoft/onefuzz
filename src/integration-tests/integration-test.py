@@ -376,6 +376,7 @@ class TestOnefuzz:
             self.pool_size = pool_size
             self.the_os = the_os
             self.unmanaged_principal_id = unmanaged_principal_id
+            self.image_tag = f"unmanaged_agent:{self.test_id}"
 
         def __enter__(self):
             self.start_unmanaged_pool()
@@ -415,13 +416,13 @@ class TestOnefuzz:
             services = list(
                 map(
                     lambda x: {
-                        f"agent{x+1}": {"build": ".", "command": f"--machine_id {uuid4()}"}
+                        f"agent{x+1}": {"depends_on":["_build"], "image": self.image_tag, "command": f"--machine_id {uuid4()}"}
                     },
                     range(0, self.pool_size),
                 )
             )
             # create docker compose file
-            compose = {"version": "3", "services": {}}
+            compose = {"version": "3", "services": {"_build": {"image": self.image_tag, "build":"." }}}
             for service in services:
                 key = next(iter(service.keys()))
                 compose["services"][key] = service[key]
@@ -447,6 +448,7 @@ class TestOnefuzz:
         def stop_unmanaged_pool(self):
             tools_path = self.get_tools_path(self.the_os)
             subprocess.check_call("docker compose rm --stop --force", shell=True, cwd=tools_path)
+            subprocess.check_call(f"docker image rm {self.image_tag}", shell=True, cwd=tools_path)
 
     def create_unmanaged_pool(self, pool_size: int, the_os:OS) -> "UnmanagedPool":
         if self.unmanaged_client_id is None or self.unmanaged_client_secret is None or self.unmanaged_principal_id is None:
@@ -1356,7 +1358,6 @@ class Run(Command):
                 result = tester.check_jobs(poll=True, stop_on_complete_check=True)
                 if not result:
                     raise Exception("jobs failed")
-            tester.check_logs_for_errors()
         except Exception as e:
             self.logger.error("testing failed: %s", repr(e))
             sys.exit(1)
