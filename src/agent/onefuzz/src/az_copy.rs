@@ -41,7 +41,7 @@ impl fmt::Display for Mode {
             Mode::Copy => "copy",
             Mode::Sync => "sync",
         };
-        write!(f, "{}", as_str)
+        write!(f, "{as_str}")
     }
 }
 
@@ -99,7 +99,7 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
         let stderr = String::from_utf8_lossy(&output.stderr);
         let logfile = read_azcopy_log_file(temp_dir.path())
             .await
-            .unwrap_or_else(|e| format!("unable to read azcopy log file from: {:?}", e));
+            .unwrap_or_else(|e| format!("unable to read azcopy log file from: {e:?}"));
 
         let src = redact_azcopy_sas_arg(src);
         let dst = redact_azcopy_sas_arg(dst);
@@ -121,7 +121,7 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
 // Work around issues where azcopy fails with an error we should consider
 // "acceptable" to always retry on.
 fn should_always_retry(err: &anyhow::Error) -> bool {
-    let as_string = format!("{:?}", err);
+    let as_string = format!("{err:?}");
     for value in ALWAYS_RETRY_ERROR_STRINGS {
         if as_string.contains(value) {
             info!(
@@ -183,7 +183,7 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
         },
     )
     .await
-    .with_context(|| format!("azcopy failed after retrying.  mode: {}", mode))?;
+    .with_context(|| format!("azcopy failed after retrying.  mode: {mode}"))?;
 
     Ok(())
 }

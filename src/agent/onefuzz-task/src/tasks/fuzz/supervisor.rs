@@ -269,7 +269,7 @@ async fn start_supervisor(
     info!("starting supervisor '{:?}'", cmd);
     let child = cmd
         .spawn()
-        .with_context(|| format!("supervisor failed to start: {:?}", cmd))?;
+        .with_context(|| format!("supervisor failed to start: {cmd:?}"))?;
     Ok(child)
 }
 

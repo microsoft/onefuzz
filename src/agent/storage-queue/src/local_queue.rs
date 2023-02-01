@@ -81,7 +81,7 @@ impl FileQueueClient {
             max_elapsed_time: Some(MAX_ELAPSED_TIME),
             ..ExponentialBackoff::default()
         };
-        let notify = |err, _| println!("IO error: {}", err);
+        let notify = |err, _| println!("IO error: {err}");
         retry_notify(backoff, send_data, notify).await?;
 
         Ok(())
@@ -110,7 +110,7 @@ impl FileQueueClient {
             max_elapsed_time: Some(MAX_ELAPSED_TIME),
             ..ExponentialBackoff::default()
         };
-        let notify = |err, _| println!("IO error: {}", err);
+        let notify = |err, _| println!("IO error: {err}");
         let result = retry_notify(backoff, receive_data, notify).await?;
 
         Ok(result)

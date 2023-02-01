@@ -25,6 +25,11 @@ public sealed class TestServiceConfiguration : IServiceConfig {
 
     public string? OneFuzzTelemetry => "TestOneFuzzTelemetry";
 
+    public string? CliAppId => "TestGuid";
+
+    public string? Authority => "TestAuthority";
+
+    public string? TenantDomain => "TestDomain";
     public string? MultiTenantDomain => null;
 
     public string? OneFuzzInstanceName => "UnitTestInstance";

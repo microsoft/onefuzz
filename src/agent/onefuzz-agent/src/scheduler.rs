@@ -46,7 +46,7 @@ impl fmt::Display for Scheduler {
             Self::Busy(..) => "Scheduler::Busy",
             Self::Done(..) => "Scheduler::Done",
         };
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 
@@ -213,7 +213,7 @@ impl State<SettingUp> {
                 // No script was executed.
             }
             Err(err) => {
-                let error = format!("{:?}", err);
+                let error = format!("{err:?}");
                 warn!("{}", error);
                 let cause = DoneCause::SetupError {
                     error,

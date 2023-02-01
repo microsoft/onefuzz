@@ -6,7 +6,7 @@
 import unittest
 from typing import Any
 
-from deploylib.configuration import NetworkSecurityConfig
+from deploylib.configuration import Config
 
 
 class DeployTests(unittest.TestCase):
@@ -15,33 +15,33 @@ class DeployTests(unittest.TestCase):
         #  Test Dictionary
         invalid_config: Any = ""
         with self.assertRaises(Exception):
-            NetworkSecurityConfig(invalid_config)
+            Config(invalid_config)
         #  Test Empty Dic
         invalid_config = {}
         with self.assertRaises(Exception):
-            NetworkSecurityConfig(invalid_config)
+            Config(invalid_config)
         #  Test Invalid Outer Keys
         invalid_config = {"": ""}
         with self.assertRaises(Exception):
-            NetworkSecurityConfig(invalid_config)
+            Config(invalid_config)
         #  Test Inner Dictionary
         invalid_config = {"proxy_nsg_config": ""}
         with self.assertRaises(Exception):
-            NetworkSecurityConfig(invalid_config)
+            Config(invalid_config)
         #  Test Inner Keys
         invalid_config = {"proxy_nsg_config": {}}
         with self.assertRaises(Exception):
-            NetworkSecurityConfig(invalid_config)
+            Config(invalid_config)
         #  Test Inner Keys
         invalid_config = {"proxy_nsg_config": {"allowed_ips": ""}}
         with self.assertRaises(Exception):
-            NetworkSecurityConfig(invalid_config)
+            Config(invalid_config)
         #  Test Inner Dict Values (lists)
         invalid_config = {
             "proxy_nsg_config": {"allowed_ips": [], "allowed_service_tags": ""}
         }
         with self.assertRaises(Exception):
-            NetworkSecurityConfig(invalid_config)
+            Config(invalid_config)
         #  Test List Values
         invalid_config = {
             "proxy_nsg_config": {
@@ -50,19 +50,19 @@ class DeployTests(unittest.TestCase):
             }
         }
         with self.assertRaises(Exception):
-            NetworkSecurityConfig(invalid_config)
+            Config(invalid_config)
 
         ## Test Valid Configs
         #  Test Empty Lists
         valid_config: Any = {
             "proxy_nsg_config": {"allowed_ips": [], "allowed_service_tags": []}
         }
-        NetworkSecurityConfig(valid_config)
+        Config(valid_config)
         #  Test Wild Card Lists
         valid_config = {
             "proxy_nsg_config": {"allowed_ips": ["*"], "allowed_service_tags": []}
         }
-        NetworkSecurityConfig(valid_config)
+        Config(valid_config)
         #  Test IPs Lists
         valid_config = {
             "proxy_nsg_config": {
@@ -70,7 +70,7 @@ class DeployTests(unittest.TestCase):
                 "allowed_service_tags": [],
             }
         }
-        NetworkSecurityConfig(valid_config)
+        Config(valid_config)
         #  Test Tags Lists
         valid_config = {
             "proxy_nsg_config": {
@@ -78,7 +78,7 @@ class DeployTests(unittest.TestCase):
                 "allowed_service_tags": ["Internet"],
             }
         }
-        NetworkSecurityConfig(valid_config)
+        Config(valid_config)
 
 
 if __name__ == "__main__":

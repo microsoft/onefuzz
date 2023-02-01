@@ -102,8 +102,8 @@ impl std::ops::AddAssign for Count {
     }
 }
 
-pub fn find_coverage_sites<'data>(
-    module: &dyn Module<'data>,
+pub fn find_coverage_sites(
+    module: &dyn Module,
     allowlist: &TargetAllowList,
 ) -> Result<ModuleBinaryCoverage> {
     let debuginfo = module.debuginfo()?;
@@ -124,16 +124,27 @@ pub fn find_coverage_sites<'data>(
             continue;
         }
 
-        if let Some(location) = symcache.lookup(function.offset.0).next() {
-            if let Some(file) = location.file() {
-                let path = file.full_path();
+        let blocks = block::sweep_region(module, &debuginfo, function.offset, function.size)?;
 
-                if allowlist.source_files.is_allowed(path) {
-                    let blocks =
-                        block::sweep_region(module, &debuginfo, function.offset, function.size)?;
-                    offsets.extend(blocks.iter().map(|b| b.offset));
+        for block in &blocks {
+            if let Some(location) = symcache.lookup(block.offset.0).next() {
+                if let Some(file) = location.file() {
+                    let path = file.full_path();
+
+                    // Apply allowlists per block, to account for inlining. The `location` values
+                    // here describe the top of the inline-inclusive call stack.
+                    if !allowlist.functions.is_allowed(&path) {
+                        continue;
+                    }
+
+                    if !allowlist.source_files.is_allowed(&path) {
+                        continue;
+                    }
+
+                    offsets.insert(block.offset);
                 }
             }
+            println!();
         }
     }
 
