@@ -22,7 +22,6 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
     protected JinjaToScribanMigrationTestBase(ITestOutputHelper output, IStorage storage) : base(output, storage) {
     }
 
-    // Dry run doesn't make changes
     [Fact]
     public async Async.Task Dry_Run_Does_Not_Make_Changes() {
         await ConfigureAuth();
@@ -31,24 +30,14 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var _ = await Context.Containers.CreateContainer(notificationContainer, StorageType.Corpus, null);
         var r = await Context.NotificationOperations.Create(
                 notificationContainer,
-                new AdoTemplate(
-                    new Uri("http://example.com"),
-                    new SecretData<string>(new SecretValue<string>("some secret")),
-                    "{% if org %} blah {% endif %}",
-                    string.Empty,
-                    Array.Empty<string>().ToList(),
-                    new Dictionary<string, string>(),
-                    new ADODuplicateTemplate(
-                        Array.Empty<string>().ToList(),
-                        new Dictionary<string, string>(),
-                        new Dictionary<string, string>()
-                    )),
-                    true);
+                MigratableAdoTemplate(),
+                true);
 
         r.Should().NotBeNull();
         r.IsOk.Should().BeTrue("Failed to create notification for test");
 
-        var notification = r.OkV!;
+        var notificationBefore = r.OkV!;
+        var adoTemplateBefore = (notificationBefore.Config as AdoTemplate)!;
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
         var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
@@ -58,17 +47,60 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         result.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
 
         var dryRunResult = BodyAs<JinjaToScribanMigrationDryRunResponse>(result);
-        dryRunResult.NotificationIdsToUpdate.Should().BeEquivalentTo(new List<Guid> { notification.NotificationId });
+        dryRunResult.NotificationIdsToUpdate.Should().BeEquivalentTo(new List<Guid> { notificationBefore.NotificationId });
 
-        Context.NotificationOperations.
+        var notificationAfter = await Context.NotificationOperations.GetNotification(notificationBefore.NotificationId);
+        var adoTemplateAfter = (notificationAfter.Config as AdoTemplate)!;
+
+        notificationBefore.Should().BeEquivalentTo(notificationAfter, options =>
+            options
+                .Excluding(o => o.TimeStamp)
+                .Excluding(o => o.ETag));
+
+        adoTemplateBefore.Should().BeEquivalentTo(adoTemplateAfter);
     }
-    // Migration happens if not dry run
+
+    [Fact]
+    public async Async.Task Migration_Happens_When_Not_Dry_run() {
+        await ConfigureAuth();
+
+        var notificationContainer = Container.Parse("abc123");
+        var _ = await Context.Containers.CreateContainer(notificationContainer, StorageType.Corpus, null);
+        var r = await Context.NotificationOperations.Create(
+                notificationContainer,
+                MigratableAdoTemplate(),
+                true);
+
+        r.Should().NotBeNull();
+        r.IsOk.Should().BeTrue("Failed to create notification for test");
+
+        var notificationBefore = r.OkV!;
+        var adoTemplateBefore = (notificationBefore.Config as AdoTemplate)!;
+
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var req = new JinjaToScribanMigrationPost();
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
+
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+
+        var migrationResult = BodyAs<JinjaToScribanMigrationResponse>(result);
+        migrationResult.FailedNotificationIds.Should().BeEmpty();
+        migrationResult.UpdatedNotificationIds.Should().BeEquivalentTo(new List<Guid> { notificationBefore.NotificationId });
+
+        var notificationAfter = await Context.NotificationOperations.GetNotification(notificationBefore.NotificationId);
+        var adoTemplateAfter = (notificationAfter.Config as AdoTemplate)!;
+
+        adoTemplateBefore.Should().NotBeEquivalentTo(adoTemplateAfter);
+
+        var template = (notificationAfter.Config as AdoTemplate)!;
+        template.Project.Should().BeEquivalentTo(JinjaTemplateAdapter.AdaptForScriban(MigratableAdoTemplate().Project));
+    }
     // Validate ado migration code
     // Validate github migration code
 
 
-    // Admin is required to execute
-    // [Fact]
+    [Fact]
     public async Async.Task Access_WithoutAuthorization_IsRejected() {
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
@@ -87,5 +119,20 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         // override the found user credentials - need these to check for admin
         var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
         Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+    }
+
+    private static AdoTemplate MigratableAdoTemplate() {
+        return new AdoTemplate(
+            new Uri("http://example.com"),
+            new SecretData<string>(new SecretValue<string>("some secret")),
+            "{% if org %} blah {% endif %}",
+            string.Empty,
+            Array.Empty<string>().ToList(),
+            new Dictionary<string, string>(),
+            new ADODuplicateTemplate(
+                Array.Empty<string>().ToList(),
+                new Dictionary<string, string>(),
+                new Dictionary<string, string>()
+        ));
     }
 }
