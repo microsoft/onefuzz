@@ -1,13 +1,13 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using FluentAssertions;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
 using Xunit;
 using Xunit.Abstractions;
-using FluentAssertions;
 using Async = System.Threading.Tasks;
 using JinjaToScribanMigrationFunction = Microsoft.OneFuzz.Service.Functions.JinjaToScriban;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace IntegrationTests;
 

@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Async = System.Threading.Tasks;
+using System.Text.Json;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.OneFuzz.Service;
-using System.Text.Json;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using Async = System.Threading.Tasks;
 
 namespace IntegrationTests.Fakes;
 sealed class TestSecretsOperations : SecretsOperations {
