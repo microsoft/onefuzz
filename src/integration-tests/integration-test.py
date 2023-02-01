@@ -312,7 +312,7 @@ class TestOnefuzz:
         polling_period=30,
         unmanaged_client_id: Optional[UUID] = None,
         unmanaged_client_secret: Optional[str] = None,
-        unmanaged_principal_id: Optional[str] = None,
+        unmanaged_principal_id: Optional[UUID] = None,
     ) -> None:
         self.of = onefuzz
         self.logger = logger
@@ -331,8 +331,7 @@ class TestOnefuzz:
         *,
         region: Optional[Region] = None,
         pool_size: int,
-        os_list: List[OS],
-        unmanaged: bool = False,
+        os_list: List[OS]
     ) -> None:
         def try_info_get(data: Any) -> None:
             self.of.info.get()
@@ -344,79 +343,140 @@ class TestOnefuzz:
             name = PoolName(f"testpool-{entry.name}-{self.test_id}")
             self.logger.info("creating pool: %s:%s", entry.name, name)
             self.of.pools.create(
-                name, entry, unmanaged=unmanaged, object_id=self.unmanaged_principal_id
+                name, entry, object_id=self.unmanaged_principal_id
             )
-            if unmanaged:
-                self.start_unmanaged_pool(name, pool_size, entry)
+            self.logger.info("creating scaleset for pool: %s", name)
+            self.of.scalesets.create(
+                name, pool_size, region=region, initial_size=pool_size
+            )
+
+
+
+    class UnmanagedPool:
+        def __init__(
+            self,
+            onefuzz: Onefuzz,
+            logger: logging.Logger,
+            test_id: UUID,
+            pool_name: PoolName,
+            the_os: OS,
+            pool_size: int,
+            unmanaged_client_id: UUID,
+            unmanaged_client_secret: str,
+            unmanaged_principal_id: UUID
+        ) -> None:
+            self.of = onefuzz
+            self.logger = logger
+            self.test_id = test_id
+            self.project = f"test-{self.test_id}"
+            self.tools_dir = f"{self.test_id}/tools"
+            self.unmanaged_client_id = unmanaged_client_id
+            self.unmanaged_client_secret = unmanaged_client_secret
+            self.pool_name = pool_name
+            self.pool_size = pool_size
+            self.the_os = the_os
+            self.unmanaged_principal_id = unmanaged_principal_id
+
+        def __enter__(self):
+            self.start_unmanaged_pool()
+        def __exit__(self, *args):
+            self.stop_unmanaged_pool()
+
+
+        def get_tools_path(self, the_os: OS):
+            if the_os == OS.linux:
+                return os.path.join(self.tools_dir, "linux")
+            elif the_os == OS.windows:
+                return os.path.join(self.tools_dir, "win64")
             else:
-                self.logger.info("creating scaleset for pool: %s", name)
-                self.of.scalesets.create(
-                    name, pool_size, region=region, initial_size=pool_size
+                raise Exception(f"unsupported os: {the_os}")
+
+        def start_unmanaged_pool(self):
+
+            self.logger.info("creating pool: %s:%s", self.the_os.name, self.pool_name)
+            self.of.pools.create(
+                self.pool_name, self.the_os, unmanaged=True, object_id=self.unmanaged_principal_id
+            )
+
+            os.makedirs(self.tools_dir, exist_ok=True)
+            self.logger.info("starting unmanaged pools docker containers")
+            if self.unmanaged_client_id is None or self.unmanaged_client_secret is None:
+                raise Exception(
+                    "unmanaged_client_id and unmanaged_client_secret must be set to test the unmanaged scenario"
                 )
 
-    def get_tools_path(self, the_os: OS):
-        if the_os == OS.linux:
-            return os.path.join(self.tools_dir, "linux")
-        elif the_os == OS.windows:
-            return os.path.join(self.tools_dir, "win64")
-        else:
-            raise Exception(f"unsupported os: {the_os}")
+            self.of.tools.get(self.tools_dir)
+            with zipfile.ZipFile(os.path.join(self.tools_dir, "tools.zip"), "r") as zip_ref:
+                zip_ref.extractall(self.tools_dir)
 
-    def start_unmanaged_pool(self, pool_name: PoolName, pool_size: int, the_os: OS):
-        os.makedirs(self.tools_dir, exist_ok=True)
-        self.logger.info("starting unmanaged pools docker containers")
-        if self.unmanaged_client_id is None or self.unmanaged_client_secret is None:
+            tools_path = self.get_tools_path(self.the_os)
+
+            # zipfile.ext
+            services = list(
+                map(
+                    lambda x: {
+                        f"agent{x+1}": {"build": ".", "command": f"--machine_id {uuid4()}"}
+                    },
+                    range(0, self.pool_size),
+                )
+            )
+            # create docker compose file
+            compose = {"version": "3", "services": {}}
+            for service in services:
+                key = next(iter(service.keys()))
+                compose["services"][key] = service[key]
+
+            docker_compose_path = os.path.join(tools_path, "docker-compose.yml")
+            self.logger.info(f"writing docker-compose.yml to {docker_compose_path}")
+            with open(docker_compose_path, "w") as f:
+                yaml.dump(compose, f)
+
+            config = self.of.pools.get_config(self.pool_name)
+            config.client_credentials.client_id = self.unmanaged_client_id
+            config.client_credentials.client_secret = self.unmanaged_client_secret
+
+            config_path = os.path.join(tools_path, "config.json")
+            self.logger.info(f"writing config.json to {config_path}")
+            with open(config_path, "w") as f:
+                f.write(config.json())
+
+            subprocess.check_call(
+                "docker compose up -d --force-recreate --build", shell=True, cwd=tools_path
+            )
+
+        def stop_unmanaged_pool(self):
+            tools_path = self.get_tools_path(self.the_os)
+            subprocess.check_call("docker compose rm --stop --force", shell=True, cwd=tools_path)
+
+    def create_unmanaged_pool(self, pool_size: int, the_os:OS) -> "UnmanagedPool":
+        if self.unmanaged_client_id is None or self.unmanaged_client_secret is None or self.unmanaged_principal_id is None:
             raise Exception(
-                "unmanaged_client_id and unmanaged_client_secret must be set to test the unmanaged scenario"
+                "unmanaged_client_id, unmanaged_client_secret and unmanaged_principal_id must be set to test the unmanaged scenario"
             )
 
-        self.of.tools.get(self.tools_dir)
-        with zipfile.ZipFile(os.path.join(self.tools_dir, "tools.zip"), "r") as zip_ref:
-            zip_ref.extractall(self.tools_dir)
-
-        tools_path = self.get_tools_path(the_os)
-
-        # zipfile.ext
-        services = list(
-            map(
-                lambda x: {
-                    f"agent{x+1}": {"build": ".", "command": f"--machine_id {uuid4()}"}
-                },
-                range(0, pool_size),
-            )
+        return self.UnmanagedPool(
+            self.of,
+            self.logger,
+            self.test_id,
+            PoolName(f"unmanaged-testpool-{self.test_id}"),
+            the_os,
+            pool_size,
+            unmanaged_client_id=self.unmanaged_client_id,
+            unmanaged_client_secret=self.unmanaged_client_secret,
+            unmanaged_principal_id=self.unmanaged_principal_id,
         )
-        # create docker compose file
-        compose = {"version": "3", "services": {}}
-        for service in services:
-            key = next(iter(service.keys()))
-            compose["services"][key] = service[key]
-
-        with open(os.path.join(tools_path, "docker-compose.yml"), "w") as f:
-            yaml.dump(compose, f)
-
-        config = self.of.pools.get_config(pool_name)
-        config.client_credentials.client_id = self.unmanaged_client_id
-        config.client_credentials.client_secret = self.unmanaged_client_secret
-
-        with open(os.path.join(tools_path, "config.json"), "w") as f:
-            f.write(config.json())
-
-        subprocess.check_call(
-            "docker compose up -d --force-recreate --build", shell=True, cwd=tools_path
-        )
-
-    def stop_unmanaged_pool(self, pool: Pool):
-        tools_path = self.get_tools_path(pool.os)
-        subprocess.check_call("docker compose stop", shell=True, cwd=tools_path)
 
     def launch(
-        self, path: Directory, *, os_list: List[OS], targets: List[str], duration=int
+        self, path: Directory, *, os_list: List[OS], targets: List[str], duration=int, unmanaged_pool:Optional[UnmanagedPool] = None
     ) -> List[UUID]:
         """Launch all of the fuzzing templates"""
 
         pools = {}
-        for pool in self.of.pools.list():
-            pools[pool.os] = pool
+        if unmanaged_pool is not None:
+            pools[unmanaged_pool.the_os] = self.of.pools.get(unmanaged_pool.pool_name)
+        else:
+            for pool in self.of.pools.list():
+                pools[pool.os] = pool
 
         job_ids = []
 
@@ -917,8 +977,6 @@ class TestOnefuzz:
             try:
                 self.of.pools.shutdown(pool.name, now=True)
 
-                if not pool.managed:
-                    self.stop_unmanaged_pool(pool)
             except Exception as e:
                 self.logger.error("cleanup of pool failed: %s - %s", pool.name, e)
                 errors.append(e)
@@ -1118,10 +1176,9 @@ class Run(Command):
         region: Optional[Region] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
         test_id: Optional[UUID] = None,
-        unmanaged: bool = False,
         unmanaged_client_id: Optional[UUID] = None,
         unmanaged_client_secret: Optional[str] = None,
-        unmanaged_principal_id: Optional[str] = None,
+        unmanaged_principal_id: Optional[UUID] = None,
     ) -> None:
         if test_id is None:
             test_id = uuid4()
@@ -1149,7 +1206,6 @@ class Run(Command):
             region=region,
             pool_size=pool_size,
             os_list=os_list,
-            unmanaged=unmanaged,
         )
 
     def launch(
@@ -1258,6 +1314,64 @@ class Run(Command):
                 job_ids=job_ids,
             )
 
+    def test_unmanaged(
+        self,
+        samples: Directory,
+        os: OS,
+        *,
+        endpoint: Optional[str] = None,
+        authority: Optional[str] = None,
+        client_id: Optional[str] = None,
+        client_secret: Optional[str] = None,
+        pool_size: int = 4,
+        targets: List[str] = list(TARGETS.keys()),
+        duration: int = 1,
+        unmanaged_client_id: Optional[UUID] = None,
+        unmanaged_client_secret: Optional[str] = None,
+        unmanaged_principal_id: Optional[UUID] = None,
+    ) -> None:
+        success = True
+        test_id = uuid4()
+        error: Optional[Exception] = None
+        # try:
+        def try_setup(data: Any) -> None:
+                self.onefuzz.__setup__(
+                    endpoint=endpoint,
+                    client_id=client_id,
+                    client_secret=client_secret,
+                    authority=authority,
+                )
+
+        retry(self.logger, try_setup, "trying to configure")
+        tester = TestOnefuzz(
+            self.onefuzz,
+            self.logger,
+            test_id,
+            unmanaged_client_id=unmanaged_client_id,
+            unmanaged_client_secret=unmanaged_client_secret,
+            unmanaged_principal_id=unmanaged_principal_id,
+        )
+
+        print(f"**** test_unmanaged 1")
+
+        with tester.create_unmanaged_pool(pool_size, os) as unmanaged_pool:
+            tester.launch(samples, os_list=[os], targets=targets, duration=duration, unmanaged_pool=unmanaged_pool)
+            result = tester.check_jobs(poll=True, stop_on_complete_check=True)
+            if not result:
+                raise Exception("jobs failed")
+        print(f"test_unmanaged 2")
+        tester.check_logs_for_errors()
+        print(f"test_unmanaged 3")
+        # except Exception as e:
+        #     self.logger.error("testing failed: %s", repr(e))
+        #     error = e
+        #     success = False
+        # except KeyboardInterrupt:
+        #     self.logger.error("interrupted testing")
+        #     success = False
+
+
+
     def test(
         self,
         samples: Directory,
@@ -1272,7 +1386,6 @@ class Run(Command):
         targets: List[str] = list(TARGETS.keys()),
         skip_repro: bool = False,
         duration: int = 1,
-        unmanaged: bool = False,
         unmanaged_client_id: Optional[UUID] = None,
         unmanaged_client_secret: Optional[str] = None,
     ) -> None:
@@ -1302,7 +1415,6 @@ class Run(Command):
                 region=region,
                 pool_size=pool_size,
                 os_list=os_list,
-                unmanaged=unmanaged,
             )
             tester.launch(samples, os_list=os_list, targets=targets, duration=duration)
             result = tester.check_jobs(poll=True, stop_on_complete_check=True)
