@@ -382,7 +382,6 @@ def add_application_password(
 def add_application_password_impl(
     password_name: str, app_object_id: UUID, subscription_id: str
 ) -> Tuple[str, str]:
-
     app = query_microsoft_graph(
         method="GET",
         resource="applications/%s" % app_object_id,
