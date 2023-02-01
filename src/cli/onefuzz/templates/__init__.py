@@ -97,7 +97,7 @@ class JobHelper:
         )
 
     def create_containers(self) -> None:
-        for (container_type, container_name) in self.containers.items():
+        for container_type, container_name in self.containers.items():
             self.logger.info("using container: %s", container_name)
             self.onefuzz.containers.create(
                 container_name, metadata={"container_type": container_type.name}

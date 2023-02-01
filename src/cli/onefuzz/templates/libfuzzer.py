@@ -466,7 +466,6 @@ class Libfuzzer(Command):
         preserve_existing_outputs: bool = False,
         check_fuzzer_help: bool = True,
     ) -> Optional[Job]:
-
         """
         libfuzzer merge task
         """
@@ -585,7 +584,6 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
     ) -> Optional[Job]:
-
         """
         libfuzzer-dotnet task
         """
@@ -910,7 +908,6 @@ class Libfuzzer(Command):
         check_retry_count: Optional[int] = 300,
         check_fuzzer_help: bool = True,
     ) -> Optional[Job]:
-
         """
         libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
         """

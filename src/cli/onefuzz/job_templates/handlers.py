@@ -61,7 +61,6 @@ class TemplateSubmitHandler(Endpoint):
     def _define_missing_containers(
         self, config: JobTemplateConfig, request: JobTemplateRequest
     ) -> None:
-
         for container_type in config.containers:
             seen = False
             for container in request.containers:
