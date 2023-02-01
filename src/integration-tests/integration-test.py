@@ -28,20 +28,21 @@ import sys
 import tempfile
 import time
 import zipfile
-import yaml
 from enum import Enum
 from shutil import which
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar
 from uuid import UUID, uuid4
 
 import requests
-from onefuzz.api import Command, Onefuzz
-from onefuzz.backend import ContainerWrapper, wait
-from onefuzz.cli import execute_api
-from onefuzztypes.enums import OS, ContainerType, TaskState, VmState, ScalesetState
+import yaml
+from onefuzztypes.enums import OS, ContainerType, ScalesetState, TaskState, VmState
 from onefuzztypes.models import Job, Pool, Repro, Scaleset, Task
 from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, Field
+
+from onefuzz.api import Command, Onefuzz
+from onefuzz.backend import ContainerWrapper, wait
+from onefuzz.cli import execute_api
 
 LINUX_POOL = "linux-test"
 WINDOWS_POOL = "linux-test"
@@ -327,11 +328,7 @@ class TestOnefuzz:
         self.unmanaged_principal_id = unmanaged_principal_id
 
     def setup(
-        self,
-        *,
-        region: Optional[Region] = None,
-        pool_size: int,
-        os_list: List[OS]
+        self, *, region: Optional[Region] = None, pool_size: int, os_list: List[OS]
     ) -> None:
         def try_info_get(data: Any) -> None:
             self.of.info.get()
@@ -342,15 +339,11 @@ class TestOnefuzz:
         for entry in os_list:
             name = PoolName(f"testpool-{entry.name}-{self.test_id}")
             self.logger.info("creating pool: %s:%s", entry.name, name)
-            self.of.pools.create(
-                name, entry, object_id=self.unmanaged_principal_id
-            )
+            self.of.pools.create(name, entry)
             self.logger.info("creating scaleset for pool: %s", name)
             self.of.scalesets.create(
                 name, pool_size, region=region, initial_size=pool_size
             )
-
-
 
     class UnmanagedPool:
         def __init__(
@@ -363,7 +356,7 @@ class TestOnefuzz:
             pool_size: int,
             unmanaged_client_id: UUID,
             unmanaged_client_secret: str,
-            unmanaged_principal_id: UUID
+            unmanaged_principal_id: UUID,
         ) -> None:
             self.of = onefuzz
             self.logger = logger
@@ -380,9 +373,9 @@ class TestOnefuzz:
 
         def __enter__(self):
             self.start_unmanaged_pool()
+
         def __exit__(self, *args):
             self.stop_unmanaged_pool()
-
 
         def get_tools_path(self, the_os: OS):
             if the_os == OS.linux:
@@ -393,10 +386,12 @@ class TestOnefuzz:
                 raise Exception(f"unsupported os: {the_os}")
 
         def start_unmanaged_pool(self):
-
             self.logger.info("creating pool: %s:%s", self.the_os.name, self.pool_name)
             self.of.pools.create(
-                self.pool_name, self.the_os, unmanaged=True, object_id=self.unmanaged_principal_id
+                self.pool_name,
+                self.the_os,
+                unmanaged=True,
+                object_id=self.unmanaged_principal_id,
             )
 
             os.makedirs(self.tools_dir, exist_ok=True)
@@ -407,7 +402,9 @@ class TestOnefuzz:
                 )
 
             self.of.tools.get(self.tools_dir)
-            with zipfile.ZipFile(os.path.join(self.tools_dir, "tools.zip"), "r") as zip_ref:
+            with zipfile.ZipFile(
+                os.path.join(self.tools_dir, "tools.zip"), "r"
+            ) as zip_ref:
                 zip_ref.extractall(self.tools_dir)
 
             tools_path = self.get_tools_path(self.the_os)
@@ -416,13 +413,20 @@ class TestOnefuzz:
             services = list(
                 map(
                     lambda x: {
-                        f"agent{x+1}": {"depends_on":["_build"], "image": self.image_tag, "command": f"--machine_id {uuid4()}"}
+                        f"agent{x+1}": {
+                            "depends_on": ["_build"],
+                            "image": self.image_tag,
+                            "command": f"--machine_id {uuid4()}",
+                        }
                     },
                     range(0, self.pool_size),
                 )
             )
             # create docker compose file
-            compose = {"version": "3", "services": {"_build": {"image": self.image_tag, "build":"." }}}
+            compose = {
+                "version": "3",
+                "services": {"_build": {"image": self.image_tag, "build": "."}},
+            }
             for service in services:
                 key = next(iter(service.keys()))
                 compose["services"][key] = service[key]
@@ -442,16 +446,26 @@ class TestOnefuzz:
                 f.write(config.json())
 
             subprocess.check_call(
-                "docker compose up -d --force-recreate --build", shell=True, cwd=tools_path
+                "docker compose up -d --force-recreate --build",
+                shell=True,
+                cwd=tools_path,
             )
 
         def stop_unmanaged_pool(self):
             tools_path = self.get_tools_path(self.the_os)
-            subprocess.check_call("docker compose rm --stop --force", shell=True, cwd=tools_path)
-            subprocess.check_call(f"docker image rm {self.image_tag}", shell=True, cwd=tools_path)
+            subprocess.check_call(
+                "docker compose rm --stop --force", shell=True, cwd=tools_path
+            )
+            subprocess.check_call(
+                f"docker image rm {self.image_tag}", shell=True, cwd=tools_path
+            )
 
-    def create_unmanaged_pool(self, pool_size: int, the_os:OS) -> "UnmanagedPool":
-        if self.unmanaged_client_id is None or self.unmanaged_client_secret is None or self.unmanaged_principal_id is None:
+    def create_unmanaged_pool(self, pool_size: int, the_os: OS) -> "UnmanagedPool":
+        if (
+            self.unmanaged_client_id is None
+            or self.unmanaged_client_secret is None
+            or self.unmanaged_principal_id is None
+        ):
             raise Exception(
                 "unmanaged_client_id, unmanaged_client_secret and unmanaged_principal_id must be set to test the unmanaged scenario"
             )
@@ -469,7 +483,13 @@ class TestOnefuzz:
         )
 
     def launch(
-        self, path: Directory, *, os_list: List[OS], targets: List[str], duration=int, unmanaged_pool:Optional[UnmanagedPool] = None
+        self,
+        path: Directory,
+        *,
+        os_list: List[OS],
+        targets: List[str],
+        duration=int,
+        unmanaged_pool: Optional[UnmanagedPool] = None,
     ) -> List[UUID]:
         """Launch all of the fuzzing templates"""
 
@@ -710,9 +730,7 @@ class TestOnefuzz:
 
             for job_id in check_containers:
                 finished_containers: Set[Container] = set()
-                for (container_name, container_impl) in check_containers[
-                    job_id
-                ].items():
+                for container_name, container_impl in check_containers[job_id].items():
                     container_client, count = container_impl
                     if len(container_client.list_blobs()) >= count:
                         clear()
@@ -879,10 +897,10 @@ class TestOnefuzz:
                 OS.linux: ("info reg rip", r"^rip\s+0x[a-f0-9]+\s+0x[a-f0-9]+"),
             }
 
-            for (job, repro) in list(repros.values()):
+            for job, repro in list(repros.values()):
                 repros[job.job_id] = (job, self.of.repro.get(repro.vm_id))
 
-            for (job, repro) in list(repros.values()):
+            for job, repro in list(repros.values()):
                 if repro.error:
                     clear()
                     self.logger.error(
@@ -924,7 +942,7 @@ class TestOnefuzz:
                     del repros[job.job_id]
 
             repro_states: Dict[str, List[str]] = {}
-            for (job, repro) in repros.values():
+            for job, repro in repros.values():
                 if repro.state.name not in repro_states:
                     repro_states[repro.state.name] = []
                 repro_states[repro.state.name].append(job.config.name)
@@ -1178,9 +1196,6 @@ class Run(Command):
         region: Optional[Region] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
         test_id: Optional[UUID] = None,
-        unmanaged_client_id: Optional[UUID] = None,
-        unmanaged_client_secret: Optional[str] = None,
-        unmanaged_principal_id: Optional[UUID] = None,
     ) -> None:
         if test_id is None:
             test_id = uuid4()
@@ -1200,9 +1215,6 @@ class Run(Command):
             self.onefuzz,
             self.logger,
             test_id,
-            unmanaged_client_id=unmanaged_client_id,
-            unmanaged_client_secret=unmanaged_client_secret,
-            unmanaged_principal_id=unmanaged_principal_id,
         )
         tester.setup(
             region=region,
@@ -1292,7 +1304,6 @@ class Run(Command):
         test_id: UUID,
         job_ids: List[UUID] = [],
     ) -> None:
-
         self.check_jobs(
             test_id,
             endpoint=endpoint,
@@ -1334,13 +1345,14 @@ class Run(Command):
     ) -> None:
         test_id = uuid4()
         try:
+
             def try_setup(data: Any) -> None:
-                    self.onefuzz.__setup__(
-                        endpoint=endpoint,
-                        client_id=client_id,
-                        client_secret=client_secret,
-                        authority=authority,
-                    )
+                self.onefuzz.__setup__(
+                    endpoint=endpoint,
+                    client_id=client_id,
+                    client_secret=client_secret,
+                    authority=authority,
+                )
 
             retry(self.logger, try_setup, "trying to configure")
             tester = TestOnefuzz(
@@ -1354,7 +1366,13 @@ class Run(Command):
 
             unmanaged_pool = tester.create_unmanaged_pool(pool_size, os)
             with unmanaged_pool:
-                tester.launch(samples, os_list=[os], targets=targets, duration=duration, unmanaged_pool=unmanaged_pool)
+                tester.launch(
+                    samples,
+                    os_list=[os],
+                    targets=targets,
+                    duration=duration,
+                    unmanaged_pool=unmanaged_pool,
+                )
                 result = tester.check_jobs(poll=True, stop_on_complete_check=True)
                 if not result:
                     raise Exception("jobs failed")
