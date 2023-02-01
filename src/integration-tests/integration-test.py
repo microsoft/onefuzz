@@ -1330,47 +1330,39 @@ class Run(Command):
         unmanaged_client_secret: Optional[str] = None,
         unmanaged_principal_id: Optional[UUID] = None,
     ) -> None:
-        success = True
         test_id = uuid4()
-        error: Optional[Exception] = None
-        # try:
-        def try_setup(data: Any) -> None:
-                self.onefuzz.__setup__(
-                    endpoint=endpoint,
-                    client_id=client_id,
-                    client_secret=client_secret,
-                    authority=authority,
-                )
+        try:
+            def try_setup(data: Any) -> None:
+                    self.onefuzz.__setup__(
+                        endpoint=endpoint,
+                        client_id=client_id,
+                        client_secret=client_secret,
+                        authority=authority,
+                    )
 
-        retry(self.logger, try_setup, "trying to configure")
-        tester = TestOnefuzz(
-            self.onefuzz,
-            self.logger,
-            test_id,
-            unmanaged_client_id=unmanaged_client_id,
-            unmanaged_client_secret=unmanaged_client_secret,
-            unmanaged_principal_id=unmanaged_principal_id,
-        )
+            retry(self.logger, try_setup, "trying to configure")
+            tester = TestOnefuzz(
+                self.onefuzz,
+                self.logger,
+                test_id,
+                unmanaged_client_id=unmanaged_client_id,
+                unmanaged_client_secret=unmanaged_client_secret,
+                unmanaged_principal_id=unmanaged_principal_id,
+            )
 
-        print(f"**** test_unmanaged 1")
-
-        with tester.create_unmanaged_pool(pool_size, os) as unmanaged_pool:
-            tester.launch(samples, os_list=[os], targets=targets, duration=duration, unmanaged_pool=unmanaged_pool)
-            result = tester.check_jobs(poll=True, stop_on_complete_check=True)
-            if not result:
-                raise Exception("jobs failed")
-        print(f"test_unmanaged 2")
-        tester.check_logs_for_errors()
-        print(f"test_unmanaged 3")
-        # except Exception as e:
-        #     self.logger.error("testing failed: %s", repr(e))
-        #     error = e
-        #     success = False
-        # except KeyboardInterrupt:
-        #     self.logger.error("interrupted testing")
-        #     success = False
-
-
+            unmanaged_pool = tester.create_unmanaged_pool(pool_size, os)
+            with unmanaged_pool:
+                tester.launch(samples, os_list=[os], targets=targets, duration=duration, unmanaged_pool=unmanaged_pool)
+                result = tester.check_jobs(poll=True, stop_on_complete_check=True)
+                if not result:
+                    raise Exception("jobs failed")
+            tester.check_logs_for_errors()
+        except Exception as e:
+            self.logger.error("testing failed: %s", repr(e))
+            sys.exit(1)
+        except KeyboardInterrupt:
+            self.logger.error("interrupted testing")
+            sys.exit(1)
 
     def test(
         self,
