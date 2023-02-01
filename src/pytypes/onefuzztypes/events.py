@@ -305,8 +305,7 @@ EventTypeMap = {
 
 
 def get_event_type(event: Event) -> EventType:
-
-    for (event_type, event_class) in EventTypeMap.items():
+    for event_type, event_class in EventTypeMap.items():
         if isinstance(event, event_class):
             return event_type
 

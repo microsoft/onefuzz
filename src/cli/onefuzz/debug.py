@@ -462,7 +462,6 @@ class DebugLog(Command):
         if self._app_id is None:
             raise Exception("instance does not have an insights_appid")
         if self._client is None:
-
             creds = AzureIdentityCredentialAdapter(
                 AzureCliCredential(), resource_id="https://api.applicationinsights.io"
             )

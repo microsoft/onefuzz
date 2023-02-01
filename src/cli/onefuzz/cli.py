@@ -429,7 +429,7 @@ class Builder:
         self, inst: Callable, subparser: argparse._SubParsersAction
     ) -> None:
         """Expose every non-private callable in a class instance"""
-        for (name, func) in self.get_children(inst, is_callable=True):
+        for name, func in self.get_children(inst, is_callable=True):
             sub = subparser.add_parser(name, help=self.get_help(func))
             add_base(sub)
             self.parse_function(func, sub)
@@ -442,7 +442,7 @@ class Builder:
             title="subcommands", dest="level_%d" % level
         )
 
-        for (name, endpoint) in self.get_children(inst, is_typed=True):
+        for name, endpoint in self.get_children(inst, is_typed=True):
             parser = subparser.add_parser(
                 name, help=self.get_help(endpoint), parents=[self.top_level]
             )
@@ -451,7 +451,7 @@ class Builder:
                 title="subcommands", dest="level_%d" % (level + 1)
             )
 
-            for (nested_name, nested_endpoint) in self.get_children(
+            for nested_name, nested_endpoint in self.get_children(
                 endpoint, is_typed=True
             ):
                 nested = method_subparser.add_parser(
