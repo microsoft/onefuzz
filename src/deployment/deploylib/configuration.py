@@ -113,7 +113,6 @@ class Config:
         self.allowed_service_tags = proxy_config["allowed_service_tags"]
 
     def parse_endpoint_json(self, config: Any) -> None:
-
         if "cli_client_id" not in config:
             raise Exception(
                 "CLI client_id not provided as valid key. Please Provide Valid Config."
@@ -241,7 +240,6 @@ def update_admins(config_client: InstanceConfigClient, admins: List[UUID]) -> No
 
 
 def parse_rules(proxy_config: Config) -> List[NsgRule]:
-
     allowed_ips = proxy_config.allowed_ips
     allowed_service_tags = proxy_config.allowed_service_tags
 
