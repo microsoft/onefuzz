@@ -17,7 +17,7 @@ use onefuzz_telemetry::{
     EventData,
 };
 use serde::Deserialize;
-use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use std::{collections::HashMap, io::ErrorKind, path::PathBuf, sync::Arc};
 use tempfile::{tempdir_in, TempDir};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
@@ -68,6 +68,7 @@ pub struct Config<L: LibFuzzerType + Send + Sync + ?Sized> {
     pub inputs: SyncedDir,
     pub readonly_inputs: Option<Vec<SyncedDir>>,
     pub crashes: SyncedDir,
+    pub crashdumps: SyncedDir,
     pub target_exe: PathBuf,
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
@@ -240,6 +241,8 @@ where
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs).await?;
         let notify = Arc::new(Notify::new());
 
+        let pid = running.id();
+
         // Splitting borrow.
         let stderr = running
             .stderr
@@ -303,17 +306,38 @@ where
             }
         }
 
+        // check for core dumps on Linux:
+        // note that collecting the dumps must be enabled by the template
+        if let Some(pid) = pid {
+            // expect crash dump to exist in CWD
+            let filename = format!("core.{pid}");
+            let dest = self.config.crashdumps.local_path.join(&filename);
+            match tokio::fs::rename(filename, dest).await {
+                Err(e) if e.kind() == ErrorKind::NotFound => {
+                    // okay, no crash dump found
+                }
+                other => other.context("moving crash dump to output directory")?,
+            }
+        }
+
+        // Windows: TODO
+
         Ok(())
     }
 
     async fn init_directories(&self) -> Result<()> {
+        // input directories (init_pull):
         self.config.inputs.init_pull().await?;
-        self.config.crashes.init().await?;
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
             for dir in readonly_inputs {
                 dir.init_pull().await?;
             }
         }
+
+        // output directories (init):
+        self.config.crashes.init().await?;
+        self.config.crashdumps.init().await?;
+
         Ok(())
     }
 

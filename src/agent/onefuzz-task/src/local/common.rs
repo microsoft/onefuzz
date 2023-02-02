@@ -24,6 +24,7 @@ use crate::tasks::utils::parse_key_value;
 pub const SETUP_DIR: &str = "setup_dir";
 pub const INPUTS_DIR: &str = "inputs_dir";
 pub const CRASHES_DIR: &str = "crashes_dir";
+pub const CRASHDUMPS_DIR: &str = "crashdumps_dir";
 pub const TARGET_WORKERS: &str = "target_workers";
 pub const REPORTS_DIR: &str = "reports_dir";
 pub const NO_REPRO_DIR: &str = "no_repro_dir";

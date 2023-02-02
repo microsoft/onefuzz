@@ -81,6 +81,7 @@ class Integration(BaseModel):
     target_class: Optional[str]
     target_method: Optional[str]
     setup_dir: Optional[str]
+    target_env: Optional[Dict[str, str]]
 
 
 TARGETS: Dict[str, Integration] = {
@@ -202,6 +203,34 @@ TARGETS: Dict[str, Integration] = {
         check_asan_log=True,
         disable_check_debugger=True,
     ),
+    "linux-crashdump": Integration(
+        template=TemplateType.libfuzzer,
+        os=OS.linux,
+        target_exe="fuzz.exe",
+        inputs="seeds",
+        wait_for_files={
+            ContainerType.unique_reports: 1,
+            ContainerType.coverage: 1,
+            ContainerType.inputs: 2,
+            ContainerType.crashdumps: 1,
+        },
+        reboot_after_setup=True,
+        inject_fake_regression=True,
+        target_env={"ASAN_OPTIONS": "disable_crashdump=0:abort_on_error=1"},
+    ),
+    # "windows-crashdump": Integration(
+    # template=TemplateType.libfuzzer,
+    # os=OS.windows,
+    # target_exe="fuzz.exe",
+    # target_env={"ASAN_OPTIONS": "disable_crashdump=0:abort_on_error=1"},
+    # inputs="seeds",
+    # wait_for_files={
+    # ContainerType.inputs: 2,
+    # ContainerType.unique_reports: 1,
+    # ContainerType.coverage: 1,
+    # },
+    # inject_fake_regression=True,
+    # ),
     "windows-libfuzzer": Integration(
         template=TemplateType.libfuzzer,
         os=OS.windows,
@@ -355,7 +384,9 @@ class TestOnefuzz:
             self.logger.info("launching: %s", target)
 
             if config.setup_dir is None:
-                setup = Directory(os.path.join(path, target)) if config.use_setup else None
+                setup = (
+                    Directory(os.path.join(path, target)) if config.use_setup else None
+                )
             else:
                 setup = config.setup_dir
 
@@ -384,6 +415,7 @@ class TestOnefuzz:
                     reboot_after_setup=config.reboot_after_setup or False,
                     target_options=config.target_options,
                     fuzzing_target_options=config.fuzzing_target_options,
+                    target_env=config.target_env,
                 )
             elif config.template == TemplateType.libfuzzer_dotnet:
                 if setup is None:
@@ -399,6 +431,7 @@ class TestOnefuzz:
                     duration=duration,
                     vm_count=1,
                     target_options=config.target_options,
+                    target_env=config.target_env,
                 )
             elif config.template == TemplateType.libfuzzer_dotnet_dll:
                 if setup is None:
@@ -421,6 +454,7 @@ class TestOnefuzz:
                     fuzzing_target_options=config.target_options,
                     target_class=config.target_class,
                     target_method=config.target_method,
+                    target_env=config.target_env,
                 )
             elif config.template == TemplateType.libfuzzer_qemu_user:
                 job = self.of.template.libfuzzer.qemu_user(
@@ -433,6 +467,7 @@ class TestOnefuzz:
                     duration=duration,
                     vm_count=1,
                     target_options=config.target_options,
+                    target_env=config.target_env,
                 )
             elif config.template == TemplateType.radamsa:
                 job = self.of.template.radamsa.basic(
@@ -447,6 +482,7 @@ class TestOnefuzz:
                     disable_check_debugger=config.disable_check_debugger or False,
                     duration=duration,
                     vm_count=1,
+                    target_env=config.target_env,
                 )
             elif config.template == TemplateType.afl:
                 job = self.of.template.afl.basic(
@@ -460,6 +496,7 @@ class TestOnefuzz:
                     duration=duration,
                     vm_count=1,
                     target_options=config.target_options,
+                    target_env=config.target_env,
                 )
             else:
                 raise NotImplementedError
@@ -935,10 +972,7 @@ class TestOnefuzz:
 
             # ignore warnings coming from the rust code, only be concerned
             # about errors
-            if (
-                entry.get("severityLevel") == 2
-                and "rust" in entry.get("sdkVersion")
-            ):
+            if entry.get("severityLevel") == 2 and "rust" in entry.get("sdkVersion"):
                 continue
 
             # ignore resource not found warnings from azure-functions layer,

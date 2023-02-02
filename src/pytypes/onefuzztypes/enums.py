@@ -216,6 +216,7 @@ class ContainerType(Enum):
     coverage = "coverage"
     crashes = "crashes"
     inputs = "inputs"
+    crashdumps = "crashdumps"
     no_repro = "no_repro"
     readonly_inputs = "readonly_inputs"
     reports = "reports"
@@ -232,6 +233,7 @@ class ContainerType(Enum):
             cls.analysis,
             cls.coverage,
             cls.crashes,
+            cls.crashdumps,
             cls.inputs,
             cls.no_repro,
             cls.readonly_inputs,
