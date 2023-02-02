@@ -323,8 +323,6 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var githubTemplateAfter = (githubNotificationAfter.Config as GithubIssuesTemplate)!;
         githubTemplateAfter.Organization.Should().BeEquivalentTo(JinjaTemplateAdapter.AdaptForScriban(githubTemplateBefore.Organization));
     }
-    // 1 failure in migration will not fail other migrations
-
 
     [Fact]
     public async Async.Task Access_WithoutAuthorization_IsRejected() {
