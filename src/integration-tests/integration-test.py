@@ -416,7 +416,7 @@ class TestOnefuzz:
                 map(
                     lambda x: {
                         f"agent{x+1}": {
-                            "depends_on": ["_build"],
+                            "depends_on": ["agent_image"],
                             "image": self.image_tag,
                             "command": f"--machine_id {uuid4()}",
                             "restart": "always",
@@ -430,7 +430,7 @@ class TestOnefuzz:
                 windows_type = subprocess.check_output(
                     "powershell -c (Get-ComputerInfo).OsProductType", shell=True
                 )
-                if windows_type == b"Workstation":
+                if windows_type.strip() == b"Workstation":
                     self.logger.info("using windows workstation image")
                     build = {
                         "context": ".",
@@ -448,7 +448,7 @@ class TestOnefuzz:
             # create docker compose file
             compose = {
                 "version": "3",
-                "services": {"_build": {"image": self.image_tag, "build": build}},
+                "services": {"agent_image": {"image": self.image_tag, "build": build}},
             }
             for service in services:
                 key = next(iter(service.keys()))
