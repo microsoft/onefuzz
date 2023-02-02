@@ -48,8 +48,10 @@ linux-vdso.so.1"
 check "$script_dir/../agent/target/release/onefuzz-agent" \
 "/lib64/ld-linux-x86-64.so.2
 libc.so.6
+libdl.so.2
 liblzma.so.5
 libm.so.6
+libpthread.so.0
 libunwind.so.8
 linux-vdso.so.1"
 
@@ -57,4 +59,5 @@ check "$script_dir/../agent/target/release/srcview" \
 "/lib64/ld-linux-x86-64.so.2
 libc.so.6
 libgcc_s.so.1
+libpthread.so.0
 linux-vdso.so.1"
