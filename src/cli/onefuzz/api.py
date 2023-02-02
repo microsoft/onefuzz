@@ -1804,8 +1804,8 @@ class Onefuzz:
         self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
 
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates = JobTemplates(self)
+        # if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
+        #     self.job_templates = JobTemplates(self)
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
@@ -1932,6 +1932,6 @@ class Onefuzz:
 
 
 from .debug import Debug  # noqa: E402
-from .job_templates.main import JobTemplates  # noqa: E402
+# from .job_templates.main import JobTemplates  # noqa: E402
 from .status.cmd import Status  # noqa: E402
 from .template import Template  # noqa: E402
