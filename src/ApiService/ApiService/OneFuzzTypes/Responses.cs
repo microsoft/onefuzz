@@ -195,3 +195,12 @@ public record TemplateValidationResponse(
     string RenderedTemplate,
     TemplateRenderContext AvailableContext
 ) : BaseResponse();
+
+public record JinjaToScribanMigrationResponse(
+    List<Guid> UpdatedNotificationIds,
+    List<Guid> FailedNotificationIds
+) : BaseResponse();
+
+public record JinjaToScribanMigrationDryRunResponse(
+    List<Guid> NotificationIdsToUpdate
+) : BaseResponse();
