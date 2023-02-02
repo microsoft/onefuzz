@@ -425,13 +425,23 @@ class TestOnefuzz:
                 )
             )
             if os == OS.windows:
-                windows_type = subprocess.check_output("powershell -c (Get-ComputerInfo).OsProductType", shell=True)
+                windows_type = subprocess.check_output(
+                    "powershell -c (Get-ComputerInfo).OsProductType", shell=True
+                )
                 if windows_type == b"Workstation":
                     self.logger.info("using windows workstation image")
-                    build = {"context": ".", "args": {"BASE_IMAGE": "mcr.microsoft.com/windows:ltsc2019"}}
+                    build = {
+                        "context": ".",
+                        "args": {"BASE_IMAGE": "mcr.microsoft.com/windows:ltsc2019"},
+                    }
                 else:
                     self.logger.info("using windows server image")
-                    build = {"context": ".", "args": {"BASE_IMAGE": "mcr.microsoft.com/windows/server:ltsc2022"}}
+                    build = {
+                        "context": ".",
+                        "args": {
+                            "BASE_IMAGE": "mcr.microsoft.com/windows/server:ltsc2022"
+                        },
+                    }
 
             elif os == OS.linux:
                 build = {"context": "."}
@@ -439,14 +449,16 @@ class TestOnefuzz:
             # create docker compose file
             compose = {
                 "version": "3",
-                "services": {"_build": {"image": self.image_tag, "build": build }},
+                "services": {"_build": {"image": self.image_tag, "build": build}},
             }
             for service in services:
                 key = next(iter(service.keys()))
                 compose["services"][key] = service[key]
 
             docker_compose_path = os.path.join(tools_path, "docker-compose.yml")
-            self.logger.info(f"writing docker-compose.yml to {docker_compose_path}:\n{yaml.dump(compose)}")
+            self.logger.info(
+                f"writing docker-compose.yml to {docker_compose_path}:\n{yaml.dump(compose)}"
+            )
             with open(docker_compose_path, "w") as f:
                 yaml.dump(compose, f)
 
@@ -456,7 +468,6 @@ class TestOnefuzz:
             self.logger.info(f"updating config.json with unmanaged credentials")
             config.client_credentials.client_id = self.unmanaged_client_id
             config.client_credentials.client_secret = self.unmanaged_client_secret
-
 
             config_path = os.path.join(tools_path, "config.json")
             self.logger.info(f"writing config.json to {config_path}")
