@@ -1,7 +1,6 @@
 ﻿namespace Microsoft.OneFuzz.Service;
 
 public static class Defs {
-
     public static readonly IReadOnlyDictionary<TaskType, TaskDefinition> TASK_DEFINITIONS = new Dictionary<TaskType, TaskDefinition>() {
         { TaskType.Coverage ,
             new TaskDefinition(
@@ -163,6 +162,12 @@ public static class Defs {
                    Permissions: ContainerPermission.Write
                 ),
                new ContainerDefinition(
+                   Type:ContainerType.CrashDumps,
+                   Compare: Compare.Equal,
+                   Value:1,
+                   Permissions: ContainerPermission.Write
+                ),
+               new ContainerDefinition(
                    Type: ContainerType.Inputs,
                    Compare: Compare.Equal,
                    Value: 1,
@@ -234,19 +239,23 @@ public static class Defs {
      Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
      Containers: new[] {
         new ContainerDefinition(
-            Type:ContainerType.Setup,
+            Type: ContainerType.Setup,
             Compare: Compare.Equal,
-            Value:1,
+            Value: 1,
             Permissions: ContainerPermission.Read | ContainerPermission.List
         ),
         new ContainerDefinition(
-            Type:ContainerType.Crashes,
+            Type: ContainerType.Crashes,
             Compare: Compare.Equal,
-            Value:1,
+            Value: 1,
             Permissions: ContainerPermission.Write
-
-
-         ),
+        ),
+        new ContainerDefinition(
+            Type: ContainerType.CrashDumps,
+            Compare: Compare.Equal,
+            Value: 1,
+            Permissions: ContainerPermission.Write
+        ),
         new ContainerDefinition(
             Type: ContainerType.Inputs,
             Compare: Compare.Equal,
@@ -407,8 +416,6 @@ public static class Defs {
             Compare: Compare.Equal,
             Value:1,
             Permissions: ContainerPermission.Write
-
-
          ),
         new ContainerDefinition(
             Type: ContainerType.Inputs,
