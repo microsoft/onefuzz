@@ -92,7 +92,7 @@ public class UserCredentials : IUserCredentials {
                 } else {
                     var tenantsStr = allowedTenants.OkV is null ? "null" : String.Join(';', allowedTenants.OkV!);
                     _log.Error($"issuer not from allowed tenant. issuer: {token.Issuer:Tag:Issuer} - tenants: {tenantsStr:Tag:Tenants}");
-                    return OneFuzzResult<UserAuthInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unauthorized AAD issuer" });
+                    return OneFuzzResult<UserAuthInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unauthorized AAD issuer. If multi-tenant auth is failing, make sure to include all tenant_ids in the `allowed_aad_tenants` list in the instance_config. To see the current instance_config, run `onefuzz instance_config get`. " });
                 }
             } else {
                 _log.Error($"Failed to get allowed tenants due to {allowedTenants.ErrorV:Tag:Error}");

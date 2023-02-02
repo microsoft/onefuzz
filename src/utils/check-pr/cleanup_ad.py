@@ -55,7 +55,7 @@ def delete_current_user_app_registrations(contains: str) -> None:
         ):
             my_apps.append((x["displayName"], x["id"]))
 
-    for (name, id) in my_apps:
+    for name, id in my_apps:
         print("Deleting: %s (%s)" % (name, id))
         result = client.delete(f"/applications/{id}")
         if not result.ok:
