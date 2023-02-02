@@ -3,9 +3,9 @@
 
 use anyhow::Result;
 
+use cobertura::CoberturaCoverage;
 use coverage::source::{Count, FileCoverage, Line, SourceCoverage};
 use debuggable_module::path::FilePath;
-use onefuzz_file_format::coverage::cobertura::CoberturaCoverage;
 
 fn main() -> Result<()> {
     let modoff = vec![
