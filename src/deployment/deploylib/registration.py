@@ -657,7 +657,9 @@ def assign_instance_app_role(
         raise Exception("onefuzz app service principal not found")
 
     onefuzz_service_principal = onefuzz_service_principals[0]
-    logger.info( f"Assigning app role instance service principal {onefuzz_service_principal['id']}")
+    logger.info(
+        f"Assigning app role instance service principal {onefuzz_service_principal['id']}"
+    )
     if isinstance(application_name, str):
         application_service_principals = query_microsoft_graph_list(
             method="GET",
