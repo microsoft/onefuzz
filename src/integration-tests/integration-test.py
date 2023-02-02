@@ -424,6 +424,7 @@ class TestOnefuzz:
                     range(0, self.pool_size),
                 )
             )
+            build = {"context": "."}
             if os == OS.windows:
                 windows_type = subprocess.check_output(
                     "powershell -c (Get-ComputerInfo).OsProductType", shell=True
@@ -442,9 +443,6 @@ class TestOnefuzz:
                             "BASE_IMAGE": "mcr.microsoft.com/windows/server:ltsc2022"
                         },
                     }
-
-            elif os == OS.linux:
-                build = {"context": "."}
 
             # create docker compose file
             compose = {
