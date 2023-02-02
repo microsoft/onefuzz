@@ -123,7 +123,6 @@ class Endpoint:
         as_params: bool = False,
         alternate_endpoint: Optional[str] = None,
     ) -> A:
-
         # Retrieve Auth Parameters
         self._req_config_params()
 
@@ -161,7 +160,6 @@ class Endpoint:
     def _req_config_params(
         self,
     ) -> None:
-
         if self.onefuzz._backend.config.endpoint is None:
             raise Exception("Endpoint Not Configured")
 
@@ -529,7 +527,6 @@ class Containers(Endpoint):
     def _download_tasks(
         self, tasks: List[models.Task], output: Optional[primitives.Directory]
     ) -> None:
-
         to_download: Dict[str, str] = {}
         for task in tasks:
             for container in task.config.containers:
@@ -611,7 +608,6 @@ class Repro(Endpoint):
         with build_ssh_command(
             repro.ip, repro.auth.private_key, command="-T"
         ) as ssh_cmd:
-
             gdb_script = [
                 "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
                 % " ".join(ssh_cmd)
@@ -1006,7 +1002,7 @@ class Tasks(Endpoint):
             tags = {}
 
         containers_submit = []
-        for (container_type, container) in containers:
+        for container_type, container in containers:
             containers_submit.append(
                 models.TaskContainers(name=container, type=container_type)
             )
@@ -1208,7 +1204,6 @@ class Jobs(Endpoint):
         self.tasks = JobTasks(onefuzz)
 
     def delete(self, job_id: UUID_EXPANSION) -> models.Job:
-
         """Stop a job and all tasks that make up a job"""
         job_id_expanded = self._disambiguate_uuid(
             "job_id", job_id, lambda: [str(x.job_id) for x in self.list()]
@@ -1834,7 +1829,6 @@ class Onefuzz:
         authority: Optional[str] = None,
         tenant_domain: Optional[str] = None,
     ) -> None:
-
         if endpoint:
             self._backend.config.endpoint = endpoint
         if authority is not None:

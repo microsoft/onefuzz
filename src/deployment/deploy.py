@@ -631,7 +631,6 @@ class Client:
 
         # Add --custom_domain value to Allowed token audiences setting
         if self.custom_domain:
-
             if self.multi_tenant_domain != "":
                 root_domain = self.multi_tenant_domain
             else:
@@ -776,7 +775,6 @@ class Client:
         logger.info("parsing config: %s", self.config)
 
         if self.config:
-
             with open(self.config, "r") as template_handle:
                 config_template = json.load(template_handle)
 
