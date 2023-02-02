@@ -419,7 +419,7 @@ class TestOnefuzz:
                             "depends_on": ["agent_image"],
                             "image": self.image_tag,
                             "command": f"--machine_id {uuid4()}",
-                            "restart": "always",
+                            "restart": "unless-stopped",
                         }
                     },
                     range(0, self.pool_size),
