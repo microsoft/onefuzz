@@ -1405,6 +1405,9 @@ class Run(Command):
                 result = tester.check_jobs(poll=True, stop_on_complete_check=True)
                 if not result:
                     raise Exception("jobs failed")
+                else:
+                    self.logger.info("****** testing succeeded")
+
         except Exception as e:
             self.logger.error("testing failed: %s", repr(e))
             sys.exit(1)
