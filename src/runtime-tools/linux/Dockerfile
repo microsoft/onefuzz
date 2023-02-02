@@ -14,6 +14,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     pkg-config lldb ca-certificates
 RUN mkdir -p /onefuzz/tools/linux \
     && mv /onefuzz/downloaded/* /onefuzz/tools/linux
+RUN chmod +x /onefuzz/tools/linux/run.sh
 WORKDIR /onefuzz
 
 ENTRYPOINT ["./tools/linux/run.sh"]

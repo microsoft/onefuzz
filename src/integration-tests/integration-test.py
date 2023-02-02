@@ -425,7 +425,7 @@ class TestOnefuzz:
                 )
             )
             build = {"context": "."}
-            if os == OS.windows:
+            if self.the_os == OS.windows:
                 windows_type = subprocess.check_output(
                     "powershell -c (Get-ComputerInfo).OsProductType", shell=True
                 )
