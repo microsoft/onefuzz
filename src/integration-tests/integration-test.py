@@ -401,7 +401,9 @@ class TestOnefuzz:
                     "unmanaged_client_id and unmanaged_client_secret must be set to test the unmanaged scenario"
                 )
 
+            self.logger.info("downloading tools")
             self.of.tools.get(self.tools_dir)
+            self.logger.info("extracting tools")
             with zipfile.ZipFile(
                 os.path.join(self.tools_dir, "tools.zip"), "r"
             ) as zip_ref:
@@ -409,7 +411,7 @@ class TestOnefuzz:
 
             tools_path = self.get_tools_path(self.the_os)
 
-            # zipfile.ext
+            self.logger.info("creating docker compose file")
             services = list(
                 map(
                     lambda x: {
@@ -422,29 +424,46 @@ class TestOnefuzz:
                     range(0, self.pool_size),
                 )
             )
+            if os == OS.windows:
+                windows_type = subprocess.check_output("powershell -c (Get-ComputerInfo).OsProductType", shell=True)
+                if windows_type == b"Workstation":
+                    self.logger.info("using windows workstation image")
+                    build = {"context": ".", "args": {"BASE_IMAGE": "mcr.microsoft.com/windows:ltsc2019"}}
+                else:
+                    self.logger.info("using windows server image")
+                    build = {"context": ".", "args": {"BASE_IMAGE": "mcr.microsoft.com/windows/server:ltsc2022"}}
+
+            elif os == OS.linux:
+                build = {"context": "."}
+
             # create docker compose file
             compose = {
                 "version": "3",
-                "services": {"_build": {"image": self.image_tag, "build": "."}},
+                "services": {"_build": {"image": self.image_tag, "build": build }},
             }
             for service in services:
                 key = next(iter(service.keys()))
                 compose["services"][key] = service[key]
 
             docker_compose_path = os.path.join(tools_path, "docker-compose.yml")
-            self.logger.info(f"writing docker-compose.yml to {docker_compose_path}")
+            self.logger.info(f"writing docker-compose.yml to {docker_compose_path}:\n{yaml.dump(compose)}")
             with open(docker_compose_path, "w") as f:
                 yaml.dump(compose, f)
 
+            self.logger.info(f"retreiving base config.json from {self.pool_name}")
             config = self.of.pools.get_config(self.pool_name)
+
+            self.logger.info(f"updating config.json with unmanaged credentials")
             config.client_credentials.client_id = self.unmanaged_client_id
             config.client_credentials.client_secret = self.unmanaged_client_secret
+
 
             config_path = os.path.join(tools_path, "config.json")
             self.logger.info(f"writing config.json to {config_path}")
             with open(config_path, "w") as f:
                 f.write(config.json())
 
+            self.logger.info(f"starting docker compose")
             subprocess.check_call(
                 "docker compose up -d --force-recreate --build",
                 shell=True,

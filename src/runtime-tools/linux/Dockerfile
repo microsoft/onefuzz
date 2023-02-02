@@ -7,8 +7,7 @@ RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 RUN mkdir /onefuzz
 COPY . /onefuzz
 RUN chmod +x /onefuzz/setup.sh
-RUN chmod +x /onefuzz/tools/linux/run.sh
-RUN export DEBIAN_FRONTEND=noninteractive && export DOCKER_BUILD=1 && cd /onefuzz && ./setup.sh
+RUN export DEBIAN_FRONTEND=noninteractive && export DOCKER_BUILD=1 && cd /onefuzz && ./setup.sh fuzz
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
     libunwind-dev build-essential libssl-dev \
