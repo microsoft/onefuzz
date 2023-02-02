@@ -320,9 +320,9 @@ public class Config : IConfig {
             return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"invalid pool: {config.Pool.PoolName}"));
         }
 
-        if ((config.Task.RebootAfterSetup ?? false) && !pool.OkV.Managed) {
-            return ResultVoid<TaskConfigError>.Error(new TaskConfigError("reboot_after_setup is not supported for unmanaged pools"));
-        }
+        // if ((config.Task.RebootAfterSetup ?? false) && !pool.OkV.Managed) {
+        //     return ResultVoid<TaskConfigError>.Error(new TaskConfigError("reboot_after_setup is not supported for unmanaged pools"));
+        // }
 
         var checkTarget = await CheckTargetExe(config, definition);
         if (!checkTarget.IsOk) {
