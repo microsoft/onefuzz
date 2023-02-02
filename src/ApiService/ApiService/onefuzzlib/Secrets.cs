@@ -35,7 +35,7 @@ public class SecretsOperations : ISecretsOperations {
         return (new Uri(vaultUrl), secretName);
     }
 
-    public async Task<SecretData<T>> SaveToKeyvault<T>(SecretData<T> secretData) {
+    public virtual async Task<SecretData<T>> SaveToKeyvault<T>(SecretData<T> secretData) {
 
         if (secretData.Secret is SecretAddress<T> secretAddress) {
             return secretData;
@@ -72,7 +72,7 @@ public class SecretsOperations : ISecretsOperations {
     }
 
 
-    public async Task<KeyVaultSecret> StoreInKeyvault(Uri keyvaultUrl, string secretName, string secretValue) {
+    public virtual async Task<KeyVaultSecret> StoreInKeyvault(Uri keyvaultUrl, string secretName, string secretValue) {
         var keyvaultClient = new SecretClient(keyvaultUrl, _creds.GetIdentity());
         var r = await keyvaultClient.SetSecretAsync(secretName, secretValue);
         return r.Value;
