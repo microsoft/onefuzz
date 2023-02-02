@@ -40,11 +40,7 @@ from .ssh import build_ssh_command, ssh_connect, temp_file
 
 UUID_EXPANSION = TypeVar("UUID_EXPANSION", UUID, str)
 
-DEFAULT = BackendConfig(
-    authority="",
-    client_id="",
-    tenant_domain="",
-)
+DEFAULT = BackendConfig(endpoint="")
 
 # This was generated randomly and should be preserved moving forwards
 ONEFUZZ_GUID_NAMESPACE = uuid.UUID("27f25e3f-6544-4b69-b309-9b096c5a9cbc")
@@ -172,14 +168,12 @@ class Endpoint:
         logging.debug(response.json())
         endpoint_params = responses.Config.parse_obj(response.json())
 
-        logging.debug(self.onefuzz._backend.config.authority)
         # Will override values in storage w/ provided values for SP use
-        if self.onefuzz._backend.config.client_id == "":
-            self.onefuzz._backend.config.client_id = endpoint_params.client_id
-        if self.onefuzz._backend.config.authority == "":
-            self.onefuzz._backend.config.authority = endpoint_params.authority
-        if self.onefuzz._backend.config.tenant_domain == "":
-            self.onefuzz._backend.config.tenant_domain = endpoint_params.tenant_domain
+        if self.onefuzz._backend.client_id is None:
+            self.onefuzz._backend.client_id = endpoint_params.client_id
+
+        self.onefuzz._backend.authority = endpoint_params.authority
+        self.onefuzz._backend.tenant_domain = endpoint_params.tenant_domain
 
         self.onefuzz._backend.save_config()
 
@@ -1302,8 +1296,8 @@ class Pool(Endpoint):
                 client_id=uuid.UUID(int=0),
                 client_secret="<client_secret>",
                 resource=self.onefuzz._backend.config.endpoint,
-                tenant=urlparse(self.onefuzz._backend.config.authority).path.strip("/"),
-                multi_tenant_domain=self.onefuzz._backend.config.tenant_domain,
+                tenant=urlparse(self.onefuzz._backend.authority).path.strip("/"),
+                multi_tenant_domain=self.onefuzz._backend.tenant_domain,
             )
 
         return pool.config
@@ -1775,6 +1769,7 @@ class Onefuzz:
         self,
         config_path: Optional[str] = None,
         token_path: Optional[str] = None,
+        client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
     ) -> None:
         self.logger = logging.getLogger("onefuzz")
@@ -1787,6 +1782,7 @@ class Onefuzz:
             config=DEFAULT,
             config_path=config_path,
             token_path=token_path,
+            client_id=client_id,
             client_secret=client_secret,
         )
         self.containers = Containers(self)
@@ -1826,19 +1822,13 @@ class Onefuzz:
         endpoint: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
-        authority: Optional[str] = None,
-        tenant_domain: Optional[str] = None,
     ) -> None:
         if endpoint:
             self._backend.config.endpoint = endpoint
-        if authority is not None:
-            self._backend.config.authority = authority
         if client_id is not None:
-            self._backend.config.client_id = client_id
+            self._backend.client_id = client_id
         if client_secret is not None:
             self._backend.client_secret = client_secret
-        if tenant_domain is not None:
-            self._backend.config.tenant_domain = tenant_domain
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates._load_cache()
@@ -1878,19 +1868,14 @@ class Onefuzz:
     def config(
         self,
         endpoint: Optional[str] = None,
-        authority: Optional[str] = None,
-        client_id: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
-        tenant_domain: Optional[str] = None,
         reset: Optional[bool] = None,
     ) -> BackendConfig:
         """Configure onefuzz CLI"""
         self.logger.debug("set config")
 
         if reset:
-            self._backend.config = BackendConfig(
-                authority="", client_id="", tenant_domain=""
-            )
+            self._backend.config = BackendConfig(endpoint="")
 
         if endpoint is not None:
             # The normal path for calling the API always uses the oauth2 workflow,
@@ -1906,14 +1891,8 @@ class Onefuzz:
                     "Missing HTTP Authentication"
                 )
             self._backend.config.endpoint = endpoint
-        if authority is not None:
-            self._backend.config.authority = authority
-        if client_id is not None:
-            self._backend.config.client_id = client_id
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
-        if tenant_domain is not None:
-            self._backend.config.tenant_domain = tenant_domain
         self._backend.app = None
         self._backend.save_config()
 

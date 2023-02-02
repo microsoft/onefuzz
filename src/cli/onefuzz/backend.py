@@ -91,11 +91,8 @@ def check_application_error(response: requests.Response) -> None:
 
 
 class BackendConfig(BaseModel):
-    authority: str
-    client_id: str
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
-    tenant_domain: str
 
 
 class Backend:
@@ -104,11 +101,15 @@ class Backend:
         config: BackendConfig,
         config_path: Optional[str] = None,
         token_path: Optional[str] = None,
+        client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
     ):
         self.config_path = os.path.expanduser(config_path or DEFAULT_CONFIG_PATH)
         self.token_path = os.path.expanduser(token_path or DEFAULT_TOKEN_PATH)
+        self.client_id = client_id
         self.client_secret = client_secret
+        self.authority: str = ""
+        self.tenant_domain: str = ""
         self.config = config
         self.token_cache: Optional[msal.SerializableTokenCache] = None
         self.init_cache()
@@ -169,7 +170,9 @@ class Backend:
 
     def headers(self) -> Dict[str, str]:
         value = {}
-        if self.config.client_id is not None:
+        LOGGER.info("hello world")
+        LOGGER.info(self.client_id)
+        if self.client_id is not None:
             access_token = self.get_access_token()
             value["Authorization"] = "%s %s" % (
                 access_token["token_type"],
@@ -181,10 +184,10 @@ class Backend:
         if not self.config.endpoint:
             raise Exception("endpoint not configured")
 
-        if "https://login.microsoftonline.com/common" in self.config.authority:
+        if "https://login.microsoftonline.com/common" in self.authority:
             endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
             scopes = [
-                f"api://{self.config.tenant_domain}/{endpoint}/.default",
+                f"api://{self.tenant_domain}/{endpoint}/.default",
             ]
         else:
             netloc = urlparse(self.config.endpoint).netloc
@@ -200,8 +203,8 @@ class Backend:
     def access_token_from_client_secret(self, scopes: List[str]) -> Any:
         if not self.app:
             self.app = msal.ConfidentialClientApplication(
-                self.config.client_id,
-                authority=self.config.authority,
+                self.client_id,
+                authority=self.authority,
                 client_credential=self.client_secret,
                 token_cache=self.token_cache,
             )
@@ -247,8 +250,8 @@ class Backend:
     def do_login(self, scopes: List[str]) -> Any:
         if not self.app:
             self.app = msal.PublicClientApplication(
-                self.config.client_id,
-                authority=self.config.authority,
+                self.client_id,
+                authority=self.authority,
                 token_cache=self.token_cache,
                 allow_broker=True,
             )
