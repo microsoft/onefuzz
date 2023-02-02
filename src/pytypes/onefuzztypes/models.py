@@ -394,6 +394,7 @@ class TaskUnitConfig(BaseModel):
     analysis: CONTAINER_DEF
     coverage: CONTAINER_DEF
     crashes: CONTAINER_DEF
+    crashdumps: CONTAINER_DEF
     inputs: CONTAINER_DEF
     no_repro: CONTAINER_DEF
     readonly_inputs: CONTAINER_DEF
