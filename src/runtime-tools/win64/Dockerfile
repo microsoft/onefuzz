@@ -2,7 +2,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-FROM mcr.microsoft.com/windows:ltsc2019 as base_onefuzz
+FROM mcr.microsoft.com/windows/server:ltsc2022 as base_onefuzz
 
 SHELL ["powershell.exe", "-ExecutionPolicy", "Unrestricted", "-Command"]
 
