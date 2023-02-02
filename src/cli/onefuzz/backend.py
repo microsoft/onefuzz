@@ -170,8 +170,6 @@ class Backend:
 
     def headers(self) -> Dict[str, str]:
         value = {}
-        LOGGER.info("hello world")
-        LOGGER.info(self.client_id)
         if self.client_id is not None:
             access_token = self.get_access_token()
             value["Authorization"] = "%s %s" % (
