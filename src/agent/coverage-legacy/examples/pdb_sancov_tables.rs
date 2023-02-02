@@ -34,7 +34,7 @@ fn main() -> Result<()> {
     let mut provider = PeSancovBasicBlockProvider::new(&data, &pe, &mut pdb);
     let blocks = provider.provide()?;
 
-    println!("blocks = {:x?}", blocks);
+    println!("blocks = {blocks:x?}");
 
     Ok(())
 }

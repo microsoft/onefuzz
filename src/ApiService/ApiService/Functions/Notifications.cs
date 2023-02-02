@@ -22,7 +22,7 @@ public class Notifications {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "notification search");
         }
 
-        var entries = request.OkV switch { { Container: null } => _context.NotificationOperations.SearchAll(), { Container: var c } => _context.NotificationOperations.SearchByRowKeys(c.Select(x => x.String))
+        var entries = request.OkV switch { { Container: null, NotificationId: null } => _context.NotificationOperations.SearchAll(), { Container: var c, NotificationId: null } => _context.NotificationOperations.SearchByRowKeys(c.Select(x => x.String)), { Container: var _, NotificationId: var n } => new[] { await _context.NotificationOperations.GetNotification(n.Value) }.ToAsyncEnumerable(),
         };
 
         var response = req.CreateResponse(HttpStatusCode.OK);

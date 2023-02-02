@@ -33,12 +33,17 @@ public class Ado : NotificationsBase, IAdo {
             await ado.Process(notificationInfo);
         } catch (Exception e)
               when (e is VssAuthenticationException || e is VssServiceException) {
+            var _ = config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo);
+            if (e is VssAuthenticationException && !string.IsNullOrEmpty(assignedTo)) {
+                notificationInfo = notificationInfo.AddRange(new (string, string)[] { ("assigned_to", assignedTo) });
+            }
+
             if (!isLastRetryAttempt && IsTransient(e)) {
                 _logTracer.WithTags(notificationInfo).Error($"transient ADO notification failure {report.JobId:Tag:JobId} {report.TaskId:Tag:TaskId} {container:Tag:Container} {filename:Tag:Filename}");
                 throw;
             } else {
                 _logTracer.WithTags(notificationInfo).Exception(e, $"Failed to process ado notification");
-                LogFailedNotification(report, e, notificationId);
+                await LogFailedNotification(report, e, notificationId);
             }
         }
     }

@@ -95,7 +95,7 @@ class BackendConfig(BaseModel):
     client_id: str
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
-    tenant_domain: Optional[str]
+    tenant_domain: str
 
 
 class Backend:
@@ -181,7 +181,7 @@ class Backend:
         if not self.config.endpoint:
             raise Exception("endpoint not configured")
 
-        if self.config.tenant_domain:
+        if "https://login.microsoftonline.com/common" in self.config.authority:
             endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
             scopes = [
                 f"api://{self.config.tenant_domain}/{endpoint}/.default",

@@ -84,7 +84,7 @@ class Deployer:
                 ),
             ),
         ]
-        for (msg, cmd) in commands:
+        for msg, cmd in commands:
             print(msg)
             subprocess.check_call(cmd, shell=True)
 
@@ -115,7 +115,7 @@ class Deployer:
             ),
         ]
 
-        for (msg, cmd) in commands:
+        for msg, cmd in commands:
             print(msg)
             output = subprocess.check_output(cmd, shell=True, encoding="UTF-8")
             if "client_id" in output:
@@ -166,7 +166,7 @@ class Deployer:
                 ),
             ),
         ]
-        for (msg, cmd) in commands:
+        for msg, cmd in commands:
             print(msg)
             print(cmd)
             subprocess.check_call(cmd, shell=True)

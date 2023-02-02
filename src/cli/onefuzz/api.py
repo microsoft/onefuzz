@@ -41,8 +41,9 @@ from .ssh import build_ssh_command, ssh_connect, temp_file
 UUID_EXPANSION = TypeVar("UUID_EXPANSION", UUID, str)
 
 DEFAULT = BackendConfig(
-    authority="https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47",
-    client_id="72f1562a-8c0c-41ea-beb9-fa2b71c80134",
+    authority="",
+    client_id="",
+    tenant_domain="",
 )
 
 # This was generated randomly and should be preserved moving forwards
@@ -122,6 +123,9 @@ class Endpoint:
         as_params: bool = False,
         alternate_endpoint: Optional[str] = None,
     ) -> A:
+        # Retrieve Auth Parameters
+        self._req_config_params()
+
         response = self._req_base(
             method,
             data=data,
@@ -152,6 +156,32 @@ class Endpoint:
             ).json()
 
         return [model.parse_obj(x) for x in response]
+
+    def _req_config_params(
+        self,
+    ) -> None:
+        if self.onefuzz._backend.config.endpoint is None:
+            raise Exception("Endpoint Not Configured")
+
+        endpoint = self.onefuzz._backend.config.endpoint
+
+        response = self.onefuzz._backend.session.request(
+            "GET", endpoint + "/api/config"
+        )
+
+        logging.debug(response.json())
+        endpoint_params = responses.Config.parse_obj(response.json())
+
+        logging.debug(self.onefuzz._backend.config.authority)
+        # Will override values in storage w/ provided values for SP use
+        if self.onefuzz._backend.config.client_id == "":
+            self.onefuzz._backend.config.client_id = endpoint_params.client_id
+        if self.onefuzz._backend.config.authority == "":
+            self.onefuzz._backend.config.authority = endpoint_params.authority
+        if self.onefuzz._backend.config.tenant_domain == "":
+            self.onefuzz._backend.config.tenant_domain = endpoint_params.tenant_domain
+
+        self.onefuzz._backend.save_config()
 
     def _disambiguate(
         self,
@@ -497,7 +527,6 @@ class Containers(Endpoint):
     def _download_tasks(
         self, tasks: List[models.Task], output: Optional[primitives.Directory]
     ) -> None:
-
         to_download: Dict[str, str] = {}
         for task in tasks:
             for container in task.config.containers:
@@ -579,7 +608,6 @@ class Repro(Endpoint):
         with build_ssh_command(
             repro.ip, repro.auth.private_key, command="-T"
         ) as ssh_cmd:
-
             gdb_script = [
                 "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
                 % " ".join(ssh_cmd)
@@ -974,7 +1002,7 @@ class Tasks(Endpoint):
             tags = {}
 
         containers_submit = []
-        for (container_type, container) in containers:
+        for container_type, container in containers:
             containers_submit.append(
                 models.TaskContainers(name=container, type=container_type)
             )
@@ -1176,7 +1204,6 @@ class Jobs(Endpoint):
         self.tasks = JobTasks(onefuzz)
 
     def delete(self, job_id: UUID_EXPANSION) -> models.Job:
-
         """Stop a job and all tasks that make up a job"""
         job_id_expanded = self._disambiguate_uuid(
             "job_id", job_id, lambda: [str(x.job_id) for x in self.list()]
@@ -1802,7 +1829,6 @@ class Onefuzz:
         authority: Optional[str] = None,
         tenant_domain: Optional[str] = None,
     ) -> None:
-
         if endpoint:
             self._backend.config.endpoint = endpoint
         if authority is not None:
@@ -1862,7 +1888,9 @@ class Onefuzz:
         self.logger.debug("set config")
 
         if reset:
-            self._backend.config = BackendConfig(authority="", client_id="")
+            self._backend.config = BackendConfig(
+                authority="", client_id="", tenant_domain=""
+            )
 
         if endpoint is not None:
             # The normal path for calling the API always uses the oauth2 workflow,

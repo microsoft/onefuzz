@@ -121,7 +121,7 @@ impl AzureQueueClient {
         let http = Client::new();
         let messages_url = {
             let queue_path = queue_url.path();
-            let messages_path = format!("{}/messages", queue_path);
+            let messages_path = format!("{queue_path}/messages");
             let mut url = queue_url;
             url.set_path(&messages_path);
             url
