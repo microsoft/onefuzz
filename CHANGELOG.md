@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 6.4.0
 ### Deployment Change:
-In the config.json used during deployment; `authority`, `tenant_domain`, and `cli_client_id` are now required values. These values are being moved from parameters used in the `onefuzz config` CLI command, which not be present in a future release, however they are unchanged for this version. There is an updated version of the config.json with default values that correspond to the Microsoft.com tenant in this release as well. Please review [Pull Request - #2771](https://github.com/microsoft/onefuzz/pull/2771) for more information.
+In the config.json used during deployment; `authority`, `tenant_domain`, and `cli_client_id` are now required values. These values are being moved from parameters used in the `onefuzz config` CLI command, which will not be present in a future release, however they are unchanged for this version. There is an updated version of the config.json with default values that correspond to the Microsoft.com tenant in this release as well. Please review [Pull Request - #2771](https://github.com/microsoft/onefuzz/pull/2771) for more information.
 
 ### Added 
 * Deployment/CLI: OneFuzz Config refactored - `authority`, `tenant_domain`, and `cli_client_id` are now required values in the config.json used during deployment [#2771](https://github.com/microsoft/onefuzz/pull/2771)
