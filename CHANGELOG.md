@@ -18,10 +18,10 @@ In the config.json used during deployment; `authority`, `tenant_domain`, and `cl
 * Service: Include `AssignedTo` when failing to create a work item due to an authentication exception [#2770](https://github.com/microsoft/onefuzz/pull/2770)
 
 ### Fixed
-* Agent: Fixes & improvements to Expand behavior [#2789](https://github.com/microsoft/onefuzz/pull/2789)
-* Agent: Trim whitespace in output from monitored process before printing [#2782](https://github.com/microsoft/onefuzz/pull/2782)
-* CLI: fix default value of analyzer_exe [#2797](https://github.com/microsoft/onefuzz/pull/2797)
-* Service: Fix query to get the existing proxy [#2791](https://github.com/microsoft/onefuzz/pull/2791)
+* Agent: Fixes & improvements to `Expand` behavior [#2789](https://github.com/microsoft/onefuzz/pull/2789)
+* Agent: Triming whitespace in output from monitored process before printing [#2782](https://github.com/microsoft/onefuzz/pull/2782)
+* CLI: Fixed default value of analyzer_exe [#2797](https://github.com/microsoft/onefuzz/pull/2797)
+* Service: Fixed query to get the existing proxy [#2791](https://github.com/microsoft/onefuzz/pull/2791)
 * Service: Truncate webhooks message length for azure queue size compatibility [#2788](https://github.com/microsoft/onefuzz/pull/2788)
 
 ## 6.3.0
