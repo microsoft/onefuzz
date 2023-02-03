@@ -97,6 +97,12 @@ class BackendConfig(BaseModel):
     features: Set[str] = Field(default_factory=set)
     tenant_domain: str
 
+    def get_multi_tenant_domain(self) -> Optional[str]:
+        if "https://login.microsoftonline.com/common" in self.authority:
+            return self.tenant_domain
+        else:
+            return None
+
 
 class Backend:
     def __init__(
@@ -181,10 +187,11 @@ class Backend:
         if not self.config.endpoint:
             raise Exception("endpoint not configured")
 
-        if "https://login.microsoftonline.com/common" in self.config.authority:
+        multi_tenant_domain = self.config.get_multi_tenant_domain()
+        if multi_tenant_domain is not None:
             endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
             scopes = [
-                f"api://{self.config.tenant_domain}/{endpoint}/.default",
+                f"api://{multi_tenant_domain}/{endpoint}/.default",
             ]
         else:
             netloc = urlparse(self.config.endpoint).netloc
