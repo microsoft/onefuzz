@@ -981,7 +981,6 @@ class Run(Command):
         test_id: UUID,
         *,
         endpoint: Optional[str],
-        authority: Optional[str] = None,
         client_id: Optional[str],
         client_secret: Optional[str],
         poll: bool = False,
@@ -1007,7 +1006,6 @@ class Run(Command):
         endpoint: Optional[str],
         client_id: Optional[str],
         client_secret: Optional[str],
-        authority: Optional[str] = None,
         job_ids: List[UUID] = [],
     ) -> None:
         self.onefuzz.__setup__(
@@ -1087,7 +1085,6 @@ class Run(Command):
         test_id: UUID,
         *,
         endpoint: Optional[str],
-        authority: Optional[str],
         client_id: Optional[str],
         client_secret: Optional[str],
     ) -> None:
@@ -1119,7 +1116,6 @@ class Run(Command):
         self,
         *,
         endpoint: Optional[str] = None,
-        authority: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
         skip_repro: bool = False,
@@ -1130,7 +1126,6 @@ class Run(Command):
         self.check_jobs(
             test_id,
             endpoint=endpoint,
-            authority=authority,
             client_id=client_id,
             client_secret=client_secret,
             poll=True,
@@ -1144,7 +1139,6 @@ class Run(Command):
             self.check_repros(
                 test_id,
                 endpoint=endpoint,
-                authority=authority,
                 client_id=client_id,
                 client_secret=client_secret,
                 job_ids=job_ids,
@@ -1155,7 +1149,6 @@ class Run(Command):
         samples: Directory,
         *,
         endpoint: Optional[str] = None,
-        authority: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
         pool_size: int = 15,
@@ -1209,7 +1202,6 @@ class Run(Command):
                 endpoint=endpoint,
                 client_id=client_id,
                 client_secret=client_secret,
-                authority=authority,
             )
         except Exception as e:
             self.logger.error("testing failed: %s", repr(e))
