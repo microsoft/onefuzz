@@ -1713,6 +1713,17 @@ class InstanceConfigCmd(Endpoint):
         )
 
 
+class ValidateScriban(Endpoint):
+    """Interact with Validate Scriban"""
+
+    endpoint = "ValidateScriban"
+
+    def post(self, req: requests.TemplateValidationPost) -> responses.TemplateValidationResponse:
+        return self._req_model(
+            "POST",
+            responses.TemplateValidationResponse,
+            data=req)
+
 class Command:
     def __init__(self, onefuzz: "Onefuzz", logger: logging.Logger):
         self.onefuzz = onefuzz
@@ -1803,6 +1814,7 @@ class Onefuzz:
         self.webhooks = Webhooks(self)
         self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
+        self.validate_scriban = ValidateScriban(self)
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates = JobTemplates(self)

@@ -20,7 +20,7 @@ from .enums import (
     TaskState,
 )
 from .events import EventType
-from .models import AutoScaleConfig, InstanceConfig, NotificationConfig
+from .models import AutoScaleConfig, InstanceConfig, NotificationConfig, TemplateRenderContext
 from .primitives import Container, PoolName, Region
 from .webhooks import WebhookMessageFormat
 
@@ -251,5 +251,8 @@ class NodeAddSshKey(BaseModel):
 class InstanceConfigUpdate(BaseModel):
     config: InstanceConfig
 
+class TemplateValidationPost(BaseModel):
+    template: str
+    context: Optional[TemplateRenderContext]
 
 _check_hotfix()

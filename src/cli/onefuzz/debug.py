@@ -18,9 +18,12 @@ from azure.applicationinsights import ApplicationInsightsDataClient
 from azure.applicationinsights.models import QueryBody
 from azure.identity import AzureCliCredential
 from azure.storage.blob import ContainerClient
+from onefuzztypes import requests
+from onefuzztypes import models
 from onefuzztypes.enums import ContainerType, TaskType
-from onefuzztypes.models import BlobRef, Job, NodeAssignment, Report, Task, TaskConfig
+from onefuzztypes.models import BlobRef, Job, NodeAssignment, Report, Task, TaskConfig, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, PoolName
+from onefuzztypes.responses import TemplateValidationResponse
 
 from onefuzz.api import UUID_EXPANSION, Command, Onefuzz
 
@@ -730,6 +733,15 @@ class DebugNotification(Command):
         sas_url = self.onefuzz.containers.get(container_name).sas_url
         _, netloc, _, _, _, _ = urlparse(sas_url)
         return netloc.split(".")[0]
+
+    def template(
+        self,
+        template: str,
+        context: Optional[models.TemplateRenderContext]
+    ) -> TemplateValidationResponse:
+        """Validate scriban rendering of notification config"""
+        req = requests.TemplateValidationPost(template=template, context=context)
+        return self.onefuzz.validate_scriban.post(req)
 
     def job(
         self,
