@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, root_validator, validator, AnyHttpUrl
+from pydantic import AnyHttpUrl, BaseModel, Field, root_validator, validator
 from pydantic.dataclasses import dataclass
 
 from ._monkeypatch import _check_hotfix
@@ -868,6 +868,7 @@ class AzureVmExtensionConfig(BaseModel):
 class ApiAccessRule(BaseModel):
     methods: List[str]
     allowed_groups: List[UUID]
+
 
 class TemplateRenderContext(BaseModel):
     report: Report

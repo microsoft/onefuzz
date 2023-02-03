@@ -18,10 +18,9 @@ from azure.applicationinsights import ApplicationInsightsDataClient
 from azure.applicationinsights.models import QueryBody
 from azure.identity import AzureCliCredential
 from azure.storage.blob import ContainerClient
-from onefuzztypes import requests
-from onefuzztypes import models
+from onefuzztypes import models, requests
 from onefuzztypes.enums import ContainerType, TaskType
-from onefuzztypes.models import BlobRef, Job, NodeAssignment, Report, Task, TaskConfig, NotificationConfig
+from onefuzztypes.models import BlobRef, Job, NodeAssignment, Report, Task, TaskConfig
 from onefuzztypes.primitives import Container, Directory, PoolName
 from onefuzztypes.responses import TemplateValidationResponse
 
@@ -724,9 +723,10 @@ class DebugNotification(Command):
     def _get_container(
         self, task: Task, container_type: ContainerType
     ) -> Optional[Container]:
-        for container in task.config.containers:
-            if container.type == container_type:
-                return container.name
+        if task.config.containers is not None:
+            for container in task.config.containers:
+                if container.type == container_type:
+                    return container.name
         return None
 
     def _get_storage_account(self, container_name: Container) -> str:
@@ -735,9 +735,7 @@ class DebugNotification(Command):
         return netloc.split(".")[0]
 
     def template(
-        self,
-        template: str,
-        context: Optional[models.TemplateRenderContext]
+        self, template: str, context: Optional[models.TemplateRenderContext]
     ) -> TemplateValidationResponse:
         """Validate scriban rendering of notification config"""
         req = requests.TemplateValidationPost(template=template, context=context)

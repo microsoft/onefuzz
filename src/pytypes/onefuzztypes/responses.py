@@ -85,6 +85,7 @@ class CanSchedule(BaseResponse):
     allowed: bool
     work_stopped: bool
 
+
 class TemplateValidationResponse(BaseResponse):
     rendered_template: str
     available_context: TemplateRenderContext
