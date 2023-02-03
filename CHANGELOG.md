@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Deployment/CLI: OneFuzz Config refactored - `tenant_id`, `tenant_domain`, `multi_tenant_domain`, and `cli_client_id` are now required values in the config.json used during deployment and no longer required when running the config command. [#2771](https://github.com/microsoft/onefuzz/pull/2771)
 * Agent: Fully escape allowlist rules [#2784](https://github.com/microsoft/onefuzz/pull/2784)
 * Agent: Apply allowlist to all blocks within a function [#2785](https://github.com/microsoft/onefuzz/pull/2785)
-
+* Service: Added Notification failure webhook to communicate Notification failures [#2628](https://github.com/microsoft/onefuzz/pull/2628)
 ### Changed
 * Service: Include `AssignedTo` when failing to create a work item due to an authentication exception [#2770](https://github.com/microsoft/onefuzz/pull/2770)
 
@@ -23,7 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 6.3.0
 ### Added 
-* Service: Added Notification failure webhook to communicate Notification failures [#2628](https://github.com/microsoft/onefuzz/pull/2628)
 * Service: Add Optional Analysis Task to Libfuzzer Template [#2748](https://github.com/microsoft/onefuzz/pull/2748)
 * Agent: Use `elsa` for improved interface with `debuggable_module::Loader` [#2703](https://github.com/microsoft/onefuzz/pull/2703)
 * Agent: Add sourceline output and logging to coverage example [#2753](https://github.com/microsoft/onefuzz/pull/2753)
