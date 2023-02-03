@@ -5,6 +5,8 @@
 
 set -ex
 
+script_dir=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+
 exists() {
     [ -e "$1" ]
 }
@@ -68,6 +70,10 @@ cargo build --release --locked --manifest-path ./onefuzz-telemetry/Cargo.toml --
 if [ -n "$SCCACHE" ]; then
     sccache --show-stats
 fi
+
+echo "Checking dependencies of binaries"
+
+"$script_dir/check-dependencies.sh"
 
 echo "Copying artifacts to $output_dir"
 
