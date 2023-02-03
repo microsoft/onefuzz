@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 6.3.0
 ### Added 
+* Service: Added Notification failure webhook to communicate Notification failures [#2628](https://github.com/microsoft/onefuzz/pull/2628)
 * Service: Add Optional Analysis Task to Libfuzzer Template [#2748](https://github.com/microsoft/onefuzz/pull/2748)
 * Agent: Use `elsa` for improved interface with `debuggable_module::Loader` [#2703](https://github.com/microsoft/onefuzz/pull/2703)
 * Agent: Add sourceline output and logging to coverage example [#2753](https://github.com/microsoft/onefuzz/pull/2753)
