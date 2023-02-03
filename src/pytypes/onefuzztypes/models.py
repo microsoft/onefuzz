@@ -193,8 +193,8 @@ class TaskConfig(BaseModel):
     task: TaskDetails
     vm: Optional[TaskVm]
     pool: Optional[TaskPool]
-    containers: List[TaskContainers]
-    tags: Dict[str, str]
+    containers: Optional[List[TaskContainers]]
+    tags: Optional[Dict[str, str]]
     debug: Optional[List[TaskDebugFlag]]
     colocate: Optional[bool]
 
