@@ -101,9 +101,11 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.unique_reports: 1,
             ContainerType.coverage: 1,
             ContainerType.inputs: 2,
+            ContainerType.crashdumps: 1,
         },
         reboot_after_setup=True,
         inject_fake_regression=True,
+        target_env={"ASAN_OPTIONS": "disable_crashdump=0:abort_on_error=1"},
     ),
     "linux-libfuzzer-with-options": Integration(
         template=TemplateType.libfuzzer,
@@ -202,21 +204,6 @@ TARGETS: Dict[str, Integration] = {
         wait_for_files={ContainerType.unique_reports: 1},
         check_asan_log=True,
         disable_check_debugger=True,
-    ),
-    "linux-crashdump": Integration(
-        template=TemplateType.libfuzzer,
-        os=OS.linux,
-        target_exe="fuzz.exe",
-        inputs="seeds",
-        wait_for_files={
-            ContainerType.unique_reports: 1,
-            ContainerType.coverage: 1,
-            ContainerType.inputs: 2,
-            ContainerType.crashdumps: 1,
-        },
-        reboot_after_setup=True,
-        inject_fake_regression=True,
-        target_env={"ASAN_OPTIONS": "disable_crashdump=0:abort_on_error=1"},
     ),
     # "windows-crashdump": Integration(
     # template=TemplateType.libfuzzer,
