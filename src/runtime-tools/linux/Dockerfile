@@ -15,6 +15,8 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 RUN mkdir -p /onefuzz/tools/linux \
     && mv /onefuzz/downloaded/* /onefuzz/tools/linux
 RUN chmod +x /onefuzz/tools/linux/run.sh
+RUN chmod +x /onefuzz/tools/linux/onefuzz-agent
+RUN chmod +x /onefuzz/tools/linux/onefuzz-task
 WORKDIR /onefuzz
 
 ENTRYPOINT ["./tools/linux/run.sh"]
