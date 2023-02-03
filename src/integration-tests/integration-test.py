@@ -355,7 +355,9 @@ class TestOnefuzz:
             self.logger.info("launching: %s", target)
 
             if config.setup_dir is None:
-                setup = Directory(os.path.join(path, target)) if config.use_setup else None
+                setup = (
+                    Directory(os.path.join(path, target)) if config.use_setup else None
+                )
             else:
                 setup = config.setup_dir
 
@@ -935,10 +937,7 @@ class TestOnefuzz:
 
             # ignore warnings coming from the rust code, only be concerned
             # about errors
-            if (
-                entry.get("severityLevel") == 2
-                and "rust" in entry.get("sdkVersion")
-            ):
+            if entry.get("severityLevel") == 2 and "rust" in entry.get("sdkVersion"):
                 continue
 
             # ignore resource not found warnings from azure-functions layer,
@@ -993,7 +992,6 @@ class Run(Command):
             endpoint=endpoint,
             client_id=client_id,
             client_secret=client_secret,
-            authority=authority,
         )
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
         result = tester.check_jobs(
@@ -1016,7 +1014,6 @@ class Run(Command):
             endpoint=endpoint,
             client_id=client_id,
             client_secret=client_secret,
-            authority=authority,
         )
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
         launch_result, repros = tester.launch_repro(job_ids=job_ids)
@@ -1028,7 +1025,6 @@ class Run(Command):
         self,
         *,
         endpoint: Optional[str] = None,
-        authority: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
         pool_size: int = 10,
@@ -1045,7 +1041,6 @@ class Run(Command):
                 endpoint=endpoint,
                 client_id=client_id,
                 client_secret=client_secret,
-                authority=authority,
             )
 
         retry(self.logger, try_setup, "trying to configure")
@@ -1058,7 +1053,6 @@ class Run(Command):
         samples: Directory,
         *,
         endpoint: Optional[str] = None,
-        authority: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
@@ -1075,7 +1069,6 @@ class Run(Command):
                 endpoint=endpoint,
                 client_id=client_id,
                 client_secret=client_secret,
-                authority=authority,
             )
 
         retry(self.logger, try_setup, "trying to configure")
@@ -1102,7 +1095,6 @@ class Run(Command):
             endpoint=endpoint,
             client_id=client_id,
             client_secret=client_secret,
-            authority=authority,
         )
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id=test_id)
         tester.cleanup()
@@ -1112,7 +1104,6 @@ class Run(Command):
         test_id: UUID,
         *,
         endpoint: Optional[str],
-        authority: Optional[str] = None,
         client_id: Optional[str],
         client_secret: Optional[str],
     ) -> None:
@@ -1120,7 +1111,6 @@ class Run(Command):
             endpoint=endpoint,
             client_id=client_id,
             client_secret=client_secret,
-            authority=authority,
         )
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id=test_id)
         tester.check_logs_for_errors()
@@ -1186,7 +1176,6 @@ class Run(Command):
                     endpoint=endpoint,
                     client_id=client_id,
                     client_secret=client_secret,
-                    authority=authority,
                 )
 
             retry(self.logger, try_setup, "trying to configure")
