@@ -1804,7 +1804,6 @@ class Onefuzz:
         self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
 
-
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
         self.debug = Debug(self, self.logger)
@@ -1921,6 +1920,7 @@ class Onefuzz:
             "%s are a preview-feature and may change in an upcoming release",
             feature.name,
         )
+
 
 from .debug import Debug  # noqa: E402
 from .status.cmd import Status  # noqa: E402
