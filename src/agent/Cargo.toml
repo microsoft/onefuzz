@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "atexit",
+    "cobertura",
     "coverage",
     "coverage-legacy",
     "debuggable-module",

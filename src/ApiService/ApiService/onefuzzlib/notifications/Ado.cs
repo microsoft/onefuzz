@@ -43,7 +43,7 @@ public class Ado : NotificationsBase, IAdo {
                 throw;
             } else {
                 _logTracer.WithTags(notificationInfo).Exception(e, $"Failed to process ado notification");
-                LogFailedNotification(report, e, notificationId);
+                await LogFailedNotification(report, e, notificationId);
             }
         }
     }
