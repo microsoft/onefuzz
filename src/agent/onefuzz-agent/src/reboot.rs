@@ -90,7 +90,7 @@ impl Reboot {
 
     #[cfg(target_family = "unix")]
     pub fn invoke(&self) -> Result<()> {
-        if std::path::Path.exists("/.dockerenv") {
+        if std::path::Path::new("/.dockerenv").exists() {
             info!("running inside docker, exiting instead of rebooting");
             std::process::exit(0);
         } else {
@@ -103,7 +103,6 @@ impl Reboot {
     #[cfg(target_family = "windows")]
     pub fn invoke(&self) -> Result<()> {
         info!("invoking local reboot command");
-
         Command::new("powershell.exe")
             .arg("-Command")
             .arg("Restart-Computer")
