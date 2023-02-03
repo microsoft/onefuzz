@@ -1,7 +1,7 @@
 {
     "tenant_id": "",
     "tenant_domain": "",
-    "multi_tenant_domain": "",
+    "multi_tenant_domain": "", // make optional?
     "cli_client_id": "",
     "proxy_nsg_config": {
         "allowed_ips": [

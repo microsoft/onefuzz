@@ -174,6 +174,7 @@ class Endpoint:
 
         self.onefuzz._backend.authority = endpoint_params.authority
         self.onefuzz._backend.tenant_domain = endpoint_params.tenant_domain
+        self.onefuzz._backend.multi_tenant_domain = endpoint_params.multi_tenant_domain
 
         self.onefuzz._backend.save_config()
 
@@ -1290,6 +1291,12 @@ class Pool(Endpoint):
         if pool.config is None:
             raise Exception("Missing AgentConfig in response")
 
+        multi_tenant_domain = (
+            self.onefuzz._backend.multi_tenant_domain
+            if self.onefuzz._backend.multi_tenant_domain != ""
+            else None
+        )
+
         config = pool.config
         if not pool.managed:
             config.client_credentials = models.ClientCredentials(  # nosec
@@ -1297,7 +1304,7 @@ class Pool(Endpoint):
                 client_secret="<client_secret>",
                 resource=self.onefuzz._backend.config.endpoint,
                 tenant=urlparse(self.onefuzz._backend.authority).path.strip("/"),
-                multi_tenant_domain=self.onefuzz._backend.tenant_domain,
+                multi_tenant_domain=multi_tenant_domain,
             )
 
         return pool.config

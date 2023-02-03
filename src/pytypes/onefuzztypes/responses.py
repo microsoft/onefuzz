@@ -56,6 +56,7 @@ class Config(BaseResponse):
     authority: str
     client_id: str
     tenant_domain: str
+    multi_tenant_domain: str
 
 
 class ContainerInfoBase(BaseResponse):
