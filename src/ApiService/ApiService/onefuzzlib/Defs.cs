@@ -162,7 +162,7 @@ public static class Defs {
                    Permissions: ContainerPermission.Write
                 ),
                new ContainerDefinition(
-                   Type:ContainerType.CrashDumps,
+                   Type:ContainerType.Crashdumps,
                    Compare: Compare.Equal,
                    Value:1,
                    Permissions: ContainerPermission.Write
@@ -251,7 +251,7 @@ public static class Defs {
             Permissions: ContainerPermission.Write
         ),
         new ContainerDefinition(
-            Type: ContainerType.CrashDumps,
+            Type: ContainerType.Crashdumps,
             Compare: Compare.Equal,
             Value: 1,
             Permissions: ContainerPermission.Write
