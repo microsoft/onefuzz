@@ -110,7 +110,7 @@ class Backend:
         self.client_secret = client_secret
         self.authority: str = ""
         self.tenant_domain: str = ""
-        self.multi_tenant_domain: str = ""
+        self.multi_tenant_domain: Optional[str] = None
         self.config = config
         self.token_cache: Optional[msal.SerializableTokenCache] = None
         self.init_cache()
