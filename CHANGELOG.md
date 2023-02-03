@@ -5,8 +5,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## 6.4.0
-### Deployment Change:
-In the config.json used during deployment; `authority`, `tenant_domain`, and `cli_client_id` are now required values. These values are being moved from parameters used in the `onefuzz config` CLI command, which will not be present in a future release, however they are unchanged for this version. There is an updated version of the config.json with default values that correspond to the Microsoft.com tenant in this release as well. Please review [Pull Request - #2771](https://github.com/microsoft/onefuzz/pull/2771) for more information.
 
 ### Added 
 * Deployment/CLI: OneFuzz Config refactored - `authority`, `tenant_domain`, and `cli_client_id` are now required values in the config.json used during deployment [#2771](https://github.com/microsoft/onefuzz/pull/2771)
@@ -14,7 +12,6 @@ In the config.json used during deployment; `authority`, `tenant_domain`, and `cl
 * Agent: Apply allowlist to all blocks within a function [#2785](https://github.com/microsoft/onefuzz/pull/2785)
 
 ### Changed
-* Agent: Updated Rust version to 1.67 [#2781](https://github.com/microsoft/onefuzz/pull/2781)
 * Service: Include `AssignedTo` when failing to create a work item due to an authentication exception [#2770](https://github.com/microsoft/onefuzz/pull/2770)
 
 ### Fixed
