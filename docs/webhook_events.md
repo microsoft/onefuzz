@@ -330,9 +330,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -2239,9 +2237,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -2969,9 +2965,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -3490,9 +3484,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -3954,9 +3946,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -4392,9 +4382,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -4857,9 +4845,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -6606,9 +6592,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
