@@ -325,7 +325,7 @@ class Libfuzzer(Command):
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
         coverage_filter: Optional[File] = None,
-        analyzer_exe: Optional[str] = "powershell.exe",
+        analyzer_exe: Optional[str] = None,
         analyzer_options: Optional[List[str]] = None,
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
