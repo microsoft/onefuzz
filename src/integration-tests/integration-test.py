@@ -25,7 +25,7 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
+from textwrap import TextWrapper
 import time
 import zipfile
 from enum import Enum
@@ -357,6 +357,7 @@ class TestOnefuzz:
             unmanaged_client_id: UUID,
             unmanaged_client_secret: str,
             unmanaged_principal_id: UUID,
+            save_logs: bool = False,
         ) -> None:
             self.of = onefuzz
             self.logger = logger
@@ -370,6 +371,8 @@ class TestOnefuzz:
             self.the_os = the_os
             self.unmanaged_principal_id = unmanaged_principal_id
             self.image_tag = f"unmanaged_agent:{self.test_id}"
+            self.log_file_path: Optional[str] = None
+            self.process: Optional[subprocess.Popen[bytes]] = None
 
         def __enter__(self):
             self.start_unmanaged_pool()
@@ -474,11 +477,19 @@ class TestOnefuzz:
                 f.write(config.json())
 
             self.logger.info(f"starting docker compose")
+            log_file_name = "docker-logs.txt"
+            self.log_file_path = os.path.join(tools_path, log_file_name)
             subprocess.check_call(
                 "docker compose up -d --force-recreate --build",
                 shell=True,
                 cwd=tools_path,
             )
+            if self.save_logs:
+                self.process = subprocess.Popen(
+                    f"docker compose logs -f > {log_file_name} 2>&1",
+                    shell=True,
+                    cwd=tools_path,
+                )
 
         def stop_unmanaged_pool(self):
             tools_path = self.get_tools_path(self.the_os)
@@ -489,7 +500,9 @@ class TestOnefuzz:
                 f"docker image rm {self.image_tag}", shell=True, cwd=tools_path
             )
 
-    def create_unmanaged_pool(self, pool_size: int, the_os: OS) -> "UnmanagedPool":
+    def create_unmanaged_pool(
+        self, pool_size: int, the_os: OS, save_logs: bool = False
+    ) -> "UnmanagedPool":
         if (
             self.unmanaged_client_id is None
             or self.unmanaged_client_secret is None
@@ -509,6 +522,7 @@ class TestOnefuzz:
             unmanaged_client_id=self.unmanaged_client_id,
             unmanaged_client_secret=self.unmanaged_client_secret,
             unmanaged_principal_id=self.unmanaged_principal_id,
+            save_logs=save_logs,
         )
 
     def launch(
@@ -1361,6 +1375,7 @@ class Run(Command):
         samples: Directory,
         os: OS,
         *,
+        test_id: Optional[UUID] = None,
         endpoint: Optional[str] = None,
         authority: Optional[str] = None,
         client_id: Optional[str] = None,
@@ -1371,8 +1386,11 @@ class Run(Command):
         unmanaged_client_id: Optional[UUID] = None,
         unmanaged_client_secret: Optional[str] = None,
         unmanaged_principal_id: Optional[UUID] = None,
+        save_logs: bool = False,
     ) -> None:
-        test_id = uuid4()
+        if test_id is None:
+            test_id = uuid4()
+        self.logger.info("test_unmanaged test_id: %s", test_id)
         try:
 
             def try_setup(data: Any) -> None:
@@ -1393,7 +1411,9 @@ class Run(Command):
                 unmanaged_principal_id=unmanaged_principal_id,
             )
 
-            unmanaged_pool = tester.create_unmanaged_pool(pool_size, os)
+            unmanaged_pool = tester.create_unmanaged_pool(
+                pool_size, os, save_logs=save_logs
+            )
             with unmanaged_pool:
                 tester.launch(
                     samples,
