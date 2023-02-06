@@ -373,6 +373,7 @@ class TestOnefuzz:
             self.image_tag = f"unmanaged_agent:{self.test_id}"
             self.log_file_path: Optional[str] = None
             self.process: Optional[subprocess.Popen[bytes]] = None
+            self.save_logs = save_logs
 
         def __enter__(self):
             self.start_unmanaged_pool()
