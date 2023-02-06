@@ -116,6 +116,9 @@ public class Config : IConfig {
                 case ContainerType.Crashes:
                     config.Crashes = def;
                     break;
+                case ContainerType.Crashdumps:
+                    config.Crashdumps = def;
+                    break;
                 case ContainerType.Inputs:
                     config.Inputs = def;
                     break;
@@ -140,6 +143,8 @@ public class Config : IConfig {
                 case ContainerType.RegressionReports:
                     config.RegressionReports = def;
                     break;
+                default:
+                    throw new ArgumentException($"Unhandled container type in {nameof(BuildTaskConfig)}: {data.countainerDef.Type}");
             }
         }
 
