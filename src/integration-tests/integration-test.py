@@ -458,7 +458,6 @@ class TestOnefuzz:
                     "agent1": {
                         "image": self.image_tag,
                         "build": build,
-                        "profiles": ["build"],
                     }
                 },
             }
