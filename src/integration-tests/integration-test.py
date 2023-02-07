@@ -452,7 +452,7 @@ class TestOnefuzz:
             # create docker compose file
             compose = {
                 "version": "3",
-                "services": {"agent_image": {"image": self.image_tag, "build": build}},
+                "services": {"agent_image": {"image": self.image_tag, "build": build, "profiles": ["build"]}},
             }
             for service in services:
                 key = next(iter(service.keys()))
