@@ -322,7 +322,6 @@ class Backend:
         logging.debug(response.json())
         endpoint_params = responses.Config.parse_obj(response.json())
 
-        logging.debug(self.config.authority)
         # Will override values in storage w/ provided values for SP use
         if self.config.client_id == "":
             self.config.client_id = endpoint_params.client_id
@@ -348,11 +347,10 @@ class Backend:
 
         url = endpoint + "/api/" + path
 
-        if (
-            self.config.client_id == ""
-            and self.config.authority == ""
-            and self.config.tenant_domain == ""
+        if self.config.client_id == "" or (
+            self.config.authority == "" and self.config.tenant_domain == ""
         ):
+
             self.config_params()
         headers = self.headers()
         json_data = serialize(json_data)
