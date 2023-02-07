@@ -737,7 +737,7 @@ class TestOnefuzz:
         }
         job_tasks: Dict[UUID, List[Task]] = {}
         check_containers: Dict[UUID, Dict[Container, Tuple[ContainerWrapper, int]]] = {}
-        start = datetime.datetime.utcnow()
+
 
         for job in jobs.values():
             if job.config.name not in TARGETS:
@@ -748,9 +748,6 @@ class TestOnefuzz:
             job_tasks[job.job_id] = tasks
             check_containers[job.job_id] = {}
             for task in tasks:
-                if datetime.datetime.utcnow() - start > timeout:
-                    self.logger.error("timed out while checking jobs")
-                    return False
                 for container in task.config.containers:
                     if container.type in TARGETS[job.config.name].wait_for_files:
                         count = TARGETS[job.config.name].wait_for_files[container.type]
@@ -772,10 +769,16 @@ class TestOnefuzz:
                 if poll:
                     print("")
 
+        start = datetime.datetime.utcnow()
+
         def check_jobs_impl() -> Tuple[bool, str, bool]:
             self.cleared = False
             failed_jobs: Set[UUID] = set()
             job_task_states: Dict[UUID, Set[TaskTestState]] = {}
+
+            if datetime.datetime.utcnow() - start > timeout:
+                self.logger.error()
+                return (True, "timed out while checking jobs", False)
 
             for job_id in check_containers:
                 finished_containers: Set[Container] = set()
