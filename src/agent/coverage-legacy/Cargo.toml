@@ -27,7 +27,7 @@ serde = { version = "1.0", features = ["derive"] }
 symbolic = { version = "8.8", features = ["debuginfo", "demangle", "symcache"] }
 uuid = { version = "0.8", features = ["guid"] }
 win-util = { path = "../win-util" }
-quick-xml = "0.26"
+quick-xml = "0.27"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 pdb = "0.7"
