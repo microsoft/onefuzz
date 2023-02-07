@@ -112,7 +112,7 @@ class Backend:
         self.client_secret = client_secret
         self.config = config
         self.token_cache: Optional[msal.SerializableTokenCache] = None
-        # self.init_cache()
+        self.init_cache()
         self.app: Optional[msal.ClientApplication] = None
         self.token_expires = 0
         self.load_config()
