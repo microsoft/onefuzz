@@ -25,6 +25,7 @@ from typing import (
     TypeVar,
     cast,
 )
+from onefuzztypes import responses
 from urllib.parse import urlparse, urlunparse
 from uuid import UUID
 
@@ -308,6 +309,28 @@ class Backend:
         else:
             raise Exception("Failed to acquire token")
 
+    def config_params(
+        self,
+    ) -> None:
+        if self.config.endpoint is None:
+            raise Exception("Endpoint Not Configured")
+
+        endpoint = self.config.endpoint
+
+        response = self.session.request("GET", endpoint + "/api/config")
+
+        logging.debug(response.json())
+        endpoint_params = responses.Config.parse_obj(response.json())
+
+        logging.debug(self.config.authority)
+        # Will override values in storage w/ provided values for SP use
+        if self.config.client_id == "":
+            self.config.client_id = endpoint_params.client_id
+        if self.config.authority == "":
+            self.config.authority = endpoint_params.authority
+        if self.config.tenant_domain == "":
+            self.config.tenant_domain = endpoint_params.tenant_domain
+
     def request(
         self,
         method: str,
@@ -322,6 +345,8 @@ class Backend:
             raise Exception("endpoint not configured")
 
         url = endpoint + "/api/" + path
+
+        self.config_params()
         headers = self.headers()
         json_data = serialize(json_data)
 
