@@ -346,7 +346,12 @@ class Backend:
 
         url = endpoint + "/api/" + path
 
-        self.config_params()
+        if (
+            self.config.client_id == ""
+            and self.config.authority == ""
+            and self.config.tenant_domain == ""
+        ):
+            self.config_params()
         headers = self.headers()
         json_data = serialize(json_data)
 
