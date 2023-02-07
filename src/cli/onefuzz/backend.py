@@ -350,7 +350,6 @@ class Backend:
         if self.config.client_id == "" or (
             self.config.authority == "" and self.config.tenant_domain == ""
         ):
-
             self.config_params()
         headers = self.headers()
         json_data = serialize(json_data)
