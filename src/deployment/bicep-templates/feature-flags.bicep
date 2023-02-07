@@ -17,7 +17,7 @@ resource configStoreFeatureflag 'Microsoft.AppConfiguration/configurationStores/
   properties: {
     value: string({
       id: 'EnableScribanOnly'
-      description: 'Your description.'
+      description: 'Render notification templates with scriban only'
       enabled: true
     })
     contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'
