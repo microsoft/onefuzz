@@ -25,13 +25,13 @@ from typing import (
     TypeVar,
     cast,
 )
-from onefuzztypes import responses
 from urllib.parse import urlparse, urlunparse
 from uuid import UUID
 
 import msal
 import requests
 from azure.storage.blob import ContainerClient
+from onefuzztypes import responses
 from pydantic import BaseModel, Field
 from requests import Response
 from tenacity import RetryCallState, retry
