@@ -727,6 +727,7 @@ class TestOnefuzz:
         poll: bool = False,
         stop_on_complete_check: bool = False,
         job_ids: List[UUID] = [],
+        timeout: datetime.timedelta = datetime.timedelta(hours=1),
     ) -> bool:
         """Check all of the integration jobs"""
         jobs: Dict[UUID, Job] = {
@@ -736,6 +737,7 @@ class TestOnefuzz:
         }
         job_tasks: Dict[UUID, List[Task]] = {}
         check_containers: Dict[UUID, Dict[Container, Tuple[ContainerWrapper, int]]] = {}
+        start = datetime.datetime.utcnow()
 
         for job in jobs.values():
             if job.config.name not in TARGETS:
@@ -746,6 +748,9 @@ class TestOnefuzz:
             job_tasks[job.job_id] = tasks
             check_containers[job.job_id] = {}
             for task in tasks:
+                if datetime.datetime.utcnow() - start > timeout:
+                    self.logger.error("timed out while checking jobs")
+                    return False
                 for container in task.config.containers:
                     if container.type in TARGETS[job.config.name].wait_for_files:
                         count = TARGETS[job.config.name].wait_for_files[container.type]
@@ -1388,6 +1393,7 @@ class Run(Command):
         unmanaged_client_secret: Optional[str] = None,
         unmanaged_principal_id: Optional[UUID] = None,
         save_logs: bool = False,
+        timeout_in_minutes: int = 60,
     ) -> None:
         if test_id is None:
             test_id = uuid4()
@@ -1423,7 +1429,11 @@ class Run(Command):
                     duration=duration,
                     unmanaged_pool=unmanaged_pool,
                 )
-                result = tester.check_jobs(poll=True, stop_on_complete_check=True)
+                result = tester.check_jobs(
+                    poll=True,
+                    stop_on_complete_check=True,
+                    timeout=datetime.timedelta(minutes=timeout_in_minutes),
+                )
                 if not result:
                     raise Exception("jobs failed")
                 else:
