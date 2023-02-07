@@ -331,6 +331,8 @@ class Backend:
         if self.config.tenant_domain == "":
             self.config.tenant_domain = endpoint_params.tenant_domain
 
+        self.save_config()
+
     def request(
         self,
         method: str,
