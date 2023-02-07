@@ -458,6 +458,7 @@ class TestOnefuzz:
                     "agent1": {
                         "image": self.image_tag,
                         "build": build,
+                        "command": f"--machine_id {uuid4()}",
                     }
                 },
             }
