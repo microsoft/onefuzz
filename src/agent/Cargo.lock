@@ -141,33 +141,6 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "azure_core"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e691a99e962919e047217367613b3dd39d7510ef1cebbe1e04980117d8fab42f"
-dependencies = [
- "async-trait",
- "base64",
- "bytes",
- "dyn-clone",
- "futures",
- "getrandom 0.2.3",
- "http-types",
- "log",
- "paste",
- "pin-project",
- "rand 0.8.4",
- "reqwest",
- "rustc_version",
- "serde",
- "serde-xml-rs",
- "serde_json",
- "time",
- "url",
- "uuid 1.2.1",
-]
-
-[[package]]
-name = "azure_core"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca6dd496e30132b9403c478ea87121834669fa1a307ee2d0b6721c3aca47cccd"
@@ -195,38 +168,13 @@ dependencies = [
 
 [[package]]
 name = "azure_storage"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f53f36301c968007aa54f40a39cf95bb710f47b3fe2ed360fc82d8080854621"
-dependencies = [
- "RustyXML",
- "async-trait",
- "azure_core 0.6.0",
- "base64",
- "bytes",
- "futures",
- "hmac",
- "log",
- "once_cell",
- "serde",
- "serde-xml-rs",
- "serde_derive",
- "serde_json",
- "sha2",
- "time",
- "url",
- "uuid 1.2.1",
-]
-
-[[package]]
-name = "azure_storage"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b780469184adfd6c692cfb32814e0cb7b8553d5d6cd2c8a8dd6b53165acec07f"
 dependencies = [
  "RustyXML",
  "async-trait",
- "azure_core 0.8.0",
+ "azure_core",
  "base64",
  "bytes",
  "futures",
@@ -250,8 +198,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e0d8edb1630aa31452896fc6450ae151f89cc6374da4c034959b17d163dd352f"
 dependencies = [
  "RustyXML",
- "azure_core 0.8.0",
- "azure_storage 0.9.0",
+ "azure_core",
+ "azure_storage",
  "base64",
  "bytes",
  "futures",
@@ -2261,8 +2209,8 @@ dependencies = [
  "arraydeque",
  "async-trait",
  "atexit",
- "azure_core 0.6.0",
- "azure_storage 0.7.0",
+ "azure_core",
+ "azure_storage",
  "azure_storage_blobs",
  "backoff",
  "chrono",
