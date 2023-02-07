@@ -123,7 +123,6 @@ class Endpoint:
         as_params: bool = False,
         alternate_endpoint: Optional[str] = None,
     ) -> A:
-
         response = self._req_base(
             method,
             data=data,
