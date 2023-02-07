@@ -367,6 +367,8 @@ class TestOnefuzz:
             self.unmanaged_client_id = unmanaged_client_id
             self.unmanaged_client_secret = unmanaged_client_secret
             self.pool_name = pool_name
+            if pool_size < 1:
+                raise Exception("pool_size must be >= 1")
             self.pool_size = pool_size
             self.the_os = the_os
             self.unmanaged_principal_id = unmanaged_principal_id
@@ -420,13 +422,13 @@ class TestOnefuzz:
                 map(
                     lambda x: {
                         f"agent{x+1}": {
-                            "depends_on": ["agent_image"],
+                            "depends_on": ["agent1"],
                             "image": self.image_tag,
                             "command": f"--machine_id {uuid4()}",
                             "restart": "unless-stopped",
                         }
                     },
-                    range(0, self.pool_size),
+                    range(1, self.pool_size - 1),
                 )
             )
             build = {"context": "."}
@@ -452,7 +454,13 @@ class TestOnefuzz:
             # create docker compose file
             compose = {
                 "version": "3",
-                "services": {"agent_image": {"image": self.image_tag, "build": build, "profiles": ["build"]}},
+                "services": {
+                    "agent1": {
+                        "image": self.image_tag,
+                        "build": build,
+                        "profiles": ["build"],
+                    }
+                },
             }
             for service in services:
                 key = next(iter(service.keys()))
@@ -465,7 +473,7 @@ class TestOnefuzz:
             with open(docker_compose_path, "w") as f:
                 yaml.dump(compose, f)
 
-            self.logger.info(f"retreiving base config.json from {self.pool_name}")
+            self.logger.info(f"retrieving base config.json from {self.pool_name}")
             config = self.of.pools.get_config(self.pool_name)
 
             self.logger.info(f"updating config.json with unmanaged credentials")
@@ -738,7 +746,6 @@ class TestOnefuzz:
         job_tasks: Dict[UUID, List[Task]] = {}
         check_containers: Dict[UUID, Dict[Container, Tuple[ContainerWrapper, int]]] = {}
 
-
         for job in jobs.values():
             if job.config.name not in TARGETS:
                 self.logger.error("unknown job target: %s", job.config.name)
@@ -777,7 +784,6 @@ class TestOnefuzz:
             job_task_states: Dict[UUID, Set[TaskTestState]] = {}
 
             if datetime.datetime.utcnow() - start > timeout:
-                self.logger.error()
                 return (True, "timed out while checking jobs", False)
 
             for job_id in check_containers:
