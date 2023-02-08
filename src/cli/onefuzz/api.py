@@ -123,9 +123,6 @@ class Endpoint:
         as_params: bool = False,
         alternate_endpoint: Optional[str] = None,
     ) -> A:
-        # Retrieve Auth Parameters
-        self._req_config_params()
-
         response = self._req_base(
             method,
             data=data,
@@ -156,32 +153,6 @@ class Endpoint:
             ).json()
 
         return [model.parse_obj(x) for x in response]
-
-    def _req_config_params(
-        self,
-    ) -> None:
-        if self.onefuzz._backend.config.endpoint is None:
-            raise Exception("Endpoint Not Configured")
-
-        endpoint = self.onefuzz._backend.config.endpoint
-
-        response = self.onefuzz._backend.session.request(
-            "GET", endpoint + "/api/config"
-        )
-
-        logging.debug(response.json())
-        endpoint_params = responses.Config.parse_obj(response.json())
-
-        logging.debug(self.onefuzz._backend.config.authority)
-        # Will override values in storage w/ provided values for SP use
-        if self.onefuzz._backend.config.client_id == "":
-            self.onefuzz._backend.config.client_id = endpoint_params.client_id
-        if self.onefuzz._backend.config.authority == "":
-            self.onefuzz._backend.config.authority = endpoint_params.authority
-        if self.onefuzz._backend.config.tenant_domain == "":
-            self.onefuzz._backend.config.tenant_domain = endpoint_params.tenant_domain
-
-        self.onefuzz._backend.save_config()
 
     def _disambiguate(
         self,
@@ -529,10 +500,11 @@ class Containers(Endpoint):
     ) -> None:
         to_download: Dict[str, str] = {}
         for task in tasks:
-            for container in task.config.containers:
-                info = self.onefuzz.containers.get(container.name)
-                name = os.path.join(container.type.name, container.name)
-                to_download[name] = info.sas_url
+            if task.config.containers is not None:
+                for container in task.config.containers:
+                    info = self.onefuzz.containers.get(container.name)
+                    name = os.path.join(container.type.name, container.name)
+                    to_download[name] = info.sas_url
 
         if output is None:
             output = primitives.Directory(os.getcwd())
@@ -1099,9 +1071,14 @@ class JobContainers(Endpoint):
         containers = set()
         tasks = self.onefuzz.tasks.list(job_id=job_id, state=[])
         for task in tasks:
-            containers.update(
-                set(x.name for x in task.config.containers if x.type == container_type)
-            )
+            if task.config.containers is not None:
+                containers.update(
+                    set(
+                        x.name
+                        for x in task.config.containers
+                        if x.type == container_type
+                    )
+                )
 
         results: Dict[str, List[str]] = {}
         for container in containers:
@@ -1133,23 +1110,24 @@ class JobContainers(Endpoint):
         containers = set()
         to_delete = set()
         for task in self.onefuzz.jobs.tasks.list(job_id=job.job_id):
-            for container in task.config.containers:
-                containers.add(container.name)
-                if container.type not in SAFE_TO_REMOVE:
-                    continue
-                elif not only_job_specific:
-                    to_delete.add(container.name)
-                elif only_job_specific and (
-                    self.onefuzz.utils.build_container_name(
-                        container_type=container.type,
-                        project=job.config.project,
-                        name=job.config.name,
-                        build=job.config.build,
-                        platform=task.os,
-                    )
-                    == container.name
-                ):
-                    to_delete.add(container.name)
+            if task.config.containers is not None:
+                for container in task.config.containers:
+                    containers.add(container.name)
+                    if container.type not in SAFE_TO_REMOVE:
+                        continue
+                    elif not only_job_specific:
+                        to_delete.add(container.name)
+                    elif only_job_specific and (
+                        self.onefuzz.utils.build_container_name(
+                            container_type=container.type,
+                            project=job.config.project,
+                            name=job.config.name,
+                            build=job.config.build,
+                            platform=task.os,
+                        )
+                        == container.name
+                    ):
+                        to_delete.add(container.name)
 
         to_keep = containers - to_delete
         for container_name in to_keep:
@@ -1713,6 +1691,17 @@ class InstanceConfigCmd(Endpoint):
         )
 
 
+class ValidateScriban(Endpoint):
+    """Interact with Validate Scriban"""
+
+    endpoint = "ValidateScriban"
+
+    def post(
+        self, req: requests.TemplateValidationPost
+    ) -> responses.TemplateValidationResponse:
+        return self._req_model("POST", responses.TemplateValidationResponse, data=req)
+
+
 class Command:
     def __init__(self, onefuzz: "Onefuzz", logger: logging.Logger):
         self.onefuzz = onefuzz
@@ -1803,6 +1792,7 @@ class Onefuzz:
         self.webhooks = Webhooks(self)
         self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
+        self.validate_scriban = ValidateScriban(self)
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates = JobTemplates(self)
