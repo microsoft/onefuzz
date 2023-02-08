@@ -123,9 +123,6 @@ class Endpoint:
         as_params: bool = False,
         alternate_endpoint: Optional[str] = None,
     ) -> A:
-        # Retrieve Auth Parameters
-        self._req_config_params()
-
         response = self._req_base(
             method,
             data=data,
@@ -156,32 +153,6 @@ class Endpoint:
             ).json()
 
         return [model.parse_obj(x) for x in response]
-
-    def _req_config_params(
-        self,
-    ) -> None:
-        if self.onefuzz._backend.config.endpoint is None:
-            raise Exception("Endpoint Not Configured")
-
-        endpoint = self.onefuzz._backend.config.endpoint
-
-        response = self.onefuzz._backend.session.request(
-            "GET", endpoint + "/api/config"
-        )
-
-        logging.debug(response.json())
-        endpoint_params = responses.Config.parse_obj(response.json())
-
-        logging.debug(self.onefuzz._backend.config.authority)
-        # Will override values in storage w/ provided values for SP use
-        if self.onefuzz._backend.config.client_id == "":
-            self.onefuzz._backend.config.client_id = endpoint_params.client_id
-        if self.onefuzz._backend.config.authority == "":
-            self.onefuzz._backend.config.authority = endpoint_params.authority
-        if self.onefuzz._backend.config.tenant_domain == "":
-            self.onefuzz._backend.config.tenant_domain = endpoint_params.tenant_domain
-
-        self.onefuzz._backend.save_config()
 
     def _disambiguate(
         self,
@@ -1334,7 +1305,7 @@ class Pool(Endpoint):
                 client_secret="<client_secret>",
                 resource=self.onefuzz._backend.config.endpoint,
                 tenant=urlparse(self.onefuzz._backend.config.authority).path.strip("/"),
-                multi_tenant_domain=self.onefuzz._backend.config.tenant_domain,
+                multi_tenant_domain=self.onefuzz._backend.config.get_multi_tenant_domain(),
             )
 
         return pool.config
@@ -1847,9 +1818,6 @@ class Onefuzz:
         self.instance_config = InstanceConfigCmd(self)
         self.validate_scriban = ValidateScriban(self)
 
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates = JobTemplates(self)
-
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
         self.debug = Debug(self, self.logger)
@@ -1883,9 +1851,6 @@ class Onefuzz:
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
 
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates._load_cache()
-
     def licenses(self) -> object:
         """Return third-party licenses used by this package"""
         data = pkgutil.get_data("onefuzz", "data/licenses.json")
@@ -1913,9 +1878,6 @@ class Onefuzz:
         # actuates the login process
         self.info.get()
 
-        # TODO: once job templates are out of preview, this should be enabled
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates.refresh()
         return "succeeded"
 
     def config(
@@ -1975,6 +1937,5 @@ class Onefuzz:
 
 
 from .debug import Debug  # noqa: E402
-from .job_templates.main import JobTemplates  # noqa: E402
 from .status.cmd import Status  # noqa: E402
 from .template import Template  # noqa: E402
