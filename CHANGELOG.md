@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 6.4.0
 
 ### Added 
-* Deployment/CLI: OneFuzz Config refactored - `tenant_id`, `tenant_domain`, `multi_tenant_domain`, and `cli_client_id` are now required values in the config.json used during deployment and no longer required when running the config command. [#2771](https://github.com/microsoft/onefuzz/pull/2771), [#2811](https://github.com/microsoft/onefuzz/pull/2784)
+* Deployment/CLI: OneFuzz Config refactored - `tenant_id`, `tenant_domain`, `multi_tenant_domain`, and `cli_client_id` are now required values in the config.json used during deployment and no longer required when running the config command. [#2771](https://github.com/microsoft/onefuzz/pull/2771), [#2811](https://github.com/microsoft/onefuzz/pull/2811)
 * Agent: Fully escape allowlist rules [#2784](https://github.com/microsoft/onefuzz/pull/2784)
 * Agent: Apply allowlist to all blocks within a function [#2785](https://github.com/microsoft/onefuzz/pull/2785)
 * CLI: Added a cli subcommand `onefuzz debug notification template` to validate scriban notification templates [#2800](https://github.com/microsoft/onefuzz/pull/2800)
