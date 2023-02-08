@@ -459,6 +459,7 @@ class TestOnefuzz:
                         "image": self.image_tag,
                         "build": build,
                         "command": f"--machine_id {uuid4()}",
+                        "restart": "unless-stopped",
                     }
                 },
             }
