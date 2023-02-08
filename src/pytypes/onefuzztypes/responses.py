@@ -9,7 +9,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from .enums import VmState
-from .models import Forward, NodeCommandEnvelope
+from .models import Forward, NodeCommandEnvelope, TemplateRenderContext
 from .primitives import Region
 
 
@@ -84,3 +84,8 @@ class PendingNodeCommand(BaseResponse):
 class CanSchedule(BaseResponse):
     allowed: bool
     work_stopped: bool
+
+
+class TemplateValidationResponse(BaseResponse):
+    rendered_template: str
+    available_context: TemplateRenderContext

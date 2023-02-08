@@ -324,7 +324,7 @@ class Libfuzzer(Command):
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
         coverage_filter: Optional[File] = None,
-        analyzer_exe: Optional[str] = "powershell.exe",
+        analyzer_exe: Optional[str] = None,
         analyzer_options: Optional[List[str]] = None,
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
@@ -376,13 +376,11 @@ class Libfuzzer(Command):
         )
 
         if existing_inputs:
-            self.onefuzz.containers.get(existing_inputs)
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
 
         if readonly_inputs:
-            self.onefuzz.containers.get(readonly_inputs)
             helper.containers[ContainerType.readonly_inputs] = readonly_inputs
 
         if analyzer_exe is not None:
@@ -579,6 +577,7 @@ class Libfuzzer(Command):
         wait_for_running: bool = False,
         wait_for_files: Optional[List[ContainerType]] = None,
         existing_inputs: Optional[Container] = None,
+        readonly_inputs: Optional[Container] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         check_fuzzer_help: bool = True,
@@ -587,6 +586,13 @@ class Libfuzzer(Command):
         """
         libfuzzer-dotnet task
         """
+
+        # ensure containers exist
+        if existing_inputs:
+            self.onefuzz.containers.get(existing_inputs)
+
+        if readonly_inputs:
+            self.onefuzz.containers.get(readonly_inputs)
 
         harness = "libfuzzer-dotnet"
 
@@ -628,10 +634,12 @@ class Libfuzzer(Command):
         )
 
         if existing_inputs:
-            self.onefuzz.containers.get(existing_inputs)
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
+
+        if readonly_inputs:
+            helper.containers[ContainerType.readonly_inputs] = readonly_inputs
 
         fuzzer_containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
@@ -702,6 +710,7 @@ class Libfuzzer(Command):
         wait_for_running: bool = False,
         wait_for_files: Optional[List[ContainerType]] = None,
         existing_inputs: Optional[Container] = None,
+        readonly_inputs: Optional[Container] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         colocate_all_tasks: bool = False,
@@ -709,6 +718,13 @@ class Libfuzzer(Command):
         expect_crash_on_failure: bool = False,
     ) -> Optional[Job]:
         pool = self.onefuzz.pools.get(pool_name)
+
+        # verify containers exist
+        if existing_inputs:
+            self.onefuzz.containers.get(existing_inputs)
+
+        if readonly_inputs:
+            self.onefuzz.containers.get(readonly_inputs)
 
         # We _must_ proactively specify the OS based on pool.
         #
@@ -756,10 +772,12 @@ class Libfuzzer(Command):
         containers = helper.containers
 
         if existing_inputs:
-            self.onefuzz.containers.get(existing_inputs)
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
+
+        if readonly_inputs:
+            helper.containers[ContainerType.readonly_inputs] = readonly_inputs
 
         # Assumes that `libfuzzer-dotnet` and supporting tools were uploaded upon deployment.
         fuzzer_tools_container = Container(
