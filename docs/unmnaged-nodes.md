@@ -93,7 +93,7 @@ From here you will be able to schedule jobs on that pool and they will be runnin
 ## Troubleshooting
 
 ### increase the verbosity of the logs
-It can help when investiing issues to increase the log verbosity. you will need to set the [RUST_LOG](https://docs.rs/env_logger/latest/env_logger/#enabling-logging) environment variable when starting docker
+It can help when investigating issues to increase the log verbosity. you will need to set the [RUST_LOG](https://docs.rs/env_logger/latest/env_logger/#enabling-logging) environment variable when starting docker
 
 ```
 docker run --rm --env RUST_LOG=<log_level> <image_name> --machine_id <machine_id>
