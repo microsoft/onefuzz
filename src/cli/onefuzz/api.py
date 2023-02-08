@@ -13,7 +13,7 @@ import time
 import uuid
 from enum import Enum
 from shutil import which
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -858,6 +858,30 @@ class Notifications(Endpoint):
             models.Notification,
             data=requests.NotificationSearch(container=container),
         )
+
+    def migrate_jinja_to_scriban(
+        self, dry_run: bool = False
+    ) -> Union[
+        responses.JinjaToScribanMigrationResponse,
+        responses.JinjaToScribanMigrationDryRunResponse,
+    ]:
+        """Migrates all notification templates from jinja to scriban"""
+
+        migration_endpoint = "migrations/jinja_to_scriban"
+        if dry_run:
+            return self._req_model(
+                "POST",
+                responses.JinjaToScribanMigrationDryRunResponse,
+                data=requests.JinjaToScribanMigrationPost(dry_run=dry_run),
+                alternate_endpoint=migration_endpoint,
+            )
+        else:
+            return self._req_model(
+                "POST",
+                responses.JinjaToScribanMigrationResponse,
+                data=requests.JinjaToScribanMigrationPost(dry_run=dry_run),
+                alternate_endpoint=migration_endpoint,
+            )
 
 
 class Tasks(Endpoint):

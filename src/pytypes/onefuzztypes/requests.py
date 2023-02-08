@@ -262,4 +262,8 @@ class TemplateValidationPost(BaseModel):
     context: Optional[TemplateRenderContext]
 
 
+class JinjaToScribanMigrationPost(BaseModel):
+    dry_run: bool = Field(default=False)
+
+
 _check_hotfix()
