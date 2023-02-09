@@ -867,7 +867,7 @@ class Notifications(Endpoint):
             models.Notification,
             data=requests.NotificationSearch(notification_id=notification_id),
         )
- 
+
     def migrate_jinja_to_scriban(
         self, dry_run: bool = False
     ) -> Union[
