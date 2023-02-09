@@ -52,6 +52,7 @@ class NotificationCreate(BaseRequest, NotificationConfig):
 
 class NotificationSearch(BaseRequest):
     container: Optional[List[Container]]
+    notification_id: Optional[UUID]
 
 
 class NotificationGet(BaseRequest):

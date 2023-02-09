@@ -859,6 +859,15 @@ class Notifications(Endpoint):
             data=requests.NotificationSearch(container=container),
         )
 
+    def get(self, notification_id: UUID_EXPANSION) -> List[models.Notification]:
+        """Get a notification"""
+        self.logger.debug("getting notification")
+        return self._req_model_list(
+            "GET",
+            models.Notification,
+            data=requests.NotificationSearch(notification_id=notification_id),
+        )
+
     def migrate_jinja_to_scriban(
         self, dry_run: bool = False
     ) -> Union[
