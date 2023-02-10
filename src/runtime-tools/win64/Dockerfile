@@ -2,7 +2,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-FROM mcr.microsoft.com/windows:ltsc2019 as base_onefuzz
+ARG BASE_IMAGE=mcr.microsoft.com/windows:ltsc2019
+FROM ${BASE_IMAGE}
 
 SHELL ["powershell.exe", "-ExecutionPolicy", "Unrestricted", "-Command"]
 

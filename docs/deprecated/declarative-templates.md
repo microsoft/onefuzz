@@ -1,4 +1,4 @@
-# Declarative Job Templates
+# Declarative Job Templates -- Deprecated
 
 Provide the ability to maintain job templates, akin to `onefuzz template
 libfuzzer basic` at the service level. The templates include a job
@@ -94,7 +94,7 @@ TaskConfig(
 
 ## Hardcoded vs Runtime-specified Container Names
 
-To support differentiating _always use "afl-linux" for tools_ vs _ask 
+To support differentiating _always use "afl-linux" for tools_ vs _ask
 what container to use for setup_, if the container name is blank in the
 template, it will be provided as part of the `JobTemplateConfig` and in the
 resulting `JobTemplateRequest`.

@@ -52,6 +52,7 @@ class NotificationCreate(BaseRequest, NotificationConfig):
 
 class NotificationSearch(BaseRequest):
     container: Optional[List[Container]]
+    notification_id: Optional[UUID]
 
 
 class NotificationGet(BaseRequest):
@@ -260,6 +261,10 @@ class InstanceConfigUpdate(BaseModel):
 class TemplateValidationPost(BaseModel):
     template: str
     context: Optional[TemplateRenderContext]
+
+
+class JinjaToScribanMigrationPost(BaseModel):
+    dry_run: bool = Field(default=False)
 
 
 _check_hotfix()
