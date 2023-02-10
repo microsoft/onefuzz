@@ -144,7 +144,6 @@ pub fn find_coverage_sites(
                     offsets.insert(block.offset);
                 }
             }
-            println!();
         }
     }
 
