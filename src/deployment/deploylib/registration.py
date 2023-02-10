@@ -244,7 +244,6 @@ def create_application_registration(
     app = get_application(
         display_name=onefuzz_instance_name, subscription_id=subscription_id
     )
-
     if not app:
         raise Exception("onefuzz app registration not found")
 
@@ -337,7 +336,7 @@ def create_application_registration(
     registered_app_id = registered_app["appId"]
     app_id = app["appId"]
 
-    authorize_and_assign_role(app_id, registered_app_id, approle, subscription_id)
+    authorize_and_assign_role(UUID(app_id), UUID(registered_app_id), approle, subscription_id)
     return registered_app
 
 
@@ -433,7 +432,6 @@ def get_application(
         filters.append("displayName eq '%s'" % display_name)
 
     filter_str = " and ".join(filters)
-
     apps = query_microsoft_graph(
         method="GET",
         resource="applications",
