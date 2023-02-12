@@ -1,0 +1,31 @@
+[package]
+name = "windows-error-reporting"
+version = "0.1.0"
+authors = ["fuzzing@microsoft.com"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+anyhow = "1.0"
+fnv = "1.0"
+goblin = "0.5"
+iced-x86 = "1.17"
+log = "0.4"
+memmap2 = "0.5"
+rand = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+debugger = { path = "../debugger" }
+
+[dependencies.windows]
+version = "0.43.0"
+features = [
+    "Win32_Foundation",
+    "Win32_System_ErrorReporting",
+    "Win32_System_Diagnostics_Debug",
+    "Win32_System_Kernel",
+    "Win32_System_Threading",
+    "Win32_Security"
+]
+
+
+

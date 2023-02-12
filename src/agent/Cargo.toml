@@ -19,6 +19,7 @@ members = [
     "win-util",
     "libclusterfuzz",
     "stacktrace-parser",
+    "windows-error-reporting",
 ]
 
 [profile.release]
