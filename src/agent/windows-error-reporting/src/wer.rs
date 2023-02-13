@@ -1,11 +1,4 @@
-use std::{
-    os::windows::{
-        prelude::{AsRawHandle, HandleOrInvalid},
-        process::CommandExt,
-    },
-    path::{Path, PathBuf},
-    process::{Child, Command},
-};
+use std::{ffi::OsStr, os::windows::process::CommandExt, path::Path, process::Command};
 
 use anyhow::{Context, Result};
 use windows::{
@@ -16,8 +9,7 @@ use windows::{
             ErrorReporting::{
                 WerConsentApproved, WerDumpTypeMiniDump, WerReportAddDump,
                 WerReportApplicationCrash, WerReportCloseHandle, WerReportCreate, WerReportSubmit,
-                HREPORT, WER_DUMP_NOHEAP_ONQUEUE, WER_DUMP_TYPE, WER_REPORT_INFORMATION,
-                WER_SUBMIT_FLAGS,
+                HREPORT, WER_DUMP_NOHEAP_ONQUEUE, WER_REPORT_INFORMATION, WER_SUBMIT_FLAGS,
             },
             Threading::DEBUG_ONLY_THIS_PROCESS,
         },
@@ -26,21 +18,30 @@ use windows::{
 
 use debugger::{DebugEventHandler, Debugger};
 
-struct WerDebugEventHandler {}
+struct WerDebugEventHandler<'a> {
+    path: &'a OsStr,
+}
 
-impl WerDebugEventHandler {
+impl<'a> WerDebugEventHandler<'a> {
+    fn new(path: &'a OsStr) -> Result<Self> {
+        Ok(WerDebugEventHandler { path })
+    }
+
     fn _on_exit_process(&mut self, debugger: &mut Debugger, _exit_code: u32) -> Result<()> {
         println!("on_exit_process 1");
-
-
         let process_handle = debugger.target().process_handle();
         println!("on_exit_process 2");
+
+        let app_name = self
+            .path
+            .to_str()
+            .ok_or(anyhow::anyhow!("invalid target_exe path"))?;
         let report = WerReport::create(
             HANDLE(process_handle as isize),
-            "crash",
-            "app name",
-            PathBuf::from(""),
-            "",
+            "libfuzzer_crash",
+            app_name,
+            self.path,
+            "libfuzzer crash detected by onefuzz",
         )
         .context("failed to create WER report")?;
         println!("on_exit_process 3");
@@ -50,7 +51,7 @@ impl WerDebugEventHandler {
     }
 }
 
-impl DebugEventHandler for WerDebugEventHandler {
+impl<'a> DebugEventHandler for WerDebugEventHandler<'a> {
     fn on_exit_process(&mut self, debugger: &mut Debugger, exit_code: u32) {
         match WerDebugEventHandler::_on_exit_process(self, debugger, exit_code) {
             Ok(_) => (),
@@ -107,7 +108,7 @@ impl WerReport {
         process_handle: HANDLE,
         event_name: &str,
         application_name: &str,
-        path: PathBuf,
+        path: impl AsRef<Path>,
         description: &str,
     ) -> Result<Self> {
         let event_name = to_u16::<64>(event_name);
@@ -118,7 +119,7 @@ impl WerReport {
             wzConsentKey: event_name,
             wzFriendlyEventName: to_u16::<128>(""),
             wzApplicationName: to_u16::<128>(application_name),
-            wzApplicationPath: to_u16::<260>(path.to_string_lossy().as_ref()),
+            wzApplicationPath: to_u16::<260>(path.as_ref().to_string_lossy().as_ref()),
             wzDescription: to_u16::<512>(description),
             hwndParent: HWND(0),
         };
@@ -144,18 +145,18 @@ impl WerReport {
         }
     }
 
-    pub fn report_crash(target_exe: impl AsRef<Path>, target_options: Vec<String>) -> Result<()> {
-        let target_exe_str = target_exe
-            .as_ref()
-            .to_str()
-            .ok_or(anyhow::anyhow!("invalid target_exe path"))?;
-        let mut target = Command::new(target_exe_str);
+    pub fn report_crash(target_exe: &OsStr, target_options: Vec<String>) -> Result<()> {
+        let mut target = Command::new(
+            target_exe
+                .to_str()
+                .ok_or(anyhow::anyhow!("invalid target_exe path"))?,
+        );
         target
             .args(&target_options)
             .creation_flags(DEBUG_ONLY_THIS_PROCESS.0)
             .env("ASAN_OPTIONS", "abort_on_error=1");
 
-        let mut handler = WerDebugEventHandler {};
+        let mut handler = WerDebugEventHandler::new(target_exe)?;
 
         let (mut debugger, _child) = Debugger::init(target, &mut handler)?;
         debugger
@@ -175,7 +176,7 @@ mod tests {
     #[test]
     fn test1() {
         WerReport::report_crash(
-            "C:\\work\\scratch\\watson\\integration-tests\\libfuzzer\\fuzz.exe",
+            OsStr::new("C:\\work\\scratch\\watson\\integration-tests\\libfuzzer\\fuzz.exe"),
             vec!["C:\\work\\scratch\\watson\\integration-tests\\libfuzzer\\crash-24dd304aabea149efcdbbdf59be46bad3f4d289e".into()])
             .unwrap();
     }
