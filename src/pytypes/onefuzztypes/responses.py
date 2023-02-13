@@ -89,3 +89,12 @@ class CanSchedule(BaseResponse):
 class TemplateValidationResponse(BaseResponse):
     rendered_template: str
     available_context: TemplateRenderContext
+
+
+class JinjaToScribanMigrationResponse(BaseResponse):
+    updated_notification_ids: List[UUID]
+    failed_notification_ids: List[UUID]
+
+
+class JinjaToScribanMigrationDryRunResponse(BaseResponse):
+    notification_ids_to_update: List[UUID]

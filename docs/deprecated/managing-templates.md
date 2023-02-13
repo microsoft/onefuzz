@@ -1,4 +1,4 @@
-# Managing Declarative Job Templates
+# Managing Declarative Job Templates -- Deprecated
 
 [Declarative Job Templates](declarative-templates.md), currently a preview
 feature, allow a user to define a reusable fuzzing pipeline as a template.
@@ -6,7 +6,7 @@ Once saved, any user of the OneFuzz instance can create fuzzing jobs based on
 the templates.
 
 This is a walk-through guide for updating an existing job template, though
-the process is similar for creating templates from scratch. 
+the process is similar for creating templates from scratch.
 
 This process demonstrates adding [Microsoft Teams
 notifications](notifications/teams.md) for new unique crash reports to an existing
@@ -27,9 +27,9 @@ notifications](notifications/teams.md) for new unique crash reports to an existi
     onefuzz job_templates manage get libfuzzer_linux > libfuzzer_linux.json
     ```
 3. With your preferred text editor, add the following to the `notifications` list:
-    ```json 
+    ```json
     {
-        "container_type": "unique_reports", 
+        "container_type": "unique_reports",
         "notification": {
             "config": {
                 "url": "https://contoso.com/webhook-url-here"
@@ -120,7 +120,7 @@ Now let's make use of our new template.
         "job_id": "d3259dfe-fdad-45a0-bf90-a381b8dc1ee8",
         "state": "init"
     }
-    $ 
+    $
     ```
 3. Verify a notification was set up for the unique reports container
     ```
@@ -160,7 +160,7 @@ This example will demonstrate setting the following:
     onefuzz job_templates manage get libfuzzer_linux > libfuzzer_linux_ado_areapath.json
     ```
 3. With your preferred text editor, add the following to the `notifications` list:
-    ```json 
+    ```json
     {
         "container_type": "unique_reports",
         "notification": {
@@ -234,7 +234,7 @@ This example will demonstrate setting the following:
     onefuzz job_templates refresh
     ```
 
-Using `--help`, we can see the new optional and required arguments.  
+Using `--help`, we can see the new optional and required arguments.
 ```
 $ onefuzz job_templates submit libfuzzer_linux_ado_areapath --help
 usage: onefuzz job_templates submit libfuzzer_linux_ado_areapath [-h] [-v] [--format {json,raw}] [--query QUERY]

@@ -90,17 +90,22 @@ impl Reboot {
 
     #[cfg(target_family = "unix")]
     pub fn invoke(&self) -> Result<()> {
-        info!("invoking local reboot command");
-
-        Command::new("reboot").arg("-f").status()?;
-
-        self.wait_for_reboot()
+        match std::path::Path::new("/.dockerenv").try_exists() {
+            Ok(true) => {
+                info!("running inside docker, exiting instead of rebooting");
+                std::process::exit(0);
+            }
+            _ => {
+                info!("invoking local reboot command");
+                Command::new("reboot").arg("-f").status()?;
+                self.wait_for_reboot()
+            }
+        }
     }
 
     #[cfg(target_family = "windows")]
     pub fn invoke(&self) -> Result<()> {
         info!("invoking local reboot command");
-
         Command::new("powershell.exe")
             .arg("-Command")
             .arg("Restart-Computer")

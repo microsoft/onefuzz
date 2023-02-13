@@ -13,7 +13,7 @@ import time
 import uuid
 from enum import Enum
 from shutil import which
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -868,6 +868,30 @@ class Notifications(Endpoint):
             data=requests.NotificationSearch(notification_id=notification_id),
         )
 
+    def migrate_jinja_to_scriban(
+        self, dry_run: bool = False
+    ) -> Union[
+        responses.JinjaToScribanMigrationResponse,
+        responses.JinjaToScribanMigrationDryRunResponse,
+    ]:
+        """Migrates all notification templates from jinja to scriban"""
+
+        migration_endpoint = "migrations/jinja_to_scriban"
+        if dry_run:
+            return self._req_model(
+                "POST",
+                responses.JinjaToScribanMigrationDryRunResponse,
+                data=requests.JinjaToScribanMigrationPost(dry_run=dry_run),
+                alternate_endpoint=migration_endpoint,
+            )
+        else:
+            return self._req_model(
+                "POST",
+                responses.JinjaToScribanMigrationResponse,
+                data=requests.JinjaToScribanMigrationPost(dry_run=dry_run),
+                alternate_endpoint=migration_endpoint,
+            )
+
 
 class Tasks(Endpoint):
     """Interact with tasks"""
@@ -1290,7 +1314,7 @@ class Pool(Endpoint):
                 client_secret="<client_secret>",
                 resource=self.onefuzz._backend.config.endpoint,
                 tenant=urlparse(self.onefuzz._backend.config.authority).path.strip("/"),
-                multi_tenant_domain=self.onefuzz._backend.config.tenant_domain,
+                multi_tenant_domain=self.onefuzz._backend.config.get_multi_tenant_domain(),
             )
 
         return pool.config
@@ -1803,9 +1827,6 @@ class Onefuzz:
         self.instance_config = InstanceConfigCmd(self)
         self.validate_scriban = ValidateScriban(self)
 
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates = JobTemplates(self)
-
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
         self.debug = Debug(self, self.logger)
@@ -1839,9 +1860,6 @@ class Onefuzz:
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
 
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates._load_cache()
-
     def licenses(self) -> object:
         """Return third-party licenses used by this package"""
         data = pkgutil.get_data("onefuzz", "data/licenses.json")
@@ -1869,9 +1887,6 @@ class Onefuzz:
         # actuates the login process
         self.info.get()
 
-        # TODO: once job templates are out of preview, this should be enabled
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates.refresh()
         return "succeeded"
 
     def config(
@@ -1931,6 +1946,5 @@ class Onefuzz:
 
 
 from .debug import Debug  # noqa: E402
-from .job_templates.main import JobTemplates  # noqa: E402
 from .status.cmd import Status  # noqa: E402
 from .template import Template  # noqa: E402
