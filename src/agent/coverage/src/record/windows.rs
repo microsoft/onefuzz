@@ -71,9 +71,6 @@ impl<'data> WindowsRecorder<'data> {
     }
 
     fn try_on_breakpoint(&mut self, dbg: &mut Debugger, id: BreakpointId) -> Result<()> {
-        let pc = dbg.read_program_counter()?;
-        let tid = dbg.get_current_thread_id();
-
         if let Some((trigger, state)) = self.deferred_breakpoints.remove(&id) {
             match state {
                 DeferralState::NotEntered => {
@@ -196,7 +193,6 @@ impl<'data> WindowsRecorder<'data> {
         let state = DeferralState::NotEntered;
         let entry_breakpoint = Breakpoint::new(path, trigger.offset);
         let id = entry_breakpoint.set(dbg)?;
-        let thread_id = dbg.get_current_thread_id();
 
         self.deferred_breakpoints.insert(id, (entry_breakpoint, state));
 
