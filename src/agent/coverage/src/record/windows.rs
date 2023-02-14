@@ -69,8 +69,12 @@ impl<'data> WindowsRecorder<'data> {
     fn try_on_breakpoint(&mut self, _dbg: &mut Debugger, id: BreakpointId) -> Result<()> {
         let breakpoint = self
             .breakpoints
-            .remove(id)
-            .ok_or_else(|| anyhow!("stopped on dangling breakpoint"))?;
+            .remove(id);
+
+        let Some(breakpoint) = breakpoint else {
+            let stack = dbg.get_current_stack()?;
+            bail!("stopped on dangling breakpoint, debuggee stack:\n{}", stack);
+        };
 
         let coverage = self
             .coverage
