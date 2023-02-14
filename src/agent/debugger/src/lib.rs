@@ -19,5 +19,8 @@ mod target;
 
 pub use self::{
     debug_event::DebugEvent,
-    debugger::{BreakpointId, BreakpointType, DebugEventHandler, Debugger, ModuleLoadInfo},
+    debugger::{
+        BreakpointId, BreakpointType, DebugEventHandler, Debugger, ExceptionDebugInfo,
+        ModuleLoadInfo,
+    },
 };

@@ -28,7 +28,7 @@ use winapi::{
         dbghelp::ADDRESS64,
         debugapi::{ContinueDebugEvent, WaitForDebugEvent},
         errhandlingapi::GetLastError,
-        minwinbase::{EXCEPTION_BREAKPOINT, EXCEPTION_DEBUG_INFO, EXCEPTION_SINGLE_STEP},
+        minwinbase::{EXCEPTION_BREAKPOINT, EXCEPTION_SINGLE_STEP},
         winbase::{DebugSetProcessKillOnExit, DEBUG_ONLY_THIS_PROCESS, INFINITE},
         winnt::{DBG_CONTINUE, DBG_EXCEPTION_NOT_HANDLED, HANDLE},
     },
@@ -103,11 +103,17 @@ impl ModuleLoadInfo {
     }
 }
 
+pub type ExceptionDebugInfo = winapi::um::minwinbase::EXCEPTION_DEBUG_INFO;
+
 #[rustfmt::skip]
 #[allow(clippy::trivially_copy_pass_by_ref)]
 pub trait DebugEventHandler {
-    fn on_exception(&mut self, _debugger: &mut Debugger, _info: &EXCEPTION_DEBUG_INFO, _process_handle: HANDLE) -> DWORD {
+    fn on_exception(&mut self, _debugger: &mut Debugger, _info: &ExceptionDebugInfo, _process_handle: HANDLE) -> DWORD {
         // Continue normal exception handling processing
+        // let stack = _debugger.get_current_stack().unwrap();
+        // println!("{}", stack);
+        println!("*** exception code {}", _info.ExceptionRecord.ExceptionCode);
+
         DBG_EXCEPTION_NOT_HANDLED
     }
     fn on_create_process(&mut self, _debugger: &mut Debugger, _module: &ModuleLoadInfo) {}
@@ -248,7 +254,7 @@ impl Debugger {
         if unsafe { WaitForDebugEvent(de.as_mut_ptr(), timeout_ms) } == TRUE {
             let de = unsafe { de.assume_init() };
             let de = DebugEvent::new(&de);
-            trace!("{}", de);
+            println!("*** debug event{}", de);
 
             let continue_status = self.dispatch_event(&de, callbacks);
             self.continue_args = Some(ContinueDebugEventArguments {
@@ -406,7 +412,7 @@ impl Debugger {
 
     fn dispatch_exception_event(
         &mut self,
-        info: &EXCEPTION_DEBUG_INFO,
+        info: &ExceptionDebugInfo,
         callbacks: &mut impl DebugEventHandler,
     ) -> Result<u32> {
         match is_debugger_notification(
