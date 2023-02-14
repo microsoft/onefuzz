@@ -23,6 +23,7 @@ features = [
     "debugapi",
     "handleapi",
     "memoryapi",
+    "namedpipeapi",
     "processthreadsapi",
     "securitybaseapi",
     "shellapi",
