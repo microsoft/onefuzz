@@ -97,6 +97,7 @@ class BackendConfig(BaseModel):
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
     tenant_domain: str
+    expires_on: Optional[DateTime] = datetime.utcnow() + timedelta(hours=24)
 
     def get_multi_tenant_domain(self) -> Optional[str]:
         if "https://login.microsoftonline.com/common" in self.authority:
@@ -139,6 +140,10 @@ class Backend:
             self.config = BackendConfig.parse_obj(data)
 
     def save_config(self) -> None:
+        
+        if datetime.utcnow() > self.config.expires_on: 
+            os.remove(os.path.dirname(self.config_path))
+            
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
         with open(self.config_path, "w") as handle:
             handle.write(self.config.json(indent=4, exclude_none=True))
