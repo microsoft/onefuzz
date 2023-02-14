@@ -179,10 +179,10 @@ impl<'data> WindowsRecorder<'data> {
         }
 
         if let Some(trigger) = trigger {
-            debug!("deferring module breakpoints for {}", path);
+            debug!("deferring coverage breakpoints for module {}", path);
             self.defer_module_breakpoints(dbg, path, trigger)
         } else {
-            debug!("immediately setting module breakpoints for {}", path);
+            debug!("immediately setting coverage breakpoints for module {}", path);
             self.set_module_breakpoints(dbg, path)
         }
     }
