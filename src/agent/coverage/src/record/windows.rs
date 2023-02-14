@@ -83,7 +83,7 @@ impl<'data> WindowsRecorder<'data> {
                     let thread_id = dbg.get_current_thread_id();
                     let state = DeferralState::PendingReturn { thread_id };
                     self.deferred_breakpoints.insert(id, (trigger, state));
-                },
+                }
                 DeferralState::PendingReturn { thread_id } => {
                     if dbg.get_current_thread_id() == thread_id {
                         // We've returned from the trigger function, and on the same thread.
@@ -99,15 +99,13 @@ impl<'data> WindowsRecorder<'data> {
                         let id = trigger.set(dbg)?;
                         self.deferred_breakpoints.insert(id, (trigger, state));
                     }
-                },
+                }
             }
 
             return Ok(());
         }
 
-        let breakpoint = self
-            .breakpoints
-            .remove(id);
+        let breakpoint = self.breakpoints.remove(id);
 
         let Some(breakpoint) = breakpoint else {
             let stack = dbg.get_current_stack()?;
@@ -153,7 +151,11 @@ impl<'data> WindowsRecorder<'data> {
         Ok(())
     }
 
-    fn set_or_defer_module_breakpoints(&mut self, dbg: &mut Debugger, path: FilePath) -> Result<()> {
+    fn set_or_defer_module_breakpoints(
+        &mut self,
+        dbg: &mut Debugger,
+        path: FilePath,
+    ) -> Result<()> {
         let (_module, debuginfo) = &self.modules[&path];
 
         // For borrowck.
@@ -177,7 +179,10 @@ impl<'data> WindowsRecorder<'data> {
             debug!("deferring coverage breakpoints for module {}", path);
             self.defer_module_breakpoints(dbg, path, trigger)
         } else {
-            debug!("immediately setting coverage breakpoints for module {}", path);
+            debug!(
+                "immediately setting coverage breakpoints for module {}",
+                path
+            );
             self.set_module_breakpoints(dbg, path)
         }
     }
@@ -192,7 +197,8 @@ impl<'data> WindowsRecorder<'data> {
         let entry_breakpoint = Breakpoint::new(path, trigger.offset);
         let id = entry_breakpoint.set(dbg)?;
 
-        self.deferred_breakpoints.insert(id, (entry_breakpoint, state));
+        self.deferred_breakpoints
+            .insert(id, (entry_breakpoint, state));
 
         Ok(())
     }
