@@ -275,6 +275,8 @@ impl Breakpoint {
     }
 
     pub fn set(&self, dbg: &mut Debugger) -> Result<BreakpointId> {
+        // The `debugger` crates tracks loaded modules by base name. If a path or file
+        // name is used, software breakpoints will not be written.
         let name = Path::new(self.module.base_name());
         let id = dbg.new_rva_breakpoint(name, self.offset.0, BreakpointType::OneTime)?;
         Ok(id)
