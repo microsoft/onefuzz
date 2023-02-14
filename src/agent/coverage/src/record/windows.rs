@@ -174,6 +174,12 @@ impl Breakpoint {
     pub fn new(module: FilePath, offset: Offset) -> Self {
         Self { module, offset }
     }
+
+    pub fn set(&self, dbg: &mut Debugger) -> Result<BreakpointId> {
+        let name = Path::new(self.module.base_name());
+        let id = dbg.new_rva_breakpoint(name, self.offset.0, BreakpointType::OneTime)?;
+        Ok(id)
+    }
 }
 
 impl<'data> DebugEventHandler for WindowsRecorder<'data> {
