@@ -329,7 +329,6 @@ class Backend:
 
         response = self.session.request("GET", endpoint + "/api/config")
 
-        logging.debug(response.json())
         endpoint_params = responses.Config.parse_obj(response.json())
 
         # Will override values in storage w/ provided values for SP use
@@ -357,13 +356,10 @@ class Backend:
 
         # If file expires, remove and force user to reset
         if datetime.utcnow() > self.config.expires_on:
-            logging.debug("Removing confif")
-            logging.debug(self.config_path) 
             os.remove(self.config_path)
             self.config = BackendConfig(
                 endpoint=endpoint, authority="", client_id="", tenant_domain=""
             )
-            time.sleep(30)
 
         url = endpoint + "/api/" + path
 
