@@ -16,6 +16,15 @@ use debugger::{BreakpointId, BreakpointType, DebugEventHandler, Debugger, Module
 use crate::allowlist::TargetAllowList;
 use crate::binary::{self, BinaryCoverage};
 
+// For a new module image, we defer setting coverage breakpoints until exit from one of these
+// functions (when present). This avoids breaking hotpatching routines in the ASan interceptor
+// initializers.
+//
+// We will use these constants with a prefix comparison. Only check up to the first open paren to
+// avoid false negatives if the demangled representation of parameters ever varies.
+const PROCESS_IMAGE_DEFERRAL_TRIGGER: &str = "__asan::AsanInitInternal(";
+const LIBRARY_IMAGE_DEFERRAL_TRIGGER: &str = "DllMain(";
+
 pub struct WindowsRecorder<'data> {
     allowlist: TargetAllowList,
     breakpoints: Breakpoints,
@@ -175,13 +184,13 @@ impl<'data> WindowsRecorder<'data> {
 
         for function in debuginfo.functions() {
             // Called on process startup.
-            if function.name.contains("__asan::AsanInitInternal") {
+            if function.name.starts_with(PROCESS_IMAGE_DEFERRAL_TRIGGER) {
                 trigger = Some(function.clone());
                 break;
             }
 
             // Called on shared library load.
-            if function.name.contains("DllMain(") {
+            if function.name.starts_with(LIBRARY_IMAGE_DEFERRAL_TRIGGER) {
                 trigger = Some(function.clone());
                 break;
             }
