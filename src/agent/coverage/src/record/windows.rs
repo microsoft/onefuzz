@@ -83,7 +83,6 @@ impl<'data> WindowsRecorder<'data> {
                     let thread_id = dbg.get_current_thread_id();
                     let state = DeferralState::PendingReturn { thread_id };
                     self.deferred_breakpoints.insert(id, (trigger, state));
-                    // return Ok(());
                 },
                 DeferralState::PendingReturn { thread_id } => {
                     if dbg.get_current_thread_id() == thread_id {
@@ -99,7 +98,6 @@ impl<'data> WindowsRecorder<'data> {
                         // expect to reach this code in practice.
                         let id = trigger.set(dbg)?;
                         self.deferred_breakpoints.insert(id, (trigger, state));
-                        // return Ok(());
                     }
                 },
             }
