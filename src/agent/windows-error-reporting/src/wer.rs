@@ -19,7 +19,7 @@ use windows::{
                 WerReportAddFile, WerReportApplicationCrash, WerReportCloseHandle, WerReportCreate,
                 WerReportSubmit, WerReportUploaded, HREPORT, WER_DUMP_NOHEAP_ONQUEUE,
                 WER_FILE_ANONYMOUS_DATA, WER_REPORT_INFORMATION, WER_SUBMIT_FLAGS,
-                WER_SUBMIT_RESULT, WER_SUBMIT_NO_QUEUE, WER_SUBMIT_REPORT_MACHINE_ID,
+                WER_SUBMIT_RESULT, WER_SUBMIT_NO_QUEUE, WER_SUBMIT_REPORT_MACHINE_ID, WER_SUBMIT_BYPASS_DATA_THROTTLING,
             },
             Threading::DEBUG_ONLY_THIS_PROCESS,
         },
@@ -141,7 +141,7 @@ impl WerReport {
     pub fn submit(&self) -> Result<WER_SUBMIT_RESULT> {
         unsafe {
             let result =
-                WerReportSubmit(self.inner_report, WerConsentApproved, WER_SUBMIT_NO_QUEUE | WER_SUBMIT_REPORT_MACHINE_ID)?;
+                WerReportSubmit(self.inner_report, WerConsentApproved, WER_SUBMIT_NO_QUEUE | WER_SUBMIT_REPORT_MACHINE_ID | WER_SUBMIT_BYPASS_DATA_THROTTLING)?;
             Ok(result)
         }
     }
