@@ -98,7 +98,7 @@ class BackendConfig(BaseModel):
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
     tenant_domain: str
-    expires_on: Optional[datetime] = datetime.utcnow() + timedelta(hours=24)
+    expires_on: datetime = datetime.utcnow() + timedelta(hours=24)
 
     def get_multi_tenant_domain(self) -> Optional[str]:
         if "https://login.microsoftonline.com/common" in self.authority:
