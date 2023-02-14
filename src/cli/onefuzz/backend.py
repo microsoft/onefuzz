@@ -363,6 +363,7 @@ class Backend:
             self.config = BackendConfig(
                 endpoint=endpoint, authority="", client_id="", tenant_domain=""
             )
+            time.sleep(30)
 
         url = endpoint + "/api/" + path
 
