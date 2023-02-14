@@ -139,6 +139,7 @@ public class ValidateScriban {
             reportContainer,
             reportFileName,
             report,
+            _log,
             task,
             job,
             targetUrl,

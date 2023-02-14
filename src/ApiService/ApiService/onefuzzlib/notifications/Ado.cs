@@ -43,7 +43,7 @@ public class Ado : NotificationsBase, IAdo {
                 throw;
             } else {
                 _logTracer.WithTags(notificationInfo).Exception(e, $"Failed to process ado notification");
-                LogFailedNotification(report, e, notificationId);
+                await LogFailedNotification(report, e, notificationId);
             }
         }
     }
@@ -69,7 +69,7 @@ public class Ado : NotificationsBase, IAdo {
         private readonly Uri _instanceUrl;
         private readonly ILogTracer _logTracer;
         public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogTracer logTracer, Renderer? renderer = null) {
-            renderer ??= await Renderer.ConstructRenderer(context, container, filename, report);
+            renderer ??= await Renderer.ConstructRenderer(context, container, filename, report, logTracer);
             var instanceUrl = context.Creds.GetInstanceUrl();
             var project = await renderer.Render(config.Project, instanceUrl);
 

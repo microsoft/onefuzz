@@ -46,6 +46,7 @@ public enum EventType {
     TaskHeartbeat,
     NodeHeartbeat,
     InstanceConfigUpdated,
+    NotificationFailed
 }
 
 public abstract record BaseEvent() {
@@ -334,6 +335,13 @@ public record EventFileAdded(
 [EventType(EventType.InstanceConfigUpdated)]
 public record EventInstanceConfigUpdated(
     InstanceConfig Config
+) : BaseEvent();
+
+[EventType(EventType.NotificationFailed)]
+public record EventNotificationFailed(
+    Guid NotificationId,
+    Guid JobId,
+    Error? Error
 ) : BaseEvent();
 
 public record EventMessage(

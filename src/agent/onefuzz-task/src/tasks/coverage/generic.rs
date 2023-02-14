@@ -279,12 +279,12 @@ impl<'a> TaskContext<'a> {
         let input = PlaceHolder::Input.get_string();
 
         for entry in &self.config.target_options {
-            if entry.contains(&input) {
+            if entry.contains(input) {
                 return true;
             }
         }
         for (k, v) in &self.config.target_env {
-            if k == &input || v.contains(&input) {
+            if k == input || v.contains(input) {
                 return true;
             }
         }

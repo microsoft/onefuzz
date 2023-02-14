@@ -1,0 +1,3 @@
+__azurite_db_*.json
+__blobstorage__
+__queuestorage__

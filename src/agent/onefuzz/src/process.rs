@@ -172,7 +172,9 @@ fn log_line(name: &str, context: &str, buf: Vec<u8>) {
         line.truncate(MAX_LOG_LINE_LENGTH);
         line.push_str("...<truncated>");
     }
-    info!("process ({}) {}: {}", name, context, line);
+
+    // Trim whitespace from our line before printing it.
+    info!("process ({}) {}: {}", name, context, line.trim());
 }
 
 async fn wait_process(context: &str, process: Child, stopped: Option<&Notify>) -> Result<()> {

@@ -13,7 +13,7 @@ import time
 import uuid
 from enum import Enum
 from shutil import which
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -41,8 +41,9 @@ from .ssh import build_ssh_command, ssh_connect, temp_file
 UUID_EXPANSION = TypeVar("UUID_EXPANSION", UUID, str)
 
 DEFAULT = BackendConfig(
-    authority="https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47",
-    client_id="72f1562a-8c0c-41ea-beb9-fa2b71c80134",
+    authority="",
+    client_id="",
+    tenant_domain="",
 )
 
 # This was generated randomly and should be preserved moving forwards
@@ -497,13 +498,13 @@ class Containers(Endpoint):
     def _download_tasks(
         self, tasks: List[models.Task], output: Optional[primitives.Directory]
     ) -> None:
-
         to_download: Dict[str, str] = {}
         for task in tasks:
-            for container in task.config.containers:
-                info = self.onefuzz.containers.get(container.name)
-                name = os.path.join(container.type.name, container.name)
-                to_download[name] = info.sas_url
+            if task.config.containers is not None:
+                for container in task.config.containers:
+                    info = self.onefuzz.containers.get(container.name)
+                    name = os.path.join(container.type.name, container.name)
+                    to_download[name] = info.sas_url
 
         if output is None:
             output = primitives.Directory(os.getcwd())
@@ -579,7 +580,6 @@ class Repro(Endpoint):
         with build_ssh_command(
             repro.ip, repro.auth.private_key, command="-T"
         ) as ssh_cmd:
-
             gdb_script = [
                 "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
                 % " ".join(ssh_cmd)
@@ -859,6 +859,39 @@ class Notifications(Endpoint):
             data=requests.NotificationSearch(container=container),
         )
 
+    def get(self, notification_id: UUID_EXPANSION) -> List[models.Notification]:
+        """Get a notification"""
+        self.logger.debug("getting notification")
+        return self._req_model_list(
+            "GET",
+            models.Notification,
+            data=requests.NotificationSearch(notification_id=notification_id),
+        )
+
+    def migrate_jinja_to_scriban(
+        self, dry_run: bool = False
+    ) -> Union[
+        responses.JinjaToScribanMigrationResponse,
+        responses.JinjaToScribanMigrationDryRunResponse,
+    ]:
+        """Migrates all notification templates from jinja to scriban"""
+
+        migration_endpoint = "migrations/jinja_to_scriban"
+        if dry_run:
+            return self._req_model(
+                "POST",
+                responses.JinjaToScribanMigrationDryRunResponse,
+                data=requests.JinjaToScribanMigrationPost(dry_run=dry_run),
+                alternate_endpoint=migration_endpoint,
+            )
+        else:
+            return self._req_model(
+                "POST",
+                responses.JinjaToScribanMigrationResponse,
+                data=requests.JinjaToScribanMigrationPost(dry_run=dry_run),
+                alternate_endpoint=migration_endpoint,
+            )
+
 
 class Tasks(Endpoint):
     """Interact with tasks"""
@@ -976,7 +1009,7 @@ class Tasks(Endpoint):
             tags = {}
 
         containers_submit = []
-        for (container_type, container) in containers:
+        for container_type, container in containers:
             containers_submit.append(
                 models.TaskContainers(name=container, type=container_type)
             )
@@ -1075,9 +1108,14 @@ class JobContainers(Endpoint):
         containers = set()
         tasks = self.onefuzz.tasks.list(job_id=job_id, state=[])
         for task in tasks:
-            containers.update(
-                set(x.name for x in task.config.containers if x.type == container_type)
-            )
+            if task.config.containers is not None:
+                containers.update(
+                    set(
+                        x.name
+                        for x in task.config.containers
+                        if x.type == container_type
+                    )
+                )
 
         results: Dict[str, List[str]] = {}
         for container in containers:
@@ -1109,23 +1147,24 @@ class JobContainers(Endpoint):
         containers = set()
         to_delete = set()
         for task in self.onefuzz.jobs.tasks.list(job_id=job.job_id):
-            for container in task.config.containers:
-                containers.add(container.name)
-                if container.type not in SAFE_TO_REMOVE:
-                    continue
-                elif not only_job_specific:
-                    to_delete.add(container.name)
-                elif only_job_specific and (
-                    self.onefuzz.utils.build_container_name(
-                        container_type=container.type,
-                        project=job.config.project,
-                        name=job.config.name,
-                        build=job.config.build,
-                        platform=task.os,
-                    )
-                    == container.name
-                ):
-                    to_delete.add(container.name)
+            if task.config.containers is not None:
+                for container in task.config.containers:
+                    containers.add(container.name)
+                    if container.type not in SAFE_TO_REMOVE:
+                        continue
+                    elif not only_job_specific:
+                        to_delete.add(container.name)
+                    elif only_job_specific and (
+                        self.onefuzz.utils.build_container_name(
+                            container_type=container.type,
+                            project=job.config.project,
+                            name=job.config.name,
+                            build=job.config.build,
+                            platform=task.os,
+                        )
+                        == container.name
+                    ):
+                        to_delete.add(container.name)
 
         to_keep = containers - to_delete
         for container_name in to_keep:
@@ -1180,7 +1219,6 @@ class Jobs(Endpoint):
         self.tasks = JobTasks(onefuzz)
 
     def delete(self, job_id: UUID_EXPANSION) -> models.Job:
-
         """Stop a job and all tasks that make up a job"""
         job_id_expanded = self._disambiguate_uuid(
             "job_id", job_id, lambda: [str(x.job_id) for x in self.list()]
@@ -1280,7 +1318,7 @@ class Pool(Endpoint):
                 client_secret="<client_secret>",
                 resource=self.onefuzz._backend.config.endpoint,
                 tenant=urlparse(self.onefuzz._backend.config.authority).path.strip("/"),
-                multi_tenant_domain=self.onefuzz._backend.config.tenant_domain,
+                multi_tenant_domain=self.onefuzz._backend.config.get_multi_tenant_domain(),
             )
 
         return pool.config
@@ -1690,6 +1728,17 @@ class InstanceConfigCmd(Endpoint):
         )
 
 
+class ValidateScriban(Endpoint):
+    """Interact with Validate Scriban"""
+
+    endpoint = "ValidateScriban"
+
+    def post(
+        self, req: requests.TemplateValidationPost
+    ) -> responses.TemplateValidationResponse:
+        return self._req_model("POST", responses.TemplateValidationResponse, data=req)
+
+
 class Command:
     def __init__(self, onefuzz: "Onefuzz", logger: logging.Logger):
         self.onefuzz = onefuzz
@@ -1780,9 +1829,7 @@ class Onefuzz:
         self.webhooks = Webhooks(self)
         self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
-
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates = JobTemplates(self)
+        self.validate_scriban = ValidateScriban(self)
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
@@ -1806,7 +1853,6 @@ class Onefuzz:
         authority: Optional[str] = None,
         tenant_domain: Optional[str] = None,
     ) -> None:
-
         if endpoint:
             self._backend.config.endpoint = endpoint
         if authority is not None:
@@ -1817,9 +1863,6 @@ class Onefuzz:
             self._backend.client_secret = client_secret
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
-
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates._load_cache()
 
     def licenses(self) -> object:
         """Return third-party licenses used by this package"""
@@ -1848,9 +1891,6 @@ class Onefuzz:
         # actuates the login process
         self.info.get()
 
-        # TODO: once job templates are out of preview, this should be enabled
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates.refresh()
         return "succeeded"
 
     def config(
@@ -1866,7 +1906,9 @@ class Onefuzz:
         self.logger.debug("set config")
 
         if reset:
-            self._backend.config = BackendConfig(authority="", client_id="")
+            self._backend.config = BackendConfig(
+                authority="", client_id="", tenant_domain=""
+            )
 
         if endpoint is not None:
             # The normal path for calling the API always uses the oauth2 workflow,
@@ -1908,6 +1950,5 @@ class Onefuzz:
 
 
 from .debug import Debug  # noqa: E402
-from .job_templates.main import JobTemplates  # noqa: E402
 from .status.cmd import Status  # noqa: E402
 from .template import Template  # noqa: E402

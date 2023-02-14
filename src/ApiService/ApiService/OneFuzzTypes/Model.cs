@@ -638,6 +638,7 @@ public record AdoTemplate(
     ADODuplicateTemplate OnDuplicate,
     string? Comment = null
     ) : NotificationTemplate;
+
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate;
 
 

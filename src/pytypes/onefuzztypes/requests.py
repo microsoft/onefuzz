@@ -20,7 +20,12 @@ from .enums import (
     TaskState,
 )
 from .events import EventType
-from .models import AutoScaleConfig, InstanceConfig, NotificationConfig
+from .models import (
+    AutoScaleConfig,
+    InstanceConfig,
+    NotificationConfig,
+    TemplateRenderContext,
+)
 from .primitives import Container, PoolName, Region
 from .webhooks import WebhookMessageFormat
 
@@ -47,6 +52,7 @@ class NotificationCreate(BaseRequest, NotificationConfig):
 
 class NotificationSearch(BaseRequest):
     container: Optional[List[Container]]
+    notification_id: Optional[UUID]
 
 
 class NotificationGet(BaseRequest):
@@ -250,6 +256,15 @@ class NodeAddSshKey(BaseModel):
 
 class InstanceConfigUpdate(BaseModel):
     config: InstanceConfig
+
+
+class TemplateValidationPost(BaseModel):
+    template: str
+    context: Optional[TemplateRenderContext]
+
+
+class JinjaToScribanMigrationPost(BaseModel):
+    dry_run: bool = Field(default=False)
 
 
 _check_hotfix()
