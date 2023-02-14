@@ -12,6 +12,7 @@ import sys
 import tempfile
 import time
 from dataclasses import asdict, is_dataclass
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import (
     Any,
@@ -27,7 +28,7 @@ from typing import (
 )
 from urllib.parse import urlparse, urlunparse
 from uuid import UUID
-from datetime import datetime, timedelta
+
 import msal
 import requests
 from azure.storage.blob import ContainerClient
@@ -134,14 +135,12 @@ class Backend:
         return name in self.config.features
 
     def load_config(self) -> None:
-
         if os.path.exists(self.config_path):
             with open(self.config_path, "r") as handle:
                 data = json.load(handle)
             self.config = BackendConfig.parse_obj(data)
 
     def save_config(self) -> None:
-
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
         with open(self.config_path, "w") as handle:
             handle.write(self.config.json(indent=4, exclude_none=True))
