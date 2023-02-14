@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 6.4.0
+
+### Added 
+* Deployment/CLI: OneFuzz Config refactored - `tenant_id`, `tenant_domain`, `multi_tenant_domain`, and `cli_client_id` are now required values in the config.json used during deployment and no longer required when running the config command. [#2771](https://github.com/microsoft/onefuzz/pull/2771), [#2811](https://github.com/microsoft/onefuzz/pull/2811)
+* Agent: Fully escape allowlist rules [#2784](https://github.com/microsoft/onefuzz/pull/2784)
+* Agent: Apply allowlist to all blocks within a function [#2785](https://github.com/microsoft/onefuzz/pull/2785)
+* CLI: Added a cli subcommand `onefuzz debug notification template` to validate scriban notification templates [#2800](https://github.com/microsoft/onefuzz/pull/2800)
+* Service: Added Notification failure webhook to communicate Notification failures [#2628](https://github.com/microsoft/onefuzz/pull/2628)
+### Changed
+* Service: Include `AssignedTo` when failing to create a work item due to an authentication exception [#2770](https://github.com/microsoft/onefuzz/pull/2770)
+
+### Fixed
+* Agent: Fixes & improvements to `Expand` behavior [#2789](https://github.com/microsoft/onefuzz/pull/2789)
+* Agent: Triming whitespace in output from monitored process before printing [#2782](https://github.com/microsoft/onefuzz/pull/2782)
+* CLI: Fixed default value of analyzer_exe [#2797](https://github.com/microsoft/onefuzz/pull/2797)
+* CLI: Fixed missing `readonly_inputs` parameter in dotnet & dotnet_dll templates [#2740](https://github.com/microsoft/onefuzz/pull/2740)
+* Service: Fixed query to get the existing proxy [#2791](https://github.com/microsoft/onefuzz/pull/2791)
+* Service: Truncate webhooks message length for azure queue size compatibility [#2788](https://github.com/microsoft/onefuzz/pull/2788)
+
 ## 6.3.0
 ### Added 
 * Service: Add Optional Analysis Task to Libfuzzer Template [#2748](https://github.com/microsoft/onefuzz/pull/2748)
