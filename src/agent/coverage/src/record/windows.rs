@@ -166,8 +166,8 @@ impl Breakpoints {
 
 #[derive(Clone, Debug)]
 struct Breakpoint {
-    module: FilePath,
-    offset: Offset,
+    pub module: FilePath,
+    pub offset: Offset,
 }
 
 impl Breakpoint {
