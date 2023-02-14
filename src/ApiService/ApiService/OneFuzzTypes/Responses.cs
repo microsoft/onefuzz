@@ -163,6 +163,7 @@ public record ConfigResponse(
     string? Authority,
     string? ClientId,
     string? TenantDomain
+    string? MultiTenantDomain
 ) : BaseResponse();
 
 public class BaseResponseConverter : JsonConverter<BaseResponse> {

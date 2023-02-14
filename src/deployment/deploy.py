@@ -190,9 +190,11 @@ class Client:
 
         self.rules: List[NsgRule] = []
 
+        self.cli_app_id = ""
+        self.authority = ""
         self.tenant_id = ""
         self.tenant_domain = ""
-        self.authority = ""
+        self.multi_tenant_domain = ""
 
         self.cli_config: Dict[str, Union[str, UUID]] = {
             "client_id": "",
@@ -1269,12 +1271,6 @@ def main() -> None:
         help="enable appinsight log export",
     )
     parser.add_argument(
-        "--multi_tenant_domain",
-        type=str,
-        default="",
-        help="enable multi-tenant authentication with this tenant domain",
-    )
-    parser.add_argument(
         "--subscription_id",
         type=str,
     )
@@ -1294,12 +1290,6 @@ def main() -> None:
         type=UUID,
         nargs="*",
         help="Set additional AAD tenants beyond the tenant the app is deployed in",
-    )
-    parser.add_argument(
-        "--cli_app_id",
-        type=str,
-        default="",
-        help="CLI App Registration to be used during deployment.",
     )
     parser.add_argument(
         "--auto_create_cli_app",
@@ -1348,12 +1338,10 @@ def main() -> None:
         create_registration=args.create_pool_registration,
         migrations=args.apply_migrations,
         export_appinsights=args.export_appinsights,
-        multi_tenant_domain=args.multi_tenant_domain,
         upgrade=args.upgrade,
         subscription_id=args.subscription_id,
         admins=args.set_admins,
         allowed_aad_tenants=args.allowed_aad_tenants or [],
-        cli_app_id=args.cli_app_id,
         auto_create_cli_app=args.auto_create_cli_app,
         host_dotnet_on_windows=args.host_dotnet_on_windows,
         enable_profiler=args.enable_profiler,
