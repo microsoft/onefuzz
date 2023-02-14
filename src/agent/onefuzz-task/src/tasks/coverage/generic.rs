@@ -9,6 +9,7 @@ use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
+use cobertura::CoberturaCoverage;
 use coverage::allowlist::{AllowList, TargetAllowList};
 use coverage::binary::BinaryCoverage;
 use coverage::record::CoverageRecorder;
@@ -17,7 +18,6 @@ use onefuzz::expand::{Expand, PlaceHolder};
 use onefuzz::syncdir::SyncedDir;
 use onefuzz_file_format::coverage::{
     binary::{v1::BinaryCoverageJson as BinaryCoverageJsonV1, BinaryCoverageJson},
-    cobertura::CoberturaCoverage,
     source::{v1::SourceCoverageJson as SourceCoverageJsonV1, SourceCoverageJson},
 };
 use onefuzz_telemetry::{warn, Event::coverage_data, EventData};
