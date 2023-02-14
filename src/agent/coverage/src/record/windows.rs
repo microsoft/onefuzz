@@ -74,6 +74,10 @@ impl<'data> WindowsRecorder<'data> {
         if let Some((trigger, state)) = self.deferred_breakpoints.remove(&id) {
             match state {
                 DeferralState::NotEntered => {
+                    debug!(
+                        "hit trigger breakpoint (not-entered) for deferred coverage breakpoints"
+                    );
+
                     // Find the return address.
                     let frame = dbg.get_current_frame()?;
                     let ret = frame.return_address();
@@ -85,12 +89,20 @@ impl<'data> WindowsRecorder<'data> {
                     self.deferred_breakpoints.insert(id, (trigger, state));
                 }
                 DeferralState::PendingReturn { thread_id } => {
+                    debug!(
+                        "hit trigger breakpoint (pending-return) for deferred coverage breakpoints"
+                    );
+
                     if dbg.get_current_thread_id() == thread_id {
+                        debug!("correct thread hit pending-return trigger breakpoint");
+
                         // We've returned from the trigger function, and on the same thread.
                         //
                         // It's safe to set coverage breakpoints.
                         self.set_module_breakpoints(dbg, trigger.module)?;
                     } else {
+                        warn!("wrong thread saw pending-return trigger breakpoint, resetting");
+
                         // Hit a ret breakpoint, but on the wrong thread. Reset it so the correct
                         // thread has a chance to see it.
                         //
