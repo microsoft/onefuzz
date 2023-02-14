@@ -161,7 +161,7 @@ impl<'data> WindowsRecorder<'data> {
     fn set_or_defer_module_breakpoints(&mut self, dbg: &mut Debugger, path: FilePath) -> Result<()> {
         let (_module, debuginfo) = &self.modules[&path];
 
-        // For borrocwk.
+        // For borrowck.
         let mut trigger = None;
 
         for function in debuginfo.functions() {
