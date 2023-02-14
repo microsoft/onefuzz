@@ -167,7 +167,6 @@ class Client:
         self.instance_specific = instance_specific
         self.third_party = third_party
         self.create_registration = create_registration
-        self.multi_tenant_domain = multi_tenant_domain
         self.custom_domain = custom_domain
         self.upgrade = upgrade
         self.results: Dict = {
@@ -181,7 +180,6 @@ class Client:
 
         self.arm_template = bicep_to_arm(bicep_template)
 
-        self.cli_app_id = cli_app_id
         self.auto_create_cli_app = auto_create_cli_app
         self.host_dotnet_on_windows = host_dotnet_on_windows
         self.enable_profiler = enable_profiler
