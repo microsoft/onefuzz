@@ -152,6 +152,11 @@ impl<'data> WindowsRecorder<'data> {
     fn insert_module(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) -> Result<()> {
         let path = FilePath::new(module.path().to_string_lossy())?;
 
+        if self.modules.contains_key(&path) {
+            warn!("module coverage already initialized, skipping");
+            return Ok(());
+        }
+
         if !self.allowlist.modules.is_allowed(&path) {
             debug!("not inserting denylisted module: {path}");
             return Ok(());
