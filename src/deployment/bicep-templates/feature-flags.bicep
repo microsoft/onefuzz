@@ -6,8 +6,21 @@ var appConfigName = 'app-config-${suffix}'
 resource featureFlags 'Microsoft.AppConfiguration/configurationStores@2022-05-01' = {
   name: appConfigName
   location: location
-  sku:{
+  sku: {
     name: 'standard'
+  }
+}
+
+resource configStoreFeatureflag 'Microsoft.AppConfiguration/configurationStores/keyValues@2021-10-01-preview' = {
+  parent: featureFlags
+  name: '.appconfig.featureflag~2FEnableScribanOnly'
+  properties: {
+    value: string({
+      id: 'EnableScribanOnly'
+      description: 'Render notification templates with scriban only'
+      enabled: true
+    })
+    contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'
   }
 }
 
