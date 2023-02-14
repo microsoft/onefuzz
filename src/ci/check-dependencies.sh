@@ -40,9 +40,11 @@ check "$script_dir/../agent/target/release/onefuzz-task" \
 "/lib64/ld-linux-x86-64.so.2
 libc.so.6
 libdl.so.2
+libgcc_s.so.1
 liblzma.so.5
 libm.so.6
 libpthread.so.0
+libstdc++.so.6
 libunwind-ptrace.so.0
 libunwind-x86_64.so.8
 libunwind.so.8
@@ -70,11 +72,9 @@ check "$script_dir/../agent/target/release/onefuzz-agent" \
 "/lib64/ld-linux-x86-64.so.2
 libc.so.6
 libdl.so.2
-libgcc_s.so.1
 liblzma.so.5
 libm.so.6
 libpthread.so.0
-libstdc++.so.6
 libunwind.so.8
 linux-vdso.so.1" \
 \
