@@ -125,42 +125,22 @@ impl<'data> WindowsRecorder<'data> {
 
 #[derive(Debug, Default)]
 struct Breakpoints {
-    id_to_offset: BTreeMap<BreakpointId, Offset>,
-    offset_to_breakpoint: BTreeMap<Offset, Breakpoint>,
+    id_to_breakpoint: BTreeMap<BreakpointId, Breakpoint>,
 }
 
 impl Breakpoints {
     pub fn set(&mut self, dbg: &mut Debugger, breakpoint: Breakpoint) -> Result<()> {
-        if self.is_set(&breakpoint) {
-            return Ok(());
-        }
-
-        self.write(dbg, breakpoint)
-    }
-
-    // Unguarded action that ovewrites both the target process address space and our index
-    // of known breakpoints. Callers must use `set()`, which avoids redundant breakpoint
-    // setting.
-    fn write(&mut self, dbg: &mut Debugger, breakpoint: Breakpoint) -> Result<()> {
-        // The `debugger` crates tracks loaded modules by base name. If a path or file
-        // name is used, software breakpoints will not be written.
-        let name = Path::new(breakpoint.module.base_name());
-        let id = dbg.new_rva_breakpoint(name, breakpoint.offset.0, BreakpointType::OneTime)?;
-
-        self.id_to_offset.insert(id, breakpoint.offset);
-        self.offset_to_breakpoint
-            .insert(breakpoint.offset, breakpoint);
-
+        let id = breakpoint.set(dbg)?;
+        self.id_to_breakpoint.insert(id, breakpoint);
         Ok(())
     }
 
-    pub fn is_set(&self, breakpoint: &Breakpoint) -> bool {
-        self.offset_to_breakpoint.contains_key(&breakpoint.offset)
-    }
-
+    /// Remove a registered breakpoint from the index.
+    ///
+    /// This method should be called when a breakpoint is hit to retrieve its associated data.
+    /// It does NOT clear the actual breakpoint in the debugger engine.
     pub fn remove(&mut self, id: BreakpointId) -> Option<Breakpoint> {
-        let offset = self.id_to_offset.remove(&id)?;
-        self.offset_to_breakpoint.remove(&offset)
+        self.id_to_breakpoint.remove(&id)
     }
 }
 
