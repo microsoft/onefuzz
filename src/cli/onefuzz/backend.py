@@ -27,7 +27,7 @@ from typing import (
 )
 from urllib.parse import urlparse, urlunparse
 from uuid import UUID
-
+from datetime import datetime, timedelta
 import msal
 import requests
 from azure.storage.blob import ContainerClient
@@ -97,7 +97,7 @@ class BackendConfig(BaseModel):
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
     tenant_domain: str
-    expires_on: Optional[DateTime] = datetime.utcnow() + timedelta(hours=24)
+    expires_on: Optional[datetime] = datetime.utcnow() + timedelta(minutes=1)
 
     def get_multi_tenant_domain(self) -> Optional[str]:
         if "https://login.microsoftonline.com/common" in self.authority:
@@ -134,16 +134,14 @@ class Backend:
         return name in self.config.features
 
     def load_config(self) -> None:
+
         if os.path.exists(self.config_path):
             with open(self.config_path, "r") as handle:
                 data = json.load(handle)
             self.config = BackendConfig.parse_obj(data)
 
     def save_config(self) -> None:
-        
-        if datetime.utcnow() > self.config.expires_on: 
-            os.remove(os.path.dirname(self.config_path))
-            
+
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
         with open(self.config_path, "w") as handle:
             handle.write(self.config.json(indent=4, exclude_none=True))
@@ -356,6 +354,15 @@ class Backend:
 
         if not endpoint:
             raise Exception("endpoint not configured")
+
+        # If file expires, remove and force user to reset
+        if datetime.utcnow() > self.config.expires_on:
+            logging.debug("Removing confif")
+            logging.debug(self.config_path) 
+            os.remove(self.config_path)
+            self.config = BackendConfig(
+                endpoint=endpoint, authority="", client_id="", tenant_domain=""
+            )
 
         url = endpoint + "/api/" + path
 
