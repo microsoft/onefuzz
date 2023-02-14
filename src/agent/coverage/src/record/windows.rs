@@ -110,7 +110,8 @@ impl<'data> WindowsRecorder<'data> {
             self.breakpoints.set(dbg, breakpoint)?;
         }
 
-        self.coverage.modules.insert(path.clone(), coverage);
+        let count = coverage.offsets.len();
+        debug!("set {} breakpoints for module {}", count, path);
 
         self.modules.insert(path, module);
 
