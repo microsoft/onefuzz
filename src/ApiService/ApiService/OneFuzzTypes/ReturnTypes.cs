@@ -2,7 +2,7 @@
 
 namespace Microsoft.OneFuzz.Service {
 
-    public struct ResultVoid<T_Error> {
+    public readonly struct ResultVoid<T_Error> {
         public static ResultVoid<T_Error> Ok() => new();
         public static ResultVoid<T_Error> Error(T_Error err) => new(err);
 
@@ -16,7 +16,7 @@ namespace Microsoft.OneFuzz.Service {
     }
 
 
-    public struct Result<T_Ok, T_Error> {
+    public readonly struct Result<T_Ok, T_Error> {
         public static Result<T_Ok, T_Error> Ok(T_Ok ok) => new(ok);
         public static Result<T_Ok, T_Error> Error(T_Error err) => new(err);
 
@@ -37,17 +37,17 @@ namespace Microsoft.OneFuzz.Service {
         public static OneFuzzResult<T> Ok<T>(T val) => OneFuzzResult<T>.Ok(val);
     }
 
-    public struct OneFuzzResult<T_Ok> {
-        static Error NoError = new(0);
+    public readonly struct OneFuzzResult<T_Ok> {
 
         [MemberNotNullWhen(returnValue: true, member: nameof(OkV))]
+        [MemberNotNullWhen(returnValue: false, member: nameof(ErrorV))]
         public bool IsOk { get; }
 
         public T_Ok? OkV { get; }
 
-        public Error ErrorV { get; }
+        public Error? ErrorV { get; }
 
-        private OneFuzzResult(T_Ok ok) => (OkV, ErrorV, IsOk) = (ok, NoError, true);
+        private OneFuzzResult(T_Ok ok) => (OkV, ErrorV, IsOk) = (ok, null, true);
 
         private OneFuzzResult(ErrorCode errorCode, string[] errors) => (OkV, ErrorV, IsOk) = (default, new Error(errorCode, errors), false);
 
@@ -63,14 +63,14 @@ namespace Microsoft.OneFuzz.Service {
         public static implicit operator OneFuzzResult<T_Ok>(Error err) => new(err);
     }
 
-    public struct OneFuzzResultVoid {
-        static Error NoError = new(0);
+    public readonly struct OneFuzzResultVoid {
 
+        [MemberNotNullWhen(returnValue: false, member: nameof(ErrorV))]
         public bool IsOk { get; }
 
-        public Error ErrorV { get; }
+        public Error? ErrorV { get; }
 
-        public OneFuzzResultVoid() => (ErrorV, IsOk) = (NoError, true);
+        public OneFuzzResultVoid() => (ErrorV, IsOk) = (null, true);
 
         private OneFuzzResultVoid(ErrorCode errorCode, string[] errors) => (ErrorV, IsOk) = (new Error(errorCode, errors), false);
 
