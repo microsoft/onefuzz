@@ -35,9 +35,9 @@ public class Ado : NotificationsBase, IAdo {
             var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
             await ado.Process(notificationInfo);
         } catch (Exception e)
-              when (e is VssAuthenticationException || e is VssServiceException) {
+              when (e is VssUnauthorizedException || e is VssAuthenticationException || e is VssServiceException) {
             var _ = config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo);
-            if (e is VssAuthenticationException && !string.IsNullOrEmpty(assignedTo)) {
+            if ((e is VssAuthenticationException || e is VssUnauthorizedException) && !string.IsNullOrEmpty(assignedTo)) {
                 notificationInfo = notificationInfo.AddRange(new (string, string)[] { ("assigned_to", assignedTo) });
             }
 
