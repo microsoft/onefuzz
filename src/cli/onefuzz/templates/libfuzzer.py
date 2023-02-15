@@ -604,6 +604,7 @@ class Libfuzzer(Command):
         ensemble_sync_delay: Optional[int] = None,
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
+        notification_config: Optional[NotificationConfig] = None,
     ) -> Optional[Job]:
         """
         libfuzzer-dotnet task
@@ -670,6 +671,7 @@ class Libfuzzer(Command):
         ]
 
         helper.create_containers()
+        helper.setup_notifications(notification_config)
 
         helper.upload_setup(setup_dir, target_exe)
         if inputs:
@@ -738,6 +740,7 @@ class Libfuzzer(Command):
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
         expect_crash_on_failure: bool = False,
+        notification_config: Optional[NotificationConfig] = None,
     ) -> Optional[Job]:
         pool = self.onefuzz.pools.get(pool_name)
 
@@ -814,6 +817,7 @@ class Libfuzzer(Command):
         ]
 
         helper.create_containers()
+        helper.setup_notifications(notification_config)
 
         helper.upload_setup(setup_dir, target_dll)
 
