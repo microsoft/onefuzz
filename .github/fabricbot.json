@@ -23,7 +23,7 @@
           {
             "name": "addLabel",
             "parameters": {
-              "label": "Needs: Triage :mag:"
+              "label": "Needs: triage"
             }
           }
         ],
