@@ -32,9 +32,9 @@ public class Ado : NotificationsBase, IAdo {
             var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
             await ado.Process(notificationInfo);
         } catch (Exception e)
-              when (e is VssAuthenticationException || e is VssServiceException) {
+              when (e is VssUnauthorizedException || e is VssAuthenticationException || e is VssServiceException) {
             var _ = config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo);
-            if (e is VssAuthenticationException && !string.IsNullOrEmpty(assignedTo)) {
+            if ((e is VssAuthenticationException || e is VssUnauthorizedException) && !string.IsNullOrEmpty(assignedTo)) {
                 notificationInfo = notificationInfo.AddRange(new (string, string)[] { ("assigned_to", assignedTo) });
             }
 
@@ -69,7 +69,7 @@ public class Ado : NotificationsBase, IAdo {
         private readonly Uri _instanceUrl;
         private readonly ILogTracer _logTracer;
         public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogTracer logTracer, Renderer? renderer = null) {
-            renderer ??= await Renderer.ConstructRenderer(context, container, filename, report);
+            renderer ??= await Renderer.ConstructRenderer(context, container, filename, report, logTracer);
             var instanceUrl = context.Creds.GetInstanceUrl();
             var project = await renderer.Render(config.Project, instanceUrl);
 

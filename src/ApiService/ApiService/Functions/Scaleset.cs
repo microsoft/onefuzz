@@ -63,7 +63,7 @@ public class Scaleset {
         // verify the pool exists
         var poolResult = await _context.PoolOperations.GetByName(create.PoolName);
         if (!poolResult.IsOk) {
-            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "ScalesetCreate");
+            return await _context.RequestHandling.NotOk(req, poolResult.ErrorV, "ScalesetCreate");
         }
 
         var pool = poolResult.OkV;

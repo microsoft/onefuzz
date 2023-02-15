@@ -40,6 +40,7 @@ impl DebugInfo {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct Function {
     pub name: String,
     pub offset: Offset,
