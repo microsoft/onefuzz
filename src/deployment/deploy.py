@@ -1285,7 +1285,6 @@ def main() -> None:
     )
     parser.add_argument(
         "--set_admins",
-        type=UUID,
         nargs="*",
         help="set the list of administrators (by OID in AAD)",
     )
