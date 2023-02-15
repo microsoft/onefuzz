@@ -135,6 +135,7 @@ public class JinjaTemplateAdapter {
             reportContainer,
             reportFileName,
             report,
+            log,
             task,
             job,
             targetUrl,
