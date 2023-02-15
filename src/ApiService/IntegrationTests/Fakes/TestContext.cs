@@ -41,6 +41,7 @@ public sealed class TestContext : IOnefuzzContext {
         UserCredentials = new UserCredentials(logTracer, ConfigOperations);
         NotificationOperations = new NotificationOperations(logTracer, this);
         SecretsOperations = new TestSecretsOperations(Creds, ServiceConfiguration);
+        FeatureManagerSnapshot = new TestFeatureManagerSnapshot();
     }
 
     public TestEvents Events { get; set; } = new();
@@ -92,6 +93,9 @@ public sealed class TestContext : IOnefuzzContext {
 
     public ISecretsOperations SecretsOperations { get; }
 
+    public IFeatureManagerSnapshot FeatureManagerSnapshot { get; }
+
+
     // -- Remainder not implemented --
 
     public IConfig Config => throw new System.NotImplementedException();
@@ -129,7 +133,6 @@ public sealed class TestContext : IOnefuzzContext {
     public ITeams Teams => throw new NotImplementedException();
     public IGithubIssues GithubIssues => throw new NotImplementedException();
     public IAdo Ado => throw new NotImplementedException();
-    public IFeatureManagerSnapshot FeatureManagerSnapshot => throw new NotImplementedException();
 
     public IConfigurationRefresher ConfigurationRefresher => throw new NotImplementedException();
 }
