@@ -14,6 +14,7 @@ use coverage::allowlist::{AllowList, TargetAllowList};
 use coverage::binary::BinaryCoverage;
 use coverage::record::CoverageRecorder;
 use coverage::source::{binary_to_source_coverage, SourceCoverage};
+use onefuzz::env::LD_LIBRARY_PATH;
 use onefuzz::expand::{Expand, PlaceHolder};
 use onefuzz::syncdir::SyncedDir;
 use onefuzz_file_format::coverage::{
@@ -314,6 +315,43 @@ impl<'a> TaskContext<'a> {
 
         for (k, v) in &self.config.target_env {
             cmd.env(k, expand.evaluate_value(v)?);
+        }
+
+        // Make shared library resolution on Linux match behavior in other tasks.
+        if cfg!(target_os = "linux") {
+            let cmd_ld_library_path = cmd
+                .get_envs()
+                .find(|(k, _)| *k == LD_LIBRARY_PATH)
+                .map(|(_, v)| v);
+
+            // Depending on user-provided values, obtain a base value for `LD_LIBRARY_PATH`, which
+            // we will update to include the local root of the setup directory.
+            let ld_library_path = match cmd_ld_library_path {
+                None => {
+                    // The user did not provide an `LD_LIBRARY_PATH`, so the child process will
+                    // inherit the current actual value (if any). It would be best to never inherit
+                    // the current environment in any user subprocess invocation, but since we do,
+                    // preserve the existing behavior.
+                    std::env::var_os(LD_LIBRARY_PATH).unwrap_or_default()
+                }
+                Some(None) => {
+                    // This is actually unreachable, since it can only occur as the result of a call
+                    // to `env_clear(LD_LIBRARY_PATH)`. Even if this could happen, we'd reset it to
+                    // the setup dir, so use the empty path as our base.
+                    "".into()
+                }
+                Some(Some(path)) => {
+                    // `LD_LIBRARY_PATH` was set by the user-provided `target_env`, and we may have
+                    // expanded some placeholder variables. Extend that.
+                    path.to_owned()
+                }
+            };
+
+            // Add the setup directory to the library path and ensure it will occur in the child
+            // environment.
+            let ld_library_path =
+                onefuzz::env::update_path(ld_library_path, &self.config.common.setup_dir)?;
+            cmd.env(LD_LIBRARY_PATH, ld_library_path);
         }
 
         cmd.env_remove("RUST_LOG");
