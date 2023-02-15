@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT"
 
 [dependencies]
-anyhow = "1.0"
+anyhow = { version = "1.0", features = ["backtrace"] }
 cobertura = { path = "../cobertura" }
 debuggable-module = { path = "../debuggable-module" }
 iced-x86 = "1.17"
