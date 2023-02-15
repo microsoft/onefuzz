@@ -15,6 +15,9 @@ struct Args {
     module_allowlist: Option<String>,
 
     #[arg(long)]
+    function_allowlist: Option<String>,
+
+    #[arg(long)]
     source_allowlist: Option<String>,
 
     #[arg(short, long)]
@@ -57,6 +60,10 @@ fn main() -> Result<()> {
 
     if let Some(path) = &args.module_allowlist {
         allowlist.modules = AllowList::load(path)?;
+    }
+
+    if let Some(path) = &args.function_allowlist {
+        allowlist.functions = AllowList::load(path)?;
     }
 
     if let Some(path) = &args.source_allowlist {

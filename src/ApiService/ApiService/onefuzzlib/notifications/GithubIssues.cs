@@ -31,7 +31,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
     }
 
     private async Async.Task Process(GithubIssuesTemplate config, Container container, string filename, Report report) {
-        var renderer = await Renderer.ConstructRenderer(_context, container, filename, report);
+        var renderer = await Renderer.ConstructRenderer(_context, container, filename, report, _logTracer);
         var handler = await GithubConnnector.GithubConnnectorCreator(config, container, filename, renderer, _context.Creds.GetInstanceUrl(), _context, _logTracer);
         await handler.Process();
     }
