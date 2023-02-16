@@ -642,7 +642,7 @@ public record AdoTemplate(
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate {
     public Task<OneFuzzResultVoid> Validate() {
         // The only way we can validate in the current state is to send a test webhook
-        // MAybe there's a teams nuget package we can pull in to help validate
+        // Maybe there's a teams nuget package we can pull in to help validate
         return Async.Task.FromResult(OneFuzzResultVoid.Ok);
     }
 }
