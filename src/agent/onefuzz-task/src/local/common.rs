@@ -235,7 +235,6 @@ pub async fn build_local_context(
 
     let extra_dir = value_t!(args, EXTRA_DIR, PathBuf).ok();
 
-
     let setup_dir = if args.is_present(SETUP_DIR) {
         value_t!(args, SETUP_DIR, PathBuf)?
     } else if args.is_present(TARGET_EXE) {

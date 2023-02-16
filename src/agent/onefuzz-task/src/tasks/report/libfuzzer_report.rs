@@ -76,6 +76,7 @@ impl ReportTask {
             self.config.target_options.clone(),
             self.config.target_env.clone(),
             &self.config.common.setup_dir,
+            self.config.common.extra_dir.clone(),
             self.config.common.machine_identity.clone(),
         );
         fuzzer.verify(self.config.check_fuzzer_help, None).await
@@ -118,6 +119,7 @@ pub struct TestInputArgs<'a> {
     pub target_options: &'a [String],
     pub target_env: &'a HashMap<String, String>,
     pub setup_dir: &'a Path,
+    pub extra_dir: Option<&'a Path>,
     pub task_id: uuid::Uuid,
     pub job_id: uuid::Uuid,
     pub target_timeout: Option<u64>,
@@ -132,6 +134,7 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
         args.target_options.to_vec(),
         args.target_env.clone(),
         args.setup_dir,
+        args.extra_dir.map(PathBuf::from),
         args.machine_identity,
     );
 
@@ -215,6 +218,7 @@ impl AsanProcessor {
             target_options: &self.config.target_options,
             target_env: &self.config.target_env,
             setup_dir: &self.config.common.setup_dir,
+            extra_dir: self.config.common.extra_dir.as_ref().map(|x| x.as_path()),
             task_id: self.config.common.task_id,
             job_id: self.config.common.job_id,
             target_timeout: self.config.target_timeout,

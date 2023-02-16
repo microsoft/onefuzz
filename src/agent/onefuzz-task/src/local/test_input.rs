@@ -37,6 +37,11 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
         target_timeout,
         check_retry_count,
         setup_dir: &context.common_config.setup_dir,
+        extra_dir: context
+            .common_config
+            .extra_dir
+            .as_ref()
+            .map(|x| x.as_path()),
         minimized_stack_depth: None,
         check_asan_log,
         check_debugger,

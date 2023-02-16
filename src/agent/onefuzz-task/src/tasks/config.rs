@@ -138,7 +138,11 @@ pub enum Config {
 }
 
 impl Config {
-    pub fn from_file(path: PathBuf, setup_dir: PathBuf, extra_dir: Option<PathBuf>) -> Result<Self> {
+    pub fn from_file(
+        path: PathBuf,
+        setup_dir: PathBuf,
+        extra_dir: Option<PathBuf>,
+    ) -> Result<Self> {
         let json = std::fs::read_to_string(path)?;
         let json_config: serde_json::Value = serde_json::from_str(&json)?;
 

@@ -113,6 +113,7 @@ pub struct TestInputArgs<'a> {
     pub target_options: &'a [String],
     pub target_env: &'a HashMap<String, String>,
     pub setup_dir: &'a Path,
+    pub extra_dir: Option<&'a Path>,
     pub task_id: Uuid,
     pub job_id: Uuid,
     pub target_timeout: Option<u64>,
@@ -124,8 +125,10 @@ pub struct TestInputArgs<'a> {
 }
 
 pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
+    let extra_dir = &args.extra_dir.map(|p| p.to_path_buf());
     let tester = Tester::new(
         args.setup_dir,
+        extra_dir,
         args.target_exe,
         args.target_options,
         args.target_env,
@@ -201,6 +204,8 @@ impl<'a> GenericReportProcessor<'a> {
             try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
                 .await?;
 
+        //let extra_dir = self.config.common.extra_dir.map(|x| x.as_path());
+        let extra_dir = self.config.common.extra_dir.as_ref().map(|x| x.as_path());
         let args = TestInputArgs {
             input_url,
             input,
@@ -208,6 +213,7 @@ impl<'a> GenericReportProcessor<'a> {
             target_options: &self.config.target_options,
             target_env: &self.config.target_env,
             setup_dir: &self.config.common.setup_dir,
+            extra_dir,
             task_id: self.config.common.task_id,
             job_id: self.config.common.job_id,
             target_timeout: self.config.target_timeout,

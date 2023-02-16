@@ -99,6 +99,7 @@ impl GeneratorTask {
 
         let tester = Tester::new(
             &self.config.common.setup_dir,
+            &self.config.common.extra_dir,
             &target_exe,
             &self.config.target_options,
             &self.config.target_env,
@@ -168,6 +169,9 @@ impl GeneratorTask {
                 .machine_id()
                 .await?
                 .setup_dir(&self.config.common.setup_dir)
+                .set_optional_ref(&self.config.common.extra_dir, |expand, extra_dir| {
+                    expand.extra_dir(extra_dir)
+                })
                 .generated_inputs(&output_dir)
                 .input_corpus(&corpus_dir)
                 .generator_exe(&self.config.generator_exe)

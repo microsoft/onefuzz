@@ -66,6 +66,7 @@ impl RegressionHandler for LibFuzzerRegressionTask {
             target_options: &self.config.target_options,
             target_env: &self.config.target_env,
             setup_dir: &self.config.common.setup_dir,
+            extra_dir: self.config.common.extra_dir.as_ref().map(|x| x.as_path()),
             task_id: self.config.common.task_id,
             job_id: self.config.common.job_id,
             target_timeout: self.config.target_timeout,

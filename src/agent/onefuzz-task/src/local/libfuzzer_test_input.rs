@@ -22,6 +22,11 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
     let input = value_t!(args, "input", PathBuf)?;
     let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
     let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
+    let extra_dir = context
+        .common_config
+        .extra_dir
+        .as_ref()
+        .map(|x| x.as_path());
 
     let config = TestInputArgs {
         target_exe: target_exe.as_path(),
@@ -34,6 +39,7 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
         target_timeout,
         check_retry_count,
         setup_dir: &context.common_config.setup_dir,
+        extra_dir,
         minimized_stack_depth: None,
         machine_identity: context.common_config.machine_identity,
     };

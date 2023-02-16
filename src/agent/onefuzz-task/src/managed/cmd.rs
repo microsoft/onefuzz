@@ -124,6 +124,9 @@ pub fn args(name: &str) -> App<'static, 'static> {
         .about("managed fuzzing")
         .arg(Arg::with_name("config").required(true))
         .arg(Arg::with_name("setup_dir").required(true))
-        .arg(Arg::with_name("extra_dir").long("extra_dir").required(false)
-    )
+        .arg(
+            Arg::with_name("extra_dir")
+                .long("extra_dir")
+                .required(false),
+        )
 }

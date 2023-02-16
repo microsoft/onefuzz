@@ -37,6 +37,7 @@ pub struct LibFuzzerMergeOutput {
 
 pub struct LibFuzzer {
     setup_dir: PathBuf,
+    extra_dir: Option<PathBuf>,
     exe: PathBuf,
     options: Vec<String>,
     env: HashMap<String, String>,
@@ -49,6 +50,7 @@ impl LibFuzzer {
         options: Vec<String>,
         env: HashMap<String, String>,
         setup_dir: impl Into<PathBuf>,
+        extra_dir: Option<impl Into<PathBuf>>,
         machine_identity: MachineIdentity,
     ) -> Self {
         Self {
@@ -56,6 +58,7 @@ impl LibFuzzer {
             options,
             env,
             setup_dir: setup_dir.into(),
+            extra_dir: extra_dir.map(|x| x.into()),
             machine_identity,
         }
     }
@@ -108,6 +111,9 @@ impl LibFuzzer {
             .target_exe(&self.exe)
             .target_options(&self.options)
             .setup_dir(&self.setup_dir)
+            .set_optional(self.extra_dir.as_ref(), |expand, extra_dir| {
+                expand.extra_dir(extra_dir)
+            })
             .set_optional(corpus_dir, |e, corpus_dir| e.input_corpus(corpus_dir))
             .set_optional(fault_dir, |e, fault_dir| e.crashes(fault_dir));
 
@@ -314,6 +320,7 @@ impl LibFuzzer {
 
         let mut tester = Tester::new(
             &self.setup_dir,
+            &self.extra_dir,
             &self.exe,
             &options,
             &self.env,
