@@ -135,13 +135,9 @@ fn dump_stdio(recorded: &Recorded) {
     } else {
         println!("status = <unavailable>");
     }
-    println!(
-        "stderr ========================================================================="
-    );
+    println!("stderr =========================================================================");
     println!("{}", recorded.output.stderr);
-    println!(
-        "stdout ========================================================================="
-    );
+    println!("stdout =========================================================================");
     println!("{}", recorded.output.stdout);
     println!();
 }
