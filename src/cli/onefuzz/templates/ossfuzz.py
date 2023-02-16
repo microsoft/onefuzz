@@ -9,7 +9,7 @@ import os
 import subprocess  # nosec
 from typing import Dict, List, Optional, Tuple
 
-from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag, ContainerType
+from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag
 from onefuzztypes.models import NotificationConfig
 from onefuzztypes.primitives import File, PoolName, Container
 

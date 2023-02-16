@@ -394,6 +394,7 @@ mod tests {
                 microsoft_telemetry_key: Default::default(),
                 logs: Default::default(),
                 setup_dir: Default::default(),
+                extra_dir: Default::default(),
                 min_available_memory_mb: Default::default(),
                 machine_identity: MachineIdentity {
                     machine_id: uuid::Uuid::new_v4(),
