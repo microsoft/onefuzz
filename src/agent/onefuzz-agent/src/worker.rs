@@ -137,7 +137,7 @@ impl<C: Context> State<C> {
 impl State<Ready> {
     pub async fn run(self, runner: &mut dyn IWorkerRunner) -> Result<State<Running>> {
         let child = runner
-            .run(&self.ctx.setup_dir, self.ctx.extra_dir.into(), &self.work)
+            .run(&self.ctx.setup_dir, self.ctx.extra_dir, &self.work)
             .await?;
 
         let state = State {

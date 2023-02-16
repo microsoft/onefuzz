@@ -60,7 +60,7 @@ impl RegressionHandler for GenericRegressionTask {
             try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
                 .await?;
 
-        let extra_dir = self.config.common.extra_dir.as_ref().map(|x| x.as_path());
+        let extra_dir = self.config.common.extra_dir.as_deref();
         let args = generic::TestInputArgs {
             input_url: Some(input_url),
             input: &input,

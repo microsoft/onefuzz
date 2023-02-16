@@ -18,11 +18,7 @@ use stacktrace_parser::CrashLog;
 use stacktrace_parser::StackEntry;
 #[cfg(target_os = "linux")]
 use std::process::Stdio;
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-    time::Duration,
-};
+use std::{collections::HashMap, path::Path, time::Duration};
 use tempfile::tempdir;
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
@@ -31,7 +27,7 @@ const CRASH_SITE_UNAVAILABLE: &str = "<crash site unavailable>";
 
 pub struct Tester<'a> {
     setup_dir: &'a Path,
-    extra_dir: &'a Option<PathBuf>,
+    extra_dir: Option<&'a Path>,
     exe_path: &'a Path,
     arguments: &'a [String],
     environ: &'a HashMap<String, String>,
@@ -61,7 +57,7 @@ pub struct TestResult {
 impl<'a> Tester<'a> {
     pub fn new(
         setup_dir: &'a Path,
-        extra_dir: &'a Option<PathBuf>,
+        extra_dir: Option<&'a Path>,
         exe_path: &'a Path,
         arguments: &'a [String],
         environ: &'a HashMap<String, String>,

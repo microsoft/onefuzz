@@ -89,7 +89,6 @@ class Libfuzzer(Command):
             ),
         ]
 
-
         # We don't really need a separate timeout for crash reporting, and we could just
         # use `target_timeout`. But `crash_report_timeout` was introduced first, so we
         # can't remove it without a breaking change. Since both timeouts may be present,
@@ -182,7 +181,6 @@ class Libfuzzer(Command):
                 )
             )
 
-
         self.logger.info("creating coverage task")
 
         # The `coverage` task is not libFuzzer-aware, so invocations of the target fuzzer
@@ -235,7 +233,6 @@ class Libfuzzer(Command):
             (ContainerType.unique_reports, containers[ContainerType.unique_reports]),
             (ContainerType.no_repro, containers[ContainerType.no_repro]),
         ]
-
 
         self.logger.info("creating libfuzzer_crash_report task")
         self.onefuzz.tasks.create(
@@ -396,8 +393,6 @@ class Libfuzzer(Command):
 
         if readonly_inputs:
             helper.containers[ContainerType.readonly_inputs] = readonly_inputs
-
-
 
         if analyzer_exe is not None:
             helper.define_containers(ContainerType.analysis)
@@ -1135,7 +1130,6 @@ class Libfuzzer(Command):
             (ContainerType.no_repro, helper.containers[ContainerType.no_repro]),
             (ContainerType.extra, helper.containers[ContainerType.extra]),
         ]
-
 
         self.logger.info("creating libfuzzer_crash_report task")
         self.onefuzz.tasks.create(

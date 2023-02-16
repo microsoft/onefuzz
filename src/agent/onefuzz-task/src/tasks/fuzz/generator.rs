@@ -99,7 +99,7 @@ impl GeneratorTask {
 
         let tester = Tester::new(
             &self.config.common.setup_dir,
-            &self.config.common.extra_dir,
+            self.config.common.extra_dir.as_deref(),
             &target_exe,
             &self.config.target_options,
             &self.config.target_env,

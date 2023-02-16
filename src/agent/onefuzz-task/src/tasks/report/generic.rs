@@ -125,7 +125,7 @@ pub struct TestInputArgs<'a> {
 }
 
 pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
-    let extra_dir = &args.extra_dir.map(|p| p.to_path_buf());
+    let extra_dir = args.extra_dir;
     let tester = Tester::new(
         args.setup_dir,
         extra_dir,
@@ -205,7 +205,7 @@ impl<'a> GenericReportProcessor<'a> {
                 .await?;
 
         //let extra_dir = self.config.common.extra_dir.map(|x| x.as_path());
-        let extra_dir = self.config.common.extra_dir.as_ref().map(|x| x.as_path());
+        let extra_dir = self.config.common.extra_dir.as_deref();
         let args = TestInputArgs {
             input_url,
             input,

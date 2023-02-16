@@ -320,7 +320,7 @@ impl LibFuzzer {
 
         let mut tester = Tester::new(
             &self.setup_dir,
-            &self.extra_dir,
+            self.extra_dir.as_deref(),
             &self.exe,
             &options,
             &self.env,

@@ -90,7 +90,7 @@ class Regression(Command):
             check_fuzzer_help=check_fuzzer_help,
             delete_input_container=delete_input_container,
             check_regressions=check_regressions,
-            setup_container=setup_container
+            extra_container=extra_container,
         )
 
     def libfuzzer(
@@ -151,7 +151,7 @@ class Regression(Command):
             check_fuzzer_help=check_fuzzer_help,
             delete_input_container=delete_input_container,
             check_regressions=check_regressions,
-            setup_container=setup_container,
+            extra_container=extra_container,
         )
 
     def _create_job(
