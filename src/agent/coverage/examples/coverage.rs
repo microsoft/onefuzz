@@ -94,8 +94,8 @@ fn main() -> Result<()> {
     } else {
         let cmd = command(&args.command, None);
         let recorded = CoverageRecorder::new(cmd)
-            .allowlist(allowlist.clone())
-            .loader(loader.clone())
+            .allowlist(allowlist)
+            .loader(loader)
             .timeout(timeout)
             .record()?;
 
