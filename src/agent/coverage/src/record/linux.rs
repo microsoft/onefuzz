@@ -2,8 +2,6 @@
 // Licensed under the MIT License.
 
 use std::collections::BTreeMap;
-use std::process::Command;
-use std::time::Duration;
 
 use anyhow::{bail, Result};
 use debuggable_module::linux::LinuxModule;
@@ -14,31 +12,14 @@ use debuggable_module::Address;
 use pete::Tracee;
 
 pub mod debugger;
-use debugger::{DebugEventHandler, Debugger, DebuggerContext, ModuleImage};
+use debugger::{DebugEventHandler, DebuggerContext, ModuleImage};
 
 use crate::allowlist::TargetAllowList;
 use crate::binary::{self, BinaryCoverage};
 
-pub fn record(
-    cmd: Command,
-    timeout: Duration,
-    allowlist: impl Into<Option<TargetAllowList>>,
-) -> Result<BinaryCoverage> {
-    let loader = Loader::new();
-    let allowlist = allowlist.into().unwrap_or_default();
-
-    crate::timer::timed(timeout, move || {
-        let mut recorder = LinuxRecorder::new(&loader, allowlist);
-        let dbg = Debugger::new(&mut recorder);
-        dbg.run(cmd)?;
-
-        Ok(recorder.coverage)
-    })?
-}
-
 pub struct LinuxRecorder<'data> {
     allowlist: TargetAllowList,
-    coverage: BinaryCoverage,
+    pub coverage: BinaryCoverage,
     loader: &'data Loader,
     modules: BTreeMap<FilePath, LinuxModule<'data>>,
 }
@@ -67,7 +48,7 @@ impl<'data> LinuxRecorder<'data> {
         if let Some(image) = context.find_image_for_addr(addr) {
             if let Some(coverage) = self.coverage.modules.get_mut(image.path()) {
                 let offset = addr.offset_from(image.base())?;
-                coverage.increment(offset)?;
+                coverage.increment(offset);
             } else {
                 bail!("coverage not initialized for module {}", image.path());
             }

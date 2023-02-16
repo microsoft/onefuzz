@@ -1,8 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿using System.Text;
+using System.Threading.Tasks;
 using Azure;
+using Azure.Core;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
-using Newtonsoft.Json;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -153,7 +154,7 @@ public class VmOperations : IVmOperations {
 
 
     public async Task<OneFuzzResult<bool>> AddExtensions(Vm vm, Dictionary<string, VirtualMachineExtensionData> extensions) {
-        var status = new List<string>();
+        var statuses = new List<(string extName, string state)>();
         var toCreate = new List<KeyValuePair<string, VirtualMachineExtensionData>>();
         foreach (var extensionConfig in extensions) {
             var extensionName = extensionConfig.Key;
@@ -164,7 +165,7 @@ public class VmOperations : IVmOperations {
                 _logTracer.Info(
                     $"vm extension state: {vm.Name:Tag:VmName} - {extensionName:Tag:ExtensionName} - {extension.ProvisioningState:Tag:ExtensionProvisioningState}"
                 );
-                status.Add(extension.ProvisioningState);
+                statuses.Add((extensionName, extension.ProvisioningState));
             } else {
                 toCreate.Add(extensionConfig);
             }
@@ -175,19 +176,15 @@ public class VmOperations : IVmOperations {
                 await CreateExtension(vm.Name, config.Key, config.Value);
             }
         } else {
-            if (status.All(s => string.Equals(s, "Succeeded", StringComparison.Ordinal))) {
-                return OneFuzzResult<bool>.Ok(true);
-            } else if (status.Any(s => string.Equals(s, "Failed", StringComparison.Ordinal))) {
-                return OneFuzzResult<bool>.Error(
-                    ErrorCode.VM_CREATE_FAILED,
-                    "failed to launch extension"
-                );
-            } else if (!(status.Contains("Creating") || status.Contains("Updating"))) {
-                _logTracer.Error($"vm agent - unknown state {vm.Name:Tag:VmName}: {JsonConvert.SerializeObject(status):Tag:Status}");
+            if (statuses.All(s => s.state == "Succeeded")) {
+                return OneFuzzResult.Ok(true);
+            } else if (statuses.Any(s => s.state == "Failed")) {
+                var errors = await GetExtensionErrors(vm.Name, statuses.Where(s => s.state == "Failed").Select(s => s.extName));
+                return OneFuzzResult<bool>.Error(ErrorCode.VM_CREATE_FAILED, "failed to launch extension(s): " + errors);
             }
         }
 
-        return OneFuzzResult<bool>.Ok(false);
+        return OneFuzzResult.Ok(false);
     }
 
     public async Task<OneFuzzResultVoid> Create(Vm vm) {
@@ -223,22 +220,48 @@ public class VmOperations : IVmOperations {
         }
     }
 
+    private ResourceIdentifier GetVirtualMachineIdentifier(string vmName)
+        => VirtualMachineResource.CreateResourceIdentifier(
+            _context.Creds.GetSubscription(),
+            _context.Creds.GetBaseResourceGroup(),
+            vmName);
+
     public async Async.Task CreateExtension(string vmName, string extensionName, VirtualMachineExtensionData extension) {
         _logTracer.Info($"creating extension: {_context.Creds.GetBaseResourceGroup():Tag:ResourceGroup} - {vmName:Tag:VmName} - {extensionName:Tag:ExtensionName}");
-        var vm = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(vmName);
 
+        var vm = _context.Creds.ArmClient.GetVirtualMachineResource(GetVirtualMachineIdentifier(vmName));
         try {
-            _ = await vm.Value.GetVirtualMachineExtensions().CreateOrUpdateAsync(
+            _ = await vm.GetVirtualMachineExtensions().CreateOrUpdateAsync(
                 WaitUntil.Started,
                 extensionName,
-                extension
-            );
+                extension);
         } catch (RequestFailedException ex) when
             (ex.Status == 409 &&
                 (ex.Message.Contains("VM is marked for deletion") || ex.Message.Contains("The request failed due to conflict with a concurrent request."))) {
             _logTracer.Info($"Tried to create {extensionName:Tag:ExtensionName} for {vmName:Tag:VmName} but failed due to {ex.Message:Tag:Error}");
         }
         return;
+    }
+
+    public async Async.Task<string> GetExtensionErrors(string vmName, IEnumerable<string> extensionNames) {
+        var vmResource = _context.Creds.ArmClient.GetVirtualMachineResource(GetVirtualMachineIdentifier(vmName));
+        var vmData = await vmResource.GetAsync(InstanceViewTypes.InstanceView);
+
+        var result = new StringBuilder();
+        foreach (var extensionName in extensionNames) {
+            result.Append($"Errors for extension '{extensionName}':");
+            var extensionData = vmData.Value.Data.InstanceView.Extensions.FirstOrDefault(ext => ext.Name == extensionName);
+            if (extensionData is null) {
+                result.Append($" (cannot get errors - extension was not found on target VM)\n");
+            } else {
+                result.Append('\n');
+                foreach (var status in extensionData.Statuses) {
+                    result.Append($"{status.Time}:{status.Level}: {status.Code} ({status.DisplayStatus}) - {status.Message}\n");
+                }
+            }
+        }
+
+        return result.ToString();
     }
 
     async Task<OneFuzzResultVoid> CreateVm(

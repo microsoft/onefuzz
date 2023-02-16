@@ -26,7 +26,9 @@ public interface IServiceConfig {
 
     public string? DiagnosticsAzureBlobContainerSasUrl { get; }
     public string? DiagnosticsAzureBlobRetentionDays { get; }
-
+    public string? CliAppId { get; }
+    public string? Authority { get; }
+    public string? TenantDomain { get; }
     public string? MultiTenantDomain { get; }
     public ResourceIdentifier? OneFuzzDataStorage { get; }
     public ResourceIdentifier? OneFuzzFuncStorage { get; }
@@ -37,8 +39,6 @@ public interface IServiceConfig {
 
     public string? OneFuzzMonitor { get; }
     public string? OneFuzzOwner { get; }
-
-    public string OneFuzzNodeDisposalStrategy { get; }
 
     public string? OneFuzzResourceGroup { get; }
     public string? OneFuzzTelemetry { get; }
@@ -99,7 +99,9 @@ public class ServiceConfiguration : IServiceConfig {
 
     public string? DiagnosticsAzureBlobContainerSasUrl { get => GetEnv("DIAGNOSTICS_AZUREBLOBCONTAINERSASURL"); }
     public string? DiagnosticsAzureBlobRetentionDays { get => GetEnv("DIAGNOSTICS_AZUREBLOBRETENTIONINDAYS"); }
-
+    public string? CliAppId { get => GetEnv("CLI_APP_ID"); }
+    public string? Authority { get => GetEnv("AUTHORITY"); }
+    public string? TenantDomain { get => GetEnv("TENANT_DOMAIN"); }
     public string? MultiTenantDomain { get => GetEnv("MULTI_TENANT_DOMAIN"); }
 
     public ResourceIdentifier? OneFuzzDataStorage {
@@ -135,8 +137,6 @@ public class ServiceConfiguration : IServiceConfig {
     }
 
     public string? OneFuzzAllowOutdatedAgent => GetEnv("ONEFUZZ_ALLOW_OUTDATED_AGENT");
-
-    public string OneFuzzNodeDisposalStrategy { get => GetEnv("ONEFUZZ_NODE_DISPOSAL_STRATEGY") ?? "scale_in"; }
     public string OneFuzzStoragePrefix => ""; // in production we never prefix the tables
 
     public Uri OneFuzzBaseAddress {

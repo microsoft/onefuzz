@@ -15,8 +15,14 @@ public abstract class NotificationsBase {
         _context = context;
     }
 
-    public void LogFailedNotification(Report report, Exception error, Guid notificationId) {
+    public async Async.Task LogFailedNotification(Report report, Exception error, Guid notificationId) {
         _logTracer.Error($"notification failed: notification_id:{notificationId:Tag:NotificationId} job_id:{report.JobId:Tag:JobId} task_id:{report.TaskId:Tag:TaskId} err:{error.Message:Tag:Error}");
+        Error? err = new Error(ErrorCode.NOTIFICATION_FAILURE, new string[] { $"{error}" });
+        await _context.Events.SendEvent(new EventNotificationFailed(
+            NotificationId: notificationId,
+            JobId: report.JobId,
+            Error: err)
+        );
     }
 
     public static string ReplaceFirstSetup(string executable) {
@@ -42,6 +48,7 @@ public abstract class NotificationsBase {
             Container container,
             string filename,
             Report report,
+            ILogTracer log,
             Task? task = null,
             Job? job = null,
             Uri? targetUrl = null,
@@ -70,7 +77,10 @@ public abstract class NotificationsBase {
             }
 
             await context.ConfigurationRefresher.TryRefreshAsync().IgnoreResult();
-            var scribanOnly = scribanOnlyOverride ?? await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly);
+            var scribanOnlyFeatureFlag = await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly);
+            log.Info($"ScribanOnlyFeatureFlag: {scribanOnlyFeatureFlag}");
+
+            var scribanOnly = scribanOnlyOverride ?? scribanOnlyFeatureFlag;
 
             return new Renderer(
                 container,

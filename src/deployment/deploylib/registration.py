@@ -244,7 +244,6 @@ def create_application_registration(
     app = get_application(
         display_name=onefuzz_instance_name, subscription_id=subscription_id
     )
-
     if not app:
         raise Exception("onefuzz app registration not found")
 
@@ -307,12 +306,13 @@ def create_application_registration(
         error: Optional[Exception] = None
         for _ in range(10):
             try:
-                query_microsoft_graph(
+                service_principal = query_microsoft_graph(
                     method="POST",
                     resource="servicePrincipals",
                     body=service_principal_params,
                     subscription=subscription_id,
                 )
+                logger.info(f"created service principal:\n {service_principal}")
                 return
             except GraphQueryError as err:
                 # work around timing issue when creating service principal
@@ -337,7 +337,9 @@ def create_application_registration(
     registered_app_id = registered_app["appId"]
     app_id = app["appId"]
 
-    authorize_and_assign_role(app_id, registered_app_id, approle, subscription_id)
+    authorize_and_assign_role(
+        UUID(app_id), UUID(registered_app_id), approle, subscription_id
+    )
     return registered_app
 
 
@@ -382,7 +384,6 @@ def add_application_password(
 def add_application_password_impl(
     password_name: str, app_object_id: UUID, subscription_id: str
 ) -> Tuple[str, str]:
-
     app = query_microsoft_graph(
         method="GET",
         resource="applications/%s" % app_object_id,
@@ -434,7 +435,6 @@ def get_application(
         filters.append("displayName eq '%s'" % display_name)
 
     filter_str = " and ".join(filters)
-
     apps = query_microsoft_graph(
         method="GET",
         resource="applications",
@@ -655,8 +655,11 @@ def assign_instance_app_role(
 
     if len(onefuzz_service_principals) == 0:
         raise Exception("onefuzz app service principal not found")
-    onefuzz_service_principal = onefuzz_service_principals[0]
 
+    onefuzz_service_principal = onefuzz_service_principals[0]
+    logger.info(
+        f"Assigning app role instance service principal {onefuzz_service_principal['id']}"
+    )
     if isinstance(application_name, str):
         application_service_principals = query_microsoft_graph_list(
             method="GET",

@@ -67,7 +67,7 @@ impl BlobLogWriter {
         max_log_size: u64,
     ) -> Result<Self> {
         let container_client = TaskLogger::create_container_client(&log_container)?;
-        let prefix = format!("{}/{}", task_id, machine_id);
+        let prefix = format!("{task_id}/{machine_id}");
         let pages: Vec<ListBlobsResponse> = container_client
             .list_blobs()
             .prefix(prefix.clone())
@@ -100,7 +100,7 @@ impl BlobLogWriter {
         let blob_id = match blob_ids.into_iter().last() {
             Some(id) => id,
             None => {
-                let blob_client = container_client.blob_client(format!("{}/1.log", prefix));
+                let blob_client = container_client.blob_client(format!("{prefix}/1.log"));
                 blob_client
                     .put_append_blob()
                     .await
@@ -135,7 +135,7 @@ impl LogWriter<BlobLogWriter> for BlobLogWriter {
                         .data
                         .iter()
                         .map(|p| p.as_values())
-                        .map(|(name, val)| format!("{} {}", name, val))
+                        .map(|(name, val)| format!("{name} {val}"))
                         .collect::<Vec<_>>()
                         .join(", ")
                 )
@@ -353,8 +353,7 @@ impl TaskLogger {
                                 timestamp: chrono::Utc::now(),
                                 level: log::Level::Info,
                                 message: format!(
-                                    "onefuzz task logger: Skipped {} traces/events",
-                                    skipped_messages_count
+                                    "onefuzz task logger: Skipped {skipped_messages_count} traces/events"
                                 ),
                             };
 
@@ -591,9 +590,9 @@ mod tests {
         let x = events.read().unwrap();
 
         for (k, values) in x.iter() {
-            println!("{}", k);
+            println!("{k}");
             for v in values {
-                println!(" {:?}", v);
+                println!(" {v:?}");
             }
         }
 
@@ -649,9 +648,9 @@ mod tests {
         let x = events.read().unwrap();
 
         for (k, values) in x.iter() {
-            println!("{}", k);
+            println!("{k}");
             for v in values {
-                println!(" {:?}", v);
+                println!(" {v:?}");
             }
         }
 

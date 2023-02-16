@@ -189,7 +189,7 @@ impl_from_state_for_worker!(Done);
 
 #[async_trait]
 pub trait IWorkerRunner: Downcast {
-    async fn run(&mut self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>>;
+    async fn run(&self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>>;
 }
 
 impl_downcast!(IWorkerRunner);
@@ -214,7 +214,7 @@ impl WorkerRunner {
 
 #[async_trait]
 impl IWorkerRunner for WorkerRunner {
-    async fn run(&mut self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
+    async fn run(&self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
         let working_dir = work.working_dir(self.machine_identity.machine_id)?;
 
         debug!("worker working dir = {}", working_dir.display());
@@ -268,12 +268,12 @@ impl IWorkerRunner for WorkerRunner {
 }
 
 trait SuspendableChild {
-    fn suspend(&mut self) -> Result<()>;
+    fn suspend(&self) -> Result<()>;
 }
 
 #[cfg(target_os = "windows")]
 impl SuspendableChild for Child {
-    fn suspend(&mut self) -> Result<()> {
+    fn suspend(&self) -> Result<()> {
         // DebugActiveProcess suspends all threads in the process.
         // https://docs.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-debugactiveprocess#remarks
         let result = unsafe { winapi::um::debugapi::DebugActiveProcess(self.id()) };
@@ -286,7 +286,7 @@ impl SuspendableChild for Child {
 
 #[cfg(target_os = "linux")]
 impl SuspendableChild for Child {
-    fn suspend(&mut self) -> Result<()> {
+    fn suspend(&self) -> Result<()> {
         use nix::sys::signal;
         signal::kill(
             nix::unistd::Pid::from_raw(self.id() as _),

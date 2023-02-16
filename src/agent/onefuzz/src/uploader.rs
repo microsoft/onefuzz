@@ -36,13 +36,13 @@ impl BlobUploader {
 
         let url = {
             let url_path = self.url.path();
-            let blob_path = format!("{}/{}", url_path, file_name);
+            let blob_path = format!("{url_path}/{file_name}");
             let mut url = self.url.clone();
             url.set_path(&blob_path);
             url
         };
 
-        let content_length = format!("{}", file_len);
+        let content_length = format!("{file_len}");
 
         let resp = send_retry_reqwest(
             || {

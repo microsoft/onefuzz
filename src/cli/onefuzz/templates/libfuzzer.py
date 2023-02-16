@@ -68,7 +68,13 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
-        coverage_filter: Optional[str] = None,
+        function_allowlist: Optional[str] = None,
+        module_allowlist: Optional[str] = None,
+        source_allowlist: Optional[str] = None,
+        analyzer_exe: Optional[str] = None,
+        analyzer_options: Optional[List[str]] = None,
+        analyzer_env: Optional[Dict[str, str]] = None,
+        tools: Optional[Container] = None,
     ) -> None:
         target_options = target_options or []
 
@@ -214,7 +220,9 @@ class Libfuzzer(Command):
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             check_fuzzer_help=check_fuzzer_help,
-            coverage_filter=coverage_filter,
+            function_allowlist=function_allowlist,
+            module_allowlist=module_allowlist,
+            source_allowlist=source_allowlist,
         )
 
         report_containers = [
@@ -246,6 +254,43 @@ class Libfuzzer(Command):
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             minimized_stack_depth=minimized_stack_depth,
         )
+
+        if analyzer_exe is not None:
+            self.logger.info("creating custom analysis")
+
+            if tools is None:
+                self.logger.error(
+                    "tools container cannot be empty when specifying a custom analyzer"
+                )
+                return None
+
+            analysis_containers = [
+                (ContainerType.setup, containers[ContainerType.setup]),
+                (ContainerType.tools, tools),
+                (ContainerType.analysis, containers[ContainerType.analysis]),
+                (ContainerType.crashes, containers[ContainerType.crashes]),
+            ]
+
+            self.onefuzz.tasks.create(
+                job.job_id,
+                TaskType.generic_analysis,
+                target_exe,
+                analysis_containers,
+                duration=duration,
+                pool_name=pool_name,
+                vm_count=vm_count,
+                reboot_after_setup=reboot_after_setup,
+                target_options=target_options,
+                target_env=target_env,
+                analyzer_exe=analyzer_exe,
+                analyzer_options=analyzer_options,
+                analyzer_env=analyzer_env,
+                tags=tags,
+                prereq_tasks=[fuzzer_task.task_id],
+                colocate=colocate_all_tasks or colocate_secondary_tasks,
+                debug=debug,
+                target_timeout=target_timeout,
+            )
 
     def basic(
         self,
@@ -282,7 +327,13 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
-        coverage_filter: Optional[File] = None,
+        function_allowlist: Optional[File] = None,
+        module_allowlist: Optional[File] = None,
+        source_allowlist: Optional[File] = None,
+        analyzer_exe: Optional[str] = None,
+        analyzer_options: Optional[List[str]] = None,
+        analyzer_env: Optional[Dict[str, str]] = None,
+        tools: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -331,14 +382,15 @@ class Libfuzzer(Command):
         )
 
         if existing_inputs:
-            self.onefuzz.containers.get(existing_inputs)
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
 
         if readonly_inputs:
-            self.onefuzz.containers.get(readonly_inputs)
             helper.containers[ContainerType.readonly_inputs] = readonly_inputs
+
+        if analyzer_exe is not None:
+            helper.define_containers(ContainerType.analysis)
 
         helper.create_containers()
         helper.setup_notifications(notification_config)
@@ -350,12 +402,26 @@ class Libfuzzer(Command):
 
         target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
 
-        if coverage_filter:
-            coverage_filter_blob_name: Optional[str] = helper.setup_relative_blob_name(
-                coverage_filter, setup_dir
+        if function_allowlist:
+            function_allowlist_blob_name: Optional[
+                str
+            ] = helper.setup_relative_blob_name(function_allowlist, setup_dir)
+        else:
+            function_allowlist_blob_name = None
+
+        if module_allowlist:
+            module_allowlist_blob_name: Optional[str] = helper.setup_relative_blob_name(
+                module_allowlist, setup_dir
             )
         else:
-            coverage_filter_blob_name = None
+            module_allowlist_blob_name = None
+
+        if source_allowlist:
+            source_allowlist_blob_name: Optional[str] = helper.setup_relative_blob_name(
+                source_allowlist, setup_dir
+            )
+        else:
+            source_allowlist_blob_name = None
 
         self._create_tasks(
             job=helper.job,
@@ -379,7 +445,13 @@ class Libfuzzer(Command):
             check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
             minimized_stack_depth=minimized_stack_depth,
-            coverage_filter=coverage_filter_blob_name,
+            function_allowlist=function_allowlist_blob_name,
+            module_allowlist=module_allowlist_blob_name,
+            source_allowlist=source_allowlist_blob_name,
+            analyzer_exe=analyzer_exe,
+            analyzer_options=analyzer_options,
+            analyzer_env=analyzer_env,
+            tools=tools,
         )
 
         self.logger.info("done creating tasks")
@@ -414,7 +486,6 @@ class Libfuzzer(Command):
         preserve_existing_outputs: bool = False,
         check_fuzzer_help: bool = True,
     ) -> Optional[Job]:
-
         """
         libfuzzer merge task
         """
@@ -528,15 +599,23 @@ class Libfuzzer(Command):
         wait_for_running: bool = False,
         wait_for_files: Optional[List[ContainerType]] = None,
         existing_inputs: Optional[Container] = None,
+        readonly_inputs: Optional[Container] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
+        notification_config: Optional[NotificationConfig] = None,
     ) -> Optional[Job]:
-
         """
         libfuzzer-dotnet task
         """
+
+        # ensure containers exist
+        if existing_inputs:
+            self.onefuzz.containers.get(existing_inputs)
+
+        if readonly_inputs:
+            self.onefuzz.containers.get(readonly_inputs)
 
         harness = "libfuzzer-dotnet"
 
@@ -578,10 +657,12 @@ class Libfuzzer(Command):
         )
 
         if existing_inputs:
-            self.onefuzz.containers.get(existing_inputs)
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
+
+        if readonly_inputs:
+            helper.containers[ContainerType.readonly_inputs] = readonly_inputs
 
         fuzzer_containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
@@ -590,6 +671,7 @@ class Libfuzzer(Command):
         ]
 
         helper.create_containers()
+        helper.setup_notifications(notification_config)
 
         helper.upload_setup(setup_dir, target_exe)
         if inputs:
@@ -652,13 +734,22 @@ class Libfuzzer(Command):
         wait_for_running: bool = False,
         wait_for_files: Optional[List[ContainerType]] = None,
         existing_inputs: Optional[Container] = None,
+        readonly_inputs: Optional[Container] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
         expect_crash_on_failure: bool = False,
+        notification_config: Optional[NotificationConfig] = None,
     ) -> Optional[Job]:
         pool = self.onefuzz.pools.get(pool_name)
+
+        # verify containers exist
+        if existing_inputs:
+            self.onefuzz.containers.get(existing_inputs)
+
+        if readonly_inputs:
+            self.onefuzz.containers.get(readonly_inputs)
 
         # We _must_ proactively specify the OS based on pool.
         #
@@ -706,10 +797,12 @@ class Libfuzzer(Command):
         containers = helper.containers
 
         if existing_inputs:
-            self.onefuzz.containers.get(existing_inputs)
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
+
+        if readonly_inputs:
+            helper.containers[ContainerType.readonly_inputs] = readonly_inputs
 
         # Assumes that `libfuzzer-dotnet` and supporting tools were uploaded upon deployment.
         fuzzer_tools_container = Container(
@@ -724,6 +817,7 @@ class Libfuzzer(Command):
         ]
 
         helper.create_containers()
+        helper.setup_notifications(notification_config)
 
         helper.upload_setup(setup_dir, target_dll)
 
@@ -858,7 +952,6 @@ class Libfuzzer(Command):
         check_retry_count: Optional[int] = 300,
         check_fuzzer_help: bool = True,
     ) -> Optional[Job]:
-
         """
         libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
         """

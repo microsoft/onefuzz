@@ -4,6 +4,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 6.4.0
+
+### Added 
+* Deployment/CLI: OneFuzz Config refactored - `tenant_id`, `tenant_domain`, `multi_tenant_domain`, and `cli_client_id` are now required values in the config.json used during deployment and no longer required when running the config command. [#2771](https://github.com/microsoft/onefuzz/pull/2771), [#2811](https://github.com/microsoft/onefuzz/pull/2811)
+* Agent: Fully escape allowlist rules [#2784](https://github.com/microsoft/onefuzz/pull/2784)
+* Agent: Apply allowlist to all blocks within a function [#2785](https://github.com/microsoft/onefuzz/pull/2785)
+* CLI: Added a cli subcommand `onefuzz debug notification template` to validate scriban notification templates [#2800](https://github.com/microsoft/onefuzz/pull/2800)
+* Service: Added Notification failure webhook to communicate Notification failures [#2628](https://github.com/microsoft/onefuzz/pull/2628)
+### Changed
+* Service: Include `AssignedTo` when failing to create a work item due to an authentication exception [#2770](https://github.com/microsoft/onefuzz/pull/2770)
+
+### Fixed
+* Agent: Fixes & improvements to `Expand` behavior [#2789](https://github.com/microsoft/onefuzz/pull/2789)
+* Agent: Triming whitespace in output from monitored process before printing [#2782](https://github.com/microsoft/onefuzz/pull/2782)
+* CLI: Fixed default value of analyzer_exe [#2797](https://github.com/microsoft/onefuzz/pull/2797)
+* CLI: Fixed missing `readonly_inputs` parameter in dotnet & dotnet_dll templates [#2740](https://github.com/microsoft/onefuzz/pull/2740)
+* Service: Fixed query to get the existing proxy [#2791](https://github.com/microsoft/onefuzz/pull/2791)
+* Service: Truncate webhooks message length for azure queue size compatibility [#2788](https://github.com/microsoft/onefuzz/pull/2788)
+
+## 6.3.0
+### Added 
+* Service: Add Optional Analysis Task to Libfuzzer Template [#2748](https://github.com/microsoft/onefuzz/pull/2748)
+* Agent: Use `elsa` for improved interface with `debuggable_module::Loader` [#2703](https://github.com/microsoft/onefuzz/pull/2703)
+* Agent: Add sourceline output and logging to coverage example [#2753](https://github.com/microsoft/onefuzz/pull/2753)
+* Agent: Fix Linux detection of shared library mappings [#2754](https://github.com/microsoft/onefuzz/pull/2754)
+* Agent: Support AllowList extension [#2756](https://github.com/microsoft/onefuzz/pull/2756)
+* Agent: Add `stdio` dumping to example [#2757](https://github.com/microsoft/onefuzz/pull/2757)
+### Changed
+* Service: Update Azure Cli [#2733](https://github.com/microsoft/onefuzz/pull/2733)
+* Service: Truncate Large Webhook Events [#2742](https://github.com/microsoft/onefuzz/pull/2742)
+* Service: Wrap fallible ORM functions in try/catch [#2745](https://github.com/microsoft/onefuzz/pull/2745)
+* Agent/Supervisor/Proxy: Updated third-party Rust dependencies. [#2744](https://github.com/microsoft/onefuzz/pull/2744)
+### Fixed
+* Agent: Fixed Mulit-Agent Issue - Added `machine_id` to config_path and failure_path of the Agent [#2731](https://github.com/microsoft/onefuzz/pull/2731)
+* Service: Fixed Proxy Table Query [#2743](https://github.com/microsoft/onefuzz/pull/2743)
+* Service: Fix Notification Logic and Regression Reporting [#2751](https://github.com/microsoft/onefuzz/pull/2751)[#2758](https://github.com/microsoft/onefuzz/pull/2758)
+
+## 6.2.0
+### Added
+* Agent: Added more into-JSON coverage conversions [#2725](https://github.com/microsoft/onefuzz/pull/2725)
+* Agent: Added binary coverage merging measurements [#2724](https://github.com/microsoft/onefuzz/pull/2724)
+* Agent: Added deserialization compatibility functions [#2719](https://github.com/microsoft/onefuzz/pull/2719)
+* Agent: Added OS-generic `CoverageRecord` builder to capture output of target child process and allow `Loader` reuse in coverage recording [#2716](https://github.com/microsoft/onefuzz/pull/2716)
+* Agent: Improve source coverage of HTML reports [#2700](https://github.com/microsoft/onefuzz/pull/2700), [#2701](https://github.com/microsoft/onefuzz/pull/2701), [#2706](https://github.com/microsoft/onefuzz/pull/2706)
+* Deployment: Added support for custom domain names used as OneFuzz endpoints [#2720](https://github.com/microsoft/onefuzz/pull/2720)
+* Service: Added documentation for unmanaged node deployment [#2694](https://github.com/microsoft/onefuzz/pull/2694)
+### Changed
+* Agent: Use a custom `Output` type when recording coverage [#2723](https://github.com/microsoft/onefuzz/pull/2723)
+* Agent: Reduce mutation in the agent state machine [#2710](https://github.com/microsoft/onefuzz/pull/2710)
+* Service: Include dotnet version in `info` response [#2693](https://github.com/microsoft/onefuzz/pull/2693)
+* Service: Use feature flags to get the node disposal strategy [#2713](https://github.com/microsoft/onefuzz/pull/2713)
+### Fixed
+* Agent: Escape periods when converting globs [#2721](https://github.com/microsoft/onefuzz/pull/2721)
+* Agent: Ignore benign recv hangup in agent timer functions [#2722](https://github.com/microsoft/onefuzz/pull/2722)
+* Agent: Fix NullRef exception when getting a scaleset that does not exist [#2692](https://github.com/microsoft/onefuzz/pull/2692)
+* Service: Downgrade error on _"cannot delete nodes from scaleset"_ to a warning [#2691](https://github.com/microsoft/onefuzz/pull/2691)
+* Service: Fixed build issue related to dotnet version `7.0.101` [#2698](https://github.com/microsoft/onefuzz/pull/2698)
+* Service: Adding `public` identifier to `Events` to restore missing events [#2705](https://github.com/microsoft/onefuzz/pull/2705)
+
 ## 6.1.0
 ### Added
 * Service: Added support for feature flags which allows us to deploy new code in parts and turn it on when it's ready. [#2620](https://github.com/microsoft/onefuzz/pull/2620)

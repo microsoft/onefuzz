@@ -68,6 +68,16 @@ Run the agent with the following command. If you need more nodes use a different
 onefuzz-agent run --machine_id <machine_guid> -c <path_to_config_file> --reset_lock
 ```
 
+Alternatively, the agent folder contains a Dockerfile which provide the configuration of a docker container.
+you can use it by first building the container
+```cmd
+docker build --t <container_name> .
+```
+Then start the agent inside the container
+```cmd
+docker run  <container_name> --machine_id <machine_id> --reset_lock
+```
+
 ### Verify that the agent is registered to OneFuzz
 
 Using the OneFuzz CLI run the following command:
@@ -78,3 +88,33 @@ onefuzz nodes get <machine_guid>
 
 This should return one entry. Verify that the `pool_name` matched the pool name created earlier.
 From here you will be able to schedule jobs on that pool and they will be running.
+
+
+## Troubleshooting
+
+### increase the verbosity of the logs
+It can help when investigating issues to increase the log verbosity. you will need to set the [RUST_LOG](https://docs.rs/env_logger/latest/env_logger/#enabling-logging) environment variable when starting docker
+
+```
+docker run --rm --env RUST_LOG=<log_level> <image_name> --machine_id <machine_id>
+```
+log_level can be any of
+- error
+- warn
+- info
+- debug
+- trace
+
+
+### use the container interactively
+you can use the container interactively by with the following command
+
+windows
+```
+docker run --it --rm --entrypoint powershell <image_name>
+```
+
+linux
+```
+docker run --it --rm --entrypoint bash <image_name>
+```

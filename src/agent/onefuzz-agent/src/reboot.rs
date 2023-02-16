@@ -7,40 +7,47 @@ use std::process::Command;
 use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use tokio::fs;
+use uuid::Uuid;
 
 use crate::work::*;
 
 #[async_trait]
 pub trait IReboot: Downcast {
-    async fn save_context(&mut self, ctx: RebootContext) -> Result<()>;
+    async fn save_context(&self, ctx: RebootContext) -> Result<()>;
 
-    async fn load_context(&mut self) -> Result<Option<RebootContext>>;
+    async fn load_context(&self) -> Result<Option<RebootContext>>;
 
-    fn invoke(&mut self) -> Result<()>;
+    fn invoke(&self) -> Result<()>;
 }
 
 impl_downcast!(IReboot);
 
 #[async_trait]
 impl IReboot for Reboot {
-    async fn save_context(&mut self, ctx: RebootContext) -> Result<()> {
+    async fn save_context(&self, ctx: RebootContext) -> Result<()> {
         self.save_context(ctx).await
     }
 
-    async fn load_context(&mut self) -> Result<Option<RebootContext>> {
+    async fn load_context(&self) -> Result<Option<RebootContext>> {
         self.load_context().await
     }
 
-    fn invoke(&mut self) -> Result<()> {
+    fn invoke(&self) -> Result<()> {
         self.invoke()
     }
 }
 
-pub struct Reboot;
+pub struct Reboot {
+    machine_id: Uuid,
+}
 
 impl Reboot {
-    pub async fn save_context(&mut self, ctx: RebootContext) -> Result<()> {
-        let path = reboot_context_path()?;
+    pub fn new(machine_id: Uuid) -> Self {
+        Self { machine_id }
+    }
+
+    pub async fn save_context(&self, ctx: RebootContext) -> Result<()> {
+        let path = reboot_context_path(self.machine_id)?;
 
         info!("saving reboot context to: {}", path.display());
 
@@ -54,9 +61,9 @@ impl Reboot {
         Ok(())
     }
 
-    pub async fn load_context(&mut self) -> Result<Option<RebootContext>> {
+    pub async fn load_context(&self) -> Result<Option<RebootContext>> {
         use std::io::ErrorKind;
-        let path = reboot_context_path()?;
+        let path = reboot_context_path(self.machine_id)?;
 
         info!("checking for saved reboot context: {}", path.display());
 
@@ -82,18 +89,23 @@ impl Reboot {
     }
 
     #[cfg(target_family = "unix")]
-    pub fn invoke(&mut self) -> Result<()> {
-        info!("invoking local reboot command");
-
-        Command::new("reboot").arg("-f").status()?;
-
-        self.wait_for_reboot()
+    pub fn invoke(&self) -> Result<()> {
+        match std::path::Path::new("/.dockerenv").try_exists() {
+            Ok(true) => {
+                info!("running inside docker, exiting instead of rebooting");
+                std::process::exit(0);
+            }
+            _ => {
+                info!("invoking local reboot command");
+                Command::new("reboot").arg("-f").status()?;
+                self.wait_for_reboot()
+            }
+        }
     }
 
     #[cfg(target_family = "windows")]
-    pub fn invoke(&mut self) -> Result<()> {
+    pub fn invoke(&self) -> Result<()> {
         info!("invoking local reboot command");
-
         Command::new("powershell.exe")
             .arg("-Command")
             .arg("Restart-Computer")
@@ -127,8 +139,8 @@ impl RebootContext {
     }
 }
 
-fn reboot_context_path() -> Result<PathBuf> {
-    Ok(onefuzz::fs::onefuzz_root()?.join("reboot_context.json"))
+fn reboot_context_path(machine_id: Uuid) -> Result<PathBuf> {
+    Ok(onefuzz::fs::onefuzz_root()?.join(format!("reboot_context_{machine_id}.json")))
 }
 
 #[cfg(test)]

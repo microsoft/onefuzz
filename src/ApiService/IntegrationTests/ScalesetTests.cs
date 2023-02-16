@@ -102,4 +102,38 @@ public abstract class ScalesetTestBase : FunctionTestBase {
         // auth should not be included in the response
         Assert.Null(resp.Auth);
     }
+
+    [Fact]
+    public async Async.Task Create_Scaleset_Under_NonExistent_Pool_Provides_Error() {
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+
+        // override the found user credentials 
+        var userObjectId = Guid.NewGuid();
+        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn");
+        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+
+        await Context.InsertAll(
+            // user must be admin
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { userObjectId } });
+
+        var poolName = PoolName.Parse("nosuchpool");
+        // pool not created
+        var req = new ScalesetCreate(
+            poolName,
+            TestVmssOperations.TestSku,
+            "Image",
+            Region: null,
+            Size: 1,
+            SpotInstances: false,
+            Tags: new Dictionary<string, string>());
+
+        var func = new ScalesetFunction(Logger, auth, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
+
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        var body = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.INVALID_REQUEST.ToString(), body.Title);
+        Assert.Contains("unable to find pool with name nosuchpool", body.Detail);
+    }
 }

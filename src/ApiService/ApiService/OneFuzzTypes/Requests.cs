@@ -125,7 +125,8 @@ public record NotificationCreate(
 ) : BaseRequest;
 
 public record NotificationSearch(
-    List<Container>? Container
+    List<Container>? Container,
+    Guid? NotificationId
 ) : BaseRequest;
 
 public record NotificationGet(
@@ -309,4 +310,8 @@ public record AgentRegistrationPost(
 public record TemplateValidationPost(
     [property: Required] string Template,
     TemplateRenderContext? Context
+) : BaseRequest;
+
+public record JinjaToScribanMigrationPost(
+    bool DryRun = false
 ) : BaseRequest;

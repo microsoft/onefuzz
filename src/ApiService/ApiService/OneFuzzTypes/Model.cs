@@ -208,7 +208,13 @@ public record TaskDetails(
     bool? PreserveExistingOutputs = null,
     List<string>? ReportList = null,
     long? MinimizedStackDepth = null,
+
+    // Deprecated. Retained for processing old table data.
     string? CoverageFilter = null,
+
+    string? FunctionAllowlist = null,
+    string? ModuleAllowlist = null,
+    string? SourceAllowlist = null,
     string? TargetAssembly = null,
     string? TargetClass = null,
     string? TargetMethod = null
@@ -452,8 +458,31 @@ public record Report(
     string? MinimizedStackFunctionLinesSha256,
     string? ToolName,
     string? ToolVersion,
-    string? OnefuzzVersion
-) : IReport;
+    string? OnefuzzVersion,
+    Uri? ReportUrl
+) : IReport, ITruncatable<Report> {
+    public Report Truncate(int maxLength) {
+        return this with {
+            Executable = Executable[..maxLength],
+            CrashType = CrashType[..Math.Min(maxLength, CrashType.Length)],
+            CrashSite = CrashSite[..Math.Min(maxLength, CrashSite.Length)],
+            CallStack = TruncateUtils.TruncateList(CallStack, maxLength),
+            CallStackSha256 = CallStackSha256[..Math.Min(maxLength, CallStackSha256.Length)],
+            InputSha256 = InputSha256[..Math.Min(maxLength, InputSha256.Length)],
+            AsanLog = AsanLog?[..Math.Min(maxLength, AsanLog.Length)],
+            ScarinessDescription = ScarinessDescription?[..Math.Min(maxLength, ScarinessDescription.Length)],
+            MinimizedStack = MinimizedStack != null ? TruncateUtils.TruncateList(MinimizedStack, maxLength) : MinimizedStack,
+            MinimizedStackSha256 = MinimizedStackSha256?[..Math.Min(maxLength, MinimizedStackSha256.Length)],
+            MinimizedStackFunctionNames = MinimizedStackFunctionNames != null ? TruncateUtils.TruncateList(MinimizedStackFunctionNames, maxLength) : MinimizedStackFunctionNames,
+            MinimizedStackFunctionNamesSha256 = MinimizedStackFunctionNamesSha256?[..Math.Min(maxLength, MinimizedStackFunctionNamesSha256.Length)],
+            MinimizedStackFunctionLines = MinimizedStackFunctionLines != null ? TruncateUtils.TruncateList(MinimizedStackFunctionLines, maxLength) : MinimizedStackFunctionLines,
+            MinimizedStackFunctionLinesSha256 = MinimizedStackFunctionLinesSha256?[..Math.Min(maxLength, MinimizedStackFunctionLinesSha256.Length)],
+            ToolName = ToolName?[..Math.Min(maxLength, ToolName.Length)],
+            ToolVersion = ToolVersion?[..Math.Min(maxLength, ToolVersion.Length)],
+            OnefuzzVersion = OnefuzzVersion?[..Math.Min(maxLength, OnefuzzVersion.Length)],
+        };
+    }
+}
 
 public record NoReproReport(
     string InputSha,
@@ -463,18 +492,40 @@ public record NoReproReport(
     Guid JobId,
     long Tries,
     string? Error
-);
+) : ITruncatable<NoReproReport> {
+    public NoReproReport Truncate(int maxLength) {
+        return this with {
+            Executable = Executable?[..maxLength],
+            Error = Error?[..maxLength]
+        };
+    }
+}
 
 public record CrashTestResult(
     Report? CrashReport,
     NoReproReport? NoReproReport
-);
+) : ITruncatable<CrashTestResult> {
+    public CrashTestResult Truncate(int maxLength) {
+        return new CrashTestResult(
+            CrashReport?.Truncate(maxLength),
+            NoReproReport?.Truncate(maxLength)
+        );
+    }
+}
 
 public record RegressionReport(
     CrashTestResult CrashTestResult,
-    CrashTestResult? OriginalCrashTestResult
-) : IReport;
-
+    CrashTestResult? OriginalCrashTestResult,
+    Uri? ReportUrl
+) : IReport, ITruncatable<RegressionReport> {
+    public RegressionReport Truncate(int maxLength) {
+        return new RegressionReport(
+            CrashTestResult.Truncate(maxLength),
+            OriginalCrashTestResult?.Truncate(maxLength),
+            ReportUrl
+        );
+    }
+}
 
 [JsonConverter(typeof(NotificationTemplateConverter))]
 #pragma warning disable CA1715
@@ -582,6 +633,7 @@ public record AdoTemplate(
     ADODuplicateTemplate OnDuplicate,
     string? Comment = null
     ) : NotificationTemplate;
+
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate;
 
 
@@ -926,7 +978,13 @@ public record TaskUnitConfig(
     public long? EnsembleSyncDelay { get; set; }
     public List<string>? ReportList { get; set; }
     public long? MinimizedStackDepth { get; set; }
+
+    // Deprecated. Retained for processing old table data.
     public string? CoverageFilter { get; set; }
+
+    public string? FunctionAllowlist { get; set; }
+    public string? ModuleAllowlist { get; set; }
+    public string? SourceAllowlist { get; set; }
     public string? TargetAssembly { get; set; }
     public string? TargetClass { get; set; }
     public string? TargetMethod { get; set; }
@@ -963,3 +1021,7 @@ public record TemplateRenderContext(
     string ReportFilename,
     string ReproCmd
 );
+
+public interface ITruncatable<T> {
+    public T Truncate(int maxLength);
+}

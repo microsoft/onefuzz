@@ -159,6 +159,12 @@ public record ScalesetResponse(
             Nodes: null);
 }
 
+public record ConfigResponse(
+    string? Authority,
+    string? ClientId,
+    string? TenantDomain
+) : BaseResponse();
+
 public class BaseResponseConverter : JsonConverter<BaseResponse> {
     public override BaseResponse? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         return null;
@@ -188,4 +194,13 @@ public record ProxyList(
 public record TemplateValidationResponse(
     string RenderedTemplate,
     TemplateRenderContext AvailableContext
+) : BaseResponse();
+
+public record JinjaToScribanMigrationResponse(
+    List<Guid> UpdatedNotificationIds,
+    List<Guid> FailedNotificationIds
+) : BaseResponse();
+
+public record JinjaToScribanMigrationDryRunResponse(
+    List<Guid> NotificationIdsToUpdate
 ) : BaseResponse();

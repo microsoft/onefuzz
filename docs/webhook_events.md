@@ -330,9 +330,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -418,6 +416,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -440,6 +442,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -458,6 +464,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -2239,9 +2249,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -2327,6 +2335,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -2349,6 +2361,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -2367,6 +2383,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -2969,9 +2989,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -3057,6 +3075,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -3079,6 +3101,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -3097,6 +3123,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -3490,9 +3520,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -3578,6 +3606,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -3600,6 +3632,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -3618,6 +3654,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -3954,9 +3994,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -4042,6 +4080,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -4064,6 +4106,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -4082,6 +4128,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -4392,9 +4442,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -4480,6 +4528,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -4502,6 +4554,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -4520,6 +4576,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -4857,9 +4917,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -4945,6 +5003,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -4967,6 +5029,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -4985,6 +5051,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -6606,9 +6676,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -6694,6 +6762,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -6716,6 +6788,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -6734,6 +6810,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",

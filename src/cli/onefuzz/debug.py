@@ -18,9 +18,11 @@ from azure.applicationinsights import ApplicationInsightsDataClient
 from azure.applicationinsights.models import QueryBody
 from azure.identity import AzureCliCredential
 from azure.storage.blob import ContainerClient
+from onefuzztypes import models, requests
 from onefuzztypes.enums import ContainerType, TaskType
 from onefuzztypes.models import BlobRef, Job, NodeAssignment, Report, Task, TaskConfig
 from onefuzztypes.primitives import Container, Directory, PoolName
+from onefuzztypes.responses import TemplateValidationResponse
 
 from onefuzz.api import UUID_EXPANSION, Command, Onefuzz
 
@@ -462,7 +464,6 @@ class DebugLog(Command):
         if self._app_id is None:
             raise Exception("instance does not have an insights_appid")
         if self._client is None:
-
             creds = AzureIdentityCredentialAdapter(
                 AzureCliCredential(), resource_id="https://api.applicationinsights.io"
             )
@@ -722,15 +723,23 @@ class DebugNotification(Command):
     def _get_container(
         self, task: Task, container_type: ContainerType
     ) -> Optional[Container]:
-        for container in task.config.containers:
-            if container.type == container_type:
-                return container.name
+        if task.config.containers is not None:
+            for container in task.config.containers:
+                if container.type == container_type:
+                    return container.name
         return None
 
     def _get_storage_account(self, container_name: Container) -> str:
         sas_url = self.onefuzz.containers.get(container_name).sas_url
         _, netloc, _, _, _, _ = urlparse(sas_url)
         return netloc.split(".")[0]
+
+    def template(
+        self, template: str, context: Optional[models.TemplateRenderContext]
+    ) -> TemplateValidationResponse:
+        """Validate scriban rendering of notification config"""
+        req = requests.TemplateValidationPost(template=template, context=context)
+        return self.onefuzz.validate_scriban.post(req)
 
     def job(
         self,

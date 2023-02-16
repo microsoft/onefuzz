@@ -46,7 +46,7 @@ impl fmt::Display for Scheduler {
             Self::Busy(..) => "Scheduler::Busy",
             Self::Done(..) => "Scheduler::Done",
         };
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 
@@ -55,18 +55,22 @@ impl Scheduler {
         Self::default()
     }
 
-    pub async fn execute_command(&mut self, cmd: &NodeCommand, managed: bool) -> Result<()> {
+    pub async fn execute_command(self, cmd: NodeCommand, managed: bool) -> Result<Self> {
         match cmd {
             NodeCommand::AddSshKey(ssh_key_info) => {
                 if managed {
-                    add_ssh_key(ssh_key_info).await?;
+                    add_ssh_key(&ssh_key_info).await?;
                 } else {
                     warn!("adding ssh keys only supported on managed nodes");
                 }
+                Ok(self)
             }
             NodeCommand::StopTask(stop_task) => {
                 if let Scheduler::Busy(state) = self {
-                    state.stop(stop_task.task_id)?;
+                    let state = state.stop(stop_task.task_id)?;
+                    Ok(state.into())
+                } else {
+                    Ok(self)
                 }
             }
             NodeCommand::Stop {} => {
@@ -74,7 +78,7 @@ impl Scheduler {
                 let state = State {
                     ctx: Done { cause },
                 };
-                *self = state.into();
+                Ok(state.into())
             }
             NodeCommand::StopIfFree {} => {
                 if let Scheduler::Free(_) = self {
@@ -82,12 +86,12 @@ impl Scheduler {
                     let state = State {
                         ctx: Done { cause },
                     };
-                    *self = state.into();
+                    Ok(state.into())
+                } else {
+                    Ok(self)
                 }
             }
         }
-
-        Ok(())
     }
 }
 
@@ -187,7 +191,7 @@ pub enum SetupDone {
 }
 
 impl State<SettingUp> {
-    pub async fn finish(self, runner: &mut dyn ISetupRunner) -> Result<SetupDone> {
+    pub async fn finish(self, runner: &dyn ISetupRunner) -> Result<SetupDone> {
         let work_set = self.ctx.work_set;
 
         let output = runner.run(&work_set).await;
@@ -209,7 +213,7 @@ impl State<SettingUp> {
                 // No script was executed.
             }
             Err(err) => {
-                let error = format!("{:?}", err);
+                let error = format!("{err:?}");
                 warn!("{}", error);
                 let cause = DoneCause::SetupError {
                     error,
@@ -289,7 +293,7 @@ impl State<Busy> {
             .all(|worker| worker.as_ref().unwrap().is_done())
     }
 
-    pub fn stop(&mut self, task_id: TaskId) -> Result<()> {
+    pub fn stop(mut self, task_id: TaskId) -> Result<Self> {
         for worker in &mut self.ctx.workers {
             let worker = worker.as_mut().unwrap();
 
@@ -300,7 +304,7 @@ impl State<Busy> {
             }
         }
 
-        Ok(())
+        Ok(self)
     }
 }
 

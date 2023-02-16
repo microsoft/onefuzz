@@ -17,12 +17,12 @@ where
 
     let _worker = thread::spawn(move || {
         let out = function();
-        worker_sender.send(Timed::Done(out)).unwrap();
+        let _ = worker_sender.send(Timed::Done(out));
     });
 
     let _timer = thread::spawn(move || {
         thread::sleep(timeout);
-        timer_sender.send(Timed::Timeout).unwrap();
+        let _ = timer_sender.send(Timed::Timeout);
     });
 
     match receiver.recv()? {

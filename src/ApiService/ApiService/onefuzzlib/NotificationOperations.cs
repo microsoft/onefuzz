@@ -9,6 +9,7 @@ public interface INotificationOperations : IOrm<Notification> {
     IAsyncEnumerable<Notification> GetNotifications(Container container);
     IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks();
     Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting);
+    Async.Task<Notification> GetNotification(Guid notifificationId);
 }
 
 public class NotificationOperations : Orm<Notification>, INotificationOperations {
@@ -20,34 +21,31 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     public async Async.Task NewFiles(Container container, string filename, bool isLastRetryAttempt) {
         var notifications = GetNotifications(container);
         var hasNotifications = await notifications.AnyAsync();
-
-        if (!hasNotifications) {
-            return;
-        }
-
         var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
-        var done = new List<NotificationTemplate>();
-        await foreach (var notification in notifications) {
-            if (done.Contains(notification.Config)) {
-                continue;
-            }
+        if (hasNotifications) {
+            var done = new List<NotificationTemplate>();
+            await foreach (var notification in notifications) {
+                if (done.Contains(notification.Config)) {
+                    continue;
+                }
 
-            done.Add(notification.Config);
+                done.Add(notification.Config);
 
-            if (notification.Config is TeamsTemplate teamsTemplate) {
-                await _context.Teams.NotifyTeams(teamsTemplate, container, filename, reportOrRegression!, notification.NotificationId);
-            }
+                if (notification.Config is TeamsTemplate teamsTemplate) {
+                    await _context.Teams.NotifyTeams(teamsTemplate, container, filename, reportOrRegression!, notification.NotificationId);
+                }
 
-            if (reportOrRegression == null) {
-                continue;
-            }
+                if (reportOrRegression == null) {
+                    continue;
+                }
 
-            if (notification.Config is AdoTemplate adoTemplate) {
-                await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, isLastRetryAttempt, notification.NotificationId);
-            }
+                if (notification.Config is AdoTemplate adoTemplate) {
+                    await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, isLastRetryAttempt, notification.NotificationId);
+                }
 
-            if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {
-                await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression, notification.NotificationId);
+                if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {
+                    await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression, notification.NotificationId);
+                }
             }
         }
 
@@ -91,6 +89,11 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     public async Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting) {
         if (await _context.Containers.FindContainer(container, StorageType.Corpus) == null) {
             return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, "invalid container");
+        }
+
+        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly) &&
+            !await JinjaTemplateAdapter.IsValidScribanNotificationTemplate(_context, _logTracer, config)) {
+            return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, "The notification config is not a valid scriban template");
         }
 
         if (replaceExisting) {
@@ -144,5 +147,9 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
         _logTracer.Error($"unable to find crash_report or no repro entry for report: {JsonSerializer.Serialize(report)}");
         return null;
+    }
+
+    public async Async.Task<Notification> GetNotification(Guid notifificationId) {
+        return await SearchByPartitionKeys(new[] { notifificationId.ToString() }).SingleAsync();
     }
 }

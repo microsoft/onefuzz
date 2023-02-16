@@ -5,22 +5,24 @@ use super::*;
 
 #[derive(Debug, Default)]
 pub struct CoordinatorDouble {
-    pub commands: Vec<NodeCommand>,
-    pub events: Vec<NodeEvent>,
+    pub commands: Arc<RwLock<Vec<NodeCommand>>>,
+    pub events: Arc<RwLock<Vec<NodeEvent>>>,
 }
 
 #[async_trait]
 impl ICoordinator for CoordinatorDouble {
     async fn poll_commands(&mut self) -> Result<Option<NodeCommand>, PollCommandError> {
-        Ok(self.commands.pop())
+        let mut commands = self.commands.write().await;
+        Ok(commands.pop())
     }
 
-    async fn emit_event(&mut self, event: NodeEvent) -> Result<()> {
-        self.events.push(event);
+    async fn emit_event(&self, event: NodeEvent) -> Result<()> {
+        let mut events = self.events.write().await;
+        events.push(event);
         Ok(())
     }
 
-    async fn can_schedule(&mut self, _work: &WorkSet) -> Result<CanSchedule> {
+    async fn can_schedule(&self, _work: &WorkSet) -> Result<CanSchedule> {
         Ok(CanSchedule {
             allowed: true,
             work_stopped: true,

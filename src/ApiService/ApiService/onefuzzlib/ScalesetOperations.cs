@@ -609,11 +609,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
 
         // Perform operations until they fail due to scaleset getting locked:
-        var strategy = _context.ServiceConfiguration.OneFuzzNodeDisposalStrategy.ToLowerInvariant() switch {
-            // allowing typo’d or correct name for config setting:
-            "decomission" or "decommission" => NodeDisposalStrategy.Decommission,
-            _ => NodeDisposalStrategy.ScaleIn,
-        };
+        var strategy = await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableNodeDecommissionStrategy) ? NodeDisposalStrategy.Decommission : NodeDisposalStrategy.ScaleIn;
 
         var reimageNodes = await ReimageNodes(scaleSet, toReimage.Values, strategy);
         if (!reimageNodes.IsOk) {

@@ -34,7 +34,7 @@ fn main() -> Result<()> {
     }
 
     if let Some(path) = &opt.ld_library_path {
-        println!("setting LD_LIBRARY_PATH = \"{}\"", path);
+        println!("setting LD_LIBRARY_PATH = \"{path}\"");
         cmd.env("LD_LIBRARY_PATH", path);
     }
 
@@ -44,7 +44,7 @@ fn main() -> Result<()> {
         println!("no missing libraries");
     } else {
         for lib in missing {
-            println!("missing library: {:x?}", lib);
+            println!("missing library: {lib:x?}");
         }
     }
 

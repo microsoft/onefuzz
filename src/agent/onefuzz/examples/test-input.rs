@@ -80,7 +80,7 @@ async fn main() -> Result<()> {
         let text: &str = crash.text.as_deref().unwrap_or_default();
         println!("    sanitizer = {}", crash.sanitizer);
         println!("    summary = {}", crash.summary);
-        println!("    text = {}", text);
+        println!("    text = {text}");
     } else {
         println!("[-] no crash detected.");
     }
@@ -88,7 +88,7 @@ async fn main() -> Result<()> {
     println!();
     println!("[+] verbose test result:");
     println!();
-    println!("{:?}", test_result);
+    println!("{test_result:?}");
 
     Ok(())
 }

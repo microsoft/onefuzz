@@ -39,6 +39,10 @@ public sealed class TestContext : IOnefuzzContext {
         ReproOperations = new ReproOperations(logTracer, this);
         Reports = new Reports(logTracer, Containers);
         UserCredentials = new UserCredentials(logTracer, ConfigOperations);
+        NotificationOperations = new NotificationOperations(logTracer, this);
+        SecretsOperations = new TestSecretsOperations(Creds, ServiceConfiguration);
+        
+        = new TestFeatureManagerSnapshot();
     }
 
     public TestEvents Events { get; set; } = new();
@@ -54,6 +58,7 @@ public sealed class TestContext : IOnefuzzContext {
                 Repro r => ReproOperations.Insert(r),
                 NodeTasks nt => NodeTasksOperations.Insert(nt),
                 InstanceConfig ic => ConfigOperations.Insert(ic),
+                Notification n => NotificationOperations.Insert(n),
                 _ => throw new NotSupportedException($"You will need to add an TestContext.InsertAll case for {x.GetType()} entities"),
             }));
 
@@ -85,6 +90,13 @@ public sealed class TestContext : IOnefuzzContext {
     public IReports Reports { get; }
     public EntityConverter EntityConverter { get; }
 
+    public INotificationOperations NotificationOperations { get; }
+
+    public ISecretsOperations SecretsOperations { get; }
+
+    public IFeatureManagerSnapshot FeatureManagerSnapshot { get; }
+
+
     // -- Remainder not implemented --
 
     public IConfig Config => throw new System.NotImplementedException();
@@ -99,7 +111,6 @@ public sealed class TestContext : IOnefuzzContext {
 
     public ILogAnalytics LogAnalytics => throw new System.NotImplementedException();
 
-    public INotificationOperations NotificationOperations => throw new System.NotImplementedException();
 
     public IProxyForwardOperations ProxyForwardOperations => throw new System.NotImplementedException();
 
@@ -108,7 +119,6 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IScheduler Scheduler => throw new System.NotImplementedException();
 
-    public ISecretsOperations SecretsOperations => throw new System.NotImplementedException();
 
     public IVmOperations VmOperations => throw new System.NotImplementedException();
 
@@ -123,8 +133,6 @@ public sealed class TestContext : IOnefuzzContext {
     public ITeams Teams => throw new NotImplementedException();
     public IGithubIssues GithubIssues => throw new NotImplementedException();
     public IAdo Ado => throw new NotImplementedException();
-
-    public IFeatureManagerSnapshot FeatureManagerSnapshot => throw new NotImplementedException();
 
     public IConfigurationRefresher ConfigurationRefresher => throw new NotImplementedException();
 }

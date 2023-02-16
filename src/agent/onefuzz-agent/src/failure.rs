@@ -4,23 +4,22 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
+use uuid::Uuid;
 
-const FAILURE_FILE: &str = "onefuzz-agent-failure.txt";
-
-pub fn failure_path() -> Result<PathBuf> {
-    Ok(onefuzz_root()?.join(FAILURE_FILE))
+pub fn failure_path(machine_id: Uuid) -> Result<PathBuf> {
+    Ok(onefuzz_root()?.join(format!("onefuzz-agent-failure-{machine_id}.txt")))
 }
 
-pub fn save_failure(err: &Error) -> Result<()> {
+pub fn save_failure(err: &Error, machine_id: Uuid) -> Result<()> {
     error!("saving failure: {:?}", err);
-    let path = failure_path()?;
-    let message = format!("{:?}", err);
+    let path = failure_path(machine_id)?;
+    let message = format!("{err:?}");
     fs::write(&path, message)
         .with_context(|| format!("unable to write failure log: {}", path.display()))
 }
 
-pub fn read_failure() -> Result<String> {
-    let path = failure_path()?;
+pub fn read_failure(machine_id: Uuid) -> Result<String> {
+    let path = failure_path(machine_id)?;
     read_file_lossy(&path)
 }
 

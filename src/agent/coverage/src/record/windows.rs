@@ -3,57 +3,54 @@
 
 use std::collections::BTreeMap;
 use std::path::Path;
-use std::process::Command;
-use std::time::Duration;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Error, Result};
+use debuggable_module::debuginfo::{DebugInfo, Function};
 use debuggable_module::load_module::LoadModule;
 use debuggable_module::loader::Loader;
 use debuggable_module::path::FilePath;
 use debuggable_module::windows::WindowsModule;
-use debuggable_module::Offset;
+use debuggable_module::{Module, Offset};
 use debugger::{BreakpointId, BreakpointType, DebugEventHandler, Debugger, ModuleLoadInfo};
 
 use crate::allowlist::TargetAllowList;
 use crate::binary::{self, BinaryCoverage};
 
-pub fn record(
-    cmd: Command,
-    timeout: Duration,
-    allowlist: impl Into<Option<TargetAllowList>>,
-) -> Result<BinaryCoverage> {
-    let loader = Loader::new();
-    let allowlist = allowlist.into().unwrap_or_default();
-
-    crate::timer::timed(timeout, move || {
-        let mut recorder = WindowsRecorder::new(&loader, allowlist);
-        let (mut dbg, _child) = Debugger::init(cmd, &mut recorder)?;
-        dbg.run(&mut recorder)?;
-
-        Ok(recorder.coverage)
-    })?
-}
+// For a new module image, we defer setting coverage breakpoints until exit from one of these
+// functions (when present). This avoids breaking hotpatching routines in the ASan interceptor
+// initializers.
+//
+// We will use these constants with a prefix comparison. Only check up to the first open paren to
+// avoid false negatives if the demangled representation of parameters ever varies.
+const PROCESS_IMAGE_DEFERRAL_TRIGGER: &str = "__asan::AsanInitInternal(";
+const LIBRARY_IMAGE_DEFERRAL_TRIGGER: &str = "DllMain(";
 
 pub struct WindowsRecorder<'data> {
     allowlist: TargetAllowList,
     breakpoints: Breakpoints,
-    coverage: BinaryCoverage,
+    deferred_breakpoints: BTreeMap<BreakpointId, (Breakpoint, DeferralState)>,
+    pub coverage: BinaryCoverage,
     loader: &'data Loader,
-    modules: BTreeMap<FilePath, WindowsModule<'data>>,
+    modules: BTreeMap<FilePath, (WindowsModule<'data>, DebugInfo)>,
+    pub stop_error: Option<Error>,
 }
 
 impl<'data> WindowsRecorder<'data> {
     pub fn new(loader: &'data Loader, allowlist: TargetAllowList) -> Self {
         let breakpoints = Breakpoints::default();
+        let deferred_breakpoints = BTreeMap::new();
         let coverage = BinaryCoverage::default();
         let modules = BTreeMap::new();
+        let stop_error = None;
 
         Self {
             allowlist,
             breakpoints,
+            deferred_breakpoints,
             coverage,
             loader,
             modules,
+            stop_error,
         }
     }
 
@@ -82,11 +79,59 @@ impl<'data> WindowsRecorder<'data> {
         self.insert_module(dbg, module)
     }
 
-    fn try_on_breakpoint(&mut self, _dbg: &mut Debugger, id: BreakpointId) -> Result<()> {
-        let breakpoint = self
-            .breakpoints
-            .remove(id)
-            .ok_or_else(|| anyhow!("stopped on dangling breakpoint"))?;
+    fn try_on_breakpoint(&mut self, dbg: &mut Debugger, id: BreakpointId) -> Result<()> {
+        if let Some((trigger, state)) = self.deferred_breakpoints.remove(&id) {
+            match state {
+                DeferralState::NotEntered => {
+                    debug!(
+                        "hit trigger breakpoint (not-entered) for deferred coverage breakpoints"
+                    );
+
+                    // Find the return address.
+                    let frame = dbg.get_current_frame()?;
+                    let ret = frame.return_address();
+                    let id = dbg.new_address_breakpoint(ret, BreakpointType::OneTime)?;
+
+                    // Update the state for this deferral to set module coverage breakpoints on ret.
+                    let thread_id = dbg.get_current_thread_id();
+                    let state = DeferralState::PendingReturn { thread_id };
+                    self.deferred_breakpoints.insert(id, (trigger, state));
+                }
+                DeferralState::PendingReturn { thread_id } => {
+                    debug!(
+                        "hit trigger breakpoint (pending-return) for deferred coverage breakpoints"
+                    );
+
+                    if dbg.get_current_thread_id() == thread_id {
+                        debug!("correct thread hit pending-return trigger breakpoint");
+
+                        // We've returned from the trigger function, and on the same thread.
+                        //
+                        // It's safe to set coverage breakpoints.
+                        self.set_module_breakpoints(dbg, trigger.module)?;
+                    } else {
+                        warn!("wrong thread saw pending-return trigger breakpoint, resetting");
+
+                        // Hit a ret breakpoint, but on the wrong thread. Reset it so the correct
+                        // thread has a chance to see it.
+                        //
+                        // We only defer breakpoints in image initialization code, so we don't
+                        // expect to reach this code in practice.
+                        let id = trigger.set(dbg)?;
+                        self.deferred_breakpoints.insert(id, (trigger, state));
+                    }
+                }
+            }
+
+            return Ok(());
+        }
+
+        let breakpoint = self.breakpoints.remove(id);
+
+        let Some(breakpoint) = breakpoint else {
+            let stack = dbg.get_current_stack()?;
+            bail!("stopped on dangling breakpoint, debuggee stack:\n{}", stack);
+        };
 
         let coverage = self
             .coverage
@@ -94,17 +139,23 @@ impl<'data> WindowsRecorder<'data> {
             .get_mut(&breakpoint.module)
             .ok_or_else(|| anyhow!("coverage not initialized for module: {}", breakpoint.module))?;
 
-        coverage.increment(breakpoint.offset)?;
+        coverage.increment(breakpoint.offset);
 
         Ok(())
     }
 
-    fn stop(&self, dbg: &mut Debugger) {
+    fn stop(&mut self, dbg: &mut Debugger, stop_error: impl Into<Option<Error>>) {
+        self.stop_error = stop_error.into();
         dbg.quit_debugging();
     }
 
     fn insert_module(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) -> Result<()> {
         let path = FilePath::new(module.path().to_string_lossy())?;
+
+        if self.modules.contains_key(&path) {
+            warn!("module coverage already initialized, skipping");
+            return Ok(());
+        }
 
         if !self.allowlist.modules.is_allowed(&path) {
             debug!("not inserting denylisted module: {path}");
@@ -118,16 +169,79 @@ impl<'data> WindowsRecorder<'data> {
             return Ok(());
         };
 
-        let coverage = binary::find_coverage_sites(&module, &self.allowlist)?;
+        let debuginfo = module.debuginfo()?;
+        self.modules.insert(path.clone(), (module, debuginfo));
+
+        self.set_or_defer_module_breakpoints(dbg, path)?;
+
+        Ok(())
+    }
+
+    fn set_or_defer_module_breakpoints(
+        &mut self,
+        dbg: &mut Debugger,
+        path: FilePath,
+    ) -> Result<()> {
+        let (_module, debuginfo) = &self.modules[&path];
+
+        // For borrowck.
+        let mut trigger = None;
+
+        for function in debuginfo.functions() {
+            // Called on process startup.
+            if function.name.starts_with(PROCESS_IMAGE_DEFERRAL_TRIGGER) {
+                trigger = Some(function.clone());
+                break;
+            }
+
+            // Called on shared library load.
+            if function.name.starts_with(LIBRARY_IMAGE_DEFERRAL_TRIGGER) {
+                trigger = Some(function.clone());
+                break;
+            }
+        }
+
+        if let Some(trigger) = trigger {
+            debug!("deferring coverage breakpoints for module {}", path);
+            self.defer_module_breakpoints(dbg, path, trigger)
+        } else {
+            debug!(
+                "immediately setting coverage breakpoints for module {}",
+                path
+            );
+            self.set_module_breakpoints(dbg, path)
+        }
+    }
+
+    fn defer_module_breakpoints(
+        &mut self,
+        dbg: &mut Debugger,
+        path: FilePath,
+        trigger: Function,
+    ) -> Result<()> {
+        let state = DeferralState::NotEntered;
+        let entry_breakpoint = Breakpoint::new(path, trigger.offset);
+        let id = entry_breakpoint.set(dbg)?;
+
+        self.deferred_breakpoints
+            .insert(id, (entry_breakpoint, state));
+
+        Ok(())
+    }
+
+    fn set_module_breakpoints(&mut self, dbg: &mut Debugger, path: FilePath) -> Result<()> {
+        let (module, _) = &self.modules[&path];
+        let coverage = binary::find_coverage_sites(module, &self.allowlist)?;
 
         for offset in coverage.as_ref().keys().copied() {
             let breakpoint = Breakpoint::new(path.clone(), offset);
             self.breakpoints.set(dbg, breakpoint)?;
         }
 
-        self.coverage.modules.insert(path.clone(), coverage);
+        let count = coverage.offsets.len();
+        debug!("set {} breakpoints for module {}", count, path);
 
-        self.modules.insert(path, module);
+        self.coverage.modules.insert(path, coverage);
 
         Ok(())
     }
@@ -135,54 +249,42 @@ impl<'data> WindowsRecorder<'data> {
 
 #[derive(Debug, Default)]
 struct Breakpoints {
-    id_to_offset: BTreeMap<BreakpointId, Offset>,
-    offset_to_breakpoint: BTreeMap<Offset, Breakpoint>,
+    id_to_breakpoint: BTreeMap<BreakpointId, Breakpoint>,
 }
 
 impl Breakpoints {
     pub fn set(&mut self, dbg: &mut Debugger, breakpoint: Breakpoint) -> Result<()> {
-        if self.is_set(&breakpoint) {
-            return Ok(());
-        }
-
-        self.write(dbg, breakpoint)
-    }
-
-    // Unguarded action that ovewrites both the target process address space and our index
-    // of known breakpoints. Callers must use `set()`, which avoids redundant breakpoint
-    // setting.
-    fn write(&mut self, dbg: &mut Debugger, breakpoint: Breakpoint) -> Result<()> {
-        // The `debugger` crates tracks loaded modules by base name. If a path or file
-        // name is used, software breakpoints will not be written.
-        let name = Path::new(breakpoint.module.base_name());
-        let id = dbg.new_rva_breakpoint(name, breakpoint.offset.0, BreakpointType::OneTime)?;
-
-        self.id_to_offset.insert(id, breakpoint.offset);
-        self.offset_to_breakpoint
-            .insert(breakpoint.offset, breakpoint);
-
+        let id = breakpoint.set(dbg)?;
+        self.id_to_breakpoint.insert(id, breakpoint);
         Ok(())
     }
 
-    pub fn is_set(&self, breakpoint: &Breakpoint) -> bool {
-        self.offset_to_breakpoint.contains_key(&breakpoint.offset)
-    }
-
+    /// Remove a registered breakpoint from the index.
+    ///
+    /// This method should be called when a breakpoint is hit to retrieve its associated data.
+    /// It does NOT clear the actual breakpoint in the debugger engine.
     pub fn remove(&mut self, id: BreakpointId) -> Option<Breakpoint> {
-        let offset = self.id_to_offset.remove(&id)?;
-        self.offset_to_breakpoint.remove(&offset)
+        self.id_to_breakpoint.remove(&id)
     }
 }
 
 #[derive(Clone, Debug)]
 struct Breakpoint {
-    module: FilePath,
-    offset: Offset,
+    pub module: FilePath,
+    pub offset: Offset,
 }
 
 impl Breakpoint {
     pub fn new(module: FilePath, offset: Offset) -> Self {
         Self { module, offset }
+    }
+
+    pub fn set(&self, dbg: &mut Debugger) -> Result<BreakpointId> {
+        // The `debugger` crates tracks loaded modules by base name. If a path or file
+        // name is used, software breakpoints will not be written.
+        let name = Path::new(self.module.base_name());
+        let id = dbg.new_rva_breakpoint(name, self.offset.0, BreakpointType::OneTime)?;
+        Ok(id)
     }
 }
 
@@ -190,21 +292,26 @@ impl<'data> DebugEventHandler for WindowsRecorder<'data> {
     fn on_create_process(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) {
         if let Err(err) = self.try_on_create_process(dbg, module) {
             warn!("{err}");
-            self.stop(dbg);
+            self.stop(dbg, err);
         }
     }
 
     fn on_load_dll(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) {
         if let Err(err) = self.try_on_load_dll(dbg, module) {
             warn!("{err}");
-            self.stop(dbg);
+            self.stop(dbg, err);
         }
     }
 
     fn on_breakpoint(&mut self, dbg: &mut Debugger, bp: BreakpointId) {
         if let Err(err) = self.try_on_breakpoint(dbg, bp) {
             warn!("{err}");
-            self.stop(dbg);
+            self.stop(dbg, err);
         }
     }
+}
+
+enum DeferralState {
+    NotEntered,
+    PendingReturn { thread_id: u64 },
 }

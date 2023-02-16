@@ -46,6 +46,7 @@ public enum EventType {
     TaskHeartbeat,
     NodeHeartbeat,
     InstanceConfigUpdated,
+    NotificationFailed
 }
 
 public abstract record BaseEvent() {
@@ -302,8 +303,13 @@ public record EventCrashReported(
     Container Container,
     [property: JsonPropertyName("filename")] String FileName,
     TaskConfig? TaskConfig
-) : BaseEvent();
-
+) : BaseEvent(), ITruncatable<BaseEvent> {
+    public BaseEvent Truncate(int maxLength) {
+        return this with {
+            Report = Report.Truncate(maxLength)
+        };
+    }
+}
 
 [EventType(EventType.RegressionReported)]
 public record EventRegressionReported(
@@ -311,8 +317,13 @@ public record EventRegressionReported(
     Container Container,
     [property: JsonPropertyName("filename")] String FileName,
     TaskConfig? TaskConfig
-) : BaseEvent();
-
+) : BaseEvent(), ITruncatable<BaseEvent> {
+    public BaseEvent Truncate(int maxLength) {
+        return this with {
+            RegressionReport = RegressionReport.Truncate(maxLength)
+        };
+    }
+}
 
 [EventType(EventType.FileAdded)]
 public record EventFileAdded(
@@ -324,6 +335,13 @@ public record EventFileAdded(
 [EventType(EventType.InstanceConfigUpdated)]
 public record EventInstanceConfigUpdated(
     InstanceConfig Config
+) : BaseEvent();
+
+[EventType(EventType.NotificationFailed)]
+public record EventNotificationFailed(
+    Guid NotificationId,
+    Guid JobId,
+    Error? Error
 ) : BaseEvent();
 
 public record EventMessage(

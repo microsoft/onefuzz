@@ -308,7 +308,7 @@ namespace Tests {
         }
 
         public static Gen<Report> Report() {
-            return Arb.Generate<Tuple<string, BlobRef, List<string>, Guid, int>>().Select(
+            return Arb.Generate<Tuple<string, BlobRef, List<string>, Guid, int, Uri?>>().Select(
                 arg =>
                     new Report(
                         InputUrl: arg.Item1,
@@ -332,8 +332,8 @@ namespace Tests {
                         MinimizedStackFunctionLinesSha256: arg.Item1,
                         ToolName: arg.Item1,
                         ToolVersion: arg.Item1,
-                        OnefuzzVersion: arg.Item1
-
+                        OnefuzzVersion: arg.Item1,
+                        ReportUrl: arg.Item6
 
                     )
             );
@@ -365,11 +365,12 @@ namespace Tests {
         }
 
         public static Gen<RegressionReport> RegressionReport() {
-            return Arb.Generate<Tuple<CrashTestResult, CrashTestResult?>>().Select(
+            return Arb.Generate<Tuple<CrashTestResult, CrashTestResult?, Uri?>>().Select(
                 arg =>
                     new RegressionReport(
                         arg.Item1,
-                        arg.Item2
+                        arg.Item2,
+                        arg.Item3
                     )
             );
         }

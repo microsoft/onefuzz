@@ -116,7 +116,6 @@ class Regression(Command):
         delete_input_container: bool = True,
         check_regressions: bool = False,
     ) -> None:
-
         """
         libfuzzer regression task
 
@@ -177,7 +176,6 @@ class Regression(Command):
         delete_input_container: bool = True,
         check_regressions: bool = False,
     ) -> None:
-
         if dryrun:
             return None
 

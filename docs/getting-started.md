@@ -168,7 +168,7 @@ Enabling [notifications](notifications.md) provides automatic reporting of ident
 crashes.  The CLI can be used to manually monitor for crash reports:
 
 ```console
-$ onefuzz jobs containers list a6eda06f-d2e3-4a50-8754-1c1de5c6ea23 --container_type unique_reports
+$ onefuzz jobs containers list a6eda06f-d2e3-4a50-8754-1c1de5c6ea23 unique_reports
 {
 "oft-unique-reports-05ca06fd172b5db6a862a38e95c83730": [
         "972a371a291ed5668a77576368ead0c46c2bac9f9a16b7fa7c0b48aec5b059b1.json"

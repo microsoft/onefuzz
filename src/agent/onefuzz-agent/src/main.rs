@@ -113,9 +113,9 @@ fn redirect(opt: RunOpt) -> Result<()> {
 
     let run_id = Uuid::new_v4();
 
-    let stdout_path = log_path.join(format!("{}-stdout.txt", run_id));
-    let stderr_path = log_path.join(format!("{}-stdout.txt", run_id));
-    let failure_path = log_path.join(format!("{}-failure.txt", run_id));
+    let stdout_path = log_path.join(format!("{run_id}-stdout.txt"));
+    let stderr_path = log_path.join(format!("{run_id}-stdout.txt"));
+    let failure_path = log_path.join(format!("{run_id}-failure.txt"));
 
     info!(
         "saving output to files: {} {} {}",
@@ -143,6 +143,18 @@ fn redirect(opt: RunOpt) -> Result<()> {
         cmd.arg("--config").arg(path);
     }
 
+    if let Some(machine_id) = opt.machine_id {
+        cmd.arg("--machine_id").arg(machine_id.to_string());
+    }
+
+    if let Some(machine_name) = opt.machine_name {
+        cmd.arg("--machine_name").arg(machine_name);
+    }
+
+    if opt.reset_node_lock {
+        cmd.arg("--reset_lock");
+    }
+
     let exit_status: ExitStatus = cmd
         .spawn()
         .context("unable to start child onefuzz-agent")?
@@ -156,10 +168,7 @@ fn redirect(opt: RunOpt) -> Result<()> {
             .append(true)
             .open(failure_path)
             .context("unable to open log file")?;
-        log.write_fmt(format_args!(
-            "onefuzz-agent child failed: {:?}",
-            exit_status
-        ))?;
+        log.write_fmt(format_args!("onefuzz-agent child failed: {exit_status:?}"))?;
         bail!("onefuzz-agent child failed: {:?}", exit_status);
     }
 
@@ -181,13 +190,14 @@ fn run(opt: RunOpt) -> Result<()> {
     }
 
     let config = config?;
+    let machine_id = config.machine_identity.machine_id;
 
     if reset_lock {
-        done::remove_done_lock(config.machine_identity.machine_id)?;
-    } else if done::is_agent_done(config.machine_identity.machine_id)? {
+        done::remove_done_lock(machine_id)?;
+    } else if done::is_agent_done(machine_id)? {
         debug!(
             "agent is done, remove lock ({}) to continue",
-            done::done_path(config.machine_identity.machine_id)?.display()
+            done::done_path(machine_id)?.display()
         );
         return Ok(());
     }
@@ -196,7 +206,7 @@ fn run(opt: RunOpt) -> Result<()> {
 
     if let Err(err) = &result {
         error!("error running supervisor agent: {:?}", err);
-        if let Err(err) = failure::save_failure(err) {
+        if let Err(err) = failure::save_failure(err, machine_id) {
             error!("unable to save failure log: {:?}", err);
         }
     }
@@ -213,7 +223,7 @@ async fn load_config(opt: RunOpt) -> Result<StaticConfig> {
 
     let machine_identity = opt_machine_id.map(|machine_id| MachineIdentity {
         machine_id,
-        machine_name: opt_machine_name.unwrap_or(format!("{}", machine_id)),
+        machine_name: opt_machine_name.unwrap_or(format!("{machine_id}")),
         scaleset_name: None,
     });
 
@@ -234,17 +244,14 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
 
     if let Some(work) = WorkSet::load_from_fs_context(coordinator.get_machine_id()).await? {
         warn!("onefuzz-agent unexpectedly identified an existing workset on start");
-        let failure = match failure::read_failure() {
-            Ok(value) => format!("onefuzz-agent failed: {}", value),
+        let failure = match failure::read_failure(coordinator.get_machine_id()) {
+            Ok(value) => format!("onefuzz-agent failed: {value}"),
             Err(failure_err) => {
                 warn!("unable to read failure: {:?}", failure_err);
                 let logs = failure::read_logs().unwrap_or_else(|logs_err| {
-                    format!(
-                        "unable to read failure message or logs: {:?} {:?}",
-                        failure_err, logs_err
-                    )
+                    format!("unable to read failure message or logs: {failure_err:?} {logs_err:?}")
                 });
-                format!("onefuzz-agent failed: {}", logs)
+                format!("onefuzz-agent failed: {logs}")
             }
         };
 
@@ -306,7 +313,7 @@ async fn run_agent(config: StaticConfig, reset_node: bool) -> Result<()> {
     let mut coordinator = coordinator::Coordinator::new(registration.clone()).await?;
     debug!("initialized coordinator");
 
-    let mut reboot = reboot::Reboot;
+    let reboot = reboot::Reboot::new(config.machine_identity.machine_id);
     let reboot_context = reboot.load_context().await?;
     if reset_node {
         WorkSet::remove_context(config.machine_identity.machine_id).await?;
@@ -331,7 +338,7 @@ async fn run_agent(config: StaticConfig, reset_node: bool) -> Result<()> {
         ),
         None => None,
     };
-    let mut agent = agent::Agent::new(
+    let agent = agent::Agent::new(
         Box::new(coordinator),
         Box::new(reboot),
         scheduler,

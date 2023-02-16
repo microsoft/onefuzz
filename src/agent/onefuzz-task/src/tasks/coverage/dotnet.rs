@@ -308,7 +308,7 @@ impl<'a> TaskContext<'a> {
         let id = Uuid::new_v4();
         let output_file_path =
             intermediate_coverage_files_path(self.config.coverage.local_path.as_path())?
-                .join(format!("{}.cobertura.xml", id));
+                .join(format!("{id}.cobertura.xml"));
 
         let target_options = expand.evaluate(&self.config.target_options)?;
 
@@ -341,12 +341,12 @@ impl<'a> TaskContext<'a> {
         let input = PlaceHolder::Input.get_string();
 
         for entry in &self.config.target_options {
-            if entry.contains(&input) {
+            if entry.contains(input) {
                 return true;
             }
         }
         for (k, v) in &self.config.target_env {
-            if k == &input || v.contains(&input) {
+            if k == input || v.contains(input) {
                 return true;
             }
         }
