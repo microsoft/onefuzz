@@ -50,6 +50,7 @@ class Radamsa(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         target_timeout: Optional[int] = None,
+        extra_container: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         Basic radamsa job
@@ -90,6 +91,9 @@ class Radamsa(Command):
             ContainerType.no_repro,
             ContainerType.analysis,
         )
+        if extra_container is not None:
+            helper.containers[ContainerType.extra] = extra_container
+
         if existing_inputs:
             self.onefuzz.containers.get(existing_inputs)
             helper.containers[ContainerType.readonly_inputs] = existing_inputs
@@ -153,6 +157,7 @@ class Radamsa(Command):
                 ContainerType.readonly_inputs,
                 helper.containers[ContainerType.readonly_inputs],
             ),
+            (ContainerType.extra, helper.containers[ContainerType.extra]),
         ]
 
         fuzzer_task = self.onefuzz.tasks.create(
@@ -186,6 +191,7 @@ class Radamsa(Command):
                 helper.containers[ContainerType.unique_reports],
             ),
             (ContainerType.no_repro, helper.containers[ContainerType.no_repro]),
+            (ContainerType.extra, helper.containers[ContainerType.extra]),
         ]
 
         self.logger.info("creating generic_crash_report task")
@@ -229,6 +235,7 @@ class Radamsa(Command):
                 (ContainerType.tools, tools),
                 (ContainerType.analysis, helper.containers[ContainerType.analysis]),
                 (ContainerType.crashes, helper.containers[ContainerType.crashes]),
+                (ContainerType.extra, helper.containers[ContainerType.extra]),
             ]
 
             self.onefuzz.tasks.create(

@@ -143,6 +143,9 @@ pub struct RunWorkerOpt {
 
     #[clap(long)]
     script: bool,
+
+    #[clap(long)]
+    extra_url: Option<Url>,
 }
 
 fn debug_run_worker(opt: RunWorkerOpt) -> Result<()> {
@@ -164,6 +167,7 @@ fn debug_run_worker(opt: RunWorkerOpt) -> Result<()> {
     let work_set = WorkSet {
         reboot: false,
         setup_url: BlobContainerUrl::new(opt.setup_url)?,
+        extra_url: opt.extra_url.map(BlobContainerUrl::new).transpose()?,
         script: opt.script,
         work_units: vec![work_unit],
     };
@@ -188,8 +192,9 @@ async fn run_worker(mut work_set: WorkSet) -> Result<Vec<WorkerEvent>> {
     let mut events = vec![];
     let work_unit = work_set.work_units.pop().unwrap();
     let setup_dir = work_set.setup_dir()?;
+    let extra_dir = work_set.extra_dir()?;
 
-    let mut worker = Worker::new(&setup_dir, work_unit);
+    let mut worker = Worker::new(&setup_dir, extra_dir,  work_unit);
     while !worker.is_done() {
         worker = worker
             .update(

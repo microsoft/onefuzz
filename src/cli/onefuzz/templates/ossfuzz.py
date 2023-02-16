@@ -9,9 +9,9 @@ import os
 import subprocess  # nosec
 from typing import Dict, List, Optional, Tuple
 
-from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag
+from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag, ContainerType
 from onefuzztypes.models import NotificationConfig
-from onefuzztypes.primitives import File, PoolName
+from onefuzztypes.primitives import File, PoolName, Container
 
 from onefuzz.api import Command
 from onefuzz.backend import container_file_path
@@ -119,6 +119,7 @@ class OssFuzz(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        extra_container: Optional[Container] = None,
     ) -> None:
         """
         OssFuzz style libfuzzer jobs
@@ -212,6 +213,10 @@ class OssFuzz(Command):
                 ContainerType.no_repro,
                 ContainerType.coverage,
             )
+
+            if extra_container is not None:
+                helper.containers[ContainerType.extra] = extra_container
+
             helper.create_containers()
             helper.setup_notifications(notification_config)
 
@@ -237,6 +242,8 @@ class OssFuzz(Command):
             #
             # Cast because `glob()` returns `str`.
             fuzzer_blob_name = helper.setup_relative_blob_name(fuzzer, None)
+
+            containers = helper.containers
 
             self.onefuzz.template.libfuzzer._create_tasks(
                 job=base_helper.job,

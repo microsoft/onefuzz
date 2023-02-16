@@ -17,7 +17,8 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     let config_path = value_t!(args, "config", PathBuf)?;
     let setup_dir = value_t!(args, "setup_dir", PathBuf)?;
-    let config = Config::from_file(config_path, setup_dir)?;
+    let extra_dir = value_t!(args, "extra_dir", PathBuf).ok();
+    let config = Config::from_file(config_path, setup_dir, extra_dir)?;
 
     init_telemetry(config.common()).await;
 
@@ -123,4 +124,6 @@ pub fn args(name: &str) -> App<'static, 'static> {
         .about("managed fuzzing")
         .arg(Arg::with_name("config").required(true))
         .arg(Arg::with_name("setup_dir").required(true))
+        .arg(Arg::with_name("extra_dir").long("extra_dir").required(false)
+    )
 }

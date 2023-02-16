@@ -879,6 +879,7 @@ public record TaskDefinition(
 public record WorkSet(
     bool Reboot,
     Uri SetupUrl,
+    Uri? ExtraUrl,
     bool Script,
     List<WorkUnit> WorkUnits
 );
@@ -1007,6 +1008,7 @@ public record TaskUnitConfig(
     public IContainerDef? UniqueInputs { get; set; }
     public IContainerDef? UniqueReports { get; set; }
     public IContainerDef? RegressionReports { get; set; }
+    public IContainerDef? Extra { get; set; }
 
 }
 

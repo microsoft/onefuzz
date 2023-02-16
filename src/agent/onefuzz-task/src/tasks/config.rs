@@ -51,6 +51,9 @@ pub struct CommonConfig {
     #[serde(default)]
     pub setup_dir: PathBuf,
 
+    #[serde(default)]
+    pub extra_dir: Option<PathBuf>,
+
     /// Lower bound on available system memory. If the available memory drops
     /// below the limit, the task will exit with an error. This is a fail-fast
     /// mechanism to support debugging.
@@ -135,13 +138,14 @@ pub enum Config {
 }
 
 impl Config {
-    pub fn from_file(path: PathBuf, setup_dir: PathBuf) -> Result<Self> {
+    pub fn from_file(path: PathBuf, setup_dir: PathBuf, extra_dir: Option<PathBuf>) -> Result<Self> {
         let json = std::fs::read_to_string(path)?;
         let json_config: serde_json::Value = serde_json::from_str(&json)?;
 
         // override the setup_dir in the config file with the parameter value if specified
         let mut config: Self = serde_json::from_value(json_config)?;
         config.common_mut().setup_dir = setup_dir;
+        config.common_mut().extra_dir = extra_dir;
 
         Ok(config)
     }

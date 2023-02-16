@@ -56,6 +56,7 @@ class Regression(Command):
         check_fuzzer_help: bool = True,
         delete_input_container: bool = True,
         check_regressions: bool = False,
+        extra_container: Optional[Container] = None,
     ) -> None:
         """
         generic regression task
@@ -89,6 +90,7 @@ class Regression(Command):
             check_fuzzer_help=check_fuzzer_help,
             delete_input_container=delete_input_container,
             check_regressions=check_regressions,
+            setup_container=setup_container
         )
 
     def libfuzzer(
@@ -115,6 +117,7 @@ class Regression(Command):
         check_fuzzer_help: bool = True,
         delete_input_container: bool = True,
         check_regressions: bool = False,
+        extra_container: Optional[Container] = None,
     ) -> None:
         """
         libfuzzer regression task
@@ -148,6 +151,7 @@ class Regression(Command):
             check_fuzzer_help=check_fuzzer_help,
             delete_input_container=delete_input_container,
             check_regressions=check_regressions,
+            setup_container=setup_container,
         )
 
     def _create_job(
@@ -175,6 +179,7 @@ class Regression(Command):
         check_fuzzer_help: bool = True,
         delete_input_container: bool = True,
         check_regressions: bool = False,
+        extra_container: Optional[Container] = None,
     ) -> None:
         if dryrun:
             return None
@@ -201,6 +206,9 @@ class Regression(Command):
             ContainerType.regression_reports,
         )
 
+        if extra_container is not None:
+            helper.containers[ContainerType.extra] = extra_container
+
         containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
             (ContainerType.crashes, helper.containers[ContainerType.crashes]),
@@ -214,6 +222,7 @@ class Regression(Command):
                 ContainerType.regression_reports,
                 helper.containers[ContainerType.regression_reports],
             ),
+            (ContainerType.extra, helper.containers[ContainerType.extra]),
         ]
 
         if crashes:
