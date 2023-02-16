@@ -91,6 +91,18 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, "invalid container");
         }
 
+        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly) &&
+            !await JinjaTemplateAdapter.IsValidScribanNotificationTemplate(_context, _logTracer, config)) {
+            return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, "The notification config is not a valid scriban template");
+        }
+
+        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableValidateNotificationConfigSemantics)) {
+            var validConfig = await config.Validate();
+            if (!validConfig.IsOk) {
+                return OneFuzzResult<Notification>.Error(validConfig.ErrorV);
+            }
+        }
+
         if (replaceExisting) {
             var existing = this.SearchByRowKeys(new[] { container.String });
             await foreach (var existingEntry in existing) {
@@ -133,7 +145,6 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
     public async Async.Task<Task?> GetRegressionReportTask(RegressionReport report) {
         if (report.CrashTestResult.CrashReport != null) {
-
             return await _context.TaskOperations.GetByJobIdAndTaskId(report.CrashTestResult.CrashReport.JobId, report.CrashTestResult.CrashReport.TaskId);
         }
         if (report.CrashTestResult.NoReproReport != null) {

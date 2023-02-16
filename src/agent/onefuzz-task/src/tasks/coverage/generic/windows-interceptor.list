@@ -1,0 +1,15 @@
+# Required to avoid recording errors.
+! *\llvm-project\compiler-rt\*
+! *\vctools\crt\*
+! *\Windows Kits\10\Include\*\ucrt\*
+! *\ExternalAPIs\Windows\10\sdk\*
+! *\ExternalAPIs\UnifiedCRT\*
+! minkernel\crts\*
+! vccrt\vcruntime\*
+
+# Optional, reduces noise.
+! *\Microsoft Visual Studio\*\VC\Tools\MSVC\*\include\*
+! *\Windows Kits\10\include\*\um\*
+! *\vctools\langapi\*
+! onecore\internal\sdk\inc\minwin\*
+! shared\inc\*

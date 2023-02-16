@@ -48,6 +48,7 @@ public abstract class NotificationsBase {
             Container container,
             string filename,
             Report report,
+            ILogTracer log,
             Task? task = null,
             Job? job = null,
             Uri? targetUrl = null,
@@ -76,7 +77,10 @@ public abstract class NotificationsBase {
             }
 
             await context.ConfigurationRefresher.TryRefreshAsync().IgnoreResult();
-            var scribanOnly = scribanOnlyOverride ?? await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly);
+            var scribanOnlyFeatureFlag = await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly);
+            log.Info($"ScribanOnlyFeatureFlag: {scribanOnlyFeatureFlag}");
+
+            var scribanOnly = scribanOnlyOverride ?? scribanOnlyFeatureFlag;
 
             return new Renderer(
                 container,
