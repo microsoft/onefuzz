@@ -44,7 +44,7 @@ public class AgentCommands {
 
     private async Async.Task<HttpResponseData> Delete(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeCommandDelete>(req);
-        if (!request.IsOk || request.OkV == null) {
+        if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, typeof(NodeCommandDelete).ToString());
         }
         var nodeCommand = request.OkV;

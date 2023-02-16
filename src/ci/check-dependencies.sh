@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # This script checks the OneFuzz agent binaries to ensure
-# that we don't accidentally change their dependencies, and 
+# that we don't accidentally change their dependencies, and
 # create a binary that won't work on our standard Ubuntu images.
-# 
+#
 # If we do make changes on purpose, the lists below should be updated.
 
 # See issue and related links:
@@ -19,11 +19,11 @@ function get-deps {
 
 function check {
     wanted=$2
-    if [ "$(uname)" != 'Linux' ]; then 
+    if [ "$(uname)" != 'Linux' ]; then
         wanted=$3
     fi
     got=$(get-deps "$1")
-    if ! difference=$(diff -u --color <(echo "$wanted") <(echo "$got")); then 
+    if ! difference=$(diff -u --color <(echo "$wanted") <(echo "$got")); then
         echo "unexpected dependencies for $1"
         echo "wanted:"
         echo "$wanted"
@@ -40,9 +40,11 @@ check "$script_dir/../agent/target/release/onefuzz-task" \
 "/lib64/ld-linux-x86-64.so.2
 libc.so.6
 libdl.so.2
+libgcc_s.so.1
 liblzma.so.5
 libm.so.6
 libpthread.so.0
+libstdc++.so.6
 libunwind-ptrace.so.0
 libunwind-x86_64.so.8
 libunwind.so.8
