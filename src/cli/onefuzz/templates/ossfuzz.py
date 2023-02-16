@@ -243,8 +243,6 @@ class OssFuzz(Command):
             # Cast because `glob()` returns `str`.
             fuzzer_blob_name = helper.setup_relative_blob_name(fuzzer, None)
 
-            containers = helper.containers
-
             self.onefuzz.template.libfuzzer._create_tasks(
                 job=base_helper.job,
                 containers=helper.containers,
