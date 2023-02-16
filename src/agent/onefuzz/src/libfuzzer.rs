@@ -450,7 +450,7 @@ mod tests {
             options.clone(),
             env.clone(),
             temp_setup_dir.path(),
-            None,
+            Option::<PathBuf>::None,
             MachineIdentity {
                 machine_id: uuid::Uuid::new_v4(),
                 machine_name: "test-input".into(),
@@ -484,7 +484,7 @@ mod tests {
             options.clone(),
             env.clone(),
             temp_setup_dir.path(),
-            None,
+            Option::<PathBuf>::None,
             MachineIdentity {
                 machine_id: uuid::Uuid::new_v4(),
                 machine_name: "test-input".into(),
