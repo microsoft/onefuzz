@@ -206,9 +206,6 @@ class Regression(Command):
             ContainerType.regression_reports,
         )
 
-        if extra_container is not None:
-            helper.containers[ContainerType.extra] = extra_container
-
         containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
             (ContainerType.crashes, helper.containers[ContainerType.crashes]),
@@ -222,8 +219,10 @@ class Regression(Command):
                 ContainerType.regression_reports,
                 helper.containers[ContainerType.regression_reports],
             ),
-            (ContainerType.extra, helper.containers[ContainerType.extra]),
         ]
+
+        if extra_container:
+            containers.append((ContainerType.extra, extra_container))
 
         if crashes:
             helper.containers[

@@ -94,8 +94,6 @@ class AFL(Command):
             ContainerType.reports,
             ContainerType.unique_reports,
         )
-        if extra_container is not None:
-            helper.containers[ContainerType.extra] = extra_container
 
         if existing_inputs:
             self.onefuzz.containers.get(existing_inputs)
@@ -135,8 +133,10 @@ class AFL(Command):
             (ContainerType.setup, helper.containers[ContainerType.setup]),
             (ContainerType.crashes, helper.containers[ContainerType.crashes]),
             (ContainerType.inputs, helper.containers[ContainerType.inputs]),
-            (ContainerType.extra, helper.containers[ContainerType.extra]),
         ]
+
+        if extra_container is not None:
+            containers.append((ContainerType.extra, helper.containers[ContainerType.extra]))
 
         self.logger.info("creating afl fuzz task")
         fuzzer_task = self.onefuzz.tasks.create(
@@ -170,6 +170,9 @@ class AFL(Command):
                 helper.containers[ContainerType.unique_reports],
             ),
         ]
+
+        if extra_container is not None:
+            report_containers.append((ContainerType.extra, helper.containers[ContainerType.extra]))
 
         self.logger.info("creating generic_crash_report task")
         self.onefuzz.tasks.create(
