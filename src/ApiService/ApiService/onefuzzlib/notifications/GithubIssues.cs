@@ -30,6 +30,35 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         }
     }
 
+    public static async Async.Task<OneFuzzResultVoid> Validate(GithubIssuesTemplate config) {
+        // Validate PAT is valid
+        GitHubClient gh;
+        if (config.Auth.Secret is SecretValue<GithubAuth> auth) {
+            try {
+                gh = GetGitHubClient(auth.Value.User, auth.Value.PersonalAccessToken);
+                var _ = await gh.User.Get(auth.Value.User);
+            } catch {
+                return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"Failed to login to github.com with user {auth.Value.User} and the provided Personal Access Token");
+            }
+        } else {
+            return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"GithubAuth is missing or invalid");
+        }
+
+        try {
+            var _ = await gh.Repository.Get(config.Organization, config.Repository);
+        } catch {
+            return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"Failed to access repository: {config.Organization}/{config.Repository}");
+        }
+
+        return OneFuzzResultVoid.Ok;
+    }
+
+    private static GitHubClient GetGitHubClient(string user, string pat) {
+        return new GitHubClient(new ProductHeaderValue("OneFuzz")) {
+            Credentials = new Credentials(user, pat)
+        };
+    }
+
     private async Async.Task Process(GithubIssuesTemplate config, Container container, string filename, Report report) {
         var renderer = await Renderer.ConstructRenderer(_context, container, filename, report, _logTracer);
         var handler = await GithubConnnector.GithubConnnectorCreator(config, container, filename, renderer, _context.Creds.GetInstanceUrl(), _context, _logTracer);
@@ -48,14 +77,12 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
                 SecretValue<GithubAuth> sv => sv.Value,
                 _ => throw new ArgumentException($"Unexpected secret type {config.Auth.Secret.GetType()}")
             };
-            return new GithubConnnector(config, container, filename, renderer, instanceUrl, auth!, logTracer);
+            return new GithubConnnector(config, renderer, instanceUrl, auth!, logTracer);
         }
 
-        public GithubConnnector(GithubIssuesTemplate config, Container container, string filename, Renderer renderer, Uri instanceUrl, GithubAuth auth, ILogTracer logTracer) {
+        public GithubConnnector(GithubIssuesTemplate config, Renderer renderer, Uri instanceUrl, GithubAuth auth, ILogTracer logTracer) {
             _config = config;
-            _gh = new GitHubClient(new ProductHeaderValue("OneFuzz")) {
-                Credentials = new Credentials(auth.User, auth.PersonalAccessToken)
-            };
+            _gh = GetGitHubClient(auth.User, auth.PersonalAccessToken);
             _renderer = renderer;
             _instanceUrl = instanceUrl;
             _logTracer = logTracer;
