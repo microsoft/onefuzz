@@ -9,9 +9,6 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface IAdo {
     public Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool isLastRetryAttempt, Guid notificationId);
-
-    public Async.Task<OneFuzzResultVoid> Validate(AdoTemplate config);
-
 }
 
 public class Ado : NotificationsBase, IAdo {
@@ -64,7 +61,7 @@ public class Ado : NotificationsBase, IAdo {
         return errorCodes.Any(code => errorStr.Contains(code));
     }
 
-    public async Async.Task<OneFuzzResultVoid> Validate(AdoTemplate config) {
+    public static async Async.Task<OneFuzzResultVoid> Validate(AdoTemplate config) {
         // Validate PAT is valid for the base url
         VssConnection connection;
         if (config.AuthToken.Secret is SecretValue<string> token) {
