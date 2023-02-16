@@ -154,7 +154,7 @@ class Radamsa(Command):
             (
                 ContainerType.readonly_inputs,
                 helper.containers[ContainerType.readonly_inputs],
-            )
+            ),
         ]
 
         if extra_container is not None:

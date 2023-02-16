@@ -1132,7 +1132,6 @@ class Libfuzzer(Command):
             (ContainerType.no_repro, helper.containers[ContainerType.no_repro]),
         ]
 
-
         if extra_container is not None:
             report_containers.append((ContainerType.extra, extra_container))
 
