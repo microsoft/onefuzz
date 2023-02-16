@@ -287,7 +287,7 @@ public class Extensions : IExtensions {
                 Publisher = "Microsoft.Compute",
                 Location = region,
                 ForceUpdateTag = Guid.NewGuid().ToString(),
-                TypeHandlerVersion = "1.9",
+                TypeHandlerVersion = "1.10",
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(JsonSerializer.Serialize(new { commandToExecute = toExecuteCmd, fileUris = urlsUpdated }, _extensionSerializerOptions)),
                 ProtectedSettings = new BinaryData(managedIdentity)
