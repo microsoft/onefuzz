@@ -4,7 +4,6 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
-using Newtonsoft.Json;
 
 namespace Microsoft.OneFuzz.Service;
 
