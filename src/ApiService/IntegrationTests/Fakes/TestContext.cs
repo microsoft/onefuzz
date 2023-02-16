@@ -41,8 +41,7 @@ public sealed class TestContext : IOnefuzzContext {
         UserCredentials = new UserCredentials(logTracer, ConfigOperations);
         NotificationOperations = new NotificationOperations(logTracer, this);
         SecretsOperations = new TestSecretsOperations(Creds, ServiceConfiguration);
-        
-        = new TestFeatureManagerSnapshot();
+        FeatureManagerSnapshot = new TestFeatureManagerSnapshot();
     }
 
     public TestEvents Events { get; set; } = new();
