@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Tuple
 
 from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag
 from onefuzztypes.models import NotificationConfig
-from onefuzztypes.primitives import File, PoolName, Container
+from onefuzztypes.primitives import Container, File, PoolName
 
 from onefuzz.api import Command
 from onefuzz.backend import container_file_path

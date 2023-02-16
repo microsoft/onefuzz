@@ -31,13 +31,14 @@ from uuid import UUID
 import msal
 import requests
 from azure.storage.blob import ContainerClient
-from onefuzztypes import responses
 from pydantic import BaseModel, Field
 from requests import Response
 from tenacity import RetryCallState, retry
 from tenacity.retry import retry_if_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random
+
+from onefuzztypes import responses
 
 from .azcopy import azcopy_copy, azcopy_sync
 

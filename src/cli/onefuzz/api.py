@@ -19,6 +19,11 @@ from uuid import UUID
 
 import semver
 from memoization import cached
+from onefuzztypes.enums import TaskType
+from pydantic import BaseModel
+from requests import Response
+from six.moves import input  # workaround for static analysis
+
 from onefuzztypes import (
     enums,
     events,
@@ -28,10 +33,6 @@ from onefuzztypes import (
     responses,
     webhooks,
 )
-from onefuzztypes.enums import TaskType
-from pydantic import BaseModel
-from requests import Response
-from six.moves import input  # workaround for static analysis
 
 from .__version__ import __version__
 from .azcopy import azcopy_sync
