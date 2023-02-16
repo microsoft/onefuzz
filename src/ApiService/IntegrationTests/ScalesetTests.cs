@@ -121,7 +121,7 @@ public abstract class ScalesetTestBase : FunctionTestBase {
         var req = new ScalesetCreate(
             poolName,
             TestVmssOperations.TestSku,
-            "Image",
+            TestVmssOperations.TestImage,
             Region: null,
             Size: 1,
             SpotInstances: false,
