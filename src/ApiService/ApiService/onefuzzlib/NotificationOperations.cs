@@ -97,7 +97,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         }
 
         if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableValidateNotificationConfigSemantics)) {
-            var validConfig = await Validate(config);
+            var validConfig = await config.Validate();
             if (!validConfig.IsOk) {
                 return OneFuzzResult<Notification>.Error(validConfig.ErrorV);
             }
@@ -141,10 +141,6 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
                 throw new ArgumentOutOfRangeException(nameof(notificationTemplate));
         }
 
-    }
-
-    private static async Async.Task<OneFuzzResultVoid> Validate(NotificationTemplate config) {
-        return await config.Validate();
     }
 
     public async Async.Task<Task?> GetRegressionReportTask(RegressionReport report) {
