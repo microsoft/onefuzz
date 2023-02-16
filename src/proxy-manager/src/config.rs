@@ -16,9 +16,6 @@ use uuid::Uuid;
 
 #[derive(Error, Debug)]
 pub enum ProxyError {
-    #[error("missing argument {0}")]
-    MissingArg(String),
-
     #[error("missing etag header")]
     EtagError,
 

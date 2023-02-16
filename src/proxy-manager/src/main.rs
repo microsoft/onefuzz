@@ -6,7 +6,7 @@ mod proxy;
 
 use anyhow::Result;
 use clap::{Arg, Command};
-use config::{Config, ProxyError::MissingArg};
+use config::Config;
 use onefuzz_telemetry::{error, info};
 use std::{
     io::{stdout, Write},
@@ -58,7 +58,7 @@ fn main() -> Result<()> {
 
     let app = Command::new("onefuzz-proxy")
         .version(version)
-        .arg(Arg::new("config").long("config").short('c'))
+        .arg(Arg::new("config").long("config").short('c').required(true))
         .subcommand(license_cmd);
     let matches = app.get_matches();
 
@@ -69,7 +69,7 @@ fn main() -> Result<()> {
 
     let config_path = matches
         .get_one::<String>("config")
-        .ok_or_else(|| MissingArg("--config".to_string()))?
+        .expect("was required")
         .parse()?;
 
     let rt = Runtime::new()?;
