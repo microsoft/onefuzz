@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 use crate::proxy;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use onefuzz_telemetry::{
-    set_appinsights_clients, EventData, InstanceTelemetryKey, MicrosoftTelemetryKey, Role,
+    info, set_appinsights_clients, EventData, InstanceTelemetryKey, MicrosoftTelemetryKey, Role,
 };
 use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
