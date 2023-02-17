@@ -2,8 +2,8 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
-use onefuzz::monitor::DirectoryMonitor;
 use clap::Parser;
+use onefuzz::monitor::DirectoryMonitor;
 
 #[derive(Debug, Parser)]
 struct Opt {
