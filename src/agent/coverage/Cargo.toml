@@ -25,7 +25,7 @@ debugger = { path = "../debugger" }
 pete = "0.9"
 # For procfs, opt out of the `chrono` freature; it pulls in an old version
 # of `time`. We do not use the methods that the `chrono` feature enables.
-procfs = { version = "0.12", default-features = false, features = ["flate2"] }
+procfs = { version = "0.15", default-features = false, features = ["flate2"] }
 
 [dev-dependencies]
 clap = { version = "4.0", features = ["derive"] }
