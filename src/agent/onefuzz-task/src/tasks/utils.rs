@@ -85,7 +85,7 @@ impl CheckNotify for tokio::sync::Notify {
     }
 }
 
-pub fn parse_key_value(value: String) -> Result<(String, String)> {
+pub fn parse_key_value(value: &str) -> Result<(String, String)> {
     let offset = value
         .find('=')
         .ok_or_else(|| format_err!("invalid key=value, no = found {:?}", value))?;
