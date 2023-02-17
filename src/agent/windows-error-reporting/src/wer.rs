@@ -1,25 +1,19 @@
-use std::{
-    ffi::c_void,
-    os::windows::process::CommandExt,
-    path::Path,
-    process::Command,
-};
+use std::{ffi::c_void, os::windows::process::CommandExt, path::Path, process::Command};
 
 use anyhow::{Context, Result};
 
 use windows::{
     core::PCWSTR,
     Win32::{
-        Foundation::{
-            DBG_CONTINUE, DBG_EXCEPTION_NOT_HANDLED, EXCEPTION_BREAKPOINT, HANDLE, HWND,
-        },
+        Foundation::{DBG_CONTINUE, DBG_EXCEPTION_NOT_HANDLED, EXCEPTION_BREAKPOINT, HANDLE, HWND},
         System::{
             ErrorReporting::{
                 WerConsentApproved, WerDumpTypeMiniDump, WerFileTypeOther, WerReportAddDump,
-                WerReportAddFile, WerReportCloseHandle, WerReportCreate,
-                WerReportSubmit, WerReportUploaded, HREPORT, WER_DUMP_NOHEAP_ONQUEUE,
-                WER_FILE_ANONYMOUS_DATA, WER_REPORT_INFORMATION,
-                WER_SUBMIT_RESULT, WER_SUBMIT_NO_QUEUE, WER_SUBMIT_REPORT_MACHINE_ID, WER_SUBMIT_BYPASS_DATA_THROTTLING, WerReportSetParameter, WerReportCritical,
+                WerReportAddFile, WerReportCloseHandle, WerReportCreate, WerReportCritical,
+                WerReportSetParameter, WerReportSubmit, WerReportUploaded, HREPORT,
+                WER_DUMP_NOHEAP_ONQUEUE, WER_FILE_ANONYMOUS_DATA, WER_REPORT_INFORMATION,
+                WER_SUBMIT_BYPASS_DATA_THROTTLING, WER_SUBMIT_NO_QUEUE,
+                WER_SUBMIT_REPORT_MACHINE_ID, WER_SUBMIT_RESULT,
             },
             Threading::DEBUG_ONLY_THIS_PROCESS,
         },
@@ -58,9 +52,10 @@ impl<'a> WerDebugEventHandler<'a> {
     ) -> Result<u32> {
         let process_handle = HANDLE(process_handle as isize);
         let app_name = self
-                .target_exe
-                .file_name().and_then(|f| f.to_str())
-                .ok_or(anyhow::anyhow!("invalid target_exe path"))?;
+            .target_exe
+            .file_name()
+            .and_then(|f| f.to_str())
+            .ok_or(anyhow::anyhow!("invalid target_exe path"))?;
         println!("**** app_name: {}", app_name);
         let report = WerReport::create(
             process_handle,
@@ -140,8 +135,13 @@ impl From<HREPORT> for WerReport {
 impl WerReport {
     pub fn submit(&self) -> Result<WER_SUBMIT_RESULT> {
         unsafe {
-            let result =
-                WerReportSubmit(self.inner_report, WerConsentApproved, WER_SUBMIT_NO_QUEUE | WER_SUBMIT_REPORT_MACHINE_ID | WER_SUBMIT_BYPASS_DATA_THROTTLING)?;
+            let result = WerReportSubmit(
+                self.inner_report,
+                WerConsentApproved,
+                WER_SUBMIT_NO_QUEUE
+                    | WER_SUBMIT_REPORT_MACHINE_ID
+                    | WER_SUBMIT_BYPASS_DATA_THROTTLING,
+            )?;
             Ok(result)
         }
     }
@@ -175,12 +175,15 @@ impl WerReport {
             )?
         };
         let wer_report = WerReport::from(report);
-        wer_report.set_parameters(&vec![("Param1","Value1"), ("Param2","Value2"), ("Param3","Value3")])?;
+        wer_report.set_parameters(&vec![
+            ("Param1", "Value1"),
+            ("Param2", "Value2"),
+            ("Param3", "Value3"),
+        ])?;
         wer_report.add_file(input_path)?;
 
         Ok(wer_report)
     }
-
 
     pub fn set_parameters(&self, parameters: &[(&str, &str)]) -> Result<()> {
         if parameters.len() > 10 {
@@ -197,7 +200,6 @@ impl WerReport {
                 )?;
             }
         }
-
 
         Ok(())
     }
