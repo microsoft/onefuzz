@@ -7,7 +7,6 @@ license = "MIT"
 
 [features]
 default = []
-z3 = ["z3-sys"]
 intel_instructions = ["iced-x86"]
 
 [dependencies]
@@ -16,7 +15,6 @@ appinsights = { version = "0.2.3" }
 log = "0.4"
 uuid = { version = "0.8", features = ["serde", "v4"] }
 serde = { version = "1.0", features = ["derive"] }
-z3-sys = { version = "0.6", optional = true}
 iced-x86 = { version = "1.17", optional = true}
 tokio = { version = "1.24", features = ["full"] }
 lazy_static = "1.4"
