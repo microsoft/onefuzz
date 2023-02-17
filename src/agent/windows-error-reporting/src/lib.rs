@@ -1,3 +1,2 @@
 #![cfg(windows)]
-
-mod wer;
+pub mod wer;

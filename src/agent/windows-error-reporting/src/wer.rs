@@ -1,5 +1,5 @@
 use std::{
-    ffi::{c_void, OsStr},
+    ffi::c_void,
     os::windows::process::CommandExt,
     path::Path,
     process::Command,
@@ -16,10 +16,10 @@ use windows::{
         System::{
             ErrorReporting::{
                 WerConsentApproved, WerDumpTypeMiniDump, WerFileTypeOther, WerReportAddDump,
-                WerReportAddFile, WerReportApplicationCrash, WerReportCloseHandle, WerReportCreate,
+                WerReportAddFile, WerReportCloseHandle, WerReportCreate,
                 WerReportSubmit, WerReportUploaded, HREPORT, WER_DUMP_NOHEAP_ONQUEUE,
-                WER_FILE_ANONYMOUS_DATA, WER_REPORT_INFORMATION, WER_SUBMIT_FLAGS,
-                WER_SUBMIT_RESULT, WER_SUBMIT_NO_QUEUE, WER_SUBMIT_REPORT_MACHINE_ID, WER_SUBMIT_BYPASS_DATA_THROTTLING,
+                WER_FILE_ANONYMOUS_DATA, WER_REPORT_INFORMATION,
+                WER_SUBMIT_RESULT, WER_SUBMIT_NO_QUEUE, WER_SUBMIT_REPORT_MACHINE_ID, WER_SUBMIT_BYPASS_DATA_THROTTLING, WerReportSetParameter, WerReportCritical,
             },
             Threading::DEBUG_ONLY_THIS_PROCESS,
         },
@@ -117,7 +117,7 @@ fn to_u16<const N: usize>(str: &str) -> [u16; N] {
     arr
 }
 
-struct WerReport {
+pub struct WerReport {
     inner_report: HREPORT,
 }
 
@@ -170,13 +170,36 @@ impl WerReport {
         let report = unsafe {
             WerReportCreate(
                 PCWSTR::from_raw(event_name.as_ptr()),
-                WerReportApplicationCrash,
+                WerReportCritical,
                 Some(&report_info as *const _),
             )?
         };
         let wer_report = WerReport::from(report);
+        wer_report.set_parameters(&vec![("Param1","Value1"), ("Param2","Value2"), ("Param3","Value3")])?;
         wer_report.add_file(input_path)?;
+
         Ok(wer_report)
+    }
+
+
+    pub fn set_parameters(&self, parameters: &[(&str, &str)]) -> Result<()> {
+        if parameters.len() > 10 {
+            return Err(anyhow::anyhow!("too many parameters"));
+        }
+
+        for (index, &(name, value)) in parameters.iter().enumerate() {
+            unsafe {
+                WerReportSetParameter(
+                    self.inner_report,
+                    index as u32,
+                    PCWSTR::from_raw(to_u16::<64>(name).as_ptr()),
+                    PCWSTR::from_raw(to_u16::<64>(value).as_ptr()),
+                )?;
+            }
+        }
+
+
+        Ok(())
     }
 
     pub fn add_file(&self, path: impl AsRef<Path>) -> Result<()> {
@@ -221,32 +244,5 @@ impl WerReport {
             .context("failed to run debugger")?;
 
         Ok(())
-    }
-}
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-    use windows::Win32::Foundation::EXCEPTION_BREAKPOINT;
-
-    #[test]
-    fn test1() {
-        let x = EXCEPTION_BREAKPOINT;
-
-        // WerReport::report_crash(
-        //     OsStr::new("C:\\work\\scratch\\watson\\integration-tests\\libfuzzer\\fuzz.exe"),
-        //     vec!["C:\\work\\scratch\\watson\\integration-tests\\libfuzzer\\crash-24dd304aabea149efcdbbdf59be46bad3f4d289e".into()])
-        //     .unwrap();
-
-        WerReport::report_crash(
-            OsStr::new("C:\\temp\\onefuzz_sample\\onefuzz-sample\\onefuzz_sample.exe"),
-            "C:\\temp\\onefuzz_sample\\onefuzz-sample\\crash-265682293fb3a15c75213499359083bf2551717a")
-            .unwrap();
-    }
-
-    #[test]
-    fn test2 () {
-        let size = std::mem::size_of::<WER_REPORT_INFORMATION>() as u32;
-        println!("size: {}", size)
     }
 }

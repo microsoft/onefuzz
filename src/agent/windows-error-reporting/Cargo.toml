@@ -15,6 +15,7 @@ memmap2 = "0.5"
 rand = "0.8"
 serde = { version = "1.0", features = ["derive"] }
 debugger = { path = "../debugger" }
+clap = { version = "3.2.4", features = ["derive", "cargo"] }
 
 [dependencies.windows]
 version = "0.43.0"

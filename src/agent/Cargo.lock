@@ -3984,6 +3984,7 @@ name = "windows-error-reporting"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "clap 3.2.4",
  "debugger",
  "fnv",
  "goblin 0.5.1",
