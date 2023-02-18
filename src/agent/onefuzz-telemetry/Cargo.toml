@@ -5,17 +5,12 @@ authors = ["fuzzing@microsoft.com"]
 edition = "2018"
 license = "MIT"
 
-[features]
-default = []
-intel_instructions = ["iced-x86"]
-
 [dependencies]
 anyhow = "1.0"
 appinsights = { version = "0.2.3" }
-log = "0.4"
-uuid = { version = "0.8", features = ["serde", "v4"] }
-serde = { version = "1.0", features = ["derive"] }
-iced-x86 = { version = "1.17", optional = true}
-tokio = { version = "1.24", features = ["full"] }
-lazy_static = "1.4"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+lazy_static = "1.4"
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.24", features = ["full"] }
+uuid = { version = "0.8", features = ["serde", "v4"] }
