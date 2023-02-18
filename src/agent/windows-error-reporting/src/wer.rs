@@ -1,4 +1,4 @@
-use std::{ffi::c_void, os::windows::process::CommandExt, path::Path, process::Command};
+use std::{ffi::c_void, os::windows::process::CommandExt, path::{Path, PathBuf}, process::Command};
 
 use anyhow::{Context, Result};
 
@@ -15,7 +15,7 @@ use windows::{
                 WER_SUBMIT_BYPASS_DATA_THROTTLING, WER_SUBMIT_NO_QUEUE,
                 WER_SUBMIT_REPORT_MACHINE_ID, WER_SUBMIT_RESULT,
             },
-            Threading::DEBUG_ONLY_THIS_PROCESS,
+            Threading::{DEBUG_ONLY_THIS_PROCESS, GetCurrentProcess},
         },
     },
 };
@@ -63,7 +63,7 @@ impl<'a> WerDebugEventHandler<'a> {
             app_name,
             self.target_exe,
             "libfuzzer crash detected by onefuzz",
-            self.input_file,
+            Some(self.input_file),
         )
         .context("failed to create WER report")?;
 
@@ -152,7 +152,7 @@ impl WerReport {
         application_name: &str,
         application_path: impl AsRef<Path>,
         description: &str,
-        input_path: impl AsRef<Path>,
+        input_path: Option<impl AsRef<Path>>,
     ) -> Result<Self> {
         let event_name = to_u16::<64>(event_name);
 
@@ -180,7 +180,10 @@ impl WerReport {
             ("Param2", "Value2"),
             ("Param3", "Value3"),
         ])?;
-        wer_report.add_file(input_path)?;
+
+        if let Some(input_path) = input_path {
+            wer_report.add_file(input_path)?;
+        }
 
         Ok(wer_report)
     }
@@ -244,6 +247,26 @@ impl WerReport {
         debugger
             .run(&mut handler)
             .context("failed to run debugger")?;
+
+        Ok(())
+    }
+
+
+    pub fn report_current_process() -> Result<()> {
+        unsafe {
+            let report = WerReport::create(
+                GetCurrentProcess(),
+                "WerReportCurrentProcess",
+                "WerReportCurrentProcess",
+                std::env::current_exe()?,
+                "WerReportCurrentProcess",
+                Option::<PathBuf>::None,
+            )?;
+
+            report.add_dump(GetCurrentProcess())?;
+
+            report.submit()?;
+        }
 
         Ok(())
     }
