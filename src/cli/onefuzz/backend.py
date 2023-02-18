@@ -12,6 +12,7 @@ import sys
 import tempfile
 import time
 from dataclasses import asdict, is_dataclass
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import (
     Any,
@@ -97,6 +98,7 @@ class BackendConfig(BaseModel):
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
     tenant_domain: str
+    expires_on: datetime = datetime.utcnow() + timedelta(hours=24)
 
     def get_multi_tenant_domain(self) -> Optional[str]:
         if "https://login.microsoftonline.com/common" in self.authority:
@@ -326,7 +328,6 @@ class Backend:
 
         response = self.session.request("GET", endpoint + "/api/config")
 
-        logging.debug(response.json())
         endpoint_params = responses.Config.parse_obj(response.json())
 
         # Will override values in storage w/ provided values for SP use
@@ -351,6 +352,13 @@ class Backend:
 
         if not endpoint:
             raise Exception("endpoint not configured")
+
+        # If file expires, remove and force user to reset
+        if datetime.utcnow() > self.config.expires_on:
+            os.remove(self.config_path)
+            self.config = BackendConfig(
+                endpoint=endpoint, authority="", client_id="", tenant_domain=""
+            )
 
         url = endpoint + "/api/" + path
 

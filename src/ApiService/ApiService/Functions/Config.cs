@@ -24,7 +24,8 @@ public class Config {
         var endpointParams = new ConfigResponse(
                 Authority: _context.ServiceConfiguration.Authority,
                 ClientId: _context.ServiceConfiguration.CliAppId,
-                TenantDomain: _context.ServiceConfiguration.TenantDomain);
+                TenantDomain: _context.ServiceConfiguration.TenantDomain,
+                MultiTenantDomain: _context.ServiceConfiguration.MultiTenantDomain);
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(endpointParams);
