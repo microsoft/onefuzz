@@ -15,7 +15,6 @@ public static class Defs {
                     // Deprecated. Retained for processing old table data.
                     TaskFeature.CoverageFilter,
 
-                    TaskFeature.FunctionAllowlist,
                     TaskFeature.ModuleAllowlist,
                     TaskFeature.SourceAllowlist,
                 },
