@@ -1896,10 +1896,10 @@ class Onefuzz:
     def config(
         self,
         endpoint: Optional[str] = None,
-        authority: Optional[str] = None,
-        client_id: Optional[str] = None,
+        override_authority: Optional[str] = None,
+        override_client_id: Optional[str] = None,
+        override_tenant_domain: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
-        tenant_domain: Optional[str] = None,
         reset: Optional[bool] = None,
     ) -> BackendConfig:
         """Configure onefuzz CLI"""
@@ -1924,14 +1924,14 @@ class Onefuzz:
                     "Missing HTTP Authentication"
                 )
             self._backend.config.endpoint = endpoint
-        if authority is not None:
-            self._backend.config.authority = authority
-        if client_id is not None:
-            self._backend.config.client_id = client_id
+        if override_authority is not None:
+            self._backend.config.authority = override_authority
+        if override_client_id is not None:
+            self._backend.config.client_id = override_client_id
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
-        if tenant_domain is not None:
-            self._backend.config.tenant_domain = tenant_domain
+        if override_tenant_domain is not None:
+            self._backend.config.tenant_domain = override_tenant_domain
         self._backend.app = None
         self._backend.save_config()
 
