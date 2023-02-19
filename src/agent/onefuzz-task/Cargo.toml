@@ -49,7 +49,7 @@ thiserror = "1.0"
 tokio = { version = "1.24", features = ["full"] }
 tokio-util = { version = "0.7", features = ["full"] }
 tokio-stream = "0.1"
-tui = { version = "0.18", default-features = false, features = ['crossterm'] }
+tui = { version = "0.19", default-features = false, features = ['crossterm'] }
 url = { version = "2.3", features = ["serde"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 chrono = { version = "0.4", default-features = false, features = [
