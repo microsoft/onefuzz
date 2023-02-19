@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::path::PathBuf;
+
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
@@ -13,14 +15,14 @@ use crate::{
     },
 };
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
+use clap::{Arg, ArgAction, Command};
 use flume::Sender;
 use storage_queue::QueueClient;
 
 use super::common::{SyncCountDirMonitor, UiEvent};
 
 pub fn build_coverage_config(
-    args: &clap::ArgMatches<'_>,
+    args: &clap::ArgMatches,
     local_job: bool,
     input_queue: Option<QueueClient>,
     common: CommonConfig,
@@ -29,7 +31,7 @@ pub fn build_coverage_config(
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let mut target_options = get_cmd_arg(CmdType::Target, args);
-    let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
+    let target_timeout = args.get_one::<u64>(TARGET_TIMEOUT).copied();
 
     let readonly_inputs = if local_job {
         vec![
@@ -67,7 +69,7 @@ pub fn build_coverage_config(
     Ok(config)
 }
 
-pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
+pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
     let context = build_local_context(args, true, event_sender.clone()).await?;
     let config = build_coverage_config(
         args,
@@ -81,54 +83,47 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
     task.run().await
 }
 
-pub fn build_shared_args(local_job: bool) -> Vec<Arg<'static, 'static>> {
+pub fn build_shared_args(local_job: bool) -> Vec<Arg> {
     let mut args = vec![
-        Arg::with_name(TARGET_EXE)
-            .long(TARGET_EXE)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(TARGET_ENV)
-            .long(TARGET_ENV)
-            .takes_value(true)
-            .multiple(true),
-        Arg::with_name(TARGET_OPTIONS)
+        Arg::new(TARGET_EXE).long(TARGET_EXE).required(true),
+        Arg::new(TARGET_ENV).long(TARGET_ENV).num_args(0..),
+        Arg::new(TARGET_OPTIONS)
             .long(TARGET_OPTIONS)
             .default_value("{input}")
-            .takes_value(true)
-            .value_delimiter(" ")
+            .value_delimiter(' ')
             .help("Use a quoted string with space separation to denote multiple arguments"),
-        Arg::with_name(TARGET_TIMEOUT)
-            .takes_value(true)
+        Arg::new(TARGET_TIMEOUT)
+            .value_parser(value_parser!(u64))
             .long(TARGET_TIMEOUT),
-        Arg::with_name(COVERAGE_DIR)
-            .takes_value(true)
+        Arg::new(COVERAGE_DIR)
             .required(!local_job)
+            .value_parser(value_parser!(PathBuf))
             .long(COVERAGE_DIR),
-        Arg::with_name(CHECK_FUZZER_HELP)
-            .takes_value(false)
+        Arg::new(CHECK_FUZZER_HELP)
+            .action(ArgAction::SetTrue)
             .long(CHECK_FUZZER_HELP),
     ];
     if local_job {
         args.push(
-            Arg::with_name(INPUTS_DIR)
+            Arg::new(INPUTS_DIR)
                 .long(INPUTS_DIR)
-                .takes_value(true)
-                .required(true),
+                .required(true)
+                .value_parser(value_parser!(PathBuf)),
         )
     } else {
         args.push(
-            Arg::with_name(READONLY_INPUTS)
-                .takes_value(true)
+            Arg::new(READONLY_INPUTS)
                 .required(true)
                 .long(READONLY_INPUTS)
-                .multiple(true),
+                .value_parser(value_parser!(PathBuf))
+                .num_args(1..),
         )
     }
     args
 }
 
-pub fn args(name: &'static str) -> App<'static, 'static> {
-    SubCommand::with_name(name)
+pub fn args(name: &'static str) -> Command {
+    Command::new(name)
         .about("execute a local-only coverage task")
         .args(&build_shared_args(false))
 }
