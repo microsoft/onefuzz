@@ -19,7 +19,7 @@ hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 notify = "5.0.0-pre.14"
-regex = "1.6.0"
+regex = "1.7.1"
 reqwest = { version = "0.11", features = [
     "json",
     "stream",
@@ -60,8 +60,8 @@ nix = "0.25"
 [target.'cfg(target_os = "linux")'.dependencies]
 pete = "0.9"
 rstack = "0.3"
-proc-maps = "0.2"
+proc-maps = { version = "0.3", default-features = false }
 
 [dev-dependencies]
-structopt = "0.3"
+clap = { version = "4.1.6", features = ["derive"] }
 pretty_assertions = "1.3.0"

@@ -267,12 +267,6 @@ public class Config : IConfig {
             }
         }
 
-        if (definition.Features.Contains(TaskFeature.FunctionAllowlist)) {
-            if (task.Config.Task.FunctionAllowlist != null) {
-                config.FunctionAllowlist = task.Config.Task.FunctionAllowlist;
-            }
-        }
-
         if (definition.Features.Contains(TaskFeature.ModuleAllowlist)) {
             if (task.Config.Task.ModuleAllowlist != null) {
                 config.ModuleAllowlist = task.Config.Task.ModuleAllowlist;
