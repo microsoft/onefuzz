@@ -88,7 +88,7 @@ pub fn build_shared_args() -> Vec<Arg> {
             .long(CRASHES_DIR)
             .required(true)
             .value_parser(value_parser!(PathBuf)),
-        Arg::with_name(CRASHDUMPS_DIR)
+        Arg::new(CRASHDUMPS_DIR)
             .long(CRASHDUMPS_DIR)
             .required(true)
             .value_parser(value_parser!(PathBuf)),
