@@ -486,15 +486,6 @@ dependencies = [
 
 [[package]]
 name = "cpp_demangle"
-version = "0.3.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eeaa953eaad386a53111e47172c2fedba671e5684c8dd601a5f474f4f118710f"
-dependencies = [
- "cfg-if 1.0.0",
-]
-
-[[package]]
-name = "cpp_demangle"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b446fd40bcc17eddd6a4a78f24315eb90afdb3334999ddfd4909985c47722442"
@@ -1842,7 +1833,7 @@ dependencies = [
  "base64",
  "bytes",
  "clap",
- "cpp_demangle 0.3.5",
+ "cpp_demangle",
  "debugger",
  "dunce",
  "dynamic-library",
@@ -3096,7 +3087,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "79be897be8a483a81fff6a3a4e195b4ac838ef73ca42d348b3f722da9902e489"
 dependencies = [
  "cc",
- "cpp_demangle 0.4.0",
+ "cpp_demangle",
  "msvc-demangler",
  "rustc-demangle",
  "symbolic-common",
