@@ -2184,7 +2184,6 @@ dependencies = [
  "serde",
  "tokio",
  "uuid 0.8.2",
- "z3-sys",
 ]
 
 [[package]]
@@ -4146,12 +4145,6 @@ name = "yansi"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09041cd90cf85f7f8b2df60c646f853b7f535ce68f85244eb6731cf89fa498ec"
-
-[[package]]
-name = "z3-sys"
-version = "0.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afa18ba5fbd4933e41ffb440c3fd91f91fe9cdb7310cce3ddfb6648563811de0"
 
 [[package]]
 name = "zip"

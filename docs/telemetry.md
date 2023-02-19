@@ -241,10 +241,6 @@ The following information is recorded for Salvo related tasks:
   during symbolic execution but may have been input tainted. Examples include
   `Cmovs` and `Movq`.  For the full list, see
   [iced_x86::mnemonic](https://docs.rs/iced-x86/1.10.3/iced_x86/enum.Mnemonic.html).
-* Z3ErrorCode - An error code that corresponds to an error code from Z3 when
-  solving a constraint fails.  Examples include `NoParser` and
-  `InvalidPattern`.  For the full list, see
-  [z3_sys::ErrorCode](https://docs.rs/z3-sys/0.6.3/z3_sys/enum.ErrorCode.html)
 * SymexTimeout - A u64 representing the maximum time in seconds to spend during
   symbolic execution, reported each time symbolic execution was stopped due to
   the limit.

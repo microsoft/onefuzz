@@ -68,7 +68,6 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
-        function_allowlist: Optional[str] = None,
         module_allowlist: Optional[str] = None,
         source_allowlist: Optional[str] = None,
         analyzer_exe: Optional[str] = None,
@@ -220,7 +219,6 @@ class Libfuzzer(Command):
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             check_fuzzer_help=check_fuzzer_help,
-            function_allowlist=function_allowlist,
             module_allowlist=module_allowlist,
             source_allowlist=source_allowlist,
         )
@@ -327,7 +325,6 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
-        function_allowlist: Optional[File] = None,
         module_allowlist: Optional[File] = None,
         source_allowlist: Optional[File] = None,
         analyzer_exe: Optional[str] = None,
@@ -402,13 +399,6 @@ class Libfuzzer(Command):
 
         target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
 
-        if function_allowlist:
-            function_allowlist_blob_name: Optional[
-                str
-            ] = helper.setup_relative_blob_name(function_allowlist, setup_dir)
-        else:
-            function_allowlist_blob_name = None
-
         if module_allowlist:
             module_allowlist_blob_name: Optional[str] = helper.setup_relative_blob_name(
                 module_allowlist, setup_dir
@@ -445,7 +435,6 @@ class Libfuzzer(Command):
             check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
             minimized_stack_depth=minimized_stack_depth,
-            function_allowlist=function_allowlist_blob_name,
             module_allowlist=module_allowlist_blob_name,
             source_allowlist=source_allowlist_blob_name,
             analyzer_exe=analyzer_exe,
