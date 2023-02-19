@@ -19,7 +19,7 @@ hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 notify = "5.0.0-pre.14"
-regex = "1.6.0"
+regex = "1.7.1"
 reqwest = { version = "0.11", features = [
     "json",
     "stream",
