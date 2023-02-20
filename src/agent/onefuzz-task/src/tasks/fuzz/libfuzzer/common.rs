@@ -13,7 +13,7 @@ use onefuzz::{
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
 };
 use onefuzz_telemetry::{
-    Event::{new_coverage, new_result, runtime_stats},
+    Event::{new_coverage, new_crashdump, new_result, runtime_stats},
     EventData,
 };
 use serde::Deserialize;
@@ -123,11 +123,19 @@ where
         let resync = self.continuous_sync_inputs();
         let new_inputs = self.config.inputs.monitor_results(new_coverage, true);
         let new_crashes = self.config.crashes.monitor_results(new_result, true);
+        let new_crashdumps = self.config.crashdumps.monitor_results(new_crashdump, true);
 
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
         let report_stats = report_runtime_stats(stats_receiver, hb_client);
         let fuzzers = self.run_fuzzers(Some(&stats_sender));
-        futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
+        futures::try_join!(
+            resync,
+            new_inputs,
+            new_crashes,
+            new_crashdumps,
+            fuzzers,
+            report_stats
+        )?;
 
         Ok(())
     }
