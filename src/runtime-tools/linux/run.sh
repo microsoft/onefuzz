@@ -16,21 +16,24 @@ logger "onefuzz: starting up onefuzz"
 
 #check if we are running in docker
 if [ -f /.dockerenv ]; then
-    echo "Running in docker:
-    to optimize the experience make sure the host os is setup properly. with the following command
-    # use core files, not external crash handler
-    echo core | sudo tee /proc/sys/kernel/core_pattern
-    # disable ASLR
-    echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
-    # set core dumping to default behavior
-    echo 1 | sudo tee /proc/sys/fs/suid_dumpable"
+    echo "Running in docker: to optimize the experience make sure the host OS is setup properly, use the following commands:
+    # 1) use core files, not external crash handler
+    # 2) suffix core with PID: will be 'core.XXXX'
+    # 3) disable ASLR
+    # 4) set core dumping to default behavior
+    sudo sysctl -w 'kernel.core_pattern=core' 'kernel.core_uses_pid=1' 'kernel.randomize_va_space=0' 'fs.suid_dumpable=1'
+
+    # unlimit core files
+    ulimit -c unlimited"
 else
-    # use core files, not external crash handler
-    echo core | sudo tee /proc/sys/kernel/core_pattern
-    # disable ASLR
-    echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
-    # set core dumping to default behavior
-    echo 1 | sudo tee /proc/sys/fs/suid_dumpable
+    # 1) use core files, not external crash handler
+    # 2) suffix core with PID: will be 'core.XXXX'
+    # 3) disable ASLR
+    # 4) set core dumping to default behavior
+    sudo sysctl -w 'kernel.core_pattern=core' 'kernel.core_uses_pid=1' 'kernel.randomize_va_space=0' 'fs.suid_dumpable=1'
+
+    # unlimit core files
+    ulimit -c unlimited
 fi
 
 cd /onefuzz
