@@ -3,6 +3,7 @@
 
 use crate::config::ConfigData;
 use anyhow::Result;
+use onefuzz_telemetry::{error, info};
 use std::{collections::HashMap, path::Path};
 use tokio::process::Command;
 

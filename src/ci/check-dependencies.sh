@@ -51,6 +51,7 @@ libunwind.so.8
 linux-vdso.so.1" \
 \
 "ADVAPI32.dll
+GDI32.dll
 KERNEL32.DLL
 KERNELBASE.dll
 MSASN1.dll
@@ -61,11 +62,15 @@ apphelp.dll
 bcrypt.dll
 crypt32.dll
 dbghelp.dll
+gdi32full.dll
+msvcp_win.dll
 msvcrt.dll
 ntdll.dll
 sechost.dll
 secur32.dll
 ucrtbase.dll
+user32.dll
+win32u.dll
 ws2_32.dll"
 
 check "$script_dir/../agent/target/release/onefuzz-agent" \
