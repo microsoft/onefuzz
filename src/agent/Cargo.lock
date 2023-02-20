@@ -1971,7 +1971,6 @@ dependencies = [
  "anyhow",
  "appinsights",
  "chrono",
- "iced-x86",
  "lazy_static",
  "log",
  "serde",
