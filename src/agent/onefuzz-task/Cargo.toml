@@ -57,13 +57,13 @@ chrono = { version = "0.4", default-features = false, features = [
     "std",
 ] }
 
-azure_core = { version = "0.8", default-features = false, features = [
+azure_core = { version = "0.10", default-features = false, features = [
     "enable_reqwest",
 ] }
-azure_storage = { version = "0.9", default-features = false, features = [
+azure_storage = { version = "0.10", default-features = false, features = [
     "enable_reqwest",
 ] }
-azure_storage_blobs = { version = "0.9", default-features = false, features = [
+azure_storage_blobs = { version = "0.10", default-features = false, features = [
     "enable_reqwest",
 ] }
 
