@@ -247,9 +247,9 @@ where
 
         let fuzzer = L::from_config(&self.config).await?;
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs).await?;
-        let notify = Arc::new(Notify::new());
-
         let pid = running.id();
+
+        let notify = Arc::new(Notify::new());
 
         // Splitting borrow.
         let stderr = running
@@ -303,10 +303,10 @@ where
             }
         }
 
-        for file in &files {
+        for file in files {
             if let Some(filename) = file.file_name() {
                 let dest = self.config.crashes.local_path.join(filename);
-                if let Err(e) = tokio::fs::rename(file.clone(), dest.clone()).await {
+                if let Err(e) = tokio::fs::rename(file, dest.clone()).await {
                     if !dest.exists() {
                         bail!(e)
                     }
@@ -326,6 +326,8 @@ where
                 }
                 other => other.context("moving crash dump to output directory")?,
             }
+        } else {
+            warn!("no PID found for libfuzzer process");
         }
 
         // Windows: TODO

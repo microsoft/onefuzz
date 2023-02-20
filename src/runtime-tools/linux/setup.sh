@@ -159,12 +159,6 @@ if type apt > /dev/null 2> /dev/null; then
     popd
 fi
 
-# enable crash dumps; by default on Ubuntu this is done by apport
-# so we need to disable that
-sudo sysctl -w 'kernel.core_pattern=core' # write dumps to file named 'core'
-sudo sysctl -w 'kernel.core_uses_pid=1'   # suffix core with PID: will be 'core.XXXX'
-ulimit -c unlimited # remove core dump size limit (if any)
-
 if  [ -v DOCKER_BUILD ]; then
     echo "building for docker"
 elif [ -d /etc/systemd/system ]; then
