@@ -213,7 +213,6 @@ public record TaskDetails(
     // Deprecated. Retained for processing old table data.
     string? CoverageFilter = null,
 
-    string? FunctionAllowlist = null,
     string? ModuleAllowlist = null,
     string? SourceAllowlist = null,
     string? TargetAssembly = null,
@@ -1003,7 +1002,6 @@ public record TaskUnitConfig(
     // Deprecated. Retained for processing old table data.
     public string? CoverageFilter { get; set; }
 
-    public string? FunctionAllowlist { get; set; }
     public string? ModuleAllowlist { get; set; }
     public string? SourceAllowlist { get; set; }
     public string? TargetAssembly { get; set; }

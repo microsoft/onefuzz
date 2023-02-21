@@ -1,4 +1,5 @@
 use std::process::Command;
+use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Result;
@@ -6,16 +7,13 @@ use clap::Parser;
 use cobertura::CoberturaCoverage;
 use coverage::allowlist::{AllowList, TargetAllowList};
 use coverage::binary::BinaryCoverage;
-use coverage::record::CoverageRecorder;
+use coverage::record::{CoverageRecorder, Recorded};
 use debuggable_module::loader::Loader;
 
 #[derive(Parser, Debug)]
 struct Args {
     #[arg(long)]
     module_allowlist: Option<String>,
-
-    #[arg(long)]
-    function_allowlist: Option<String>,
 
     #[arg(long)]
     source_allowlist: Option<String>,
@@ -29,6 +27,10 @@ struct Args {
     #[arg(long)]
     dump_stdio: bool,
 
+    #[arg(short = 'd', long)]
+    input_dir: Option<String>,
+
+    #[arg(required = true, num_args = 1..)]
     command: Vec<String>,
 }
 
@@ -40,6 +42,7 @@ enum OutputFormat {
 }
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
+const INPUT_MARKER: &str = "@@";
 
 fn main() -> Result<()> {
     let args = Args::parse();
@@ -51,56 +54,85 @@ fn main() -> Result<()> {
         .map(Duration::from_millis)
         .unwrap_or(DEFAULT_TIMEOUT);
 
-    let mut cmd = Command::new(&args.command[0]);
-    if args.command.len() > 1 {
-        cmd.args(&args.command[1..]);
-    }
-
     let mut allowlist = TargetAllowList::default();
 
     if let Some(path) = &args.module_allowlist {
         allowlist.modules = AllowList::load(path)?;
     }
 
-    if let Some(path) = &args.function_allowlist {
-        allowlist.functions = AllowList::load(path)?;
-    }
-
     if let Some(path) = &args.source_allowlist {
         allowlist.source_files = AllowList::load(path)?;
     }
 
-    let loader = Loader::new();
-    let recorded = CoverageRecorder::new(cmd)
-        .allowlist(allowlist)
-        .loader(loader)
-        .timeout(timeout)
-        .record()?;
+    let mut coverage = BinaryCoverage::default();
+    let loader = Arc::new(Loader::new());
 
-    if args.dump_stdio {
-        if let Some(status) = &recorded.output.status {
-            println!("status = {status}");
-        } else {
-            println!("status = <unavailable>");
+    if let Some(dir) = args.input_dir {
+        for input in std::fs::read_dir(dir)? {
+            let input = input?.path();
+            let cmd = command(&args.command, Some(&input.to_string_lossy()));
+
+            let recorded = CoverageRecorder::new(cmd)
+                .allowlist(allowlist.clone())
+                .loader(loader.clone())
+                .timeout(timeout)
+                .record()?;
+
+            if args.dump_stdio {
+                dump_stdio(&recorded);
+            }
+
+            coverage.merge(&recorded.coverage);
         }
-        println!(
-            "stderr ========================================================================="
-        );
-        println!("{}", recorded.output.stderr);
-        println!(
-            "stdout ========================================================================="
-        );
-        println!("{}", recorded.output.stdout);
-        println!();
+    } else {
+        let cmd = command(&args.command, None);
+        let recorded = CoverageRecorder::new(cmd)
+            .allowlist(allowlist)
+            .loader(loader)
+            .timeout(timeout)
+            .record()?;
+
+        if args.dump_stdio {
+            dump_stdio(&recorded);
+        }
+
+        coverage.merge(&recorded.coverage);
     }
 
     match args.output {
-        OutputFormat::ModOff => dump_modoff(&recorded.coverage)?,
-        OutputFormat::Source => dump_source_line(&recorded.coverage)?,
-        OutputFormat::Cobertura => dump_cobertura(&recorded.coverage)?,
+        OutputFormat::ModOff => dump_modoff(&coverage)?,
+        OutputFormat::Source => dump_source_line(&coverage)?,
+        OutputFormat::Cobertura => dump_cobertura(&coverage)?,
     }
 
     Ok(())
+}
+
+fn command(argv: &[String], input: Option<&str>) -> Command {
+    let mut cmd = Command::new(&argv[0]);
+
+    let args = argv.iter().skip(1);
+
+    if let Some(input) = input {
+        cmd.args(args.map(|a| a.replace(INPUT_MARKER, input)));
+    } else {
+        cmd.args(args);
+    }
+
+    cmd
+}
+
+fn dump_stdio(recorded: &Recorded) {
+    if let Some(status) = recorded.output.status {
+        println!("status = {status}");
+    } else {
+        println!("status = <unavailable>");
+    }
+    println!("stderr =========================================================================");
+    println!("{}", recorded.output.stderr);
+    println!("stdout =========================================================================");
+    println!("{}", recorded.output.stdout);
+    println!();
 }
 
 fn dump_modoff(coverage: &BinaryCoverage) -> Result<()> {

@@ -247,7 +247,7 @@ where
             .ok_or_else(|| format_err!("stderr not captured"))?;
         let mut stderr = BufReader::new(stderr);
 
-        let mut libfuzzer_output: ArrayDeque<[_; LOGS_BUFFER_SIZE], Wrapping> = ArrayDeque::new();
+        let mut libfuzzer_output: ArrayDeque<_, LOGS_BUFFER_SIZE, Wrapping> = ArrayDeque::new();
         loop {
             let mut buf = vec![];
             let bytes_read = stderr.read_until(b'\n', &mut buf).await?;

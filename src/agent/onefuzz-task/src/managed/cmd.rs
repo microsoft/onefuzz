@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
+use clap::{Arg, Command};
 use std::time::Duration;
 
 use crate::tasks::{
@@ -13,11 +13,18 @@ use crate::tasks::{
 
 const OOM_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
-pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
+pub async fn run(args: &clap::ArgMatches) -> Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-    let config_path = value_t!(args, "config", PathBuf)?;
-    let setup_dir = value_t!(args, "setup_dir", PathBuf)?;
-    let extra_dir = value_t!(args, "extra_dir", PathBuf).ok();
+
+    let config_path = args
+        .get_one::<PathBuf>("config")
+        .expect("marked as required");
+
+    let setup_dir = args
+        .get_one::<PathBuf>("setup_dir")
+        .expect("marked as required");
+
+    let extra_dir = args.get_one::<PathBuf>("extra_dir").map(|f| f.as_path());
     let config = Config::from_file(config_path, setup_dir, extra_dir)?;
 
     init_telemetry(config.common()).await;
@@ -119,14 +126,25 @@ async fn init_telemetry(config: &CommonConfig) {
     .await;
 }
 
-pub fn args(name: &str) -> App<'static, 'static> {
-    SubCommand::with_name(name)
+pub fn args(name: &'static str) -> Command {
+    Command::new(name)
         .about("managed fuzzing")
-        .arg(Arg::with_name("config").required(true))
-        .arg(Arg::with_name("setup_dir").required(true))
         .arg(
-            Arg::with_name("extra_dir")
-                .long("extra_dir")
-                .required(false),
+            Arg::new("config")
+                .required(true)
+                .value_parser(value_parser!(PathBuf)),
         )
+        .arg(
+            Arg::new("setup_dir")
+                .required(true)
+                .value_parser(value_parser!(PathBuf)),
+        )
+        .arg(
+            Arg::new("extra_dir")
+                .required(false)
+                .value_parser(value_parser!(PathBuf)),
+        )
+
+
+
 }
