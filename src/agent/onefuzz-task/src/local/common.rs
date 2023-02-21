@@ -238,7 +238,7 @@ pub async fn build_local_context(
     });
     let instance_id = get_uuid("instance_id", args).unwrap_or_default();
 
-    let extra_dir = args.get_one::<PathBuf>(EXTRA_DIR);
+    let extra_dir = args.get_one::<PathBuf>(EXTRA_DIR).cloned();
     let setup_dir = if let Some(setup_dir) = args.get_one::<PathBuf>(SETUP_DIR) {
         setup_dir.clone()
     } else if let Some(target_exe) = args.get_one::<String>(TARGET_EXE) {
