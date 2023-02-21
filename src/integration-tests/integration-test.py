@@ -111,7 +111,9 @@ TARGETS: Dict[str, Integration] = {
         },
         reboot_after_setup=True,
         inject_fake_regression=True,
-        target_env={"ASAN_OPTIONS": "disable_coredump=0:abort_on_error=1"},
+        target_env={
+            "ASAN_OPTIONS": "disable_coredump=0:abort_on_error=1:unmap_shadow_on_exit=1"
+        },
     ),
     "linux-libfuzzer-with-options": Integration(
         template=TemplateType.libfuzzer,
