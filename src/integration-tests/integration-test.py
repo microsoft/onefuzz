@@ -123,7 +123,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.inputs: 2,
         },
         reboot_after_setup=True,
-        fuzzing_target_options=["-runs=10000000 --test:{extra}"],
+        fuzzing_target_options=["-runs=10000000"],
     ),
     "linux-libfuzzer-dlopen": Integration(
         template=TemplateType.libfuzzer,
@@ -137,7 +137,6 @@ TARGETS: Dict[str, Integration] = {
         },
         reboot_after_setup=True,
         use_setup=True,
-        fuzzing_target_options=["--test:{extra}"],
     ),
     "linux-libfuzzer-linked-library": Integration(
         template=TemplateType.libfuzzer,
@@ -151,7 +150,6 @@ TARGETS: Dict[str, Integration] = {
         },
         reboot_after_setup=True,
         use_setup=True,
-        fuzzing_target_options=["--test:{extra}"],
     ),
     "linux-libfuzzer-dotnet": Integration(
         template=TemplateType.libfuzzer_dotnet,
@@ -237,7 +235,6 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.coverage: 1,
         },
         use_setup=True,
-        fuzzing_target_options=["--test:{extra}"],
     ),
     "windows-libfuzzer-load-library": Integration(
         template=TemplateType.libfuzzer,
@@ -250,7 +247,6 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.coverage: 1,
         },
         use_setup=True,
-        fuzzing_target_options=["--test:{extra}"],
     ),
     "windows-libfuzzer-dotnet-dll": Integration(
         template=TemplateType.libfuzzer_dotnet_dll,
@@ -593,6 +589,7 @@ class TestOnefuzz:
 
             job: Optional[Job] = None
             if config.template == TemplateType.libfuzzer:
+                # building the extra container to test this variable substitution
                 extra = self.of.containers.create("extra")
                 job = self.of.template.libfuzzer.basic(
                     self.project,
