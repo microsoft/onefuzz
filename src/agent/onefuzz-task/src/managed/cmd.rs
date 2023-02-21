@@ -144,7 +144,4 @@ pub fn args(name: &'static str) -> Command {
                 .required(false)
                 .value_parser(value_parser!(PathBuf)),
         )
-
-
-
 }
