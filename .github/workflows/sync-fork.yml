@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: tgymnich/fork-sync@v1.6.3
+      - uses: tgymnich/fork-sync@v1.8
         with:
           token: ${{ secrets.SYNC_FORK_TOKEN }}
           owner: microsoft
