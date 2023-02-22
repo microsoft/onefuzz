@@ -180,7 +180,7 @@ function Install-Dotnet([string]$Versions, [string]$InstallDir, [string]$ToolsDi
     $Version = $_
     log "Installing dotnet ${Version} to ${InstallDir}"
     Invoke-WebRequest 'https://dot.net/v1/dotnet-install.ps1' -OutFile 'dotnet-install.ps1'
-    ./dotnet-install.ps1 -Version $Version -InstallDir $InstallDir
+    ./dotnet-install.ps1 -Channel $Version -InstallDir $InstallDir
     Remove-Item ./dotnet-install.ps1
     log "Installing dotnet ${Version}: done"
   }

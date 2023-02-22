@@ -146,7 +146,7 @@ if type apt > /dev/null 2> /dev/null; then
 
     for version in "${DOTNET_VERSIONS[@]}"; do
         logger "running dotnet install $version"
-        /bin/bash ./dotnet-install.sh --version "$version" --install-dir "$DOTNET_ROOT" 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
+        /bin/bash ./dotnet-install.sh --channel "$version" --install-dir "$DOTNET_ROOT" 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
     done
     rm dotnet-install.sh
 
