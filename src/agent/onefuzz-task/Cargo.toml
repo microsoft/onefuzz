@@ -54,6 +54,7 @@ chrono = { version = "0.4", default-features = false, features = [
     "clock",
     "std",
 ] }
+ipc-channel = "0.16.0"
 
 azure_core = { version = "0.6", default-features = false, features = [
     "enable_reqwest",

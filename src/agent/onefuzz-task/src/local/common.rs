@@ -261,6 +261,8 @@ pub async fn build_local_context(
         microsoft_telemetry_key: None,
         logs: None,
         min_available_memory_mb: 0,
+        from_agent_to_task_endpoint: None,
+        from_task_to_agent_endpoint: None,
     };
     let current_dir = current_dir()?;
     let job_path = current_dir.join(format!("{job_id}"));

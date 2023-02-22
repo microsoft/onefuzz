@@ -10,6 +10,7 @@ use crate::tasks::{
     merge, regression, report,
 };
 use anyhow::Result;
+use ipc_channel::ipc::{self, IpcOneShotServer, IpcReceiver, IpcSender};
 use onefuzz::machine_id::MachineIdentity;
 use onefuzz_telemetry::{
     self as telemetry, Event::task_start, EventData, InstanceTelemetryKey, MicrosoftTelemetryKey,
@@ -60,6 +61,9 @@ pub struct CommonConfig {
     pub min_available_memory_mb: u64,
 
     pub machine_identity: MachineIdentity,
+
+    pub from_agent_to_task_endpoint: Option<String>,
+    pub from_task_to_agent_endpoint: Option<String>,
 }
 
 impl CommonConfig {
@@ -233,6 +237,28 @@ impl Config {
 
         if let Some(scaleset_name) = &self.common().machine_identity.scaleset_name {
             telemetry::set_property(EventData::ScalesetId(scaleset_name.to_string()));
+        }
+
+        if let Some(from_agent_to_task_endpoint) = &self.common().from_agent_to_task_endpoint {
+            info!("Creating channel from agent to task");
+            let (agent_sender, receive_from_agent): (IpcSender<String>, IpcReceiver<String>) =
+                ipc::channel().unwrap();
+            info!("Conecting...");
+            let oneshot_sender = IpcSender::connect(from_agent_to_task_endpoint.clone()).unwrap();
+            info!("Sending sender to agent");
+            oneshot_sender.send(agent_sender).unwrap();
+        }
+
+        if let Some(from_task_to_agent_endpoint) = &self.common().from_task_to_agent_endpoint {
+            info!("Creating channel from task to agent");
+            let (task_sender, receive_from_task): (IpcSender<String>, IpcReceiver<String>) =
+                ipc::channel().unwrap();
+            info!("Connecting...");
+            let oneshot_receiver = IpcSender::connect(from_task_to_agent_endpoint.clone()).unwrap();
+            info!("Sending receiver to agent");
+            oneshot_receiver.send(receive_from_task).unwrap();
+
+            task_sender.send("hiiiii".to_string());
         }
 
         info!("agent ready, dispatching task");
