@@ -611,28 +611,12 @@ class TestOnefuzz:
             elif config.template == TemplateType.libfuzzer_dotnet:
                 if setup is None:
                     raise Exception("setup required for libfuzzer_dotnet")
-                job = self.of.template.libfuzzer.dotnet(
-                    self.project,
-                    target,
-                    BUILD,
-                    pools[config.os].name,
-                    target_harness=config.target_exe,
-                    inputs=inputs,
-                    setup_dir=setup,
-                    duration=duration,
-                    vm_count=1,
-                    target_options=config.target_options,
-                    target_env=config.target_env,
-                )
-            elif config.template == TemplateType.libfuzzer_dotnet_dll:
-                if setup is None:
-                    raise Exception("setup required for libfuzzer_dotnet_dll")
                 if config.target_class is None:
-                    raise Exception("target_class required for libfuzzer_dotnet_dll")
+                    raise Exception("target_class required for libfuzzer_dotnet")
                 if config.target_method is None:
-                    raise Exception("target_method required for libfuzzer_dotnet_dll")
+                    raise Exception("target_method required for libfuzzer_dotnet")
 
-                job = self.of.template.libfuzzer.dotnet_dll(
+                job = self.of.template.libfuzzer.dotnet(
                     self.project,
                     target,
                     BUILD,
