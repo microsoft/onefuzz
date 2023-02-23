@@ -55,6 +55,7 @@ async fn main() -> Result<()> {
     let env = Default::default();
     let tester = Tester::new(
         &setup_dir,
+        None,
         &opt.exe,
         &target_options,
         &env,

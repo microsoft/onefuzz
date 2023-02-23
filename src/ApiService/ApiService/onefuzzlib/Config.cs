@@ -140,6 +140,9 @@ public class Config : IConfig {
                 case ContainerType.RegressionReports:
                     config.RegressionReports = def;
                     break;
+                case ContainerType.Extra:
+                    config.Extra = def;
+                    break;
             }
         }
 

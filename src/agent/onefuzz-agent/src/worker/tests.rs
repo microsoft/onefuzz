@@ -55,7 +55,12 @@ struct RunnerDouble {
 
 #[async_trait]
 impl IWorkerRunner for RunnerDouble {
-    async fn run(&self, _setup_dir: &Path, _work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
+    async fn run(
+        &self,
+        _setup_dir: &Path,
+        _extra_dir: Option<PathBuf>,
+        _work: &WorkUnit,
+    ) -> Result<Box<dyn IWorkerChild>> {
         Ok(Box::new(self.child.clone()))
     }
 }
@@ -66,6 +71,7 @@ async fn test_ready_run() {
     let state = State {
         ctx: Ready {
             setup_dir: PathBuf::default(),
+            extra_dir: None,
         },
         work: Fixture.work(),
     };
@@ -148,6 +154,7 @@ async fn test_worker_ready_update() {
     let state = State {
         ctx: Ready {
             setup_dir: PathBuf::default(),
+            extra_dir: None,
         },
         work: Fixture.work(),
     };
