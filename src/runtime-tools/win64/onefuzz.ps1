@@ -8,7 +8,7 @@ $env:LLVM_SYMBOLIZER_PATH = "C:\Program Files\LLVM\bin\llvm-symbolizer.exe"
 if (!$env:RUST_LOG){
   $env:RUST_LOG = "info"
 }
-$env:DOTNET_VERSIONS = "7.0.100;6.0.403"
+$env:DOTNET_VERSIONS = "7.0"
 # Set a session and machine scoped env var
 $env:DOTNET_ROOT = "c:\onefuzz\tools\dotnet"
 [Environment]::SetEnvironmentVariable("DOTNET_ROOT", $env:DOTNET_ROOT, "Machine")
@@ -180,7 +180,7 @@ function Install-Dotnet([string]$Versions, [string]$InstallDir, [string]$ToolsDi
     $Version = $_
     log "Installing dotnet ${Version} to ${InstallDir}"
     Invoke-WebRequest 'https://dot.net/v1/dotnet-install.ps1' -OutFile 'dotnet-install.ps1'
-    ./dotnet-install.ps1 -Version $Version -InstallDir $InstallDir
+    ./dotnet-install.ps1 -Channel $Version -InstallDir $InstallDir
     Remove-Item ./dotnet-install.ps1
     log "Installing dotnet ${Version}: done"
   }
