@@ -121,12 +121,12 @@ Note: this depends on SharpFuzz 2.0.0 or greater.
 
 #### Linux
 ```
-dotnet publish src/SharpFuzz.CommandLine -f net6.0 -c Release --sc -r linux-x64
+dotnet publish src/SharpFuzz.CommandLine -f net7.0 -c Release --sc -r linux-x64
 ```
 
 #### Windows 10
 ```
-dotnet publish src\SharpFuzz.CommandLine -f net6.0 -c Release --sc -r win10-x64
+dotnet publish src\SharpFuzz.CommandLine -f net7.0 -c Release --sc -r win10-x64
 ```
 
 In the end, you should have two binaries for your platform: `libfuzzer-dotnet`(`.exe`) and `LibFuzzerDotnetLoader`(.`exe`).
