@@ -2,13 +2,13 @@
 // Licensed under the MIT License.
 
 use anyhow::{format_err, Context, Result};
+use clap::Parser;
 use srcview::{ModOff, Report, SrcLine, SrcView};
 use std::fs::{self, OpenOptions};
 use std::io::{stdout, BufWriter, Write};
 use std::path::{Path, PathBuf};
-use structopt::StructOpt;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 enum Opt {
     Srcloc(SrcLocOpt),
     PdbPaths(PdbPathsOpt),
@@ -18,17 +18,17 @@ enum Opt {
 }
 
 /// Print the file paths in the provided PDB
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 struct PdbPathsOpt {
     pdb_path: PathBuf,
 }
 
 /// Print modoffset file with file and source lines
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 struct SrcLocOpt {
     pdb_path: PathBuf,
     modoff_path: PathBuf,
-    #[structopt(long)]
+    #[arg(long)]
     module_name: Option<String>,
 }
 
@@ -45,30 +45,30 @@ struct SrcLocOpt {
 ///
 /// The XML report is written to either a file or stdout if the argument is
 /// a single dash.
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 struct CoberturaOpt {
     pdb_path: PathBuf,
     modoff_path: PathBuf,
-    #[structopt(default_value = "-")]
+    #[arg(default_value = "-")]
     output_path: String,
-    #[structopt(long)]
+    #[arg(long)]
     module_name: Option<String>,
 
     /// regular expression that will be applied against the file paths from the
     /// srcview
-    #[structopt(long)]
+    #[arg(long)]
     include_regex: Option<String>,
 
     /// search and replace regular expression that is applied to all file
     /// paths that will appear in the output report
-    #[structopt(long)]
+    #[arg(long)]
     filter_regex: Option<String>,
 }
 
 fn main() -> Result<()> {
     env_logger::init();
 
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
 
     match opt {
         Opt::Srcloc(opts) => srcloc(opts)?,

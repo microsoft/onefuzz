@@ -274,6 +274,8 @@ public enum TaskFeature {
     ReportList,
     MinimizedStackDepth,
     CoverageFilter,
+    ModuleAllowlist,
+    SourceAllowlist,
     TargetMustUseInput,
     TargetAssembly,
     TargetClass,

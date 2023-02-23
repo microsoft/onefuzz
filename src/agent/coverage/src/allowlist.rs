@@ -7,18 +7,13 @@ use std::path::Path;
 
 #[derive(Clone, Debug, Default)]
 pub struct TargetAllowList {
-    pub functions: AllowList,
     pub modules: AllowList,
     pub source_files: AllowList,
 }
 
 impl TargetAllowList {
     pub fn new(modules: AllowList, source_files: AllowList) -> Self {
-        // Allow all.
-        let functions = AllowList::default();
-
         Self {
-            functions,
             modules,
             source_files,
         }
@@ -28,7 +23,6 @@ impl TargetAllowList {
     pub fn extend(&self, other: &Self) -> Self {
         let mut new = Self::default();
 
-        new.functions = self.functions.extend(&other.functions);
         new.modules = self.modules.extend(&other.modules);
         new.source_files = self.source_files.extend(&other.source_files);
 

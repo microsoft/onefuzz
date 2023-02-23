@@ -10,8 +10,13 @@ public static class Defs {
                     TaskFeature.TargetEnv,
                     TaskFeature.TargetOptions,
                     TaskFeature.TargetTimeout,
-                    TaskFeature.CoverageFilter,
                     TaskFeature.TargetMustUseInput,
+
+                    // Deprecated. Retained for processing old table data.
+                    TaskFeature.CoverageFilter,
+
+                    TaskFeature.ModuleAllowlist,
+                    TaskFeature.SourceAllowlist,
                 },
             Vm: new VmDefinition(Compare: Compare.Equal, Value:1),
             Containers: new [] {

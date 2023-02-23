@@ -262,6 +262,18 @@ public class Config : IConfig {
             }
         }
 
+        if (definition.Features.Contains(TaskFeature.ModuleAllowlist)) {
+            if (task.Config.Task.ModuleAllowlist != null) {
+                config.ModuleAllowlist = task.Config.Task.ModuleAllowlist;
+            }
+        }
+
+        if (definition.Features.Contains(TaskFeature.SourceAllowlist)) {
+            if (task.Config.Task.SourceAllowlist != null) {
+                config.SourceAllowlist = task.Config.Task.SourceAllowlist;
+            }
+        }
+
         if (definition.Features.Contains(TaskFeature.TargetAssembly)) {
             config.TargetAssembly = task.Config.Task.TargetAssembly;
         }
