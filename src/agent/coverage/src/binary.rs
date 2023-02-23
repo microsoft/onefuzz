@@ -129,7 +129,7 @@ pub fn find_coverage_sites(
 
                     // Apply allowlists per block, to account for inlining. The `location` values
                     // here describe the top of the inline-inclusive call stack.
-                    if !allowlist.source_files.is_allowed(&path) {
+                    if !allowlist.source_files.is_allowed(path) {
                         continue;
                     }
 

@@ -109,6 +109,7 @@ TARGETS: Dict[str, Integration] = {
         },
         reboot_after_setup=True,
         inject_fake_regression=True,
+        fuzzing_target_options=["--test:{extra}"],
     ),
     "linux-libfuzzer-with-options": Integration(
         template=TemplateType.libfuzzer,
@@ -180,6 +181,7 @@ TARGETS: Dict[str, Integration] = {
         os=OS.linux,
         target_exe="fuzz_target_1",
         wait_for_files={ContainerType.unique_reports: 1, ContainerType.coverage: 1},
+        fuzzing_target_options=["--test:{extra}"],
     ),
     "linux-trivial-crash": Integration(
         template=TemplateType.radamsa,
@@ -209,6 +211,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.coverage: 1,
         },
         inject_fake_regression=True,
+        fuzzing_target_options=["--test:{extra}"],
     ),
     "windows-libfuzzer-linked-library": Integration(
         template=TemplateType.libfuzzer,
@@ -575,6 +578,8 @@ class TestOnefuzz:
 
             job: Optional[Job] = None
             if config.template == TemplateType.libfuzzer:
+                # building the extra container to test this variable substitution
+                extra = self.of.containers.create("extra")
                 job = self.of.template.libfuzzer.basic(
                     self.project,
                     target,
@@ -588,6 +593,7 @@ class TestOnefuzz:
                     reboot_after_setup=config.reboot_after_setup or False,
                     target_options=config.target_options,
                     fuzzing_target_options=config.fuzzing_target_options,
+                    extra_container=Container(extra.name),
                 )
             elif config.template == TemplateType.libfuzzer_dotnet:
                 if setup is None:
