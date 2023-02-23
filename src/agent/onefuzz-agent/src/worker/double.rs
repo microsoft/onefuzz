@@ -10,7 +10,12 @@ pub struct WorkerRunnerDouble {
 
 #[async_trait]
 impl IWorkerRunner for WorkerRunnerDouble {
-    async fn run(&self, _setup_dir: &Path, _work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
+    async fn run(
+        &self,
+        _setup_dir: &Path,
+        _extra_dir: Option<PathBuf>,
+        _work: &WorkUnit,
+    ) -> Result<Box<dyn IWorkerChild>> {
         Ok(Box::new(self.child.clone()))
     }
 }

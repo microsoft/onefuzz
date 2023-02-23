@@ -55,7 +55,6 @@ pub struct Config {
     // Retained only to informatively fail tasks that were qeueued pre-upgrade.
     pub coverage_filter: Option<String>,
 
-    pub function_allowlist: Option<String>,
     pub module_allowlist: Option<String>,
     pub source_allowlist: Option<String>,
 
@@ -160,10 +159,6 @@ impl CoverageTask {
         // We will check for user allowlists for each item type. On Windows, we must ensure some
         // source files are excluded.
         let mut allowlist = TargetAllowList::default();
-
-        if let Some(functions) = &self.config.function_allowlist {
-            allowlist.functions = self.load_allowlist(functions).await?;
-        }
 
         if let Some(modules) = &self.config.module_allowlist {
             allowlist.modules = self.load_allowlist(modules).await?;
@@ -304,6 +299,9 @@ impl<'a> TaskContext<'a> {
             .input_path(input)
             .job_id(&self.config.common.job_id)
             .setup_dir(&self.config.common.setup_dir)
+            .set_optional_ref(&self.config.common.extra_dir, |expand, extra_dir| {
+                expand.extra_dir(extra_dir)
+            })
             .target_exe(&target_exe)
             .target_options(&self.config.target_options)
             .task_id(&self.config.common.task_id);

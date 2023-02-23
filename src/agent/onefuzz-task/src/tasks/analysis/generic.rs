@@ -209,6 +209,9 @@ pub async fn run_tool(
         .output_dir(&config.analysis.local_path)
         .tools_dir(&config.tools.local_path)
         .setup_dir(&config.common.setup_dir)
+        .set_optional_ref(&config.common.extra_dir, |expand, extra_dir| {
+            expand.extra_dir(extra_dir)
+        })
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
         .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {

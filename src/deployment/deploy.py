@@ -147,12 +147,10 @@ class Client:
         create_registration: bool,
         migrations: List[str],
         export_appinsights: bool,
-        multi_tenant_domain: str,
         upgrade: bool,
         subscription_id: Optional[str],
         admins: List[UUID],
         allowed_aad_tenants: List[UUID],
-        cli_app_id: str,
         auto_create_cli_app: bool,
         host_dotnet_on_windows: bool,
         enable_profiler: bool,
@@ -169,7 +167,6 @@ class Client:
         self.instance_specific = instance_specific
         self.third_party = third_party
         self.create_registration = create_registration
-        self.multi_tenant_domain = multi_tenant_domain
         self.custom_domain = custom_domain
         self.upgrade = upgrade
         self.results: Dict = {
@@ -183,16 +180,17 @@ class Client:
 
         self.arm_template = bicep_to_arm(bicep_template)
 
-        self.cli_app_id = cli_app_id
         self.auto_create_cli_app = auto_create_cli_app
         self.host_dotnet_on_windows = host_dotnet_on_windows
         self.enable_profiler = enable_profiler
 
         self.rules: List[NsgRule] = []
 
+        self.cli_app_id = ""
+        self.authority = ""
         self.tenant_id = ""
         self.tenant_domain = ""
-        self.authority = ""
+        self.multi_tenant_domain = ""
 
         self.cli_config: Dict[str, Union[str, UUID]] = {
             "client_id": "",
@@ -1269,12 +1267,6 @@ def main() -> None:
         help="enable appinsight log export",
     )
     parser.add_argument(
-        "--multi_tenant_domain",
-        type=str,
-        default="",
-        help="enable multi-tenant authentication with this tenant domain",
-    )
-    parser.add_argument(
         "--subscription_id",
         type=str,
     )
@@ -1293,12 +1285,6 @@ def main() -> None:
         type=UUID,
         nargs="*",
         help="Set additional AAD tenants beyond the tenant the app is deployed in",
-    )
-    parser.add_argument(
-        "--cli_app_id",
-        type=str,
-        default="",
-        help="CLI App Registration to be used during deployment.",
     )
     parser.add_argument(
         "--auto_create_cli_app",
@@ -1347,12 +1333,10 @@ def main() -> None:
         create_registration=args.create_pool_registration,
         migrations=args.apply_migrations,
         export_appinsights=args.export_appinsights,
-        multi_tenant_domain=args.multi_tenant_domain,
         upgrade=args.upgrade,
         subscription_id=args.subscription_id,
         admins=args.set_admins,
         allowed_aad_tenants=args.allowed_aad_tenants or [],
-        cli_app_id=args.cli_app_id,
         auto_create_cli_app=args.auto_create_cli_app,
         host_dotnet_on_windows=args.host_dotnet_on_windows,
         enable_profiler=args.enable_profiler,
