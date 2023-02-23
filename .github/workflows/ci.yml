@@ -39,7 +39,7 @@ jobs:
             ]
           - [
               self-hosted,
-              "1ES.Pool=onefuzz-ci",
+              "1ES.Pool=onefuzz-ci-arm",
               "1ES.ImageOverride=github-runner-image-mariner-2",
             ]
     runs-on: "${{ matrix.os }}"
