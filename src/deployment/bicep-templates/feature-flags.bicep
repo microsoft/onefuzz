@@ -18,6 +18,19 @@ resource configStoreFeatureflag 'Microsoft.AppConfiguration/configurationStores/
     value: string({
       id: 'EnableScribanOnly'
       description: 'Render notification templates with scriban only'
+      enabled: false
+    })
+    contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'
+  }
+}
+
+resource validateNotificationConfigSemantics 'Microsoft.AppConfiguration/configurationStores/keyValues@2021-10-01-preview' = {
+  parent: featureFlags
+  name: '.appconfig.featureflag~2FEnableValidateNotificationConfigSemantics'
+  properties: {
+    value: string({
+      id: 'EnableScribanOnly'
+      description: 'Check notification configs for valid PATs and fields'
       enabled: true
     })
     contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'

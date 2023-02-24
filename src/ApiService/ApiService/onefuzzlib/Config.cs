@@ -140,6 +140,9 @@ public class Config : IConfig {
                 case ContainerType.RegressionReports:
                     config.RegressionReports = def;
                     break;
+                case ContainerType.Extra:
+                    config.Extra = def;
+                    break;
             }
         }
 
@@ -259,6 +262,18 @@ public class Config : IConfig {
         if (definition.Features.Contains(TaskFeature.CoverageFilter)) {
             if (task.Config.Task.CoverageFilter != null) {
                 config.CoverageFilter = task.Config.Task.CoverageFilter;
+            }
+        }
+
+        if (definition.Features.Contains(TaskFeature.ModuleAllowlist)) {
+            if (task.Config.Task.ModuleAllowlist != null) {
+                config.ModuleAllowlist = task.Config.Task.ModuleAllowlist;
+            }
+        }
+
+        if (definition.Features.Contains(TaskFeature.SourceAllowlist)) {
+            if (task.Config.Task.SourceAllowlist != null) {
+                config.SourceAllowlist = task.Config.Task.SourceAllowlist;
             }
         }
 

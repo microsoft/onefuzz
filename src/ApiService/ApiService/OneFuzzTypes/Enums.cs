@@ -98,7 +98,8 @@ public enum ContainerType {
     UniqueInputs,
     UniqueReports,
     RegressionReports,
-    Logs
+    Logs,
+    Extra
 }
 
 
@@ -274,6 +275,8 @@ public enum TaskFeature {
     ReportList,
     MinimizedStackDepth,
     CoverageFilter,
+    ModuleAllowlist,
+    SourceAllowlist,
     TargetMustUseInput,
     TargetAssembly,
     TargetClass,

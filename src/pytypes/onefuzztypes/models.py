@@ -163,6 +163,9 @@ class TaskDetails(BaseModel):
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
     coverage_filter: Optional[str]
+    function_allowlist: Optional[str]
+    module_allowlist: Optional[str]
+    source_allowlist: Optional[str]
     target_assembly: Optional[str]
     target_class: Optional[str]
     target_method: Optional[str]
@@ -385,6 +388,9 @@ class TaskUnitConfig(BaseModel):
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
     coverage_filter: Optional[str]
+    function_allowlist: Optional[str]
+    module_allowlist: Optional[str]
+    source_allowlist: Optional[str]
     target_assembly: Optional[str]
     target_class: Optional[str]
     target_method: Optional[str]
@@ -402,6 +408,7 @@ class TaskUnitConfig(BaseModel):
     unique_inputs: CONTAINER_DEF
     unique_reports: CONTAINER_DEF
     regression_reports: CONTAINER_DEF
+    extra: CONTAINER_DEF
 
 
 class Forward(BaseModel):

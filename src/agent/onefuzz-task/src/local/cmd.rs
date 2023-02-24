@@ -9,7 +9,7 @@ use crate::local::{
     libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
 };
 use anyhow::{Context, Result};
-use clap::{App, Arg, SubCommand};
+use clap::{Arg, ArgAction, Command};
 use std::str::FromStr;
 use std::time::Duration;
 use strum::IntoEnumIterator;
@@ -37,17 +37,22 @@ enum Commands {
 const TIMEOUT: &str = "timeout";
 const TUI: &str = "tui";
 
-pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
-    let running_duration = value_t!(args, TIMEOUT, u64).ok();
-    let start_ui = args.is_present(TUI);
+pub async fn run(args: clap::ArgMatches) -> Result<()> {
+    let running_duration = args.get_one::<u64>(TIMEOUT).copied();
 
-    let (cmd, sub_args) = args.subcommand();
-    let command =
-        Commands::from_str(cmd).with_context(|| format!("unexpected subcommand: {cmd}"))?;
+    let start_ui = args.get_flag(TUI);
 
-    let sub_args = sub_args
-        .ok_or_else(|| anyhow!("missing subcommand arguments"))?
-        .to_owned();
+    let (cmd, sub_args) = args.subcommand().ok_or_else(|| {
+        format_err!(
+            "Expected subcommand for 'local'. Use 'local help' to see available subcommands."
+        )
+    })?;
+
+    let command = Commands::from_str(cmd).with_context(|| {
+        format!("Unexpected subcommand: {cmd}. Use 'local help' to see available subcommands.")
+    })?;
+
+    let sub_args = sub_args.clone();
 
     let terminal = if start_ui {
         Some(TerminalUi::init()?)
@@ -104,20 +109,20 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
     }
 }
 
-pub fn args(name: &str) -> App<'static, 'static> {
-    let mut cmd = SubCommand::with_name(name)
+pub fn args(name: &'static str) -> Command {
+    let mut cmd = Command::new(name)
         .about("pre-release local fuzzing")
         .arg(
-            Arg::with_name(TIMEOUT)
+            Arg::new(TIMEOUT)
                 .long(TIMEOUT)
-                .help("The maximum running time in seconds")
-                .takes_value(true),
+                .value_parser(value_parser!(u64))
+                .help("The maximum running time in seconds"),
         )
         .arg(
-            Arg::with_name(TUI)
+            Arg::new(TUI)
                 .long(TUI)
                 .help("Enable the terminal UI")
-                .takes_value(false),
+                .action(ArgAction::SetTrue),
         );
 
     for subcommand in Commands::iter() {

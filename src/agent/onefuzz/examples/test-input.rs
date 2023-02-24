@@ -4,40 +4,40 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
+use clap::Parser;
 use onefuzz::{input_tester::Tester, machine_id::MachineIdentity};
-use structopt::StructOpt;
 
-#[derive(Debug, PartialEq, Eq, StructOpt)]
-#[structopt(name = "test-input")]
+#[derive(Debug, PartialEq, Eq, Parser)]
+#[command(name = "test-input")]
 struct Opt {
-    #[structopt(short, long)]
+    #[arg(short, long)]
     pub exe: PathBuf,
 
-    #[structopt(short, long, long_help = "Defaults to `{input}`")]
+    #[arg(short, long, long_help = "Defaults to `{input}`")]
     pub options: Vec<String>,
 
-    #[structopt(short, long, long_help = "Defaults to dir of `exe`")]
+    #[arg(short, long, long_help = "Defaults to dir of `exe`")]
     pub setup_dir: Option<PathBuf>,
 
-    #[structopt(short, long)]
+    #[arg(short, long)]
     pub input: PathBuf,
 
-    #[structopt(long)]
+    #[arg(long)]
     pub check_asan_log: bool,
 
-    #[structopt(long)]
+    #[arg(long)]
     pub check_asan_stderr: bool,
 
-    #[structopt(long)]
+    #[arg(long)]
     pub no_check_debugger: bool,
 
-    #[structopt(short, long, long_help = "Timeout (seconds)", default_value = "5")]
+    #[arg(short, long, long_help = "Timeout (seconds)", default_value = "5")]
     pub timeout: u64,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
 
     // Default `setup_dir` to base dir of
     let setup_dir = opt.setup_dir.clone().unwrap_or_else(|| {
@@ -55,6 +55,7 @@ async fn main() -> Result<()> {
     let env = Default::default();
     let tester = Tester::new(
         &setup_dir,
+        None,
         &opt.exe,
         &target_options,
         &env,
