@@ -227,6 +227,9 @@ async fn start_supervisor(
         .input_corpus(&inputs.local_path)
         .reports_dir(reports_dir)
         .setup_dir(&config.common.setup_dir)
+        .set_optional_ref(&config.common.extra_dir, |expand, extra_dir| {
+            expand.extra_dir(extra_dir)
+        })
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
         .set_optional_ref(&config.tools, |expand, tools| {
@@ -415,6 +418,7 @@ mod tests {
                 microsoft_telemetry_key: Default::default(),
                 logs: Default::default(),
                 setup_dir: Default::default(),
+                extra_dir: Default::default(),
                 min_available_memory_mb: Default::default(),
                 machine_identity: MachineIdentity {
                     machine_id: uuid::Uuid::new_v4(),

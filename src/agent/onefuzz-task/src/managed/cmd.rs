@@ -24,7 +24,8 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
         .get_one::<PathBuf>("setup_dir")
         .expect("marked as required");
 
-    let config = Config::from_file(config_path, setup_dir)?;
+    let extra_dir = args.get_one::<PathBuf>("extra_dir").map(|f| f.as_path());
+    let config = Config::from_file(config_path, setup_dir, extra_dir)?;
 
     init_telemetry(config.common()).await;
 
@@ -136,6 +137,11 @@ pub fn args(name: &'static str) -> Command {
         .arg(
             Arg::new("setup_dir")
                 .required(true)
+                .value_parser(value_parser!(PathBuf)),
+        )
+        .arg(
+            Arg::new("extra_dir")
+                .required(false)
                 .value_parser(value_parser!(PathBuf)),
         )
 }

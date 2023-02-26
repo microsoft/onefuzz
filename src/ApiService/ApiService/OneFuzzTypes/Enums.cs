@@ -99,7 +99,8 @@ public enum ContainerType {
     UniqueInputs,
     UniqueReports,
     RegressionReports,
-    Logs
+    Logs,
+    Extra
 }
 
 

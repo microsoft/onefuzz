@@ -143,6 +143,9 @@ public class Config : IConfig {
                 case ContainerType.RegressionReports:
                     config.RegressionReports = def;
                     break;
+                case ContainerType.Extra:
+                    config.Extra = def;
+                    break;
                 default:
                     throw new ArgumentException($"Unhandled container type in {nameof(BuildTaskConfig)}: {data.countainerDef.Type}");
             }

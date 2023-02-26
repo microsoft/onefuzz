@@ -182,7 +182,10 @@ impl AsanProcessor {
 
         let expand = Expand::new(&self.config.common.machine_identity)
             .input_path(input)
-            .setup_dir(&self.config.common.setup_dir);
+            .setup_dir(&self.config.common.setup_dir)
+            .set_optional_ref(&self.config.common.extra_dir, |expand, extra_dir| {
+                expand.extra_dir(extra_dir)
+            });
         let expanded_args = expand.evaluate(&args)?;
 
         let env = {

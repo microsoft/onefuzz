@@ -54,6 +54,7 @@ class AFL(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        extra_container: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         Basic AFL job
@@ -94,6 +95,7 @@ class AFL(Command):
             ContainerType.reports,
             ContainerType.unique_reports,
         )
+
         if existing_inputs:
             self.onefuzz.containers.get(existing_inputs)
             helper.containers[ContainerType.inputs] = existing_inputs
@@ -134,6 +136,11 @@ class AFL(Command):
             (ContainerType.inputs, helper.containers[ContainerType.inputs]),
         ]
 
+        if extra_container is not None:
+            containers.append(
+                (ContainerType.extra, helper.containers[ContainerType.extra])
+            )
+
         self.logger.info("creating afl fuzz task")
         fuzzer_task = self.onefuzz.tasks.create(
             helper.job.job_id,
@@ -167,6 +174,11 @@ class AFL(Command):
                 helper.containers[ContainerType.unique_reports],
             ),
         ]
+
+        if extra_container is not None:
+            report_containers.append(
+                (ContainerType.extra, helper.containers[ContainerType.extra])
+            )
 
         self.logger.info("creating generic_crash_report task")
         self.onefuzz.tasks.create(

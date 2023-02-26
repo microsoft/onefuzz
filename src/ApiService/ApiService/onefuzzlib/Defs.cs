@@ -39,7 +39,14 @@ public static class Defs {
                         ContainerPermission.List |
                         ContainerPermission.Read |
                         ContainerPermission.Write
-                )},
+                ),
+                new ContainerDefinition(
+                   Type:ContainerType.Extra,
+                   Compare: Compare.AtMost,
+                   Value:1,
+                   Permissions: ContainerPermission.Read | ContainerPermission.List
+                ),
+            },
             MonitorQueue: ContainerType.ReadonlyInputs)
     },
     {
@@ -81,6 +88,12 @@ public static class Defs {
                     Compare: Compare.Equal,
                     Value:1,
                     Permissions: ContainerPermission.Read | ContainerPermission.List
+                ),
+                new ContainerDefinition(
+                   Type:ContainerType.Extra,
+                   Compare: Compare.AtMost,
+                   Value:1,
+                   Permissions: ContainerPermission.Read | ContainerPermission.List
                 ),
             },
             MonitorQueue: ContainerType.ReadonlyInputs)
@@ -134,6 +147,12 @@ public static class Defs {
                    Value:1,
                    Permissions: ContainerPermission.Read | ContainerPermission.List
                ),
+               new ContainerDefinition(
+                   Type:ContainerType.Extra,
+                   Compare: Compare.AtMost,
+                   Value:1,
+                   Permissions: ContainerPermission.Read | ContainerPermission.List
+                ),
            },
            MonitorQueue: ContainerType.Crashes
     )
@@ -190,6 +209,12 @@ public static class Defs {
                    Value:1,
                    Permissions: ContainerPermission.Read | ContainerPermission.List
                ),
+               new ContainerDefinition(
+                   Type:ContainerType.Extra,
+                   Compare: Compare.AtMost,
+                   Value:1,
+                   Permissions: ContainerPermission.Read | ContainerPermission.List
+                ),
            }
     )},
     { TaskType.GenericAnalysis ,
@@ -226,6 +251,12 @@ public static class Defs {
                     Compare: Compare.Equal,
                     Value:1,
                     Permissions: ContainerPermission.Read | ContainerPermission.List
+                ),
+                new ContainerDefinition(
+                   Type:ContainerType.Extra,
+                   Compare: Compare.AtMost,
+                   Value:1,
+                   Permissions: ContainerPermission.Read | ContainerPermission.List
                 ),
             },
             MonitorQueue: ContainerType.Crashes)
@@ -273,6 +304,12 @@ public static class Defs {
             Value: 0,
             Permissions: ContainerPermission.Read | ContainerPermission.List
         ),
+        new ContainerDefinition(
+            Type:ContainerType.Extra,
+            Compare: Compare.AtMost,
+            Value:1,
+            Permissions: ContainerPermission.Read | ContainerPermission.List
+        ),
     }
 )},
 {
@@ -318,6 +355,12 @@ public static class Defs {
             Value: 1,
             Permissions: ContainerPermission.Write
         ),
+        new ContainerDefinition(
+            Type:ContainerType.Extra,
+            Compare: Compare.AtMost,
+            Value:1,
+            Permissions: ContainerPermission.Read | ContainerPermission.List
+        ),
     },
     MonitorQueue: ContainerType.Crashes
 )
@@ -352,7 +395,16 @@ public static class Defs {
                 ContainerPermission.List |
                 ContainerPermission.Read |
                 ContainerPermission.Write
-        )},
+        ),
+        new ContainerDefinition(
+            Type:ContainerType.Extra,
+            Compare: Compare.AtMost,
+            Value:1,
+            Permissions: ContainerPermission.Read | ContainerPermission.List
+        ),
+
+
+        },
     MonitorQueue: ContainerType.ReadonlyInputs
 )},
 {
@@ -384,6 +436,12 @@ public static class Defs {
             Type: ContainerType.Inputs,
             Compare: Compare.AtLeast,
             Value: 0,
+            Permissions: ContainerPermission.Read | ContainerPermission.List
+        ),
+        new ContainerDefinition(
+            Type:ContainerType.Extra,
+            Compare: Compare.AtMost,
+            Value:1,
             Permissions: ContainerPermission.Read | ContainerPermission.List
         ),
     }
@@ -452,6 +510,12 @@ public static class Defs {
             Value: 1,
             Permissions: ContainerPermission.Write | ContainerPermission.Read | ContainerPermission.List
         ),
+        new ContainerDefinition(
+            Type:ContainerType.Extra,
+            Compare: Compare.AtMost,
+            Value:1,
+            Permissions: ContainerPermission.Read | ContainerPermission.List
+        ),
     }
 )
 },
@@ -492,6 +556,12 @@ public static class Defs {
             Compare: Compare.Equal,
             Value:1,
             Permissions: ContainerPermission.Write| ContainerPermission.List
+        ),
+        new ContainerDefinition(
+            Type:ContainerType.Extra,
+            Compare: Compare.AtMost,
+            Value:1,
+            Permissions: ContainerPermission.Read | ContainerPermission.List
         ),
      }
  )
@@ -536,6 +606,12 @@ public static class Defs {
         new ContainerDefinition(
             Type:ContainerType.ReadonlyInputs,
             Compare: Compare.AtLeast,
+            Value:1,
+            Permissions: ContainerPermission.Read | ContainerPermission.List
+        ),
+        new ContainerDefinition(
+            Type:ContainerType.Extra,
+            Compare: Compare.AtMost,
             Value:1,
             Permissions: ContainerPermission.Read | ContainerPermission.List
         ),
@@ -585,6 +661,12 @@ public static class Defs {
             Compare: Compare.AtMost,
             Value:1,
             Permissions: ContainerPermission.Write
+        ),
+        new ContainerDefinition(
+            Type:ContainerType.Extra,
+            Compare: Compare.AtMost,
+            Value:1,
+            Permissions: ContainerPermission.Read | ContainerPermission.List
         ),
      },
      MonitorQueue: ContainerType.Crashes
@@ -643,6 +725,12 @@ public static class Defs {
         ),
         new ContainerDefinition(
             Type:ContainerType.ReadonlyInputs,
+            Compare: Compare.AtMost,
+            Value:1,
+            Permissions: ContainerPermission.Read | ContainerPermission.List
+        ),
+        new ContainerDefinition(
+            Type:ContainerType.Extra,
             Compare: Compare.AtMost,
             Value:1,
             Permissions: ContainerPermission.Read | ContainerPermission.List
@@ -706,6 +794,12 @@ public static class Defs {
             Permissions:
                 ContainerPermission.Read | ContainerPermission.List
          ),
+         new ContainerDefinition(
+            Type:ContainerType.Extra,
+            Compare: Compare.AtMost,
+            Value:1,
+            Permissions: ContainerPermission.Read | ContainerPermission.List
+        ),
     })
     },
     };

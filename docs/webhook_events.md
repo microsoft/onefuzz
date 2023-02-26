@@ -152,7 +152,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra"
             ],
             "title": "ContainerType"
         },
@@ -2003,7 +2004,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra"
             ],
             "title": "ContainerType"
         },
@@ -2930,7 +2932,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra"
             ],
             "title": "ContainerType"
         },
@@ -3412,7 +3415,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra"
             ],
             "title": "ContainerType"
         },
@@ -3937,7 +3941,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra"
             ],
             "title": "ContainerType"
         },
@@ -4386,7 +4391,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra"
             ],
             "title": "ContainerType"
         },
@@ -4862,7 +4868,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra"
             ],
             "title": "ContainerType"
         },
@@ -5468,7 +5475,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra"
             ],
             "title": "ContainerType"
         },
