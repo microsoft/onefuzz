@@ -5,16 +5,18 @@ use std::{
     path::{Path, PathBuf},
     process::{Child, ChildStderr, ChildStdout, Command, Stdio},
     thread::{self, JoinHandle},
+    time::Duration,
 };
 
 use anyhow::{format_err, Context as AnyhowContext, Result};
 use downcast_rs::Downcast;
 use ipc_channel::ipc::{self, IpcOneShotServer, IpcReceiver, IpcSender};
 use onefuzz::{
+    ipc::IpcMessageKind,
     machine_id::MachineIdentity,
     process::{ExitStatus, Output},
 };
-use tokio::fs;
+use tokio::{fs, task, time::timeout};
 
 use crate::buffer::TailBuffer;
 use crate::work::*;
@@ -104,8 +106,8 @@ pub struct Ready {
 #[derive(Debug)]
 pub struct Running {
     child: Box<dyn IWorkerChild>,
-    from_agent_to_task: IpcSender<String>,
-    from_task_to_agent: IpcReceiver<String>,
+    from_agent_to_task: IpcSender<IpcMessageKind>,
+    from_task_to_agent: IpcReceiver<IpcMessageKind>,
 }
 
 #[derive(Debug)]
@@ -149,13 +151,46 @@ impl State<Ready> {
         //      * Accept calls OsIpcOneShotServer::accept - https://doc.servo.org/src/ipc_channel/ipc.rs.html#722-737
         //      * OsIpcOneShotServer::accept calls OsIpcReceiver::recv - https://doc.servo.org/src/ipc_channel/ipc.rs.html#722-737
         //      * OsIpcReceiver::recv is a blocking call - https://doc.servo.org/src/ipc_channel/platform/unix/mod.rs.html#130-133
-        // We should have a timeout for this operation or we could PR a non blocking accept
+        // This issue is tracking a non-blocking accept - https://github.com/servo/ipc-channel/issues/307
 
         info!("waiting for client_sender_server.accept()");
-        let (_, from_agent_to_task): (_, IpcSender<String>) = from_agent_to_task_server.accept()?;
+
+        let (_, from_agent_to_task): (_, IpcSender<IpcMessageKind>) = match timeout(
+            Duration::from_secs(30),
+            task::spawn_blocking(move || from_agent_to_task_server.accept()),
+        )
+        .await
+        {
+            Err(e) => {
+                error!("timeout waiting for client_sender_server.accept(): {:?}", e);
+                return Err(format_err!(
+                    "timeout waiting for client_sender_server.accept(): {:?}",
+                    e
+                ));
+            }
+            Ok(res) => res??,
+        };
+
         info!("waiting for server_receiver_server.accept()");
-        let (_, from_task_to_agent): (_, IpcReceiver<String>) =
-            from_task_to_agent_server.accept()?;
+
+        let (_, from_task_to_agent): (_, IpcReceiver<IpcMessageKind>) = match timeout(
+            Duration::from_secs(30),
+            task::spawn_blocking(move || from_task_to_agent_server.accept()),
+        )
+        .await
+        {
+            Err(e) => {
+                error!(
+                    "timeout waiting for server_receiver_server.accept(): {:?}",
+                    e
+                );
+                return Err(format_err!(
+                    "timeout waiting for server_receiver_server.accept(): {:?}",
+                    e
+                ));
+            }
+            Ok(res) => res??,
+        };
 
         let state = State {
             ctx: Running {
@@ -172,15 +207,9 @@ impl State<Ready> {
 
 impl State<Running> {
     pub fn wait(mut self) -> Result<Waited> {
-        match self.ctx.from_task_to_agent.try_recv() {
-            Ok(res) => {
-                info!("received message from server_receiver: {:?}", res);
-            }
-            Err(e) => {
-                // TODO: Err here just means there was no message to receive, so we shouldn't log an error
-                info!("error receiving message from server_receiver: {:?}", e);
-            }
-        };
+        while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
+            info!("received message from server_receiver: {:?}", res);
+        }
 
         let waited = self.ctx.child.try_wait()?;
 
@@ -190,14 +219,46 @@ impl State<Running> {
                 ctx,
                 work: self.work,
             };
+
+            // Since the agent has exited, drain one more time before returning
+            while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
+                info!("received message from server_receiver: {:?}", res);
+            }
             Ok(Waited::Done(state))
         } else {
             Ok(Waited::Running(self))
         }
     }
 
-    pub fn kill(&mut self) -> Result<()> {
-        self.ctx.child.kill()
+    pub async fn kill(&mut self) -> Result<()> {
+        let graceful_shutdown = self.ctx.from_agent_to_task.send(IpcMessageKind::Shutdown);
+
+        tokio::time::sleep(Duration::from_secs(90)).await;
+
+        match graceful_shutdown {
+            Ok(_) => match self.ctx.child.try_wait() {
+                Ok(Some(_)) => {
+                    info!("Agent was gracefully shut down");
+                    // Since the agent has exited, drain one more time before returning
+                    while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
+                        info!("received message from server_receiver: {:?}", res);
+                    }
+                    Ok(())
+                }
+                Ok(None) => {
+                    error!("Agent did not shutdown in the allotted time");
+                    self.ctx.child.kill()
+                }
+                Err(e) => {
+                    error!("failed to wait for graceful shutdown: {:?}", e);
+                    self.ctx.child.kill()
+                }
+            },
+            Err(e) => {
+                error!("failed to send graceful shutdown message: {:?}", e);
+                self.ctx.child.kill()
+            }
+        }
     }
 }
 
