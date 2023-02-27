@@ -43,12 +43,15 @@ pub struct SetupRunner {
 
 impl SetupRunner {
     pub async fn run(&self, work_set: &WorkSet) -> Result<SetupOutput> {
-        if let (Some(extra_url), Some(extra_dir)) = (&work_set.extra_url, work_set.extra_dir()?) {
+        if let (Some(extra_container), Some(extra_dir)) =
+            (&work_set.extra_url, work_set.extra_dir()?)
+        {
             info!("downloading extra container");
             // `azcopy sync` requires the local dir to exist.
             fs::create_dir_all(&extra_dir).await.with_context(|| {
                 format!("unable to create extra container: {}", extra_dir.display())
             })?;
+            let extra_url = extra_container.url()?;
             az_copy::sync(extra_url.to_string(), &extra_dir, false).await?;
             debug!(
                 "synced extra container from {} to {}",
