@@ -279,7 +279,6 @@ impl IWorkerRunner for WorkerRunner {
         cmd.arg("config.json");
         cmd.arg(setup_dir);
         if let Some(extra_dir) = extra_dir {
-            cmd.arg("--extra_dir");
             cmd.arg(extra_dir);
         }
 
