@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::cell::Cell;
-
 use ipc_channel::ipc;
 
 use super::*;
