@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use clap::{App, Arg, Command, SubCommand};
+use clap::{Arg, Command};
 use ipc_channel::ipc::{self, IpcReceiver, IpcSender};
 use onefuzz::ipc::IpcMessageKind;
 use std::time::Duration;
