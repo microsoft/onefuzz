@@ -17,5 +17,5 @@ regex = "1"
 serde = { version = "1", features = ["derive"] }
 quick-xml = "0.27"
 anyhow = "1.0"
-structopt = "0.3"
-env_logger = "0.9"
+env_logger = "0.10"
+clap = { version = "4.1.6", features = ["derive"] }

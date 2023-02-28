@@ -36,15 +36,16 @@ struct WerDebugEventHandler<'a> {
     /// the WER report handle.
     // report: OnceCell<WerReport>,
     /// the path to the input file.
-    input_file: &'a Path,
+    input_file: Option<&'a Path>,
 
     pub report: RefCell<Option<WerReport>>,
 
 }
 
 impl<'a> WerDebugEventHandler<'a> {
-    fn new(target_exe: &'a Path, input_file: &'a Path) -> Result<Self> {
+    fn new(target_exe: &'a Path, input_file: Option<&'a Path>) -> Result<Self> {
         let report = RefCell::new(None);
+
         Ok(WerDebugEventHandler {
             target_exe,
             report,
@@ -71,7 +72,6 @@ impl<'a> WerDebugEventHandler<'a> {
             app_name,
             self.target_exe,
             "libfuzzer crash detected by onefuzz",
-            Some(self.input_file),
         )
         .context("failed to create WER report")?;
 
@@ -155,7 +155,6 @@ impl WerReport {
         application_name: &str,
         application_path: impl AsRef<Path>,
         description: &str,
-        input_path: Option<impl AsRef<Path>>,
     ) -> Result<Self> {
         let event_name = to_u16::<64>(event_name);
 
@@ -239,14 +238,17 @@ impl WerReport {
         Ok(())
     }
 
-    pub fn report_crash(target_exe: impl AsRef<Path>, input_file: Option<impl AsRef<Path>>) -> Result<()> {
+    pub fn report_crash(target_exe: &Path, input_file: Option<&Path>) -> Result<()> {
         let (stdout_reader, stdout_writer) = pipe()?;
         // let (stderr_reader, stderr_writer) = pipe()?;
-        let input = input_file.as_ref().map(|path| path.as_ref().to_string_lossy().to_string()).unwrap_or(Uuid::new_v4().to_string());
+        let input = input_file.as_ref().map(|path| path.to_string_lossy().to_string()).unwrap_or(Uuid::new_v4().to_string());
 
-        let mut target = Command::new(target_exe.as_ref());
+        let mut target = Command::new(target_exe);
+        if let Some(input_file) = input_file {
+            target
+                .args(&[format!("{}", input_file.to_string_lossy() )]);
+        }
         target
-            .args(&[format!("{}", input_file.as_ref().to_string_lossy())])
             .arg("-exact_artifact_path")
             .arg(format!(""))
             .creation_flags(DEBUG_ONLY_THIS_PROCESS.0)
@@ -256,8 +258,8 @@ impl WerReport {
             //.stdout(stdout_writer)
             //.stderr(stderr_writer);
 
-
-        let mut handler = WerDebugEventHandler::new(target_exe.as_ref(), input_file.as_ref())?;
+        let test = &input_file.as_deref();
+        let mut handler = WerDebugEventHandler::new(target_exe.as_ref(), input_file)?;
 
         let (mut debugger, _child) = Debugger::init(target, &mut handler)?;
         debugger
@@ -303,7 +305,6 @@ impl WerReport {
                 "WerReportCurrentProcess",
                 std::env::current_exe()?,
                 "WerReportCurrentProcess",
-                Option::<PathBuf>::None,
             )?;
 
             report.add_dump(GetCurrentProcess())?;

@@ -228,6 +228,7 @@ class ContainerType(Enum):
     unique_reports = "unique_reports"
     regression_reports = "regression_reports"
     logs = "logs"
+    extra = "extra"
 
     @classmethod
     def reset_defaults(cls) -> List["ContainerType"]:

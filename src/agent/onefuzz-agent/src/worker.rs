@@ -45,9 +45,14 @@ pub enum Worker {
 }
 
 impl Worker {
-    pub fn new(setup_dir: impl AsRef<Path>, work: WorkUnit) -> Self {
+    pub fn new(
+        setup_dir: impl AsRef<Path>,
+        extra_dir: Option<impl AsRef<Path>>,
+        work: WorkUnit,
+    ) -> Self {
         let ctx = Ready {
             setup_dir: PathBuf::from(setup_dir.as_ref()),
+            extra_dir: extra_dir.map(|dir| PathBuf::from(dir.as_ref())),
         };
         let state = State { ctx, work };
         state.into()
@@ -98,6 +103,7 @@ impl Worker {
 #[derive(Debug)]
 pub struct Ready {
     setup_dir: PathBuf,
+    extra_dir: Option<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -130,7 +136,9 @@ impl<C: Context> State<C> {
 
 impl State<Ready> {
     pub async fn run(self, runner: &mut dyn IWorkerRunner) -> Result<State<Running>> {
-        let child = runner.run(&self.ctx.setup_dir, &self.work).await?;
+        let child = runner
+            .run(&self.ctx.setup_dir, self.ctx.extra_dir, &self.work)
+            .await?;
 
         let state = State {
             ctx: Running { child },
@@ -189,7 +197,12 @@ impl_from_state_for_worker!(Done);
 
 #[async_trait]
 pub trait IWorkerRunner: Downcast {
-    async fn run(&self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>>;
+    async fn run(
+        &self,
+        setup_dir: &Path,
+        extra_dir: Option<PathBuf>,
+        work: &WorkUnit,
+    ) -> Result<Box<dyn IWorkerChild>>;
 }
 
 impl_downcast!(IWorkerRunner);
@@ -214,7 +227,12 @@ impl WorkerRunner {
 
 #[async_trait]
 impl IWorkerRunner for WorkerRunner {
-    async fn run(&self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
+    async fn run(
+        &self,
+        setup_dir: &Path,
+        extra_dir: Option<PathBuf>,
+        work: &WorkUnit,
+    ) -> Result<Box<dyn IWorkerChild>> {
         let working_dir = work.working_dir(self.machine_identity.machine_id)?;
 
         debug!("worker working dir = {}", working_dir.display());
@@ -260,6 +278,10 @@ impl IWorkerRunner for WorkerRunner {
         cmd.arg("managed");
         cmd.arg("config.json");
         cmd.arg(setup_dir);
+        if let Some(extra_dir) = extra_dir {
+            cmd.arg(extra_dir);
+        }
+
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 

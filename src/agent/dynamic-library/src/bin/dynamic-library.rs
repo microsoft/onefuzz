@@ -4,22 +4,22 @@
 use std::process::{Command, Stdio};
 
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Parser, Debug)]
 struct Opt {
-    #[structopt(min_values = 1)]
+    #[arg(required = true, num_args = 1..)]
     argv: Vec<String>,
 
-    #[structopt(short, long)]
+    #[arg(short, long)]
     quiet: bool,
 
-    #[structopt(short, long)]
+    #[arg(short, long)]
     ld_library_path: Option<String>,
 }
 
 fn main() -> Result<()> {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
 
     let exe = &opt.argv[0];
     let mut cmd = Command::new(exe);

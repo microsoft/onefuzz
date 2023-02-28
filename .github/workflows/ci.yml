@@ -507,10 +507,6 @@ jobs:
           (cd trivial-crash ; make )
           cp -r trivial-crash/fuzz.exe trivial-crash/seeds artifacts/linux-trivial-crash
 
-          mkdir -p artifacts/linux-libfuzzer-dotnet
-          (cd libfuzzer-dotnet; make)
-          cp -r libfuzzer-dotnet/my-fuzzer libfuzzer-dotnet/inputs artifacts/linux-libfuzzer-dotnet/
-
           mkdir -p artifacts/linux-libfuzzer-dlopen
           (cd libfuzzer-dlopen; make)
           cp -r libfuzzer-dlopen/{fuzz.exe,*.so,seeds} artifacts/linux-libfuzzer-dlopen/

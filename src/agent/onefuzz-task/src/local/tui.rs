@@ -87,7 +87,7 @@ enum TerminalEvent {
 }
 
 struct UiLoopState {
-    pub logs: ArrayDeque<[(Level, String); LOGS_BUFFER_SIZE], Wrapping>,
+    pub logs: ArrayDeque<(Level, String), LOGS_BUFFER_SIZE, Wrapping>,
     pub file_count: HashMap<PathBuf, usize>,
     pub file_count_state: ListState,
     pub file_monitors: HashMap<PathBuf, tokio::task::JoinHandle<Result<()>>>,
@@ -303,7 +303,7 @@ impl TerminalUi {
     fn take_available_logs<T>(
         receiver: &mut Receiver<T>,
         size: usize,
-        buffer: &mut ArrayDeque<[T; LOGS_BUFFER_SIZE], Wrapping>,
+        buffer: &mut ArrayDeque<T, LOGS_BUFFER_SIZE, Wrapping>,
     ) {
         let mut count = 0;
         while let Ok(v) = receiver.try_recv() {
@@ -396,9 +396,7 @@ impl TerminalUi {
             .wrap(Wrap { trim: true })
     }
 
-    fn create_log_list(
-        logs: &ArrayDeque<[(Level, String); LOGS_BUFFER_SIZE], Wrapping>,
-    ) -> List<'_> {
+    fn create_log_list(logs: &ArrayDeque<(Level, String), LOGS_BUFFER_SIZE, Wrapping>) -> List<'_> {
         let log_items = logs
             .iter()
             .map(|(level, log)| {

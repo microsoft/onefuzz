@@ -2,18 +2,18 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
+use clap::Parser;
 use onefuzz::monitor::DirectoryMonitor;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 struct Opt {
-    #[structopt(short, long)]
+    #[arg(short, long)]
     path: String,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
 
     let mut monitor = DirectoryMonitor::new(opt.path).await?;
     monitor.set_report_directories(true);

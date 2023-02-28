@@ -22,6 +22,7 @@ pub type TaskId = Uuid;
 pub struct WorkSet {
     pub reboot: bool,
     pub setup_url: BlobContainerUrl,
+    pub extra_url: Option<BlobContainerUrl>,
     pub script: bool,
     pub work_units: Vec<WorkUnit>,
 }
@@ -91,6 +92,21 @@ impl WorkSet {
         Ok(onefuzz::fs::onefuzz_root()?
             .join("blob-containers")
             .join(setup_dir))
+    }
+
+    pub fn extra_dir(&self) -> Result<Option<PathBuf>> {
+        if let Some(extra_url) = &self.extra_url {
+            let extra_dir = extra_url
+                .account()
+                .ok_or_else(|| anyhow!("Invalid container Url"))?;
+            Ok(Some(
+                onefuzz::fs::onefuzz_root()?
+                    .join("blob-containers")
+                    .join(extra_dir),
+            ))
+        } else {
+            Ok(None)
+        }
     }
 }
 
