@@ -10,7 +10,6 @@ use crate::tasks::{
     merge, regression, report,
 };
 use anyhow::Result;
-use ipc_channel::ipc::{self, IpcOneShotServer, IpcReceiver, IpcSender};
 use onefuzz::machine_id::MachineIdentity;
 use onefuzz_telemetry::{
     self as telemetry, Event::task_start, EventData, InstanceTelemetryKey, MicrosoftTelemetryKey,
@@ -64,7 +63,6 @@ pub struct CommonConfig {
 
     pub from_agent_to_task_endpoint: String,
     pub from_task_to_agent_endpoint: String,
-    // TODO: Add the ipc receiver/sender here as optional?
 }
 
 impl CommonConfig {

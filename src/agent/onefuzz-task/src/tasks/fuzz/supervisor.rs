@@ -397,6 +397,8 @@ mod tests {
                     machine_name: "test".to_string(),
                     scaleset_name: None,
                 },
+                from_agent_to_task_endpoint: "/".to_string(),
+                from_task_to_agent_endpoint: "/".to_string(),
             },
         };
 

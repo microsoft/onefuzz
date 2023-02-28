@@ -33,8 +33,12 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     oneshot_sender.send(agent_sender)?;
 
     info!("Creating channel from task to agent");
-    let (task_sender, receive_from_task): (IpcSender<IpcMessageKind>, IpcReceiver<IpcMessageKind>) =
-        ipc::channel()?;
+    // For now, the task_sender is unused since the task isn't sending any messages to the agent yet
+    // In the future, when we may want to send telemetry through this ipc channel for example, we can use the task_sender
+    let (_task_sender, receive_from_task): (
+        IpcSender<IpcMessageKind>,
+        IpcReceiver<IpcMessageKind>,
+    ) = ipc::channel()?;
     info!("Connecting...");
     let oneshot_receiver = IpcSender::connect(config.common().from_task_to_agent_endpoint.clone())?;
     info!("Sending receiver to agent");

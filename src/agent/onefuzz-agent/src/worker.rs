@@ -10,7 +10,7 @@ use std::{
 
 use anyhow::{format_err, Context as AnyhowContext, Result};
 use downcast_rs::Downcast;
-use ipc_channel::ipc::{self, IpcOneShotServer, IpcReceiver, IpcSender};
+use ipc_channel::ipc::{IpcOneShotServer, IpcReceiver, IpcSender};
 use onefuzz::{
     ipc::IpcMessageKind,
     machine_id::MachineIdentity,
@@ -233,32 +233,38 @@ impl State<Running> {
     pub async fn kill(&mut self) -> Result<()> {
         let graceful_shutdown = self.ctx.from_agent_to_task.send(IpcMessageKind::Shutdown);
 
-        tokio::time::sleep(Duration::from_secs(90)).await;
-
-        match graceful_shutdown {
-            Ok(_) => match self.ctx.child.try_wait() {
-                Ok(Some(_)) => {
-                    info!("Agent was gracefully shut down");
-                    // Since the agent has exited, drain one more time before returning
-                    while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
-                        info!("received message from server_receiver: {:?}", res);
+        for i in 0..90 {
+            match graceful_shutdown {
+                Ok(_) => match self.ctx.child.try_wait() {
+                    Ok(Some(_)) => {
+                        info!("Agent was gracefully shut down");
+                        // Since the agent has exited, drain one more time before returning
+                        while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
+                            info!("received message from server_receiver: {:?}", res);
+                        }
+                        return Ok(());
                     }
-                    Ok(())
-                }
-                Ok(None) => {
-                    error!("Agent did not shutdown in the allotted time");
-                    self.ctx.child.kill()
-                }
+                    Ok(None) => {
+                        if i == 89 {
+                            error!("Agent did not shutdown in the allotted time");
+                            return self.ctx.child.kill();
+                        }
+                    }
+                    Err(e) => {
+                        error!("failed to wait for graceful shutdown: {:?}", e);
+                        return self.ctx.child.kill();
+                    }
+                },
                 Err(e) => {
-                    error!("failed to wait for graceful shutdown: {:?}", e);
-                    self.ctx.child.kill()
+                    error!("failed to send graceful shutdown message: {:?}", e);
+                    return self.ctx.child.kill();
                 }
-            },
-            Err(e) => {
-                error!("failed to send graceful shutdown message: {:?}", e);
-                self.ctx.child.kill()
-            }
+            };
+            info!("Agent didn't respond yet, trying again in 1 second...");
+            tokio::time::sleep(Duration::from_secs(1)).await;
         }
+
+        self.ctx.child.kill()
     }
 }
 
