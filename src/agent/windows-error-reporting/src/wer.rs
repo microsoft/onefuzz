@@ -1,9 +1,10 @@
-use std::{ffi::c_void, os::windows::process::CommandExt, path::{Path, PathBuf}, process::Command, cell::RefCell};
+use std::{
+    cell::RefCell, ffi::c_void, os::windows::process::CommandExt, path::Path, process::Command,
+};
 
 use anyhow::{Context, Result};
 
 use log::warn;
-use uuid::Uuid;
 use win_util::pipe_handle::pipe;
 use windows::{
     core::PCWSTR,
@@ -18,12 +19,12 @@ use windows::{
                 WER_SUBMIT_BYPASS_DATA_THROTTLING, WER_SUBMIT_NO_QUEUE,
                 WER_SUBMIT_REPORT_MACHINE_ID, WER_SUBMIT_RESULT,
             },
-            Threading::{DEBUG_ONLY_THIS_PROCESS, GetCurrentProcess},
+            Threading::{GetCurrentProcess, DEBUG_ONLY_THIS_PROCESS},
         },
     },
 };
 
-const EVENT_NAME:&str = "onefuzz_crash";
+const EVENT_NAME: &str = "onefuzz_crash";
 
 use debugger::{DebugEventHandler, Debugger};
 
@@ -36,20 +37,18 @@ struct WerDebugEventHandler<'a> {
     /// the WER report handle.
     // report: OnceCell<WerReport>,
     /// the path to the input file.
-    input_file: Option<&'a Path>,
-
+    // input_file: Option<&'a Path>,
     pub report: RefCell<Option<WerReport>>,
-
 }
 
 impl<'a> WerDebugEventHandler<'a> {
-    fn new(target_exe: &'a Path, input_file: Option<&'a Path>) -> Result<Self> {
+    fn new(target_exe: &'a Path) -> Result<Self> {
         let report = RefCell::new(None);
 
         Ok(WerDebugEventHandler {
             target_exe,
             report,
-            input_file,
+            // input_file,
         })
     }
 
@@ -178,7 +177,6 @@ impl WerReport {
         };
         let wer_report = WerReport::from(report);
 
-
         // wer_report.set_parameters(&vec![
         //     ("Param1", "Value1"),
         //     ("Param2", "Value2"),
@@ -239,27 +237,26 @@ impl WerReport {
     }
 
     pub fn report_crash(target_exe: &Path, input_file: Option<&Path>) -> Result<()> {
-        let (stdout_reader, stdout_writer) = pipe()?;
+        let (_stdout_reader, _stdout_writer) = pipe()?;
         // let (stderr_reader, stderr_writer) = pipe()?;
-        let input = input_file.as_ref().map(|path| path.to_string_lossy().to_string()).unwrap_or(Uuid::new_v4().to_string());
+        // let input = input_file
+        //     .as_ref()
+        //     .map(|path| path.to_string_lossy().to_string())
+        //     .unwrap_or(Uuid::new_v4().to_string());
 
         let mut target = Command::new(target_exe);
         if let Some(input_file) = input_file {
-            target
-                .args(&[format!("{}", input_file.to_string_lossy() )]);
+            target.args(&[format!("{}", input_file.to_string_lossy())]);
         }
         target
-            .arg("-exact_artifact_path")
-            .arg(format!(""))
+            // .arg("-exact_artifact_path")
+            // .arg(format!(""))
             .creation_flags(DEBUG_ONLY_THIS_PROCESS.0)
-            .env("ASAN_OPTIONS", "abort_on_error=true")
+            .env("ASAN_OPTIONS", "abort_on_error=true");
+        //.stdout(stdout_writer)
+        //.stderr(stderr_writer);
 
-            ;
-            //.stdout(stdout_writer)
-            //.stderr(stderr_writer);
-
-        let test = &input_file.as_deref();
-        let mut handler = WerDebugEventHandler::new(target_exe.as_ref(), input_file)?;
+        let mut handler = WerDebugEventHandler::new(target_exe)?;
 
         let (mut debugger, _child) = Debugger::init(target, &mut handler)?;
         debugger
@@ -267,10 +264,10 @@ impl WerReport {
             .context("failed to run debugger")?;
 
         println!("report_crash 3");
-        if let Some(report )= handler.report.take() {
+        if let Some(report) = handler.report.take() {
             println!("report_crash 4");
             // add other metadata here
-            report.set_parameters(&vec![
+            report.set_parameters(&[
                 ("Param1", "Value1"),
                 ("Param2", "Value2"),
                 ("Param3", "Value3"),
@@ -284,18 +281,13 @@ impl WerReport {
             println!("report_crash 6");
         }
 
-
-
         // let pid = child.id();
         // let status = child.wait()?;
         // let stdout = stdout_reader.;
         // let stderr = stderr_buffer;
 
-
-
         Ok(())
     }
-
 
     pub fn report_current_process() -> Result<()> {
         unsafe {
