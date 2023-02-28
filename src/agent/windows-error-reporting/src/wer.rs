@@ -1,7 +1,10 @@
-use std::{ffi::c_void, os::windows::process::CommandExt, path::{Path, PathBuf}, process::Command};
+use std::{ffi::c_void, os::windows::process::CommandExt, path::{Path, PathBuf}, process::Command, cell::RefCell};
 
 use anyhow::{Context, Result};
 
+use log::warn;
+use uuid::Uuid;
+use win_util::pipe_handle::pipe;
 use windows::{
     core::PCWSTR,
     Win32::{
@@ -20,6 +23,8 @@ use windows::{
     },
 };
 
+const EVENT_NAME:&str = "onefuzz_crash";
+
 use debugger::{DebugEventHandler, Debugger};
 
 /// Event handler for Windows Error Reporting (WER) crash reporting.
@@ -32,20 +37,23 @@ struct WerDebugEventHandler<'a> {
     // report: OnceCell<WerReport>,
     /// the path to the input file.
     input_file: &'a Path,
+
+    pub report: RefCell<Option<WerReport>>,
+
 }
 
 impl<'a> WerDebugEventHandler<'a> {
     fn new(target_exe: &'a Path, input_file: &'a Path) -> Result<Self> {
-        // let report = OnceCell::new();
+        let report = RefCell::new(None);
         Ok(WerDebugEventHandler {
             target_exe,
-            // report,
+            report,
             input_file,
         })
     }
 
-    fn report_to_wer(
-        &mut self,
+    fn create_report(
+        &self,
         _debugger: &mut Debugger,
         _info: &debugger::ExceptionDebugInfo,
         process_handle: *mut c_void,
@@ -59,7 +67,7 @@ impl<'a> WerDebugEventHandler<'a> {
         println!("**** app_name: {}", app_name);
         let report = WerReport::create(
             process_handle,
-            "libfuzzer_crash",
+            EVENT_NAME,
             app_name,
             self.target_exe,
             "libfuzzer crash detected by onefuzz",
@@ -67,14 +75,10 @@ impl<'a> WerDebugEventHandler<'a> {
         )
         .context("failed to create WER report")?;
 
-        report.add_dump(process_handle)?;
-
-        let result = report.submit().context("failed to submit WER report")?;
-        if result != WerReportUploaded {
-            return Err(anyhow::anyhow!("failed to submit WER report: {}", result.0));
+        if self.report.borrow().is_none() {
+            report.add_dump(process_handle)?;
+            self.report.replace(Some(report));
         }
-
-        println!("on_exit_process 4");
         Ok(DBG_CONTINUE.0 as u32)
     }
 }
@@ -87,11 +91,10 @@ impl<'a> DebugEventHandler for WerDebugEventHandler<'a> {
         process_handle: *mut c_void,
     ) -> u32 {
         if info.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT.0 as u32 {
-            println!("*** on_exception 1");
-            match self.report_to_wer(debugger, info, process_handle) {
+            match self.create_report(debugger, info, process_handle) {
                 Ok(result) => return result,
                 Err(err) => {
-                    println!("failed to report to WER: {}", err);
+                    warn!("failed to report to WER: {}", err);
                 }
             }
         }
@@ -175,15 +178,17 @@ impl WerReport {
             )?
         };
         let wer_report = WerReport::from(report);
-        wer_report.set_parameters(&vec![
-            ("Param1", "Value1"),
-            ("Param2", "Value2"),
-            ("Param3", "Value3"),
-        ])?;
 
-        if let Some(input_path) = input_path {
-            wer_report.add_file(input_path)?;
-        }
+
+        // wer_report.set_parameters(&vec![
+        //     ("Param1", "Value1"),
+        //     ("Param2", "Value2"),
+        //     ("Param3", "Value3"),
+        // ])?;
+
+        // if let Some(input_path) = input_path {
+        //     wer_report.add_file(input_path)?;
+        // }
 
         Ok(wer_report)
     }
@@ -234,12 +239,23 @@ impl WerReport {
         Ok(())
     }
 
-    pub fn report_crash(target_exe: impl AsRef<Path>, input_file: impl AsRef<Path>) -> Result<()> {
+    pub fn report_crash(target_exe: impl AsRef<Path>, input_file: Option<impl AsRef<Path>>) -> Result<()> {
+        let (stdout_reader, stdout_writer) = pipe()?;
+        // let (stderr_reader, stderr_writer) = pipe()?;
+        let input = input_file.as_ref().map(|path| path.as_ref().to_string_lossy().to_string()).unwrap_or(Uuid::new_v4().to_string());
+
         let mut target = Command::new(target_exe.as_ref());
         target
             .args(&[format!("{}", input_file.as_ref().to_string_lossy())])
+            .arg("-exact_artifact_path")
+            .arg(format!(""))
             .creation_flags(DEBUG_ONLY_THIS_PROCESS.0)
-            .env("ASAN_OPTIONS", "abort_on_error=true");
+            .env("ASAN_OPTIONS", "abort_on_error=true")
+
+            ;
+            //.stdout(stdout_writer)
+            //.stderr(stderr_writer);
+
 
         let mut handler = WerDebugEventHandler::new(target_exe.as_ref(), input_file.as_ref())?;
 
@@ -247,6 +263,33 @@ impl WerReport {
         debugger
             .run(&mut handler)
             .context("failed to run debugger")?;
+
+        println!("report_crash 3");
+        if let Some(report )= handler.report.take() {
+            println!("report_crash 4");
+            // add other metadata here
+            report.set_parameters(&vec![
+                ("Param1", "Value1"),
+                ("Param2", "Value2"),
+                ("Param3", "Value3"),
+            ])?;
+            println!("report_crash 5");
+            let result = report.submit()?;
+
+            if result != WerReportUploaded {
+                return Err(anyhow::anyhow!("failed to submit WER report: {}", result.0));
+            }
+            println!("report_crash 6");
+        }
+
+
+
+        // let pid = child.id();
+        // let status = child.wait()?;
+        // let stdout = stdout_reader.;
+        // let stderr = stderr_buffer;
+
+
 
         Ok(())
     }
@@ -256,7 +299,7 @@ impl WerReport {
         unsafe {
             let report = WerReport::create(
                 GetCurrentProcess(),
-                "WerReportCurrentProcess",
+                "SampleGenericReport",
                 "WerReportCurrentProcess",
                 std::env::current_exe()?,
                 "WerReportCurrentProcess",

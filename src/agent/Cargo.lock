@@ -3993,6 +3993,8 @@ dependencies = [
  "memmap2",
  "rand 0.8.4",
  "serde",
+ "uuid 0.8.2",
+ "win-util",
  "windows",
 ]
 
