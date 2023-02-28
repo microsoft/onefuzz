@@ -115,10 +115,11 @@ class Status(Command):
 
         containers: DefaultDict[ContainerType, Set[Container]] = defaultdict(set)
         for task in tasks:
-            for container in task.config.containers:
-                if container.type not in containers:
-                    containers[container.type] = set()
-                containers[container.type].add(container.name)
+            if task.config.containers is not None:
+                for container in task.config.containers:
+                    if container.type not in containers:
+                        containers[container.type] = set()
+                    containers[container.type].add(container.name)
 
         print("\ncontainers:")
         for container_type in containers:

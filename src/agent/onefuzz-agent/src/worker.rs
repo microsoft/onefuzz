@@ -48,9 +48,14 @@ pub enum Worker {
 }
 
 impl Worker {
-    pub fn new(setup_dir: impl AsRef<Path>, work: WorkUnit) -> Self {
+    pub fn new(
+        setup_dir: impl AsRef<Path>,
+        extra_dir: Option<impl AsRef<Path>>,
+        work: WorkUnit,
+    ) -> Self {
         let ctx = Ready {
             setup_dir: PathBuf::from(setup_dir.as_ref()),
+            extra_dir: extra_dir.map(|dir| PathBuf::from(dir.as_ref())),
         };
         let state = State { ctx, work };
         state.into()
@@ -101,6 +106,7 @@ impl Worker {
 #[derive(Debug)]
 pub struct Ready {
     setup_dir: PathBuf,
+    extra_dir: Option<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -141,6 +147,7 @@ impl State<Ready> {
         let child = runner
             .run(
                 &self.ctx.setup_dir,
+                self.ctx.extra_dir,
                 &self.work,
                 from_agent_to_task_endpoint,
                 from_task_to_agent_endpoint,
@@ -298,6 +305,7 @@ pub trait IWorkerRunner: Downcast {
     async fn run(
         &self,
         setup_dir: &Path,
+        extra_dir: Option<PathBuf>,
         work: &WorkUnit,
         from_agent_to_task_endpoint: String,
         from_task_to_agent_endpoint: String,
@@ -329,6 +337,7 @@ impl IWorkerRunner for WorkerRunner {
     async fn run(
         &self,
         setup_dir: &Path,
+        extra_dir: Option<PathBuf>,
         work: &WorkUnit,
         from_agent_to_task_endpoint: String,
         from_task_to_agent_endpoint: String,
@@ -388,6 +397,10 @@ impl IWorkerRunner for WorkerRunner {
         cmd.arg("managed");
         cmd.arg("config.json");
         cmd.arg(setup_dir);
+        if let Some(extra_dir) = extra_dir {
+            cmd.arg(extra_dir);
+        }
+
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 

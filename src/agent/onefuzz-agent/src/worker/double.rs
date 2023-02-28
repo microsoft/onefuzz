@@ -13,6 +13,7 @@ impl IWorkerRunner for WorkerRunnerDouble {
     async fn run(
         &self,
         _setup_dir: &Path,
+        _extra_dir: Option<PathBuf>,
         _work: &WorkUnit,
         _from_agent_to_task_endpoint: String,
         _from_task_to_agent_endpoint: String,

@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, root_validator, validator
+from pydantic import AnyHttpUrl, BaseModel, Field, root_validator, validator
 from pydantic.dataclasses import dataclass
 
 from ._monkeypatch import _check_hotfix
@@ -163,6 +163,9 @@ class TaskDetails(BaseModel):
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
     coverage_filter: Optional[str]
+    function_allowlist: Optional[str]
+    module_allowlist: Optional[str]
+    source_allowlist: Optional[str]
     target_assembly: Optional[str]
     target_class: Optional[str]
     target_method: Optional[str]
@@ -193,8 +196,8 @@ class TaskConfig(BaseModel):
     task: TaskDetails
     vm: Optional[TaskVm]
     pool: Optional[TaskPool]
-    containers: List[TaskContainers]
-    tags: Dict[str, str]
+    containers: Optional[List[TaskContainers]]
+    tags: Optional[Dict[str, str]]
     debug: Optional[List[TaskDebugFlag]]
     colocate: Optional[bool]
 
@@ -385,6 +388,9 @@ class TaskUnitConfig(BaseModel):
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
     coverage_filter: Optional[str]
+    function_allowlist: Optional[str]
+    module_allowlist: Optional[str]
+    source_allowlist: Optional[str]
     target_assembly: Optional[str]
     target_class: Optional[str]
     target_method: Optional[str]
@@ -402,6 +408,7 @@ class TaskUnitConfig(BaseModel):
     unique_inputs: CONTAINER_DEF
     unique_reports: CONTAINER_DEF
     regression_reports: CONTAINER_DEF
+    extra: CONTAINER_DEF
 
 
 class Forward(BaseModel):
@@ -868,6 +875,18 @@ class AzureVmExtensionConfig(BaseModel):
 class ApiAccessRule(BaseModel):
     methods: List[str]
     allowed_groups: List[UUID]
+
+
+class TemplateRenderContext(BaseModel):
+    report: Report
+    task: TaskConfig
+    job: JobConfig
+    report_url: AnyHttpUrl
+    input_url: AnyHttpUrl
+    target_url: AnyHttpUrl
+    report_container: Container
+    report_filename: str
+    repro_cmd: str
 
 
 Endpoint = str

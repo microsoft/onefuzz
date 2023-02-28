@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
 using GroupId = System.Guid;
@@ -208,7 +209,12 @@ public record TaskDetails(
     bool? PreserveExistingOutputs = null,
     List<string>? ReportList = null,
     long? MinimizedStackDepth = null,
+
+    // Deprecated. Retained for processing old table data.
     string? CoverageFilter = null,
+
+    string? ModuleAllowlist = null,
+    string? SourceAllowlist = null,
     string? TargetAssembly = null,
     string? TargetClass = null,
     string? TargetMethod = null
@@ -530,6 +536,7 @@ public record RegressionReport(
 #pragma warning disable CA1715
 public interface NotificationTemplate {
 #pragma warning restore CA1715
+    Async.Task<OneFuzzResultVoid> Validate();
 }
 
 
@@ -631,9 +638,19 @@ public record AdoTemplate(
     Dictionary<string, string> AdoFields,
     ADODuplicateTemplate OnDuplicate,
     string? Comment = null
-    ) : NotificationTemplate;
-public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate;
+    ) : NotificationTemplate {
+    public async Task<OneFuzzResultVoid> Validate() {
+        return await Ado.Validate(this);
+    }
+}
 
+public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate {
+    public Task<OneFuzzResultVoid> Validate() {
+        // The only way we can validate in the current state is to send a test webhook
+        // Maybe there's a teams nuget package we can pull in to help validate
+        return Async.Task.FromResult(OneFuzzResultVoid.Ok);
+    }
+}
 
 public record GithubAuth(string User, string PersonalAccessToken);
 
@@ -661,7 +678,11 @@ public record GithubIssuesTemplate(
     List<string> Assignees,
     List<string> Labels,
     GithubIssueDuplicate OnDuplicate
-    ) : NotificationTemplate;
+    ) : NotificationTemplate {
+    public async Task<OneFuzzResultVoid> Validate() {
+        return await GithubIssues.Validate(this);
+    }
+}
 
 public record Repro(
     [PartitionKey][RowKey] Guid VmId,
@@ -872,6 +893,7 @@ public record TaskDefinition(
 public record WorkSet(
     bool Reboot,
     Uri SetupUrl,
+    Uri? ExtraUrl,
     bool Script,
     List<WorkUnit> WorkUnits
 );
@@ -976,7 +998,12 @@ public record TaskUnitConfig(
     public long? EnsembleSyncDelay { get; set; }
     public List<string>? ReportList { get; set; }
     public long? MinimizedStackDepth { get; set; }
+
+    // Deprecated. Retained for processing old table data.
     public string? CoverageFilter { get; set; }
+
+    public string? ModuleAllowlist { get; set; }
+    public string? SourceAllowlist { get; set; }
     public string? TargetAssembly { get; set; }
     public string? TargetClass { get; set; }
     public string? TargetMethod { get; set; }
@@ -994,6 +1021,7 @@ public record TaskUnitConfig(
     public IContainerDef? UniqueInputs { get; set; }
     public IContainerDef? UniqueReports { get; set; }
     public IContainerDef? RegressionReports { get; set; }
+    public IContainerDef? Extra { get; set; }
 
 }
 

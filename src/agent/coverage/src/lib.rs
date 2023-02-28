@@ -6,6 +6,7 @@ extern crate log;
 
 pub mod allowlist;
 pub mod binary;
+pub mod cobertura;
 pub mod record;
 pub mod source;
 mod timer;

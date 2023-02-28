@@ -60,6 +60,7 @@ impl IWorkerRunner for RunnerDouble {
     async fn run(
         &self,
         _setup_dir: &Path,
+        _extra_dir: Option<PathBuf>,
         _work: &WorkUnit,
         from_agent_to_task_endpoint: String,
         from_task_to_agent_endpoint: String,
@@ -83,7 +84,6 @@ impl IWorkerRunner for RunnerDouble {
         let oneshot_receiver = IpcSender::connect(from_task_to_agent_endpoint)?;
         info!("Sending receiver to agent");
         oneshot_receiver.send(receive_from_task)?;
-
         Ok(Box::new(self.child.clone()))
     }
 }
@@ -94,6 +94,7 @@ async fn test_ready_run() {
     let state = State {
         ctx: Ready {
             setup_dir: PathBuf::default(),
+            extra_dir: None,
         },
         work: Fixture.work(),
     };
@@ -191,6 +192,7 @@ async fn test_worker_ready_update() {
     let state = State {
         ctx: Ready {
             setup_dir: PathBuf::default(),
+            extra_dir: None,
         },
         work: Fixture.work(),
     };

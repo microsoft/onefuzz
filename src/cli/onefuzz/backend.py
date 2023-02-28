@@ -12,6 +12,7 @@ import sys
 import tempfile
 import time
 from dataclasses import asdict, is_dataclass
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import (
     Any,
@@ -31,6 +32,7 @@ from uuid import UUID
 import msal
 import requests
 from azure.storage.blob import ContainerClient
+from onefuzztypes import responses
 from pydantic import BaseModel, Field
 from requests import Response
 from tenacity import RetryCallState, retry
@@ -96,6 +98,13 @@ class BackendConfig(BaseModel):
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
     tenant_domain: str
+    expires_on: datetime = datetime.utcnow() + timedelta(hours=24)
+
+    def get_multi_tenant_domain(self) -> Optional[str]:
+        if "https://login.microsoftonline.com/common" in self.authority:
+            return self.tenant_domain
+        else:
+            return None
 
 
 class Backend:
@@ -181,10 +190,11 @@ class Backend:
         if not self.config.endpoint:
             raise Exception("endpoint not configured")
 
-        if "https://login.microsoftonline.com/common" in self.config.authority:
+        multi_tenant_domain = self.config.get_multi_tenant_domain()
+        if multi_tenant_domain is not None:
             endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
             scopes = [
-                f"api://{self.config.tenant_domain}/{endpoint}/.default",
+                f"api://{multi_tenant_domain}/{endpoint}/.default",
             ]
         else:
             netloc = urlparse(self.config.endpoint).netloc
@@ -308,6 +318,28 @@ class Backend:
         else:
             raise Exception("Failed to acquire token")
 
+    def config_params(
+        self,
+    ) -> None:
+        if self.config.endpoint is None:
+            raise Exception("Endpoint Not Configured")
+
+        endpoint = self.config.endpoint
+
+        response = self.session.request("GET", endpoint + "/api/config")
+
+        endpoint_params = responses.Config.parse_obj(response.json())
+
+        # Will override values in storage w/ provided values for SP use
+        if self.config.client_id == "":
+            self.config.client_id = endpoint_params.client_id
+        if self.config.authority == "":
+            self.config.authority = endpoint_params.authority
+        if self.config.tenant_domain == "":
+            self.config.tenant_domain = endpoint_params.tenant_domain
+
+        self.save_config()
+
     def request(
         self,
         method: str,
@@ -321,7 +353,19 @@ class Backend:
         if not endpoint:
             raise Exception("endpoint not configured")
 
+        # If file expires, remove and force user to reset
+        if datetime.utcnow() > self.config.expires_on:
+            os.remove(self.config_path)
+            self.config = BackendConfig(
+                endpoint=endpoint, authority="", client_id="", tenant_domain=""
+            )
+
         url = endpoint + "/api/" + path
+
+        if self.config.client_id == "" or (
+            self.config.authority == "" and self.config.tenant_domain == ""
+        ):
+            self.config_params()
         headers = self.headers()
         json_data = serialize(json_data)
 

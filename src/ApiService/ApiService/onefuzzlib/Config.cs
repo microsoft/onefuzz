@@ -140,6 +140,9 @@ public class Config : IConfig {
                 case ContainerType.RegressionReports:
                     config.RegressionReports = def;
                     break;
+                case ContainerType.Extra:
+                    config.Extra = def;
+                    break;
             }
         }
 
@@ -262,6 +265,18 @@ public class Config : IConfig {
             }
         }
 
+        if (definition.Features.Contains(TaskFeature.ModuleAllowlist)) {
+            if (task.Config.Task.ModuleAllowlist != null) {
+                config.ModuleAllowlist = task.Config.Task.ModuleAllowlist;
+            }
+        }
+
+        if (definition.Features.Contains(TaskFeature.SourceAllowlist)) {
+            if (task.Config.Task.SourceAllowlist != null) {
+                config.SourceAllowlist = task.Config.Task.SourceAllowlist;
+            }
+        }
+
         if (definition.Features.Contains(TaskFeature.TargetAssembly)) {
             config.TargetAssembly = task.Config.Task.TargetAssembly;
         }
@@ -318,10 +333,6 @@ public class Config : IConfig {
         var pool = await _context.PoolOperations.GetByName(config.Pool.PoolName);
         if (!pool.IsOk) {
             return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"invalid pool: {config.Pool.PoolName}"));
-        }
-
-        if ((config.Task.RebootAfterSetup ?? false) && !pool.OkV.Managed) {
-            return ResultVoid<TaskConfigError>.Error(new TaskConfigError("reboot_after_setup is not supported for unmanaged pools"));
         }
 
         var checkTarget = await CheckTargetExe(config, definition);

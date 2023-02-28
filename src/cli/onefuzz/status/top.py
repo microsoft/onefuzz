@@ -68,8 +68,9 @@ class Top:
 
             for task in self.onefuzz.tasks.list(job_id=job.job_id):
                 self.cache.add_task(task)
-                for container in task.config.containers:
-                    self.add_container(container.name)
+                if task.config.containers is not None:
+                    for container in task.config.containers:
+                        self.add_container(container.name)
 
         nodes = self.onefuzz.nodes.list()
         for node in nodes:

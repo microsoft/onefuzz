@@ -13,7 +13,7 @@ import time
 import uuid
 from enum import Enum
 from shutil import which
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -123,9 +123,6 @@ class Endpoint:
         as_params: bool = False,
         alternate_endpoint: Optional[str] = None,
     ) -> A:
-        # Retrieve Auth Parameters
-        self._req_config_params()
-
         response = self._req_base(
             method,
             data=data,
@@ -156,32 +153,6 @@ class Endpoint:
             ).json()
 
         return [model.parse_obj(x) for x in response]
-
-    def _req_config_params(
-        self,
-    ) -> None:
-        if self.onefuzz._backend.config.endpoint is None:
-            raise Exception("Endpoint Not Configured")
-
-        endpoint = self.onefuzz._backend.config.endpoint
-
-        response = self.onefuzz._backend.session.request(
-            "GET", endpoint + "/api/config"
-        )
-
-        logging.debug(response.json())
-        endpoint_params = responses.Config.parse_obj(response.json())
-
-        logging.debug(self.onefuzz._backend.config.authority)
-        # Will override values in storage w/ provided values for SP use
-        if self.onefuzz._backend.config.client_id == "":
-            self.onefuzz._backend.config.client_id = endpoint_params.client_id
-        if self.onefuzz._backend.config.authority == "":
-            self.onefuzz._backend.config.authority = endpoint_params.authority
-        if self.onefuzz._backend.config.tenant_domain == "":
-            self.onefuzz._backend.config.tenant_domain = endpoint_params.tenant_domain
-
-        self.onefuzz._backend.save_config()
 
     def _disambiguate(
         self,
@@ -529,10 +500,11 @@ class Containers(Endpoint):
     ) -> None:
         to_download: Dict[str, str] = {}
         for task in tasks:
-            for container in task.config.containers:
-                info = self.onefuzz.containers.get(container.name)
-                name = os.path.join(container.type.name, container.name)
-                to_download[name] = info.sas_url
+            if task.config.containers is not None:
+                for container in task.config.containers:
+                    info = self.onefuzz.containers.get(container.name)
+                    name = os.path.join(container.type.name, container.name)
+                    to_download[name] = info.sas_url
 
         if output is None:
             output = primitives.Directory(os.getcwd())
@@ -887,6 +859,39 @@ class Notifications(Endpoint):
             data=requests.NotificationSearch(container=container),
         )
 
+    def get(self, notification_id: UUID_EXPANSION) -> List[models.Notification]:
+        """Get a notification"""
+        self.logger.debug("getting notification")
+        return self._req_model_list(
+            "GET",
+            models.Notification,
+            data=requests.NotificationSearch(notification_id=notification_id),
+        )
+
+    def migrate_jinja_to_scriban(
+        self, dry_run: bool = False
+    ) -> Union[
+        responses.JinjaToScribanMigrationResponse,
+        responses.JinjaToScribanMigrationDryRunResponse,
+    ]:
+        """Migrates all notification templates from jinja to scriban"""
+
+        migration_endpoint = "migrations/jinja_to_scriban"
+        if dry_run:
+            return self._req_model(
+                "POST",
+                responses.JinjaToScribanMigrationDryRunResponse,
+                data=requests.JinjaToScribanMigrationPost(dry_run=dry_run),
+                alternate_endpoint=migration_endpoint,
+            )
+        else:
+            return self._req_model(
+                "POST",
+                responses.JinjaToScribanMigrationResponse,
+                data=requests.JinjaToScribanMigrationPost(dry_run=dry_run),
+                alternate_endpoint=migration_endpoint,
+            )
+
 
 class Tasks(Endpoint):
     """Interact with tasks"""
@@ -974,7 +979,8 @@ class Tasks(Endpoint):
         colocate: bool = False,
         report_list: Optional[List[str]] = None,
         minimized_stack_depth: Optional[int] = None,
-        coverage_filter: Optional[str] = None,
+        module_allowlist: Optional[str] = None,
+        source_allowlist: Optional[str] = None,
     ) -> models.Task:
         """
         Create a task
@@ -1050,7 +1056,8 @@ class Tasks(Endpoint):
                 report_list=report_list,
                 preserve_existing_outputs=preserve_existing_outputs,
                 minimized_stack_depth=minimized_stack_depth,
-                coverage_filter=coverage_filter,
+                module_allowlist=module_allowlist,
+                source_allowlist=source_allowlist,
             ),
         )
 
@@ -1099,9 +1106,14 @@ class JobContainers(Endpoint):
         containers = set()
         tasks = self.onefuzz.tasks.list(job_id=job_id, state=[])
         for task in tasks:
-            containers.update(
-                set(x.name for x in task.config.containers if x.type == container_type)
-            )
+            if task.config.containers is not None:
+                containers.update(
+                    set(
+                        x.name
+                        for x in task.config.containers
+                        if x.type == container_type
+                    )
+                )
 
         results: Dict[str, List[str]] = {}
         for container in containers:
@@ -1133,23 +1145,24 @@ class JobContainers(Endpoint):
         containers = set()
         to_delete = set()
         for task in self.onefuzz.jobs.tasks.list(job_id=job.job_id):
-            for container in task.config.containers:
-                containers.add(container.name)
-                if container.type not in SAFE_TO_REMOVE:
-                    continue
-                elif not only_job_specific:
-                    to_delete.add(container.name)
-                elif only_job_specific and (
-                    self.onefuzz.utils.build_container_name(
-                        container_type=container.type,
-                        project=job.config.project,
-                        name=job.config.name,
-                        build=job.config.build,
-                        platform=task.os,
-                    )
-                    == container.name
-                ):
-                    to_delete.add(container.name)
+            if task.config.containers is not None:
+                for container in task.config.containers:
+                    containers.add(container.name)
+                    if container.type not in SAFE_TO_REMOVE:
+                        continue
+                    elif not only_job_specific:
+                        to_delete.add(container.name)
+                    elif only_job_specific and (
+                        self.onefuzz.utils.build_container_name(
+                            container_type=container.type,
+                            project=job.config.project,
+                            name=job.config.name,
+                            build=job.config.build,
+                            platform=task.os,
+                        )
+                        == container.name
+                    ):
+                        to_delete.add(container.name)
 
         to_keep = containers - to_delete
         for container_name in to_keep:
@@ -1303,7 +1316,7 @@ class Pool(Endpoint):
                 client_secret="<client_secret>",
                 resource=self.onefuzz._backend.config.endpoint,
                 tenant=urlparse(self.onefuzz._backend.config.authority).path.strip("/"),
-                multi_tenant_domain=self.onefuzz._backend.config.tenant_domain,
+                multi_tenant_domain=self.onefuzz._backend.config.get_multi_tenant_domain(),
             )
 
         return pool.config
@@ -1713,6 +1726,17 @@ class InstanceConfigCmd(Endpoint):
         )
 
 
+class ValidateScriban(Endpoint):
+    """Interact with Validate Scriban"""
+
+    endpoint = "ValidateScriban"
+
+    def post(
+        self, req: requests.TemplateValidationPost
+    ) -> responses.TemplateValidationResponse:
+        return self._req_model("POST", responses.TemplateValidationResponse, data=req)
+
+
 class Command:
     def __init__(self, onefuzz: "Onefuzz", logger: logging.Logger):
         self.onefuzz = onefuzz
@@ -1803,9 +1827,7 @@ class Onefuzz:
         self.webhooks = Webhooks(self)
         self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
-
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates = JobTemplates(self)
+        self.validate_scriban = ValidateScriban(self)
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
@@ -1840,9 +1862,6 @@ class Onefuzz:
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
 
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates._load_cache()
-
     def licenses(self) -> object:
         """Return third-party licenses used by this package"""
         data = pkgutil.get_data("onefuzz", "data/licenses.json")
@@ -1870,18 +1889,15 @@ class Onefuzz:
         # actuates the login process
         self.info.get()
 
-        # TODO: once job templates are out of preview, this should be enabled
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates.refresh()
         return "succeeded"
 
     def config(
         self,
         endpoint: Optional[str] = None,
-        authority: Optional[str] = None,
+        override_authority: Optional[str] = None,
         client_id: Optional[str] = None,
+        override_tenant_domain: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
-        tenant_domain: Optional[str] = None,
         reset: Optional[bool] = None,
     ) -> BackendConfig:
         """Configure onefuzz CLI"""
@@ -1906,14 +1922,14 @@ class Onefuzz:
                     "Missing HTTP Authentication"
                 )
             self._backend.config.endpoint = endpoint
-        if authority is not None:
-            self._backend.config.authority = authority
         if client_id is not None:
             self._backend.config.client_id = client_id
+        if override_authority is not None:
+            self._backend.config.authority = override_authority
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
-        if tenant_domain is not None:
-            self._backend.config.tenant_domain = tenant_domain
+        if override_tenant_domain is not None:
+            self._backend.config.tenant_domain = override_tenant_domain
         self._backend.app = None
         self._backend.save_config()
 
@@ -1932,6 +1948,5 @@ class Onefuzz:
 
 
 from .debug import Debug  # noqa: E402
-from .job_templates.main import JobTemplates  # noqa: E402
 from .status.cmd import Status  # noqa: E402
 from .template import Template  # noqa: E402

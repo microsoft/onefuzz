@@ -250,8 +250,9 @@ impl State<Ready> {
     pub async fn run(self) -> Result<State<Busy>> {
         let mut workers = vec![];
         let setup_dir = &self.ctx.work_set.setup_dir()?;
+        let extra_dir = self.ctx.work_set.extra_dir()?;
         for work in self.ctx.work_set.work_units {
-            let worker = Some(Worker::new(setup_dir, work));
+            let worker = Some(Worker::new(setup_dir, extra_dir.clone(), work));
             workers.push(worker);
         }
 

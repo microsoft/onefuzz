@@ -162,7 +162,8 @@ public record ScalesetResponse(
 public record ConfigResponse(
     string? Authority,
     string? ClientId,
-    string? TenantDomain
+    string? TenantDomain,
+    string? MultiTenantDomain
 ) : BaseResponse();
 
 public class BaseResponseConverter : JsonConverter<BaseResponse> {
@@ -194,4 +195,13 @@ public record ProxyList(
 public record TemplateValidationResponse(
     string RenderedTemplate,
     TemplateRenderContext AvailableContext
+) : BaseResponse();
+
+public record JinjaToScribanMigrationResponse(
+    List<Guid> UpdatedNotificationIds,
+    List<Guid> FailedNotificationIds
+) : BaseResponse();
+
+public record JinjaToScribanMigrationDryRunResponse(
+    List<Guid> NotificationIdsToUpdate
 ) : BaseResponse();

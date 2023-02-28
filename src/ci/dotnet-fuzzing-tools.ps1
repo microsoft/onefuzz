@@ -2,10 +2,10 @@
 # Licensed under the MIT License.
 
 $SHARPFUZZ_REPO = 'https://github.com/Metalnem/sharpfuzz'
-$SHARPFUZZ_COMMIT = 'v2.0.0'
+$SHARPFUZZ_COMMIT = '66ef5c27df37ee26deb50140482dba20a393050e'
 
 $LIBFUZZER_DOTNET_REPO = 'https://github.com/Metalnem/libfuzzer-dotnet'
-$LIBFUZZER_DOTNET_COMMIT = 'ed148633f8df078cb2b0ba0ca30166aa72f1de90'
+$LIBFUZZER_DOTNET_COMMIT = '4b4970168e8e105e1cda9ad67a2a0a3e81e34015'
 
 # Script below assumes an absolute path.
 $ARTIFACTS = "${env:GITHUB_WORKSPACE}/artifacts/third-party/dotnet-fuzzing-windows"
@@ -20,8 +20,7 @@ mkdir $ARTIFACTS/sharpfuzz
 git clone $SHARPFUZZ_REPO sharpfuzz
 pushd sharpfuzz
 git checkout $SHARPFUZZ_COMMIT
-# TODO(dotnet): Update dotnet framework to 7.0 when SharpFuzz supports it
-dotnet publish src/SharpFuzz.CommandLine -f net6.0 -c Release -o $ARTIFACTS/sharpfuzz --self-contained -r win10-x64
+dotnet publish src/SharpFuzz.CommandLine -f net7.0 -c Release -o $ARTIFACTS/sharpfuzz --self-contained -r win10-x64
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish exited with $LASTEXITCODE" }
 popd
 

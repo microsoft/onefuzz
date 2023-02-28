@@ -2,13 +2,13 @@
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace Microsoft.OneFuzz.Service;
 
 public interface IAdo {
     public Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool isLastRetryAttempt, Guid notificationId);
-
 }
 
 public class Ado : NotificationsBase, IAdo {
@@ -32,9 +32,9 @@ public class Ado : NotificationsBase, IAdo {
             var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
             await ado.Process(notificationInfo);
         } catch (Exception e)
-              when (e is VssAuthenticationException || e is VssServiceException) {
+              when (e is VssUnauthorizedException || e is VssAuthenticationException || e is VssServiceException) {
             var _ = config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo);
-            if (e is VssAuthenticationException && !string.IsNullOrEmpty(assignedTo)) {
+            if ((e is VssAuthenticationException || e is VssUnauthorizedException) && !string.IsNullOrEmpty(assignedTo)) {
                 notificationInfo = notificationInfo.AddRange(new (string, string)[] { ("assigned_to", assignedTo) });
             }
 
@@ -61,6 +61,55 @@ public class Ado : NotificationsBase, IAdo {
         return errorCodes.Any(code => errorStr.Contains(code));
     }
 
+    public static async Async.Task<OneFuzzResultVoid> Validate(AdoTemplate config) {
+        // Validate PAT is valid for the base url
+        VssConnection connection;
+        if (config.AuthToken.Secret is SecretValue<string> token) {
+            try {
+                connection = new VssConnection(config.BaseUrl, new VssBasicCredential(string.Empty, token.Value));
+                await connection.ConnectAsync();
+            } catch {
+                return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"Failed to connect to {config.BaseUrl} using the provided token");
+            }
+        } else {
+            return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, "Auth token is missing or invalid");
+        }
+
+        try {
+            // Validate unique_fields are part of the project's valid fields
+            var witClient = await connection.GetClientAsync<WorkItemTrackingHttpClient>();
+
+            // The set of valid fields for this project according to ADO
+            var projectValidFields = await GetValidFields(witClient, config.Project);
+
+            var configFields = config.UniqueFields.Select(field => field.ToLowerInvariant()).ToHashSet();
+            var validConfigFields = configFields.Intersect(projectValidFields.Keys).ToHashSet();
+
+            if (!validConfigFields.SetEquals(configFields)) {
+                var invalidFields = configFields.Except(validConfigFields);
+                return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, new[]
+                    {
+                        $"The following unique fields are not valid fields for this project: {string.Join(',', invalidFields)}",
+                        "You can find the valid fields for your project by following these steps: https://learn.microsoft.com/en-us/azure/devops/boards/work-items/work-item-fields?view=azure-devops#review-fields"
+                    }
+                );
+            }
+        } catch {
+            return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, "Failed to query and compare the valid fields for this project");
+        }
+
+        return OneFuzzResultVoid.Ok;
+    }
+
+    private static WorkItemTrackingHttpClient GetAdoClient(Uri baseUrl, string token) {
+        return new WorkItemTrackingHttpClient(baseUrl, new VssBasicCredential("PAT", token));
+    }
+
+    private static async Async.Task<Dictionary<string, WorkItemField>> GetValidFields(WorkItemTrackingHttpClient client, string? project) {
+        return (await client.GetFieldsAsync(project, expand: GetFieldsExpand.ExtensionFields))
+            .ToDictionary(field => field.ReferenceName.ToLowerInvariant());
+    }
+
     sealed class AdoConnector {
         private readonly AdoTemplate _config;
         private readonly Renderer _renderer;
@@ -69,19 +118,17 @@ public class Ado : NotificationsBase, IAdo {
         private readonly Uri _instanceUrl;
         private readonly ILogTracer _logTracer;
         public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogTracer logTracer, Renderer? renderer = null) {
-            renderer ??= await Renderer.ConstructRenderer(context, container, filename, report);
+            renderer ??= await Renderer.ConstructRenderer(context, container, filename, report, logTracer);
             var instanceUrl = context.Creds.GetInstanceUrl();
             var project = await renderer.Render(config.Project, instanceUrl);
 
             var authToken = await context.SecretsOperations.GetSecretStringValue(config.AuthToken);
             var client = GetAdoClient(config.BaseUrl, authToken!);
-            return new AdoConnector(container, filename, config, report, renderer, project!, client, instanceUrl, logTracer);
+            return new AdoConnector(config, renderer, project!, client, instanceUrl, logTracer);
         }
 
-        private static WorkItemTrackingHttpClient GetAdoClient(Uri baseUrl, string token) {
-            return new WorkItemTrackingHttpClient(baseUrl, new VssBasicCredential("PAT", token));
-        }
-        public AdoConnector(Container container, string filename, AdoTemplate config, Report report, Renderer renderer, string project, WorkItemTrackingHttpClient client, Uri instanceUrl, ILogTracer logTracer) {
+
+        public AdoConnector(AdoTemplate config, Renderer renderer, string project, WorkItemTrackingHttpClient client, Uri instanceUrl, ILogTracer logTracer) {
             _config = config;
             _renderer = renderer;
             _project = project;
@@ -112,7 +159,7 @@ public class Ado : NotificationsBase, IAdo {
             }
 
             var project = filters.TryGetValue("system.teamproject", out var value) ? value : null;
-            var validFields = await GetValidFields(project);
+            var validFields = await GetValidFields(_client, project);
 
             var postQueryFilter = new Dictionary<string, string>();
             /*
@@ -233,11 +280,6 @@ public class Ado : NotificationsBase, IAdo {
             }
 
             return stateUpdated;
-        }
-
-        private async Async.Task<Dictionary<string, WorkItemField>> GetValidFields(string? project) {
-            return (await _client.GetFieldsAsync(project, expand: GetFieldsExpand.ExtensionFields))
-                .ToDictionary(field => field.ReferenceName.ToLowerInvariant());
         }
 
         private async Async.Task<WorkItem> CreateNew() {
