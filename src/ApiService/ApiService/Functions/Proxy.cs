@@ -31,14 +31,16 @@ public class Proxy {
     private ProxyGetResult GetResult(ProxyForward proxyForward, VmProxy? proxy) {
         var forward = _context.ProxyForwardOperations.ToForward(proxyForward);
 
+        _log.Info($"Proxy?");
         if (proxy == null
             || (proxy.State != VmState.Running && proxy.State != VmState.ExtensionsLaunch)
             || proxy.Heartbeat == null
             || !proxy.Heartbeat.Forwards.Contains(forward)
            ) {
+             _log.Info($"Proxy null...");
             return new ProxyGetResult(null, Forward: forward);
         }
-
+        _log.Info($"Proxy not null...");
         return new ProxyGetResult(proxy.Ip, forward);
     }
 
