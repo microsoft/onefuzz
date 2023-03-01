@@ -309,6 +309,7 @@ mod tests {
                     machine_name: "test".to_string(),
                     scaleset_name: None,
                 },
+                tags: Default::default(),
             },
         };
         let task = GeneratorTask::new(config);
