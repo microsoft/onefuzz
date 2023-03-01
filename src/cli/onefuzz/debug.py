@@ -107,8 +107,6 @@ class DebugScaleset(Command):
         proxy = self.onefuzz.scaleset_proxy.create(
             scaleset_id, machine_id, port, duration=duration
         )
-        self.logger.debug("proxy")
-        self.logger.debug(proxy)
         if proxy.ip is None:
             return (False, "waiting on proxy ip", None)
 
