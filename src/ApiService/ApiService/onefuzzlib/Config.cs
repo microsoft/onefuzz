@@ -70,7 +70,7 @@ public class Config : IConfig {
             TaskType: task.Config.Task.Type,
             InstanceTelemetryKey: _serviceConfig.ApplicationInsightsInstrumentationKey,
             MicrosoftTelemetryKey: _serviceConfig.OneFuzzTelemetry,
-            HeartbeatQueue: await _queue.GetQueueSas("task-heartbeat", StorageType.Config, QueueSasPermissions.Add) ?? throw new Exception("unable to get heartbeat queue sas")
+            HeartbeatQueue: await _queue.GetQueueSas("task-heartbeat", StorageType.Config, QueueSasPermissions.Add) ?? throw new Exception("unable to get heartbeat queue sas"),
             Tags: task.Config.Tags ?? new Dictionary<string, string>()
         );
 
