@@ -967,7 +967,8 @@ public record TaskUnitConfig(
     TaskType TaskType,
     string? InstanceTelemetryKey,
     string? MicrosoftTelemetryKey,
-    Uri HeartbeatQueue
+    Uri HeartbeatQueue,
+    Dictionary<string, string> Tags
     ) {
     public Uri? inputQueue { get; set; }
     public String? SupervisorExe { get; set; }
