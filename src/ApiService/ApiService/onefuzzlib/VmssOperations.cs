@@ -2,12 +2,12 @@
 using System.Threading.Tasks;
 using Azure;
 using Azure.Core;
-using Azure.Data.Tables;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
 using Azure.ResourceManager.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Rest.Azure;
+using ApiService.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -420,7 +420,7 @@ public class VmssOperations : IVmssOperations {
             entry = entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
 
             var sub = _creds.GetSubscriptionResource();
-            var skus = sub.GetResourceSkusAsync(filter: TableClient.CreateQueryFilter($"location eq {region.String}"));
+            var skus = sub.GetResourceSkusAsync(filter: Query.CreateQueryFilter($"location eq {region.String}"));
 
             var skuNames = new List<string>();
             await foreach (var sku in skus) {

@@ -32,12 +32,14 @@ public class Proxy {
         var forward = _context.ProxyForwardOperations.ToForward(proxyForward);
 
         _log.Info($"Proxy?");
+        _log.Info($"{proxy}");
+        _log.Info($"{forward}");
         if (proxy == null
             || (proxy.State != VmState.Running && proxy.State != VmState.ExtensionsLaunch)
             || proxy.Heartbeat == null
             || !proxy.Heartbeat.Forwards.Contains(forward)
            ) {
-             _log.Info($"Proxy null...");
+            _log.Info($"Proxy null...");
             return new ProxyGetResult(null, Forward: forward);
         }
         _log.Info($"Proxy not null...");
@@ -112,12 +114,14 @@ public class Proxy {
         }
 
         var proxy = await _context.ProxyOperations.GetOrCreate(scaleset.OkV.Region);
+        _log.Info($"{proxy}");
         if (proxy != null) {
             var updated = forwardResult.OkV with { ProxyId = proxy.ProxyId };
             var r = await _context.ProxyForwardOperations.Replace(updated);
             if (!r.IsOk) {
                 _log.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"failed to update proxy forward with {updated.MachineId:Tag:MachineId} with new {proxy.ProxyId:Tag:ProxyId}");
             }
+            _log.Info($"Getting ready to save config");
             await _context.ProxyOperations.SaveProxyConfig(proxy);
         }
 

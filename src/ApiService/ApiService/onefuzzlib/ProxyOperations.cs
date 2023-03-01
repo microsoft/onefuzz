@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
-using Azure.Data.Tables;
 using Azure.ResourceManager.Compute.Models;
 using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
@@ -41,7 +40,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     public async Async.Task<Proxy> GetOrCreate(Region region) {
         {
-            var proxyList = QueryAsync(filter: TableClient.CreateQueryFilter($"PartitionKey eq {region.String} and outdated eq false"));
+            var proxyList = QueryAsync(filter: Query.CreateQueryFilter($"PartitionKey eq {region.String} and outdated eq false"));
             await foreach (var proxy in proxyList) {
                 if (IsOutdated(proxy)) {
                     var r1 = await Replace(proxy with { Outdated = true });
@@ -117,6 +116,11 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     public async Async.Task SaveProxyConfig(Proxy proxy) {
         var forwards = await GetForwards(proxy);
+        _logTracer.Info($"forwards....");
+        _logTracer.Info($"{forwards.Count}");
+        foreach (var forward in forwards) {
+            _logTracer.Info($"another forward");
+        }
         var url = (await _context.Containers.GetFileSasUrl(WellKnownContainers.ProxyConfigs, $"{proxy.Region}/{proxy.ProxyId}/config.json", StorageType.Config, BlobSasPermissions.Read)).EnsureNotNull("Can't generate file sas");
         var queueSas = await _context.Queue.GetQueueSas("proxy", StorageType.Config, QueueSasPermissions.Add).EnsureNotNull("can't generate queue sas") ?? throw new Exception("Queue sas is null");
 
