@@ -26,7 +26,7 @@ namespace FunctionalTests {
         public string ResourceGroup => _e.GetStringProperty("resource_group")!;
         public string Region => _e.GetStringProperty("region")!;
         public string Subscription => _e.GetStringProperty("subscription")!;
-        public IDictionary<string, InfoVersion> Versions => _e.GetDictProperty<InfoVersion>("property");
+        public IDictionary<string, InfoVersion> Versions => _e.GetDictProperty<InfoVersion>("versions");
     }
 
 

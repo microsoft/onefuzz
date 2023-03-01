@@ -13,7 +13,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     o.config(
         endpoint=os.environ.get("ONEFUZZ_ENDPOINT"),
         override_authority=os.environ.get("ONEFUZZ_AUTHORITY"),
-        override_client_id=os.environ.get("ONEFUZZ_CLIENT_ID"),
+        client_id=os.environ.get("ONEFUZZ_CLIENT_ID"),
     )
     info = o.info.get()
     return func.HttpResponse(info.json())
