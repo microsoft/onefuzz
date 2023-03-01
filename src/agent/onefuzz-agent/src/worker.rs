@@ -199,6 +199,8 @@ impl State<Ready> {
             Ok(res) => res??,
         };
 
+        info!("IPC connection bootstrapped");
+
         let state = State {
             ctx: Running {
                 child,
@@ -240,38 +242,41 @@ impl State<Running> {
     pub async fn kill(&mut self) -> Result<()> {
         let graceful_shutdown = self.ctx.from_agent_to_task.send(IpcMessageKind::Shutdown);
 
-        for i in 0..90 {
-            match graceful_shutdown {
-                Ok(_) => match self.ctx.child.try_wait() {
-                    Ok(Some(_)) => {
-                        info!("Agent was gracefully shut down");
-                        // Since the agent has exited, drain one more time before returning
-                        while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
-                            info!("received message from server_receiver: {:?}", res);
+        match timeout(Duration::from_secs(90), async {
+            loop {
+                match graceful_shutdown {
+                    Ok(_) => match self.ctx.child.try_wait() {
+                        Ok(Some(_)) => {
+                            info!("Agent was gracefully shut down");
+                            // Since the agent has exited, drain one more time before returning
+                            while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
+                                info!("received message from server_receiver: {:?}", res);
+                            }
+                            return Ok(());
                         }
-                        return Ok(());
-                    }
-                    Ok(None) => {
-                        if i == 89 {
-                            error!("Agent did not shutdown in the allotted time");
+                        Ok(None) => { /* Still waiting */ }
+                        Err(e) => {
+                            error!("failed to wait for graceful shutdown: {:?}", e);
                             return self.ctx.child.kill();
                         }
-                    }
+                    },
                     Err(e) => {
-                        error!("failed to wait for graceful shutdown: {:?}", e);
+                        error!("failed to send graceful shutdown message: {:?}", e);
                         return self.ctx.child.kill();
                     }
-                },
-                Err(e) => {
-                    error!("failed to send graceful shutdown message: {:?}", e);
-                    return self.ctx.child.kill();
-                }
-            };
-            info!("Agent didn't respond yet, trying again in 1 second...");
-            tokio::time::sleep(Duration::from_secs(1)).await;
+                };
+                info!("Agent didn't respond yet, trying again in 1 second...");
+                tokio::time::sleep(Duration::from_secs(1)).await;
+            }
+        })
+        .await
+        {
+            Ok(res) => res,
+            Err(e) => {
+                error!("timeout waiting for graceful shutdown: {:?}", e);
+                self.ctx.child.kill()
+            }
         }
-
-        self.ctx.child.kill()
     }
 }
 
