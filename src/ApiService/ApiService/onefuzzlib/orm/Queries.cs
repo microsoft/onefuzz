@@ -1,5 +1,5 @@
-﻿using System.Text.Json;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
+using System.Text.Json;
 using Azure.Data.Tables;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 

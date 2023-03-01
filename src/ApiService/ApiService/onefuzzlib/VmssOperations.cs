@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Threading.Tasks;
+using ApiService.OneFuzzLib.Orm;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Compute;
@@ -7,7 +8,6 @@ using Azure.ResourceManager.Compute.Models;
 using Azure.ResourceManager.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Rest.Azure;
-using ApiService.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
