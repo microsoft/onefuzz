@@ -31,6 +31,25 @@ namespace Tests {
         }
 
         [Fact]
+        public void QueryFilterTest() {
+
+            var scalesetId = Guid.Parse("3b0426d3-9bde-4ae8-89ac-4edf0d3b3618");
+            var proxyId = Guid.Parse("4c96dd6b-9bdb-4758-9720-1010c244fa4b");
+            var region = "westus2";
+            var outdated = false;
+
+            var string1 = Query.CreateQueryFilter($"scaleset_id eq {scalesetId}");
+            Assert.Equal("scaleset_id eq '3b0426d3-9bde-4ae8-89ac-4edf0d3b3618'", string1);
+
+            var string2 = Query.CreateQueryFilter($"proxy_id eq {proxyId}");
+            Assert.NotEqual("proxy_id eq guid'4c96dd6b-9bdb-4758-9720-1010c244fa4b'", string2);
+
+            var string3 = Query.CreateQueryFilter($"PartitionKey eq {region} and outdated eq {outdated} and scaleset_id eq {scalesetId} and proxy_id eq {proxyId}");
+            Assert.Equal("PartitionKey eq 'westus2' and outdated eq false and scaleset_id eq '3b0426d3-9bde-4ae8-89ac-4edf0d3b3618' and proxy_id eq '4c96dd6b-9bdb-4758-9720-1010c244fa4b'", string3);
+
+        }
+
+        [Fact]
         public void StartsWithTests() {
             var query = Query.StartsWith("prop", "prefix");
             Assert.Equal("prop ge 'prefix' and prop lt 'prefiy'", query);
