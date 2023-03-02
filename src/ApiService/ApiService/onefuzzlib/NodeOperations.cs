@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure;
-using Azure.Data.Tables;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -238,8 +237,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     /// fuzzing tasks with patch reboot cycles.
     public async Async.Task ReimageLongLivedNodes(Guid scaleSetId) {
         var timeFilter = Query.OlderThan("initialized_at", DateTimeOffset.UtcNow - INodeOperations.NODE_REIMAGE_TIME);
-        //force ToString(), since all GUIDs are strings in the table
-        await foreach (var node in QueryAsync(Query.And(TableClient.CreateQueryFilter($"scaleset_id eq {scaleSetId.ToString()}"), timeFilter))) {
+
+        await foreach (var node in QueryAsync(Query.And(Query.CreateQueryFilter($"scaleset_id eq {scaleSetId}"), timeFilter))) {
             if (node.DebugKeepNode) {
                 _logTracer.Info($"removing debug_keep_node for expired node. scaleset_id:{node.ScalesetId} machine_id:{node.MachineId}");
             }
@@ -280,15 +279,15 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         List<string> queryParts = new();
 
         if (poolId is not null) {
-            queryParts.Add(TableClient.CreateQueryFilter($"(pool_id eq {poolId})"));
+            queryParts.Add(Query.CreateQueryFilter($"(pool_id eq {poolId})"));
         }
 
         if (poolName is not null) {
-            queryParts.Add(TableClient.CreateQueryFilter($"(pool_name eq {poolName.String})"));
+            queryParts.Add(Query.CreateQueryFilter($"(pool_name eq {poolName.String})"));
         }
 
         if (scalesetId is not null) {
-            queryParts.Add(TableClient.CreateQueryFilter($"(scaleset_id eq {scalesetId})"));
+            queryParts.Add(Query.CreateQueryFilter($"(scaleset_id eq {scalesetId})"));
         }
 
         if (states is not null) {
@@ -304,7 +303,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         //# azure table query always return false when the column does not exist
         //# We write the query this way to allow us to get the nodes where the
         //# version is not defined as well as the nodes with a mismatched version
-        var versionQuery = TableClient.CreateQueryFilter($"not (version eq {oneFuzzVersion})");
+        var versionQuery = Query.CreateQueryFilter($"not (version eq {oneFuzzVersion})");
         queryParts.Add(versionQuery);
         return Query.And(queryParts);
     }
@@ -581,7 +580,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public IAsyncEnumerable<Node> SearchByPoolName(PoolName poolName) {
-        return QueryAsync(TableClient.CreateQueryFilter($"(pool_name eq {poolName.String})"));
+        return QueryAsync(Query.CreateQueryFilter($"(pool_name eq {poolName.String})"));
     }
 
 
