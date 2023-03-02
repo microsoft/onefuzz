@@ -237,7 +237,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     /// fuzzing tasks with patch reboot cycles.
     public async Async.Task ReimageLongLivedNodes(Guid scaleSetId) {
         var timeFilter = Query.OlderThan("initialized_at", DateTimeOffset.UtcNow - INodeOperations.NODE_REIMAGE_TIME);
-        //force ToString(), since all GUIDs are strings in the table
+
         await foreach (var node in QueryAsync(Query.And(Query.CreateQueryFilter($"scaleset_id eq {scaleSetId}"), timeFilter))) {
             if (node.DebugKeepNode) {
                 _logTracer.Info($"removing debug_keep_node for expired node. scaleset_id:{node.ScalesetId} machine_id:{node.MachineId}");
