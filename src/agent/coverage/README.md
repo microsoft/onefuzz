@@ -108,3 +108,35 @@ To obtain source and line coverage in the Cobertura XML format, you can directly
 is serializable via the `CoberturaCoverage::to_string()` method. The conversion defined in
 the `cobertura` module emits Cobertura designed to produce sensible HTML reports when
 consumed by the ReportGenerator project.
+
+## FAQ
+
+1 _My Linux target uses dynamic linking or loading and has zero coverage info for shared libraries._
+
+Make sure that your target shared libraries were compiled with debuginfo. If not, no
+coverage will be measured for them at all. If coverage locations are defined, but never
+reached, the shared libraries may not be found by the dynamic linker/loader at runtime.
+This is an issue with your command invocation. You can debug this with the `record` tool's
+`--dump-stdio` tool. A typical fix is to include the directories of non-system shared
+libraries in the `LD_LIBRARY_PATH` environment variable.
+
+2 _Coverage is being recorded generally, but the branches of `switch` statements don't seem reachable._
+
+Please report your case to the OneFuzz team. Large `switch` statements are frequently
+compiled to indirect jumps via tables, and we are working to improve coverage in these
+cases.
+
+3 _I have a source line with multiple statements. How do I know which ones are being hit or missed?_
+
+Binary coverage is both ground truth and the most granular coverage format. The source
+coverage representations do not currently include column info. If any module offset that
+maps to a source line is missed, then the entire line is considered missed. In the future,
+we intend to support partial line coverage.
+
+4 _The source coverage reported for my target looks strange or incomplete._
+
+Report your case to the OneFuzz team. Source coverage for optimized builds can be lossy,
+and we are constrained by what info we get from the debuginfo. If possible, try recording
+coverage for an unoptimized build of your target, and see if the same issue occurs. Either
+way, we are always looking for edge cases we could use to drive improvements or
+workarounds.
