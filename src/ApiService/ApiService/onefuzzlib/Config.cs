@@ -248,7 +248,7 @@ public class Config : IConfig {
         }
 
         if (definition.Features.Contains(TaskFeature.PreserveExistingOutputs)) {
-            config.PreserveExistingOutputs = task.Config.Task.PreserveExistingOutputs;
+            config.PreserveExistingOutputs = task.Config.Task.PreserveExistingOutputs ?? false;
         }
 
         if (definition.Features.Contains(TaskFeature.ReportList)) {
