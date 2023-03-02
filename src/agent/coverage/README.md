@@ -117,7 +117,7 @@ Make sure that your target shared libraries were compiled with debuginfo. If not
 coverage will be measured for them at all. If coverage locations are defined, but never
 reached, the shared libraries may not be found by the dynamic linker/loader at runtime.
 This is an issue with your command invocation. You can debug this with the `record` tool's
-`--dump-stdio` tool. A typical fix is to include the directories of non-system shared
+`--dump-stdio` option. A typical fix is to include the directories of non-system shared
 libraries in the `LD_LIBRARY_PATH` environment variable.
 
 2 _Coverage is being recorded generally, but the branches of `switch` statements don't seem reachable._
