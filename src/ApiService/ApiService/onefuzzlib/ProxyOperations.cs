@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
-using Azure.Data.Tables;
 using Azure.ResourceManager.Compute.Models;
 using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
@@ -41,7 +40,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     public async Async.Task<Proxy> GetOrCreate(Region region) {
         {
-            var proxyList = QueryAsync(filter: TableClient.CreateQueryFilter($"PartitionKey eq {region.String} and outdated eq false"));
+            var proxyList = QueryAsync(filter: Query.CreateQueryFilter($"PartitionKey eq {region.String} and outdated eq false"));
             await foreach (var proxy in proxyList) {
                 if (IsOutdated(proxy)) {
                     var r1 = await Replace(proxy with { Outdated = true });

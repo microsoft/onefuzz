@@ -415,16 +415,15 @@ class Backend:
         if response.status_code // 100 != 2:
             try:
                 json = response.json()
+                # attempt to read as https://www.rfc-editor.org/rfc/rfc7807
+                if isinstance(json, Dict):
+                    title = json.get("title")
+                    details = json.get("detail")
+                    raise Exception(
+                        f"request did not succeed ({response.status_code}: {title}): {details}"
+                    )
             except requests.exceptions.JSONDecodeError:
                 pass
-
-            # attempt to read as https://www.rfc-editor.org/rfc/rfc7807
-            if isinstance(json, Dict):
-                title = json.get("title")
-                details = json.get("detail")
-                raise Exception(
-                    f"request did not succeed ({response.status_code}: {title}): {details}"
-                )
 
             error_text = str(
                 response.content, encoding="utf-8", errors="backslashreplace"
