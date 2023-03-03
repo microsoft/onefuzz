@@ -18,6 +18,8 @@ debugger = { path = "../debugger" }
 clap = { version = "3.2.4", features = ["derive", "cargo"] }
 win-util = { path = "../win-util" }
 uuid = { version = "0.8", features = ["serde", "v4"] }
+tempfile = "3.4.0"
+stacktrace-parser = { path = "../stacktrace-parser" }
 
 [dependencies.windows]
 version = "0.43.0"
