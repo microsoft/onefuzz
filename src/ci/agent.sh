@@ -50,7 +50,9 @@ if [ X${CARGO_INCREMENTAL} == X ]; then
 fi
 
 cargo fmt -- --check
-cargo deny -L error check
+# There is a PR currently open to stop using the unmaintained crate: https://github.com/servo/ipc-channel/pull/302
+# Once that merges, we can update remove the --allow unmaintained flag.
+cargo deny -L error check --allow unmaintained
 cargo license -j > data/licenses.json
 cargo build --release --locked
 cargo clippy --release --locked --all-targets -- -D warnings

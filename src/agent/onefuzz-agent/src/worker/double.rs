@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use ipc_channel::ipc;
+
 use super::*;
 
 #[derive(Clone, Debug, Default)]
@@ -15,7 +17,29 @@ impl IWorkerRunner for WorkerRunnerDouble {
         _setup_dir: &Path,
         _extra_dir: Option<PathBuf>,
         _work: &WorkUnit,
+        from_agent_to_task_endpoint: String,
+        from_task_to_agent_endpoint: String,
     ) -> Result<Box<dyn IWorkerChild>> {
+        info!("Creating channel from agent to task");
+        let (agent_sender, _receive_from_agent): (
+            IpcSender<IpcMessageKind>,
+            IpcReceiver<IpcMessageKind>,
+        ) = ipc::channel()?;
+        info!("Conecting...");
+        let oneshot_sender = IpcSender::connect(from_agent_to_task_endpoint)?;
+        info!("Sending sender to agent");
+        oneshot_sender.send(agent_sender)?;
+
+        info!("Creating channel from task to agent");
+        let (_task_sender, receive_from_task): (
+            IpcSender<IpcMessageKind>,
+            IpcReceiver<IpcMessageKind>,
+        ) = ipc::channel()?;
+        info!("Connecting...");
+        let oneshot_receiver = IpcSender::connect(from_task_to_agent_endpoint)?;
+        info!("Sending receiver to agent");
+        oneshot_receiver.send(receive_from_task)?;
+
         Ok(Box::new(self.child.clone()))
     }
 }
