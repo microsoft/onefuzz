@@ -247,6 +247,10 @@ public class Config : IConfig {
             config.CheckFuzzerHelp = task.Config.Task.CheckFuzzerHelp ?? true;
         }
 
+        if (definition.Features.Contains(TaskFeature.PreserveExistingOutputs)) {
+            config.PreserveExistingOutputs = task.Config.Task.PreserveExistingOutputs ?? false;
+        }
+
         if (definition.Features.Contains(TaskFeature.ReportList)) {
             config.ReportList = task.Config.Task.ReportList;
         }
