@@ -67,7 +67,7 @@ impl Scheduler {
             }
             NodeCommand::StopTask(stop_task) => {
                 if let Scheduler::Busy(state) = self {
-                    let state = state.stop(stop_task.task_id).await?;
+                    let state = state.stop(stop_task.task_id)?;
                     Ok(state.into())
                 } else {
                     Ok(self)
@@ -294,13 +294,13 @@ impl State<Busy> {
             .all(|worker| worker.as_ref().unwrap().is_done())
     }
 
-    pub async fn stop(mut self, task_id: TaskId) -> Result<Self> {
+    pub fn stop(mut self, task_id: TaskId) -> Result<Self> {
         for worker in &mut self.ctx.workers {
             let worker = worker.as_mut().unwrap();
 
             if let Worker::Running(state) = worker {
                 if state.work().task_id == task_id {
-                    state.kill().await?;
+                    state.kill()?;
                 }
             }
         }

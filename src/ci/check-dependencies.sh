@@ -83,12 +83,12 @@ libpthread.so.0
 libunwind.so.8
 linux-vdso.so.1" \
 \
-"ADVAPI32.dll
-KERNEL32.DLL
+"KERNEL32.DLL
 KERNELBASE.dll
 MSASN1.dll
 RPCRT4.dll
 SSPICLI.DLL
+advapi32.dll
 apphelp.dll
 bcrypt.dll
 crypt32.dll
