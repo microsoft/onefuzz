@@ -12,7 +12,7 @@ mkdir -p artifacts/proxy
 cd src/proxy-manager
 cargo fmt -- --check
 cargo clippy --release --all-targets -- -D warnings
-cargo deny -L error check --allow vulnerability
+cargo deny -L error check
 cargo license -j > data/licenses.json
 cargo build --release --locked
 # export RUST_LOG=trace
