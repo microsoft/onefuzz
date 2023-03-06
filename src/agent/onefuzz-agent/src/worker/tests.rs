@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use ipc_channel::ipc;
-
 use crate::work::WorkUnit;
 use crate::worker::double::ChildDouble;
 
@@ -62,28 +60,7 @@ impl IWorkerRunner for RunnerDouble {
         _setup_dir: &Path,
         _extra_dir: Option<PathBuf>,
         _work: &WorkUnit,
-        from_agent_to_task_endpoint: String,
-        from_task_to_agent_endpoint: String,
     ) -> Result<Box<dyn IWorkerChild>> {
-        info!("Creating channel from agent to task");
-        let (agent_sender, _receive_from_agent): (
-            IpcSender<IpcMessageKind>,
-            IpcReceiver<IpcMessageKind>,
-        ) = ipc::channel()?;
-        info!("Conecting...");
-        let oneshot_sender = IpcSender::connect(from_agent_to_task_endpoint)?;
-        info!("Sending sender to agent");
-        oneshot_sender.send(agent_sender)?;
-
-        info!("Creating channel from task to agent");
-        let (_task_sender, receive_from_task): (
-            IpcSender<IpcMessageKind>,
-            IpcReceiver<IpcMessageKind>,
-        ) = ipc::channel()?;
-        info!("Connecting...");
-        let oneshot_receiver = IpcSender::connect(from_task_to_agent_endpoint)?;
-        info!("Sending receiver to agent");
-        oneshot_receiver.send(receive_from_task)?;
         Ok(Box::new(self.child.clone()))
     }
 }
@@ -112,18 +89,13 @@ async fn test_ready_run() {
 
 #[tokio::test]
 async fn test_running_kill() {
-    let connections = bootstrap_ipc().await.unwrap();
     let child = Box::new(Fixture.child_running());
     let mut state = State {
-        ctx: Running {
-            child,
-            from_agent_to_task: connections.agent_connections.0,
-            from_task_to_agent: connections.agent_connections.1,
-        },
+        ctx: Running { child },
         work: Fixture.work(),
     };
 
-    state.kill().await.unwrap();
+    state.kill().unwrap();
 
     let child = state
         .ctx
@@ -136,14 +108,9 @@ async fn test_running_kill() {
 
 #[tokio::test]
 async fn test_running_wait_running() {
-    let connections = bootstrap_ipc().await.unwrap();
     let child = Box::new(Fixture.child_running());
     let state = State {
-        ctx: Running {
-            child,
-            from_agent_to_task: connections.agent_connections.0,
-            from_task_to_agent: connections.agent_connections.1,
-        },
+        ctx: Running { child },
         work: Fixture.work(),
     };
 
@@ -164,15 +131,10 @@ async fn test_running_wait_running() {
 
 #[tokio::test]
 async fn test_running_wait_done() {
-    let connections = bootstrap_ipc().await.unwrap();
     let exit_status = Fixture.exit_status_ok();
     let child = Box::new(Fixture.child_exited(exit_status));
     let state = State {
-        ctx: Running {
-            child,
-            from_agent_to_task: connections.agent_connections.0,
-            from_task_to_agent: connections.agent_connections.1,
-        },
+        ctx: Running { child },
         work: Fixture.work(),
     };
 
@@ -207,15 +169,10 @@ async fn test_worker_ready_update() {
 
 #[tokio::test]
 async fn test_worker_running_update_running() {
-    let connections = bootstrap_ipc().await.unwrap();
     let mut runner = Fixture.runner(Fixture.child_running());
     let child = Box::new(Fixture.child_running());
     let state = State {
-        ctx: Running {
-            child,
-            from_agent_to_task: connections.agent_connections.0,
-            from_task_to_agent: connections.agent_connections.1,
-        },
+        ctx: Running { child },
         work: Fixture.work(),
     };
     let worker = Worker::Running(state);
@@ -229,15 +186,10 @@ async fn test_worker_running_update_running() {
 
 #[tokio::test]
 async fn test_worker_running_update_done() {
-    let connections = bootstrap_ipc().await.unwrap();
     let exit_status = Fixture.exit_status_ok();
     let child = Box::new(Fixture.child_exited(exit_status));
     let state = State {
-        ctx: Running {
-            child,
-            from_agent_to_task: connections.agent_connections.0,
-            from_task_to_agent: connections.agent_connections.1,
-        },
+        ctx: Running { child },
         work: Fixture.work(),
     };
     let worker = Worker::Running(state);
@@ -351,42 +303,4 @@ fn test_redirected_child() {
     assert_eq!(captured.stdout, stdout);
 
     assert_eq!(captured.stderr, "");
-}
-
-async fn bootstrap_ipc() -> Result<IpcConnections> {
-    let (from_agent_to_task_server, from_agent_to_task_endpoint) = IpcOneShotServer::new()?;
-    let (from_task_to_agent_server, from_task_to_agent_endpoint) = IpcOneShotServer::new()?;
-
-    info!("Creating channel from agent to task");
-    let (agent_sender, receive_from_agent): (
-        IpcSender<IpcMessageKind>,
-        IpcReceiver<IpcMessageKind>,
-    ) = ipc::channel()?;
-    info!("Conecting...");
-    let oneshot_sender = IpcSender::connect(from_agent_to_task_endpoint)?;
-    info!("Sending sender to agent");
-    oneshot_sender.send(agent_sender)?;
-
-    info!("Creating channel from task to agent");
-    let (task_sender, receive_from_task): (IpcSender<IpcMessageKind>, IpcReceiver<IpcMessageKind>) =
-        ipc::channel()?;
-    info!("Connecting...");
-    let oneshot_receiver = IpcSender::connect(from_task_to_agent_endpoint)?;
-    info!("Sending receiver to agent");
-    oneshot_receiver.send(receive_from_task)?;
-
-    let (_, from_agent_to_task): (_, IpcSender<IpcMessageKind>) =
-        from_agent_to_task_server.accept()?;
-    let (_, from_task_to_agent): (_, IpcReceiver<IpcMessageKind>) =
-        from_task_to_agent_server.accept()?;
-
-    Ok(IpcConnections {
-        agent_connections: (from_agent_to_task, from_task_to_agent),
-        _task_connections: (task_sender, receive_from_agent),
-    })
-}
-
-struct IpcConnections {
-    pub agent_connections: (IpcSender<IpcMessageKind>, IpcReceiver<IpcMessageKind>),
-    pub _task_connections: (IpcSender<IpcMessageKind>, IpcReceiver<IpcMessageKind>),
 }
