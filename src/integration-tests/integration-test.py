@@ -109,7 +109,7 @@ TARGETS: Dict[str, Integration] = {
         },
         reboot_after_setup=True,
         inject_fake_regression=True,
-        fuzzing_target_options=["--test:{extra}"],
+        fuzzing_target_options=["--test:{extra_dir}"],
     ),
     "linux-libfuzzer-with-options": Integration(
         template=TemplateType.libfuzzer,
@@ -181,7 +181,7 @@ TARGETS: Dict[str, Integration] = {
         os=OS.linux,
         target_exe="fuzz_target_1",
         wait_for_files={ContainerType.unique_reports: 1, ContainerType.coverage: 1},
-        fuzzing_target_options=["--test:{extra}"],
+        fuzzing_target_options=["--test:{extra_dir}"],
     ),
     "linux-trivial-crash": Integration(
         template=TemplateType.radamsa,
@@ -211,7 +211,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.coverage: 1,
         },
         inject_fake_regression=True,
-        fuzzing_target_options=["--test:{extra}"],
+        fuzzing_target_options=["--test:{extra_dir}"],
     ),
     "windows-libfuzzer-linked-library": Integration(
         template=TemplateType.libfuzzer,

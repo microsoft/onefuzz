@@ -74,7 +74,6 @@ class Libfuzzer(Command):
         analyzer_options: Optional[List[str]] = None,
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
-        extra_container: Optional[Container] = None,
     ) -> None:
         target_options = target_options or []
 
@@ -87,6 +86,11 @@ class Libfuzzer(Command):
                 containers[ContainerType.regression_reports],
             ),
         ]
+
+        if ContainerType.extra in containers:
+            regression_containers.append(
+                (ContainerType.extra, containers[ContainerType.extra])
+            )
 
         # We don't really need a separate timeout for crash reporting, and we could just
         # use `target_timeout`. But `crash_report_timeout` was introduced first, so we
@@ -127,6 +131,11 @@ class Libfuzzer(Command):
                     ContainerType.readonly_inputs,
                     containers[ContainerType.readonly_inputs],
                 )
+            )
+
+        if ContainerType.extra in containers:
+            fuzzer_containers.append(
+                (ContainerType.extra, containers[ContainerType.extra])
             )
 
         self.logger.info("creating libfuzzer task")
@@ -171,6 +180,11 @@ class Libfuzzer(Command):
             (ContainerType.coverage, containers[ContainerType.coverage]),
             (ContainerType.readonly_inputs, containers[ContainerType.inputs]),
         ]
+
+        if ContainerType.extra in containers:
+            coverage_containers.append(
+                (ContainerType.extra, containers[ContainerType.extra])
+            )
 
         if ContainerType.readonly_inputs in containers:
             coverage_containers.append(
@@ -232,6 +246,11 @@ class Libfuzzer(Command):
             (ContainerType.no_repro, containers[ContainerType.no_repro]),
         ]
 
+        if ContainerType.extra in containers:
+            report_containers.append(
+                (ContainerType.extra, containers[ContainerType.extra])
+            )
+
         self.logger.info("creating libfuzzer_crash_report task")
         self.onefuzz.tasks.create(
             job.job_id,
@@ -269,6 +288,11 @@ class Libfuzzer(Command):
                 (ContainerType.analysis, containers[ContainerType.analysis]),
                 (ContainerType.crashes, containers[ContainerType.crashes]),
             ]
+
+            if ContainerType.extra in containers:
+                analysis_containers.append(
+                    (ContainerType.extra, containers[ContainerType.extra])
+                )
 
             self.onefuzz.tasks.create(
                 job.job_id,
