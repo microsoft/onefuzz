@@ -98,6 +98,33 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
     }
 
     [Fact]
+    public async Async.Task OptionalFieldsAreSupported() {
+        await ConfigureAuth();
+
+        var adoTemplate = new AdoTemplate(
+            new Uri("http://example.com"),
+            new SecretData<string>(new SecretValue<string>("some secret")),
+            "{{ report.input_blob.container }}",
+            "{{ if org }} blah {{ end }}",
+            Array.Empty<string>().ToList(),
+            new Dictionary<string, string> {
+                        { "abc", "{{ if org }} blah {{ end }}"}
+            },
+            new ADODuplicateTemplate(
+                Array.Empty<string>().ToList(),
+                new Dictionary<string, string>(),
+                new Dictionary<string, string> {
+                            { "onDuplicateComment", "{{ if org }} blah {{ end }}" }
+                },
+                "{{ if org }} blah {{ end }}"
+            ),
+            "{{ if org }} blah {{ end }}"
+        );
+
+        (await JinjaTemplateAdapter.IsValidScribanNotificationTemplate(Context, Logger, adoTemplate)).Should().BeTrue();
+    }
+
+    [Fact]
     public async Async.Task All_ADO_Fields_Are_Migrated() {
         await ConfigureAuth();
 
