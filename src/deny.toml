@@ -16,6 +16,7 @@ unsound = "deny"
 yanked = "deny"
 ignore = [
     "RUSTSEC-2022-0048", # xml-rs is unmaintained
+    "RUSTSEC-2023-0018"
 ]
 
 [bans]
