@@ -76,7 +76,6 @@ public abstract class NotificationsBase {
                 inputUrl = new Uri(context.Containers.AuthDownloadUrl(report.InputBlob.Container, report.InputBlob.Name));
             }
 
-            await context.ConfigurationRefresher.TryRefreshAsync().IgnoreResult();
             var scribanOnlyFeatureFlag = await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly);
             log.Info($"ScribanOnlyFeatureFlag: {scribanOnlyFeatureFlag}");
 
