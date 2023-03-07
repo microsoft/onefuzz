@@ -5,18 +5,15 @@ use std::{
     path::{Path, PathBuf},
     process::{Child, ChildStderr, ChildStdout, Command, Stdio},
     thread::{self, JoinHandle},
-    time::Duration,
 };
 
 use anyhow::{format_err, Context as AnyhowContext, Result};
 use downcast_rs::Downcast;
-use ipc_channel::ipc::{IpcOneShotServer, IpcReceiver, IpcSender};
 use onefuzz::{
-    ipc::IpcMessageKind,
     machine_id::MachineIdentity,
     process::{ExitStatus, Output},
 };
-use tokio::{fs, task, time::timeout};
+use tokio::fs;
 
 use crate::buffer::TailBuffer;
 use crate::work::*;
@@ -112,8 +109,6 @@ pub struct Ready {
 #[derive(Debug)]
 pub struct Running {
     child: Box<dyn IWorkerChild>,
-    from_agent_to_task: IpcSender<IpcMessageKind>,
-    from_task_to_agent: IpcReceiver<IpcMessageKind>,
 }
 
 #[derive(Debug)]
@@ -141,72 +136,12 @@ impl<C: Context> State<C> {
 
 impl State<Ready> {
     pub async fn run(self, runner: &mut dyn IWorkerRunner) -> Result<State<Running>> {
-        // Create and pass the server here
-        let (from_agent_to_task_server, from_agent_to_task_endpoint) = IpcOneShotServer::new()?;
-        let (from_task_to_agent_server, from_task_to_agent_endpoint) = IpcOneShotServer::new()?;
         let child = runner
-            .run(
-                &self.ctx.setup_dir,
-                self.ctx.extra_dir,
-                &self.work,
-                from_agent_to_task_endpoint,
-                from_task_to_agent_endpoint,
-            )
+            .run(&self.ctx.setup_dir, self.ctx.extra_dir, &self.work)
             .await?;
 
-        // Accept is a blocking call:
-        //      * Accept calls OsIpcOneShotServer::accept - https://doc.servo.org/src/ipc_channel/ipc.rs.html#722-737
-        //      * OsIpcOneShotServer::accept calls OsIpcReceiver::recv - https://doc.servo.org/src/ipc_channel/ipc.rs.html#722-737
-        //      * OsIpcReceiver::recv is a blocking call - https://doc.servo.org/src/ipc_channel/platform/unix/mod.rs.html#130-133
-        // This issue is tracking a non-blocking accept - https://github.com/servo/ipc-channel/issues/307
-
-        info!("waiting for client_sender_server.accept()");
-
-        let (_, from_agent_to_task): (_, IpcSender<IpcMessageKind>) = match timeout(
-            Duration::from_secs(30),
-            task::spawn_blocking(move || from_agent_to_task_server.accept()),
-        )
-        .await
-        {
-            Err(e) => {
-                error!("timeout waiting for client_sender_server.accept(): {:?}", e);
-                return Err(format_err!(
-                    "timeout waiting for client_sender_server.accept(): {:?}",
-                    e
-                ));
-            }
-            Ok(res) => res??,
-        };
-
-        info!("waiting for server_receiver_server.accept()");
-
-        let (_, from_task_to_agent): (_, IpcReceiver<IpcMessageKind>) = match timeout(
-            Duration::from_secs(30),
-            task::spawn_blocking(move || from_task_to_agent_server.accept()),
-        )
-        .await
-        {
-            Err(e) => {
-                error!(
-                    "timeout waiting for server_receiver_server.accept(): {:?}",
-                    e
-                );
-                return Err(format_err!(
-                    "timeout waiting for server_receiver_server.accept(): {:?}",
-                    e
-                ));
-            }
-            Ok(res) => res??,
-        };
-
-        info!("IPC connection bootstrapped");
-
         let state = State {
-            ctx: Running {
-                child,
-                from_agent_to_task,
-                from_task_to_agent,
-            },
+            ctx: Running { child },
             work: self.work,
         };
 
@@ -216,10 +151,6 @@ impl State<Ready> {
 
 impl State<Running> {
     pub fn wait(mut self) -> Result<Waited> {
-        while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
-            info!("received message from server_receiver: {:?}", res);
-        }
-
         let waited = self.ctx.child.try_wait()?;
 
         if let Some(output) = waited {
@@ -228,55 +159,14 @@ impl State<Running> {
                 ctx,
                 work: self.work,
             };
-
-            // Since the agent has exited, drain one more time before returning
-            while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
-                info!("received message from server_receiver: {:?}", res);
-            }
             Ok(Waited::Done(state))
         } else {
             Ok(Waited::Running(self))
         }
     }
 
-    pub async fn kill(&mut self) -> Result<()> {
-        let graceful_shutdown = self.ctx.from_agent_to_task.send(IpcMessageKind::Shutdown);
-
-        match timeout(Duration::from_secs(90), async {
-            loop {
-                match graceful_shutdown {
-                    Ok(_) => match self.ctx.child.try_wait() {
-                        Ok(Some(_)) => {
-                            info!("Agent was gracefully shut down");
-                            // Since the agent has exited, drain one more time before returning
-                            while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
-                                info!("received message from server_receiver: {:?}", res);
-                            }
-                            return Ok(());
-                        }
-                        Ok(None) => { /* Still waiting */ }
-                        Err(e) => {
-                            error!("failed to wait for graceful shutdown: {:?}", e);
-                            return self.ctx.child.kill();
-                        }
-                    },
-                    Err(e) => {
-                        error!("failed to send graceful shutdown message: {:?}", e);
-                        return self.ctx.child.kill();
-                    }
-                };
-                info!("Agent didn't respond yet, trying again in 1 second...");
-                tokio::time::sleep(Duration::from_secs(1)).await;
-            }
-        })
-        .await
-        {
-            Ok(res) => res,
-            Err(e) => {
-                error!("timeout waiting for graceful shutdown: {:?}", e);
-                self.ctx.child.kill()
-            }
-        }
+    pub fn kill(&mut self) -> Result<()> {
+        self.ctx.child.kill()
     }
 }
 
@@ -312,8 +202,6 @@ pub trait IWorkerRunner: Downcast {
         setup_dir: &Path,
         extra_dir: Option<PathBuf>,
         work: &WorkUnit,
-        from_agent_to_task_endpoint: String,
-        from_task_to_agent_endpoint: String,
     ) -> Result<Box<dyn IWorkerChild>>;
 }
 
@@ -344,8 +232,6 @@ impl IWorkerRunner for WorkerRunner {
         setup_dir: &Path,
         extra_dir: Option<PathBuf>,
         work: &WorkUnit,
-        from_agent_to_task_endpoint: String,
-        from_task_to_agent_endpoint: String,
     ) -> Result<Box<dyn IWorkerChild>> {
         let working_dir = work.working_dir(self.machine_identity.machine_id)?;
 
@@ -367,16 +253,6 @@ impl IWorkerRunner for WorkerRunner {
         config.insert(
             "machine_identity".to_string(),
             serde_json::to_value(&self.machine_identity)?,
-        );
-
-        config.insert(
-            "from_agent_to_task_endpoint".to_string(),
-            serde_json::to_value(&from_agent_to_task_endpoint)?,
-        );
-
-        config.insert(
-            "from_task_to_agent_endpoint".to_string(),
-            serde_json::to_value(&from_task_to_agent_endpoint)?,
         );
 
         let config_path = work.config_path(self.machine_identity.machine_id)?;
