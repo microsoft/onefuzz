@@ -295,15 +295,22 @@ impl State<Busy> {
     }
 
     pub async fn stop(mut self, task_id: TaskId) -> Result<Self> {
-        for worker in &mut self.ctx.workers {
-            let worker = worker.as_mut().unwrap();
-
-            if let Worker::Running(state) = worker {
-                if state.work().task_id == task_id {
-                    state.kill().await?;
+        self.ctx.workers =
+            futures::future::try_join_all(self.ctx.workers.iter_mut().map(|worker| async move {
+                match worker.take() {
+                    Some(worker) => {
+                        let mut new_worker = None;
+                        if let Worker::Running(state) = worker {
+                            if state.work().task_id == task_id {
+                                new_worker = Some(Worker::Done(state.stop().kill().await?));
+                            }
+                        }
+                        Ok::<std::option::Option<Worker>, anyhow::Error>(new_worker)
+                    }
+                    None => Ok(None),
                 }
-            }
-        }
+            }))
+            .await?;
 
         Ok(self)
     }

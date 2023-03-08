@@ -54,15 +54,17 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
 
     let shutdown_listener = task::spawn_blocking(move || loop {
         match receive_from_agent.recv() {
-            Ok(msg) => match msg {
-                IpcMessageKind::Shutdown => {
-                    info!("Received shutdown message from agent. Shutting down gracefully");
-                    break;
-                }
-                _ => info!("Received unexpected message from agent: {:?}", msg),
-            },
-            Err(e) => {
-                error!("Error receiving message from agent: {:?}", e);
+            Ok(msg) => info!("Received unexpected message from agent: {:?}", msg),
+            Err(ipc::IpcError::Disconnected) => {
+                info!("Agent disconnected from the IPC channel. Shutting down");
+                break;
+            }
+            Err(ipc::IpcError::Bincode(e)) => {
+                error!("BinCode error receiving message from agent: {:?}", e);
+                break;
+            }
+            Err(ipc::IpcError::Io(e)) => {
+                error!("IO error receiving message from agent: {:?}", e);
                 break;
             }
         }

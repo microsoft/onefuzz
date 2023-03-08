@@ -44,6 +44,7 @@ pub enum WorkerEvent {
 pub enum Worker {
     Ready(State<Ready>),
     Running(State<Running>),
+    Stopping(State<Stopping>),
     Done(State<Done>),
 }
 
@@ -93,6 +94,10 @@ impl Worker {
                 }
                 Waited::Running(state) => state.into(),
             },
+            Worker::Stopping(state) => {
+                let state = state.kill().await?;
+                state.into()
+            }
             Worker::Done(state) => {
                 // Nothing to do for workers that are done.
                 state.into()
@@ -117,6 +122,11 @@ pub struct Running {
 }
 
 #[derive(Debug)]
+pub struct Stopping {
+    child: Box<dyn IWorkerChild>,
+}
+
+#[derive(Debug)]
 pub struct Done {
     output: Output,
 }
@@ -125,6 +135,7 @@ pub trait Context {}
 
 impl Context for Ready {}
 impl Context for Running {}
+impl Context for Stopping {}
 impl Context for Done {}
 
 #[derive(Debug)]
@@ -229,40 +240,52 @@ impl State<Running> {
                 work: self.work,
             };
 
-            // Since the agent has exited, drain one more time before returning
-            while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
-                info!("received message from server_receiver: {:?}", res);
-            }
             Ok(Waited::Done(state))
         } else {
             Ok(Waited::Running(self))
         }
     }
 
-    pub async fn kill(&mut self) -> Result<()> {
-        let graceful_shutdown = self.ctx.from_agent_to_task.send(IpcMessageKind::Shutdown);
+    pub fn stop(self) -> State<Stopping> {
+        let c = std::mem::replace(
+            &mut self.ctx.child,
+            Box::new(double::ChildDouble {
+                id: 0,
+                exit_status: None,
+                stderr: "".to_string(),
+                stdout: "".to_string(),
+                killed: true,
+            }),
+        );
 
+        State {
+            ctx: Stopping { child: c },
+            work: self.work,
+        }
+    }
+}
+
+impl Drop for Running {
+    fn drop(&mut self) {
+        // Drain the channel
+        while let Ok(res) = self.from_task_to_agent.try_recv() {
+            info!("received message from server_receiver: {:?}", res);
+        }
+    }
+}
+
+impl State<Stopping> {
+    pub async fn kill(mut self) -> Result<State<Done>> {
         match timeout(Duration::from_secs(90), async {
             loop {
-                match graceful_shutdown {
-                    Ok(_) => match self.ctx.child.try_wait() {
-                        Ok(Some(_)) => {
-                            info!("Agent was gracefully shut down");
-                            // Since the agent has exited, drain one more time before returning
-                            while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
-                                info!("received message from server_receiver: {:?}", res);
-                            }
-                            return Ok(());
-                        }
-                        Ok(None) => { /* Still waiting */ }
-                        Err(e) => {
-                            error!("failed to wait for graceful shutdown: {:?}", e);
-                            return self.ctx.child.kill();
-                        }
-                    },
+                match self.ctx.child.try_wait() {
+                    Ok(Some(output)) => {
+                        return Ok(output);
+                    }
+                    Ok(None) => { /* Still waiting */ }
                     Err(e) => {
-                        error!("failed to send graceful shutdown message: {:?}", e);
-                        return self.ctx.child.kill();
+                        error!("failed to wait for graceful shutdown: {:?}", e);
+                        return Err(e);
                     }
                 };
                 info!("Agent didn't respond yet, trying again in 1 second...");
@@ -271,10 +294,24 @@ impl State<Running> {
         })
         .await
         {
-            Ok(res) => res,
+            Ok(Ok(output)) => {
+                let ctx = Done { output };
+                Ok(State {
+                    ctx,
+                    work: self.work,
+                })
+            }
             Err(e) => {
-                error!("timeout waiting for graceful shutdown: {:?}", e);
-                self.ctx.child.kill()
+                error!("Time out while shutting down task: {:?}", e);
+                error!("Forcefully killing task");
+                self.ctx.child.kill()?;
+                Err(e.into())
+            }
+            Ok(Err(e)) => {
+                error!("Error shutting down task: {:?}", e);
+                error!("Forcefully killing task");
+                self.ctx.child.kill()?;
+                Err(e)
             }
         }
     }
@@ -303,6 +340,7 @@ macro_rules! impl_from_state_for_worker {
 
 impl_from_state_for_worker!(Ready);
 impl_from_state_for_worker!(Running);
+impl_from_state_for_worker!(Stopping);
 impl_from_state_for_worker!(Done);
 
 #[async_trait]
