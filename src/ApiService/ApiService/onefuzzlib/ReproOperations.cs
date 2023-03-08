@@ -90,21 +90,22 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var config = await _context.ConfigOperations.Fetch();
         var vm = await GetVm(repro, config);
         var vmOperations = _context.VmOperations;
-        if (!await vmOperations.IsDeleted(vm)) {
-            _logTracer.Info($"vm stopping: {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
-            var rr = await vmOperations.Delete(vm);
-            if (rr) {
-                _logTracer.Info($"repro vm fully deleted {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
-            }
-            repro = repro with { State = VmState.Stopping };
-            var r = await Replace(repro);
-            if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName} marked Stopping");
-            }
-            return repro;
-        } else {
-            return await Stopped(repro);
-        }
+        // if (!await vmOperations.IsDeleted(vm)) {
+        //     _logTracer.Info($"vm stopping: {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
+        //     var rr = await vmOperations.Delete(vm);
+        //     if (rr) {
+        //         _logTracer.Info($"repro vm fully deleted {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
+        //     }
+        //     repro = repro with { State = VmState.Stopping };
+        //     var r = await Replace(repro);
+        //     if (!r.IsOk) {
+        //         _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName} marked Stopping");
+        //     }
+        //     return repro;
+        // } else {
+        //     return await Stopped(repro);
+        // }
+        return await Stopped(repro);
     }
 
     public async Async.Task<Repro> Stopped(Repro repro) {
