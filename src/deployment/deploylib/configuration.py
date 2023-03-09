@@ -56,7 +56,8 @@ class Config:
     allowed_ips: List[str]
     allowed_service_tags: List[str]
 
-    def __init__(self, config: Any):
+    def __init__(self, config: Any, new_app:bool=False):
+        self.new_app_id = new_app
         self.parse_nsg_json(config)
         self.parse_endpoint_json(config)
 
@@ -113,25 +114,28 @@ class Config:
         self.allowed_service_tags = proxy_config["allowed_service_tags"]
 
     def parse_endpoint_json(self, config: Any) -> None:
-        if "cli_client_id" not in config:
-            raise Exception(
-                "CLI client_id not provided as valid key. Please Provide Valid Config."
-            )
+        if not self.new_app_id:
+            if "cli_client_id" not in config:
+                raise Exception(
+                    "CLI client_id not provided as valid key. Please Provide Valid Config."
+                )
 
-        if (
-            not isinstance(config["cli_client_id"], str)
-            or config["cli_client_id"] == ""
-        ):
-            raise Exception(
-                "client_id is not a string. Please provide valid client_id."
-            )
+            if (
+                not isinstance(config["cli_client_id"], str)
+                or config["cli_client_id"] == ""
+            ):
+                raise Exception(
+                    "client_id is not a string. Please provide valid client_id."
+                )
 
-        try:
-            UUID(config["cli_client_id"])
-        except ValueError:
-            raise Exception(
-                "client_id is not a valid UUID. Please provide valid client_id."
-            )
+            try:
+                UUID(config["cli_client_id"])
+            except ValueError:
+                raise Exception(
+                    "client_id is not a valid UUID. Please provide valid client_id."
+                )
+
+            self.cli_client_id = config["cli_client_id"]
 
         if "tenant_id" not in config:
             raise Exception(
@@ -166,7 +170,7 @@ class Config:
                 "multi_tenant_domain is not a string. Please provide valid multi_tenant_domain. If the instance is not multi-tenant, please provide an empty string."
             )
 
-        self.cli_client_id = config["cli_client_id"]
+        
         self.tenant_id = config["tenant_id"]
         self.tenant_domain = config["tenant_domain"]
         self.multi_tenant_domain = config["multi_tenant_domain"]

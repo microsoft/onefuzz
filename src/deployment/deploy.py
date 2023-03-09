@@ -398,10 +398,13 @@ class Client:
 
         (password_id, password) = self.create_password(app["id"])
 
-        cli_app = get_application(
-            app_id=uuid.UUID(self.cli_app_id),
-            subscription_id=self.get_subscription_id(),
-        )
+        try:
+            cli_app = get_application(
+                app_id=uuid.UUID(self.cli_app_id),
+                subscription_id=self.get_subscription_id(),
+            )
+        except:
+            cli_app = None
 
         if not cli_app:
             if self.auto_create_cli_app:
@@ -416,10 +419,18 @@ class Client:
                     self.get_subscription_id(),
                 )
 
-                self.cli_config = {
-                    "client_id": app_info.client_id,
-                    "authority": self.authority,
-                }
+                try:
+                    cli_app = get_application(
+                    app_id=uuid.UUID(app_info.client_id),
+                    subscription_id=self.get_subscription_id(),
+                )
+                    self.cli_app_id = app_info.client_id
+                except: 
+                    logger.error(
+                        "Unable to determine new 'cli_app_id' for new app registration."
+                    )
+                    sys.exit(1)
+
             else:
                 logger.error(
                     "error deploying. could not find specified CLI app registrion."
@@ -427,45 +438,45 @@ class Client:
                     "or specify a correct app id with --cli_app_id."
                 )
                 sys.exit(1)
-        else:
-            onefuzz_cli_app = cli_app
-            authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
 
-            self.cli_config = {
-                "client_id": onefuzz_cli_app["appId"],
-                "authority": self.authority,
-            }
+        onefuzz_cli_app = cli_app
+        authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
 
-            # ensure replyURLs is set properly
-            if "publicClient" not in onefuzz_cli_app:
-                onefuzz_cli_app["publicClient"] = {}
+        self.cli_config = {
+            "client_id": onefuzz_cli_app["appId"],
+            "authority": self.authority,
+        }
 
-            if "redirectUris" not in onefuzz_cli_app["publicClient"]:
-                onefuzz_cli_app["publicClient"]["redirectUris"] = []
+        # ensure replyURLs is set properly
+        if "publicClient" not in onefuzz_cli_app:
+            onefuzz_cli_app["publicClient"] = {}
 
-            requiredRedirectUris = [
-                "http://localhost",  # required for browser-based auth
-                f"ms-appx-web://Microsoft.AAD.BrokerPlugin/{onefuzz_cli_app['appId']}",  # required for broker auth
-            ]
+        if "redirectUris" not in onefuzz_cli_app["publicClient"]:
+            onefuzz_cli_app["publicClient"]["redirectUris"] = []
 
-            redirectUris: List[str] = onefuzz_cli_app["publicClient"]["redirectUris"]
-            updatedRedirectUris = list(set(requiredRedirectUris) | set(redirectUris))
+        requiredRedirectUris = [
+            "http://localhost",  # required for browser-based auth
+            f"ms-appx-web://Microsoft.AAD.BrokerPlugin/{onefuzz_cli_app['appId']}",  # required for broker auth
+        ]
 
-            if len(updatedRedirectUris) > len(redirectUris):
-                logger.info("Updating redirectUris for CLI app")
-                query_microsoft_graph(
-                    method="PATCH",
-                    resource=f"applications/{onefuzz_cli_app['id']}",
-                    body={"publicClient": {"redirectUris": updatedRedirectUris}},
-                    subscription=self.get_subscription_id(),
-                )
+        redirectUris: List[str] = onefuzz_cli_app["publicClient"]["redirectUris"]
+        updatedRedirectUris = list(set(requiredRedirectUris) | set(redirectUris))
 
-            assign_instance_app_role(
-                self.application_name,
-                onefuzz_cli_app["displayName"],
-                self.get_subscription_id(),
-                OnefuzzAppRole.ManagedNode,
+        if len(updatedRedirectUris) > len(redirectUris):
+            logger.info("Updating redirectUris for CLI app")
+            query_microsoft_graph(
+                method="PATCH",
+                resource=f"applications/{onefuzz_cli_app['id']}",
+                body={"publicClient": {"redirectUris": updatedRedirectUris}},
+                subscription=self.get_subscription_id(),
             )
+
+        assign_instance_app_role(
+            self.application_name,
+            onefuzz_cli_app["displayName"],
+            self.get_subscription_id(),
+            OnefuzzAppRole.ManagedNode,
+        )
 
         self.results["client_id"] = app["appId"]
         self.results["client_secret"] = password
@@ -777,7 +788,10 @@ class Client:
                 config_template = json.load(template_handle)
 
             try:
-                config = Config(config_template)
+                if self.auto_create_cli_app:
+                    config = Config(config_template, True)
+                else:
+                    config = Config(config_template)
                 self.rules = parse_rules(config)
 
                 ## Values provided via the CLI will override what's in the config.json
@@ -790,7 +804,8 @@ class Client:
                 if self.multi_tenant_domain == "":
                     self.multi_tenant_domain = config.multi_tenant_domain
                 if self.cli_app_id == "":
-                    self.cli_app_id = config.cli_client_id
+                    if not self.auto_create_cli_app:
+                        self.cli_app_id = config.cli_client_id
 
             except Exception as ex:
                 logging.info(
