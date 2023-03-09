@@ -289,8 +289,7 @@ public class Extensions : IExtensions {
                 ForceUpdateTag = Guid.NewGuid().ToString(),
                 TypeHandlerVersion = "1.9",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(JsonSerializer.Serialize(new { commandToExecute = toExecuteCmd, fileUris = urlsUpdated }, _extensionSerializerOptions)),
-                ProtectedSettings = null
+                Settings = new BinaryData(JsonSerializer.Serialize(new { commandToExecute = toExecuteCmd, fileUris = urlsUpdated }, _extensionSerializerOptions))
             };
             return extension;
         } else if (vmOs == Os.Linux) {
@@ -315,7 +314,6 @@ public class Extensions : IExtensions {
                 ForceUpdateTag = Guid.NewGuid().ToString(),
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(extensionSettings),
-                ProtectedSettings = new BinaryData(managedIdentity)
             };
             return extension;
         }
