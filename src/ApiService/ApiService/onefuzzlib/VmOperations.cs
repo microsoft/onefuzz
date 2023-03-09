@@ -161,6 +161,9 @@ public class VmOperations : IVmOperations {
 
             var extension = await GetExtension(vm.Name, extensionName);
             if (extension != null) {
+                _logTracer.Info(
+                    $"vm extension state: {vm.Name:Tag:VmName} - {extensionName:Tag:ExtensionName} - {extension.ProvisioningState:Tag:ExtensionProvisioningState}"
+                );
                 statuses.Add((extensionName, extension.ProvisioningState));
             } else {
                 toCreate.Add(extensionConfig);

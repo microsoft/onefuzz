@@ -132,7 +132,6 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var vm = await GetVm(repro, config);
         var vmData = await _context.VmOperations.GetVm(vm.Name);
         if (vmData != null) {
-            _logTracer.Info($"VM State: {vmData.ProvisioningState}");
             if (vmData.ProvisioningState == "Failed") {
                 var failedVmData = await _context.VmOperations.GetVmWithInstanceView(vm.Name);
                 if (failedVmData is null) {
