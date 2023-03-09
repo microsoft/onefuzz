@@ -421,10 +421,10 @@ class Client:
 
                 try:
                     cli_app = get_application(
-                    app_id=uuid.UUID(app_info.client_id),
+                    app_id=app_info.client_id,
                     subscription_id=self.get_subscription_id(),
                 )
-                    self.cli_app_id = app_info.client_id
+                    self.cli_app_id = uuid.UUID(app_info.client_id)
                 except: 
                     logger.error(
                         "Unable to determine new 'cli_app_id' for new app registration."
