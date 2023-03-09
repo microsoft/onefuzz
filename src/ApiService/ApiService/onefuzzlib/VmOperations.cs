@@ -153,30 +153,6 @@ public class VmOperations : IVmOperations {
         return;
     }
 
-
-    // public async Task<OneFuzzResult<bool>> CheckExtensionStatus(Vm vm, List<(string extName, string state)> statuses) {
-    //     var statusSuccess = statuses.All(s => s.state == "Succeeded");
-    //     var retryLimit = 10;
-    //     var retryCount = 0;
-
-    //     while (retryCount < retryLimit) {
-    //         if (statusSuccess) {
-    //             _logTracer.Info($"all extensions deployed successfully.");
-    //             return OneFuzzResult.Ok(true);
-    //         } else if (statuses.Any(s => s.state == "Failed")) {
-    //             var errors = await GetExtensionErrors(vm.Name, statuses.Where(s => s.state == "Failed").Select(s => s.extName));
-    //             if (errors.Contains("The remote server returned an error: (400) Bad Request")) {
-    //                 _logTracer.Info($"vm extension failed a remote request. retrying.");
-    //                 Thread.Sleep(6000);
-    //             } else {
-    //                 return OneFuzzResult<bool>.Error(ErrorCode.VM_CREATE_FAILED, "failed to launch extension(s): " + errors);
-    //             }
-    //         }
-    //         retryCount = retryCount + 1;
-    //     }
-    //     return OneFuzzResult.Ok(false);
-    // }
-
     public async Task<OneFuzzResult<bool>> AddExtensions(Vm vm, Dictionary<string, VirtualMachineExtensionData> extensions) {
         var statuses = new List<(string extName, string state)>();
         var toCreate = new List<KeyValuePair<string, VirtualMachineExtensionData>>();

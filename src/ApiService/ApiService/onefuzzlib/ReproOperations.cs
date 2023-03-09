@@ -141,7 +141,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
                 }
 
                 return await _context.ReproOperations.SetFailed(repro, failedVmData.InstanceView);
-            } else if (vmData.ProvisioningState == "Succeeded") {
+            } else {
                 var scriptResult = await BuildReproScript(repro);
                 if (!scriptResult.IsOk) {
                     return await _context.ReproOperations.SetError(repro, scriptResult.ErrorV);
