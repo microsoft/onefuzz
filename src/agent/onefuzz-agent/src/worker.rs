@@ -117,7 +117,7 @@ pub struct Ready {
 #[derive(Debug)]
 pub struct Running {
     child: Box<dyn IWorkerChild>,
-    from_agent_to_task: IpcSender<IpcMessageKind>,
+    _from_agent_to_task: IpcSender<IpcMessageKind>,
     from_task_to_agent: IpcReceiver<IpcMessageKind>,
 }
 
@@ -215,7 +215,7 @@ impl State<Ready> {
         let state = State {
             ctx: Running {
                 child,
-                from_agent_to_task,
+                _from_agent_to_task: from_agent_to_task,
                 from_task_to_agent,
             },
             work: self.work,

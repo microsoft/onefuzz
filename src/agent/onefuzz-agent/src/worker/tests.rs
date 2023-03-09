@@ -117,7 +117,7 @@ async fn test_running_kill() {
     let mut state = State {
         ctx: Running {
             child,
-            from_agent_to_task: connections.agent_connections.0,
+            _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
         },
         work: Fixture.work(),
@@ -141,7 +141,7 @@ async fn test_running_wait_running() {
     let state = State {
         ctx: Running {
             child,
-            from_agent_to_task: connections.agent_connections.0,
+            _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
         },
         work: Fixture.work(),
@@ -170,7 +170,7 @@ async fn test_running_wait_done() {
     let state = State {
         ctx: Running {
             child,
-            from_agent_to_task: connections.agent_connections.0,
+            _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
         },
         work: Fixture.work(),
@@ -213,7 +213,7 @@ async fn test_worker_running_update_running() {
     let state = State {
         ctx: Running {
             child,
-            from_agent_to_task: connections.agent_connections.0,
+            _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
         },
         work: Fixture.work(),
@@ -235,7 +235,7 @@ async fn test_worker_running_update_done() {
     let state = State {
         ctx: Running {
             child,
-            from_agent_to_task: connections.agent_connections.0,
+            _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
         },
         work: Fixture.work(),
