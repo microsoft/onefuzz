@@ -267,6 +267,8 @@ public class Extensions : IExtensions {
         await UpdateManagedScripts();
         var urlsUpdated = urls ?? new();
 
+        var managedIdentity = withSas ? null : new BinaryData(JsonSerializer.Serialize(new { ManagedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions));
+
         if (vmOs == Os.Windows) {
             var vmScripts = await ConfigUrl(WellKnownContainers.VmScripts, "managed.ps1", withSas) ?? throw new Exception("failed to get VmScripts config url");
             var toolsAzCopy = await ConfigUrl(WellKnownContainers.Tools, "win64/azcopy.exe", withSas) ?? throw new Exception("failed to get toolsAzCopy config url");
@@ -288,7 +290,8 @@ public class Extensions : IExtensions {
                 ForceUpdateTag = Guid.NewGuid().ToString(),
                 TypeHandlerVersion = "1.9",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(JsonSerializer.Serialize(new { commandToExecute = toExecuteCmd, fileUris = urlsUpdated }, _extensionSerializerOptions))
+                Settings = new BinaryData(JsonSerializer.Serialize(new { commandToExecute = toExecuteCmd, fileUris = urlsUpdated }, _extensionSerializerOptions)),
+                ProtectedSettings = managedIdentity
             };
             return extension;
         } else if (vmOs == Os.Linux) {
@@ -313,6 +316,7 @@ public class Extensions : IExtensions {
                 ForceUpdateTag = Guid.NewGuid().ToString(),
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(extensionSettings),
+                ProtectedSettings = managedIdentity
             };
             return extension;
         }
