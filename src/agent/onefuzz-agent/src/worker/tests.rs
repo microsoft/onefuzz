@@ -123,7 +123,7 @@ async fn test_running_kill() {
         work: Fixture.work(),
     };
 
-    state.kill().await.unwrap();
+    state.ctx.child.kill().unwrap();
 
     let child = state
         .ctx

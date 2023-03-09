@@ -246,17 +246,8 @@ impl State<Running> {
         }
     }
 
-    pub fn stop(self) -> State<Stopping> {
-        let c = std::mem::replace(
-            &mut self.ctx.child,
-            Box::new(double::ChildDouble {
-                id: 0,
-                exit_status: None,
-                stderr: "".to_string(),
-                stdout: "".to_string(),
-                killed: true,
-            }),
-        );
+    pub fn stop(mut self) -> State<Stopping> {
+        let c = std::mem::replace(&mut self.ctx.child, Box::new(NoopChild {}));
 
         State {
             ctx: Stopping { child: c },
@@ -504,6 +495,19 @@ impl RedirectedChild {
         let streams = Some(StreamReaderThreads::new(stderr, stdout));
 
         Ok(Self { child, streams })
+    }
+}
+
+#[derive(Debug)]
+struct NoopChild {}
+
+impl IWorkerChild for NoopChild {
+    fn try_wait(&mut self) -> Result<Option<Output>> {
+        Ok(None)
+    }
+
+    fn kill(&mut self) -> Result<()> {
+        Ok(())
     }
 }
 
