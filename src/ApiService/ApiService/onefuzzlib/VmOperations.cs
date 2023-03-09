@@ -1,6 +1,6 @@
 ﻿using System.Text;
 using System.Threading.Tasks;
-using System.Threading;
+using System.Text.Json;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Compute;
@@ -154,28 +154,28 @@ public class VmOperations : IVmOperations {
     }
 
 
-    public async Task<OneFuzzResult<bool>> CheckExtensionStatus(Vm vm, List<(string extName, string state)> statuses) {
-        var statusSuccess = statuses.All(s => s.state == "Succeeded");
-        var retryLimit = 10;
-        var retryCount = 0;
+    // public async Task<OneFuzzResult<bool>> CheckExtensionStatus(Vm vm, List<(string extName, string state)> statuses) {
+    //     var statusSuccess = statuses.All(s => s.state == "Succeeded");
+    //     var retryLimit = 10;
+    //     var retryCount = 0;
 
-        while (retryCount < retryLimit) {
-            if (statusSuccess) {
-                _logTracer.Info($"all extensions deployed successfully.");
-                return OneFuzzResult.Ok(true);
-            } else if (statuses.Any(s => s.state == "Failed")) {
-                var errors = await GetExtensionErrors(vm.Name, statuses.Where(s => s.state == "Failed").Select(s => s.extName));
-                if (errors.Contains("The remote server returned an error: (400) Bad Request")) {
-                    _logTracer.Info($"vm extension failed a remote request. retrying.");
-                    Thread.Sleep(6000);
-                } else {
-                    return OneFuzzResult<bool>.Error(ErrorCode.VM_CREATE_FAILED, "failed to launch extension(s): " + errors);
-                }
-            }
-            retryCount = retryCount + 1;
-        }
-        return OneFuzzResult.Ok(false);
-    }
+    //     while (retryCount < retryLimit) {
+    //         if (statusSuccess) {
+    //             _logTracer.Info($"all extensions deployed successfully.");
+    //             return OneFuzzResult.Ok(true);
+    //         } else if (statuses.Any(s => s.state == "Failed")) {
+    //             var errors = await GetExtensionErrors(vm.Name, statuses.Where(s => s.state == "Failed").Select(s => s.extName));
+    //             if (errors.Contains("The remote server returned an error: (400) Bad Request")) {
+    //                 _logTracer.Info($"vm extension failed a remote request. retrying.");
+    //                 Thread.Sleep(6000);
+    //             } else {
+    //                 return OneFuzzResult<bool>.Error(ErrorCode.VM_CREATE_FAILED, "failed to launch extension(s): " + errors);
+    //             }
+    //         }
+    //         retryCount = retryCount + 1;
+    //     }
+    //     return OneFuzzResult.Ok(false);
+    // }
 
     public async Task<OneFuzzResult<bool>> AddExtensions(Vm vm, Dictionary<string, VirtualMachineExtensionData> extensions) {
         var statuses = new List<(string extName, string state)>();
@@ -186,8 +186,10 @@ public class VmOperations : IVmOperations {
 
             var extension = await GetExtension(vm.Name, extensionName);
             if (extension != null) {
+                _logTracer.Info($"Extension substatus data: {extension.ToString()}");
+                _logTracer.Info($"Extension substatus data: {JsonSerializer.Serialize(extension.InstanceView)}");
                 _logTracer.Info(
-                    $"vm extension state: {vm.Name:Tag:VmName} - {extensionName:Tag:ExtensionName} - {extension.ProvisioningState:Tag:ExtensionProvisioningState}"
+                    $"vm extension state: {vm.Name} - {extensionName} - {extension.ProvisioningState}"
                 );
                 statuses.Add((extensionName, extension.ProvisioningState));
             } else {
@@ -199,8 +201,17 @@ public class VmOperations : IVmOperations {
             foreach (var config in toCreate) {
                 await CreateExtension(vm.Name, config.Key, config.Value);
             }
+        } else {
+            if (statuses.All(s => s.state == "Succeeded")) {
+                return OneFuzzResult.Ok(true);
+            } else if (statuses.Any(s => s.state == "Failed")) {
+                var errors = await GetExtensionErrors(vm.Name, statuses.Where(s => s.state == "Failed").Select(s => s.extName));
+                // return OneFuzzResult<bool>.Error(ErrorCode.VM_CREATE_FAILED, "failed to launch extension(s): " + errors);
+                return OneFuzzResult.Ok(true);
+            }
         }
-        return await CheckExtensionStatus(vm, statuses);
+
+        return OneFuzzResult.Ok(false);
     }
 
     public async Task<OneFuzzResultVoid> Create(Vm vm) {
@@ -228,8 +239,8 @@ public class VmOperations : IVmOperations {
             var vm = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(
                 vmName
             );
-
-            return (await vm.Value.GetVirtualMachineExtensionAsync(extensionName)).Value.Data;
+            // var instanceView = await vm.Value.GetVirtualMachineExtensionAsync(extensionName, expand: "InstanceView");
+            return (await vm.Value.GetVirtualMachineExtensionAsync(extensionName, expand: "instanceView")).Value.Data;
         } catch (RequestFailedException ex) {
             _logTracer.Info($"extension does not exist {ex.Message:Tag:Error}");
             return null;

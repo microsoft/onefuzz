@@ -290,7 +290,7 @@ public class Extensions : IExtensions {
                 TypeHandlerVersion = "1.9",
                 AutoUpgradeMinorVersion = true,
                 Settings = new BinaryData(JsonSerializer.Serialize(new { commandToExecute = toExecuteCmd, fileUris = urlsUpdated }, _extensionSerializerOptions)),
-                ProtectedSettings = new BinaryData(managedIdentity)
+                ProtectedSettings = null
             };
             return extension;
         } else if (vmOs == Os.Linux) {

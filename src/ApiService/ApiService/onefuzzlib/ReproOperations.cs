@@ -90,21 +90,21 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var config = await _context.ConfigOperations.Fetch();
         var vm = await GetVm(repro, config);
         var vmOperations = _context.VmOperations;
-        // if (!await vmOperations.IsDeleted(vm)) {
-        //     _logTracer.Info($"vm stopping: {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
-        //     var rr = await vmOperations.Delete(vm);
-        //     if (rr) {
-        //         _logTracer.Info($"repro vm fully deleted {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
-        //     }
-        //     repro = repro with { State = VmState.Stopping };
-        //     var r = await Replace(repro);
-        //     if (!r.IsOk) {
-        //         _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName} marked Stopping");
-        //     }
-        //     return repro;
-        // } else {
-        //     return await Stopped(repro);
-        // }
+        if (!await vmOperations.IsDeleted(vm)) {
+            _logTracer.Info($"vm stopping: {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
+            var rr = await vmOperations.Delete(vm);
+            if (rr) {
+                _logTracer.Info($"repro vm fully deleted {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
+            }
+            repro = repro with { State = VmState.Stopping };
+            var r = await Replace(repro);
+            if (!r.IsOk) {
+                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName} marked Stopping");
+            }
+            return repro;
+        } else {
+            return await Stopped(repro);
+        }
         return await Stopped(repro);
     }
 
@@ -133,6 +133,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var vm = await GetVm(repro, config);
         var vmData = await _context.VmOperations.GetVm(vm.Name);
         if (vmData != null) {
+            _logTracer.Info($"VM State: {vmData.ProvisioningState}");
             if (vmData.ProvisioningState == "Failed") {
                 var failedVmData = await _context.VmOperations.GetVmWithInstanceView(vm.Name);
                 if (failedVmData is null) {
@@ -141,7 +142,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
                 }
 
                 return await _context.ReproOperations.SetFailed(repro, failedVmData.InstanceView);
-            } else {
+            } else if (vmData.ProvisioningState == "Succeeded") {
                 var scriptResult = await BuildReproScript(repro);
                 if (!scriptResult.IsOk) {
                     return await _context.ReproOperations.SetError(repro, scriptResult.ErrorV);
@@ -186,7 +187,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
                     ErrorCode.VM_CREATE_FAILED,
                     new string[] { "failed before launching extensions" }));
         }
-
+        _logTracer.Info($"VM State: {vmData.ProvisioningState}");
         if (vmData.ProvisioningState == "Failed") {
             var failedVmData = await _context.VmOperations.GetVmWithInstanceView(vm.Name);
             if (failedVmData is null) {
