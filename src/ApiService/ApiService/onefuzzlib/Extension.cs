@@ -267,7 +267,6 @@ public class Extensions : IExtensions {
         await UpdateManagedScripts();
         var urlsUpdated = urls ?? new();
 
-        var managedIdentity = JsonSerializer.Serialize(new { ManagedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions);
         if (vmOs == Os.Windows) {
             var vmScripts = await ConfigUrl(WellKnownContainers.VmScripts, "managed.ps1", withSas) ?? throw new Exception("failed to get VmScripts config url");
             var toolsAzCopy = await ConfigUrl(WellKnownContainers.Tools, "win64/azcopy.exe", withSas) ?? throw new Exception("failed to get toolsAzCopy config url");
