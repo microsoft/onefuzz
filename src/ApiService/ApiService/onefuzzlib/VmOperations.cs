@@ -176,8 +176,7 @@ public class VmOperations : IVmOperations {
                 return OneFuzzResult.Ok(true);
             } else if (statuses.Any(s => s.state == "Failed")) {
                 var errors = await GetExtensionErrors(vm.Name, statuses.Where(s => s.state == "Failed").Select(s => s.extName));
-                // return OneFuzzResult<bool>.Error(ErrorCode.VM_CREATE_FAILED, "failed to launch extension(s): " + errors);
-                return OneFuzzResult.Ok(true);
+                return OneFuzzResult<bool>.Error(ErrorCode.VM_CREATE_FAILED, "failed to launch extension(s): " + errors);
             }
         }
 
@@ -209,8 +208,7 @@ public class VmOperations : IVmOperations {
             var vm = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(
                 vmName
             );
-            // var instanceView = await vm.Value.GetVirtualMachineExtensionAsync(extensionName, expand: "InstanceView");
-            return (await vm.Value.GetVirtualMachineExtensionAsync(extensionName, expand: "instanceView")).Value.Data;
+            return (await vm.Value.GetVirtualMachineExtensionAsync(extensionName)).Value.Data;
         } catch (RequestFailedException ex) {
             _logTracer.Info($"extension does not exist {ex.Message:Tag:Error}");
             return null;
