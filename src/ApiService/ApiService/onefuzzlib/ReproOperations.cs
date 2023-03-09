@@ -186,7 +186,6 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
                     ErrorCode.VM_CREATE_FAILED,
                     new string[] { "failed before launching extensions" }));
         }
-        _logTracer.Info($"VM State: {vmData.ProvisioningState}");
         if (vmData.ProvisioningState == "Failed") {
             var failedVmData = await _context.VmOperations.GetVmWithInstanceView(vm.Name);
             if (failedVmData is null) {

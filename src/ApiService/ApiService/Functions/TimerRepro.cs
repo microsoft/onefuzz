@@ -13,7 +13,7 @@ public class TimerRepro {
     }
 
     [Function("TimerRepro")]
-    public async Async.Task Run([TimerTrigger("00:00:10")] TimerInfo myTimer) {
+    public async Async.Task Run([TimerTrigger("00:00:30")] TimerInfo myTimer) {
         var expiredVmIds = new HashSet<Guid>();
         {
             var expired = _onefuzzContext.ReproOperations.SearchExpired();
@@ -21,7 +21,7 @@ public class TimerRepro {
                 _log.Info($"stopping repro: {repro.VmId:Tag:VmId}");
                 _ = expiredVmIds.Add(repro.VmId);
                 // ignoring result: value not used later
-                // _ = await _onefuzzContext.ReproOperations.Stopping(repro);
+                _ = await _onefuzzContext.ReproOperations.Stopping(repro);
             }
         }
 

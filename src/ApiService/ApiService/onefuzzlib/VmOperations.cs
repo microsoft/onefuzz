@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using System.Threading.Tasks;
-using System.Text.Json;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Compute;
@@ -162,11 +161,6 @@ public class VmOperations : IVmOperations {
 
             var extension = await GetExtension(vm.Name, extensionName);
             if (extension != null) {
-                _logTracer.Info($"Extension substatus data: {extension.ToString()}");
-                _logTracer.Info($"Extension substatus data: {JsonSerializer.Serialize(extension.InstanceView)}");
-                _logTracer.Info(
-                    $"vm extension state: {vm.Name} - {extensionName} - {extension.ProvisioningState}"
-                );
                 statuses.Add((extensionName, extension.ProvisioningState));
             } else {
                 toCreate.Add(extensionConfig);
