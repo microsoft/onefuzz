@@ -105,7 +105,6 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         } else {
             return await Stopped(repro);
         }
-        return await Stopped(repro);
     }
 
     public async Async.Task<Repro> Stopped(Repro repro) {
