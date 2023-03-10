@@ -40,7 +40,7 @@ chmod +x deploy.py
 When running `deploy.py` the first time for an instance, you will be prompted
 to follow a manual step to initialize your CLI config.
 
-The `$NSG_CONFIG_FILE` is a required parameter that specifies the 'allow rules' for the OneFuzz Network Security Group as well as other basic OneFuzz settings. A default `config.json` is provided in the deployment zip.
+The `$NSG_CONFIG_FILE` is a required parameter that specifies the 'allow rules' for the OneFuzz Network Security Group as well as other basic OneFuzz settings. A `config.json` file is provided with defauly NSG values. 
 This 'allow' config resembles the following:
 
 ```json
