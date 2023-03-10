@@ -409,6 +409,7 @@ class Client:
                 "Could not find the default CLI application under the current "
                 "subscription."
             )
+            logger.debug(f"Error finding app CLI application due to: {err}")
         if self.auto_create_cli_app:
             logger.info("auto_create_cli_app specified, creating a new CLI application")
             app_info = register_application(
