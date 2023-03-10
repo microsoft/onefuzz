@@ -55,7 +55,7 @@ This 'allow' config resembles the following:
 >#### Note: 
 > - Line #5 in the example `config.json` inside of the deployment.zip has the parameter for `"cli_client_id": "",` 
 >   - You'll need to add your CLI app registration ID to this parameter's value for deployments and upgrade deployments
->    **unless** you're deploying and passing the `---auto_create_cli_app` flag to create a new App ID during the deployment.
+>    **unless** you're deploying and passing the `--auto_create_cli_app` flag to create a new App ID during the deployment.
 >   - If you wanted to create a new App ID at deployment and use this flag, you need to delete this line to remove the `cli_client_id` key from your config file.
 
 **Example deployment config.json:**
@@ -75,7 +75,7 @@ This 'allow' config resembles the following:
 }
 ```
 
-**Example config.json for a deployment where `---auto_create_cli_app` is being used:**
+**Example config.json for a deployment where `--auto_create_cli_app` is being used:**
 
 ```json
 {
