@@ -4,7 +4,10 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::{Arg, Command};
+use ipc_channel::ipc::{self, IpcReceiver, IpcSender};
+use onefuzz::ipc::IpcMessageKind;
 use std::time::Duration;
+use tokio::task;
 
 use crate::tasks::{
     config::{CommonConfig, Config},
@@ -26,6 +29,46 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
 
     let extra_dir = args.get_one::<PathBuf>("extra_dir").map(|f| f.as_path());
     let config = Config::from_file(config_path, setup_dir, extra_dir)?;
+
+    info!("Creating channel from agent to task");
+    let (agent_sender, receive_from_agent): (
+        IpcSender<IpcMessageKind>,
+        IpcReceiver<IpcMessageKind>,
+    ) = ipc::channel()?;
+    info!("Conecting...");
+    let oneshot_sender = IpcSender::connect(config.common().from_agent_to_task_endpoint.clone())?;
+    info!("Sending sender to agent");
+    oneshot_sender.send(agent_sender)?;
+
+    info!("Creating channel from task to agent");
+    // For now, the task_sender is unused since the task isn't sending any messages to the agent yet
+    // In the future, when we may want to send telemetry through this ipc channel for example, we can use the task_sender
+    let (_task_sender, receive_from_task): (
+        IpcSender<IpcMessageKind>,
+        IpcReceiver<IpcMessageKind>,
+    ) = ipc::channel()?;
+    info!("Connecting...");
+    let oneshot_receiver = IpcSender::connect(config.common().from_task_to_agent_endpoint.clone())?;
+    info!("Sending receiver to agent");
+    oneshot_receiver.send(receive_from_task)?;
+
+    let shutdown_listener = task::spawn_blocking(move || loop {
+        match receive_from_agent.recv() {
+            Ok(msg) => info!("Received unexpected message from agent: {:?}", msg),
+            Err(ipc::IpcError::Disconnected) => {
+                info!("Agent disconnected from the IPC channel. Shutting down");
+                break;
+            }
+            Err(ipc::IpcError::Bincode(e)) => {
+                error!("BinCode error receiving message from agent: {:?}", e);
+                break;
+            }
+            Err(ipc::IpcError::Io(e)) => {
+                error!("IO error receiving message from agent: {:?}", e);
+                break;
+            }
+        }
+    });
 
     init_telemetry(config.common()).await;
 
@@ -55,6 +98,10 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
             let err = format_err!("out of memory: {} bytes available, {} required", oom.available_bytes, oom.min_bytes);
             Err(err)
         },
+
+        _shutdown = shutdown_listener => {
+            Ok(())
+        }
     };
 
     if let Err(err) = &result {
