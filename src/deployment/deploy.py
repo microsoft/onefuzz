@@ -420,17 +420,17 @@ class Client:
 
             try:
                 cli_app = get_application(
-                app_id=app_info.client_id,
-                subscription_id=self.get_subscription_id(),
+                    app_id=app_info.client_id,
+                    subscription_id=self.get_subscription_id(),
                 )
                 self.cli_app_id = str(app_info.client_id)
-            except: 
+            except Exception as err:
                 logger.error(
-                    "Unable to determine new 'cli_app_id' for new app registration."
+                    f"Unable to determine new 'cli_app_id' for new app registration: {err} "
                 )
                 sys.exit(1)
 
-        if cli_app: 
+        if cli_app:
             onefuzz_cli_app = cli_app
             authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
 

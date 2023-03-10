@@ -56,7 +56,7 @@ class Config:
     allowed_ips: List[str]
     allowed_service_tags: List[str]
 
-    def __init__(self, config: Any, new_app:bool=False):
+    def __init__(self, config: Any, new_app: bool = False):
         self.new_app_id = new_app
         self.parse_nsg_json(config)
         self.parse_endpoint_json(config)
@@ -170,7 +170,6 @@ class Config:
                 "multi_tenant_domain is not a string. Please provide valid multi_tenant_domain. If the instance is not multi-tenant, please provide an empty string."
             )
 
-        
         self.tenant_id = config["tenant_id"]
         self.tenant_domain = config["tenant_domain"]
         self.multi_tenant_domain = config["multi_tenant_domain"]
