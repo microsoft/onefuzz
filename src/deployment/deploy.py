@@ -403,14 +403,14 @@ class Client:
                 app_id=uuid.UUID(self.cli_app_id),
                 subscription_id=self.get_subscription_id(),
             )
-        except:
+        except Exception as err:
             cli_app = None
-
-        if self.auto_create_cli_app:
             logger.info(
                 "Could not find the default CLI application under the current "
-                "subscription and auto_create specified, creating a new one"
+                "subscription."
             )
+        if self.auto_create_cli_app:
+            logger.info("auto_create_cli_app specified, creating a new CLI application")
             app_info = register_application(
                 "onefuzz-cli",
                 self.application_name,
@@ -424,6 +424,7 @@ class Client:
                     subscription_id=self.get_subscription_id(),
                 )
                 self.cli_app_id = str(app_info.client_id)
+                logger.info(f"New CLI app created - cli_app_id : {self.cli_app_id}")
             except Exception as err:
                 logger.error(
                     f"Unable to determine new 'cli_app_id' for new app registration: {err} "
