@@ -406,80 +406,79 @@ class Client:
         except:
             cli_app = None
 
-        if not cli_app:
-            if self.auto_create_cli_app:
-                logger.info(
-                    "Could not find the default CLI application under the current "
-                    "subscription and auto_create specified, creating a new one"
-                )
-                app_info = register_application(
-                    "onefuzz-cli",
-                    self.application_name,
-                    OnefuzzAppRole.CliClient,
-                    self.get_subscription_id(),
-                )
+        if self.auto_create_cli_app:
+            logger.info(
+                "Could not find the default CLI application under the current "
+                "subscription and auto_create specified, creating a new one"
+            )
+            app_info = register_application(
+                "onefuzz-cli",
+                self.application_name,
+                OnefuzzAppRole.CliClient,
+                self.get_subscription_id(),
+            )
 
-                try:
-                    cli_app = get_application(
-                    app_id=app_info.client_id,
-                    subscription_id=self.get_subscription_id(),
+            try:
+                cli_app = get_application(
+                app_id=app_info.client_id,
+                subscription_id=self.get_subscription_id(),
                 )
-                    self.cli_app_id = uuid.UUID(app_info.client_id)
-                except: 
-                    logger.error(
-                        "Unable to determine new 'cli_app_id' for new app registration."
-                    )
-                    sys.exit(1)
-
-            else:
+                self.cli_app_id = str(app_info.client_id)
+            except: 
                 logger.error(
-                    "error deploying. could not find specified CLI app registrion."
-                    "use flag --auto_create_cli_app to automatically create CLI registration"
-                    "or specify a correct app id with --cli_app_id."
+                    "Unable to determine new 'cli_app_id' for new app registration."
                 )
                 sys.exit(1)
 
-        onefuzz_cli_app = cli_app
-        authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
+        if cli_app: 
+            onefuzz_cli_app = cli_app
+            authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
 
-        self.cli_config = {
-            "client_id": onefuzz_cli_app["appId"],
-            "authority": self.authority,
-        }
+            self.cli_config = {
+                "client_id": onefuzz_cli_app["appId"],
+                "authority": self.authority,
+            }
 
-        # ensure replyURLs is set properly
-        if "publicClient" not in onefuzz_cli_app:
-            onefuzz_cli_app["publicClient"] = {}
+            # ensure replyURLs is set properly
+            if "publicClient" not in onefuzz_cli_app:
+                onefuzz_cli_app["publicClient"] = {}
 
-        if "redirectUris" not in onefuzz_cli_app["publicClient"]:
-            onefuzz_cli_app["publicClient"]["redirectUris"] = []
+            if "redirectUris" not in onefuzz_cli_app["publicClient"]:
+                onefuzz_cli_app["publicClient"]["redirectUris"] = []
 
-        requiredRedirectUris = [
-            "http://localhost",  # required for browser-based auth
-            f"ms-appx-web://Microsoft.AAD.BrokerPlugin/{onefuzz_cli_app['appId']}",  # required for broker auth
-        ]
+            requiredRedirectUris = [
+                "http://localhost",  # required for browser-based auth
+                f"ms-appx-web://Microsoft.AAD.BrokerPlugin/{onefuzz_cli_app['appId']}",  # required for broker auth
+            ]
 
-        redirectUris: List[str] = onefuzz_cli_app["publicClient"]["redirectUris"]
-        updatedRedirectUris = list(set(requiredRedirectUris) | set(redirectUris))
+            redirectUris: List[str] = onefuzz_cli_app["publicClient"]["redirectUris"]
+            updatedRedirectUris = list(set(requiredRedirectUris) | set(redirectUris))
 
-        if len(updatedRedirectUris) > len(redirectUris):
-            logger.info("Updating redirectUris for CLI app")
-            query_microsoft_graph(
-                method="PATCH",
-                resource=f"applications/{onefuzz_cli_app['id']}",
-                body={"publicClient": {"redirectUris": updatedRedirectUris}},
-                subscription=self.get_subscription_id(),
+            if len(updatedRedirectUris) > len(redirectUris):
+                logger.info("Updating redirectUris for CLI app")
+                query_microsoft_graph(
+                    method="PATCH",
+                    resource=f"applications/{onefuzz_cli_app['id']}",
+                    body={"publicClient": {"redirectUris": updatedRedirectUris}},
+                    subscription=self.get_subscription_id(),
+                )
+
+            assign_instance_app_role(
+                self.application_name,
+                onefuzz_cli_app["displayName"],
+                self.get_subscription_id(),
+                OnefuzzAppRole.ManagedNode,
             )
 
-        assign_instance_app_role(
-            self.application_name,
-            onefuzz_cli_app["displayName"],
-            self.get_subscription_id(),
-            OnefuzzAppRole.ManagedNode,
-        )
-
-        self.results["client_id"] = app["appId"]
-        self.results["client_secret"] = password
+            self.results["client_id"] = app["appId"]
+            self.results["client_secret"] = password
+        else:
+            logger.error(
+                "error deploying. could not find specified CLI app registrion."
+                "use flag --auto_create_cli_app to automatically create CLI registration"
+                "or specify a correct app id with --cli_app_id."
+            )
+            sys.exit(1)
 
     def update_existing_app_registration(
         self, app: Dict[str, Any], app_roles: List[Dict[str, Any]]
@@ -803,7 +802,7 @@ class Client:
                     self.tenant_domain = config.tenant_domain
                 if self.multi_tenant_domain == "":
                     self.multi_tenant_domain = config.multi_tenant_domain
-                if self.cli_app_id == "":
+                if not self.cli_app_id:
                     if not self.auto_create_cli_app:
                         self.cli_app_id = config.cli_client_id
 
