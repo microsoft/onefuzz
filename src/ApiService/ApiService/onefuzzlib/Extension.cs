@@ -265,9 +265,12 @@ public class Extensions : IExtensions {
 
     public async Async.Task<VMExtensionWrapper> AgentConfig(AzureLocation region, Os vmOs, AgentMode mode, List<Uri>? urls = null, bool withSas = false) {
         await UpdateManagedScripts();
-        var urlsUpdated = urls ?? new();
+        var baseUrls = urls ?? Enumerable.Empty<Uri>();
 
-        var managedIdentity = withSas ? null : new BinaryData(JsonSerializer.Serialize(new { ManagedIdentity = new Dictionary<string, string>() }, _extensionSerializerOptions));
+        var protectedSettings = new Dictionary<string, object>();
+        if (!withSas) {
+            protectedSettings["managedIdentity"] = new Dictionary<string, string>();
+        }
 
         if (vmOs == Os.Windows) {
             var vmScripts = await ConfigUrl(WellKnownContainers.VmScripts, "managed.ps1", withSas) ?? throw new Exception("failed to get VmScripts config url");
@@ -275,14 +278,10 @@ public class Extensions : IExtensions {
             var toolsSetup = await ConfigUrl(WellKnownContainers.Tools, "win64/setup.ps1", withSas) ?? throw new Exception("failed to get toolsSetup config url");
             var toolsOneFuzz = await ConfigUrl(WellKnownContainers.Tools, "win64/onefuzz.ps1", withSas) ?? throw new Exception("failed to get toolsOneFuzz config url");
 
-            urlsUpdated.Add(vmScripts);
-            urlsUpdated.Add(toolsAzCopy);
-            urlsUpdated.Add(toolsSetup);
-            urlsUpdated.Add(toolsOneFuzz);
+            protectedSettings["fileUris"] = new List<Uri>(baseUrls) { vmScripts, toolsAzCopy, toolsSetup, toolsOneFuzz };
+            protectedSettings["commandToExecute"] = $"powershell -ExecutionPolicy Unrestricted -File win64/setup.ps1 -mode {mode.ToString().ToLowerInvariant()}";
 
-            var toExecuteCmd = $"powershell -ExecutionPolicy Unrestricted -File win64/setup.ps1 -mode {mode.ToString().ToLowerInvariant()}";
-
-            var extension = new VMExtensionWrapper {
+            return new VMExtensionWrapper {
                 Name = "CustomScriptExtension",
                 TypePropertiesType = "CustomScriptExtension",
                 Publisher = "Microsoft.Compute",
@@ -290,24 +289,18 @@ public class Extensions : IExtensions {
                 ForceUpdateTag = Guid.NewGuid().ToString(),
                 TypeHandlerVersion = "1.9",
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(JsonSerializer.Serialize(new { commandToExecute = toExecuteCmd, fileUris = urlsUpdated }, _extensionSerializerOptions)),
-                ProtectedSettings = managedIdentity
+                ProtectedSettings = new BinaryData(protectedSettings, _extensionSerializerOptions)
             };
-            return extension;
         } else if (vmOs == Os.Linux) {
 
             var vmScripts = await ConfigUrl(WellKnownContainers.VmScripts, "managed.sh", withSas) ?? throw new Exception("failed to get VmScripts config url");
             var toolsAzCopy = await ConfigUrl(WellKnownContainers.Tools, "linux/azcopy", withSas) ?? throw new Exception("failed to get toolsAzCopy config url");
             var toolsSetup = await ConfigUrl(WellKnownContainers.Tools, "linux/setup.sh", withSas) ?? throw new Exception("failed to get toolsSetup config url");
 
-            urlsUpdated.Add(vmScripts);
-            urlsUpdated.Add(toolsAzCopy);
-            urlsUpdated.Add(toolsSetup);
+            protectedSettings["fileUris"] = new List<Uri>(baseUrls) { vmScripts, toolsAzCopy, toolsSetup };
+            protectedSettings["commandToExecute"] = $"bash setup.sh {mode.ToString().ToLowerInvariant()}";
 
-            var toExecuteCmd = $"bash setup.sh {mode.ToString().ToLowerInvariant()}";
-            var extensionSettings = JsonSerializer.Serialize(new { CommandToExecute = toExecuteCmd, FileUris = urlsUpdated }, _extensionSerializerOptions);
-
-            var extension = new VMExtensionWrapper {
+            return new VMExtensionWrapper {
                 Name = "CustomScript",
                 Publisher = "Microsoft.Azure.Extensions",
                 TypePropertiesType = "CustomScript",
@@ -315,10 +308,8 @@ public class Extensions : IExtensions {
                 Location = region,
                 ForceUpdateTag = Guid.NewGuid().ToString(),
                 AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(extensionSettings),
-                ProtectedSettings = managedIdentity
+                ProtectedSettings = new BinaryData(protectedSettings, _extensionSerializerOptions),
             };
-            return extension;
         }
 
         throw new NotSupportedException($"unsupported OS: {vmOs}");
