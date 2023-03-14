@@ -283,12 +283,12 @@ public class Extensions : IExtensions {
 
             return new VMExtensionWrapper {
                 Name = "CustomScriptExtension",
-                TypePropertiesType = "CustomScriptExtension",
                 Publisher = "Microsoft.Compute",
-                Location = region,
-                ForceUpdateTag = Guid.NewGuid().ToString(),
+                TypePropertiesType = "CustomScriptExtension",
                 TypeHandlerVersion = "1.9",
                 AutoUpgradeMinorVersion = true,
+                Location = region,
+                ForceUpdateTag = Guid.NewGuid().ToString(),
                 ProtectedSettings = new BinaryData(protectedSettings, _extensionSerializerOptions)
             };
         } else if (vmOs == Os.Linux) {
@@ -305,9 +305,9 @@ public class Extensions : IExtensions {
                 Publisher = "Microsoft.Azure.Extensions",
                 TypePropertiesType = "CustomScript",
                 TypeHandlerVersion = "2.1",
+                AutoUpgradeMinorVersion = true,
                 Location = region,
                 ForceUpdateTag = Guid.NewGuid().ToString(),
-                AutoUpgradeMinorVersion = true,
                 ProtectedSettings = new BinaryData(protectedSettings, _extensionSerializerOptions),
             };
         }
