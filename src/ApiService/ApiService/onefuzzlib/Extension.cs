@@ -354,7 +354,7 @@ public class Extensions : IExtensions {
         var scaleSetScript = await BuildScaleSetScript(pool, scaleset) ?? throw new Exception("scaleSet script url is null");
         var urls = new List<Uri>() { poolConfig, scaleSetScript };
 
-        var fuzzExtension = await AgentConfig(scaleset.Region, pool.Os, AgentMode.Fuzz, urls);
+        var fuzzExtension = await AgentConfig(scaleset.Region, pool.Os, AgentMode.Fuzz, urls, withSas: true);
         var extensions = await GenericExtensions(scaleset.Region, pool.Os);
 
         extensions.Add(fuzzExtension);
@@ -468,7 +468,7 @@ public class Extensions : IExtensions {
             BlobSasPermissions.Read);
 
         var baseExtension =
-            await AgentConfig(region, Os.Linux, AgentMode.Proxy, new List<Uri> { config, proxyManager }, true);
+            await AgentConfig(region, Os.Linux, AgentMode.Proxy, new List<Uri> { config, proxyManager }, withSas: true);
 
         var extensions = await GenericExtensions(region, Os.Linux);
         extensions.Add(baseExtension);
