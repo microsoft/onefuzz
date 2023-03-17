@@ -166,7 +166,7 @@ public class Config : IConfig {
             config.TargetExe = task.Config.Task.TargetExe;
         }
 
-        if (definition.Features.Contains(TaskFeature.TargetExeOptional) && config.TargetExe != null) {
+        if (definition.Features.Contains(TaskFeature.TargetExeOptional) && task.Config.Task.TargetExe != null) {
             config.TargetExe = task.Config.Task.TargetExe;
         }
 
