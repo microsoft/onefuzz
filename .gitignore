@@ -20,6 +20,3 @@ lcov.info
 /src/ApiService/ApiService/Properties/ServiceDependencies/*
 
 .vs
-
-# Local fork tools, not to be merged back into main repo
-/.github/workflows/sync-fork.yml
