@@ -18,9 +18,9 @@ jobs:
         ado_project: "${{ secrets.ADO_PROJECT_NAME }}"
         ado_area_path: "${{ secrets.ADO_AREA_PATH }}"
         ado_iteration_path: "${{ secrets.ADO_ITERATION_PATH }}"
-        ado_wit: "Deliverable"
-        ado_new_state: "Proposed"
-        ado_active_state: "Started"
+        ado_wit: "User Story"
+        ado_new_state: "New"
+        ado_active_state: "Active"
         ado_close_state: "Completed"
         ado_bypassrules: false
         log_level: 100

@@ -309,6 +309,6 @@ public class AgentEvents {
             return str;
         }
 
-        return str[..MAX_OUTPUT_SIZE];
+        return str[(str.Length - MAX_OUTPUT_SIZE)..];
     }
 }

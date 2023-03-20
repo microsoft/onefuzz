@@ -414,6 +414,7 @@ public static class Defs {
         TaskFeature.TargetEnv,
         TaskFeature.TargetOptions,
         TaskFeature.CheckFuzzerHelp,
+        TaskFeature.PreserveExistingOutputs,
      },
      Vm: new VmDefinition(Compare: Compare.Equal, Value: 1),
      Containers: new[] {

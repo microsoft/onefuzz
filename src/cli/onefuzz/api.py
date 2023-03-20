@@ -1895,7 +1895,7 @@ class Onefuzz:
         self,
         endpoint: Optional[str] = None,
         override_authority: Optional[str] = None,
-        override_client_id: Optional[str] = None,
+        client_id: Optional[str] = None,
         override_tenant_domain: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
         reset: Optional[bool] = None,
@@ -1922,10 +1922,10 @@ class Onefuzz:
                     "Missing HTTP Authentication"
                 )
             self._backend.config.endpoint = endpoint
+        if client_id is not None:
+            self._backend.config.client_id = client_id
         if override_authority is not None:
             self._backend.config.authority = override_authority
-        if override_client_id is not None:
-            self._backend.config.client_id = override_client_id
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
         if override_tenant_domain is not None:

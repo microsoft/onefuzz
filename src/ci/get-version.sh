@@ -12,17 +12,17 @@ GIT_HASH=$(git rev-parse HEAD)
 
 if [ "${GITHUB_REF}" != "" ]; then
     TAG_VERSION=${GITHUB_REF#refs/tags/}
-    
+
     # this isn't a tag
     if [ ${TAG_VERSION} == ${GITHUB_REF} ]; then
-        echo ${BASE_VERSION}-${GIT_HASH}
+        echo ${BASE_VERSION}+${GIT_HASH}
     else
         echo ${BASE_VERSION}
-    fi    
+    fi
 else
     if $(git diff --quiet); then
-        echo ${BASE_VERSION}-${GIT_HASH}
+        echo ${BASE_VERSION}+${GIT_HASH}
     else
-        echo ${BASE_VERSION}-${GIT_HASH}localchanges
-    fi 
+        echo ${BASE_VERSION}+${GIT_HASH}localchanges
+    fi
 fi

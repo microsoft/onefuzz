@@ -50,6 +50,7 @@ if [ X${CARGO_INCREMENTAL} == X ]; then
 fi
 
 cargo fmt -- --check
+
 cargo deny -L error check
 cargo license -j > data/licenses.json
 cargo build --release --locked

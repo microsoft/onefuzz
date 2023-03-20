@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
-using Azure.Data.Tables;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -25,15 +24,14 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
 
         var conditions =
             new[] {
-                scalesetId is not null ? TableClient.CreateQueryFilter($"scaleset_id eq {scalesetId}") : null,
-                region is not null ? TableClient.CreateQueryFilter($"PartitionKey eq {region.String}") : null ,
-                machineId is not null ? TableClient.CreateQueryFilter($"machine_id eq {machineId}") : null ,
-                proxyId is not null ? TableClient.CreateQueryFilter($"proxy_id eq {proxyId}") : null ,
-                dstPort is not null ? TableClient.CreateQueryFilter($"dst_port eq {dstPort}") : null ,
+                scalesetId is not null ? Query.CreateQueryFilter($"scaleset_id eq {scalesetId}") : null,
+                region is not null ? Query.CreateQueryFilter($"PartitionKey eq {region.String}") : null ,
+                machineId is not null ? Query.CreateQueryFilter($"machine_id eq {machineId}") : null ,
+                proxyId is not null ? Query.CreateQueryFilter($"proxy_id eq {proxyId}") : null ,
+                dstPort is not null ? Query.CreateQueryFilter($"dst_port eq {dstPort}") : null ,
             }.Where(x => x != null);
 
         var filter = Query.And(conditions!);
-
         return QueryAsync(filter);
     }
 

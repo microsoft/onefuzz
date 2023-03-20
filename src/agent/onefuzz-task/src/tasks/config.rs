@@ -67,6 +67,9 @@ pub struct CommonConfig {
     pub min_available_memory_mb: u64,
 
     pub machine_identity: MachineIdentity,
+
+    pub from_agent_to_task_endpoint: String,
+    pub from_task_to_agent_endpoint: String,
 }
 
 impl CommonConfig {
