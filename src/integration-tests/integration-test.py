@@ -205,24 +205,12 @@ TARGETS: Dict[str, Integration] = {
         check_asan_log=True,
         disable_check_debugger=True,
     ),
-    # "windows-crashdump": Integration(
-    # template=TemplateType.libfuzzer,
-    # os=OS.windows,
-    # target_exe="fuzz.exe",
-    # target_env={"ASAN_OPTIONS": "disable_coredump=0:abort_on_error=1"},
-    # inputs="seeds",
-    # wait_for_files={
-    # ContainerType.inputs: 2,
-    # ContainerType.unique_reports: 1,
-    # ContainerType.coverage: 1,
-    # },
-    # inject_fake_regression=True,
-    # ),
     "windows-libfuzzer": Integration(
         template=TemplateType.libfuzzer,
         os=OS.windows,
         target_exe="fuzz.exe",
         inputs="seeds",
+        target_env={"ASAN_OPTIONS": "ASAN_SAVE_DUMPS=dump.dmp"},
         wait_for_files={
             ContainerType.inputs: 2,
             ContainerType.unique_reports: 1,

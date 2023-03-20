@@ -316,6 +316,7 @@ where
 
         // check for core dumps on Linux:
         // note that collecting the dumps must be enabled by the template
+        #[cfg(target_os = "linux")]
         if let Some(pid) = pid {
             // expect crash dump to exist in CWD
             let filename = format!("core.{pid}");
@@ -330,7 +331,23 @@ where
             warn!("no PID found for libfuzzer process");
         }
 
-        // Windows: TODO
+        // check for crash dumps on Windows:
+        #[cfg(target_os = "windows")]
+        {
+            let dumpfile_extension = Some(std::ffi::OsStr::new(".dmp"));
+
+            let mut working_dir = tokio::fs::read_dir(".").await?;
+            while let Some(next) = working_dir.next_entry().await? {
+                if next.path().extension() == dumpfile_extension {
+                    // Windows dumps get a fixed filename so we will generate a new one:
+                    let new_filename = format!("{}.dmp", uuid::Uuid::new_v4());
+                    let dest = self.config.crashdumps.local_path.join(&new_filename);
+                    tokio::fs::rename(next.path(), dest)
+                        .await
+                        .context("moving crash dump to output directory")?;
+                }
+            }
+        }
 
         Ok(())
     }
