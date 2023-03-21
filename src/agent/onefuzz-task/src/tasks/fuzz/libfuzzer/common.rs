@@ -17,7 +17,7 @@ use onefuzz_telemetry::{
     EventData,
 };
 use serde::Deserialize;
-use std::{collections::HashMap, io::ErrorKind, path::PathBuf, sync::Arc};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tempfile::{tempdir_in, TempDir};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
@@ -247,6 +247,8 @@ where
 
         let fuzzer = L::from_config(&self.config).await?;
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs).await?;
+
+        #[cfg(target_os = "linux")]
         let pid = running.id();
 
         let notify = Arc::new(Notify::new());
@@ -322,7 +324,7 @@ where
             let filename = format!("core.{pid}");
             let dest = self.config.crashdumps.local_path.join(&filename);
             match tokio::fs::rename(filename, dest).await {
-                Err(e) if e.kind() == ErrorKind::NotFound => {
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
                     // okay, no crash dump found
                 }
                 other => other.context("moving crash dump to output directory")?,
