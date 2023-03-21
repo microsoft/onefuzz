@@ -51,6 +51,7 @@ libunwind.so.8
 linux-vdso.so.1" \
 \
 "ADVAPI32.dll
+CRYPTBASE.DLL
 GDI32.dll
 KERNEL32.DLL
 KERNELBASE.dll
@@ -60,6 +61,7 @@ RPCRT4.dll
 SSPICLI.DLL
 apphelp.dll
 bcrypt.dll
+bcryptPrimitives.dll
 crypt32.dll
 dbghelp.dll
 gdi32full.dll
@@ -84,6 +86,7 @@ libunwind.so.8
 linux-vdso.so.1" \
 \
 "ADVAPI32.dll
+CRYPTBASE.DLL
 KERNEL32.DLL
 KERNELBASE.dll
 MSASN1.dll
@@ -91,6 +94,7 @@ RPCRT4.dll
 SSPICLI.DLL
 apphelp.dll
 bcrypt.dll
+bcryptPrimitives.dll
 crypt32.dll
 msvcrt.dll
 ntdll.dll
@@ -106,8 +110,14 @@ libgcc_s.so.1
 libpthread.so.0
 linux-vdso.so.1" \
 \
-"KERNEL32.DLL
+"CRYPTBASE.DLL
+KERNEL32.DLL
 KERNELBASE.dll
+RPCRT4.dll
+advapi32.dll
 apphelp.dll
 bcrypt.dll
-ntdll.dll"
+bcryptPrimitives.dll
+msvcrt.dll
+ntdll.dll
+sechost.dll"
