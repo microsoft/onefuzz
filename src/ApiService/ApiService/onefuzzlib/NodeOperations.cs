@@ -463,7 +463,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
 
     public async Async.Task SendStopIfFree(Node node) {
-        var ver = new Version(_context.ServiceConfiguration.OneFuzzVersion.Split('-')[0]);
+        var ver = new Version(_context.ServiceConfiguration.OneFuzzVersion.Split('-', '+')[0]);
         if (ver >= Version.Parse("2.16.1")) {
             await SendMessage(node, new NodeCommand(StopIfFree: new NodeCommandStopIfFree()));
         }
