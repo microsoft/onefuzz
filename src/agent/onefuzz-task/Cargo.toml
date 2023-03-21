@@ -15,11 +15,11 @@ arraydeque = "0.5"
 async-trait = "0.1"
 atexit = { path = "../atexit" }
 backoff = { version = "0.4", features = ["tokio"] }
-clap = "2.34"
+clap = { version = "4", features = ["cargo", "string"] }
 cobertura = { path = "../cobertura" }
 coverage = { path = "../coverage" }
-crossterm = "0.22"
-env_logger = "0.9"
+crossterm = "0.25"
+env_logger = "0.10"
 flume = "0.10"
 futures = "0.3"
 hex = "0.4"
@@ -27,7 +27,7 @@ lazy_static = "1.4"
 log = "0.4"
 num_cpus = "1.15"
 onefuzz-file-format = { path = "../onefuzz-file-format" }
-regex = "1.6.0"
+regex = "1.7.1"
 reqwest = { version = "0.11", features = [
     "json",
     "stream",
@@ -49,21 +49,22 @@ thiserror = "1.0"
 tokio = { version = "1.24", features = ["full"] }
 tokio-util = { version = "0.7", features = ["full"] }
 tokio-stream = "0.1"
-tui = { version = "0.18", default-features = false, features = ['crossterm'] }
+tui = { version = "0.19", default-features = false, features = ['crossterm'] }
 url = { version = "2.3", features = ["serde"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 chrono = { version = "0.4", default-features = false, features = [
     "clock",
     "std",
 ] }
+ipc-channel = { git = "https://github.com/servo/ipc-channel", rev = "7f432aa" }
 
-azure_core = { version = "0.8", default-features = false, features = [
+azure_core = { version = "0.10", default-features = false, features = [
     "enable_reqwest",
 ] }
-azure_storage = { version = "0.9", default-features = false, features = [
+azure_storage = { version = "0.10", default-features = false, features = [
     "enable_reqwest",
 ] }
-azure_storage_blobs = { version = "0.9", default-features = false, features = [
+azure_storage_blobs = { version = "0.10", default-features = false, features = [
     "enable_reqwest",
 ] }
 

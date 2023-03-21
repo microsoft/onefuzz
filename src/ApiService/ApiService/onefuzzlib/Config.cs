@@ -140,6 +140,9 @@ public class Config : IConfig {
                 case ContainerType.RegressionReports:
                     config.RegressionReports = def;
                     break;
+                case ContainerType.Extra:
+                    config.Extra = def;
+                    break;
             }
         }
 
@@ -163,7 +166,7 @@ public class Config : IConfig {
             config.TargetExe = task.Config.Task.TargetExe;
         }
 
-        if (definition.Features.Contains(TaskFeature.TargetExeOptional) && config.TargetExe != null) {
+        if (definition.Features.Contains(TaskFeature.TargetExeOptional) && task.Config.Task.TargetExe != null) {
             config.TargetExe = task.Config.Task.TargetExe;
         }
 
@@ -244,6 +247,10 @@ public class Config : IConfig {
             config.CheckFuzzerHelp = task.Config.Task.CheckFuzzerHelp ?? true;
         }
 
+        if (definition.Features.Contains(TaskFeature.PreserveExistingOutputs)) {
+            config.PreserveExistingOutputs = task.Config.Task.PreserveExistingOutputs ?? false;
+        }
+
         if (definition.Features.Contains(TaskFeature.ReportList)) {
             config.ReportList = task.Config.Task.ReportList;
         }
@@ -259,12 +266,6 @@ public class Config : IConfig {
         if (definition.Features.Contains(TaskFeature.CoverageFilter)) {
             if (task.Config.Task.CoverageFilter != null) {
                 config.CoverageFilter = task.Config.Task.CoverageFilter;
-            }
-        }
-
-        if (definition.Features.Contains(TaskFeature.FunctionAllowlist)) {
-            if (task.Config.Task.FunctionAllowlist != null) {
-                config.FunctionAllowlist = task.Config.Task.FunctionAllowlist;
             }
         }
 

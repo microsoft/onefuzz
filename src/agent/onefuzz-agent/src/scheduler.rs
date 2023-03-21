@@ -67,7 +67,7 @@ impl Scheduler {
             }
             NodeCommand::StopTask(stop_task) => {
                 if let Scheduler::Busy(state) = self {
-                    let state = state.stop(stop_task.task_id)?;
+                    let state = state.stop(stop_task.task_id).await?;
                     Ok(state.into())
                 } else {
                     Ok(self)
@@ -250,8 +250,9 @@ impl State<Ready> {
     pub async fn run(self) -> Result<State<Busy>> {
         let mut workers = vec![];
         let setup_dir = &self.ctx.work_set.setup_dir()?;
+        let extra_dir = self.ctx.work_set.extra_dir()?;
         for work in self.ctx.work_set.work_units {
-            let worker = Some(Worker::new(setup_dir, work));
+            let worker = Some(Worker::new(setup_dir, extra_dir.clone(), work));
             workers.push(worker);
         }
 
@@ -293,16 +294,23 @@ impl State<Busy> {
             .all(|worker| worker.as_ref().unwrap().is_done())
     }
 
-    pub fn stop(mut self, task_id: TaskId) -> Result<Self> {
-        for worker in &mut self.ctx.workers {
-            let worker = worker.as_mut().unwrap();
-
-            if let Worker::Running(state) = worker {
-                if state.work().task_id == task_id {
-                    state.kill()?;
+    pub async fn stop(mut self, task_id: TaskId) -> Result<Self> {
+        self.ctx.workers =
+            futures::future::try_join_all(self.ctx.workers.iter_mut().map(|worker| async move {
+                match worker.take() {
+                    Some(worker) => {
+                        let mut new_worker = None;
+                        if let Worker::Running(state) = worker {
+                            if state.work().task_id == task_id {
+                                new_worker = Some(Worker::Done(state.stop().kill().await?));
+                            }
+                        }
+                        Ok::<std::option::Option<Worker>, anyhow::Error>(new_worker)
+                    }
+                    None => Ok(None),
                 }
-            }
-        }
+            }))
+            .await?;
 
         Ok(self)
     }

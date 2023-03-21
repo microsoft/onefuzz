@@ -74,35 +74,54 @@ public class JinjaTemplateAdapter {
         var project = "some project";
         var jobName = "job name";
         var buildName = "build name";
+        var account = "some account";
+        var container = Container.Parse("container");
+        var asanLog = "asan log";
+        var scarinessScore = 5;
+        var scarinessDescription = "super scary";
+        var minimizedStack = new List<string> { "minimized stack frame 0", "minimized stack frame 1" };
+        var minimizedStackSha = "abc123";
+        var minimizedStackFunctionNames = new List<string> { "minimized stack function 0", "minimized stack function 1" };
+        var minimizedStackFunctionNamesSha = "abc123";
+        var minimizedStackFunctionLines = new List<string> { "minimized stack function line 0", "minimized stack function line 1" };
+        var minimizedStackFunctionLinesSha = "abc123";
         var reportContainer = templateRenderContext?.ReportContainer ?? Container.Parse("example-container-name");
         var reportFileName = templateRenderContext?.ReportFilename ?? "example file name";
         var reproCmd = templateRenderContext?.ReproCmd ?? "onefuzz command to create a repro";
+        var toolName = "tool name";
+        var toolVersion = "tool version";
+        var onefuzzVersion = "onefuzz version";
         var report = templateRenderContext?.Report ?? new Report(
                 inputUrl.ToString(),
-                null,
+                new BlobRef(account, container, reportFileName),
                 executable,
                 crashType,
                 crashSite,
                 callStack,
                 callStackSha,
                 inputSha,
-                null,
+                asanLog,
                 taskId,
                 jobId,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
+                scarinessScore,
+                scarinessDescription,
+                minimizedStack,
+                minimizedStackSha,
+                minimizedStackFunctionNames,
+                minimizedStackFunctionNamesSha,
+                minimizedStackFunctionLines,
+                minimizedStackFunctionLinesSha,
+                toolName,
+                toolVersion,
+                onefuzzVersion,
+                reportUrl
             );
 
+        var preReqTasks = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
+        var targetExe = "target exe";
+        var targetEnv = new Dictionary<string, string> { { "key", "value" } };
+        var targetOptions = new List<string> { "option 1", "option 2" };
+        var supervisorExe = "supervisor exe";
         var task = new Task(
                 jobId,
                 taskId,
@@ -110,12 +129,71 @@ public class JinjaTemplateAdapter {
                 os,
                 templateRenderContext?.Task ?? new TaskConfig(
                     jobId,
-                    null,
+                    preReqTasks,
                     new TaskDetails(
                         taskType,
-                        duration
-                    )
-                )
+                        duration,
+                        targetExe,
+                        targetEnv,
+                        targetOptions,
+                        1,
+                        true,
+                        true,
+                        true,
+                        1,
+                        true,
+                        true,
+                        true,
+                        supervisorExe,
+                        targetEnv,
+                        targetOptions,
+                        "supervisor input market",
+                        "generator exe",
+                        targetEnv,
+                        targetOptions,
+                        "analyzer exe",
+                        targetEnv,
+                        targetOptions,
+                        ContainerType.Analysis,
+                        "stats file",
+                        StatsFormat.AFL,
+                        true,
+                        1,
+                        1,
+                        true,
+                        targetOptions,
+                        1,
+                        "coverage filter",
+                        "module allow list",
+                        "source allow list",
+                        "target assembly",
+                        "target class",
+                        "target method"
+                    ),
+                    new TaskVm(
+                        Region.Parse("westus3"),
+                        "some sku",
+                        "some image",
+                        true,
+                        1,
+                        true
+                    ),
+                    new TaskPool(
+                        1,
+                        PoolName.Parse("poolname")
+                    ),
+                    new List<TaskContainers> {
+                        new TaskContainers(ContainerType.Inputs, Container.Parse("inputs")),
+                    },
+                    targetEnv,
+                    new List<TaskDebugFlag> { TaskDebugFlag.KeepNodeOnCompletion },
+                    true
+                ),
+                new Error(ErrorCode.UNABLE_TO_FIND, new string[] { "some error message" }),
+                new Authentication("password", "public key", "private key"),
+                DateTimeOffset.UtcNow,
+                DateTimeOffset.UtcNow,
+                new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn")
             );
 
         var job = new Job(
@@ -126,8 +204,10 @@ public class JinjaTemplateAdapter {
                     jobName,
                     buildName,
                     duration,
-                    null
-                )
+                    "logs"
+                ),
+                "some error",
+                DateTimeOffset.UtcNow
             );
 
         var renderer = await NotificationsBase.Renderer.ConstructRenderer(

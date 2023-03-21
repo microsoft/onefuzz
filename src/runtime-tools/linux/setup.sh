@@ -12,7 +12,7 @@ USER_SETUP="/onefuzz/setup/setup.sh"
 TASK_SETUP="/onefuzz/bin/task-setup.sh"
 MANAGED_SETUP="/onefuzz/bin/managed.sh"
 SCALESET_SETUP="/onefuzz/bin/scaleset-setup.sh"
-DOTNET_VERSIONS=('7.0.100' '6.0.403')
+DOTNET_VERSIONS=('7.0')
 export DOTNET_ROOT=/onefuzz/tools/dotnet
 export DOTNET_CLI_HOME="$DOTNET_ROOT"
 export ONEFUZZ_ROOT=/onefuzz
@@ -146,7 +146,7 @@ if type apt > /dev/null 2> /dev/null; then
 
     for version in "${DOTNET_VERSIONS[@]}"; do
         logger "running dotnet install $version"
-        /bin/bash ./dotnet-install.sh --version "$version" --install-dir "$DOTNET_ROOT" 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
+        /bin/bash ./dotnet-install.sh --channel "$version" --install-dir "$DOTNET_ROOT" 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
     done
     rm dotnet-install.sh
 
