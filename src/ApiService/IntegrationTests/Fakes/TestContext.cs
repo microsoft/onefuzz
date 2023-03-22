@@ -27,7 +27,7 @@ public sealed class TestContext : IOnefuzzContext {
         Containers = new Containers(logTracer, Storage, ServiceConfiguration);
         Queue = new Queue(Storage, logTracer);
         RequestHandling = new RequestHandling(logTracer);
-        TaskOperations = new TaskOperations(logTracer, this);
+        TaskOperations = new TaskOperations(logTracer, cache, this);
         NodeOperations = new NodeOperations(logTracer, this);
         JobOperations = new JobOperations(logTracer, this);
         NodeTasksOperations = new NodeTasksOperations(logTracer, this);
@@ -35,7 +35,7 @@ public sealed class TestContext : IOnefuzzContext {
         NodeMessageOperations = new NodeMessageOperations(logTracer, this);
         ConfigOperations = new ConfigOperations(logTracer, this, cache);
         PoolOperations = new PoolOperations(logTracer, this);
-        ScalesetOperations = new ScalesetOperations(logTracer, this);
+        ScalesetOperations = new ScalesetOperations(logTracer, cache, this);
         ReproOperations = new ReproOperations(logTracer, this);
         Reports = new Reports(logTracer, Containers);
         UserCredentials = new UserCredentials(logTracer, ConfigOperations);
