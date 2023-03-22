@@ -4,6 +4,7 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -29,11 +30,13 @@ public interface IVmOperations {
 }
 
 public class VmOperations : IVmOperations {
-    private ILogTracer _logTracer;
-    private IOnefuzzContext _context;
+    private readonly ILogTracer _logTracer;
+    private readonly IMemoryCache _cache;
+    private readonly IOnefuzzContext _context;
 
-    public VmOperations(ILogTracer log, IOnefuzzContext context) {
+    public VmOperations(ILogTracer log, IMemoryCache cache, IOnefuzzContext context) {
         _logTracer = log;
+        _cache = cache;
         _context = context;
     }
 
@@ -312,8 +315,7 @@ public class VmOperations : IVmOperations {
 
         vmParams.NetworkProfile.NetworkInterfaces.Add(new NetworkInterfaceReference { Id = nic.Id });
 
-        var armClient = _context.Creds.ArmClient;
-        var imageOs = await image.GetOs(armClient, location);
+        var imageOs = await image.GetOs(_cache, _context.Creds.ArmClient, location);
         if (!imageOs.IsOk) {
             return OneFuzzResultVoid.Error(imageOs.ErrorV);
         }

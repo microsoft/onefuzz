@@ -4,6 +4,8 @@ using ApiService.OneFuzzLib.Orm;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Monitor;
 using Azure.ResourceManager.Monitor.Models;
+using Microsoft.Extensions.Caching.Memory;
+
 namespace Microsoft.OneFuzz.Service;
 
 public interface IScalesetOperations : IStatefulOrm<Scaleset, ScalesetState> {
@@ -40,11 +42,12 @@ public interface IScalesetOperations : IStatefulOrm<Scaleset, ScalesetState> {
 
 public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetOperations>, IScalesetOperations {
     private readonly ILogTracer _log;
+    private readonly IMemoryCache _cache;
 
-    public ScalesetOperations(ILogTracer log, IOnefuzzContext context)
+    public ScalesetOperations(ILogTracer log, IMemoryCache cache, IOnefuzzContext context)
         : base(log.WithTag("Component", "scalesets"), context) {
         _log = base._logTracer;
-
+        _cache = cache;
     }
 
     public IAsyncEnumerable<Scaleset> Search() {
@@ -446,8 +449,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         if (pool.State == PoolState.Init) {
             _logTracer.Info($"waiting for pool {scaleset.PoolName:Tag:PoolName} - {scaleset.ScalesetId:Tag:ScalesetId}");
         } else if (pool.State == PoolState.Running) {
-            var armClient = _context.Creds.ArmClient;
-            var imageOsResult = await scaleset.Image.GetOs(armClient, scaleset.Region);
+            var imageOsResult = await scaleset.Image.GetOs(_cache, _context.Creds.ArmClient, scaleset.Region);
             if (!imageOsResult.IsOk) {
                 _logTracer.Error($"failed to get OS with region: {scaleset.Region:Tag:Region} {scaleset.Image:Tag:Image} for scaleset: {scaleset.ScalesetId:Tag:ScalesetId} due to {imageOsResult.ErrorV:Tag:Error}");
                 return await SetFailed(scaleset, imageOsResult.ErrorV);

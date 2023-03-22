@@ -280,10 +280,9 @@ public class VmssOperations : IVmssOperations {
         if (vmss is not null) {
             return OneFuzzResultVoid.Ok;
         }
-        _log.Info($"creating VM name: {name:Tag:VmssName} {vmSku:Tag:VmSku} {vmCount:Tag:VmCount} {image:Tag:Image} {networkId:Tag:Subnet} {spotInstance:Tag:SpotInstance}");
-        var client = _creds.ArmClient;
 
-        var getOsResult = await image.GetOs(client, location);
+        _log.Info($"creating VM name: {name:Tag:VmssName} {vmSku:Tag:VmSku} {vmCount:Tag:VmCount} {image:Tag:Image} {networkId:Tag:Subnet} {spotInstance:Tag:SpotInstance}");
+        var getOsResult = await image.GetOs(_cache, _creds.ArmClient, location);
         if (!getOsResult.IsOk) {
             return getOsResult.ErrorV;
         }

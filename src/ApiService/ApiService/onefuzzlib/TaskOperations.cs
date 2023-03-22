@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -39,11 +40,11 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
 }
 
 public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITaskOperations {
+    private readonly IMemoryCache _cache;
 
-
-    public TaskOperations(ILogTracer log, IOnefuzzContext context)
+    public TaskOperations(ILogTracer log, IMemoryCache cache, IOnefuzzContext context)
         : base(log, context) {
-
+        _cache = cache;
     }
 
     public async Async.Task<Task?> GetByTaskId(Guid taskId) {
@@ -189,15 +190,13 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
         Os os;
         if (config.Vm != null) {
-            var armClient = _context.Creds.ArmClient;
-            var osResult = await config.Vm.Image.GetOs(armClient, config.Vm.Region);
+            var osResult = await config.Vm.Image.GetOs(_cache, _context.Creds.ArmClient, config.Vm.Region);
             if (!osResult.IsOk) {
                 return OneFuzzResult<Task>.Error(osResult.ErrorV);
             }
             os = osResult.OkV;
         } else if (config.Pool != null) {
             var pool = await _context.PoolOperations.GetByName(config.Pool.PoolName);
-
             if (!pool.IsOk) {
                 return OneFuzzResult<Task>.Error(pool.ErrorV);
             }
