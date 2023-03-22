@@ -72,7 +72,7 @@ public abstract record ImageReference {
 
     // region is not part of the key as it should not make a difference to the OS type
     // it is only used for marketplace images
-    private record CacheKey(string image);
+    private sealed record CacheKey(string image);
     public Task<OneFuzzResult<Os>> GetOs(IMemoryCache cache, ArmClient armClient, Region region) {
         return cache.GetOrCreateAsync(new CacheKey(ToString()), entry => {
             // this should essentially never change
