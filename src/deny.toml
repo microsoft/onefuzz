@@ -15,7 +15,8 @@ unmaintained = "deny"
 unsound = "deny"
 yanked = "deny"
 ignore = [
-    "RUSTSEC-2022-0048", # xml-rs is unmaintained
+    "RUSTSEC-2023-0018",
+    "RUSTSEC-2020-0016", # There is a PR currently open to stop using the unmaintained crate: https://github.com/servo/ipc-channel/pull/302
 ]
 
 [bans]

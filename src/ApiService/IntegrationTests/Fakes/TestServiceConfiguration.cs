@@ -35,6 +35,7 @@ public sealed class TestServiceConfiguration : IServiceConfig {
     public string? OneFuzzInstanceName => "UnitTestInstance";
 
     public string? OneFuzzKeyvault => "TestOneFuzzKeyVault";
+    public string? OneFuzzInstance => "https://onefuzz-integration-test.example.com";
 
     // -- Remainder not implemented --
 
@@ -57,7 +58,6 @@ public sealed class TestServiceConfiguration : IServiceConfig {
 
     public string? DiagnosticsAzureBlobRetentionDays => throw new System.NotImplementedException();
 
-    public string? OneFuzzInstance => throw new System.NotImplementedException();
 
     public string? OneFuzzMonitor => throw new System.NotImplementedException();
 

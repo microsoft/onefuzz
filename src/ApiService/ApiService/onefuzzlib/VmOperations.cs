@@ -152,7 +152,6 @@ public class VmOperations : IVmOperations {
         return;
     }
 
-
     public async Task<OneFuzzResult<bool>> AddExtensions(Vm vm, Dictionary<string, VirtualMachineExtensionData> extensions) {
         var statuses = new List<(string extName, string state)>();
         var toCreate = new List<KeyValuePair<string, VirtualMachineExtensionData>>();
@@ -212,7 +211,6 @@ public class VmOperations : IVmOperations {
             var vm = await _context.Creds.GetResourceGroupResource().GetVirtualMachineAsync(
                 vmName
             );
-
             return (await vm.Value.GetVirtualMachineExtensionAsync(extensionName)).Value.Data;
         } catch (RequestFailedException ex) {
             _logTracer.Info($"extension does not exist {ex.Message:Tag:Error}");

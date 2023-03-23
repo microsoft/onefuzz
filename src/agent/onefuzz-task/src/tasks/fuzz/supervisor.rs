@@ -402,6 +402,8 @@ mod tests {
                     scaleset_name: None,
                 },
                 tags: Default::default(),
+                from_agent_to_task_endpoint: "/".to_string(),
+                from_task_to_agent_endpoint: "/".to_string(),
             },
         };
 

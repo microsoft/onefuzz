@@ -38,7 +38,6 @@ public class Proxy {
            ) {
             return new ProxyGetResult(null, Forward: forward);
         }
-
         return new ProxyGetResult(proxy.Ip, forward);
     }
 

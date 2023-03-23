@@ -1003,6 +1003,7 @@ public record TaskUnitConfig(
     // Deprecated. Retained for processing old table data.
     public string? CoverageFilter { get; set; }
 
+    public bool? PreserveExistingOutputs { get; set; }
     public string? ModuleAllowlist { get; set; }
     public string? SourceAllowlist { get; set; }
     public string? TargetAssembly { get; set; }
