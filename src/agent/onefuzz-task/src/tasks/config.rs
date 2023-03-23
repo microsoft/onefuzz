@@ -71,7 +71,7 @@ pub struct CommonConfig {
 
     #[serde(default)]
     pub tags: HashMap<String, String>,
-    
+
     pub from_agent_to_task_endpoint: String,
     pub from_task_to_agent_endpoint: String,
 }
