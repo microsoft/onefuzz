@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Runtime.CompilerServices;
+using System.Text.Json;
 using Azure.Data.Tables;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -8,11 +9,22 @@ namespace ApiService.OneFuzzLib.Orm {
         // and handles escaping the interpolated values properly. It also handles quoting the values
         // where needed, so use {string} and not '{string}'.
 
+        public static string CreateQueryFilter(FormattableString input) {
+            var args = input.GetArguments();
+
+            for (int i = 0; i < args.Length; i++) {
+                if (args[i] is Guid g) {
+                    args[i] = g.ToString();
+                }
+            }
+
+            return TableClient.CreateQueryFilter(FormattableStringFactory.Create(input.Format, args));
+        }
         public static string PartitionKey(string partitionKey)
-            => TableClient.CreateQueryFilter($"PartitionKey eq {partitionKey}");
+            => CreateQueryFilter($"PartitionKey eq {partitionKey}");
 
         public static string RowKey(string rowKey)
-            => TableClient.CreateQueryFilter($"RowKey eq {rowKey}");
+            => CreateQueryFilter($"RowKey eq {rowKey}");
 
         public static string PartitionKeys(IEnumerable<string> partitionKeys)
             => Or(partitionKeys.Select(PartitionKey));
@@ -21,7 +33,7 @@ namespace ApiService.OneFuzzLib.Orm {
             => Or(rowKeys.Select(RowKey));
 
         public static string SingleEntity(string partitionKey, string rowKey)
-            => TableClient.CreateQueryFilter($"(PartitionKey eq {partitionKey}) and (RowKey eq {rowKey})");
+            => CreateQueryFilter($"(PartitionKey eq {partitionKey}) and (RowKey eq {rowKey})");
 
         public static string Or(IEnumerable<string> queries)
             // subqueries should already be properly escaped
@@ -54,21 +66,21 @@ namespace ApiService.OneFuzzLib.Orm {
         public static string TimeRange(DateTimeOffset min, DateTimeOffset max) {
             // NB: this uses the auto-populated Timestamp property, and will result in a table scan
             // TODO: should this be inclusive at the endpoints?
-            return TableClient.CreateQueryFilter($"Timestamp lt {max} and Timestamp gt {min}");
+            return CreateQueryFilter($"Timestamp lt {max} and Timestamp gt {min}");
         }
 
         public static string TimestampNewerThan(DateTimeOffset t) {
-            return TableClient.CreateQueryFilter($"Timestamp gt {t}");
+            return CreateQueryFilter($"Timestamp gt {t}");
         }
         public static string NewerThan(string field, DateTimeOffset t) {
-            return $"{field} gt {TableClient.CreateQueryFilter($"{t}")}";
+            return $"{field} gt {CreateQueryFilter($"{t}")}";
         }
         public static string TimestampOlderThan(DateTimeOffset t) {
-            return TableClient.CreateQueryFilter($"Timestamp lt {t}");
+            return CreateQueryFilter($"Timestamp lt {t}");
         }
 
         public static string OlderThan(string field, DateTimeOffset t) {
-            return $"{field} lt {TableClient.CreateQueryFilter($"{t}")}";
+            return $"{field} lt {CreateQueryFilter($"{t}")}";
         }
 
         public static string StartsWith(string property, string prefix) {

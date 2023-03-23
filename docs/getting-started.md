@@ -30,7 +30,7 @@ On a host with the [Azure CLI logged
 in](https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli?view=azure-cli-latest),
 do the following:
 
-```
+```console
 unzip onefuzz-deployment-$VERSION.zip
 pip install -r requirements.txt
 chmod +x deploy.py
@@ -40,7 +40,7 @@ chmod +x deploy.py
 When running `deploy.py` the first time for an instance, you will be prompted
 to follow a manual step to initialize your CLI config.
 
-The `$NSG_CONFIG_FILE` is a required parameter that specifies the 'allow rules' for the OneFuzz Network Security Group. A default `config.json` is provided in the deployment zip.
+The `$NSG_CONFIG_FILE` is a required parameter that specifies the 'allow rules' for the OneFuzz Network Security Group as well as other basic OneFuzz settings. A `config.json` file is provided with default NSG values. 
 This 'allow' config resembles the following:
 
 ```json
@@ -52,7 +52,45 @@ This 'allow' config resembles the following:
 }
 ```
 
-Future updates can be made to this configuration via the OneFuzz CLI. 
+>#### Note: 
+> - Line #5 in the example `config.json` inside of the deployment.zip has the parameter for `"cli_client_id": "",` 
+>   - You'll need to add your CLI app registration ID to this parameter's value for deployments and upgrade deployments
+>    **unless** you're deploying and passing the `--auto_create_cli_app` flag to create a new App ID during the deployment.
+>   - If you wanted to create a new App ID at deployment and use this flag, you need to delete this line to remove the `cli_client_id` key from your config file.
+
+**Example deployment config.json:**
+
+```json
+{
+    "tenant_id": "05c88c2c-55f6-4a51-81db-cdbbf759fa75",
+    "tenant_domain": "azurewebsites.net",
+    "multi_tenant_domain": "",
+    "cli_client_id": "6e5d9a35-39ca-4978-8fe3-5b84b0b8806a",
+    "proxy_nsg_config": {
+        "allowed_ips": [
+            "*"
+        ],
+        "allowed_service_tags": []
+    }
+}
+```
+
+**Example config.json for a deployment where `--auto_create_cli_app` is being used:**
+
+```json
+{
+    "tenant_id": "e6424a5f-2625-42a4-8d94-c9677a4d96fc",
+    "tenant_domain": "azurewebsites.net",
+    "multi_tenant_domain": "",
+    "proxy_nsg_config": {
+        "allowed_ips": [
+            "*"
+        ],
+        "allowed_service_tags": []
+    }
+}
+```
+Future updates can be made to this configuration via the OneFuzz CLI.
 
 ## Install the CLI
 
@@ -61,7 +99,7 @@ from the [Latest Release of OneFuzz](https://github.com/microsoft/onefuzz/releas
 
 If you're using the SDK, install via:
 
-```
+```console
 pip install ./onefuzz*.whl
 ```
 
