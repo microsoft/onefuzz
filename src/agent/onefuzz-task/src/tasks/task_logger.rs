@@ -8,13 +8,13 @@ use azure_core::StatusCode;
 use azure_storage::StorageCredentials;
 use azure_storage_blobs::container::operations::ListBlobsResponse;
 use azure_storage_blobs::prelude::*;
-use futures::TryStreamExt;
+use futures::{TryStreamExt, TryFutureExt};
 use onefuzz_telemetry::{LogTrace, LoggingEvent};
 use reqwest::Url;
 use std::{path::PathBuf, time::Duration};
 use uuid::Uuid;
 
-use tokio::sync::broadcast::{error::TryRecvError, Receiver};
+use tokio::{sync::broadcast::{error::TryRecvError, Receiver}, task::JoinError};
 
 const LOGS_BUFFER_SIZE: usize = 100;
 const MAX_LOG_SIZE: u64 = 100000000; // 100 MB
@@ -422,8 +422,8 @@ impl TaskLogger {
                     }) => break,
                     Ok(c) => c,
                     Err(e) => {
-                        error!("{}", e);
-                        break;
+                        error!("task logger failure {}", e);
+                        return Err(e);
                     }
                 };
             }
@@ -440,7 +440,10 @@ pub struct SpawnedLogger {
 
 impl SpawnedLogger {
     pub async fn flush_and_stop(self, timeout: Duration) -> Result<()> {
-        let _ = tokio::time::timeout(timeout, self.logger_handle).await;
+        if let Ok(Err(e)) =  tokio::time::timeout(timeout, self.logger_handle).await {
+            error!("task logger failure {}", e);
+            return Err(e.into());
+        }
         Ok(())
     }
 }
