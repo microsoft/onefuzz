@@ -979,7 +979,6 @@ class Tasks(Endpoint):
         colocate: bool = False,
         report_list: Optional[List[str]] = None,
         minimized_stack_depth: Optional[int] = None,
-        function_allowlist: Optional[str] = None,
         module_allowlist: Optional[str] = None,
         source_allowlist: Optional[str] = None,
     ) -> models.Task:
@@ -1057,7 +1056,6 @@ class Tasks(Endpoint):
                 report_list=report_list,
                 preserve_existing_outputs=preserve_existing_outputs,
                 minimized_stack_depth=minimized_stack_depth,
-                function_allowlist=function_allowlist,
                 module_allowlist=module_allowlist,
                 source_allowlist=source_allowlist,
             ),
@@ -1896,10 +1894,10 @@ class Onefuzz:
     def config(
         self,
         endpoint: Optional[str] = None,
-        authority: Optional[str] = None,
+        override_authority: Optional[str] = None,
         client_id: Optional[str] = None,
+        override_tenant_domain: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
-        tenant_domain: Optional[str] = None,
         reset: Optional[bool] = None,
     ) -> BackendConfig:
         """Configure onefuzz CLI"""
@@ -1924,14 +1922,14 @@ class Onefuzz:
                     "Missing HTTP Authentication"
                 )
             self._backend.config.endpoint = endpoint
-        if authority is not None:
-            self._backend.config.authority = authority
         if client_id is not None:
             self._backend.config.client_id = client_id
+        if override_authority is not None:
+            self._backend.config.authority = override_authority
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
-        if tenant_domain is not None:
-            self._backend.config.tenant_domain = tenant_domain
+        if override_tenant_domain is not None:
+            self._backend.config.tenant_domain = override_tenant_domain
         self._backend.app = None
         self._backend.save_config()
 

@@ -44,7 +44,7 @@ jobs:
         uses: dtolnay/rust-toolchain@55c7845fad90d0ae8b2e83715cb900e5e861e8cb # pinned latest master as of 2022-10-08
         # note: keep this in sync with .devcontainer/Dockerfile
         with:
-          toolchain: 1.67
+          toolchain: 1.68
           components: clippy, rustfmt, llvm-tools-preview
       - name: Get Rust version & build version
         shell: bash
@@ -351,7 +351,10 @@ jobs:
       - uses: actions/checkout@v3
       - uses: azure/CLI@v1
         with:
-          inlineScript: az bicep build --file src/deployment/azuredeploy.bicep --stdout > /dev/null
+          inlineScript: |
+            az config set bicep.use_binary_from_path=false
+            az bicep install
+            az bicep build --file src/deployment/azuredeploy.bicep --stdout > /dev/null
   dotnet-fuzzing-tools-linux:
     runs-on: ubuntu-20.04
     steps:
@@ -506,10 +509,6 @@ jobs:
           mkdir -p artifacts/linux-trivial-crash
           (cd trivial-crash ; make )
           cp -r trivial-crash/fuzz.exe trivial-crash/seeds artifacts/linux-trivial-crash
-
-          mkdir -p artifacts/linux-libfuzzer-dotnet
-          (cd libfuzzer-dotnet; make)
-          cp -r libfuzzer-dotnet/my-fuzzer libfuzzer-dotnet/inputs artifacts/linux-libfuzzer-dotnet/
 
           mkdir -p artifacts/linux-libfuzzer-dlopen
           (cd libfuzzer-dlopen; make)

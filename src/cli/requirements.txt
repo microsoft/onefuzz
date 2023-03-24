@@ -12,16 +12,7 @@ azure-applicationinsights==0.1.0
 tenacity==8.0.1
 docstring_parser==0.8.1
 azure-identity==1.10.0
-azure-cli-core==2.43.0
-# packaging is required but not specified by azure-cli-core
-packaging==21.3
-# urllib3[secure] needs to be specifically stated for azure-cli-core
-urllib3[secure]>=1.26.8
-# iDNA needs to be specifically stated for azure-cli-core
-idna<3,>=2.10
-# cryptography needs to be pinned to the version used by azure-cli-core
-cryptography<3.4,>=3.3.2
-# PyJWT needs to be pinned to the version used by azure-cli-core
+azure-cli-core==2.46.0
 PyJWT>=2.4.0
 # install rsa version >=4.7 to fix CVE-2020-25658
 rsa>=4.7

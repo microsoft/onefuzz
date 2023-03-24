@@ -54,20 +54,21 @@ enum Opt {
 
 #[derive(Parser, Debug)]
 struct RunOpt {
-    #[clap(short, long = "--config", parse(from_os_str))]
+    #[arg(short, long = "config")]
     config_path: Option<PathBuf>,
+
     /// re-executes as a child process, recording stdout/stderr to files in
     /// the specified directory
-    #[clap(short, long = "--redirect-output", parse(from_os_str))]
+    #[arg(short, long = "redirect-output")]
     redirect_output: Option<PathBuf>,
 
-    #[clap(long = "--machine_id")]
+    #[arg(long = "machine_id")]
     machine_id: Option<Uuid>,
 
-    #[clap(long = "--machine_name")]
+    #[arg(long = "machine_name")]
     machine_name: Option<String>,
 
-    #[clap(long = "--reset_lock", takes_value = false, action = ArgAction::SetTrue )]
+    #[arg(long = "reset_lock", action = ArgAction::SetTrue )]
     reset_node_lock: bool,
 }
 

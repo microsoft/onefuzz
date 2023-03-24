@@ -120,10 +120,6 @@ pub fn find_coverage_sites(
     let mut offsets = BTreeSet::new();
 
     for function in debuginfo.functions() {
-        if !allowlist.functions.is_allowed(&function.name) {
-            continue;
-        }
-
         let blocks = block::sweep_region(module, &debuginfo, function.offset, function.size)?;
 
         for block in &blocks {
@@ -133,11 +129,7 @@ pub fn find_coverage_sites(
 
                     // Apply allowlists per block, to account for inlining. The `location` values
                     // here describe the top of the inline-inclusive call stack.
-                    if !allowlist.functions.is_allowed(&path) {
-                        continue;
-                    }
-
-                    if !allowlist.source_files.is_allowed(&path) {
+                    if !allowlist.source_files.is_allowed(path) {
                         continue;
                     }
 

@@ -5,15 +5,18 @@ use std::{
     path::{Path, PathBuf},
     process::{Child, ChildStderr, ChildStdout, Command, Stdio},
     thread::{self, JoinHandle},
+    time::Duration,
 };
 
 use anyhow::{format_err, Context as AnyhowContext, Result};
 use downcast_rs::Downcast;
+use ipc_channel::ipc::{IpcOneShotServer, IpcReceiver, IpcSender};
 use onefuzz::{
+    ipc::IpcMessageKind,
     machine_id::MachineIdentity,
     process::{ExitStatus, Output},
 };
-use tokio::fs;
+use tokio::{fs, task, time::timeout};
 
 use crate::buffer::TailBuffer;
 use crate::work::*;
@@ -41,13 +44,19 @@ pub enum WorkerEvent {
 pub enum Worker {
     Ready(State<Ready>),
     Running(State<Running>),
+    Stopping(State<Stopping>),
     Done(State<Done>),
 }
 
 impl Worker {
-    pub fn new(setup_dir: impl AsRef<Path>, work: WorkUnit) -> Self {
+    pub fn new(
+        setup_dir: impl AsRef<Path>,
+        extra_dir: Option<impl AsRef<Path>>,
+        work: WorkUnit,
+    ) -> Self {
         let ctx = Ready {
             setup_dir: PathBuf::from(setup_dir.as_ref()),
+            extra_dir: extra_dir.map(|dir| PathBuf::from(dir.as_ref())),
         };
         let state = State { ctx, work };
         state.into()
@@ -85,6 +94,10 @@ impl Worker {
                 }
                 Waited::Running(state) => state.into(),
             },
+            Worker::Stopping(state) => {
+                let state = state.kill().await?;
+                state.into()
+            }
             Worker::Done(state) => {
                 // Nothing to do for workers that are done.
                 state.into()
@@ -98,10 +111,18 @@ impl Worker {
 #[derive(Debug)]
 pub struct Ready {
     setup_dir: PathBuf,
+    extra_dir: Option<PathBuf>,
 }
 
 #[derive(Debug)]
 pub struct Running {
+    child: Box<dyn IWorkerChild>,
+    _from_agent_to_task: IpcSender<IpcMessageKind>,
+    from_task_to_agent: IpcReceiver<IpcMessageKind>,
+}
+
+#[derive(Debug)]
+pub struct Stopping {
     child: Box<dyn IWorkerChild>,
 }
 
@@ -114,6 +135,7 @@ pub trait Context {}
 
 impl Context for Ready {}
 impl Context for Running {}
+impl Context for Stopping {}
 impl Context for Done {}
 
 #[derive(Debug)]
@@ -130,10 +152,72 @@ impl<C: Context> State<C> {
 
 impl State<Ready> {
     pub async fn run(self, runner: &mut dyn IWorkerRunner) -> Result<State<Running>> {
-        let child = runner.run(&self.ctx.setup_dir, &self.work).await?;
+        // Create and pass the server here
+        let (from_agent_to_task_server, from_agent_to_task_endpoint) = IpcOneShotServer::new()?;
+        let (from_task_to_agent_server, from_task_to_agent_endpoint) = IpcOneShotServer::new()?;
+        let child = runner
+            .run(
+                &self.ctx.setup_dir,
+                self.ctx.extra_dir,
+                &self.work,
+                from_agent_to_task_endpoint,
+                from_task_to_agent_endpoint,
+            )
+            .await?;
+
+        // Accept is a blocking call:
+        //      * Accept calls OsIpcOneShotServer::accept - https://doc.servo.org/src/ipc_channel/ipc.rs.html#722-737
+        //      * OsIpcOneShotServer::accept calls OsIpcReceiver::recv - https://doc.servo.org/src/ipc_channel/ipc.rs.html#722-737
+        //      * OsIpcReceiver::recv is a blocking call - https://doc.servo.org/src/ipc_channel/platform/unix/mod.rs.html#130-133
+        // This issue is tracking a non-blocking accept - https://github.com/servo/ipc-channel/issues/307
+
+        info!("waiting for client_sender_server.accept()");
+
+        let (_, from_agent_to_task): (_, IpcSender<IpcMessageKind>) = match timeout(
+            Duration::from_secs(30),
+            task::spawn_blocking(move || from_agent_to_task_server.accept()),
+        )
+        .await
+        {
+            Err(e) => {
+                error!("timeout waiting for client_sender_server.accept(): {:?}", e);
+                return Err(format_err!(
+                    "timeout waiting for client_sender_server.accept(): {:?}",
+                    e
+                ));
+            }
+            Ok(res) => res??,
+        };
+
+        info!("waiting for server_receiver_server.accept()");
+
+        let (_, from_task_to_agent): (_, IpcReceiver<IpcMessageKind>) = match timeout(
+            Duration::from_secs(30),
+            task::spawn_blocking(move || from_task_to_agent_server.accept()),
+        )
+        .await
+        {
+            Err(e) => {
+                error!(
+                    "timeout waiting for server_receiver_server.accept(): {:?}",
+                    e
+                );
+                return Err(format_err!(
+                    "timeout waiting for server_receiver_server.accept(): {:?}",
+                    e
+                ));
+            }
+            Ok(res) => res??,
+        };
+
+        info!("IPC connection bootstrapped");
 
         let state = State {
-            ctx: Running { child },
+            ctx: Running {
+                child,
+                _from_agent_to_task: from_agent_to_task,
+                from_task_to_agent,
+            },
             work: self.work,
         };
 
@@ -143,6 +227,10 @@ impl State<Ready> {
 
 impl State<Running> {
     pub fn wait(mut self) -> Result<Waited> {
+        while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
+            info!("received message from server_receiver: {:?}", res);
+        }
+
         let waited = self.ctx.child.try_wait()?;
 
         if let Some(output) = waited {
@@ -151,14 +239,72 @@ impl State<Running> {
                 ctx,
                 work: self.work,
             };
+
             Ok(Waited::Done(state))
         } else {
             Ok(Waited::Running(self))
         }
     }
 
-    pub fn kill(&mut self) -> Result<()> {
-        self.ctx.child.kill()
+    pub fn stop(mut self) -> State<Stopping> {
+        let c = std::mem::replace(&mut self.ctx.child, Box::new(NoopChild {}));
+
+        State {
+            ctx: Stopping { child: c },
+            work: self.work,
+        }
+    }
+}
+
+impl Drop for Running {
+    fn drop(&mut self) {
+        // Drain the channel
+        while let Ok(res) = self.from_task_to_agent.try_recv() {
+            info!("received message from server_receiver: {:?}", res);
+        }
+    }
+}
+
+impl State<Stopping> {
+    pub async fn kill(mut self) -> Result<State<Done>> {
+        match timeout(Duration::from_secs(90), async {
+            loop {
+                match self.ctx.child.try_wait() {
+                    Ok(Some(output)) => {
+                        return Ok(output);
+                    }
+                    Ok(None) => { /* Still waiting */ }
+                    Err(e) => {
+                        error!("failed to wait for graceful shutdown: {:?}", e);
+                        return Err(e);
+                    }
+                };
+                info!("Agent didn't respond yet, trying again in 1 second...");
+                tokio::time::sleep(Duration::from_secs(1)).await;
+            }
+        })
+        .await
+        {
+            Ok(Ok(output)) => {
+                let ctx = Done { output };
+                Ok(State {
+                    ctx,
+                    work: self.work,
+                })
+            }
+            Err(e) => {
+                error!("Time out while shutting down task: {:?}", e);
+                error!("Forcefully killing task");
+                self.ctx.child.kill()?;
+                Err(e.into())
+            }
+            Ok(Err(e)) => {
+                error!("Error shutting down task: {:?}", e);
+                error!("Forcefully killing task");
+                self.ctx.child.kill()?;
+                Err(e)
+            }
+        }
     }
 }
 
@@ -185,11 +331,19 @@ macro_rules! impl_from_state_for_worker {
 
 impl_from_state_for_worker!(Ready);
 impl_from_state_for_worker!(Running);
+impl_from_state_for_worker!(Stopping);
 impl_from_state_for_worker!(Done);
 
 #[async_trait]
 pub trait IWorkerRunner: Downcast {
-    async fn run(&self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>>;
+    async fn run(
+        &self,
+        setup_dir: &Path,
+        extra_dir: Option<PathBuf>,
+        work: &WorkUnit,
+        from_agent_to_task_endpoint: String,
+        from_task_to_agent_endpoint: String,
+    ) -> Result<Box<dyn IWorkerChild>>;
 }
 
 impl_downcast!(IWorkerRunner);
@@ -214,7 +368,14 @@ impl WorkerRunner {
 
 #[async_trait]
 impl IWorkerRunner for WorkerRunner {
-    async fn run(&self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
+    async fn run(
+        &self,
+        setup_dir: &Path,
+        extra_dir: Option<PathBuf>,
+        work: &WorkUnit,
+        from_agent_to_task_endpoint: String,
+        from_task_to_agent_endpoint: String,
+    ) -> Result<Box<dyn IWorkerChild>> {
         let working_dir = work.working_dir(self.machine_identity.machine_id)?;
 
         debug!("worker working dir = {}", working_dir.display());
@@ -235,6 +396,16 @@ impl IWorkerRunner for WorkerRunner {
         config.insert(
             "machine_identity".to_string(),
             serde_json::to_value(&self.machine_identity)?,
+        );
+
+        config.insert(
+            "from_agent_to_task_endpoint".to_string(),
+            serde_json::to_value(&from_agent_to_task_endpoint)?,
+        );
+
+        config.insert(
+            "from_task_to_agent_endpoint".to_string(),
+            serde_json::to_value(&from_task_to_agent_endpoint)?,
         );
 
         let config_path = work.config_path(self.machine_identity.machine_id)?;
@@ -260,6 +431,10 @@ impl IWorkerRunner for WorkerRunner {
         cmd.arg("managed");
         cmd.arg("config.json");
         cmd.arg(setup_dir);
+        if let Some(extra_dir) = extra_dir {
+            cmd.arg(extra_dir);
+        }
+
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 
@@ -320,6 +495,19 @@ impl RedirectedChild {
         let streams = Some(StreamReaderThreads::new(stderr, stdout));
 
         Ok(Self { child, streams })
+    }
+}
+
+#[derive(Debug)]
+struct NoopChild {}
+
+impl IWorkerChild for NoopChild {
+    fn try_wait(&mut self) -> Result<Option<Output>> {
+        Ok(None)
+    }
+
+    fn kill(&mut self) -> Result<()> {
+        Ok(())
     }
 }
 

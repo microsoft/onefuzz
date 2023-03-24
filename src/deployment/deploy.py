@@ -147,12 +147,10 @@ class Client:
         create_registration: bool,
         migrations: List[str],
         export_appinsights: bool,
-        multi_tenant_domain: str,
         upgrade: bool,
         subscription_id: Optional[str],
         admins: List[UUID],
         allowed_aad_tenants: List[UUID],
-        cli_app_id: str,
         auto_create_cli_app: bool,
         host_dotnet_on_windows: bool,
         enable_profiler: bool,
@@ -169,7 +167,6 @@ class Client:
         self.instance_specific = instance_specific
         self.third_party = third_party
         self.create_registration = create_registration
-        self.multi_tenant_domain = multi_tenant_domain
         self.custom_domain = custom_domain
         self.upgrade = upgrade
         self.results: Dict = {
@@ -183,16 +180,17 @@ class Client:
 
         self.arm_template = bicep_to_arm(bicep_template)
 
-        self.cli_app_id = cli_app_id
         self.auto_create_cli_app = auto_create_cli_app
         self.host_dotnet_on_windows = host_dotnet_on_windows
         self.enable_profiler = enable_profiler
 
         self.rules: List[NsgRule] = []
 
+        self.cli_app_id = ""
+        self.authority = ""
         self.tenant_id = ""
         self.tenant_domain = ""
-        self.authority = ""
+        self.multi_tenant_domain = ""
 
         self.cli_config: Dict[str, Union[str, UUID]] = {
             "client_id": "",
@@ -400,36 +398,41 @@ class Client:
 
         (password_id, password) = self.create_password(app["id"])
 
-        cli_app = get_application(
-            app_id=uuid.UUID(self.cli_app_id),
-            subscription_id=self.get_subscription_id(),
-        )
+        try:
+            cli_app = get_application(
+                app_id=uuid.UUID(self.cli_app_id),
+                subscription_id=self.get_subscription_id(),
+            )
+        except Exception as err:
+            cli_app = None
+            logger.info(
+                "Could not find the default CLI application under the current "
+                "subscription."
+            )
+            logger.debug(f"Error finding CLI application due to: {err}")
+        if self.auto_create_cli_app:
+            logger.info("auto_create_cli_app specified, creating a new CLI application")
+            app_info = register_application(
+                "onefuzz-cli",
+                self.application_name,
+                OnefuzzAppRole.CliClient,
+                self.get_subscription_id(),
+            )
 
-        if not cli_app:
-            if self.auto_create_cli_app:
-                logger.info(
-                    "Could not find the default CLI application under the current "
-                    "subscription and auto_create specified, creating a new one"
+            try:
+                cli_app = get_application(
+                    app_id=app_info.client_id,
+                    subscription_id=self.get_subscription_id(),
                 )
-                app_info = register_application(
-                    "onefuzz-cli",
-                    self.application_name,
-                    OnefuzzAppRole.CliClient,
-                    self.get_subscription_id(),
-                )
-
-                self.cli_config = {
-                    "client_id": app_info.client_id,
-                    "authority": self.authority,
-                }
-            else:
+                self.cli_app_id = str(app_info.client_id)
+                logger.info(f"New CLI app created - cli_app_id : {self.cli_app_id}")
+            except Exception as err:
                 logger.error(
-                    "error deploying. could not find specified CLI app registrion."
-                    "use flag --auto_create_cli_app to automatically create CLI registration"
-                    "or specify a correct app id with --cli_app_id."
+                    f"Unable to determine new 'cli_app_id' for new app registration: {err} "
                 )
                 sys.exit(1)
-        else:
+
+        if cli_app:
             onefuzz_cli_app = cli_app
             authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
 
@@ -469,8 +472,15 @@ class Client:
                 OnefuzzAppRole.ManagedNode,
             )
 
-        self.results["client_id"] = app["appId"]
-        self.results["client_secret"] = password
+            self.results["client_id"] = app["appId"]
+            self.results["client_secret"] = password
+        else:
+            logger.error(
+                "error deploying. could not find specified CLI app registrion."
+                "use flag --auto_create_cli_app to automatically create CLI registration"
+                "or specify a correct app id with --cli_app_id."
+            )
+            sys.exit(1)
 
     def update_existing_app_registration(
         self, app: Dict[str, Any], app_roles: List[Dict[str, Any]]
@@ -779,7 +789,10 @@ class Client:
                 config_template = json.load(template_handle)
 
             try:
-                config = Config(config_template)
+                if self.auto_create_cli_app:
+                    config = Config(config_template, True)
+                else:
+                    config = Config(config_template)
                 self.rules = parse_rules(config)
 
                 ## Values provided via the CLI will override what's in the config.json
@@ -791,8 +804,9 @@ class Client:
                     self.tenant_domain = config.tenant_domain
                 if self.multi_tenant_domain == "":
                     self.multi_tenant_domain = config.multi_tenant_domain
-                if self.cli_app_id == "":
-                    self.cli_app_id = config.cli_client_id
+                if not self.cli_app_id:
+                    if not self.auto_create_cli_app:
+                        self.cli_app_id = config.cli_client_id
 
             except Exception as ex:
                 logging.info(
@@ -1269,12 +1283,6 @@ def main() -> None:
         help="enable appinsight log export",
     )
     parser.add_argument(
-        "--multi_tenant_domain",
-        type=str,
-        default="",
-        help="enable multi-tenant authentication with this tenant domain",
-    )
-    parser.add_argument(
         "--subscription_id",
         type=str,
     )
@@ -1294,12 +1302,6 @@ def main() -> None:
         type=UUID,
         nargs="*",
         help="Set additional AAD tenants beyond the tenant the app is deployed in",
-    )
-    parser.add_argument(
-        "--cli_app_id",
-        type=str,
-        default="",
-        help="CLI App Registration to be used during deployment.",
     )
     parser.add_argument(
         "--auto_create_cli_app",
@@ -1348,12 +1350,10 @@ def main() -> None:
         create_registration=args.create_pool_registration,
         migrations=args.apply_migrations,
         export_appinsights=args.export_appinsights,
-        multi_tenant_domain=args.multi_tenant_domain,
         upgrade=args.upgrade,
         subscription_id=args.subscription_id,
         admins=args.set_admins,
         allowed_aad_tenants=args.allowed_aad_tenants or [],
-        cli_app_id=args.cli_app_id,
         auto_create_cli_app=args.auto_create_cli_app,
         host_dotnet_on_windows=args.host_dotnet_on_windows,
         enable_profiler=args.enable_profiler,

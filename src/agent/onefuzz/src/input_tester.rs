@@ -27,6 +27,7 @@ const CRASH_SITE_UNAVAILABLE: &str = "<crash site unavailable>";
 
 pub struct Tester<'a> {
     setup_dir: &'a Path,
+    extra_dir: Option<&'a Path>,
     exe_path: &'a Path,
     arguments: &'a [String],
     environ: &'a HashMap<String, String>,
@@ -56,6 +57,7 @@ pub struct TestResult {
 impl<'a> Tester<'a> {
     pub fn new(
         setup_dir: &'a Path,
+        extra_dir: Option<&'a Path>,
         exe_path: &'a Path,
         arguments: &'a [String],
         environ: &'a HashMap<String, String>,
@@ -63,6 +65,7 @@ impl<'a> Tester<'a> {
     ) -> Self {
         Self {
             setup_dir,
+            extra_dir,
             exe_path,
             arguments,
             environ,
@@ -298,7 +301,10 @@ impl<'a> Tester<'a> {
                 .input_path(input_file)
                 .target_exe(self.exe_path)
                 .target_options(self.arguments)
-                .setup_dir(self.setup_dir);
+                .setup_dir(self.setup_dir)
+                .set_optional(self.extra_dir.as_ref(), |expand, extra_dir| {
+                    expand.extra_dir(extra_dir)
+                });
 
             let argv = expand.evaluate(self.arguments)?;
             let mut env: HashMap<String, String> = HashMap::new();

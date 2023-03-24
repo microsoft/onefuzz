@@ -46,6 +46,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
         config.target_options.clone(),
         config.target_env.clone(),
         &config.common.setup_dir,
+        config.common.extra_dir.clone(),
         config.common.machine_identity.clone(),
     );
     fuzzer.verify(config.check_fuzzer_help, None).await?;
@@ -160,6 +161,7 @@ pub async fn merge_inputs(
         config.target_options.clone(),
         config.target_env.clone(),
         &config.common.setup_dir,
+        config.common.extra_dir.clone(),
         config.common.machine_identity.clone(),
     );
     merger

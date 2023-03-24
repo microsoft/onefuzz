@@ -8,7 +8,7 @@ $env:LLVM_SYMBOLIZER_PATH = "C:\Program Files\LLVM\bin\llvm-symbolizer.exe"
 if (!$env:RUST_LOG){
   $env:RUST_LOG = "info"
 }
-$env:DOTNET_VERSIONS = "7.0.100;6.0.403"
+$env:DOTNET_VERSIONS = "7.0"
 # Set a session and machine scoped env var
 $env:DOTNET_ROOT = "c:\onefuzz\tools\dotnet"
 [Environment]::SetEnvironmentVariable("DOTNET_ROOT", $env:DOTNET_ROOT, "Machine")
@@ -165,8 +165,8 @@ function Set-Restart {
 
 function Install-VCRedist {
   log "installing VC Redist"
-  $x64Release = 'https://aka.ms/vs/15/release/VC_redist.x64.exe'
-  $x86Release = 'https://aka.ms/vs/15/release/VC_redist.x86.exe'
+  $x64Release = 'https://aka.ms/vs/17/release/VC_redist.x64.exe'
+  $x86Release = 'https://aka.ms/vs/17/release/VC_redist.x86.exe'
   $ProgressPreference = 'SilentlyContinue'
   Invoke-WebRequest -Uri $x64Release -OutFile "C:\onefuzz\vcredist_x64.exe"
   Invoke-WebRequest -Uri $x86Release -OutFile "C:\onefuzz\vcredist_x86.exe"
@@ -180,7 +180,7 @@ function Install-Dotnet([string]$Versions, [string]$InstallDir, [string]$ToolsDi
     $Version = $_
     log "Installing dotnet ${Version} to ${InstallDir}"
     Invoke-WebRequest 'https://dot.net/v1/dotnet-install.ps1' -OutFile 'dotnet-install.ps1'
-    ./dotnet-install.ps1 -Version $Version -InstallDir $InstallDir
+    ./dotnet-install.ps1 -Channel $Version -InstallDir $InstallDir
     Remove-Item ./dotnet-install.ps1
     log "Installing dotnet ${Version}: done"
   }

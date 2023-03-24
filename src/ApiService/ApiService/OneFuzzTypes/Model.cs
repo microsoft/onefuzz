@@ -213,7 +213,6 @@ public record TaskDetails(
     // Deprecated. Retained for processing old table data.
     string? CoverageFilter = null,
 
-    string? FunctionAllowlist = null,
     string? ModuleAllowlist = null,
     string? SourceAllowlist = null,
     string? TargetAssembly = null,
@@ -894,6 +893,7 @@ public record TaskDefinition(
 public record WorkSet(
     bool Reboot,
     Uri SetupUrl,
+    Uri? ExtraUrl,
     bool Script,
     List<WorkUnit> WorkUnits
 );
@@ -1002,7 +1002,7 @@ public record TaskUnitConfig(
     // Deprecated. Retained for processing old table data.
     public string? CoverageFilter { get; set; }
 
-    public string? FunctionAllowlist { get; set; }
+    public bool? PreserveExistingOutputs { get; set; }
     public string? ModuleAllowlist { get; set; }
     public string? SourceAllowlist { get; set; }
     public string? TargetAssembly { get; set; }
@@ -1022,6 +1022,7 @@ public record TaskUnitConfig(
     public IContainerDef? UniqueInputs { get; set; }
     public IContainerDef? UniqueReports { get; set; }
     public IContainerDef? RegressionReports { get; set; }
+    public IContainerDef? Extra { get; set; }
 
 }
 
