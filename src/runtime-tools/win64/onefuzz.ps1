@@ -165,8 +165,8 @@ function Set-Restart {
 
 function Install-VCRedist {
   log "installing VC Redist"
-  $x64Release = 'https://aka.ms/vs/15/release/VC_redist.x64.exe'
-  $x86Release = 'https://aka.ms/vs/15/release/VC_redist.x86.exe'
+  $x64Release = 'https://aka.ms/vs/17/release/VC_redist.x64.exe'
+  $x86Release = 'https://aka.ms/vs/17/release/VC_redist.x86.exe'
   $ProgressPreference = 'SilentlyContinue'
   Invoke-WebRequest -Uri $x64Release -OutFile "C:\onefuzz\vcredist_x64.exe"
   Invoke-WebRequest -Uri $x86Release -OutFile "C:\onefuzz\vcredist_x86.exe"
