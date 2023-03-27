@@ -8,7 +8,6 @@ use std::time::Duration;
 use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use onefuzz::az_copy;
-use onefuzz::blob::BlobContainerUrl;
 use onefuzz::process::Output;
 use tokio::fs;
 use tokio::process::Command;
@@ -96,7 +95,9 @@ impl SetupRunner {
         Self::run_setup_script(setup_dir).await
     }
 
-    pub async fn run_setup_script(setup_dir: PathBuf) -> std::result::Result<Option<Output>, anyhow::Error> {
+    pub async fn run_setup_script(
+        setup_dir: PathBuf,
+    ) -> std::result::Result<Option<Output>, anyhow::Error> {
         // Run setup script, if any.
         let setup_script = SetupScript::new(setup_dir).await?;
 
@@ -130,8 +131,6 @@ impl SetupRunner {
         Ok(output)
     }
 }
-
-
 
 #[cfg(target_family = "windows")]
 async fn create_setup_symlink(setup_dir: &Path, working_dir: impl AsRef<Path>) -> Result<()> {
