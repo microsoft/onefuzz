@@ -84,29 +84,21 @@ impl WorkSet {
         Ok(())
     }
 
+    pub fn get_root_folder(&self) -> Result<PathBuf> {
+        onefuzz::fs::onefuzz_root().map(|root| root.join("blob-containers"))
+    }
+
     pub fn setup_dir(&self) -> Result<PathBuf> {
-        let setup_dir = self
-            .setup_url
-            .account()
-            .ok_or_else(|| anyhow!("Invalid container Url"))?;
-        Ok(onefuzz::fs::onefuzz_root()?
-            .join("blob-containers")
-            .join(setup_dir))
+        let root = self.get_root_folder()?;
+        self.setup_url.as_path(root.join("blob-containers"))
     }
 
     pub fn extra_dir(&self) -> Result<Option<PathBuf>> {
-        if let Some(extra_url) = &self.extra_url {
-            let extra_dir = extra_url
-                .account()
-                .ok_or_else(|| anyhow!("Invalid container Url"))?;
-            Ok(Some(
-                onefuzz::fs::onefuzz_root()?
-                    .join("blob-containers")
-                    .join(extra_dir),
-            ))
-        } else {
-            Ok(None)
-        }
+        let root = self.get_root_folder()?;
+        self.extra_url
+            .as_ref()
+            .map(|url| url.as_path(root.join("blob-containers")))
+            .transpose()
     }
 }
 
@@ -253,7 +245,6 @@ impl WorkQueue {
 #[cfg(test)]
 pub mod double;
 
-
 #[cfg(test)]
 pub mod test {
 
@@ -262,8 +253,7 @@ pub mod test {
     use serde_json;
 
     #[test]
-    fn test(){
-
+    fn test() {
         let w1 = WorkSet {
             reboot: true,
             setup_url: BlobContainerUrl::BlobContainer(
@@ -276,27 +266,21 @@ pub mod test {
 
         let w2 = WorkSet {
             reboot: true,
-            setup_url: BlobContainerUrl::Path(
-                PathBuf::from("c:\\test\\test"),
-            ),
+            setup_url: BlobContainerUrl::Path(PathBuf::from("c:\\test\\test")),
             extra_url: None,
             script: true,
-            work_units: vec![]
+            work_units: vec![],
         };
 
-        println!("{}", serde_json::to_string(&w1).unwrap()) ;
+        println!("{}", serde_json::to_string(&w1).unwrap());
 
         let w2_json = serde_json::to_string(&w2).unwrap();
-        println!("{}", w2_json) ;
+        println!("{}", w2_json);
 
         let w3: WorkSet = serde_json::from_str(&w2_json).unwrap();
 
         // asse
 
         println!("{:?}", w3);
-
-
-
-
     }
 }
