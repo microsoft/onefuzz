@@ -1987,6 +1987,7 @@ dependencies = [
  "log",
  "nix",
  "onefuzz",
+ "onefuzz-task",
  "onefuzz-telemetry",
  "reqwest",
  "reqwest-retry",

@@ -252,3 +252,51 @@ impl WorkQueue {
 
 #[cfg(test)]
 pub mod double;
+
+
+#[cfg(test)]
+pub mod test {
+
+    use super::*;
+    use reqwest::Url;
+    use serde_json;
+
+    #[test]
+    fn test(){
+
+        let w1 = WorkSet {
+            reboot: true,
+            setup_url: BlobContainerUrl::BlobContainer(
+                Url::parse("https://onefuzz-test.blob.core.windows.net/containers/1?sv=2019-12-12&sr=c&sig=123&se=2020-12-31T00%3A00%3A00Z&sp=r").unwrap(),
+            ),
+            extra_url: None,
+            script: true,
+            work_units: vec![]
+        };
+
+        let w2 = WorkSet {
+            reboot: true,
+            setup_url: BlobContainerUrl::Path(
+                PathBuf::from("c:\\test\\test"),
+            ),
+            extra_url: None,
+            script: true,
+            work_units: vec![]
+        };
+
+        println!("{}", serde_json::to_string(&w1).unwrap()) ;
+
+        let w2_json = serde_json::to_string(&w2).unwrap();
+        println!("{}", w2_json) ;
+
+        let w3: WorkSet = serde_json::from_str(&w2_json).unwrap();
+
+        // asse
+
+        println!("{:?}", w3);
+
+
+
+
+    }
+}
