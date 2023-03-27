@@ -40,7 +40,7 @@ pub mod panic;
 pub mod reboot;
 pub mod scheduler;
 pub mod setup;
-pub mod Validation;
+pub mod validation;
 pub mod work;
 pub mod worker;
 
@@ -50,7 +50,7 @@ enum Opt {
     #[clap(subcommand)]
     Debug(debug::DebugOpt),
     #[clap(subcommand)]
-    Validate(Validation::ValidationCommand),
+    Validate(validation::ValidationCommand),
     Licenses,
     Version,
 }
@@ -93,10 +93,10 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn validate(validation_command: Validation::ValidationCommand) -> Result<()> {
+fn validate(validation_command: validation::ValidationCommand) -> Result<()> {
     let rt = tokio::runtime::Runtime::new()?;
     rt.block_on(async {
-        Validation::validate(validation_command).await
+        validation::validate(validation_command).await
     })
 }
 
