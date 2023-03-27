@@ -88,6 +88,8 @@ sealed class OnefuzzNamingPolicy : JsonNamingPolicy {
 }
 public class EntityConverter {
 
+    private const int MAX_DESERIALIZATION_RECURSION_DEPTH = 100;
+    private ILogTracer _logTracer;
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
     private static readonly JsonSerializerOptions _options = new() {
         PropertyNamingPolicy = new OnefuzzNamingPolicy(),
@@ -97,8 +99,9 @@ public class EntityConverter {
         }
     };
 
-    public EntityConverter() {
+    public EntityConverter(ILogTracer logTracer) {
         _cache = new ConcurrentDictionary<Type, EntityInfo>();
+        _logTracer = logTracer;
     }
 
     public static JsonSerializerOptions GetJsonSerializerOptions() {
@@ -222,7 +225,7 @@ public class EntityConverter {
     }
 
 
-    private object? GetFieldValue(EntityInfo info, string name, TableEntity entity) {
+    private object? GetFieldValue(EntityInfo info, string name, TableEntity entity, int iterationCount = 0) {
         var ef = info.properties[name].First();
         if (ef.kind == EntityPropertyKind.PartitionKey || ef.kind == EntityPropertyKind.RowKey) {
             // partition & row keys must always be strings
@@ -284,8 +287,17 @@ public class EntityConverter {
             } else {
                 var outputType = ef.type;
                 if (ef.discriminator != null) {
+                    if (iterationCount > MAX_DESERIALIZATION_RECURSION_DEPTH) {
+                        var tags = GenerateTableEntityTags(entity);
+                        tags.AddRange(new (string, string)[] {
+                            ("outputType", outputType?.Name ?? string.Empty),
+                            ("fieldName", fieldName)
+                        });
+                        _logTracer.WithTags(tags).Error($"Too many iterations deserializing {info.type}");
+                        throw new Exception($"MAX_DESERIALIZATION_RECURSION_DEPTH reached");
+                    }
                     var (attr, typeProvider) = ef.discriminator.Value;
-                    var v = GetFieldValue(info, attr.FieldName, entity) ?? throw new Exception($"No value for {attr.FieldName}");
+                    var v = GetFieldValue(info, attr.FieldName, entity, ++iterationCount) ?? throw new Exception($"No value for {attr.FieldName}");
                     outputType = typeProvider.GetTypeInfo(v);
                 }
 
@@ -303,6 +315,11 @@ public class EntityConverter {
                 }
             }
         } catch (Exception ex) {
+            var tags = GenerateTableEntityTags(entity);
+            tags.AddRange(new (string, string)[] {
+                ("fieldName", fieldName)
+            });
+            _logTracer.WithTags(tags).Error($"Unable to get value for property '{name}' (entity field '{fieldName}')");
             throw new InvalidOperationException($"Unable to get value for property '{name}' (entity field '{fieldName}')", ex);
         }
     }
@@ -361,6 +378,15 @@ public class EntityConverter {
         return Expression.Lambda<Func<T, object?>>(call, paramter).Compile();
     }
 
+    private static List<(string, string)> GenerateTableEntityTags(TableEntity entity) {
+        var entityKeys = string.Join(',', entity.Keys);
+        var partitionKey = entity.ContainsKey(EntityPropertyKind.PartitionKey.ToString()) ? entity.GetString(EntityPropertyKind.PartitionKey.ToString()) : string.Empty;
+        var rowKey = entity.ContainsKey(EntityPropertyKind.RowKey.ToString()) ? entity.GetString(EntityPropertyKind.RowKey.ToString()) : string.Empty;
 
-
+        return new List<(string, string)> {
+            ("entityKeys", entityKeys),
+            ("partitionKey", partitionKey),
+            ("rowKey", rowKey)
+        };
+    }
 }

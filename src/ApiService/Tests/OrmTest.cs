@@ -1,14 +1,22 @@
 ﻿using System;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Azure.Data.Tables;
+using FluentAssertions;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using Moq;
 using Xunit;
 
 namespace Tests {
     public class OrmTest {
+        private ILogTracer _logTracer;
+
+        public OrmTest() {
+            _logTracer = new Mock<ILogTracer>().Object;
+        }
 
         sealed class TestObject {
             public String? TheName { get; set; }
@@ -55,7 +63,7 @@ namespace Tests {
         [Fact]
         public void TestBothDirections() {
             var uriString = new Uri("https://localhost:9090");
-            var converter = new EntityConverter();
+            var converter = new EntityConverter(_logTracer);
             var entity1 = new Entity1(
                             Guid.NewGuid(),
                             "test",
@@ -105,7 +113,7 @@ namespace Tests {
         [Fact]
         public void TestConvertToTableEntity() {
             var uriString = new Uri("https://localhost:9090");
-            var converter = new EntityConverter();
+            var converter = new EntityConverter(_logTracer);
             var entity1 = new Entity1(
                             Guid.NewGuid(),
                             "test",
@@ -154,7 +162,7 @@ namespace Tests {
 
         [Fact]
         public void TestFromtableEntity() {
-            var converter = new EntityConverter();
+            var converter = new EntityConverter(_logTracer);
             var tableEntity = new TableEntity(Guid.NewGuid().ToString(), "test") {
                 {"the_date", DateTimeOffset.UtcNow },
                 { "the_number", 1234},
@@ -249,7 +257,7 @@ namespace Tests {
         [Fact]
         public void TestIntKey() {
             var expected = new Entity2(10, "test");
-            var converter = new EntityConverter();
+            var converter = new EntityConverter(_logTracer);
             var tableEntity = converter.ToTableEntity(expected);
             var actual = converter.ToRecord<Entity2>(tableEntity);
 
@@ -267,7 +275,7 @@ namespace Tests {
         public void TestContainerSerialization() {
             var container = Container.Parse("abc-123");
             var expected = new Entity3(123, "abc", container);
-            var converter = new EntityConverter();
+            var converter = new EntityConverter(_logTracer);
 
             var tableEntity = converter.ToTableEntity(expected);
             var actual = converter.ToRecord<Entity3>(tableEntity);
@@ -302,7 +310,7 @@ namespace Tests {
         public void TestPartitionKeyIsRowKey() {
             var container = Container.Parse("abc-123");
             var expected = new Entity4(123, "abc", container);
-            var converter = new EntityConverter();
+            var converter = new EntityConverter(_logTracer);
 
             var tableEntity = converter.ToTableEntity(expected);
             Assert.Equal(expected.Id.ToString(), tableEntity.RowKey);
@@ -336,7 +344,7 @@ namespace Tests {
         [Fact]
         public void TestNullValue() {
 
-            var entityConverter = new EntityConverter();
+            var entityConverter = new EntityConverter(_logTracer);
             var tableEntity = entityConverter.ToTableEntity(new TestNullField(null, null, null));
 
             Assert.Null(tableEntity["id"]);
@@ -367,7 +375,7 @@ namespace Tests {
         [Fact]
         public void TestSkipRename() {
 
-            var entityConverter = new EntityConverter();
+            var entityConverter = new EntityConverter(_logTracer);
 
             var expected = new TestEntity3(DoNotRename.TEST3, DoNotRenameFlag.Test_2 | DoNotRenameFlag.test1);
             var tableEntity = entityConverter.ToTableEntity(expected);
@@ -390,7 +398,7 @@ namespace Tests {
 
         [Fact]
         public void TestInitValue() {
-            var entityConverter = new EntityConverter();
+            var entityConverter = new EntityConverter(_logTracer);
             var tableEntity = new TableEntity();
             var actual = entityConverter.ToRecord<TestIinit>(tableEntity);
 
@@ -409,6 +417,34 @@ namespace Tests {
 
             Assert.Equal(test.PartitionKey, actualPartitionKey);
             Assert.Equal(test.RowKey, actualRowKey);
+        }
+
+        sealed record NestedEntity(
+            [PartitionKey] int Id,
+            [RowKey] string TheName,
+            Nested? nested
+        ) : EntityBase();
+
+#pragma warning disable CS0169
+        private sealed class Nested {
+            Nested? nested;
+        }
+#pragma warning restore CS0169
+
+        [Fact]
+        public void TestDeeplyNestedObjects() {
+            var converter = new EntityConverter(_logTracer);
+            var deeplyNestedJson = $"{{{string.Concat(Enumerable.Repeat("\"nested\": {", 150))}{new String('}', 150)}}}"; // {{{...}}}
+            var nestedEntity = new NestedEntity(
+                Id: 123,
+                TheName: "abc",
+                nested: JsonSerializer.Deserialize<Nested>(deeplyNestedJson, new JsonSerializerOptions() { MaxDepth = 160 })
+            );
+
+            var tableEntity = converter.ToTableEntity(nestedEntity);
+            var toRecord = () => converter.ToRecord<NestedEntity>(tableEntity);
+
+            toRecord.Should().Throw<Exception>().And.Message.Should().Contain("MAX_DESERIALIZATION_RECURSION_DEPTH");
         }
     }
 }

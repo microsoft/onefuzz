@@ -7,6 +7,7 @@ using FsCheck;
 using FsCheck.Xunit;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using Moq;
 using Xunit.Abstractions;
 
 namespace Tests {
@@ -693,7 +694,7 @@ namespace Tests {
     }
 
     public class OrmModelsTest {
-        EntityConverter _converter = new EntityConverter();
+        EntityConverter _converter = new EntityConverter(new Mock<ILogTracer>().Object);
         ITestOutputHelper _output;
 
         public OrmModelsTest(ITestOutputHelper output) {
