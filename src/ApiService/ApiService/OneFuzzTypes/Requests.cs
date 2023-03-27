@@ -191,7 +191,7 @@ public record ProxyReset(
 public record ScalesetCreate(
     [property: Required] PoolName PoolName,
     [property: Required] string VmSku,
-    string? Image,
+    ImageReference? Image,
     Region? Region,
     [property: Range(1, long.MaxValue), Required] long Size,
     [property: Required] bool SpotInstances,

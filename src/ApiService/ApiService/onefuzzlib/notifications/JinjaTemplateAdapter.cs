@@ -173,7 +173,7 @@ public class JinjaTemplateAdapter {
                     new TaskVm(
                         Region.Parse("westus3"),
                         "some sku",
-                        "some image",
+                        DefaultImages.Linux,
                         true,
                         1,
                         true
