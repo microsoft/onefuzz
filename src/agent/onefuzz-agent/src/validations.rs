@@ -21,7 +21,7 @@ pub struct Config {
     pub command: ValidationCommand,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct ValidationConfig {
     pub seeds: PathBuf,
     pub setup_folder: PathBuf,
