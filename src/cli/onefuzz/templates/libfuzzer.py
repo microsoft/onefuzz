@@ -425,13 +425,6 @@ class Libfuzzer(Command):
         helper.create_containers()
         helper.setup_notifications(notification_config)
 
-        if crashes:
-            self.logger.info("uploading crash directory")
-            self.onefuzz.containers.files.upload_dir(
-                helper.containers[ContainerType.crashes], crashes
-            )
-            self.logger.info("uploading crash directory complete")
-
         helper.upload_setup(setup_dir, target_exe, extra_files)
         if inputs:
             helper.upload_inputs(inputs)
@@ -737,13 +730,6 @@ class Libfuzzer(Command):
         helper.create_containers()
         helper.setup_notifications(notification_config)
 
-        if crashes:
-            self.logger.info("uploading crash directory")
-            self.onefuzz.containers.files.upload_dir(
-                helper.containers[ContainerType.crashes], crashes
-            )
-            self.logger.info("uploading crash directory complete")
-
         helper.upload_setup(setup_dir, target_dll)
 
         if inputs:
@@ -950,13 +936,6 @@ class Libfuzzer(Command):
             fuzzer_containers.append((ContainerType.extra, extra_container))
 
         helper.create_containers()
-
-        if crashes:
-            self.logger.info("uploading crash directory")
-            self.onefuzz.containers.files.upload_dir(
-                helper.containers[ContainerType.crashes], crashes
-            )
-            self.logger.info("uploading crash directory complete")
 
         target_exe_blob_name = helper.setup_relative_blob_name(target_exe, None)
 
