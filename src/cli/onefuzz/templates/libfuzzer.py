@@ -357,6 +357,7 @@ class Libfuzzer(Command):
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
         extra_container: Optional[Container] = None,
+        crashes: Optional[Directory] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -417,6 +418,13 @@ class Libfuzzer(Command):
 
         helper.create_containers()
         helper.setup_notifications(notification_config)
+
+        if crashes:
+            self.logger.info("uploading crash directory")
+            self.onefuzz.containers.files.upload_dir(
+                helper.containers[ContainerType.crashes], crashes
+            )
+            self.logger.info("uploading crash directory complete")
 
         helper.upload_setup(setup_dir, target_exe, extra_files)
         if inputs:
@@ -635,6 +643,7 @@ class Libfuzzer(Command):
         expect_crash_on_failure: bool = False,
         notification_config: Optional[NotificationConfig] = None,
         extra_container: Optional[Container] = None,
+        crashes: Optional[Directory] = None,
     ) -> Optional[Job]:
         pool = self.onefuzz.pools.get(pool_name)
 
@@ -715,6 +724,13 @@ class Libfuzzer(Command):
 
         helper.create_containers()
         helper.setup_notifications(notification_config)
+
+        if crashes:
+            self.logger.info("uploading crash directory")
+            self.onefuzz.containers.files.upload_dir(
+                helper.containers[ContainerType.crashes], crashes
+            )
+            self.logger.info("uploading crash directory complete")
 
         helper.upload_setup(setup_dir, target_dll)
 
@@ -855,6 +871,7 @@ class Libfuzzer(Command):
         check_retry_count: Optional[int] = 300,
         check_fuzzer_help: bool = True,
         extra_container: Optional[Container] = None,
+        crashes: Optional[Directory] = None,
     ) -> Optional[Job]:
         """
         libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
@@ -917,6 +934,13 @@ class Libfuzzer(Command):
             fuzzer_containers.append((ContainerType.extra, extra_container))
 
         helper.create_containers()
+
+        if crashes:
+            self.logger.info("uploading crash directory")
+            self.onefuzz.containers.files.upload_dir(
+                helper.containers[ContainerType.crashes], crashes
+            )
+            self.logger.info("uploading crash directory complete")
 
         target_exe_blob_name = helper.setup_relative_blob_name(target_exe, None)
 
