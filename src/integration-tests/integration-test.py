@@ -215,6 +215,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.inputs: 2,
             ContainerType.unique_reports: 1,
             ContainerType.coverage: 1,
+            ContainerType.crashdumps: 1,
         },
         inject_fake_regression=True,
         fuzzing_target_options=["--test:{extra_dir}"],
