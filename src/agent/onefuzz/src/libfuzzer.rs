@@ -13,7 +13,7 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::{
     collections::HashMap,
-    ffi::OsString,
+    ffi::{OsStr, OsString},
     path::{Path, PathBuf},
     process::Stdio,
 };
@@ -64,17 +64,23 @@ impl LibFuzzer {
     }
 
     // Build an async `Command`.
-    async fn build_command(
+    fn build_command(
         &self,
         fault_dir: Option<&Path>,
         corpus_dir: Option<&Path>,
         extra_corpus_dirs: Option<&[&Path]>,
+        extra_args: Option<&[&OsStr]>,
+        custom_arg_filter: Option<&dyn Fn(String) -> Option<String>>,
     ) -> Result<Command> {
-        let std_cmd = self
-            .build_std_command(fault_dir, corpus_dir, extra_corpus_dirs)
-            .await?;
+        let std_cmd = self.build_std_command(
+            fault_dir,
+            corpus_dir,
+            extra_corpus_dirs,
+            extra_args,
+            custom_arg_filter,
+        )?;
 
-        // Make async.
+        // Make async (turn into tokio::process::Command):
         let mut cmd = Command::from(std_cmd);
 
         // Terminate the process if the `Child` handle is dropped.
@@ -84,11 +90,13 @@ impl LibFuzzer {
     }
 
     // Build a non-async `Command`.
-    async fn build_std_command(
+    fn build_std_command(
         &self,
         fault_dir: Option<&Path>,
         corpus_dir: Option<&Path>,
         extra_corpus_dirs: Option<&[&Path]>,
+        extra_args: Option<&[&OsStr]>,
+        custom_arg_filter: Option<&dyn Fn(String) -> Option<String>>,
     ) -> Result<std::process::Command> {
         let mut cmd = std::process::Command::new(&self.exe);
         cmd.env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
@@ -107,38 +115,36 @@ impl LibFuzzer {
 
         let expand = Expand::new(&self.machine_identity)
             .machine_id()
-            .await?
             .target_exe(&self.exe)
             .target_options(&self.options)
             .setup_dir(&self.setup_dir)
-            .set_optional(self.extra_dir.as_ref(), |expand, extra_dir| {
-                expand.extra_dir(extra_dir)
-            })
-            .set_optional(corpus_dir, |e, corpus_dir| e.input_corpus(corpus_dir))
-            .set_optional(fault_dir, |e, fault_dir| e.crashes(fault_dir));
+            .set_optional(self.extra_dir.as_ref(), Expand::extra_dir)
+            .set_optional(corpus_dir, Expand::input_corpus)
+            .set_optional(fault_dir, Expand::crashes);
 
+        // Expand and set environment variables:
         for (k, v) in &self.env {
             cmd.env(k, expand.evaluate_value(v)?);
         }
 
-        // Pass custom option arguments.
-        for o in expand.evaluate(&self.options)? {
-            cmd.arg(o);
-        }
-
-        // Set the read/written main corpus directory.
+        // Set the read/written main corpus directory:
         if let Some(corpus_dir) = corpus_dir {
             cmd.arg(corpus_dir);
         }
 
-        // Set extra corpus directories that will be periodically rescanned.
+        // Set extra (readonly) corpus directories that will also be used:
         if let Some(extra_corpus_dirs) = extra_corpus_dirs {
-            for dir in extra_corpus_dirs {
-                cmd.arg(dir);
-            }
+            cmd.args(extra_corpus_dirs);
         }
 
-        // check if a max_time is already set
+        // Pass any extra arguments that we need; this is done in this function
+        // rather than the caller so that they can come before any custom options
+        // that might interfere (e.g. -help=1 must come before -ignore_remaining_args=1).
+        if let Some(extra_args) = extra_args {
+            cmd.args(extra_args);
+        }
+
+        // Check if a max time is already set by the custom options, and set if not:
         if !self
             .options
             .iter()
@@ -146,6 +152,18 @@ impl LibFuzzer {
         {
             cmd.arg(format!("-max_total_time={DEFAULT_MAX_TOTAL_SECONDS}"));
         }
+
+        // Pass custom option arguments last, to lessen the chance that they
+        // interfere with standard options (e.g. use of -ignore_remaining_args=1),
+        // and also to allow last-one-wins overriding if needed.
+        //
+        // We also allow filtering out parameters as well:
+        cmd.args(
+            expand
+                .evaluate(&self.options)?
+                .into_iter()
+                .filter_map(custom_arg_filter.unwrap_or(&Some)),
+        );
 
         Ok(cmd)
     }
@@ -194,21 +212,27 @@ impl LibFuzzer {
         Ok(())
     }
 
+    // Verify that the libfuzzer exits with a zero return code with a known
+    // good input, which libfuzzer works as we expect.
     async fn check_input(&self, input: &Path) -> Result<()> {
-        // Verify that the libfuzzer exits with a zero return code with a known
-        // good input, which libfuzzer works as we expect.
-
-        let mut cmd = self.build_command(None, None, None).await?;
-
-        // Override any arg of the form `-runs=<N>` (last occurrence wins).
-        // In this command invocation, we only ever want to test inputs once.
-        //
-        // Assumes that the presence of an `-args` option was an iteration limit meant
-        // for fuzzing mode. We are only mutating the args of a local `Command`, so the
-        // command used by the `fuzz()` method will still receive the iteration limit.
-        cmd.arg("-runs=1");
-
-        cmd.arg(input);
+        let mut cmd = self.build_command(
+            None,
+            None,
+            None,
+            // Custom args for this run: supply the required input. In this mode,
+            // LibFuzzer will only execute one run of fuzzing unless overridden
+            Some(&[input.as_ref()]),
+            // Filter out any argument starting with `-runs=` from the custom
+            // target options, if supplied, so that it doesn't make more than
+            // one run happen:
+            Some(&|arg: String| {
+                if arg.starts_with("-runs=") {
+                    None
+                } else {
+                    Some(arg)
+                }
+            }),
+        )?;
 
         let result = cmd
             .spawn()
@@ -216,6 +240,7 @@ impl LibFuzzer {
             .wait_with_output()
             .await
             .with_context(|| format_err!("libfuzzer failed to run: {}", self.exe.display()))?;
+
         if !result.status.success() {
             bail!(
                 "libFuzzer failed when parsing an initial seed {:?}: stdout:{:?} stderr:{:?}",
@@ -224,6 +249,7 @@ impl LibFuzzer {
                 String::from_utf8_lossy(&result.stderr),
             );
         }
+
         Ok(())
     }
 
@@ -231,8 +257,7 @@ impl LibFuzzer {
     /// least able to satisfy the fuzzer's shared library dependencies. User-authored
     /// dynamic loading may still fail later on, e.g. in `LLVMFuzzerInitialize()`.
     async fn check_help(&self) -> Result<()> {
-        let mut cmd = self.build_command(None, None, None).await?;
-        cmd.arg("-help=1");
+        let mut cmd = self.build_command(None, None, None, Some(&["-help=1".as_ref()]), None)?;
 
         let result = cmd
             .spawn()
@@ -263,7 +288,7 @@ impl LibFuzzer {
     }
 
     async fn find_missing_libraries(&self) -> Result<Vec<String>> {
-        let cmd = self.build_std_command(None, None, None).await?;
+        let cmd = self.build_std_command(None, None, None, None, None)?;
 
         #[cfg(target_os = "linux")]
         let blocking = move || dynamic_library::linux::find_missing(cmd);
@@ -284,13 +309,6 @@ impl LibFuzzer {
         extra_corpus_dirs: &[impl AsRef<Path>],
     ) -> Result<Child> {
         let extra_corpus_dirs: Vec<&Path> = extra_corpus_dirs.iter().map(|x| x.as_ref()).collect();
-        let mut cmd = self
-            .build_command(
-                Some(fault_dir.as_ref()),
-                Some(corpus_dir.as_ref()),
-                Some(&extra_corpus_dirs),
-            )
-            .await?;
 
         // When writing a new faulting input, the libFuzzer runtime _exactly_
         // prepends the value of `-artifact_prefix` to the new file name. To
@@ -300,7 +318,13 @@ impl LibFuzzer {
         let artifact_prefix: OsString =
             format!("-artifact_prefix={}/", fault_dir.as_ref().display()).into();
 
-        cmd.arg(&artifact_prefix);
+        let mut cmd = self.build_command(
+            Some(fault_dir.as_ref()),
+            Some(corpus_dir.as_ref()),
+            Some(&extra_corpus_dirs),
+            Some(&[&artifact_prefix]),
+            None,
+        )?;
 
         let child = cmd
             .spawn()
@@ -344,10 +368,13 @@ impl LibFuzzer {
         extra_corpus_dirs: &[impl AsRef<Path>],
     ) -> Result<LibFuzzerMergeOutput> {
         let extra_corpus_dirs: Vec<&Path> = extra_corpus_dirs.iter().map(|x| x.as_ref()).collect();
-        let mut cmd = self
-            .build_command(None, Some(corpus_dir.as_ref()), Some(&extra_corpus_dirs))
-            .await?;
-        cmd.arg("-merge=1");
+        let mut cmd = self.build_command(
+            None,
+            Some(corpus_dir.as_ref()),
+            Some(&extra_corpus_dirs),
+            Some(&["-merge=1".as_ref()]),
+            None,
+        )?;
 
         let output = cmd
             .spawn()

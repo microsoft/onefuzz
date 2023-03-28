@@ -167,7 +167,6 @@ impl GeneratorTask {
         let (mut generator, generator_path) = {
             let expand = Expand::new(&self.config.common.machine_identity)
                 .machine_id()
-                .await?
                 .setup_dir(&self.config.common.setup_dir)
                 .set_optional_ref(&self.config.common.extra_dir, |expand, extra_dir| {
                     expand.extra_dir(extra_dir)
