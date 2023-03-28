@@ -123,7 +123,6 @@ public class Program {
                 .AddScoped<INodeTasksOperations, NodeTasksOperations>()
                 .AddScoped<INodeMessageOperations, NodeMessageOperations>()
                 .AddScoped<IRequestHandling, RequestHandling>()
-                .AddScoped<IImageOperations, ImageOperations>()
                 .AddScoped<ITeams, Teams>()
                 .AddScoped<IGithubIssues, GithubIssues>()
                 .AddScoped<IAdo, Ado>()

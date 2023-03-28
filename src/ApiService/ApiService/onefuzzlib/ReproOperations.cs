@@ -31,7 +31,6 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
-
     const string DEFAULT_SKU = "Standard_DS1_v2";
 
     public ReproOperations(ILogTracer log, IOnefuzzContext context)
@@ -51,10 +50,10 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             throw new Exception($"previous existing task missing: {repro.TaskId}");
         }
 
-        Dictionary<Os, string> default_os = new()
+        Dictionary<Os, ImageReference> default_os = new()
         {
-            { Os.Linux, config.DefaultLinuxVmImage },
-            { Os.Windows, config.DefaultWindowsVmImage }
+            { Os.Linux, config.DefaultLinuxVmImage ?? DefaultImages.Linux },
+            { Os.Windows, config.DefaultWindowsVmImage ?? DefaultImages.Windows },
         };
 
         var vmConfig = await taskOperations.GetReproVmConfig(task);
