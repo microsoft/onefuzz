@@ -76,13 +76,13 @@ public class Scaleset {
                 context: "ScalesetCreate");
         }
 
-        string image;
+        ImageReference image;
         if (create.Image is null) {
             var config = await _context.ConfigOperations.Fetch();
             if (pool.Os == Os.Windows) {
-                image = config.DefaultWindowsVmImage;
+                image = config.DefaultWindowsVmImage ?? DefaultImages.Windows;
             } else {
-                image = config.DefaultLinuxVmImage;
+                image = config.DefaultLinuxVmImage ?? DefaultImages.Linux;
             }
         } else {
             image = create.Image;

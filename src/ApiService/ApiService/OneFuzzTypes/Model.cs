@@ -223,7 +223,7 @@ public record TaskDetails(
 public record TaskVm(
     Region Region,
     string Sku,
-    string Image,
+    ImageReference Image,
     bool? RebootAfterSetup,
     long Count = 1,
     bool SpotInstance = false
@@ -345,9 +345,9 @@ public record InstanceConfig
     string[] AllowedAadTenants,
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkConfig NetworkConfig,
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
-    AzureVmExtensionConfig? Extensions,
-    string DefaultWindowsVmImage = "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
-    string DefaultLinuxVmImage = "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
+    AzureVmExtensionConfig? Extensions = null,
+    ImageReference? DefaultWindowsVmImage = null,
+    ImageReference? DefaultLinuxVmImage = null,
     string ProxyVmSku = "Standard_B2s",
     bool RequireAdminPrivileges = false,
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
@@ -355,18 +355,13 @@ public record InstanceConfig
     IDictionary<string, string>? VmTags = null,
     IDictionary<string, string>? VmssTags = null
 ) : EntityBase() {
+
     public InstanceConfig(string instanceName) : this(
-        instanceName,
-        null,
-        Array.Empty<string>(),
-        new NetworkConfig(),
-        new NetworkSecurityGroupConfig(),
-        null,
-        "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
-        "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
-        "Standard_B2s",
-        false
-        ) { }
+        InstanceName: instanceName,
+        Admins: null,
+        AllowedAadTenants: Array.Empty<string>(),
+        NetworkConfig: new NetworkConfig(),
+        ProxyNsgConfig: new NetworkSecurityGroupConfig()) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {
         if (value is not null && value.Count == 0) {
@@ -378,8 +373,8 @@ public record InstanceConfig
 
     public InstanceConfig() : this(String.Empty) { }
 
-    //# At the moment, this only checks allowed_aad_tenants, however adding
-    //# support for 3rd party JWT validation is anticipated in a future release.
+    // At the moment, this only checks allowed_aad_tenants, however adding
+    // support for 3rd party JWT validation is anticipated in a future release.
     public ResultVoid<List<string>> CheckInstanceConfig() {
         List<string> errors = new();
         if (AllowedAadTenants.Length == 0) {
@@ -415,7 +410,7 @@ public record Scaleset(
     [RowKey] Guid ScalesetId,
     ScalesetState State,
     string VmSku,
-    string Image,
+    ImageReference Image,
     Region Region,
     long Size,
     bool? SpotInstances,
@@ -757,7 +752,7 @@ public record Vm(
     string Name,
     Region Region,
     string Sku,
-    string Image,
+    ImageReference Image,
     Authentication Auth,
     Nsg? Nsg,
     IDictionary<string, string>? Tags
