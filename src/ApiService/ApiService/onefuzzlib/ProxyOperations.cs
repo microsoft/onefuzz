@@ -242,19 +242,12 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     public static Vm GetVm(Proxy proxy, InstanceConfig config) {
         var tags = config.VmssTags;
-        string proxyVmSku;
-        string proxyImage = config.DefaultLinuxVmImage;
-        if (config.ProxyVmSku is null) {
-            proxyVmSku = "Standard_B2s";
-        } else {
-            proxyVmSku = config.ProxyVmSku;
-        }
         return new Vm(
             // name should be less than 40 chars otherwise it gets truncated by azure
             Name: $"proxy-{proxy.ProxyId:N}",
             Region: proxy.Region,
-            Sku: proxyVmSku,
-            Image: proxyImage,
+            Sku: config.ProxyVmSku ?? "Standard_B2s",
+            Image: config.DefaultLinuxVmImage ?? DefaultImages.Linux,
             Auth: proxy.Auth,
             Tags: tags,
             Nsg: null

@@ -357,6 +357,7 @@ class Libfuzzer(Command):
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
         extra_container: Optional[Container] = None,
+        crashes: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -371,6 +372,9 @@ class Libfuzzer(Command):
 
         if readonly_inputs:
             self.onefuzz.containers.get(readonly_inputs)
+
+        if crashes:
+            self.onefuzz.containers.get(crashes)
 
         if dryrun:
             return None
@@ -411,6 +415,9 @@ class Libfuzzer(Command):
 
         if readonly_inputs:
             helper.containers[ContainerType.readonly_inputs] = readonly_inputs
+
+        if crashes:
+            helper.containers[ContainerType.crashes] = crashes
 
         if analyzer_exe is not None:
             helper.define_containers(ContainerType.analysis)
@@ -635,6 +642,7 @@ class Libfuzzer(Command):
         expect_crash_on_failure: bool = False,
         notification_config: Optional[NotificationConfig] = None,
         extra_container: Optional[Container] = None,
+        crashes: Optional[Container] = None,
     ) -> Optional[Job]:
         pool = self.onefuzz.pools.get(pool_name)
 
@@ -644,6 +652,9 @@ class Libfuzzer(Command):
 
         if readonly_inputs:
             self.onefuzz.containers.get(readonly_inputs)
+
+        if crashes:
+            self.onefuzz.containers.get(crashes)
 
         # We _must_ proactively specify the OS based on pool.
         #
@@ -697,6 +708,9 @@ class Libfuzzer(Command):
 
         if readonly_inputs:
             helper.containers[ContainerType.readonly_inputs] = readonly_inputs
+
+        if crashes:
+            helper.containers[ContainerType.crashes] = crashes
 
         # Assumes that `libfuzzer-dotnet` and supporting tools were uploaded upon deployment.
         fuzzer_tools_container = Container(
@@ -855,6 +869,7 @@ class Libfuzzer(Command):
         check_retry_count: Optional[int] = 300,
         check_fuzzer_help: bool = True,
         extra_container: Optional[Container] = None,
+        crashes: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
@@ -906,6 +921,10 @@ class Libfuzzer(Command):
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
+
+        if crashes:
+            self.onefuzz.containers.get(crashes)
+            helper.containers[ContainerType.crashes] = crashes
 
         fuzzer_containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
