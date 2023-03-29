@@ -37,6 +37,10 @@ pub fn find_missing(mut cmd: Command) -> Result<HashSet<MissingDynamicLibrary>, 
     Ok(logs.missing())
 }
 
+pub fn get_logs(cmd: Command) -> Result<Vec<String>, io::Error> {
+    todo!()
+}
+
 // Compute the `LD_LIBRARY_PATH` value that a `Command` sets, if any.
 //
 // If the command either inherits or unsets the variable, returns `None`.

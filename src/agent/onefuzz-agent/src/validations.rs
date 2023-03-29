@@ -11,6 +11,7 @@ use uuid::Uuid;
 pub enum ValidationCommand {
     ValidateSetup,
     ValidateLibfuzzer,
+    ExecutionLog,
 }
 
 #[derive(Parser, Debug)]
@@ -38,6 +39,7 @@ pub async fn validate(config: Config) -> Result<()> {
     match config.command {
         ValidationCommand::ValidateSetup => validate_setup(validation_config).await,
         ValidationCommand::ValidateLibfuzzer => validate_libfuzzer(validation_config).await,
+        ValidationCommand::ExecutionLog => get_logs(validation_config).await,
     }
 }
 
@@ -74,3 +76,36 @@ async fn validate_setup(config: ValidationConfig) -> Result<()> {
     }
     Ok(())
 }
+
+async fn get_logs(config: ValidationConfig) -> Result<()> {
+    let libfuzzer = LibFuzzer::new(
+        &config.target_exe,
+        config.target_options.clone(),
+        config.target_env.clone(),
+        config.setup_folder.clone(),
+        None::<&PathBuf>,
+        MachineIdentity {
+            machine_id: Uuid::nil(),
+            machine_name: "".to_string(),
+            scaleset_name: None,
+        },
+    );
+
+    let cmd = libfuzzer.build_std_command(None, None, None).await?;
+
+    // #[cfg(target_os = "linux")]
+    //     let blocking = move || dynamic_library::linux::find_missing(cmd);
+
+    #[cfg(target_os = "windows")]
+    let logs = dynamic_library::windows::get_logs(cmd)?;
+
+    for log in logs {
+        println!("{log:x?}");
+    }
+
+    Ok(())
+}
+
+// https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/extra-tools#installation-directory
+// ./gflags /i C:\setup\Xbox.Shell.OneStoreServices.FuzzerTest.exe +sls
+// ./cdb -c "q" C:\setup\Xbox.Shell.OneStoreServices.FuzzerTest.exe
