@@ -4,7 +4,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::ffi::OsStr;
-use std::io;
+use std::io::{self};
 use std::path::Path;
 use std::process::Command;
 
@@ -37,8 +37,17 @@ pub fn find_missing(mut cmd: Command) -> Result<HashSet<MissingDynamicLibrary>, 
     Ok(logs.missing())
 }
 
-pub fn get_logs(cmd: Command) -> Result<Vec<String>, io::Error> {
-    todo!()
+pub fn get_linked_library_logs<'a>(cmd: &Command) -> Result<std::process::Output, io::Error> {
+    let library_path = explicit_library_path(cmd);
+    let output = LinkedDynamicLibraries::run(cmd.get_program(), library_path)?;
+    Ok(output)
+}
+
+pub fn get_loaded_libraries_logs<'a>(cmd: Command) -> Result<std::process::Output, io::Error> {
+    let mut cmd = Command::from(cmd);
+    cmd.env("LD_DEBUG", "libs");
+    let output = cmd.output()?;
+    Ok(output)
 }
 
 // Compute the `LD_LIBRARY_PATH` value that a `Command` sets, if any.
@@ -257,19 +266,24 @@ impl LinkedDynamicLibraries {
         module: impl AsRef<OsStr>,
         library_path: Option<&OsStr>,
     ) -> Result<Self, io::Error> {
+        let output = Self::run(module, library_path)?;
+        let linked = Self::parse(&*output.stdout);
+        Ok(linked)
+    }
+
+    pub fn run(
+        module: impl AsRef<OsStr>,
+        library_path: Option<&OsStr>,
+    ) -> Result<std::process::Output, io::Error> {
         let mut cmd = Command::new("ldd");
         cmd.arg(module);
-
         if let Some(library_path) = library_path {
             cmd.env(LD_LIBRARY_PATH, library_path);
         } else {
             cmd.env_remove(LD_LIBRARY_PATH);
         }
-
         let output = cmd.output()?;
-        let linked = Self::parse(&*output.stdout);
-
-        Ok(linked)
+        Ok(output)
     }
 
     pub fn parse<R: io::Read>(readable: R) -> Self {

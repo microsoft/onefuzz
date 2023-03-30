@@ -90,16 +90,28 @@ async fn get_logs(config: ValidationConfig) -> Result<()> {
             scaleset_name: None,
         },
     );
-
     let cmd = libfuzzer.build_std_command(None, None, None).await?;
+    print_logs(cmd)?;
+    Ok(())
+}
 
-    // #[cfg(target_os = "linux")]
-    //     let blocking = move || dynamic_library::linux::find_missing(cmd);
-
-    #[cfg(target_os = "windows")]
+#[cfg(target_os = "windows")]
+fn print_logs(cmd: std::process::Command) -> Result<(), anyhow::Error> {
     let logs = dynamic_library::windows::get_logs(cmd)?;
+    Ok(for log in logs {
+        println!("{log:x?}");
+    })
+}
 
-    for log in logs {
+#[cfg(target_os = "linux")]
+fn print_logs(cmd: std::process::Command) -> Result<(), anyhow::Error> {
+    let logs = dynamic_library::linux::get_linked_library_logs(&cmd)?;
+    for log in logs.stdout {
+        println!("{log:x?}");
+    }
+
+    let logs2 = dynamic_library::linux::get_loaded_libraries_logs(cmd)?;
+    for log in logs2.stderr {
         println!("{log:x?}");
     }
 
