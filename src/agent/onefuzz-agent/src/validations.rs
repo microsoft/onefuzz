@@ -98,9 +98,11 @@ async fn get_logs(config: ValidationConfig) -> Result<()> {
 #[cfg(target_os = "windows")]
 fn print_logs(cmd: std::process::Command) -> Result<(), anyhow::Error> {
     let logs = dynamic_library::windows::get_logs(cmd)?;
-    Ok(for log in logs {
+    for log in logs {
         println!("{log:x?}");
-    })
+    }
+
+    Ok(())
 }
 
 #[cfg(target_os = "linux")]
