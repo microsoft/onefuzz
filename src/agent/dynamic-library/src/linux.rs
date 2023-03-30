@@ -37,14 +37,14 @@ pub fn find_missing(mut cmd: Command) -> Result<HashSet<MissingDynamicLibrary>, 
     Ok(logs.missing())
 }
 
-pub fn get_linked_library_logs<'a>(cmd: &Command) -> Result<std::process::Output, io::Error> {
+pub fn get_linked_library_logs(cmd: &Command) -> Result<std::process::Output, io::Error> {
     let library_path = explicit_library_path(cmd);
     let output = LinkedDynamicLibraries::run(cmd.get_program(), library_path)?;
     Ok(output)
 }
 
-pub fn get_loaded_libraries_logs<'a>(cmd: Command) -> Result<std::process::Output, io::Error> {
-    let mut cmd = Command::from(cmd);
+pub fn get_loaded_libraries_logs(cmd: Command) -> Result<std::process::Output, io::Error> {
+    let mut cmd = cmd;
     cmd.env("LD_DEBUG", "libs");
     let output = cmd.output()?;
     Ok(output)
