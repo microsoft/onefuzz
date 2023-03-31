@@ -4,6 +4,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 7.0.0
+## BREAKING CHANGES
+
+* This release has fully deprecated `jinja` templates and will only accept `scriban` templates. 
+* The `onefuzz config` command has removed the `--authority` and `--tenant_domain` parameters. The only _required_ parameter for interactive use is the `--endpoint` parameters. The other values needed for authentication are now retrieved dynamically. 
+* The recording components used in the `coverage` task have been rewritten for improved source-level reporting. The task-level API has one breaking change: the `coverage_filter` field has been removed and replaced by the `module_allowlist` and `source_allowlist` fields. See [here](https://github.com/microsoft/onefuzz/blob/5bfcc4e242aa041d8c067471ee2e81904589a79e/src/agent/coverage/README.md#allowlists) for documentation of the new format.
+* The old `dotnet` template has been removed and `dotnet_dll` is now `dotnet`. 
+
+### Added
+* Service: Added  unmanaged nodes integration tests. [#2780](https://github.com/microsoft/onefuzz/pull/2780)
+* CLI: Added notification `get` command to retrieve specific notification definitions. [#2818](https://github.com/microsoft/onefuzz/pull/2818)
+* Agent: Added function allow-list to the coverage example exe. [#2830](https://github.com/microsoft/onefuzz/pull/2830)
+* Service: Added feature flag, validation when new notifications are created, and CLI support for migration to scriban. [#2816](https://github.com/microsoft/onefuzz/pull/2816), [#2834](https://github.com/microsoft/onefuzz/pull/2834), [#2839](https://github.com/microsoft/onefuzz/pull/2839)
+* Agent: Switch over to new `coverage` task. [#2741](https://github.com/microsoft/onefuzz/pull/2741)
+* Service: Added `--notification_config` support for dotnet templates. [#2842](https://github.com/microsoft/onefuzz/pull/2842)
+* Service: Report extension errors when deploying VM in a scaleset. [#2846](https://github.com/microsoft/onefuzz/pull/2846)
+* Service: Semantically validate notification configurations. [#2850](https://github.com/microsoft/onefuzz/pull/2850)
+* Agent: Accept optional `dir` of coverage test inputs. [#2853](https://github.com/microsoft/onefuzz/pull/2853)
+* Service/Agent: Added extra container to tasks. [#2847](https://github.com/microsoft/onefuzz/pull/2847)
+* Documentation: Document `coverage` crate and tool. [#2904](https://github.com/microsoft/onefuzz/pull/2904)
+* Agent: Add the ability for a task to gracefully shutdown when a task is stopped. [#2912](https://github.com/microsoft/onefuzz/pull/2912)
+
+
+### Changed
+* Service: Deprecated the job template feature. [#2798](https://github.com/microsoft/onefuzz/pull/2798)
+* Service: Deploy with scriban only, removing jinja. [#2809](https://github.com/microsoft/onefuzz/pull/2809)
+* Agent: Defer setting coverage breakpoints. This avoids breaking hot patching routines in the ASan interceptor
+initializers. [#2832](https://github.com/microsoft/onefuzz/pull/2832)
+* Service: Updated remaining jinja docs. [#2838](https://github.com/microsoft/onefuzz/pull/2838)
+* Service: Support another exception case when adding `AssignedTo` to telemetry. [#2829](https://github.com/microsoft/onefuzz/pull/2829)
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.[#2849](https://github.com/microsoft/onefuzz/pull/2849), [#2855](https://github.com/microsoft/onefuzz/pull/2855), [#2274](https://github.com/microsoft/onefuzz/pull/2274), [#2544](https://github.com/microsoft/onefuzz/pull/2544), [#2857](https://github.com/microsoft/onefuzz/pull/2857), [#2876](https://github.com/microsoft/onefuzz/pull/2876)
+* Contrib: Updated contribution `onefuzz config` command lines. [#2861](https://github.com/microsoft/onefuzz/pull/2861)
+* Agent: Removed Z3 telemetry. [#2860](https://github.com/microsoft/onefuzz/pull/2860)
+* Service: Change the optional parameter names and set an expiration for the cache created on the `onefuzz config` command. [#2835](https://github.com/microsoft/onefuzz/pull/2835)
+* Agent: Removed the function allowlist. [#2859](https://github.com/microsoft/onefuzz/pull/2859)
+* Agent: Updated clap to remove suppressions. [#2856](https://github.com/microsoft/onefuzz/pull/2856)
+* Agent: Removed unused telemetry data. [#2863](https://github.com/microsoft/onefuzz/pull/2863)
+* CLI: Removed old `libfuzzer dotnet` template. [#2875](https://github.com/microsoft/onefuzz/pull/2875)
+* Test: Updated C# functional testing InfoResponse. [#2894](https://github.com/microsoft/onefuzz/pull/2894)
+* Service: Updated the truncating logic when getting the error so that we retrieve the last messages. [#2896](https://github.com/microsoft/onefuzz/pull/2896)
+* Service: Added additional filter check for reports and regressions. [#2911](https://github.com/microsoft/onefuzz/pull/2911)
+
+### Fixed
+* Agent: Removed a stray print statement. [#2823](https://github.com/microsoft/onefuzz/pull/2823)
+* Deployment: Fixed a bug in `registration.py` when creating CLI service principals. [#2828](https://github.com/microsoft/onefuzz/pull/2828)
+* Example: Fixed coverage example build. [#2831](https://github.com/microsoft/onefuzz/pull/2831)
+* Service: Fixed the way we report an error when creating a Scaleset under a missing Pool. [#2844](https://github.com/microsoft/onefuzz/pull/2844)
+* Service: Update SharpFuzz to a version that supports .NET7.0, and change .NET installation method. [#2878](https://github.com/microsoft/onefuzz/pull/2878)
+* Deployment: Fixed an error where a variable was being referenced before being assigned. [#2903](https://github.com/microsoft/onefuzz/pull/2903)
+* Service: Created a wrapper function to handle columns defined as GUID in tables. [#2898](https://github.com/microsoft/onefuzz/pull/2898)
+* Service: Pass `PreserveExistingOutputs` to the task. [#2905](https://github.com/microsoft/onefuzz/pull/2905)
+* Service: Fixed notification validation. [#2914](https://github.com/microsoft/onefuzz/pull/2914)
+* Service: Fixed the custom script definition that could prevent the creation of the repro VM due to a change in the underlying extension setup processes. [#2920](https://github.com/microsoft/onefuzz/pull/2920)
+* Deployment: Fixed `--auto_create_cli_app` flag bug used during deployment. [#2921](https://github.com/microsoft/onefuzz/pull/2921)
+* Agent/Service: Updates to address CVE's. [#2933](https://github.com/microsoft/onefuzz/pull/2933)
+* Service: Fixed a condition when generating a task configuration. [#2925](https://github.com/microsoft/onefuzz/pull/2925)
+
 ## 6.4.0
 
 ### Added 
