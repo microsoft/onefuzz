@@ -90,14 +90,14 @@ impl WorkSet {
 
     pub fn setup_dir(&self) -> Result<PathBuf> {
         let root = self.get_root_folder()?;
-        self.setup_url.as_path(root.join("blob-containers"))
+        self.setup_url.as_path(root)
     }
 
     pub fn extra_dir(&self) -> Result<Option<PathBuf>> {
         let root = self.get_root_folder()?;
         self.extra_url
             .as_ref()
-            .map(|url| url.as_path(root.join("blob-containers")))
+            .map(|url| url.as_path(root))
             .transpose()
     }
 }
