@@ -1981,6 +1981,7 @@ dependencies = [
  "backtrace",
  "clap",
  "downcast-rs",
+ "dynamic-library",
  "env_logger",
  "futures",
  "ipc-channel",
