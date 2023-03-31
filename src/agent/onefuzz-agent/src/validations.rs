@@ -1,7 +1,7 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::path::{Path, PathBuf};
 
 use crate::setup::SetupRunner;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::Parser;
 use onefuzz::{libfuzzer::LibFuzzer, machine_id::MachineIdentity};
 use uuid::Uuid;
@@ -9,37 +9,54 @@ use uuid::Uuid;
 #[derive(Parser, Debug)]
 #[clap(rename_all = "snake_case")]
 pub enum ValidationCommand {
-    ValidateSetup,
-    ValidateLibfuzzer,
-    ExecutionLog,
+    /// Run the setup script
+    RunSetup { setup_folder: PathBuf },
+    /// Validate the libfuzzer target
+    ValidateLibfuzzer(ValidationConfig),
+    /// Get the execution logs to debug loading issues
+    ExecutionLog(ValidationConfig),
 }
 
-#[derive(Parser, Debug)]
+fn parse_key_val<T, U>(
+    s: &str,
+) -> Result<(T, U), Box<dyn std::error::Error + Send + Sync + 'static>>
+where
+    T: std::str::FromStr,
+    T::Err: std::error::Error + Send + Sync + 'static,
+    U: std::str::FromStr,
+    U::Err: std::error::Error + Send + Sync + 'static,
+{
+    let pos = s
+        .find('=')
+        .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{s}`"))?;
+
+    println!("******** pos: {}", pos);
+
+    Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
+}
+
+#[derive(Parser, Debug, Deserialize)]
 #[clap(rename_all = "snake_case")]
-pub struct Config {
-    pub config_path: PathBuf,
-    #[clap(subcommand)]
-    pub command: ValidationCommand,
-}
-
-#[derive(Debug, Deserialize, Clone)]
 pub struct ValidationConfig {
-    pub seeds: PathBuf,
-    pub setup_folder: PathBuf,
+    #[clap(long = "seeds")]
+    pub seeds: Option<PathBuf>,
+    #[clap(long = "target_exe")]
     pub target_exe: PathBuf,
-    pub target_env: HashMap<String, String>,
+    #[clap(long = "setup_folder")]
+    pub setup_folder: Option<PathBuf>,
+    #[clap(long = "target_options")]
     pub target_options: Vec<String>,
+    #[arg(value_parser = parse_key_val::<String, String>, long = "target_env")]
+    pub target_env: Vec<(String, String)>,
 }
 
-pub async fn validate(config: Config) -> Result<()> {
-    let validation_config = serde_json::from_str::<ValidationConfig>(
-        &std::fs::read_to_string(&config.config_path).context("unable to read config file")?,
-    )?;
-
-    match config.command {
-        ValidationCommand::ValidateSetup => validate_setup(validation_config).await,
-        ValidationCommand::ValidateLibfuzzer => validate_libfuzzer(validation_config).await,
-        ValidationCommand::ExecutionLog => get_logs(validation_config).await,
+pub async fn validate(command: ValidationCommand) -> Result<()> {
+    match command {
+        ValidationCommand::RunSetup { setup_folder } => run_setup(setup_folder).await,
+        ValidationCommand::ValidateLibfuzzer(validation_config) => {
+            validate_libfuzzer(validation_config).await
+        }
+        ValidationCommand::ExecutionLog(validation_config) => get_logs(validation_config).await,
     }
 }
 
@@ -47,8 +64,10 @@ async fn validate_libfuzzer(config: ValidationConfig) -> Result<()> {
     let libfuzzer = LibFuzzer::new(
         &config.target_exe,
         config.target_options.clone(),
-        config.target_env.clone(),
-        config.setup_folder.clone(),
+        config.target_env.into_iter().collect(),
+        config
+            .setup_folder
+            .unwrap_or(config.target_exe.parent().unwrap().to_path_buf()),
         None::<&PathBuf>,
         MachineIdentity {
             machine_id: Uuid::nil(),
@@ -57,12 +76,15 @@ async fn validate_libfuzzer(config: ValidationConfig) -> Result<()> {
         },
     );
 
-    libfuzzer.verify(true, Some(vec![config.seeds])).await?;
+    if let Some(seeds) = config.seeds {
+        libfuzzer.verify(true, Some(vec![seeds])).await?;
+    }
+
     Ok(())
 }
 
-async fn validate_setup(config: ValidationConfig) -> Result<()> {
-    let output = SetupRunner::run_setup_script(config.setup_folder).await?;
+async fn run_setup(setup_folder: impl AsRef<Path>) -> Result<()> {
+    let output = SetupRunner::run_setup_script(setup_folder.as_ref()).await?;
     match output {
         Some(output) => {
             if !output.exit_status.success {
@@ -81,8 +103,10 @@ async fn get_logs(config: ValidationConfig) -> Result<()> {
     let libfuzzer = LibFuzzer::new(
         &config.target_exe,
         config.target_options.clone(),
-        config.target_env.clone(),
-        config.setup_folder.clone(),
+        config.target_env.into_iter().collect(),
+        config
+            .setup_folder
+            .unwrap_or(config.target_exe.parent().unwrap().to_path_buf()),
         None::<&PathBuf>,
         MachineIdentity {
             machine_id: Uuid::nil(),
@@ -119,7 +143,3 @@ fn print_logs(cmd: std::process::Command) -> Result<(), anyhow::Error> {
 
     Ok(())
 }
-
-// https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/extra-tools#installation-directory
-// ./gflags /i C:\setup\Xbox.Shell.OneStoreServices.FuzzerTest.exe +sls
-// ./cdb -c "q" C:\setup\Xbox.Shell.OneStoreServices.FuzzerTest.exe

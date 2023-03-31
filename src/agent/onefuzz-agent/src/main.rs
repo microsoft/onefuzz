@@ -49,7 +49,8 @@ enum Opt {
     Run(RunOpt),
     #[clap(subcommand)]
     Debug(debug::DebugOpt),
-    Validate(validations::Config),
+    #[clap(subcommand)]
+    Validate(validations::ValidationCommand),
     Licenses,
     Version,
 }
@@ -92,7 +93,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn validate(validation_command: validations::Config) -> Result<()> {
+fn validate(validation_command: validations::ValidationCommand) -> Result<()> {
     let rt = tokio::runtime::Runtime::new()?;
     rt.block_on(async { validations::validate(validation_command).await })
 }

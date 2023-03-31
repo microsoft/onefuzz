@@ -96,7 +96,7 @@ impl SetupRunner {
     }
 
     pub async fn run_setup_script(
-        setup_dir: PathBuf,
+        setup_dir: impl AsRef<Path>,
     ) -> std::result::Result<Option<Output>, anyhow::Error> {
         // Run setup script, if any.
         let setup_script = SetupScript::new(setup_dir).await?;
