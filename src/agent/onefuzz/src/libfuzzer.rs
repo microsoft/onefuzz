@@ -90,7 +90,7 @@ impl LibFuzzer {
     }
 
     // Build a non-async `Command`.
-    fn build_std_command(
+    pub fn build_std_command(
         &self,
         fault_dir: Option<&Path>,
         corpus_dir: Option<&Path>,
