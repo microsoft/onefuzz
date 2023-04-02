@@ -1,7 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::{fmt, path::PathBuf};
+use std::{
+    fmt,
+    path::{Path, PathBuf},
+};
 
 use anyhow::Result;
 use reqwest::Url;
@@ -186,6 +189,13 @@ impl BlobContainerUrl {
             }
             Self::Path(p) => BlobUrl::LocalFile(p.join(name.as_ref())),
         }
+    }
+
+    pub fn as_path(&self, prefix: impl AsRef<Path>) -> Result<PathBuf> {
+        let dir = self
+            .account()
+            .ok_or_else(|| anyhow!("Invalid container Url"))?;
+        Ok(prefix.as_ref().join(dir))
     }
 }
 

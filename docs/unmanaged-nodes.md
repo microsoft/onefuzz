@@ -142,3 +142,11 @@ linux
 ```
 docker run --it --rm --entrypoint bash <image_name>
 ```
+
+### mount a local folder in the container
+
+docker allows you to [mount](https://docs.docker.com/storage/bind-mounts/#mount-into-a-non-empty-directory-on-the-container) a local folder when running a container
+
+```
+docker run -it --rm --mount type=bind,source=<local_path>,target=<path_in_container>
+```
