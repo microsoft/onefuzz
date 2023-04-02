@@ -110,11 +110,11 @@ async fn get_logs(config: ValidationConfig) -> Result<()> {
         None::<&PathBuf>,
         MachineIdentity {
             machine_id: Uuid::nil(),
-            machine_name: "".to_string(),
+            machine_name: String::new(),
             scaleset_name: None,
         },
     );
-    let cmd = libfuzzer.build_std_command(None, None, None).await?;
+    let cmd = libfuzzer.build_std_command(None, None, None, None, None)?;
     print_logs(cmd)?;
     Ok(())
 }
