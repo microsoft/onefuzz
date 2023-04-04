@@ -212,7 +212,7 @@ public class VmssOperations : IVmssOperations {
             } else {
                 return foundInstanceId;
             }
-        });
+        })!; // NULLABLE: only this method inserts InstanceIdKey so it cannot be null
 
     public async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(Guid name, Guid vmId) {
         _log.Info($"get instance ID for scaleset node: {name:Tag:VmssName}:{vmId:Tag:VmId}");
@@ -402,8 +402,9 @@ public class VmssOperations : IVmssOperations {
             .GetVirtualMachineScaleSetVms()
             .SelectAwait(async vm => vm.HasData ? vm : await vm.GetAsync());
 
+    private sealed record AvailableSkusKey(Region region);
     public Async.Task<IReadOnlyList<string>> ListAvailableSkus(Region region)
-        => _cache.GetOrCreateAsync<IReadOnlyList<string>>($"compute-skus-{region}", async entry => {
+        => _cache.GetOrCreateAsync<IReadOnlyList<string>>(new AvailableSkusKey(region), async entry => {
             entry = entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
 
             var sub = _creds.GetSubscriptionResource();
@@ -428,7 +429,7 @@ public class VmssOperations : IVmssOperations {
             }
 
             return skuNames;
-        });
+        })!; // NULLABLE: only this method inserts AvailableSkusKey so it cannot be null
 
     private async Async.Task<HashSet<string>> ResolveInstanceIds(Guid scalesetId, IEnumerable<Node> nodes) {
 

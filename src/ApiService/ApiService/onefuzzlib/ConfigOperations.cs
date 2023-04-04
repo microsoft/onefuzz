@@ -22,14 +22,13 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
         _cache = cache;
     }
 
-    private sealed record InstanceConfigCacheKey();
-    private static readonly InstanceConfigCacheKey _key = new(); // singleton key
+    private static readonly object _instanceConfigCacheKey = new(); // singleton key; we only need hashcode/equality
     public Task<InstanceConfig> Fetch()
-        => _cache.GetOrCreateAsync(_key, async entry => {
+        => _cache.GetOrCreateAsync(_instanceConfigCacheKey, async entry => {
             entry = entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(1)); // cached for 1 minute
             var key = _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set");
             return await GetEntityAsync(key, key);
-        });
+        })!; // NULLABLE: only this class inserts _instanceConfigCacheKey so it cannot be null
 
     public async Async.Task Save(InstanceConfig config, bool isNew = false, bool requireEtag = false) {
         var newConfig = config with { InstanceName = _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set") };
@@ -52,7 +51,7 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
         }
 
         if (r.IsOk) {
-            _ = _cache.Set(_key, newConfig);
+            _ = _cache.Set(_instanceConfigCacheKey, newConfig);
         }
 
         await _context.Events.SendEvent(new EventInstanceConfigUpdated(newConfig));
