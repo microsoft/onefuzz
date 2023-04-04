@@ -16,7 +16,7 @@ resource eventGridSystemTopics 'Microsoft.EventGrid/systemTopics@2021-12-01' = {
 }
 
 resource eventSubscriptions 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2021-12-01' = {
-  name: 'onefuzz1_subscription'
+  name: 'onefuzz1-subscription'
   parent: eventGridSystemTopics
   properties: {
     destination: {
