@@ -45,7 +45,7 @@
     <PackageReference Include="TaskTupleAwaiter" Version="2.0.0" />
     <PackageReference Include="Scriban" Version="5.5.0" />
     <PackageReference Include="Octokit" Version="2.0.1" />
-    <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="19.209.0-preview" />
+    <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="19.219.0-preview" />
     <PackageReference Include="SmartAnalyzers.CSharpExtensions.Annotations" Version="4.2.7" />
   </ItemGroup>
   <ItemGroup>
