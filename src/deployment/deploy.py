@@ -877,18 +877,16 @@ class Client:
         )
 
         # Event subscription for version up to 5.1.0
-        # or 7.1.0
-        old_subscription_names = ["onefuzz1", "onefuzz1_subscription"]
-        for old_subscription_name in old_subscription_names:
-            old_subscription_exists = Client.event_subscription_exists(
-                event_grid_client, src_resource_id, old_subscription_name
-            )
+        old_subscription_name = "onefuzz1"
+        old_subscription_exists = Client.event_subscription_exists(
+            event_grid_client, src_resource_id, old_subscription_name
+        )
 
-            if old_subscription_exists:
-                logger.info("removing deprecated event subscription")
-                event_grid_client.event_subscriptions.begin_delete(
-                    src_resource_id, old_subscription_name
-                ).wait()
+        if old_subscription_exists:
+            logger.info("removing deprecated event subscription")
+            event_grid_client.event_subscriptions.begin_delete(
+                src_resource_id, old_subscription_name
+            ).wait()
 
     def add_instance_id(self) -> None:
         logger.info("setting instance_id log export")
