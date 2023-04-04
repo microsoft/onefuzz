@@ -16,14 +16,13 @@ use nix::sys::signal::{kill, Signal};
 use stacktrace_parser::CrashLog;
 #[cfg(any(target_os = "linux", target_family = "windows"))]
 use stacktrace_parser::StackEntry;
+use std::ffi::OsStr;
 #[cfg(target_os = "linux")]
 use std::process::Stdio;
 use std::{collections::HashMap, path::Path, time::Duration};
 use tempfile::tempdir;
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
-#[cfg(any(target_os = "linux", target_family = "windows"))]
-const CRASH_SITE_UNAVAILABLE: &str = "<crash site unavailable>";
 
 pub struct Tester<'a> {
     setup_dir: &'a Path,
@@ -140,14 +139,14 @@ impl<'a> Tester<'a> {
     #[cfg(target_family = "windows")]
     async fn test_input_debugger(
         &self,
-        argv: Vec<String>,
-        env: HashMap<String, String>,
+        argv: &[impl AsRef<OsStr>],
+        env: &HashMap<String, String>,
     ) -> Result<Option<CrashLog>> {
         const IGNORE_FIRST_CHANCE_EXCEPTIONS: bool = true;
         let report = input_tester::crash_detector::test_process(
             self.exe_path,
-            &argv,
-            &env,
+            argv,
+            env,
             self.timeout,
             IGNORE_FIRST_CHANCE_EXCEPTIONS,
         )?;
@@ -182,18 +181,11 @@ impl<'a> Tester<'a> {
                 })
                 .collect();
 
-            let crash_site = if let Some(frame) = call_stack.get(0) {
-                frame.line.to_owned()
-            } else {
-                CRASH_SITE_UNAVAILABLE.to_owned()
-            };
-
             let fault_type = exception.description.to_string();
             let sanitizer = fault_type.to_string();
-            let summary = crash_site;
 
             Some(CrashLog::new(
-                None, summary, sanitizer, fault_type, None, None, call_stack,
+                None, None, sanitizer, fault_type, None, None, call_stack,
             )?)
         } else {
             None
@@ -205,12 +197,12 @@ impl<'a> Tester<'a> {
     #[cfg(target_os = "linux")]
     async fn test_input_debugger(
         &self,
-        args: Vec<String>,
-        env: HashMap<String, String>,
+        args: &[impl AsRef<OsStr>],
+        env: &HashMap<String, String>,
     ) -> Result<Option<CrashLog>> {
         let mut cmd = std::process::Command::new(self.exe_path);
         cmd.args(args).stdin(Stdio::null());
-        cmd.envs(&env);
+        cmd.envs(env);
 
         let (sender, receiver) = std::sync::mpsc::channel();
 
@@ -265,19 +257,11 @@ impl<'a> Tester<'a> {
                     .collect();
 
                 let crash_type = crash.signal.to_string();
-
-                let crash_site = if let Some(frame) = crash_thread.callstack.get(0) {
-                    frame.to_string()
-                } else {
-                    CRASH_SITE_UNAVAILABLE.to_owned()
-                };
-
-                let summary = crash_site;
                 let sanitizer = crash_type.clone();
                 let fault_type = crash_type;
 
                 Some(CrashLog::new(
-                    None, summary, sanitizer, fault_type, None, None, call_stack,
+                    None, None, sanitizer, fault_type, None, None, call_stack,
                 )?)
             } else {
                 None
@@ -301,9 +285,7 @@ impl<'a> Tester<'a> {
                 .target_exe(self.exe_path)
                 .target_options(self.arguments)
                 .setup_dir(self.setup_dir)
-                .set_optional(self.extra_dir.as_ref(), |expand, extra_dir| {
-                    expand.extra_dir(extra_dir)
-                });
+                .set_optional(self.extra_dir, Expand::extra_dir);
 
             let argv = expand.evaluate(self.arguments)?;
             let mut env: HashMap<String, String> = HashMap::new();
@@ -317,6 +299,7 @@ impl<'a> Tester<'a> {
                     Some(v) => update_path(v.clone().into(), setup_dir)?,
                     None => get_path_with_directory(PATH, setup_dir)?,
                 };
+
                 env.insert(PATH.to_string(), new_path.to_string_lossy().to_string());
             }
             if self.add_setup_to_ld_library_path {
@@ -343,7 +326,7 @@ impl<'a> Tester<'a> {
         let attempts = 1 + self.check_retry_count;
         for _ in 0..attempts {
             let result = if self.check_debugger {
-                match self.test_input_debugger(argv.clone(), env.clone()).await {
+                match self.test_input_debugger(&argv, &env).await {
                     Ok(crash) => (crash, None, None),
                     Err(error) => (None, Some(error), None),
                 }

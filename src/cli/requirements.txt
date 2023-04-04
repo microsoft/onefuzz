@@ -7,12 +7,12 @@ asciimatics~=1.13.0
 pydantic~=1.8.1 --no-binary=pydantic
 memoization~=0.4.0
 msrestazure==0.6.4
-azure-storage-blob~=12.8
+azure-storage-blob==12.14.1
 azure-applicationinsights==0.1.0
 tenacity==8.0.1
 docstring_parser==0.8.1
 azure-identity==1.10.0
-azure-cli-core==2.46.0
+azure-cli-core==2.47.0
 PyJWT>=2.4.0
 # install rsa version >=4.7 to fix CVE-2020-25658
 rsa>=4.7
