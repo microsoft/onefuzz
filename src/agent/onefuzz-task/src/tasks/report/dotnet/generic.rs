@@ -208,7 +208,7 @@ impl AsanProcessor {
                     input_blob,
                     executable,
                     crash_type: exception.exception,
-                    crash_site: exception.call_stack[0].clone(),
+                    crash_site: exception.call_stack.first().cloned().unwrap_or_default(),
                     call_stack: exception.call_stack,
                     call_stack_sha256,
                     minimized_stack: None,
