@@ -362,6 +362,12 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         result.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
     }
 
+    [Fact]
+    public async Async.Task Do_Not_Enforce_Key_Exists_In_Strict_Validation() {
+        (await JinjaTemplateAdapter.IsValidScribanNotificationTemplate(Context, Logger, ValidScribanAdoTemplate()))
+            .Should().BeTrue();
+    }
+
     private async Async.Task ConfigureAuth() {
         await Context.InsertAll(
             new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } } // needed for admin check
@@ -411,5 +417,20 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
 
     private static TeamsTemplate GetTeamsTemplate() {
         return new TeamsTemplate(new SecretData<string>(new SecretValue<string>("https://example.com")));
+    }
+
+    private static AdoTemplate ValidScribanAdoTemplate() {
+        return new AdoTemplate(
+            new Uri("http://example.com"),
+            new SecretData<string>(new SecretValue<string>("some secret")),
+            "{{ if task.tags.project }} blah {{ end }}",
+            string.Empty,
+            Array.Empty<string>().ToList(),
+            new Dictionary<string, string>(),
+            new ADODuplicateTemplate(
+                Array.Empty<string>().ToList(),
+                new Dictionary<string, string>(),
+                new Dictionary<string, string>()
+        ));
     }
 }
