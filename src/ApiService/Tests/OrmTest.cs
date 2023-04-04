@@ -422,23 +422,26 @@ namespace Tests {
         sealed record NestedEntity(
             [PartitionKey] int Id,
             [RowKey] string TheName,
-            Nested? nested
+            [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
+            [property: JsonConverter(typeof(BaseEventConverter))]
+            Nested? EventType
         ) : EntityBase();
 
 #pragma warning disable CS0169
-        private sealed class Nested {
-            Nested? nested;
-        }
+        public record Nested(
+            bool? B,
+            Nested? EventType
+        ) : BaseEvent();
 #pragma warning restore CS0169
 
         [Fact]
         public void TestDeeplyNestedObjects() {
             var converter = new EntityConverter(_logTracer);
-            var deeplyNestedJson = $"{{{string.Concat(Enumerable.Repeat("\"nested\": {", 150))}{new String('}', 150)}}}"; // {{{...}}}
+            var deeplyNestedJson = $"{{{string.Concat(Enumerable.Repeat("\"EventType\": {", 32))}{new String('}', 32)}}}"; // {{{...}}}
             var nestedEntity = new NestedEntity(
                 Id: 123,
                 TheName: "abc",
-                nested: JsonSerializer.Deserialize<Nested>(deeplyNestedJson, new JsonSerializerOptions() { MaxDepth = 160 })
+                EventType: JsonSerializer.Deserialize<Nested>(deeplyNestedJson, new JsonSerializerOptions() { MaxDepth = 160 })
             );
 
             var tableEntity = converter.ToTableEntity(nestedEntity);

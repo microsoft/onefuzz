@@ -88,7 +88,7 @@ sealed class OnefuzzNamingPolicy : JsonNamingPolicy {
 }
 public class EntityConverter {
 
-    private const int MAX_DESERIALIZATION_RECURSION_DEPTH = 100;
+    private const int MAX_DESERIALIZATION_RECURSION_DEPTH = 20;
     private ILogTracer _logTracer;
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
     private static readonly JsonSerializerOptions _options = new() {
