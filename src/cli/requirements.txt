@@ -9,6 +9,7 @@ memoization~=0.4.0
 msrestazure==0.6.4
 azure-storage-blob==12.14.1
 azure-applicationinsights==0.1.0
+azure-mgmt-keyvault==10.2.1
 tenacity==8.0.1
 docstring_parser==0.8.1
 azure-identity==1.10.0
