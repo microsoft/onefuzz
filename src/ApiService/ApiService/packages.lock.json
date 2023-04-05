@@ -157,6 +157,16 @@
         "resolved": "0.12.2",
         "contentHash": "JgMAGj8ekeAzKkagubXqf1UqgfHq89GyA1UQYWbkAe441uRr2Rh2rktkx5Z0LPwmD/aOqu9cxjekD2GZjP8rbw=="
       },
+      "Microsoft.Azure.AppConfiguration.Functions.Worker": {
+        "type": "Direct",
+        "requested": "[6.0.0, )",
+        "resolved": "6.0.0",
+        "contentHash": "cwj73rhjH27VOg5pGB7mlTkX6do96u733T8m8int62RuxcQRKQVTuzh91hpQYFsf9IFAgS/RAwdO7fTAPJ7vOA==",
+        "dependencies": {
+          "Microsoft.Azure.Functions.Worker": "1.6.0",
+          "Microsoft.Extensions.Configuration.AzureAppConfiguration": "6.0.0"
+        }
+      },
       "Microsoft.Azure.Functions.Extensions": {
         "type": "Direct",
         "requested": "[1.1.0, )",
@@ -270,21 +280,6 @@
           "Microsoft.Rest.ClientRuntime.Azure": "[3.3.19, 4.0.0)",
           "Newtonsoft.Json": "10.0.3",
           "System.Net.Http": "4.3.0"
-        }
-      },
-      "Microsoft.Extensions.Configuration.AzureAppConfiguration": {
-        "type": "Direct",
-        "requested": "[5.1.0, )",
-        "resolved": "5.1.0",
-        "contentHash": "FoAfgvT/rjL/+c7BP7q0LrJIdc4Hu6SH56BTIUbwCwVjHoUw4dpgGtLQULi5GmMjdbdAxyLQSnbwpOEWuBy+RA==",
-        "dependencies": {
-          "Azure.Data.AppConfiguration": "1.2.0",
-          "Azure.Messaging.EventGrid": "4.7.0",
-          "Azure.Security.KeyVault.Secrets": "4.0.1",
-          "Microsoft.Extensions.Configuration": "3.1.18",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "3.1.18",
-          "Microsoft.Extensions.Logging": "3.1.18",
-          "System.Text.Json": "4.6.0"
         }
       },
       "Microsoft.FeatureManagement": {
@@ -722,6 +717,20 @@
         "contentHash": "f34u2eaqIjNO9YLHBz8rozVZ+TcFiFs0F3r7nUJd7FRkVSxk8u4OpoK226mi49MwexHOR2ibP9MFvRUaLilcQQ==",
         "dependencies": {
           "Microsoft.Extensions.Primitives": "7.0.0"
+        }
+      },
+      "Microsoft.Extensions.Configuration.AzureAppConfiguration": {
+        "type": "Transitive",
+        "resolved": "6.0.0",
+        "contentHash": "oRCr8qqBp/37CXttfgbEWnPznHy0/ZCkgNVFFQ5cnXGvG8TBWicnAK032opyrbGIH3n2jYSg/PvIw7aLoOTy3Q==",
+        "dependencies": {
+          "Azure.Data.AppConfiguration": "1.2.0",
+          "Azure.Messaging.EventGrid": "4.7.0",
+          "Azure.Security.KeyVault.Secrets": "4.3.0",
+          "Microsoft.Extensions.Configuration": "3.1.18",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "3.1.18",
+          "Microsoft.Extensions.Logging": "3.1.18",
+          "System.Text.Json": "4.7.2"
         }
       },
       "Microsoft.Extensions.Configuration.Binder": {
