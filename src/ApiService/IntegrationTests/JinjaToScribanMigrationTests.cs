@@ -49,7 +49,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var dryRunResult = BodyAs<JinjaToScribanMigrationDryRunResponse>(result);
         dryRunResult.NotificationIdsToUpdate.Should().BeEquivalentTo(new List<Guid> { notificationBefore.NotificationId });
 
-        var notificationAfter = await Context.NotificationOperations.GetNotification(notificationBefore.NotificationId);
+        var notificationAfter = (await Context.NotificationOperations.GetNotification(notificationBefore.NotificationId))!;
         var adoTemplateAfter = (notificationAfter.Config as AdoTemplate)!;
 
         notificationBefore.Should().BeEquivalentTo(notificationAfter, options =>
@@ -88,7 +88,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         migrationResult.FailedNotificationIds.Should().BeEmpty();
         migrationResult.UpdatedNotificationIds.Should().BeEquivalentTo(new List<Guid> { notificationBefore.NotificationId });
 
-        var notificationAfter = await Context.NotificationOperations.GetNotification(notificationBefore.NotificationId);
+        var notificationAfter = (await Context.NotificationOperations.GetNotification(notificationBefore.NotificationId))!;
         var adoTemplateAfter = (notificationAfter.Config as AdoTemplate)!;
 
         adoTemplateBefore.Should().NotBeEquivalentTo(adoTemplateAfter);
@@ -172,7 +172,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         migrationResult.FailedNotificationIds.Should().BeEmpty();
         migrationResult.UpdatedNotificationIds.Should().BeEquivalentTo(new List<Guid> { notificationBefore.NotificationId });
 
-        var notificationAfter = await Context.NotificationOperations.GetNotification(notificationBefore.NotificationId);
+        var notificationAfter = (await Context.NotificationOperations.GetNotification(notificationBefore.NotificationId))!;
         var adoTemplateAfter = (notificationAfter.Config as AdoTemplate)!;
 
         adoTemplateBefore.Should().NotBeEquivalentTo(adoTemplateAfter);
@@ -224,7 +224,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         migrationResult.FailedNotificationIds.Should().BeEmpty();
         migrationResult.UpdatedNotificationIds.Should().BeEquivalentTo(new List<Guid> { notificationBefore.NotificationId });
 
-        var notificationAfter = await Context.NotificationOperations.GetNotification(notificationBefore.NotificationId);
+        var notificationAfter = (await Context.NotificationOperations.GetNotification(notificationBefore.NotificationId))!;
         var githubTemplateAfter = (notificationAfter.Config as GithubIssuesTemplate)!;
 
         githubTemplateBefore.Should().NotBeEquivalentTo(githubTemplateAfter);
@@ -279,7 +279,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         migrationResult.FailedNotificationIds.Should().BeEmpty();
         migrationResult.UpdatedNotificationIds.Should().BeEmpty();
 
-        var notificationAfter = await Context.NotificationOperations.GetNotification(notificationBefore.NotificationId);
+        var notificationAfter = (await Context.NotificationOperations.GetNotification(notificationBefore.NotificationId))!;
         var teamsTemplateAfter = (notificationAfter.Config as TeamsTemplate)!;
 
         teamsTemplateBefore.Should().BeEquivalentTo(teamsTemplateAfter);
@@ -330,9 +330,9 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
 
         result.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
 
-        var teamsNotificationAfter = await Context.NotificationOperations.GetNotification(teamsNotificationBefore.NotificationId);
-        var adoNotificationAfter = await Context.NotificationOperations.GetNotification(adoNotificationBefore.NotificationId);
-        var githubNotificationAfter = await Context.NotificationOperations.GetNotification(githubNotificationBefore.NotificationId);
+        var teamsNotificationAfter = (await Context.NotificationOperations.GetNotification(teamsNotificationBefore.NotificationId))!;
+        var adoNotificationAfter = (await Context.NotificationOperations.GetNotification(adoNotificationBefore.NotificationId))!;
+        var githubNotificationAfter = (await Context.NotificationOperations.GetNotification(githubNotificationBefore.NotificationId))!;
 
         var migrationResult = BodyAs<JinjaToScribanMigrationResponse>(result);
         migrationResult.FailedNotificationIds.Should().BeEmpty();
