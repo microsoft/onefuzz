@@ -8,16 +8,14 @@ use azure_core::StatusCode;
 use azure_storage::StorageCredentials;
 use azure_storage_blobs::container::operations::ListBlobsResponse;
 use azure_storage_blobs::prelude::*;
-use futures::{TryFutureExt, TryStreamExt};
+use futures::TryStreamExt;
 use onefuzz_telemetry::{LogTrace, LoggingEvent};
 use reqwest::Url;
 use std::{path::PathBuf, time::Duration};
 use uuid::Uuid;
 
-use tokio::{
-    sync::broadcast::{error::TryRecvError, Receiver},
-    task::JoinError,
-};
+use tokio::sync::broadcast::{error::TryRecvError, Receiver}
+;
 
 const LOGS_BUFFER_SIZE: usize = 100;
 const MAX_LOG_SIZE: u64 = 100000000; // 100 MB
