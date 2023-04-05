@@ -9,7 +9,7 @@ public interface INotificationOperations : IOrm<Notification> {
     IAsyncEnumerable<Notification> GetNotifications(Container container);
     IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks();
     Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting);
-    Async.Task<Notification> GetNotification(Guid notifificationId);
+    Async.Task<Notification?> GetNotification(Guid notifificationId);
 }
 
 public class NotificationOperations : Orm<Notification>, INotificationOperations {
@@ -155,7 +155,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         return null;
     }
 
-    public async Async.Task<Notification> GetNotification(Guid notifificationId) {
-        return await SearchByPartitionKeys(new[] { notifificationId.ToString() }).SingleAsync();
+    public async Async.Task<Notification?> GetNotification(Guid notifificationId) {
+        return await SearchByPartitionKeys(new[] { notifificationId.ToString() }).SingleOrDefaultAsync();
     }
 }
