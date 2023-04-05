@@ -6,7 +6,7 @@ license = "MIT"
 
 [dependencies]
 anyhow = "1.0"
-elsa = "1.7.0"
+elsa = "1.8.0"
 gimli = "0.26.2"
 goblin = "0.6.0"
 iced-x86 = "1.17"
