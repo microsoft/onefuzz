@@ -423,6 +423,15 @@
         "resolved": "7.0.4",
         "contentHash": "LrTtzEkC28PBGDpohPtMOf26a8Sg5yvQyEtlG7z2YB93qloK2u8sqG6BDzj0rBiz/mpyVlkc8Nj36IJCvqWtPg=="
       },
+      "Microsoft.Azure.AppConfiguration.Functions.Worker": {
+        "type": "Transitive",
+        "resolved": "6.0.0",
+        "contentHash": "cwj73rhjH27VOg5pGB7mlTkX6do96u733T8m8int62RuxcQRKQVTuzh91hpQYFsf9IFAgS/RAwdO7fTAPJ7vOA==",
+        "dependencies": {
+          "Microsoft.Azure.Functions.Worker": "1.6.0",
+          "Microsoft.Extensions.Configuration.AzureAppConfiguration": "6.0.0"
+        }
+      },
       "Microsoft.Azure.Functions.Extensions": {
         "type": "Transitive",
         "resolved": "1.1.0",
@@ -694,16 +703,16 @@
       },
       "Microsoft.Extensions.Configuration.AzureAppConfiguration": {
         "type": "Transitive",
-        "resolved": "5.1.0",
-        "contentHash": "FoAfgvT/rjL/+c7BP7q0LrJIdc4Hu6SH56BTIUbwCwVjHoUw4dpgGtLQULi5GmMjdbdAxyLQSnbwpOEWuBy+RA==",
+        "resolved": "6.0.0",
+        "contentHash": "oRCr8qqBp/37CXttfgbEWnPznHy0/ZCkgNVFFQ5cnXGvG8TBWicnAK032opyrbGIH3n2jYSg/PvIw7aLoOTy3Q==",
         "dependencies": {
           "Azure.Data.AppConfiguration": "1.2.0",
           "Azure.Messaging.EventGrid": "4.7.0",
-          "Azure.Security.KeyVault.Secrets": "4.0.1",
+          "Azure.Security.KeyVault.Secrets": "4.3.0",
           "Microsoft.Extensions.Configuration": "3.1.18",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "3.1.18",
           "Microsoft.Extensions.Logging": "3.1.18",
-          "System.Text.Json": "4.6.0"
+          "System.Text.Json": "4.7.2"
         }
       },
       "Microsoft.Extensions.Configuration.Binder": {
@@ -2614,6 +2623,7 @@
           "Azure.Storage.Blobs": "[12.13.0, )",
           "Azure.Storage.Queues": "[12.11.0, )",
           "Faithlife.Utility": "[0.12.2, )",
+          "Microsoft.Azure.AppConfiguration.Functions.Worker": "[6.0.0, )",
           "Microsoft.Azure.Functions.Extensions": "[1.1.0, )",
           "Microsoft.Azure.Functions.Worker": "[1.10.0, )",
           "Microsoft.Azure.Functions.Worker.ApplicationInsights": "[1.0.0-preview3, )",
@@ -2625,7 +2635,6 @@
           "Microsoft.Azure.Functions.Worker.Sdk": "[1.7.0, )",
           "Microsoft.Azure.Management.Monitor": "[0.28.0-preview, )",
           "Microsoft.Azure.Management.OperationalInsights": "[0.24.0-preview, )",
-          "Microsoft.Extensions.Configuration.AzureAppConfiguration": "[5.1.0, )",
           "Microsoft.FeatureManagement": "[2.5.1, )",
           "Microsoft.Graph": "[4.37.0, )",
           "Microsoft.Identity.Client": "[4.52.0, )",
