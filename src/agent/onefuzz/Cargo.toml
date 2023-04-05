@@ -34,7 +34,7 @@ serde_derive = "1.0"
 tokio = { version = "1.24", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["fs", "time", "tokio-util"] }
 tokio-util = { version = "0.7", features = ["full"] }
-uuid = { version = "0.8", features = ["serde", "v4"] }
+uuid = { version = "1.2", features = ["serde", "v4"] }
 urlparse = "0.7"
 url-escape = "0.1.0"
 storage-queue = { path = "../storage-queue" }

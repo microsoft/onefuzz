@@ -24,7 +24,7 @@ serde_json = "1.0"
 storage-queue = { path = "../storage-queue" }
 tokio = { version = "1.24", features = ["full"] }
 url = { version = "2.3", features = ["serde"] }
-uuid = { version = "0.8", features = ["serde", "v4"] }
+uuid = { version = "1.2", features = ["serde", "v4"] }
 clap = { version = "4", features = ["derive", "cargo"] }
 reqwest-retry = { path = "../reqwest-retry" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
