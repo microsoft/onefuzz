@@ -37,15 +37,16 @@
     <PackageReference Include="Azure.Storage.Queues" Version="12.11.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
     <PackageReference Include="Microsoft.Graph" Version="4.37.0" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.46.2" />
-    <PackageReference Include="Microsoft.Identity.Web.TokenCache" Version="1.23.1" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.52.0" />
+    <PackageReference Include="Microsoft.Identity.Web.TokenCache" Version="2.7.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.22.1" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.SignalRService" Version="1.7.0" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageReference Include="TaskTupleAwaiter" Version="2.0.0" />
     <PackageReference Include="Scriban" Version="5.5.0" />
     <PackageReference Include="Octokit" Version="2.0.1" />
-    <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="19.209.0-preview" />
+    <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="19.219.0-preview" />
     <PackageReference Include="SmartAnalyzers.CSharpExtensions.Annotations" Version="4.2.7" />
   </ItemGroup>
   <ItemGroup>
