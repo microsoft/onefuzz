@@ -17,17 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Agent: Install v17 Visual Studio redistributables [#2943](https://github.com/microsoft/onefuzz/pull/2943)
-* Agent/Service: Use minimized stack for crash site if no ASAN logs available [#2962](https://github.com/microsoft/onefuzz/pull/2962)
-* Service: Loosen scriban validation [#2963](https://github.com/microsoft/onefuzz/pull/2963)
+* Agent/Service: Use minimized stack for crash site if no ASAN logs are available [#2962](https://github.com/microsoft/onefuzz/pull/2962)
+* Service: Loosen scriban template validation [#2963](https://github.com/microsoft/onefuzz/pull/2963)
 * Service: Updated integration test pool size [#2935](https://github.com/microsoft/onefuzz/pull/2935)
 
 ### Fixed
 
 * Agent: Ensure custom `target_options` are always passed last to the fuzzer [#2952](https://github.com/microsoft/onefuzz/pull/2952)
 * Agent: Removed xml-rs dependency [#2936](https://github.com/microsoft/onefuzz/pull/2936)
-* Agent/Service: Updates to address CVE's. [#2931](https://github.com/microsoft/onefuzz/pull/2931), [#2957](https://github.com/microsoft/onefuzz/pull/2957), [#2967](https://github.com/microsoft/onefuzz/pull/2967)
+* Agent/Service: Updates to address CVE's [#2931](https://github.com/microsoft/onefuzz/pull/2931), [#2957](https://github.com/microsoft/onefuzz/pull/2957), [#2967](https://github.com/microsoft/onefuzz/pull/2967)
 * Deployment/Service: Renamed EventGrid subscription to conform with EventGrid's naming scheme [#2960](https://github.com/microsoft/onefuzz/pull/2960)
-* Documentation: Updated Azure Devops Work Item creation doc to remove an outdated template reference [#2956](https://github.com/microsoft/onefuzz/pull/2956)
+* Documentation: Updated 'Azure Devops Work Item creation' doc to remove an outdated template reference [#2956](https://github.com/microsoft/onefuzz/pull/2956)
 
 ## 7.0.0
 
