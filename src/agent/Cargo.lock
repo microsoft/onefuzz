@@ -61,7 +61,7 @@ dependencies = [
  "serde_json",
  "sm",
  "tokio",
- "uuid 1.2.1",
+ "uuid",
 ]
 
 [[package]]
@@ -143,7 +143,7 @@ dependencies = [
  "serde_json",
  "time",
  "url",
- "uuid 1.2.1",
+ "uuid",
 ]
 
 [[package]]
@@ -166,7 +166,7 @@ dependencies = [
  "sha2",
  "time",
  "url",
- "uuid 1.2.1",
+ "uuid",
 ]
 
 [[package]]
@@ -187,7 +187,7 @@ dependencies = [
  "serde_json",
  "time",
  "url",
- "uuid 1.2.1",
+ "uuid",
 ]
 
 [[package]]
@@ -674,7 +674,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef552e6f588e446098f6ba40d89ac146c8c7b64aade83c051ee00bb5d2bc18d"
 dependencies = [
- "uuid 1.2.1",
+ "uuid",
 ]
 
 [[package]]
@@ -1445,7 +1445,7 @@ dependencies = [
  "rand 0.7.3",
  "serde",
  "tempfile",
- "uuid 1.2.1",
+ "uuid",
  "winapi 0.3.9",
 ]
 
@@ -1967,7 +1967,7 @@ dependencies = [
  "url",
  "url-escape",
  "urlparse",
- "uuid 0.8.2",
+ "uuid",
  "winapi 0.3.9",
  "winreg 0.10.1",
 ]
@@ -1997,7 +1997,7 @@ dependencies = [
  "tokio",
  "url",
  "users",
- "uuid 0.8.2",
+ "uuid",
  "winapi 0.3.9",
 ]
 
@@ -2060,7 +2060,7 @@ dependencies = [
  "tokio-util 0.7.2",
  "tui",
  "url",
- "uuid 0.8.2",
+ "uuid",
 ]
 
 [[package]]
@@ -2074,7 +2074,7 @@ dependencies = [
  "log",
  "serde",
  "tokio",
- "uuid 0.8.2",
+ "uuid",
 ]
 
 [[package]]
@@ -2243,7 +2243,7 @@ checksum = "82040a392923abe6279c00ab4aff62d5250d1c8555dc780e4b02783a7aa74863"
 dependencies = [
  "fallible-iterator",
  "scroll",
- "uuid 1.2.1",
+ "uuid",
 ]
 
 [[package]]
@@ -3054,7 +3054,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "tokio",
- "uuid 0.8.2",
+ "uuid",
 ]
 
 [[package]]
@@ -3123,7 +3123,7 @@ dependencies = [
  "debugid",
  "memmap2",
  "stable_deref_trait",
- "uuid 1.2.1",
+ "uuid",
 ]
 
 [[package]]
@@ -3180,7 +3180,7 @@ dependencies = [
  "indexmap",
  "symbolic-common",
  "thiserror",
- "uuid 1.2.1",
+ "uuid",
  "watto",
 ]
 
@@ -3548,21 +3548,12 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "0.8.2"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
+checksum = "1674845326ee10d37ca60470760d4288a6f80f304007d92e5c53bab78c9cfd79"
 dependencies = [
  "getrandom 0.2.3",
  "serde",
-]
-
-[[package]]
-name = "uuid"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "feb41e78f93363bb2df8b0e86a2ca30eed7806ea16ea0c790d757cf93f79be83"
-dependencies = [
- "getrandom 0.2.3",
 ]
 
 [[package]]
