@@ -185,7 +185,7 @@ impl DebugEventHandler for CrashDetectorEventHandler {
     fn on_exception(
         &mut self,
         debugger: &mut Debugger,
-        info: &EXCEPTION_DEBUG_INFO,
+        info: &debugger::ExceptionDebugInfo,
         process_handle: HANDLE,
     ) -> DWORD {
         if !is_vcpp_notification(info, process_handle) {

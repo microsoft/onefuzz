@@ -32,5 +32,6 @@ features = [
     "werapi",
     "winbase",
     "winerror",
-    "wow64apiset"
+    "wow64apiset",
+    "namedpipeapi"
 ]
