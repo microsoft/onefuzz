@@ -1,18 +1,45 @@
+<!-- markdownlint-disable-file MD024 -->
+
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 7.0.0
-## BREAKING CHANGES
-
-* This release has fully deprecated `jinja` templates and will only accept `scriban` templates. 
-* The `onefuzz config` command has removed the `--authority` and `--tenant_domain` parameters. The only _required_ parameter for interactive use is the `--endpoint` parameters. The other values needed for authentication are now retrieved dynamically. 
-* The recording components used in the `coverage` task have been rewritten for improved source-level reporting. The task-level API has one breaking change: the `coverage_filter` field has been removed and replaced by the `module_allowlist` and `source_allowlist` fields. See [here](https://github.com/microsoft/onefuzz/blob/5bfcc4e242aa041d8c067471ee2e81904589a79e/src/agent/coverage/README.md#allowlists) for documentation of the new format.
-* The old `dotnet` template has been removed and `dotnet_dll` is now `dotnet`. 
+## 7.1.0
 
 ### Added
+
+* Agent: Added `validate` command to the agent to help validate a fuzzer [#2948](https://github.com/microsoft/onefuzz/pull/2948)
+* CLI: Added option to libfuzzer template to specify a known crash container [#2950](https://github.com/microsoft/onefuzz/pull/2950)
+
+### Changed
+
+* Agent: Install v17 Visual Studio redistributables [#2943](https://github.com/microsoft/onefuzz/pull/2943)
+* Agent/Service: Use minimized stack for crash site if no ASAN logs available [#2962](https://github.com/microsoft/onefuzz/pull/2962)
+* Service: Loosen scriban validation [#2963](https://github.com/microsoft/onefuzz/pull/2963)
+* Service: Updated integration test pool size [#2935](https://github.com/microsoft/onefuzz/pull/2935)
+
+### Fixed
+
+* Agent: Ensure custom `target_options` are always passed last to the fuzzer [#2952](https://github.com/microsoft/onefuzz/pull/2952)
+* Agent: Removed xml-rs dependency [#2936](https://github.com/microsoft/onefuzz/pull/2936)
+* Agent/Service: Updates to address CVE's. [#2931](https://github.com/microsoft/onefuzz/pull/2931), [#2957](https://github.com/microsoft/onefuzz/pull/2957), [#2967](https://github.com/microsoft/onefuzz/pull/2967)
+* Deployment/Service: Renamed EventGrid subscription to conform with EventGrid's naming scheme [#2960](https://github.com/microsoft/onefuzz/pull/2960)
+* Documentation: Updated Azure Devops Work Item creation doc to remove an outdated template refrence [#2956](https://github.com/microsoft/onefuzz/pull/2956)
+
+## 7.0.0
+
+## BREAKING CHANGES
+
+* This release has fully deprecated `jinja` templates and will only accept `scriban` templates.
+* The `onefuzz config` command has removed the `--authority` and `--tenant_domain` parameters. The only _required_ parameter for interactive use is the `--endpoint` parameters. The other values needed for authentication are now retrieved dynamically.
+* The recording components used in the `coverage` task have been rewritten for improved source-level reporting. The task-level API has one breaking change: the `coverage_filter` field has been removed and replaced by the `module_allowlist` and `source_allowlist` fields. See [here](https://github.com/microsoft/onefuzz/blob/5bfcc4e242aa041d8c067471ee2e81904589a79e/src/agent/coverage/README.md#allowlists) for documentation of the new format.
+* The old `dotnet` template has been removed and `dotnet_dll` is now `dotnet`.
+
+### Added
+
 * Service: Added  unmanaged nodes integration tests. [#2780](https://github.com/microsoft/onefuzz/pull/2780)
 * CLI: Added notification `get` command to retrieve specific notification definitions. [#2818](https://github.com/microsoft/onefuzz/pull/2818)
 * Agent: Added function allow-list to the coverage example exe. [#2830](https://github.com/microsoft/onefuzz/pull/2830)
@@ -26,8 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Documentation: Document `coverage` crate and tool. [#2904](https://github.com/microsoft/onefuzz/pull/2904)
 * Agent: Add the ability for a task to gracefully shutdown when a task is stopped. [#2912](https://github.com/microsoft/onefuzz/pull/2912)
 
-
 ### Changed
+
 * Service: Deprecated the job template feature. [#2798](https://github.com/microsoft/onefuzz/pull/2798)
 * Service: Deploy with scriban only, removing jinja. [#2809](https://github.com/microsoft/onefuzz/pull/2809)
 * Agent: Defer setting coverage breakpoints. This avoids breaking hot patching routines in the ASan interceptor
@@ -47,6 +74,7 @@ initializers. [#2832](https://github.com/microsoft/onefuzz/pull/2832)
 * Service: Added additional filter check for reports and regressions. [#2911](https://github.com/microsoft/onefuzz/pull/2911)
 
 ### Fixed
+
 * Agent: Removed a stray print statement. [#2823](https://github.com/microsoft/onefuzz/pull/2823)
 * Deployment: Fixed a bug in `registration.py` when creating CLI service principals. [#2828](https://github.com/microsoft/onefuzz/pull/2828)
 * Example: Fixed coverage example build. [#2831](https://github.com/microsoft/onefuzz/pull/2831)
@@ -63,16 +91,20 @@ initializers. [#2832](https://github.com/microsoft/onefuzz/pull/2832)
 
 ## 6.4.0
 
-### Added 
+### Added
+
 * Deployment/CLI: OneFuzz Config refactored - `tenant_id`, `tenant_domain`, `multi_tenant_domain`, and `cli_client_id` are now required values in the config.json used during deployment and no longer required when running the config command. [#2771](https://github.com/microsoft/onefuzz/pull/2771), [#2811](https://github.com/microsoft/onefuzz/pull/2811)
 * Agent: Fully escape allowlist rules [#2784](https://github.com/microsoft/onefuzz/pull/2784)
 * Agent: Apply allowlist to all blocks within a function [#2785](https://github.com/microsoft/onefuzz/pull/2785)
 * CLI: Added a cli subcommand `onefuzz debug notification template` to validate scriban notification templates [#2800](https://github.com/microsoft/onefuzz/pull/2800)
 * Service: Added Notification failure webhook to communicate Notification failures [#2628](https://github.com/microsoft/onefuzz/pull/2628)
+
 ### Changed
+
 * Service: Include `AssignedTo` when failing to create a work item due to an authentication exception [#2770](https://github.com/microsoft/onefuzz/pull/2770)
 
 ### Fixed
+
 * Agent: Fixes & improvements to `Expand` behavior [#2789](https://github.com/microsoft/onefuzz/pull/2789)
 * Agent: Triming whitespace in output from monitored process before printing [#2782](https://github.com/microsoft/onefuzz/pull/2782)
 * CLI: Fixed default value of analyzer_exe [#2797](https://github.com/microsoft/onefuzz/pull/2797)
@@ -81,25 +113,33 @@ initializers. [#2832](https://github.com/microsoft/onefuzz/pull/2832)
 * Service: Truncate webhooks message length for azure queue size compatibility [#2788](https://github.com/microsoft/onefuzz/pull/2788)
 
 ## 6.3.0
-### Added 
+
+### Added
+
 * Service: Add Optional Analysis Task to Libfuzzer Template [#2748](https://github.com/microsoft/onefuzz/pull/2748)
 * Agent: Use `elsa` for improved interface with `debuggable_module::Loader` [#2703](https://github.com/microsoft/onefuzz/pull/2703)
 * Agent: Add sourceline output and logging to coverage example [#2753](https://github.com/microsoft/onefuzz/pull/2753)
 * Agent: Fix Linux detection of shared library mappings [#2754](https://github.com/microsoft/onefuzz/pull/2754)
 * Agent: Support AllowList extension [#2756](https://github.com/microsoft/onefuzz/pull/2756)
 * Agent: Add `stdio` dumping to example [#2757](https://github.com/microsoft/onefuzz/pull/2757)
+
 ### Changed
+
 * Service: Update Azure Cli [#2733](https://github.com/microsoft/onefuzz/pull/2733)
 * Service: Truncate Large Webhook Events [#2742](https://github.com/microsoft/onefuzz/pull/2742)
 * Service: Wrap fallible ORM functions in try/catch [#2745](https://github.com/microsoft/onefuzz/pull/2745)
 * Agent/Supervisor/Proxy: Updated third-party Rust dependencies. [#2744](https://github.com/microsoft/onefuzz/pull/2744)
+
 ### Fixed
+
 * Agent: Fixed Mulit-Agent Issue - Added `machine_id` to config_path and failure_path of the Agent [#2731](https://github.com/microsoft/onefuzz/pull/2731)
 * Service: Fixed Proxy Table Query [#2743](https://github.com/microsoft/onefuzz/pull/2743)
 * Service: Fix Notification Logic and Regression Reporting [#2751](https://github.com/microsoft/onefuzz/pull/2751)[#2758](https://github.com/microsoft/onefuzz/pull/2758)
 
 ## 6.2.0
+
 ### Added
+
 * Agent: Added more into-JSON coverage conversions [#2725](https://github.com/microsoft/onefuzz/pull/2725)
 * Agent: Added binary coverage merging measurements [#2724](https://github.com/microsoft/onefuzz/pull/2724)
 * Agent: Added deserialization compatibility functions [#2719](https://github.com/microsoft/onefuzz/pull/2719)
@@ -107,12 +147,16 @@ initializers. [#2832](https://github.com/microsoft/onefuzz/pull/2832)
 * Agent: Improve source coverage of HTML reports [#2700](https://github.com/microsoft/onefuzz/pull/2700), [#2701](https://github.com/microsoft/onefuzz/pull/2701), [#2706](https://github.com/microsoft/onefuzz/pull/2706)
 * Deployment: Added support for custom domain names used as OneFuzz endpoints [#2720](https://github.com/microsoft/onefuzz/pull/2720)
 * Service: Added documentation for unmanaged node deployment [#2694](https://github.com/microsoft/onefuzz/pull/2694)
+
 ### Changed
+
 * Agent: Use a custom `Output` type when recording coverage [#2723](https://github.com/microsoft/onefuzz/pull/2723)
 * Agent: Reduce mutation in the agent state machine [#2710](https://github.com/microsoft/onefuzz/pull/2710)
 * Service: Include dotnet version in `info` response [#2693](https://github.com/microsoft/onefuzz/pull/2693)
 * Service: Use feature flags to get the node disposal strategy [#2713](https://github.com/microsoft/onefuzz/pull/2713)
+
 ### Fixed
+
 * Agent: Escape periods when converting globs [#2721](https://github.com/microsoft/onefuzz/pull/2721)
 * Agent: Ignore benign recv hangup in agent timer functions [#2722](https://github.com/microsoft/onefuzz/pull/2722)
 * Agent: Fix NullRef exception when getting a scaleset that does not exist [#2692](https://github.com/microsoft/onefuzz/pull/2692)
@@ -121,14 +165,19 @@ initializers. [#2832](https://github.com/microsoft/onefuzz/pull/2832)
 * Service: Adding `public` identifier to `Events` to restore missing events [#2705](https://github.com/microsoft/onefuzz/pull/2705)
 
 ## 6.1.0
+
 ### Added
+
 * Service: Added support for feature flags which allows us to deploy new code in parts and turn it on when it's ready. [#2620](https://github.com/microsoft/onefuzz/pull/2620)
 * Service: Added a validation endpoint for the notification template. [#2655](https://github.com/microsoft/onefuzz/pull/2655)
+
 ### Changed
+
 * Service: Update LLVM from v10 to v12 now that we are supporting Ubuntu 20.04 as our default image. [#2617](https://github.com/microsoft/onefuzz/pull/2617)
 * Agent: Remove unused coverage recorder from `input-tester`. [#2681](https://github.com/microsoft/onefuzz/pull/2681)
 * Agent: Rename `coverage` to `coverage-legacy`. [#2685](https://github.com/microsoft/onefuzz/pull/2685)
 ### Fixed
+
 * CLI: Return an error when uppercase application names are specified when using deploy.py. [#2665](https://github.com/microsoft/onefuzz/pull/2665)
 * Agent: Fix local fuzzing mode. [#2669](https://github.com/microsoft/onefuzz/pull/2669)
 * Service: Post the JobCreated event when a job is created. [#2677](https://github.com/microsoft/onefuzz/pull/2677)
@@ -136,27 +185,34 @@ initializers. [#2832](https://github.com/microsoft/onefuzz/pull/2832)
 * Service: Added support for `Contains Words` in WIQL [#2686](https://github.com/microsoft/onefuzz/pull/2686)
 
 ## 6.0.0
+
 ## BREAKING CHANGES
 
 ### Manual Deployment Step
-When upgrading from version 5.20 a manual step is required. Before deploying 6.0 delete both Azure App Functions and the Azure App Service plan before upgrading. This is required because we have migrated the service from `python` to `C#`. 
 
-After deployment, there will be two App Functions deployed, one with the name of the deployment and a second one with the same name and a `-net` suffix. This is a temporary situation and the `-net` app function will be removed in a following release. 
+When upgrading from version 5.20 a manual step is required. Before deploying 6.0 delete both Azure App Functions and the Azure App Service plan before upgrading. This is required because we have migrated the service from `python` to `C#`.
 
-If you have not used the deployment parameters to deploy C# functions in 5.20, you can manually delete the `-net` app function immediately. Deploying the C# functions was not a default action in 5.20, for most deployments deleting the `-net` app function immediately is ok. 
+After deployment, there will be two App Functions deployed, one with the name of the deployment and a second one with the same name and a `-net` suffix. This is a temporary situation and the `-net` app function will be removed in a following release.
+
+If you have not used the deployment parameters to deploy C# functions in 5.20, you can manually delete the `-net` app function immediately. Deploying the C# functions was not a default action in 5.20, for most deployments deleting the `-net` app function immediately is ok.
 
 ### Deprecation of jinja templates
-With this release we are moving from jinja templates to [scriban](https://github.com/scriban/scriban) templates. See the documentation for [scriban here](https://github.com/scriban/scriban/tree/master/doc). 
 
-Version 6.0 will convert jinja templates on-the-fly for a short period of time. We do **_not_** guarantee that this will be successful for all jinja template options. These on-the-fly conversions are not persisted in the notifications table in this release. They will be in a following release. This will allow time for conversions of templates that are not handled by the current automatic conversion process. 
+With this release we are moving from jinja templates to [scriban](https://github.com/scriban/scriban) templates. See the documentation for [scriban here](https://github.com/scriban/scriban/tree/master/doc).
+
+Version 6.0 will convert jinja templates on-the-fly for a short period of time. We do **_not_** guarantee that this will be successful for all jinja template options. These on-the-fly conversions are not persisted in the notifications table in this release. They will be in a following release. This will allow time for conversions of templates that are not handled by the current automatic conversion process.
 
 ### CLI
-The default value for the `--container_type` parameter to the `container` command has been removed. The `container_type` parameter is still required for the command. This change removes the ambiguity of the container information being returned. 
+
+The default value for the `--container_type` parameter to the `container` command has been removed. The `container_type` parameter is still required for the command. This change removes the ambiguity of the container information being returned.
 
 ### Added
+
 * Agent: Added `machine_id` a parameter of the agent config. [#2649](https://github.com/microsoft/onefuzz/pull/2649)
 * Agent: Pass the `machine_id` from the Agent to the Task. [#2662](https://github.com/microsoft/onefuzz/pull/2662)
+
 ### Changed
+
 * Service: Deployment enables refactored C# App Function. [#2650](https://github.com/microsoft/onefuzz/pull/2650)
 * CLI: Attempt to use broker or browser login instead of device flow for authentication. Canceling the attempt with `Ctrl-C` will fall back to using the device flow. [#2612](https://github.com/microsoft/onefuzz/pull/2612)
 * Service: Update to .NET 7. [#2615](https://github.com/microsoft/onefuzz/pull/2615)
@@ -166,7 +222,9 @@ The default value for the `--container_type` parameter to the `container` comman
 * Service: Improve logging around notification failures. [#2653](https://github.com/microsoft/onefuzz/pull/2653)
 * Service: Standardize HTTP Error Results. Better Rejection Message When Parsing Validated Strings. [#2663](https://github.com/microsoft/onefuzz/pull/2663)
 * CLI: Retry on Connection Errors when acquiring auth token. [#2668](https://github.com/microsoft/onefuzz/pull/2668)
+
 ### Fixed
+
 * Service: Notification Template `targetUrl` parameter fix. Only use the filename instead of the absolute path in the URL. The makes the links created in ADO bugs work as expected. [#2625](https://github.com/microsoft/onefuzz/pull/2625)
 * CLI: Fixed SignalR client code not reading responses correctly. [#2626](https://github.com/microsoft/onefuzz/pull/2626)
 * Service: Fix a logic bug in the notification hook. [#2627](https://github.com/microsoft/onefuzz/pull/2627)
