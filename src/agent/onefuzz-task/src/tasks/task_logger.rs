@@ -14,8 +14,7 @@ use reqwest::Url;
 use std::{path::PathBuf, time::Duration};
 use uuid::Uuid;
 
-use tokio::sync::broadcast::{error::TryRecvError, Receiver}
-;
+use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
 const LOGS_BUFFER_SIZE: usize = 100;
 const MAX_LOG_SIZE: u64 = 100000000; // 100 MB

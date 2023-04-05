@@ -64,9 +64,10 @@ async fn validate_libfuzzer(config: ValidationConfig) -> Result<()> {
     let libfuzzer = LibFuzzer::new(
         &config.target_exe,
         config.target_options.clone(),
-        config.target_env.clone().into_iter().collect(),
+        config.target_env.iter().cloned().collect(),
         config
-            .setup_folder.clone()
+            .setup_folder
+            .clone()
             .unwrap_or_else(|| config.target_exe.parent().unwrap().to_path_buf()),
         None::<&PathBuf>,
         MachineIdentity {
@@ -103,9 +104,10 @@ async fn get_logs(config: ValidationConfig) -> Result<()> {
     let libfuzzer = LibFuzzer::new(
         &config.target_exe,
         config.target_options.clone(),
-        config.target_env.clone().into_iter().collect(),
+        config.target_env.iter().cloned().collect(),
         config
-            .setup_folder.clone()
+            .setup_folder
+            .clone()
             .unwrap_or_else(|| config.target_exe.parent().unwrap().to_path_buf()),
         None::<&PathBuf>,
         MachineIdentity {
