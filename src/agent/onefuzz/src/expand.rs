@@ -331,12 +331,12 @@ impl<'a> Expand<'a> {
     }
 
     pub fn task_id(self, arg: &Uuid) -> Self {
-        let value = arg.to_hyphenated().to_string();
+        let value = arg.hyphenated().to_string();
         self.set_value(PlaceHolder::TaskId, ExpandedValue::Scalar(value))
     }
 
     pub fn job_id(self, arg: &Uuid) -> Self {
-        let value = arg.to_hyphenated().to_string();
+        let value = arg.hyphenated().to_string();
         self.set_value(PlaceHolder::JobId, ExpandedValue::Scalar(value))
     }
 
