@@ -4,6 +4,8 @@ using ApiService.OneFuzzLib.Orm;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Monitor;
 using Azure.ResourceManager.Monitor.Models;
+using Microsoft.Extensions.Caching.Memory;
+
 namespace Microsoft.OneFuzz.Service;
 
 public interface IScalesetOperations : IStatefulOrm<Scaleset, ScalesetState> {
@@ -40,11 +42,12 @@ public interface IScalesetOperations : IStatefulOrm<Scaleset, ScalesetState> {
 
 public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetOperations>, IScalesetOperations {
     private readonly ILogTracer _log;
+    private readonly IMemoryCache _cache;
 
-    public ScalesetOperations(ILogTracer log, IOnefuzzContext context)
+    public ScalesetOperations(ILogTracer log, IMemoryCache cache, IOnefuzzContext context)
         : base(log.WithTag("Component", "scalesets"), context) {
         _log = base._logTracer;
-
+        _cache = cache;
     }
 
     public IAsyncEnumerable<Scaleset> Search() {
@@ -158,7 +161,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         await shrinkQueue.Clear();
 
         //# just in case, always ensure size is within max capacity
-        scaleset = scaleset with { Size = Math.Min(scaleset.Size, MaxSize(scaleset)) };
+        scaleset = scaleset with { Size = Math.Min(scaleset.Size, scaleset.Image.MaximumVmCount) };
 
         // # Treat Azure knowledge of the size of the scaleset as "ground truth"
         var vmssSize = await _context.VmssOperations.GetVmssSize(scaleset.ScalesetId);
@@ -446,7 +449,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         if (pool.State == PoolState.Init) {
             _logTracer.Info($"waiting for pool {scaleset.PoolName:Tag:PoolName} - {scaleset.ScalesetId:Tag:ScalesetId}");
         } else if (pool.State == PoolState.Running) {
-            var imageOsResult = await _context.ImageOperations.GetOs(scaleset.Region, scaleset.Image);
+            var imageOsResult = await scaleset.Image.GetOs(_cache, _context.Creds.ArmClient, scaleset.Region);
             if (!imageOsResult.IsOk) {
                 _logTracer.Error($"failed to get OS with region: {scaleset.Region:Tag:Region} {scaleset.Image:Tag:Image} for scaleset: {scaleset.ScalesetId:Tag:ScalesetId} due to {imageOsResult.ErrorV:Tag:Error}");
                 return await SetFailed(scaleset, imageOsResult.ErrorV);
@@ -817,7 +820,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         => QueryAsync(Query.EqualAnyEnum("state", states));
 
     public Async.Task<Scaleset> SetSize(Scaleset scaleset, long size) {
-        var permittedSize = Math.Min(size, MaxSize(scaleset));
+        var permittedSize = Math.Min(size, scaleset.Image.MaximumVmCount);
         if (permittedSize == scaleset.Size) {
             return Async.Task.FromResult(scaleset); // nothing to do
         }
@@ -900,15 +903,6 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
 
         return scaleset;
-    }
-
-    private static long MaxSize(Scaleset scaleset) {
-        // https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-placement-groups#checklist-for-using-large-scale-sets
-        if (scaleset.Image.StartsWith("/", StringComparison.Ordinal)) {
-            return 600;
-        } else {
-            return 1000;
-        }
     }
 
     public Task<Scaleset> Running(Scaleset scaleset) {

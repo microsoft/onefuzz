@@ -138,7 +138,7 @@ public abstract class NotificationsBase {
                 true => new TemplateContext {
                     EnableRelaxedFunctionAccess = false,
                     EnableRelaxedIndexerAccess = false,
-                    EnableRelaxedMemberAccess = false,
+                    EnableRelaxedMemberAccess = true,
                     EnableRelaxedTargetAccess = false
                 },
                 _ => new TemplateContext()

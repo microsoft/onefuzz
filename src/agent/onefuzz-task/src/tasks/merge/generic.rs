@@ -132,7 +132,6 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
 
     let expand = Expand::new(&config.common.machine_identity)
         .machine_id()
-        .await?
         .input_marker(&config.supervisor_input_marker)
         .input_corpus(&config.unique_inputs.local_path)
         .target_options(&config.target_options)

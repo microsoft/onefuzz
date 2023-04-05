@@ -96,6 +96,7 @@ apphelp.dll
 bcrypt.dll
 bcryptPrimitives.dll
 crypt32.dll
+dbghelp.dll
 msvcrt.dll
 ntdll.dll
 sechost.dll
