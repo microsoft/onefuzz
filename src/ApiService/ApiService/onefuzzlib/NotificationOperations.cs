@@ -91,12 +91,12 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, "invalid container");
         }
 
-        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly) &&
+        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.RenderOnlyScribanTemplates) &&
             !await JinjaTemplateAdapter.IsValidScribanNotificationTemplate(_context, _logTracer, config)) {
             return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, "The notification config is not a valid scriban template");
         }
 
-        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableValidateNotificationConfigSemantics)) {
+        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.SemanticNotificationConfigValidation)) {
             var validConfig = await config.Validate();
             if (!validConfig.IsOk) {
                 return OneFuzzResult<Notification>.Error(validConfig.ErrorV);
