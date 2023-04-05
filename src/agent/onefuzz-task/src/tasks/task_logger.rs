@@ -441,7 +441,7 @@ pub struct SpawnedLogger {
 impl SpawnedLogger {
     pub async fn flush_and_stop(self, timeout: Duration) -> Result<()> {
         if let Ok(Err(e)) = tokio::time::timeout(timeout, self.logger_handle).await {
-            error!("task logger failure {}", e);
+            error!("failed to flush and stop task logger {}", e);
             return Err(e.into());
         }
         Ok(())
