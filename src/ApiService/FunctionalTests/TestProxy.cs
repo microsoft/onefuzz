@@ -37,8 +37,7 @@ namespace FunctionalTests {
             }
         }
 
-        //TODO: do not run this for now - this triggers: https://github.com/microsoft/onefuzz/issues/2331
-        //[Fact]
+        [Fact(Skip = "triggers: https://github.com/microsoft/onefuzz/issues/2331")]
         public async Task CreateResetDelete() {
             var (newPool, newScaleset) = await Helpers.CreatePoolAndScaleset(_poolApi, _scalesetApi, "linux");
 

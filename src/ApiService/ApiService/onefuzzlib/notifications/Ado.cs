@@ -105,8 +105,8 @@ public class Ado : NotificationsBase, IAdo {
         return new WorkItemTrackingHttpClient(baseUrl, new VssBasicCredential("PAT", token));
     }
 
-    private static async Async.Task<Dictionary<string, WorkItemField>> GetValidFields(WorkItemTrackingHttpClient client, string? project) {
-        return (await client.GetFieldsAsync(project, expand: GetFieldsExpand.ExtensionFields))
+    private static async Async.Task<Dictionary<string, WorkItemField2>> GetValidFields(WorkItemTrackingHttpClient client, string? project) {
+        return (await client.GetWorkItemFieldsAsync(project, expand: GetFieldsExpand.ExtensionFields))
             .ToDictionary(field => field.ReferenceName.ToLowerInvariant());
     }
 
