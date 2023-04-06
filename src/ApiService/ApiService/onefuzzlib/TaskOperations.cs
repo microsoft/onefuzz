@@ -106,7 +106,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         }
 
         if (!task.State.HasStarted()) {
-            await MarkFailed(task, new Error(Code: ErrorCode.TASK_FAILED, Errors: new[] { "task never started" }));
+            await MarkFailed(task, Error.Create(ErrorCode.TASK_FAILED, "task never started"));
         } else {
             _ = await SetState(task, TaskState.Stopping);
         }
@@ -264,7 +264,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
                 // if a prereq task fails, then mark this task as failed
                 if (t == null) {
-                    await MarkFailed(task, new Error(ErrorCode.INVALID_REQUEST, Errors: new[] { "unable to find prereq task" }));
+                    await MarkFailed(task, Error.Create(ErrorCode.INVALID_REQUEST, "unable to find prereq task"));
                     return false;
                 }
 

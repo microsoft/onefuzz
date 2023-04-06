@@ -72,7 +72,7 @@ public class JinjaToScriban {
                     _log.Info($"Migrated notification: {notification.NotificationId} to jinja");
                 } else {
                     failedNotificationIds.Add(notification.NotificationId);
-                    _log.Error(new Error(ErrorCode.UNABLE_TO_UPDATE, new[] { r.ErrorV.Reason, r.ErrorV.Status.ToString() }));
+                    _log.Error(Error.Create(ErrorCode.UNABLE_TO_UPDATE, r.ErrorV.Reason, r.ErrorV.Status.ToString()));
                 }
             } catch (Exception ex) {
                 failedNotificationIds.Add(notification.NotificationId);

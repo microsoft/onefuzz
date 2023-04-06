@@ -22,7 +22,7 @@ public abstract record ImageReference {
     public static ImageReference MustParse(string image) {
         var result = TryParse(image);
         if (!result.IsOk) {
-            var msg = string.Join(", ", result.ErrorV.Errors ?? Array.Empty<string>());
+            var msg = result.ErrorV.Errors != null ? string.Join(", ", result.ErrorV.Errors) : string.Empty;
             throw new ArgumentException(msg, nameof(image));
         }
 
@@ -53,11 +53,10 @@ public abstract record ImageReference {
         } catch (FormatException) {
             // not an ARM identifier, try to parse a marketplace image:
             var imageParts = image.Split(":");
-            // The python code would throw if more than 4 parts are found in the split
+            // The python code would throw if more than 4 parts are foud in the split
             if (imageParts.Length != 4) {
-                return new Error(
-                    Code: ErrorCode.INVALID_IMAGE,
-                    new[] { $"Expected 4 ':' separated parts in '{image}'" });
+                return Error.Create(
+                    ErrorCode.INVALID_IMAGE, $"Expected 4 ':' separated parts in '{image}'");
             }
 
             result = new Marketplace(

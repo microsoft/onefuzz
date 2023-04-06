@@ -35,11 +35,7 @@ public class AgentCanSchedule {
             _log.Warning($"Unable to find {canScheduleRequest.MachineId:Tag:MachineId}");
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    ErrorCode.UNABLE_TO_FIND,
-                    new string[] {
-                        "unable to find node"
-                    }),
+                Error.Create(ErrorCode.UNABLE_TO_FIND, "unable to find node"),
                 canScheduleRequest.MachineId.ToString());
         }
 
