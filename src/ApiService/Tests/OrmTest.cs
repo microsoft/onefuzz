@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -15,7 +16,7 @@ namespace Tests {
         private ILogTracer _logTracer;
 
         public OrmTest() {
-            _logTracer = new Mock<ILogTracer>().Object;
+            _logTracer = new LogTracerFactory(new List<ILog> { new Microsoft.OneFuzz.Service.Console() }).CreateLogTracer(Guid.Empty);
         }
 
         sealed class TestObject {
@@ -437,17 +438,17 @@ namespace Tests {
         [Fact]
         public void TestDeeplyNestedObjects() {
             var converter = new EntityConverter(_logTracer);
-            var deeplyNestedJson = $"{{{string.Concat(Enumerable.Repeat("\"EventType\": {", 32))}{new String('}', 32)}}}"; // {{{...}}}
+            var deeplyNestedJson = $"{{{string.Concat(Enumerable.Repeat("\"EventType\": {", 3))}{new String('}', 3)}}}"; // {{{...}}}
             var nestedEntity = new NestedEntity(
                 Id: 123,
                 TheName: "abc",
-                EventType: JsonSerializer.Deserialize<Nested>(deeplyNestedJson, new JsonSerializerOptions() { MaxDepth = 160 })
+                EventType: JsonSerializer.Deserialize<Nested>(deeplyNestedJson, new JsonSerializerOptions())
             );
 
             var tableEntity = converter.ToTableEntity(nestedEntity);
             var toRecord = () => converter.ToRecord<NestedEntity>(tableEntity);
 
-            toRecord.Should().Throw<Exception>().And.Message.Should().Contain("MAX_DESERIALIZATION_RECURSION_DEPTH");
+            _ = toRecord.Should().Throw<Exception>().And.InnerException!.Should().BeOfType<OrmShortCircuitInfiniteLoopException>();
         }
     }
 }

@@ -88,8 +88,8 @@ sealed class OnefuzzNamingPolicy : JsonNamingPolicy {
 }
 public class EntityConverter {
 
-    private const int MAX_DESERIALIZATION_RECURSION_DEPTH = 20;
-    private ILogTracer _logTracer;
+    private const int MAX_DESERIALIZATION_RECURSION_DEPTH = 100;
+    private readonly ILogTracer _logTracer;
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
     private static readonly JsonSerializerOptions _options = new() {
         PropertyNamingPolicy = new OnefuzzNamingPolicy(),
@@ -127,8 +127,8 @@ public class EntityConverter {
     }
 
     private static IEnumerable<EntityProperty> GetEntityProperties<T>(ParameterInfo parameterInfo) {
-        var name = parameterInfo.Name.EnsureNotNull($"Invalid paramter {parameterInfo}");
-        var parameterType = parameterInfo.ParameterType.EnsureNotNull($"Invalid paramter {parameterInfo}");
+        var name = parameterInfo.Name.EnsureNotNull($"Invalid paramater {parameterInfo}");
+        var parameterType = parameterInfo.ParameterType.EnsureNotNull($"Invalid paramater {parameterInfo}");
         var isRowkey = parameterInfo.GetCustomAttribute(typeof(RowKeyAttribute)) != null;
         var isPartitionkey = parameterInfo.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
 
@@ -138,7 +138,7 @@ public class EntityConverter {
 
         (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator = null;
         if (discriminatorAttribute != null) {
-            var t = (ITypeProvider)(Activator.CreateInstance(discriminatorAttribute.ConverterType) ?? throw new Exception("unable to retrive the type provider"));
+            var t = (ITypeProvider)(Activator.CreateInstance(discriminatorAttribute.ConverterType) ?? throw new Exception("unable to retrieve the type provider"));
             discriminator = (discriminatorAttribute, t);
         }
 
@@ -287,6 +287,7 @@ public class EntityConverter {
             } else {
                 var outputType = ef.type;
                 if (ef.discriminator != null) {
+                    var (attr, typeProvider) = ef.discriminator.Value;
                     if (iterationCount > MAX_DESERIALIZATION_RECURSION_DEPTH) {
                         var tags = GenerateTableEntityTags(entity);
                         tags.AddRange(new (string, string)[] {
@@ -294,9 +295,11 @@ public class EntityConverter {
                             ("fieldName", fieldName)
                         });
                         _logTracer.WithTags(tags).Error($"Too many iterations deserializing {info.type}");
-                        throw new Exception($"MAX_DESERIALIZATION_RECURSION_DEPTH reached");
+                        throw new OrmShortCircuitInfiniteLoopException("MAX_DESERIALIZATION_RECURSION_DEPTH reached");
                     }
-                    var (attr, typeProvider) = ef.discriminator.Value;
+                    if (attr.FieldName == name) {
+                        throw new OrmShortCircuitInfiniteLoopException("Discriminator field cannot be the same as the field being deserialized");
+                    }
                     var v = GetFieldValue(info, attr.FieldName, entity, ++iterationCount) ?? throw new Exception($"No value for {attr.FieldName}");
                     outputType = typeProvider.GetTypeInfo(v);
                 }
@@ -314,7 +317,8 @@ public class EntityConverter {
                     return JsonSerializer.Deserialize(value, outputType, options: _options);
                 }
             }
-        } catch (Exception ex) {
+        } catch (Exception ex)
+            when (ex is not OrmShortCircuitInfiniteLoopException) {
             var tags = GenerateTableEntityTags(entity);
             tags.AddRange(new (string, string)[] {
                 ("fieldName", fieldName)
@@ -389,4 +393,8 @@ public class EntityConverter {
             ("rowKey", rowKey)
         };
     }
+}
+
+public class OrmShortCircuitInfiniteLoopException : Exception {
+    public OrmShortCircuitInfiniteLoopException(string message) : base(message) { }
 }
