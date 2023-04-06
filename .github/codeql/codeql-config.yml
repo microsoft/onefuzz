@@ -1,5 +1,7 @@
 paths:
-  - src/cli
+  - src/ApiService
   - src/agent
-  - src/pytypes
+  - src/cli
   - src/deployment
+  - src/proxy-manager
+  - src/pytypes
