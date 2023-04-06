@@ -152,12 +152,11 @@ public class Ado : NotificationsBase, IAdo {
                 var filter = string.Empty;
                 if (string.Equals("System.TeamProject", key)) {
                     filter = await Render(_config.Project);
+                } else if (_config.AdoFields.ContainsKey(key)) {
+                    filter = await Render(_config.AdoFields[key]);
                 } else {
-                    try {
-                        filter = await Render(_config.AdoFields[key]);
-                    } catch (Exception e) {
-                        _logTracer.WithTags(notificationInfo).Exception(e, $"Failed to check for existing work items using the UniqueField Key: {key}. Value is not present in config field AdoFields.");
-                    }
+                    _logTracer.WithTags(notificationInfo).Error($"Failed to check for existing work items using the UniqueField Key: {key}. Value is not present in config field AdoFields.");
+                    continue;
                 }
 
                 filters.Add(key.ToLowerInvariant(), filter);
