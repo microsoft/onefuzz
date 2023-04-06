@@ -298,6 +298,12 @@ public class EntityConverter {
                         throw new OrmShortCircuitInfiniteLoopException("MAX_DESERIALIZATION_RECURSION_DEPTH reached");
                     }
                     if (attr.FieldName == name) {
+                        var tags = GenerateTableEntityTags(entity);
+                        tags.AddRange(new (string, string)[] {
+                            ("outputType", outputType?.Name ?? string.Empty),
+                            ("fieldName", fieldName)
+                        });
+                        _logTracer.WithTags(tags).Error($"Discriminator field is the same as the field being deserialized {name}");
                         throw new OrmShortCircuitInfiniteLoopException("Discriminator field cannot be the same as the field being deserialized");
                     }
                     var v = GetFieldValue(info, attr.FieldName, entity, ++iterationCount) ?? throw new Exception($"No value for {attr.FieldName}");
