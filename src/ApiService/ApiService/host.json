@@ -3,7 +3,7 @@
     "logging": {
         "applicationInsights": {
             "samplingSettings": {
-                "isEnabled": true,
+                "isEnabled": false,
                 "excludedTypes": "Request;Trace;Dependency;Event"
             }
         }
