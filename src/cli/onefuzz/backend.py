@@ -58,6 +58,7 @@ LOGGER = logging.getLogger("backend")
 
 LOCK = threading.Lock()
 
+
 @contextlib.contextmanager
 def _temporary_umask(new_umask: int) -> Generator[None, None, None]:
     prev_umask = None
@@ -144,7 +145,7 @@ class Backend:
 
     def save_config(self) -> None:
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
-        with LOCK:     
+        with LOCK:
             with open(self.config_path, "w") as handle:
                 handle.write(self.config.json(indent=4, exclude_none=True))
 
