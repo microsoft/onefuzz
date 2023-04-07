@@ -49,7 +49,7 @@ clickable, make it a link.
       "Microsoft.VSTS.Scheduling.StoryPoints": "1",
       "System.IterationPath": "Iteration\\Path\\Here",
       "System.Title": "{{ report.crash_site }} - {{ report.executable }}",
-      "Microsoft.VSTS.TCM.ReproSteps": "This is my call stack: <ul> {{ for item in report.call_stack }} <li> {{ item }} </li> {{ endfor }} </ul>"
+      "Microsoft.VSTS.TCM.ReproSteps": "This is my call stack: <ul> {{ for item in report.call_stack }} <li> {{ item }} </li> {{ end }} </ul>"
     },
     "comment": "This is my comment. {{ report.input_sha256 }} {{ input_url }} <br> <pre>{{ repro_cmd }}</pre>",
     "unique_fields": ["System.Title", "System.AreaPath"],

@@ -116,11 +116,10 @@ impl<'a> Expand<'a> {
         }
     }
 
-    // Must be manually called to enable the use of async library code.
-    pub async fn machine_id(self) -> Result<Expand<'a>> {
+    pub fn machine_id(self) -> Expand<'a> {
         let id = self.machine_identity.machine_id;
         let value = id.to_string();
-        Ok(self.set_value(PlaceHolder::MachineId, ExpandedValue::Scalar(value)))
+        self.set_value(PlaceHolder::MachineId, ExpandedValue::Scalar(value))
     }
 
     fn input_file_sha256(&self) -> Result<ExpandedValue<'a>> {
@@ -332,12 +331,12 @@ impl<'a> Expand<'a> {
     }
 
     pub fn task_id(self, arg: &Uuid) -> Self {
-        let value = arg.to_hyphenated().to_string();
+        let value = arg.hyphenated().to_string();
         self.set_value(PlaceHolder::TaskId, ExpandedValue::Scalar(value))
     }
 
     pub fn job_id(self, arg: &Uuid) -> Self {
-        let value = arg.to_hyphenated().to_string();
+        let value = arg.hyphenated().to_string();
         self.set_value(PlaceHolder::JobId, ExpandedValue::Scalar(value))
     }
 
@@ -742,7 +741,7 @@ mod tests {
     async fn test_expand_machine_id() -> Result<()> {
         let machine_identity = &test_machine_identity();
         let machine_id = machine_identity.machine_id;
-        let expand = Expand::new(machine_identity).machine_id().await?;
+        let expand = Expand::new(machine_identity).machine_id();
         let expanded = expand.evaluate_value("{machine_id}")?;
         // Check that "{machine_id}" expands to a valid UUID, but don't worry about the actual value.
         let expanded_machine_id = Uuid::parse_str(&expanded)?;

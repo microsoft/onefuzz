@@ -190,6 +190,7 @@ async fn _copy(input_url: BlobUrl, destination_folder: &OwnedDir) -> Result<Path
     }
     Ok(destination_path)
 }
+
 pub async fn run_tool(
     input: impl AsRef<Path>,
     config: &Config,
@@ -200,7 +201,6 @@ pub async fn run_tool(
 
     let expand = Expand::new(&config.common.machine_identity)
         .machine_id()
-        .await?
         .input_path(&input)
         .target_exe(&target_exe)
         .target_options(&config.target_options)

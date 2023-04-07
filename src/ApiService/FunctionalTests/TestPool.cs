@@ -19,14 +19,14 @@ namespace FunctionalTests {
         }
 
         [Fact]
-        async Task GetNonExistentPool() {
+        public async Task GetNonExistentPool() {
             var p = await _poolApi.Get(name: Guid.NewGuid().ToString());
             p.ErrorV!.UnableToFindPoolError.Should().BeTrue("{0}", p.ErrorV!);
         }
 
 
         // This for manual test cleanup during development of tests
-        //[Fact]
+        [Fact(Skip = "not actually a test")]
         public async Task DeleteFunctionalTestPools() {
             await _poolApi.DeleteAll();
         }
