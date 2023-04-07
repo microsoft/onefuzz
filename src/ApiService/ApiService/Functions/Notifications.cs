@@ -67,6 +67,14 @@ public class Notifications {
         if (entries.Count > 1) {
             return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "error identifying Notification" }), context: "notification delete");
         }
+
+        var result = await _context.NotificationOperations.Delete(entries[0]);
+
+        if (!result.IsOk) {
+            var (status, error) = result.ErrorV;
+            return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.UNABLE_TO_UPDATE, new[] { error }), "notification delete");
+        }
+
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(entries[0]);
         return response;
