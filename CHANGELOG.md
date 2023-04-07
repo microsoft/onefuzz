@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Make `GetNotification` nullable to fix errors looking up non-existent notification IDs [#2981](https://github.com/microsoft/onefuzz/pull/2981)
 * Service: UniqueReports should be UniqueInputs in LibFuzzer merge task [#2982](https://github.com/microsoft/onefuzz/pull/2982)
 * Service: Fix Notification `delete` action [#2987](https://github.com/microsoft/onefuzz/pull/2987)
+* Service: Added handle for missing unique field key in `AdoFields` [#2986](https://github.com/microsoft/onefuzz/pull/2986)
 
 ## 7.0.0
 
