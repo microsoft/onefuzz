@@ -10,8 +10,8 @@ import logging
 import os
 import sys
 import tempfile
-import time
 import threading
+import time
 from dataclasses import asdict, is_dataclass
 from datetime import datetime, timedelta
 from enum import Enum
