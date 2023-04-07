@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Updated feature configuration package to fix an issue where 2 feature flags were using the same ID [#2980](https://github.com/microsoft/onefuzz/pull/2980)
 * Service: Make `GetNotification` nullable to fix errors looking up non-existent notification IDs [#2981](https://github.com/microsoft/onefuzz/pull/2981)
 * Service: UniqueReports should be UniqueInputs in LibFuzzer merge task [#2982](https://github.com/microsoft/onefuzz/pull/2982)
+* Service: Fix Notification `delete` action [#2987](https://github.com/microsoft/onefuzz/pull/2987)
 
 ## 7.0.0
 
