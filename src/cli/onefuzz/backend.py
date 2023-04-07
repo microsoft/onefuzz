@@ -13,7 +13,6 @@ import tempfile
 import threading
 import time
 from dataclasses import asdict, is_dataclass
-from datetime import datetime, timedelta
 from enum import Enum
 from typing import (
     Any,
@@ -55,8 +54,6 @@ REQUEST_CONNECT_TIMEOUT = 30.0
 REQUEST_READ_TIMEOUT = 120.0
 
 LOGGER = logging.getLogger("backend")
-
-LOCK = threading.Lock()
 
 
 @contextlib.contextmanager
@@ -101,7 +98,6 @@ class BackendConfig(BaseModel):
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
     tenant_domain: str
-    expires_on: datetime = datetime.utcnow() + timedelta(hours=24)
 
     def get_multi_tenant_domain(self) -> Optional[str]:
         if "https://login.microsoftonline.com/common" in self.authority:
@@ -145,9 +141,8 @@ class Backend:
 
     def save_config(self) -> None:
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
-        with LOCK:
-            with open(self.config_path, "w") as handle:
-                handle.write(self.config.json(indent=4, exclude_none=True))
+        with open(self.config_path, "w") as handle:
+            handle.write(self.config.json(indent=4, exclude_none=True))
 
     def init_cache(self) -> None:
         # Ensure the token_path directory exists
@@ -356,12 +351,6 @@ class Backend:
 
         if not endpoint:
             raise Exception("endpoint not configured")
-
-        # If file expires, remove and force user to reset
-        if datetime.utcnow() > self.config.expires_on:
-            self.config = BackendConfig(
-                endpoint=endpoint, authority="", client_id="", tenant_domain=""
-            )
 
         url = endpoint + "/api/" + path
 
