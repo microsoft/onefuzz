@@ -819,7 +819,17 @@ public record JobConfig(
     string Build,
     long Duration,
     string? Logs
-);
+) : ITruncatable<JobConfig> {
+    public JobConfig Truncate(int maxLength) {
+        return new JobConfig(
+            Project,
+            Name,
+            Build,
+            Duration,
+            Logs?[..maxLength]
+        );
+    }
+}
 
 public record JobTaskInfo(
     Guid TaskId,

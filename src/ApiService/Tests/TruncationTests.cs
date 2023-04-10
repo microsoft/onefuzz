@@ -43,6 +43,14 @@ public class TruncationTests {
         truncatedEvent?.Report.CallStack.Count.Should().Be(0);
     }
 
+    [Fact]
+    public static void JobConfigIsTruncatable() {
+        var jobConfig = GenerateJobConfig();
+
+        var truncatedJobConfig = jobConfig.Truncate(5);
+        truncatedJobConfig.Logs.Should().Be("SOMES");
+    }
+
     private static Report GenerateReport() {
         return new Report(
             null,
@@ -68,6 +76,16 @@ public class TruncationTests {
             null,
             null,
             new Uri("http://example.com")
+        );
+    }
+
+    private static JobConfig GenerateJobConfig() {
+        return new JobConfig(
+            "some project",
+            "abc123",
+            "some build",
+            1,
+            "SOMESUPRTLONGSTRINGSOMESUPRTLONGSTRINGSOMESUPRTLONGSTRINGSOMESUPRTLONGSTRING"
         );
     }
 }
