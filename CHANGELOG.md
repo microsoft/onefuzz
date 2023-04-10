@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent/Service: Use minimized stack for crash site if no ASAN logs are available [#2962](https://github.com/microsoft/onefuzz/pull/2962)
 * Service: Loosen scriban template validation [#2963](https://github.com/microsoft/onefuzz/pull/2963)
 * Service: Updated integration test pool size [#2935](https://github.com/microsoft/onefuzz/pull/2935)
+* Service: Pass the task tags to the agent when scheduling jobs [#2881](https://github.com/microsoft/onefuzz/pull/2881)
 
 ### Fixed
 
@@ -29,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Better logging of failures in the task_logger [#2940](https://github.com/microsoft/onefuzz/pull/2940)
 * Agent/Service: Updates to address CVE's [#2931](https://github.com/microsoft/onefuzz/pull/2931), [#2957](https://github.com/microsoft/onefuzz/pull/2957), [#2967](https://github.com/microsoft/onefuzz/pull/2967)
 * Deployment/Service: Renamed EventGrid subscription to conform with EventGrid's naming scheme [#2960](https://github.com/microsoft/onefuzz/pull/2960)
+* Deployment/Service: Added required KeyVault access policy allowing OneFuzz Function App to use an SSL cert for custom domain endpoints [#3004](https://github.com/microsoft/onefuzz/pull/3004)
 * Documentation: Updated 'Azure Devops Work Item creation' doc to remove an outdated template reference [#2956](https://github.com/microsoft/onefuzz/pull/2956)
 * Service: Updated feature configuration package to fix an issue where 2 feature flags were using the same ID [#2980](https://github.com/microsoft/onefuzz/pull/2980)
 * Service: Make `GetNotification` nullable to fix errors looking up non-existent notification IDs [#2981](https://github.com/microsoft/onefuzz/pull/2981)
