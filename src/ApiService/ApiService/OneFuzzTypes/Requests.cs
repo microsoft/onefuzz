@@ -315,3 +315,7 @@ public record TemplateValidationPost(
 public record JinjaToScribanMigrationPost(
     bool DryRun = false
 ) : BaseRequest;
+
+public record EventsGet(
+    [property: Required] Guid EventId
+) : BaseRequest;

@@ -205,3 +205,7 @@ public record JinjaToScribanMigrationResponse(
 public record JinjaToScribanMigrationDryRunResponse(
     List<Guid> NotificationIdsToUpdate
 ) : BaseResponse();
+
+public record EventGetResponse(
+    BaseEvent Event
+) : BaseResponse();

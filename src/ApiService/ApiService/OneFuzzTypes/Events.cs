@@ -50,7 +50,6 @@ public enum EventType {
 }
 
 public abstract record BaseEvent() {
-
     private static readonly IReadOnlyDictionary<Type, EventType> typeToEvent;
     private static readonly IReadOnlyDictionary<EventType, Type> eventToType;
 
@@ -351,7 +350,9 @@ public record EventMessage(
     [property: JsonConverter(typeof(BaseEventConverter))]
     BaseEvent Event,
     Guid InstanceId,
-    String InstanceName
+    String InstanceName,
+    DateTime CreatedAt,
+    Uri SasUrl
 );
 
 public class BaseEventConverter : JsonConverter<BaseEvent> {
