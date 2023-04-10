@@ -32,7 +32,7 @@ import msal
 import requests
 from azure.storage.blob import ContainerClient
 from onefuzztypes import responses
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from requests import Response
 from tenacity import RetryCallState, retry
 from tenacity.retry import retry_if_exception_type
