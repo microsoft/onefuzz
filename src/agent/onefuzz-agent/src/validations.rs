@@ -64,10 +64,12 @@ async fn validate_libfuzzer(config: ValidationConfig) -> Result<()> {
     let libfuzzer = LibFuzzer::new(
         &config.target_exe,
         config.target_options.clone(),
-        config.target_env.into_iter().collect(),
+        config.target_env.iter().cloned().collect(),
         config
             .setup_folder
-            .unwrap_or(config.target_exe.parent().unwrap().to_path_buf()),
+            .clone()
+            .or_else(|| config.target_exe.parent().map(|p| p.to_path_buf()))
+            .expect("invalid target_exe"),
         None::<&PathBuf>,
         MachineIdentity {
             machine_id: Uuid::nil(),
@@ -103,10 +105,12 @@ async fn get_logs(config: ValidationConfig) -> Result<()> {
     let libfuzzer = LibFuzzer::new(
         &config.target_exe,
         config.target_options.clone(),
-        config.target_env.into_iter().collect(),
+        config.target_env.iter().cloned().collect(),
         config
             .setup_folder
-            .unwrap_or(config.target_exe.parent().unwrap().to_path_buf()),
+            .clone()
+            .or_else(|| config.target_exe.parent().map(|p| p.to_path_buf()))
+            .expect("invalid setup_folder"),
         None::<&PathBuf>,
         MachineIdentity {
             machine_id: Uuid::nil(),
