@@ -99,7 +99,7 @@ class BackendConfig(BaseModel):
     tenant_domain: Optional[str]
 
     def get_multi_tenant_domain(self) -> Optional[str]:
-        if "https://login.microsoftonline.com/common" in self.authority:
+        if self.authority and "https://login.microsoftonline.com/common" in self.authority:
             return self.tenant_domain
         else:
             return None
@@ -131,6 +131,9 @@ class Backend:
         atexit.register(self.save_cache)
 
     def enable_feature(self, name: str) -> None:
+        if not self.config.features:
+            self.config.features = Set[str]()
+        
         self.config.features.add(name)
 
     def is_feature_enabled(self, name: str) -> bool:
