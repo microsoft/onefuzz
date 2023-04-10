@@ -1306,7 +1306,7 @@ class Pool(Endpoint):
             raise Exception("Missing AgentConfig in response")
 
         config = pool.config
-        if not pool.managed:
+        if not pool.managed and self.onefuzz.config.authority:
             config.client_credentials = models.ClientCredentials(  # nosec
                 client_id=uuid.UUID(int=0),
                 client_secret="<client_secret>",
