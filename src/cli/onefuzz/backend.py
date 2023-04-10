@@ -99,7 +99,10 @@ class BackendConfig(BaseModel):
     tenant_domain: Optional[str]
 
     def get_multi_tenant_domain(self) -> Optional[str]:
-        if self.authority and "https://login.microsoftonline.com/common" in self.authority:
+        if (
+            self.authority
+            and "https://login.microsoftonline.com/common" in self.authority
+        ):
             return self.tenant_domain
         else:
             return None
