@@ -117,7 +117,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
             'list'
             'set'
             'delete'
-          ],
+          ]
           certificates: [
             'get'
             'list'
