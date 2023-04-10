@@ -441,7 +441,7 @@ namespace Tests {
             var tableEntity = converter.ToTableEntity(nestedEntity);
             var toRecord = () => converter.ToRecord<NestedEntity>(tableEntity);
 
-            _ = toRecord.Should().Throw<Exception>().And.InnerException!.Should().BeOfType<OrmException>();
+            _ = toRecord.Should().Throw<Exception>().And.InnerException!.Should().BeOfType<OrmInvalidDiscriminatorFieldException>();
         }
     }
 }

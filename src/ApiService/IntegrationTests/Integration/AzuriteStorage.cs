@@ -12,7 +12,6 @@ using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service;
 
 using Async = System.Threading.Tasks;
-using Console = System.Console;
 
 namespace IntegrationTests.Integration;
 
