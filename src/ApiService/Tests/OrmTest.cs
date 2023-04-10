@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -13,12 +12,6 @@ using Xunit;
 
 namespace Tests {
     public class OrmTest {
-        private ILogTracer _logTracer;
-
-        public OrmTest() {
-            _logTracer = new LogTracerFactory(new List<ILog> { new Microsoft.OneFuzz.Service.Console() }).CreateLogTracer(Guid.Empty);
-        }
-
         sealed class TestObject {
             public String? TheName { get; set; }
             public TestEnum TheEnum { get; set; }

@@ -128,7 +128,7 @@ sealed class AppInsights : ILog {
 }
 
 //TODO: Should we write errors and Exception to std err ? 
-public sealed class Console : ILog {
+sealed class Console : ILog {
 
     private static string DictToString<T>(IReadOnlyDictionary<string, T>? d) {
         if (d is null) {

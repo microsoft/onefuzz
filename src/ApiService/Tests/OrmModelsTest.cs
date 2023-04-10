@@ -7,7 +7,6 @@ using FsCheck;
 using FsCheck.Xunit;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using Moq;
 using Xunit.Abstractions;
 
 namespace Tests {
