@@ -133,7 +133,6 @@ class Backend:
     def enable_feature(self, name: str) -> None:
         if not self.config.features:
             self.config.features = Set[str]()
-        
         self.config.features.add(name)
 
     def is_feature_enabled(self, name: str) -> bool:
