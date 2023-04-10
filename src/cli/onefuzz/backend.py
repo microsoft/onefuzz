@@ -139,7 +139,9 @@ class Backend:
         self.config.features.add(name)
 
     def is_feature_enabled(self, name: str) -> bool:
-        return name in self.config.features
+        if self.config.features:
+            return name in self.config.features
+        return False
 
     def load_config(self) -> None:
         if os.path.exists(self.config_path):
