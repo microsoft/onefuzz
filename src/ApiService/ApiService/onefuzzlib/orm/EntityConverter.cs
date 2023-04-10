@@ -89,7 +89,6 @@ sealed class OnefuzzNamingPolicy : JsonNamingPolicy {
 public class EntityConverter {
 
     private const int MAX_DESERIALIZATION_RECURSION_DEPTH = 100;
-    private readonly ILogTracer _logTracer;
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
     private static readonly JsonSerializerOptions _options = new() {
         PropertyNamingPolicy = new OnefuzzNamingPolicy(),
@@ -99,9 +98,8 @@ public class EntityConverter {
         }
     };
 
-    public EntityConverter(ILogTracer logTracer) {
+    public EntityConverter() {
         _cache = new ConcurrentDictionary<Type, EntityInfo>();
-        _logTracer = logTracer;
     }
 
     public static JsonSerializerOptions GetJsonSerializerOptions() {
@@ -294,8 +292,7 @@ public class EntityConverter {
                             ("outputType", outputType?.Name ?? string.Empty),
                             ("fieldName", fieldName)
                         });
-                        _logTracer.WithTags(tags).Error($"Too many iterations deserializing {info.type}");
-                        throw new OrmShortCircuitInfiniteLoopException("MAX_DESERIALIZATION_RECURSION_DEPTH reached");
+                        throw new OrmMaxRecursionDepthReachedException($"MAX_DESERIALIZATION_RECURSION_DEPTH reached. Too many iterations deserializing {info.type}. {PrintTags(tags)}");
                     }
                     if (attr.FieldName == name) {
                         var tags = GenerateTableEntityTags(entity);
@@ -303,8 +300,7 @@ public class EntityConverter {
                             ("outputType", outputType?.Name ?? string.Empty),
                             ("fieldName", fieldName)
                         });
-                        _logTracer.WithTags(tags).Error($"Discriminator field is the same as the field being deserialized {name}");
-                        throw new OrmShortCircuitInfiniteLoopException("Discriminator field cannot be the same as the field being deserialized");
+                        throw new OrmInvalidDiscriminatorFieldException($"Discriminator field is the same as the field being deserialized {name}. {PrintTags(tags)}");
                     }
                     var v = GetFieldValue(info, attr.FieldName, entity, ++iterationCount) ?? throw new Exception($"No value for {attr.FieldName}");
                     outputType = typeProvider.GetTypeInfo(v);
@@ -324,13 +320,12 @@ public class EntityConverter {
                 }
             }
         } catch (Exception ex)
-            when (ex is not OrmShortCircuitInfiniteLoopException) {
+            when (ex is not OrmException) {
             var tags = GenerateTableEntityTags(entity);
             tags.AddRange(new (string, string)[] {
                 ("fieldName", fieldName)
             });
-            _logTracer.WithTags(tags).Error($"Unable to get value for property '{name}' (entity field '{fieldName}')");
-            throw new InvalidOperationException($"Unable to get value for property '{name}' (entity field '{fieldName}')", ex);
+            throw new InvalidOperationException($"Unable to get value for property '{name}' (entity field '{fieldName}'). {PrintTags(tags)}", ex);
         }
     }
 
@@ -399,8 +394,20 @@ public class EntityConverter {
             ("rowKey", rowKey)
         };
     }
+
+    private static string PrintTags(List<(string, string)>? tags) {
+        return tags != null ? string.Join(", ", tags.Select(x => $"{x.Item1}={x.Item2}")) : string.Empty;
+    }
 }
 
-public class OrmShortCircuitInfiniteLoopException : Exception {
-    public OrmShortCircuitInfiniteLoopException(string message) : base(message) { }
+public class OrmInvalidDiscriminatorFieldException : OrmException {
+    public OrmInvalidDiscriminatorFieldException(string message) : base(message) { }
+}
+
+public class OrmMaxRecursionDepthReachedException : OrmException {
+    public OrmMaxRecursionDepthReachedException(string message) : base(message) { }
+}
+
+public class OrmException : Exception {
+    public OrmException(string message) : base(message) { }
 }

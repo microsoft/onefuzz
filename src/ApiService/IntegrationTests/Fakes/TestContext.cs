@@ -16,7 +16,7 @@ namespace IntegrationTests.Fakes;
 public sealed class TestContext : IOnefuzzContext {
     public TestContext(ILogTracer logTracer, IStorage storage, ICreds creds, string storagePrefix) {
         var cache = new MemoryCache(Options.Create(new MemoryCacheOptions()));
-        EntityConverter = new EntityConverter(logTracer);
+        EntityConverter = new EntityConverter();
         ServiceConfiguration = new TestServiceConfiguration(storagePrefix);
         Storage = storage;
         Creds = creds;

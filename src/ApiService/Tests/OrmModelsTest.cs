@@ -694,7 +694,7 @@ namespace Tests {
     }
 
     public class OrmModelsTest {
-        EntityConverter _converter = new EntityConverter(new Mock<ILogTracer>().Object);
+        EntityConverter _converter = new EntityConverter();
         ITestOutputHelper _output;
 
         public OrmModelsTest(ITestOutputHelper output) {

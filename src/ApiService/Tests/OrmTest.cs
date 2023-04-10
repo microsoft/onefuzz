@@ -64,7 +64,7 @@ namespace Tests {
         [Fact]
         public void TestBothDirections() {
             var uriString = new Uri("https://localhost:9090");
-            var converter = new EntityConverter(_logTracer);
+            var converter = new EntityConverter();
             var entity1 = new Entity1(
                             Guid.NewGuid(),
                             "test",
@@ -114,7 +114,7 @@ namespace Tests {
         [Fact]
         public void TestConvertToTableEntity() {
             var uriString = new Uri("https://localhost:9090");
-            var converter = new EntityConverter(_logTracer);
+            var converter = new EntityConverter();
             var entity1 = new Entity1(
                             Guid.NewGuid(),
                             "test",
@@ -163,7 +163,7 @@ namespace Tests {
 
         [Fact]
         public void TestFromtableEntity() {
-            var converter = new EntityConverter(_logTracer);
+            var converter = new EntityConverter();
             var tableEntity = new TableEntity(Guid.NewGuid().ToString(), "test") {
                 {"the_date", DateTimeOffset.UtcNow },
                 { "the_number", 1234},
@@ -258,7 +258,7 @@ namespace Tests {
         [Fact]
         public void TestIntKey() {
             var expected = new Entity2(10, "test");
-            var converter = new EntityConverter(_logTracer);
+            var converter = new EntityConverter();
             var tableEntity = converter.ToTableEntity(expected);
             var actual = converter.ToRecord<Entity2>(tableEntity);
 
@@ -276,7 +276,7 @@ namespace Tests {
         public void TestContainerSerialization() {
             var container = Container.Parse("abc-123");
             var expected = new Entity3(123, "abc", container);
-            var converter = new EntityConverter(_logTracer);
+            var converter = new EntityConverter();
 
             var tableEntity = converter.ToTableEntity(expected);
             var actual = converter.ToRecord<Entity3>(tableEntity);
@@ -311,7 +311,7 @@ namespace Tests {
         public void TestPartitionKeyIsRowKey() {
             var container = Container.Parse("abc-123");
             var expected = new Entity4(123, "abc", container);
-            var converter = new EntityConverter(_logTracer);
+            var converter = new EntityConverter();
 
             var tableEntity = converter.ToTableEntity(expected);
             Assert.Equal(expected.Id.ToString(), tableEntity.RowKey);
@@ -345,7 +345,7 @@ namespace Tests {
         [Fact]
         public void TestNullValue() {
 
-            var entityConverter = new EntityConverter(_logTracer);
+            var entityConverter = new EntityConverter();
             var tableEntity = entityConverter.ToTableEntity(new TestNullField(null, null, null));
 
             Assert.Null(tableEntity["id"]);
@@ -376,7 +376,7 @@ namespace Tests {
         [Fact]
         public void TestSkipRename() {
 
-            var entityConverter = new EntityConverter(_logTracer);
+            var entityConverter = new EntityConverter();
 
             var expected = new TestEntity3(DoNotRename.TEST3, DoNotRenameFlag.Test_2 | DoNotRenameFlag.test1);
             var tableEntity = entityConverter.ToTableEntity(expected);
@@ -399,7 +399,7 @@ namespace Tests {
 
         [Fact]
         public void TestInitValue() {
-            var entityConverter = new EntityConverter(_logTracer);
+            var entityConverter = new EntityConverter();
             var tableEntity = new TableEntity();
             var actual = entityConverter.ToRecord<TestIinit>(tableEntity);
 
@@ -437,7 +437,7 @@ namespace Tests {
 
         [Fact]
         public void TestDeeplyNestedObjects() {
-            var converter = new EntityConverter(_logTracer);
+            var converter = new EntityConverter();
             var deeplyNestedJson = $"{{{string.Concat(Enumerable.Repeat("\"EventType\": {", 3))}{new String('}', 3)}}}"; // {{{...}}}
             var nestedEntity = new NestedEntity(
                 Id: 123,
@@ -448,7 +448,7 @@ namespace Tests {
             var tableEntity = converter.ToTableEntity(nestedEntity);
             var toRecord = () => converter.ToRecord<NestedEntity>(tableEntity);
 
-            _ = toRecord.Should().Throw<Exception>().And.InnerException!.Should().BeOfType<OrmShortCircuitInfiniteLoopException>();
+            _ = toRecord.Should().Throw<Exception>().And.InnerException!.Should().BeOfType<OrmException>();
         }
     }
 }
