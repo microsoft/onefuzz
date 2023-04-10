@@ -92,17 +92,21 @@ def check_application_error(response: requests.Response) -> None:
 
 
 class BackendConfig(BaseModel):
-    authority: str
-    client_id: str
-    endpoint: Optional[str]
-    features: Set[str] = Field(default_factory=set)
-    tenant_domain: str
+    authority: Optional[str]
+    client_id: Optional[str]
+    endpoint: str
+    features: Optional[Set[str]]
+    tenant_domain: Optional[str]
 
     def get_multi_tenant_domain(self) -> Optional[str]:
         if "https://login.microsoftonline.com/common" in self.authority:
             return self.tenant_domain
         else:
             return None
+
+
+class CacheConfig(BaseModel):
+    endpoint: Optional[str]
 
 
 class Backend:
@@ -141,7 +145,8 @@ class Backend:
     def save_config(self) -> None:
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
         with open(self.config_path, "w") as handle:
-            handle.write(self.config.json(indent=4, exclude_none=True))
+            endpoint_cache = {"endpoint": f"{self.config.endpoint}"}
+            handle.write(json.dumps(endpoint_cache, indent=4, sort_keys=True))
 
     def init_cache(self) -> None:
         # Ensure the token_path directory exists
@@ -329,14 +334,12 @@ class Backend:
         endpoint_params = responses.Config.parse_obj(response.json())
 
         # Will override values in storage w/ provided values for SP use
-        if self.config.client_id == "":
+        if not self.config.client_id:
             self.config.client_id = endpoint_params.client_id
-        if self.config.authority == "":
+        if not self.config.authority:
             self.config.authority = endpoint_params.authority
-        if self.config.tenant_domain == "":
+        if not self.config.tenant_domain:
             self.config.tenant_domain = endpoint_params.tenant_domain
-
-        self.save_config()
 
     def request(
         self,
@@ -352,9 +355,8 @@ class Backend:
             raise Exception("endpoint not configured")
 
         url = endpoint + "/api/" + path
-
-        if self.config.client_id == "" or (
-            self.config.authority == "" and self.config.tenant_domain == ""
+        if not self.config.client_id or (
+            not self.config.authority and not self.config.tenant_domain
         ):
             self.config_params()
         headers = self.headers()

@@ -40,11 +40,7 @@ from .ssh import build_ssh_command, ssh_connect, temp_file
 
 UUID_EXPANSION = TypeVar("UUID_EXPANSION", UUID, str)
 
-DEFAULT = BackendConfig(
-    authority="",
-    client_id="",
-    tenant_domain="",
-)
+DEFAULT = BackendConfig(endpoint="")
 
 # This was generated randomly and should be preserved moving forwards
 ONEFUZZ_GUID_NAMESPACE = uuid.UUID("27f25e3f-6544-4b69-b309-9b096c5a9cbc")
@@ -1894,9 +1890,6 @@ class Onefuzz:
     def config(
         self,
         endpoint: Optional[str] = None,
-        override_authority: Optional[str] = None,
-        client_id: Optional[str] = None,
-        override_tenant_domain: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
         reset: Optional[bool] = None,
     ) -> BackendConfig:
@@ -1904,9 +1897,7 @@ class Onefuzz:
         self.logger.debug("set config")
 
         if reset:
-            self._backend.config = BackendConfig(
-                authority="", client_id="", tenant_domain=""
-            )
+            self._backend.config = BackendConfig(endpoint="")
 
         if endpoint is not None:
             # The normal path for calling the API always uses the oauth2 workflow,
@@ -1922,17 +1913,12 @@ class Onefuzz:
                     "Missing HTTP Authentication"
                 )
             self._backend.config.endpoint = endpoint
-        if client_id is not None:
-            self._backend.config.client_id = client_id
-        if override_authority is not None:
-            self._backend.config.authority = override_authority
+
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
-        if override_tenant_domain is not None:
-            self._backend.config.tenant_domain = override_tenant_domain
+
         self._backend.app = None
         self._backend.save_config()
-
         data = self._backend.config.copy(deep=True)
 
         if not data.endpoint:
