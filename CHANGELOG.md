@@ -7,18 +7,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 7.1.0
+## 8.0.0
 
+## BREAKING CHANGES
+(In progress) This release has a change that removes caching of the OneFuzz config parameters. The new OneFuzz operation only store the endpoint and requires parameters per CLI command.
 ### Added
 
 * Agent: Added `validate` command to the agent to help validate a fuzzer [#2948](https://github.com/microsoft/onefuzz/pull/2948)
 * CLI: Added option to libfuzzer template to specify a known crash container [#2950](https://github.com/microsoft/onefuzz/pull/2950)
 * CLI: Added option to libfuzzer template to specify the duration of the tasks independently from the job duration [#2997](https://github.com/microsoft/onefuzz/pull/2997)
+* Deployment: Added `global.json` file to specify .NET version [#3007](https://github.com/microsoft/onefuzz/pull/3007)
 
 ### Changed
 
 * Agent: Install v17 Visual Studio redistributables [#2943](https://github.com/microsoft/onefuzz/pull/2943)
 * Agent/Service: Use minimized stack for crash site if no ASAN logs are available [#2962](https://github.com/microsoft/onefuzz/pull/2962)
+* Agent/Service: Unified several Rust crate dependancy versions across the platform [#3010](https://github.com/microsoft/onefuzz/pull/3010)
 * Service: Loosen scriban template validation [#2963](https://github.com/microsoft/onefuzz/pull/2963)
 * Service: Updated integration test pool size [#2935](https://github.com/microsoft/onefuzz/pull/2935)
 * Service: Pass the task tags to the agent when scheduling jobs [#2881](https://github.com/microsoft/onefuzz/pull/2881)
@@ -30,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Better logging of failures in the task_logger [#2940](https://github.com/microsoft/onefuzz/pull/2940)
 * Agent/Service: Updates to address CVE's [#2931](https://github.com/microsoft/onefuzz/pull/2931), [#2957](https://github.com/microsoft/onefuzz/pull/2957), [#2967](https://github.com/microsoft/onefuzz/pull/2967)
 * Deployment/Service: Renamed EventGrid subscription to conform with EventGrid's naming scheme [#2960](https://github.com/microsoft/onefuzz/pull/2960)
-* Deployment/Service: Added required KeyVault access policy allowing OneFuzz Function App to use an SSL cert for custom domain endpoints [#3004](https://github.com/microsoft/onefuzz/pull/3004)
+* Deployment/Service: Added required KeyVault access policy allowing OneFuzz Function App to use an SSL cert for custom domain endpoints [#3004](https://github.com/microsoft/onefuzz/pull/3004), [#3006](https://github.com/microsoft/onefuzz/pull/3006)
 * Documentation: Updated 'Azure Devops Work Item creation' doc to remove an outdated template reference [#2956](https://github.com/microsoft/onefuzz/pull/2956)
 * Service: Updated feature configuration package to fix an issue where 2 feature flags were using the same ID [#2980](https://github.com/microsoft/onefuzz/pull/2980)
 * Service: Make `GetNotification` nullable to fix errors looking up non-existent notification IDs [#2981](https://github.com/microsoft/onefuzz/pull/2981)
