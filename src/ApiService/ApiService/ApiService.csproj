@@ -39,7 +39,7 @@
     <PackageReference Include="Microsoft.Graph" Version="4.37.0" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.52.0" />
     <PackageReference Include="Microsoft.Identity.Web.TokenCache" Version="2.7.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.22.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.28.1" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.SignalRService" Version="1.7.0" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
