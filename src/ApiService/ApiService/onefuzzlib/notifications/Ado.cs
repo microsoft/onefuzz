@@ -201,7 +201,7 @@ public class Ado : NotificationsBase, IAdo {
                 }
             }
 
-            var query = "select [System.Id] from WorkItems";
+            var query = "select [System.Id] from WorkItems order by [System.Id]";
             if (parts != null && parts.Any()) {
                 query += " where " + string.Join(" AND ", parts);
             }
@@ -327,47 +327,47 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         public async Async.Task Process((string, string)[] notificationInfo) {
-            var matchingWorkItems = await ExistingWorkItems().ToListAsync();
+            var matchingItems = ExistingWorkItems()
+                .Select(wi => new { IsDuplicate = !IsADODuplicateWorkItem(wi), wi });
 
-            var nonDuplicateWorkItems = matchingWorkItems
-                .Where(wi => !IsADODuplicateWorkItem(wi))
-                .ToList();
-
-            if (nonDuplicateWorkItems.Count > 1) {
-                var nonDuplicateWorkItemIds = nonDuplicateWorkItems.Select(wi => wi.Id);
-                var matchingWorkItemIds = matchingWorkItems.Select(wi => wi.Id);
-
-                var extraTags = new List<(string, string)> {
-                    ("NonDuplicateWorkItemIds", JsonSerializer.Serialize(nonDuplicateWorkItemIds)),
-                    ("MatchingWorkItemIds", JsonSerializer.Serialize(matchingWorkItemIds))
-                };
-                extraTags.AddRange(notificationInfo);
-
-                _logTracer.WithTags(extraTags).Info($"Found more than 1 matching, non-duplicate work item");
-                foreach (var workItem in nonDuplicateWorkItems) {
-                    _ = await UpdateExisting(workItem, notificationInfo);
+            var updated = false;
+            WorkItem? oldest = null;
+            await foreach (var workItem in matchingItems) {
+                oldest ??= workItem.wi;
+                
+                _logTracer.WithTags(new List<(string, string)> { ("MatchingWorkItemIds", $"{workItem.wi.Id}") }).Info($"Found matching work item");
+                if (workItem.IsDuplicate) {
+                    
+                    continue;
                 }
-            } else if (nonDuplicateWorkItems.Count == 1) {
-                _ = await UpdateExisting(nonDuplicateWorkItems.Single(), notificationInfo);
-            } else if (matchingWorkItems.Any()) {
-                // We have matching work items but all are duplicates
-                _logTracer.WithTags(notificationInfo).Info($"All matching work items were duplicates, re-opening the oldest one");
-                var oldestWorkItem = matchingWorkItems.OrderBy(wi => wi.Id).First();
-                var stateChanged = await UpdateExisting(oldestWorkItem, notificationInfo);
-                if (stateChanged) {
-                    // add a comment if we re-opened the bug
-                    _ = await _client.AddCommentAsync(
-                        new CommentCreate() {
-                            Text = "This work item was re-opened because OneFuzz could only find related work items that are marked as duplicate."
-                        },
-                        _project,
-                        (int)oldestWorkItem.Id!);
+                _logTracer.WithTags(new List<(string, string)> { ("NonDuplicateWorkItemId", $"{workItem.wi.Id}") }).Info($"Found matching non-duplicate work item");
+                _ = await UpdateExisting(workItem.wi, notificationInfo);
+                updated = true;
+            }
+
+            if (!updated) {
+                if (oldest != null) {
+                    // We have matching work items but all are duplicates
+                    _logTracer.WithTags(notificationInfo)
+                        .Info($"All matching work items were duplicates, re-opening the oldest one");
+                    var oldestWorkItem = oldest;
+                    var stateChanged = await UpdateExisting(oldestWorkItem, notificationInfo);
+                    if (stateChanged) {
+                        // add a comment if we re-opened the bug
+                        _ = await _client.AddCommentAsync(
+                            new CommentCreate() {
+                                Text =
+                                    "This work item was re-opened because OneFuzz could only find related work items that are marked as duplicate."
+                            },
+                            _project,
+                            (int)oldestWorkItem.Id!);
+                    }
+                } else {
+                    // We never saw a work item like this before, it must be new
+                    var entry = await CreateNew();
+                    var adoEventType = "AdoNewItem";
+                    _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {entry.Id:Tag:WorkItemId}");
                 }
-            } else {
-                // We never saw a work item like this before, it must be new
-                var entry = await CreateNew();
-                var adoEventType = "AdoNewItem";
-                _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {entry.Id:Tag:WorkItemId}");
             }
         }
 
