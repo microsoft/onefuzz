@@ -46,6 +46,8 @@ jobs:
         with:
           toolchain: 1.68
           components: clippy, rustfmt, llvm-tools-preview
+      - name: Setup Rust problem-matchers
+        uses: r7kamura/rust-problem-matchers@d58b70c4a13c4866d96436315da451d8106f8f08 # pinned to 1.3.0
       - name: Get Rust version & build version
         shell: bash
         run: |

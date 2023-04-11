@@ -416,7 +416,7 @@ public static class Defs {
             Permissions: ContainerPermission.Read | ContainerPermission.List
         ),
         new ContainerDefinition(
-            Type:ContainerType.UniqueReports,
+            Type:ContainerType.UniqueInputs,
             Compare: Compare.Equal,
             Value:1,
             Permissions:
