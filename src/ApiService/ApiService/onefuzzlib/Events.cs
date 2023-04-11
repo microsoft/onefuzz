@@ -9,14 +9,14 @@ namespace Microsoft.OneFuzz.Service {
     public record SignalREvent
     (
         string Target,
-        List<EventMessage> arguments
+        List<DownloadableEventMessage> arguments
     );
 
 
     public interface IEvents {
         Async.Task SendEvent(BaseEvent anEvent);
 
-        Async.Task QueueSignalrEvent(EventMessage message);
+        Async.Task QueueSignalrEvent(DownloadableEventMessage message);
 
         void LogEvent(BaseEvent anEvent);
 
@@ -43,8 +43,8 @@ namespace Microsoft.OneFuzz.Service {
             _options.Converters.Add(new RemoveUserInfo());
         }
 
-        public async Async.Task QueueSignalrEvent(EventMessage message) {
-            var ev = new SignalREvent("events", new List<EventMessage>() { message });
+        public async Async.Task QueueSignalrEvent(DownloadableEventMessage message) {
+            var ev = new SignalREvent("events", new List<DownloadableEventMessage>() { message });
             await _queue.SendMessage("signalr-events", JsonSerializer.Serialize(ev, _options), StorageType.Config);
         }
 
@@ -57,9 +57,7 @@ namespace Microsoft.OneFuzz.Service {
                 eventType,
                 anEvent,
                 instanceId,
-                _creds.GetInstanceName(),
-                DateTime.UtcNow,
-                new Uri("http://example.com")
+                _creds.GetInstanceName()
             );
 
             var container = Container.Parse("events");
@@ -67,8 +65,18 @@ namespace Microsoft.OneFuzz.Service {
             await _containers.SaveBlob(container, eventMessage.EventId.ToString(), JsonSerializer.Serialize(eventMessage, _options), StorageType.Corpus);
             var sasUrl = await _containers.GetFileSasUrl(container, eventMessage.EventId.ToString(), StorageType.Corpus, BlobSasPermissions.Read);
 
-            await QueueSignalrEvent(eventMessage);
-            await _webhook.SendEvent(eventMessage);
+            var downloadableEventMessage = new DownloadableEventMessage(
+                eventMessage.EventId,
+                eventType,
+                anEvent,
+                instanceId,
+                _creds.GetInstanceName(),
+                DateTime.UtcNow,
+                sasUrl
+            );
+
+            await QueueSignalrEvent(downloadableEventMessage);
+            await _webhook.SendEvent(downloadableEventMessage);
             LogEvent(anEvent);
         }
 

@@ -10,7 +10,7 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IWebhookOperations : IOrm<Webhook> {
-    Async.Task SendEvent(EventMessage eventMessage);
+    Async.Task SendEvent(DownloadableEventMessage eventMessage);
     Async.Task<Webhook?> GetByWebhookId(Guid webhookId);
     Async.Task<bool> Send(WebhookMessageLog messageLog);
     Task<EventPing> Ping(Webhook webhook);
@@ -25,7 +25,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         _httpFactory = httpFactory;
     }
 
-    async public Async.Task SendEvent(EventMessage eventMessage) {
+    async public Async.Task SendEvent(DownloadableEventMessage eventMessage) {
         await foreach (var webhook in GetWebhooksCached()) {
             if (!webhook.EventTypes.Contains(eventMessage.EventType)) {
                 continue;
@@ -34,7 +34,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         }
     }
 
-    async private Async.Task AddEvent(Webhook webhook, EventMessage eventMessage) {
+    async private Async.Task AddEvent(Webhook webhook, DownloadableEventMessage eventMessage) {
         (string, string)[] tags = { ("WebhookId", webhook.WebhookId.ToString()), ("EventId", eventMessage.EventId.ToString()) };
 
         var message = new WebhookMessageLog(
@@ -115,7 +115,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         var ping = new EventPing(Guid.NewGuid());
         var instanceId = await _context.Containers.GetInstanceId();
         var instanceName = _context.Creds.GetInstanceName();
-        await AddEvent(webhook, new EventMessage(Guid.NewGuid(), EventType.Ping, ping, instanceId, instanceName));
+        await AddEvent(webhook, new DownloadableEventMessage(Guid.NewGuid(), EventType.Ping, ping, instanceId, instanceName, DateTime.UtcNow, new Uri("https://example.com")));
         return ping;
     }
 

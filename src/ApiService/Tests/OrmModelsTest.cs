@@ -154,7 +154,7 @@ namespace Tests {
                 Heartbeat: heartbeat,
                 Outdated: outdated);
 
-        public static Gen<EventMessage> EventMessage() {
+        public static Gen<DownloadableEventMessage> EventMessage() {
             return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string>>().Select(
                 arg =>
                     new EventMessage(
@@ -524,7 +524,7 @@ namespace Tests {
             return Arb.From(OrmGenerators.Proxy);
         }
 
-        public static Arbitrary<EventMessage> EventMessage() {
+        public static Arbitrary<DownloadableEventMessage> EventMessage() {
             return Arb.From(OrmGenerators.EventMessage());
         }
 
@@ -1084,7 +1084,7 @@ namespace Tests {
         }
 
         [Property]
-        public bool EventMessage(EventMessage e) {
+        public bool EventMessage(DownloadableEventMessage e) {
             return Test(e);
         }
 

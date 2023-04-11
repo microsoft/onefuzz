@@ -8,13 +8,13 @@ namespace IntegrationTests.Fakes;
 public sealed class TestEvents : IEvents {
 
     public List<BaseEvent> Events { get; } = new();
-    public List<EventMessage> SignalREvents { get; } = new();
+    public List<DownloadableEventMessage> SignalREvents { get; } = new();
 
     public void LogEvent(BaseEvent anEvent) {
         Events.Add(anEvent);
     }
 
-    public Async.Task QueueSignalrEvent(EventMessage message) {
+    public Async.Task QueueSignalrEvent(DownloadableEventMessage message) {
         SignalREvents.Add(message);
         return Async.Task.CompletedTask;
     }

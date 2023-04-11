@@ -343,6 +343,16 @@ public record EventNotificationFailed(
     Error? Error
 ) : BaseEvent();
 
+public record DownloadableEventMessage : EventMessage {
+    public Uri SasUrl { get; init; }
+    public DateTime CreatedAt { get; init; }
+
+    public DownloadableEventMessage(Guid EventId, EventType EventType, BaseEvent Event, Guid InstanceId, string InstanceName, DateTime CreatedAt, Uri SasUrl)
+        : base(EventId, EventType, Event, InstanceId, InstanceName) {
+        this.CreatedAt = CreatedAt;
+        this.SasUrl = SasUrl;
+    }
+}
 public record EventMessage(
     Guid EventId,
     EventType EventType,
@@ -350,9 +360,7 @@ public record EventMessage(
     [property: JsonConverter(typeof(BaseEventConverter))]
     BaseEvent Event,
     Guid InstanceId,
-    String InstanceName,
-    DateTime CreatedAt,
-    Uri SasUrl
+    String InstanceName
 );
 
 public class BaseEventConverter : JsonConverter<BaseEvent> {
