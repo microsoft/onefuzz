@@ -125,8 +125,8 @@ public class EntityConverter {
     }
 
     private static IEnumerable<EntityProperty> GetEntityProperties<T>(ParameterInfo parameterInfo) {
-        var name = parameterInfo.Name.EnsureNotNull($"Invalid paramater {parameterInfo}");
-        var parameterType = parameterInfo.ParameterType.EnsureNotNull($"Invalid paramater {parameterInfo}");
+        var name = parameterInfo.Name.EnsureNotNull($"Invalid parameter {parameterInfo}");
+        var parameterType = parameterInfo.ParameterType.EnsureNotNull($"Invalid parameter {parameterInfo}");
         var isRowkey = parameterInfo.GetCustomAttribute(typeof(RowKeyAttribute)) != null;
         var isPartitionkey = parameterInfo.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
 
@@ -223,7 +223,7 @@ public class EntityConverter {
     }
 
 
-    private object? GetFieldValue(EntityInfo info, string name, TableEntity entity, int iterationCount = 0) {
+    private object? GetFieldValue(EntityInfo info, string name, TableEntity entity, int iterationCount) {
         var ef = info.properties[name].First();
         if (ef.kind == EntityPropertyKind.PartitionKey || ef.kind == EntityPropertyKind.RowKey) {
             // partition & row keys must always be strings
@@ -335,7 +335,7 @@ public class EntityConverter {
 
         object?[] parameters;
         try {
-            parameters = entityInfo.properties.Select(grouping => GetFieldValue(entityInfo, grouping.Key, entity)).ToArray();
+            parameters = entityInfo.properties.Select(grouping => GetFieldValue(entityInfo, grouping.Key, entity, 0)).ToArray();
         } catch (Exception ex) {
             throw new InvalidOperationException($"Unable to extract properties from TableEntity for {typeof(T)}", ex);
         }
