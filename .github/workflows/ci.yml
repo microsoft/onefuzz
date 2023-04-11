@@ -267,7 +267,9 @@ jobs:
       - uses: actions/checkout@v3
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v3
-        # this will use global.json to install the correct version
+        with:
+          # use global.json to install the correct version
+          global-json-file: global.json
       - name: Install dependencies
         run: |
           cd src/ApiService/
