@@ -363,8 +363,8 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: ${{env.DOTNET_VERSION}}
-          dotnet-quality: "ga"
+          # use global.json to install the correct version
+          global-json-file: global.json
       - run: src/ci/dotnet-fuzzing-tools.sh
         shell: bash
       - uses: actions/upload-artifact@v3
@@ -378,8 +378,8 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: ${{env.DOTNET_VERSION}}
-          dotnet-quality: "ga"
+          # use global.json to install the correct version
+          global-json-file: global.json
       - run: src/ci/dotnet-fuzzing-tools.ps1
         shell: pwsh
       - uses: actions/upload-artifact@v3
