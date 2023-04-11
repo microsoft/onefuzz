@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 8.0.0
 
 ## BREAKING CHANGES
+
 (In progress) This release has a change that removes caching of the OneFuzz config parameters. The new OneFuzz operation only store the endpoint and requires parameters per CLI command.
+
 ### Added
 
 * Agent: Added `validate` command to the agent to help validate a fuzzer [#2948](https://github.com/microsoft/onefuzz/pull/2948)
