@@ -328,6 +328,7 @@ class Libfuzzer(Command):
         inputs: Optional[Directory] = None,
         reboot_after_setup: bool = False,
         duration: int = 24,
+        task_duration: Optional[int] = None,
         target_workers: Optional[int] = None,
         target_options: Optional[List[str]] = None,
         fuzzing_target_options: Optional[List[str]] = None,
@@ -357,6 +358,7 @@ class Libfuzzer(Command):
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
         extra_container: Optional[Container] = None,
+        crashes: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -371,6 +373,9 @@ class Libfuzzer(Command):
 
         if readonly_inputs:
             self.onefuzz.containers.get(readonly_inputs)
+
+        if crashes:
+            self.onefuzz.containers.get(crashes)
 
         if dryrun:
             return None
@@ -412,6 +417,9 @@ class Libfuzzer(Command):
         if readonly_inputs:
             helper.containers[ContainerType.readonly_inputs] = readonly_inputs
 
+        if crashes:
+            helper.containers[ContainerType.crashes] = crashes
+
         if analyzer_exe is not None:
             helper.define_containers(ContainerType.analysis)
 
@@ -451,7 +459,7 @@ class Libfuzzer(Command):
             target_exe=target_exe_blob_name,
             vm_count=vm_count,
             reboot_after_setup=reboot_after_setup,
-            duration=duration,
+            duration=task_duration if task_duration else duration,
             target_workers=target_workers,
             target_options=target_options,
             fuzzing_target_options=fuzzing_target_options,
@@ -618,6 +626,7 @@ class Libfuzzer(Command):
         inputs: Optional[Directory] = None,
         reboot_after_setup: bool = False,
         duration: int = 24,
+        task_duration: Optional[int] = None,
         target_workers: Optional[int] = None,
         fuzzing_target_options: Optional[List[str]] = None,
         target_env: Optional[Dict[str, str]] = None,
@@ -635,6 +644,7 @@ class Libfuzzer(Command):
         expect_crash_on_failure: bool = False,
         notification_config: Optional[NotificationConfig] = None,
         extra_container: Optional[Container] = None,
+        crashes: Optional[Container] = None,
     ) -> Optional[Job]:
         pool = self.onefuzz.pools.get(pool_name)
 
@@ -644,6 +654,9 @@ class Libfuzzer(Command):
 
         if readonly_inputs:
             self.onefuzz.containers.get(readonly_inputs)
+
+        if crashes:
+            self.onefuzz.containers.get(crashes)
 
         # We _must_ proactively specify the OS based on pool.
         #
@@ -698,6 +711,9 @@ class Libfuzzer(Command):
         if readonly_inputs:
             helper.containers[ContainerType.readonly_inputs] = readonly_inputs
 
+        if crashes:
+            helper.containers[ContainerType.crashes] = crashes
+
         # Assumes that `libfuzzer-dotnet` and supporting tools were uploaded upon deployment.
         fuzzer_tools_container = Container(
             "dotnet-fuzzing-linux" if platform == OS.linux else "dotnet-fuzzing-windows"
@@ -730,7 +746,7 @@ class Libfuzzer(Command):
             fuzzer_containers,
             pool_name=pool_name,
             reboot_after_setup=reboot_after_setup,
-            duration=duration,
+            duration=task_duration if task_duration else duration,
             vm_count=vm_count,
             target_options=fuzzing_target_options,
             target_env=target_env,
@@ -778,7 +794,7 @@ class Libfuzzer(Command):
             libfuzzer_dotnet_loader_dll,
             coverage_containers,
             pool_name=pool_name,
-            duration=duration,
+            duration=task_duration if task_duration else duration,
             vm_count=1,
             reboot_after_setup=reboot_after_setup,
             target_options=sharpfuzz_harness_target_options,
@@ -809,7 +825,7 @@ class Libfuzzer(Command):
             libfuzzer_dotnet_loader_dll,
             report_containers,
             pool_name=pool_name,
-            duration=duration,
+            duration=task_duration if task_duration else duration,
             vm_count=1,
             reboot_after_setup=reboot_after_setup,
             target_options=sharpfuzz_harness_target_options,
@@ -840,6 +856,7 @@ class Libfuzzer(Command):
         inputs: Optional[Directory] = None,
         reboot_after_setup: bool = False,
         duration: int = 24,
+        task_duration: Optional[int] = None,
         target_workers: Optional[int] = 1,
         target_options: Optional[List[str]] = None,
         fuzzing_target_options: Optional[List[str]] = None,
@@ -855,6 +872,7 @@ class Libfuzzer(Command):
         check_retry_count: Optional[int] = 300,
         check_fuzzer_help: bool = True,
         extra_container: Optional[Container] = None,
+        crashes: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
@@ -906,6 +924,10 @@ class Libfuzzer(Command):
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
+
+        if crashes:
+            self.onefuzz.containers.get(crashes)
+            helper.containers[ContainerType.crashes] = crashes
 
         fuzzer_containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
@@ -986,7 +1008,7 @@ class Libfuzzer(Command):
             fuzzer_containers,
             pool_name=pool_name,
             reboot_after_setup=reboot_after_setup,
-            duration=duration,
+            duration=task_duration if task_duration else duration,
             vm_count=vm_count,
             target_options=libfuzzer_fuzz_target_options,
             target_env=target_env,
@@ -1019,7 +1041,7 @@ class Libfuzzer(Command):
             wrapper_name,
             report_containers,
             pool_name=pool_name,
-            duration=duration,
+            duration=task_duration if task_duration else duration,
             vm_count=1,
             reboot_after_setup=reboot_after_setup,
             target_options=target_options,

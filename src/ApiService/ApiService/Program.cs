@@ -65,15 +65,7 @@ public class Program {
                     });
                 }
             })
-            .ConfigureFunctionsWorkerDefaults(builder => {
-                builder.UseMiddleware<LoggingMiddleware>();
-                builder.AddApplicationInsights(options => {
-                    options.ConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
-                });
-            })
             .ConfigureServices((context, services) => {
-                services.AddAzureAppConfiguration();
-                _ = services.AddFeatureManagement();
                 services.Configure<JsonSerializerOptions>(options => {
                     options = EntityConverter.GetJsonSerializerOptions();
                 });
@@ -123,7 +115,6 @@ public class Program {
                 .AddScoped<INodeTasksOperations, NodeTasksOperations>()
                 .AddScoped<INodeMessageOperations, NodeMessageOperations>()
                 .AddScoped<IRequestHandling, RequestHandling>()
-                .AddScoped<IImageOperations, ImageOperations>()
                 .AddScoped<ITeams, Teams>()
                 .AddScoped<IGithubIssues, GithubIssues>()
                 .AddScoped<IAdo, Ado>()
@@ -140,7 +131,17 @@ public class Program {
                 .AddSingleton<IStorage, Storage>()
                 .AddSingleton<ILogSinks, LogSinks>()
                 .AddHttpClient()
-                .AddMemoryCache();
+                .AddMemoryCache()
+                .AddAzureAppConfiguration();
+
+                _ = services.AddFeatureManagement();
+            })
+            .ConfigureFunctionsWorkerDefaults(builder => {
+                builder.UseAzureAppConfiguration();
+                builder.UseMiddleware<LoggingMiddleware>();
+                builder.AddApplicationInsights(options => {
+                    options.ConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
+                });
             })
             .Build();
 

@@ -295,7 +295,6 @@ impl<'a> TaskContext<'a> {
 
         let expand = Expand::new(&self.config.common.machine_identity)
             .machine_id()
-            .await?
             .input_path(input)
             .job_id(&self.config.common.job_id)
             .setup_dir(&self.config.common.setup_dir)

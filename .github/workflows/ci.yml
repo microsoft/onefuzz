@@ -20,7 +20,6 @@ env:
   SCCACHE_CACHE_SIZE: 1G
   ACTIONS_CACHE_KEY_DATE: 2022-11-21-02
   CI: true
-  DOTNET_VERSION: 7.0.x
 
 jobs:
   agent:
@@ -46,6 +45,8 @@ jobs:
         with:
           toolchain: 1.68
           components: clippy, rustfmt, llvm-tools-preview
+      - name: Setup Rust problem-matchers
+        uses: r7kamura/rust-problem-matchers@d58b70c4a13c4866d96436315da451d8106f8f08 # pinned to 1.3.0
       - name: Get Rust version & build version
         shell: bash
         run: |
@@ -267,8 +268,8 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: ${{env.DOTNET_VERSION}}
-          dotnet-quality: "ga"
+          # use global.json to install the correct version
+          global-json-file: global.json
       - name: Install dependencies
         run: |
           cd src/ApiService/
@@ -362,8 +363,8 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: ${{env.DOTNET_VERSION}}
-          dotnet-quality: "ga"
+          # use global.json to install the correct version
+          global-json-file: global.json
       - run: src/ci/dotnet-fuzzing-tools.sh
         shell: bash
       - uses: actions/upload-artifact@v3
@@ -377,8 +378,8 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: ${{env.DOTNET_VERSION}}
-          dotnet-quality: "ga"
+          # use global.json to install the correct version
+          global-json-file: global.json
       - run: src/ci/dotnet-fuzzing-tools.ps1
         shell: pwsh
       - uses: actions/upload-artifact@v3

@@ -155,7 +155,7 @@ fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntr
 impl CrashLog {
     pub fn new(
         text: Option<String>,
-        summary: String,
+        summary: Option<String>,
         sanitizer: String,
         fault_type: String,
         scariness_score: Option<u32>,
@@ -197,6 +197,15 @@ impl CrashLog {
         let minimized_stack_function_names = stack_names(&minimized_stack_details);
         let minimized_stack_function_lines = stack_function_lines(&minimized_stack_details);
 
+        // if summary was not supplied,
+        // use first line of minimized stack
+        // or else first line of stack,
+        // or else nothing
+        let summary = summary
+            .or_else(|| minimized_stack.first().cloned())
+            .or_else(|| call_stack.first().cloned())
+            .unwrap_or_else(|| "<crash site unavailable>".to_string());
+
         Ok(Self {
             text,
             sanitizer,
@@ -220,7 +229,7 @@ impl CrashLog {
         let (scariness_score, scariness_description) = parse_scariness(&text);
         Self::new(
             Some(text),
-            summary,
+            Some(summary),
             sanitizer,
             fault_type,
             scariness_score,
@@ -325,6 +334,8 @@ mod tests {
             if skip_files.contains(&file_name) {
                 eprintln!("skipping file: {file_name}");
                 continue;
+            } else {
+                eprintln!("parsing file: {file_name}");
             }
 
             let data_raw =

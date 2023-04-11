@@ -146,7 +146,6 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         Some(
             Expand::new(&config.common.machine_identity)
                 .machine_id()
-                .await?
                 .runtime_dir(runtime_dir.path())
                 .evaluate_value(stats_file)?,
         )
@@ -206,7 +205,6 @@ async fn start_supervisor(
 
     let expand = Expand::new(&config.common.machine_identity)
         .machine_id()
-        .await?
         .supervisor_exe(&config.supervisor_exe)
         .supervisor_options(&config.supervisor_options)
         .runtime_dir(&runtime_dir)
@@ -401,6 +399,7 @@ mod tests {
                     machine_name: "test".to_string(),
                     scaleset_name: None,
                 },
+                tags: Default::default(),
                 from_agent_to_task_endpoint: "/".to_string(),
                 from_task_to_agent_endpoint: "/".to_string(),
             },

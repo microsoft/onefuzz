@@ -32,7 +32,7 @@ public interface IVmssOperations {
         Guid name,
         string vmSku,
         long vmCount,
-        string image,
+        ImageReference image,
         string networkId,
         bool? spotInstance,
         bool ephemeralOsDisks,
@@ -49,7 +49,6 @@ public interface IVmssOperations {
 public class VmssOperations : IVmssOperations {
     private readonly ILogTracer _log;
     private readonly ICreds _creds;
-    private readonly IImageOperations _imageOps;
     private readonly IServiceConfig _serviceConfig;
     private readonly IMemoryCache _cache;
 
@@ -57,7 +56,6 @@ public class VmssOperations : IVmssOperations {
     public VmssOperations(ILogTracer log, IOnefuzzContext context, IMemoryCache cache) {
         _log = log.WithTag("Component", "vmss-operations");
         _creds = context.Creds;
-        _imageOps = context.ImageOperations;
         _serviceConfig = context.ServiceConfiguration;
         _cache = cache;
     }
@@ -214,7 +212,7 @@ public class VmssOperations : IVmssOperations {
             } else {
                 return foundInstanceId;
             }
-        });
+        })!; // NULLABLE: only this method inserts InstanceIdKey so it cannot be null
 
     public async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(Guid name, Guid vmId) {
         _log.Info($"get instance ID for scaleset node: {name:Tag:VmssName}:{vmId:Tag:VmId}");
@@ -270,7 +268,7 @@ public class VmssOperations : IVmssOperations {
         Guid name,
         string vmSku,
         long vmCount,
-        string image,
+        ImageReference image,
         string networkId,
         bool? spotInstance,
         bool ephemeralOsDisks,
@@ -282,22 +280,11 @@ public class VmssOperations : IVmssOperations {
         if (vmss is not null) {
             return OneFuzzResultVoid.Ok;
         }
-        _log.Info($"creating VM name: {name:Tag:VmssName} {vmSku:Tag:VmSku} {vmCount:Tag:VmCount} {image:Tag:Image} {networkId:Tag:Subnet} {spotInstance:Tag:SpotInstance}");
-        var getOsResult = await _imageOps.GetOs(location, image);
 
+        _log.Info($"creating VM name: {name:Tag:VmssName} {vmSku:Tag:VmSku} {vmCount:Tag:VmCount} {image:Tag:Image} {networkId:Tag:Subnet} {spotInstance:Tag:SpotInstance}");
+        var getOsResult = await image.GetOs(_cache, _creds.ArmClient, location);
         if (!getOsResult.IsOk) {
             return getOsResult.ErrorV;
-        }
-
-        var imageRef = new ImageReference();
-        if (image.StartsWith('/')) {
-            imageRef.Id = image;
-        } else {
-            var info = IImageOperations.GetImageInfo(image);
-            imageRef.Publisher = info.Publisher;
-            imageRef.Offer = info.Offer;
-            imageRef.Sku = info.Sku;
-            imageRef.Version = info.Version;
         }
 
         var vmssData = new VirtualMachineScaleSetData(location) {
@@ -320,7 +307,7 @@ public class VmssOperations : IVmssOperations {
             VirtualMachineProfile = new() {
                 Priority = VirtualMachinePriorityTypes.Regular,
                 StorageProfile = new() {
-                    ImageReference = imageRef,
+                    ImageReference = image.ToArm(),
                 },
                 OSProfile = new() {
                     ComputerNamePrefix = "node",
@@ -415,8 +402,9 @@ public class VmssOperations : IVmssOperations {
             .GetVirtualMachineScaleSetVms()
             .SelectAwait(async vm => vm.HasData ? vm : await vm.GetAsync());
 
+    private sealed record AvailableSkusKey(Region region);
     public Async.Task<IReadOnlyList<string>> ListAvailableSkus(Region region)
-        => _cache.GetOrCreateAsync<IReadOnlyList<string>>($"compute-skus-{region}", async entry => {
+        => _cache.GetOrCreateAsync<IReadOnlyList<string>>(new AvailableSkusKey(region), async entry => {
             entry = entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
 
             var sub = _creds.GetSubscriptionResource();
@@ -441,7 +429,7 @@ public class VmssOperations : IVmssOperations {
             }
 
             return skuNames;
-        });
+        })!; // NULLABLE: only this method inserts AvailableSkusKey so it cannot be null
 
     private async Async.Task<HashSet<string>> ResolveInstanceIds(Guid scalesetId, IEnumerable<Node> nodes) {
 

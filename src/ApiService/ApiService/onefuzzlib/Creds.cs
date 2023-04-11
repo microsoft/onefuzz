@@ -95,14 +95,15 @@ public sealed class Creds : ICreds {
         return ArmClient.GetSubscriptionResource(id);
     }
 
+    private static readonly object _baseRegionKey = new(); // we only need equality/hashcode
     public Async.Task<Region> GetBaseRegion() {
-        return _cache.GetOrCreateAsync(nameof(GetBaseRegion), async _ => {
+        return _cache.GetOrCreateAsync(_baseRegionKey, async _ => {
             var rg = await ArmClient.GetResourceGroupResource(GetResourceGroupResourceIdentifier()).GetAsync();
             if (rg.GetRawResponse().IsError) {
                 throw new Exception($"Failed to get base region due to [{rg.GetRawResponse().Status}] {rg.GetRawResponse().ReasonPhrase}");
             }
             return Region.Parse(rg.Value.Data.Location.Name);
-        });
+        })!; // NULLABLE: only this method inserts _baseRegionKey so it cannot be null
     }
 
     public Uri GetInstanceUrl() {
@@ -145,9 +146,10 @@ public sealed class Creds : ICreds {
         return resource;
     }
 
+    private static readonly object _regionsKey = new(); // we only need equality/hashcode
     public Task<IReadOnlyList<Region>> GetRegions()
         => _cache.GetOrCreateAsync<IReadOnlyList<Region>>(
-            nameof(Creds) + "." + nameof(GetRegions),
+            _regionsKey,
             async entry => {
                 // cache for one day
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
@@ -156,8 +158,7 @@ public sealed class Creds : ICreds {
                     .GetLocationsAsync()
                     .Select(x => Region.Parse(x.Name))
                     .ToListAsync();
-            });
-
+            })!; // NULLABLE: only this method inserts _regionsKey so it cannot be null
 }
 
 

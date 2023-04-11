@@ -13,10 +13,10 @@ resource featureFlags 'Microsoft.AppConfiguration/configurationStores@2022-05-01
 
 resource configStoreFeatureflag 'Microsoft.AppConfiguration/configurationStores/keyValues@2021-10-01-preview' = {
   parent: featureFlags
-  name: '.appconfig.featureflag~2FEnableScribanOnly'
+  name: '.appconfig.featureflag~2FRenderOnlyScribanTemplates'
   properties: {
     value: string({
-      id: 'EnableScribanOnly'
+      id: 'RenderOnlyScribanTemplates'
       description: 'Render notification templates with scriban only'
       enabled: false
     })
@@ -26,10 +26,10 @@ resource configStoreFeatureflag 'Microsoft.AppConfiguration/configurationStores/
 
 resource validateNotificationConfigSemantics 'Microsoft.AppConfiguration/configurationStores/keyValues@2021-10-01-preview' = {
   parent: featureFlags
-  name: '.appconfig.featureflag~2FEnableValidateNotificationConfigSemantics'
+  name: '.appconfig.featureflag~2FSemanticNotificationConfigValidation'
   properties: {
     value: string({
-      id: 'EnableScribanOnly'
+      id: 'SemanticNotificationConfigValidation'
       description: 'Check notification configs for valid PATs and fields'
       enabled: true
     })
