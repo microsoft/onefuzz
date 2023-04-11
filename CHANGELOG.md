@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Agent: Install v17 Visual Studio redistributables [#2943](https://github.com/microsoft/onefuzz/pull/2943)
 * Agent/Service: Use minimized stack for crash site if no ASAN logs are available [#2962](https://github.com/microsoft/onefuzz/pull/2962)
-* Agent/Service: Unified several Rust crate dependancy versions across the platform [#3010](https://github.com/microsoft/onefuzz/pull/3010)
+* Agent/Service: Unified several Rust crate dependency versions across the platform [#3010](https://github.com/microsoft/onefuzz/pull/3010)
 * Service: Loosen scriban template validation [#2963](https://github.com/microsoft/onefuzz/pull/2963)
 * Service: Updated integration test pool size [#2935](https://github.com/microsoft/onefuzz/pull/2935)
 * Service: Pass the task tags to the agent when scheduling jobs [#2881](https://github.com/microsoft/onefuzz/pull/2881)
