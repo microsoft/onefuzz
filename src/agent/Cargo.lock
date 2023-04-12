@@ -569,7 +569,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "crossbeam-utils",
  "lazy_static",
- "memoffset",
+ "memoffset 0.6.4",
  "scopeguard",
 ]
 
@@ -659,7 +659,7 @@ version = "3.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d91974fbbe88ec1df0c24a4f00f99583667a7e2e6272b2b92d294d81e462173"
 dependencies = [
- "nix",
+ "nix 0.25.1",
  "winapi 0.3.9",
 ]
 
@@ -1772,6 +1772,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "memoffset"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5de893c32cde5f383baa4c04c5d6dbdd735cfd4a794b0debdb2bb1b421da5ff4"
+dependencies = [
+ "autocfg",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1900,16 +1909,30 @@ checksum = "e4a24736216ec316047a1fc4252e27dabb04218aa4a3f37c6e7ddbf1f9782b54"
 
 [[package]]
 name = "nix"
-version = "0.25.0"
+version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e322c04a9e3440c327fca7b6c8a63e6890a32fa2ad689db972425f07e0d22abb"
+checksum = "f346ff70e7dbfd675fe90590b92d59ef2de15a8779ae305ebcbfd3f0caf59be4"
 dependencies = [
  "autocfg",
  "bitflags",
  "cfg-if 1.0.0",
  "libc",
- "memoffset",
+ "memoffset 0.6.4",
  "pin-utils",
+]
+
+[[package]]
+name = "nix"
+version = "0.26.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfdda3d196821d6af13126e40375cdf7da646a96114af134d5f417a9a1dc8e1a"
+dependencies = [
+ "bitflags",
+ "cfg-if 1.0.0",
+ "libc",
+ "memoffset 0.7.1",
+ "pin-utils",
+ "static_assertions",
 ]
 
 [[package]]
@@ -2026,7 +2049,7 @@ dependencies = [
  "input-tester",
  "lazy_static",
  "log",
- "nix",
+ "nix 0.26.2",
  "notify",
  "onefuzz-telemetry",
  "pete",
@@ -2072,7 +2095,7 @@ dependencies = [
  "futures",
  "ipc-channel",
  "log",
- "nix",
+ "nix 0.26.2",
  "onefuzz",
  "onefuzz-telemetry",
  "reqwest",
@@ -2365,8 +2388,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "493eb0f2954de9a30ee85b01891f6519e9d065464eaab79aff65d949f44b7850"
 dependencies = [
  "libc",
- "memoffset",
- "nix",
+ "memoffset 0.6.4",
+ "nix 0.25.1",
  "thiserror",
 ]
 
