@@ -11,7 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## BREAKING CHANGES
 
-(In progress) This release has a change that removes caching of the OneFuzz config parameters. The new OneFuzz operation only store the endpoint and requires parameters per CLI command.
+This release removes the parameters `--client_id`, `--override_authority`, and `override_tenant_domain` from the `config` command.
+
+For those accessing the CLI with a service principal, the parameters can be supplied on the command line for each of the CLI commands.
+
+For example, if deploying a job:
+
+```shell
+onefuzz --client_id [CLIENT_ID] --client_secret [CLIENT_SECRET] template libfuzzer basic --setup_dir .....
+```
 
 ### Added
 
@@ -25,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Install v17 Visual Studio redistributables [#2943](https://github.com/microsoft/onefuzz/pull/2943)
 * Agent/Service: Use minimized stack for crash site if no ASAN logs are available [#2962](https://github.com/microsoft/onefuzz/pull/2962)
 * Agent/Service: Unified several Rust crate dependency versions across the platform [#3010](https://github.com/microsoft/onefuzz/pull/3010)
+* CLI: Remove additional parameters from the `config` command and require them on each CLI request if accessing the CLI with a service principal [#3000](https://github.com/microsoft/onefuzz/pull/3000)
 * Service: Loosen scriban template validation [#2963](https://github.com/microsoft/onefuzz/pull/2963)
 * Service: Updated integration test pool size [#2935](https://github.com/microsoft/onefuzz/pull/2935)
 * Service: Pass the task tags to the agent when scheduling jobs [#2881](https://github.com/microsoft/onefuzz/pull/2881)
