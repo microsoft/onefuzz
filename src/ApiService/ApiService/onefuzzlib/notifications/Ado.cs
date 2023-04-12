@@ -146,15 +146,19 @@ public class Ado : NotificationsBase, IAdo {
             }
         }
 
-        public async IAsyncEnumerable<WorkItem> ExistingWorkItems() {
+        public async IAsyncEnumerable<WorkItem> ExistingWorkItems((string, string)[] notificationInfo) {
             var filters = new Dictionary<string, string>();
             foreach (var key in _config.UniqueFields) {
                 var filter = string.Empty;
                 if (string.Equals("System.TeamProject", key)) {
                     filter = await Render(_config.Project);
+                } else if (_config.AdoFields.TryGetValue(key, out var field)) {
+                    filter = await Render(field);
                 } else {
-                    filter = await Render(_config.AdoFields[key]);
+                    _logTracer.WithTags(notificationInfo).Error($"Failed to check for existing work items using the UniqueField Key: {key}. Value is not present in config field AdoFields.");
+                    continue;
                 }
+
                 filters.Add(key.ToLowerInvariant(), filter);
             }
 
@@ -327,7 +331,7 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         public async Async.Task Process((string, string)[] notificationInfo) {
-            var matchingItems = ExistingWorkItems()
+            var matchingItems = ExistingWorkItems(notificationInfo)
                 .Select(wi => new { IsDuplicate = !IsADODuplicateWorkItem(wi), wi });
 
             var updated = false;
