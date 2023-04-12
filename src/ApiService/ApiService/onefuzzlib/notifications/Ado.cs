@@ -338,10 +338,10 @@ public class Ado : NotificationsBase, IAdo {
             WorkItem? oldest = null;
             await foreach (var workItem in matchingItems) {
                 oldest ??= workItem.wi;
-                
+
                 _logTracer.WithTags(new List<(string, string)> { ("MatchingWorkItemIds", $"{workItem.wi.Id}") }).Info($"Found matching work item");
                 if (workItem.IsDuplicate) {
-                    
+
                     continue;
                 }
                 _logTracer.WithTags(new List<(string, string)> { ("NonDuplicateWorkItemId", $"{workItem.wi.Id}") }).Info($"Found matching non-duplicate work item");
