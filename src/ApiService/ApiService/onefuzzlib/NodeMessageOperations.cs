@@ -26,7 +26,7 @@ public class NodeMessageOperations : Orm<NodeMessage>, INodeMessageOperations {
         : base(log, context) { }
 
     public IAsyncEnumerable<NodeMessage> GetMessage(Guid machineId)
-        => QueryAsync(Query.PartitionKey(machineId.ToString()));
+        => QueryAsync(Query.PartitionKey(machineId.ToString()), maxPerPage: 1);
 
     public async Async.Task ClearMessages(Guid machineId) {
         _logTracer.Info($"clearing messages for node {machineId:Tag:MachineId}");
