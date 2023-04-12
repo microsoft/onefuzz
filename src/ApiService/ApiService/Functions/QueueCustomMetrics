@@ -1,0 +1,25 @@
+using System.Text.Json;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+
+namespace Microsoft.OneFuzz.Service.Functions;
+
+
+public class QueueCustomMetrics
+{
+    private readonly ILogTracer _log;
+
+    private readonly IOnefuzzContext _context;
+
+    public QueueCustomMetrics(ILogTracer log, IOnefuzzContext context)
+    {
+        _log = log;
+        _context = context;
+    }
+
+    [Function("QueueCustomMetrics")]
+    public async Async.Task Run([QueueTrigger("custom-metrics", Connection = "AzureWebJobsStorage")] string msg)
+    {
+
+    }
+}
