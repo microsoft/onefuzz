@@ -1,4 +1,5 @@
-﻿using ApiService.OneFuzzLib.Orm;
+﻿using System.Threading.Tasks;
+using ApiService.OneFuzzLib.Orm;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
@@ -14,7 +15,9 @@ public record NodeMessage(
 };
 
 public interface INodeMessageOperations : IOrm<NodeMessage> {
-    IAsyncEnumerable<NodeMessage> GetMessage(Guid machineId);
+    IAsyncEnumerable<NodeMessage> GetMessages(Guid machineId);
+
+    Async.Task<NodeMessage?> GetMessage(Guid machineId);
     Async.Task ClearMessages(Guid machineId);
 
     Async.Task SendMessage(Guid machineId, NodeCommand message, string? messageId = null);
@@ -25,8 +28,8 @@ public class NodeMessageOperations : Orm<NodeMessage>, INodeMessageOperations {
     public NodeMessageOperations(ILogTracer log, IOnefuzzContext context)
         : base(log, context) { }
 
-    public IAsyncEnumerable<NodeMessage> GetMessage(Guid machineId)
-        => QueryAsync(Query.PartitionKey(machineId.ToString()), maxPerPage: 1);
+    public IAsyncEnumerable<NodeMessage> GetMessages(Guid machineId)
+        => QueryAsync(Query.PartitionKey(machineId.ToString()));
 
     public async Async.Task ClearMessages(Guid machineId) {
         _logTracer.Info($"clearing messages for node {machineId:Tag:MachineId}");
@@ -45,4 +48,7 @@ public class NodeMessageOperations : Orm<NodeMessage>, INodeMessageOperations {
             _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert message with id: {messageId:Tag:MessageId} for machine id: {machineId:Tag:MachineId} message: {message:Tag:Message}");
         }
     }
+
+    public async Task<NodeMessage?> GetMessage(Guid machineId)
+        => await QueryAsync(Query.PartitionKey(machineId.ToString()), maxPerPage: 1).FirstOrDefaultAsync();
 }
