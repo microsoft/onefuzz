@@ -26,7 +26,6 @@ onefuzz --client_id [CLIENT_ID] --client_secret [CLIENT_SECRET] template libfuzz
 * Agent: Added `validate` command to the agent to help validate a fuzzer [#2948](https://github.com/microsoft/onefuzz/pull/2948)
 * CLI: Added option to libfuzzer template to specify a known crash container [#2950](https://github.com/microsoft/onefuzz/pull/2950)
 * CLI: Added option to libfuzzer template to specify the duration of the tasks independently from the job duration [#2997](https://github.com/microsoft/onefuzz/pull/2997)
-* Deployment: Added `global.json` file to specify .NET version [#3007](https://github.com/microsoft/onefuzz/pull/3007)
 
 ### Changed
 
