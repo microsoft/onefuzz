@@ -12,7 +12,7 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 namespace ApiService.OneFuzzLib.Orm {
     public interface IOrm<T> where T : EntityBase {
         Task<TableClient> GetTableClient(string table, ResourceIdentifier? accountId = null);
-        IAsyncEnumerable<T> QueryAsync(string? filter = null);
+        IAsyncEnumerable<T> QueryAsync(string? filter = null, int? maxPerPage = null);
 
         Task<T> GetEntityAsync(string partitionKey, string rowKey);
         Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(T entity);
@@ -49,14 +49,14 @@ namespace ApiService.OneFuzzLib.Orm {
             _entityConverter = _context.EntityConverter;
         }
 
-        public async IAsyncEnumerable<T> QueryAsync(string? filter = null) {
+        public async IAsyncEnumerable<T> QueryAsync(string? filter = null, int? maxPerPage = null) {
             var tableClient = await GetTableClient(typeof(T).Name);
 
             if (filter == "") {
                 filter = null;
             }
 
-            await foreach (var x in tableClient.QueryAsync<TableEntity>(filter).Select(x => _entityConverter.ToRecord<T>(x))) {
+            await foreach (var x in tableClient.QueryAsync<TableEntity>(filter: filter, maxPerPage: maxPerPage).Select(x => _entityConverter.ToRecord<T>(x))) {
                 yield return x;
             }
         }
