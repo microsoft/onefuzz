@@ -332,7 +332,7 @@ public class Ado : NotificationsBase, IAdo {
 
         public async Async.Task Process((string, string)[] notificationInfo) {
             var matchingItems = ExistingWorkItems(notificationInfo)
-                .Select(wi => new { IsDuplicate = !IsADODuplicateWorkItem(wi), wi });
+                .Select(wi => new { IsDuplicate = IsADODuplicateWorkItem(wi), wi });
 
             var updated = false;
             WorkItem? oldest = null;
