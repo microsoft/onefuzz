@@ -22,6 +22,7 @@ public class EventsFunction {
         });
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
+        // TODO: Need to consider where the blob is stored?
         var request = await RequestHandling.ParseRequest<EventsGet>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "events get");
