@@ -30,7 +30,7 @@ public class EventsFunction {
 
         var eventsGet = request.OkV;
 
-        var requestedEvent = await _context.Events.GetEvent(eventsGet.EventId);
+        var requestedEvent = await _context.Events.GetDownloadableEvent(eventsGet.EventId);
         return await RequestHandling.Ok(req, new EventGetResponse(requestedEvent));
     }
 }

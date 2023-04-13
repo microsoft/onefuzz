@@ -154,15 +154,16 @@ namespace Tests {
                 Heartbeat: heartbeat,
                 Outdated: outdated);
 
-        public static Gen<DownloadableEventMessage> EventMessage() {
-            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string>>().Select(
+        public static Gen<EventMessage> EventMessage() {
+            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, DateTime>>().Select(
                 arg =>
                     new EventMessage(
                         EventId: arg.Item1,
                         EventType: arg.Item2.GetEventType(),
                         Event: arg.Item2,
                         InstanceId: arg.Item3,
-                        InstanceName: arg.Item4
+                        InstanceName: arg.Item4,
+                        CreatedAt: arg.Item5
                     )
             );
         }
@@ -280,7 +281,7 @@ namespace Tests {
         }
 
         public static Gen<WebhookMessage> WebhookMessage() {
-            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, Guid>>().Select(
+            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, Guid, DateTime, Uri>>().Select(
                 arg =>
                     new WebhookMessage(
                         EventId: arg.Item1,
@@ -288,7 +289,9 @@ namespace Tests {
                         Event: arg.Item2,
                         InstanceId: arg.Item3,
                         InstanceName: arg.Item4,
-                        WebhookId: arg.Item5
+                        WebhookId: arg.Item5,
+                        CreatedAt: arg.Item6,
+                        SasUrl: arg.Item7
                     )
             );
         }
@@ -487,6 +490,21 @@ namespace Tests {
                 )
             );
         }
+
+        public static Gen<DownloadableEventMessage> DownloadableEventMessage() {
+            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, DateTime, Uri>>().Select(
+                arg =>
+                    new DownloadableEventMessage(
+                        EventId: arg.Item1,
+                        EventType: arg.Item2.GetEventType(),
+                        Event: arg.Item2,
+                        InstanceId: arg.Item3,
+                        InstanceName: arg.Item4,
+                        CreatedAt: arg.Item5,
+                        SasUrl: arg.Item6
+                    )
+            );
+        }
     }
 
     public class OrmArb {
@@ -524,8 +542,12 @@ namespace Tests {
             return Arb.From(OrmGenerators.Proxy);
         }
 
-        public static Arbitrary<DownloadableEventMessage> EventMessage() {
+        public static Arbitrary<EventMessage> EventMessage() {
             return Arb.From(OrmGenerators.EventMessage());
+        }
+
+        public static Arbitrary<DownloadableEventMessage> DownloadableEventMessage() {
+            return Arb.From(OrmGenerators.DownloadableEventMessage());
         }
 
         public static Arbitrary<NetworkConfig> NetworkConfig() {

@@ -207,5 +207,5 @@ public record JinjaToScribanMigrationDryRunResponse(
 ) : BaseResponse();
 
 public record EventGetResponse(
-    BaseEvent Event
+    DownloadableEventMessage Event
 ) : BaseResponse();

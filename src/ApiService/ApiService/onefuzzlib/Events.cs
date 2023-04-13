@@ -20,7 +20,8 @@ namespace Microsoft.OneFuzz.Service {
 
         void LogEvent(BaseEvent anEvent);
 
-        Async.Task<BaseEvent> GetEvent(Guid eventId);
+        Async.Task<EventMessage> GetEvent(Guid eventId);
+        Async.Task<DownloadableEventMessage> GetDownloadableEvent(Guid eventId);
     }
 
     public class Events : IEvents {
@@ -52,12 +53,14 @@ namespace Microsoft.OneFuzz.Service {
             var eventType = anEvent.GetEventType();
 
             var instanceId = await _containers.GetInstanceId();
+            var creationDate = DateTime.UtcNow;
             var eventMessage = new EventMessage(
                 Guid.NewGuid(),
                 eventType,
                 anEvent,
                 instanceId,
-                _creds.GetInstanceName()
+                _creds.GetInstanceName(),
+                creationDate
             );
 
             await _containers.SaveBlob(WellKnownContainers.Events, eventMessage.EventId.ToString(), JsonSerializer.Serialize(eventMessage, _options), StorageType.Corpus);
@@ -69,7 +72,7 @@ namespace Microsoft.OneFuzz.Service {
                 anEvent,
                 instanceId,
                 _creds.GetInstanceName(),
-                DateTime.UtcNow,
+                creationDate,
                 sasUrl
             );
 
@@ -83,8 +86,12 @@ namespace Microsoft.OneFuzz.Service {
             _log.Info($"sending event: {anEvent.GetEventType():Tag:EventType} - {serializedEvent}");
         }
 
-        public Async.Task<BaseEvent> GetEvent(Guid eventId) {
+        public Async.Task<EventMessage> GetEvent(Guid eventId) {
             // TODO: Load the event data from container and include a read only sas url
+            throw new NotImplementedException();
+        }
+
+        public Async.Task<DownloadableEventMessage> GetDownloadableEvent(Guid eventId) {
             throw new NotImplementedException();
         }
     }

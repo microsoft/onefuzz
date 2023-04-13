@@ -345,11 +345,9 @@ public record EventNotificationFailed(
 
 public record DownloadableEventMessage : EventMessage {
     public Uri SasUrl { get; init; }
-    public DateTime CreatedAt { get; init; }
 
     public DownloadableEventMessage(Guid EventId, EventType EventType, BaseEvent Event, Guid InstanceId, string InstanceName, DateTime CreatedAt, Uri SasUrl)
-        : base(EventId, EventType, Event, InstanceId, InstanceName) {
-        this.CreatedAt = CreatedAt;
+        : base(EventId, EventType, Event, InstanceId, InstanceName, CreatedAt) {
         this.SasUrl = SasUrl;
     }
 }
@@ -361,6 +359,7 @@ public record EventMessage(
     BaseEvent Event,
     Guid InstanceId,
     String InstanceName,
+    DateTime CreatedAt,
     String Version = "1.0"
 );
 

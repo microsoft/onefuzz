@@ -25,7 +25,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         _httpFactory = httpFactory;
     }
 
-    async public Async.Task SendEvent(DownloadableEventMessage eventMessage) {
+    public async Async.Task SendEvent(DownloadableEventMessage eventMessage) {
         await foreach (var webhook in GetWebhooksCached()) {
             if (!webhook.EventTypes.Contains(eventMessage.EventType)) {
                 continue;
@@ -34,7 +34,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         }
     }
 
-    async private Async.Task AddEvent(Webhook webhook, DownloadableEventMessage eventMessage) {
+    private async Async.Task AddEvent(Webhook webhook, DownloadableEventMessage eventMessage) {
         (string, string)[] tags = { ("WebhookId", webhook.WebhookId.ToString()), ("EventId", eventMessage.EventId.ToString()) };
 
         var message = new WebhookMessageLog(
@@ -121,13 +121,14 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
     // Not converting to bytes, as it's not neccessary in C#. Just keeping as string.
     public async Async.Task<Tuple<string, string?>> BuildMessage(Guid webhookId, Guid eventId, EventType eventType, BaseEvent webhookEvent, String? secretToken, WebhookMessageFormat? messageFormat) {
-        string data = "";
+        string data;
         if (messageFormat != null && messageFormat == WebhookMessageFormat.EventGrid) {
             var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: webhookEvent, DataVersion: "1.0.0", Subject: _context.Creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
             data = JsonSerializer.Serialize(eventGridMessage, options: EntityConverter.GetJsonSerializerOptions());
         } else {
             var instanceId = await _context.Containers.GetInstanceId();
-            var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _context.Creds.GetInstanceName());
+            var eventData = await _context.Events.GetDownloadableEvent(eventId);
+            var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _context.Creds.GetInstanceName(), CreatedAt: eventData.CreatedAt, SasUrl: eventData.SasUrl);
 
             data = JsonSerializer.Serialize(webhookMessage, options: EntityConverter.GetJsonSerializerOptions());
         }
@@ -166,7 +167,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     const int MAX_TRIES = 5;
 
 
-    public WebhookMessageLogOperations(IHttpClientFactory httpFactory, ILogTracer log, IOnefuzzContext context)
+    public WebhookMessageLogOperations(ILogTracer log, IOnefuzzContext context)
         : base(log, context) {
 
     }
