@@ -18,8 +18,11 @@ public class QueueCustomMetrics
     }
 
     [Function("QueueCustomMetrics")]
-    public async Async.Task Run([QueueTrigger("custom-metrics", Connection = "AzureWebJobsStorage")] string msg)
+    // public void Run([QueueTrigger("custom-metrics", Connection = "AzureWebJobsStorage")] string msg)
+    public void Run([TimerTrigger("00:00:30")] TimerInfo myTimer)
     {
-
+        {
+            _log.Metric($"Testing Test-Metric");
+        }
     }
 }
