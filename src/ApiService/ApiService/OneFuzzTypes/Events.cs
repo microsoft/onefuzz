@@ -360,7 +360,8 @@ public record EventMessage(
     [property: JsonConverter(typeof(BaseEventConverter))]
     BaseEvent Event,
     Guid InstanceId,
-    String InstanceName
+    String InstanceName,
+    String Version = "1.0"
 );
 
 public class BaseEventConverter : JsonConverter<BaseEvent> {

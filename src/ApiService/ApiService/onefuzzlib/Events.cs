@@ -60,10 +60,8 @@ namespace Microsoft.OneFuzz.Service {
                 _creds.GetInstanceName()
             );
 
-            var container = Container.Parse("events");
-            _ = await _containers.CreateContainer(container, StorageType.Corpus, null);
-            await _containers.SaveBlob(container, eventMessage.EventId.ToString(), JsonSerializer.Serialize(eventMessage, _options), StorageType.Corpus);
-            var sasUrl = await _containers.GetFileSasUrl(container, eventMessage.EventId.ToString(), StorageType.Corpus, BlobSasPermissions.Read);
+            await _containers.SaveBlob(WellKnownContainers.Events, eventMessage.EventId.ToString(), JsonSerializer.Serialize(eventMessage, _options), StorageType.Corpus);
+            var sasUrl = await _containers.GetFileSasUrl(WellKnownContainers.Events, eventMessage.EventId.ToString(), StorageType.Corpus, BlobSasPermissions.Read);
 
             var downloadableEventMessage = new DownloadableEventMessage(
                 eventMessage.EventId,
