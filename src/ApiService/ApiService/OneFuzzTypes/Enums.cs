@@ -32,6 +32,8 @@ public enum ErrorCode {
     UNABLE_TO_DOWNLOAD_FILE = 475,
     VM_UPDATE_FAILED = 476,
     UNSUPPORTED_FIELD_OPERATION = 477,
+    UNEXPECTED_DATA_SHAPE = 478,
+    UNABLE_TO_SEND = 479,
 }
 
 public enum VmState {

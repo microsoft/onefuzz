@@ -297,7 +297,7 @@ namespace Tests {
         }
 
         public static Gen<WebhookMessageEventGrid> WebhookMessageEventGrid() {
-            return Arb.Generate<Tuple<string, string, BaseEvent, Guid, DateTimeOffset>>().Select(
+            return Arb.Generate<Tuple<string, string, BaseEvent, Guid, DateTimeOffset, Uri>>().Select(
                 arg =>
                     new WebhookMessageEventGrid(
                         DataVersion: arg.Item1,
@@ -305,7 +305,8 @@ namespace Tests {
                         EventType: arg.Item3.GetEventType(),
                         Data: arg.Item3,
                         Id: arg.Item4,
-                        EventTime: arg.Item5
+                        EventTime: arg.Item5,
+                        SasUrl: arg.Item6
                     )
             );
         }

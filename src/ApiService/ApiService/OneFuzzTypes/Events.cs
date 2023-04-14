@@ -50,12 +50,11 @@ public enum EventType {
 }
 
 public abstract record BaseEvent() {
-    private static readonly IReadOnlyDictionary<Type, EventType> typeToEvent;
-    private static readonly IReadOnlyDictionary<EventType, Type> eventToType;
+    private static readonly IReadOnlyDictionary<Type, EventType> _typeToEvent;
+    private static readonly IReadOnlyDictionary<EventType, Type> _eventToType;
 
     static BaseEvent() {
-
-        EventType ExtractEventType(Type type) {
+        static EventType ExtractEventType(Type type) {
             var attr = type.GetCustomAttribute<EventTypeAttribute>();
             if (attr is null) {
                 throw new InvalidOperationException($"Type {type} is missing {nameof(EventTypeAttribute)}");
@@ -63,16 +62,16 @@ public abstract record BaseEvent() {
             return attr.EventType;
         }
 
-        typeToEvent =
+        _typeToEvent =
             typeof(BaseEvent).Assembly.GetTypes()
             .Where(t => t.IsSubclassOf(typeof(BaseEvent)))
             .ToDictionary(x => x, ExtractEventType);
 
-        eventToType = typeToEvent.ToDictionary(x => x.Value, x => x.Key);
+        _eventToType = _typeToEvent.ToDictionary(x => x.Value, x => x.Key);
 
         // check that all event types are accounted for
         var allEventTypes = Enum.GetValues<EventType>();
-        var missingEventTypes = allEventTypes.Except(eventToType.Keys).ToList();
+        var missingEventTypes = allEventTypes.Except(_eventToType.Keys).ToList();
         if (missingEventTypes.Any()) {
             throw new InvalidOperationException($"Missing event types: {string.Join(", ", missingEventTypes)}");
         }
@@ -81,7 +80,7 @@ public abstract record BaseEvent() {
 
     public EventType GetEventType() {
         var type = this.GetType();
-        if (typeToEvent.TryGetValue(type, out var eventType)) {
+        if (_typeToEvent.TryGetValue(type, out var eventType)) {
             return eventType;
         }
 
@@ -89,7 +88,7 @@ public abstract record BaseEvent() {
     }
 
     public static Type GetTypeInfo(EventType eventType) {
-        if (eventToType.TryGetValue(eventType, out var type)) {
+        if (_eventToType.TryGetValue(eventType, out var type)) {
             return type;
         }
 

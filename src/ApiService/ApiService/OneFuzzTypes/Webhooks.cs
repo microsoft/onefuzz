@@ -32,7 +32,8 @@ public record WebhookMessageEventGrid(
     Guid Id,
     [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
     [property: JsonConverter(typeof(BaseEventConverter))]
-    BaseEvent Data);
+    BaseEvent Data,
+    Uri SasUrl);
 
 public record WebhookMessageLog(
     [RowKey] Guid EventId,

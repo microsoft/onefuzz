@@ -12,14 +12,6 @@ public sealed class TestEvents : IEvents {
     public List<BaseEvent> Events { get; } = new();
     public List<DownloadableEventMessage> SignalREvents { get; } = new();
 
-    public Task<DownloadableEventMessage> GetDownloadableEvent(Guid eventId) {
-        throw new NotImplementedException();
-    }
-
-    public Task<EventMessage> GetEvent(Guid eventId) {
-        throw new NotImplementedException();
-    }
-
     public void LogEvent(BaseEvent anEvent) {
         Events.Add(anEvent);
     }
@@ -32,5 +24,13 @@ public sealed class TestEvents : IEvents {
     public Async.Task SendEvent(BaseEvent anEvent) {
         Events.Add(anEvent);
         return Async.Task.CompletedTask;
+    }
+
+    Task<OneFuzzResult<DownloadableEventMessage>> IEvents.GetDownloadableEvent(Guid eventId) {
+        throw new NotImplementedException();
+    }
+
+    Task<OneFuzzResult<EventMessage>> IEvents.GetEvent(Guid eventId) {
+        throw new NotImplementedException();
     }
 }

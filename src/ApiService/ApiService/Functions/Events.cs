@@ -4,14 +4,14 @@ using Microsoft.Azure.Functions.Worker.Http;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class EventsFunction {
-    private readonly ILogTracer _logger;
+    private readonly ILogTracer _log;
     private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public EventsFunction(ILogTracer logger, IEndpointAuthorization auth, IOnefuzzContext context) {
-        _logger = logger;
+    public EventsFunction(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _auth = auth;
         _context = context;
+        _log = log;
     }
 
     [Function("Events")]
@@ -31,6 +31,10 @@ public class EventsFunction {
         var eventsGet = request.OkV;
 
         var requestedEvent = await _context.Events.GetDownloadableEvent(eventsGet.EventId);
-        return await RequestHandling.Ok(req, new EventGetResponse(requestedEvent));
+        if (!requestedEvent.IsOk) {
+            return await new RequestHandling(_log).NotOk(req, requestedEvent.ErrorV, "events get");
+        }
+
+        return await RequestHandling.Ok(req, new EventGetResponse(requestedEvent.OkV));
     }
 }

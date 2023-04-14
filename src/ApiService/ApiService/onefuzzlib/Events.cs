@@ -20,8 +20,8 @@ namespace Microsoft.OneFuzz.Service {
 
         void LogEvent(BaseEvent anEvent);
 
-        Async.Task<EventMessage> GetEvent(Guid eventId);
-        Async.Task<DownloadableEventMessage> GetDownloadableEvent(Guid eventId);
+        Async.Task<OneFuzzResult<EventMessage>> GetEvent(Guid eventId);
+        Async.Task<OneFuzzResult<DownloadableEventMessage>> GetDownloadableEvent(Guid eventId);
     }
 
     public class Events : IEvents {
@@ -86,13 +86,42 @@ namespace Microsoft.OneFuzz.Service {
             _log.Info($"sending event: {anEvent.GetEventType():Tag:EventType} - {serializedEvent}");
         }
 
-        public Async.Task<EventMessage> GetEvent(Guid eventId) {
-            // TODO: Load the event data from container and include a read only sas url
-            throw new NotImplementedException();
+        public async Async.Task<OneFuzzResult<EventMessage>> GetEvent(Guid eventId) {
+            var blob = await _containers.GetBlob(WellKnownContainers.Events, eventId.ToString(), StorageType.Corpus);
+            if (blob == null) {
+                return OneFuzzResult<EventMessage>.Error(ErrorCode.UNABLE_TO_FIND, $"Could not find container for event with id {eventId}");
+            }
+
+            var eventMessage = JsonSerializer.Deserialize<EventMessage>(blob, _options);
+            if (eventMessage == null) {
+                return OneFuzzResult<EventMessage>.Error(ErrorCode.UNEXPECTED_DATA_SHAPE, $"Could not deserialize event with id {eventId}");
+            }
+
+            return OneFuzzResult<EventMessage>.Ok(eventMessage);
         }
 
-        public Async.Task<DownloadableEventMessage> GetDownloadableEvent(Guid eventId) {
-            throw new NotImplementedException();
+        public async Async.Task<OneFuzzResult<DownloadableEventMessage>> GetDownloadableEvent(Guid eventId) {
+            var eventMessageResult = await GetEvent(eventId);
+            if (!eventMessageResult.IsOk) {
+                return OneFuzzResult<DownloadableEventMessage>.Error(eventMessageResult.ErrorV);
+            }
+
+            var sasUrl = await _containers.GetFileSasUrl(WellKnownContainers.Events, eventId.ToString(), StorageType.Corpus, BlobSasPermissions.Read);
+            if (sasUrl == null) {
+                return OneFuzzResult<DownloadableEventMessage>.Error(ErrorCode.UNABLE_TO_FIND, $"Could not find container for event with id {eventId}");
+            }
+
+            var eventMessage = eventMessageResult.OkV!;
+
+            return OneFuzzResult<DownloadableEventMessage>.Ok(new DownloadableEventMessage(
+                eventMessage.EventId,
+                eventMessage.EventType,
+                eventMessage.Event,
+                eventMessage.InstanceId,
+                eventMessage.InstanceName,
+                eventMessage.CreatedAt,
+                sasUrl
+            ));
         }
     }
 

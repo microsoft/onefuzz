@@ -12,7 +12,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IWebhookOperations : IOrm<Webhook> {
     Async.Task SendEvent(DownloadableEventMessage eventMessage);
     Async.Task<Webhook?> GetByWebhookId(Guid webhookId);
-    Async.Task<bool> Send(WebhookMessageLog messageLog);
+    Async.Task<OneFuzzResultVoid> Send(WebhookMessageLog messageLog);
     Task<EventPing> Ping(Webhook webhook);
 }
 
@@ -77,14 +77,25 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         }
     }
 
-    public async Async.Task<bool> Send(WebhookMessageLog messageLog) {
+    public async Async.Task<OneFuzzResultVoid> Send(WebhookMessageLog messageLog) {
         var webhook = await GetByWebhookId(messageLog.WebhookId);
         if (webhook == null || webhook.Url == null) {
-            throw new Exception($"Invalid Webhook. Webhook with WebhookId: {messageLog.WebhookId} Not Found");
+            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_FIND, $"Invalid Webhook. Webhook with WebhookId: {messageLog.WebhookId} Not Found");
         }
 
-        var (data, digest) = await BuildMessage(webhookId: webhook.WebhookId, eventId: messageLog.EventId, eventType: messageLog.EventType, webhookEvent: messageLog.Event!, secretToken: webhook.SecretToken, messageFormat: webhook.MessageFormat);
+        var messageResult = await BuildMessage(webhookId: webhook.WebhookId, eventId: messageLog.EventId, eventType: messageLog.EventType, webhookEvent: messageLog.Event!, secretToken: webhook.SecretToken, messageFormat: webhook.MessageFormat);
+        if (!messageResult.IsOk) {
+            var tags = new List<(string, string)> {
+                ("WebhookId", webhook.WebhookId.ToString()),
+                ("EventId", messageLog.EventId.ToString()),
+                ("EventType", messageLog.EventType.ToString())
+            };
 
+            _logTracer.WithTags(tags).Error($"Failed to build message for webhook.");
+            return OneFuzzResultVoid.Error(messageResult.ErrorV);
+        }
+
+        var (data, digest) = messageResult.OkV;
         var headers = new Dictionary<string, string> { { "User-Agent", $"onefuzz-webhook {_context.ServiceConfiguration.OneFuzzVersion}" } };
 
         if (digest != null) {
@@ -98,7 +109,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         using var response = await client.Post(url: webhook.Url, json: data, headers: headers);
         if (response.IsSuccessStatusCode) {
             _logTracer.Info($"Successfully sent webhook: {messageLog.WebhookId:Tag:WebhookId}");
-            return true;
+            return OneFuzzResultVoid.Ok;
         }
 
         _logTracer
@@ -108,7 +119,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
             })
             .Info($"Webhook not successful");
 
-        return false;
+        return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_SEND, $"Webhook not successful. Status Code: {response.StatusCode}");
     }
 
     public async Task<EventPing> Ping(Webhook webhook) {
@@ -120,14 +131,20 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
     }
 
     // Not converting to bytes, as it's not neccessary in C#. Just keeping as string.
-    public async Async.Task<Tuple<string, string?>> BuildMessage(Guid webhookId, Guid eventId, EventType eventType, BaseEvent webhookEvent, String? secretToken, WebhookMessageFormat? messageFormat) {
+    public async Async.Task<OneFuzzResult<Tuple<string, string?>>> BuildMessage(Guid webhookId, Guid eventId, EventType eventType, BaseEvent webhookEvent, String? secretToken, WebhookMessageFormat? messageFormat) {
+        var eventDataResult = await _context.Events.GetDownloadableEvent(eventId);
+        if (!eventDataResult.IsOk) {
+            return OneFuzzResult<Tuple<string, string?>>.Error(eventDataResult.ErrorV);
+        }
+
+        var eventData = eventDataResult.OkV;
+
         string data;
         if (messageFormat != null && messageFormat == WebhookMessageFormat.EventGrid) {
-            var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: webhookEvent, DataVersion: "1.0.0", Subject: _context.Creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
+            var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: webhookEvent, DataVersion: "1.0.0", Subject: _context.Creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow, SasUrl: eventData.SasUrl) };
             data = JsonSerializer.Serialize(eventGridMessage, options: EntityConverter.GetJsonSerializerOptions());
         } else {
             var instanceId = await _context.Containers.GetInstanceId();
-            var eventData = await _context.Events.GetDownloadableEvent(eventId);
             var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _context.Creds.GetInstanceName(), CreatedAt: eventData.CreatedAt, SasUrl: eventData.SasUrl);
 
             data = JsonSerializer.Serialize(webhookMessage, options: EntityConverter.GetJsonSerializerOptions());
@@ -138,7 +155,8 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
             using var hmac = new HMACSHA512(Encoding.UTF8.GetBytes(secretToken));
             digest = Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(data)));
         }
-        return new Tuple<string, string?>(data, digest);
+
+        return OneFuzzResult<Tuple<string, string?>>.Ok(new Tuple<string, string?>(data, digest));
 
     }
 
@@ -245,7 +263,11 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
             return false;
         }
         try {
-            return await _context.WebhookOperations.Send(message);
+            var sendResult = await _context.WebhookOperations.Send(message);
+            if (!sendResult.IsOk) {
+                _logTracer.Error(sendResult.ErrorV);
+            }
+            return sendResult.IsOk;
         } catch (Exception exc) {
             log.Exception(exc);
             return false;
