@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 mod asan;
+mod dotnet;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StackEntry {
@@ -224,14 +225,14 @@ impl CrashLog {
     }
 
     pub fn parse(text: String) -> Result<Self> {
-        let (summary, sanitizer, fault_type) = parse_summary(&text)?;
+        let summary = parse_summary(&text)?;
         let stack = parse_call_stack(&text).unwrap_or_default();
         let (scariness_score, scariness_description) = parse_scariness(&text);
         Self::new(
             Some(text),
-            Some(summary),
-            sanitizer,
-            fault_type,
+            Some(summary.summary),
+            summary.sanitizer,
+            summary.fault_type,
             scariness_score,
             scariness_description,
             stack,
@@ -271,9 +272,20 @@ fn stack_function_lines(stack: &[StackEntry]) -> Vec<String> {
     stack.iter().flat_map(|x| x.function_line_entry()).collect()
 }
 
-fn parse_summary(text: &str) -> Result<(String, String, String)> {
+struct CrashLogSummary {
+    summary: String,
+    sanitizer: String,
+    fault_type: String,
+}
+
+fn parse_summary(text: &str) -> Result<CrashLogSummary> {
     // eventually, this should be updated to support multiple callstack formats
-    asan::parse_summary(text)
+
+    // dotnet should be parsed first to try to extract a .NET exception stack trace
+    // since this is a specialization of an ASAN dump
+    dotnet::parse_summary(text)
+        .or_else(|| asan::parse_summary(text))
+        .ok_or(anyhow::format_err!("unable to parse crash log summary"))
 }
 
 fn parse_scariness(text: &str) -> (Option<u32>, Option<String>) {
@@ -287,7 +299,12 @@ fn parse_scariness(text: &str) -> (Option<u32>, Option<String>) {
 
 pub fn parse_call_stack(text: &str) -> Result<Vec<StackEntry>> {
     // eventually, this should be updated to support multiple callstack formats
-    asan::parse_asan_call_stack(text)
+
+    // if we find a .NET callstack and an ASAN callstack, splat the .NET one on top:
+    let mut dotnet_callstack = dotnet::parse_dotnet_callstack(text);
+    let asan_callstack = asan::parse_asan_call_stack(text)?;
+    dotnet_callstack.extend(asan_callstack.into_iter());
+    Ok(dotnet_callstack)
 }
 
 pub fn digest_iter(

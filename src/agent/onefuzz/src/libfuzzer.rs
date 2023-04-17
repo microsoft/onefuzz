@@ -353,13 +353,13 @@ impl LibFuzzer {
         .check_asan_stderr(true)
         .check_retry_count(retry)
         .add_setup_to_path(true)
-        .set_optional(timeout, |tester, timeout| tester.timeout(timeout));
+        .set_optional(timeout, Tester::timeout);
 
         if cfg!(target_family = "unix") {
             tester = tester.add_setup_to_ld_library_path(true);
         }
 
-        tester.test_input(test_input.as_ref()).await
+        tester.test_input(test_input).await
     }
 
     pub async fn merge(
