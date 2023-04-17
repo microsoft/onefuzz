@@ -149,6 +149,17 @@ function Install-Debugger {
   log "installing debugger: done"
 }
 
+function Install_Docker {
+  log "installing docker"
+  $ProgressPreference = 'SilentlyContinue'
+  #  https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe?utm_source=docker&utm_medium=webreferral&utm_campaign=dd-smartbutton&utm_location=module
+  # https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe
+  Invoke-WebRequest -Uri 'https://download.docker.com/win/static/stable/x86_64/docker-20.10.5.zip' -OutFile docker.zip
+  Expand-Archive docker.zip -DestinationPath c:\onefuzz\tools\win64
+  $env:Path += ";c:\onefuzz\tools\win64\docker"
+  log "installing docker: done"
+}
+
 function Write-OnefuzzConfig($config) {
   $config | ConvertTo-Json | Out-File "C:\onefuzz\onefuzz-config.json"
 }

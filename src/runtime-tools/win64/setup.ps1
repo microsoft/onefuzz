@@ -76,6 +76,10 @@ function Install-OnefuzzSetup {
     Setup-Silent-Notification
   }
 
+  # install docker
+  # https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe
+  choco install docker-desktop --pre
+
   log "onefuzz: setup done"
 }
 
