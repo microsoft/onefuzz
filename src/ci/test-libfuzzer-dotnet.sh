@@ -10,6 +10,8 @@ set -ex -o pipefail
 export GOODBAD_DLL='GoodBad/GoodBad.dll'
 
 TMP=$(mktemp -d)
+trap "rm -rf $TMP" EXIT
+
 cd $TMP
 
 cp -r ${GOODBAD_DOTNET} GoodBad
@@ -41,5 +43,3 @@ ${LIBFUZZER_DOTNET} --target_path=${LIBFUZZER_DOTNET_LOADER} good.txt
 
 # Expect nonzero exit.
 ! ${LIBFUZZER_DOTNET} --target_path=${LIBFUZZER_DOTNET_LOADER} bad.txt
-
-rm -rf $TMP
