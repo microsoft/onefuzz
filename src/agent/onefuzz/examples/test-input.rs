@@ -89,7 +89,7 @@ async fn main() -> Result<()> {
     println!();
     println!("[+] verbose test result:");
     println!();
-    println!("{test_result:?}");
+    println!("{test_result:#?}");
 
     Ok(())
 }

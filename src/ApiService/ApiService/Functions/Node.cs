@@ -46,7 +46,7 @@ public class Node {
 
             var (tasks, messages) = await (
                 _context.NodeTasksOperations.GetByMachineId(machineId).ToListAsync().AsTask(),
-                _context.NodeMessageOperations.GetMessage(machineId).ToListAsync().AsTask());
+                _context.NodeMessageOperations.GetMessages(machineId).ToListAsync().AsTask());
 
             var commands = messages.Select(m => m.Message).ToList();
             return await RequestHandling.Ok(req, NodeToNodeSearchResult(node with { Tasks = tasks, Messages = commands }));
