@@ -204,7 +204,7 @@ impl<'a> Tester<'a> {
         cmd.args(args).stdin(Stdio::null());
         cmd.envs(env);
 
-        let (sender, receiver) = std::sync::mpsc::channel();
+        let (sender, receiver) = tokio::sync::oneshot::channel();
 
         // Create two async tasks: one off-thread task for the blocking triage run,
         // and one task that will kill the triage target if we time out.
@@ -215,7 +215,7 @@ impl<'a> Tester<'a> {
             let triage = crate::triage::TriageCommand::new(cmd)?;
 
             // Share the new child ID with main thread.
-            sender.send(triage.pid())?;
+            let Ok(()) = sender.send(triage.pid()) else { bail!("unable to send PID") };
 
             // The target run is blocking, and may hang.
             triage.run()
@@ -223,52 +223,59 @@ impl<'a> Tester<'a> {
 
         // Save the new process ID of the spawned triage target, so we can try to kill
         // the (possibly hung) target out-of-band, if we time out.
-        let target_pid = receiver.recv()?;
-
-        let timeout = tokio::time::timeout(self.timeout, triage).await;
-        let crash = if timeout.is_err() {
-            // Yes. Try to kill the target process, if hung.
-            kill(target_pid, Signal::SIGKILL)?;
-            bail!("process timed out");
-        } else {
-            let report = timeout???;
-
-            if let Some(crash) = report.crashes.last() {
-                let crash_thread = crash
-                    .threads
-                    .get(&crash.tid.as_raw())
-                    .ok_or_else(|| anyhow!("no thread info for crash thread ID = {}", crash.tid))?;
-
-                let call_stack: Vec<_> = crash_thread
-                    .callstack
-                    .iter()
-                    .enumerate()
-                    .map(|(idx, frame)| StackEntry {
-                        line: format!("#{idx} {frame}"),
-                        address: Some(frame.addr.0),
-                        function_name: frame.function.as_ref().map(|x| x.name.clone()),
-                        function_offset: frame.function.as_ref().map(|x| x.offset),
-                        module_path: frame.module.as_ref().map(|x| x.name.clone()),
-                        module_offset: frame.module.as_ref().map(|x| x.offset),
-                        source_file_name: None,
-                        source_file_line: None,
-                        source_file_path: None,
-                    })
-                    .collect();
-
-                let crash_type = crash.signal.to_string();
-                let sanitizer = crash_type.clone();
-                let fault_type = crash_type;
-
-                Some(CrashLog::new(
-                    None, None, sanitizer, fault_type, None, None, call_stack,
-                )?)
-            } else {
-                None
+        let target_pid = match receiver.await {
+            Ok(pid) => pid,
+            Err(e) => {
+                if triage.is_finished() {
+                    bail!("triage run failed: {:?}", triage.await.unwrap().err());
+                } else {
+                    bail!("unable to receive PID: {}", e);
+                }
             }
         };
 
-        Ok(crash)
+        let timeout = tokio::time::timeout(self.timeout, triage).await;
+        if timeout.is_err() {
+            // Yes. Try to kill the target process, if hung.
+            kill(target_pid, Signal::SIGKILL)?;
+            bail!("process timed out");
+        }
+
+        let report = timeout???;
+
+        let Some(crash) = report.crashes.last() else {
+            return Ok(None);
+        };
+
+        let crash_thread = crash
+            .threads
+            .get(&crash.tid.as_raw())
+            .ok_or_else(|| anyhow!("no thread info for crash thread ID = {}", crash.tid))?;
+
+        let call_stack: Vec<_> = crash_thread
+            .callstack
+            .iter()
+            .enumerate()
+            .map(|(idx, frame)| StackEntry {
+                line: format!("#{idx} {frame}"),
+                address: Some(frame.addr.0),
+                function_name: frame.function.as_ref().map(|x| x.name.clone()),
+                function_offset: frame.function.as_ref().map(|x| x.offset),
+                module_path: frame.module.as_ref().map(|x| x.name.clone()),
+                module_offset: frame.module.as_ref().map(|x| x.offset),
+                source_file_name: None,
+                source_file_line: None,
+                source_file_path: None,
+            })
+            .collect();
+
+        let crash_type = crash.signal.to_string();
+        let sanitizer = crash_type.clone();
+        let fault_type = crash_type;
+
+        Ok(Some(CrashLog::new(
+            None, None, sanitizer, fault_type, None, None, call_stack,
+        )?))
     }
 
     pub async fn test_input(&self, input_file: impl AsRef<Path>) -> Result<TestResult> {
