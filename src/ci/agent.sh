@@ -30,7 +30,8 @@ else
     fi
 fi
 
-platform=$(uname)
+platform=$(uname --kernel-name --machine)
+platform=${platform// /-} # replace spaces with dashes
 rel_output_dir="artifacts/agent-$platform"
 mkdir -p "$rel_output_dir"
 output_dir=$(realpath "$rel_output_dir")
