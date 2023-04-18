@@ -2,28 +2,13 @@
   "version": 1,
   "dependencies": {
     "net7.0": {
-      "Azure.Core": {
-        "type": "Direct",
-        "requested": "[1.25.0, )",
-        "resolved": "1.25.0",
-        "contentHash": "X8Dd4sAggS84KScWIjEbFAdt2U1KDolQopTPoHVubG2y3CM54f9l6asVrP5Uy384NWXjsspPYaJgz5xHc+KvTA==",
-        "dependencies": {
-          "Microsoft.Bcl.AsyncInterfaces": "1.1.1",
-          "System.Diagnostics.DiagnosticSource": "4.6.0",
-          "System.Memory.Data": "1.0.2",
-          "System.Numerics.Vectors": "4.5.0",
-          "System.Text.Encodings.Web": "4.7.2",
-          "System.Text.Json": "4.7.2",
-          "System.Threading.Tasks.Extensions": "4.5.4"
-        }
-      },
       "Azure.Data.Tables": {
         "type": "Direct",
-        "requested": "[12.5.0, )",
-        "resolved": "12.5.0",
-        "contentHash": "XeIxPf+rF1NXkX3NJSB0ZTNgU233vyPXGmaFsR0lUVibtWP/lj+Qu1FcPxoslURcX0KC+UgTb226nqVdHjoweQ==",
+        "requested": "[12.8.0, )",
+        "resolved": "12.8.0",
+        "contentHash": "jBNOUXoANEv66mIyR+rzC7toogo48pYciH4n5xsb8nHRz6lfjX9jwsOjC8sdR1Zl75Z6MZvaZjajqVwCt3JqVw==",
         "dependencies": {
-          "Azure.Core": "1.22.0",
+          "Azure.Core": "1.27.0",
           "System.Text.Json": "4.7.2"
         }
       },
@@ -396,6 +381,20 @@
         "requested": "[2.0.3, )",
         "resolved": "2.0.3",
         "contentHash": "RUdwpeaZpj98w1dQw295V950qGGtoVdPbhxU1UBazR9pOAX6YpK9qc17u9swRhlKTDY2PvHIXODrNwFXGC/jvw=="
+      },
+      "Azure.Core": {
+        "type": "Transitive",
+        "resolved": "1.27.0",
+        "contentHash": "2313x90KaNKRY88ZMK/4MQaNESTzgPEeUCeyXMrOoZwh8HsjuHAHPG8eskHlpmQ4CuOag+QEwE04vykzTvosrw==",
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "1.1.1",
+          "System.Diagnostics.DiagnosticSource": "4.6.0",
+          "System.Memory.Data": "1.0.2",
+          "System.Numerics.Vectors": "4.5.0",
+          "System.Text.Encodings.Web": "4.7.2",
+          "System.Text.Json": "4.7.2",
+          "System.Threading.Tasks.Extensions": "4.5.4"
+        }
       },
       "Azure.Data.AppConfiguration": {
         "type": "Transitive",
