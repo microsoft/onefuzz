@@ -8,6 +8,8 @@ from uuid import UUID
 
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
 
+from onefuzztypes import models
+
 from ._monkeypatch import _check_hotfix
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
@@ -24,12 +26,11 @@ from .models import (
     AutoScaleConfig,
     InstanceConfig,
     NotificationConfig,
-    TemplateRenderContext,
     Report,
+    TemplateRenderContext,
 )
 from .primitives import Container, PoolName, Region
 from .webhooks import WebhookMessageFormat
-from onefuzztypes import models
 
 
 class BaseRequest(BaseModel):
