@@ -226,6 +226,7 @@ impl LibFuzzer {
                 Ok(()) => return Ok(()),
                 Err(e) => {
                     if (Instant::now() + sleep_time) <= (started_at + max_verification_time) {
+                        warn!("libfuzzer verification failed, will retry: {e:?}");
                         tokio::time::sleep(sleep_time).await;
                     } else {
                         return Err(e.context(format!(
