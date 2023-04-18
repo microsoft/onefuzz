@@ -800,6 +800,7 @@ class DebugNotification(Command):
             name=crash_name,
         )
 
+        assert task.config.task.target_exe is not None
         report = self._create_report(
             task.job_id, task.task_id, task.config.task.target_exe, input_blob_ref
         )
