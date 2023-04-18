@@ -829,7 +829,7 @@ class DebugNotification(Command):
         )
 
         report = self._create_report(job_id, task_id, "fake_target.exe", input_blob_ref)
-        report.report_url = "https://fuzz7tkgjsiivmq6i.blob.core.windows.net/dummy-reports/dummy-report.json"
+        report.report_url = "https://dummy-container.blob.core.windows.net/dummy-reports/dummy-report.json"
 
         return endpoint._req_model(
             "POST",
