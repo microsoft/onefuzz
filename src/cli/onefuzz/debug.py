@@ -776,8 +776,7 @@ class DebugNotification(Command):
         """Inject a report into the specified crash reporting task"""
 
         task = self.onefuzz.tasks.get(task_id)
-        task_id = task.task_id
-        job_id = task.job_id
+
         crashes = self._get_container(task, ContainerType.crashes)
         reports = self._get_container(task, report_container_type)
 
@@ -802,7 +801,7 @@ class DebugNotification(Command):
         )
 
         report = self._create_report(
-            job_id, task_id, task.config.task.target_exe, input_blob_ref
+            task.job_id, task.task_id, task.config.task.target_exe, input_blob_ref
         )
 
         with tempfile.TemporaryDirectory() as tempdir:
@@ -820,15 +819,15 @@ class DebugNotification(Command):
         """Test a notification template"""
         endpoint = Endpoint(self.onefuzz)
         task = self.onefuzz.tasks.get(task_id)
-        task_id = task.task_id
-        job_id = task.job_id
         input_blob_ref = BlobRef(
             account="dummy-storage-account",
             container="test-notification-crashes",
             name="fake-crash-sample",
         )
 
-        report = self._create_report(job_id, task_id, "fake_target.exe", input_blob_ref)
+        report = self._create_report(
+            task.job_id, task.task_id, "fake_target.exe", input_blob_ref
+        )
         report.report_url = "https://dummy-container.blob.core.windows.net/dummy-reports/dummy-report.json"
 
         return endpoint._req_model(
@@ -837,7 +836,7 @@ class DebugNotification(Command):
             data=requests.NotificationTest(
                 report=report,
                 notification=models.Notification(
-                    container=models.Container("test-notification-reports"),
+                    container=Container("test-notification-reports"),
                     notification_id=uuid.uuid4(),
                     config=template.config,
                 ),
@@ -845,7 +844,9 @@ class DebugNotification(Command):
             alternate_endpoint="notifications/test",
         )
 
-    def _create_report(self, job_id, task_id, target_exe, input_blob_ref) -> Report:
+    def _create_report(
+        self, job_id: UUID, task_id: UUID, target_exe: str, input_blob_ref: BlobRef
+    ) -> Report:
         return Report(
             input_blob=input_blob_ref,
             executable=target_exe,
