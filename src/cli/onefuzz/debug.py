@@ -815,7 +815,7 @@ class DebugNotification(Command):
             )
 
     def test_template(
-        self, task_id: UUID_EXPANSION, template: models.NotificationConfig
+        self, task_id: UUID_EXPANSION, notificationConfig: models.NotificationConfig
     ) -> responses.NotificationTestResponse:
         """Test a notification template"""
         endpoint = Endpoint(self.onefuzz)
@@ -839,7 +839,7 @@ class DebugNotification(Command):
                 notification=models.Notification(
                     container=Container("test-notification-reports"),
                     notification_id=uuid.uuid4(),
-                    config=template.config,
+                    config=notificationConfig.config,
                 ),
             ),
             alternate_endpoint="notifications/test",
