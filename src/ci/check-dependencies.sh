@@ -104,8 +104,7 @@ linux-vdso.so.1" \
 "/lib/ld-linux-aarch64.so.1
 libc.so.6
 libdl.so.2
-liblzma.so.5
-libm.so.6
+libgcc_s.so.1
 libpthread.so.0
 linux-vdso.so.1" \
 \
