@@ -216,7 +216,7 @@ impl LibFuzzer {
         let sleep_time = Duration::from_secs(5);
         let max_verification_time = Duration::from_secs(60);
         let started_at = Instant::now();
-        let mut attempts = 0;
+        let mut attempts = 1;
         loop {
             let result = self
                 .verify_inner(check_fuzzer_help, inputs.unwrap_or_default())
