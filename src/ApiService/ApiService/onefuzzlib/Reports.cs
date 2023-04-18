@@ -35,7 +35,17 @@ public class Reports : IReports {
             return null;
         }
 
-        var blob = await _containers.GetBlob(container, fileName, StorageType.Corpus);
+        var containerClient = await _containers.FindContainer(container, StorageType.Corpus);
+        if (containerClient == null) {
+            if (expectReports) {
+                _log.Error($"get_report invalid container: {filePath:Tag:FilePath}");
+            }
+            return null;
+        }
+
+        Uri reportUrl = containerClient.GetBlobClient(fileName).Uri;
+
+        var blob = (await containerClient.GetBlobClient(fileName).DownloadContentAsync()).Value.Content;
 
         if (blob == null) {
             if (expectReports) {
@@ -44,11 +54,9 @@ public class Reports : IReports {
             return null;
         }
 
-        var reportUrl = await _containers.GetFileUrl(container, fileName, StorageType.Corpus);
-
         var reportOrRegression = ParseReportOrRegression(blob.ToString(), reportUrl);
 
-        if (reportOrRegression == null && expectReports) {
+        if (reportOrRegression is UnknownReportType && expectReports) {
             _log.Error($"unable to parse report ({filePath:Tag:FilePath}) as a report or regression");
         }
 
@@ -64,7 +72,7 @@ public class Reports : IReports {
         }
     }
 
-    public static IReport? ParseReportOrRegression(string content, Uri? reportUrl) {
+    public static IReport ParseReportOrRegression(string content, Uri reportUrl) {
         var regressionReport = TryDeserialize<RegressionReport>(content);
         if (regressionReport is { CrashTestResult: { } }) {
             return regressionReport with { ReportUrl = reportUrl };
@@ -73,12 +81,17 @@ public class Reports : IReports {
         if (report is { CrashType: { } }) {
             return report with { ReportUrl = reportUrl };
         }
-        return null;
+        return new UnknownReportType(reportUrl);
     }
 }
 
 public interface IReport {
     Uri? ReportUrl {
         init;
+        get;
+    }
+    public string FileName() {
+        var segments = (this.ReportUrl ?? throw new ArgumentException()).Segments.Skip(2);
+        return string.Concat(segments);
     }
 };

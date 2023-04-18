@@ -8,17 +8,18 @@ using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IAdo {
-    public Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool isLastRetryAttempt, Guid notificationId);
+    public Async.Task<OneFuzzResultVoid> NotifyAdo(AdoTemplate config, Container container, IReport reportable, bool isLastRetryAttempt, Guid notificationId);
 }
 
 public class Ado : NotificationsBase, IAdo {
     public Ado(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
 
-    public async Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool isLastRetryAttempt, Guid notificationId) {
+    public async Async.Task<OneFuzzResultVoid> NotifyAdo(AdoTemplate config, Container container, IReport reportable, bool isLastRetryAttempt, Guid notificationId) {
+        var filename = reportable.FileName();
         if (reportable is RegressionReport) {
             _logTracer.Info($"ado integration does not support regression report. container:{container:Tag:Container} filename:{filename:Tag:Filename}");
-            return;
+            return OneFuzzResultVoid.Ok;
         }
 
         var report = (Report)reportable;
@@ -44,8 +45,11 @@ public class Ado : NotificationsBase, IAdo {
             } else {
                 _logTracer.WithTags(notificationInfo).Exception(e, $"Failed to process ado notification");
                 await LogFailedNotification(report, e, notificationId);
+                return OneFuzzResultVoid.Error(ErrorCode.NOTIFICATION_FAILURE,
+                    $"Failed to process ado notification : exception: {e}");
             }
         }
+        return OneFuzzResultVoid.Ok;
     }
 
     private static bool IsTransient(Exception e) {
@@ -331,30 +335,25 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         public async Async.Task Process((string, string)[] notificationInfo) {
-            var matchingItems = ExistingWorkItems(notificationInfo)
-                .Select(wi => new { IsDuplicate = IsADODuplicateWorkItem(wi), wi });
-
             var updated = false;
-            WorkItem? oldest = null;
-            await foreach (var workItem in matchingItems) {
-                oldest ??= workItem.wi;
-
-                _logTracer.WithTags(new List<(string, string)> { ("MatchingWorkItemIds", $"{workItem.wi.Id}") }).Info($"Found matching work item");
-                if (workItem.IsDuplicate) {
-
+            WorkItem? oldestWorkItem = null;
+            await foreach (var workItem in ExistingWorkItems(notificationInfo)) {
+                // work items are ordered by id, so the oldest one is the first one
+                oldestWorkItem ??= workItem;
+                _logTracer.WithTags(new List<(string, string)> { ("MatchingWorkItemIds", $"{workItem.Id}") }).Info($"Found matching work item");
+                if (IsADODuplicateWorkItem(workItem)) {
                     continue;
                 }
-                _logTracer.WithTags(new List<(string, string)> { ("NonDuplicateWorkItemId", $"{workItem.wi.Id}") }).Info($"Found matching non-duplicate work item");
-                _ = await UpdateExisting(workItem.wi, notificationInfo);
+                _logTracer.WithTags(new List<(string, string)> { ("NonDuplicateWorkItemId", $"{workItem.Id}") }).Info($"Found matching non-duplicate work item");
+                _ = await UpdateExisting(workItem, notificationInfo);
                 updated = true;
             }
 
             if (!updated) {
-                if (oldest != null) {
+                if (oldestWorkItem != null) {
                     // We have matching work items but all are duplicates
                     _logTracer.WithTags(notificationInfo)
                         .Info($"All matching work items were duplicates, re-opening the oldest one");
-                    var oldestWorkItem = oldest;
                     var stateChanged = await UpdateExisting(oldestWorkItem, notificationInfo);
                     if (stateChanged) {
                         // add a comment if we re-opened the bug

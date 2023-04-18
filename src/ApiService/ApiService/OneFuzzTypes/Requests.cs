@@ -129,6 +129,12 @@ public record NotificationSearch(
     Guid? NotificationId
 ) : BaseRequest;
 
+
+public record NotificationTest(
+    Report Report,
+    Notification Notification
+) : BaseRequest;
+
 public record NotificationGet(
     [property: Required] Guid NotificationId
 ) : BaseRequest;

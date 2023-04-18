@@ -25,9 +25,11 @@ from .models import (
     InstanceConfig,
     NotificationConfig,
     TemplateRenderContext,
+    Report,
 )
 from .primitives import Container, PoolName, Region
 from .webhooks import WebhookMessageFormat
+from onefuzztypes import models
 
 
 class BaseRequest(BaseModel):
@@ -265,6 +267,11 @@ class TemplateValidationPost(BaseModel):
 
 class JinjaToScribanMigrationPost(BaseModel):
     dry_run: bool = Field(default=False)
+
+
+class NotificationTest(BaseModel):
+    report: Report
+    notification: models.Notification
 
 
 _check_hotfix()
