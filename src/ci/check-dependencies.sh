@@ -53,7 +53,7 @@ libunwind-x86_64.so.8
 libunwind.so.8
 linux-vdso.so.1" \
 \
-"/lib64/ld-linux-aarch64.so.1
+"/lib/ld-linux-aarch64.so.1
 libc.so.6
 libdl.so.2
 libgcc_s.so.1
@@ -101,7 +101,7 @@ libpthread.so.0
 libunwind.so.8
 linux-vdso.so.1" \
 \
-"/lib64/ld-linux-aarch64.so.1
+"/lib/ld-linux-aarch64.so.1
 libc.so.6
 libdl.so.2
 liblzma.so.5
@@ -135,7 +135,7 @@ libgcc_s.so.1
 libpthread.so.0
 linux-vdso.so.1" \
 \
-"/lib64/ld-linux-aarch64.so.1
+"/lib/ld-linux-aarch64.so.1
 libc.so.6
 libgcc_s.so.1
 libpthread.so.0
