@@ -800,9 +800,9 @@ class DebugNotification(Command):
             name=crash_name,
         )
 
-        assert task.config.task.target_exe is not None
+        target_exe = task.config.task.target_exe if task.config.task.target_exe else ""
         report = self._create_report(
-            task.job_id, task.task_id, task.config.task.target_exe, input_blob_ref
+            task.job_id, task.task_id, target_exe, input_blob_ref
         )
 
         with tempfile.TemporaryDirectory() as tempdir:
