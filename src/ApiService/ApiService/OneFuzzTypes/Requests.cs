@@ -131,8 +131,8 @@ public record NotificationSearch(
 
 
 public record NotificationTest(
-    Report Report,
-    Notification Notification
+    [property: Required] Report Report,
+    [property: Required] Notification Notification
 ) : BaseRequest;
 
 public record NotificationGet(
