@@ -192,7 +192,7 @@ impl LibFuzzer {
                     seen_inputs = true;
                 }
             } else {
-                println!("input dir doesn't exist: {input_dir:?}");
+                debug!("input dir doesn't exist: {input_dir:?}");
             }
         }
 
