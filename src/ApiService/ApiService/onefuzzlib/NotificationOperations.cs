@@ -29,7 +29,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             var done = new List<NotificationTemplate>();
             await foreach (var notification in notifications) {
                 if (done.Contains(notification.Config)) {
-                    return;
+                    continue;
                 }
 
                 done.Add(notification.Config);
