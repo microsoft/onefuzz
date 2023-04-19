@@ -167,3 +167,19 @@ fn dump_cobertura(binary: &BinaryCoverage) -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn can_run_coverage() {
+        let cmd = command(&["ls".to_string()], None);
+        let recorded = CoverageRecorder::new(cmd)
+            .timeout(Duration::from_secs(5))
+            .record()
+            .unwrap();
+
+        assert!(recorded.coverage.modules.len() > 0);
+    }
+}
