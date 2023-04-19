@@ -2,8 +2,9 @@
 // Licensed under the MIT License.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::num::NonZeroU32;
 
-use anyhow::{bail, Result};
+use anyhow::{Context, Result};
 
 use debuggable_module::block::{sweep_region, Block, Blocks};
 use debuggable_module::load_module::LoadModule;
@@ -27,19 +28,17 @@ pub struct FileCoverage {
 
 // Must be nonzero.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct Line(u32);
+pub struct Line(NonZeroU32);
 
 impl Line {
     pub fn new(number: u32) -> Result<Self> {
-        if number == 0 {
-            bail!("line numbers must be nonzero");
-        }
-
-        Ok(Line(number))
+        NonZeroU32::try_from(number)
+            .map(Self)
+            .context("line numbers must be nonzero")
     }
 
-    pub fn number(&self) -> u32 {
-        self.0
+    pub const fn number(&self) -> u32 {
+        self.0.get()
     }
 }
 
@@ -96,11 +95,9 @@ pub fn binary_to_source_coverage(binary: &BinaryCoverage) -> Result<SourceCovera
 
                 for offset in block_offsets {
                     for location in symcache.lookup(offset.0) {
-                        let line_number = location.line();
-
-                        if line_number == 0 {
-                            continue;
-                        }
+                        let Ok(line_number) = location.line().try_into() else {
+                            continue; // line number was 0
+                        };
 
                         if let Some(file) = location.file() {
                             let file_path = FilePath::new(file.full_path())?;
