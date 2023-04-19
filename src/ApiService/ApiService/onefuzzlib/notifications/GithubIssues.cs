@@ -13,9 +13,6 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
 
     public async Async.Task GithubIssue(GithubIssuesTemplate config, Container container, IReport reportable, Guid notificationId) {
         var filename = reportable.FileName();
-        if (filename == null) {
-            return;
-        }
 
         if (reportable is RegressionReport) {
             _logTracer.Info($"github issue integration does not support regression reports. {container:Tag:Container} - {filename:Tag:Filename}");
