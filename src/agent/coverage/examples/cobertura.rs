@@ -49,6 +49,8 @@ mod test {
     use pretty_assertions::assert_eq;
 
     #[test]
+    // On Windows this produces different output due to filename parsing.
+    #[cfg(target_os = "linux")]
     pub fn check_output() {
         let result = generate_output().unwrap();
 
