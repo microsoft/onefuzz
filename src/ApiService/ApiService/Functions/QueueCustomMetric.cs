@@ -1,11 +1,15 @@
-﻿// using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.Azure.Functions.Worker;
-// using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
 
 public class QueueCustomMetric {
+
+    private const string QueueCustomMetricQueueNmae = "custom-metrics";
+
+
     private readonly ILogTracer _log;
 
     private readonly IOnefuzzContext _context;
@@ -16,10 +20,12 @@ public class QueueCustomMetric {
     }
 
     [Function("QueueCustomMetric")]
-    // public void Run([QueueTrigger("custom-metrics", Connection = "AzureWebJobsStorage")] string msg)
-    public void Run([TimerTrigger("00:00:30")] TimerInfo myTimer) {
-        {
-            _log.Metric($"Testing Test-Metric");
-        }
+    public void Run([QueueTrigger("custom-metrics", Connection = "AzureWebJobsStorage")] string msg)
+    // public void Run([TimerTrigger("00:00:30")] TimerInfo myTimer) {
+    {
+        _log.Metric($"Testing Test-Metric");
+        var customMetricEvent = JsonSerializer.Deserialize<JsonDocument>(msg, EntityConverter.GetJsonSerializerOptions());
+        _log.Metric($"Deserialized Test-Metric");
     }
 }
+
