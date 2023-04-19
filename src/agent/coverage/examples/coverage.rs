@@ -174,12 +174,21 @@ mod test {
 
     #[test]
     fn can_run_coverage() {
-        let cmd = command(&["ls".to_string()], None);
+        #[cfg(target_os = "linux")]
+        let cmd = command(&["ls"].map(str::to_string), None);
+
+        #[cfg(target_os = "windows")]
+        let cmd = command(&["cmd.exe", "/c", "dir"].map(str::to_string), None);
+
         let recorded = CoverageRecorder::new(cmd)
             .timeout(Duration::from_secs(5))
             .record()
             .unwrap();
 
+        assert_ne!("", recorded.output.stdout);
+
+        // only non-debuggable modules are found on Windows
+        #[cfg(target_os = "linux")]
         assert!(recorded.coverage.modules.len() > 0);
     }
 }
