@@ -205,3 +205,8 @@ public record JinjaToScribanMigrationResponse(
 public record JinjaToScribanMigrationDryRunResponse(
     List<Guid> NotificationIdsToUpdate
 ) : BaseResponse();
+
+public record NotificationTestResponse(
+    bool Success,
+    string? Error = null
+) : BaseResponse();

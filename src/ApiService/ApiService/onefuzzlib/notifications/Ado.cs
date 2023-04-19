@@ -8,17 +8,18 @@ using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IAdo {
-    public Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool isLastRetryAttempt, Guid notificationId);
+    public Async.Task<OneFuzzResultVoid> NotifyAdo(AdoTemplate config, Container container, IReport reportable, bool isLastRetryAttempt, Guid notificationId);
 }
 
 public class Ado : NotificationsBase, IAdo {
     public Ado(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
 
-    public async Async.Task NotifyAdo(AdoTemplate config, Container container, string filename, IReport reportable, bool isLastRetryAttempt, Guid notificationId) {
+    public async Async.Task<OneFuzzResultVoid> NotifyAdo(AdoTemplate config, Container container, IReport reportable, bool isLastRetryAttempt, Guid notificationId) {
+        var filename = reportable.FileName();
         if (reportable is RegressionReport) {
             _logTracer.Info($"ado integration does not support regression report. container:{container:Tag:Container} filename:{filename:Tag:Filename}");
-            return;
+            return OneFuzzResultVoid.Ok;
         }
 
         var report = (Report)reportable;
@@ -44,8 +45,11 @@ public class Ado : NotificationsBase, IAdo {
             } else {
                 _logTracer.WithTags(notificationInfo).Exception(e, $"Failed to process ado notification");
                 await LogFailedNotification(report, e, notificationId);
+                return OneFuzzResultVoid.Error(ErrorCode.NOTIFICATION_FAILURE,
+                    $"Failed to process ado notification : exception: {e}");
             }
         }
+        return OneFuzzResultVoid.Ok;
     }
 
     private static bool IsTransient(Exception e) {
@@ -205,7 +209,7 @@ public class Ado : NotificationsBase, IAdo {
                 }
             }
 
-            var query = "select [System.Id] from WorkItems";
+            var query = "select [System.Id] from WorkItems order by [System.Id]";
             if (parts != null && parts.Any()) {
                 query += " where " + string.Join(" AND ", parts);
             }
@@ -331,47 +335,42 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         public async Async.Task Process((string, string)[] notificationInfo) {
-            var matchingWorkItems = await ExistingWorkItems(notificationInfo).ToListAsync();
-
-            var nonDuplicateWorkItems = matchingWorkItems
-                .Where(wi => !IsADODuplicateWorkItem(wi))
-                .ToList();
-
-            if (nonDuplicateWorkItems.Count > 1) {
-                var nonDuplicateWorkItemIds = nonDuplicateWorkItems.Select(wi => wi.Id);
-                var matchingWorkItemIds = matchingWorkItems.Select(wi => wi.Id);
-
-                var extraTags = new List<(string, string)> {
-                    ("NonDuplicateWorkItemIds", JsonSerializer.Serialize(nonDuplicateWorkItemIds)),
-                    ("MatchingWorkItemIds", JsonSerializer.Serialize(matchingWorkItemIds))
-                };
-                extraTags.AddRange(notificationInfo);
-
-                _logTracer.WithTags(extraTags).Info($"Found more than 1 matching, non-duplicate work item");
-                foreach (var workItem in nonDuplicateWorkItems) {
-                    _ = await UpdateExisting(workItem, notificationInfo);
+            var updated = false;
+            WorkItem? oldestWorkItem = null;
+            await foreach (var workItem in ExistingWorkItems(notificationInfo)) {
+                // work items are ordered by id, so the oldest one is the first one
+                oldestWorkItem ??= workItem;
+                _logTracer.WithTags(new List<(string, string)> { ("MatchingWorkItemIds", $"{workItem.Id}") }).Info($"Found matching work item");
+                if (IsADODuplicateWorkItem(workItem)) {
+                    continue;
                 }
-            } else if (nonDuplicateWorkItems.Count == 1) {
-                _ = await UpdateExisting(nonDuplicateWorkItems.Single(), notificationInfo);
-            } else if (matchingWorkItems.Any()) {
-                // We have matching work items but all are duplicates
-                _logTracer.WithTags(notificationInfo).Info($"All matching work items were duplicates, re-opening the oldest one");
-                var oldestWorkItem = matchingWorkItems.OrderBy(wi => wi.Id).First();
-                var stateChanged = await UpdateExisting(oldestWorkItem, notificationInfo);
-                if (stateChanged) {
-                    // add a comment if we re-opened the bug
-                    _ = await _client.AddCommentAsync(
-                        new CommentCreate() {
-                            Text = "This work item was re-opened because OneFuzz could only find related work items that are marked as duplicate."
-                        },
-                        _project,
-                        (int)oldestWorkItem.Id!);
+                _logTracer.WithTags(new List<(string, string)> { ("NonDuplicateWorkItemId", $"{workItem.Id}") }).Info($"Found matching non-duplicate work item");
+                _ = await UpdateExisting(workItem, notificationInfo);
+                updated = true;
+            }
+
+            if (!updated) {
+                if (oldestWorkItem != null) {
+                    // We have matching work items but all are duplicates
+                    _logTracer.WithTags(notificationInfo)
+                        .Info($"All matching work items were duplicates, re-opening the oldest one");
+                    var stateChanged = await UpdateExisting(oldestWorkItem, notificationInfo);
+                    if (stateChanged) {
+                        // add a comment if we re-opened the bug
+                        _ = await _client.AddCommentAsync(
+                            new CommentCreate() {
+                                Text =
+                                    "This work item was re-opened because OneFuzz could only find related work items that are marked as duplicate."
+                            },
+                            _project,
+                            (int)oldestWorkItem.Id!);
+                    }
+                } else {
+                    // We never saw a work item like this before, it must be new
+                    var entry = await CreateNew();
+                    var adoEventType = "AdoNewItem";
+                    _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {entry.Id:Tag:WorkItemId}");
                 }
-            } else {
-                // We never saw a work item like this before, it must be new
-                var entry = await CreateNew();
-                var adoEventType = "AdoNewItem";
-                _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {entry.Id:Tag:WorkItemId}");
             }
         }
 
