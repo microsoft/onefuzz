@@ -46,6 +46,8 @@ public sealed class TestContext : IOnefuzzContext {
 
     public TestEvents Events { get; set; } = new();
 
+    public TestMetrics Metrics { get; set; } = new();
+
     // convenience method for test setup
     public Async.Task InsertAll(params EntityBase[] objs)
         => Async.Task.WhenAll(
@@ -64,6 +66,7 @@ public sealed class TestContext : IOnefuzzContext {
     // Implementations:
 
     IEvents IOnefuzzContext.Events => Events;
+    IMetrics IOnefuzzContext.Metrics => Metrics;
 
     public IServiceConfig ServiceConfiguration { get; }
 
