@@ -195,12 +195,12 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             return CanProcessNewWorkResponse.NotAllowed("node is set to be deleted");
         }
 
-        if (node.ReimageRequested) {
+        if (node.ReimageRequested && node.Managed) {
             _ = await Stop(node, done: true);
             return CanProcessNewWorkResponse.NotAllowed("node is set to be reimaged");
         }
 
-        if (await CouldShrinkScaleset(node)) {
+        if (await CouldShrinkScaleset(node) && node.Managed) {
             _ = await SetHalt(node);
             return CanProcessNewWorkResponse.NotAllowed("node is scheduled to shrink");
         }
@@ -488,7 +488,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public bool IsTooOld(Node node) {
-        return node.ScalesetId != null
+        return node.Managed
+            && node.ScalesetId != null
             && node.InitializedAt != null
             && node.InitializedAt < DateTime.UtcNow - INodeOperations.NODE_REIMAGE_TIME;
     }
