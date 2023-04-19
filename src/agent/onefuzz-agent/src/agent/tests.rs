@@ -84,7 +84,8 @@ impl Fixture {
 
 #[tokio::test]
 async fn test_update_free_no_work() {
-    let agent = Fixture.agent();
+    let mut agent = Fixture.agent();
+    agent.sleep_duration = Duration::from_secs(5);
 
     let (agent, done) = agent.update().await.unwrap();
     assert!(!done);
