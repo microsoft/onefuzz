@@ -11,6 +11,11 @@ namespace Microsoft.OneFuzz.Service {
         List<EventMessage> arguments
     );
 
+    public record CustomMetric
+    (
+        string Target
+    );
+
 
     public interface IEvents {
         Async.Task SendEvent(BaseEvent anEvent);
@@ -43,6 +48,11 @@ namespace Microsoft.OneFuzz.Service {
         public async Async.Task QueueSignalrEvent(EventMessage message) {
             var ev = new SignalREvent("events", new List<EventMessage>() { message });
             await _queue.SendMessage("signalr-events", JsonSerializer.Serialize(ev, _options), StorageType.Config);
+        }
+
+        public async Async.Task QueueCustomMetric(EventMessage message) {
+            var ev = new CustomMetric("metrics");
+            await _queue.SendMessage("custom-metrics", JsonSerializer.Serialize(ev, _options), StorageType.Config);
         }
 
         public async Async.Task SendEvent(BaseEvent anEvent) {

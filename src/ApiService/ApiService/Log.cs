@@ -107,7 +107,6 @@ sealed class AppInsights : ILog {
 
     public void LogMetric(Guid correlationId, LogStringHandler evt, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller) {
         var telemetry = new MetricTelemetry("test-metric", 1, 1, 1, 1, 1);
-
         // copy properties
         Copy(telemetry.Properties, tags);
         telemetry.Properties["CorrelationId"] = correlationId.ToString();
@@ -116,7 +115,6 @@ sealed class AppInsights : ILog {
 
         // copy metrics
         // Copy(telemetry.Metrics, metrics);
-
         _telemetryClient.TrackMetric(telemetry);
     }
 
