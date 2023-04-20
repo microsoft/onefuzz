@@ -35,13 +35,13 @@ public class ImageReferenceTests {
 
     [Fact]
     public void CanParseMarketplaceReference() {
-        var input = "Canonical:UbuntuServer:18.04-LTS:latest";
+        var input = "Canonical:UbuntuServer:20.04-LTS:latest";
         var result = ImageReference.MustParse(input);
         var marketplace = Assert.IsType<ImageReference.Marketplace>(result);
 
         Assert.Equal("Canonical", marketplace.Publisher);
         Assert.Equal("UbuntuServer", marketplace.Offer);
-        Assert.Equal("18.04-LTS", marketplace.Sku);
+        Assert.Equal("20.04-LTS", marketplace.Sku);
         Assert.Equal("latest", marketplace.Version);
     }
 
@@ -99,7 +99,7 @@ public class ImageReferenceTests {
     static readonly string _expected = @$"{{
   ""latestGalleryId"": ""/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/galleries/gallery/images/imageName"",
   ""imageId"": ""/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/images/imageName"",
-  ""marketplaceId"": ""Canonical:UbuntuServer:18.04-LTS:latest"",
+  ""marketplaceId"": ""Canonical:UbuntuServer:20.04-LTS:latest"",
   ""galleryId"": ""/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/galleries/gallery/images/imageName/versions/latest"",
   ""latestSharedGalleryId"": ""/subscriptions/{Guid.Empty}/providers/Microsoft.Compute/locations/location/sharedGalleries/gallery/images/imageName"",
   ""sharedGalleryId"": ""/subscriptions/{Guid.Empty}/providers/Microsoft.Compute/locations/location/sharedGalleries/gallery/images/imageName/versions/latest""
@@ -130,7 +130,7 @@ public class ImageReferenceTests {
                 subId.ToString(), "resource-group", "imageName"));
 
         var marketplaceId = new ImageReference.Marketplace(
-            "Canonical", "UbuntuServer", "18.04-LTS", "latest");
+            "Canonical", "UbuntuServer", "20.04-LTS", "latest");
 
         var latestSharedGalleryId = new ImageReference.LatestSharedGalleryImage(
             SharedGalleryImageResource.CreateResourceIdentifier(
