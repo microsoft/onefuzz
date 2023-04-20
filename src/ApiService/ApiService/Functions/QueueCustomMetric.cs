@@ -22,7 +22,7 @@ public class QueueCustomMetric {
     public record CustomMetric(
         string name,
         int value,
-        Dictionary<string, string> customDimensions
+        Dictionary customDimensions
     );
 
     [Function("QueueCustomMetric")]
