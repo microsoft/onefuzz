@@ -1569,9 +1569,7 @@ class Scaleset(Endpoint):
             ),
         )
 
-    def shutdown(
-        self, scaleset_id: str, *, now: bool = False
-    ) -> responses.BoolResult:
+    def shutdown(self, scaleset_id: str, *, now: bool = False) -> responses.BoolResult:
         self.logger.debug("shutdown scaleset: %s (now: %s)", scaleset_id, now)
         return self._req_model(
             "DELETE",
@@ -1579,9 +1577,7 @@ class Scaleset(Endpoint):
             data=requests.ScalesetStop(scaleset_id=scaleset_id, now=now),
         )
 
-    def get(
-        self, scaleset_id: str, *, include_auth: bool = False
-    ) -> models.Scaleset:
+    def get(self, scaleset_id: str, *, include_auth: bool = False) -> models.Scaleset:
         self.logger.debug("get scaleset: %s", scaleset_id)
         return self._req_model(
             "GET",
