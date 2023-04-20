@@ -9,8 +9,8 @@ public sealed class TestMetrics : IMetrics {
 
     public List<BaseMetric> Metrics { get; } = new();
     public List<MetricMessage> CustomMetrics { get; } = new();
-    public void LogMetric(BaseMetric anMetric) {
-        Metrics.Add(anMetric);
+    public void LogMetric(BaseMetric metric) {
+        Metrics.Add(metric);
     }
 
     public Async.Task QueueCustomMetric(MetricMessage message) {
@@ -18,8 +18,8 @@ public sealed class TestMetrics : IMetrics {
         return Async.Task.CompletedTask;
     }
 
-    public Async.Task SendMetric(BaseMetric anMetric) {
-        Metrics.Add(anMetric);
+    public Async.Task SendMetric(int metricValue, BaseMetric customDimensions) {
+        Metrics.Add(customDimensions);
         return Async.Task.CompletedTask;
     }
 }

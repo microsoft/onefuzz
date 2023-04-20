@@ -28,9 +28,9 @@ namespace Microsoft.OneFuzz.Service {
 
 
     public interface IMetrics {
-        Async.Task SendMetric(BaseMetric anMetric);
+        Async.Task SendMetric(int metricValue, BaseMetric customDimensions);
 
-        void LogMetric(BaseMetric anMetric);
+        void LogMetric(BaseMetric metric);
     }
 
     public class Metrics : IMetrics {
@@ -40,7 +40,7 @@ namespace Microsoft.OneFuzz.Service {
         private readonly ICreds _creds;
         private readonly JsonSerializerOptions _options;
 
-        public Metrics(IQueue queue, IWebhookOperations webhook, ILogTracer log, IContainers containers, ICreds creds) {
+        public Metrics(IQueue queue, ILogTracer log, IContainers containers, ICreds creds) {
             _queue = queue;
             _log = log;
             _containers = containers;
@@ -62,28 +62,21 @@ namespace Microsoft.OneFuzz.Service {
             await _queue.SendMessage("custom-metrics", JsonSerializer.Serialize(message, _options), StorageType.Config);
         }
 
-        public async Async.Task SendMetric(BaseMetric anMetric) {
-            var metricType = anMetric.GetMetricType();
-
-            var instanceId = await _containers.GetInstanceId();
-
-            // var value = anMetric.metricValue;
-            var customDimensions = anMetric;
+        public async Async.Task SendMetric(int metricValue, BaseMetric customDimensions) {
+            var metricType = customDimensions.GetMetricType();
 
             var metricMessage = new MetricMessage(
-                Guid.NewGuid(),
                 metricType,
-                anMetric, // customDimensions? 
-                instanceId,
-                _creds.GetInstanceName()
+                customDimensions, // customDimensions? 
+                metricValue
             );
             await QueueCustomMetric(metricMessage);
-            LogMetric(anMetric);
+            LogMetric(customDimensions);
         }
 
-        public void LogMetric(BaseMetric anMetric) {
-            var serializedMetric = JsonSerializer.Serialize(anMetric, anMetric.GetType(), _options);
-            _log.Info($"sending metric: {anMetric.GetMetricType():Tag:MetricType} - {serializedMetric}");
+        public void LogMetric(BaseMetric metric) {
+            var serializedMetric = JsonSerializer.Serialize(metric, metric.GetType(), _options);
+            _log.Info($"sending metric: {metric.GetMetricType():Tag:MetricType} - {serializedMetric}");
         }
     }
 }

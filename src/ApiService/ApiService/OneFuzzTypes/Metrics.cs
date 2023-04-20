@@ -277,8 +277,7 @@ public record MetricNodeCreated(
 public record MetricNodeHeartbeat(
     Guid MachineId,
     Guid? ScalesetId,
-    PoolName PoolName,
-    int Value
+    PoolName PoolName
     ) : BaseMetric();
 
 
@@ -354,13 +353,11 @@ public record MetricNotificationFailed(
 ) : BaseMetric();
 
 public record MetricMessage(
-    Guid MetricId,
-    MetricType MetricType,
-    [property: TypeDiscrimnatorAttribute("MetricType", typeof(MetricTypeProvider))]
+    MetricType name,
+    [property: TypeDiscrimnatorAttribute("name", typeof(MetricTypeProvider))]
     [property: JsonConverter(typeof(BaseMetricConverter))]
-    BaseMetric Metric,
-    Guid InstanceId,
-    String InstanceName
+    BaseMetric customDimensions,
+    int value
 );
 
 public class BaseMetricConverter : JsonConverter<BaseMetric> {

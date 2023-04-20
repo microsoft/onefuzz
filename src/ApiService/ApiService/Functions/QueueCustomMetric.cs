@@ -19,13 +19,31 @@ public class QueueCustomMetric {
         _context = context;
     }
 
+    public record CustomMetric(
+        string name,
+        int value,
+        Dictionary<string, string> customDimensions
+    );
+
     [Function("QueueCustomMetric")]
     public void Run([QueueTrigger("custom-metrics", Connection = "AzureWebJobsStorage")] string msg)
     // public void Run([TimerTrigger("00:00:30")] TimerInfo myTimer) {
     {
-        _log.Metric($"Testing Test-Metric");
-        var customMetricEvent = JsonSerializer.Deserialize<JsonDocument>(msg, EntityConverter.GetJsonSerializerOptions());
-        _log.Metric($"Deserialized Test-Metric");
+        // _log.Metric($"Testing Test-Metric");
+        // Desiarilize with CustomMetricType
+        var customMetricMessage = JsonSerializer.Deserialize<CustomMetric>(msg, EntityConverter.GetJsonSerializerOptions());
+
+        _ = customMetricMessage ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
+
+        //         if (customMetricMessage.name || customMetricMessage.value
+        // || customMetricMessage.customDimensions) {
+        //             _log.WithTag("queueMessage", msg)
+        //                 .Info($"Expected customMetricMessage to contain a missing property - name, value, or custom dimensions.");
+        //             return;
+        //         }
+
+        _log.Metric($"{customMetricMessage.name}", customMetricMessage.value, customMetricMessage.customDimensions);
+
     }
 }
 

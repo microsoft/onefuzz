@@ -9,12 +9,14 @@ public class QueueTaskHearbeat {
     private readonly ILogTracer _log;
 
     private readonly IEvents _events;
+    private readonly IMetrics _metrics;
     private readonly ITaskOperations _tasks;
 
-    public QueueTaskHearbeat(ILogTracer logTracer, ITaskOperations tasks, IEvents events) {
+    public QueueTaskHearbeat(ILogTracer logTracer, ITaskOperations tasks, IEvents events, IMetrics metrics) {
         _log = logTracer;
         _tasks = tasks;
         _events = events;
+        _metrics = metrics;
     }
 
     [Function("QueueTaskHeartbeat")]
@@ -36,5 +38,6 @@ public class QueueTaskHearbeat {
             _log.WithHttpStatus(r.ErrorV).Error($"failed to replace with new task {hb.TaskId:Tag:TaskId}");
         }
         await _events.SendEvent(new EventTaskHeartbeat(newTask.JobId, newTask.TaskId, newTask.Config));
+        await _metrics.SendMetric(1, new MetricTaskHeartbeat(newTask.JobId, newTask.TaskId, newTask.Config));
     }
 }
