@@ -9,19 +9,11 @@ use std::os::windows::io::{AsRawHandle, RawHandle};
 
 use anyhow::{Context, Result};
 use log::trace;
-use winapi::{
-    shared::{
-        minwindef::{DWORD, FALSE, LPDWORD, LPVOID},
-        ntdef::NULL,
-        winerror::{ERROR_BROKEN_PIPE, ERROR_NO_DATA},
-    },
-    um::{
-        errhandlingapi::GetLastError, fileapi::ReadFile, minwinbase::LPOVERLAPPED,
-        namedpipeapi::SetNamedPipeHandleState, winbase::PIPE_NOWAIT,
-    },
+use windows::Win32::{
+    Foundation::{GetLastError, ERROR_BROKEN_PIPE, ERROR_NO_DATA, FALSE, HANDLE},
+    Storage::FileSystem::ReadFile,
+    System::Pipes::{SetNamedPipeHandleState, PIPE_NOWAIT},
 };
-
-use crate::check_winapi;
 
 // A wrapper over a Vec that uses RAII to set the length correctly after uses of the
 // Vec internal buffer in unsafe Win32 apis that bypass safe Vec apis when writing data.
@@ -78,11 +70,11 @@ impl PipeReaderNonBlocking {
             let mut bytes_read = 0u32;
             let success = unsafe {
                 ReadFile(
-                    self.reader.as_raw_handle(),
-                    unused_space.as_mut_ptr() as LPVOID,
-                    unused_len as DWORD,
-                    &mut bytes_read as LPDWORD,
-                    NULL as LPOVERLAPPED,
+                    HANDLE(self.reader.as_raw_handle() as _),
+                    Some(unused_space.as_mut_ptr().cast()),
+                    unused_len as u32,
+                    Some(&mut bytes_read),
+                    None,
                 )
             };
 
@@ -133,18 +125,9 @@ impl PipeReaderNonBlocking {
 }
 
 fn set_nonblocking_mode(handle: RawHandle) -> Result<()> {
-    let mut mode = PIPE_NOWAIT as DWORD;
-    check_winapi(|| unsafe {
-        SetNamedPipeHandleState(
-            handle,
-            &mut mode as LPDWORD,
-            NULL as LPDWORD,
-            NULL as LPDWORD,
-        )
-    })
-    .context("Setting pipe to non-blocking mode")?;
-
-    Ok(())
+    unsafe { SetNamedPipeHandleState(HANDLE(handle as _), Some(&PIPE_NOWAIT), None, None) }
+        .ok()
+        .context("Setting pipe to non-blocking mode")
 }
 
 // Return a pair a reader and writer handle wrapping a Win32 named pipe.

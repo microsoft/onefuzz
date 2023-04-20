@@ -481,7 +481,7 @@ fn log_input_test_result(result: &InputTestResult) {
             info!(
                 "Exception found testing {} ExceptionCode=0x{:08x} Description={} FirstChance={} StackHash={}",
                 input_path.display(),
-                exception.exception_code,
+                exception.exception_code.0,
                 exception.description,
                 exception.first_chance,
                 exception.stack_hash,

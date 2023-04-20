@@ -1,13 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use winapi::{
-    shared::minwindef::{FALSE, LPHANDLE},
-    um::{
-        handleapi::{CloseHandle, DuplicateHandle, INVALID_HANDLE_VALUE},
-        processthreadsapi::GetCurrentProcess,
-        winnt::{DUPLICATE_SAME_ACCESS, HANDLE},
+use windows::Win32::{
+    Foundation::{
+        CloseHandle, DuplicateHandle, DUPLICATE_SAME_ACCESS, FALSE, HANDLE, INVALID_HANDLE_VALUE,
     },
+    System::Threading::GetCurrentProcess,
 };
 
 pub struct Handle(pub HANDLE);
@@ -21,7 +19,7 @@ impl Clone for Handle {
                 current_process,
                 self.0,
                 current_process,
-                &mut duplicate as LPHANDLE,
+                &mut duplicate,
                 0,
                 FALSE,
                 DUPLICATE_SAME_ACCESS,

@@ -9,16 +9,12 @@ use std::{
 };
 
 use win_util::file::get_path_from_handle;
-use winapi::{
-    shared::minwindef::DWORD,
-    um::minwinbase::{
-        CREATE_PROCESS_DEBUG_EVENT, CREATE_PROCESS_DEBUG_INFO, CREATE_THREAD_DEBUG_EVENT,
-        CREATE_THREAD_DEBUG_INFO, DEBUG_EVENT, EXCEPTION_DEBUG_EVENT, EXCEPTION_DEBUG_INFO,
-        EXIT_PROCESS_DEBUG_EVENT, EXIT_PROCESS_DEBUG_INFO, EXIT_THREAD_DEBUG_EVENT,
-        EXIT_THREAD_DEBUG_INFO, LOAD_DLL_DEBUG_EVENT, LOAD_DLL_DEBUG_INFO,
-        OUTPUT_DEBUG_STRING_EVENT, OUTPUT_DEBUG_STRING_INFO, RIP_EVENT, RIP_INFO,
-        UNLOAD_DLL_DEBUG_EVENT, UNLOAD_DLL_DEBUG_INFO,
-    },
+use windows::Win32::System::Diagnostics::Debug::{
+    CREATE_PROCESS_DEBUG_EVENT, CREATE_PROCESS_DEBUG_INFO, CREATE_THREAD_DEBUG_EVENT,
+    CREATE_THREAD_DEBUG_INFO, DEBUG_EVENT, EXCEPTION_DEBUG_EVENT, EXCEPTION_DEBUG_INFO,
+    EXIT_PROCESS_DEBUG_EVENT, EXIT_PROCESS_DEBUG_INFO, EXIT_THREAD_DEBUG_EVENT,
+    EXIT_THREAD_DEBUG_INFO, LOAD_DLL_DEBUG_EVENT, LOAD_DLL_DEBUG_INFO, OUTPUT_DEBUG_STRING_EVENT,
+    OUTPUT_DEBUG_STRING_INFO, RIP_EVENT, RIP_INFO, UNLOAD_DLL_DEBUG_EVENT, UNLOAD_DLL_DEBUG_INFO,
 };
 
 pub enum DebugEventInfo<'a> {
@@ -42,7 +38,7 @@ impl<'a> Display for DebugEventInfo<'a> {
                 write!(
                     formatter,
                     "Exception code=0x{:08x} address=0x{:08x} {}",
-                    info.ExceptionRecord.ExceptionCode,
+                    info.ExceptionRecord.ExceptionCode.0,
                     info.ExceptionRecord.ExceptionAddress as u64,
                     if info.dwFirstChance == 0 {
                         "second_chance"
@@ -52,7 +48,7 @@ impl<'a> Display for DebugEventInfo<'a> {
                 )?;
             }
             CreateThread(info) => {
-                write!(formatter, "CreateThread handle={:x}", info.hThread as u64)?;
+                write!(formatter, "CreateThread handle={:x}", info.hThread.0 as u64)?;
             }
             CreateProcess(info) => {
                 let image_name = get_path_from_handle(info.hFile).unwrap_or_else(|_| "???".into());
@@ -89,14 +85,14 @@ impl<'a> Display for DebugEventInfo<'a> {
                 write!(
                     formatter,
                     "OutputDebugString unicode={} address=0x{:016x} length={}",
-                    info.fUnicode, info.lpDebugStringData as u64, info.nDebugStringLength,
+                    info.fUnicode, info.lpDebugStringData.0 as u64, info.nDebugStringLength,
                 )?;
             }
             Rip(info) => {
                 write!(
                     formatter,
                     "Rip error=0x{:x} type={}",
-                    info.dwError, info.dwType
+                    info.dwError, info.dwType.0
                 )?;
             }
             Unknown => {
@@ -109,8 +105,8 @@ impl<'a> Display for DebugEventInfo<'a> {
 }
 
 pub struct DebugEvent<'a> {
-    process_id: DWORD,
-    thread_id: DWORD,
+    process_id: u32,
+    thread_id: u32,
     info: DebugEventInfo<'a>,
 }
 
@@ -118,17 +114,17 @@ impl<'a> DebugEvent<'a> {
     pub fn new(de: &'a DEBUG_EVENT) -> Self {
         let info = unsafe {
             match de.dwDebugEventCode {
-                EXCEPTION_DEBUG_EVENT => DebugEventInfo::Exception(de.u.Exception()),
+                EXCEPTION_DEBUG_EVENT => DebugEventInfo::Exception(&de.u.Exception),
                 CREATE_PROCESS_DEBUG_EVENT => {
-                    DebugEventInfo::CreateProcess(de.u.CreateProcessInfo())
+                    DebugEventInfo::CreateProcess(&de.u.CreateProcessInfo)
                 }
-                CREATE_THREAD_DEBUG_EVENT => DebugEventInfo::CreateThread(de.u.CreateThread()),
-                EXIT_PROCESS_DEBUG_EVENT => DebugEventInfo::ExitProcess(de.u.ExitProcess()),
-                EXIT_THREAD_DEBUG_EVENT => DebugEventInfo::ExitThread(de.u.ExitThread()),
-                LOAD_DLL_DEBUG_EVENT => DebugEventInfo::LoadDll(de.u.LoadDll()),
-                UNLOAD_DLL_DEBUG_EVENT => DebugEventInfo::UnloadDll(de.u.UnloadDll()),
-                OUTPUT_DEBUG_STRING_EVENT => DebugEventInfo::OutputDebugString(de.u.DebugString()),
-                RIP_EVENT => DebugEventInfo::Rip(de.u.RipInfo()),
+                CREATE_THREAD_DEBUG_EVENT => DebugEventInfo::CreateThread(&de.u.CreateThread),
+                EXIT_PROCESS_DEBUG_EVENT => DebugEventInfo::ExitProcess(&de.u.ExitProcess),
+                EXIT_THREAD_DEBUG_EVENT => DebugEventInfo::ExitThread(&de.u.ExitThread),
+                LOAD_DLL_DEBUG_EVENT => DebugEventInfo::LoadDll(&de.u.LoadDll),
+                UNLOAD_DLL_DEBUG_EVENT => DebugEventInfo::UnloadDll(&de.u.UnloadDll),
+                OUTPUT_DEBUG_STRING_EVENT => DebugEventInfo::OutputDebugString(&de.u.DebugString),
+                RIP_EVENT => DebugEventInfo::Rip(&de.u.RipInfo),
                 _ => DebugEventInfo::Unknown,
             }
         };
@@ -140,11 +136,11 @@ impl<'a> DebugEvent<'a> {
         }
     }
 
-    pub fn process_id(&self) -> DWORD {
+    pub fn process_id(&self) -> u32 {
         self.process_id
     }
 
-    pub fn thread_id(&self) -> DWORD {
+    pub fn thread_id(&self) -> u32 {
         self.thread_id
     }
 

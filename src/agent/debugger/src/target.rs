@@ -3,22 +3,15 @@
 
 #![allow(clippy::single_match)]
 
-use std::{io, num::NonZeroU64, path::Path};
+use std::{ffi::c_void, io, num::NonZeroU64, path::Path};
 
 use anyhow::{format_err, Result};
 use log::{debug, error, trace};
 use rand::{thread_rng, Rng};
 use win_util::process;
-use winapi::{
-    shared::{
-        minwindef::{DWORD, LPCVOID},
-        winerror::ERROR_ACCESS_DENIED,
-    },
-    um::{
-        processthreadsapi::{ResumeThread, SuspendThread},
-        winbase::Wow64SuspendThread,
-        winnt::HANDLE,
-    },
+use windows::Win32::{
+    Foundation::{ERROR_ACCESS_DENIED, HANDLE},
+    System::Threading::{ResumeThread, SuspendThread, Wow64SuspendThread},
 };
 
 use crate::{
@@ -49,7 +42,7 @@ struct ThreadInfo {
     wow64: bool,
 }
 
-const SUSPEND_RESUME_ERROR_CODE: DWORD = -1i32 as DWORD;
+const SUSPEND_RESUME_ERROR_CODE: u32 = -1i32 as u32;
 
 impl ThreadInfo {
     fn new(id: u32, handle: HANDLE, wow64: bool) -> Self {
@@ -137,7 +130,7 @@ impl ThreadInfo {
         //
         // This means we are observing a race between OS-level thread exit and
         // the (pending) debug event.
-        let exited = matches!(raw_os_error as DWORD, ERROR_ACCESS_DENIED);
+        let exited = raw_os_error as u32 == ERROR_ACCESS_DENIED.0;
 
         Ok(exited)
     }
@@ -151,10 +144,10 @@ enum SymInitalizeState {
 }
 
 pub struct Target {
-    process_id: DWORD,
+    process_id: u32,
     process_handle: HANDLE,
     current_thread_handle: HANDLE,
-    current_thread_id: DWORD,
+    current_thread_id: u32,
     saw_initial_bp: bool,
     saw_initial_wow64_bp: bool,
     wow64: bool,
@@ -165,7 +158,7 @@ pub struct Target {
     exited: bool,
 
     // Map of thread ID to thread info.
-    thread_info: fnv::FnvHashMap<DWORD, ThreadInfo>,
+    thread_info: fnv::FnvHashMap<u32, ThreadInfo>,
 
     // We cache the current thread context for possible repeated queries and modifications.
     // We want to call GetThreadContext once, then call SetThreadContext (if necessary) before
@@ -180,7 +173,7 @@ pub struct Target {
     unresolved_breakpoints: Vec<UnresolvedBreakpoint>,
 
     // Map of thread ID to stepping state (e.g. breakpoint address to restore breakpoints)
-    single_step: fnv::FnvHashMap<DWORD, StepState>,
+    single_step: fnv::FnvHashMap<u32, StepState>,
 
     // When stepping after hitting a breakpoint, we need to restore the breakpoint.
     // We track the address of the breakpoint to restore. 1 is sufficient because we
@@ -190,8 +183,8 @@ pub struct Target {
 
 impl Target {
     pub fn new(
-        process_id: DWORD,
-        thread_id: DWORD,
+        process_id: u32,
+        thread_id: u32,
         process_handle: HANDLE,
         thread_handle: HANDLE,
     ) -> Self {
@@ -222,11 +215,11 @@ impl Target {
         self.current_thread_handle
     }
 
-    pub fn current_thread_id(&self) -> DWORD {
+    pub fn current_thread_id(&self) -> u32 {
         self.current_thread_id
     }
 
-    pub fn create_new_thread(&mut self, thread_handle: HANDLE, thread_id: DWORD) {
+    pub fn create_new_thread(&mut self, thread_handle: HANDLE, thread_id: u32) {
         self.current_thread_handle = thread_handle;
         self.thread_info.insert(
             thread_id,
@@ -234,12 +227,12 @@ impl Target {
         );
     }
 
-    pub fn set_current_thread(&mut self, thread_id: DWORD) {
+    pub fn set_current_thread(&mut self, thread_id: u32) {
         self.current_thread_id = thread_id;
         self.current_thread_handle = self.thread_info.get(&thread_id).unwrap().handle;
     }
 
-    pub fn exit_thread(&mut self, thread_id: DWORD) {
+    pub fn exit_thread(&mut self, thread_id: u32) {
         self.thread_info.remove(&thread_id);
     }
 
@@ -247,7 +240,7 @@ impl Target {
         self.process_handle
     }
 
-    pub fn process_id(&self) -> DWORD {
+    pub fn process_id(&self) -> u32 {
         self.process_id
     }
 
@@ -423,11 +416,11 @@ impl Target {
             .contains_breakpoint(address)
     }
 
-    pub(crate) fn expecting_single_step(&self, thread_id: DWORD) -> bool {
+    pub(crate) fn expecting_single_step(&self, thread_id: u32) -> bool {
         self.single_step.contains_key(&thread_id)
     }
 
-    pub(crate) fn complete_single_step(&mut self, thread_id: DWORD) -> Result<()> {
+    pub(crate) fn complete_single_step(&mut self, thread_id: u32) -> Result<()> {
         // We now re-enable the breakpoint so that the next time we step, the breakpoint
         // will be restored.
         if let Some(restore_breakpoint_pc) = self.restore_breakpoint_pc.take() {
@@ -626,7 +619,11 @@ impl Target {
         Ok(current_context.get_flags())
     }
 
-    pub fn read_memory(&mut self, remote_address: LPCVOID, buf: &mut [impl Copy]) -> Result<()> {
+    pub fn read_memory(
+        &mut self,
+        remote_address: *const c_void,
+        buf: &mut [impl Copy],
+    ) -> Result<()> {
         process::read_memory_array(self.process_handle, remote_address, buf)?;
 
         // We don't remove breakpoints when processing an event, so it's possible that the

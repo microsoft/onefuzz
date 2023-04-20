@@ -1,25 +1,27 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#![allow(clippy::upper_case_acronyms)]
-
 use std::ffi::OsStr;
 
 use anyhow::Result;
 use log::error;
-use winapi::{
-    shared::minwindef::{DWORD, TRUE},
-    um::werapi::{WerAddExcludedApplication, WerRemoveExcludedApplication},
+use windows::{
+    core::PCWSTR,
+    Win32::{
+        Foundation::TRUE,
+        System::ErrorReporting::{WerAddExcludedApplication, WerRemoveExcludedApplication},
+    },
 };
 use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 
-use crate::{check_hr, string};
+use crate::string;
 
 pub fn add_exclusion(exe_name: &OsStr) -> Result<()> {
     let wexe_name = string::to_wstring(exe_name);
-    check_hr!(unsafe {
-        WerAddExcludedApplication(wexe_name.as_ptr(), /*AllUsers*/ TRUE)
-    });
+    unsafe {
+        WerAddExcludedApplication(PCWSTR(wexe_name.as_ptr()), /*AllUsers*/ TRUE)?;
+    };
+
     atexit::register(move || remove_exclusion(&wexe_name));
 
     Ok(())
@@ -28,7 +30,8 @@ pub fn add_exclusion(exe_name: &OsStr) -> Result<()> {
 fn remove_exclusion(application_path: &[u16]) {
     unsafe {
         // TODO: Minor bug - we shouldn't remove from WER if we weren't the tool to add it.
-        WerRemoveExcludedApplication(application_path.as_ptr(), /*AllUsers*/ TRUE);
+        WerRemoveExcludedApplication(PCWSTR(application_path.as_ptr()), /*AllUsers*/ TRUE)
+            .expect("unable to remove WER exclusion");
     }
 }
 
@@ -45,7 +48,7 @@ pub fn disable_wer_ui() -> Result<()> {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
     let (wer, _) = hklm.create_subkey(WINDOWS_ERROR_REPORTING_KEY)?;
 
-    let restore = match wer.get_value::<DWORD, _>(DONTSHOWUI_PROP) {
+    let restore = match wer.get_value::<u32, _>(DONTSHOWUI_PROP) {
         Err(_) => RestoreWerUI::DeleteKey,
         Ok(v) => RestoreWerUI::Value(v),
     };

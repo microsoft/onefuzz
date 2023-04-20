@@ -3,31 +3,32 @@
 
 #![allow(clippy::fn_to_numeric_cast_with_truncation)]
 
-use std::mem::{size_of, MaybeUninit};
-
-use anyhow::Result;
-use winapi::{
-    shared::minwindef::{DWORD, FALSE, LPVOID},
-    um::{
-        memoryapi::VirtualQueryEx,
-        psapi::{K32GetPerformanceInfo, PERFORMANCE_INFORMATION},
-        winnt::{
-            HANDLE, MEMORY_BASIC_INFORMATION, PAGE_EXECUTE, PAGE_EXECUTE_READ,
-            PAGE_EXECUTE_READWRITE, PAGE_EXECUTE_WRITECOPY,
-        },
-    },
+use std::{
+    ffi::c_void,
+    mem::{size_of, MaybeUninit},
 };
 
 use crate::last_os_error;
+use anyhow::Result;
+use windows::Win32::{
+    Foundation::HANDLE,
+    System::{
+        Memory::{
+            VirtualQueryEx, MEMORY_BASIC_INFORMATION, PAGE_EXECUTE, PAGE_EXECUTE_READ,
+            PAGE_EXECUTE_READWRITE, PAGE_EXECUTE_WRITECOPY, PAGE_PROTECTION_FLAGS,
+        },
+        ProcessStatus::{GetPerformanceInfo, PERFORMANCE_INFORMATION},
+    },
+};
 
 pub struct MemoryInfo {
     base_address: u64,
     region_size: u64,
-    protection: DWORD,
+    protection: PAGE_PROTECTION_FLAGS,
 }
 
 impl MemoryInfo {
-    pub fn new(base_address: u64, region_size: u64, protection: DWORD) -> Self {
+    pub fn new(base_address: u64, region_size: u64, protection: PAGE_PROTECTION_FLAGS) -> Self {
         Self {
             base_address,
             region_size,
@@ -44,8 +45,9 @@ impl MemoryInfo {
     }
 
     pub fn is_executable(&self) -> bool {
-        0 != (self.protection
+        (self.protection
             & (PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY))
+            != PAGE_PROTECTION_FLAGS::default()
     }
 }
 
@@ -54,11 +56,12 @@ pub fn get_memory_info(process_handle: HANDLE, address: u64) -> Result<MemoryInf
     let size = unsafe {
         VirtualQueryEx(
             process_handle,
-            address as LPVOID,
+            Some(address as *const c_void),
             mbi.as_mut_ptr(),
             size_of::<MEMORY_BASIC_INFORMATION>(),
         )
     };
+
     if size != size_of::<MEMORY_BASIC_INFORMATION>() {
         return Err(last_os_error());
     }
@@ -107,14 +110,9 @@ impl From<PERFORMANCE_INFORMATION> for SystemMemoryInfo {
 
 pub fn get_system_memory_info() -> Result<SystemMemoryInfo> {
     let mut info = MaybeUninit::zeroed();
-    if unsafe {
-        K32GetPerformanceInfo(info.as_mut_ptr(), size_of::<PERFORMANCE_INFORMATION> as u32)
-    } == FALSE
-    {
-        return Err(last_os_error());
-    }
+    const SIZE: u32 = size_of::<PERFORMANCE_INFORMATION>() as u32;
+    unsafe { GetPerformanceInfo(info.as_mut_ptr(), SIZE).ok()? };
 
     let info = unsafe { info.assume_init() };
-
     Ok(info.into())
 }
