@@ -7,7 +7,6 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
 using GroupId = System.Guid;
 using PrincipalId = System.Guid;
-using System;
 
 namespace Microsoft.OneFuzz.Service;
 
