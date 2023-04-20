@@ -5,17 +5,9 @@ use anyhow::Result;
 
 use crate::path::FilePath;
 
+#[derive(Default)]
 pub struct Loader {
     loaded: elsa::sync::FrozenMap<FilePath, Box<[u8]>>,
-}
-
-impl Default for Loader {
-    fn default() -> Self {
-        Self {
-            // sync version doesn't have a Default impl
-            loaded: elsa::sync::FrozenMap::new(),
-        }
-    }
 }
 
 impl Loader {
