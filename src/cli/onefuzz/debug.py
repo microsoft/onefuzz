@@ -185,7 +185,7 @@ class DebugTask(Command):
 
     def _get_node(
         self, task_id: UUID_EXPANSION, node_id: Optional[UUID]
-    ) -> Tuple[UUID, UUID]:
+    ) -> Tuple[str, UUID]:
         nodes = self.list_nodes(task_id)
         if not nodes:
             raise Exception("task is not currently executing on nodes")
