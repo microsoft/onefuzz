@@ -141,6 +141,7 @@ impl<'data> WindowsModule<'data> {
                 let mut symbols = mi.symbols()?;
 
                 while let Some(symbol) = symbols.next()? {
+                    #[allow(clippy::single_match)]
                     match symbol.parse() {
                         Ok(SymbolData::Procedure(proc)) => {
                             let noreturn = proc.flags.never;
