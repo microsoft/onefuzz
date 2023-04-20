@@ -16,7 +16,7 @@ sealed class TestVmssOperations : IVmssOperations {
 
     public static IReadOnlyList<string> TestSkus = new[] { TestSku };
     public const string TestSku = "Test_Sku";
-    public static readonly ImageReference TestImage = ImageReference.MustParse("Canonical:UbuntuServer:18.04-LTS:latest");
+    public static readonly ImageReference TestImage = ImageReference.MustParse("Canonical:UbuntuServer:20.04-LTS:latest");
 
     /* below not implemented */
 
