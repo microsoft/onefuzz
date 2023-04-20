@@ -91,26 +91,32 @@ namespace Tests {
               where PoolName.IsValid(name.Get)
               select PoolName.Parse(name.Get);
 
+        public static Gen<ScalesetId> ScalesetIdGen { get; }
+            = from name in Arb.Generate<NonEmptyString>()
+              where ScalesetId.IsValid(name.Get)
+              select ScalesetId.Parse(name.Get);
+
         public static Gen<Region> RegionGen { get; }
             = from name in Arb.Generate<NonEmptyString>()
               where Region.IsValid(name.Get)
               select Region.Parse(name.Get);
 
         public static Gen<Node> Node { get; }
-            = from arg in Arb.Generate<Tuple<Tuple<DateTimeOffset?, Guid?, Guid, NodeState>, Tuple<Guid?, DateTimeOffset, string, bool, bool, bool>>>()
+            = from arg in Arb.Generate<Tuple<Tuple<DateTimeOffset?, Guid?, Guid, NodeState>, Tuple<DateTimeOffset, string, bool, bool, bool>>>()
               from poolName in PoolNameGen
+              from scalesetId in Arb.Generate<Guid>()
               select new Node(
                         InitializedAt: arg.Item1.Item1,
                         PoolName: poolName,
                         PoolId: arg.Item1.Item3,
                         MachineId: arg.Item1.Item3,
                         State: arg.Item1.Item4,
-                        ScalesetId: arg.Item2.Item1,
-                        Heartbeat: arg.Item2.Item2,
-                        Version: arg.Item2.Item3,
-                        ReimageRequested: arg.Item2.Item4,
-                        DeleteRequested: arg.Item2.Item5,
-                        DebugKeepNode: arg.Item2.Item6);
+                        ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
+                        Heartbeat: arg.Item2.Item1,
+                        Version: arg.Item2.Item2,
+                        ReimageRequested: arg.Item2.Item3,
+                        DeleteRequested: arg.Item2.Item4,
+                        DebugKeepNode: arg.Item2.Item5);
 
         public static Gen<ProxyForward> ProxyForward { get; } =
             from region in RegionGen
@@ -124,7 +130,7 @@ namespace Tests {
             select new ProxyForward(
                 Region: region,
                 Port: port,
-                ScalesetId: scalesetId,
+                ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
                 MachineId: machineId,
                 ProxyId: proxyId,
                 DstPort: dstPort,
@@ -240,18 +246,19 @@ namespace Tests {
 
         public static Gen<Scaleset> Scaleset { get; }
             = from arg in Arb.Generate<Tuple<
-                    Tuple<Guid, ScalesetState, Authentication?, string>,
+                    Tuple<ScalesetState, Authentication?, string>,
                     Tuple<int, bool, bool, bool, Error?, Guid?>,
                     Tuple<Guid?, Dictionary<string, string>>>>()
+              from scalesetId in Arb.Generate<Guid>()
               from poolName in PoolNameGen
               from region in RegionGen
               from image in ImageReferenceGen
               select new Scaleset(
                           PoolName: poolName,
-                          ScalesetId: arg.Item1.Item1,
-                          State: arg.Item1.Item2,
-                          Auth: arg.Item1.Item3,
-                          VmSku: arg.Item1.Item4,
+                          ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
+                          State: arg.Item1.Item1,
+                          Auth: arg.Item1.Item2,
+                          VmSku: arg.Item1.Item3,
                           Image: image,
                           Region: region,
 
@@ -492,6 +499,7 @@ namespace Tests {
     public class OrmArb {
 
         public static Arbitrary<PoolName> PoolName { get; } = OrmGenerators.PoolNameGen.ToArbitrary();
+        public static Arbitrary<ScalesetId> ScalesetId { get; } = OrmGenerators.ScalesetIdGen.ToArbitrary();
 
         public static Arbitrary<IReadOnlyList<T>> ReadOnlyList<T>()
             => Arb.Default.List<T>().Convert(x => (IReadOnlyList<T>)x, x => (List<T>)x);

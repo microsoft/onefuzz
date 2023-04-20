@@ -52,7 +52,7 @@ public class Proxy {
 
         var proxyGet = request.OkV;
         switch ((proxyGet.ScalesetId, proxyGet.MachineId, proxyGet.DstPort)) {
-            case (Guid scalesetId, Guid machineId, int dstPort):
+            case (ScalesetId scalesetId, Guid machineId, int dstPort):
                 var scaleset = await _context.ScalesetOperations.GetById(scalesetId);
                 if (!scaleset.IsOk) {
                     return await _context.RequestHandling.NotOk(req, scaleset.ErrorV, "ProxyGet");

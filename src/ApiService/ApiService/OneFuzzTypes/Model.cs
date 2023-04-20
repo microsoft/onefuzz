@@ -1,11 +1,13 @@
 ﻿using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
 using GroupId = System.Guid;
 using PrincipalId = System.Guid;
+using System;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -107,7 +109,7 @@ public record Node
     // a string internally.
     string? InstanceId = null,
 
-    Guid? ScalesetId = null,
+    ScalesetId? ScalesetId = null,
 
     bool ReimageRequested = false,
     bool DeleteRequested = false,
@@ -132,7 +134,7 @@ public record ProxyForward
 (
     [PartitionKey] Region Region,
     [RowKey] long Port,
-    Guid ScalesetId,
+    ScalesetId ScalesetId,
     Guid MachineId,
     Guid? ProxyId,
     long DstPort,
@@ -260,7 +262,7 @@ public record TaskEventSummary(
 
 public record NodeAssignment(
     Guid NodeId,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     NodeTaskState State
 );
 
@@ -389,7 +391,7 @@ public record InstanceConfig
 }
 
 public record AutoScale(
-    [PartitionKey, RowKey] Guid ScalesetId,
+    [PartitionKey, RowKey] ScalesetId ScalesetId,
     long Min,
     long Max,
     long Default,
@@ -399,15 +401,10 @@ public record AutoScale(
     long ScaleInCooldown
 ) : EntityBase;
 
-public record ScalesetNodeState(
-    Guid MachineId,
-    string InstanceId,
-    NodeState? State
-);
 
-public record Scaleset(
+public partial record Scaleset(
     [PartitionKey] PoolName PoolName,
-    [RowKey] Guid ScalesetId,
+    [RowKey] ScalesetId ScalesetId,
     ScalesetState State,
     string VmSku,
     ImageReference Image,
@@ -422,7 +419,31 @@ public record Scaleset(
     Guid? ClientId = null,
     Guid? ClientObjectId = null
 // 'Nodes' removed when porting from Python: only used in search response
-) : StatefulEntityBase<ScalesetState>(State);
+) : StatefulEntityBase<ScalesetState>(State) {
+
+    [GeneratedRegex(@"[^a-zA-Z0-9\-]+")]
+    private static partial Regex InvalidCharacterRegex();
+
+    public static ScalesetId GenerateNewScalesetId(PoolName poolName)
+        => GenerateNewScalesetIdUsingGuid(poolName, Guid.NewGuid());
+
+    public static ScalesetId GenerateNewScalesetIdUsingGuid(PoolName poolName, Guid guid) {
+        // poolnames permit underscores but not scaleset names; use hyphen instead:
+        var name = poolName.ToString().Replace("_", "-");
+
+        // since poolnames are not actually validated, take only the valid characters:
+        name = InvalidCharacterRegex().Replace(name, "");
+
+        // trim off any starting and ending dashes:
+        name = name.Trim('-');
+
+        // this should now be a valid name; generate a unique suffix:
+        // max length is 64; length of Guid in "N" format is 32, -1 for the hyphen
+        name = name[..Math.Min(64 - 32 - 1, name.Length)] + "-" + guid.ToString("N");
+
+        return ScalesetId.Parse(name);
+    }
+}
 
 public record Notification(
     [PartitionKey] Guid NotificationId,
@@ -728,7 +749,7 @@ public record WorkSetSummary(
 );
 
 public record ScalesetSummary(
-    Guid ScalesetId,
+    ScalesetId ScalesetId,
     ScalesetState State
 );
 

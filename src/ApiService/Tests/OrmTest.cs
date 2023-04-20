@@ -236,7 +236,9 @@ namespace Tests {
 
         [Fact]
         public void TestEventSerialization() {
-            var expectedEvent = new EventMessage(Guid.NewGuid(), EventType.NodeHeartbeat, new EventNodeHeartbeat(Guid.NewGuid(), Guid.NewGuid(), PoolName.Parse("test-Poool")), Guid.NewGuid(), "test");
+            var scalesetId = ScalesetId.Parse(Guid.NewGuid().ToString());
+            var hb = new EventNodeHeartbeat(Guid.NewGuid(), scalesetId, PoolName.Parse("test-Poool"));
+            var expectedEvent = new EventMessage(Guid.NewGuid(), EventType.NodeHeartbeat, hb, Guid.NewGuid(), "test");
             var serialized = JsonSerializer.Serialize(expectedEvent, EntityConverter.GetJsonSerializerOptions());
             var actualEvent = JsonSerializer.Deserialize<EventMessage>(serialized, EntityConverter.GetJsonSerializerOptions());
             Assert.Equal(expectedEvent, actualEvent);

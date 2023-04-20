@@ -124,7 +124,7 @@ public class Scaleset {
         }
 
         var scaleset = new Service.Scaleset(
-            ScalesetId: Guid.NewGuid(),
+            ScalesetId: Service.Scaleset.GenerateNewScalesetId(create.PoolName),
             State: ScalesetState.Init,
             NeedsConfigUpdate: false,
             Auth: await Auth.BuildAuth(_log),
@@ -212,7 +212,7 @@ public class Scaleset {
         }
 
         var search = request.OkV;
-        if (search.ScalesetId is Guid id) {
+        if (search.ScalesetId is ScalesetId id) {
             var scalesetResult = await _context.ScalesetOperations.GetById(id);
             if (!scalesetResult.IsOk) {
                 return await _context.RequestHandling.NotOk(req, scalesetResult.ErrorV, "ScalesetSearch");

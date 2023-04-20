@@ -2,13 +2,21 @@
 
 public record ShrinkEntry(Guid ShrinkId);
 
-
-public class ShrinkQueue {
-    readonly Guid _baseId;
+public sealed class ShrinkQueue {
+    readonly string _baseId;
     readonly IQueue _queueOps;
     readonly ILogTracer _log;
 
-    public ShrinkQueue(Guid baseId, IQueue queueOps, ILogTracer log) {
+    public ShrinkQueue(ScalesetId baseId, IQueue queueOps, ILogTracer log)
+    // backwards compat
+    // scaleset ID used to be a GUID and then this class would format it with "N" format
+    // to retain the same behaviour remove any dashes in the name
+        : this(baseId.ToString().Replace("-", ""), queueOps, log) { }
+
+    public ShrinkQueue(Guid poolId, IQueue queueOps, ILogTracer log)
+        : this(poolId.ToString("N"), queueOps, log) { }
+
+    private ShrinkQueue(string baseId, IQueue queueOps, ILogTracer log) {
         _baseId = baseId;
         _queueOps = queueOps;
         _log = log;
@@ -17,7 +25,7 @@ public class ShrinkQueue {
     public static string ShrinkQueueNamePrefix => "to-shrink-";
 
     public override string ToString() {
-        return $"{ShrinkQueueNamePrefix}{_baseId:N}";
+        return $"{ShrinkQueueNamePrefix}{_baseId}";
     }
 
     public string QueueName => ToString();

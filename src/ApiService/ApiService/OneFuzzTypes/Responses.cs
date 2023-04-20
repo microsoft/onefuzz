@@ -30,7 +30,7 @@ public record NodeSearchResult(
     DateTimeOffset? Heartbeat,
     DateTimeOffset? InitializedAt,
     NodeState State,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     bool ReimageRequested,
     bool DeleteRequested,
     bool DebugKeepNode
@@ -123,7 +123,7 @@ public record PoolGetResult(
 
 public record ScalesetResponse(
     PoolName PoolName,
-    Guid ScalesetId,
+    ScalesetId ScalesetId,
     ScalesetState State,
     Authentication? Auth,
     string VmSku,
@@ -158,6 +158,12 @@ public record ScalesetResponse(
             Tags: s.Tags,
             Nodes: null);
 }
+
+public record ScalesetNodeState(
+    Guid MachineId,
+    string? InstanceId,
+    NodeState? State
+);
 
 public record ConfigResponse(
     string? Authority,

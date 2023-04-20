@@ -159,7 +159,10 @@ namespace ApiService.TestHooks {
 
             var query = UriExtension.GetQueryComponents(req.Url);
             Guid? poolId = UriExtension.GetGuid("poolId", query);
-            Guid? scaleSetId = UriExtension.GetGuid("scaleSetId", query);
+            var scaleSetId = UriExtension.GetString("scaleSetId", query)
+                is string scalesetId
+                ? ScalesetId.Parse(scalesetId)
+                : null;
 
             List<NodeState>? states = default;
             if (query.TryGetValue("states", out var value)) {
@@ -196,7 +199,7 @@ namespace ApiService.TestHooks {
             _log.Info($"reimage long lived nodes");
             var query = UriExtension.GetQueryComponents(req.Url);
 
-            var r = _nodeOps.ReimageLongLivedNodes(Guid.Parse(query["scaleSetId"]));
+            var r = _nodeOps.ReimageLongLivedNodes(ScalesetId.Parse(query["scaleSetId"]));
             var resp = req.CreateResponse(HttpStatusCode.OK);
             await resp.WriteAsJsonAsync(r);
             return resp;
@@ -213,9 +216,9 @@ namespace ApiService.TestHooks {
             var poolName = PoolName.Parse(query["poolName"]);
             Guid machineId = Guid.Parse(query["machineId"]);
 
-            Guid? scaleSetId = default;
+            ScalesetId? scaleSetId = null;
             if (query.TryGetValue("scaleSetId", out var value)) {
-                scaleSetId = Guid.Parse(value);
+                scaleSetId = ScalesetId.Parse(value);
             }
 
             string version = query["version"];
@@ -236,10 +239,10 @@ namespace ApiService.TestHooks {
 
             var query = UriExtension.GetQueryComponents(req.Url);
 
-            Guid scaleSetId = Guid.Parse(query["scaleSetId"]);
+            var scaleSetId = ScalesetId.Parse(query["scaleSetId"]);
             TimeSpan timeSpan = TimeSpan.Parse(query["timeSpan"]);
 
-            var nodes = await (_nodeOps.GetDeadNodes(scaleSetId, timeSpan).ToListAsync());
+            var nodes = await _nodeOps.GetDeadNodes(scaleSetId, timeSpan).ToListAsync();
             var json = JsonSerializer.Serialize(nodes, EntityConverter.GetJsonSerializerOptions());
             var resp = req.CreateResponse(HttpStatusCode.OK);
             await resp.WriteStringAsync(json);

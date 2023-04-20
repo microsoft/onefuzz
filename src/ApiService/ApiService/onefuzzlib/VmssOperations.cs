@@ -13,23 +13,23 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface IVmssOperations {
     Async.Task<OneFuzzResultVoid> UpdateScaleInProtection(Scaleset scaleset, string instanceId, bool protectFromScaleIn);
-    Async.Task<OneFuzzResult<string>> GetInstanceId(Guid name, Guid vmId);
-    Async.Task<OneFuzzResultVoid> UpdateExtensions(Guid name, IList<VirtualMachineScaleSetExtensionData> extensions);
-    Async.Task<VirtualMachineScaleSetData?> GetVmss(Guid name);
+    Async.Task<OneFuzzResult<string>> GetInstanceId(ScalesetId name, Guid vmId);
+    Async.Task<OneFuzzResultVoid> UpdateExtensions(ScalesetId name, IList<VirtualMachineScaleSetExtensionData> extensions);
+    Async.Task<VirtualMachineScaleSetData?> GetVmss(ScalesetId name);
 
     Async.Task<IReadOnlyList<string>> ListAvailableSkus(Region region);
 
-    Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null);
+    Async.Task<bool> DeleteVmss(ScalesetId name, bool? forceDeletion = null);
 
-    Async.Task<IDictionary<Guid, string>> ListInstanceIds(Guid name);
+    Async.Task<IDictionary<Guid, string>> ListInstanceIds(ScalesetId name);
 
-    Async.Task<long?> GetVmssSize(Guid name);
+    Async.Task<long?> GetVmssSize(ScalesetId name);
 
-    Async.Task<OneFuzzResultVoid> ResizeVmss(Guid name, long capacity);
+    Async.Task<OneFuzzResultVoid> ResizeVmss(ScalesetId name, long capacity);
 
     Async.Task<OneFuzzResultVoid> CreateVmss(
         Region location,
-        Guid name,
+        ScalesetId name,
         string vmSku,
         long vmCount,
         ImageReference image,
@@ -41,9 +41,9 @@ public interface IVmssOperations {
         string sshPublicKey,
         IDictionary<string, string> tags);
 
-    IAsyncEnumerable<VirtualMachineScaleSetVmResource> ListVmss(Guid name);
-    Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IEnumerable<Node> nodes);
-    Async.Task<OneFuzzResultVoid> DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes);
+    IAsyncEnumerable<VirtualMachineScaleSetVmResource> ListVmss(ScalesetId name);
+    Async.Task<OneFuzzResultVoid> ReimageNodes(ScalesetId scalesetId, IEnumerable<Node> nodes);
+    Async.Task<OneFuzzResultVoid> DeleteNodes(ScalesetId scalesetId, IEnumerable<Node> nodes);
 }
 
 public class VmssOperations : IVmssOperations {
@@ -60,7 +60,7 @@ public class VmssOperations : IVmssOperations {
         _cache = cache;
     }
 
-    public async Async.Task<bool> DeleteVmss(Guid name, bool? forceDeletion = null) {
+    public async Async.Task<bool> DeleteVmss(ScalesetId name, bool? forceDeletion = null) {
         var r = GetVmssResource(name);
         var result = await r.DeleteAsync(WaitUntil.Started, forceDeletion: forceDeletion);
         var raw = result.GetRawResponse();
@@ -72,7 +72,7 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    public async Async.Task<long?> GetVmssSize(Guid name) {
+    public async Async.Task<long?> GetVmssSize(ScalesetId name) {
         var vmss = await GetVmss(name);
         if (vmss == null) {
             return null;
@@ -80,7 +80,7 @@ public class VmssOperations : IVmssOperations {
         return vmss.Sku.Capacity;
     }
 
-    public async Async.Task<OneFuzzResultVoid> ResizeVmss(Guid name, long capacity) {
+    public async Async.Task<OneFuzzResultVoid> ResizeVmss(ScalesetId name, long capacity) {
         var canUpdate = await CheckCanUpdate(name);
         if (canUpdate.IsOk) {
             var scalesetResource = GetVmssResource(name);
@@ -100,7 +100,7 @@ public class VmssOperations : IVmssOperations {
     }
 
 
-    private VirtualMachineScaleSetResource GetVmssResource(Guid name) {
+    private VirtualMachineScaleSetResource GetVmssResource(ScalesetId name) {
         var id = VirtualMachineScaleSetResource.CreateResourceIdentifier(
             _creds.GetSubscription(),
             _creds.GetBaseResourceGroup(),
@@ -108,7 +108,7 @@ public class VmssOperations : IVmssOperations {
         return _creds.ArmClient.GetVirtualMachineScaleSetResource(id);
     }
 
-    private VirtualMachineScaleSetVmResource GetVmssVmResource(Guid name, string instanceId) {
+    private VirtualMachineScaleSetVmResource GetVmssVmResource(ScalesetId name, string instanceId) {
         var id = VirtualMachineScaleSetVmResource.CreateResourceIdentifier(
             _creds.GetSubscription(),
             _creds.GetBaseResourceGroup(),
@@ -117,7 +117,7 @@ public class VmssOperations : IVmssOperations {
         return _creds.ArmClient.GetVirtualMachineScaleSetVmResource(id);
     }
 
-    public async Async.Task<VirtualMachineScaleSetData?> GetVmss(Guid name) {
+    public async Async.Task<VirtualMachineScaleSetData?> GetVmss(ScalesetId name) {
         try {
             var res = await GetVmssResource(name).GetAsync();
             _log.Verbose($"getting vmss: {name:Tag:VmssName}");
@@ -127,7 +127,7 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    public async Async.Task<OneFuzzResult<VirtualMachineScaleSetData>> CheckCanUpdate(Guid name) {
+    public async Async.Task<OneFuzzResult<VirtualMachineScaleSetData>> CheckCanUpdate(ScalesetId name) {
         var vmss = await GetVmss(name);
         if (vmss is null) {
             return OneFuzzResult<VirtualMachineScaleSetData>.Error(ErrorCode.UNABLE_TO_UPDATE, $"vmss not found: {name}");
@@ -139,7 +139,7 @@ public class VmssOperations : IVmssOperations {
     }
 
 
-    public async Async.Task<OneFuzzResultVoid> UpdateExtensions(Guid name, IList<VirtualMachineScaleSetExtensionData> extensions) {
+    public async Async.Task<OneFuzzResultVoid> UpdateExtensions(ScalesetId name, IList<VirtualMachineScaleSetExtensionData> extensions) {
         var canUpdate = await CheckCanUpdate(name);
         if (canUpdate.IsOk) {
             var res = GetVmssResource(name);
@@ -165,7 +165,7 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    public async Async.Task<IDictionary<Guid, string>> ListInstanceIds(Guid name) {
+    public async Async.Task<IDictionary<Guid, string>> ListInstanceIds(ScalesetId name) {
         _log.Verbose($"get instance IDs for scaleset {name:Tag:VmssName}");
         try {
             var results = new Dictionary<Guid, string>();
@@ -185,8 +185,8 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    private sealed record InstanceIdKey(Guid Scaleset, Guid VmId);
-    private Task<string> GetInstanceIdForVmId(Guid scaleset, Guid vmId)
+    private sealed record InstanceIdKey(ScalesetId Scaleset, Guid VmId);
+    private Task<string> GetInstanceIdForVmId(ScalesetId scaleset, Guid vmId)
         => _cache.GetOrCreateAsync(new InstanceIdKey(scaleset, vmId), async entry => {
             var scalesetResource = GetVmssResource(scaleset);
             var vmIdString = vmId.ToString();
@@ -214,7 +214,7 @@ public class VmssOperations : IVmssOperations {
             }
         })!; // NULLABLE: only this method inserts InstanceIdKey so it cannot be null
 
-    public async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(Guid name, Guid vmId) {
+    public async Async.Task<OneFuzzResult<VirtualMachineScaleSetVmResource>> GetInstanceVm(ScalesetId name, Guid vmId) {
         _log.Info($"get instance ID for scaleset node: {name:Tag:VmssName}:{vmId:Tag:VmId}");
         var instanceId = await GetInstanceId(name, vmId);
         if (!instanceId.IsOk) {
@@ -231,7 +231,7 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    public async Async.Task<OneFuzzResult<string>> GetInstanceId(Guid name, Guid vmId) {
+    public async Async.Task<OneFuzzResult<string>> GetInstanceId(ScalesetId name, Guid vmId) {
         try {
             return OneFuzzResult.Ok(await GetInstanceIdForVmId(name, vmId));
         } catch {
@@ -265,7 +265,7 @@ public class VmssOperations : IVmssOperations {
 
     public async Async.Task<OneFuzzResultVoid> CreateVmss(
         Region location,
-        Guid name,
+        ScalesetId name,
         string vmSku,
         long vmCount,
         ImageReference image,
@@ -397,7 +397,7 @@ public class VmssOperations : IVmssOperations {
         }
     }
 
-    public IAsyncEnumerable<VirtualMachineScaleSetVmResource> ListVmss(Guid name)
+    public IAsyncEnumerable<VirtualMachineScaleSetVmResource> ListVmss(ScalesetId name)
         => GetVmssResource(name)
             .GetVirtualMachineScaleSetVms()
             .SelectAwait(async vm => vm.HasData ? vm : await vm.GetAsync());
@@ -431,7 +431,7 @@ public class VmssOperations : IVmssOperations {
             return skuNames;
         })!; // NULLABLE: only this method inserts AvailableSkusKey so it cannot be null
 
-    private async Async.Task<HashSet<string>> ResolveInstanceIds(Guid scalesetId, IEnumerable<Node> nodes) {
+    private async Async.Task<HashSet<string>> ResolveInstanceIds(ScalesetId scalesetId, IEnumerable<Node> nodes) {
 
         // only initialize this if we find a missing InstanceId
         var machineToInstanceLazy = new Lazy<Task<IDictionary<Guid, string>>>(async () => {
@@ -461,7 +461,7 @@ public class VmssOperations : IVmssOperations {
         return instanceIds;
     }
 
-    public async Async.Task<OneFuzzResultVoid> ReimageNodes(Guid scalesetId, IEnumerable<Node> nodes) {
+    public async Async.Task<OneFuzzResultVoid> ReimageNodes(ScalesetId scalesetId, IEnumerable<Node> nodes) {
         var result = await CheckCanUpdate(scalesetId);
         if (!result.IsOk) {
             return OneFuzzResultVoid.Error(result.ErrorV);
@@ -514,7 +514,7 @@ public class VmssOperations : IVmssOperations {
         return OneFuzzResultVoid.Ok;
     }
 
-    public async Async.Task<OneFuzzResultVoid> DeleteNodes(Guid scalesetId, IEnumerable<Node> nodes) {
+    public async Async.Task<OneFuzzResultVoid> DeleteNodes(ScalesetId scalesetId, IEnumerable<Node> nodes) {
         var result = await CheckCanUpdate(scalesetId);
         if (!result.IsOk) {
             _log.Warning($"cannot delete nodes from scaleset {scalesetId} : {result.ErrorV}");

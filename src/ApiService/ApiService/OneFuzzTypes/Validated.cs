@@ -16,9 +16,15 @@ static partial class Check {
     public static bool IsAlnumDash(string input) => IsAlnumDashRegex().IsMatch(input);
 
     // Permits 1-64 characters: alphanumeric, underscore, period, or dash.
-    [GeneratedRegex("\\A[._a-zA-Z0-9\\-]{1,64}\\z")]
-    private static partial Regex IsNameLikeRegex();
-    public static bool IsNameLike(string input) => IsNameLikeRegex().IsMatch(input);
+    // Cannot start with underscore (or dash) or end with period or dash.
+    [GeneratedRegex(@"\A(?![_\-])[._a-zA-Z0-9\-]{1,64}(?<![.\-])\z")]
+    private static partial Regex ResourceNameRegex();
+    public static bool IsResourceName(string input) => ResourceNameRegex().IsMatch(input);
+
+    // The same as ResourceNameRegex but underscore and period are not permitted.
+    [GeneratedRegex(@"\A(?!-)[a-zA-Z0-9\-]{1,64}(?<!-)\z")]
+    private static partial Regex VmssNameRegex();
+    public static bool IsVmssName(string input) => VmssNameRegex().IsMatch(input);
 
     // This regex is based upon DNS labels but more restricted.
     // It is used for many different Storage resources.
@@ -108,4 +114,12 @@ public sealed record Container : ValidatedStringBase<Container>, IValidatedStrin
     public static Container Parse(string input) => new(input);
     public static bool IsValid(string input) => Check.IsStorageDnsLabel(input);
     public static string Requirements => "Container name must be 3-63 lowercase letters, numbers, or non-consecutive hyphens (see: https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftstorage)";
+}
+
+[JsonConverter(typeof(ValidatedStringConverter<ScalesetId>))]
+public sealed record ScalesetId : ValidatedStringBase<ScalesetId>, IValidatedString<ScalesetId> {
+    private ScalesetId(string value) : base(value) { }
+    public static ScalesetId Parse(string input) => new(input);
+    public static bool IsValid(string input) => Check.IsVmssName(input);
+    public static string Requirements => "Virtual machine scaleset names must be 1-64 numbers, letters, or dashes (not at start or end).";
 }
