@@ -20,7 +20,9 @@ function get-deps {
 function check {
     wanted=$2
     if [ "$(uname)" != 'Linux' ]; then
-        wanted=$3
+        wanted=$4 # Windows
+    elif [ "$(uname -m)" != 'x86_64' ]; then
+        wanted=$3 # ARM64
     fi
     got=$(get-deps "$1")
     if ! difference=$(diff -u --color <(echo "$wanted") <(echo "$got")); then
@@ -37,6 +39,7 @@ function check {
 }
 
 check "$script_dir/../agent/target/release/onefuzz-task" \
+\
 "/lib64/ld-linux-x86-64.so.2
 libc.so.6
 libdl.so.2
@@ -48,6 +51,18 @@ libstdc++.so.6
 libunwind-ptrace.so.0
 libunwind-x86_64.so.8
 libunwind.so.8
+linux-vdso.so.1" \
+\
+"/lib/ld-linux-aarch64.so.1
+libc.so.6
+libdl.so.2
+libgcc_s.so.1
+liblzma.so.5
+libm.so.6
+libpthread.so.0
+libstdc++.so.6
+libunwind-aarch64.so.8
+libunwind-ptrace.so.0
 linux-vdso.so.1" \
 \
 "ADVAPI32.dll
@@ -76,6 +91,7 @@ win32u.dll
 ws2_32.dll"
 
 check "$script_dir/../agent/target/release/onefuzz-agent" \
+\
 "/lib64/ld-linux-x86-64.so.2
 libc.so.6
 libdl.so.2
@@ -83,6 +99,13 @@ liblzma.so.5
 libm.so.6
 libpthread.so.0
 libunwind.so.8
+linux-vdso.so.1" \
+\
+"/lib/ld-linux-aarch64.so.1
+libc.so.6
+libdl.so.2
+libgcc_s.so.1
+libpthread.so.0
 linux-vdso.so.1" \
 \
 "ADVAPI32.dll
@@ -106,6 +129,12 @@ ws2_32.dll"
 
 check "$script_dir/../agent/target/release/srcview" \
 "/lib64/ld-linux-x86-64.so.2
+libc.so.6
+libgcc_s.so.1
+libpthread.so.0
+linux-vdso.so.1" \
+\
+"/lib/ld-linux-aarch64.so.1
 libc.so.6
 libgcc_s.so.1
 libpthread.so.0

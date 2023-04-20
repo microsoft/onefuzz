@@ -527,6 +527,10 @@ public record RegressionReport(
     }
 }
 
+public record UnknownReportType(
+    Uri? ReportUrl
+) : IReport;
+
 [JsonConverter(typeof(NotificationTemplateConverter))]
 #pragma warning disable CA1715
 public interface NotificationTemplate {

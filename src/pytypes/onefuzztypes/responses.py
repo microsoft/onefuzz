@@ -99,3 +99,8 @@ class JinjaToScribanMigrationResponse(BaseResponse):
 
 class JinjaToScribanMigrationDryRunResponse(BaseResponse):
     notification_ids_to_update: List[UUID]
+
+
+class NotificationTestResponse(BaseResponse):
+    success: bool
+    error: Optional[str]

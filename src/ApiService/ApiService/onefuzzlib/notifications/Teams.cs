@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace Microsoft.OneFuzz.Service;
 
 public interface ITeams {
-    Async.Task NotifyTeams(TeamsTemplate config, Container container, string filename, IReport reportOrRegression, Guid notificationId);
+    Async.Task NotifyTeams(TeamsTemplate config, Container container, IReport reportOrRegression, Guid notificationId);
 }
 
 public class Teams : ITeams {
@@ -53,10 +53,11 @@ public class Teams : ITeams {
         }
     }
 
-    public async Async.Task NotifyTeams(TeamsTemplate config, Container container, string filename, IReport reportOrRegression, Guid notificationId) {
+    public async Async.Task NotifyTeams(TeamsTemplate config, Container container, IReport reportOrRegression, Guid notificationId) {
         var facts = new List<Dictionary<string, string>>();
         string? text = null;
         var title = string.Empty;
+        var filename = reportOrRegression.FileName();
 
         if (reportOrRegression is Report report) {
             var task = await _context.TaskOperations.GetByJobIdAndTaskId(report.JobId, report.TaskId);
