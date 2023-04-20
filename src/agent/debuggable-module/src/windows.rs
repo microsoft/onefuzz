@@ -153,13 +153,6 @@ impl<'data> WindowsModule<'data> {
                                 extra.noreturns.insert(offset);
                             }
                         }
-                        Ok(SymbolData::Label(label)) => {
-                            let internal = label.offset;
-                            let offset = self
-                                .translator
-                                .internal_section_offset_to_virtual_offset(internal)?;
-                            extra.labels.insert(offset);
-                        }
                         _ => {}
                     }
                 }
