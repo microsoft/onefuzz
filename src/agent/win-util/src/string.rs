@@ -10,7 +10,7 @@ use std::{
 };
 
 use windows::{
-    core::PCWSTR,
+    core::{Error, PCWSTR},
     Win32::{Foundation::HLOCAL, System::Memory::LocalFree, UI::Shell::CommandLineToArgvW},
 };
 
@@ -33,7 +33,10 @@ pub fn to_argv(command_line: &str) -> Vec<OsString> {
             argv.push(os_string_from_wide_ptr((*args.offset(i as isize)).0));
         }
 
-        LocalFree(HLOCAL(args as _)).expect("unable to free argv memory");
+        let free_result = LocalFree(HLOCAL(args as _));
+        // the return value here is backwards from what you'd expect
+        // "The operation completed successfully."
+        debug_assert!(free_result == Err(Error::OK));
     }
     argv
 }
