@@ -3,7 +3,6 @@
 public record ShrinkEntry(Guid ShrinkId);
 
 public sealed class ShrinkQueue {
-    readonly string _baseId;
     readonly IQueue _queueOps;
     readonly ILogTracer _log;
 
@@ -17,18 +16,26 @@ public sealed class ShrinkQueue {
         : this(poolId.ToString("N"), queueOps, log) { }
 
     private ShrinkQueue(string baseId, IQueue queueOps, ILogTracer log) {
-        _baseId = baseId;
+        var name = ShrinkQueueNamePrefix + baseId;
+
+        // queue names can be no longer than 64 characters
+        // if we exceed that, trim off the end. we will still have
+        // sufficient random chracters to stop collisions from happening
+        if (name.Length > 64) {
+            name = name[..64];
+        }
+
+        QueueName = name;
         _queueOps = queueOps;
         _log = log;
     }
 
     public static string ShrinkQueueNamePrefix => "to-shrink-";
 
-    public override string ToString() {
-        return $"{ShrinkQueueNamePrefix}{_baseId}";
-    }
+    public override string ToString()
+        => QueueName;
 
-    public string QueueName => ToString();
+    public string QueueName { get; }
 
     public async Async.Task Clear() {
         await _queueOps.ClearQueue(QueueName, StorageType.Config);
