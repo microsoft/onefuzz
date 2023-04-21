@@ -16,13 +16,13 @@ public sealed class ShrinkQueue {
         : this(poolId.ToString("N"), queueOps, log) { }
 
     private ShrinkQueue(string baseId, IQueue queueOps, ILogTracer log) {
-        var name = ShrinkQueueNamePrefix + baseId;
+        var name = ShrinkQueueNamePrefix + baseId.ToLowerInvariant();
 
-        // queue names can be no longer than 64 characters
+        // queue names can be no longer than 63 characters
         // if we exceed that, trim off the end. we will still have
         // sufficient random chracters to stop collisions from happening
-        if (name.Length > 64) {
-            name = name[..64];
+        if (name.Length > 63) {
+            name = name[..63];
         }
 
         QueueName = name;
