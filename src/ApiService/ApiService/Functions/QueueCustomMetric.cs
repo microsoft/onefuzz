@@ -35,13 +35,29 @@ public class QueueCustomMetric {
 
         _ = customMetricMessage ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
 
-        //         if (customMetricMessage.name || customMetricMessage.value
-        // || customMetricMessage.customDimensions) {
-        //             _log.WithTag("queueMessage", msg)
-        //                 .Info($"Expected customMetricMessage to contain a missing property - name, value, or custom dimensions.");
-        //             return;
-        //         }
+        // var jsonName = "name";
+        // var jsonValue = "value";
+        // var jsonCustomDimensions = "custom_dimensions";
 
+        // if (!customMetricMessage.RootElement.TryGetProperty(jsonName, out var metricName)) {
+        //     _log.WithTag("queueMessage", msg)
+        //         .Info($"Expected customMetricMessage to contain a property named '{jsonName}'");
+        //     return;
+        // }
+
+        // if (!customMetricMessage.RootElement.TryGetProperty(jsonValue, out var metricValue)) {
+        //     _log.WithTag("queueMessage", msg)
+        //         .Info($"Expected customMetricMessage to contain a property named '{jsonValue}'");
+        //     return;
+        // }
+
+        // if (!customMetricMessage.RootElement.TryGetProperty(jsonCustomDimensions, out var metricCustomDimensions)) {
+        //     _log.WithTag("queueMessage", msg)
+        //         .Info($"Expected customMetricMessage to contain a property named '{jsonCustomDimensions}'");
+        //     return;
+        // }
+
+        // _log.Metric($"{metricName}", int.Parse($"{metricValue}"), metricCustomDimensions);
         _log.Metric($"{customMetricMessage.name}", customMetricMessage.value, customMetricMessage.customDimensions);
 
     }

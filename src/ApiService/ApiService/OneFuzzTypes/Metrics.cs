@@ -176,7 +176,10 @@ public record MetricTaskStateUpdated(
 public record MetricTaskHeartbeat(
    Guid JobId,
    Guid TaskId,
-   TaskConfig Config
+   string Project,
+   string Name,
+   TaskState State
+//    TaskConfig Config
 ) : BaseMetric();
 
 [MetricType(MetricType.Ping)]
@@ -277,7 +280,8 @@ public record MetricNodeCreated(
 public record MetricNodeHeartbeat(
     Guid MachineId,
     Guid? ScalesetId,
-    PoolName PoolName
+    PoolName PoolName,
+    NodeState state
     ) : BaseMetric();
 
 

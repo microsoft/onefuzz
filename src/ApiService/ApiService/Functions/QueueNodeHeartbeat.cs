@@ -38,6 +38,6 @@ public class QueueNodeHearbeat {
 
         // TODO: do we still send event if we fail do update the table ?
         await events.SendEvent(new EventNodeHeartbeat(node.MachineId, node.ScalesetId, node.PoolName));
-        await metrics.SendMetric(1, new MetricNodeHeartbeat(node.MachineId, node.ScalesetId, node.PoolName));
+        await metrics.SendMetric(1, new MetricNodeHeartbeat(node.MachineId, node.ScalesetId, node.PoolName, node.State));
     }
 }
