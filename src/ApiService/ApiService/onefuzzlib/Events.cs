@@ -63,6 +63,7 @@ namespace Microsoft.OneFuzz.Service {
                 creationDate
             );
 
+            // TODO: Maybe we store the events by event type?
             await _containers.SaveBlob(WellKnownContainers.Events, eventMessage.EventId.ToString(), JsonSerializer.Serialize(eventMessage, _options), StorageType.Corpus);
             var sasUrl = await _containers.GetFileSasUrl(WellKnownContainers.Events, eventMessage.EventId.ToString(), StorageType.Corpus, BlobSasPermissions.Read);
 
@@ -103,7 +104,7 @@ namespace Microsoft.OneFuzz.Service {
         public async Async.Task<OneFuzzResult<DownloadableEventMessage>> GetDownloadableEvent(Guid eventId) {
             var eventMessageResult = await GetEvent(eventId);
             if (!eventMessageResult.IsOk) {
-                return OneFuzzResult<DownloadableEventMessage>.Error(eventMessageResult.ErrorV);
+                return eventMessageResult.ErrorV;
             }
 
             var sasUrl = await _containers.GetFileSasUrl(WellKnownContainers.Events, eventId.ToString(), StorageType.Corpus, BlobSasPermissions.Read);
