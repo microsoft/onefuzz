@@ -37,11 +37,14 @@ static partial class Check {
     public static bool IsStorageDnsLabel(string input) => StorageDnsLabelRegex().IsMatch(input);
 }
 
-public interface IValidatedString<T> where T : IValidatedString<T> {
-    public static abstract T Parse(string input);
+public interface IValidatedString {
     public static abstract bool IsValid(string input);
     public static abstract string Requirements { get; }
     public string String { get; }
+}
+
+public interface IValidatedString<T> : IValidatedString where T : IValidatedString<T> {
+    public static abstract T Parse(string input);
 }
 
 public abstract record ValidatedStringBase<T> where T : IValidatedString<T> {

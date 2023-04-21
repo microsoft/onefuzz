@@ -283,7 +283,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         }
 
         if (poolName is not null) {
-            queryParts.Add(Query.CreateQueryFilter($"(pool_name eq {poolName.String})"));
+            queryParts.Add(Query.CreateQueryFilter($"(pool_name eq {poolName})"));
         }
 
         if (scalesetId is not null) {
@@ -370,7 +370,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         var minDate = DateTimeOffset.UtcNow - expirationPeriod;
 
         var filter = $"heartbeat lt datetime'{minDate.ToString("o")}' or Timestamp lt datetime'{minDate.ToString("o")}'";
-        var query = Query.And(filter, $"scaleset_id eq '{scaleSetId}'");
+        var query = Query.And(filter, Query.CreateQueryFilter($"scaleset_id eq {scaleSetId}"));
         return QueryAsync(query);
     }
 
@@ -544,15 +544,15 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         List<string> queryParts = new();
 
         if (poolId is not null) {
-            queryParts.Add($"(pool_id eq '{poolId}')");
+            queryParts.Add(Query.CreateQueryFilter($"(pool_id eq {poolId})"));
         }
 
         if (poolName is not null) {
-            queryParts.Add($"(PartitionKey eq '{poolName.String}')");
+            queryParts.Add(Query.CreateQueryFilter($"(PartitionKey eq {poolName})"));
         }
 
         if (scaleSetId is not null) {
-            queryParts.Add($"(scaleset_id eq '{scaleSetId}')");
+            queryParts.Add(Query.CreateQueryFilter($"(scaleset_id eq {scaleSetId})"));
         }
 
         if (states is not null) {

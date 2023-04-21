@@ -25,7 +25,7 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
         var conditions =
             new[] {
                 scalesetId is not null ? Query.CreateQueryFilter($"scaleset_id eq {scalesetId}") : null,
-                region is not null ? Query.CreateQueryFilter($"PartitionKey eq {region.String}") : null ,
+                region is not null ? Query.CreateQueryFilter($"PartitionKey eq {region}") : null ,
                 machineId is not null ? Query.CreateQueryFilter($"machine_id eq {machineId}") : null ,
                 proxyId is not null ? Query.CreateQueryFilter($"proxy_id eq {proxyId}") : null ,
                 dstPort is not null ? Query.CreateQueryFilter($"dst_port eq {dstPort}") : null ,

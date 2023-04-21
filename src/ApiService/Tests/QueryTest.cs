@@ -33,7 +33,7 @@ namespace Tests {
         [Fact]
         public void QueryFilterTest() {
 
-            var scalesetId = Guid.Parse("3b0426d3-9bde-4ae8-89ac-4edf0d3b3618");
+            var scalesetId = ScalesetId.Parse(Guid.Parse("3b0426d3-9bde-4ae8-89ac-4edf0d3b3618").ToString());
             var proxyId = Guid.Parse("4c96dd6b-9bdb-4758-9720-1010c244fa4b");
             var region = "westus2";
             var outdated = false;
