@@ -43,17 +43,22 @@ impl<'data> LinuxRecorder<'data> {
         tracee: &mut Tracee,
     ) -> Result<()> {
         let regs = tracee.registers()?;
-        let addr = Address(regs.rip);
 
-        if let Some(image) = context.find_image_for_addr(addr) {
+        #[cfg(target_arch = "x86_64")]
+        let instruction_pointer = Address(regs.rip);
+
+        #[cfg(target_arch = "aarch64")]
+        let instruction_pointer = Address(regs.pc);
+
+        if let Some(image) = context.find_image_for_addr(instruction_pointer) {
             if let Some(coverage) = self.coverage.modules.get_mut(image.path()) {
-                let offset = addr.offset_from(image.base())?;
+                let offset = instruction_pointer.offset_from(image.base())?;
                 coverage.increment(offset);
             } else {
                 bail!("coverage not initialized for module {}", image.path());
             }
         } else {
-            bail!("no image for addr: {addr:x}");
+            bail!("no image for addr: {instruction_pointer:x}");
         }
 
         Ok(())

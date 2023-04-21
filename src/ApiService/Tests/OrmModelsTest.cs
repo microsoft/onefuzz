@@ -234,7 +234,7 @@ namespace Tests {
 
         public static Gen<ImageReference> ImageReferenceGen { get; } =
             Gen.Elements(
-                ImageReference.MustParse("Canonical:UbuntuServer:18.04-LTS:latest"),
+                ImageReference.MustParse("Canonical:UbuntuServer:20.04-LTS:latest"),
                 ImageReference.MustParse($"/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/galleries/gallery/images/imageName"),
                 ImageReference.MustParse($"/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/images/imageName"));
 

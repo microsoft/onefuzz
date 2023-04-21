@@ -1,0 +1,8 @@
+Unhandled exception. System.Exception: No fuzzing target specified
+ ---> System.Exception: Missing `LIBFUZZER_DOTNET_TARGET` environment variables: LIBFUZZER_DOTNET_TARGET_ASSEMBLY, LIBFUZZER_DOTNET_TARGET_CLASS, LIBFUZZER_DOTNET_TARGET_METHOD
+   at LibFuzzerDotnetLoader.LibFuzzerDotnetTarget.FromEnvironmentVars() in /workspaces/onefuzz/src/agent/LibFuzzerDotnetLoader/Program.cs:line 190
+   at LibFuzzerDotnetLoader.LibFuzzerDotnetTarget.FromEnvironment() in /workspaces/onefuzz/src/agent/LibFuzzerDotnetLoader/Program.cs:line 166
+   --- End of inner exception stack trace ---
+   at LibFuzzerDotnetLoader.LibFuzzerDotnetTarget.FromEnvironment() in /workspaces/onefuzz/src/agent/LibFuzzerDotnetLoader/Program.cs:line 171
+   at LibFuzzerDotnetLoader.Program.TryMain() in /workspaces/onefuzz/src/agent/LibFuzzerDotnetLoader/Program.cs:line 70
+   at LibFuzzerDotnetLoader.Program.Main(String[] args) in /workspaces/onefuzz/src/agent/LibFuzzerDotnetLoader/Program.cs:line 57

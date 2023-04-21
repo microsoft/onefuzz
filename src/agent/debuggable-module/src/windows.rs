@@ -141,6 +141,7 @@ impl<'data> WindowsModule<'data> {
                 let mut symbols = mi.symbols()?;
 
                 while let Some(symbol) = symbols.next()? {
+                    #[allow(clippy::single_match)]
                     match symbol.parse() {
                         Ok(SymbolData::Procedure(proc)) => {
                             let noreturn = proc.flags.never;
@@ -152,13 +153,6 @@ impl<'data> WindowsModule<'data> {
                                     .internal_section_offset_to_virtual_offset(internal)?;
                                 extra.noreturns.insert(offset);
                             }
-                        }
-                        Ok(SymbolData::Label(label)) => {
-                            let internal = label.offset;
-                            let offset = self
-                                .translator
-                                .internal_section_offset_to_virtual_offset(internal)?;
-                            extra.labels.insert(offset);
                         }
                         _ => {}
                     }
