@@ -105,6 +105,11 @@ class PoolCreate(BaseRequest):
     autoscale: Optional[AutoScaleConfig]
 
 
+class PoolUpdate(BaseRequest):
+    name: PoolName
+    object_id: Optional[UUID]
+
+
 class PoolSearch(BaseRequest):
     pool_id: Optional[UUID]
     name: Optional[PoolName]

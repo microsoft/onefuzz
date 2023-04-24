@@ -270,6 +270,13 @@ public record PoolCreate(
     [property: Required] Os Os,
     [property: Required] Architecture Arch,
     [property: Required] bool Managed,
+    Guid? ObjectId = null,
+    bool Update = false
+) : BaseRequest;
+
+
+public record PoolUpdate(
+    [property: Required] PoolName Name,
     Guid? ObjectId = null
 ) : BaseRequest;
 
