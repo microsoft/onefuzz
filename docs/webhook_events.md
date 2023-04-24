@@ -238,6 +238,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Onefuzz Version",
                     "type": "string"
                 },
+                "report_url": {
+                    "title": "Report Url",
+                    "type": "string"
+                },
                 "scariness_description": {
                     "title": "Scariness Description",
                     "type": "string"
@@ -2156,6 +2160,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "onefuzz_version": {
                     "title": "Onefuzz Version",
+                    "type": "string"
+                },
+                "report_url": {
+                    "title": "Report Url",
                     "type": "string"
                 },
                 "scariness_description": {
@@ -6576,6 +6584,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "onefuzz_version": {
                     "title": "Onefuzz Version",
+                    "type": "string"
+                },
+                "report_url": {
+                    "title": "Report Url",
                     "type": "string"
                 },
                 "scariness_description": {

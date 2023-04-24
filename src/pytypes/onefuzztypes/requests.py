@@ -8,6 +8,8 @@ from uuid import UUID
 
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
 
+from onefuzztypes import models
+
 from ._monkeypatch import _check_hotfix
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
@@ -24,6 +26,7 @@ from .models import (
     AutoScaleConfig,
     InstanceConfig,
     NotificationConfig,
+    Report,
     TemplateRenderContext,
 )
 from .primitives import Container, PoolName, Region
@@ -270,6 +273,11 @@ class TemplateValidationPost(BaseModel):
 
 class JinjaToScribanMigrationPost(BaseModel):
     dry_run: bool = Field(default=False)
+
+
+class NotificationTest(BaseModel):
+    report: Report
+    notification: models.Notification
 
 
 _check_hotfix()

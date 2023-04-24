@@ -56,13 +56,11 @@ public class SecretsOperations : ISecretsOperations {
     }
 
     public async Task<string?> GetSecretStringValue<T>(SecretData<T> data) {
-
-        if (data.Secret is SecretAddress<T> secretAddress) {
-            var secret = await GetSecret(secretAddress.Url);
-            return secret.Value;
-        } else {
-            return data.Secret.ToString();
-        }
+        return (data.Secret) switch {
+            SecretAddress<T> secretAddress => (await GetSecret(secretAddress.Url)).Value,
+            SecretValue<T> sValue => sValue.Value?.ToString(),
+            _ => data.Secret.ToString(),
+        };
     }
 
     public Uri GetKeyvaultAddress() {
