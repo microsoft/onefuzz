@@ -73,10 +73,10 @@ public class Ado : NotificationsBase, IAdo {
                 connection = new VssConnection(config.BaseUrl, new VssBasicCredential(string.Empty, token.Value));
                 await connection.ConnectAsync();
             } catch {
-                return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"Failed to connect to {config.BaseUrl} using the provided token");
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, $"Failed to connect to {config.BaseUrl} using the provided token");
             }
         } else {
-            return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, "Auth token is missing or invalid");
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, "Auth token is missing or invalid");
         }
 
         try {
@@ -91,7 +91,7 @@ public class Ado : NotificationsBase, IAdo {
 
             if (!validConfigFields.SetEquals(configFields)) {
                 var invalidFields = configFields.Except(validConfigFields);
-                return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, new[]
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_FIELDS, new[]
                     {
                         $"The following unique fields are not valid fields for this project: {string.Join(',', invalidFields)}",
                         "You can find the valid fields for your project by following these steps: https://learn.microsoft.com/en-us/azure/devops/boards/work-items/work-item-fields?view=azure-devops#review-fields"
@@ -99,7 +99,7 @@ public class Ado : NotificationsBase, IAdo {
                 );
             }
         } catch {
-            return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, "Failed to query and compare the valid fields for this project");
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_FIELDS, "Failed to query and compare the valid fields for this project");
         }
 
         return OneFuzzResultVoid.Ok;
