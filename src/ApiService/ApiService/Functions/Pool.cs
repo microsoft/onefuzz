@@ -91,7 +91,7 @@ public class Pool {
                 req,
                 new Error(
                     Code: ErrorCode.INVALID_REQUEST,
-                    Errors: new string[] { "pool with that name does not exist exists" }),
+                    Errors: new string[] { "pool with that name does not exist" }),
                 "PoolUpdate");
         }
 
