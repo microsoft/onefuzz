@@ -218,6 +218,20 @@ class Files(Endpoint):
         downloaded = client.download_blob(filename)
         return downloaded
 
+    def download(
+        self, container: primitives.Container, blob_name: str, file_path: Optional[str]
+    ) -> "None":
+        """download a container file to a local path"""
+        self.logger.debug("getting file from container: %s:%s", container, blob_name)
+        client = self._get_client(container)
+        downloaded = client.download_blob(blob_name)
+        local_file = file_path if file_path else blob_name
+        with open(local_file, "wb") as handle:
+            handle.write(downloaded)
+        self.logger.debug(
+            f"downloaded blob {blob_name} from container {container} to {local_file}"
+        )
+
     def upload_file(
         self,
         container: primitives.Container,
