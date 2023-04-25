@@ -905,7 +905,7 @@ class Libfuzzer(Command):
             self.logger.warning(
                 "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
             )
-        check_fuzzer_help=not no_check_fuzzer_help
+        check_fuzzer_help = not no_check_fuzzer_help
         del no_check_fuzzer_help
 
         self.logger.warning(
