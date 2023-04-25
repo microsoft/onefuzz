@@ -16,7 +16,7 @@ use std::{
     ffi::{OsStr, OsString},
     path::{Path, PathBuf},
     process::Stdio,
-    time::{Duration, Instant},
+    time::Duration,
 };
 use tempfile::tempdir;
 use tokio::process::{Child, Command};
@@ -213,9 +213,8 @@ impl LibFuzzer {
         // for example, executables that depend upon an override in KnownDlls from taking effect
         //
         // so, we let the verification step fail for a while before we commit to its total failure
-        let sleep_time = Duration::from_secs(5);
-        let max_verification_time = Duration::from_secs(60);
-        let started_at = Instant::now();
+        const SLEEP_TIME: Duration = Duration::from_secs(5);
+        const MAX_ATTEMPTS: usize = 20; // have seen this take 10+ attempts
         let mut attempts = 1;
         loop {
             let result = self
@@ -225,9 +224,9 @@ impl LibFuzzer {
             match result {
                 Ok(()) => return Ok(()),
                 Err(e) => {
-                    if (Instant::now() + sleep_time) <= (started_at + max_verification_time) {
+                    if attempts < MAX_ATTEMPTS {
                         warn!("libfuzzer verification failed, will retry: {e:?}");
-                        tokio::time::sleep(sleep_time).await;
+                        tokio::time::sleep(SLEEP_TIME).await;
                     } else {
                         return Err(e.context(format!(
                             "libfuzzer verification still failing after {attempts} attempts"
