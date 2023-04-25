@@ -129,6 +129,12 @@ public record NotificationSearch(
     Guid? NotificationId
 ) : BaseRequest;
 
+
+public record NotificationTest(
+    [property: Required] Report Report,
+    [property: Required] Notification Notification
+) : BaseRequest;
+
 public record NotificationGet(
     [property: Required] Guid NotificationId
 ) : BaseRequest;
@@ -264,6 +270,13 @@ public record PoolCreate(
     [property: Required] Os Os,
     [property: Required] Architecture Arch,
     [property: Required] bool Managed,
+    Guid? ObjectId = null,
+    bool Update = false
+) : BaseRequest;
+
+
+public record PoolUpdate(
+    [property: Required] PoolName Name,
     Guid? ObjectId = null
 ) : BaseRequest;
 

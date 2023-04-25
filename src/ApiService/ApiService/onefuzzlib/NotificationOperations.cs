@@ -9,7 +9,10 @@ public interface INotificationOperations : IOrm<Notification> {
     IAsyncEnumerable<Notification> GetNotifications(Container container);
     IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks();
     Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting);
-    Async.Task<Notification> GetNotification(Guid notifificationId);
+    Async.Task<Notification?> GetNotification(Guid notifificationId);
+
+    System.Threading.Tasks.Task<OneFuzzResultVoid> TriggerNotification(Container container,
+        Notification notification, IReport? reportOrRegression, bool isLastRetryAttempt = false);
 }
 
 public class NotificationOperations : Orm<Notification>, INotificationOperations {
@@ -30,22 +33,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
                 }
 
                 done.Add(notification.Config);
-
-                if (notification.Config is TeamsTemplate teamsTemplate) {
-                    await _context.Teams.NotifyTeams(teamsTemplate, container, filename, reportOrRegression!, notification.NotificationId);
-                }
-
-                if (reportOrRegression == null) {
-                    continue;
-                }
-
-                if (notification.Config is AdoTemplate adoTemplate) {
-                    await _context.Ado.NotifyAdo(adoTemplate, container, filename, reportOrRegression, isLastRetryAttempt, notification.NotificationId);
-                }
-
-                if (notification.Config is GithubIssuesTemplate githubIssuesTemplate) {
-                    await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, filename, reportOrRegression, notification.NotificationId);
-                }
+                _ = await TriggerNotification(container, notification, reportOrRegression, isLastRetryAttempt);
             }
         }
 
@@ -74,6 +62,25 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         }
     }
 
+    public async System.Threading.Tasks.Task<OneFuzzResultVoid> TriggerNotification(Container container,
+        Notification notification, IReport? reportOrRegression, bool isLastRetryAttempt = false) {
+        switch (notification.Config) {
+            case TeamsTemplate teamsTemplate:
+                await _context.Teams.NotifyTeams(teamsTemplate, container, reportOrRegression!,
+                    notification.NotificationId);
+                break;
+            case AdoTemplate adoTemplate when reportOrRegression is not null:
+                return await _context.Ado.NotifyAdo(adoTemplate, container, reportOrRegression, isLastRetryAttempt,
+                    notification.NotificationId);
+            case GithubIssuesTemplate githubIssuesTemplate when reportOrRegression is not null:
+                await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, reportOrRegression,
+                    notification.NotificationId);
+                break;
+        }
+
+        return OneFuzzResultVoid.Ok;
+    }
+
     public IAsyncEnumerable<Notification> GetNotifications(Container container) {
         return SearchByRowKeys(new[] { container.String });
     }
@@ -91,12 +98,12 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, "invalid container");
         }
 
-        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly) &&
+        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.RenderOnlyScribanTemplates) &&
             !await JinjaTemplateAdapter.IsValidScribanNotificationTemplate(_context, _logTracer, config)) {
             return OneFuzzResult<Notification>.Error(ErrorCode.INVALID_REQUEST, "The notification config is not a valid scriban template");
         }
 
-        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableValidateNotificationConfigSemantics)) {
+        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.SemanticNotificationConfigValidation)) {
             var validConfig = await config.Validate();
             if (!validConfig.IsOk) {
                 return OneFuzzResult<Notification>.Error(validConfig.ErrorV);
@@ -155,7 +162,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         return null;
     }
 
-    public async Async.Task<Notification> GetNotification(Guid notifificationId) {
-        return await SearchByPartitionKeys(new[] { notifificationId.ToString() }).SingleAsync();
+    public async Async.Task<Notification?> GetNotification(Guid notifificationId) {
+        return await SearchByPartitionKeys(new[] { notifificationId.ToString() }).SingleOrDefaultAsync();
     }
 }

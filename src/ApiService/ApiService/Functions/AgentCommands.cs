@@ -31,7 +31,7 @@ public class AgentCommands {
         }
         var nodeCommand = request.OkV;
 
-        var message = await _context.NodeMessageOperations.GetMessage(nodeCommand.MachineId).FirstOrDefaultAsync();
+        var message = await _context.NodeMessageOperations.GetMessage(nodeCommand.MachineId);
         if (message != null) {
             var command = message.Message;
             var messageId = message.MessageId;

@@ -76,7 +76,7 @@ public abstract class NotificationsBase {
                 inputUrl = new Uri(context.Containers.AuthDownloadUrl(report.InputBlob.Container, report.InputBlob.Name));
             }
 
-            var scribanOnlyFeatureFlag = await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableScribanOnly);
+            var scribanOnlyFeatureFlag = await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.RenderOnlyScribanTemplates);
             log.Info($"ScribanOnlyFeatureFlag: {scribanOnlyFeatureFlag}");
 
             var scribanOnly = scribanOnlyOverride ?? scribanOnlyFeatureFlag;
@@ -138,7 +138,7 @@ public abstract class NotificationsBase {
                 true => new TemplateContext {
                     EnableRelaxedFunctionAccess = false,
                     EnableRelaxedIndexerAccess = false,
-                    EnableRelaxedMemberAccess = false,
+                    EnableRelaxedMemberAccess = true,
                     EnableRelaxedTargetAccess = false
                 },
                 _ => new TemplateContext()

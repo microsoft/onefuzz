@@ -18,9 +18,8 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
-  ACTIONS_CACHE_KEY_DATE: 2022-11-21-02
+  ACTIONS_CACHE_KEY_DATE: 2023-04-19
   CI: true
-  DOTNET_VERSION: 7.0.x
 
 jobs:
   agent:
@@ -37,15 +36,21 @@ jobs:
               "1ES.Pool=onefuzz-ci",
               "1ES.ImageOverride=github-runner-image-ubuntu-20.04",
             ]
+          - [
+              self-hosted,
+              "1ES.Pool=onefuzz-ci-arm64",
+              "1ES.ImageOverride=github-runner-image-ubuntu-20.04-arm64",
+            ]
     runs-on: "${{ matrix.os }}"
     steps:
       - uses: actions/checkout@v3
       - name: Install specific Rust version
         uses: dtolnay/rust-toolchain@55c7845fad90d0ae8b2e83715cb900e5e861e8cb # pinned latest master as of 2022-10-08
-        # note: keep this in sync with .devcontainer/Dockerfile
         with:
-          toolchain: 1.68
+          toolchain: 1.69 # note: keep this in sync with .devcontainer/Dockerfile
           components: clippy, rustfmt, llvm-tools-preview
+      - name: Setup Rust problem-matchers
+        uses: r7kamura/rust-problem-matchers@d58b70c4a13c4866d96436315da451d8106f8f08 # pinned to 1.3.0
       - name: Get Rust version & build version
         shell: bash
         run: |
@@ -267,8 +272,8 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: ${{env.DOTNET_VERSION}}
-          dotnet-quality: "ga"
+          # use global.json to install the correct version
+          global-json-file: global.json
       - name: Install dependencies
         run: |
           cd src/ApiService/
@@ -362,8 +367,8 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: ${{env.DOTNET_VERSION}}
-          dotnet-quality: "ga"
+          # use global.json to install the correct version
+          global-json-file: global.json
       - run: src/ci/dotnet-fuzzing-tools.sh
         shell: bash
       - uses: actions/upload-artifact@v3
@@ -377,8 +382,8 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: ${{env.DOTNET_VERSION}}
-          dotnet-quality: "ga"
+          # use global.json to install the correct version
+          global-json-file: global.json
       - run: src/ci/dotnet-fuzzing-tools.ps1
         shell: pwsh
       - uses: actions/upload-artifact@v3
@@ -469,8 +474,10 @@ jobs:
           cp artifacts/agent-MINGW*/onefuzz-task.exe src/deployment/tools/win64/
           cp artifacts/agent-MINGW*/onefuzz_agent.pdb src/deployment/tools/win64/
           cp artifacts/agent-MINGW*/onefuzz_task.pdb src/deployment/tools/win64/
-          cp artifacts/agent-Linux/onefuzz-agent src/deployment/tools/linux/
-          cp artifacts/agent-Linux/onefuzz-task src/deployment/tools/linux/
+          cp artifacts/agent-Linux-x86_64/onefuzz-agent src/deployment/tools/linux/
+          cp artifacts/agent-Linux-x86_64/onefuzz-task src/deployment/tools/linux/
+          # cp artifacts/agent-Linux-aarch64/onefuzz-agent src/deployment/tools/linux-aarch64/
+          # cp artifacts/agent-Linux-aarch64/onefuzz-task src/deployment/tools/linux-aarch64/
 
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment

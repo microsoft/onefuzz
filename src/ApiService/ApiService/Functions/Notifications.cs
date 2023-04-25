@@ -22,7 +22,7 @@ public class Notifications {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "notification search");
         }
 
-        var entries = request.OkV switch { { Container: null, NotificationId: null } => _context.NotificationOperations.SearchAll(), { Container: var c, NotificationId: null } => _context.NotificationOperations.SearchByRowKeys(c.Select(x => x.String)), { Container: var _, NotificationId: var n } => new[] { await _context.NotificationOperations.GetNotification(n.Value) }.ToAsyncEnumerable(),
+        var entries = request.OkV switch { { Container: null, NotificationId: null } => _context.NotificationOperations.SearchAll(), { Container: var c, NotificationId: null } => _context.NotificationOperations.SearchByRowKeys(c.Select(x => x.String)), { Container: var _, NotificationId: var n } => new[] { await _context.NotificationOperations.GetNotification(n.Value) }.ToAsyncEnumerable()
         };
 
         var response = req.CreateResponse(HttpStatusCode.OK);
@@ -67,6 +67,14 @@ public class Notifications {
         if (entries.Count > 1) {
             return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "error identifying Notification" }), context: "notification delete");
         }
+
+        var result = await _context.NotificationOperations.Delete(entries[0]);
+
+        if (!result.IsOk) {
+            var (status, error) = result.ErrorV;
+            return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.UNABLE_TO_UPDATE, new[] { error }), "notification delete");
+        }
+
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(entries[0]);
         return response;

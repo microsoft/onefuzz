@@ -231,6 +231,7 @@ class Report(BaseModel):
     minimized_stack_function_names_sha256: Optional[str]
     minimized_stack_function_lines: Optional[List[str]]
     minimized_stack_function_lines_sha256: Optional[str]
+    report_url: Optional[str]
 
 
 class NoReproReport(BaseModel):
@@ -653,6 +654,7 @@ class Pool(BaseModel):
     # intended to be used to pass the information to the CLI when the CLI asks
     # for information about what work is in the queue for the pool.
     work_queue: Optional[List[WorkSetSummary]]
+    object_id: Optional[UUID]
 
     # explicitly excluded from Tables
     scaleset_summary: Optional[List[ScalesetSummary]]

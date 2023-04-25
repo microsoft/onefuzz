@@ -267,6 +267,7 @@ pub async fn build_local_context(
         microsoft_telemetry_key: None,
         logs: None,
         min_available_memory_mb: 0,
+        tags: Default::default(),
         from_agent_to_task_endpoint: "/".to_string(),
         from_task_to_agent_endpoint: "/".to_string(),
     };

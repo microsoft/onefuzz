@@ -31,11 +31,12 @@ public class LogAnalytics : ILogAnalytics {
         return _creds.GetIdentity().GetToken(new TokenRequestContext(scopes));
     }
 
+    private static readonly object _monitorSettingsKey = new(); // we only need equality/hashcode
     public Async.Task<MonitorSettings> GetMonitorSettings() =>
-        _cache.GetOrCreateAsync(nameof(GetMonitorSettings), entry => {
+        _cache.GetOrCreateAsync(_monitorSettingsKey, entry => {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
             return GetMonitorSettingsInternal();
-        });
+        })!; // NULLABLE: only this method inserts _monitorSettingsKey so it cannot be null
 
     public async Async.Task<MonitorSettings> GetMonitorSettingsInternal() {
         var token = GetToken();
