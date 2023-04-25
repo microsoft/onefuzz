@@ -65,6 +65,7 @@ class Libfuzzer(Command):
         ensemble_sync_delay: Optional[int] = None,
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
+        check_fuzzer_help: bool = False,
         no_check_fuzzer_help: bool = False,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
@@ -75,6 +76,13 @@ class Libfuzzer(Command):
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
     ) -> None:
+        if check_fuzzer_help:
+            self.logger.warning(
+                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
+            )
+        check_fuzzer_help = not no_check_fuzzer_help
+        del no_check_fuzzer_help
+
         target_options = target_options or []
 
         regression_containers = [
@@ -113,7 +121,7 @@ class Libfuzzer(Command):
             tags=tags,
             target_timeout=effective_crash_report_timeout,
             check_retry_count=check_retry_count,
-            check_fuzzer_help=not no_check_fuzzer_help,
+            check_fuzzer_help=check_fuzzer_help,
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             minimized_stack_depth=minimized_stack_depth,
@@ -169,7 +177,7 @@ class Libfuzzer(Command):
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
             colocate=colocate_all_tasks,
-            check_fuzzer_help=not no_check_fuzzer_help,
+            check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
         )
 
@@ -233,7 +241,7 @@ class Libfuzzer(Command):
             prereq_tasks=prereq_tasks,
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
-            check_fuzzer_help=not no_check_fuzzer_help,
+            check_fuzzer_help=check_fuzzer_help,
             module_allowlist=module_allowlist,
             source_allowlist=source_allowlist,
         )
@@ -267,7 +275,7 @@ class Libfuzzer(Command):
             prereq_tasks=prereq_tasks,
             target_timeout=effective_crash_report_timeout,
             check_retry_count=check_retry_count,
-            check_fuzzer_help=not no_check_fuzzer_help,
+            check_fuzzer_help=check_fuzzer_help,
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             minimized_stack_depth=minimized_stack_depth,
@@ -348,6 +356,7 @@ class Libfuzzer(Command):
         ensemble_sync_delay: Optional[int] = None,
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
+        check_fuzzer_help: bool = False,
         no_check_fuzzer_help: bool = False,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
@@ -366,6 +375,13 @@ class Libfuzzer(Command):
         :param bool ensemble_sync_delay: Specify duration between
             syncing inputs during ensemble fuzzing (0 to disable).
         """
+
+        if check_fuzzer_help:
+            self.logger.warning(
+                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
+            )
+        check_fuzzer_help = not no_check_fuzzer_help
+        del no_check_fuzzer_help
 
         # verify containers exist
         if existing_inputs:
@@ -471,7 +487,7 @@ class Libfuzzer(Command):
             ensemble_sync_delay=ensemble_sync_delay,
             colocate_all_tasks=colocate_all_tasks,
             colocate_secondary_tasks=colocate_secondary_tasks,
-            check_fuzzer_help=not no_check_fuzzer_help,
+            check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
             minimized_stack_depth=minimized_stack_depth,
             module_allowlist=module_allowlist_blob_name,
@@ -512,12 +528,19 @@ class Libfuzzer(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         preserve_existing_outputs: bool = False,
+        check_fuzzer_help: bool = False,
         no_check_fuzzer_help: bool = False,
         extra_container: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         libfuzzer merge task
         """
+        if check_fuzzer_help:
+            self.logger.warning(
+                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
+            )
+        check_fuzzer_help = not no_check_fuzzer_help
+        del no_check_fuzzer_help
 
         # verify containers exist
         if existing_inputs:
@@ -604,7 +627,7 @@ class Libfuzzer(Command):
             check_retry_count=check_retry_count,
             debug=debug,
             preserve_existing_outputs=preserve_existing_outputs,
-            check_fuzzer_help=not no_check_fuzzer_help,
+            check_fuzzer_help=check_fuzzer_help,
         )
 
         self.logger.info("done creating tasks")
@@ -870,6 +893,7 @@ class Libfuzzer(Command):
         colocate_all_tasks: bool = False,
         crash_report_timeout: Optional[int] = 1,
         check_retry_count: Optional[int] = 300,
+        check_fuzzer_help: bool = False,
         no_check_fuzzer_help: bool = False,
         extra_container: Optional[Container] = None,
         crashes: Optional[Container] = None,
@@ -877,6 +901,12 @@ class Libfuzzer(Command):
         """
         libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
         """
+        if check_fuzzer_help:
+            self.logger.warning(
+                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
+            )
+        check_fuzzer_help=not no_check_fuzzer_help
+        del no_check_fuzzer_help
 
         self.logger.warning(
             "qemu_user jobs are a preview feature and may change in the future"
@@ -1017,7 +1047,7 @@ class Libfuzzer(Command):
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
             expect_crash_on_failure=False,
-            check_fuzzer_help=not no_check_fuzzer_help,
+            check_fuzzer_help=check_fuzzer_help,
         )
 
         report_containers = [
@@ -1053,7 +1083,7 @@ class Libfuzzer(Command):
             debug=debug,
             colocate=colocate_all_tasks,
             expect_crash_on_failure=False,
-            check_fuzzer_help=not no_check_fuzzer_help,
+            check_fuzzer_help=check_fuzzer_help,
         )
 
         self.logger.info("done creating tasks")
