@@ -1311,6 +1311,24 @@ class Pool(Endpoint):
             ),
         )
 
+    def update(
+        self,
+        name: str,
+        object_id: Optional[UUID] = None,
+    ) -> models.Pool:
+        """
+        Update a worker pool
+
+        :param str name: Name of the worker-pool
+        """
+        self.logger.debug("create worker pool")
+
+        return self._req_model(
+            "PATCH",
+            models.Pool,
+            data=requests.PoolUpdate(name=name, object_id=object_id),
+        )
+
     def get_config(self, pool_name: primitives.PoolName) -> models.AgentConfig:
         """Get the agent configuration for the pool"""
 
