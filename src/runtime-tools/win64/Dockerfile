@@ -9,11 +9,11 @@ SHELL ["powershell.exe", "-ExecutionPolicy", "Unrestricted", "-Command"]
 
 RUN dir
 
-COPY . c:\onefuzz\tools\win64\
-COPY . c:\downloads\
+COPY . "c:\\onefuzz\\tools\\win64\\"
+COPY . "c:\\downloads\\"
 RUN New-LocalUser -Name 'onefuzz' -Description 'onefuzz account' -NoPassword
-RUN cd c:\downloads; & .\setup.ps1 -docker
+RUN "cd c:\\downloads; & .\\setup.ps1 -docker"
 
-WORKDIR "c:\onefuzz"
+WORKDIR "c:\\onefuzz"
 
-ENTRYPOINT & .\onefuzz-run.ps1 -docker
+ENTRYPOINT "& .\\onefuzz-run.ps1 -docker"
