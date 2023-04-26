@@ -144,6 +144,11 @@ public class Config : IConfig {
                 case ContainerType.Extra:
                     config.Extra = def;
                     break;
+                case ContainerType.ExtraRw:
+                    config.ExtraRw = def;
+                    break;
+                default:
+                    throw new InvalidDataException($"unknown container type: {data.countainerDef.Type}");
             }
         }
 

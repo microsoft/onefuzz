@@ -120,7 +120,14 @@ public class Scheduler : IScheduler {
     }
 
 
-    sealed record BucketConfig(long count, bool reboot, Container setupContainer, Container? extraContainer, string? setupScript, Pool pool);
+    sealed record BucketConfig(
+        long count,
+        bool reboot,
+        Container setupContainer,
+        Container? extraContainer,
+        Container? extraRwContainer,
+        string? setupScript,
+        Pool pool);
 
     sealed record PoolKey(
         PoolName? poolName = null,
@@ -174,7 +181,8 @@ public class Scheduler : IScheduler {
         }
         var setupContainer = task.Config.Containers?.FirstOrDefault(c => c.Type == ContainerType.Setup) ?? throw new Exception($"task missing setup container: task_type = {task.Config.Task.Type}");
 
-        var extraContainer = task.Config.Containers?.FirstOrDefault(c => c.Type == ContainerType.Extra);
+        var extraContainer = task.Config.Containers?.FirstOrDefault(c => c is { Type: ContainerType.Extra });
+        var extraRwContainer = task.Config.Containers?.FirstOrDefault(c => c is { Type: ContainerType.ExtraRw });
 
         string? setupScript = null;
         if (task.Os == Os.Windows) {
@@ -214,6 +222,7 @@ public class Scheduler : IScheduler {
             reboot,
             setupContainer.Name,
             extraContainer?.Name,
+            extraRwContainer?.Name,
             setupScript,
             pool with { ETag = default, TimeStamp = default });
 

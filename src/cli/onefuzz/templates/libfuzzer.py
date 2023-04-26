@@ -43,6 +43,14 @@ class Libfuzzer(Command):
         if LIBFUZZER_MAGIC_STRING not in data:
             raise Exception("not a libfuzzer binary: %s" % target_exe)
 
+    def _add_optional_containers(
+        self,
+        dest: list[(ContainerType, Container)],
+        source: map[ContainerType, Container],
+        types: list[ContainerType],
+    ):
+        dest.extend([(c, source[c]) for c in types if c in source])
+
     def _create_tasks(
         self,
         *,
@@ -95,10 +103,11 @@ class Libfuzzer(Command):
             ),
         ]
 
-        if ContainerType.extra in containers:
-            regression_containers.append(
-                (ContainerType.extra, containers[ContainerType.extra])
-            )
+        self._add_optional_containers(
+            regression_containers,
+            containers,
+            [ContainerType.extra, ContainerType.extra_rw],
+        )
 
         # We don't really need a separate timeout for crash reporting, and we could just
         # use `target_timeout`. But `crash_report_timeout` was introduced first, so we
@@ -133,18 +142,15 @@ class Libfuzzer(Command):
             (ContainerType.inputs, containers[ContainerType.inputs]),
         ]
 
-        if ContainerType.readonly_inputs in containers:
-            fuzzer_containers.append(
-                (
-                    ContainerType.readonly_inputs,
-                    containers[ContainerType.readonly_inputs],
-                )
-            )
-
-        if ContainerType.extra in containers:
-            fuzzer_containers.append(
-                (ContainerType.extra, containers[ContainerType.extra])
-            )
+        self._add_optional_containers(
+            fuzzer_containers,
+            containers,
+            [
+                ContainerType.extra,
+                ContainerType.extra_rw,
+                ContainerType.readonly_inputs,
+            ],
+        )
 
         self.logger.info("creating libfuzzer task")
 
@@ -189,18 +195,11 @@ class Libfuzzer(Command):
             (ContainerType.readonly_inputs, containers[ContainerType.inputs]),
         ]
 
-        if ContainerType.extra in containers:
-            coverage_containers.append(
-                (ContainerType.extra, containers[ContainerType.extra])
-            )
-
-        if ContainerType.readonly_inputs in containers:
-            coverage_containers.append(
-                (
-                    ContainerType.readonly_inputs,
-                    containers[ContainerType.readonly_inputs],
-                )
-            )
+        self._add_optional_containers(
+            coverage_containers,
+            containers,
+            [ContainerType.extra, ContainerType.extra_rw, ContainerType.readonly_inputs]
+        )
 
         self.logger.info("creating coverage task")
 
@@ -254,10 +253,11 @@ class Libfuzzer(Command):
             (ContainerType.no_repro, containers[ContainerType.no_repro]),
         ]
 
-        if ContainerType.extra in containers:
-            report_containers.append(
-                (ContainerType.extra, containers[ContainerType.extra])
-            )
+        self._add_optional_containers(
+            report_containers,
+            containers,
+            [ContainerType.extra, ContainerType.extra_rw]
+        )
 
         self.logger.info("creating libfuzzer_crash_report task")
         self.onefuzz.tasks.create(
@@ -297,10 +297,11 @@ class Libfuzzer(Command):
                 (ContainerType.crashes, containers[ContainerType.crashes]),
             ]
 
-            if ContainerType.extra in containers:
-                analysis_containers.append(
-                    (ContainerType.extra, containers[ContainerType.extra])
-                )
+            self._add_optional_containers(
+                analysis_containers,
+                containers,
+                [ContainerType.extra, ContainerType.extra_rw]
+            )
 
             self.onefuzz.tasks.create(
                 job.job_id,
@@ -367,6 +368,7 @@ class Libfuzzer(Command):
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
         extra_container: Optional[Container] = None,
+        extra_rw_container: Optional[Container] = None,
         crashes: Optional[Container] = None,
     ) -> Optional[Job]:
         """
@@ -467,6 +469,9 @@ class Libfuzzer(Command):
 
         if extra_container is not None:
             containers[ContainerType.extra] = extra_container
+
+        if extra_rw_container is not None:
+            containers[ContainerType.extra_rw] = extra_rw_container
 
         self._create_tasks(
             job=helper.job,

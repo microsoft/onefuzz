@@ -2,6 +2,22 @@
 
 public static class Defs {
 
+    private static readonly ContainerDefinition _extraContainer =
+        new(
+            Type: ContainerType.Extra,
+            Compare: Compare.AtMost,
+            Value: 1,
+            Permissions: ContainerPermission.Read | ContainerPermission.List
+        );
+
+    private static readonly ContainerDefinition _extraRwContainer =
+        new(
+            Type: ContainerType.ExtraRw,
+            Compare: Compare.AtMost,
+            Value: 1,
+            Permissions: ContainerPermission.Read | ContainerPermission.List | ContainerPermission.Write
+        );
+
     public static readonly IReadOnlyDictionary<TaskType, TaskDefinition> TASK_DEFINITIONS = new Dictionary<TaskType, TaskDefinition>() {
         { TaskType.Coverage ,
             new TaskDefinition(
@@ -41,12 +57,8 @@ public static class Defs {
                         ContainerPermission.Read |
                         ContainerPermission.Write
                 ),
-                new ContainerDefinition(
-                   Type:ContainerType.Extra,
-                   Compare: Compare.AtMost,
-                   Value:1,
-                   Permissions: ContainerPermission.Read | ContainerPermission.List
-                ),
+                _extraContainer,
+                _extraRwContainer,
             },
             MonitorQueue: ContainerType.ReadonlyInputs)
     },
@@ -90,12 +102,8 @@ public static class Defs {
                     Value:1,
                     Permissions: ContainerPermission.Read | ContainerPermission.List
                 ),
-                new ContainerDefinition(
-                   Type:ContainerType.Extra,
-                   Compare: Compare.AtMost,
-                   Value:1,
-                   Permissions: ContainerPermission.Read | ContainerPermission.List
-                ),
+                _extraContainer,
+                _extraRwContainer,
             },
             MonitorQueue: ContainerType.ReadonlyInputs)
     },
@@ -148,12 +156,8 @@ public static class Defs {
                    Value:1,
                    Permissions: ContainerPermission.Read | ContainerPermission.List
                ),
-               new ContainerDefinition(
-                   Type:ContainerType.Extra,
-                   Compare: Compare.AtMost,
-                   Value:1,
-                   Permissions: ContainerPermission.Read | ContainerPermission.List
-                ),
+              _extraContainer,
+              _extraRwContainer,
            },
            MonitorQueue: ContainerType.Crashes
     )
@@ -204,12 +208,8 @@ public static class Defs {
                    Value:1,
                    Permissions: ContainerPermission.Read | ContainerPermission.List
                ),
-               new ContainerDefinition(
-                   Type:ContainerType.Extra,
-                   Compare: Compare.AtMost,
-                   Value:1,
-                   Permissions: ContainerPermission.Read | ContainerPermission.List
-                ),
+              _extraContainer,
+              _extraRwContainer,
            }
     )},
     { TaskType.GenericAnalysis ,
@@ -247,12 +247,8 @@ public static class Defs {
                     Value:1,
                     Permissions: ContainerPermission.Read | ContainerPermission.List
                 ),
-                new ContainerDefinition(
-                   Type:ContainerType.Extra,
-                   Compare: Compare.AtMost,
-                   Value:1,
-                   Permissions: ContainerPermission.Read | ContainerPermission.List
-                ),
+                _extraContainer,
+                _extraRwContainer,
             },
             MonitorQueue: ContainerType.Crashes)
     },
@@ -295,12 +291,8 @@ public static class Defs {
             Value: 0,
             Permissions: ContainerPermission.Read | ContainerPermission.List
         ),
-        new ContainerDefinition(
-            Type:ContainerType.Extra,
-            Compare: Compare.AtMost,
-            Value:1,
-            Permissions: ContainerPermission.Read | ContainerPermission.List
-        ),
+                _extraContainer,
+                _extraRwContainer,
     }
 )},
 {
@@ -346,12 +338,8 @@ public static class Defs {
             Value: 1,
             Permissions: ContainerPermission.Write
         ),
-        new ContainerDefinition(
-            Type:ContainerType.Extra,
-            Compare: Compare.AtMost,
-            Value:1,
-            Permissions: ContainerPermission.Read | ContainerPermission.List
-        ),
+                _extraContainer,
+                _extraRwContainer,
     },
     MonitorQueue: ContainerType.Crashes
 )
@@ -387,14 +375,8 @@ public static class Defs {
                 ContainerPermission.Read |
                 ContainerPermission.Write
         ),
-        new ContainerDefinition(
-            Type:ContainerType.Extra,
-            Compare: Compare.AtMost,
-            Value:1,
-            Permissions: ContainerPermission.Read | ContainerPermission.List
-        ),
-
-
+                _extraContainer,
+                _extraRwContainer,
         },
     MonitorQueue: ContainerType.ReadonlyInputs
 )},
@@ -430,12 +412,8 @@ public static class Defs {
             Value: 0,
             Permissions: ContainerPermission.Read | ContainerPermission.List
         ),
-        new ContainerDefinition(
-            Type:ContainerType.Extra,
-            Compare: Compare.AtMost,
-            Value:1,
-            Permissions: ContainerPermission.Read | ContainerPermission.List
-        ),
+                _extraContainer,
+                _extraRwContainer,
     }
 )
 },
@@ -504,12 +482,8 @@ public static class Defs {
             Value: 1,
             Permissions: ContainerPermission.Write | ContainerPermission.Read | ContainerPermission.List
         ),
-        new ContainerDefinition(
-            Type:ContainerType.Extra,
-            Compare: Compare.AtMost,
-            Value:1,
-            Permissions: ContainerPermission.Read | ContainerPermission.List
-        ),
+                _extraContainer,
+                _extraRwContainer,
     }
 )
 },
@@ -551,12 +525,8 @@ public static class Defs {
             Value:1,
             Permissions: ContainerPermission.Write| ContainerPermission.List
         ),
-        new ContainerDefinition(
-            Type:ContainerType.Extra,
-            Compare: Compare.AtMost,
-            Value:1,
-            Permissions: ContainerPermission.Read | ContainerPermission.List
-        ),
+                _extraContainer,
+                _extraRwContainer,
      }
  )
 },
@@ -603,12 +573,8 @@ public static class Defs {
             Value:1,
             Permissions: ContainerPermission.Read | ContainerPermission.List
         ),
-        new ContainerDefinition(
-            Type:ContainerType.Extra,
-            Compare: Compare.AtMost,
-            Value:1,
-            Permissions: ContainerPermission.Read | ContainerPermission.List
-        ),
+        _extraContainer,
+        _extraRwContainer,
      }
  )
  },
@@ -656,12 +622,8 @@ public static class Defs {
             Value:1,
             Permissions: ContainerPermission.Write
         ),
-        new ContainerDefinition(
-            Type:ContainerType.Extra,
-            Compare: Compare.AtMost,
-            Value:1,
-            Permissions: ContainerPermission.Read | ContainerPermission.List
-        ),
+                _extraContainer,
+                _extraRwContainer,
      },
      MonitorQueue: ContainerType.Crashes
  )
@@ -723,12 +685,8 @@ public static class Defs {
             Value:1,
             Permissions: ContainerPermission.Read | ContainerPermission.List
         ),
-        new ContainerDefinition(
-            Type:ContainerType.Extra,
-            Compare: Compare.AtMost,
-            Value:1,
-            Permissions: ContainerPermission.Read | ContainerPermission.List
-        ),
+        _extraContainer,
+        _extraRwContainer,
      })
    },
    {
@@ -788,12 +746,8 @@ public static class Defs {
             Permissions:
                 ContainerPermission.Read | ContainerPermission.List
          ),
-         new ContainerDefinition(
-            Type:ContainerType.Extra,
-            Compare: Compare.AtMost,
-            Value:1,
-            Permissions: ContainerPermission.Read | ContainerPermission.List
-        ),
+        _extraContainer,
+        _extraRwContainer,
     })
     },
     };
