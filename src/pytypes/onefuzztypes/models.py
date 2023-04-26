@@ -410,6 +410,7 @@ class TaskUnitConfig(BaseModel):
     unique_reports: CONTAINER_DEF
     regression_reports: CONTAINER_DEF
     extra: CONTAINER_DEF
+    extra_rw: CONTAINER_DEF
 
 
 class Forward(BaseModel):
