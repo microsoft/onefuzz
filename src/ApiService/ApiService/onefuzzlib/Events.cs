@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Azure.Storage.Sas;
+using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service {
 

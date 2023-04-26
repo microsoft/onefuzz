@@ -9,11 +9,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from .enums import VmState
-from .models import (
-    Forward,
-    NodeCommandEnvelope,
-    TemplateRenderContext,
-)
+from .models import Forward, NodeCommandEnvelope, TemplateRenderContext
 from .primitives import Region
 
 

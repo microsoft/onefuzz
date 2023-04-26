@@ -274,8 +274,10 @@ class TemplateValidationPost(BaseModel):
 class JinjaToScribanMigrationPost(BaseModel):
     dry_run: bool = Field(default=False)
 
+
 class EventsGet(BaseModel):
     event_id: UUID
+
 
 class NotificationTest(BaseModel):
     report: Report
