@@ -141,7 +141,13 @@ public record EventJobStopped(
     JobConfig Config,
     UserInfo? UserInfo,
     List<JobTaskStopped> TaskInfo
-) : BaseEvent();
+) : BaseEvent(), ITruncatable<BaseEvent> {
+    public BaseEvent Truncate(int maxLength) {
+        return this with {
+            Config = Config.Truncate(maxLength)
+        };
+    }
+}
 
 
 [EventType(EventType.TaskCreated)]

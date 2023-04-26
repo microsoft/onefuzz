@@ -65,7 +65,8 @@ class Libfuzzer(Command):
         ensemble_sync_delay: Optional[int] = None,
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
-        check_fuzzer_help: bool = True,
+        check_fuzzer_help: bool = False,
+        no_check_fuzzer_help: bool = False,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
         module_allowlist: Optional[str] = None,
@@ -75,6 +76,13 @@ class Libfuzzer(Command):
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
     ) -> None:
+        if check_fuzzer_help:
+            self.logger.warning(
+                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
+            )
+        check_fuzzer_help = not no_check_fuzzer_help
+        del no_check_fuzzer_help
+
         target_options = target_options or []
 
         regression_containers = [
@@ -328,6 +336,7 @@ class Libfuzzer(Command):
         inputs: Optional[Directory] = None,
         reboot_after_setup: bool = False,
         duration: int = 24,
+        task_duration: Optional[int] = None,
         target_workers: Optional[int] = None,
         target_options: Optional[List[str]] = None,
         fuzzing_target_options: Optional[List[str]] = None,
@@ -347,7 +356,8 @@ class Libfuzzer(Command):
         ensemble_sync_delay: Optional[int] = None,
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
-        check_fuzzer_help: bool = True,
+        check_fuzzer_help: bool = False,
+        no_check_fuzzer_help: bool = False,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
         module_allowlist: Optional[File] = None,
@@ -365,6 +375,13 @@ class Libfuzzer(Command):
         :param bool ensemble_sync_delay: Specify duration between
             syncing inputs during ensemble fuzzing (0 to disable).
         """
+
+        if check_fuzzer_help:
+            self.logger.warning(
+                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
+            )
+        check_fuzzer_help = not no_check_fuzzer_help
+        del no_check_fuzzer_help
 
         # verify containers exist
         if existing_inputs:
@@ -458,7 +475,7 @@ class Libfuzzer(Command):
             target_exe=target_exe_blob_name,
             vm_count=vm_count,
             reboot_after_setup=reboot_after_setup,
-            duration=duration,
+            duration=task_duration if task_duration else duration,
             target_workers=target_workers,
             target_options=target_options,
             fuzzing_target_options=fuzzing_target_options,
@@ -511,12 +528,19 @@ class Libfuzzer(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         preserve_existing_outputs: bool = False,
-        check_fuzzer_help: bool = True,
+        check_fuzzer_help: bool = False,
+        no_check_fuzzer_help: bool = False,
         extra_container: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         libfuzzer merge task
         """
+        if check_fuzzer_help:
+            self.logger.warning(
+                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
+            )
+        check_fuzzer_help = not no_check_fuzzer_help
+        del no_check_fuzzer_help
 
         # verify containers exist
         if existing_inputs:
@@ -625,6 +649,7 @@ class Libfuzzer(Command):
         inputs: Optional[Directory] = None,
         reboot_after_setup: bool = False,
         duration: int = 24,
+        task_duration: Optional[int] = None,
         target_workers: Optional[int] = None,
         fuzzing_target_options: Optional[List[str]] = None,
         target_env: Optional[Dict[str, str]] = None,
@@ -744,7 +769,7 @@ class Libfuzzer(Command):
             fuzzer_containers,
             pool_name=pool_name,
             reboot_after_setup=reboot_after_setup,
-            duration=duration,
+            duration=task_duration if task_duration else duration,
             vm_count=vm_count,
             target_options=fuzzing_target_options,
             target_env=target_env,
@@ -792,7 +817,7 @@ class Libfuzzer(Command):
             libfuzzer_dotnet_loader_dll,
             coverage_containers,
             pool_name=pool_name,
-            duration=duration,
+            duration=task_duration if task_duration else duration,
             vm_count=1,
             reboot_after_setup=reboot_after_setup,
             target_options=sharpfuzz_harness_target_options,
@@ -823,7 +848,7 @@ class Libfuzzer(Command):
             libfuzzer_dotnet_loader_dll,
             report_containers,
             pool_name=pool_name,
-            duration=duration,
+            duration=task_duration if task_duration else duration,
             vm_count=1,
             reboot_after_setup=reboot_after_setup,
             target_options=sharpfuzz_harness_target_options,
@@ -854,6 +879,7 @@ class Libfuzzer(Command):
         inputs: Optional[Directory] = None,
         reboot_after_setup: bool = False,
         duration: int = 24,
+        task_duration: Optional[int] = None,
         target_workers: Optional[int] = 1,
         target_options: Optional[List[str]] = None,
         fuzzing_target_options: Optional[List[str]] = None,
@@ -867,13 +893,20 @@ class Libfuzzer(Command):
         colocate_all_tasks: bool = False,
         crash_report_timeout: Optional[int] = 1,
         check_retry_count: Optional[int] = 300,
-        check_fuzzer_help: bool = True,
+        check_fuzzer_help: bool = False,
+        no_check_fuzzer_help: bool = False,
         extra_container: Optional[Container] = None,
         crashes: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
         """
+        if check_fuzzer_help:
+            self.logger.warning(
+                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
+            )
+        check_fuzzer_help = not no_check_fuzzer_help
+        del no_check_fuzzer_help
 
         self.logger.warning(
             "qemu_user jobs are a preview feature and may change in the future"
@@ -1005,7 +1038,7 @@ class Libfuzzer(Command):
             fuzzer_containers,
             pool_name=pool_name,
             reboot_after_setup=reboot_after_setup,
-            duration=duration,
+            duration=task_duration if task_duration else duration,
             vm_count=vm_count,
             target_options=libfuzzer_fuzz_target_options,
             target_env=target_env,
@@ -1038,7 +1071,7 @@ class Libfuzzer(Command):
             wrapper_name,
             report_containers,
             pool_name=pool_name,
-            duration=duration,
+            duration=task_duration if task_duration else duration,
             vm_count=1,
             reboot_after_setup=reboot_after_setup,
             target_options=target_options,

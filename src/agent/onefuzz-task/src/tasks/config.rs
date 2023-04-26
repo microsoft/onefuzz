@@ -18,6 +18,7 @@ use onefuzz_telemetry::{
 use reqwest::Url;
 use serde::{self, Deserialize};
 use std::{
+    collections::HashMap,
     path::{Path, PathBuf},
     sync::Arc,
     time::Duration,
@@ -67,6 +68,9 @@ pub struct CommonConfig {
     pub min_available_memory_mb: u64,
 
     pub machine_identity: MachineIdentity,
+
+    #[serde(default)]
+    pub tags: HashMap<String, String>,
 
     pub from_agent_to_task_endpoint: String,
     pub from_task_to_agent_endpoint: String,

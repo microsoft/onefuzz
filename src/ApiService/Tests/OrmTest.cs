@@ -1,15 +1,17 @@
 ﻿using System;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Azure.Data.Tables;
+using FluentAssertions;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using Moq;
 using Xunit;
 
 namespace Tests {
     public class OrmTest {
-
         sealed class TestObject {
             public String? TheName { get; set; }
             public TestEnum TheEnum { get; set; }
@@ -409,6 +411,37 @@ namespace Tests {
 
             Assert.Equal(test.PartitionKey, actualPartitionKey);
             Assert.Equal(test.RowKey, actualRowKey);
+        }
+
+        sealed record NestedEntity(
+            [PartitionKey] int Id,
+            [RowKey] string TheName,
+            [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
+            [property: JsonConverter(typeof(BaseEventConverter))]
+            Nested? EventType
+        ) : EntityBase();
+
+#pragma warning disable CS0169
+        public record Nested(
+            bool? B,
+            Nested? EventType
+        ) : BaseEvent();
+#pragma warning restore CS0169
+
+        [Fact]
+        public void TestDeeplyNestedObjects() {
+            var converter = new EntityConverter();
+            var deeplyNestedJson = $"{{{string.Concat(Enumerable.Repeat("\"EventType\": {", 3))}{new String('}', 3)}}}"; // {{{...}}}
+            var nestedEntity = new NestedEntity(
+                Id: 123,
+                TheName: "abc",
+                EventType: JsonSerializer.Deserialize<Nested>(deeplyNestedJson, new JsonSerializerOptions())
+            );
+
+            var tableEntity = converter.ToTableEntity(nestedEntity);
+            var toRecord = () => converter.ToRecord<NestedEntity>(tableEntity);
+
+            _ = toRecord.Should().Throw<Exception>().And.InnerException!.Should().BeOfType<OrmInvalidDiscriminatorFieldException>();
         }
     }
 }

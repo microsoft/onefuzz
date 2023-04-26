@@ -1,7 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    iter::Sum,
+};
 
 use cobertura::{
     Class, Classes, CoberturaCoverage, Line, Lines, Package, Packages, Source, Sources,
@@ -30,72 +33,115 @@ impl From<SourceCoverage> for CoberturaCoverage {
 
         // Source files grouped by directory.
         let mut file_map = FileMap::default();
-
         for file_path in source.files.keys() {
             let dir = file_path.directory();
             let files = file_map.entry(dir).or_default();
             files.insert(file_path);
         }
 
+        // Collect every file name for the `<sources>` manifest element.
+        let sources = file_map
+            .values()
+            .flatten()
+            .map(|file_path| Source {
+                path: file_path.to_string(),
+            })
+            .collect();
+
         // Iterate through the grouped files, accumulating `<package>` elements.
-        let mut packages = vec![];
-        let mut sources = vec![];
+        let (packages, hit_counts): (Vec<Package>, Vec<HitCounts>) = file_map
+            .into_iter()
+            .map(|(directory, files)| directory_to_package(&source, directory, files))
+            .unzip();
 
-        for (directory, files) in file_map {
-            // Make a `<package>` to represent the directory.
-            //
-            // We will add a `<class>` for each contained file.
-            let mut package = Package {
-                name: directory.to_owned(),
-                ..Package::default()
-            };
-
-            let mut classes = vec![];
-
-            for file_path in files {
-                // Add the file to the `<sources>` manifest element.
-                let src = Source {
-                    path: file_path.to_string(),
-                };
-                sources.push(src);
-
-                let mut lines = vec![];
-
-                // Can't panic, by construction.
-                let file_coverage = &source.files[file_path];
-
-                for (line, count) in &file_coverage.lines {
-                    let number = u64::from(line.number());
-                    let hits = u64::from(count.0);
-
-                    let line = Line {
-                        number,
-                        hits,
-                        ..Line::default()
-                    };
-
-                    lines.push(line);
-                }
-
-                let class = Class {
-                    name: file_path.file_name().to_owned(),
-                    filename: file_path.to_string(),
-                    lines: Lines { lines },
-                    ..Class::default()
-                };
-
-                classes.push(class);
-            }
-
-            package.classes = Classes { classes };
-
-            packages.push(package);
-        }
+        let hit_count: HitCounts = hit_counts.into_iter().sum();
 
         CoberturaCoverage {
             sources: Some(Sources { sources }),
             packages: Packages { packages },
+            line_rate: hit_count.rate(),
+            lines_covered: hit_count.hit_lines,
+            lines_valid: hit_count.total_lines,
             ..CoberturaCoverage::default()
         }
+    }
+}
+
+// Make a `<package>` to represent the directory.
+//
+// We will add a `<class>` for each contained file.
+fn directory_to_package(
+    source: &SourceCoverage,
+    directory: &str,
+    files: BTreeSet<&FilePath>,
+) -> (Package, HitCounts) {
+    let (classes, hit_counts): (Vec<Class>, Vec<HitCounts>) = files
+        .into_iter()
+        .map(|file_path| file_to_class(source, file_path))
+        .unzip();
+
+    let hit_count: HitCounts = hit_counts.into_iter().sum();
+
+    let result = Package {
+        name: directory.to_owned(),
+        classes: Classes { classes },
+        line_rate: hit_count.rate(),
+        ..Package::default()
+    };
+
+    (result, hit_count)
+}
+
+// Make a `<class>` to represent a file.
+fn file_to_class(source: &SourceCoverage, file_path: &FilePath) -> (Class, HitCounts) {
+    let lines: Vec<Line> = source.files[file_path] // can't panic, by construction
+        .lines
+        .iter()
+        .map(|(line, count)| Line {
+            number: u64::from(line.number()),
+            hits: u64::from(count.0),
+            ..Line::default()
+        })
+        .collect();
+
+    let hit_counts = HitCounts {
+        hit_lines: lines.iter().filter(|l| l.hits > 0).count() as u64,
+        total_lines: lines.len() as u64,
+    };
+
+    let result = Class {
+        name: file_path.file_name().to_owned(),
+        filename: file_path.to_string(),
+        lines: Lines { lines },
+        line_rate: hit_counts.rate(),
+        ..Class::default()
+    };
+
+    (result, hit_counts)
+}
+
+struct HitCounts {
+    hit_lines: u64,
+    total_lines: u64,
+}
+
+impl HitCounts {
+    fn rate(&self) -> f64 {
+        self.hit_lines as f64 / self.total_lines as f64
+    }
+}
+
+impl Sum for HitCounts {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(
+            HitCounts {
+                hit_lines: 0,
+                total_lines: 0,
+            },
+            |current, next| HitCounts {
+                hit_lines: current.hit_lines + next.hit_lines,
+                total_lines: current.total_lines + next.total_lines,
+            },
+        )
     }
 }

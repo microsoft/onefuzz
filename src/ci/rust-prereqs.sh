@@ -5,14 +5,7 @@
 
 set -ex
 
-if ! sccache --help; then
-    cargo install sccache
-fi
+cargo install sccache cargo-license@0.4.2 cargo-llvm-cov cargo-deny cargo-insta cargo-nextest
+
 # sccache --start-server
 # export RUSTC_WRAPPER=$(which sccache)
-
-cargo install cargo-llvm-cov cargo-deny
-
-if ! cargo license --help; then
-    cargo install cargo-license@0.4.2
-fi

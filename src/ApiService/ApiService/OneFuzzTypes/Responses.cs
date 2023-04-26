@@ -209,3 +209,8 @@ public record JinjaToScribanMigrationDryRunResponse(
 public record EventGetResponse(
     DownloadableEventMessage Event
 ) : BaseResponse();
+
+public record NotificationTestResponse(
+    bool Success,
+    string? Error = null
+) : BaseResponse();

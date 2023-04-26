@@ -84,7 +84,7 @@ public class ReportTests {
         _ = Assert.IsType<RegressionReport>(regression);
 
         var noReport = Reports.ParseReportOrRegression("{}", new Uri("http://test"));
-        Assert.Null(noReport);
+        _ = Assert.IsType<UnknownReportType>(noReport);
 
 
 

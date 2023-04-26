@@ -527,6 +527,10 @@ public record RegressionReport(
     }
 }
 
+public record UnknownReportType(
+    Uri? ReportUrl
+) : IReport;
+
 [JsonConverter(typeof(NotificationTemplateConverter))]
 #pragma warning disable CA1715
 public interface NotificationTemplate {
@@ -819,7 +823,17 @@ public record JobConfig(
     string Build,
     long Duration,
     string? Logs
-);
+) : ITruncatable<JobConfig> {
+    public JobConfig Truncate(int maxLength) {
+        return new JobConfig(
+            Project,
+            Name,
+            Build,
+            Duration,
+            Logs?[..maxLength]
+        );
+    }
+}
 
 public record JobTaskInfo(
     Guid TaskId,
@@ -962,7 +976,8 @@ public record TaskUnitConfig(
     TaskType TaskType,
     string? InstanceTelemetryKey,
     string? MicrosoftTelemetryKey,
-    Uri HeartbeatQueue
+    Uri HeartbeatQueue,
+    Dictionary<string, string> Tags
     ) {
     public Uri? inputQueue { get; set; }
     public String? SupervisorExe { get; set; }

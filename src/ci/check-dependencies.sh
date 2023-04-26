@@ -14,13 +14,15 @@ set -euo pipefail
 script_dir=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
 
 function get-deps {
-    ldd "$1" | awk '{ print $1 }' | sort -u
+    ldd "$1" | awk '{ print tolower($1) }' | sort -u
 }
 
 function check {
     wanted=$2
     if [ "$(uname)" != 'Linux' ]; then
-        wanted=$3
+        wanted=$4 # Windows
+    elif [ "$(uname -m)" != 'x86_64' ]; then
+        wanted=$3 # ARM64
     fi
     got=$(get-deps "$1")
     if ! difference=$(diff -u --color <(echo "$wanted") <(echo "$got")); then
@@ -37,6 +39,7 @@ function check {
 }
 
 check "$script_dir/../agent/target/release/onefuzz-task" \
+\
 "/lib64/ld-linux-x86-64.so.2
 libc.so.6
 libdl.so.2
@@ -50,32 +53,45 @@ libunwind-x86_64.so.8
 libunwind.so.8
 linux-vdso.so.1" \
 \
-"ADVAPI32.dll
-CRYPTBASE.DLL
-GDI32.dll
-KERNEL32.DLL
-KERNELBASE.dll
-MSASN1.dll
-PSAPI.DLL
-RPCRT4.dll
-SSPICLI.DLL
+"/lib/ld-linux-aarch64.so.1
+libc.so.6
+libdl.so.2
+libgcc_s.so.1
+liblzma.so.5
+libm.so.6
+libpthread.so.0
+libstdc++.so.6
+libunwind-aarch64.so.8
+libunwind-ptrace.so.0
+linux-vdso.so.1" \
+\
+"advapi32.dll
 apphelp.dll
 bcrypt.dll
-bcryptPrimitives.dll
+bcryptprimitives.dll
 crypt32.dll
+cryptbase.dll
 dbghelp.dll
+gdi32.dll
 gdi32full.dll
+kernel32.dll
+kernelbase.dll
+msasn1.dll
 msvcp_win.dll
 msvcrt.dll
 ntdll.dll
+psapi.dll
+rpcrt4.dll
 sechost.dll
 secur32.dll
+sspicli.dll
 ucrtbase.dll
 user32.dll
 win32u.dll
 ws2_32.dll"
 
 check "$script_dir/../agent/target/release/onefuzz-agent" \
+\
 "/lib64/ld-linux-x86-64.so.2
 libc.so.6
 libdl.so.2
@@ -85,22 +101,29 @@ libpthread.so.0
 libunwind.so.8
 linux-vdso.so.1" \
 \
-"ADVAPI32.dll
-CRYPTBASE.DLL
-KERNEL32.DLL
-KERNELBASE.dll
-MSASN1.dll
-RPCRT4.dll
-SSPICLI.DLL
+"/lib/ld-linux-aarch64.so.1
+libc.so.6
+libdl.so.2
+libgcc_s.so.1
+libpthread.so.0
+linux-vdso.so.1" \
+\
+"advapi32.dll
 apphelp.dll
 bcrypt.dll
-bcryptPrimitives.dll
+bcryptprimitives.dll
 crypt32.dll
+cryptbase.dll
 dbghelp.dll
+kernel32.dll
+kernelbase.dll
+msasn1.dll
 msvcrt.dll
 ntdll.dll
+rpcrt4.dll
 sechost.dll
 secur32.dll
+sspicli.dll
 ucrtbase.dll
 ws2_32.dll"
 
@@ -111,14 +134,20 @@ libgcc_s.so.1
 libpthread.so.0
 linux-vdso.so.1" \
 \
-"CRYPTBASE.DLL
-KERNEL32.DLL
-KERNELBASE.dll
-RPCRT4.dll
-advapi32.dll
+"/lib/ld-linux-aarch64.so.1
+libc.so.6
+libgcc_s.so.1
+libpthread.so.0
+linux-vdso.so.1" \
+\
+"advapi32.dll
 apphelp.dll
 bcrypt.dll
-bcryptPrimitives.dll
+bcryptprimitives.dll
+cryptbase.dll
+kernel32.dll
+kernelbase.dll
 msvcrt.dll
 ntdll.dll
+rpcrt4.dll
 sechost.dll"
