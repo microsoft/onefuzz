@@ -15,7 +15,6 @@ use std::{path::PathBuf, time::Duration};
 use uuid::Uuid;
 
 use tokio::sync::broadcast::{error::TryRecvError, Receiver};
-
 const LOGS_BUFFER_SIZE: usize = 1000;
 const MAX_LOG_SIZE: u64 = 100000000; // 100 MB
 const DEFAULT_LOGGING_INTERVAL: Duration = Duration::from_secs(20);
@@ -101,6 +100,7 @@ impl BlobLogWriter {
             Some(id) => id,
             None => {
                 let blob_client = container_client.blob_client(format!("{prefix}/1.log"));
+
                 blob_client
                     .put_append_blob()
                     .await
@@ -737,6 +737,53 @@ mod tests {
                 .into_iter()
                 .any(|x| x.name == format!("{}/2.log", &blob_prefix)),
             "expected 2.log"
+        );
+
+        Ok(())
+    }
+
+    async fn get_or_create() -> Result<(BlobClient, u64)> {
+        let sas_credentials = StorageCredentials::sas_token("")?;
+        let client = BlobServiceClient::new("bugfingsa", sas_credentials);
+        let container_client = client.container_client("test-logs");
+        let blob_client = container_client.blob_client("test122132");
+
+        match blob_client.get_properties().await {
+            Ok(prop) => {
+                println!("prop {:?}", prop);
+                Ok((blob_client, prop.blob.properties.content_length))
+            }
+            Err(e) => {
+                println!("err {:?}", e);
+                match e.downcast_ref::<HttpError>() {
+                    Some(herr) if herr.status() == StatusCode::NotFound => {
+                        blob_client
+                            .put_append_blob()
+                            // .content_type("text/plain")
+                            // .execute("test")
+                            .await?;
+                        // println!("res {:?}", res);
+                        Ok((blob_client, 0))
+                    }
+                    _ => Err(e.into()),
+                }
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_rq() -> Result<()> {
+        let sas_credentials = StorageCredentials::sas_token("")?;
+        let client = BlobServiceClient::new("bugfingsa", sas_credentials);
+        let container_client = client.container_client("test-logs");
+        let blob_client = container_client.blob_client("test122132");
+
+        let properties = blob_client.get_properties().await?;
+        // println!("properties {:?}", properties);
+
+        println!(
+            "content-length {:?}",
+            properties.blob.properties.content_length
         );
 
         Ok(())

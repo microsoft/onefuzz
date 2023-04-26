@@ -19,6 +19,7 @@ use onefuzz::{
 use tokio::{fs, task, time::timeout};
 
 use crate::buffer::TailBuffer;
+use crate::log_uploader::continuous_sync_file;
 use crate::work::*;
 
 use serde_json::Value;
@@ -119,6 +120,7 @@ pub struct Running {
     child: Box<dyn IWorkerChild>,
     _from_agent_to_task: IpcSender<IpcMessageKind>,
     from_task_to_agent: IpcReceiver<IpcMessageKind>,
+    _log_monitor: task::JoinHandle<anyhow::Result<()>>,
 }
 
 #[derive(Debug)]
@@ -212,11 +214,20 @@ impl State<Ready> {
 
         info!("IPC connection bootstrapped");
 
+        let _log_monitor = tokio::spawn(async {
+            continuous_sync_file(
+                reqwest::Url::parse("http://localhost:8080").unwrap(),
+                std::path::Path::new("test.txt"),
+            )
+            .await
+        });
+
         let state = State {
             ctx: Running {
                 child,
                 _from_agent_to_task: from_agent_to_task,
                 from_task_to_agent,
+                _log_monitor,
             },
             work: self.work,
         };

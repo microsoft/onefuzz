@@ -114,11 +114,13 @@ async fn test_ready_run() {
 async fn test_running_kill() {
     let connections = bootstrap_ipc().await.unwrap();
     let child = Box::new(Fixture.child_running());
+    let _log_monitor = tokio::spawn(async { Ok(()) });
     let mut state = State {
         ctx: Running {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            _log_monitor,
         },
         work: Fixture.work(),
     };
@@ -138,11 +140,13 @@ async fn test_running_kill() {
 async fn test_running_wait_running() {
     let connections = bootstrap_ipc().await.unwrap();
     let child = Box::new(Fixture.child_running());
+    let _log_monitor = tokio::spawn(async { Ok(()) });
     let state = State {
         ctx: Running {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            _log_monitor,
         },
         work: Fixture.work(),
     };
@@ -167,11 +171,13 @@ async fn test_running_wait_done() {
     let connections = bootstrap_ipc().await.unwrap();
     let exit_status = Fixture.exit_status_ok();
     let child = Box::new(Fixture.child_exited(exit_status));
+    let _log_monitor = tokio::spawn(async { Ok(()) });
     let state = State {
         ctx: Running {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            _log_monitor,
         },
         work: Fixture.work(),
     };
@@ -210,11 +216,13 @@ async fn test_worker_running_update_running() {
     let connections = bootstrap_ipc().await.unwrap();
     let mut runner = Fixture.runner(Fixture.child_running());
     let child = Box::new(Fixture.child_running());
+    let _log_monitor = tokio::spawn(async { Ok(()) });
     let state = State {
         ctx: Running {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            _log_monitor,
         },
         work: Fixture.work(),
     };
@@ -232,11 +240,13 @@ async fn test_worker_running_update_done() {
     let connections = bootstrap_ipc().await.unwrap();
     let exit_status = Fixture.exit_status_ok();
     let child = Box::new(Fixture.child_exited(exit_status));
+    let _log_monitor = tokio::spawn(async { Ok(()) });
     let state = State {
         ctx: Running {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            _log_monitor
         },
         work: Fixture.work(),
     };

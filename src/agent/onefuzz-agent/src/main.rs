@@ -36,6 +36,7 @@ pub mod debug;
 pub mod done;
 pub mod failure;
 pub mod heartbeat;
+pub mod log_uploader;
 pub mod panic;
 pub mod reboot;
 pub mod scheduler;

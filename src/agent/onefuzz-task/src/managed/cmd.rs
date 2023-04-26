@@ -5,6 +5,12 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::{Arg, Command};
 use ipc_channel::ipc::{self, IpcReceiver, IpcSender};
+use log::LevelFilter;
+use log4rs::{
+    append::{console::ConsoleAppender, file::FileAppender},
+    config::Appender,
+    encode::pattern::PatternEncoder,
+};
 use onefuzz::ipc::IpcMessageKind;
 use std::time::Duration;
 use tokio::task;
@@ -16,8 +22,81 @@ use crate::tasks::{
 
 const OOM_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
+fn get_log_levels() -> Result<Vec<(Option<String>, LevelFilter)>> {
+    // parse the log levels form the RUST_LOG environment variable
+    // ex: RUST_LOG="warn,test::foo=info,test::foo::bar=debug"
+    match option_env!("RUST_LOG") {
+        Some(env) => env
+            .split(',')
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+            .map(|s| {
+                let mut split = s.split('=');
+
+                let (path, level) = match (split.next(), split.next()) {
+                    (Some(path), Some(level)) => (Some(path.to_string()), level),
+                    (Some(level), None) => (None, level),
+                    _ => bail!("invalid log level: {}", s),
+                };
+                let level = match level {
+                    "error" => LevelFilter::Error,
+                    "warn" => LevelFilter::Warn,
+                    "info" => LevelFilter::Info,
+                    "debug" => LevelFilter::Debug,
+                    "trace" => LevelFilter::Trace,
+                    _ => panic!("unknown log level: {}", level),
+                };
+                Ok((path, level))
+            })
+            .collect(),
+        None => Ok(vec![]),
+    }
+}
+
+fn setup_logger() -> Result<()> {
+    let stdout = ConsoleAppender::builder().build();
+
+    let log_file = FileAppender::builder()
+        .encoder(Box::new(PatternEncoder::new("{d} - {m}{n}")))
+        .build("./logs/log.txt")
+        .unwrap();
+
+    let builder = log4rs::Config::builder()
+        .appender(Appender::builder().build("stdout", Box::new(stdout)))
+        .appender(Appender::builder().build("log_file", Box::new(log_file)));
+
+    let log_levels = get_log_levels()?;
+
+    let (builder, root_log_level) = log_levels.iter().fold(
+        (builder, LevelFilter::Info),
+        |(builder, max_log_level), (path, level)| {
+            let builder = match path {
+                Some(path) => {
+                    builder.logger(log4rs::config::Logger::builder().build(path, *level))
+                }
+                None => builder.logger(log4rs::config::Logger::builder().build("", *level)),
+            };
+
+            (builder, std::cmp::max(max_log_level, *level))
+        },
+    );
+    let config = builder
+        .build(
+            log4rs::config::Root::builder()
+                .appender("requests")
+                .appender("stdout")
+                .build(root_log_level),
+        )
+        .unwrap();
+
+    let _handle = log4rs::init_config(config).unwrap();
+
+    Ok(())
+}
+
 pub async fn run(args: &clap::ArgMatches) -> Result<()> {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    // env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    setup_logger()?;
 
     let config_path = args
         .get_one::<PathBuf>("config")
