@@ -6,7 +6,7 @@
 import os
 import tempfile
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag, TaskType
 from onefuzztypes.models import Job, NotificationConfig
@@ -45,10 +45,10 @@ class Libfuzzer(Command):
 
     def _add_optional_containers(
         self,
-        dest: list[(ContainerType, Container)],
-        source: map[ContainerType, Container],
-        types: list[ContainerType],
-    ):
+        dest: List[Tuple[ContainerType, Container]],
+        source: Dict[ContainerType, Container],
+        types: List[ContainerType],
+    ) -> None:
         dest.extend([(c, source[c]) for c in types if c in source])
 
     def _create_tasks(
@@ -198,7 +198,11 @@ class Libfuzzer(Command):
         self._add_optional_containers(
             coverage_containers,
             containers,
-            [ContainerType.extra, ContainerType.extra_rw, ContainerType.readonly_inputs]
+            [
+                ContainerType.extra,
+                ContainerType.extra_rw,
+                ContainerType.readonly_inputs,
+            ],
         )
 
         self.logger.info("creating coverage task")
@@ -254,9 +258,7 @@ class Libfuzzer(Command):
         ]
 
         self._add_optional_containers(
-            report_containers,
-            containers,
-            [ContainerType.extra, ContainerType.extra_rw]
+            report_containers, containers, [ContainerType.extra, ContainerType.extra_rw]
         )
 
         self.logger.info("creating libfuzzer_crash_report task")
@@ -300,7 +302,7 @@ class Libfuzzer(Command):
             self._add_optional_containers(
                 analysis_containers,
                 containers,
-                [ContainerType.extra, ContainerType.extra_rw]
+                [ContainerType.extra, ContainerType.extra_rw],
             )
 
             self.onefuzz.tasks.create(
