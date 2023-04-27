@@ -17,11 +17,12 @@ public class QueueNodeHearbeat {
 
     [Function("QueueNodeHeartbeat")]
     public async Async.Task Run([QueueTrigger("node-heartbeat", Connection = "AzureWebJobsStorage")] string msg) {
-        _log.Info($"heartbeat: {msg}");
+
         var nodes = _context.NodeOperations;
         var events = _context.Events;
         var metrics = _context.Metrics;
 
+        _log.Info($"heartbeat: {msg}");
         var hb = JsonSerializer.Deserialize<NodeHeartbeatEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
         var node = await nodes.GetByMachineId(hb.NodeId);
 
@@ -38,6 +39,9 @@ public class QueueNodeHearbeat {
 
         // TODO: do we still send event if we fail do update the table ?
         await events.SendEvent(new EventNodeHeartbeat(node.MachineId, node.ScalesetId, node.PoolName));
-        await metrics.SendMetric(1, new MetricNodeHeartbeat(node.MachineId, node.ScalesetId, node.PoolName, node.State));
+        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableCustomMetricTelemetry)) {
+            await metrics.SendMetric(1, new MetricNodeHeartbeat(node.MachineId, node.ScalesetId, node.PoolName, node.State));
+        }
+
     }
 }
