@@ -37,4 +37,17 @@ resource validateNotificationConfigSemantics 'Microsoft.AppConfiguration/configu
   }
 }
 
+resource enableCustomMetricFeatureFlag 'Microsoft.AppConfiguration/configurationStores/keyValues@2021-10-01-preview' = {
+  parent: featureFlags
+  name: '.appconfig.featureflag~2FEnableCustomMetricTelemetry'
+  properties: {
+    value: string({
+      id: 'EnableCustomMetricTelemetry'
+      description: 'Allow custom metrics to be sent.'
+      enabled: false
+    })
+    contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'
+  }
+}
+
 output AppConfigEndpoint string = 'https://${appConfigName}.azconfig.io'
