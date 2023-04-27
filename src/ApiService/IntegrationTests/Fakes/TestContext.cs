@@ -45,6 +45,7 @@ public sealed class TestContext : IOnefuzzContext {
         FeatureManagerSnapshot = new TestFeatureManagerSnapshot();
         WebhookOperations = new TestWebhookOperations(httpClientFactory, logTracer, this);
         Events = new TestEvents(logTracer, this);
+        WebhookMessageLogOperations = new TestWebhookMessageLogOperations(logTracer, this);
     }
 
     // convenience method for test setup
@@ -99,6 +100,8 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IWebhookOperations WebhookOperations { get; }
 
+    public IWebhookMessageLogOperations WebhookMessageLogOperations { get; }
+
     // -- Remainder not implemented --
 
     public IConfig Config => throw new System.NotImplementedException();
@@ -123,9 +126,6 @@ public sealed class TestContext : IOnefuzzContext {
 
 
     public IVmOperations VmOperations => throw new System.NotImplementedException();
-
-    public IWebhookMessageLogOperations WebhookMessageLogOperations => throw new System.NotImplementedException();
-
 
     public INsgOperations NsgOperations => throw new NotImplementedException();
 

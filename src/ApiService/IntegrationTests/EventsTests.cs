@@ -1,16 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
+using Azure.Storage.Blobs;
+using FluentAssertions;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.Functions;
 using Xunit;
 using Xunit.Abstractions;
-using FluentAssertions;
-
 using Async = System.Threading.Tasks;
-using Azure.Storage.Blobs;
-using System.IO;
 
 namespace IntegrationTests;
 
@@ -46,7 +45,7 @@ public abstract class EventsTestBase : FunctionTestBase {
         ping.Should().NotBeNull();
 
         var msg = TestHttpRequestData.FromJson("GET", new EventsGet(ping.PingId));
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
         var func = new EventsFunction(Logger, auth, Context);
         var result = await func.Run(msg);
         result.StatusCode.Should().Be(HttpStatusCode.OK);
