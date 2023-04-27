@@ -20,12 +20,12 @@ namespace Microsoft.OneFuzz.Service {
     }
 
     public class Metrics : IMetrics {
-        private readonly IQueue _queue;
         private readonly ILogTracer _log;
+        private readonly IOnefuzzContext _context;
         private readonly JsonSerializerOptions _options;
 
-        public Metrics(IQueue queue, ILogTracer log, IContainers containers, ICreds creds) {
-            _queue = queue;
+        public Metrics(ILogTracer log, IOnefuzzContext context) {
+            _context = context;
             _log = log;
             _options = new JsonSerializerOptions(EntityConverter.GetJsonSerializerOptions()) {
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -34,7 +34,7 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         public async Async.Task QueueCustomMetric(MetricMessage message) {
-            await _queue.SendMessage("custom-metrics", JsonSerializer.Serialize(message, _options), StorageType.Config);
+            await _context.Queue.SendMessage("custom-metrics", JsonSerializer.Serialize(message, _options), StorageType.Config);
         }
 
         public async Async.Task SendMetric(int metricValue, BaseMetric customDimensions) {
