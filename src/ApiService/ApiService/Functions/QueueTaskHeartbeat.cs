@@ -11,13 +11,11 @@ public class QueueTaskHearbeat {
     private readonly IEvents _events;
     private readonly IMetrics _metrics;
     private readonly ITaskOperations _tasks;
-    private readonly IContainers _containers;
     private readonly IJobOperations _jobs;
 
-    public QueueTaskHearbeat(ILogTracer logTracer, ITaskOperations tasks, IContainers containers, IJobOperations jobs, IEvents events, IMetrics metrics) {
+    public QueueTaskHearbeat(ILogTracer logTracer, ITaskOperations tasks, IJobOperations jobs, IEvents events, IMetrics metrics) {
         _log = logTracer;
         _tasks = tasks;
-        _containers = containers;
         _jobs = jobs;
         _events = events;
         _metrics = metrics;
