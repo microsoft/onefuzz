@@ -48,10 +48,6 @@ public sealed class TestContext : IOnefuzzContext {
         WebhookMessageLogOperations = new TestWebhookMessageLogOperations(logTracer, this);
     }
 
-    public TestEvents Events { get; set; } = new();
-
-    public TestMetrics Metrics { get; set; } = new();
-
     // convenience method for test setup
     public Async.Task InsertAll(params EntityBase[] objs)
         => Async.Task.WhenAll(
