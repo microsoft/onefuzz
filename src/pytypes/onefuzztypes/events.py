@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import AnyHttpUrl, BaseModel, Field
 
 from ._monkeypatch import _check_hotfix
 from .enums import (
@@ -318,6 +318,14 @@ class EventMessage(BaseEvent):
     event: Event
     instance_id: UUID
     instance_name: str
+
+
+class DownloadableEventMessage(EventMessage):
+    sas_url: AnyHttpUrl
+
+
+class EventGetResponse(BaseResponse):
+    event: DownloadableEventMessage
 
 
 # because Pydantic does not yet have discriminated union types yet, parse events

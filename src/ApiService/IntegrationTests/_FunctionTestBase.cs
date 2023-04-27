@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Data.Tables;
@@ -46,15 +47,23 @@ public abstract class FunctionTestBase : IAsyncLifetime {
         => _blobClient.GetBlobContainerClient(_storagePrefix + container.String);
 
     public FunctionTestBase(ITestOutputHelper output, IStorage storage) {
+        var instanceId = Guid.NewGuid().ToString();
         Logger = new TestLogTracer(output);
         _storage = storage;
 
-        var creds = new TestCreds(_subscriptionId, _resourceGroup, _region);
-        Context = new TestContext(Logger, _storage, creds, _storagePrefix);
+        var creds = new TestCreds(_subscriptionId, _resourceGroup, _region, instanceId);
+        Context = new TestContext(new DefaultHttpClientFactory(), Logger, _storage, creds, _storagePrefix);
 
         // set up blob client for test purposes:
         // this is always sync for test purposes
         _blobClient = _storage.GetBlobServiceClientForAccount(_storage.GetPrimaryAccount(StorageType.Config)).Result;
+
+        var baseConfigContainer = WellKnownContainers.BaseConfig;
+        var containerClient = GetContainerClient(baseConfigContainer);
+        _ = containerClient.Create();
+        _ = containerClient.GetBlobClient("instance_id").Upload(new BinaryData(instanceId));
+
+        _ = GetContainerClient(WellKnownContainers.Events).Create();
     }
 
     public async Task InitializeAsync() {
@@ -108,4 +117,16 @@ public abstract class FunctionTestBase : IAsyncLifetime {
                     }
                 })
                 .ToListAsync());
+}
+
+public sealed class DefaultHttpClientFactory : IHttpClientFactory, IDisposable {
+    private readonly Lazy<HttpMessageHandler> _handlerLazy = new(() => new HttpClientHandler());
+
+    public HttpClient CreateClient(string name) => new(_handlerLazy.Value, disposeHandler: false);
+
+    public void Dispose() {
+        if (_handlerLazy.IsValueCreated) {
+            _handlerLazy.Value.Dispose();
+        }
+    }
 }
