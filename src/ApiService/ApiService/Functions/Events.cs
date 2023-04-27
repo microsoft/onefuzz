@@ -31,7 +31,7 @@ public class EventsFunction {
 
         var requestedEvent = await _context.Events.GetDownloadableEvent(eventsGet.EventId);
         if (!requestedEvent.IsOk) {
-            return await new RequestHandling(_log).NotOk(req, requestedEvent.ErrorV, "events get");
+            return await _context.RequestHandling.NotOk(req, requestedEvent.ErrorV, "events get");
         }
 
         return await RequestHandling.Ok(req, new EventGetResponse(requestedEvent.OkV));
