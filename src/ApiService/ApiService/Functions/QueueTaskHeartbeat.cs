@@ -11,11 +11,13 @@ public class QueueTaskHearbeat {
     private readonly IEvents _events;
     private readonly IMetrics _metrics;
     private readonly ITaskOperations _tasks;
+    private readonly IContainers _containers;
     private readonly IJobOperations _jobs;
 
-    public QueueTaskHearbeat(ILogTracer logTracer, ITaskOperations tasks, IJobOperations jobs, IEvents events, IMetrics metrics) {
+    public QueueTaskHearbeat(ILogTracer logTracer, ITaskOperations tasks, IContainers containers, IJobOperations jobs, IEvents events, IMetrics metrics) {
         _log = logTracer;
         _tasks = tasks;
+        _containers = containers;
         _jobs = jobs;
         _events = events;
         _metrics = metrics;
@@ -28,14 +30,12 @@ public class QueueTaskHearbeat {
         var hb = JsonSerializer.Deserialize<TaskHeartbeatEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 
         var task = await _tasks.GetByTaskId(hb.TaskId);
-
         if (task == null) {
             _log.Warning($"invalid {hb.TaskId:Tag:TaskId}");
             return;
         }
 
         var job = await _jobs.Get(task.JobId);
-
         if (job == null) {
             _log.Warning($"invalid {task.JobId:Tag:JobId}");
             return;
@@ -45,6 +45,7 @@ public class QueueTaskHearbeat {
         if (!r.IsOk) {
             _log.WithHttpStatus(r.ErrorV).Error($"failed to replace with new task {hb.TaskId:Tag:TaskId}");
         }
+
         await _events.SendEvent(new EventTaskHeartbeat(newTask.JobId, newTask.TaskId, newTask.Config));
         await _metrics.SendMetric(1, new MetricTaskHeartbeat(newTask.JobId, newTask.TaskId, job.Config.Project, job.Config.Name, newTask.State));
     }
