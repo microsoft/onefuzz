@@ -28,6 +28,6 @@ pete = "0.10"
 procfs = { version = "0.12", default-features = false, features = ["flate2"] }
 
 [dev-dependencies]
-clap = { version = "4.0", features = ["derive"] }
+clap = { version = "4.2", features = ["derive"] }
 env_logger = "0.10.0"
 pretty_assertions = "1.3.0"
