@@ -48,7 +48,7 @@ stacktrace-parser = { path = "../stacktrace-parser" }
 backoff = { version = "0.4", features = ["tokio"] }
 
 [target.'cfg(target_family = "windows")'.dependencies]
-winreg = "0.10"
+winreg = "0.50"
 input-tester = { path = "../input-tester" }
 debugger = { path = "../debugger" }
 winapi = { version = "0.3", features = ["impl-default", "psapi"] }
