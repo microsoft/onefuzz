@@ -36,16 +36,16 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
                 gh = GetGitHubClient(auth.Value.User, auth.Value.PersonalAccessToken);
                 var _ = await gh.User.Get(auth.Value.User);
             } catch {
-                return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"Failed to login to github.com with user {auth.Value.User} and the provided Personal Access Token");
+                return OneFuzzResultVoid.Error(ErrorCode.GITHUB_VALIDATION_INVALID_PAT, $"Failed to login to github.com with user {auth.Value.User} and the provided Personal Access Token");
             }
         } else {
-            return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"GithubAuth is missing or invalid");
+            return OneFuzzResultVoid.Error(ErrorCode.GITHUB_VALIDATION_INVALID_PAT, $"GithubAuth is missing or invalid");
         }
 
         try {
             var _ = await gh.Repository.Get(config.Organization, config.Repository);
         } catch {
-            return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"Failed to access repository: {config.Organization}/{config.Repository}");
+            return OneFuzzResultVoid.Error(ErrorCode.GITHUB_VALIDATION_INVALID_REPOSITORY, $"Failed to access repository: {config.Organization}/{config.Repository}");
         }
 
         return OneFuzzResultVoid.Ok;

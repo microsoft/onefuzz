@@ -12,9 +12,9 @@ goblin = "0.6.0"
 iced-x86 = "1.18"
 log = "0.4.17"
 pdb = "0.8.0"
-regex = "1.7"
+regex = "1.8"
 symbolic = { version = "10.1", features = ["debuginfo", "demangle", "symcache"] }
 thiserror = "1.0"
 
 [dev-dependencies]
-clap = { version = "4.0", features = ["derive"] }
+clap = { version = "4.2", features = ["derive"] }

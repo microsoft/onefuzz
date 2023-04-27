@@ -6,14 +6,14 @@ license = "MIT"
 
 [dependencies]
 anyhow = "1.0"
-clap = { version = "4.1.6", features = ["derive"] }
+clap = { version = "4.2.4", features = ["derive"] }
 lazy_static = "1.4"
-regex = "1.7"
+regex = "1.8"
 thiserror = "1.0"
 
 [target.'cfg(windows)'.dependencies]
 debugger = { path = "../debugger" }
-winreg = "0.10"
+winreg = "0.50"
 
 [dependencies.winapi]
 version = "0.3"
