@@ -102,30 +102,33 @@ public class Scheduler : IScheduler {
             }
         }
 
-        if (bucketConfig is not null) {
-            var setupUrl = await _containers.GetContainerSasUrl(bucketConfig.setupContainer, StorageType.Corpus, BlobContainerSasPermissions.Read | BlobContainerSasPermissions.List);
-            var extraUrl = bucketConfig.extraContainer != null ? await _containers.GetContainerSasUrl(bucketConfig.extraContainer, StorageType.Corpus, BlobContainerSasPermissions.Read | BlobContainerSasPermissions.List) : null;
+        if (bucketConfig is BucketConfig c) {
+            var readOnlyPermissions = BlobContainerSasPermissions.Read | BlobContainerSasPermissions.List;
+            var setupUrl = await _containers.GetContainerSasUrl(c.setupContainer, StorageType.Corpus, readOnlyPermissions);
+            var extraSetupUrl = c.extraSetupContainer is not null
+                ? await _containers.GetContainerSasUrl(c.extraSetupContainer, StorageType.Corpus, readOnlyPermissions)
+                : null;
+
             var workSet = new WorkSet(
-                Reboot: bucketConfig.reboot,
-                Script: bucketConfig.setupScript is not null,
+                Reboot: c.reboot,
+                Script: c.setupScript is not null,
                 SetupUrl: setupUrl,
-                ExtraUrl: extraUrl,
+                ExtraUrl: extraSetupUrl,
                 WorkUnits: workUnits
             );
 
-            return (bucketConfig, workSet);
+            return (c, workSet);
         }
 
         return null;
     }
 
 
-    sealed record BucketConfig(
+    readonly record struct BucketConfig(
         long count,
         bool reboot,
         Container setupContainer,
-        Container? extraContainer,
-        Container? extraRwContainer,
+        Container? extraSetupContainer,
         string? setupScript,
         Pool pool);
 
@@ -181,8 +184,7 @@ public class Scheduler : IScheduler {
         }
         var setupContainer = task.Config.Containers?.FirstOrDefault(c => c.Type == ContainerType.Setup) ?? throw new Exception($"task missing setup container: task_type = {task.Config.Task.Type}");
 
-        var extraContainer = task.Config.Containers?.FirstOrDefault(c => c is { Type: ContainerType.Extra });
-        var extraRwContainer = task.Config.Containers?.FirstOrDefault(c => c is { Type: ContainerType.ExtraRw });
+        var extraSetupContainer = task.Config.Containers?.FirstOrDefault(c => c is { Type: ContainerType.Extra });
 
         string? setupScript = null;
         if (task.Os == Os.Windows) {
@@ -221,8 +223,7 @@ public class Scheduler : IScheduler {
             count,
             reboot,
             setupContainer.Name,
-            extraContainer?.Name,
-            extraRwContainer?.Name,
+            extraSetupContainer?.Name,
             setupScript,
             pool with { ETag = default, TimeStamp = default });
 

@@ -917,7 +917,7 @@ public record VmDefinition(
     long Value
 );
 
-public record TaskDefinition(
+public readonly record struct TaskDefinition(
     TaskFeature[] Features,
     VmDefinition Vm,
     ContainerDefinition[] Containers,
@@ -932,37 +932,31 @@ public record WorkSet(
     List<WorkUnit> WorkUnits
 );
 
-
-
-
-
-public record ContainerDefinition(
+public readonly record struct ContainerDefinition(
     ContainerType Type,
     Compare Compare,
     long Value,
     ContainerPermission Permissions);
 
-
 // TODO: service shouldn't pass SyncedDir, but just the url and let the agent
 // come up with paths
-public record SyncedDir(string Path, Uri Url);
-
+public readonly record struct SyncedDir(string Path, Uri Url);
 
 [JsonConverter(typeof(ContainerDefConverter))]
 public interface IContainerDef { }
 public record SingleContainer(SyncedDir SyncedDir) : IContainerDef;
-public record MultipleContainer(List<SyncedDir> SyncedDirs) : IContainerDef;
+public record MultipleContainer(IReadOnlyList<SyncedDir> SyncedDirs) : IContainerDef;
 
 
 public class ContainerDefConverter : JsonConverter<IContainerDef> {
     public override IContainerDef? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         if (reader.TokenType == JsonTokenType.StartObject) {
             var result = (SyncedDir?)JsonSerializer.Deserialize(ref reader, typeof(SyncedDir), options);
-            if (result is null) {
-                return null;
+            if (result is SyncedDir sd) {
+                return new SingleContainer(sd);
             }
 
-            return new SingleContainer(result);
+            return null;
         }
 
         if (reader.TokenType == JsonTokenType.StartArray) {

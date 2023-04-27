@@ -1,7 +1,6 @@
 ﻿namespace Microsoft.OneFuzz.Service;
 
-public static class Defs
-{
+public static class Defs {
     private static readonly ContainerDefinition _extraContainer =
         new(
             Type: ContainerType.Extra,
@@ -18,6 +17,14 @@ public static class Defs
             Permissions: ContainerPermission.Read
                 | ContainerPermission.List
                 | ContainerPermission.Write
+        );
+
+    private static readonly ContainerDefinition _setupContainer =
+        new(
+            Type: ContainerType.Setup,
+            Compare: Compare.Equal,
+            Value: 1,
+            Permissions: ContainerPermission.Read | ContainerPermission.List
         );
 
     public static readonly IReadOnlyDictionary<TaskType, TaskDefinition> TASK_DEFINITIONS =
@@ -41,12 +48,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.Equal, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.ReadonlyInputs,
                             Compare: Compare.AtLeast,
@@ -82,12 +84,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.Equal, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.ReadonlyInputs,
                             Compare: Compare.AtLeast,
@@ -130,12 +127,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.Crashes,
                             Compare: Compare.Equal,
@@ -191,12 +183,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.Crashes,
                             Compare: Compare.Equal,
@@ -242,12 +229,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.Analysis,
                             Compare: Compare.Equal,
@@ -290,12 +272,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.Crashes,
                             Compare: Compare.Equal,
@@ -337,12 +314,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.Crashes,
                             Compare: Compare.Equal,
@@ -386,12 +358,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.Equal, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.ReadonlyInputs,
                             Compare: Compare.AtLeast,
@@ -426,12 +393,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.Equal, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.UniqueInputs,
                             Compare: Compare.Equal,
@@ -469,12 +431,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.Tools,
                             Compare: Compare.AtMost,
@@ -549,12 +506,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.Tools,
                             Compare: Compare.Equal,
@@ -600,12 +552,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.Tools,
                             Compare: Compare.Equal,
@@ -646,12 +593,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.Crashes,
                             Compare: Compare.Equal,
@@ -700,12 +642,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.RegressionReports,
                             Compare: Compare.Equal,
@@ -766,12 +703,7 @@ public static class Defs
                     Vm: new VmDefinition(Compare: Compare.AtLeast, Value: 1),
                     Containers: new[]
                     {
-                        new ContainerDefinition(
-                            Type: ContainerType.Setup,
-                            Compare: Compare.Equal,
-                            Value: 1,
-                            Permissions: ContainerPermission.Read | ContainerPermission.List
-                        ),
+                        _setupContainer,
                         new ContainerDefinition(
                             Type: ContainerType.RegressionReports,
                             Compare: Compare.Equal,
