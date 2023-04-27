@@ -126,7 +126,12 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         var ping = new EventPing(Guid.NewGuid());
         var instanceId = await _context.Containers.GetInstanceId();
         var instanceName = _context.Creds.GetInstanceName();
-        await AddEvent(webhook, new DownloadableEventMessage(Guid.NewGuid(), EventType.Ping, ping, instanceId, instanceName, DateTime.UtcNow, new Uri("https://example.com")));
+        var eventMessage = new EventMessage(
+            ping.PingId, EventType.Ping, ping, instanceId, instanceName, DateTime.UtcNow
+        );
+        var downloadableEventMessage = await _context.Events.MakeDownloadable(eventMessage);
+
+        await AddEvent(webhook, downloadableEventMessage);
         return ping;
     }
 

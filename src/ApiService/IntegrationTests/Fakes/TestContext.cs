@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Microsoft.Extensions.Options;
@@ -14,7 +15,7 @@ namespace IntegrationTests.Fakes;
 // TestContext provides a minimal IOnefuzzContext implementation to allow running
 // of functions as unit or integration tests.
 public sealed class TestContext : IOnefuzzContext {
-    public TestContext(ILogTracer logTracer, IStorage storage, ICreds creds, string storagePrefix) {
+    public TestContext(IHttpClientFactory httpClientFactory, ILogTracer logTracer, IStorage storage, ICreds creds, string storagePrefix) {
         var cache = new MemoryCache(Options.Create(new MemoryCacheOptions()));
         EntityConverter = new EntityConverter();
         ServiceConfiguration = new TestServiceConfiguration(storagePrefix);
@@ -42,9 +43,9 @@ public sealed class TestContext : IOnefuzzContext {
         NotificationOperations = new NotificationOperations(logTracer, this);
         SecretsOperations = new TestSecretsOperations(Creds, ServiceConfiguration);
         FeatureManagerSnapshot = new TestFeatureManagerSnapshot();
+        WebhookOperations = new TestWebhookOperations(httpClientFactory, logTracer, this);
+        Events = new TestEvents(logTracer, this);
     }
-
-    public TestEvents Events { get; set; } = new();
 
     // convenience method for test setup
     public Async.Task InsertAll(params EntityBase[] objs)
@@ -58,12 +59,13 @@ public sealed class TestContext : IOnefuzzContext {
                 NodeTasks nt => NodeTasksOperations.Insert(nt),
                 InstanceConfig ic => ConfigOperations.Insert(ic),
                 Notification n => NotificationOperations.Insert(n),
+                Webhook w => WebhookOperations.Insert(w),
                 _ => throw new NotSupportedException($"You will need to add an TestContext.InsertAll case for {x.GetType()} entities"),
             }));
 
     // Implementations:
 
-    IEvents IOnefuzzContext.Events => Events;
+    public IEvents Events { get; }
 
     public IServiceConfig ServiceConfiguration { get; }
 
@@ -95,6 +97,7 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IFeatureManagerSnapshot FeatureManagerSnapshot { get; }
 
+    public IWebhookOperations WebhookOperations { get; }
 
     // -- Remainder not implemented --
 
@@ -123,7 +126,6 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IWebhookMessageLogOperations WebhookMessageLogOperations => throw new System.NotImplementedException();
 
-    public IWebhookOperations WebhookOperations => throw new System.NotImplementedException();
 
     public INsgOperations NsgOperations => throw new NotImplementedException();
 

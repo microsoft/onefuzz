@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -22,6 +23,7 @@ namespace Microsoft.OneFuzz.Service {
 
         Async.Task<OneFuzzResult<EventMessage>> GetEvent(Guid eventId);
         Async.Task<OneFuzzResult<DownloadableEventMessage>> GetDownloadableEvent(Guid eventId);
+        Async.Task<DownloadableEventMessage> MakeDownloadable(EventMessage eventMessage);
     }
 
     public class Events : IEvents {
@@ -44,7 +46,7 @@ namespace Microsoft.OneFuzz.Service {
             _options.Converters.Add(new RemoveUserInfo());
         }
 
-        public async Async.Task QueueSignalrEvent(DownloadableEventMessage message) {
+        public virtual async Async.Task QueueSignalrEvent(DownloadableEventMessage message) {
             var ev = new SignalREvent("events", new List<DownloadableEventMessage>() { message });
             await _queue.SendMessage("signalr-events", JsonSerializer.Serialize(ev, _options), StorageType.Config);
         }
@@ -63,26 +65,14 @@ namespace Microsoft.OneFuzz.Service {
                 creationDate
             );
 
-            // TODO: Maybe we store the events by event type?
-            await _containers.SaveBlob(WellKnownContainers.Events, eventMessage.EventId.ToString(), JsonSerializer.Serialize(eventMessage, _options), StorageType.Corpus);
-            var sasUrl = await _containers.GetFileSasUrl(WellKnownContainers.Events, eventMessage.EventId.ToString(), StorageType.Corpus, BlobSasPermissions.Read);
-
-            var downloadableEventMessage = new DownloadableEventMessage(
-                eventMessage.EventId,
-                eventType,
-                anEvent,
-                instanceId,
-                _creds.GetInstanceName(),
-                creationDate,
-                sasUrl
-            );
+            var downloadableEventMessage = await MakeDownloadable(eventMessage);
 
             await QueueSignalrEvent(downloadableEventMessage);
             await _webhook.SendEvent(downloadableEventMessage);
             LogEvent(anEvent);
         }
 
-        public void LogEvent(BaseEvent anEvent) {
+        public virtual void LogEvent(BaseEvent anEvent) {
             var serializedEvent = JsonSerializer.Serialize(anEvent, anEvent.GetType(), _options);
             _log.Info($"sending event: {anEvent.GetEventType():Tag:EventType} - {serializedEvent}");
         }
@@ -123,6 +113,21 @@ namespace Microsoft.OneFuzz.Service {
                 eventMessage.CreatedAt,
                 sasUrl
             ));
+        }
+
+        public async Task<DownloadableEventMessage> MakeDownloadable(EventMessage eventMessage) {
+            await _containers.SaveBlob(WellKnownContainers.Events, eventMessage.EventId.ToString(), JsonSerializer.Serialize(eventMessage, _options), StorageType.Corpus);
+            var sasUrl = await _containers.GetFileSasUrl(WellKnownContainers.Events, eventMessage.EventId.ToString(), StorageType.Corpus, BlobSasPermissions.Read);
+
+            return new DownloadableEventMessage(
+                eventMessage.EventId,
+                eventMessage.EventType,
+                eventMessage.Event,
+                eventMessage.InstanceId,
+                eventMessage.InstanceName,
+                eventMessage.CreatedAt,
+                sasUrl
+            );
         }
     }
 

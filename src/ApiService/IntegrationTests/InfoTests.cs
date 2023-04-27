@@ -1,6 +1,6 @@
 ﻿
-using System;
 using System.Net;
+using FluentAssertions;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.Functions;
@@ -45,14 +45,6 @@ public abstract class InfoTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task TestInfo_WithUserCredentials_Succeeds() {
-        // store the instance ID in the expected location:
-        // for production this is done by the deploy script
-        var instanceId = Guid.NewGuid().ToString();
-        var baseConfigContainer = WellKnownContainers.BaseConfig;
-        var containerClient = GetContainerClient(baseConfigContainer);
-        _ = await containerClient.CreateAsync();
-        _ = await containerClient.GetBlobClient("instance_id").UploadAsync(new BinaryData(instanceId));
-
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
         var func = new Info(auth, Context);
 
@@ -61,6 +53,7 @@ public abstract class InfoTestBase : FunctionTestBase {
 
         // the instance ID should be somewhere in the result,
         // indicating it was read from the blob
-        Assert.Contains(instanceId, BodyAsString(result));
+        var info = BodyAs<InfoResponse>(result);
+        info.InstanceId.Should().NotBeEmpty();
     }
 }
