@@ -1765,6 +1765,21 @@ class ValidateScriban(Endpoint):
         return self._req_model("POST", responses.TemplateValidationResponse, data=req)
 
 
+class Events(Endpoint):
+    """Interact with Onefuzz events"""
+
+    endpoint = "events"
+
+    def get(self, event_id: UUID_EXPANSION) -> events.EventGetResponse:
+        """Get an event's payload by id"""
+        self.logger.debug("get event: %s", event_id)
+        return self._req_model(
+            "GET",
+            events.EventGetResponse,
+            data=requests.EventsGet(event_id=event_id),
+        )
+
+
 class Command:
     def __init__(self, onefuzz: "Onefuzz", logger: logging.Logger):
         self.onefuzz = onefuzz
@@ -1856,6 +1871,7 @@ class Onefuzz:
         self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
         self.validate_scriban = ValidateScriban(self)
+        self.events = Events(self)
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)

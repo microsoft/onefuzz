@@ -16,10 +16,10 @@ use uuid::Uuid;
 
 use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
-const LOGS_BUFFER_SIZE: usize = 100;
+const LOGS_BUFFER_SIZE: usize = 1000;
 const MAX_LOG_SIZE: u64 = 100000000; // 100 MB
-const DEFAULT_LOGGING_INTERVAL: Duration = Duration::from_secs(60);
-const DEFAULT_POLLING_INTERVAL: Duration = Duration::from_secs(5);
+const DEFAULT_LOGGING_INTERVAL: Duration = Duration::from_secs(20);
+const DEFAULT_POLLING_INTERVAL: Duration = Duration::from_secs(3);
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]

@@ -65,7 +65,8 @@ class Libfuzzer(Command):
         ensemble_sync_delay: Optional[int] = None,
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
-        check_fuzzer_help: bool = True,
+        check_fuzzer_help: bool = False,
+        no_check_fuzzer_help: bool = False,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
         module_allowlist: Optional[str] = None,
@@ -75,6 +76,13 @@ class Libfuzzer(Command):
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
     ) -> None:
+        if check_fuzzer_help:
+            self.logger.warning(
+                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
+            )
+        check_fuzzer_help = not no_check_fuzzer_help
+        del no_check_fuzzer_help
+
         target_options = target_options or []
 
         regression_containers = [
@@ -349,7 +357,8 @@ class Libfuzzer(Command):
         ensemble_sync_delay: Optional[int] = None,
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
-        check_fuzzer_help: bool = True,
+        check_fuzzer_help: bool = False,
+        no_check_fuzzer_help: bool = False,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
         module_allowlist: Optional[File] = None,
@@ -367,6 +376,13 @@ class Libfuzzer(Command):
         :param bool ensemble_sync_delay: Specify duration between
             syncing inputs during ensemble fuzzing (0 to disable).
         """
+
+        if check_fuzzer_help:
+            self.logger.warning(
+                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
+            )
+        check_fuzzer_help = not no_check_fuzzer_help
+        del no_check_fuzzer_help
 
         # verify containers exist
         if existing_inputs:
@@ -514,12 +530,19 @@ class Libfuzzer(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         preserve_existing_outputs: bool = False,
-        check_fuzzer_help: bool = True,
+        check_fuzzer_help: bool = False,
+        no_check_fuzzer_help: bool = False,
         extra_container: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         libfuzzer merge task
         """
+        if check_fuzzer_help:
+            self.logger.warning(
+                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
+            )
+        check_fuzzer_help = not no_check_fuzzer_help
+        del no_check_fuzzer_help
 
         # verify containers exist
         if existing_inputs:
@@ -874,13 +897,20 @@ class Libfuzzer(Command):
         colocate_all_tasks: bool = False,
         crash_report_timeout: Optional[int] = 1,
         check_retry_count: Optional[int] = 300,
-        check_fuzzer_help: bool = True,
+        check_fuzzer_help: bool = False,
+        no_check_fuzzer_help: bool = False,
         extra_container: Optional[Container] = None,
         crashes: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
         """
+        if check_fuzzer_help:
+            self.logger.warning(
+                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
+            )
+        check_fuzzer_help = not no_check_fuzzer_help
+        del no_check_fuzzer_help
 
         self.logger.warning(
             "qemu_user jobs are a preview feature and may change in the future"

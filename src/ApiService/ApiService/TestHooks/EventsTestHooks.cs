@@ -25,7 +25,7 @@ namespace ApiService.TestHooks {
             _log.Info($"Log event");
 
             var s = await req.ReadAsStringAsync();
-            var msg = JsonSerializer.Deserialize<EventMessage>(s!, EntityConverter.GetJsonSerializerOptions());
+            var msg = JsonSerializer.Deserialize<DownloadableEventMessage>(s!, EntityConverter.GetJsonSerializerOptions());
             _events.LogEvent(msg!.Event);
             var resp = req.CreateResponse(HttpStatusCode.OK);
             return resp;
@@ -37,7 +37,7 @@ namespace ApiService.TestHooks {
             _log.Info($"Send event");
 
             var s = await req.ReadAsStringAsync();
-            var msg = JsonSerializer.Deserialize<EventMessage>(s!, EntityConverter.GetJsonSerializerOptions());
+            var msg = JsonSerializer.Deserialize<DownloadableEventMessage>(s!, EntityConverter.GetJsonSerializerOptions());
             await _events.SendEvent(msg!.Event);
             var resp = req.CreateResponse(HttpStatusCode.OK);
             return resp;

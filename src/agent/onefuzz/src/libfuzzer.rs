@@ -16,6 +16,7 @@ use std::{
     ffi::{OsStr, OsString},
     path::{Path, PathBuf},
     process::Stdio,
+    time::Duration,
 };
 use tempfile::tempdir;
 use tokio::process::{Child, Command};
@@ -168,35 +169,30 @@ impl LibFuzzer {
         Ok(cmd)
     }
 
-    pub async fn verify(
-        &self,
-        check_fuzzer_help: bool,
-        inputs: Option<Vec<PathBuf>>,
-    ) -> Result<()> {
+    async fn verify_inner(&self, check_fuzzer_help: bool, inputs: &[&Path]) -> Result<()> {
         if check_fuzzer_help {
             self.check_help().await?;
         }
 
         let mut seen_inputs = false;
 
-        if let Some(inputs) = inputs {
-            // check the 5 files at random from the input directories
-            for input_dir in inputs {
-                if tokio::fs::metadata(&input_dir).await.is_ok() {
-                    let mut files = list_files(&input_dir).await?;
-                    {
-                        let mut rng = thread_rng();
-                        files.shuffle(&mut rng);
-                    }
-                    for file in files.iter().take(5) {
-                        self.check_input(file).await.with_context(|| {
-                            format!("checking input corpus: {}", file.display())
-                        })?;
-                        seen_inputs = true;
-                    }
-                } else {
-                    println!("input dir doesn't exist: {input_dir:?}");
+        // check 5 files at random from each input directory
+        for input_dir in inputs {
+            if tokio::fs::metadata(&input_dir).await.is_ok() {
+                let mut files = list_files(&input_dir).await?;
+                {
+                    let mut rng = thread_rng();
+                    files.shuffle(&mut rng);
                 }
+
+                for file in files.iter().take(5) {
+                    self.check_input(file)
+                        .await
+                        .with_context(|| format!("checking input corpus: {}", file.display()))?;
+                    seen_inputs = true;
+                }
+            } else {
+                debug!("input dir doesn't exist: {input_dir:?}");
             }
         }
 
@@ -210,6 +206,37 @@ impl LibFuzzer {
         }
 
         Ok(())
+    }
+
+    pub async fn verify(&self, check_fuzzer_help: bool, inputs: Option<&[&Path]>) -> Result<()> {
+        // we’ve seen issues where executables cannot run on the first attempt;
+        // for example, executables that depend upon an override in KnownDlls from taking effect
+        //
+        // so, we let the verification step fail for a while before we commit to its total failure
+        const SLEEP_TIME: Duration = Duration::from_secs(5);
+        const MAX_ATTEMPTS: usize = 20; // have seen this take 10+ attempts
+        let mut attempts = 1;
+        loop {
+            let result = self
+                .verify_inner(check_fuzzer_help, inputs.unwrap_or_default())
+                .await;
+
+            match result {
+                Ok(()) => return Ok(()),
+                Err(e) => {
+                    if attempts < MAX_ATTEMPTS {
+                        warn!("libfuzzer verification failed, will retry: {e:?}");
+                        tokio::time::sleep(SLEEP_TIME).await;
+                    } else {
+                        return Err(e.context(format!(
+                            "libfuzzer verification still failing after {attempts} attempts"
+                        )));
+                    }
+                }
+            }
+
+            attempts += 1;
+        }
     }
 
     // Verify that the libfuzzer exits with a zero return code with a known
@@ -494,7 +521,7 @@ mod tests {
         // verify catching bad exits with inputs
         assert!(
             fuzzer
-                .verify(false, Some(vec!(temp_setup_dir.path().to_path_buf())))
+                .verify(false, Some(&[temp_setup_dir.path()]))
                 .await
                 .is_err(),
             "checking false with basic input"
@@ -527,7 +554,7 @@ mod tests {
         // verify good exits with inputs
         assert!(
             fuzzer
-                .verify(false, Some(vec!(temp_setup_dir.path().to_path_buf())))
+                .verify(false, Some(&[temp_setup_dir.path()]))
                 .await
                 .is_ok(),
             "checking true with basic inputs"

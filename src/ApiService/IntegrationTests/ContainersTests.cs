@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using Azure.Storage.Blobs;
+using FluentAssertions;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.Functions;
@@ -155,13 +156,20 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
         var list = BodyAs<ContainerInfoBase[]>(result);
         // other tests can run in parallel, so filter to just our containers:
-        var cs = list.Where(ci => ci.Name.String.StartsWith(Context.ServiceConfiguration.OneFuzzStoragePrefix)).ToList();
-        Assert.Equal(2, cs.Count);
+        var cs = list
+            .Where(ci => ci.Name.String.StartsWith(Context.ServiceConfiguration.OneFuzzStoragePrefix))
+            .ToList();
+
+        _ = list.Should().Contain(ci => ci.Name.String.Contains("one"));
+        _ = list.Should().Contain(ci => ci.Name.String.Contains("two"));
+
+        var cs1 = list.Single(ci => ci.Name.String.Contains("one"));
+        var cs2 = list.Single(ci => ci.Name.String.Contains("two"));
 
         // ensure correct metadata was returned.
         // these will be in order as "one"<"two"
-        Assert.Equal(meta1, cs[0].Metadata);
-        Assert.Equal(meta2, cs[1].Metadata);
+        Assert.Equal(meta1, cs1.Metadata);
+        Assert.Equal(meta2, cs2.Metadata);
     }
 
     private static async Async.Task AssertCanCRUD(Uri sasUrl) {

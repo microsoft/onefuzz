@@ -22,6 +22,11 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
     }
     public async Async.Task NewFiles(Container container, string filename, bool isLastRetryAttempt) {
+        // We don't want to store file added events for the events container because that causes an infinite loop
+        if (container == WellKnownContainers.Events) {
+            return;
+        }
+
         var notifications = GetNotifications(container);
         var hasNotifications = await notifications.AnyAsync();
         var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
