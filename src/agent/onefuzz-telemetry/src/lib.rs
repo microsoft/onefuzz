@@ -254,7 +254,7 @@ mod global {
 
     lazy_static! {
         pub static ref EVENT_SOURCE: RwLock<Option<Sender<LoggingEvent>>> = {
-            let (telemetry_event_source, _) = broadcast::channel::<_>(100);
+            let (telemetry_event_source, _) = broadcast::channel::<_>(5000);
             RwLock::new(Some(telemetry_event_source))
         };
     }
