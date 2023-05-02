@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Azure;
 using Azure.Storage.Sas;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -12,8 +11,13 @@ namespace Microsoft.OneFuzz.Service {
     (
         string Target,
         List<DownloadableEventMessage> arguments
-    );
-
+    ) : ITruncatable<SignalREvent> {
+        public SignalREvent Truncate(int maxLength) {
+            return this with {
+                arguments = arguments.Select(x => x.Truncate(maxLength)).ToList()
+            };
+        }
+    }
 
     public interface IEvents {
         Async.Task SendEvent(BaseEvent anEvent);
@@ -52,21 +56,11 @@ namespace Microsoft.OneFuzz.Service {
                 ("event_type", message.EventType.ToString()),
                 ("event_id", message.EventId.ToString())
             };
-            try {
-                var ev = new SignalREvent("events", new List<DownloadableEventMessage>() { message });
-                await _queue.SendMessage("signalr-events", JsonSerializer.Serialize(ev, _options), StorageType.Config);
-            } catch (RequestFailedException ex) {
-                if (ex.Message.Contains("The request body is too large") && message.Event is ITruncatable<BaseEvent> truncatableEvent) {
-                    _log.WithTags(tags).Warning($"The EventMessage was too large for Azure Queue. Truncating event data and trying again.");
-                    message = message with {
-                        Event = truncatableEvent.Truncate(1000)
-                    };
-                    var ev = new SignalREvent("events", new List<DownloadableEventMessage>() { message });
-                    await _queue.SendMessage("signalr-events", JsonSerializer.Serialize(ev, _options), StorageType.Config);
-                } else {
-                    // Not handled
-                    throw ex;
-                }
+            var ev = new SignalREvent("events", new List<DownloadableEventMessage>() { message });
+            var queueResult = await _queue.QueueObject("signalr-events", ev, StorageType.Config, serializerOptions: _options);
+
+            if (!queueResult) {
+                _log.WithTags(tags).Error($"Fsailed to queue signalr event");
             }
         }
 
