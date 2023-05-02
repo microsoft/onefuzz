@@ -62,62 +62,6 @@ function Optimize-VM {
   sc.exe config "WSearch" start= disabled
 }
 
-function Set-SetSSHACL {
-  icacls.exe "$env:ProgramData\ssh\ssh_host_dsa_key" /remove "NT AUTHORITY/Authenticated Users"
-  icacls.exe "$env:ProgramData\ssh\ssh_host_dsa_key" /inheritance:r
-  Get-Acl "$env:ProgramData\ssh\ssh_host_dsa_key" | Set-Acl "$env:ProgramData\ssh\administrators_authorized_keys"
-
-  icacls.exe "c:\programdata\ssh\ssh_host_dsa_key" /remove "NT AUTHORITY/Authenticated Users"
-  icacls.exe "c:\programdata\ssh\ssh_host_dsa_key" /inheritance:r
-  Get-Acl "c:\programdata\ssh\ssh_host_dsa_key" | Set-Acl "c:\programdata\ssh\administrators_authorized_keys"
-}
-
-function Enable-SSH {
-  log "enabling ssh"
-
-  Get-Service -name sshd
-  if ($?) {
-    log "ssh already installed"
-  }
-  else {
-    Remove-WindowsCapability -Online -Name OpenSSH.*
-    Get-WindowsCapability -Online -Name OpenSSH.* | Add-WindowsCapability -Online
-    log "enabling ssh: adding ssh"
-  }
-
-  Start-Service sshd
-  Set-Service -Name sshd -StartupType 'Automatic'
-  Enable-SSHTrafic
-
-  Get-Service -Name sshd
-  if ($?) {
-    log "onefuzz: ssh running"
-  }
-  else {
-    log "onefuzz: specifying onefuzz must reboot before starting"
-    Set-Restart
-  }
-
-  Set-SetSSHACL
-
-  log "enabling ssh: done"
-}
-
-function Enable-SSHTrafic {
-  log "enabling ssh firewall"
-  $name = "sshd"
-  $display = "OpenSSH Server (sshd)"
-  $rule = Get-NetFirewallRule -Name $name -ErrorAction SilentlyContinue
-  if ($rule) {
-    log "Firewall rule '$name' already created"
-    Enable-NetFirewallRule -Name $name
-  }
-  else {
-    New-NetFirewallRule -Name $name -DisplayName $display -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22
-  }
-  log "enabling ssh firewall done"
-}
-
 function Install-OnBoot {
   log "adding onboot: starting"
   schtasks /create /sc onstart /tn onefuzz /tr "powershell.exe -ExecutionPolicy Unrestricted -WindowStyle Hidden -File c:\onefuzz\tools\win64\onefuzz-run.ps1" /ru SYSTEM
