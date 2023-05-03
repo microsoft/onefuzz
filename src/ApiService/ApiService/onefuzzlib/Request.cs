@@ -159,7 +159,7 @@ public class RequestHandling : IRequestHandling {
                 exception.Message,
                 exception.Source ?? string.Empty,
                 exception.StackTrace ?? string.Empty
-            
+
         );
     }
 

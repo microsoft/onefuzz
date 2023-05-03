@@ -17,7 +17,7 @@ public abstract class NotificationsBase {
 
     public async Async.Task LogFailedNotification(Report report, Exception error, Guid notificationId) {
         _logTracer.Error($"notification failed: notification_id:{notificationId:Tag:NotificationId} job_id:{report.JobId:Tag:JobId} task_id:{report.TaskId:Tag:TaskId} err:{error.Message:Tag:Error}");
-        Error? err =Error.Create(ErrorCode.NOTIFICATION_FAILURE, $"{error}");
+        Error? err = Error.Create(ErrorCode.NOTIFICATION_FAILURE, $"{error}");
         await _context.Events.SendEvent(new EventNotificationFailed(
             NotificationId: notificationId,
             JobId: report.JobId,

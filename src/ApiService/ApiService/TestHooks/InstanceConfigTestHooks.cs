@@ -26,7 +26,7 @@ namespace ApiService.TestHooks {
 
             if (config is null) {
                 _log.Error($"Instance config is null");
-                Error err = Error.Create(ErrorCode.INVALID_REQUEST, "Instance config is null" );
+                Error err = Error.Create(ErrorCode.INVALID_REQUEST, "Instance config is null");
                 var resp = req.CreateResponse(HttpStatusCode.InternalServerError);
                 await resp.WriteAsJsonAsync(err);
                 return resp;
