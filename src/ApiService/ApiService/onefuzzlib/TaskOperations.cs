@@ -133,7 +133,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         foreach (var t in taskInJob) {
             if (t.Config.PrereqTasks != null) {
                 if (t.Config.PrereqTasks.Contains(task.TaskId)) {
-                    await MarkFailed(t, new Error(ErrorCode.TASK_FAILED, new[] { $"prerequisite task failed.  task_id:{t.TaskId}" }), taskInJob);
+                    await MarkFailed(t, Error.Create(ErrorCode.TASK_FAILED, $"prerequisite task failed.  task_id:{t.TaskId}"), taskInJob);
                 }
             }
         }

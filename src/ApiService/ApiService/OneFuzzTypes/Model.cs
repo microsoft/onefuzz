@@ -167,10 +167,6 @@ public record Proxy
 ) : StatefulEntityBase<VmState>(State);
 
 public record Error(ErrorCode Code, List<string>? Errors) {
-    public Error(ErrorCode code, params string[] errors) : this(code, errors.ToList()) {
-
-    }
-
     public static Error Create(ErrorCode code, params string[] errors) {
         return new Error(code, errors.ToList());
     }

@@ -213,7 +213,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     private async System.Threading.Tasks.Task<Proxy> SetProvisionFailed(Proxy proxy, VirtualMachineInstanceView? instanceView) {
         var errors = GetErrors(proxy, instanceView).ToArray();
-        return await SetFailed(proxy, new Error(ErrorCode.PROXY_FAILED, errors));
+        return await SetFailed(proxy, new Error(ErrorCode.PROXY_FAILED, errors.ToList()));
     }
 
     private async Task<Proxy> SetFailed(Proxy proxy, Error error) {
@@ -259,7 +259,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         var vm = GetVm(proxy, config);
         var vmData = await _context.VmOperations.GetVm(vm.Name);
         if (vmData is null) {
-            return await SetFailed(proxy, new Error(ErrorCode.PROXY_FAILED, new[] { "azure not able to find vm" }));
+            return await SetFailed(proxy, Error.Create(ErrorCode.PROXY_FAILED, "azure not able to find vm"));
         }
 
         if (vmData.ProvisioningState == "Failed") {

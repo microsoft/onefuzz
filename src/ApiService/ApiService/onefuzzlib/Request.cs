@@ -154,13 +154,12 @@ public class RequestHandling : IRequestHandling {
             }
         }
 
-        return new Error(
+        return Error.Create(
             ErrorCode.INVALID_REQUEST,
-            new string[] {
                 exception.Message,
                 exception.Source ?? string.Empty,
                 exception.StackTrace ?? string.Empty
-            }
+            
         );
     }
 

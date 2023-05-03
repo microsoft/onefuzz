@@ -610,7 +610,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public new async Async.Task Delete(Node node) {
-        await MarkTasksStoppedEarly(node, new Error(ErrorCode.INVALID_NODE, "node is being deleted"));
+        await MarkTasksStoppedEarly(node, Error.Create(ErrorCode.INVALID_NODE, "node is being deleted"));
         await _context.NodeTasksOperations.ClearByMachineId(node.MachineId);
         await _context.NodeMessageOperations.ClearMessages(node.MachineId);
         var r = await base.Delete(node);
