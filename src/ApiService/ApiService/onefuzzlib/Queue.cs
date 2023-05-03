@@ -10,7 +10,7 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 namespace Microsoft.OneFuzz.Service;
 public interface IQueue {
     Async.Task SendMessage(string name, string message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
-    Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
+    Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null, JsonSerializerOptions? serializerOptions = null);
     Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
     ResourceIdentifier GetResourceId(string queueName, StorageType storageType);
     Task<IList<T>> PeekQueue<T>(string name, StorageType storageType);
@@ -57,22 +57,39 @@ public class Queue : IQueue {
     public Task<QueueServiceClient> GetQueueClientService(StorageType storageType)
         => _storage.GetQueueServiceClientForAccount(_storage.GetPrimaryAccount(storageType));
 
-    public async Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
+    public async Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null, JsonSerializerOptions? serializerOptions = null) {
         var queueClient = await GetQueueClient(name, storageType);
+        serializerOptions ??= EntityConverter.GetJsonSerializerOptions();
         try {
-            var serialized = JsonSerializer.Serialize(obj, EntityConverter.GetJsonSerializerOptions());
-            var res = await queueClient.SendMessageAsync(serialized, visibilityTimeout: visibilityTimeout, timeToLive);
-            if (res.GetRawResponse().IsError) {
-                _log.Error($"Failed to send {serialized:Tag:Message} in {name:Tag:QueueName} due to {res.GetRawResponse().ReasonPhrase:Tag:Error}");
-                return false;
-            } else {
-                return true;
-            }
+            return await QueueObjectInternal(obj, queueClient, serializerOptions, visibilityTimeout, timeToLive);
         } catch (Exception ex) {
             _log.Exception(ex, $"Failed to queue message in {name:Tag:QueueName}");
+            if (IsMessageTooLargeException(ex) &&
+                obj is ITruncatable<T> truncatable) {
+                obj = truncatable.Truncate(1000);
+                try {
+                    return await QueueObjectInternal(obj, queueClient, serializerOptions, visibilityTimeout, timeToLive);
+                } catch (Exception ex2) {
+                    _log.Exception(ex2, $"Failed to queue message in {name:Tag:QueueName} after truncation");
+                }
+            }
             return false;
         }
     }
+
+    private async Task<bool> QueueObjectInternal<T>(T obj, QueueClient queueClient, JsonSerializerOptions serializerOptions, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
+        var serialized = JsonSerializer.Serialize(obj, serializerOptions);
+        var res = await queueClient.SendMessageAsync(serialized, visibilityTimeout: visibilityTimeout, timeToLive);
+        if (res.GetRawResponse().IsError) {
+            _log.Error($"Failed to send {serialized:Tag:Message} in {queueClient.Name:Tag:QueueName} due to {res.GetRawResponse().ReasonPhrase:Tag:Error}");
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private static bool IsMessageTooLargeException(Exception ex) =>
+        ex is RequestFailedException rfe && rfe.Message.Contains("The request body is too large");
 
     public async Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
         var queueClient = await GetQueueClient(name, storageType);

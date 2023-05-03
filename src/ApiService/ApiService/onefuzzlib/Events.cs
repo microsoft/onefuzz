@@ -10,8 +10,13 @@ namespace Microsoft.OneFuzz.Service {
     public record SignalREvent
     (
         string Target,
-        List<DownloadableEventMessage> arguments
-    );
+    ) : ITruncatable<SignalREvent> {
+        public SignalREvent Truncate(int maxLength) {
+            return this with {
+                arguments = arguments.Select(x => x.Truncate(maxLength)).ToList()
+            };
+        }
+    }
 
     public interface IEvents {
         Async.Task SendEvent(BaseEvent anEvent);
@@ -45,8 +50,16 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         public virtual async Async.Task QueueSignalrEvent(DownloadableEventMessage message) {
+            var tags = new (string, string)[] {
+                ("event_type", message.EventType.ToString()),
+                ("event_id", message.EventId.ToString())
+            };
             var ev = new SignalREvent("events", new List<DownloadableEventMessage>() { message });
-            await _queue.SendMessage("signalr-events", JsonSerializer.Serialize(ev, _options), StorageType.Config);
+            var queueResult = await _queue.QueueObject("signalr-events", ev, StorageType.Config, serializerOptions: _options);
+
+            if (!queueResult) {
+                _log.WithTags(tags).Error($"Fsailed to queue signalr event");
+            }
         }
 
         public async Async.Task SendEvent(BaseEvent anEvent) {
