@@ -57,7 +57,7 @@ public struct LogStringHandler {
 public interface ILog {
     void Log(Guid correlationId, LogStringHandler message, SeverityLevel level, IReadOnlyDictionary<string, string> tags, string? caller);
     void LogEvent(Guid correlationId, LogStringHandler evt, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller);
-    void LogMetric(Guid correlationId, LogStringHandler metric, int value, IReadOnlyDictionary<string, string> customDimensions, IReadOnlyDictionary<string, string> tags, string? caller);
+    void LogMetric(Guid correlationId, LogStringHandler metric, int value, IReadOnlyDictionary<string, string>? customDimensions, IReadOnlyDictionary<string, string> tags, string? caller);
 
     void LogException(Guid correlationId, Exception ex, LogStringHandler message, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller);
     void Flush();
@@ -105,7 +105,7 @@ sealed class AppInsights : ILog {
         _telemetryClient.TrackEvent(telemetry);
     }
 
-    public void LogMetric(Guid correlationId, LogStringHandler metric, int value, IReadOnlyDictionary<string, string> customDimensions, IReadOnlyDictionary<string, string> tags, string? caller) {
+    public void LogMetric(Guid correlationId, LogStringHandler metric, int value, IReadOnlyDictionary<string, string>? customDimensions, IReadOnlyDictionary<string, string> tags, string? caller) {
         var telemetry = new MetricTelemetry(metric.ToString(), value, value, value, value, value);
         // copy properties
         Copy(telemetry.Properties, customDimensions);
@@ -173,7 +173,7 @@ sealed class Console : ILog {
         }
     }
 
-    public void LogMetric(Guid correlationId, LogStringHandler metric, int value, IReadOnlyDictionary<string, string> customDimensions, IReadOnlyDictionary<string, string> tags, string? caller) {
+    public void LogMetric(Guid correlationId, LogStringHandler metric, int value, IReadOnlyDictionary<string, string>? customDimensions, IReadOnlyDictionary<string, string> tags, string? caller) {
         System.Console.Out.WriteLine($"[{correlationId}][Metric] {metric}");
         LogTags(correlationId, tags);
     }
@@ -202,7 +202,7 @@ public interface ILogTracer {
 
     void Error(Error error);
     void Event(LogStringHandler evt, IReadOnlyDictionary<string, double>? metrics = null);
-    void Metric(LogStringHandler metric, int value, IReadOnlyDictionary<string, string> customDimensions);
+    void Metric(LogStringHandler metric, int value, IReadOnlyDictionary<string, string>? customDimensions);
     void Exception(Exception ex, LogStringHandler message = $"", IReadOnlyDictionary<string, double>? metrics = null);
     void ForceFlush();
     void Info(LogStringHandler message);
@@ -347,7 +347,7 @@ public class LogTracer : ILogTracerInternal {
         }
     }
 
-    public void Metric(LogStringHandler metric, int value, IReadOnlyDictionary<string, string> customDimensions) {
+    public void Metric(LogStringHandler metric, int value, IReadOnlyDictionary<string, string>? customDimensions) {
         var caller = GetCaller();
         foreach (var logger in _loggers) {
             logger.LogMetric(CorrelationId, metric, value, customDimensions, Tags, caller);

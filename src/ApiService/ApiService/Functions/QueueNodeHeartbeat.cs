@@ -40,7 +40,7 @@ public class QueueNodeHearbeat {
         // TODO: do we still send event if we fail do update the table ?
         await events.SendEvent(new EventNodeHeartbeat(node.MachineId, node.ScalesetId, node.PoolName));
         if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableCustomMetricTelemetry)) {
-            await metrics.SendMetric(1, new MetricNodeHeartbeat(node.MachineId, node.ScalesetId, node.PoolName, node.State));
+            metrics.SendMetric(1, new MetricNodeHeartbeat(node.MachineId, node.ScalesetId, node.PoolName, node.State));
         }
 
     }

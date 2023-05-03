@@ -360,7 +360,7 @@ public record MetricMessage(
     MetricType name,
     [property: TypeDiscrimnatorAttribute("name", typeof(MetricTypeProvider))]
     [property: JsonConverter(typeof(BaseMetricConverter))]
-    BaseMetric customDimensions,
+    Dictionary<string, string> customDimensions,
     int value
 );
 

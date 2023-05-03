@@ -44,7 +44,7 @@ public class QueueTaskHearbeat {
 
         await _events.SendEvent(new EventTaskHeartbeat(newTask.JobId, newTask.TaskId, newTask.Config));
         if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableCustomMetricTelemetry)) {
-            await _metrics.SendMetric(1, new MetricTaskHeartbeat(newTask.JobId, newTask.TaskId, job.Config.Project, job.Config.Name, newTask.State));
+            _metrics.SendMetric(1, new MetricTaskHeartbeat(newTask.JobId, newTask.TaskId, job.Config.Project, job.Config.Name, newTask.State));
         }
     }
 }

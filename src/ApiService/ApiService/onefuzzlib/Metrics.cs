@@ -14,7 +14,7 @@ namespace Microsoft.OneFuzz.Service {
 
 
     public interface IMetrics {
-        Async.Task SendMetric(int metricValue, BaseMetric customDimensions);
+        void SendMetric(int metricValue, BaseMetric customDimensions);
 
         void LogMetric(BaseMetric metric);
     }
@@ -33,19 +33,16 @@ namespace Microsoft.OneFuzz.Service {
             _options.Converters.Add(new RemoveUserInfo());
         }
 
-        public async Async.Task QueueCustomMetric(MetricMessage message) {
-            await _context.Queue.SendMessage("custom-metrics", JsonSerializer.Serialize(message, _options), StorageType.Config);
-        }
+        // public async Async.Task QueueCustomMetric(MetricMessage message) {
+        //     await _context.Queue.SendMessage("custom-metrics", JsonSerializer.Serialize(message, _options), StorageType.Config);
+        // }
 
-        public async Async.Task SendMetric(int metricValue, BaseMetric customDimensions) {
+        public void SendMetric(int metricValue, BaseMetric customDimensions) {
             var metricType = customDimensions.GetMetricType();
 
-            var metricMessage = new MetricMessage(
-                metricType,
-                customDimensions,
-                metricValue
-            );
-            await QueueCustomMetric(metricMessage);
+            var dimensionString = JsonSerializer.Serialize(customDimensions, customDimensions.GetType(), _options);
+
+            _log.Metric($"{metricType}", metricValue, JsonSerializer.Deserialize<Dictionary<string, string>>(dimensionString));
             LogMetric(customDimensions);
         }
 

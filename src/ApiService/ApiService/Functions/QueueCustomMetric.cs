@@ -1,38 +1,34 @@
-﻿using System.Text.Json;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+﻿// using System.Text.Json;
+// using Microsoft.Azure.Functions.Worker;
+// using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
-namespace Microsoft.OneFuzz.Service.Functions;
+// namespace Microsoft.OneFuzz.Service.Functions;
 
+// public class QueueCustomMetric {
 
-public class QueueCustomMetric {
+//     private readonly ILogTracer _log;
 
-    private const string QueueCustomMetricQueueNmae = "custom-metrics";
+//     private readonly IOnefuzzContext _context;
 
+//     public QueueCustomMetric(ILogTracer log, IOnefuzzContext context) {
+//         _log = log;
+//         _context = context;
+//     }
 
-    private readonly ILogTracer _log;
+//     public record CustomMetric(
+//         string name,
+//         int value,
+//         Dictionary<string, string> customDimensions
+//     );
 
-    private readonly IOnefuzzContext _context;
+//     [Function("QueueCustomMetric")]
+//     public void Run([QueueTrigger("custom-metrics", Connection = "AzureWebJobsStorage")] string msg) {
+//         var customMetricMessage = JsonSerializer.Deserialize<CustomMetric>(msg, EntityConverter.GetJsonSerializerOptions());
 
-    public QueueCustomMetric(ILogTracer log, IOnefuzzContext context) {
-        _log = log;
-        _context = context;
-    }
+//         _ = customMetricMessage ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
 
-    public record CustomMetric(
-        string name,
-        int value,
-        Dictionary<string, string> customDimensions
-    );
+//         // _log.Metric($"{customMetricMessage.name}", customMetricMessage.value, customMetricMessage.customDimensions);
 
-    [Function("QueueCustomMetric")]
-    public void Run([QueueTrigger("custom-metrics", Connection = "AzureWebJobsStorage")] string msg) {
-        var customMetricMessage = JsonSerializer.Deserialize<CustomMetric>(msg, EntityConverter.GetJsonSerializerOptions());
-
-        _ = customMetricMessage ?? throw new ArgumentException("Unable to parse queue trigger as JSON");
-
-        _log.Metric($"{customMetricMessage.name}", customMetricMessage.value, customMetricMessage.customDimensions);
-
-    }
-}
+//     }
+// }
 
