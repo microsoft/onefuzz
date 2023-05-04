@@ -212,7 +212,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
     }
 
     private async System.Threading.Tasks.Task<Proxy> SetProvisionFailed(Proxy proxy, VirtualMachineInstanceView? instanceView) {
-        var errors = GetErrors(proxy, instanceView).ToArray();
+        var errors = GetErrors(proxy, instanceView);
         return await SetFailed(proxy, new Error(ErrorCode.PROXY_FAILED, errors.ToList()));
     }
 
