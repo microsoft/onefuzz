@@ -37,9 +37,9 @@ public class Tasks {
             if (task == null) {
                 return await _context.RequestHandling.NotOk(
                     req,
-                    new Error(
+                    Error.Create(
                         ErrorCode.INVALID_REQUEST,
-                        new[] { "unable to find task" }),
+                        "unable to find task"),
                     "task get");
             }
 
@@ -101,7 +101,7 @@ public class Tasks {
         if (!checkConfig.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(ErrorCode.INVALID_REQUEST, new[] { checkConfig.ErrorV.Error }),
+                Error.Create(ErrorCode.INVALID_REQUEST, checkConfig.ErrorV.Error),
                 "task create");
         }
 
@@ -115,14 +115,14 @@ public class Tasks {
         if (job == null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find job" }),
+                Error.Create(ErrorCode.INVALID_REQUEST, "unable to find job"),
                 cfg.JobId.ToString());
         }
 
         if (job.State != JobState.Enabled && job.State != JobState.Init) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(ErrorCode.UNABLE_TO_ADD_TASK_TO_JOB, new[] { $"unable to add a job in state {job.State}" }),
+                Error.Create(ErrorCode.UNABLE_TO_ADD_TASK_TO_JOB, $"unable to add a job in state {job.State}"),
                 cfg.JobId.ToString());
         }
 
@@ -133,7 +133,7 @@ public class Tasks {
                 if (prereq == null) {
                     return await _context.RequestHandling.NotOk(
                         req,
-                        new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find task " }),
+                        Error.Create(ErrorCode.INVALID_REQUEST, "unable to find task "),
                         "task create prerequisite");
                 }
             }
@@ -165,8 +165,8 @@ public class Tasks {
 
         var task = await _context.TaskOperations.GetByTaskId(request.OkV.TaskId);
         if (task == null) {
-            return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find task"
-            }), "task delete");
+            return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "unable to find task"
+            ), "task delete");
 
         }
 

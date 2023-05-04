@@ -63,9 +63,7 @@ public class Pool {
         if (pool.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.INVALID_REQUEST,
-                    Errors: new string[] { "pool with that name already exists" }),
+                Error.Create(ErrorCode.INVALID_REQUEST, "pool with that name already exists"),
                 "PoolCreate");
         }
         var newPool = await _context.PoolOperations.Create(name: create.Name, os: create.Os, architecture: create.Arch, managed: create.Managed, objectId: create.ObjectId);
@@ -89,9 +87,7 @@ public class Pool {
         if (!pool.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.INVALID_REQUEST,
-                    Errors: new string[] { "pool with that name does not exist" }),
+                Error.Create(ErrorCode.INVALID_REQUEST, "pool with that name does not exist"),
                 "PoolUpdate");
         }
 
@@ -100,9 +96,7 @@ public class Pool {
         if (updatePool.IsOk) {
             return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(updated), true));
         } else {
-            return await _context.RequestHandling.NotOk(req, new Error(
-                Code: ErrorCode.INVALID_REQUEST,
-                Errors: new string[] { updatePool.ErrorV.Reason }), "PoolUpdate");
+            return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, updatePool.ErrorV.Reason), "PoolUpdate");
         }
 
 

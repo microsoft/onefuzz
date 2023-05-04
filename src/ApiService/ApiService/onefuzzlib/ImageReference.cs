@@ -22,7 +22,7 @@ public abstract record ImageReference {
     public static ImageReference MustParse(string image) {
         var result = TryParse(image);
         if (!result.IsOk) {
-            var msg = string.Join(", ", result.ErrorV.Errors ?? Array.Empty<string>());
+            var msg = result.ErrorV.Errors != null ? string.Join(", ", result.ErrorV.Errors) : string.Empty;
             throw new ArgumentException(msg, nameof(image));
         }
 
@@ -46,18 +46,17 @@ public abstract record ImageReference {
             } else if (identifier.ResourceType == ImageResource.ResourceType) {
                 result = new Image(identifier);
             } else {
-                return new Error(
+                return Error.Create(
                     ErrorCode.INVALID_IMAGE,
-                    new[] { $"Unknown image resource type: {identifier.ResourceType}" });
+                    $"Unknown image resource type: {identifier.ResourceType}");
             }
         } catch (FormatException) {
             // not an ARM identifier, try to parse a marketplace image:
             var imageParts = image.Split(":");
             // The python code would throw if more than 4 parts are found in the split
             if (imageParts.Length != 4) {
-                return new Error(
-                    Code: ErrorCode.INVALID_IMAGE,
-                    new[] { $"Expected 4 ':' separated parts in '{image}'" });
+                return Error.Create(
+                    ErrorCode.INVALID_IMAGE, $"Expected 4 ':' separated parts in '{image}'");
             }
 
             result = new Marketplace(
@@ -112,10 +111,10 @@ public abstract record ImageReference {
                 if (resource.Value.Data.OSType is OperatingSystemTypes os) {
                     return OneFuzzResult.Ok(Enum.Parse<Os>(os.ToString(), ignoreCase: true));
                 } else {
-                    return new Error(ErrorCode.INVALID_IMAGE, new[] { "Specified image had no OSType" });
+                    return Error.Create(ErrorCode.INVALID_IMAGE, "Specified image had no OSType");
                 }
             } catch (Exception ex) when (ex is RequestFailedException) {
-                return new Error(ErrorCode.INVALID_IMAGE, new[] { ex.ToString() });
+                return Error.Create(ErrorCode.INVALID_IMAGE, ex.ToString());
             }
         }
     }
@@ -129,10 +128,10 @@ public abstract record ImageReference {
                 if (resource.Value.Data.OSType is OperatingSystemTypes os) {
                     return OneFuzzResult.Ok(Enum.Parse<Os>(os.ToString(), ignoreCase: true));
                 } else {
-                    return new Error(ErrorCode.INVALID_IMAGE, new[] { "Specified image had no OSType" });
+                    return Error.Create(ErrorCode.INVALID_IMAGE, "Specified image had no OSType");
                 }
             } catch (Exception ex) when (ex is RequestFailedException) {
-                return new Error(ErrorCode.INVALID_IMAGE, new[] { ex.ToString() });
+                return Error.Create(ErrorCode.INVALID_IMAGE, ex.ToString());
             }
         }
     }
@@ -145,10 +144,10 @@ public abstract record ImageReference {
                 if (resource.Value.Data.OSType is OperatingSystemTypes os) {
                     return OneFuzzResult.Ok(Enum.Parse<Os>(os.ToString(), ignoreCase: true));
                 } else {
-                    return new Error(ErrorCode.INVALID_IMAGE, new[] { "Specified image had no OSType" });
+                    return Error.Create(ErrorCode.INVALID_IMAGE, "Specified image had no OSType");
                 }
             } catch (Exception ex) when (ex is RequestFailedException) {
-                return new Error(ErrorCode.INVALID_IMAGE, new[] { ex.ToString() });
+                return Error.Create(ErrorCode.INVALID_IMAGE, ex.ToString());
             }
         }
     }
@@ -162,10 +161,10 @@ public abstract record ImageReference {
                 if (resource.Value.Data.OSType is OperatingSystemTypes os) {
                     return OneFuzzResult.Ok(Enum.Parse<Os>(os.ToString(), ignoreCase: true));
                 } else {
-                    return new Error(ErrorCode.INVALID_IMAGE, new[] { "Specified image had no OSType" });
+                    return Error.Create(ErrorCode.INVALID_IMAGE, "Specified image had no OSType");
                 }
             } catch (Exception ex) when (ex is RequestFailedException) {
-                return new Error(ErrorCode.INVALID_IMAGE, new[] { ex.ToString() });
+                return Error.Create(ErrorCode.INVALID_IMAGE, ex.ToString());
             }
         }
     }
@@ -178,7 +177,7 @@ public abstract record ImageReference {
                 var os = resource.Value.Data.StorageProfile.OSDisk.OSType.ToString();
                 return OneFuzzResult.Ok(Enum.Parse<Os>(os.ToString(), ignoreCase: true));
             } catch (Exception ex) when (ex is RequestFailedException) {
-                return new Error(ErrorCode.INVALID_IMAGE, new[] { ex.ToString() });
+                return Error.Create(ErrorCode.INVALID_IMAGE, ex.ToString());
             }
         }
     }

@@ -166,7 +166,10 @@ public record Proxy
     bool Outdated
 ) : StatefulEntityBase<VmState>(State);
 
-public record Error(ErrorCode Code, string[]? Errors = null) {
+public record Error(ErrorCode Code, List<string>? Errors) {
+    public static Error Create(ErrorCode code, params string[] errors) {
+        return new Error(code, errors.ToList());
+    }
     public sealed override string ToString() {
         var errorsString = Errors != null ? string.Join("", Errors) : string.Empty;
         return $"Error {{ Code = {Code}, Errors = {errorsString} }}";

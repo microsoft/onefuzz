@@ -49,7 +49,7 @@ namespace Microsoft.OneFuzz.Service {
 
         private OneFuzzResult(T_Ok ok) => (OkV, ErrorV, IsOk) = (ok, null, true);
 
-        private OneFuzzResult(ErrorCode errorCode, string[] errors) => (OkV, ErrorV, IsOk) = (default, new Error(errorCode, errors), false);
+        private OneFuzzResult(ErrorCode errorCode, string[] errors) => (OkV, ErrorV, IsOk) = (default, new Error(errorCode, errors.ToList()), false);
 
         private OneFuzzResult(Error err) => (OkV, ErrorV, IsOk) = (default, err, false);
 
@@ -72,7 +72,7 @@ namespace Microsoft.OneFuzz.Service {
 
         public OneFuzzResultVoid() => (ErrorV, IsOk) = (null, true);
 
-        private OneFuzzResultVoid(ErrorCode errorCode, string[] errors) => (ErrorV, IsOk) = (new Error(errorCode, errors), false);
+        private OneFuzzResultVoid(ErrorCode errorCode, string[] errors) => (ErrorV, IsOk) = (new Error(errorCode, errors.ToList()), false);
 
         private OneFuzzResultVoid(Error err) => (ErrorV, IsOk) = (err, false);
 
