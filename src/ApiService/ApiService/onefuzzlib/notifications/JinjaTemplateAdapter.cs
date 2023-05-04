@@ -189,7 +189,7 @@ public class JinjaTemplateAdapter {
                     new List<TaskDebugFlag> { TaskDebugFlag.KeepNodeOnCompletion },
                     true
                 ),
-                new Error(ErrorCode.UNABLE_TO_FIND, new string[] { "some error message" }),
+                Error.Create(ErrorCode.UNABLE_TO_FIND, "some error message"),
                 new Authentication("password", "public key", "private key"),
                 DateTimeOffset.UtcNow,
                 DateTimeOffset.UtcNow,

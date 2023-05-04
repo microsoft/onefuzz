@@ -291,7 +291,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         if (scaleset.Auth is null) {
             _logTracer.Error($"Scaleset Auth is missing for scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
-            return await SetFailed(scaleset, new Error(ErrorCode.UNABLE_TO_CREATE, new[] { "missing required auth" }));
+            return await SetFailed(scaleset, Error.Create(ErrorCode.UNABLE_TO_CREATE, "missing required auth"));
         }
 
         var vmss = await _context.VmssOperations.GetVmss(scaleset.ScalesetId);
@@ -455,7 +455,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 return await SetFailed(scaleset, imageOsResult.ErrorV);
             } else if (imageOsResult.OkV != pool.Os) {
                 _logTracer.Error($"got invalid OS: {imageOsResult.OkV:Tag:ActualOs} for scaleset: {scaleset.ScalesetId:Tag:ScalesetId} expected OS {pool.Os:Tag:ExpectedOs}");
-                return await SetFailed(scaleset, new Error(ErrorCode.INVALID_REQUEST, new[] { $"invalid os (got: {imageOsResult.OkV} needed: {pool.Os})" }));
+                return await SetFailed(scaleset, Error.Create(ErrorCode.INVALID_REQUEST, $"invalid os (got: {imageOsResult.OkV} needed: {pool.Os})"));
             } else {
                 return await SetState(scaleset, ScalesetState.Setup);
             }
@@ -605,7 +605,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
             _log.Info($"{errorMessage} {deadNode.MachineId:Tag:MachineId} {deadNode.ScalesetId:Tag:ScalesetId}");
 
-            var error = new Error(ErrorCode.TASK_FAILED, new[] { $"{errorMessage} scaleset_id {deadNode.ScalesetId} last heartbeat:{deadNode.Heartbeat}" });
+            var error = Error.Create(ErrorCode.TASK_FAILED, $"{errorMessage} scaleset_id {deadNode.ScalesetId} last heartbeat:{deadNode.Heartbeat}");
             await _context.NodeOperations.MarkTasksStoppedEarly(deadNode, error);
             toReimage[deadNode.MachineId] = await _context.NodeOperations.ToReimage(deadNode, true);
         }

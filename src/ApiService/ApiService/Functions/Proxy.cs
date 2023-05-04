@@ -63,7 +63,7 @@ public class Proxy {
                     machineId: machineId, dstPort: dstPort).ToListAsync();
 
                 if (!forwards.Any()) {
-                    return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "no forwards for scaleset and node" }), "debug_proxy get");
+                    return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "no forwards for scaleset and node"), "debug_proxy get");
                 }
 
                 var response = req.CreateResponse();
@@ -78,7 +78,7 @@ public class Proxy {
                 await r.WriteAsJsonAsync(new ProxyList(proxies));
                 return r;
             default:
-                return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "ProxyGet must provide all or none of the following: scaleset_id, machine_id, dst_port" }), "debug_proxy get");
+                return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "ProxyGet must provide all or none of the following: scaleset_id, machine_id, dst_port"), "debug_proxy get");
         }
     }
 

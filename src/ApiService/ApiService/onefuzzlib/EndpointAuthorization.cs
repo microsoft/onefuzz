@@ -75,9 +75,9 @@ public class EndpointAuthorization : IEndpointAuthorization {
 
         return await _context.RequestHandling.NotOk(
             req,
-            new Error(
+           Error.Create(
                 ErrorCode.UNAUTHORIZED,
-                new string[] { reason ?? "Unrecognized agent" }
+                reason ?? "Unrecognized agent"
             ),
             "token verification",
             HttpStatusCode.Unauthorized
@@ -92,9 +92,9 @@ public class EndpointAuthorization : IEndpointAuthorization {
 
         var config = await _context.ConfigOperations.Fetch();
         if (config is null) {
-            return new Error(
-                Code: ErrorCode.INVALID_CONFIGURATION,
-                Errors: new string[] { "no instance configuration found " });
+            return Error.Create(
+                ErrorCode.INVALID_CONFIGURATION,
+                "no instance configuration found ");
         }
 
         return CheckRequireAdminsImpl(config, tokenResult.OkV.UserInfo);
@@ -117,9 +117,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
         }
 
         if (config.Admins is null) {
-            return new Error(
-                Code: ErrorCode.UNAUTHORIZED,
-                Errors: new string[] { "pool modification disabled " });
+            return Error.Create(ErrorCode.UNAUTHORIZED, "pool modification disabled ");
         }
 
         if (userInfo.ObjectId is Guid objectId) {
@@ -127,13 +125,9 @@ public class EndpointAuthorization : IEndpointAuthorization {
                 return OneFuzzResultVoid.Ok;
             }
 
-            return new Error(
-                Code: ErrorCode.UNAUTHORIZED,
-                Errors: new string[] { "not authorized to manage instance" });
+            return Error.Create(ErrorCode.UNAUTHORIZED, "not authorized to manage instance");
         } else {
-            return new Error(
-                Code: ErrorCode.UNAUTHORIZED,
-                Errors: new string[] { "user had no Object ID" });
+            return Error.Create(ErrorCode.UNAUTHORIZED, "user had no Object ID");
         }
     }
 
@@ -157,16 +151,12 @@ public class EndpointAuthorization : IEndpointAuthorization {
             var allowed = await membershipChecker.IsMember(rule.AllowedGroupsIds, memberId);
             if (!allowed) {
                 _log.Error($"unauthorized access: {memberId:Tag:MemberId} is not authorized to access {path:Tag:Path}");
-                return new Error(
-                    Code: ErrorCode.UNAUTHORIZED,
-                    Errors: new string[] { "not approved to use this endpoint" });
+                return Error.Create(ErrorCode.UNAUTHORIZED, "not approved to use this endpoint");
             } else {
                 return OneFuzzResultVoid.Ok;
             }
         } catch (Exception ex) {
-            return new Error(
-                Code: ErrorCode.UNAUTHORIZED,
-                Errors: new string[] { "unable to interact with graph", ex.Message });
+            return Error.Create(ErrorCode.UNAUTHORIZED, "unable to interact with graph", ex.Message);
         }
     }
 
