@@ -7,6 +7,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.1.0
+
+### Added
+
+* Agent: Added coverage percentage in Cobertura reports [#3034](https://github.com/microsoft/onefuzz/pull/3034)
+* Agent: Added `maxPerPage` to ORM [#3016](https://github.com/microsoft/onefuzz/pull/3016)
+* CLI: Added `onefuzz containers files download` command to download the blob content to a file [#3060](https://github.com/microsoft/onefuzz/pull/3060)
+
+### Changed
+
+* Agent: Reconfigured OneFuzz agent to not consume `S_LABEL` symbols from PDBs [#3046](https://github.com/microsoft/onefuzz/pull/3046)
+* Agent: Update `elsa::sync::FrozenMap` now implements Default [#3044](https://github.com/microsoft/onefuzz/pull/3044)
+* Agent: Updated agent to use insta Rust crate for snapshot tests of stacktrace parsing [#3027](https://github.com/microsoft/onefuzz/pull/3027)
+* Agent/CLI/Deployment: Rework events to limit how much data we're attempting to send to Azure queues [#3069](https://github.com/microsoft/onefuzz/pull/3069)
+* Agent/Service: Bumped Rust version, several Rust dependencies, and several C# dependencies [#3049](https://github.com/microsoft/onefuzz/pull/3049), [#3037](https://github.com/microsoft/onefuzz/pull/3037), [#3031](https://github.com/microsoft/onefuzz/pull/3031), [#3023](https://github.com/microsoft/onefuzz/pull/3023), [#2972](https://github.com/microsoft/onefuzz/pull/2972), [#2814](https://github.com/microsoft/onefuzz/pull/2814), [#3052](https://github.com/microsoft/onefuzz/pull/3052), [#3067](https://github.com/microsoft/onefuzz/pull/3067), [#3068](https://github.com/microsoft/onefuzz/pull/3068), [#3056](https://github.com/microsoft/onefuzz/pull/3056), [#2958](https://github.com/microsoft/onefuzz/pull/2958)
+* Service: Made our validation errors more specific so that we can handle them appropriately and reference them in documentation [#3053](https://github.com/microsoft/onefuzz/pull/3053)
+* Service/CLI: Updated the Azure DevOps logic to consume the list of existing items once [#3014](https://github.com/microsoft/onefuzz/pull/3014)
+* Service: Cap recursion in ORM [#2992](https://github.com/microsoft/onefuzz/pull/2992)
+* Service: Collect additional report field in an `ExtensionData` property [#3079](https://github.com/microsoft/onefuzz/pull/3079)
+
+### Fixed
+
+* Agent: Parse .NET exception stack traces when we see them in crash log outputs [#2988](https://github.com/microsoft/onefuzz/pull/2988)
+* Agent: Tweaked some of the parameters for the agent's logging to avoid task logger occasionally skipping messages [#3070](https://github.com/microsoft/onefuzz/pull/3070)
+* Agent: Allow libfuzzer verification to retry [#3032](https://github.com/microsoft/onefuzz/pull/3032)
+* Agent/CLI: Added new endpoint to update the pool authentication in order to fix multiple stop messages from being sent after node shuts down [#3059](https://github.com/microsoft/onefuzz/pull/3059)
+* CLI: Changed `--check_fuzzer_help` to `--no_check_fuzzer_help` [#3063](https://github.com/microsoft/onefuzz/pull/3063)
+* Service: Include exception information when validation fails [#3077](https://github.com/microsoft/onefuzz/pull/3077)
+* Service: Added another truncation case for 'Request body too large...' errors [#3075](https://github.com/microsoft/onefuzz/pull/3075)
+* Service: Fixed the logic for marking task as failed [#3083](https://github.com/microsoft/onefuzz/pull/3083)
+
 ## 8.0.0
 
 ## BREAKING CHANGES
