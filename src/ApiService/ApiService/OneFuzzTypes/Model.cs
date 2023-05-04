@@ -461,6 +461,8 @@ public record Report(
     string? OnefuzzVersion,
     Uri? ReportUrl
 ) : IReport, ITruncatable<Report> {
+
+    [JsonExtensionData] public Dictionary<string, JsonElement>? ExtensionData { get; set; }
     public Report Truncate(int maxLength) {
         return this with {
             Executable = Executable[..maxLength],
