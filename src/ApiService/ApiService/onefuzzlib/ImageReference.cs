@@ -53,7 +53,7 @@ public abstract record ImageReference {
         } catch (FormatException) {
             // not an ARM identifier, try to parse a marketplace image:
             var imageParts = image.Split(":");
-            // The python code would throw if more than 4 parts are foud in the split
+            // The python code would throw if more than 4 parts are found in the split
             if (imageParts.Length != 4) {
                 return Error.Create(
                     ErrorCode.INVALID_IMAGE, $"Expected 4 ':' separated parts in '{image}'");
