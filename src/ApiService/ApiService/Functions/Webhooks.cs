@@ -40,7 +40,7 @@ public class Webhooks {
             var webhook = await _context.WebhookOperations.GetByWebhookId(request.OkV.WebhookId.Value);
 
             if (webhook == null) {
-                return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find webhook" }), "webhook get");
+                return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "unable to find webhook"), "webhook get");
             }
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -73,7 +73,7 @@ public class Webhooks {
         var webhook = await _context.WebhookOperations.GetByWebhookId(request.OkV.WebhookId);
 
         if (webhook == null) {
-            return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find webhook" }), "webhook update");
+            return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "unable to find webhook"), "webhook update");
         }
 
         var updated = webhook with {
@@ -134,7 +134,7 @@ public class Webhooks {
         var webhook = await _context.WebhookOperations.GetByWebhookId(request.OkV.WebhookId);
 
         if (webhook == null) {
-            return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find webhook" }), "webhook delete");
+            return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "unable to find webhook"), "webhook delete");
         }
 
         var r = await _context.WebhookOperations.Delete(webhook);

@@ -37,15 +37,14 @@ namespace Microsoft.OneFuzz.Service {
         public async Async.Task<OneFuzzResult<bool>> AssociateSubnet(string name, VirtualNetworkResource vnet, SubnetResource subnet) {
             var nsg = await GetNsg(name);
             if (nsg == null) {
-                return OneFuzzResult<bool>.Error(new Error(ErrorCode.UNABLE_TO_FIND,
-                    new[] { $"cannot associate subnet. nsg {name} not found" }));
+                return OneFuzzResult<bool>.Error(Error.Create(ErrorCode.UNABLE_TO_FIND,
+                    $"cannot associate subnet. nsg {name} not found"));
             }
 
             if (nsg.Data.Location != vnet.Data.Location) {
-                return OneFuzzResult<bool>.Error(new Error(ErrorCode.UNABLE_TO_UPDATE,
-                    new[] {
+                return OneFuzzResult<bool>.Error(Error.Create(ErrorCode.UNABLE_TO_UPDATE,
                         $"subnet and nsg have to be in the same region. nsg {nsg.Data.Name} {nsg.Data.Location}, subnet: {subnet.Data.Name} {subnet.Data}"
-                    }));
+                    ));
             }
 
             if (subnet.Data.NetworkSecurityGroup != null && subnet.Data.NetworkSecurityGroup.Id == nsg.Id) {

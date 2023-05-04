@@ -36,9 +36,9 @@ sealed class TestEndpointAuthorization : EndpointAuthorization {
 
         return _context.RequestHandling.NotOk(
             req,
-            new Error(
+            Error.Create(
                 ErrorCode.UNAUTHORIZED,
-                new string[] { "Unrecognized agent" }
+                "Unrecognized agent"
             ),
             "token verification",
             HttpStatusCode.Unauthorized

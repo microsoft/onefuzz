@@ -98,9 +98,9 @@ public class RequestHandling : IRequestHandling {
                     }
 
                     if (errors.Any()) {
-                        return new Error(
-                            Code: ErrorCode.INVALID_REQUEST,
-                            Errors: errors.ToArray());
+                        return Error.Create(
+                            ErrorCode.INVALID_REQUEST,
+                            errors.ToArray());
                     }
                 }
 
@@ -109,9 +109,9 @@ public class RequestHandling : IRequestHandling {
                 if (Validator.TryValidateObject(t, validationContext, validationResults, validateAllProperties: true)) {
                     return OneFuzzResult.Ok(t);
                 } else {
-                    return new Error(
-                        Code: ErrorCode.INVALID_REQUEST,
-                        Errors: validationResults.Select(vr => vr.ToString()).ToArray());
+                    return Error.Create(
+                        ErrorCode.INVALID_REQUEST,
+                        validationResults.Select(vr => vr.ToString()).ToArray());
                 }
             } else {
                 return OneFuzzResult<T>.Error(
@@ -154,13 +154,12 @@ public class RequestHandling : IRequestHandling {
             }
         }
 
-        return new Error(
+        return Error.Create(
             ErrorCode.INVALID_REQUEST,
-            new string[] {
                 exception.Message,
                 exception.Source ?? string.Empty,
                 exception.StackTrace ?? string.Empty
-            }
+
         );
     }
 
