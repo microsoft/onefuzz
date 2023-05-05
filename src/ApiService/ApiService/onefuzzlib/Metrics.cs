@@ -4,12 +4,10 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service {
 
-    public record CustomMetric
-    (
-        string Name,
-        int Value,
-        DateTime CreatedAt,
-        BaseMetric CustomDimensions
+    public record CustomMetric(
+         string name,
+         int value,
+         Dictionary<string, string> customDimensions
     );
 
 
@@ -33,16 +31,17 @@ namespace Microsoft.OneFuzz.Service {
             _options.Converters.Add(new RemoveUserInfo());
         }
 
-        // public async Async.Task QueueCustomMetric(MetricMessage message) {
-        //     await _context.Queue.SendMessage("custom-metrics", JsonSerializer.Serialize(message, _options), StorageType.Config);
-        // }
-
         public void SendMetric(int metricValue, BaseMetric customDimensions) {
             var metricType = customDimensions.GetMetricType();
 
-            var dimensionString = JsonSerializer.Serialize(customDimensions, customDimensions.GetType(), _options);
+            _ = _options.PropertyNamingPolicy ?? throw new ArgumentException("Serializer _options not available.");
 
-            _log.Metric($"{metricType}", metricValue, JsonSerializer.Deserialize<Dictionary<string, string>>(dimensionString));
+            var metricTypeSnakeCase = _options.PropertyNamingPolicy.ConvertName($"{metricType}");
+
+            var dimensionString = JsonSerializer.Serialize(customDimensions, customDimensions.GetType(), _options);
+            var dimensionDict = JsonSerializer.Deserialize<Dictionary<string, string>>(dimensionString);
+
+            _log.Metric($"{metricTypeSnakeCase}", metricValue, dimensionDict);
             LogMetric(customDimensions);
         }
 
