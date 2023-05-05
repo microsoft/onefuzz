@@ -79,7 +79,7 @@ async fn validate_libfuzzer(config: ValidationConfig) -> Result<()> {
     );
 
     if let Some(seeds) = config.seeds {
-        libfuzzer.verify(true, Some(vec![seeds])).await?;
+        libfuzzer.verify(true, Some(&[&seeds])).await?;
     }
 
     Ok(())
