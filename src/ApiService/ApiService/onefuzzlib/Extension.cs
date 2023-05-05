@@ -324,84 +324,84 @@ public class Extensions : IExtensions {
         throw new NotSupportedException($"unsupported OS: {vmOs}");
     }
 
-    public async Async.Task<VMExtensionWrapper> MountAzureFileExtention(Pool pool) {
-        // get or create an azure file share for the pool
+    // public async Async.Task<VMExtensionWrapper> MountAzureFileExtention(Pool pool) {
+    //     // get or create an azure file share for the pool
 
-        // get the storage account key
-        //var storageAccount = await _context.Storage.key
+    //     // get the storage account key
+    //     //var storageAccount = await _context.Storage.key
 
-        var accountName = "";
-        var accountKey = "";
-        if (pool.Os == Os.Windows) {
-            var toExecuteCmd = $"powershell -ExecutionPolicy Unrestricted -File win64/setup.ps1 -mode {mode.ToString().ToLowerInvariant()}";
-            var script = $$"""
-                    $connectTestResult = Test-NetConnection -ComputerName {{accountName}}.file.core.windows.net -Port 445
-                    if ($connectTestResult.TcpTestSucceeded) {
-                        # Save the password so the drive will persist on reboot
-                        cmd.exe /C "cmdkey /add:`"{{accountName}}.file.core.windows.net`" /user:`"localhost\{{accountName}}`" /pass:`"{{accountKey}}`""
-                        # Mount the drive
-                        New-PSDrive -Name Z -PSProvider FileSystem -Root "\\{{accountName}}.file.core.windows.net\test" -Persist
-                    } else {Write - Error - Message "Unable to reach the Azure storage account via port 445. Check to make sure your organization or ISP is not blocking port 445, or use Azure P2S VPN, Azure S2S VPN, or Express Route to tunnel SMB traffic over a different port."
-                    }
-            """;
+    //     var accountName = "";
+    //     var accountKey = "";
+    //     if (pool.Os == Os.Windows) {
+    //         var toExecuteCmd = $"powershell -ExecutionPolicy Unrestricted -File win64/setup.ps1 -mode {mode.ToString().ToLowerInvariant()}";
+    //         var script = $$"""
+    //                 $connectTestResult = Test-NetConnection -ComputerName {{accountName}}.file.core.windows.net -Port 445
+    //                 if ($connectTestResult.TcpTestSucceeded) {
+    //                     # Save the password so the drive will persist on reboot
+    //                     cmd.exe /C "cmdkey /add:`"{{accountName}}.file.core.windows.net`" /user:`"localhost\{{accountName}}`" /pass:`"{{accountKey}}`""
+    //                     # Mount the drive
+    //                     New-PSDrive -Name Z -PSProvider FileSystem -Root "\\{{accountName}}.file.core.windows.net\test" -Persist
+    //                 } else {Write - Error - Message "Unable to reach the Azure storage account via port 445. Check to make sure your organization or ISP is not blocking port 445, or use Azure P2S VPN, Azure S2S VPN, or Express Route to tunnel SMB traffic over a different port."
+    //                 }
+    //         """;
 
-            var extension = new VMExtensionWrapper {
-                Name = "CustomScriptExtension",
-                TypePropertiesType = "CustomScriptExtension",
-                Publisher = "Microsoft.Compute",
-                Location = region,
-                ForceUpdateTag = Guid.NewGuid().ToString(),
-                TypeHandlerVersion = "1.9",
-                AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(JsonSerializer.Serialize(new { commandToExecute = toExecuteCmd, fileUris = urlsUpdated }, _extensionSerializerOptions)),
-                ProtectedSettings = managedIdentity
-            };
-            return extension;
+    //         var extension = new VMExtensionWrapper {
+    //             Name = "CustomScriptExtension",
+    //             TypePropertiesType = "CustomScriptExtension",
+    //             Publisher = "Microsoft.Compute",
+    //             Location = region,
+    //             ForceUpdateTag = Guid.NewGuid().ToString(),
+    //             TypeHandlerVersion = "1.9",
+    //             AutoUpgradeMinorVersion = true,
+    //             Settings = new BinaryData(JsonSerializer.Serialize(new { commandToExecute = toExecuteCmd, fileUris = urlsUpdated }, _extensionSerializerOptions)),
+    //             ProtectedSettings = managedIdentity
+    //         };
+    //         return extension;
 
 
-            // return new VMExtensionWrapper {
-            //     Location = region,
-            //     Name = "MountLogFileShare",
-            //     TypePropertiesType = "MicrosoftMonitoringAgent",
-            //     Publisher = "Microsoft.EnterpriseCloud.Monitoring",
-            //     TypeHandlerVersion = "1.0",
-            //     AutoUpgradeMinorVersion = true,
-            //     Settings = new BinaryData(extensionSettings),
-            //     ProtectedSettings = new BinaryData(protectedExtensionSettings),
-            //     EnableAutomaticUpgrade = false
-            // };
-        } else if (pool.Os == Os.Linux) {
-            var script = $$"""
-                sudo mkdir /mnt/test
-                if [ ! -d "/etc/smbcredentials" ]; then
-                sudo mkdir /etc/smbcredentials
-                fi
-                if [ ! -f "/etc/smbcredentials/{{accountName}}.cred" ]; then
-                    sudo bash -c 'echo "username={{accountName}}" >> /etc/smbcredentials/{{accountName}}.cred'
-                    sudo bash -c 'echo "password={{accountKey}}" >> /etc/smbcredentials/{{accountName}}.cred'
-                fi
-                sudo chmod 600 /etc/smbcredentials/{{accountName}}.cred
+    //         // return new VMExtensionWrapper {
+    //         //     Location = region,
+    //         //     Name = "MountLogFileShare",
+    //         //     TypePropertiesType = "MicrosoftMonitoringAgent",
+    //         //     Publisher = "Microsoft.EnterpriseCloud.Monitoring",
+    //         //     TypeHandlerVersion = "1.0",
+    //         //     AutoUpgradeMinorVersion = true,
+    //         //     Settings = new BinaryData(extensionSettings),
+    //         //     ProtectedSettings = new BinaryData(protectedExtensionSettings),
+    //         //     EnableAutomaticUpgrade = false
+    //         // };
+    //     } else if (pool.Os == Os.Linux) {
+    //         var script = $$"""
+    //             sudo mkdir /mnt/test
+    //             if [ ! -d "/etc/smbcredentials" ]; then
+    //             sudo mkdir /etc/smbcredentials
+    //             fi
+    //             if [ ! -f "/etc/smbcredentials/{{accountName}}.cred" ]; then
+    //                 sudo bash -c 'echo "username={{accountName}}" >> /etc/smbcredentials/{{accountName}}.cred'
+    //                 sudo bash -c 'echo "password={{accountKey}}" >> /etc/smbcredentials/{{accountName}}.cred'
+    //             fi
+    //             sudo chmod 600 /etc/smbcredentials/{{accountName}}.cred
 
-                sudo bash -c 'echo "//{{accountName}}.file.core.windows.net/test /mnt/test cifs nofail,credentials=/etc/smbcredentials/{{accountName}}.cred,dir_mode=0777,file_mode=0777,serverino,nosharesock,actimeo=30" >> /etc/fstab'
-                sudo mount -t cifs //{{accountName}}.file.core.windows.net/test /mnt/test -o credentials=/etc/smbcredentials/{{accountName}}.cred,dir_mode=0777,file_mode=0777,serverino,nosharesock,actimeo=30 
-            """;
+    //             sudo bash -c 'echo "//{{accountName}}.file.core.windows.net/test /mnt/test cifs nofail,credentials=/etc/smbcredentials/{{accountName}}.cred,dir_mode=0777,file_mode=0777,serverino,nosharesock,actimeo=30" >> /etc/fstab'
+    //             sudo mount -t cifs //{{accountName}}.file.core.windows.net/test /mnt/test -o credentials=/etc/smbcredentials/{{accountName}}.cred,dir_mode=0777,file_mode=0777,serverino,nosharesock,actimeo=30
+    //         """;
 
-            var extension = new VMExtensionWrapper {
-                Name = "CustomScript",
-                Publisher = "Microsoft.Azure.Extensions",
-                TypePropertiesType = "CustomScript",
-                TypeHandlerVersion = "2.1",
-                Location = region,
-                ForceUpdateTag = Guid.NewGuid().ToString(),
-                AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(extensionSettings),
-                ProtectedSettings = managedIdentity
-            };
-        } else {
-            throw new NotSupportedException($"unsupported os: {vmOs}");
-        }
+    //         var extension = new VMExtensionWrapper {
+    //             Name = "CustomScript",
+    //             Publisher = "Microsoft.Azure.Extensions",
+    //             TypePropertiesType = "CustomScript",
+    //             TypeHandlerVersion = "2.1",
+    //             Location = region,
+    //             ForceUpdateTag = Guid.NewGuid().ToString(),
+    //             AutoUpgradeMinorVersion = true,
+    //             Settings = new BinaryData(extensionSettings),
+    //             ProtectedSettings = managedIdentity
+    //         };
+    //     } else {
+    //         throw new NotSupportedException($"unsupported os: {vmOs}");
+    //     }
 
-    }
+    // }
 
     public async Async.Task<VMExtensionWrapper> MonitorExtension(AzureLocation region, Os vmOs) {
         var settings = await _context.LogAnalytics.GetMonitorSettings();

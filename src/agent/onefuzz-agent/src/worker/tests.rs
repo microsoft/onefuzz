@@ -246,7 +246,7 @@ async fn test_worker_running_update_done() {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
-            _log_monitor
+            _log_monitor,
         },
         work: Fixture.work(),
     };

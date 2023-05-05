@@ -71,9 +71,7 @@ fn setup_logger() -> Result<()> {
         (builder, LevelFilter::Info),
         |(builder, max_log_level), (path, level)| {
             let builder = match path {
-                Some(path) => {
-                    builder.logger(log4rs::config::Logger::builder().build(path, *level))
-                }
+                Some(path) => builder.logger(log4rs::config::Logger::builder().build(path, *level)),
                 None => builder.logger(log4rs::config::Logger::builder().build("", *level)),
             };
 
