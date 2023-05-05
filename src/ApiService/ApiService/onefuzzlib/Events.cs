@@ -10,6 +10,7 @@ namespace Microsoft.OneFuzz.Service {
     public record SignalREvent
     (
         string Target,
+        List<DownloadableEventMessage> arguments
     ) : ITruncatable<SignalREvent> {
         public SignalREvent Truncate(int maxLength) {
             return this with {
