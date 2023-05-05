@@ -30,7 +30,7 @@ public class NodeAddSshKey {
         if (node == null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(ErrorCode.UNABLE_TO_FIND, new[] { "unable to find node" }),
+                Error.Create(ErrorCode.UNABLE_TO_FIND, "unable to find node"),
                 $"{request.OkV.MachineId}");
         }
 

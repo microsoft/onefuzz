@@ -38,9 +38,7 @@ public class Node {
             if (node is null) {
                 return await _context.RequestHandling.NotOk(
                     req,
-                    new Error(
-                        Code: ErrorCode.UNABLE_TO_FIND,
-                        Errors: new string[] { "unable to find node" }),
+                    Error.Create(ErrorCode.UNABLE_TO_FIND, "unable to find node"),
                     context: machineId.ToString());
             }
 
@@ -94,9 +92,7 @@ public class Node {
         if (node is null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.UNABLE_TO_FIND,
-                    Errors: new string[] { "unable to find node" }),
+                Error.Create(ErrorCode.UNABLE_TO_FIND, "unable to find node"),
                 context: patch.MachineId.ToString());
         }
 
@@ -130,9 +126,7 @@ public class Node {
         if (node is null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.UNABLE_TO_FIND,
-                    Errors: new string[] { "unable to find node" }),
+                Error.Create(ErrorCode.UNABLE_TO_FIND, "unable to find node"),
                 context: post.MachineId.ToString());
         }
 
@@ -166,9 +160,7 @@ public class Node {
         if (node is null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.UNABLE_TO_FIND,
-                    new string[] { "unable to find node" }),
+                Error.Create(ErrorCode.UNABLE_TO_FIND, "unable to find node"),
                 context: delete.MachineId.ToString());
         }
 

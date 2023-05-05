@@ -35,7 +35,7 @@ public class ReproVmss {
             var vm = await _context.ReproOperations.SearchByPartitionKeys(new[] { $"{request.OkV.VmId}" }).FirstOrDefaultAsync();
 
             if (vm == null) {
-                return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "no such VM" }), $"{request.OkV.VmId}");
+                return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "no such VM"), $"{request.OkV.VmId}");
             }
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -98,7 +98,7 @@ public class ReproVmss {
         if (request.OkV.VmId == null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(ErrorCode.INVALID_REQUEST, new[] { "missing vm_id" }),
+                Error.Create(ErrorCode.INVALID_REQUEST, "missing vm_id"),
                 context: "repro delete");
         }
 
@@ -107,7 +107,7 @@ public class ReproVmss {
         if (vm == null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(ErrorCode.INVALID_REQUEST, new[] { "no such vm" }),
+                Error.Create(ErrorCode.INVALID_REQUEST, "no such vm"),
                 context: "repro delete");
         }
 
