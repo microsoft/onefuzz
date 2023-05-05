@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Parse .NET exception stack traces when we see them in crash log outputs [#2988](https://github.com/microsoft/onefuzz/pull/2988)
 * Agent: Tweaked some of the parameters for the agent's logging to avoid task logger occasionally skipping messages [#3070](https://github.com/microsoft/onefuzz/pull/3070)
 * Agent: Allow libfuzzer verification to retry [#3032](https://github.com/microsoft/onefuzz/pull/3032)
+* Agent: Fixed typo in AzCopy parameter name and set default value to true [#3085](https://github.com/microsoft/onefuzz/pull/3085)
 * Agent/CLI: Added new endpoint to update the pool authentication in order to fix multiple stop messages from being sent after node shuts down [#3059](https://github.com/microsoft/onefuzz/pull/3059)
 * CLI: Changed `--check_fuzzer_help` to `--no_check_fuzzer_help` [#3063](https://github.com/microsoft/onefuzz/pull/3063)
 * Service: Include exception information when validation fails [#3077](https://github.com/microsoft/onefuzz/pull/3077)
