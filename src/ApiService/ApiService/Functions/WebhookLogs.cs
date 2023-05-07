@@ -36,7 +36,7 @@ public class WebhookLogs {
         var webhook = await _context.WebhookOperations.GetByWebhookId(request.OkV.WebhookId);
 
         if (webhook == null) {
-            return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find webhook" }), "webhook log");
+            return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "unable to find webhook"), "webhook log");
         }
 
         _log.Info($"getting webhook logs: {request.OkV.WebhookId:Tag:WebhookId}");

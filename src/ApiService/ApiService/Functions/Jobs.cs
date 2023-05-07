@@ -59,9 +59,7 @@ public class Jobs {
         if (containerSas is null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.UNABLE_TO_CREATE_CONTAINER,
-                    Errors: new string[] { "unable to create logs container " }),
+                Error.Create(ErrorCode.UNABLE_TO_CREATE_CONTAINER, "unable to create logs container "),
                 "logs");
         }
 
@@ -73,9 +71,9 @@ public class Jobs {
             _logTracer.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"failed to insert job {job.JobId:Tag:JobId}");
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.UNABLE_TO_CREATE,
-                    Errors: new string[] { "unable to create job " }
+                Error.Create(
+                ErrorCode.UNABLE_TO_CREATE,
+                "unable to create job"
                 ),
                 "job");
         }
@@ -95,9 +93,9 @@ public class Jobs {
         if (job is null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.INVALID_JOB,
-                    Errors: new string[] { "no such job" }),
+                Error.Create(
+                    ErrorCode.INVALID_JOB,
+                    "no such job"),
                 context: jobId.ToString());
         }
 
@@ -124,9 +122,7 @@ public class Jobs {
             if (job is null) {
                 return await _context.RequestHandling.NotOk(
                     req,
-                    new Error(
-                        Code: ErrorCode.INVALID_JOB,
-                        Errors: new string[] { "no such job" }),
+                    Error.Create(ErrorCode.INVALID_JOB, "no such job"),
                     context: jobId.ToString());
             }
 
