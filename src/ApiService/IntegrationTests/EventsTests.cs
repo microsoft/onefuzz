@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using Azure.Storage.Blobs;
 using FluentAssertions;
@@ -61,5 +62,53 @@ public abstract class EventsTestBase : FunctionTestBase {
         using var sr = new StreamReader(stream);
         var eventData = await sr.ReadToEndAsync(); // read to make sure the SAS URL works
         eventData.Should().Contain(ping.PingId.ToString());
+    }
+
+    [Fact]
+    public async Async.Task UserInfoIsDeserialized() {
+        var jobId = Guid.NewGuid();
+        var taskId = Guid.NewGuid();
+        var taskConfig = new TaskConfig(
+            jobId,
+            null,
+            new TaskDetails(
+                TaskType.Coverage,
+                1
+            )
+        );
+        var webhookId = Guid.NewGuid();
+        var webhookName = "test-webhook";
+        var appId = Guid.NewGuid();
+        var objectId = Guid.NewGuid();
+        var upn = Guid.NewGuid().ToString();
+
+        var insertWebhook = await Context.WebhookOperations.Insert(
+            new Webhook(webhookId, webhookName, null, new List<EventType> { EventType.TaskStopped }, null, WebhookMessageFormat.Onefuzz)
+        );
+        insertWebhook.IsOk.Should().BeTrue();
+
+        await Context.Events.SendEvent(new EventTaskStopped(
+            jobId,
+            taskId,
+            new UserInfo(
+                appId,
+                objectId,
+                upn
+            ),
+            taskConfig
+        ));
+
+        var webhookMessageLog = await Context.WebhookMessageLogOperations.SearchAll()
+            .FirstAsync(wml => wml.WebhookId == webhookId && wml.EventType == EventType.TaskStopped);
+
+        webhookMessageLog.Should().NotBeNull();
+
+        var message = await Context.WebhookOperations.BuildMessage(webhookMessageLog.WebhookId, webhookMessageLog.EventId, webhookMessageLog.EventType, webhookMessageLog.Event, null, WebhookMessageFormat.Onefuzz);
+
+        message.IsOk.Should().BeTrue();
+        var eventPayload = message.OkV!.Item1;
+
+        eventPayload.Should()
+            .ContainAll(jobId.ToString(), taskId.ToString());
     }
 }
