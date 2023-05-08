@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
-using Azure;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
@@ -14,6 +13,8 @@ public interface IWebhookOperations : IOrm<Webhook> {
     Async.Task<Webhook?> GetByWebhookId(Guid webhookId);
     Async.Task<OneFuzzResultVoid> Send(WebhookMessageLog messageLog);
     Task<EventPing> Ping(Webhook webhook);
+    Task<OneFuzzResult<Tuple<string, string?>>> BuildMessage(Guid webhookId, Guid eventId, EventType eventType, BaseEvent webhookEvent, String? secretToken, WebhookMessageFormat? messageFormat);
+
 }
 
 public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
@@ -61,20 +62,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
             }
         }
 
-        try {
-            await _context.WebhookMessageLogOperations.QueueWebhook(message);
-        } catch (RequestFailedException ex) {
-            if (ex.Message.Contains("The request body is too large") && eventMessage.Event is ITruncatable<BaseEvent> truncatableEvent) {
-                _logTracer.WithTags(tags).Warning($"The WebhookMessageLog was too long for Azure Queue. Truncating event data and trying again.");
-                message = message with {
-                    Event = truncatableEvent.Truncate(1000)
-                };
-                await _context.WebhookMessageLogOperations.QueueWebhook(message);
-            } else {
-                // Not handled
-                throw ex;
-            }
-        }
+        await _context.WebhookMessageLogOperations.QueueWebhook(message);
     }
 
     public async Async.Task<OneFuzzResultVoid> Send(WebhookMessageLog messageLog) {

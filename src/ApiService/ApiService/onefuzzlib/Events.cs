@@ -11,8 +11,13 @@ namespace Microsoft.OneFuzz.Service {
     (
         string Target,
         List<DownloadableEventMessage> arguments
-    );
-
+    ) : ITruncatable<SignalREvent> {
+        public SignalREvent Truncate(int maxLength) {
+            return this with {
+                arguments = arguments.Select(x => x.Truncate(maxLength)).ToList()
+            };
+        }
+    }
 
     public interface IEvents {
         Async.Task SendEvent(BaseEvent anEvent);
@@ -33,6 +38,7 @@ namespace Microsoft.OneFuzz.Service {
         private readonly IContainers _containers;
         private readonly ICreds _creds;
         private readonly JsonSerializerOptions _options;
+        private readonly JsonSerializerOptions _deserializingFromBlobOptions;
 
         public Events(ILogTracer log, IOnefuzzContext context) {
             _queue = context.Queue;
@@ -44,11 +50,22 @@ namespace Microsoft.OneFuzz.Service {
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
             _options.Converters.Add(new RemoveUserInfo());
+            _deserializingFromBlobOptions = new JsonSerializerOptions(EntityConverter.GetJsonSerializerOptions()) {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
         }
 
         public virtual async Async.Task QueueSignalrEvent(DownloadableEventMessage message) {
+            var tags = new (string, string)[] {
+                ("event_type", message.EventType.ToString()),
+                ("event_id", message.EventId.ToString())
+            };
             var ev = new SignalREvent("events", new List<DownloadableEventMessage>() { message });
-            await _queue.SendMessage("signalr-events", JsonSerializer.Serialize(ev, _options), StorageType.Config);
+            var queueResult = await _queue.QueueObject("signalr-events", ev, StorageType.Config, serializerOptions: _options);
+
+            if (!queueResult) {
+                _log.WithTags(tags).Error($"Fsailed to queue signalr event");
+            }
         }
 
         public async Async.Task SendEvent(BaseEvent anEvent) {
@@ -83,7 +100,7 @@ namespace Microsoft.OneFuzz.Service {
                 return OneFuzzResult<EventMessage>.Error(ErrorCode.UNABLE_TO_FIND, $"Could not find container for event with id {eventId}");
             }
 
-            var eventMessage = JsonSerializer.Deserialize<EventMessage>(blob, _options);
+            var eventMessage = JsonSerializer.Deserialize<EventMessage>(blob, _deserializingFromBlobOptions);
             if (eventMessage == null) {
                 return OneFuzzResult<EventMessage>.Error(ErrorCode.UNEXPECTED_DATA_SHAPE, $"Could not deserialize event with id {eventId}");
             }

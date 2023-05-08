@@ -40,9 +40,9 @@ public class AgentRegistration {
         if (machineId == Guid.Empty) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
+                Error.Create(
                     ErrorCode.INVALID_REQUEST,
-                    new string[] { "'machine_id' query parameter must be provided" }),
+                    "'machine_id' query parameter must be provided"),
                 "agent registration");
         }
 
@@ -50,9 +50,9 @@ public class AgentRegistration {
         if (agentNode is null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
+                Error.Create(
                     ErrorCode.INVALID_REQUEST,
-                    new string[] { $"unable to find a registration associated with machine_id '{machineId}'" }),
+                    $"unable to find a registration associated with machine_id '{machineId}'"),
                 "agent registration");
         }
 
@@ -60,9 +60,9 @@ public class AgentRegistration {
         if (!pool.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
+                Error.Create(
                     ErrorCode.INVALID_REQUEST,
-                    new string[] { "unable to find a pool associated with the provided machine_id" }),
+                    "unable to find a pool associated with the provided machine_id"),
                 "agent registration");
         }
 
@@ -101,18 +101,16 @@ public class AgentRegistration {
         if (machineId == Guid.Empty) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    ErrorCode.INVALID_REQUEST,
-                    new string[] { "'machine_id' query parameter must be provided" }),
+                Error.Create(
+                    ErrorCode.INVALID_REQUEST, "'machine_id' query parameter must be provided"),
                 "agent registration");
         }
 
         if (poolName is null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    ErrorCode.INVALID_REQUEST,
-                    new string[] { "'pool_name' query parameter must be provided" }),
+                Error.Create(
+                    ErrorCode.INVALID_REQUEST, "'pool_name' query parameter must be provided"),
                 "agent registration");
         }
 
@@ -124,9 +122,8 @@ public class AgentRegistration {
         if (!poolResult.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.INVALID_REQUEST,
-                    Errors: new[] { $"unable to find pool '{poolName}'" }),
+                Error.Create(
+                    ErrorCode.INVALID_REQUEST, $"unable to find pool '{poolName}'"),
                 "agent registration");
         }
 
@@ -140,9 +137,9 @@ public class AgentRegistration {
         if (os != null && pool.Os != os) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.INVALID_REQUEST,
-                    Errors: new[] { $"OS mismatch: pool '{poolName}' is configured for '{pool.Os}', but agent is running '{os}'" }),
+                Error.Create(
+                    ErrorCode.INVALID_REQUEST,
+                    $"OS mismatch: pool '{poolName}' is configured for '{pool.Os}', but agent is running '{os}'"),
                 "agent registration");
         }
 
