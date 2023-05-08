@@ -61,18 +61,18 @@ public class Notifications {
         var entries = await _context.NotificationOperations.SearchByPartitionKeys(new[] { $"{request.OkV.NotificationId}" }).ToListAsync();
 
         if (entries.Count == 0) {
-            return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find notification" }), context: "notification delete");
+            return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "unable to find notification"), context: "notification delete");
         }
 
         if (entries.Count > 1) {
-            return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "error identifying Notification" }), context: "notification delete");
+            return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "error identifying Notification"), context: "notification delete");
         }
 
         var result = await _context.NotificationOperations.Delete(entries[0]);
 
         if (!result.IsOk) {
             var (status, error) = result.ErrorV;
-            return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.UNABLE_TO_UPDATE, new[] { error }), "notification delete");
+            return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.UNABLE_TO_UPDATE, error), "notification delete");
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
