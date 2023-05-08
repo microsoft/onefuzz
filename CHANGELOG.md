@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service/CLI: Updated the Azure DevOps logic to consume the list of existing items once [#3014](https://github.com/microsoft/onefuzz/pull/3014)
 * Service: Cap recursion in ORM [#2992](https://github.com/microsoft/onefuzz/pull/2992)
 * Service: Collect additional report field in an `ExtensionData` property [#3079](https://github.com/microsoft/onefuzz/pull/3079)
+* Service: Fixed error deserializing events from the events container [#3089](https://github.com/microsoft/onefuzz/pull/3089)
 
 ### Fixed
 
@@ -38,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Include exception information when validation fails [#3077](https://github.com/microsoft/onefuzz/pull/3077)
 * Service: Added another truncation case for 'Request body too large...' errors [#3075](https://github.com/microsoft/onefuzz/pull/3075)
 * Service: Fixed the logic for marking task as failed [#3083](https://github.com/microsoft/onefuzz/pull/3083)
+* Serv
 
 ## 8.0.0
 
