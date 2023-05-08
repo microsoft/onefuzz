@@ -13,6 +13,8 @@ public interface IWebhookOperations : IOrm<Webhook> {
     Async.Task<Webhook?> GetByWebhookId(Guid webhookId);
     Async.Task<OneFuzzResultVoid> Send(WebhookMessageLog messageLog);
     Task<EventPing> Ping(Webhook webhook);
+    Task<OneFuzzResult<Tuple<string, string?>>> BuildMessage(Guid webhookId, Guid eventId, EventType eventType, BaseEvent webhookEvent, String? secretToken, WebhookMessageFormat? messageFormat);
+
 }
 
 public class WebhookOperations : Orm<Webhook>, IWebhookOperations {

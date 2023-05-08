@@ -38,6 +38,7 @@ namespace Microsoft.OneFuzz.Service {
         private readonly IContainers _containers;
         private readonly ICreds _creds;
         private readonly JsonSerializerOptions _options;
+        private readonly JsonSerializerOptions _deserializingFromBlobOptions;
 
         public Events(ILogTracer log, IOnefuzzContext context) {
             _queue = context.Queue;
@@ -49,6 +50,9 @@ namespace Microsoft.OneFuzz.Service {
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
             _options.Converters.Add(new RemoveUserInfo());
+            _deserializingFromBlobOptions = new JsonSerializerOptions(EntityConverter.GetJsonSerializerOptions()) {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
         }
 
         public virtual async Async.Task QueueSignalrEvent(DownloadableEventMessage message) {
@@ -96,7 +100,7 @@ namespace Microsoft.OneFuzz.Service {
                 return OneFuzzResult<EventMessage>.Error(ErrorCode.UNABLE_TO_FIND, $"Could not find container for event with id {eventId}");
             }
 
-            var eventMessage = JsonSerializer.Deserialize<EventMessage>(blob, _options);
+            var eventMessage = JsonSerializer.Deserialize<EventMessage>(blob, _deserializingFromBlobOptions);
             if (eventMessage == null) {
                 return OneFuzzResult<EventMessage>.Error(ErrorCode.UNEXPECTED_DATA_SHAPE, $"Could not deserialize event with id {eventId}");
             }
