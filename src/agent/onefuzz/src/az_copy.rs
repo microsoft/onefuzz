@@ -190,7 +190,7 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
 
 pub async fn sync(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, delete_dst: bool) -> Result<()> {
     let args = if delete_dst {
-        vec!["--delete_destination"]
+        vec!["--delete-destination=true"]
     } else {
         vec![]
     };

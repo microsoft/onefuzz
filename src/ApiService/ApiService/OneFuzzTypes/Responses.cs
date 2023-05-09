@@ -212,6 +212,10 @@ public record JinjaToScribanMigrationDryRunResponse(
     List<Guid> NotificationIdsToUpdate
 ) : BaseResponse();
 
+public record EventGetResponse(
+    DownloadableEventMessage Event
+) : BaseResponse();
+
 public record NotificationTestResponse(
     bool Success,
     string? Error = null

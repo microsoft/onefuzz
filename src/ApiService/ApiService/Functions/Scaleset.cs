@@ -70,9 +70,7 @@ public class Scaleset {
         if (!pool.Managed) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.UNABLE_TO_CREATE,
-                    Errors: new string[] { "scalesets can only be added to managed pools " }),
+                Error.Create(ErrorCode.UNABLE_TO_CREATE, "scalesets can only be added to managed pools "),
                 context: "ScalesetCreate");
         }
 
@@ -96,9 +94,7 @@ public class Scaleset {
             if (!validRegions.Contains(create.Region)) {
                 return await _context.RequestHandling.NotOk(
                     req,
-                    new Error(
-                        Code: ErrorCode.UNABLE_TO_CREATE,
-                        Errors: new string[] { "invalid region" }),
+                    Error.Create(ErrorCode.UNABLE_TO_CREATE, "invalid region"),
                     context: "ScalesetCreate");
             }
 
@@ -109,9 +105,7 @@ public class Scaleset {
         if (!availableSkus.Contains(create.VmSku)) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.UNABLE_TO_CREATE,
-                    Errors: new string[] { $"The specified VM SKU '{create.VmSku}' is not available in the location ${region}" }),
+                Error.Create(ErrorCode.UNABLE_TO_CREATE, $"The specified VM SKU '{create.VmSku}' is not available in the location ${region}"),
                 context: "ScalesetCreate");
         }
 
@@ -142,9 +136,9 @@ public class Scaleset {
             _log.WithHttpStatus(inserted.ErrorV).Error($"failed to insert new scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.UNABLE_TO_CREATE,
-                    new string[] { $"unable to insert scaleset: {inserted.ErrorV}" }
+                Error.Create(
+                    ErrorCode.UNABLE_TO_CREATE,
+                    $"unable to insert scaleset: {inserted.ErrorV}"
                 ),
                 context: "ScalesetCreate");
         }
@@ -191,9 +185,9 @@ public class Scaleset {
         if (!scaleset.State.CanUpdate()) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.INVALID_REQUEST,
-                    Errors: new[] { $"scaleset must be in one of the following states to update: {string.Join(", ", ScalesetStateHelper.CanUpdateStates)}" }),
+                Error.Create(
+                    ErrorCode.INVALID_REQUEST,
+                    $"scaleset must be in one of the following states to update: {string.Join(", ", ScalesetStateHelper.CanUpdateStates)}"),
                 "ScalesetUpdate");
         }
 

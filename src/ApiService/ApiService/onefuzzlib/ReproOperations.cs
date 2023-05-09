@@ -180,9 +180,9 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         if (vmData == null) {
             return await _context.ReproOperations.SetError(
                 repro,
-                new Error(
+                Error.Create(
                     ErrorCode.VM_CREATE_FAILED,
-                    new string[] { "failed before launching extensions" }));
+                    "failed before launching extensions"));
         }
         if (vmData.ProvisioningState == "Failed") {
             var failedVmData = await _context.VmOperations.GetVmWithInstanceView(vm.Name);
@@ -232,7 +232,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             repro,
             new Error(
                 ErrorCode.VM_CREATE_FAILED,
-                errors));
+                errors.ToList()));
     }
 
     public async Task<OneFuzzResultVoid> BuildReproScript(Repro repro) {

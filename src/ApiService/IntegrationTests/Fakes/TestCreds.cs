@@ -16,11 +16,14 @@ sealed class TestCreds : ICreds {
     private readonly Guid _subscriptionId;
     private readonly string _resourceGroup;
     private readonly Region _region;
+    private readonly string _instanceName;
 
-    public TestCreds(Guid subscriptionId, string resourceGroup, Region region) {
+
+    public TestCreds(Guid subscriptionId, string resourceGroup, Region region, string instanceName) {
         _subscriptionId = subscriptionId;
         _resourceGroup = resourceGroup;
         _region = region;
+        _instanceName = instanceName;
     }
 
     public ArmClient ArmClient => null!;
@@ -40,7 +43,7 @@ sealed class TestCreds : ICreds {
     }
 
     public string GetInstanceName() {
-        throw new NotImplementedException();
+        return _instanceName;
     }
 
     public ResourceGroupResource GetResourceGroupResource() {

@@ -19,7 +19,7 @@ hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 notify = "5.1.0"
-regex = "1.7.1"
+regex = "1.8.1"
 reqwest = { version = "0.11", features = [
     "json",
     "stream",
@@ -31,7 +31,7 @@ serde = "1.0"
 serde_json = "1.0"
 rand = "0.8"
 serde_derive = "1.0"
-tokio = { version = "1.27", features = ["full"] }
+tokio = { version = "1.28", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["fs", "time", "tokio-util"] }
 tokio-util = { version = "0.7", features = ["full"] }
 uuid = { version = "1.3", features = ["serde", "v4"] }
@@ -48,7 +48,7 @@ stacktrace-parser = { path = "../stacktrace-parser" }
 backoff = { version = "0.4", features = ["tokio"] }
 
 [target.'cfg(target_family = "windows")'.dependencies]
-winreg = "0.10"
+winreg = "0.50"
 input-tester = { path = "../input-tester" }
 debugger = { path = "../debugger" }
 winapi = { version = "0.3", features = ["impl-default", "psapi"] }
@@ -63,5 +63,5 @@ rstack = "0.3"
 proc-maps = { version = "0.3", default-features = false }
 
 [dev-dependencies]
-clap = { version = "4.1.6", features = ["derive"] }
+clap = { version = "4.2.4", features = ["derive"] }
 pretty_assertions = "1.3.0"

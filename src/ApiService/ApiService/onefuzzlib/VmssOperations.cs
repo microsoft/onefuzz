@@ -235,7 +235,7 @@ public class VmssOperations : IVmssOperations {
         try {
             return OneFuzzResult.Ok(await GetInstanceIdForVmId(name, vmId));
         } catch {
-            return new Error(ErrorCode.UNABLE_TO_FIND, new string[] { $"unable to find scaleset machine: {name}:{vmId}" });
+            return Error.Create(ErrorCode.UNABLE_TO_FIND, $"unable to find scaleset machine: {name}:{vmId}");
         }
     }
 

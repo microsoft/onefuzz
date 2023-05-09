@@ -14,7 +14,7 @@ set -euo pipefail
 script_dir=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
 
 function get-deps {
-    ldd "$1" | awk '{ print $1 }' | sort -u
+    ldd "$1" | awk '{ print tolower($1) }' | sort -u
 }
 
 function check {
@@ -65,26 +65,26 @@ libunwind-aarch64.so.8
 libunwind-ptrace.so.0
 linux-vdso.so.1" \
 \
-"ADVAPI32.dll
-CRYPTBASE.DLL
-GDI32.dll
-KERNEL32.DLL
-KERNELBASE.dll
-MSASN1.dll
-PSAPI.DLL
-RPCRT4.dll
-SSPICLI.DLL
+"advapi32.dll
 apphelp.dll
 bcrypt.dll
-bcryptPrimitives.dll
+bcryptprimitives.dll
 crypt32.dll
+cryptbase.dll
 dbghelp.dll
+gdi32.dll
 gdi32full.dll
+kernel32.dll
+kernelbase.dll
+msasn1.dll
 msvcp_win.dll
 msvcrt.dll
 ntdll.dll
+psapi.dll
+rpcrt4.dll
 sechost.dll
 secur32.dll
+sspicli.dll
 ucrtbase.dll
 user32.dll
 win32u.dll
@@ -108,22 +108,22 @@ libgcc_s.so.1
 libpthread.so.0
 linux-vdso.so.1" \
 \
-"ADVAPI32.dll
-CRYPTBASE.DLL
-KERNEL32.DLL
-KERNELBASE.dll
-MSASN1.dll
-RPCRT4.dll
-SSPICLI.DLL
+"advapi32.dll
 apphelp.dll
 bcrypt.dll
-bcryptPrimitives.dll
+bcryptprimitives.dll
 crypt32.dll
+cryptbase.dll
 dbghelp.dll
+kernel32.dll
+kernelbase.dll
+msasn1.dll
 msvcrt.dll
 ntdll.dll
+rpcrt4.dll
 sechost.dll
 secur32.dll
+sspicli.dll
 ucrtbase.dll
 ws2_32.dll"
 
@@ -140,14 +140,14 @@ libgcc_s.so.1
 libpthread.so.0
 linux-vdso.so.1" \
 \
-"CRYPTBASE.DLL
-KERNEL32.DLL
-KERNELBASE.dll
-RPCRT4.dll
-advapi32.dll
+"advapi32.dll
 apphelp.dll
 bcrypt.dll
-bcryptPrimitives.dll
+bcryptprimitives.dll
+cryptbase.dll
+kernel32.dll
+kernelbase.dll
 msvcrt.dll
 ntdll.dll
+rpcrt4.dll
 sechost.dll"

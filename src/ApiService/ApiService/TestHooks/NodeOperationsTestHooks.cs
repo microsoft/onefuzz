@@ -10,7 +10,7 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 #if DEBUG
 namespace ApiService.TestHooks {
 
-    sealed record MarkTasks(Node node, Error? error);
+    sealed record MarkTasks(Node node, Error error);
 
     public class NodeOperationsTestHooks {
         private readonly ILogTracer _log;

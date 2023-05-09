@@ -19,7 +19,9 @@ public record WebhookMessage(Guid EventId,
     BaseEvent Event,
     Guid InstanceId,
     String InstanceName,
-    Guid WebhookId) : EventMessage(EventId, EventType, Event, InstanceId, InstanceName);
+    Guid WebhookId,
+    DateTime CreatedAt,
+    Uri SasUrl) : DownloadableEventMessage(EventId, EventType, Event, InstanceId, InstanceName, CreatedAt, SasUrl);
 
 
 public record WebhookMessageEventGrid(
@@ -30,7 +32,9 @@ public record WebhookMessageEventGrid(
     Guid Id,
     [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
     [property: JsonConverter(typeof(BaseEventConverter))]
-    BaseEvent Data);
+    BaseEvent Data,
+    Uri SasUrl,
+    String Version = "1.0");
 
 public record WebhookMessageLog(
     [RowKey] Guid EventId,
