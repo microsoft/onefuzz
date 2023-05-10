@@ -12,7 +12,7 @@ namespace Microsoft.OneFuzz.Service;
 [InterpolatedStringHandler]
 public struct LogStringHandler {
 
-    private StringBuilder _builder;
+    private readonly StringBuilder _builder;
     private Dictionary<string, string>? _tags;
 
     public LogStringHandler(int literalLength, int formattedCount) {
