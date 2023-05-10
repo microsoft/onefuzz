@@ -1,4 +1,6 @@
 ﻿using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
@@ -79,6 +81,14 @@ public class ReproVmss {
                 req,
                 vm.ErrorV,
                 "repro_vm create");
+        }
+
+        // we’d like to track the usage of this feature; 
+        // anonymize the user ID so we can distinguish multiple requests
+        {
+            var data = userInfo.OkV.UserInfo.ToString(); // rely on record ToString
+            var hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(data)));
+            _log.Event($"created repro VM, user distinguisher: {hash:Tag:UserHash}");
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
