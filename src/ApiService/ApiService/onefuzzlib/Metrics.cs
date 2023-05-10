@@ -12,9 +12,9 @@ namespace Microsoft.OneFuzz.Service {
 
 
     public interface IMetrics {
-        void SendMetric(int metricValue, BaseMetric customDimensions);
+        void SendMetric(int metricValue, BaseEvent customDimensions);
 
-        void LogMetric(BaseMetric metric);
+        void LogMetric(BaseEvent metric);
     }
 
     public class Metrics : IMetrics {
@@ -31,8 +31,8 @@ namespace Microsoft.OneFuzz.Service {
             _options.Converters.Add(new RemoveUserInfo());
         }
 
-        public void SendMetric(int metricValue, BaseMetric customDimensions) {
-            var metricType = customDimensions.GetMetricType();
+        public void SendMetric(int metricValue, BaseEvent customDimensions) {
+            var metricType = customDimensions.GetEventType();
 
             _ = _options.PropertyNamingPolicy ?? throw new ArgumentException("Serializer _options not available.");
 
@@ -45,9 +45,9 @@ namespace Microsoft.OneFuzz.Service {
             LogMetric(customDimensions);
         }
 
-        public void LogMetric(BaseMetric metric) {
+        public void LogMetric(BaseEvent metric) {
             var serializedMetric = JsonSerializer.Serialize(metric, metric.GetType(), _options);
-            _log.Info($"sending metric: {metric.GetMetricType():Tag:MetricType} - {serializedMetric}");
+            _log.Info($"sending metric: {metric.GetEventType():Tag:MetricType} - {serializedMetric}");
         }
     }
 }

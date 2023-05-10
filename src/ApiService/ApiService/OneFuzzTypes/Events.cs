@@ -167,12 +167,14 @@ public record EventTaskStateUpdated(
     TaskConfig Config
     ) : BaseEvent();
 
-
 [EventType(EventType.TaskHeartbeat)]
 public record EventTaskHeartbeat(
    Guid JobId,
    Guid TaskId,
-   TaskConfig Config
+   string? Project,
+   string? Name,
+   TaskState? State,
+   TaskConfig? Config
 ) : BaseEvent();
 
 [EventType(EventType.Ping)]
@@ -273,7 +275,8 @@ public record EventNodeCreated(
 public record EventNodeHeartbeat(
     Guid MachineId,
     Guid? ScalesetId,
-    PoolName PoolName
+    PoolName PoolName,
+    NodeState state
     ) : BaseEvent();
 
 

@@ -42,9 +42,10 @@ public class QueueTaskHearbeat {
             _log.WithHttpStatus(r.ErrorV).Error($"failed to replace with new task {hb.TaskId:Tag:TaskId}");
         }
 
-        await _events.SendEvent(new EventTaskHeartbeat(newTask.JobId, newTask.TaskId, newTask.Config));
+        var taskHeartBeatEvent = new EventTaskHeartbeat(newTask.JobId, newTask.TaskId, job.Config.Project, job.Config.Name, newTask.State, newTask.Config);
+        await _events.SendEvent(taskHeartBeatEvent);
         if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableCustomMetricTelemetry)) {
-            _metrics.SendMetric(1, new MetricTaskHeartbeat(newTask.JobId, newTask.TaskId, job.Config.Project, job.Config.Name, newTask.State));
+            _metrics.SendMetric(1, taskHeartBeatEvent);
         }
     }
 }
