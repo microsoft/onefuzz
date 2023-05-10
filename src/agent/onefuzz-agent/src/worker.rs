@@ -51,11 +51,13 @@ pub enum Worker {
 
 impl Worker {
     pub fn new(
+        work_dir: impl AsRef<Path>,
         setup_dir: impl AsRef<Path>,
         extra_dir: Option<impl AsRef<Path>>,
         work: WorkUnit,
     ) -> Self {
         let ctx = Ready {
+            work_dir: PathBuf::from(work_dir.as_ref()),
             setup_dir: PathBuf::from(setup_dir.as_ref()),
             extra_dir: extra_dir.map(|dir| PathBuf::from(dir.as_ref())),
         };
@@ -111,6 +113,7 @@ impl Worker {
 
 #[derive(Debug)]
 pub struct Ready {
+    work_dir: PathBuf,
     setup_dir: PathBuf,
     extra_dir: Option<PathBuf>,
 }
@@ -120,7 +123,7 @@ pub struct Running {
     child: Box<dyn IWorkerChild>,
     _from_agent_to_task: IpcSender<IpcMessageKind>,
     from_task_to_agent: IpcReceiver<IpcMessageKind>,
-    _log_monitor: task::JoinHandle<anyhow::Result<()>>,
+    _log_monitor: Option<task::JoinHandle<anyhow::Result<()>>>,
 }
 
 #[derive(Debug)]
@@ -150,6 +153,11 @@ impl<C: Context> State<C> {
     pub fn work(&self) -> &WorkUnit {
         &self.work
     }
+}
+
+#[derive(Debug, Deserialize)]
+struct LogConfig {
+    pub logs: Option<url::Url>,
 }
 
 impl State<Ready> {
@@ -214,12 +222,18 @@ impl State<Ready> {
 
         info!("IPC connection bootstrapped");
 
-        let _log_monitor = tokio::spawn(async {
-            continuous_sync_file(
-                reqwest::Url::parse("http://localhost:8080").unwrap(),
-                std::path::Path::new("test.txt"),
-            )
-            .await
+        // &self.work.working_dir(self.c)
+        let log_path = Path::join(&self.ctx.work_dir, "task_log.txt");
+        let work_config = self.work.config.expose_ref();
+        let log_config: LogConfig = serde_json::from_str(work_config.as_str())?;
+
+        let _log_monitor = log_config.logs.map(|log_url| {
+            let log_url = log_url.to_string();
+            let log_path = log_path.clone();
+            tokio::spawn(async move {
+                continuous_sync_file(reqwest::Url::parse(log_url.as_str()).unwrap(), &log_path)
+                    .await
+            })
         });
 
         let state = State {
