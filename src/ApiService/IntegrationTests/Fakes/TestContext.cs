@@ -45,6 +45,7 @@ public sealed class TestContext : IOnefuzzContext {
         FeatureManagerSnapshot = new TestFeatureManagerSnapshot();
         WebhookOperations = new TestWebhookOperations(httpClientFactory, logTracer, this);
         Events = new TestEvents(logTracer, this);
+        Metrics = new TestMetrics(logTracer, this);
         WebhookMessageLogOperations = new TestWebhookMessageLogOperations(logTracer, this);
     }
 
