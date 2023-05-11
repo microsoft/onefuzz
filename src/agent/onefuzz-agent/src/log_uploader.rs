@@ -45,15 +45,13 @@ async fn get_blob_client(log_container: Url, file_name: &str) -> Result<(BlobCli
             debug!("prop {:?}", prop);
             Ok((blob_client, prop.blob.properties.content_length))
         }
-        Err(e) => {
-            match e.downcast_ref::<HttpError>() {
-                Some(herr) if herr.status() == StatusCode::NotFound => {
-                    blob_client.put_append_blob().await?;
-                    Ok((blob_client, 0))
-                }
-                _ => Err(e.into()),
+        Err(e) => match e.downcast_ref::<HttpError>() {
+            Some(herr) if herr.status() == StatusCode::NotFound => {
+                blob_client.put_append_blob().await?;
+                Ok((blob_client, 0))
             }
-        }
+            _ => Err(e.into()),
+        },
     }
 }
 
