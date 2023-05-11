@@ -214,7 +214,7 @@ impl State<Ready> {
                 );
                 return Err(format_err!(
                     "timeout waiting for server_receiver_server.accept(): {:?}",
-                    e
+                    e   
                 ));
             }
             Ok(res) => res??,
@@ -229,9 +229,10 @@ impl State<Ready> {
         let blob_path = self
             .ctx
             .work_dir
-            .strip_prefix(onefuzz::fs::onefuzz_root()?)?;
+            .strip_prefix(onefuzz::fs::onefuzz_root()?)
+            .ok();
         let log_blob_name = blob_path
-            .to_str()
+            .and_then(|path| path.to_str())
             .unwrap_or("task_log.txt")
             .replace('\\', "/");
         let _log_monitor = log_config.logs.map(|log_url| {
