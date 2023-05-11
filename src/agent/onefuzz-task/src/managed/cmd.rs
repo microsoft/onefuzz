@@ -88,8 +88,6 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
     // If the memory limit is 0, this will resolve immediately with an error.
     let check_oom = out_of_memory(min_available_memory_bytes);
 
-    let common = config.common().clone();
-
     let result = tokio::select! {
         result = config.run() => result,
 

@@ -157,7 +157,6 @@ mod tests {
     //
     use std::{
         io::Seek,
-        path::{Path, PathBuf},
     };
 
     use anyhow::Result;

@@ -233,8 +233,7 @@ impl State<Ready> {
         let log_blob_name = blob_path
             .to_str()
             .unwrap_or("task_log.txt")
-            .replace("\\", "/")
-            .to_string();
+            .replace('\\', "/");
         let _log_monitor = log_config.logs.map(|log_url| {
             let log_url = log_url.to_string();
             let log_path = log_path.clone();
