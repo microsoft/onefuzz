@@ -39,9 +39,9 @@ public class ContainersFunction {
             if (container is null) {
                 return await _context.RequestHandling.NotOk(
                     req,
-                    new Error(
-                        Code: ErrorCode.INVALID_REQUEST,
-                        Errors: new[] { "invalid container" }),
+                    Error.Create(
+                        ErrorCode.INVALID_REQUEST,
+                        "invalid container"),
                     context: get.Name.String);
             }
 
@@ -101,9 +101,9 @@ public class ContainersFunction {
         if (sas is null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.INVALID_REQUEST,
-                    Errors: new[] { "invalid container" }),
+                Error.Create(
+                    ErrorCode.INVALID_REQUEST,
+                    "invalid container"),
                 context: post.Name.String);
         }
 

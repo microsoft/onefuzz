@@ -1,4 +1,6 @@
 ﻿using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
@@ -35,7 +37,7 @@ public class ReproVmss {
             var vm = await _context.ReproOperations.SearchByPartitionKeys(new[] { $"{request.OkV.VmId}" }).FirstOrDefaultAsync();
 
             if (vm == null) {
-                return await _context.RequestHandling.NotOk(req, new Error(ErrorCode.INVALID_REQUEST, new[] { "no such VM" }), $"{request.OkV.VmId}");
+                return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "no such VM"), $"{request.OkV.VmId}");
             }
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -81,6 +83,14 @@ public class ReproVmss {
                 "repro_vm create");
         }
 
+        // we’d like to track the usage of this feature; 
+        // anonymize the user ID so we can distinguish multiple requests
+        {
+            var data = userInfo.OkV.UserInfo.ToString(); // rely on record ToString
+            var hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(data)));
+            _log.Event($"created repro VM, user distinguisher: {hash:Tag:UserHash}");
+        }
+
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(vm.OkV);
         return response;
@@ -98,7 +108,7 @@ public class ReproVmss {
         if (request.OkV.VmId == null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(ErrorCode.INVALID_REQUEST, new[] { "missing vm_id" }),
+                Error.Create(ErrorCode.INVALID_REQUEST, "missing vm_id"),
                 context: "repro delete");
         }
 
@@ -107,7 +117,7 @@ public class ReproVmss {
         if (vm == null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(ErrorCode.INVALID_REQUEST, new[] { "no such vm" }),
+                Error.Create(ErrorCode.INVALID_REQUEST, "no such vm"),
                 context: "repro delete");
         }
 

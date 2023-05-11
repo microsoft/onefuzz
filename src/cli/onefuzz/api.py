@@ -218,6 +218,20 @@ class Files(Endpoint):
         downloaded = client.download_blob(filename)
         return downloaded
 
+    def download(
+        self, container: primitives.Container, blob_name: str, file_path: Optional[str]
+    ) -> "None":
+        """download a container file to a local path"""
+        self.logger.debug("getting file from container: %s:%s", container, blob_name)
+        client = self._get_client(container)
+        downloaded = client.download_blob(blob_name)
+        local_file = file_path if file_path else blob_name
+        with open(local_file, "wb") as handle:
+            handle.write(downloaded)
+        self.logger.debug(
+            f"downloaded blob {blob_name} from container {container} to {local_file}"
+        )
+
     def upload_file(
         self,
         container: primitives.Container,
@@ -1297,6 +1311,24 @@ class Pool(Endpoint):
             ),
         )
 
+    def update(
+        self,
+        name: str,
+        object_id: Optional[UUID] = None,
+    ) -> models.Pool:
+        """
+        Update a worker pool
+
+        :param str name: Name of the worker-pool
+        """
+        self.logger.debug("create worker pool")
+
+        return self._req_model(
+            "PATCH",
+            models.Pool,
+            data=requests.PoolUpdate(name=name, object_id=object_id),
+        )
+
     def get_config(self, pool_name: primitives.PoolName) -> models.AgentConfig:
         """Get the agent configuration for the pool"""
 
@@ -1733,6 +1765,21 @@ class ValidateScriban(Endpoint):
         return self._req_model("POST", responses.TemplateValidationResponse, data=req)
 
 
+class Events(Endpoint):
+    """Interact with Onefuzz events"""
+
+    endpoint = "events"
+
+    def get(self, event_id: UUID_EXPANSION) -> events.EventGetResponse:
+        """Get an event's payload by id"""
+        self.logger.debug("get event: %s", event_id)
+        return self._req_model(
+            "GET",
+            events.EventGetResponse,
+            data=requests.EventsGet(event_id=event_id),
+        )
+
+
 class Command:
     def __init__(self, onefuzz: "Onefuzz", logger: logging.Logger):
         self.onefuzz = onefuzz
@@ -1824,6 +1871,7 @@ class Onefuzz:
         self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
         self.validate_scriban = ValidateScriban(self)
+        self.events = Events(self)
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)

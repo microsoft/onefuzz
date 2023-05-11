@@ -270,6 +270,13 @@ public record PoolCreate(
     [property: Required] Os Os,
     [property: Required] Architecture Arch,
     [property: Required] bool Managed,
+    Guid? ObjectId = null,
+    bool Update = false
+) : BaseRequest;
+
+
+public record PoolUpdate(
+    [property: Required] PoolName Name,
     Guid? ObjectId = null
 ) : BaseRequest;
 
@@ -320,4 +327,8 @@ public record TemplateValidationPost(
 
 public record JinjaToScribanMigrationPost(
     bool DryRun = false
+) : BaseRequest;
+
+public record EventsGet(
+    [property: Required] Guid EventId
 ) : BaseRequest;

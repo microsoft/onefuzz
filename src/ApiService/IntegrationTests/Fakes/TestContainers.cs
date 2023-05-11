@@ -1,14 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.OneFuzz.Service;
+﻿using Microsoft.OneFuzz.Service;
 
 // TestContainers class allows use of InstanceID without having to set it up in blob storage
 sealed class TestContainers : Containers {
     public TestContainers(ILogTracer log, IStorage storage, IServiceConfig config)
         : base(log, storage, config) { }
-
-    public Guid InstanceId { get; } = Guid.NewGuid();
-
-    public override Task<Guid> GetInstanceId()
-        => System.Threading.Tasks.Task.FromResult(InstanceId);
 }

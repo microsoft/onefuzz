@@ -48,7 +48,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
 
     IAsyncEnumerable<Node> GetDeadNodes(Guid scaleSetId, TimeSpan expirationPeriod);
 
-    Async.Task MarkTasksStoppedEarly(Node node, Error? error = null);
+    Async.Task MarkTasksStoppedEarly(Node node, Error? error);
     static readonly TimeSpan NODE_EXPIRATION_TIME = TimeSpan.FromHours(1.0);
     static readonly TimeSpan NODE_REIMAGE_TIME = TimeSpan.FromDays(6.0);
 
@@ -195,12 +195,12 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             return CanProcessNewWorkResponse.NotAllowed("node is set to be deleted");
         }
 
-        if (node.ReimageRequested) {
+        if (node.ReimageRequested && node.Managed) {
             _ = await Stop(node, done: true);
             return CanProcessNewWorkResponse.NotAllowed("node is set to be reimaged");
         }
 
-        if (await CouldShrinkScaleset(node)) {
+        if (await CouldShrinkScaleset(node) && node.Managed) {
             _ = await SetHalt(node);
             return CanProcessNewWorkResponse.NotAllowed("node is scheduled to shrink");
         }
@@ -213,18 +213,18 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
             var scaleset = scalesetResult.OkV;
             if (!scaleset.State.IsAvailable()) {
-                return CanProcessNewWorkResponse.NotAllowed($"scaleset not available for work. Scaleset state '{scaleset.State}'"); ;
+                return CanProcessNewWorkResponse.NotAllowed($"scaleset not available for work. Scaleset state '{scaleset.State}'");
             }
         }
 
         var poolResult = await _context.PoolOperations.GetByName(node.PoolName);
         if (!poolResult.IsOk) {
-            return CanProcessNewWorkResponse.NotAllowed("invalid pool"); ;
+            return CanProcessNewWorkResponse.NotAllowed("invalid pool");
         }
 
         var pool = poolResult.OkV;
         if (!PoolStateHelper.Available.Contains(pool.State)) {
-            return CanProcessNewWorkResponse.NotAllowed("pool is not available for work"); ;
+            return CanProcessNewWorkResponse.NotAllowed("pool is not available for work");
         }
 
         return CanProcessNewWorkResponse.Allowed();
@@ -488,7 +488,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public bool IsTooOld(Node node) {
-        return node.ScalesetId != null
+        return node.Managed
+            && node.ScalesetId != null
             && node.InitializedAt != null
             && node.InitializedAt < DateTime.UtcNow - INodeOperations.NODE_REIMAGE_TIME;
     }
@@ -584,14 +585,19 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
 
-    public async Async.Task MarkTasksStoppedEarly(Node node, Error? error = null) {
-        if (error is null) {
-            error = new Error(ErrorCode.TASK_FAILED, new[] { $"node reimaged during task execution.  machine_id: {node.MachineId}" });
-        }
-
+    public async Async.Task MarkTasksStoppedEarly(Node node, Error? error) {
         await foreach (var entry in _context.NodeTasksOperations.GetByMachineId(node.MachineId)) {
             var task = await _context.TaskOperations.GetByTaskId(entry.TaskId);
-            if (task is not null) {
+            if (task is not null && !TaskStateHelper.ShuttingDown(task.State)) {
+                var message = $"Node {node.MachineId} stopping while the task state is '{task.State}'";
+                if (error is not null) {
+                    if (error.Errors == null) {
+                        error = error with { Errors = new List<string>() };
+                    }
+                    error.Errors.Add(message);
+                } else {
+                    error = Error.Create(ErrorCode.TASK_FAILED, message);
+                }
                 await _context.TaskOperations.MarkFailed(task, error);
             }
             if (!node.DebugKeepNode) {
@@ -604,7 +610,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public new async Async.Task Delete(Node node) {
-        await MarkTasksStoppedEarly(node);
+        await MarkTasksStoppedEarly(node, Error.Create(ErrorCode.INVALID_NODE, "node is being deleted"));
         await _context.NodeTasksOperations.ClearByMachineId(node.MachineId);
         await _context.NodeMessageOperations.ClearMessages(node.MachineId);
         var r = await base.Delete(node);

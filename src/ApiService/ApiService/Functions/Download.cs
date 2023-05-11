@@ -25,9 +25,9 @@ public class Download {
         if (queryContainer is null || !Container.TryParse(queryContainer, out var container)) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
+                Error.Create(
                     ErrorCode.INVALID_REQUEST,
-                    new string[] { "'container' query parameter must be provided and valid" }),
+                    "'container' query parameter must be provided and valid"),
                 "download");
         }
 
@@ -35,9 +35,9 @@ public class Download {
         if (filename is null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
+                Error.Create(
                     ErrorCode.INVALID_REQUEST,
-                    new string[] { "'filename' query parameter must be provided" }),
+                    "'filename' query parameter must be provided"),
                 "download");
         }
 

@@ -35,7 +35,7 @@ public class AgentEvents {
             NodeStateUpdate updateEvent => await OnStateUpdate(envelope.MachineId, updateEvent),
             WorkerEvent workerEvent => await OnWorkerEvent(envelope.MachineId, workerEvent),
             NodeEvent nodeEvent => await OnNodeEvent(envelope.MachineId, nodeEvent),
-            _ => new Error(ErrorCode.INVALID_REQUEST, new string[] { $"invalid node event: {envelope.Event.GetType().Name}" }),
+            _ => Error.Create(ErrorCode.INVALID_REQUEST, $"invalid node event: {envelope.Event.GetType().Name}"),
         };
 
         if (error is Error e) {
@@ -72,6 +72,9 @@ public class AgentEvents {
 
         if (ev.State == NodeState.Free) {
             if (node.ReimageRequested || node.DeleteRequested) {
+                if (!node.Managed) {
+                    return null;
+                }
                 _log.Info($"stopping free node with reset flags: {machineId:Tag:MachineId}");
                 // discard result: node not used after this point
                 _ = await _context.NodeOperations.Stop(node);
@@ -110,17 +113,17 @@ public class AgentEvents {
         } else if (ev.State == NodeState.SettingUp) {
             if (ev.Data is NodeSettingUpEventData settingUpData) {
                 if (!settingUpData.Tasks.Any()) {
-                    return new Error(ErrorCode.INVALID_REQUEST, Errors: new string[] {
-                        $"setup without tasks.  machine_id: {machineId}",
-                    });
+                    return Error.Create(ErrorCode.INVALID_REQUEST,
+                        $"setup without tasks.  machine_id: {machineId}"
+                    );
                 }
 
                 foreach (var taskId in settingUpData.Tasks) {
                     var task = await _context.TaskOperations.GetByTaskId(taskId);
                     if (task is null) {
-                        return new Error(
+                        return Error.Create(
                             ErrorCode.INVALID_REQUEST,
-                            Errors: new string[] { $"unable to find task: {taskId}" });
+                            $"unable to find task: {taskId}");
                     }
 
                     _log.Info($"node starting task. {machineId:Tag:MachineId} {task.JobId:Tag:JobId} {task.TaskId:Tag:TaskId}");
@@ -150,7 +153,7 @@ public class AgentEvents {
             if (ev.Data is NodeDoneEventData doneData) {
                 if (doneData.Error is not null) {
                     var errorText = EntityConverter.ToJsonString(doneData);
-                    error = new Error(ErrorCode.TASK_FAILED, Errors: new string[] { errorText });
+                    error = Error.Create(ErrorCode.TASK_FAILED, errorText);
                     _log.Error($"node 'done' {machineId:Tag:MachineId} - {errorText:Tag:Error}");
                 }
             }
@@ -174,9 +177,9 @@ public class AgentEvents {
             return await OnWorkerEventRunning(machineId, ev.Running);
         }
 
-        return new Error(
-            Code: ErrorCode.INVALID_REQUEST,
-            Errors: new string[] { "WorkerEvent should have either 'done' or 'running' set" });
+        return Error.Create(
+            ErrorCode.INVALID_REQUEST,
+            "WorkerEvent should have either 'done' or 'running' set");
     }
 
     private async Async.Task<Error?> OnWorkerEventRunning(Guid machineId, WorkerRunningEvent running) {
@@ -185,15 +188,11 @@ public class AgentEvents {
             _context.NodeOperations.GetByMachineId(machineId));
 
         if (task is null) {
-            return new Error(
-                Code: ErrorCode.INVALID_REQUEST,
-                Errors: new string[] { $"unable to find task: {running.TaskId}" });
+            return Error.Create(ErrorCode.INVALID_REQUEST, $"unable to find task: {running.TaskId}");
         }
 
         if (node is null) {
-            return new Error(
-                Code: ErrorCode.INVALID_REQUEST,
-                Errors: new string[] { $"unable to find node: {machineId}" });
+            return Error.Create(ErrorCode.INVALID_REQUEST, $"unable to find node: {machineId}");
         }
 
         if (!node.State.ReadyForReset()) {
@@ -236,15 +235,11 @@ public class AgentEvents {
             _context.NodeOperations.GetByMachineId(machineId));
 
         if (task is null) {
-            return new Error(
-                Code: ErrorCode.INVALID_REQUEST,
-                Errors: new string[] { $"unable to find task: {done.TaskId}" });
+            return Error.Create(ErrorCode.INVALID_REQUEST, $"unable to find task: {done.TaskId}");
         }
 
         if (node is null) {
-            return new Error(
-                Code: ErrorCode.INVALID_REQUEST,
-                Errors: new string[] { $"unable to find node: {machineId}" });
+            return Error.Create(ErrorCode.INVALID_REQUEST, $"unable to find node: {machineId}");
         }
 
         // trim stdout/stderr if too long
@@ -268,13 +263,12 @@ public class AgentEvents {
         } else {
             await _context.TaskOperations.MarkFailed(
                 task,
-                new Error(
-                    Code: ErrorCode.TASK_FAILED,
-                    Errors: new string[] {
-                        $"task failed. exit_status:{done.ExitStatus}",
-                        done.Stdout,
-                        done.Stderr,
-                    }));
+                Error.Create(
+                    ErrorCode.TASK_FAILED,
+                    $"task failed. exit_status:{done.ExitStatus}",
+                    done.Stdout,
+                    done.Stderr
+                    ));
 
             // keep node if any keep options are set
             if ((task.Config.Debug?.Contains(TaskDebugFlag.KeepNodeOnFailure) == true)

@@ -17,11 +17,12 @@ public class Pool {
     }
 
     [Function("Pool")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req)
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE", "PATCH")] HttpRequestData req)
         => _auth.CallIfUser(req, r => r.Method switch {
             "GET" => Get(r),
             "POST" => Post(r),
             "DELETE" => Delete(r),
+            "PATCH" => Patch(r),
             var m => throw new InvalidOperationException("Unsupported HTTP method {m}"),
         });
 
@@ -62,13 +63,43 @@ public class Pool {
         if (pool.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.INVALID_REQUEST,
-                    Errors: new string[] { "pool with that name already exists" }),
+                Error.Create(ErrorCode.INVALID_REQUEST, "pool with that name already exists"),
                 "PoolCreate");
         }
         var newPool = await _context.PoolOperations.Create(name: create.Name, os: create.Os, architecture: create.Arch, managed: create.Managed, objectId: create.ObjectId);
         return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(newPool), true));
+    }
+
+
+    private async Task<HttpResponseData> Patch(HttpRequestData req) {
+        var request = await RequestHandling.ParseRequest<PoolUpdate>(req);
+        if (!request.IsOk) {
+            return await _context.RequestHandling.NotOk(req, request.ErrorV, "PoolUpdate");
+        }
+
+        var answer = await _auth.CheckRequireAdmins(req);
+        if (!answer.IsOk) {
+            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "PoolUpdate");
+        }
+
+        var update = request.OkV;
+        var pool = await _context.PoolOperations.GetByName(update.Name);
+        if (!pool.IsOk) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                Error.Create(ErrorCode.INVALID_REQUEST, "pool with that name does not exist"),
+                "PoolUpdate");
+        }
+
+        var updated = pool.OkV with { ObjectId = update.ObjectId };
+        var updatePool = await _context.PoolOperations.Update(updated);
+        if (updatePool.IsOk) {
+            return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(updated), true));
+        } else {
+            return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, updatePool.ErrorV.Reason), "PoolUpdate");
+        }
+
+
     }
 
     private async Task<HttpResponseData> Get(HttpRequestData req) {
