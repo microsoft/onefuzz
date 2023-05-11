@@ -13,7 +13,6 @@ use tokio::task;
 
 use crate::tasks::{
     config::{CommonConfig, Config},
-    task_logger,
 };
 
 const OOM_CHECK_INTERVAL: Duration = Duration::from_secs(5);
@@ -90,16 +89,6 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
     let check_oom = out_of_memory(min_available_memory_bytes);
 
     let common = config.common().clone();
-    let machine_id = common.machine_identity.machine_id;
-    let task_logger = if let Some(logs) = common.logs.clone() {
-        let rx = onefuzz_telemetry::subscribe_to_events()?;
-
-        let logger = task_logger::TaskLogger::new(common.job_id, common.task_id, machine_id);
-
-        Some(logger.start(rx, logs).await?)
-    } else {
-        None
-    };
 
     let result = tokio::select! {
         result = config.run() => result,
@@ -122,10 +111,6 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
 
     onefuzz_telemetry::try_flush_and_close().await;
 
-    // wait for the task logger to finish
-    if let Some(task_logger) = task_logger {
-        let _ = task_logger.flush_and_stop(Duration::from_secs(60)).await;
-    }
 
     result
 }
