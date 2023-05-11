@@ -89,3 +89,5 @@ There are 3 options for retrieving the full event payload as it would have been 
 2. Using the new events API at `GET https://{onefuzz instance}/api/events` with a request body `{ "event_id": "00000000-0000-0000-0000-000000000000" }`
 3. Using the onefuzz cli `onefuzz events get "00000000-0000-0000-0000-000000000000"`
 
+
+_**You can migrate your event handling code today to use any of those 3 options so that you will be unaffected by the future breaking change.**_
