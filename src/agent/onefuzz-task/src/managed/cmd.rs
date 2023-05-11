@@ -11,9 +11,7 @@ use onefuzz::ipc::IpcMessageKind;
 use std::time::Duration;
 use tokio::task;
 
-use crate::tasks::{
-    config::{CommonConfig, Config},
-};
+use crate::tasks::config::{CommonConfig, Config};
 
 const OOM_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
@@ -108,7 +106,6 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
     }
 
     onefuzz_telemetry::try_flush_and_close().await;
-
 
     result
 }

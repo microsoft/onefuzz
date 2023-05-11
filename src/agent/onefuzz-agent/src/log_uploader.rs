@@ -155,9 +155,7 @@ async fn sync_file(log_container: Url, log_path: &Path, log_blob_name: &str) -> 
 #[cfg(test)]
 mod tests {
     //
-    use std::{
-        io::Seek,
-    };
+    use std::io::Seek;
 
     use anyhow::Result;
     use tokio::io::{AsyncReadExt, AsyncSeekExt};
