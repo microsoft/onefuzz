@@ -73,13 +73,14 @@ When events 2.0 is released, the above event will be _sent_ like this:
     "instance_name": "example",
     "webhook_id": "00000000-0000-0000-0000-000000000000",
     "sas_url": "https://example.com",
-    "version": "2.0"
+    "version": "2.0",
+    "expiration_date": "01/01/2025"
 }
 ```
 
 You'll notice many fields are omitted. 
 
-**`event_id`, `event_type`, `instance_id`, `instance_name`, `webhook_id`, `sas_url`, `version` WILL ALWAYS BE INCLUDED**
+**`event_id`, `event_type`, `instance_id`, `instance_name`, `webhook_id`, `sas_url`, `version`, `expiration_date` WILL ALWAYS BE INCLUDED**
 
 ### How to retrieve the full event payload
 
@@ -89,5 +90,6 @@ There are 3 options for retrieving the full event payload as it would have been 
 2. Using the new events API at `GET https://{onefuzz instance}/api/events` with a request body `{ "event_id": "00000000-0000-0000-0000-000000000000" }`
 3. Using the onefuzz cli `onefuzz events get "00000000-0000-0000-0000-000000000000"`
 
+The event payload data will only be retained until the expiration date. We are currently planning to retain event data for 90 days but this may change in the future.
 
 _**You can migrate your event handling code today to use any of those 3 options so that you will be unaffected by the future breaking change.**_
