@@ -71,11 +71,10 @@ public class AgentEvents {
         }
 
         if (ev.State == NodeState.Free) {
-            if (!node.Managed) {
-                return null;
-            }
-
             if (node.ReimageRequested || node.DeleteRequested) {
+                if (!node.Managed) {
+                    return null;
+                }
                 _log.Info($"stopping free node with reset flags: {machineId:Tag:MachineId}");
                 // discard result: node not used after this point
                 _ = await _context.NodeOperations.Stop(node);

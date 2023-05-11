@@ -222,17 +222,30 @@ impl State<Ready> {
 
         info!("IPC connection bootstrapped");
 
-        // &self.work.working_dir(self.c)
         let log_path = Path::join(&self.ctx.work_dir, "task_log.txt");
+
         let work_config = self.work.config.expose_ref();
         let log_config: LogConfig = serde_json::from_str(work_config.as_str())?;
-
+        let blob_path = self
+            .ctx
+            .work_dir
+            .strip_prefix(onefuzz::fs::onefuzz_root()?)?;
+        let log_blob_name = blob_path
+            .to_str()
+            .unwrap_or("task_log.txt")
+            .replace("\\", "/")
+            .to_string();
         let _log_monitor = log_config.logs.map(|log_url| {
             let log_url = log_url.to_string();
             let log_path = log_path.clone();
+
             tokio::spawn(async move {
-                continuous_sync_file(reqwest::Url::parse(log_url.as_str()).unwrap(), &log_path)
-                    .await
+                continuous_sync_file(
+                    reqwest::Url::parse(log_url.as_str()).unwrap(),
+                    &log_path,
+                    &log_blob_name,
+                )
+                .await
             })
         });
 

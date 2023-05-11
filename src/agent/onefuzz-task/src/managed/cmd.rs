@@ -19,7 +19,7 @@ use crate::tasks::{
 const OOM_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
 pub async fn run(args: &clap::ArgMatches) -> Result<()> {
-    Logger::try_with_env_or_str("info")?
+    let _logger = Logger::try_with_env_or_str("info")?
         .log_to_file(
             FileSpec::default()
                 .directory(".") // create files in folder ./log_files

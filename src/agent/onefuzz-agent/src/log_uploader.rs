@@ -42,11 +42,10 @@ async fn get_blob_client(log_container: Url, file_name: &str) -> Result<(BlobCli
 
     match blob_client.get_properties().await {
         Ok(prop) => {
-            println!("prop {:?}", prop);
+            debug!("prop {:?}", prop);
             Ok((blob_client, prop.blob.properties.content_length))
         }
         Err(e) => {
-            println!("err {:?}", e);
             match e.downcast_ref::<HttpError>() {
                 Some(herr) if herr.status() == StatusCode::NotFound => {
                     blob_client.put_append_blob().await?;
@@ -62,7 +61,6 @@ use std::io::Seek;
 
 #[derive(Debug, Clone)]
 struct SeekableFile {
-    // file: std::pin::Pin<Box<tokio::fs::File>>,
     file: Arc<Mutex<tokio::fs::File>>,
     start_position: u64,
     len: usize,
@@ -71,7 +69,10 @@ struct SeekableFile {
 impl SeekableFile {
     fn new(file_path: &Path, start_position: usize) -> Result<Self> {
         let mut file = std::fs::File::open(file_path)?;
-        let len = file.metadata().unwrap().len();
+        let len = std::cmp::max(
+            file.metadata().unwrap().len() - (start_position as u64),
+            10000,
+        );
         file.seek(std::io::SeekFrom::Start(start_position as u64))
             .unwrap();
         let file = tokio::fs::File::from_std(file);
@@ -90,15 +91,24 @@ impl futures::AsyncRead for SeekableFile {
         cx: &mut std::task::Context<'_>,
         buf: &mut [u8],
     ) -> std::task::Poll<std::io::Result<usize>> {
-        let mut locked = self.file.blocking_lock();
-        let file = Pin::new(locked.deref_mut());
-        let mut buf = tokio::io::ReadBuf::new(buf);
-        match file.poll_read(cx, &mut buf) {
-            std::task::Poll::Ready(Ok(())) => {
-                std::task::Poll::Ready(Ok(buf.capacity() - buf.remaining()))
+        let mut locked = self.file.try_lock();
+        loop {
+            if let Ok(mut locked) = locked {
+                let file = Pin::new(locked.deref_mut());
+                let mut buf = tokio::io::ReadBuf::new(buf);
+                match file.poll_read(cx, &mut buf) {
+                    std::task::Poll::Ready(Ok(())) => {
+                        return std::task::Poll::Ready(Ok(buf.capacity() - buf.remaining()));
+                    }
+                    std::task::Poll::Ready(Err(e)) => {
+                        return std::task::Poll::Ready(Err(e));
+                    }
+                    std::task::Poll::Pending => {
+                        return std::task::Poll::Pending;
+                    }
+                }
             }
-            std::task::Poll::Ready(Err(e)) => std::task::Poll::Ready(Err(e)),
-            std::task::Poll::Pending => std::task::Poll::Pending,
+            locked = self.file.try_lock();
         }
     }
 }
@@ -117,18 +127,27 @@ impl SeekableStream for SeekableFile {
     }
 }
 
-pub async fn continuous_sync_file(log_container: Url, log_path: &Path) -> Result<()> {
+pub async fn continuous_sync_file(
+    log_container: Url,
+    log_path: &Path,
+    log_blob_name: &str,
+) -> Result<()> {
     loop {
-        let result = sync_file(log_container.clone(), log_path).await;
+        let result = sync_file(log_container.clone(), log_path, log_blob_name).await;
         if let Err(e) = result {
-            warn!("failed to sync log file: {}", e);
+            warn!(
+                "failed to sync log file log_path: '{}' log_container '{}': {}",
+                log_container,
+                log_path.display(),
+                e
+            );
         }
         tokio::time::sleep(Duration::from_secs(60)).await;
     }
 }
 
-async fn sync_file(log_container: Url, log_path: &Path) -> Result<()> {
-    let (blob_client, position) = get_blob_client(log_container, "log.txt").await?;
+async fn sync_file(log_container: Url, log_path: &Path, log_blob_name: &str) -> Result<()> {
+    let (blob_client, position) = get_blob_client(log_container, log_blob_name).await?;
     let seekable_file = SeekableFile::new(log_path, position as usize)?;
     let f: Box<dyn SeekableStream> = Box::new(seekable_file);
     blob_client.append_block(Body::from(f)).await?;
@@ -138,7 +157,10 @@ async fn sync_file(log_container: Url, log_path: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     //
-    use std::io::Seek;
+    use std::{
+        io::Seek,
+        path::{Path, PathBuf},
+    };
 
     use anyhow::Result;
     use tokio::io::{AsyncReadExt, AsyncSeekExt};

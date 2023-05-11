@@ -21,7 +21,7 @@ impl Fixture {
     pub fn agent(&self) -> Agent {
         let coordinator = Box::<CoordinatorDouble>::default();
         let reboot = Box::<RebootDouble>::default();
-        let scheduler = Scheduler::new();
+        let scheduler = Scheduler::new(None);
         let setup_runner = Box::<SetupRunnerDouble>::default();
         let work_queue = Box::<WorkQueueDouble>::default();
         let worker_runner = Box::<WorkerRunnerDouble>::default();
