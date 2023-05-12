@@ -636,7 +636,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         if (scaleset.State == ScalesetState.Shutdown) {
             _log.Info($"scaleset shutting down, deleting rather than reimaging nodes {scaleset.ScalesetId:Tag:ScalesetId}");
-            return await DeleteNodes(scaleset, nodes, "node is shutting down");
+            return await DeleteNodes(scaleset, nodes, "scaleset is shutting down");
         }
 
         if (scaleset.State == ScalesetState.Halt) {
