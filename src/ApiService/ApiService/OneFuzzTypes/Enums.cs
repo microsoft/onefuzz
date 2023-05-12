@@ -38,6 +38,7 @@ public enum ErrorCode {
     GITHUB_VALIDATION_INVALID_REPOSITORY = 481,
     UNEXPECTED_DATA_SHAPE = 482,
     UNABLE_TO_SEND = 483,
+    NODE_DELETED = 484,
 }
 
 public enum VmState {
