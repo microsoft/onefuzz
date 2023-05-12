@@ -7,6 +7,7 @@ use azure_core::{error::HttpError, SeekableStream};
 use azure_core::{Body, StatusCode};
 use azure_storage::StorageCredentials;
 use azure_storage_blobs::prelude::*;
+use onefuzz::utils::CheckNotify;
 use reqwest::Url;
 use std::ops::DerefMut;
 use std::pin::Pin;
@@ -15,6 +16,13 @@ use std::{path::Path, time::Duration};
 use tokio::io::AsyncRead;
 use tokio::io::AsyncSeekExt;
 use tokio::sync::Mutex;
+
+// append blob has a limit of 50,000 blocks, each block can be up to 4MiB
+// https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs#about-append-blobs
+const MAX_BLOB_BLOCK_SIZE: u64 = 4 * 1024 * 1024;
+
+const UPLOAD_INTERVAL: Duration = Duration::from_secs(60);
+const LOG_FLUSH_TIMEOUT: Duration = Duration::from_secs(60);
 
 fn create_container_client(log_container: &Url) -> Result<ContainerClient> {
     let account = log_container
@@ -61,16 +69,14 @@ use std::io::Seek;
 struct SeekableFile {
     file: Arc<Mutex<tokio::fs::File>>,
     start_position: u64,
-    len: usize,
+    pub len: usize,
 }
 
 impl SeekableFile {
     fn new(file_path: &Path, start_position: usize) -> Result<Self> {
         let mut file = std::fs::File::open(file_path)?;
-        let len = std::cmp::max(
-            file.metadata().unwrap().len() - (start_position as u64),
-            10000,
-        );
+        let reamining_size = file.metadata().unwrap().len() - (start_position as u64);
+        let len = std::cmp::min(reamining_size, MAX_BLOB_BLOCK_SIZE);
         file.seek(std::io::SeekFrom::Start(start_position as u64))
             .unwrap();
         let file = tokio::fs::File::from_std(file);
@@ -80,6 +86,10 @@ impl SeekableFile {
             start_position: start_position as u64,
             len: len as usize,
         })
+    }
+
+    fn is_empty(&self) -> bool {
+        self.len == 0
     }
 }
 
@@ -125,31 +135,82 @@ impl SeekableStream for SeekableFile {
     }
 }
 
-pub async fn continuous_sync_file(
-    log_container: Url,
-    log_path: &Path,
-    log_blob_name: &str,
-) -> Result<()> {
-    loop {
-        let result = sync_file(log_container.clone(), log_path, log_blob_name).await;
-        if let Err(e) = result {
-            warn!(
-                "failed to sync log file log_path: '{}' log_container '{}': {}",
-                log_container,
-                log_path.display(),
-                e
-            );
+#[derive(Debug)]
+pub struct Uploader {
+    notify: Arc<tokio::sync::Notify>,
+    uploader: Mutex<Option<tokio::task::JoinHandle<anyhow::Result<()>>>>,
+}
+
+impl Uploader {
+    pub fn start_sync(log_container: Url, log_path: impl AsRef<Path>, log_blob_name: &str) -> Self {
+        let notify = Arc::new(tokio::sync::Notify::new());
+        let log_path = log_path.as_ref().to_path_buf();
+        let log_blob_name = log_blob_name.to_string();
+        let cloned_notify = notify.clone();
+        let mut stopped = false;
+        let uploader = tokio::spawn(async move {
+            loop {
+                let result =
+                    sync_file(log_container.clone(), &log_path, &log_blob_name.to_string()).await;
+                let count = match result {
+                    Err(e) => {
+                        warn!(
+                            "failed to sync log file log_path: '{}' log_container '{}': {}",
+                            log_container,
+                            log_path.display(),
+                            e
+                        );
+                        0
+                    }
+                    Ok(count) => count,
+                };
+
+                if stopped {
+                    if count == 0 {
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+                stopped = cloned_notify.is_notified(UPLOAD_INTERVAL).await;
+            }
+            Ok(())
+        });
+        Self {
+            notify,
+            uploader: Mutex::new(Some(uploader)),
         }
-        tokio::time::sleep(Duration::from_secs(60)).await;
+    }
+
+    pub async fn stop_sync(&self) -> Result<()> {
+        let mut uploader_lock = self.uploader.lock().await;
+        if let Some(uploader) = uploader_lock.take() {
+            self.notify.notify_one();
+            let _ = tokio::time::timeout(LOG_FLUSH_TIMEOUT, uploader).await?;
+        }
+        Ok(())
     }
 }
 
-async fn sync_file(log_container: Url, log_path: &Path, log_blob_name: &str) -> Result<()> {
+async fn sync_file(
+    log_container: Url,
+    log_path: impl AsRef<Path>,
+    log_blob_name: &str,
+) -> Result<usize> {
+    if !log_path.as_ref().exists() {
+        return Ok(0);
+    }
+
     let (blob_client, position) = get_blob_client(log_container, log_blob_name).await?;
-    let seekable_file = SeekableFile::new(log_path, position as usize)?;
+    let seekable_file = SeekableFile::new(log_path.as_ref(), position as usize)?;
+
+    if seekable_file.is_empty() {
+        return Ok(0);
+    }
+    let len = seekable_file.len();
     let f: Box<dyn SeekableStream> = Box::new(seekable_file);
     blob_client.append_block(Body::from(f)).await?;
-    Ok(())
+    Ok(len)
 }
 
 #[cfg(test)]

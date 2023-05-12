@@ -18,9 +18,8 @@ use onefuzz::{
 };
 use tokio::{fs, task, time::timeout};
 
-use crate::buffer::TailBuffer;
-use crate::log_uploader::continuous_sync_file;
 use crate::work::*;
+use crate::{buffer::TailBuffer, log_uploader::Uploader};
 
 use serde_json::Value;
 
@@ -83,7 +82,7 @@ impl Worker {
                 events.push(event);
                 state.into()
             }
-            Worker::Running(state) => match state.wait()? {
+            Worker::Running(state) => match state.wait().await? {
                 Waited::Done(state) => {
                     let output = state.output();
                     let event = WorkerEvent::Done {
@@ -123,7 +122,7 @@ pub struct Running {
     child: Box<dyn IWorkerChild>,
     _from_agent_to_task: IpcSender<IpcMessageKind>,
     from_task_to_agent: IpcReceiver<IpcMessageKind>,
-    _log_monitor: Option<task::JoinHandle<anyhow::Result<()>>>,
+    log_uploader: Option<Uploader>,
 }
 
 #[derive(Debug)]
@@ -214,7 +213,7 @@ impl State<Ready> {
                 );
                 return Err(format_err!(
                     "timeout waiting for server_receiver_server.accept(): {:?}",
-                    e   
+                    e
                 ));
             }
             Ok(res) => res??,
@@ -235,18 +234,14 @@ impl State<Ready> {
             .and_then(|path| path.to_str())
             .unwrap_or("task_log.txt")
             .replace('\\', "/");
-        let _log_monitor = log_config.logs.map(|log_url| {
+        let log_uploader = log_config.logs.map(|log_url| {
             let log_url = log_url.to_string();
             let log_path = log_path.clone();
-
-            tokio::spawn(async move {
-                continuous_sync_file(
-                    reqwest::Url::parse(log_url.as_str()).unwrap(),
-                    &log_path,
-                    &log_blob_name,
-                )
-                .await
-            })
+            Uploader::start_sync(
+                reqwest::Url::parse(log_url.as_str()).unwrap(),
+                log_path,
+                &log_blob_name,
+            )
         });
 
         let state = State {
@@ -254,7 +249,7 @@ impl State<Ready> {
                 child,
                 _from_agent_to_task: from_agent_to_task,
                 from_task_to_agent,
-                _log_monitor,
+                log_uploader,
             },
             work: self.work,
         };
@@ -264,7 +259,7 @@ impl State<Ready> {
 }
 
 impl State<Running> {
-    pub fn wait(mut self) -> Result<Waited> {
+    pub async fn wait(mut self) -> Result<Waited> {
         while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
             info!("received message from server_receiver: {:?}", res);
         }
@@ -277,6 +272,11 @@ impl State<Running> {
                 ctx,
                 work: self.work,
             };
+
+            // wait for the log uploader to finish
+            if let Some(log_uploader) = &self.ctx.log_uploader {
+                let _ = log_uploader.stop_sync().await;
+            }
 
             Ok(Waited::Done(state))
         } else {
