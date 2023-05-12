@@ -33,7 +33,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
         bool excludeUpdateScheduled = false,
         int? numResults = default);
 
-    Async.Task Delete(Node node, string? reason);
+    Async.Task Delete(Node node, string reason);
 
     Async.Task ReimageLongLivedNodes(Guid scaleSetId);
 
@@ -609,12 +609,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         }
     }
 
-    public async Async.Task Delete(Node node, string? reason = null) {
-        var error = Error.Create(ErrorCode.INVALID_NODE);
-        if (reason is not null) {
-            error.Errors!.Add(reason);
-        }
-        error.Errors!.Add($"Node {node.MachineId} is being deleted");
+    public async Async.Task Delete(Node node, string reason) {
+        var error = Error.Create(ErrorCode.NODE_DELETED, reason, $"Node {node.MachineId} is being deleted");
 
         await MarkTasksStoppedEarly(node, error);
         await _context.NodeTasksOperations.ClearByMachineId(node.MachineId);
