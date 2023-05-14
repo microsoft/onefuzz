@@ -210,7 +210,7 @@ TARGETS: Dict[str, Integration] = {
         os=OS.windows,
         target_exe="fuzz.exe",
         inputs="seeds",
-        target_env={"ASAN_OPTIONS": "ASAN_SAVE_DUMPS=dump.dmp"},
+        target_env={"ASAN_SAVE_DUMPS": "my_dump.dmp"},
         wait_for_files={
             ContainerType.inputs: 2,
             ContainerType.unique_reports: 1,
